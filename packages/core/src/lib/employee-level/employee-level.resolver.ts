@@ -126,7 +126,8 @@ export class EmployeeLevelResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<EmployeeLevel>> {
 		// The delivered list route binds `data` out of its query string and hands the service
 		// `{ where: { ...findInput }, relations }` — the route's own narrowing and the relations its
@@ -134,7 +135,7 @@ export class EmployeeLevelResolver {
 		// protocol states the narrowing in `filter`, which is applied to the rows the service returns, so
 		// the read runs with the route's own defaults — no criterion and no joined collection. The tenant
 		// is applied to the criterion by the service, from the credential rather than from the caller.
-		const { items }: IPagination<EmployeeLevel> = await this.employeeLevelService.findAll({ where: {} });
+		const { items }: IPagination<EmployeeLevel> = await this.employeeLevelService.findAll({ where: {}, ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<EmployeeLevel>({
 			rows: items ?? [],

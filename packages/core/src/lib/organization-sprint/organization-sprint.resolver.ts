@@ -171,7 +171,8 @@ export class OrganizationSprintResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationSprint>> {
 		// The delivered list route binds the `relations` and the `findInput` out of its `data` query
 		// parameter and hands both to the service. This surface has no query string to bind, so the read
@@ -180,6 +181,7 @@ export class OrganizationSprintResolver {
 		// and the connection protocol's `filter` is applied to the rows the service returns. The tenant
 		// is applied to the criterion by the service, from the credential rather than from the caller.
 		const { items }: IPagination<OrganizationSprint> = await this.organizationSprintService.findAll({
+			...(withDeleted ? { withDeleted: true } : {}),
 			where: undefined,
 			relations: undefined
 		});

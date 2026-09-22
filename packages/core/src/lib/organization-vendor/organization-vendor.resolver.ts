@@ -158,13 +158,14 @@ export class OrganizationVendorResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationVendor>> {
 		// The reader takes the same service method the list route calls. That route binds its `data`
 		// parameter to a criterion, a relation list and an order; this surface has no query string to bind,
 		// so the read runs with the route's own defaults and the connection protocol's `filter` narrows the
 		// rows the service returns.
-		const filterOptions = {} as BaseQueryDTO<OrganizationVendor>;
+		const filterOptions = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<OrganizationVendor>;
 		const { items }: IPagination<OrganizationVendor> =
 			await this.organizationVendorService.findAll(filterOptions);
 

@@ -220,14 +220,22 @@ export class OrganizationRecurringExpenseResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationRecurringExpense>> {
 		// The reader takes the same service method the list route calls, with the criterion the delivered
 		// clients fill from their query string: the organization the payroll screen is showing, and the
 		// order they state. This surface states the credential's own organization and applies the
 		// caller's own order through the connection protocol.
+		//
+		// The visibility is spread *beside* `scopedQuery()` rather than into it: that reader answers the
+		// organization the caller is working in, which is a criterion, while this is the soft-delete flag the
+		// route's `withDeleted` query parameter carries.
 		const { items }: IPagination<OrganizationRecurringExpense> =
-			await this.organizationRecurringExpenseService.findAll(this.scopedQuery());
+			await this.organizationRecurringExpenseService.findAll({
+				...this.scopedQuery(),
+				...(withDeleted ? { withDeleted: true } : {})
+			});
 
 		return buildConnection<OrganizationRecurringExpense>({
 			rows: items ?? [],

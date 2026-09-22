@@ -147,10 +147,11 @@ export class IntegrationTenantResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<IntegrationTenant>> {
 		const { items }: IPagination<IntegrationTenant> = await this.integrationTenantService.findAll(
-			{} as never
+			{ ...(withDeleted ? { withDeleted: true } : {}) } as never
 		);
 
 		return buildConnection<IntegrationTenant>({

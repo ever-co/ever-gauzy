@@ -154,7 +154,7 @@ type Query {
   availabilitySlotCount: Int
 
   """The messages the caller may read, newest publication first."""
-  broadcasts(filter: BroadcastFilter, sort: [BroadcastSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): BroadcastConnection!
+  broadcasts(filter: BroadcastFilter, sort: [BroadcastSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): BroadcastConnection!
 
   """
   One message the caller may read, or null when there is none — or none they may read.
@@ -580,7 +580,7 @@ type Query {
   employeeAvailabilityCount: Int
 
   """The awards of the caller's tenant, newest first."""
-  employeeAwards(filter: EmployeeAwardFilter, sort: [EmployeeAwardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeAwardConnection!
+  employeeAwards(filter: EmployeeAwardFilter, sort: [EmployeeAwardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeAwardConnection!
 
   """One award of the caller's tenant, or null when there is none."""
   employeeAward(id: ID!): EmployeeAward
@@ -596,7 +596,7 @@ type Query {
   employeeAwardCount: Int
 
   """The levels of the caller's tenant, newest first."""
-  employeeLevels(filter: EmployeeLevelFilter, sort: [EmployeeLevelSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeLevelConnection!
+  employeeLevels(filter: EmployeeLevelFilter, sort: [EmployeeLevelSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeLevelConnection!
 
   """One level of the caller's tenant, or null when there is none."""
   employeeLevel(id: ID!): EmployeeLevel
@@ -644,7 +644,7 @@ type Query {
   """
   The standing costs of the caller's organization, newest arrangement first.
   """
-  employeeRecurringExpenses(filter: EmployeeRecurringExpenseFilter, sort: [EmployeeRecurringExpenseSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeRecurringExpenseConnection!
+  employeeRecurringExpenses(filter: EmployeeRecurringExpenseFilter, sort: [EmployeeRecurringExpenseSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeRecurringExpenseConnection!
 
   """
   One standing cost of the caller's tenant, or null when there is none.
@@ -852,7 +852,7 @@ type Query {
   ): EmployeeConnection!
 
   """The subscriptions of the caller's tenant, newest first."""
-  entitySubscriptions(filter: EntitySubscriptionFilter, sort: [EntitySubscriptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EntitySubscriptionConnection!
+  entitySubscriptions(filter: EntitySubscriptionFilter, sort: [EntitySubscriptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EntitySubscriptionConnection!
 
   """One subscription of the caller's tenant, or null when there is none."""
   entitySubscription(id: ID!): EntitySubscription
@@ -979,7 +979,7 @@ type Query {
   eventDelivery(id: ID!): EventDelivery
 
   """The meeting lengths of the caller's tenant, in title order."""
-  eventTypes(filter: EventTypeFilter, sort: [EventTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EventTypeConnection!
+  eventTypes(filter: EventTypeFilter, sort: [EventTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EventTypeConnection!
 
   """One meeting length of the caller's tenant, or null when there is none."""
   eventType(id: ID!): EventType
@@ -1099,7 +1099,7 @@ type Query {
   The policies of the caller's tenant, newest first. An organization's own policy is this connection
   narrowed by `organizationId`.
   """
-  goalGeneralSettings(filter: GoalGeneralSettingFilter, sort: [GoalGeneralSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): GoalGeneralSettingConnection!
+  goalGeneralSettings(filter: GoalGeneralSettingFilter, sort: [GoalGeneralSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): GoalGeneralSettingConnection!
 
   """One policy of the caller's tenant, or null when there is none."""
   goalGeneralSetting(id: ID!): GoalGeneralSetting
@@ -1108,7 +1108,7 @@ type Query {
   goalGeneralSettingCount: Int
 
   """The catalogue entries of the caller's tenant, newest first."""
-  goalKpiTemplates(filter: GoalKPITemplateFilter, sort: [GoalKPITemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): GoalKPITemplateConnection!
+  goalKpiTemplates(filter: GoalKPITemplateFilter, sort: [GoalKPITemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): GoalKPITemplateConnection!
 
   """
   One catalogue entry of the caller's tenant, or null when there is none.
@@ -1119,7 +1119,7 @@ type Query {
   goalKpiTemplateCount: Int
 
   """The measures of the caller's tenant, newest first."""
-  goalKpis(filter: GoalKPIFilter, sort: [GoalKPISort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): GoalKPIConnection!
+  goalKpis(filter: GoalKPIFilter, sort: [GoalKPISort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): GoalKPIConnection!
 
   """One measure of the caller's tenant, or null when there is none."""
   goalKpi(id: ID!): GoalKPI
@@ -1128,7 +1128,7 @@ type Query {
   goalKpiCount: Int
 
   """The catalogue entries of the caller's tenant, newest first."""
-  goalTemplates(filter: GoalTemplateFilter, sort: [GoalTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): GoalTemplateConnection!
+  goalTemplates(filter: GoalTemplateFilter, sort: [GoalTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): GoalTemplateConnection!
 
   """
   One catalogue entry of the caller's tenant, or null when there is none.
@@ -1142,7 +1142,7 @@ type Query {
   The periods of the caller's tenant, in the taxonomy's own order. One period by its name is this
   connection narrowed by `name`, which is the read the delivered by-name route performs.
   """
-  goalTimeFrames(filter: GoalTimeFrameFilter, sort: [GoalTimeFrameSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): GoalTimeFrameConnection!
+  goalTimeFrames(filter: GoalTimeFrameFilter, sort: [GoalTimeFrameSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): GoalTimeFrameConnection!
 
   """
   One period of the caller's tenant, or null when there is none.
@@ -1160,7 +1160,7 @@ type Query {
   The objectives of the caller's tenant, oldest first, which is the order the delivered list route
   reads them in.
   """
-  goals(filter: GoalFilter, sort: [GoalSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): GoalConnection!
+  goals(filter: GoalFilter, sort: [GoalSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): GoalConnection!
 
   """One objective of the caller's tenant, or null when there is none."""
   goal(id: ID!): Goal
@@ -1248,7 +1248,7 @@ type Query {
   The integrations the caller's tenant has connected, in the resource's own selection: a row with no
   catalogue entry is not a connection.
   """
-  integrationTenants(filter: IntegrationTenantFilter, sort: [IntegrationTenantSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): IntegrationTenantConnection!
+  integrationTenants(filter: IntegrationTenantFilter, sort: [IntegrationTenantSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): IntegrationTenantConnection!
 
   """One connected integration, or null when there is none."""
   integrationTenant(
@@ -1382,7 +1382,7 @@ type Query {
   inviteByCode(email: String!, code: String!): Invite
 
   """The log entries of the caller's tenant, newest first."""
-  invoiceEstimateHistories(filter: InvoiceEstimateHistoryFilter, sort: [InvoiceEstimateHistorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): InvoiceEstimateHistoryConnection!
+  invoiceEstimateHistories(filter: InvoiceEstimateHistoryFilter, sort: [InvoiceEstimateHistorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): InvoiceEstimateHistoryConnection!
 
   """
   One log entry, or null when there is none.
@@ -1397,7 +1397,7 @@ type Query {
   invoiceEstimateHistoryCount: Int
 
   """The billed lines of the caller's tenant, newest first."""
-  invoiceItems(filter: InvoiceItemFilter, sort: [InvoiceItemSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): InvoiceItemConnection!
+  invoiceItems(filter: InvoiceItemFilter, sort: [InvoiceItemSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): InvoiceItemConnection!
 
   """
   One line of the caller's tenant, or null when there is none.
@@ -1451,7 +1451,7 @@ type Query {
   The catalogue entries of the caller's tenant, newest first. One goal template's key results are
   this connection narrowed by `goalId`.
   """
-  keyResultTemplates(filter: KeyResultTemplateFilter, sort: [KeyResultTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): KeyResultTemplateConnection!
+  keyResultTemplates(filter: KeyResultTemplateFilter, sort: [KeyResultTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): KeyResultTemplateConnection!
 
   """
   One catalogue entry of the caller's tenant, or null when there is none.
@@ -1465,7 +1465,7 @@ type Query {
   The updates of the caller's tenant, newest first. One key result's updates are this connection
   narrowed by `keyResultId`, which is the read the delivered by-key-result route performs.
   """
-  keyResultUpdates(filter: KeyResultUpdateFilter, sort: [KeyResultUpdateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): KeyResultUpdateConnection!
+  keyResultUpdates(filter: KeyResultUpdateFilter, sort: [KeyResultUpdateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): KeyResultUpdateConnection!
 
   """
   One update of the caller's tenant, or null when there is none.
@@ -1604,7 +1604,7 @@ type Query {
   organizationContactCount: Int
 
   """The departments of the caller's tenant, in name order."""
-  organizationDepartments(filter: OrganizationDepartmentFilter, sort: [OrganizationDepartmentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationDepartmentConnection!
+  organizationDepartments(filter: OrganizationDepartmentFilter, sort: [OrganizationDepartmentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationDepartmentConnection!
 
   """One department of the caller's tenant, or null when there is none."""
   organizationDepartment(id: ID!): OrganizationDepartment
@@ -1798,7 +1798,7 @@ type Query {
   """
   The standing costs of the caller's organization, newest arrangement first.
   """
-  organizationRecurringExpenses(filter: OrganizationRecurringExpenseFilter, sort: [OrganizationRecurringExpenseSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationRecurringExpenseConnection!
+  organizationRecurringExpenses(filter: OrganizationRecurringExpenseFilter, sort: [OrganizationRecurringExpenseSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationRecurringExpenseConnection!
 
   """
   One standing cost of the caller's tenant, or null when there is none.
@@ -1853,7 +1853,7 @@ type Query {
   ): [OrganizationRecurringExpenseShare!]!
 
   """The sprints of the caller's tenant, newest first."""
-  organizationSprints(filter: OrganizationSprintFilter, sort: [OrganizationSprintSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationSprintConnection!
+  organizationSprints(filter: OrganizationSprintFilter, sort: [OrganizationSprintSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationSprintConnection!
 
   """One sprint of the caller's tenant, or null when there is none."""
   organizationSprint(id: ID!): OrganizationSprint
@@ -1933,7 +1933,7 @@ type Query {
   organizationTeamCount: Int
 
   """The suppliers of the caller's tenant, in the master's own name order."""
-  organizationVendors(filter: OrganizationVendorFilter, sort: [OrganizationVendorSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationVendorConnection!
+  organizationVendors(filter: OrganizationVendorFilter, sort: [OrganizationVendorSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationVendorConnection!
 
   """
   One supplier of the caller's tenant, or null when there is none.
@@ -2071,7 +2071,7 @@ type Query {
   productCategoryCount: Int
 
   """The options of the caller's tenant."""
-  productOptions(filter: ProductOptionFilter, sort: [ProductOptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductOptionConnection!
+  productOptions(filter: ProductOptionFilter, sort: [ProductOptionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ProductOptionConnection!
 
   """One option of the caller's tenant, or null when there is none."""
   productOption(id: ID!): ProductOption
@@ -2088,7 +2088,7 @@ type Query {
   productOptionCount: Int
 
   """The settings of the caller's tenant."""
-  productVariantSettings(filter: ProductVariantSettingFilter, sort: [ProductVariantSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductVariantSettingConnection!
+  productVariantSettings(filter: ProductVariantSettingFilter, sort: [ProductVariantSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantSettingConnection!
 
   """One setting, or null when there is none."""
   productVariantSetting(id: ID!): ProductVariantSetting
@@ -2114,7 +2114,7 @@ type Query {
   productTypeCount: Int
 
   """The prices of the caller's tenant."""
-  productVariantPrices(filter: ProductVariantPriceFilter, sort: [ProductVariantPriceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ProductVariantPriceConnection!
+  productVariantPrices(filter: ProductVariantPriceFilter, sort: [ProductVariantPriceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantPriceConnection!
 
   """One price of the caller's tenant, or null when there is none."""
   productVariantPrice(id: ID!): ProductVariantPrice
@@ -2357,7 +2357,7 @@ type Query {
   between, with the identifier as the last key so the order is total and a cursor walk over it is
   stable.
   """
-  tenantRoles(filter: RoleFilter, sort: [RoleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): RoleConnection!
+  tenantRoles(filter: RoleFilter, sort: [RoleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): RoleConnection!
 
   """
   The role the delivered options look-up answers, or null when this tenant has none.
@@ -2439,7 +2439,7 @@ type Query {
   globalStats: GlobalStats!
 
   """The tag types of the caller's tenant."""
-  tagTypes(filter: TagTypeFilter, sort: [TagTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TagTypeConnection!
+  tagTypes(filter: TagTypeFilter, sort: [TagTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TagTypeConnection!
 
   """One tag type of the caller's tenant, or null when there is none."""
   tagType(id: ID!): TagType
@@ -2563,7 +2563,7 @@ type Query {
   The estimates the caller's tenant holds. One task's estimates are this connection with `taskId` in
   `filter`.
   """
-  taskEstimations(filter: TaskEstimationFilter, sort: [TaskEstimationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TaskEstimationConnection!
+  taskEstimations(filter: TaskEstimationFilter, sort: [TaskEstimationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TaskEstimationConnection!
 
   """One estimate, or null when there is none."""
   taskEstimation(id: ID!): TaskEstimation
@@ -2575,7 +2575,7 @@ type Query {
   The links between tasks the caller's tenant holds. One task's links are this connection with
   `taskFromId` or `taskToId` in `filter`.
   """
-  taskLinkedIssues(filter: TaskLinkedIssueFilter, sort: [TaskLinkedIssueSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TaskLinkedIssueConnection!
+  taskLinkedIssues(filter: TaskLinkedIssueFilter, sort: [TaskLinkedIssueSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TaskLinkedIssueConnection!
 
   """One link, or null when there is none."""
   taskLinkedIssue(id: ID!): TaskLinkedIssue
@@ -2622,7 +2622,7 @@ type Query {
   dailyPlanCount: Int
 
   """The tasks that are being screened before they become work."""
-  screeningTasks(filter: ScreeningTaskFilter, sort: [ScreeningTaskSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ScreeningTaskConnection!
+  screeningTasks(filter: ScreeningTaskFilter, sort: [ScreeningTaskSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ScreeningTaskConnection!
 
   """One screening decision, or null when there is none."""
   screeningTask(id: ID!): ScreeningTask
@@ -2712,7 +2712,7 @@ type Query {
   """
   The setting rows of the caller's tenant and organization, tenant-wide rows included.
   """
-  tenantSettings(filter: TenantSettingFilter, sort: [TenantSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TenantSettingConnection!
+  tenantSettings(filter: TenantSettingFilter, sort: [TenantSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TenantSettingConnection!
 
   """One setting row of the caller's tenant, or null when there is none."""
   tenantSetting(id: ID!): TenantSetting
@@ -2813,7 +2813,7 @@ type Query {
   When the caller states no sort, the order is the platform's own — newest first, then the identifier,
   because the delivered read states no order of its own and a cursor walk needs a total one.
   """
-  timeOffPolicies(filter: TimeOffPolicyFilter, sort: [TimeOffPolicySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TimeOffPolicyConnection!
+  timeOffPolicies(filter: TimeOffPolicyFilter, sort: [TimeOffPolicySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TimeOffPolicyConnection!
 
   """
   One policy of the caller's tenant, or null when there is none.

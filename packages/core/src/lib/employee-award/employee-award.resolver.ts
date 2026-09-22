@@ -131,7 +131,8 @@ export class EmployeeAwardResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<EmployeeAward>> {
 		// The delivered list route binds its query string to the shared query DTO and hands the service
 		// `{ where: params.where }` — the route's own narrowing and nothing else. This surface has no
@@ -140,6 +141,7 @@ export class EmployeeAwardResolver {
 		// `where` and no `relations`. The tenant is applied to the criterion by the service, from the
 		// credential rather than from the caller.
 		const { items }: IPagination<EmployeeAward> = await this.employeeAwardService.findAll({
+			...(withDeleted ? { withDeleted: true } : {}),
 			where: undefined
 		});
 

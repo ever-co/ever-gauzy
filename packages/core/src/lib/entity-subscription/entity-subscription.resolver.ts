@@ -145,7 +145,8 @@ export class EntitySubscriptionResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<EntitySubscription>> {
 		// The reader takes the query DTO the list route binds its query string to. This surface has no
 		// query string to bind: the connection protocol states the same narrowing in `filter`, which is
@@ -153,7 +154,7 @@ export class EntitySubscriptionResolver {
 		// route's criterion when its caller states none, and no joined collection. The tenant is applied
 		// to that criterion by the service, from the credential rather than from the caller.
 		const { items }: IPagination<EntitySubscription> = await this._entitySubscriptionService.findAll(
-			{} as BaseQueryDTO<EntitySubscription>
+			{ ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<EntitySubscription>
 		);
 
 		return buildConnection<EntitySubscription>({

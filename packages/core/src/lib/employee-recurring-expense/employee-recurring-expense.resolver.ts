@@ -220,14 +220,22 @@ export class EmployeeRecurringExpenseResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<EmployeeRecurringExpense>> {
 		// The reader takes the same service method the list route calls, with the criterion that route
 		// binds from its query string: the delivered clients state the organization they are working in
 		// and the relations to load, and this surface states the credential's own organization and no
 		// relation — the row type below declares none, so there is nothing for one to load.
-		const { items }: IPagination<EmployeeRecurringExpense> =
-			await this.employeeRecurringExpenseService.findAll(this.scopedQuery());
+		//
+		// The visibility is spread *beside* `scopedQuery()` rather than into it: that reader answers the
+		// organization the caller is working in, which is a criterion, while this is the soft-delete flag the
+		// route's `withDeleted` query parameter carries — two different things that happen to travel to the same
+		// read.
+		const { items }: IPagination<EmployeeRecurringExpense> = await this.employeeRecurringExpenseService.findAll({
+			...this.scopedQuery(),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 
 		return buildConnection<EmployeeRecurringExpense>({
 			rows: items ?? [],

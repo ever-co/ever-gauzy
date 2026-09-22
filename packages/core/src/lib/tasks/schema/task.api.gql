@@ -216,6 +216,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): TaskEstimationConnection!
 
 	"""
@@ -242,6 +243,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): TaskLinkedIssueConnection!
 
 	"""
@@ -382,6 +384,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): ScreeningTaskConnection!
 
 	"""

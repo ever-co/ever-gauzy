@@ -120,9 +120,11 @@ export class GoalGeneralSettingResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<GoalGeneralSetting>> {
 		const { items }: IPagination<GoalGeneralSetting> = await this.goalGeneralSettingService.findAll({
+			...(withDeleted ? { withDeleted: true } : {}),
 			where: {}
 		} as never);
 

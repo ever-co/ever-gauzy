@@ -168,9 +168,10 @@ export class InvoiceItemResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<InvoiceItem>> {
-		const { items }: IPagination<InvoiceItem> = await this.invoiceItemService.findAll({ relations: [] });
+		const { items }: IPagination<InvoiceItem> = await this.invoiceItemService.findAll({ relations: [], ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<InvoiceItem>({
 			rows: items ?? [],

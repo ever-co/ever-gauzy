@@ -50,6 +50,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): OrganizationDepartmentConnection!
 
 	"""

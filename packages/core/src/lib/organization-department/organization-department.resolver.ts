@@ -148,7 +148,8 @@ export class OrganizationDepartmentResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationDepartment>> {
 		// The delivered list route binds `findInput`, `relations` and `order` out of its `data` query
 		// parameter and hands the three to the service. This surface has no query string to bind, so the
@@ -157,6 +158,7 @@ export class OrganizationDepartmentResolver {
 		// the service returns. The tenant is applied to the criterion by the service, from the credential
 		// rather than from the caller.
 		const { items }: IPagination<OrganizationDepartment> = await this.organizationDepartmentService.findAll({
+			...(withDeleted ? { withDeleted: true } : {}),
 			where: undefined,
 			order: undefined,
 			relations: undefined
