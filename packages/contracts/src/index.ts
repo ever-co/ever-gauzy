@@ -36,6 +36,7 @@ export * from './lib/common.model';
 export * from './lib/contact.model';
 export * from './lib/core.model';
 export * from './lib/country.model';
+export * from './lib/eea-uk-region.util';
 export * from './lib/currency.model';
 export * from './lib/custom-smtp.model';
 export * from './lib/daily-plan.model';

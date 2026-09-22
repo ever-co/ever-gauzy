@@ -1082,6 +1082,17 @@
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #agentBody [hidden]="agentBody?.state === 'collapsed'">
 						<div class="fields time-tracker">
+							@if (isEEAOrUK) {
+								<div class="alert alert-info border border-info rounded p-3 mb-3 d-flex align-items-start">
+									<nb-icon icon="info-outline" status="info" class="mr-2 mt-1"></nb-icon>
+									<div>
+										<strong>{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.EEA_UK_COMPLIANCE_NOTICE_TITLE' | translate }}</strong>
+										<p class="mb-0 text-muted small">
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.EEA_UK_COMPLIANCE_NOTICE_BODY' | translate }}
+										</p>
+									</div>
+								</div>
+							}
 							<div class="row">
 								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">

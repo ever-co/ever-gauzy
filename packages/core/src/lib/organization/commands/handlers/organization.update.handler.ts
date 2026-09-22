@@ -1,12 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ID, IOrganization, IOrganizationUpdateInput } from '@gauzy/contracts';
+import { ID, IOrganization, IOrganizationUpdateInput, isEEAOrUKRegion } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
 export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUpdateCommand> {
+	private readonly logger = new Logger(OrganizationUpdateHandler.name);
+
 	constructor(private readonly organizationService: OrganizationService) {}
 
 	/**
@@ -28,10 +30,41 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	 * @returns The updated organization.
 	 */
 	private async update(id: ID, input: IOrganizationUpdateInput): Promise<IOrganization> {
-		const organization: IOrganization = await this.organizationService.findOneByIdString(id);
+		const organization: IOrganization = await this.organizationService.findOneByIdString(id, {
+			relations: { contact: true }
+		});
 
 		if (!organization) {
 			throw new NotFoundException(`Organization with ID ${id} not found.`);
+		}
+
+		// Check if attempting to set allowAgentAppExit or allowLogoutFromAgentApp to false
+		const isRestrictingExit = input.allowAgentAppExit === false;
+		const isRestrictingLogout = input.allowLogoutFromAgentApp === false;
+
+		if (isRestrictingExit || isRestrictingLogout) {
+			const isEEAOrUK = isEEAOrUKRegion({
+				regionCode: input.regionCode || organization.regionCode,
+				timeZone: input.timeZone || organization.timeZone,
+				country: organization.contact?.country
+			});
+
+			if (isEEAOrUK) {
+				throw new BadRequestException(
+					'In accordance with EEA/UK privacy regulations (GDPR / ECHR Art 8), desktop agent exit and logout restrictions cannot be enabled for workers in EEA/UK tenants.'
+				);
+			}
+
+			if (!input.acknowledgeAgentExitLogoutRestriction) {
+				throw new BadRequestException(
+					'An explicit recorded acknowledgement of legal and proportionality risks is required before restricting agent app exit or logout.'
+				);
+			}
+
+			const currentUserId = RequestContext.currentUserId();
+			this.logger.log(
+				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Organization ID: ${id} at ${new Date().toISOString()}`
+			);
 		}
 
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;

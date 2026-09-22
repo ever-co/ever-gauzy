@@ -46,7 +46,8 @@ import {
 	IOrganization,
 	RegionsEnum,
 	WeekDaysEnum,
-	IOrganizationTaskSetting
+	IOrganizationTaskSetting,
+	isEEAOrUKRegion
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import {
@@ -73,6 +74,17 @@ export class EditOrganizationOtherSettingsComponent
 	public get isTrackInactivity(): boolean {
 		return this.form.get('allowTrackInactivity').value;
 	}
+
+	public get isEEAOrUK(): boolean {
+		if (!this.organization) return false;
+		return isEEAOrUKRegion({
+			regionCode: this.form.get('regionCode')?.value || this.organization.regionCode,
+			timeZone: this.form.get('timeZone')?.value || this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
+	}
+
+	public acknowledgeAgentExitLogoutRestriction: boolean = false;
 
 	public organization: IOrganization;
 	public organizationTaskSetting: IOrganizationTaskSetting;
@@ -448,6 +460,42 @@ export class EditOrganizationOtherSettingsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		const allowAgentAppExitControl = <FormControl>this.form.get('allowAgentAppExit');
+		allowAgentAppExitControl.valueChanges
+			.pipe(
+				tap((canExit: boolean) => {
+					if (canExit === false && !this.isEEAOrUK) {
+						this.handleAgentRestrictionAcknowledgement('allowAgentAppExit');
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const allowLogoutFromAgentAppControl = <FormControl>this.form.get('allowLogoutFromAgentApp');
+		allowLogoutFromAgentAppControl.valueChanges
+			.pipe(
+				tap((canLogout: boolean) => {
+					if (canLogout === false && !this.isEEAOrUK) {
+						this.handleAgentRestrictionAcknowledgement('allowLogoutFromAgentApp');
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private handleAgentRestrictionAcknowledgement(field: 'allowAgentAppExit' | 'allowLogoutFromAgentApp'): void {
+		const title = this.translateService.instant('ORGANIZATIONS_PAGE.EDIT.SETTINGS.RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE');
+		const body = this.translateService.instant('ORGANIZATIONS_PAGE.EDIT.SETTINGS.RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY');
+
+		const confirmed = window.confirm(`${title}\n\n${body}`);
+		if (confirmed) {
+			this.acknowledgeAgentExitLogoutRestriction = true;
+		} else {
+			this.form.get(field)?.setValue(true, { emitEvent: false });
+		}
 	}
 
 	/**
@@ -503,7 +551,10 @@ export class EditOrganizationOtherSettingsComponent
 		const { id: organizationId, name } = this.organization;
 
 		try {
-			const organization: IOrganization = await this._organizationService.update(organizationId, this.form.value);
+			const organization: IOrganization = await this._organizationService.update(organizationId, {
+				...this.form.value,
+				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
+			});
 
 			// Update the organization in the store
 			this._organizationEditStore.organizationAction = {
@@ -833,6 +884,17 @@ export class EditOrganizationOtherSettingsComponent
 			fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
 			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
 		});
+
+		if (this.isEEAOrUK) {
+			this.form.get('allowAgentAppExit')?.setValue(true, { emitEvent: false });
+			this.form.get('allowAgentAppExit')?.disable({ emitEvent: false });
+			this.form.get('allowLogoutFromAgentApp')?.setValue(true, { emitEvent: false });
+			this.form.get('allowLogoutFromAgentApp')?.disable({ emitEvent: false });
+		} else {
+			this.form.get('allowAgentAppExit')?.enable({ emitEvent: false });
+			this.form.get('allowLogoutFromAgentApp')?.enable({ emitEvent: false });
+		}
+
 		this.form.updateValueAndValidity();
 
 		const {

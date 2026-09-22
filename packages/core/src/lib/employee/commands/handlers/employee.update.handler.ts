@@ -1,5 +1,5 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { IEmployee, PermissionsEnum } from '@gauzy/contracts';
+import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { IEmployee, isEEAOrUKRegion, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
@@ -7,6 +7,8 @@ import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
+	private readonly logger = new Logger(EmployeeUpdateHandler.name);
+
 	constructor(private readonly _employeeService: EmployeeService) {}
 
 	/**
@@ -34,6 +36,39 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			}
 		}
 
+		// Check if attempting to set allowAgentAppExit or allowLogoutFromAgentApp to false
+		const isRestrictingExit = input.allowAgentAppExit === false;
+		const isRestrictingLogout = input.allowLogoutFromAgentApp === false;
+
+		if (isRestrictingExit || isRestrictingLogout) {
+			const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
+				relations: { organization: { contact: true }, user: true, contact: true }
+			});
+
+			const isEEAOrUK = isEEAOrUKRegion({
+				regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
+				timeZone: employee?.user?.timeZone || employee?.organization?.timeZone,
+				country: employee?.contact?.country || employee?.organization?.contact?.country
+			});
+
+			if (isEEAOrUK) {
+				throw new BadRequestException(
+					'In accordance with EEA/UK privacy regulations (GDPR / ECHR Art 8), desktop agent exit and logout restrictions cannot be enabled for workers in EEA/UK tenants.'
+				);
+			}
+
+			if (!input.acknowledgeAgentExitLogoutRestriction) {
+				throw new BadRequestException(
+					'An explicit recorded acknowledgement of legal and proportionality risks is required before restricting agent app exit or logout.'
+				);
+			}
+
+			const currentUserId = RequestContext.currentUserId();
+			this.logger.log(
+				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Employee ID: ${id} at ${new Date().toISOString()}`
+			);
+		}
+
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
 			return await this._employeeService.create({
@@ -44,6 +79,9 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			});
 		} catch (error) {
 			// Handle any errors during the update process
+			if (error instanceof BadRequestException || error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
 		}
 	}

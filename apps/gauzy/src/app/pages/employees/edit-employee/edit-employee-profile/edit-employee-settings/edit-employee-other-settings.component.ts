@@ -8,13 +8,14 @@ import {
 	ViewChild,
 	ViewChildren
 } from '@angular/core';
-import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, NgForm } from '@angular/forms';
 import { filter, tap } from 'rxjs';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
-import { IEmployee } from '@gauzy/contracts';
+import { IEmployee, isEEAOrUKRegion } from '@gauzy/contracts';
 import { EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,6 +28,17 @@ import { EmployeeStore } from '@gauzy/ui-core/core';
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	selectedEmployee: IEmployee;
+	public acknowledgeAgentExitLogoutRestriction: boolean = false;
+
+	public get isEEAOrUK(): boolean {
+		if (!this.selectedEmployee) return false;
+		return isEEAOrUKRegion({
+			regionCode: this.selectedEmployee.organization?.regionCode || this.selectedEmployee.contact?.regionCode,
+			timeZone: this.selectedEmployee.user?.timeZone || this.selectedEmployee.organization?.timeZone,
+			country: this.selectedEmployee.contact?.country || this.selectedEmployee.organization?.contact?.country
+		});
+	}
+
 	/**
 	 * Nebular Accordion Main Component
 	 */
@@ -54,15 +66,6 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	/**
 	 * Reveal a settings section from the rail.
 	 *
-	 * The rail used to call `toggle()` on the accordion item and stop there, which
-	 * had two consequences. Clicking the section you were already reading closed it
-	 * — leaving the rail with nothing marked active while its fields were still the
-	 * ones on screen — and, because the sections are one scrolling column, opening
-	 * anything below the fold moved nothing into view, so the lower entries looked
-	 * inert. This is an index into the page, so it opens rather than toggles, and
-	 * brings the section it opened with it. Same behaviour as the organization
-	 * settings rail (`edit-organization-other-settings.component.ts`).
-	 *
 	 * @param item the accordion section the rail entry points at
 	 */
 	openSection(item: NbAccordionItemComponent): void {
@@ -72,8 +75,6 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		if (!item.expanded) {
 			item.open();
 		}
-		// The two `ViewChildren` queries walk the same template in the same order, so
-		// an item's position in one is its element's position in the other.
 		const index = this.accordionItems?.toArray().indexOf(item) ?? -1;
 		if (index < 0) {
 			return;
@@ -110,7 +111,8 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
 		private readonly fb: FormBuilder,
-		private readonly employeeStore: EmployeeStore
+		private readonly employeeStore: EmployeeStore,
+		private readonly translateService: TranslateService
 	) {}
 
 	/**
@@ -127,6 +129,42 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		const allowAgentAppExitControl = <FormControl>this.form.get('allowAgentAppExit');
+		allowAgentAppExitControl.valueChanges
+			.pipe(
+				tap((canExit: boolean) => {
+					if (canExit === false && !this.isEEAOrUK) {
+						this.handleAgentRestrictionAcknowledgement('allowAgentAppExit');
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const allowLogoutFromAgentAppControl = <FormControl>this.form.get('allowLogoutFromAgentApp');
+		allowLogoutFromAgentAppControl.valueChanges
+			.pipe(
+				tap((canLogout: boolean) => {
+					if (canLogout === false && !this.isEEAOrUK) {
+						this.handleAgentRestrictionAcknowledgement('allowLogoutFromAgentApp');
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	private handleAgentRestrictionAcknowledgement(field: 'allowAgentAppExit' | 'allowLogoutFromAgentApp'): void {
+		const title = this.translateService.instant('ORGANIZATIONS_PAGE.EDIT.SETTINGS.RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE');
+		const body = this.translateService.instant('ORGANIZATIONS_PAGE.EDIT.SETTINGS.RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY');
+
+		const confirmed = window.confirm(`${title}\n\n${body}`);
+		if (confirmed) {
+			this.acknowledgeAgentExitLogoutRestriction = true;
+		} else {
+			this.form.get(field)?.setValue(true, { emitEvent: false });
+		}
 	}
 
 	/**
@@ -165,6 +203,17 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
 			trackAllDisplays: trackAllDisplays ?? true
 		});
+
+		if (this.isEEAOrUK) {
+			this.form.get('allowAgentAppExit')?.setValue(true, { emitEvent: false });
+			this.form.get('allowAgentAppExit')?.disable({ emitEvent: false });
+			this.form.get('allowLogoutFromAgentApp')?.setValue(true, { emitEvent: false });
+			this.form.get('allowLogoutFromAgentApp')?.disable({ emitEvent: false });
+		} else {
+			this.form.get('allowAgentAppExit')?.enable({ emitEvent: false });
+			this.form.get('allowLogoutFromAgentApp')?.enable({ emitEvent: false });
+		}
+
 		this.form.updateValueAndValidity();
 	}
 
@@ -206,7 +255,8 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowAgentAppExit,
 			allowLogoutFromAgentApp,
 			trackKeyboardMouseActivity,
-			trackAllDisplays
+			trackAllDisplays,
+			acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
 		});
 	}
 

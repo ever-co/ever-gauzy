@@ -13,6 +13,14 @@
 								<span class="current-session">{{ (counter$ | async)?.current }}</span>
 								<span class="today-time">Today {{ (counter$ | async)?.today }}</span>
 							</div>
+							<div
+								class="monitoring-badge"
+								[class.active]="running"
+								[nbTooltip]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
+								nbTooltipPlacement="bottom"
+							>
+								<span class="pulse-dot" [class.recording]="running"></span>
+							</div>
 							<div class="status" [class.offline]="isOffline$ | async"></div>
 							<button
 								nbButton
@@ -71,7 +79,13 @@
 					{{ (counter$ | async)?.today }}
 				</div>
 			</div>
-			<div class="status" [class.offline]="isOffline$ | async"></div>
+			<div
+				class="status"
+				[class.offline]="isOffline$ | async"
+				[class.recording]="running"
+				[nbTooltip]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
+				nbTooltipPlacement="bottom"
+			></div>
 		</div>
 		}
 	</nb-layout-column>

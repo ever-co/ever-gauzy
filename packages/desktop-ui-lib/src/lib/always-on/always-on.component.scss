@@ -91,6 +91,48 @@ button {
 	&.offline {
 		background: var(--color-danger-default);
 	}
+
+	&.recording {
+		background: #ff3b30;
+		box-shadow: 0 0 6px #ff3b30;
+		animation: pulse-ring 1.5s infinite;
+	}
+}
+
+.monitoring-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 4px;
+	cursor: pointer;
+
+	.pulse-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: #8e8e93;
+
+		&.recording {
+			background-color: #ff3b30;
+			box-shadow: 0 0 6px #ff3b30;
+			animation: pulse-ring 1.5s infinite;
+		}
+	}
+}
+
+@keyframes pulse-ring {
+	0% {
+		transform: scale(0.95);
+		opacity: 0.8;
+	}
+	50% {
+		transform: scale(1.15);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(0.95);
+		opacity: 0.8;
+	}
 }
 
 .main {

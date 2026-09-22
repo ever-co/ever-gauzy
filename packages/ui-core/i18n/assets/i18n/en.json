@@ -2921,6 +2921,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Allow employee to exit from the Agent application. When disabled, the exit option will be blocked in the Agent app.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Allow Logout from Agent App",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Allow employee to logout from the Agent application. When disabled, the logout option will be blocked in the Agent app.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "EEA / UK Compliance Protection Active",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Under EEA and UK privacy regulations (GDPR / ECHR Art 8), workers must always be permitted to exit and log out of the desktop agent to prevent non-interruptible continuous capture.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Legal & Compliance Risk Acknowledgement",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Restricting desktop agent exit or logout enables continuous, non-interruptible worker capture. As an administrator, you must explicitly acknowledge and accept full legal and regulatory responsibility for restricting worker exit or logout options.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Track Keyboard & Mouse Activity",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Enable full keyboard and mouse activity tracking, including keystrokes and exact mouse movements in all desktop apps and agent.",
 				"TRACK_ALL_DISPLAYS": "Track All Displays",
@@ -5001,6 +5005,8 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoring Active: Capturing time and activity",
+		"MONITORING_IDLE": "Agent Idle",
 		"IS_BILLABLE": "Is Billable",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",

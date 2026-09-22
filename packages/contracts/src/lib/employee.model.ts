@@ -120,6 +120,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
+	acknowledgeAgentExitLogoutRestriction?: boolean;
 	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
@@ -192,6 +193,7 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
+	acknowledgeAgentExitLogoutRestriction?: boolean;
 	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
