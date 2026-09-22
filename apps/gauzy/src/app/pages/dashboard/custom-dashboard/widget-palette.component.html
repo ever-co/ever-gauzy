@@ -1,0 +1,100 @@
+<aside class="widget-palette" [attr.aria-label]="'DASHBOARD_PAGE.BUILDER.PALETTE.TITLE' | translate">
+	<header class="palette-header">
+		<h5 class="palette-header__title">{{ 'DASHBOARD_PAGE.BUILDER.PALETTE.TITLE' | translate }}</h5>
+		<p class="palette-header__hint">{{ 'DASHBOARD_PAGE.BUILDER.PALETTE.HINT' | translate }}</p>
+	</header>
+
+	<div class="palette-search">
+		<input
+			#searchInput
+			nbInput
+			fullWidth
+			fieldSize="small"
+			type="text"
+			autocomplete="off"
+			[placeholder]="'DASHBOARD_PAGE.BUILDER.PALETTE.SEARCH_PLACEHOLDER' | translate"
+			[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.PALETTE.SEARCH_PLACEHOLDER' | translate"
+			(input)="onSearch($event)"
+		/>
+		@if (term) {
+			<button
+				type="button"
+				class="palette-search__clear"
+				[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.PALETTE.CLEAR_SEARCH' | translate"
+				(click)="clearSearch(searchInput)"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		}
+	</div>
+
+	<div
+		class="palette-list"
+		cdkDropList
+		cdkDropListSortingDisabled
+		[id]="dropListId"
+		[cdkDropListConnectedTo]="connectedTo"
+		[cdkDropListEnterPredicate]="rejectDrops"
+	>
+		@for (group of groups(); track group.category) {
+			<section class="palette-group">
+				<button
+					type="button"
+					class="palette-group__header"
+					[attr.aria-expanded]="isExpanded(group.category)"
+					(click)="toggleCategory(group.category)"
+				>
+					<nb-icon
+						class="palette-group__chevron"
+						[icon]="isExpanded(group.category) ? 'chevron-down-outline' : 'chevron-right-outline'"
+					></nb-icon>
+					<span class="palette-group__label">{{ group.labelKey | translate }}</span>
+					<span class="palette-group__count">{{ group.items.length }}</span>
+				</button>
+
+				@if (isExpanded(group.category)) {
+					@for (item of group.items; track item.widgetId) {
+						<button
+							type="button"
+							class="palette-item"
+							cdkDrag
+							[cdkDragData]="{ widgetId: item.widgetId }"
+							[attr.aria-label]="
+								'DASHBOARD_PAGE.BUILDER.PALETTE.ADD_WIDGET' | translate: { name: item.title }
+							"
+							[nbTooltip]="'DASHBOARD_PAGE.BUILDER.PALETTE.ADD_WIDGET' | translate: { name: item.title }"
+							(cdkDragStarted)="onDragStarted()"
+							(cdkDragEnded)="onDragEnded()"
+							(click)="onPick(item.widgetId)"
+						>
+							<nb-icon class="palette-item__icon" [icon]="item.icon"></nb-icon>
+							<span class="palette-item__text">
+								<span class="palette-item__title">{{ item.title }}</span>
+								@if (item.description) {
+									<span class="palette-item__description">{{ item.description }}</span>
+								}
+							</span>
+							<nb-icon class="palette-item__add" icon="plus-outline"></nb-icon>
+
+							<!-- Compact drag preview instead of a clone of the whole row -->
+							<div class="palette-drag-preview" *cdkDragPreview>
+								<nb-icon [icon]="item.icon"></nb-icon>
+								<span>{{ item.title }}</span>
+							</div>
+						</button>
+					}
+				}
+			</section>
+		}
+
+		@if (!total()) {
+			<p class="palette-empty">
+				@if (term) {
+					{{ 'DASHBOARD_PAGE.BUILDER.PALETTE.NO_RESULTS' | translate: { term: term } }}
+				} @else {
+					{{ 'DASHBOARD_PAGE.BUILDER.PALETTE.NO_WIDGETS' | translate }}
+				}
+			</p>
+		}
+	</div>
+</aside>

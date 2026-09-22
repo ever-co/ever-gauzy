@@ -1,33 +1,18 @@
 @if (rowData?.members?.length > 0) {
-	<div class="container">
-		<div class="row header">
-			<div class="col">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.MEMBERS' | translate }}
-			</div>
+	<div class="members">
+		<div class="members-title">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.MEMBERS' | translate }}
 		</div>
-		<div class="row employee-row">
-			<!-- First Half of Employees -->
-			<div class="col employee-column">
-				@for (member of employeesFirstHalf; track trackByEmployeeId($index, member)) {
-					<ng-container [ngTemplateOutlet]="employee" [ngTemplateOutletContext]="{ member: member }">
-					</ng-container>
-				}
-			</div>
-			<!-- Second Half of Employees -->
-			<div class="col employee-column">
-				@for (member of employeesLastHalf; track trackByEmployeeId($index, member)) {
-					<ng-container [ngTemplateOutlet]="employee" [ngTemplateOutletContext]="{ member: member }">
-					</ng-container>
-				}
-			</div>
-		</div>
+		<!--
+			Same people treatment as the grid columns, only allowed to wrap and to
+			name more people, because a card has the room a table cell does not.
+		-->
+		<ngx-people-list
+			[people]="rowData.members"
+			[maxNames]="6"
+			[maxAvatars]="6"
+			[wrap]="true"
+			(selectPerson)="edit($event)"
+		></ngx-people-list>
 	</div>
 }
-
-<!-- Reusable Employee Template -->
-<ng-template #employee let-member="member">
-	<a class="avatar" (click)="edit(member?.employee?.id)">
-		<img class="img" [src]="member?.employee?.user?.imageUrl" [alt]="member?.employee?.fullName" />
-		<span class="ml-1">{{ member?.employee?.fullName }}</span>
-	</a>
-</ng-template>

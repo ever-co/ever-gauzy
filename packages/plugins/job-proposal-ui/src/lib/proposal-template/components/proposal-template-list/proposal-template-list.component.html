@@ -18,7 +18,7 @@
 				[isDisable]="!selectedItem && disableButton"
 			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
+		<nb-tabset (changeTab)="onTabChange($event)">
 			<nb-tab [tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate" [tabId]="proposalTemplateTabsEnum.ACTIONS">
 				@if ((nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS) {
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
@@ -40,11 +40,11 @@
 			<button
 				nbButton
 				status="basic"
+				(click)="viewProposalTemplate()"
 				[disabled]="!selectedItem && disableButton"
 				class="mr-2"
 				class="action secondary"
 				size="small"
-				underConstruction
 			>
 				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
 				{{ 'BUTTONS.VIEW' | translate }}
@@ -118,6 +118,7 @@
 	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
 		<div class="table-scroll-container">
 			<angular2-smart-table
+				[class.ga-table-loading]="loading"
 				style="cursor: pointer"
 				[settings]="smartTableSettings"
 				[source]="smartTableSource"
@@ -131,3 +132,16 @@
 		</div>
 	</ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each entry that is opened. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTemplate"
+	heading="PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE"
+	[subtitle]="viewedTemplate?.name"
+	(closed)="closeView()"
+>
+	@if (viewedTemplate) {
+		<ngx-record-view [record]="viewedTemplate" [sections]="viewSections"></ngx-record-view>
+	}
+</ngx-record-view-drawer>

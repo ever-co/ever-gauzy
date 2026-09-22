@@ -12,6 +12,7 @@ import { LoggerService, NavMenuBuilderService, PageRouteRegistryService } from '
 import {
 	DynamicTabsModule,
 	NebularModule,
+	RecordViewModule,
 	SharedModule,
 	SmartDataViewLayoutModule,
 	TableComponentsModule
@@ -31,6 +32,7 @@ import { JobSearchStoreService } from './providers/job-search-store.service';
 		SmartDataViewLayoutModule,
 		DynamicTabsModule,
 		TableComponentsModule,
+		RecordViewModule,
 		JobSearchStatusEditorComponent
 	]
 })

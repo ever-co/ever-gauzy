@@ -4,7 +4,15 @@
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
-				<span> {{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }} </span> | <span> {{ pipeline?.name }} </span>
+				<!--
+					Routed through `ngx-header-title` like every other page: that is
+					what renders the breadcrumb trail under the heading, and this was
+					the only page in Pipelines still building its title by hand, so it
+					was the only one with no trail at all.
+				-->
+				<ngx-header-title [allowEmployee]="false">
+					<span> {{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }} </span> | <span> {{ pipeline?.name }} </span>
+				</ngx-header-title>
 			</h4>
 		</div>
 		<div class="gauzy-button-container">
@@ -48,6 +56,7 @@
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
 		<angular2-smart-table
+			[class.ga-table-loading]="loading"
 			#pipelineDealsTable
 			(userRowSelect)="selectPipelineDeals($event)"
 			[settings]="smartTableSettings"
@@ -65,6 +74,7 @@
 <ng-template #gridLayout let-deals="deals">
 	<div class="grid">
 		<ga-card-grid
+			[loading]="loading"
 			(onSelectedItem)="selectPipelineDeals($event)"
 			(scroll)="loadMoreDeals()"
 			[settings]="smartTableSettings"

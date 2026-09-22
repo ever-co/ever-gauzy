@@ -1,0 +1,87 @@
+<nb-card class="widget-config-dialog">
+	<nb-card-header class="dialog-header">
+		<div class="dialog-heading">
+			<h6 class="dialog-title">{{ 'DASHBOARD_PAGE.BUILDER.CONFIG.TITLE' | translate }}</h6>
+			@if (widgetTitle) {
+				<span class="dialog-subtitle">{{ widgetTitle | translate }}</span>
+			}
+		</div>
+		<button
+			type="button"
+			nbButton
+			ghost
+			size="tiny"
+			class="dialog-close"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="close()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="custom-scroll">
+		<form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
+			<p class="dialog-hint">{{ 'DASHBOARD_PAGE.BUILDER.CONFIG.HINT' | translate }}</p>
+
+			@for (field of fields; track field.key) {
+				<div class="form-group">
+					@switch (field.type) {
+						@case ('boolean') {
+							<nb-toggle [formControlName]="field.key" labelPosition="right">
+								{{ field.label | translate }}
+							</nb-toggle>
+						}
+						@case ('select') {
+							<!-- `nb-select` renders its own button, so the visible text is
+							     tied to it with `aria-label` rather than `label[for]`. -->
+							<span class="label">{{ field.label | translate }}</span>
+							<nb-select
+								fullWidth
+								[formControlName]="field.key"
+								[attr.aria-label]="field.label | translate"
+								[placeholder]="'BUTTONS.SELECT' | translate"
+							>
+								@for (option of optionsOf(field); track $index) {
+									<nb-option [value]="option.value">{{ option.label | translate }}</nb-option>
+								}
+							</nb-select>
+						}
+						@case ('number') {
+							<label class="label" [attr.for]="'widget-config-' + field.key">
+								{{ field.label | translate }}
+							</label>
+							<input
+								nbInput
+								fullWidth
+								type="number"
+								[id]="'widget-config-' + field.key"
+								[formControlName]="field.key"
+							/>
+						}
+						@default {
+							<label class="label" [attr.for]="'widget-config-' + field.key">
+								{{ field.label | translate }}
+							</label>
+							<input
+								nbInput
+								fullWidth
+								type="text"
+								[id]="'widget-config-' + field.key"
+								[formControlName]="field.key"
+							/>
+						}
+					}
+				</div>
+			}
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="dialog-footer">
+		<button type="button" nbButton status="basic" (click)="close()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" nbButton status="success" (click)="submit()">
+			{{ 'BUTTONS.APPLY' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

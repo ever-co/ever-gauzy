@@ -12,22 +12,25 @@
   [searchFn]="searchEmployee"
   bindName="firstName"
   appendTo="body"
-  class="employee"
+  class="employee gauzy-entity-select"
+  [ngClass]="panelClass"
   >
   <ng-template ng-option-tmp let-item="item" let-index="index">
-    @if (item.imageUrl) {
-      <img [src]="item.imageUrl" width="20" height="20" />
+    @if (item.imageUrl && !item.imageUrl.includes('avatar-default')) {
+      <img [src]="item.imageUrl" width="20" height="20" alt="" />
+    } @else if (item.id) {
+      <nb-icon class="avatar-fallback" icon="person-outline"></nb-icon>
     }
-    {{ getShortenedName(item.firstName, item.lastName, 42) }}
+    <span [title]="getFullName(item)">{{ getShortenedName(item.firstName, item.lastName, 42) }}</span>
   </ng-template>
   <ng-template ng-label-tmp let-item="item">
-    <div class="selector-template">
-      @if (item.imageUrl) {
-        <img height="20" width="20" [src]="item.imageUrl" />
+    <div class="selector-template" [title]="getFullName(item)">
+      @if (item.imageUrl && !item.imageUrl.includes('avatar-default')) {
+        <img height="20" width="20" [src]="item.imageUrl" alt="" />
+      } @else if (item.id) {
+        <nb-icon class="avatar-fallback" icon="person-outline"></nb-icon>
       }
-      <span>
-        {{ getShortenedName(item.firstName, item.lastName) }}
-      </span>
+      <span>{{ getFullName(item) }}</span>
     </div>
   </ng-template>
 </ng-select>

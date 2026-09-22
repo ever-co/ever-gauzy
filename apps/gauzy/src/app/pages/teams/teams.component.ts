@@ -210,7 +210,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM', {
 					name: team.name
 				});
-				this.clearItem();
+				this.closeDialog();
 				this._refresh$.next(true);
 				this.teams$.next(true);
 			} catch (error) {
@@ -223,7 +223,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM', {
 					name: team.name
 				});
-				this.clearItem();
+				this.closeDialog();
 				this._refresh$.next(true);
 				this.teams$.next(true);
 			} catch (error) {
@@ -430,10 +430,17 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			// The four widths are a RATIO the library hands to the `<th>`s, so they
+			// have to add up to the table. Left unset, `table-layout: auto` sized
+			// every column off its widest cell, and the two people columns are the
+			// widest by construction — a named person plus an avatar stack — so
+			// they took better than a third of the row EACH and held most of it as
+			// empty space, while Name and Tags were squeezed into what was left.
 			columns: {
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
+					width: '20%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -445,6 +452,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				managers: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
 					type: 'custom',
+					width: '30%',
 					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
@@ -455,6 +463,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
+					width: '30%',
 					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
@@ -465,7 +474,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				notes: {
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
-					class: 'align-row',
+					width: '20%',
 					renderComponent: TagsOnlyComponent,
 					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -498,6 +507,10 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 
 	/*
 	 * Clear selected item
+	 *
+	 * NOTE: this runs on every `teams$` emission (grid refresh), so it must never touch the
+	 * add/edit dialog — closing it here destroyed the form the user was still filling in.
+	 * Use `closeDialog()` for the explicit save/cancel paths instead.
 	 */
 	clearItem() {
 		this.selected = {
@@ -506,7 +519,15 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		};
 		this.selectedTeam = null;
 		this.disableButton = true;
+	}
+
+	/*
+	 * Close the add/edit dialog and clear the selected item
+	 */
+	closeDialog() {
 		this.addEditDialogRef?.close();
+		this.addEditDialogRef = null;
+		this.clearItem();
 	}
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {

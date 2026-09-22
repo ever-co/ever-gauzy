@@ -1,0 +1,99 @@
+// `IsSecret` stores its flag via `Reflect.defineMetadata`, which the runtime only gains once
+// reflect-metadata is loaded. The application does that at bootstrap; an isolated spec must do it
+// itself, before importing the module under test.
+import 'reflect-metadata';
+import { IsSecret, WrapSecrets, maskSecret } from './is-secret';
+
+/**
+ * Returns true when any run of `length` consecutive characters from the middle of `secret`
+ * survives into `masked`. The old masking starred only the first and last N characters, so a
+ * plain `masked !== secret` assertion passed while half the credential was still readable.
+ */
+function leaksSubstringOf(secret: string, masked: string, length = 4): boolean {
+	for (let i = 0; i + length <= secret.length; i++) {
+		if (masked.includes(secret.slice(i, i + length))) {
+			return true;
+		}
+	}
+	return false;
+}
+
+describe('maskSecret', () => {
+	it('leaves no contiguous run of the original visible beyond the trailing hint', () => {
+		// Length-matched to a real GitHub token: the size at which the previous implementation
+		// returned roughly twenty consecutive cleartext characters (GHSA-3rqg-gpm9-gx84).
+		// Assembled at runtime because a literal shaped like a credential trips secret scanners.
+		const secret = ['gho', '_', 'x'.repeat(32), 'TAIL'].join('');
+		const masked = maskSecret(secret);
+
+		expect(masked).not.toBe(secret);
+		expect(masked.slice(0, -4)).toBe('*'.repeat(secret.length - 4));
+		expect(leaksSubstringOf(secret.slice(0, -4), masked)).toBe(false);
+	});
+
+	it('keeps only the last four characters as a hint', () => {
+		expect(maskSecret('secret-value-TAIL')).toBe('*'.repeat(13) + 'TAIL');
+	});
+
+	it('fully masks short secrets rather than exposing most of them', () => {
+		// A fixed four-character hint is a percentage of the value, and on short credentials that
+		// percentage is most of the secret: an eight-character SMTP password would be half visible.
+		for (const secret of ['x', 'TAIL', 'abcde', 'passwd', 'password', 'passwords11']) {
+			expect(maskSecret(secret)).toBe('*'.repeat(secret.length));
+		}
+	});
+
+	it('starts revealing the hint only once the secret is long enough for it to be a small part', () => {
+		expect(maskSecret('passwordTAIL')).toBe('*'.repeat(8) + 'TAIL'); // 12 chars: hint is a third
+	});
+
+	it('masks the real tail rather than an earlier identical run', () => {
+		// The previous implementation used non-global String.replace, so a suffix that also occurred
+		// earlier in the value was masked instead of the actual tail, leaving the tail readable.
+		const secret = 'HEADfillerHEAD';
+		expect(maskSecret(secret)).toBe('*'.repeat(10) + 'HEAD');
+	});
+
+	it('handles empty and nullish values without throwing', () => {
+		expect(maskSecret('')).toBe('');
+		expect(maskSecret(null)).toBe('');
+		expect(maskSecret(undefined)).toBe('');
+	});
+
+	it('honours a custom masking character', () => {
+		expect(maskSecret('password-TAIL', '#')).toBe('#'.repeat(9) + 'TAIL');
+	});
+});
+
+describe('WrapSecrets', () => {
+	class Credentials {
+		accessToken?: string;
+		refreshToken?: string;
+		region?: string;
+	}
+	IsSecret()(Credentials.prototype, 'accessToken');
+	IsSecret()(Credentials.prototype, 'refreshToken');
+
+	it('masks every property marked with @IsSecret', () => {
+		const accessToken = ['gho', '_', 'x'.repeat(32), 'TAIL'].join('');
+		const refreshToken = ['rt', '-', 'y'.repeat(28), 'TAIL'].join('');
+
+		const wrapped = WrapSecrets({ accessToken, refreshToken, region: 'us2' }, new Credentials());
+
+		expect(wrapped.accessToken).not.toBe(accessToken);
+		expect(wrapped.refreshToken).not.toBe(refreshToken);
+		expect(leaksSubstringOf(accessToken.slice(0, -4), wrapped.accessToken)).toBe(false);
+		expect(leaksSubstringOf(refreshToken.slice(0, -4), wrapped.refreshToken)).toBe(false);
+	});
+
+	it('leaves properties without @IsSecret untouched', () => {
+		const wrapped = WrapSecrets({ accessToken: 'token-value-TAIL', region: 'us2' }, new Credentials());
+		expect(wrapped.region).toBe('us2');
+	});
+
+	it('ignores empty values', () => {
+		const wrapped = WrapSecrets({ accessToken: '', refreshToken: null }, new Credentials());
+		expect(wrapped.accessToken).toBe('');
+		expect(wrapped.refreshToken).toBeNull();
+	});
+});

@@ -15,6 +15,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 })
 export class NgxAuthComponent extends NbAuthComponent implements OnInit {
 	public isRegister: boolean = false;
+	public isLogin: boolean = false;
 	public queryParams$: Observable<Params>; // Observable for the query params
 
 	constructor(
@@ -27,7 +28,7 @@ export class NgxAuthComponent extends NbAuthComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.updateRegisterClass(this._router.url);
+		this.updateAuthPageClasses(this._router.url);
 
 		// Create an observable to listen to query parameter changes in the current route.
 		this.queryParams$ = this._route.queryParams.pipe(
@@ -44,19 +45,24 @@ export class NgxAuthComponent extends NbAuthComponent implements OnInit {
 				filter((event) => event instanceof NavigationStart),
 				map((event) => event as NavigationStart),
 				tap((event: NavigationStart) => {
-					this.updateRegisterClass(event.url);
+					this.updateAuthPageClasses(event.url);
 				})
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Update the register class based on the current URL.
+	 * Update the per-page classes based on the current URL.
 	 *
 	 * @param url
 	 */
-	updateRegisterClass(url: string) {
-		this.isRegister = url === '/auth/register';
+	updateAuthPageClasses(url: string) {
+		// `url` still carries the query string (`/auth/login?returnUrl=...`), so
+		// compare against the path alone or the class never lands on a deep link.
+		const path = url.split('?')[0];
+
+		this.isRegister = path === '/auth/register';
+		this.isLogin = path === '/auth/login';
 	}
 
 	/**

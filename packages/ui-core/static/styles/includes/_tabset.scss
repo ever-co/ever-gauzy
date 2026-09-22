@@ -2,17 +2,44 @@
 @forward 'var';
 @use 'var' as *;
 
-nb-route-tabset {
-  ul.route-tabset {
+// A tab strip is a tab strip. Nebular ships two components for one control —
+// `nb-tabset` switches a panel, `nb-route-tabset` switches a route — and every
+// sheet in this repo that dressed them had named only the route one, so the two
+// were drawn differently wherever both appear in the same app: the route strips
+// (organization edit, employee edit) took a 16px box and stacked their icons,
+// and every `nb-tabset` (Employment types, Time off, Candidates, Jobs,
+// Inventory) kept the theme's own box and a 0.5rem inline icon gap.
+//
+// One definition, included for both, so they cannot drift again.
+//
+// @param {String} $strip - the class on the strip's own `<ul>`. Named rather
+//   than matched with a bare `ul`, which would also catch a list in a tab's
+//   CONTENT and strip its indent.
+@mixin tab-strip($strip) {
+  ul.#{$strip} {
     padding: 0;
   }
+
   .tab-link {
     outline: none;
-    @include respond(dsk) {
-      padding: px2rem(16px) px2rem(16px);
+
+    // `outline: none` is there to drop the ring a mouse click leaves behind, and
+    // it took the keyboard's with it — on the one control a keyboard user moves
+    // through with arrows. Both families get it back the same way.
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-500, #6e49e8);
+      outline-offset: -2px;
     }
+
+    // Shared with `tabset-action-row()`, which has to match the block value to
+    // stay as tall as this strip — see the note on the tokens in `var.scss`.
+    @include respond(dsk) {
+      padding: $tabset-dsk-tab-padding-block $tabset-dsk-tab-padding-inline;
+    }
+
     nb-icon {
       margin-right: 10px;
+
       @include respond(dsk) {
         display: block;
         margin: auto;
@@ -20,4 +47,12 @@ nb-route-tabset {
       }
     }
   }
+}
+
+nb-route-tabset {
+  @include tab-strip('route-tabset');
+}
+
+nb-tabset {
+  @include tab-strip('tabset');
 }

@@ -1,0 +1,76 @@
+/*
+ * Public API Surface of @gauzy/plugin-ai-chat-react-ui
+ *
+ * This package provides an inline collapsible AI Chat widget built with
+ * the Vercel AI SDK (@ai-sdk/react), designed for the Gauzy left sidebar.
+ *
+ * Loosely coupled — registration flows through `plugin-ui.config.ts` via
+ * `defineDeclarativePlugin`. No direct component imports needed in the host app.
+ */
+
+// Plugin definition (translations, settings, sidebar widget registration)
+export { AiChatReactUiPlugin } from './lib/ai-chat-react-ui.plugin';
+
+// Angular bridge components
+export { AiChatSidebarComponent } from './lib/ai-chat-sidebar.component';
+export { AiChatWindowComponent } from './lib/ai-chat-window.component';
+export { PlaygroundPageComponent } from './lib/playground-page.component';
+export { PlaygroundChatSidebarComponent } from './lib/playground-chat-sidebar.component';
+
+// Providers — register the AI Chat in the layout's dedicated chat sidebar slot
+export { provideAiChatSidebar } from './lib/provide-ai-chat-sidebar';
+
+// Chat availability (permission + backend configuration) — shared by the
+// sidebar registration and the AI Providers settings page
+export {
+	AiChatAvailabilityService,
+	type AiChatUnavailableReason,
+	type IAiChatAvailability
+} from './lib/ai-chat-availability.service';
+
+// Route config
+export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
+
+// Detached chat window routes — wired into the app's ROOT routes so the window
+// renders without the /pages shell (nav menu sidebar, header, footer)
+export { AI_CHAT_WINDOW_PATH, AI_CHAT_WINDOW_ROUTES } from './lib/ai-chat-window.routes';
+
+// AI Providers (BYOK) settings page — component, service, and route config
+export {
+	AiChatSettingsComponent,
+	AiChatSettingsService,
+	AI_CHAT_SETTINGS_PATH,
+	AI_CHAT_SETTINGS_ROUTE
+} from './lib/settings';
+
+// React components (for advanced composition / embedding)
+export {
+	AiChatPanel,
+	ChatToggleBar,
+	ChatMessageList,
+	ChatMessageItem,
+	ChatInput,
+	ChatWelcome,
+	MarkdownContent
+} from './lib/components';
+
+// i18n bridge — lets React components read the same ngx-translate bundles the
+// Angular side uses (chat chrome lives in the core `AI_ASSISTANT.*` namespace)
+export { useChatTranslate, passthroughChatTranslate, type ChatTranslate } from './lib/use-chat-translate';
+
+// Theme tokens
+export { chatTheme } from './lib/chat-theme';
+export { playgroundTheme } from './lib/playground-theme';
+
+// Playground components (AI SDK-style playground UI)
+export {
+	Playground, type PlaygroundProps,
+	PlaygroundHeader, type PlaygroundHeaderProps,
+	PlaygroundSettings, type PlaygroundSettingsProps,
+	PlaygroundChatPanel, type PlaygroundChatPanelProps,
+	PlaygroundChatMessage, type PlaygroundChatMessageProps,
+	PlaygroundChatInput, type PlaygroundChatInputProps,
+	ModelSelector, type ModelSelectorProps, type ModelOption,
+	SettingsControl, type SettingsControlProps,
+	PlaygroundChatSidebar
+} from './lib/components/playground';

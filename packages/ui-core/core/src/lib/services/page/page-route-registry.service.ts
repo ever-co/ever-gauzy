@@ -101,6 +101,22 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			throw new Error('Page route configuration must have a location property');
 		}
 
+		// A route with no navigation target is not merely useless — Angular throws
+		// NG04014 while recognizing the LAZY PARENT config it ends up in, which
+		// silently kills every navigation into that whole subtree at click time.
+		// Fail loudly at registration instead, where the offending plugin is on
+		// the stack. The target may live on the config itself or in the `route`
+		// passthrough object.
+		const targets: (keyof Route)[] = ['component', 'loadComponent', 'loadChildren', 'redirectTo', 'children'];
+		const hasTarget = targets.some((key) => config[key] != null || config.route?.[key] != null);
+		if (!hasTarget) {
+			throw new Error(
+				`Page route registration for location "${config.location}", path "${config.path}" provides no ` +
+					`navigation target (component, loadComponent, loadChildren, redirectTo or children). ` +
+					`Such a route would invalidate its entire parent route subtree at navigation time (NG04014).`
+			);
+		}
+
 		// For section routes: reject reserved core paths and duplicate registrations
 		if (config.location === PAGE_SECTIONS_LOCATION) {
 			if (RESERVED_PAGE_SECTION_PATHS.has(config.path)) {
@@ -114,15 +130,22 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 		// Get all registered routes for the specified location
 		const routes = this.registry.get(config.location) || [];
 
-		// Check if a route with the same location and path already exists (prevents overriding)
+		// Check if a route with the same location and path already exists (prevents overriding).
+		// The one sanctioned exception: several registrations of the SAME path that all carry a
+		// `canMatch` guard. That is plain Angular router semantics — the guards decide at match
+		// time which one takes the URL — and it is how a page that ships in two UI flavours
+		// (Angular and React) keeps a single, stable path.
 		const isMatchingRoute = routes.some(
-			(route: PageRouteRegistryConfig) => route.location === config.location && route.path === config.path
+			(route: PageRouteRegistryConfig) =>
+				route.location === config.location &&
+				route.path === config.path &&
+				!(hasCanMatchGuard(route) && hasCanMatchGuard(config))
 		);
 
 		if (isMatchingRoute) {
 			throw new Error(
 				`A page with the location "${config.location}" and path "${config.path}" has already been registered. ` +
-					`Cannot override an existing route.`
+					`Cannot override an existing route (register both with a \`canMatch\` guard to share a path).`
 			);
 		}
 
@@ -160,6 +183,11 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 
 		// Filter out duplicate configurations based on the location and path
 		return configs.filter((config: PageRouteRegistryConfig) => {
+			// `canMatch`-guarded registrations may legitimately share a path (see registerPageRoute).
+			if (hasCanMatchGuard(config)) {
+				return true;
+			}
+
 			// Create a unique identifier for the combination of location and path
 			const identifier = `${config.location}-${config.path}`;
 
@@ -196,17 +224,50 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			const route: Route = {
 				path: config.path, // Add path property
 				pathMatch: config.path ? 'prefix' : 'full', // Set pathMatch property
-				data: config.data || {}, // Add data property if it exists
-				canActivate: config.canActivate || [] // Add canActivate property if it exists
+				data: config.data || {} // Add data property if it exists
 			};
 
-			// Check if the route configuration has a component or loadChildren property
+			// Guards are attached ONLY when present. An empty `canActivate: []` is still a truthy
+			// value, and Angular's dev-mode `validateConfig` rejects ANY guard on a redirect route
+			// (`redirectTo and canActivate cannot be used together`, NG04014) — which is thrown
+			// while the lazy parent config loads and blanks the whole app in `nx serve` and in
+			// development-configuration bundles such as demo.gauzy.co.
+			if (config.canActivate?.length) {
+				route.canActivate = config.canActivate;
+			}
+
+			// `canMatch` decides whether this registration takes part in matching at all — it is
+			// what lets two flavours of one page share a path, so it must reach the router.
+			if (config.canMatch?.length) {
+				route.canMatch = config.canMatch;
+			}
+
+			// Copy the route's navigation target. `loadComponent` matters: dropping it
+			// produces a route with NO target, and Angular then throws NG04014 while
+			// RECOGNIZING the parent lazy config — which kills every navigation into the
+			// whole subtree (e.g. /pages/settings/**) with no visible error. That is
+			// exactly what a registered-but-uncopied `loadComponent` did to Settings.
 			if (config.component) {
 				// Set the component property to the config object
 				route.component = config.component;
+			} else if (config.loadComponent) {
+				// Set the loadComponent property to the config object (standalone lazy component)
+				route.loadComponent = config.loadComponent;
 			} else if (config.loadChildren) {
 				// Set the loadChildren property to the config object
 				route.loadChildren = config.loadChildren;
+			} else if (config.redirectTo != null) {
+				// A pure redirect route is a valid navigation target too — registration
+				// accepts it, so the mapper must carry it or the generated route has no
+				// target at all (the exact NG04014 failure described above).
+				route.redirectTo = config.redirectTo;
+			}
+
+			// `children` can accompany any of the targets above (a componentless parent
+			// with children is itself a valid target), so it is copied independently of
+			// the else-chain rather than competing with it.
+			if (config.children) {
+				route.children = config.children;
 			}
 
 			// Check if the route configuration has a resolve property
@@ -224,4 +285,12 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			return route;
 		});
 	}
+}
+
+/**
+ * Whether a registration carries a `canMatch` guard, either directly or via the `route`
+ * passthrough object.
+ */
+function hasCanMatchGuard(config: PageRouteRegistryConfig): boolean {
+	return (config.canMatch?.length ?? 0) > 0 || (config.route?.canMatch?.length ?? 0) > 0;
 }

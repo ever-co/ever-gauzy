@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts';
+import { IInvite, ITermsAcceptanceDocument, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { MatchValidator } from '@gauzy/ui-core/core';
+import { AuthService, MatchValidator } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FormHelpers } from '@gauzy/ui-core/shared';
 
@@ -24,6 +24,16 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent implemen
 	public tenant: ITenant;
 	public tags: ITag[];
 
+	/**
+	 * The legal documents this invite acceptance must accept, as published by
+	 * the API. Same shape and same purpose as on the signup form — see
+	 * `NgxRegisterComponent`.
+	 */
+	public termsDocuments: ITermsAcceptanceDocument[] = [];
+
+	/** True when the required documents could not be loaded. */
+	public termsUnavailable: boolean = false;
+
 	public readonly form: UntypedFormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: AcceptInviteFormComponent): UntypedFormGroup {
 		return fb.group(
@@ -39,7 +49,11 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent implemen
 		);
 	}
 
-	constructor(private readonly fb: UntypedFormBuilder, public readonly translateService: TranslateService) {
+	constructor(
+		private readonly fb: UntypedFormBuilder,
+		private readonly authService: AuthService,
+		public readonly translateService: TranslateService
+	) {
 		super(translateService);
 	}
 
@@ -48,11 +62,32 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent implemen
 			this.form.get('fullName').setValue(this.invitation.fullName);
 			this.form.get('fullName').updateValueAndValidity();
 		}
+
+		// Load the documents this acceptance has to be pinned to. On failure the
+		// submit button stays disabled: this form has always had a
+		// `Validators.requiredTrue` terms checkbox whose value `saveInvites()`
+		// then discarded, and completing a registration that records nothing is
+		// exactly what is being fixed.
+		this.authService.getRequiredTermsDocuments().subscribe({
+			next: (documents: ITermsAcceptanceDocument[]) => {
+				this.termsDocuments = documents ?? [];
+				this.termsUnavailable = this.termsDocuments.length === 0;
+			},
+			error: () => {
+				this.termsUnavailable = true;
+			}
+		});
 	}
 
 	saveInvites() {
-		if (this.form.valid) {
-			const { fullName, password } = this.form.value;
+		if (this.form.valid && !this.termsUnavailable) {
+			const { fullName, password, agreeTerms } = this.form.value;
+
+			// `agreeTerms` used to stop here — it gated the button and was then
+			// dropped by this destructuring, so the acceptance was never
+			// recorded. It now travels with the payload as the identity of the
+			// exact text that was displayed: document id, version and sha256.
+			// The API re-checks each claim against the published corpus.
 			this.submitForm.emit({
 				user: {
 					firstName: fullName ? fullName.split(' ').slice(0, -1).join(' ') : null,
@@ -62,7 +97,15 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent implemen
 					tenant: this.tenant,
 					tags: this.tags
 				},
-				password
+				password,
+				terms: agreeTerms
+					? this.termsDocuments.map(({ documentId, version, sha256, locale }) => ({
+							documentId,
+							version,
+							sha256,
+							locale
+					  }))
+					: undefined
 			});
 		}
 	}

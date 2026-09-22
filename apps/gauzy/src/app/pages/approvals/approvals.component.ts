@@ -19,6 +19,7 @@ import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	PictureNameTagsComponent,
 	CreatedByUserComponent,
 	DateViewComponent,
@@ -51,6 +52,13 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 	public requestApprovalData: IRequestApproval[] = [];
 	public organization: IOrganization;
 	public _refresh$: Subject<any> = new Subject();
+
+	/*
+	 * Read-only View: an approval request is a small record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedRequestApproval: IRequestApproval;
+	public viewSections: IRecordViewSection[] = [];
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -145,56 +153,62 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			return;
 		}
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const buffersItems: any[] = [];
-		let items: any = [];
-		if (this.selectedEmployeeId) {
-			items = (
-				await this.approvalRequestService.getByEmployeeId(this.selectedEmployeeId, ['requestApprovals'], {
-					organizationId,
-					tenantId
-				})
-			).items;
-		} else {
-			items = (
-				await this.approvalRequestService.getAll(
-					[
-						'employeeApprovals',
-						'employeeApprovals.employee',
-						'employeeApprovals.employee.user',
-						'teamApprovals',
-						'teamApprovals.team',
-						'tags',
-						'createdByUser'
-					],
-					{ organizationId, tenantId }
-				)
-			).items;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+			const { activePage, itemsPerPage } = this.getPagination();
+			const buffersItems: any[] = [];
+			let items: any = [];
+			if (this.selectedEmployeeId) {
+				items = (
+					await this.approvalRequestService.getByEmployeeId(this.selectedEmployeeId, ['requestApprovals'], {
+						organizationId,
+						tenantId
+					})
+				).items;
+			} else {
+				items = (
+					await this.approvalRequestService.getAll(
+						[
+							'employeeApprovals',
+							'employeeApprovals.employee',
+							'employeeApprovals.employee.user',
+							'teamApprovals',
+							'teamApprovals.team',
+							'tags',
+							'createdByUser'
+						],
+						{ organizationId, tenantId }
+					)
+				).items;
 
-			if (items.length > 0) {
-				items.filter((item) => {
-					item.employees = pluck(item.employeeApprovals, 'employee');
-					item.teams = pluck(item.teamApprovals, 'team');
-					return item;
-				});
+				if (items.length > 0) {
+					items.filter((item) => {
+						item.employees = pluck(item.employeeApprovals, 'employee');
+						item.teams = pluck(item.teamApprovals, 'team');
+						return item;
+					});
+				}
 			}
-		}
-		items.map((item: any) => {
-			buffersItems.push({
-				...item,
-				status: this.statusMapper(item)
+			items.map((item: any) => {
+				buffersItems.push({
+					...item,
+					status: this.statusMapper(item)
+				});
 			});
-		});
-		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		this.smartTableSource.load(buffersItems);
-		if (this.isGridLayout) this._loadGridLayoutData();
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.smartTableSource.count()
-		});
-		this.loading = false;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this.smartTableSource.load(buffersItems);
+			if (this.isGridLayout) this._loadGridLayoutData();
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.smartTableSource.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving approvals', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	private get isGridLayout(): boolean {
@@ -377,6 +391,65 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		this.router.navigate(['/pages/organization/approval-policy']);
 	}
 
+	/**
+	 * Opens the read-only View of an approval request in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	view(selectedItem?: IRequestApproval): void {
+		if (selectedItem) {
+			this.selectRequestApproval({ isSelected: true, data: selectedItem });
+		}
+
+		const requestApproval = selectedItem ?? this.selectedRequestApproval;
+		if (!requestApproval) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections();
+		this.viewedRequestApproval = requestApproval;
+	}
+
+	closeView(): void {
+		this.viewedRequestApproval = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer. It mirrors the grid columns — same fields,
+	 * same renderers — so a request reads identically in the row and in its View.
+	 */
+	private buildViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME', key: 'name' },
+					// `status` was replaced by `statusMapper` when the rows were loaded,
+					// so it is already the `{ text, value, class }` a badge expects.
+					{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS', key: 'status', type: 'badge' },
+					{ label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT', key: 'min_count' },
+					{
+						label: 'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY',
+						key: 'approvalPolicy.name'
+					}
+				]
+			},
+			{
+				title: 'APPROVAL_REQUEST_PAGE.EMPLOYEES',
+				fields: [
+					{ label: 'APPROVAL_REQUEST_PAGE.EMPLOYEES', key: 'employees', type: 'people', wide: true },
+					{ label: 'APPROVAL_REQUEST_PAGE.TEAMS', key: 'teams', type: 'teams', wide: true }
+				]
+			},
+			{
+				fields: [
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true },
+					{ label: 'APPROVAL_REQUEST_PAGE.CREATED_BY', key: 'createdByUser', type: 'person' },
+					{ label: 'APPROVAL_REQUEST_PAGE.CREATED_AT', key: 'createdAt', type: 'datetime' }
+				]
+			}
+		];
+	}
+
 	async save(isCreate: boolean, selectedItem?: IRequestApproval) {
 		let dialog;
 		if (selectedItem) {
@@ -433,6 +506,9 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectRequestApproval({
 			isSelected: false,
 			data: null

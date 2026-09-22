@@ -15,6 +15,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { RolePermissionsService } from '@gauzy/ui-core/core';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { RolesPermissionsRoutingModule } from './roles-permissions-routing.module';
 import { RolesPermissionsComponent } from './roles-permissions.component';
 
@@ -34,7 +35,8 @@ import { RolesPermissionsComponent } from './roles-permissions.component';
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild()
+		TranslateModule.forChild(),
+		SharedModule
 	],
 	declarations: [RolesPermissionsComponent],
 	providers: [RolePermissionsService]

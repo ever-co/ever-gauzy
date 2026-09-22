@@ -1,16 +1,9 @@
 <nb-card>
 	<nb-card-header class="p-0">
 		<div class="filters">
+			<!-- `+ Add Time` stays on the tab strip, like Weekly and Calendar. -->
 			<div class="gauzy-action">
-				<ngx-gauzy-button-action
-					[hasLayoutSelector]="false"
-					[isDisable]="isRowSelected() ? false : !isCheckboxSelected()"
-				>
-					<ng-container
-						buttonTemplate
-						[ngTemplateOutlet]="actionButtons"
-						[ngTemplateOutletContext]="{ $implicit: selectedLog?.data }"
-					></ng-container>
+				<ngx-gauzy-button-action [hasLayoutSelector]="false">
 					<ng-container buttonTemplateVisible [ngTemplateOutlet]="visibleButtons"></ng-container>
 				</ngx-gauzy-button-action>
 			</div>
@@ -18,7 +11,22 @@
 				[isTimeFormat]="true"
 				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
+			>
+				<!-- The selection actions (View / Edit / Delete, Bulk action) open in the
+					filter row itself, leading the filter controls on the same line. -->
+				<div class="selection-actions">
+					<ngx-gauzy-button-action
+						[hasLayoutSelector]="false"
+						[isDisable]="isRowSelected() ? false : !isCheckboxSelected()"
+					>
+						<ng-container
+							buttonTemplate
+							[ngTemplateOutlet]="actionButtons"
+							[ngTemplateOutletContext]="{ $implicit: selectedLog?.data }"
+						></ng-container>
+					</ngx-gauzy-button-action>
+				</div>
+			</ngx-gauzy-filters>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -170,7 +178,7 @@
 						</div>
 					} @else {
 						<div class="h-100">
-							<ngx-no-data-message>
+							<ngx-no-data-message [loading]="loading">
 								<div
 									message
 									[innerHTML]="'REPORT_PAGE.NO_DATA.DAILY_TIME_AND_ACTIVITY' | translate"

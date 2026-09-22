@@ -1,0 +1,36 @@
+{
+	// Type-checks every `jest.config.ts` in the workspace, and nothing else.
+	//
+	// Why this exists: a duplicated `transformIgnorePatterns` key sat in
+	// `packages/core/jest.config.ts` undetected (TS1117). Node 24's native type-stripping hid it,
+	// but on any runtime without stripping Jest fell into its ts-node path and failed to load the
+	// config at all — zero suites, zero tests. Nothing in CI ran `tsc --noEmit`, so nothing caught
+	// it. See `.github/workflows/static-checks.yml`.
+	//
+	// Deliberately does NOT extend the root tsconfig: this must run with nothing installed but
+	// TypeScript itself, so the CI job costs seconds rather than a full `yarn install`. That is
+	// also why `types` is empty and `tools/jest-config-globals.d.ts` supplies `module`/`require`
+	// for the CommonJS configs.
+	"compilerOptions": {
+		"noEmit": true,
+		"skipLibCheck": true,
+		"target": "ES2022",
+		"lib": ["ES2022"],
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		// The configs are plain data. Resolving `preset: '../../jest.preset.js'` and friends is
+		// not the point of this check, and doing so would drag in the dependency graph this
+		// project exists to avoid.
+		"noResolve": true,
+		"types": []
+	},
+	"include": [
+		"jest-config-globals.d.ts",
+		"../jest.config.ts",
+		"../apps/*/jest.config.ts",
+		"../packages/*/jest.config.ts",
+		"../packages/plugins/*/jest.config.ts"
+	]
+}

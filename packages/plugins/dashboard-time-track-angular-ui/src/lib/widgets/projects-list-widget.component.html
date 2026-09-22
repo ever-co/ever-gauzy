@@ -1,0 +1,30 @@
+<gz-time-track-widget-state
+	[loading]="loading()"
+	[error]="errorMessage()"
+	[empty]="isEmpty()"
+	[emptyMessageKey]="emptyMessageKey()"
+	[skeletonRows]="5"
+	(retry)="refresh()"
+>
+	<div class="list-panel">
+		<div class="list-scroll">
+			@for (project of rows(); track project.id) {
+				<div class="list-row progress-row">
+					<span class="cell-text" [title]="project?.name">{{ project?.name }}</span>
+
+					<div class="cell-progress">
+						<span class="progress-value">{{ sharePercentage(project) }}%</span>
+						<nb-progress-bar
+							size="tiny"
+							[displayValue]="false"
+							[status]="statusFor(sharePercentage(project))"
+							[value]="sharePercentage(project)"
+						></nb-progress-bar>
+					</div>
+
+					<span class="cell-numeric cell-muted">{{ project?.duration || 0 | durationFormat }}</span>
+				</div>
+			}
+		</div>
+	</div>
+</gz-time-track-widget-state>

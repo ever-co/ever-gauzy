@@ -298,8 +298,9 @@ p,
       height: 36px;
       object-fit: cover;
       border-radius: 50%;
-      -webkit-box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.25);
-      box-shadow: var(--gauzy-shadow)(0, 0, 0, 0.25);
+      // The trailing `(0, 0, 0, 0.25)` left behind by an old find-and-replace
+      // made both declarations invalid, so the avatar drew no edge at all.
+      box-shadow: var(--gauzy-shadow);
     }
   }
 

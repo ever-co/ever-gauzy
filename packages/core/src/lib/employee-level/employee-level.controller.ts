@@ -33,10 +33,7 @@ export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 		...options: any[]
 	): Promise<IEmployeeLevel> {
 		try {
-			return this.employeeLevelService.create({
-				id,
-				...entity
-			});
+			return this.employeeLevelService.create({ ...entity, id });
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

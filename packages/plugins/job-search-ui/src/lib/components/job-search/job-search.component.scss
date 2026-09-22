@@ -1,6 +1,8 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-overrides' as *;
 @use 'gauzy/_gauzy-cards' as *;
+@use 'gauzy/tabset-actions' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   .form-group {
@@ -77,10 +79,6 @@
   ::ng-deep .table-scroll-container {
     flex-grow: 10;
     max-height: unset;
-    angular2-smart-table table tr td {
-      vertical-align: top !important;
-      //border-bottom: 20px solid var(--gauzy-border-table);
-    }
   }
 }
 
@@ -113,11 +111,25 @@
   gap: 4px;
 }
 
+// The three nav buttons ("Employees", "Matchings", "Proposals Template") sit in
+// the card header, outside `.gauzy-button-container`, so the mixin below never
+// reached them and they stayed a size larger than the action strip they sit
+// above. Same split as Invoices, and handled the same way: the mixin goes on
+// both blocks that hold a button.
+:host nb-card-header {
+  @include ga-hub.page-header-buttons();
+}
+
 :host .gauzy-button-container {
-  position: absolute;
-  @include nb-ltr(right, 1rem);
-  @include nb-rtl(left, 1rem);
-  top: 0;
+  // Buttons compacted to the table's scale (see the mixin).
+  @include ga-hub.page-header-buttons();
+
+  // Sits on the tab strip. The mixin reproduces the tab link's box so the
+  // buttons centre on the strip, and — critically — lets pointer events
+  // through the empty part of the row: this container is globally
+  // `width: 100%` (gauzy/_gauzy-table), so as a plain absolute overlay it
+  // swallowed every click on the tab labels underneath it.
+  @include tabset-action-row(1rem);
 }
 
 .advanced-filter {
@@ -160,4 +172,67 @@ nb-tabset {
       min-height: 80%;
     }
   }
+}
+
+// ── The rest of the list-page contract ───────────────────────────────────────
+// This sheet already compacted the page-header buttons (twice, for the two
+// groups that hold them), and stopped there — so Jobs > Browse was the one list
+// page in the app with a converted TOOLBAR sitting over an unconverted TABLE:
+// a 0.25rem action strip above rows still drawn at the `_overrides.scss`
+// fallbacks, 0.8125rem cells on 0.375rem/0.625rem padding, on an unbounded
+// scroll container with no ring, and a full-size pager under it.
+//
+// The six remaining blocks, spelled out rather than taken as `list-page()`,
+// because that bundle also emits the toolbar block against a single `$actions`
+// selector and this page deliberately names two.
+
+// The tokens sit on `:host`, not on the table: the cell renderers that consume
+// them are separate components, and custom properties are the only thing that
+// crosses those boundaries.
+:host {
+  @include ga-hub.density-tokens();
+}
+
+:host .table-scroll-container {
+  @include ga-hub.surface();
+}
+
+:host ::ng-deep angular2-smart-table {
+  @include ga-hub.rows();
+}
+
+// The one place this page departs from the contract, stated once instead of
+// fought over. `rows()` centres body cells, which is right for a table of
+// one-line values; this one has two columns at 15 % / 85 %, and the wide one
+// renders `JobTitleDescriptionDetailsComponent` — a title, a description and a
+// meta line, several times the height of the employee chip beside it. Centred,
+// that chip floats halfway down an otherwise empty column.
+//
+// This used to live at the top of the file as `table tr td { vertical-align: top
+// !important }`, which silently beat the mixin: the include read as if the
+// density contract governed here and the declaration it emits was dead on
+// arrival. Same selector as the mixin's now, emitted after it, so source order
+// settles it and the `!important` is gone.
+:host ::ng-deep angular2-smart-table tbody tr > td {
+  vertical-align: top;
+}
+
+:host ::ng-deep {
+  @include ga-hub.tag-stack-spacing();
+}
+
+:host ::ng-deep ga-status-badge {
+  @include ga-hub.status-badge-tints();
+}
+
+:host .pagination-container {
+  @include ga-hub.pager-container();
+}
+
+// SPECIFICITY: the pager's own rules nest under its `:host`, so `li span` shims
+// to (0,3,2). Naming `.pagination-container` — which lives in THIS component's
+// template, so it carries this component's content attribute — before
+// `::ng-deep` buys two attributes and a class, taking the block to (0,3,3).
+:host .pagination-container ::ng-deep ngx-pagination {
+  @include ga-hub.pager();
 }

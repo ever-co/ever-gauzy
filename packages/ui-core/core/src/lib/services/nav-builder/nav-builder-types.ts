@@ -25,6 +25,7 @@ export interface NavMenuSectionItem extends NbMenuItem {
  */
 export interface NavMenuItemData {
 	translationKey: string; // Translation key for the title, mandatory for all items
+	noTranslate?: boolean; // When true, translationKey holds user content and is rendered literally (e.g. custom dashboard names)
 	permissionKeys?: PermissionsEnum[]; // Permissions required to display the item (optional)
 	featureKey?: FeatureEnum; // Feature key required to display the item (optional)
 	hide?: () => boolean | boolean; // Function to determine if the item should be hidden (optional)

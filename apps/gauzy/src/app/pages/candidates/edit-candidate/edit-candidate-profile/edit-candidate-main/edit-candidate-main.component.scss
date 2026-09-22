@@ -1,0 +1,115 @@
+@use 'var' as *;
+
+// Split out of `edit-organization-main.component.scss`, which this component used
+// to borrow wholesale. That sheet is the Organization > Main tab's own layout and
+// has been rewritten around it; the candidate template never shared the markup,
+// only the file, so it keeps the rules it actually renders here.
+//
+// Carried over unchanged, and each rule below is live in
+// `edit-candidate-main.component.html`: `.content`, `.organization-container`,
+// the `.organization-photo` wrapper, its overlay and avatar image, the `.row .col`
+// halving, and both responsive blocks.
+//
+// Left behind because this template renders none of them: `.main-form` (this one
+// uses `.employee-form`), `.employees-count-text`, `.tax-form-group`,
+// `.registration-form-group`, the `ga-currency` and `nb-select` overrides, `.col-6`,
+// and `.content.main` — the candidate's `.content` carries no `main` class.
+
+:host {
+  height: 100%;
+  @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
+  @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
+}
+
+:host .content {
+  display: flex;
+  height: 100%;
+  background-color: nb-theme(gauzy-card-2);
+  padding: 1rem;
+  @include nb-ltr(border-radius, 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius));
+  @include nb-rtl(border-radius, nb-theme(border-radius) 0 nb-theme(border-radius) nb-theme(border-radius));
+}
+
+:host .organization-container {
+  padding: 15px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  transition: transform 150ms ease-in-out;
+  background-color: rgba(126, 126, 143, 0.1);
+  border-radius: nb-theme(border-radius);
+  min-width: 0;
+  height: 100%;
+
+  .organization-photo {
+    width: fit-content;
+    height: fit-content;
+    position: relative;
+
+    div {
+      pointer-events: none;
+      background: black;
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      border-radius: nb-theme(border-radius);
+    }
+
+    img {
+      width: 100px;
+      height: 100px;
+      border-radius: nb-theme(border-radius);
+    }
+
+    svg {
+      z-index: 2;
+      transition: opacity 0.2s ease-in;
+      opacity: 0.3;
+      position: absolute;
+      top: calc(50% - 68px / 2);
+      left: calc(50% - 68px / 2);
+    }
+  }
+}
+
+.row {
+  & .col {
+    max-width: 50%;
+  }
+}
+
+@include respond(lg) {
+  .organization-container {
+    width: 350px;
+  }
+}
+
+@include respond(md) {
+  :host {
+    height: auto;
+  }
+
+  .content {
+    flex-direction: column;
+  }
+
+  .organization-container {
+    width: 100%;
+  }
+
+  .row {
+    flex-direction: column;
+    max-width: 100%;
+    margin-left: 0;
+
+    & .col {
+      max-width: 100%;
+      padding: 0;
+    }
+  }
+
+  .form-group {
+    width: 100% !important;
+  }
+}

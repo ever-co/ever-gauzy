@@ -143,12 +143,14 @@
                             <p class="label">
                               {{ 'FORM.LABELS.DESCRIPTION' | translate }}
                             </p>
-                            <div class="ck-editor">
-                              <ckeditor
+                            <div class="rich-text-editor-field">
+                              <ga-rich-text-editor
                                 formControlName="description"
                                 class="description"
-                                [config]="ckConfig"
-                              ></ckeditor>
+                                preset="standard"
+                                outputFormat="html"
+                                minHeight="200px"
+                              ></ga-rich-text-editor>
                             </div>
                           </div>
                         </div>
@@ -247,7 +249,7 @@
                                     id="billRateValueInput"
                                     type="number"
                                     [min]="0"
-                                    step="0.1"
+                                    step="0.01"
                                     nbInput
                                     formControlName="billRateValue"
                                     placeholder="{{ 'FORM.PLACEHOLDERS.BILL_RATE' | translate }}"

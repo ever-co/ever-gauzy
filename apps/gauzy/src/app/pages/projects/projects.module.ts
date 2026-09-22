@@ -19,6 +19,9 @@ import {
 	ProjectMutationModule,
 	ProjectModuleMutationModule
 } from '@gauzy/ui-core/shared';
+// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
+// imported directly — the Documents hub module is never pulled in here.
+import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -47,7 +50,8 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		CardGridModule,
 		FavoriteToggleModule,
 		ProjectMutationModule,
-		ProjectModuleMutationModule
+		ProjectModuleMutationModule,
+		DocumentLinksPanelComponent
 	],
 	declarations: [
 		ProjectLayoutComponent,

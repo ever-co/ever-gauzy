@@ -142,6 +142,11 @@ export abstract class FindRecurringExpenseStartDateUpdateTypeHandler<
 		fromStartDate: Date,
 		toStartDate: Date
 	) {
+		// An expense without a parent has no siblings; an empty parent id must not be queried (it used
+		// to be dropped from the where and made every expense in the window a "conflict").
+		if (!parentRecurringExpenseId) {
+			return { items: [] as T[], total: 0 };
+		}
 		return await this.crudService.findAll({
 			where: [
 				{

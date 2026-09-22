@@ -1,3 +1,8 @@
-<div>
-	{{ value ? value.name : null }}
-</div>
+<!-- The chip used to render whether or not there was a policy, so a request with
+     none showed an empty grey pill. An em-dash reads as "not set"; the pill is
+     kept for the case where there is something to put in it. -->
+@if (value?.name) {
+	<div class="policy">{{ value.name }}</div>
+} @else {
+	<span class="empty">&mdash;</span>
+}

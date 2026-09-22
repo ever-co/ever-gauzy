@@ -1,5 +1,6 @@
 
 import { EntityTarget, FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
+import { LegacyFindManyOptions, parseTypeORMFindOptions } from '../../utils';
 import { IQueryBuilder } from './iquery-builder';
 
 export class TypeOrmQueryBuilder<Entity extends Object> implements IQueryBuilder<Entity> {
@@ -40,8 +41,10 @@ export class TypeOrmQueryBuilder<Entity extends Object> implements IQueryBuilder
         return this;
     }
 
-    setFindOptions(findOptions: FindManyOptions<Entity>) {
-        this.qb.setFindOptions(findOptions);
+    setFindOptions(findOptions: LegacyFindManyOptions<Entity>) {
+        // Normalize legacy string-array `relations`/`select` to object form before handing off to
+        // TypeORM's native query builder (which rejects the string-array syntax since v1.0).
+        this.qb.setFindOptions(parseTypeORMFindOptions(findOptions) as FindManyOptions<Entity>);
         return this;
     }
 

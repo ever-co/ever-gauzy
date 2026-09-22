@@ -1,0 +1,32 @@
+@if (error()) {
+	<div class="statistic-error" role="alert">
+		<div class="statistic-error-text">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<!-- The visible label stays generic so a narrow widget cell never
+				overflows, but the detail is REAL DOM text (visually hidden), not a
+				`title`/`aria-label` only: those are unavailable to keyboard and many
+				touch users, and the surrounding role="alert" announces text content. -->
+			<span class="statistic-error-label" [title]="error()">
+				{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
+			</span>
+			<span class="statistic-error-detail">{{ error() }}</span>
+		</div>
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}
+		</button>
+	</div>
+} @else if (loading()) {
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
+		class="statistic-skeleton"
+		aria-busy="true"
+		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
+	>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+		<span class="skeleton-line skeleton-value"></span>
+	</output>
+} @else if (unavailableKey(); as unavailable) {
+	<p class="statistic-unavailable">{{ unavailable | translate }}</p>
+} @else {
+	<ga-single-statistic [value]="value()" [color]="color()" [type]="type()"></ga-single-statistic>
+}

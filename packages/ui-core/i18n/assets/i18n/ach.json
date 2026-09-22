@@ -733,6 +733,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "crwdns11507:0crwdne11507:0"
 	},
 	"MENU": {
+		"BREADCRUMB": "Breadcrumb",
 		"PIPELINES": "crwdns4734:0crwdne4734:0",
 		"DASHBOARD": "crwdns174:0crwdne174:0",
 		"DASHBOARDS": "crwdns11523:0crwdne11523:0",
@@ -1061,6 +1062,21 @@
 		"FOCUS": "crwdns11138:0crwdne11138:0",
 		"APPLICATIONS": "crwdns11140:0crwdne11140:0"
 	},
+	"SETTINGS_GENERAL": {
+		"PREFERRED_UI": {
+			"TITLE": "User interface",
+			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (default)",
+				"REACT": "React (new)"
+			},
+			"HINT": "Applies to the whole tenant, on every device. Today the Time Tracking dashboard is available in both interfaces; more pages will follow.",
+			"READ_ONLY": "Only tenant administrators can change this setting.",
+			"SAVING": "Saving…",
+			"SAVED": "Interface preference saved",
+			"SAVE_ERROR": "The interface preference could not be saved."
+		}
+	},
 	"SETTINGS_MENU": {
 		"THEMES": "crwdns2106:0crwdne2106:0",
 		"LIGHT": "crwdns2108:0crwdne2108:0",
@@ -1083,7 +1099,9 @@
 		"TABLE": "crwdns7056:0crwdne7056:0",
 		"CARDS_GRID": "crwdns7058:0crwdne7058:0",
 		"SPRINT_VIEW": "crwdns8236:0crwdne8236:0",
-		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0"
+		"QUICK_SETTINGS": "crwdns11022:0crwdne11022:0",
+		"PREFERENCES": "Gin ma imito",
+		"SUPPORT": "Kony"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
@@ -1827,6 +1845,7 @@
 		"EXPECTED": "crwdns9554:0crwdne9554:0",
 		"UPDATES": "crwdns4984:0crwdne4984:0",
 		"UPDATE": "crwdns4986:0crwdne4986:0",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "crwdns4988:0crwdne4988:0",
 		"KEY_RESULTS": "crwdns4990:0crwdne4990:0",
 		"GROUP_BY": "crwdns7454:0crwdne7454:0",
@@ -1843,6 +1862,8 @@
 		"GOAL_TEMPLATES": "crwdns9576:0crwdne9576:0",
 		"CREATE_NEW_MENU": "crwdns11247:0crwdne11247:0",
 		"CREATE_FROM_PRESET": "crwdns11249:0crwdne11249:0",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "crwdns7500:0crwdne7500:0",
 			"TEAMS": "crwdns7502:0crwdne7502:0",
@@ -1872,7 +1893,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "crwdns7418:0crwdne7418:0",
 			"NO_UPDATES": "crwdns7420:0crwdne7420:0",
-			"NO_ALIGNMENT": "crwdns7422:0crwdne7422:0"
+			"NO_ALIGNMENT": "crwdns7422:0crwdne7422:0",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "crwdns4998:0crwdne4998:0",
@@ -2325,7 +2347,9 @@
 				"INACTIVITY_TIME_LIMIT_INFO": "crwdns11495:0crwdne11495:0",
 				"ACTIVITY_PROOF_DURATION": "crwdns11497:0crwdne11497:0",
 				"ACTIVITY_PROOF_DURATION_INFO": "crwdns11499:0crwdne11499:0",
-				"ALLOW_TRACK_INACTIVITY": "crwdns11501:0crwdne11501:0"
+				"ALLOW_TRACK_INACTIVITY": "crwdns11501:0crwdne11501:0",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs."
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "crwdns4764:0crwdne4764:0",
@@ -3353,7 +3377,44 @@
 		"SELECT_EMPLOYEE": "crwdns2639:0crwdne2639:0",
 		"SELECT_A_DATE": "crwdns2641:0crwdne2641:0",
 		"SELECT_AN_ORGANIZATION": "crwdns2643:0crwdne2643:0",
-		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0"
+		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0",
+		"AI_CHAT": "Lok ki AI",
+		"COLLAPSE_SIDEBAR": "Kan bar ma i nget",
+		"EXPAND_SIDEBAR": "Yab bar ma i nget"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "Lakony me AI",
+		"OPEN": "Yab Lakony me AI",
+		"CLOSE": "Lor Lakony me AI",
+		"HISTORY": "Tekwaro",
+		"HISTORY_HINT": "Nen lok ma kigwoko",
+		"HISTORY_CLOSE": "Lor tekwaro",
+		"HISTORY_EMPTY": "Pe tye lok mo ma kigwoko.",
+		"NEW_CHAT": "Lok manyen",
+		"NEW_CHAT_HINT": "Cak lok manyen",
+		"DELETE_CONVERSATION": "Kwany lok",
+		"LOADING": "Tye ka cano…",
+		"DOCK_LEFT": "Ket i tung acam",
+		"DOCK_RIGHT": "Ket i tung acuc",
+		"MAXIMIZE": "Dite",
+		"RESTORE": "Dwok lac",
+		"COLLAPSE": "Kan",
+		"RESIZE": "Ywa me loko lac",
+		"WELCOME_SUBTITLE": "Peny gin mo keken ikom kabedo tici, tic ni, onyo yub ni.",
+		"PLACEHOLDER": "Coo kwena…",
+		"SEND": "Cwal kwena",
+		"STOP": "Cung tyeko",
+		"ERROR": "Gin mo pe otimme maber.",
+		"RETRY": "Tem doki",
+		"DICTATION_FAILED": "Could not transcribe the recording.",
+		"DICTATION_NOT_CONFIGURED": "Dictation needs a voice provider. Add one on the AI Providers settings page.",
+		"DICTATION_ASK_ADMIN": "Dictation needs a voice provider — ask an administrator to add one in Settings → AI Providers.",
+		"DICTATION_KEY_REJECTED": "The voice provider rejected its API key. Update it on the AI Providers settings page.",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "The voice provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
+		"DICTATION_OPEN_SETTINGS": "Open AI Providers",
+		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
+		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
 	},
 	"HEADER_TITLE": {
 		"FOR": "crwdns10284:0crwdne10284:0",
@@ -3365,6 +3426,21 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "crwdns2253:0crwdne2253:0"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Find documentation, get answers, and reach the team behind Gauzy.",
+		"DOCUMENTATION": "Documentation",
+		"DOCUMENTATION_DESC": "Guides and reference for every Gauzy feature.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Answers to the most common questions.",
+		"SUPPORT_CHAT": "Support Chat",
+		"SUPPORT_CHAT_DESC": "Chat with our support team.",
+		"REPORT_ISSUE": "Report an Issue",
+		"REPORT_ISSUE_DESC": "Found a bug? Open an issue on GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Source code, releases, and discussions.",
+		"WEBSITE": "Gauzy Website",
+		"WEBSITE_DESC": "Learn more about the Gauzy platform.",
+		"ABOUT_LINK": "About Gauzy",
+		"ABOUT_LINK_DESC": "Version details, license, and links.",
 		"HELP": "crwdns2255:0crwdne2255:0",
 		"KNOWLEDGE_BASE": "crwdns6960:0crwdne6960:0",
 		"CHOSE_ICON": "crwdns4230:0crwdne4230:0",
@@ -3669,6 +3745,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. All rights reserved.",
+		"DESCRIPTION": "Ever® Gauzy™ is an Open Business Management Platform for Collaborative, On-Demand and Sharing Economies — ERP, CRM, HRM, ATS and Project Management with integrated time tracking.",
+		"LICENSE": "Open source, released under the",
+		"VERSION_DETAILS": "Version Details",
+		"VERSION_MISMATCH": "The web app and the API were built from different commits — a deployment may still be rolling out.",
+		"WEB_APP": "Web App",
+		"API": "API",
+		"UNTAGGED": "untagged build",
+		"API_UNAVAILABLE": "API version unavailable",
+		"LEARN_MORE": "Learn More",
 		"ABOUT": "crwdns2257:0crwdne2257:0"
 	},
 	"FOOTER": {
@@ -4598,10 +4684,19 @@
 		"CUSTOM": "crwdns11038:0crwdne11038:0",
 		"SET_AS_NOTIFICATION_SCHEDULE": "crwdns11040:0crwdne11040:0",
 		"SET_YOURSELF_AS_AWAY": "crwdns11042:0crwdne11042:0",
+		"SET_YOURSELF_AS_ACTIVE": "Ket keni calo <strong>ma itye</strong>",
 		"HOTKEYS": "crwdns11044:0crwdne11044:0",
 		"HELP": "crwdns11046:0crwdne11046:0",
 		"SIGN_OUT": "crwdns11048:0crwdne11048:0",
-		"PROFILE": "crwdns11050:0crwdne11050:0"
+		"PROFILE": "crwdns11050:0crwdne11050:0",
+		"ACCOUNT": "Akaunt",
+		"PREFERENCES": "Gin ma imito",
+		"DOWNLOAD_APPS": "Gam apps",
+		"DOWNLOAD_MACOS": "Gam pi macOS",
+		"DOWNLOAD_WINDOWS": "Gam pi Windows",
+		"DOWNLOAD_LINUX": "Gam pi Linux",
+		"DOWNLOAD_MOBILE": "Gam app me cim",
+		"DOWNLOAD_BROWSER_EXTENSION": "Gam lamed me browser"
 	},
 	"WORKSPACES": {
 		"MENUS": {

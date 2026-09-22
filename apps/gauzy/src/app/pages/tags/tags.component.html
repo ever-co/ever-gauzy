@@ -7,11 +7,30 @@
       </nb-card-header>
       @if (filterOptions.length) {
         <div class="list">
-          <nb-list>
-            @for (option of filterOptions; track option) {
+          <!-- These options filter the table by ONE tag type at a time: picking
+               one clears the last. `role="button"` + `aria-pressed` announced
+               them as independent toggles, so a screen reader user was never
+               told that the previous choice had been turned off. A radiogroup
+               says exactly that, and carries the single-tab-stop + arrow-key
+               behaviour such a user expects from it (`onFilterKeydown`). -->
+          <nb-list role="radiogroup" [attr.aria-label]="'TAGS_PAGE.TAGS_TYPE' | translate">
+            <!-- Tracked by VALUE, not by the option object: every refresh builds
+                 a fresh list of fresh literals, so identity tracking tore down
+                 and rebuilt every radio — including the one the keyboard user
+                 was standing on, which sent focus to the document. A tag type's
+                 id (and `''` for All) is the same across those rebuilds, so the
+                 elements are reused and focus stays where it was put. -->
+            @for (option of filterOptions; track option.value; let i = $index) {
               <nb-list-item
                 class="filter-item"
+                role="radio"
+                [attr.aria-checked]="selectedFilterValue === option.value"
+                [attr.tabindex]="i === filterTabStopIndex ? 0 : -1"
+                [class.selected]="selectedFilterValue === option.value"
                 (click)="selectedFilterOption(option.value)"
+                (keydown.enter)="selectedFilterOption(option.value)"
+                (keydown.space)="$event.preventDefault(); selectedFilterOption(option.value)"
+                (keydown)="onFilterKeydown($event, i)"
                 >
                 {{ option.displayName }}
               </nb-list-item>
@@ -22,13 +41,17 @@
     </nb-card>
   </div>
   <div class="col-10 h-100">
-    <nb-card class="tags-component h-100" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+    <nb-card class="tags-component h-100">
       <nb-card-header class="flex flex-column pb-0">
-        <h4 class="card-header-title">
-          <ngx-header-title>
-            {{ 'TAGS_PAGE.HEADER' | translate }}
-          </ngx-header-title>
-        </h4>
+        <!-- The heading needs a block of its own for the action row to be laid
+             out beside it rather than under it (see `.ga-page-header`). -->
+        <div class="card-header-title">
+          <h4>
+            <ngx-header-title>
+              {{ 'TAGS_PAGE.HEADER' | translate }}
+            </ngx-header-title>
+          </h4>
+        </div>
         <div class="gauzy-action">
           <ngx-gauzy-button-action
             [componentName]="viewComponentName"
@@ -38,21 +61,25 @@
           ></ngx-gauzy-button-action>
         </div>
       </nb-card-header>
-      <nb-card-body>
+      <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
         @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
           <div class="table-scroll-container">
             <angular2-smart-table
+              [class.ga-table-loading]="loading"
               [settings]="settingsSmartTable"
               [source]="smartTableSource"
               (userRowSelect)="selectTag($event)"
               style="cursor: pointer"
             ></angular2-smart-table>
           </div>
-          @if (smartTableSource) {
-            <ngx-pagination [source]="smartTableSource"></ngx-pagination>
-          }
+          <div class="pagination-container">
+            @if (smartTableSource) {
+              <ngx-pagination [source]="smartTableSource"></ngx-pagination>
+            }
+          </div>
         } @else {
           <ga-card-grid
+            [loading]="loading"
             [totalItems]="pagination?.totalItems"
             [settings]="settingsSmartTable"
             [source]="tags"

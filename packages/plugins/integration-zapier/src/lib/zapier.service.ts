@@ -20,7 +20,10 @@ import {
 	DEFAULT_ENTITY_SETTINGS,
 	PROJECT_TIED_ENTITIES,
 	RequestContext,
-	IntegrationTenantService
+	IntegrationTenantService,
+	parseFindOptionsRelations,
+	isAccessTokenPayload,
+	JWT_ALGORITHMS
 } from '@gauzy/core';
 import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
 import {
@@ -869,7 +872,7 @@ export class ZapierService {
 				tenantId,
 				name: IntegrationEnum.ZAPIER
 			} as IIntegrationFilter,
-			relations: ['settings']
+			relations: parseFindOptionsRelations(['settings'])
 		});
 
 		if (total === 0) {
@@ -934,9 +937,15 @@ export class ZapierService {
 	 */
 	verifyJwtToken(token: string): { id: string; tenantId: string; organizationId?: string } {
 		try {
-			const decoded = verify(token, environment.JWT_SECRET!);
+			const decoded = verify(token, environment.JWT_SECRET!, { algorithms: JWT_ALGORITHMS });
 			if (typeof decoded !== 'object' || !decoded || !('tenantId' in decoded)) {
 				throw new Error('Invalid JWT payload structure');
+			}
+			// Every purpose-specific token (estimate, invoice share, password reset, ...) is signed with
+			// the same JWT_SECRET and several carry `tenantId`; only an access token that names its
+			// user may act for the tenant (GHSA-28wv-vrxj-rp4q).
+			if (!isAccessTokenPayload(decoded) || typeof decoded['id'] !== 'string' || !decoded['id']) {
+				throw new Error('Not an access token');
 			}
 			return decoded as { id: string; tenantId: string; organizationId?: string };
 		} catch {

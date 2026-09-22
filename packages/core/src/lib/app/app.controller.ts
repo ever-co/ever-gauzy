@@ -2,7 +2,13 @@ import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as moment from 'moment';
 import { Public } from '@gauzy/common';
-import { IAppSetting } from '@gauzy/contracts';
+import { IAppSetting, IAppVersionInfo } from '@gauzy/contracts';
+
+// Application version + deployed commit, embedded at Docker build time via
+// GAUZY_APP_VERSION / GAUZY_APP_COMMIT env vars (see .deploy/*/Dockerfile).
+// Empty when running from source without those set.
+const APP_VERSION = process.env.GAUZY_APP_VERSION || '';
+const APP_COMMIT = process.env.GAUZY_APP_COMMIT || '';
 
 @Controller()
 @Public() // This seems to be a custom decorator indicating that this controller's endpoints are public
@@ -31,6 +37,23 @@ export class AppController {
 		return {
 			status: HttpStatus.OK,
 			message: `${app_name} API`
+		};
+	}
+
+	/**
+	 * Returns the running API's version and deployed commit, so clients (e.g. the
+	 * web UI footer) can display it and detect a version drift between the API and
+	 * the web app. Public — no secrets, safe to expose unauthenticated.
+	 *
+	 * @returns {IAppVersionInfo} `{ name: 'api', version, commit }`.
+	 */
+	@HttpCode(HttpStatus.OK)
+	@Get('/version')
+	getAppVersion(): IAppVersionInfo {
+		return {
+			name: 'api',
+			version: APP_VERSION,
+			commit: APP_COMMIT
 		};
 	}
 

@@ -4,10 +4,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  */
 @use 'sass:string';
+@use 'sass:map';
 // @nebular theming framework
 @use '@nebular/theme/styles/theming' as *;
 // @nebular out of the box themes
 @use '@nebular/theme/styles/themes' as *;
+// Shared gauzy token maps — without them every gauzy-* custom property this
+// theme emits is EMPTY, and all the modern surfaces render broken on it.
+@use '../gauzy-theme-maps' as gz;
 
 $theme: (
   color-primary-100: #fff2f7,
@@ -366,8 +370,11 @@ $theme: (
     string.unquote(
       '0px 3px 5px -1px rgba(0, 0, 0, 0.2), 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 0px 1px 18px 0px rgba(0, 0, 0, 0.12)'
     ),
-  header-background-color: color-primary-default,
-  footer-background-color: color-primary-default,
+  // Surface-coloured chrome like every other registered theme: the Material
+  // pink stays the ACCENT (buttons, links, focus), but painting the whole
+  // header/footer band with color-primary made the app read as a toy.
+  header-background-color: background-basic-color-1,
+  footer-background-color: background-basic-color-1,
   header-text-color: text-basic-color,
   footer-text-color: text-basic-color,
   footer-text-highlight-color: footer-text-color,
@@ -490,4 +497,8 @@ $theme: (
   option-giant-text-font-weight: material-regular-font-weight
 );
 
-$nb-themes: nb-register-theme($theme, material-dark, dark);
+$nb-themes: nb-register-theme(
+	map.merge(map.merge($theme, gz.$gauzy-canvas-dark), gz.$gauzy-shared-dark),
+	material-dark,
+	dark
+);

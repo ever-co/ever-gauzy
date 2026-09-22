@@ -19,10 +19,7 @@ export class IncomeUpdateHandler implements ICommandHandler<IncomeUpdateCommand>
 		const { id, entity } = command;
 		try {
 			await this.incomeService.findOneByIdString(id);
-			const income = await this.incomeService.create({
-				id,
-				...entity
-			});
+			const income = await this.incomeService.create({ ...entity, id });
 
 			let averageIncome = 0;
 			let averageBonus = 0;

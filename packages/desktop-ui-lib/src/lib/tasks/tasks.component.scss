@@ -175,8 +175,10 @@ input {
     gap: 4px;
   }
 
-  .cke_contents {
-    height: 309px !important;
+  // Same concrete floor the legacy editor chrome was pinned to (309px), since
+  // the `height: 100%` chain has no sized ancestor to resolve against here.
+  ga-rich-text-editor.description .ProseMirror {
+    min-height: 309px;
   }
 }
 

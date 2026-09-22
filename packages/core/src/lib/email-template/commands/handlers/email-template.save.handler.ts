@@ -1,11 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { IsNull } from 'typeorm';
+import { isEmpty } from '@gauzy/utils';
 import { EmailTemplateSaveCommand } from '../email-template.save.command';
 import { EmailTemplateService } from '../../email-template.service';
 import { EmailTemplate } from '../../email-template.entity';
 import { LanguagesEnum, EmailTemplateEnum, IEmailTemplate } from '@gauzy/contracts';
-import * as mjml2html from 'mjml';
 import { BadRequestException } from '@nestjs/common';
 import { RequestContext } from './../../../core/context';
+import { compileMjml } from '../../compile-mjml';
 
 @CommandHandler(EmailTemplateSaveCommand)
 export class EmailTemplateSaveHandler
@@ -66,8 +68,11 @@ export class EmailTemplateSaveHandler
 		} = await this.emailTemplateService.findOneOrFailByWhereOptions({
 			languageCode,
 			name: `${name}/${type}`,
-			organizationId,
-			tenantId
+			// No organization means the tenant-wide row (organizationId IS NULL) — never "any
+			// organization": EmailTemplateService is not tenant-scoped, and a dropped predicate here
+			// would pick (and then overwrite) another organization's template of the same name.
+			organizationId: isEmpty(organizationId) ? IsNull() : organizationId,
+			tenantId: isEmpty(tenantId) ? IsNull() : tenantId
 		});
 
 		let entity: IEmailTemplate;
@@ -83,7 +88,7 @@ export class EmailTemplateSaveHandler
 					entity = {
 						...record,
 						mjml: content,
-						hbs: mjml2html(content).html
+						hbs: compileMjml(content).html
 					};
 					break;
 			}
@@ -103,7 +108,7 @@ export class EmailTemplateSaveHandler
 					break;
 				case 'html':
 					entity.mjml = content;
-					entity.hbs = mjml2html(content).html;
+					entity.hbs = compileMjml(content).html;
 					break;
 			}
 			await this.emailTemplateService.create(entity);

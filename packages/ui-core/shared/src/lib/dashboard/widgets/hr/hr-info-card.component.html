@@ -1,0 +1,64 @@
+<!--
+	State order is load-bearing. `loading` is checked BEFORE `hasEmployee` because
+	a widget starts out loading with no context resolved yet — testing the
+	employee first would flash "No employee selected" on every single paint.
+-->
+@if (error(); as message) {
+	<div class="hr-info-state is-error" role="alert">
+		<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+		<p class="state-title">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}</p>
+		<p class="state-hint" [title]="message">{{ message }}</p>
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}
+		</button>
+	</div>
+} @else if (loading()) {
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
+		class="hr-info-skeleton"
+		aria-busy="true"
+		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
+	>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+		<span class="skeleton-line skeleton-title"></span>
+		<span class="skeleton-line skeleton-meta"></span>
+		<span class="skeleton-line skeleton-value"></span>
+	</output>
+} @else if (!hasEmployee()) {
+	<div class="hr-info-state is-empty">
+		<nb-icon icon="person-outline"></nb-icon>
+		<p class="state-title">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE' | translate }}</p>
+		<p class="state-hint">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE_HINT' | translate }}</p>
+	</div>
+} @else if (unavailableKey()) {
+	<div class="hr-info-state is-empty">
+		<nb-icon icon="info-outline"></nb-icon>
+		<p class="state-title">{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.UNAVAILABLE' | translate }}</p>
+		<p class="state-hint">{{ unavailableKey() | translate }}</p>
+	</div>
+} @else {
+	<ga-info-block
+		[accordion]="rows().length > 0"
+		[blockType]="highlight() ? 'highlight' : ''"
+		[title]="titleKey() | translate"
+		[meta]="metaKey() ? (metaKey() | translate: metaParams() ?? {}) : ''"
+		[value]="value()"
+		[color]="color()"
+		(openInfo)="openInfo.emit()"
+	>
+		<!--
+			Projected into `ga-info-block`'s accordion body. Only rendered when the
+			block is in accordion mode, which is exactly when `rows()` is non-empty.
+		-->
+		@for (row of rows(); track row.id) {
+			<ga-info-block
+				listItem="true"
+				[title]="row.titleKey | translate"
+				[meta]="row.metaKey ? (row.metaKey | translate: row.metaParams ?? {}) : ''"
+				[value]="row.value"
+				[color]="row.color"
+				(openInfo)="openRow.emit(row)"
+			></ga-info-block>
+		}
+	</ga-info-block>
+}

@@ -47,6 +47,10 @@ export enum PermissionsEnum {
 	ORG_PAYMENT_ADD_EDIT = 'ORG_PAYMENT_ADD_EDIT',
 	ORG_INCOMES_VIEW = 'ORG_INCOMES_VIEW',
 	ORG_INCOMES_EDIT = 'ORG_INCOMES_EDIT',
+	/** Payroll Permissions */
+	ORG_PAYROLL_VIEW = 'ORG_PAYROLL_VIEW',
+	ORG_PAYROLL_EDIT = 'ORG_PAYROLL_EDIT',
+	ORG_PAYROLL_APPROVE = 'ORG_PAYROLL_APPROVE',
 	ORG_EXPENSES_VIEW = 'ORG_EXPENSES_VIEW',
 	ORG_EXPENSES_EDIT = 'ORG_EXPENSES_EDIT',
 	PROFILE_EDIT = 'PROFILE_EDIT',
@@ -250,6 +254,19 @@ export enum PermissionsEnum {
 	ORG_STRATEGIC_INITIATIVE_UPDATE = 'ORG_STRATEGIC_INITIATIVE_UPDATE',
 	ORG_STRATEGIC_INITIATIVE_DELETE = 'ORG_STRATEGIC_INITIATIVE_DELETE',
 	/** Organization Strategic Initiative Permissions End */
+	/** AI Chat Permissions Start */
+	AI_CHAT_ACCESS = 'AI_CHAT_ACCESS',
+	AI_CHAT_SETTINGS = 'AI_CHAT_SETTINGS',
+	/** AI Chat Permissions End */
+	/** Documents Permissions Start */
+	DOCS_READ = 'DOCS_READ',
+	DOCS_CREATE = 'DOCS_CREATE',
+	DOCS_UPDATE = 'DOCS_UPDATE',
+	DOCS_DELETE = 'DOCS_DELETE',
+	DOCS_MANAGE = 'DOCS_MANAGE',
+	DOCS_REVIEW = 'DOCS_REVIEW',
+	DOCS_AI_IMPORT = 'DOCS_AI_IMPORT',
+	/** Documents Permissions End */
 	/**
 	 * Plugin Permissions
 	 */
@@ -293,6 +310,10 @@ export const PermissionGroups = {
 		PermissionsEnum.INTEGRATION_EDIT,
 		PermissionsEnum.INTEGRATION_DELETE,
 		/** Integration CRUD Permissions End */
+		/** AI Chat Permissions Start */
+		PermissionsEnum.AI_CHAT_ACCESS,
+		PermissionsEnum.AI_CHAT_SETTINGS,
+		/** AI Chat Permissions End */
 		/** Jobs Permissions Start */
 		PermissionsEnum.ORG_JOB_APPLY,
 		PermissionsEnum.ORG_JOB_SEARCH,
@@ -303,6 +324,9 @@ export const PermissionGroups = {
 		PermissionsEnum.PUBLIC_PAGE_EDIT,
 		PermissionsEnum.ORG_PAYMENT_VIEW,
 		PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
+		PermissionsEnum.ORG_PAYROLL_VIEW,
+		PermissionsEnum.ORG_PAYROLL_EDIT,
+		PermissionsEnum.ORG_PAYROLL_APPROVE,
 		PermissionsEnum.ORG_EXPENSES_VIEW,
 		PermissionsEnum.ORG_EXPENSES_EDIT,
 		PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
@@ -460,6 +484,11 @@ export const PermissionGroups = {
 		/** Organization Strategic Initiative Permissions Start */
 		PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 		/** Organization Strategic Initiative Permissions End */
+		/** Documents Permissions Start */
+		PermissionsEnum.DOCS_READ,
+		PermissionsEnum.DOCS_CREATE,
+		PermissionsEnum.DOCS_UPDATE
+		/** Documents Permissions End */
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
@@ -489,6 +518,12 @@ export const PermissionGroups = {
 		PermissionsEnum.TENANT_API_KEY_DELETE,
 		/** OAuth App Client Registry */
 		PermissionsEnum.OAUTH_CLIENT_VIEW,
-		PermissionsEnum.OAUTH_CLIENT_EDIT
+		PermissionsEnum.OAUTH_CLIENT_EDIT,
+		/** Documents Permissions Start */
+		PermissionsEnum.DOCS_DELETE,
+		PermissionsEnum.DOCS_MANAGE,
+		PermissionsEnum.DOCS_REVIEW,
+		PermissionsEnum.DOCS_AI_IMPORT
+		/** Documents Permissions End */
 	]
 };

@@ -2,6 +2,11 @@ dist
 
 tmp
 .cache
+# Local build caches — huge (multi-GB) and never needed inside images
+.angular
+**/.angular
+.nx
+**/.nx
 .github
 .circle
 .circleci

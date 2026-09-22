@@ -5,7 +5,7 @@ import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauz
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
@@ -27,6 +27,13 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @returns A pagination object containing the filtered tags and total count.
 	 */
 	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
+		// This method builds its own query instead of going through the CRUD read methods, so the
+		// sink-level check in `CrudService` never runs for it. Assert the sensitive-relation table
+		// here too: every tenant-scoped entity exposes an `organization` relation, so a client-supplied
+		// `relations` reaches the protected rows from any entity, not only from the ones whose
+		// controller mounts `SensitiveRelationsInterceptor`.
+		this.assertRelationsPermitted({ relations });
+
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = input;
 
@@ -53,7 +60,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 				// Add relations if specified
 				if (relations.length) {
-					query.setFindOptions({ relations });
+					query.setFindOptions({ relations: parseFindOptionsRelations(relations) });
 				}
 
 				// Apply filter criteria
@@ -79,6 +86,11 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		input: ITagFindInput,
 		relations: string[] | FindOptionsRelations<Tag> = []
 	): Promise<IPagination<ITag>> {
+		// See findTagsByLevel: this method builds its own query and never reaches the CRUD sink, so the
+		// sensitive-relation table has to be asserted here. `GET /api/tags` is the cheapest route to
+		// the protected rows — the controller declares no permission at all.
+		this.assertRelationsPermitted({ relations });
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -115,7 +127,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					// Define special criteria to find specific relations
 					query.setFindOptions({
-						...(relations ? { relations: relations } : {})
+						...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 					});
 
 					// Left join all relational tables with tag table

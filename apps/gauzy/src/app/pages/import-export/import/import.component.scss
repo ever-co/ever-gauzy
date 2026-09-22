@@ -1,30 +1,36 @@
 @use 'gauzy/gauzy-table' as *;
 @forward '../export/export.component';
 
+// Fallbacks on every `--gauzy-*` in this file: a bare `var()` naming a custom
+// property a theme does not emit drops the whole declaration, which on this page
+// means a drop zone with no border and body text with no colour.
 .well {
   height: 180px;
   width: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--gauzy-text-color-2);
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 }
 
 .my-drop-zone {
-  border: dashed 3px var(--gauzy-border-default-color);
+  border: dashed 3px var(--gauzy-border-default-color, rgba(126, 126, 143, 0.1));
   border-radius: var(--border-radius);
 }
 
+// Drag-over state. Was `dashed 3px red` — a raw keyword red, which reads as a
+// rejected file rather than "drop it here", and is the one colour on the page
+// that answers to no theme. The primary accent is what the rest of the app uses
+// for an active target.
 .nv-file-over {
-  border: dashed 3px red;
+  border: dashed 3px var(--color-primary-default);
   border-radius: var(--border-radius);
 }
 
-/* Default class applied to drop zones on over */
-.another-file-over-class {
-  border: dashed 3px green;
-  border-radius: var(--border-radius);
-}
+// Removed `.another-file-over-class` (`border: dashed 3px green`). The string
+// `another-file-over-class` appears nowhere in `import.component.html` or
+// `import.component.ts`; the template has a single drop zone and it toggles
+// `.nv-file-over` above.
 
 .import-data {
   display: flex;
@@ -64,7 +70,7 @@
   }
 
   .progress {
-    background-color: var(--gauzy-card-2);
+    background-color: var(--gauzy-card-2, rgba(50, 50, 50, 0.03));
     border-radius: var(--button-rectangle-border-radius);
 
     .progress-bar {
@@ -91,7 +97,7 @@
 :host ::ng-deep {
   nb-radio {
     span.text {
-      color: var(--gauzy-text-color-2);
+      color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
       font-size: 11px;
       font-weight: 400;
       line-height: 13px;
@@ -113,8 +119,8 @@
   line-height: 15px;
   letter-spacing: 0em;
   text-align: left;
-  color: var(--gauzy-text-color-2);
-  background: var(--gauzy-card-3);
+  color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  background: var(--gauzy-card-3, rgba(255, 255, 255, 0.5));
   border-radius: var(--border-radius);
   padding: 3px;
   height: 42px;
@@ -130,7 +136,7 @@
 }
 
 .custom-body {
-  background: var(--gauzy-card-4);
+  background: var(--gauzy-card-4, rgba(255, 255, 255, 0.75));
   border-radius: nb-theme(border-radius);
   margin-top: 6px;
   padding-left: 6px;
@@ -145,29 +151,30 @@
     max-height: calc(100vh - 45rem);
   }
 
+  // Overrides Bootstrap's `.border-bottom`, which is a flat `1px solid #dee2e6`
+  // and therefore the same near-white hairline on all eight themes.
   .border-bottom {
-    border-bottom: 1px solid rgba(126, 126, 143, 0.1) !important;
+    border-bottom: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.1)) !important;
+  }
+
+  // Both lists bind `[class.border-bottom-none]` on their last row
+  // (`lastItem` in the upload queue, `lastHistory` in the import history), but
+  // nothing ever defined the class, so the final row kept a divider under it
+  // and the list ended on a rule with nothing below it.
+  .border-bottom-none {
+    border-bottom: none !important;
   }
 
   [nbButton].appearance-outline.status-primary {
     border: none;
   }
-
-  .item,
-  a {
-    cursor: pointer;
-  }
-
-  .selected {
-    background-color: rgba(126, 126, 143, 0.1);
-    box-shadow: -6px 0 0 0 rgba(0, 0, 0, 0.15);
-    border-radius: 8px 0 0 8px;
-
-    &.border-bottom {
-      border-bottom: none;
-    }
-  }
 }
+
+// Removed `.custom-body .item, .custom-body a { cursor: pointer }` and the
+// `.custom-body .selected { ... }` block. Component styles only reach this
+// component's own template, and `import.component.html` has no `item` class, no
+// `selected` class (nothing binds one) and no `<a>` at all — its two lists are
+// `div.row.border-bottom` and its links are `[nbButton]`s.
 
 nb-badge {
   position: relative;

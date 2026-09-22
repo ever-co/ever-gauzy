@@ -1,0 +1,18 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="rows().length === 0"
+	[skeletonRows]="4"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.PROJECT_MANAGEMENT.MOST_VIEWED_PROJECTS.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="pm-panel">
+		<div class="pm-list">
+			@for (row of rows(); track row.project.id) {
+				<div class="pm-row project-row">
+					<ngx-project [rowData]="row"></ngx-project>
+				</div>
+			}
+		</div>
+	</div>
+</ga-teams-widget-state>

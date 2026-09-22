@@ -14,6 +14,7 @@ import {
 	ToastrService,
 	UsersOrganizationsService
 } from '@gauzy/ui-core/core';
+import { entitySelectPanelClass } from '../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +35,22 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	 * @property addTag - Whether adding new tags is allowed (default: true).
 	 */
 	@Input() addTag: boolean = true;
+
+	/**
+	 * Extra class(es) for the DROPDOWN PANEL, not for this component.
+	 *
+	 * The header passes `header-entity-select` so its panels can be set in the header band's
+	 * text; see `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`.
+	 */
+	@Input() dropdownClass: string;
+
+	/**
+	 * The class list ng-select puts on its appended panel. See `entitySelectPanelClass()` for
+	 * why an appended panel needs the whole list rebuilt rather than added to.
+	 */
+	get panelClass(): string | null {
+		return entitySelectPanelClass(this.dropdownClass, 'organization-entity-select');
+	}
 
 	constructor(
 		private readonly _router: Router,
@@ -318,13 +335,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	/**
-	 * event fired on model change.
-	 */
-	onChange() {
-		this.isOpen = false;
-	}
-
-	/**
 	 * Creates a new organization entry and navigates to the organization's page to open the add dialog.
 	 *
 	 * @param name - The name of the new organization to be created.
@@ -352,15 +362,6 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 			this._toastrService.error(error);
 		}
 	};
-
-	/**
-	 * Closes the component when a click occurs outside of it.
-	 *
-	 * @param event - The click event.
-	 */
-	onClickOutside(event: Event): void {
-		if (this.isOpen && !event) this.isOpen = false;
-	}
 
 	/**
 	 * Selects an organization by its ID.

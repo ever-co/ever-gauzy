@@ -1,9 +1,9 @@
 export const SalesEstimatesPageData = {
 	invoiceType: 'By Employee Hours',
-	discountValue: 2,
-	editDiscountValue: 4,
+	discountValue: '2',
+	editDiscountValue: '4',
 	discountType: 'Percent',
-	taxValue: 5,
+	taxValue: '5',
 	taxType: 'Percent',
 	saveAsDraftButton: 'Save as Draft',
 	editButton: 'Edit',

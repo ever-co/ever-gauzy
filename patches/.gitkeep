@@ -1,0 +1,2 @@
+# Keep this directory tracked so Docker `COPY patches ./patches` and `patch-package` still
+# work when there are no active patches. Add real `*.patch` files here as needed.

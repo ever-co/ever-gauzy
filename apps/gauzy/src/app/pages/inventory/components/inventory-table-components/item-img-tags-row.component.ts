@@ -67,7 +67,9 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				height: 64px;
 				border-radius: 4px;
 				object-fit: cover;
-				box-shadow: var(--gauzy-shadow) (0 0 0 / 15%);
+				/* the trailing '(0 0 0 / 15%)' left here by an old find-and-replace made
+				   the whole declaration invalid, so no shadow rendered at all */
+				box-shadow: var(--gauzy-shadow);
 			}
 
 			.no-image {
@@ -92,7 +94,11 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				line-height: 17px;
 				letter-spacing: 0em;
 				text-align: left;
-				color: var(--gauzy-color-text-1);
+				/* was var(--gauzy-color-text-1): not a registered token (the name is
+				   --gauzy-text-color-1), so the declaration was invalid at
+				   computed-value time and dropped. Fallback covers the two material
+				   themes, which never define the gauzy text tokens. */
+				color: var(--gauzy-text-color-1, var(--text-basic-color));
 				margin-bottom: 4px;
 			}
 		`

@@ -14,6 +14,7 @@ import { isNotNullOrUndefined } from '@gauzy/utils';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { parseFindOptionsRelations } from '../core/utils';
 import {
 	activityLogUpdatedFieldsAndValues,
 	generateActivityLogDescription,
@@ -120,7 +121,7 @@ export class ActivityLogService extends TenantAwareCrudService<ActivityLog> {
 		// Ensure that filters are properly defined
 		const queryOptions: FindManyOptions<ActivityLog> = {
 			where,
-			...(relations && { relations }),
+			...(relations && { relations: parseFindOptionsRelations(relations) }),
 			take: take,
 			skip: take * (skip - 1) // Calculate offset (skip) based on validated skip value
 		};

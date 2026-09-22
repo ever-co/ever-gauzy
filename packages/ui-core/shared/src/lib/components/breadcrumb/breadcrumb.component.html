@@ -1,0 +1,46 @@
+@if (breadcrumbs().length) {
+	<!--
+		The landmark name goes through translate like every crumb label does: the
+		component re-resolves the trail on language change, so a hard-coded English
+		"Breadcrumb" would be the one string a screen reader still announces in
+		English after switching locale.
+	-->
+	<nav class="ga-breadcrumb" [attr.aria-label]="'MENU.BREADCRUMB' | translate">
+		<ol class="ga-breadcrumb-list">
+			@for (crumb of breadcrumbs(); track $index; let first = $first, last = $last) {
+				<li class="ga-breadcrumb-item">
+					@if (!first) {
+						<span class="ga-breadcrumb-separator" aria-hidden="true">
+							<nb-icon icon="chevron-right-outline"></nb-icon>
+						</span>
+					}
+
+					@if (crumb.link) {
+						<a class="ga-breadcrumb-link" [routerLink]="crumb.link" [title]="crumb.label">
+							@if (crumb.icon) {
+								<nb-icon [icon]="crumb.icon" [attr.aria-label]="crumb.label"></nb-icon>
+							} @else {
+								{{ crumb.label }}
+							}
+						</a>
+					} @else {
+						<!-- Only the LAST crumb is the current page: intermediate levels without a
+						     route stay muted so they never read as "you are here". -->
+						<span
+							[class.ga-breadcrumb-current]="last"
+							[class.ga-breadcrumb-text]="!last"
+							[title]="crumb.label"
+							[attr.aria-current]="last ? 'page' : null"
+						>
+							@if (crumb.icon) {
+								<nb-icon [icon]="crumb.icon" [attr.aria-label]="crumb.label"></nb-icon>
+							} @else {
+								{{ crumb.label }}
+							}
+						</span>
+					}
+				</li>
+			}
+		</ol>
+	</nav>
+}

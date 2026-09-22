@@ -6,13 +6,6 @@
           {{ 'MENU.TIMESHEETS' | translate }}
         </ngx-header-title>
       </h4>
-      @if (selectedDateRange$ | async; as selectedDateRange) {
-        <ngx-date-range-title
-          [start]="selectedDateRange?.startDate"
-          [end]="selectedDateRange?.endDate"
-          [format]="'dddd, LL'"
-        ></ngx-date-range-title>
-      }
     </div>
   </nb-card-header>
   <nb-card-body class="p-0">

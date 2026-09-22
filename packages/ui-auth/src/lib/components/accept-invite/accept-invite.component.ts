@@ -71,7 +71,12 @@ export class AcceptInviteComponent extends TranslationBaseComponent implements O
 	 */
 	submitForm = async (input: IUserRegistrationInput): Promise<void> => {
 		try {
-			const { user, password } = input;
+			// `terms` is destructured here for the same reason it is emitted by
+			// the form: this function used to take only `{ user, password }`, so
+			// the invite form's required terms checkbox gated the button and
+			// then vanished — the second place the same value was dropped on the
+			// way to the server.
+			const { user, password, terms } = input;
 
 			// Get token and email from query parameters if they exist
 			const token = this._route.snapshot.queryParamMap.get('token');
@@ -82,6 +87,7 @@ export class AcceptInviteComponent extends TranslationBaseComponent implements O
 				const auth: IAuthResponse = await this._inviteService.acceptInvite({
 					user,
 					password,
+					terms,
 					token,
 					email
 				});

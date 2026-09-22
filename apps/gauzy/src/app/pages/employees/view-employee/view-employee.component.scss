@@ -1,0 +1,47 @@
+@use 'themes' as *;
+
+// The page frame is bounded to the viewport, so the profile scrolls inside the
+// card body rather than growing the page.
+nb-card {
+  height: 100%;
+  margin-bottom: 0;
+}
+
+nb-card-body {
+  overflow-y: auto;
+}
+
+.employee-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+}
+
+.employee-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.employee-identity-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.employee-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  color: nb-theme(text-basic-color);
+}
+
+.employee-position {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: nb-theme(text-hint-color);
+}

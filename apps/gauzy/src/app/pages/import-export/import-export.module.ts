@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { DialogsModule } from '@gauzy/ui-core/shared';
+import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ImportExportRoutingModule } from './import-export-routing.module';
 import { ImportExportComponent } from './import-export.component';
 import { ExternalRedirectComponent } from './external-redirect/external-redirect.component';
@@ -18,6 +18,7 @@ import { ExternalRedirectComponent } from './external-redirect/external-redirect
 		NbIconModule,
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
+		SharedModule,
 		TranslateModule.forChild()
 	],
 	declarations: [ImportExportComponent, ExternalRedirectComponent],

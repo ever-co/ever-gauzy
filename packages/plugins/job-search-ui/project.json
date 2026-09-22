@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/job-search-ui/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:plugin", "type:plugin-extension-point"],
 	"implicitDependencies": ["contracts", "ui-config", "ui-core"],
 	"targets": {
 		"build": {

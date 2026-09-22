@@ -3,6 +3,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../../employee/employee.service';
 import { ExpenseService } from '../../expense.service';
 import { FindSplitExpenseQuery } from '../expense.find-split-expense.query';
+import { parseFindOptionsRelations } from '../../../core/utils';
 
 /**
  * Finds the split expense for a given organization.
@@ -47,7 +48,7 @@ export class FindSplitExpenseHandler
 						}
 					}
 				],
-				relations
+				relations: parseFindOptionsRelations(relations)
 			},
 			filterDate
 		);

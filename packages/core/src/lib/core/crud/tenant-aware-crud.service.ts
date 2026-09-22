@@ -1,12 +1,15 @@
-import { NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, In, Repository, UpdateResult } from 'typeorm';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
+import { LegacyFindManyOptions, LegacyFindOneOptions, MultiORMEnum } from '../utils';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
+import { assertCriteriaHasPredicate } from './criteria.helper';
+import { assertGraphNotForeign } from './nested-graph-ownership.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
 
@@ -18,36 +21,43 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
 	implements ICrudService<T>
 {
-	private static readonly SKIP_EMPLOYEE_FILTER_KEY = 'skipEmployeeFilter';
+	private static skipEmployeeFilterSequence = 0;
+
+	/** The sequence keeps the key unique even when two services share a runtime class name. */
+	private readonly skipEmployeeFilterKey = `skipEmployeeFilter:${this.constructor.name}:${++TenantAwareCrudService.skipEmployeeFilterSequence}`;
 
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
 
 	/**
-	 * Gets the current skipEmployeeFilter flag from request context.
+	 * Reads how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
 	 */
-	private getSkipEmployeeFilter(): boolean {
+	private getSkipEmployeeFilterDepth(): number {
 		try {
 			const context = RequestContext['clsService'];
-			return context?.get(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY) ?? false;
+			return context?.get(this.skipEmployeeFilterKey) ?? 0;
 		} catch {
-			return false;
+			return 0;
 		}
 	}
 
 	/**
-	 * Sets the skipEmployeeFilter flag in request context.
+	 * Stores how many bypass blocks are currently open for this service.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions.
 	 */
-	private setSkipEmployeeFilter(value: boolean): void {
+	private setSkipEmployeeFilterDepth(depth: number): void {
 		try {
 			const context = RequestContext['clsService'];
-			context?.set(TenantAwareCrudService.SKIP_EMPLOYEE_FILTER_KEY, value);
+			context?.set(this.skipEmployeeFilterKey, depth);
 		} catch {
 			// Silently fail if context is not available
 		}
+	}
+
+	private getSkipEmployeeFilter(): boolean {
+		return this.getSkipEmployeeFilterDepth() > 0;
 	}
 
 	/**
@@ -76,13 +86,38 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			} as unknown as FindOptionsWhere<T>;
 		}
 
+		// A caller who may not act for other employees, but has no employee record of their own.
+		if (!isNotEmpty(employeeId) && hasEmployeeColumn && !canChangeEmployee) {
+			return this.findConditionsWithoutOwnEmployee();
+		}
+
 		return {} as FindOptionsWhere<T>;
+	}
+
+	/**
+	 * Conditions for a caller who lacks CHANGE_SELECTED_EMPLOYEE and has no employee record, on an
+	 * entity with an `employeeId` column.
+	 *
+	 * The default keeps the historical tenant-wide scope. A service whose rows are strictly personal
+	 * overrides this with {@link neverMatchingEmployeeCondition}.
+	 */
+	protected findConditionsWithoutOwnEmployee(): FindOptionsWhere<T> {
+		return {} as FindOptionsWhere<T>;
+	}
+
+	/**
+	 * A condition that matches no row (`employeeId IN ()` renders as `0=1`).
+	 */
+	protected neverMatchingEmployeeCondition(): FindOptionsWhere<T> {
+		return { employeeId: In([]) } as unknown as FindOptionsWhere<T>;
 	}
 
 	/**
 	 * Executes a callback without automatic employeeId filtering.
 	 * This is useful when you need to implement custom access control logic.
 	 * Uses AsyncLocalStorage via RequestContext to avoid race conditions between concurrent requests.
+	 *
+	 * The bypass applies to this service only, and is reference counted.
 	 *
 	 * @param callback - The async function to execute without employee filtering
 	 * @returns The result of the callback
@@ -95,12 +130,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * ```
 	 */
 	protected async withoutEmployeeFilter<R>(callback: () => Promise<R>): Promise<R> {
-		const originalValue = this.getSkipEmployeeFilter();
-		this.setSkipEmployeeFilter(true);
+		this.setSkipEmployeeFilterDepth(this.getSkipEmployeeFilterDepth() + 1);
 		try {
 			return await callback();
 		} finally {
-			this.setSkipEmployeeFilter(originalValue);
+			this.setSkipEmployeeFilterDepth(Math.max(0, this.getSkipEmployeeFilterDepth() - 1));
 		}
 	}
 
@@ -163,7 +197,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter - Additional find options.
 	 * @returns The find one options based on the current user's relationship with the tenant and additional options.
 	 */
-	private findOneWithTenant(filter?: FindOneOptions<T>): FindOneOptions<T> {
+	private findOneWithTenant(filter?: LegacyFindOneOptions<T>): LegacyFindOneOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
 			return filter;
@@ -194,7 +228,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter - Additional find options.
 	 * @returns The find many options based on the current user's relationship with the tenant and additional options.
 	 */
-	private findManyWithTenant(filter?: FindManyOptions<T>): FindManyOptions<T> {
+	private findManyWithTenant(filter?: LegacyFindManyOptions<T>): LegacyFindManyOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
 			return filter;
@@ -226,7 +260,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async count(options?: FindManyOptions<T>): Promise<number> {
+	public async count(options?: LegacyFindManyOptions<T>): Promise<number> {
 		return await super.count(this.findManyWithTenant(options));
 	}
 
@@ -253,7 +287,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter
 	 * @returns
 	 */
-	public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async findAll(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.findAll(this.findManyWithTenant(filter));
 	}
 
@@ -263,7 +297,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter
 	 * @returns
 	 */
-	public async find(filter?: FindManyOptions<T>): Promise<T[]> {
+	public async find(filter?: LegacyFindManyOptions<T>): Promise<T[]> {
 		return await super.find(this.findManyWithTenant(filter));
 	}
 
@@ -275,7 +309,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param filter
 	 * @returns
 	 */
-	public async paginate(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
+	public async paginate(filter?: LegacyFindManyOptions<T>): Promise<IPagination<T>> {
 		return await super.paginate(this.findManyWithTenant(filter));
 	}
 
@@ -293,7 +327,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByIdString(id: ID, options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+	public async findOneOrFailByIdString(id: ID, options?: LegacyFindOneOptions<T>): Promise<ITryRequest<T>> {
 		return await super.findOneOrFailByIdString(id, this.findOneWithTenant(options));
 	}
 
@@ -304,7 +338,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByOptions(options?: FindOneOptions<T>): Promise<ITryRequest<T>> {
+	public async findOneOrFailByOptions(options?: LegacyFindOneOptions<T>): Promise<ITryRequest<T>> {
 		return await super.findOneOrFailByOptions(this.findOneWithTenant(options));
 	}
 
@@ -336,7 +370,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByIdString(id: ID, options?: FindOneOptions<T>): Promise<T> {
+	public async findOneByIdString(id: ID, options?: LegacyFindOneOptions<T>): Promise<T> {
 		return await super.findOneByIdString(id, this.findOneWithTenant(options));
 	}
 
@@ -347,7 +381,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByOptions(options: FindOneOptions<T>): Promise<T> {
+	public async findOneByOptions(options: LegacyFindOneOptions<T>): Promise<T> {
 		return await super.findOneByOptions(this.findOneWithTenant(options));
 	}
 
@@ -367,6 +401,107 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	}
 
 	/**
+	 * Refuses to persist an entity whose id already names a row of ANOTHER tenant.
+	 *
+	 * create()/save() with an id are upserts: TypeORM's save() looks the row up by primary key only and
+	 * then UPDATEs it, while this service merely stamps the caller's tenantId onto the payload. A body
+	 * that smuggled a foreign id in (`{ id, ...body }` spreads, un-whitelisted update DTOs) therefore
+	 * overwrote — and re-tenanted — another tenant's row (GHSA-gwpq-mmw7-vx85 / GHSA-x4mv-fhwj-g3rp
+	 * class). Rows the caller's tenant owns, and ids that do not exist yet, are untouched.
+	 *
+	 * @param entity - The payload about to be persisted.
+	 * @param tenantId - The caller's tenant.
+	 */
+	protected async assertNotForeignRow(entity: IPartialEntity<T>, tenantId: ID | null): Promise<void> {
+		const id = (entity as any)?.id;
+		if (!id || !tenantId || !this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')) {
+			return;
+		}
+		let existing: unknown;
+		let existingTenantId: ID | null | undefined;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// `filters: false` matters: MikroORM applies the soft-delete filter by default, so a
+				// foreign row that was soft-deleted would be invisible here — the guard would pass and
+				// the upsert would claim it. The TypeORM branch uses `withDeleted: true` for the same
+				// reason.
+				existing = await this.mikroOrmRepository.findOne({ id } as any, {
+					fields: ['id', 'tenantId'] as any,
+					filters: false
+				});
+				existingTenantId = (existing as any)?.tenantId;
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				existing = await this.typeOrmRepository.findOne({
+					where: { id } as FindOptionsWhere<T>,
+					select: { id: true, tenantId: true } as any,
+					withDeleted: true
+				});
+				existingTenantId = (existing as any)?.tenantId;
+				break;
+			}
+		}
+		// Fail CLOSED on a tenant-less row too: on the update-through-create endpoints this guard is the
+		// only ownership check, so a row with a NULL tenantId (legacy / global / written without a
+		// request context) must not be overwritten — and claimed — by a tenant user.
+		if (existing && String(existingTenantId ?? '') !== String(tenantId)) {
+			throw new ForbiddenException('The record belongs to another tenant');
+		}
+	}
+
+	/**
+	 * Batch form of {@link assertNotForeignRow} for createMany()/saveMany() (one lookup for all ids).
+	 */
+	protected async assertNotForeignRows(entities: IPartialEntity<T>[], tenantId: ID | null): Promise<void> {
+		const ids = (entities ?? []).map((entity) => (entity as any)?.id).filter((id) => !!id);
+		if (!ids.length || !tenantId || !this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')) {
+			return;
+		}
+		let existing: any[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				existing = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, {
+					fields: ['id', 'tenantId'] as any,
+					filters: false
+				});
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				existing = await this.typeOrmRepository.find({
+					where: { id: In(ids) } as FindOptionsWhere<T>,
+					select: { id: true, tenantId: true } as any,
+					withDeleted: true
+				});
+				break;
+		}
+		if (existing.some((row) => String(row?.tenantId ?? '') !== String(tenantId))) {
+			throw new ForbiddenException('One of the records belongs to another tenant');
+		}
+	}
+
+	/**
+	 * Extends the root-id check to the nested objects and ids of the payload (cascaded relations,
+	 * re-parented one-to-many children, owner / many-to-many links). See {@link assertGraphNotForeign}.
+	 *
+	 * The lookups go through TypeORM for both ORMs: both are initialised on the same database, and the
+	 * check only reads. For MikroORM the same payload shape reaches `assign()` / `em.create()`, which
+	 * resolve nested objects by primary key as well.
+	 *
+	 * @param entities - The payloads about to be persisted.
+	 * @param tenantId - The caller's tenant.
+	 */
+	protected async assertNestedGraphNotForeign(entities: IPartialEntity<T>[], tenantId: ID | null): Promise<void> {
+		await assertGraphNotForeign(
+			this.typeOrmRepository.manager,
+			this.typeOrmRepository.metadata,
+			entities as unknown[],
+			tenantId
+		);
+	}
+
+	/**
 	 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 	 * Note that it copies only properties that are present in entity schema.
 	 *
@@ -376,6 +511,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async create(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
+		await this.assertNotForeignRow(entity, tenantId);
+		await this.assertNestedGraphNotForeign([entity], tenantId);
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
@@ -407,6 +544,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async createMany(entities: IPartialEntity<T>[]): Promise<T[]> {
 		const tenantId = RequestContext.currentTenantId();
+		await this.assertNotForeignRows(entities, tenantId);
+		await this.assertNestedGraphNotForeign(entities, tenantId);
 		const employeeId = RequestContext.currentEmployeeId();
 
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
@@ -434,6 +573,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async save(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		await this.assertNotForeignRow(entity, tenantId);
+		await this.assertNestedGraphNotForeign([entity], tenantId);
 
 		return await super.save({
 			...entity,
@@ -469,6 +610,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async saveMany(entities: IPartialEntity<T>[]): Promise<T[]> {
 		const tenantId = RequestContext.currentTenantId();
+		await this.assertNotForeignRows(entities, tenantId);
+		await this.assertNestedGraphNotForeign(entities, tenantId);
 		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
 
 		const enriched = entities.map((entity) => ({
@@ -517,7 +660,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * @param options - Additional options for querying, such as extra conditions or query parameters.
 	 * @returns {Promise<DeleteResult>} - The result of the delete operation.
 	 */
-	public async delete(criteria: string | FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<DeleteResult> {
+	public async delete(criteria: string | FindOptionsWhere<T>, options?: LegacyFindOneOptions<T>): Promise<DeleteResult> {
 		try {
 			// Merge additional where conditions from options into criteria if needed
 			let where: FindOptionsWhere<T> =
@@ -527,6 +670,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				where = { ...where, ...options.where };
 			}
 
+			// The caller's criteria must select rows on its own BEFORE tenant scoping is merged in:
+			// `delete({ employeeId: undefined })` would otherwise pass CrudService's guard on the strength
+			// of the injected tenantId alone and delete every row of the tenant.
+			assertCriteriaHasPredicate(where, 'delete');
+
 			const user = RequestContext.currentUser();
 
 			// Proceed with the delete operation using the merged criteria
@@ -535,6 +683,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				...this.findConditionsWithTenantByUser(user)
 			});
 		} catch (err) {
+			// A malformed criteria (no predicate) is the caller's error, not a missing record.
+			if (err instanceof BadRequestException) {
+				throw err;
+			}
 			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
 		}
@@ -588,7 +740,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async softDelete(
 		criteria: string | number | FindOptionsWhere<T>,
-		options?: FindOneOptions<T>
+		options?: LegacyFindOneOptions<T>
 	): Promise<UpdateResult | T> {
 		try {
 			let record: T | null;

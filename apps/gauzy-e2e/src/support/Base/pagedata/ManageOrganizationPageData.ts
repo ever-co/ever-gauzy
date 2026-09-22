@@ -3,7 +3,7 @@ export const ManageOrganizationPageData = {
 	dashboardCardText: 'Go to dashboard',
 	country: 'Bulgaria',
 	city: 'Sofia',
-	postcode: 1000,
+	postcode: '1000',
 	bonusType: 'Profit Based Bonus',
 	bonusPercentage: 75,
 	expiryPeriod: 7,

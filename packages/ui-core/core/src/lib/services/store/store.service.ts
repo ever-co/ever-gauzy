@@ -38,6 +38,8 @@ export interface AppState {
 	featureToggles: IFeatureToggle[];
 	featureOrganizations: IFeatureOrganization[];
 	featureTenant: IFeatureOrganization[];
+	/** Whether this deployment does billing at all. False on every self-hosted install by default. */
+	billingEnabled: boolean;
 }
 
 export interface PersistState {
@@ -64,7 +66,10 @@ export function createInitialAppState(): AppState {
 		workspacesError: null,
 		featureToggles: [],
 		featureOrganizations: [],
-		featureTenant: []
+		featureTenant: [],
+		// Stays false until the API says otherwise, so nothing billing-related renders on a
+		// self-hosted install that never answers.
+		billingEnabled: false
 	} as AppState;
 }
 
@@ -349,6 +354,15 @@ export class Store {
 		this.appStore.update({
 			featureToggles: featureToggles
 		});
+	}
+
+	get billingEnabled(): boolean {
+		const { billingEnabled } = this.appQuery.getValue();
+		return billingEnabled;
+	}
+
+	set billingEnabled(billingEnabled: boolean) {
+		this.appStore.update({ billingEnabled });
 	}
 
 	get featureTenant(): IFeatureOrganization[] {

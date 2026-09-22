@@ -1,0 +1,8 @@
+<gz-time-track-counter-card
+	[progress]="true"
+	[value]="todayActivity() + '%'"
+	[counterValue]="todayActivity()"
+	[loading]="loading()"
+	[error]="errorMessage()"
+	(retry)="refresh()"
+></gz-time-track-counter-card>

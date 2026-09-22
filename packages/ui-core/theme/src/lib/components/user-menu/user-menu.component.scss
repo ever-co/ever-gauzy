@@ -1,128 +1,147 @@
 @use 'themes' as *;
+@use '@shared/panel' as *;
 
 :host {
-  .main-menu {
-    width: 36rem;
-    //height: 30.5625rem; // After implement features revert to this height
-    height: 18rem;
-    box-shadow: 0rem 0.25rem 1rem rgba(0, 0, 0, 0.25);
-    border-radius: nb-theme(border-radius) nb-theme(border-radius)
-      nb-theme(border-radius) 0rem;
-    background: nb-theme(background-basic-color-1);
-    display: flex;
-    .right-menu {
-      background: nb-theme(color-primary-transparent-default);
-      border-radius: 0px nb-theme(border-radius) nb-theme(border-radius) 0px;
-      width: 50%;
-      padding: 13.5px 15.5px 13.5px 26px;
-      span {
-        display: flex;
-        justify-content: flex-end;
-      }
-      p {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: relative;
-        cursor: pointer;
-        .theme {
-          width: 100%;
-        }
-      }
-    }
-    .left-menu {
-      width: 50%;
-      border-radius: 0px nb-theme(border-radius) nb-theme(border-radius) 0px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      @include nb-ltr(padding, 19px 47px 10px 11px);
-      @include nb-rtl(padding, 19px 11px 10px 47px);
-      .sub-menu {
-        background: rgba(126, 126, 143, 0.05);
-        padding: 10px;
-        border-radius: nb-theme(border-radius);
-        align-items: flex-start;
-        display: flex;
-        flex-direction: column;
-      }
-      .button {
-        padding: 10px;
-        background: nb-theme(background-basic-color-1);
-        border-radius: nb-theme(border-radius);
-        margin: 4px 3px 0px 0px;
-        width: fit-content;
-        font-size: 0.6875rem;
-        &.selected {
-          background: nb-theme(background-primary-color-1);
-          color: nb-theme(text-control-color);
-        }
-      }
+  display: block;
+}
+
+.account-panel {
+  @include gauzy-panel-surface();
+  display: flex;
+  flex-direction: column;
+  width: 17.5rem;
+  max-width: calc(100vw - 1.5rem);
+  max-height: calc(100vh - 6rem);
+  @include gauzy-panel-scroll();
+  padding: $panel-pad;
+  box-sizing: border-box;
+}
+
+.panel-header {
+  @include gauzy-panel-header();
+
+  gauzy-user {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    ::ng-deep .user-container.with-identity {
+      padding-inline: 0;
     }
   }
-  .notifications,
-  .status {
-    display: flex;
-    flex-wrap: wrap;
+}
+
+.panel-close {
+  @include gauzy-panel-close();
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: $panel-gap;
+}
+
+.panel-overline {
+  @include gauzy-panel-overline();
+}
+
+.panel-divider {
+  @include gauzy-panel-divider();
+}
+
+.panel-row {
+  @include gauzy-panel-row();
+  font-family: inherit;
+
+  ::ng-deep strong {
+    font-weight: 600;
   }
 
-  p.link,
-  .button,
-  i,
-  a {
-    cursor: pointer;
-    text-decoration: none;
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+}
+
+.status-control {
+  display: flex;
+  flex-direction: column;
+  min-height: 1.5rem;
+}
+
+.control-row {
+  @include gauzy-panel-control-row();
+
+  .theme {
+    width: 100%;
+  }
+}
+
+.panel-footer {
+  @include gauzy-panel-footer();
+
+  .download-label {
+    white-space: nowrap;
+  }
+
+  .download-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: $panel-row-radius;
+      color: nb-theme(text-hint-color);
+      text-decoration: none;
+      transition:
+        background-color 0.12s ease-in-out,
+        color 0.12s ease-in-out;
+
+      &:hover {
+        background-color: #{$panel-hover-tint};
+        color: nb-theme(text-basic-color);
+      }
+
+      i {
+        font-size: 0.875rem;
+        line-height: 1;
+      }
+    }
+  }
+}
+
+.account-panel ::ng-deep {
+  .theme-container,
+  .switch-container {
+    font-size: $panel-text-row;
+    font-weight: 400;
+    line-height: 1rem;
+    color: nb-theme(text-basic-color);
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+  }
+
+  nb-select.appearance-outline .select-button {
+    width: 8.25rem;
+    min-width: 8.25rem;
+    height: 1.75rem;
+    min-height: 1.75rem;
+    padding: 0 0.5rem;
+    border: 0;
+    box-shadow: inset 0 0 0 1px #{$panel-hairline};
+    border-radius: $panel-row-radius;
+    background-color: transparent;
+    font-size: $panel-text-row;
+    font-weight: 400;
     color: nb-theme(text-basic-color);
   }
-  .links {
-    align-items: flex-start;
-    display: flex;
-    flex-direction: column;
-  }
 
-  .right-menu {
-    .download-apps-content {
-      display: flex;
-      align-items: center;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 15px;
-      letter-spacing: 0em;
-      text-align: left;
-      min-height: 20px;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
-
-      .download-apps-label {
-        color: #7e7e8f;
-      }
-
-      .download-apps-icons {
-        margin-left: 0.3rem;
-        a {
-          margin: 0 0.2rem;
-          transition: 0.2s;
-          padding: 0.1rem 0.2rem;
-          border: 1px solid transparent;
-
-          i {
-            padding: 0;
-            margin: 0;
-            color: #7e7e8f;
-          }
-
-          &:hover {
-            color: nb-theme(text-primary-color);
-            border: 1px solid nb-theme(text-primary-color);
-            border-radius: calc(nb-theme(border-radius) - 4px);
-            transform: scale(1.5);
-          }
-        }
-      }
-    }
-  }
-  .disabled-table {
-	pointer-events: none;
-	opacity: 0.5;
+  nb-select.appearance-outline.status-basic .select-button.placeholder {
+    font-size: $panel-text-row;
+    color: nb-theme(text-basic-color);
   }
 }

@@ -162,12 +162,12 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UseValidationPipe({ transform: true })
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceDTO
 	): Promise<Invoice> {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
 	}
 
 	/**
@@ -197,7 +197,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateEstimateInvoiceDTO
 	) {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
 	}
 
 	/**
@@ -224,7 +224,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Put('/:id/action')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
-		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ ...entity, id }));
 	}
 
 	/**

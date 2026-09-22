@@ -1,0 +1,67 @@
+:host {
+	display: block;
+}
+
+.general-settings {
+	.setting-section {
+		max-width: 48rem;
+		padding: 1rem 1.25rem 1.25rem;
+		border-radius: var(--card-border-radius, 0.5rem);
+		background: var(--gauzy-card-2, var(--color-basic-transparent-100));
+	}
+
+	.setting-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.setting-copy {
+		min-width: 0;
+	}
+
+	.setting-title {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 600;
+	}
+
+	.setting-description {
+		margin: 0.25rem 0 0;
+		font-size: 0.875rem;
+		opacity: 0.7;
+	}
+
+	.setting-status {
+		flex: 0 0 auto;
+		font-size: 0.8125rem;
+		opacity: 0.7;
+	}
+
+	.preferred-ui-options {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 2rem;
+		margin-top: 1rem;
+	}
+
+	.setting-hint {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.375rem;
+		margin: 0.75rem 0 0;
+		font-size: 0.8125rem;
+		opacity: 0.8;
+
+		nb-icon {
+			flex: 0 0 auto;
+			font-size: 1rem;
+			margin-top: 0.0625rem;
+		}
+
+		&.muted {
+			opacity: 0.6;
+		}
+	}
+}

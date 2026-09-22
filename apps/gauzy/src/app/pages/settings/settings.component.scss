@@ -1,0 +1,123 @@
+@use 'themes' as *;
+@use 'var' as *;
+
+:host {
+	display: block;
+	height: 100%;
+}
+
+// Two-column settings shell: narrow settings menu | selected page content.
+.settings-shell {
+	display: flex;
+	align-items: flex-start;
+	gap: 1rem;
+	height: 100%;
+}
+
+.settings-nav {
+	flex: 0 0 auto;
+	width: 220px;
+	height: fit-content;
+	background-color: nb-theme(gauzy-card-2);
+	border-radius: nb-theme(border-radius);
+	padding: 0.75rem 0.5rem;
+}
+
+.settings-nav-title {
+	display: block;
+	padding: 0 0.5rem;
+	margin-bottom: 0.5rem;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: nb-theme(text-hint-color);
+}
+
+.settings-nav-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+// Same flat chrome as the sidebar rows and the overlay menus: NOTHING is painted
+// at rest, hover is a low-contrast tint on a small radius, and "current" is a
+// slightly stronger tint plus weight — never a filled pill.
+.settings-nav-link {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 5px 8px;
+	// The shared row radius, not the CARD radius: a 10px pill on a 20px row is
+	// exactly what made these entries read as blocks.
+	border-radius: nb-theme(gauzy-radius-sm);
+	font-size: 13px;
+	line-height: 1.25;
+	// Muted at rest so the active row stands out on weight/colour alone.
+	color: nb-theme(text-hint-color);
+	text-decoration: none;
+	cursor: pointer;
+	transition-duration: 0.12s;
+	transition-property: background-color, color;
+	transition-timing-function: ease-in-out;
+
+	i {
+		width: 1rem;
+		font-size: 12px;
+		text-align: center;
+		color: inherit;
+	}
+
+	&:hover {
+		background-color: nb-theme(gauzy-hover-tint);
+		color: nb-theme(text-basic-color);
+	}
+
+	// Keyboard parity with hover, plus a non-colour indicator: the tint alone is
+	// a colour-only signal (WCAG 1.4.11 / 2.4.7). Inset so the row never grows.
+	&:focus-visible {
+		background-color: nb-theme(gauzy-hover-tint);
+		color: nb-theme(text-basic-color);
+		outline: 2px solid nb-theme(color-primary-default);
+		outline-offset: -2px;
+	}
+
+	// Current page. Icon and label deliberately share `text-basic-color` instead
+	// of the brand accent: `text-primary-color` is color-primary-500 (#6e49e8),
+	// which measures ~2.5:1 against the tinted row on the dark themes. Tint +
+	// weight already say "current" without depending on a colour.
+	&.active {
+		background-color: nb-theme(gauzy-active-tint);
+		color: nb-theme(text-basic-color);
+		font-weight: 600;
+	}
+}
+
+.settings-nav-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.settings-content {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 100%;
+}
+
+@include respond(md) {
+	.settings-shell {
+		flex-direction: column;
+	}
+
+	.settings-nav {
+		width: 100%;
+	}
+
+	.settings-content {
+		width: 100%;
+	}
+}

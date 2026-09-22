@@ -6,6 +6,7 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
     selector: 'ga-payment-method-filter',
     template: `
 		<ng-select
+		  appendTo="body"
 		  [clearable]="true"
 		  [closeOnSelect]="true"
 		  [placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"

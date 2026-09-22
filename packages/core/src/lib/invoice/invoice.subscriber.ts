@@ -1,7 +1,6 @@
 import { EventSubscriber } from 'typeorm';
-import { sign } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
 import { Invoice } from './invoice.entity';
+import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { getORMType, MultiORM, MultiORMEnum } from '../core/utils';
 import {
@@ -123,6 +122,7 @@ export class InvoiceSubscriber extends BaseEntityEventSubscriber<Invoice> {
 	 * @returns The generated JWT string.
 	 */
 	private createToken(payload: InvoiceTokenPayload): string {
-		return sign(payload, environment.JWT_SECRET, {});
+		// Purpose-typed so the share link cannot be used as any other kind of token (GHSA-28wv-vrxj-rp4q).
+		return signPurposeToken(TokenPurposeEnum.INVOICE_SHARE, { ...payload });
 	}
 }

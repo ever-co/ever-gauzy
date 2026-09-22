@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, HttpException } from '@nestjs/common';
 import { Between, Brackets, Like, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
@@ -15,7 +15,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -130,13 +130,24 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			// Verify the record belongs to the current tenant before updating
+			// Verify the record belongs to the current tenant before updating, and make the verified id
+			// the one that is saved: the body is not DTO-validated, so a body id spread after the path id
+			// used to re-point the save (TypeORM save() with an existing PK is an UPDATE of that row).
+			//
+			// `findOneByIdString` THROWS NotFoundException when nothing matches the tenant-scoped
+			// conditions, so this call is the check — an id belonging to another tenant, or to no row
+			// at all, never reaches `save()` (where it would INSERT under the caller's tenant).
 			await this.findOneByIdString(id);
 			return await this.save({
-				id,
-				...timeOffRequest
+				...timeOffRequest,
+				id
 			});
 		} catch (error) {
+			// Preserve intentional HTTP exceptions (the 404 above, and the ForbiddenException that
+			// `save()` raises for a cross-tenant row) instead of flattening them to 400.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error);
 		}
 	}
@@ -164,6 +175,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	 * @returns
 	 */
 	public async pagination(options: any) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -226,11 +241,17 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						query.setFindOptions({
 							skip: options.skip ? options.take * (options.skip - 1) : 0,
 							take: options.take ? options.take : 10,
-
-							...(options.join ? { join: options.join } : {}),
-							...(options.relations ? { relations: options.relations } : {})
+							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 						});
 					}
+					/**
+					 * The `join` find-option was removed in TypeORM v1 (passing it throws, which surfaced as a
+					 * blanket 400 for every paginated request). Declare the aliases the raw predicates below
+					 * rely on explicitly instead.
+					 */
+					query.leftJoin(`${query.alias}.policy`, 'policy');
+					query.leftJoin(`${query.alias}.employees`, 'employees');
+					query.leftJoin('employees.user', 'user');
 					query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {

@@ -1,0 +1,65 @@
+{
+	"name": "@gauzy/plugin-ai-chat",
+	"version": "0.1.0",
+	"description": "Ever Gauzy AI Chat backend plugin — Vercel AI SDK powered streaming chat endpoint with tool calling, provider registry (per-provider plugins), per-tenant BYOK credentials and optional MCP tools",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/ai-chat"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-ai-chat",
+		"lib:build:prod": "yarn nx build plugin-ai-chat",
+		"lib:watch": "yarn nx build plugin-ai-chat --watch"
+	},
+	"dependencies": {
+		"@gauzy/constants": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@nestjs/swagger": "^11.2.6",
+		"ai": "^7.0.15",
+		"@ai-sdk/mcp": "^2.0.7",
+		"chalk": "^4.1.0",
+		"express": "^5.2.1",
+		"rxjs": "^7.8.2",
+		"zod": "^4.1.13"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.14",
+		"@nestjs/core": "^11.1.14"
+	},
+	"keywords": [
+		"Ever Gauzy",
+		"plugin",
+		"AI",
+		"chat",
+		"Vercel AI SDK",
+		"MCP",
+		"NestJS"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

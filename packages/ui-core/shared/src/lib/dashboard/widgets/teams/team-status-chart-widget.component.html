@@ -1,0 +1,12 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="isEmpty()"
+	[skeletonRows]="3"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_STATUS_CHART.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="chart-container">
+		<canvas baseChart [type]="chartType" [data]="chartData()" [options]="chartOptions()"></canvas>
+	</div>
+</ga-teams-widget-state>

@@ -1,15 +1,21 @@
-<nb-card
-  [nbSpinner]="loading"
-  nbSpinnerStatus="primary"
-  nbSpinnerSize="large"
-  >
+<nb-card>
   <nb-card-header class="card-custom-header">
+    <!-- Title block: the heading only (the breadcrumb trail is parked under it
+         at runtime by ngx-header-title). -->
     <div class="card-header-title">
       <h4>
         <ngx-header-title>
           {{ 'EXPENSES_PAGE.EXPENSES' | translate }}
         </ngx-header-title>
       </h4>
+    </div>
+    <!-- Action side of the one-line page header (see `.ga-page-header` in
+         ui-core/static/styles/_overrides.scss): the secondary "Manage Categories"
+         sits with `+ Add`, the action strip and the view selector, so all of them
+         are centred on the same axis as the title. It used to be a sibling of the
+         <h4> inside the title block, where it was centred on the title LINE while
+         the action row was centred on the two-line title+trail block. -->
+    <div class="gauzy-button-container">
       <button
         nbButton
         status="basic"
@@ -19,8 +25,6 @@
         >
         {{ 'BUTTONS.MANAGE_CATEGORIES' | translate }}
       </button>
-    </div>
-    <div class="gauzy-button-container">
       <ngx-gauzy-button-action
         [isDisable]="disableButton"
         [buttonTemplate]="actionButtons"
@@ -29,10 +33,11 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body>
+  <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
       <div class="table-scroll-container">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           style="cursor: pointer"
           [settings]="smartTableSettings"
           [source]="smartTableSource"
@@ -48,6 +53,7 @@
       </div>
     } @else {
       <ga-card-grid
+        [loading]="loading"
         [totalItems]="pagination?.totalItems"
         [settings]="smartTableSettings"
         [source]="expenses"
@@ -63,18 +69,23 @@
   let-selectedItem="selectedItem"
   >
   <div class="btn-group actions">
-    <ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
+    <!-- View carries the record's OWN guard (the one the route enforces), not
+         the edit guard it used to sit behind — it shows nothing a reader of
+         this page cannot already see in the grid. -->
+    <ng-template ngxPermissionsOnly="ORG_EXPENSES_VIEW">
       <button
         nbButton
         status="basic"
         class="action secondary"
-        [disabled]="disableButton"
+        [disabled]="!selectedItem && disableButton"
+        (click)="viewExpense(selectedItem)"
         size="small"
-        underConstruction
         >
         <nb-icon icon="eye-outline" pack="eva"></nb-icon>
         {{ 'BUTTONS.VIEW' | translate }}
       </button>
+    </ng-template>
+    <ng-template ngxPermissionsOnly="ORG_EXPENSES_EDIT">
       <button
         nbButton
         status="basic"
@@ -124,3 +135,16 @@
     </button>
   </ng-template>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each expense that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedExpense"
+  heading="EXPENSES_PAGE.EXPENSES"
+  [subtitle]="viewedExpense?.category?.name"
+  (closed)="closeView()"
+  >
+  @if (viewedExpense) {
+    <ngx-record-view [record]="viewedExpense" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

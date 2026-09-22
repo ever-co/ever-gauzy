@@ -9,12 +9,28 @@ import { DateFormatPipe } from '../../pipes';
     template: `<span>{{ title }}</span>`,
     styles: [
         `
+			/*
+			 * Styled to match the breadcrumb trail (breadcrumb.component.scss), which
+			 * is the other sub-heading line in a card header — same 13px scale, same
+			 * regular weight, same muted token, same 0.25rem offset under the title.
+			 * The old 14px/600 --gauzy-text-color-2 read as a competing second title.
+			 *
+			 * :host is a block so the range drops onto its own line under the heading
+			 * text it sits beside, mirroring where .ga-page-title-trail lands. A
+			 * custom element is phrasing content, so this stays valid inside an <h4>
+			 * (unlike the trail's <nav><ol>, which is why that one gets relocated).
+			 */
+			:host {
+				display: block;
+				margin-top: 0.25rem;
+			}
 			span {
-				font-size: 14px;
-				font-weight: 600;
-				line-height: 16px;
-				letter-spacing: -0.009em;
-				color: var(--gauzy-text-color-2);
+				/* 0.8125rem = nb-theme(menu-text-font-size), the trail's scale. */
+				font-size: 0.8125rem;
+				font-weight: 400;
+				line-height: 1.25rem;
+				letter-spacing: normal;
+				color: var(--text-hint-color);
 			}
 		`
     ],

@@ -1,9 +1,8 @@
 import { FindOptionsWhere, MoreThan } from 'typeorm';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
-import { sign, verify } from 'jsonwebtoken';
-import { environment } from '@gauzy/config';
-import { ID, IEstimateEmail, IEstimateEmailFindInput, IInvoice } from '@gauzy/contracts';
+import { ID, IEstimateEmail, IInvoice } from '@gauzy/contracts';
+import { isNonEmptyString, signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { EstimateEmail } from './estimate-email.entity';
@@ -57,7 +56,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 			};
 
 			// Generate JWT token
-			const token = sign(payload, environment.JWT_SECRET, {
+			const token = signPurposeToken(TokenPurposeEnum.ESTIMATE, payload, {
 				expiresIn: `${moment.duration(moment(expireDate).diff(moment())).asSeconds()}s`
 			});
 
@@ -87,8 +86,29 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	 */
 	async validate(params: FindOptionsWhere<EstimateEmail>, relations: string[] = []): Promise<IEstimateEmail> {
 		try {
-			const decoded = verify(params.token as string, environment.JWT_SECRET) as IEstimateEmailFindInput;
-			const { organizationId, tenantId, email, token } = decoded;
+			const { email, token } = params;
+			if (!isNonEmptyString(email) || !isNonEmptyString(token)) {
+				throw new BadRequestException();
+			}
+
+			// The token must be an estimate token for the email in the link, and the lookup is bound
+			// to the STORED token. The old code read a `token` claim that is never minted and ignored
+			// the query email, so a token of another kind (e.g. an appointment token) reduced the
+			// `where` to `expireDate > now` and returned another tenant's row, token included
+			// (GHSA-28wv-vrxj-rp4q). Untyped (legacy) estimate tokens still match their stored row.
+			const decoded = verifyPurposeToken<{
+				invoiceId: string;
+				organizationId: string;
+				tenantId: string;
+				email: string;
+			}>(token, TokenPurposeEnum.ESTIMATE, {
+				requiredClaims: ['invoiceId', 'organizationId', 'tenantId', 'email'],
+				allowLegacyUntyped: true
+			});
+			if (decoded.email.trim().toLowerCase() !== email.trim().toLowerCase()) {
+				throw new BadRequestException();
+			}
+			const { organizationId, tenantId } = decoded;
 
 			const result = await this.findOneOrFailByOptions({
 				select: {
@@ -103,7 +123,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 					}
 				},
 				where: {
-					email,
+					email: decoded.email,
 					token,
 					organizationId,
 					tenantId,

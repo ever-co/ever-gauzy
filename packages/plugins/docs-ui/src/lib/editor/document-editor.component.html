@@ -1,0 +1,28 @@
+<div class="gz-document-editor" [class.gz-document-editor--readonly]="!editable">
+	<!-- ProseMirror mounts here -->
+	<div #editorHost class="gz-editor-mount"></div>
+
+	<!-- Selection / table / empty-line chrome (registered as editor plugins once the editor exists) -->
+	<ng-container *ngIf="editor">
+		<gz-text-bubble-menu
+			[editor]="editor"
+			(commentRequested)="commentRequested.emit($event)"
+		></gz-text-bubble-menu>
+		<gz-table-bubble-menu [editor]="editor"></gz-table-bubble-menu>
+		<gz-floating-block-menu [editor]="editor"></gz-floating-block-menu>
+	</ng-container>
+
+	<!-- Hidden picker feeding the upload pipeline (slash image/attachment commands).
+	     `aria-hidden` keeps it out of the accessibility tree — the label is a static
+	     fallback only (this standalone component does not import `TranslateModule`). -->
+	<input
+		#fileInput
+		id="gz-editor-file-input"
+		type="file"
+		multiple
+		class="gz-editor-file-input"
+		tabindex="-1"
+		aria-hidden="true"
+		aria-label="Upload files"
+	/>
+</div>

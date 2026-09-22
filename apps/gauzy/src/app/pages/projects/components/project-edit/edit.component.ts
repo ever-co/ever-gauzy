@@ -4,6 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, map, tap, Observable } from 'rxjs';
 import {
+	BaseEntityEnum,
 	IFavorite,
 	IIntegrationTenant,
 	IOrganization,
@@ -30,6 +31,9 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 	public project$: Observable<IOrganizationProject>;
 	public project: IOrganizationProject;
 	public organization: IOrganization = this._store.selectedOrganization;
+
+	/** Entity type the record-side Documents panel attaches its links to. */
+	public readonly documentEntity = BaseEntityEnum.OrganizationProject;
 
 	constructor(
 		public readonly translateService: TranslateService,

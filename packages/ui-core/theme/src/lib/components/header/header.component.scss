@@ -1,51 +1,101 @@
 @use '@nebular/theme/styles/global/breakpoints' as *;
 @use 'themes' as *;
 
+// The action cluster is chrome, not a form, so its text runs a step below the
+// app's 0.8125rem control size. Resolved from the theme rather than typed here,
+// because the dropdown PANELS have to land on the same size and they are
+// appended to `body`, where this stylesheet cannot reach them — see
+// `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`. A `var()`
+// rather than `nb-theme()`: half of this file sits outside
+// `nb-install-component()`, where the Sass function is not available.
+$header-text-size: var(--gauzy-header-text-size, 0.6875rem);
 
-$orange: #f56d58;
+// ONE width for every selector pill in the cluster, in the same spirit as
+// `gauzy-header-control-height` next door: the pills used to size to their
+// contents between 9rem and 13.5rem, so the whole row re-laid itself every
+// time a different organization or project was picked. A fixed box truncates
+// instead: each selector clips its own trigger to an ellipsis and puts the
+// untruncated text on its `title`.
+$header-control-width: 9.5rem;
+
+$header-text-color: var(--gauzy-text-color-2, var(--text-hint-color));
 
 @include nb-install-component() {
   width: 100%;
+  // The demo banner is an advisory notice, not a call to action, so it reads as
+  // a tinted informational strip rather than the solid primary bar it used to
+  // be: a full-saturation band above the header made the demo build look like
+  // it was permanently in an error state. Everything is resolved from the
+  // primary TRANSPARENT ramp so the tint composites over whatever the active
+  // theme paints behind it, light or dark, instead of being a fixed colour.
   .notification-header {
-    background-color: #1b005d;
-    text-align: center;
-    font-weight: 300;
-    margin: 0;
-    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    flex-wrap: wrap;
     width: 100%;
+    margin: 0;
+    padding: 0.375rem 1rem;
     position: relative;
-    color: rgb(236, 236, 236);
+    background-color: var(--color-primary-transparent-100);
+    border-bottom: 1px solid var(--color-primary-transparent-300);
+    text-align: center;
+    font-size: $header-text-size;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: var(--text-hint-color);
+
     a {
-      color: rgb(236, 236, 236);
+      color: var(--text-primary-color);
+      font-weight: 600;
+      text-decoration: none;
+      // Underline only on hover: a permanently underlined link in a strip this
+      // thin turns the whole band into a rule.
+      border-bottom: 1px solid transparent;
+      transition:
+        color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
     }
-    a:hover {
-      color: rgb(226, 226, 226);
+
+    a:hover,
+    a:focus-visible {
+      color: var(--text-primary-hover-color);
+      border-bottom-color: currentColor;
     }
   }
 
   .main-header {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: flex-end;
     width: 100%;
     background-color: transparent;
     .show-large-down {
       display: none;
     }
 
+    .header-lead {
+      display: flex;
+      align-items: center;
+      flex: none;
+      @include nb-ltr(margin-right, auto);
+      @include nb-rtl(margin-left, auto);
+
+      nb-action {
+        @include nb-ltr(padding-left, 1.5rem);
+        @include nb-rtl(padding-right, 1.5rem);
+      }
+    }
+
     .logo-container {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      //width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
       max-width: nb-theme(sidebar-width);
       width: nb-theme(sidebar-width);
       margin-left: nb-theme(sidebar-width-compact);
-      button.hidden-menu {
-        padding: 0 0.5rem;
-        height: 1.625rem;
-        width: 1.625rem;
-        margin-left: 0.625rem;
-      }
       ngx-gauzy-logo {
         width: 100%;
       }
@@ -53,14 +103,11 @@ $orange: #f56d58;
         width: nb-theme(sidebar-width-compact);
         justify-content: space-around;
         align-items: center;
-        button.hidden-menu {
-          margin-left: 0;
-        }
         ::ng-deep .accordion.workspace {
           box-shadow: none;
           width: 1.75rem;
           height: auto;
-          .logo {
+          .tenant {
             display: none;
           }
           nb-accordion-item-header {
@@ -77,18 +124,25 @@ $orange: #f56d58;
     nb-action {
       height: auto;
       display: flex;
-      align-content: center;
-      margin-right: 0.625rem;
-      @include nb-ltr(margin-right, 0.625rem);
-      @include nb-rtl(margin-left, 0.625rem);
+      align-items: center;
+      margin: 0;
 
       .header-selector {
         width: auto !important;
       }
     }
 
-    nb-actions.size-small nb-action {
-      padding: 0.5625rem;
+    // The date-range picker's dropdown (.md-drppicker) is NOT a CDK overlay:
+    // ngx-daterangepicker-material renders it inline, position:absolute, next
+    // to the input. Nebular gives every nb-action `position: relative`, which
+    // made this nb-action the dropdown's containing block — INSIDE the
+    // `.header-container` scroll clip below, which cut the panel to a sliver.
+    // `static` re-homes the containing block to `nb-layout-header.fixed`
+    // (positioned, outside the clip), so the panel escapes it and still paints
+    // in the header's fixed z-1040 stacking context — above the canvas AND
+    // above the chat column (1039) it may open over.
+    nb-action.date-range-action {
+      position: static;
     }
     ::ng-deep nb-search button {
       padding: 0 !important;
@@ -97,7 +151,22 @@ $orange: #f56d58;
     .header-container {
       display: flex;
       align-items: center;
+      gap: 0.75rem;
       width: auto;
+      // 🛑 A flex item defaults to `min-width: auto`, so without this it can never shrink below
+      //
+      // `min-width: 0` lets the row shrink, `max-width: 100%` keeps it inside the band, and
+      // `overflow-x: auto` keeps every control reachable when space genuinely runs out instead of
+      // silently hiding the leading ones. Nebular renders select/date popups through a CDK overlay
+      // attached to the body, so this scroll container does not clip them.
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      // Hide the scrollbar chrome; the row stays scrollable by wheel/trackpad/touch.
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
       z-index: 5;
 
       .sidebar-toggle {
@@ -166,7 +235,9 @@ $orange: #f56d58;
   top: 4.75rem;
   width: 100%;
   height: calc(100vh - 4.75rem);
-  background: white;
+  // Was a hard-coded `white`: a full-viewport white sheet over the app whenever
+  // the header overflow panel opens (below the `lg` breakpoint), in every theme.
+  background: var(--background-basic-color-1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -196,10 +267,12 @@ $orange: #f56d58;
 .timer-action {
   display: flex;
   align-items: center;
-  margin: 0 24px 0 14px !important;
-  gap: 2px;
+  gap: 0.25rem;
+  font-size: $header-text-size;
+  color: $header-text-color;
   nb-icon {
-    color: var(--gauzy-text-color-1);
+    color: $header-text-color;
+    font-size: 1rem;
   }
   cursor: pointer;
   span {
@@ -221,57 +294,243 @@ $orange: #f56d58;
   }
 }
 
-.organization-selector-container {
-  max-width: auto;
-}
-
+// The "+ Create" quick-actions button is a filled `status="primary"` nb-button,
+// so it takes the theme purple (`color-primary-500`) with Nebular's own
+// hover/focus/active states. It used to force a hardcoded salmon (#f56d58)
+// here, which no theme token knew about.
 .button.create {
-  background: $orange;
-  box-shadow: var(--gauzy-shadow);
   &[nbButton].appearance-filled {
     border-width: 0;
-  }
-  &:hover,
-  &:focus {
-    background: $orange;
+    font-size: $header-text-size;
   }
 }
 
-.organization-selector,
+.date-range-selector {
+  ::ng-deep {
+    // The component ships a 16px right margin for standalone use. In here the
+    // `.actions` row already spaces the cluster with its own `gap`, and the two
+    // stacked into a hole after the date pill.
+    .custom-input {
+      margin-right: 0;
+    }
+
+    .custom-input input {
+      font-size: $header-text-size;
+      color: $header-text-color;
+    }
+
+    // The component's own 190px / 103px were measured against the 13px text it
+    // ships with. The widest value this control can hold is
+    // `DD.MM.YYYY - DD.MM.YYYY` (23 characters), which fits these boxes at the
+    // band's smaller size with room to spare — so the field still shows the
+    // whole range, it just stops reserving space for text that is not there.
+    .custom-input input.double-range {
+      width: 145px;
+    }
+
+    .custom-input input.single-range {
+      width: 76px;
+    }
+
+    i {
+      color: $header-text-color;
+      font-size: 10px;
+    }
+  }
+}
+
+:host .actions nb-action > nb-icon {
+  font-size: 1rem;
+  color: $header-text-color;
+}
+
+// The icon-only triggers at the end of the cluster (What's New, Quick Settings,
+// the small-screen selector toggle). Nebular sizes an nb-action from the
+// actions-medium padding, which makes each one a wide slab beside the compact
+// selector pills; a square the height of the pills reads as an icon button.
+:host .actions nb-action.toggle-layout {
+  width: var(--gauzy-header-control-height, 1.75rem);
+  height: var(--gauzy-header-control-height, 1.75rem);
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--gauzy-radius-sm, 6px);
+  cursor: pointer;
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
+}
+
 .employee-selector,
 .team-selector,
-.project-selector {
+.project-selector,
+.organization-selector {
+  // The header selector pills. They are controls, so they resolve the shared
+  // control radius directly instead of borrowing the button token, and they
+  // carry the same 1px hairline ring as every other control — the old
+  // `--gauzy-shadow` is a black drop shadow, which on the near-black header band
+  // left these pills with no visible edge at all.
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
-      border-radius: var(--button-rectangle-border-radius) !important;
+      border-radius: var(--gauzy-radius-sm) !important;
     }
     .ng-select.ng-select-single .ng-select-container {
-      height: 2rem;
+      // Was a hard-coded `2rem` / `32px` pair that only these four selectors
+      // knew about, so the date-range picker standing next to them had no way
+      // to agree with it. Both sides resolve the token now.
+      height: nb-theme(gauzy-header-control-height);
       background-color: var(--gauzy-card-1);
-      min-height: 32px;
+      min-height: nb-theme(gauzy-header-control-height);
       min-width: 4rem;
     }
     .ng-select .ng-select-container {
-      box-shadow: var(--gauzy-shadow);
-      border-radius: var(--button-rectangle-border-radius) !important;
+      box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+      border-radius: var(--gauzy-radius-sm) !important;
       background-color: var(--gauzy-card-1);
+      transition:
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+    }
+
+    .ng-select .ng-select-container .ng-value-container {
+      padding-inline-start: 0.625rem !important;
+      min-width: 0;
+    }
+
+    .ng-select {
+      font-size: $header-text-size;
+    }
+    // Truncation itself lives with each selector, not here — the label template
+    // that overflows is theirs, and they are used outside this band too.
+    .ng-select .ng-select-container .ng-value {
+      color: $header-text-color;
+      font-weight: 400;
+    }
+    .ng-select .ng-select-container .ng-placeholder {
+      color: $header-text-color;
+      font-weight: 400;
+    }
+
+    .ng-select:not(.ng-select-disabled):hover .ng-select-container,
+    .ng-select.ng-select-focused .ng-select-container,
+    .ng-select.ng-select-opened .ng-select-container,
+    .ng-select.ng-select-opened > .ng-select-container:hover {
+      box-shadow: inset 0 0 0 1px var(--gauzy-active-tint, rgba(126, 126, 143, 0.2)) !important;
+    }
+
+    .ng-select:not(.ng-select-disabled):hover .ng-select-container {
+      background-image: linear-gradient(
+        var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)),
+        var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12))
+      );
+    }
+
+    .ng-select.ng-select-opened .ng-select-container,
+    .ng-select.ng-select-opened > .ng-select-container:hover {
+      background-image: linear-gradient(
+        var(--gauzy-active-tint, rgba(126, 126, 143, 0.2)),
+        var(--gauzy-active-tint, rgba(126, 126, 143, 0.2))
+      );
+    }
+
+    .ng-select .ng-clear-wrapper,
+    .ng-select .ng-arrow-wrapper {
+      margin-inline-start: 0.5rem;
+    }
+
+    .ng-select .ng-arrow-wrapper {
+      width: auto;
+      padding-inline-start: 0;
+      padding-inline-end: 0.625rem;
+    }
+
+    .ng-select .ng-arrow {
+      font-size: 9px;
+      color: nb-theme(text-hint-color);
+    }
+    .ng-select:hover .ng-arrow,
+    .ng-select.ng-select-opened .ng-arrow {
+      color: nb-theme(text-basic-color);
+    }
+
+    .ng-select .ng-clear-wrapper {
+      color: nb-theme(text-hint-color);
+      width: 0.875rem;
+    }
+    .ng-select .ng-clear-wrapper:hover .ng-clear {
+      color: nb-theme(text-basic-color);
     }
   }
 }
 
-.project-selector,
-.team-selector,
-.employee-selector {
-  min-width: 12.5rem;
+// Nested under `.actions` on purpose, and NOT shared with the `.extra-actions`
+// overflow panel — that panel wants the wide 300–500px pills it already
+// declares, and it sits outside `.actions`, so the two never meet.
+.actions {
+  .project-selector,
+  .team-selector,
+  .employee-selector {
+    // A fixed width, carried by the min/max pair rather than `width`, because
+    // `.main-header nb-action .header-selector` above pins `width: auto` with
+    // `!important` and would win outright.
+    //
+    // The extra `.actions` step is what makes this land: `ga-project-selector`
+    // and `ga-team-selector` each declare `:host { min-width: 200px }` for the
+    // forms they also appear in, which ties with a bare class selector on
+    // specificity — and a `min-width` that survives beats any `max-width`, so
+    // those two would have stayed 200px wide while the other two shrank.
+    min-width: $header-control-width;
+    max-width: $header-control-width;
+  }
 }
 
 :host .actions {
-  margin: 0.625rem;
-  padding: 0.625rem;
-  border-radius: nb-theme(button-rectangle-border-radius);
-  background-color: nb-theme(gauzy-card-2);
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem;
+  padding: 0;
   @include nb-ltr(margin-right, 1.5rem);
   @include nb-rtl(margin-left, 1.5rem);
+}
+
+.actions {
+  .organization-selector {
+    min-width: auto;
+    max-width: none;
+
+    ::ng-deep {
+      .ng-select .ng-select-container .selector-template:has(img) span {
+        display: none;
+      }
+      .ng-select .ng-select-container,
+      .ng-select.ng-select-single .ng-select-container {
+        background-color: transparent;
+        box-shadow: none;
+        min-width: 0;
+        padding-inline: 0.5rem;
+      }
+      .ng-select:not(.ng-select-disabled):hover .ng-select-container,
+      .ng-select.ng-select-focused .ng-select-container,
+      .ng-select.ng-select-opened .ng-select-container,
+      .ng-select.ng-select-opened > .ng-select-container:hover {
+        box-shadow: none !important;
+      }
+
+      .ng-select .ng-select-container .ng-value-container {
+        padding-inline-start: 0 !important;
+      }
+
+      .ng-select .ng-arrow-wrapper {
+        margin-inline-start: 0.25rem;
+        padding-inline-end: 0;
+      }
+
+      .ng-select .ng-select-container .selector-template img {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
+  }
 }

@@ -1,3 +1,10 @@
+// `@forward` re-exports the SMS-gateway sheet to anything that loads THIS file;
+// it does not bring that sheet's own imports into scope here. Without a `@use`
+// of the theme module `nb-theme` was not a Sass function at all — and Sass lets
+// an unknown function through as plain CSS, so every declaration below shipped as
+// the literal text `nb-theme(gauzy-card-4)` and the browser dropped it. The
+// provider card, its footer and its radii have been rendering unstyled.
+@use 'themes' as *;
 @forward '../sms-gateway/sms-gateway.component';
 
 :host {
@@ -9,15 +16,26 @@
     }
     nb-card {
         nb-card-body {
+            // The provider configuration card (S3 / Wasabi / Cloudinary / DigitalOcean).
+            //
+            // `height` pinned it to a viewport-derived box regardless of how many
+            // fields the selected provider actually has — four rows for S3, seven
+            // for DigitalOcean — so short forms sat in a tall empty panel while the
+            // outer `.card-scroll` card, already bounded by the page frame, scrolled
+            // around it. As a MAX it still caps a long form (which then scrolls in
+            // its own body, as before) and lets a short one shrink to its content.
             nb-card {
                 background-color: nb-theme(gauzy-card-4);
-                height: calc(100vh - 24rem) !important;
+                max-height: calc(100vh - 24rem);
                 margin: 0;
 
+                // Was 18px. `text-heading-6-font-size` is the 1rem step the density
+                // pass set for every theme; an 18px section title here was the only
+                // h6 in Settings that ignored it.
                 h6 {
-                    font-size: 18px;
+                    font-size: nb-theme(text-heading-6-font-size);
                     font-weight: 600;
-                    line-height: 19px;
+                    line-height: 1.25;
                     letter-spacing: 0em;
                 }
 

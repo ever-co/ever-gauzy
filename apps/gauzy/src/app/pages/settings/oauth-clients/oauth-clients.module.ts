@@ -15,6 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { OAuthClientsRoutingModule } from './oauth-clients-routing.module';
 import { OAuthClientsComponent } from './oauth-clients.component';
 import { OAuthClientFormDialogComponent } from './oauth-client-form-dialog/oauth-client-form-dialog.component';
@@ -36,7 +37,8 @@ import { OAuthClientSecretDialogComponent } from './oauth-client-secret-dialog/o
 		NbToggleModule,
 		NbTooltipModule,
 		TranslateModule.forChild(),
-		OAuthClientsRoutingModule
+		OAuthClientsRoutingModule,
+		SharedModule
 	],
 	declarations: [
 		OAuthClientsComponent,

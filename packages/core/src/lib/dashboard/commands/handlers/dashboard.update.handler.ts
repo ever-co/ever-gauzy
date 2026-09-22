@@ -22,6 +22,11 @@ export class DashboardUpdateHandler implements ICommandHandler<DashboardUpdateCo
 			return await this.dashboardService.update(id, input);
 		} catch (error) {
 			this.logger.error('Failed to update dashboard', error.stack);
+			// Preserve intentional HTTP semantics from the service
+			// (404 unknown id, 403 not owner) instead of flattening to 400.
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new HttpException(`Error while updating dashboard: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}

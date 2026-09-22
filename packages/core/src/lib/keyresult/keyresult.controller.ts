@@ -99,10 +99,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateKeyResultDTO): Promise<IKeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
-		return await this.keyResultService.create({
-			id,
-			...entity
-		});
+		return await this.keyResultService.create({ ...entity, id });
 	}
 
 	@HttpCode(HttpStatus.ACCEPTED)

@@ -1,6 +1,4 @@
-import {
-	Injectable
-} from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
 	BehaviorSubject,
 	Subscription,
@@ -23,22 +21,25 @@ export class PermissionManagerService {
 	private _accessibilityStatus$ = new BehaviorSubject<PermissionStatus>('unknown');
 	private _polling$: Subscription | null = null;
 
-	public get status$() { return this._status$.asObservable(); }
+	public get status$() {
+		return this._status$.asObservable();
+	}
 	public get isGranted$() {
-		return this._status$.pipe(map(s => s === 'granted'));
+		return this._status$.pipe(map((s) => s === 'granted'));
 	}
 
-	public get accessibilityStatus$() { return this._accessibilityStatus$.asObservable(); }
+	public get accessibilityStatus$() {
+		return this._accessibilityStatus$.asObservable();
+	}
 	public get isAccessibilityGranted$() {
-		return this._accessibilityStatus$.pipe(map(s => s === 'granted'));
+		return this._accessibilityStatus$.pipe(map((s) => s === 'granted'));
 	}
 
-	constructor(private readonly electronService: ElectronService) { }
+	constructor(private readonly electronService: ElectronService) {}
 
 	/** Check once */
 	async checkStatus(): Promise<string> {
 		const result = await this.electronService.ipcRenderer.invoke('CHECK_MACOS_PERMISSIONS');
-		console.log('permissions check result', result);
 		this._status$.next(result.screen);
 		this._accessibilityStatus$.next(result.accessibility ?? 'unknown');
 		return result.screen;
@@ -50,9 +51,11 @@ export class PermissionManagerService {
 
 		const polling$ = interval(2000).pipe(
 			switchMap(() => from(this.checkStatus())),
-			map(status => status === 'granted'),
+			map((status) => status === 'granted'),
 			distinctUntilChanged(),
-			tap(granted => { if (granted) this.stopPolling(); })
+			tap((granted) => {
+				if (granted) this.stopPolling();
+			})
 		);
 
 		// Track the subscription so stopPolling() (called from ngOnDestroy) actually works
@@ -70,7 +73,11 @@ export class PermissionManagerService {
 		return this.electronService.ipcRenderer.invoke('TEST_SCREENSHOT');
 	}
 
-	async testGetWindow(): Promise<{ success: boolean; reason?: string; window?: { title?: string; bundleId?: string; appName?: string } }> {
+	async testGetWindow(): Promise<{
+		success: boolean;
+		reason?: string;
+		window?: { title?: string; bundleId?: string; appName?: string };
+	}> {
 		return this.electronService.ipcRenderer.invoke('TEST_GET_ACTIVE_WINDOW');
 	}
 
@@ -103,6 +110,10 @@ export class PermissionManagerService {
 	/** Returns the current OS platform information including os, architecture, and system version. */
 	getPlatform(): Promise<IOSInfo> {
 		return this.electronService.ipcRenderer.invoke('GET_PLATFORM');
+	}
+
+	async getIsWayland(): Promise<boolean> {
+		return this.electronService.ipcRenderer.invoke('GET_IS_WAYLAND');
 	}
 
 	/** Returns whether hardware acceleration is currently disabled (Windows). */

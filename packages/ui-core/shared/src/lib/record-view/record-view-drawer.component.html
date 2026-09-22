@@ -1,0 +1,34 @@
+@if (open) {
+	<div class="record-drawer-backdrop" (click)="close()"></div>
+}
+
+<aside
+	class="record-drawer"
+	[class.is-open]="open"
+	role="dialog"
+	aria-modal="true"
+	[attr.aria-hidden]="open ? null : 'true'"
+	[attr.aria-label]="heading | translate"
+>
+	<header class="record-drawer-header">
+		<div class="record-drawer-heading">
+			<h6 class="record-drawer-title">{{ heading | translate }}</h6>
+			@if (subtitle) {
+				<span class="record-drawer-subtitle">{{ subtitle }}</span>
+			}
+		</div>
+		<button
+			nbButton
+			ghost
+			size="small"
+			class="record-drawer-close"
+			(click)="close()"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
+	</header>
+	<div class="record-drawer-body">
+		<ng-content></ng-content>
+	</div>
+</aside>

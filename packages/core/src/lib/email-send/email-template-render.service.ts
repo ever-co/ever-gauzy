@@ -8,6 +8,7 @@ import { CustomSmtp } from '../core/entities/internal';
 import { SMTPUtils } from './utils';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
 import { TypeOrmCustomSmtpRepository } from './../custom-smtp/repository/type-orm-custom-smtp.repository';
+import { toTemplateSource } from './../email-template/compile-mjml';
 
 @Injectable()
 export class EmailTemplateRenderService {
@@ -72,8 +73,10 @@ export class EmailTemplateRenderService {
 			});
 
 			if (!!isValidSmtp) {
-				query['organizationId'] = locals.organizationId;
-				query['tenantId'] = locals.tenantId;
+				// Same NULL handling as the SMTP lookup above: a missing organization / tenant selects
+				// the tenant-wide / global row, never "any organization's" template.
+				query['organizationId'] = isEmpty(locals.organizationId) ? IsNull() : locals.organizationId;
+				query['tenantId'] = isEmpty(locals.tenantId) ? IsNull() : locals.tenantId;
 
 				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
 			}
@@ -90,7 +93,9 @@ export class EmailTemplateRenderService {
 				return '';
 			}
 
-			const template = Handlebars.compile(emailTemplate.hbs);
+			// `hbs` is tenant-editable; Handlebars.compile() must only ever get a string, never an AST
+			// object (GHSA-48h9-vwf5-h8m7).
+			const template = Handlebars.compile(toTemplateSource(emailTemplate.hbs));
 			const html = template(locals);
 			return html;
 		} catch (error) {

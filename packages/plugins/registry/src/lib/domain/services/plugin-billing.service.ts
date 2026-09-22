@@ -1,5 +1,5 @@
 import { PluginBillingStatus } from '@gauzy/contracts';
-import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum, parseFindOptionsRelations, TenantAwareCrudService } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Between, LessThan, UpdateResult } from 'typeorm';
 import {
@@ -176,7 +176,7 @@ export class PluginBillingService extends TenantAwareCrudService<PluginBilling> 
 				status: PluginBillingStatus.PENDING,
 				dueDate: LessThan(now)
 			},
-			relations: ['subscription'],
+			relations: parseFindOptionsRelations(['subscription']),
 			order: { dueDate: 'ASC' }
 		});
 	}

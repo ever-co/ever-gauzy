@@ -1,0 +1,164 @@
+<nb-card class="card-scroll">
+	<nb-card-header>
+		<div class="card-header-title">
+			<h4>{{ 'SETTINGS_MENU.BILLING' | translate }}</h4>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		<!-- Self-hosted, or simply no Stripe account configured. -->
+		<div class="empty-state" *ngIf="billingEnabled === false">
+			<p>{{ 'SETTINGS_MENU.BILLING_NOT_CONFIGURED' | translate }}</p>
+		</div>
+
+		<!-- A failed request is not an empty account; say so rather than implying "no subscription". -->
+		<div class="load-failed" *ngIf="billingEnabled && loadFailed && !loading">
+			<p>{{ 'SETTINGS_MENU.BILLING_LOAD_FAILED' | translate }}</p>
+			<button nbButton size="small" status="basic" (click)="load()">
+				{{ 'SETTINGS_MENU.BILLING_RETRY' | translate }}
+			</button>
+		</div>
+
+		<ng-container *ngIf="billingEnabled">
+			<!-- Current subscription -->
+			<section class="billing-section">
+				<h5>{{ 'SETTINGS_MENU.BILLING_CURRENT_PLAN' | translate }}</h5>
+
+				<div *ngIf="subscription; else noSubscription" class="summary">
+					<div class="summary-row">
+						<span class="label">{{ 'SETTINGS_MENU.BILLING_PLAN' | translate }}</span>
+						<span class="value">{{ subscription.planName }}</span>
+					</div>
+					<div class="summary-row">
+						<span class="label">{{ 'SETTINGS_MENU.BILLING_STATUS' | translate }}</span>
+						<!-- One rendering only: nb-badge draws its own [text], so an adjacent span repeated it. -->
+						<span class="value status-text">{{ subscription.status }}</span>
+					</div>
+					<div class="summary-row">
+						<span class="label">{{ 'SETTINGS_MENU.BILLING_PRICE' | translate }}</span>
+						<span class="value">
+							{{ formatAmount(subscription.amount, subscription.currency) }}{{ intervalSuffix(subscription.interval) }}
+						</span>
+					</div>
+					<div class="summary-row" *ngIf="subscription.trialEndsAt">
+						<span class="label">{{ 'SETTINGS_MENU.BILLING_TRIAL_ENDS' | translate }}</span>
+						<span class="value">{{ subscription.trialEndsAt | date: 'mediumDate' }}</span>
+					</div>
+					<div class="summary-row" *ngIf="subscription.renewsAt">
+						<span class="label">
+							{{
+								(subscription.cancelAtPeriodEnd
+									? 'SETTINGS_MENU.BILLING_ENDS_ON'
+									: 'SETTINGS_MENU.BILLING_RENEWS_ON'
+								) | translate
+							}}
+						</span>
+						<span class="value">{{ subscription.renewsAt | date: 'mediumDate' }}</span>
+					</div>
+
+					<!-- A pending cancellation is the one state people most need told plainly. -->
+					<div class="pending-cancel" *ngIf="subscription.cancelAtPeriodEnd">
+						<p>{{ 'SETTINGS_MENU.BILLING_CANCEL_PENDING' | translate }}</p>
+						<button nbButton status="primary" size="small" [disabled]="working" (click)="resume()">
+							{{ 'SETTINGS_MENU.BILLING_RESUME' | translate }}
+						</button>
+					</div>
+
+					<div class="actions" *ngIf="!subscription.cancelAtPeriodEnd">
+						<button nbButton status="danger" outline size="small" [disabled]="working" (click)="cancel()">
+							{{ 'SETTINGS_MENU.BILLING_CANCEL' | translate }}
+						</button>
+					</div>
+				</div>
+
+				<ng-template #noSubscription>
+					<p class="muted">{{ 'SETTINGS_MENU.BILLING_NO_SUBSCRIPTION' | translate }}</p>
+				</ng-template>
+			</section>
+
+			<!-- Plans -->
+			<section class="billing-section" *ngIf="plans?.length">
+				<h5>{{ 'SETTINGS_MENU.BILLING_AVAILABLE_PLANS' | translate }}</h5>
+				<div class="plans">
+					<div class="plan" *ngFor="let plan of plans" [class.current]="isCurrentPlan(plan)">
+						<div class="plan-name">{{ plan.productName }}</div>
+						<div class="plan-price">
+							{{ formatAmount(plan.amount, plan.currency) }}{{ intervalSuffix(plan.interval) }}
+						</div>
+						<button
+							nbButton
+							size="small"
+							[status]="isCurrentPlan(plan) ? 'basic' : 'primary'"
+							[disabled]="working || isCurrentPlan(plan)"
+							(click)="changePlan(plan)"
+						>
+							{{
+								(isCurrentPlan(plan) ? 'SETTINGS_MENU.BILLING_CURRENT' : 'SETTINGS_MENU.BILLING_SWITCH')
+									| translate
+							}}
+						</button>
+					</div>
+				</div>
+			</section>
+
+			<!-- Payment method -->
+			<section class="billing-section">
+				<h5>{{ 'SETTINGS_MENU.BILLING_PAYMENT_METHOD' | translate }}</h5>
+				<p *ngIf="paymentMethod; else noCard" class="card-on-file">
+					{{ paymentMethod.brand | titlecase }} •••• {{ paymentMethod.last4 }}
+					<span class="muted" *ngIf="paymentMethod.expMonth">
+						({{ paymentMethod.expMonth }}/{{ paymentMethod.expYear }})
+					</span>
+				</p>
+				<ng-template #noCard>
+					<p class="muted">{{ 'SETTINGS_MENU.BILLING_NO_CARD' | translate }}</p>
+				</ng-template>
+			</section>
+
+			<!-- Invoices -->
+			<section class="billing-section" *ngIf="invoices?.length">
+				<h5>{{ 'SETTINGS_MENU.BILLING_INVOICES' | translate }}</h5>
+				<div class="invoice-table-wrapper">
+					<table class="invoices">
+						<thead>
+							<tr>
+								<th>{{ 'SETTINGS_MENU.BILLING_INVOICE_DATE' | translate }}</th>
+								<th>{{ 'SETTINGS_MENU.BILLING_INVOICE_NUMBER' | translate }}</th>
+								<th>{{ 'SETTINGS_MENU.BILLING_STATUS' | translate }}</th>
+								<th>{{ 'SETTINGS_MENU.BILLING_INVOICE_AMOUNT' | translate }}</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr *ngFor="let invoice of invoices">
+								<td>{{ invoice.createdAt | date: 'mediumDate' }}</td>
+								<td>{{ invoice.number || '—' }}</td>
+								<td>{{ invoice.status || '—' }}</td>
+								<td class="amount">{{ formatAmount(invoiceAmount(invoice), invoice.currency) }}</td>
+								<td>
+									<a
+										*ngIf="invoice.hostedInvoiceUrl"
+										[href]="invoice.hostedInvoiceUrl"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{{ 'SETTINGS_MENU.BILLING_VIEW_INVOICE' | translate }}
+									</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<!-- The other supported route: Stripe's own portal. -->
+			<section class="billing-section portal">
+				<h5>{{ 'SETTINGS_MENU.BILLING_PORTAL' | translate }}</h5>
+				<p class="muted">{{ 'SETTINGS_MENU.BILLING_PORTAL_HINT' | translate }}</p>
+				<button nbButton status="basic" size="small" [disabled]="working" (click)="openPortal()">
+					{{ 'SETTINGS_MENU.BILLING_OPEN_PORTAL' | translate }}
+				</button>
+			</section>
+		</ng-container>
+	</nb-card-body>
+</nb-card>

@@ -4,7 +4,7 @@ import * as moment from 'moment';
 import { IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
-import { getDateRangeFormat, MultiORMEnum } from './../../core/utils';
+import { getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
@@ -65,9 +65,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 				query.innerJoin(`${query.alias}.employee`, 'employee');
 
 				// Apply filters to the query
-				query.where((query: SelectQueryBuilder<Timesheet>) => {
-					this.getFilterTimesheetQuery(query, request);
-				});
+				await this.getFilterTimesheetQuery(query, request);
 
 				// Return the total count of timesheets
 				return query.getCount();
@@ -82,6 +80,10 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns Promise<ITimesheet[]> - List of timesheets
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(request);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				let {
@@ -139,13 +141,11 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 							brandColor: true
 						}
 					},
-					...(request?.relations ? { relations: request.relations } : {})
+					...(request.relations ? { relations: parseFindOptionsRelations(request.relations) } : {})
 				});
 
 				// Apply filters to the query
-				query.where((query: SelectQueryBuilder<Timesheet>) => {
-					this.getFilterTimesheetQuery(query, request);
-				});
+				await this.getFilterTimesheetQuery(query, request);
 
 				// Return the list of timesheets
 				return await query.getMany();

@@ -3,6 +3,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService, PermissionsGuard, UserResolver } from '@gauzy/ui-core/core';
 import { DateRangePickerResolver, NotFoundComponent } from '@gauzy/ui-core/shared';
 import { PagesComponent } from './pages.component';
+import { featureDocumentsRedirectGuard } from './feature-documents-redirect.guard';
 
 /**
  * Builds pages routes for the application.
@@ -415,6 +416,8 @@ function getOrganizationRoutes(_pageRouteRegistryService: PageRouteRegistryServi
 				},
 				{
 					path: 'help-center',
+					// Redirects to /pages/documents when FEATURE_DOCUMENTS is on (09-consolidation-migration.md §3.2)
+					canActivate: [featureDocumentsRedirectGuard],
 					loadChildren: () => import('./help-center/help-center.module').then((m) => m.HelpCenterModule),
 					data: { selectors: orgSelectors }
 				},
@@ -426,6 +429,8 @@ function getOrganizationRoutes(_pageRouteRegistryService: PageRouteRegistryServi
 				},
 				{
 					path: 'documents',
+					// Redirects to /pages/documents (?openAddDialog=true → ?upload=1) when FEATURE_DOCUMENTS is on
+					canActivate: [featureDocumentsRedirectGuard],
 					loadChildren: () => import('./documents/documents.module').then((m) => m.DocumentsModule),
 					data: { selectors: orgSelectors }
 				},

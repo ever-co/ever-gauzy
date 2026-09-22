@@ -1,7 +1,8 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsSelect, FindOptionsWhere } from 'typeorm';
-import { MultiORM, MultiORMEnum, getORMType } from '../../core/utils';
+import { MultiORM, MultiORMEnum, getORMType, parseFindOptionsRelations } from '../../core/utils';
+import { PUBLIC_ORGANIZATION_HTML_FIELDS, sanitizePublicRichTextFields } from '../public-html-sanitizer';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
 
 /**
@@ -59,6 +60,18 @@ function applyOrganizationVisibility<T extends Partial<IOrganization>>(organizat
 	}
 	return organization;
 }
+
+/**
+ * Sanitizes the rich-text HTML this endpoint serves, on the way OUT — see
+ * `sanitizePublicRichTextFields` for why the write-path pass is not enough on an unauthenticated
+ * endpoint. Idempotent, so a row already clean round-trips byte-for-byte.
+ *
+ * @param organization - The loaded (already field-projected and visibility-filtered) organization.
+ * @returns The same organization with its HTML fields sanitized.
+ */
+function sanitizeOrganizationHtml<T extends Partial<IOrganization>>(organization: T): T {
+	return sanitizePublicRichTextFields(organization, PUBLIC_ORGANIZATION_HTML_FIELDS);
+}
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
@@ -106,17 +119,17 @@ export class PublicOrganizationService {
 					break;
 				case MultiORMEnum.TypeORM:
 				default:
-					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
                     organization = await this.typeOrmOrganizationRepository.findOneOrFail({
 						where,
-						relations,
+						relations: parseFindOptionsRelations(relations),
 						// Restrict the response to display-safe fields only (GHSA-49ff-8859-537j).
 						select: PUBLIC_ORGANIZATION_SELECT
 					});
 					break;
 			}
-			// Enforce the organization's own visibility flags server-side.
-			return applyOrganizationVisibility(organization);
+			// Enforce the organization's own visibility flags server-side, then neutralize the
+			// rich-text HTML this response carries onto an unauthenticated page.
+			return sanitizeOrganizationHtml(applyOrganizationVisibility(organization));
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}

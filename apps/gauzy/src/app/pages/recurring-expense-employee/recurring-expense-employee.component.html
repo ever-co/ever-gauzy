@@ -1,10 +1,14 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
   <nb-card-header class="flex flex-column">
-    <h4>
-      <ngx-header-title [allowEmployee]="false">
-        {{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
-      </ngx-header-title>
-    </h4>
+    <!-- The heading needs a block of its own for the action row to be laid out
+         beside it rather than under it (see `.ga-page-header` in _overrides). -->
+    <div class="card-header-title">
+      <h4>
+        <ngx-header-title [allowEmployee]="false">
+          {{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
+        </ngx-header-title>
+      </h4>
+    </div>
     <div class="gauzy-button-container">
       <ngx-gauzy-button-action
         [hasLayoutSelector]="false"
@@ -14,7 +18,7 @@
       ></ngx-gauzy-button-action>
     </div>
   </nb-card-header>
-  <nb-card-body class="settings-body">
+  <nb-card-body class="settings-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
     <div class="container">
       @if (recurringExpenses?.length) {
         <div
@@ -63,6 +67,7 @@
       @if (!loading && recurringExpenses?.length == 0) {
         <div class="no-data">
           <ngx-no-data-message
+            [loading]="loading"
             [message]="'ORGANIZATIONS_PAGE.EXPENSE_NO_DATA_MESSAGE' | translate"
           ></ngx-no-data-message>
         </div>
@@ -89,10 +94,10 @@
     <ng-template ngxPermissionsOnly="EMPLOYEE_EXPENSES_VIEW">
       <button
         nbButton
+        (click)="viewEmployeeRecurringExpense()"
         class="action secondary"
         size="small"
         status="basic"
-        underConstruction
         >
         <nb-icon icon="eye-outline"></nb-icon>
         {{ 'BUTTONS.VIEW' | translate }}
@@ -136,3 +141,16 @@
     </ng-template>
   </div>
 </ng-template>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each entry that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedRecurringExpense"
+  heading="EMPLOYEES_PAGE.RECURRING_EXPENSE"
+  [subtitle]="viewedRecurringExpense?.employee?.user?.name"
+  (closed)="closeView()"
+  >
+  @if (viewedRecurringExpense) {
+    <ngx-record-view [record]="viewedRecurringExpense" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

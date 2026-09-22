@@ -6,7 +6,7 @@ import { NbDialogService } from '@nebular/theme';
 import { Observable, catchError, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
-import { ID, IInvoice } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IInvoice } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
@@ -23,6 +23,12 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 	public invoice$: Observable<IInvoice>;
 
 	@Input() isEstimate: boolean;
+
+	/**
+	 * Entity type the record-side Documents panel attaches to. An estimate is an
+	 * `Invoice` row with `isEstimate` set, so both share one `DocumentLink.entity`.
+	 */
+	public readonly documentEntity = BaseEntityEnum.Invoice;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -73,6 +79,17 @@ export class InvoiceViewComponent extends TranslationBaseComponent implements On
 			// Automatically unsubscribe when the component is destroyed
 			untilDestroyed(this)
 		);
+	}
+
+	/**
+	 * Label persisted into `DocumentLink.metadata.label` when a document is attached,
+	 * so the Documents hub can name this record without re-fetching it.
+	 *
+	 * @param invoice The invoice being viewed.
+	 * @returns The invoice number prefixed with `#`, falling back to the id.
+	 */
+	documentLabel(invoice: IInvoice): string {
+		return `#${invoice?.invoiceNumber ?? invoice?.id}`;
 	}
 
 	/**

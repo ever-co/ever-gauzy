@@ -69,7 +69,18 @@
 		</div>
 	</div>
 	<div class="actions">
-		<button [disabled]="form.invalid" (click)="saveInvites()" nbButton fullWidth status="success">
+		<!--
+			`termsUnavailable` also gates submission: without the published
+			documents there is nothing to pin the acceptance to, and completing
+			the registration anyway would record no evidence at all.
+		-->
+		<button
+			[disabled]="form.invalid || termsUnavailable"
+			(click)="saveInvites()"
+			nbButton
+			fullWidth
+			status="success"
+		>
 			{{ 'ACCEPT_INVITE.ACCEPT_INVITE_FORM.COMPLETE_REGISTRATION' | translate }}
 		</button>
 	</div>

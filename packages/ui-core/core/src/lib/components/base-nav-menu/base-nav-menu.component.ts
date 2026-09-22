@@ -3,13 +3,15 @@ import { combineLatest, EMPTY } from 'rxjs';
 import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, IDashboard, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { DashboardStoreService } from '../../services/dashboard/dashboard-store.service';
 import { FavoriteStoreService } from '../../services/favorite/favorite-store.service';
 import { NavMenuBuilderService } from '../../services/nav-builder/nav-menu-builder.service';
 import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
+import { EmployeeTrackedDataAccessService } from '../../services/timesheet/employee-tracked-data-access.service';
 import { Store } from '../../services/store/store.service';
 
 @UntilDestroy()
@@ -22,8 +24,11 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	protected readonly _store = inject(Store);
 	protected readonly _sidebarMenuService = inject(SidebarMenuService);
 	protected readonly _favoriteStoreService = inject(FavoriteStoreService);
+	protected readonly _dashboardStoreService = inject(DashboardStoreService);
+	protected readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
 
 	private _favoriteItems: NavMenuSectionItem[] = [];
+	private _customDashboards: IDashboard[] = [];
 
 	constructor(protected readonly _translateService: TranslateService) {
 		super(_translateService);
@@ -36,6 +41,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	ngAfterViewInit(): void {
 		combineLatest([
 			this._favoriteStoreService.favoriteItems$,
+			this._dashboardStoreService.dashboards$,
 			this._translateService.onLangChange.pipe(startWith(null)),
 			this._store.selectedOrganization$.pipe(
 				filter((organization: IOrganization | null): organization is IOrganization => !!organization),
@@ -43,12 +49,14 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 			),
 			this._store.featureOrganizations$,
 			this._store.featureTenant$,
-			this._store.userRolePermissions$
+			this._store.userRolePermissions$,
+			this._employeeTrackedDataAccessService.access$
 		])
 			.pipe(
 				debounceTime(50),
-				tap(([favorites]) => {
+				tap(([favorites, dashboards]) => {
 					this._favoriteItems = favorites;
+					this._customDashboards = dashboards;
 					this.defineBaseNavMenus();
 				}),
 				catchError((error) => {
@@ -99,6 +107,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 
 	/**
 	 * Returns the dashboard-related menu items (Dashboards, Focus, Applications).
+	 *
+	 * The "Dashboards" item is a plain link while the user has no custom
+	 * dashboards; once custom dashboards exist it becomes expandable with a
+	 * "Standard" child plus one child per custom dashboard.
 	 */
 	private _getDashboardMenu(): NavMenuSectionItem[] {
 		return [
@@ -106,13 +118,16 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				id: 'dashboards',
 				title: 'Dashboards',
 				icon: 'fas fa-th',
-				link: '/pages/dashboard',
 				pathMatch: 'prefix',
 				home: true,
 				data: {
 					translationKey: 'MENU.DASHBOARDS',
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
-				}
+				},
+				// Plain link when there are no custom dashboards; expandable otherwise
+				...(this._customDashboards.length === 0
+					? { link: '/pages/dashboard' }
+					: { items: this._getDashboardChildren() })
 			},
 			{
 				id: 'focus',
@@ -140,6 +155,36 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 					featureKey: FeatureEnum.FEATURE_DASHBOARD
 				}
 			}
+		];
+	}
+
+	/**
+	 * Returns the children of the expandable "Dashboards" menu item:
+	 * the "Standard" (prebuilt) dashboard followed by each custom dashboard.
+	 */
+	private _getDashboardChildren(): NavMenuSectionItem[] {
+		return [
+			{
+				id: 'dashboard-standard',
+				title: 'Standard',
+				icon: 'fas fa-columns',
+				link: '/pages/dashboard/time-tracking',
+				data: {
+					translationKey: 'DASHBOARD_PAGE.CUSTOM.STANDARD'
+				}
+			},
+			...this._customDashboards.map((dashboard: IDashboard) => ({
+				id: `dashboard-custom-${dashboard.id}`,
+				title: dashboard.name,
+				icon: 'fas fa-th-large',
+				link: `/pages/dashboard/custom/${dashboard.id}`,
+				data: {
+					// Custom dashboard names are user content — render literally so a
+					// name matching an existing i18n key isn't translated away.
+					translationKey: dashboard.name,
+					noTranslate: true
+				}
+			}))
 		];
 	}
 
@@ -491,7 +536,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.TIME_ACTIVITY',
 							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY,
+							hide: () => this.isEmployeeTrackedDataHidden()
 						}
 					},
 					{
@@ -503,7 +549,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.TIMESHEETS',
 							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS
+							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS,
+							hide: () => this.isEmployeeTrackedDataHidden()
 						}
 					},
 					{
@@ -741,6 +788,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
+							// Superseded by the Documents hub when FEATURE_DOCUMENTS is on (gate, never delete)
+							hide: () => this._store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS),
 							...this._addLink(
 								'/pages/organization/documents?openAddDialog=true',
 								PermissionsEnum.ALL_ORG_EDIT
@@ -785,7 +834,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: '/pages/organization/help-center',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER',
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER,
+							// Superseded by the Documents hub when FEATURE_DOCUMENTS is on (gate, never delete)
+							hide: () => this._store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
 						}
 					}
 				]
@@ -925,7 +976,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				link: '/pages/reports',
 				data: {
 					translationKey: 'MENU.REPORTS',
-					featureKey: FeatureEnum.FEATURE_REPORT
+					featureKey: FeatureEnum.FEATURE_REPORT,
+					hide: () => this.isEmployeeTrackedDataHidden()
 				},
 				items: [
 					{
@@ -940,6 +992,15 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				]
 			}
 		];
+	}
+
+	/**
+	 * Whether the organization setting `allowEmployeeToSeeTrackedData` hides tracked-data pages from the
+	 * current user. The API decides, with the same exemptions as its guard (admins, users without an
+	 * employee record, team/project managers).
+	 */
+	protected isEmployeeTrackedDataHidden(): boolean {
+		return this._employeeTrackedDataAccessService.hidden;
 	}
 
 	/**
@@ -1030,6 +1091,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				id: 'settings',
 				title: 'Settings',
 				icon: 'fas fa-cog',
+				link: '/pages/settings',
 				menuCategory: 'settings',
 				data: {
 					translationKey: 'MENU.SETTINGS'
@@ -1085,6 +1147,21 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.ACCOUNTING_TEMPLATES',
 							permissionKeys: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES]
+						}
+					},
+					{
+						id: 'settings-billing',
+						title: 'Billing',
+						icon: 'fas fa-credit-card',
+						link: '/pages/settings/billing',
+						// Absent entirely unless this deployment actually does billing. A self-hosted install
+						// configures no Stripe key, and an entry that leads only to a "not configured" card is
+						// still a visible change to people who never asked for billing.
+						hidden: !this._store.billingEnabled,
+						data: {
+							translationKey: 'MENU.BILLING',
+							// Tenant-wide, and only meaningful to whoever owns the account.
+							permissionKeys: [PermissionsEnum.TENANT_SETTING]
 						}
 					},
 					{
@@ -1188,7 +1265,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	public mapMenuSection(item: NavMenuSectionItem): NavMenuSectionItem {
 		const section: NavMenuSectionItem = {
 			...item,
-			title: this.getTranslation(item.data.translationKey),
+			// noTranslate items carry user content (e.g. a custom dashboard name)
+			// that must render literally — a name that happens to match an i18n
+			// key must not come out as that key's translation.
+			title: item.data.noTranslate ? item.data.translationKey : this.getTranslation(item.data.translationKey),
 			hidden: item.hidden || this.isSectionHidden(item)
 		};
 

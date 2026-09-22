@@ -13,7 +13,14 @@ import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbMenuItem, NbMenuService, NbPopoverDirective, NbTabComponent } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbMenuItem,
+	NbMenuService,
+	NbPopoverDirective,
+	NbSidebarService,
+	NbTabComponent
+} from '@nebular/theme';
 import {
 	IInvoice,
 	ITag,
@@ -28,6 +35,7 @@ import {
 	PermissionsEnum,
 	ICurrency,
 	IInvoiceItemCreateInput,
+	IUser,
 	InvoiceTabsEnum,
 	DiscountTaxTypeEnum,
 	IDateRangePicker
@@ -61,6 +69,7 @@ import {
 	generateCsv,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
+import { QUICK_SETTINGS_SIDEBAR_TAG } from '@gauzy/ui-core/theme';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
@@ -172,7 +181,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		private readonly nbMenuService: NbMenuService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly httpClient: HttpClient
+		private readonly httpClient: HttpClient,
+		private readonly sidebarService: NbSidebarService
 	) {
 		super(translateService);
 		this.setView();
@@ -183,6 +193,46 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
 		this.loadMenu();
+		this.watchQuickSettingsSidebar();
+	}
+
+	/**
+	 * Closes this page's popovers whenever the header's Quick Settings panel opens.
+	 * The panel and these popovers cover the same top right corner and sit in
+	 * different stacking layers, so only one may be open.
+	 *
+	 * Deliberately does NOT mirror the panel's state into a local flag. `onToggle`
+	 * reports only that a toggle happened, not the state it ended in, so a
+	 * `toggle(compact)` would compact the panel while the mirror recorded
+	 * "expanded" — and a stale mirror then leaves overlapping UI open on the next
+	 * action. There is no need for one: `NbSidebarService.collapse(tag)` is
+	 * idempotent, so the close path can simply always call it.
+	 *
+	 * Only `onExpand` is observed. Reacting to `onCollapse` would be wrong:
+	 * collapsing the panel is also what happens when one of this page's popovers
+	 * has just been opened, so it would immediately hide the popover again.
+	 */
+	private watchQuickSettingsSidebar() {
+		const tag = QUICK_SETTINGS_SIDEBAR_TAG;
+
+		this.sidebarService
+			.onExpand()
+			.pipe(
+				filter((event) => event.tag === tag),
+				tap(() => this.popups?.forEach((popover: NbPopoverDirective) => popover.hide())),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Collapses the header's Quick Settings panel so it cannot stay open next to
+	 * a popover this page is about to show. Unconditional — `collapse()` is
+	 * idempotent, and guarding it on a mirrored flag is what made the flag able
+	 * to go stale in the first place.
+	 */
+	private closeQuickSettingsSidebar() {
+		this.sidebarService.collapse(QUICK_SETTINGS_SIDEBAR_TAG);
 	}
 
 	ngAfterViewInit() {
@@ -647,7 +697,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			this.getTranslation('INVOICES_PAGE.TAX_2'),
 			this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'),
 			this.getTranslation('INVOICES_PAGE.CONTACT')
-		].join(',');
+		];
 
 		generateCsv(data, headers, fileName);
 	}
@@ -747,6 +797,80 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		}
 	}
 
+	/**
+	 * The user the History tab composes comments as. Read through a getter rather
+	 * than a field so the avatar follows a mid-session user switch, and so the
+	 * template does not have to reach into the private `store`.
+	 */
+	get currentUser(): IUser {
+		return this.store.user;
+	}
+
+	/**
+	 * Whether a comment author's name should be a link to their profile.
+	 *
+	 * `/pages/users/edit/:id` is guarded by `ORG_USERS_EDIT`, and its guard
+	 * redirects to the dashboard rather than refusing — so without this check a
+	 * viewer who lacks the permission would click a name and silently land on a
+	 * different page. They get plain text instead.
+	 */
+	get canOpenUserProfile(): boolean {
+		return this.ngxPermissionsService.getPermission(PermissionsEnum.ORG_USERS_EDIT) != null;
+	}
+
+	/**
+	 * Initials fallback for a comment author with no `imageUrl`. The shared
+	 * `ngx-avatar` renders nothing at all when its `src` is empty, which left a
+	 * hole where the avatar should be for every user who never uploaded a photo —
+	 * the common case on a fresh workspace.
+	 *
+	 * @param name - the author's display name
+	 * @returns up to two upper-cased initials, or `?` when there is no name
+	 */
+	authorInitials(name: string): string {
+		const initials = (name || '')
+			.trim()
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((part: string) => part.charAt(0))
+			.join('');
+		return initials ? initials.toUpperCase() : '?';
+	}
+
+	/**
+	 * Relative age of a comment ("3 hours ago"), the way every comment thread
+	 * dates its entries. The exact timestamp stays available on the tooltip, so
+	 * nothing is lost by not printing it inline.
+	 *
+	 * `createdAt` arrives here as the `Date.toString()` slice built in
+	 * `selectInvoice`, not as an ISO string, so it goes through `new Date` first
+	 * rather than moment's (deprecated) free-form string parser.
+	 *
+	 * A record with no usable date renders nothing rather than moment's literal
+	 * "Invalid date": the line is a subtitle beside the author's name, and a blank
+	 * one reads as "no timestamp" while that string reads as a broken comment. The
+	 * tooltip beside it is already empty in the same case.
+	 *
+	 * @param createdAt - the history record's creation date
+	 * @returns a humanized, locale-aware distance from now, or an empty string
+	 */
+	commentTimeAgo(createdAt: string | Date): string {
+		const parsed = new Date(createdAt);
+		return isNaN(parsed.getTime()) ? '' : moment(parsed).fromNow();
+	}
+
+	/**
+	 * Clears the comment composer without submitting it.
+	 *
+	 * @param historyFormDirective - the composer's `ngForm`, reset alongside the
+	 * form group so the controls drop their touched/dirty state too
+	 */
+	resetComment(historyFormDirective): void {
+		historyFormDirective.resetForm();
+		this.historyForm.reset();
+	}
+
 	async addComment(historyFormDirective) {
 		if (this.historyForm.invalid) {
 			return;
@@ -757,8 +881,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			const action = comment;
 			await this.createInvoiceHistory(action, title);
 
-			historyFormDirective.resetForm();
-			this.historyForm.reset();
+			this.resetComment(historyFormDirective);
 
 			const invoice = await this.invoicesService.getById(invoiceId, [
 				'invoiceItems',
@@ -852,6 +975,11 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				return +new Date(b.createdAt) - +new Date(a.createdAt);
 			});
 			this.histories = histories;
+		} else {
+			// Deselecting used to leave the previous invoice's comments standing in
+			// the History tab. The thread is now guarded on `selectedInvoice`, but
+			// dropping the records keeps the count badge honest either way.
+			this.histories = [];
 		}
 	}
 
@@ -1129,11 +1257,19 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	toggleActionsPopover() {
+		this.closeQuickSettingsSidebar();
 		this.popups.last.toggle();
-		this.popups.first.hide();
+		// Same guard as toggleTableSettingsPopover: when the page renders a single
+		// NbPopoverDirective, `first` and `last` are the SAME instance, so hiding
+		// `first` unconditionally would undo the toggle above and the actions
+		// popover would never open. onClickOutside routes through here too.
+		if (this.popups.length > 1) {
+			this.popups.first.hide();
+		}
 	}
 
 	toggleTableSettingsPopover() {
+		this.closeQuickSettingsSidebar();
 		this.popups.first.toggle();
 		if (this.popups.length > 1) {
 			this.popups.last.hide();

@@ -2,7 +2,13 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+	UnauthorizedException
+} from '@nestjs/common';
 import {
 	InsertResult,
 	SelectQueryBuilder,
@@ -22,23 +28,62 @@ import {
 	IEmployee,
 	IFindMeUser,
 	IUser,
+	IUserUiPreferences,
+	IUserUiPreferencesUpdateInput,
 	LanguagesEnum,
 	PermissionsEnum,
 	RolesEnum,
 	UserStats
 } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { freshTimestamp, MultiORMEnum } from './../core/utils';
+import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
 import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
+import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import {
+	assertRoleAssignmentAllowed,
+	extractRoleIds,
+	IRoleAssignmentPayload,
+	normalizeRolePayload
+} from './role-assignment.helper';
+import {
+	emailVerificationClaimWhere,
+	emailVerificationClaimWhereMikroOrm,
+	magicCodeClaimWhere
+} from '../shared/single-use/claim-criteria';
+
+/**
+ * The account-status predicate every authentication path applies.
+ *
+ * `login()` and `getJwtAccessToken()` filter on it at issuance and, since GHSA-3cgp-wmrg-4fqg,
+ * `JwtStrategy.validate()` re-applies it on every request. `checkIfExists` / `checkIfExistsThirdParty`
+ * back `GET /auth/authenticated`, which is the call the web and desktop clients use to decide whether a
+ * session is still good — without the predicate that endpoint kept answering `true` for a deactivated or
+ * archived account while every other endpoint answered 401.
+ */
+const ACTIVE_ACCOUNT = { isActive: true, isArchived: false } as const;
+
+/**
+ * How many rows {@link UserService.findAccountsUsingPasswords} reads and verifies PER CANDIDATE
+ * ADDRESS. That check runs on the boot path, `user.email` carries a plain (non-unique) index, and a
+ * password verification costs tens to hundreds of milliseconds by design — so the work has to be
+ * capped rather than scale with the number of tenants that happen to hold the same seeded address
+ * (GHSA-4r2r-mv32-3468).
+ *
+ * The budget is per address rather than global: one shared `IN (...)` limit let the rows of whichever
+ * address the database returned first use up the whole allowance, so a rotated `admin@ever.co` in ten
+ * tenants could hide an `employee@ever.co` that still had its published password.
+ */
+const MAX_ROWS_PER_ACCOUNT = 5;
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -133,7 +178,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		// Fetch employee details if 'includeEmployee' is true
 		if (options.includeEmployee) {
 			const relations = options.includeOrganization ? { organization: true } : [];
-			employee = await this._employeeService.findOneByUserId(user.id, undefined, { relations });
+			employee = await this._employeeService.findOneByUserId(user.id, undefined, {
+				relations: parseFindOptionsRelations(relations)
+			});
 		}
 
 		// Return user data combined with employee data, if it exists.
@@ -195,10 +242,18 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * GET user by email in the same tenant
+	 * GET a user by email across EVERY tenant of the installation.
+	 *
+	 * 🛑 This lookup is deliberately GLOBAL and must only be used by the pre-authentication flows
+	 * that have no tenant context yet — social/OAuth login and social signup, where the address is
+	 * what identifies the account in the first place. Calling it from a request handler that already
+	 * knows the caller's tenant turns it into a cross-tenant disclosure (and an account-existence
+	 * oracle) for the whole deployment: it answers for a user of any tenant.
+	 *
+	 * Tenant-scoped callers must use {@link getUserByEmailInTenant} instead.
 	 *
 	 * @param email
-	 * @returns
+	 * @returns the user with that email in ANY tenant, or null
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
 		switch (this.ormType) {
@@ -206,6 +261,37 @@ export class UserService extends TenantAwareCrudService<User> {
 				return await this.mikroOrmRepository.findOne({ email } as any);
 			case MultiORMEnum.TypeORM:
 				return await this.typeOrmRepository.findOneBy({ email });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * GET a user by email INSIDE a single tenant.
+	 *
+	 * The tenant-safe counterpart of {@link getUserByEmail}: anything reachable from an
+	 * authenticated request handler must go through here so that one tenant can never read — or
+	 * probe for the existence of — an account belonging to another.
+	 *
+	 * Fails closed on a missing tenant: an `undefined` key is DROPPED from a TypeORM `where` object
+	 * in this codebase (see TYPEORM_NULL_WHERE_ISOLATION), so passing an absent `tenantId` straight
+	 * through would silently widen the query back to the global lookup this method exists to
+	 * replace. "I could not work out which tenant to search" must answer "no user", never "here is
+	 * somebody else's".
+	 *
+	 * @param email
+	 * @param tenantId the tenant the lookup is restricted to
+	 * @returns the user with that email in that tenant, or null
+	 */
+	async getUserByEmailInTenant(email: string, tenantId: ID): Promise<IUser | null> {
+		if (!email || !tenantId) {
+			return null;
+		}
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository.findOne({ email, tenantId } as any);
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ email, tenantId });
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -254,11 +340,17 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExists(id: string): Promise<boolean> {
+		// An empty id must never reach the repository: `findOneBy({ id: undefined })` drops the predicate
+		// and returns the FIRST user row (see getIfExists) — for the JWT strategy that meant any token
+		// signed with JWT_SECRET but carrying no `id` claim authenticated as that user.
+		if (!id) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return !!(await this.mikroOrmRepository.findOne({ id } as any));
+				return !!(await this.mikroOrmRepository.findOne({ id, ...ACTIVE_ACCOUNT } as any));
 			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmRepository.findOneBy({ id }));
+				return !!(await this.typeOrmRepository.findOneBy({ id, ...ACTIVE_ACCOUNT }));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -270,11 +362,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
+		if (!thirdPartyId) {
+			return false;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId } as any));
+				return !!(await this.mikroOrmRepository.findOne({ thirdPartyId, ...ACTIVE_ACCOUNT } as any));
 			case MultiORMEnum.TypeORM:
-				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
+				return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId, ...ACTIVE_ACCOUNT }));
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -282,10 +377,20 @@ export class UserService extends TenantAwareCrudService<User> {
 
 	/**
 	 * Retrieves a user with the given ID if it exists.
+	 *
+	 * The id MUST be present. TypeORM silently omits an `undefined` (and, before
+	 * TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR, a `null`) where value, so `findOneBy({ id: undefined })`
+	 * became `SELECT ... LIMIT 1` and returned an arbitrary user — the JWT strategy authenticated any
+	 * JWT_SECRET-signed token that had no `id` claim (invite / estimate / team-join / appointment /
+	 * magic-code tokens) as the first user in the table.
+	 *
 	 * @param {string} id - The ID of the user to retrieve.
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExists(id: string): Promise<User | undefined> {
+		if (!id) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ id });
@@ -303,6 +408,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
+		if (!thirdPartyId) {
+			return undefined;
+		}
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmUserRepository.findOne({ thirdPartyId });
@@ -365,6 +473,11 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @throws ForbiddenException if the user lacks the required permissions or attempts unauthorized updates.
 	 */
 	async updateProfile(id: ID | number, entity: User): Promise<IUser> {
+		// The path id is authoritative. Every check below authorizes THIS id, and save() persists the
+		// entity's id — a body `id` (the update DTO is not whitelisted) must never re-point the write to
+		// another user (e.g. overwrite the SUPER_ADMIN's password hash from a PROFILE_EDIT account).
+		entity.id = id as ID;
+
 		// Retrieve the current user's role ID from the RequestContext
 		const currentRoleId = RequestContext.currentRoleId();
 		const currentUserId = RequestContext.currentUserId();
@@ -379,6 +492,13 @@ export class UserService extends TenantAwareCrudService<User> {
 				throw new ForbiddenException();
 			}
 		}
+
+		// Read the role the body assigns in EVERY form it can take — `roleId`, `role` as a bare id string,
+		// `role: { id }` — and make the payload persist exactly that id (GHSA-x4mv-fhwj-g3rp). A string
+		// `role` used to be invisible to the checks below while TypeORM still wrote it as the FK, and a
+		// `null` role cleared the caller's own role. A malformed role key or a `role`/`roleId` pair that
+		// disagrees is a 400; this runs before the `try`, which turns every error into a 403.
+		normalizeRolePayload(entity);
 
 		let user: IUser;
 
@@ -403,18 +523,22 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// Restrict users from updating their own role.
-			// Check BOTH the nested `role` object and the flat `roleId` field INDEPENDENTLY, otherwise a
-			// user could escalate their own privileges (e.g. to SUPER_ADMIN). `role?.id ?? roleId` is not
-			// enough: a crafted body could send an empty `role: { id: '' }` (non-nullish) to mask a
-			// privileged `roleId` and slip through. Reject if any provided role identifier differs from the
-			// caller's current role.
+			// Every role identifier the (normalized) payload carries is checked — `roleId`, `role` as an
+			// id string and `role: { id }` alike — otherwise a user could escalate their own privileges
+			// (e.g. to SUPER_ADMIN) through whichever form the check forgot. Reject if any of them differs
+			// from the caller's current role.
 			// Compare as strings: `id` is typed `ID | number`, so a numeric-equivalent value must not
 			// slip past the self-update check on a strict `===`.
 			if (String(currentUserId) === String(id)) {
-				const requestedRoleIds = [entity.role?.id, entity.roleId].filter((roleId) => isNotEmpty(roleId));
+				const requestedRoleIds = extractRoleIds(entity);
 				if (requestedRoleIds.some((roleId) => String(roleId) !== String(currentRoleId))) {
 					throw new ForbiddenException();
 				}
+			} else {
+				// Updating SOMEONE ELSE: granting SUPER_ADMIN is reserved to callers who may edit super
+				// admins (the same boundary the register handler and invite creation enforce). The role is
+				// resolved from the database — never from a client-supplied role name.
+				await this.assertCanAssignRoles(entity);
 			}
 
 			// Update password hash if provided
@@ -489,6 +613,54 @@ export class UserService extends TenantAwareCrudService<User> {
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
+	}
+
+	/**
+	 * Merges a per-feature patch into the current user's stored UI preferences and persists it.
+	 *
+	 * SHALLOW merge per top-level feature key: each key present in `patch` replaces that feature's
+	 * whole object (`null` removes it); other features stay untouched, so independent features
+	 * never clobber each other. Only the CURRENT user (`RequestContext.currentUserId()`) can be
+	 * written — the endpoint carries no id on purpose.
+	 *
+	 * @param patch - Feature-keyed objects to replace (see `IUserUiPreferencesUpdateInput`).
+	 * @returns The merged preferences object as now stored.
+	 * @throws BadRequestException on structurally invalid input or an oversized blob.
+	 * @throws NotFoundException when the current user row cannot be read.
+	 */
+	async updateUiPreferences(patch: IUserUiPreferencesUpdateInput): Promise<IUserUiPreferences> {
+		const userId = RequestContext.currentUserId();
+
+		let clean: IUserUiPreferencesUpdateInput;
+		try {
+			clean = sanitizeUiPreferencesPatch(patch);
+		} catch (error) {
+			throw new BadRequestException(error?.message ?? 'Invalid uiPreferences patch');
+		}
+
+		let user: IUser;
+		try {
+			// TenantAwareCrudService scopes the lookup to the caller's tenant.
+			user = await this.findOneByIdString(userId);
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
+
+		const merged = mergeUiPreferences(user.uiPreferences, clean);
+		try {
+			assertUiPreferencesSize(merged);
+		} catch (error) {
+			throw new BadRequestException(error?.message);
+		}
+
+		// `repository.update()` bypasses entity subscribers, so the SQLite text column must be
+		// serialized here (same rule as `ActivityLogService.create`). Postgres/MySQL drivers
+		// serialize json/jsonb columns themselves.
+		const value =
+			isSqlite() || isBetterSqlite3() ? (JSON.stringify(merged) as unknown as IUserUiPreferences) : merged;
+		await this.update(userId, { uiPreferences: value } as any);
+
+		return merged;
 	}
 
 	/**
@@ -597,25 +769,72 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Invalidates the magic sign-in code for all users matching the given email and code.
-	 * Called after a successful workspace sign-in to prevent code reuse.
+	 * Atomically claims a user's email-verification code, enforcing single use.
+	 *
+	 * The code and its expiry stay in the WHERE clause, so the write is its own check: the first
+	 * caller nulls the code and gets 1, and a request racing it matches nothing and gets 0. Keeping
+	 * `codeExpireAt` in the predicate also closes the window where a lookup and a claim straddle
+	 * the expiry boundary, which a claim scoped only by id and code would let through.
+	 *
+	 * This deliberately goes straight to the repositories rather than through `update()`. Email
+	 * confirmation is a PUBLIC endpoint, and `TenantAwareCrudService.update` routes object criteria
+	 * to `findOneByWhereOptions`, which dereferences `RequestContext.currentUser().tenantId` — on an
+	 * unauthenticated request there is no current user, so that path throws. The tenant comes from
+	 * the verified payload instead, which is both safe here and stricter than an id-only claim.
+	 *
+	 * @param id - The user whose code is being claimed.
+	 * @param code - The verification code being consumed.
+	 * @param tenantId - The tenant the code was issued for.
+	 * @returns 1 if this call claimed the code, 0 if it was already used or has expired.
+	 */
+	async claimEmailVerificationCode(id: ID, code: string, tenantId: ID): Promise<number> {
+		const now = new Date();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.nativeUpdate(
+					emailVerificationClaimWhereMikroOrm(id, code, tenantId, now) as any,
+					{ code: null, codeExpireAt: null } as any
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(
+					emailVerificationClaimWhere(id, code, tenantId, now),
+					{ code: null, codeExpireAt: null }
+				);
+				return affected ?? 0;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Atomically claims the magic sign-in code for every user matching the given email and code.
+	 *
+	 * The code stays in the WHERE clause, which is what makes this the single-use claim rather
+	 * than mere cleanup: the first caller nulls the code and gets a non-zero row count, and any
+	 * request racing it matches nothing and gets 0. One email can exist in several tenants, so a
+	 * winning claim may cover more than one row — hence a count rather than a boolean.
+	 *
+	 * Callers MUST gate on the return value before handing out sign-in tokens. Treating this as
+	 * fire-and-forget cleanup lets two concurrent requests both authenticate off one code.
 	 *
 	 * @param email - The email address used for the sign-in.
-	 * @param code  - The magic code that was consumed.
-	 * @returns A promise that resolves when the invalidation write completes.
+	 * @param code  - The magic code being consumed.
+	 * @returns The number of user rows claimed; 0 means the code was already consumed.
 	 */
-	async invalidateMagicCode(email: string, code: string): Promise<void> {
+	async invalidateMagicCode(email: string, code: string): Promise<number> {
 		// Common criteria and payload shared by both ORM adapters
-		const where = { email, code };
+		const where = magicCodeClaimWhere(email, code);
 		const update = { code: null, codeExpireAt: null };
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmUserRepository.nativeUpdate(where, update);
-				break;
-			case MultiORMEnum.TypeORM:
-				await this.typeOrmUserRepository.update(where, update);
-				break;
+				return await this.mikroOrmUserRepository.nativeUpdate(where, update);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update(where, update);
+				return affected ?? 0;
+			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
@@ -689,6 +908,102 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Returns the emails of the given accounts whose stored password still verifies against the given
+	 * password. One query for all candidates; used at boot to warn about seeded accounts that still
+	 * use their published default password (GHSA-4r2r-mv32-3468).
+	 *
+	 * Best effort, and deliberately bounded: `email` is not unique across tenants, so the same seeded
+	 * address can exist many times, while one verification is expensive on purpose (scrypt, or bcrypt
+	 * at 12 rounds for a legacy hash). This runs before the API starts listening, so each candidate
+	 * address is queried on its own and at most {@link MAX_ROWS_PER_ACCOUNT} of its rows are read and
+	 * verified — every candidate gets looked at, and a boot cannot be held up.
+	 *
+	 * The cap makes a clean result non-conclusive: with the same address in more tenants than the cap,
+	 * a vulnerable row can sit outside the sample. That is reported rather than hidden — `inconclusive`
+	 * names the addresses whose rows filled the budget without a match, so the caller can say "not
+	 * exhaustively checked" instead of implying "clean".
+	 *
+	 * @param candidates Account emails, each with the password to test.
+	 * @returns `matches`, the emails that still use one of the given passwords (each reported once
+	 * however many tenants hold it), and `inconclusive`, the emails whose search hit the row budget
+	 * without matching.
+	 */
+	public async findAccountsUsingPasswords(
+		candidates: ReadonlyArray<{ email: string; password: string }>
+	): Promise<{ matches: string[]; inconclusive: string[] }> {
+		// One Set of passwords per address: `getPublishedSeedAccounts()` can propose the same address
+		// twice (the canonical one and the configured one), and a Map keeps one query per address while
+		// still testing every password proposed for it. Insertion order is the candidate order.
+		const passwordsByEmail = new Map<string, Set<string>>();
+		for (const { email, password } of candidates) {
+			if (!email) {
+				continue;
+			}
+			const passwords = passwordsByEmail.get(email) ?? new Set<string>();
+			passwords.add(password);
+			passwordsByEmail.set(email, passwords);
+		}
+
+		const matches: string[] = [];
+		const inconclusive: string[] = [];
+		for (const [email, passwords] of passwordsByEmail) {
+			const rows = await this.findUsersByEmail(email);
+			// Re-checked against the row AND sliced again here, so a repository that ignored the filter
+			// or the limit can neither cross-match one account's password onto another nor make the
+			// expensive part unbounded.
+			const relevant = rows.filter((row) => row?.email === email && !!row.hash).slice(0, MAX_ROWS_PER_ACCOUNT);
+			if (await this.anyPasswordVerifies(relevant, passwords)) {
+				matches.push(email);
+			} else if (relevant.length >= MAX_ROWS_PER_ACCOUNT) {
+				// The budget ran out before the rows did: there may be a vulnerable one past it.
+				inconclusive.push(email);
+			}
+		}
+		return { matches, inconclusive };
+	}
+
+	/**
+	 * Reads at most {@link MAX_ROWS_PER_ACCOUNT} users with this exact email, with their hash.
+	 *
+	 * @param email The address to look up.
+	 */
+	private async findUsersByEmail(email: string): Promise<Array<Pick<User, 'email' | 'hash'>>> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				// Raw entities, not `serialize()`d: serialization strips `hash`.
+				return this.mikroOrmUserRepository.find({ email } as any, { limit: MAX_ROWS_PER_ACCOUNT });
+			case MultiORMEnum.TypeORM:
+			default:
+				return this.typeOrmUserRepository.find({
+					where: { email },
+					select: { id: true, email: true, hash: true },
+					take: MAX_ROWS_PER_ACCOUNT
+				});
+		}
+	}
+
+	/**
+	 * Whether any of `passwords` verifies against any of the given rows' hashes. Stops at the first
+	 * match, since one is enough to warn about the account.
+	 *
+	 * @param rows Rows already narrowed to one address and known to carry a hash.
+	 * @param passwords The passwords to test.
+	 */
+	private async anyPasswordVerifies(
+		rows: ReadonlyArray<Pick<User, 'hash'>>,
+		passwords: Iterable<string>
+	): Promise<boolean> {
+		for (const row of rows) {
+			for (const password of passwords) {
+				if (await this._passwordHashService.verify(password, row.hash)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Generates a hash from the provided password using PasswordHashService.
 	 *
 	 * @param password The password to hash.
@@ -696,6 +1011,64 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	private async getPasswordHash(password: string): Promise<string> {
 		return this._passwordHashService.hash(password);
+	}
+
+	/**
+	 * Refuses a payload that assigns a role the caller may not grant.
+	 *
+	 * @param payload The payload that assigns the role. Its identifiers are extracted here, in every
+	 *                form (`roleId`, `role` as an id string, `role: { id }`), so a caller cannot forget one.
+	 * @throws BadRequestException When a role key does not reference a role, or an id does not resolve
+	 *                             inside the caller's tenant.
+	 * @throws ForbiddenException When SUPER_ADMIN is requested without `SUPER_ADMIN_EDIT`.
+	 */
+	public async assertCanAssignRoles(payload: IRoleAssignmentPayload): Promise<void> {
+		// EVERY candidate is checked, not just the first: the entity carries both a `role` relation and a
+		// flat `roleId` column, so a body sending a harmless `roleId` next to a privileged `role` must not
+		// validate the harmless one. A role key that is present but references nothing throws inside
+		// `extractRoleIds` rather than leaving an empty list that checks nothing (GHSA-x4mv-fhwj-g3rp).
+		const candidates = extractRoleIds(payload);
+		const canEditSuperAdmin = RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
+		for (const roleId of candidates) {
+			assertRoleAssignmentAllowed(await this.resolveRoleName(roleId), canEditSuperAdmin);
+		}
+	}
+
+	/**
+	 * Resolves the name of a role of the caller's tenant from the database (by entity name, to avoid
+	 * a role -> user -> role import cycle). Returns undefined for an unknown / foreign role.
+	 *
+	 * @param roleId The role id to resolve.
+	 */
+	public async resolveRoleName(roleId: ID): Promise<string | undefined> {
+		if (!roleId) {
+			return undefined;
+		}
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fail CLOSED with no tenant context. `...(tenantId ? { tenantId } : {})` would drop the
+		// predicate entirely and resolve roles across every tenant in the database — the caller then
+		// gets a name for a role it has no claim to, and the SUPER_ADMIN gate reads as satisfied.
+		// An unresolved name makes `assertRoleAssignmentAllowed` throw, which is the safe outcome.
+		if (!tenantId) {
+			return undefined;
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const role = await this.mikroOrmRepository
+					.getEntityManager()
+					.findOne('Role', { id: roleId, tenantId } as any);
+				return (role as any)?.name;
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const role = await this.typeOrmRepository.manager.findOne('Role', {
+					where: { id: roleId, tenantId } as any
+				});
+				return (role as any)?.name;
+			}
+		}
 	}
 
 	/**

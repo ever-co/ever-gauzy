@@ -17,7 +17,8 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { RequestContext } from '../core/context';
 import { RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum } from './../core/utils';
+import { assertSensitiveRelationsAllowed } from './../core/util/sensitive-relations.helper';
+import { MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { RequestApproval } from './request-approval.entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
@@ -43,6 +44,10 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(filter);
+
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId } = findInput;
 
@@ -144,7 +149,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 				const relations = filter.relations as string[];
 				if (relations && relations.length > 0) {
-					query.setFindOptions({ relations });
+					query.setFindOptions({ relations: parseFindOptionsRelations(relations) });
 				}
 
 				const [items, total] = await query
@@ -187,6 +192,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		relations: string[],
 		findInput?: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		// The relations are applied to the EMPLOYEE read below, so the table is walked from `Employee`.
+		assertSensitiveRelationsAllowed(this.typeOrmEmployeeRepository.metadata, relations);
+
 		// Get the current tenant ID and current user ID from the request context.
 		const currentUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
@@ -209,10 +219,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				break;
 			case MultiORMEnum.TypeORM:
 			default:
-				// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
                 employee = await this.typeOrmEmployeeRepository.findOne({
 					where: { id },
-					relations
+					relations: parseFindOptionsRelations(relations)
 				});
 				break;
 		}
@@ -240,6 +249,49 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	}
 
 	/**
+	 * Resolves the approver employees named by a request approval, inside the caller's tenant only.
+	 *
+	 * The ids come from the request body and the raw repositories carry no tenant scoping, so an
+	 * unscoped lookup attached another tenant's employee (and echoed it back in the response)
+	 * (GHSA-gwpq-mmw7-vx85 sibling). Ids of other tenants are ignored; no tenant means no match.
+	 *
+	 * @param ids - The employee ids from the request.
+	 * @param tenantId - The caller's tenant.
+	 */
+	private async findEmployeesInTenant(ids: ID[], tenantId: ID): Promise<IEmployee[]> {
+		if (!tenantId || !Array.isArray(ids) || !ids.length) {
+			return [];
+		}
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmEmployeeRepository.find({ id: { $in: ids }, tenantId } as any);
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmEmployeeRepository.find({ where: { id: In(ids), tenantId } });
+		}
+	}
+
+	/**
+	 * Resolves the approver teams named by a request approval, inside the caller's tenant only.
+	 * See {@link findEmployeesInTenant}.
+	 *
+	 * @param ids - The team ids from the request.
+	 * @param tenantId - The caller's tenant.
+	 */
+	private async findTeamsInTenant(ids: ID[], tenantId: ID): Promise<IOrganizationTeam[]> {
+		if (!tenantId || !Array.isArray(ids) || !ids.length) {
+			return [];
+		}
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmOrganizationTeamRepository.find({ id: { $in: ids }, tenantId } as any);
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmOrganizationTeamRepository.find({ where: { id: In(ids), tenantId } });
+		}
+	}
+
+	/**
 	 * Creates a RequestApproval record.
 	 *
 	 * @param entity - The input data to create a RequestApproval.
@@ -259,20 +311,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		requestApproval.tenantId = tenantId;
 
 		if (entity.employeeApprovals?.length) {
-			let employees: IEmployee[];
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					employees = await this.mikroOrmEmployeeRepository.find({
-						id: { $in: entity.employeeApprovals as any }
-					});
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					employees = await this.typeOrmEmployeeRepository.find({
-						where: { id: In(entity.employeeApprovals as any) }
-					});
-					break;
-			}
+			const employees = await this.findEmployeesInTenant(entity.employeeApprovals as unknown as ID[], tenantId);
 
 			requestApproval.employeeApprovals = employees.map((employee) => {
 				const requestApprovalEmployee = new RequestApprovalEmployee();
@@ -285,18 +324,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 
 		if (entity.teams?.length) {
-			let teams: IOrganizationTeam[];
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					teams = await this.mikroOrmOrganizationTeamRepository.find({ id: { $in: entity.teams as any } });
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					teams = await this.typeOrmOrganizationTeamRepository.find({
-						where: { id: In(entity.teams as any) }
-					});
-					break;
-			}
+			const teams = await this.findTeamsInTenant(entity.teams as unknown as ID[], tenantId);
 
 			requestApproval.teamApprovals = teams.map((team) => {
 				const requestApprovalTeam = new RequestApprovalTeam();
@@ -351,22 +379,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 
 		if (entity.employeeApprovals) {
-			let employees: IEmployee[];
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					employees = await this.mikroOrmEmployeeRepository.find({
-						id: { $in: entity.employeeApprovals as any }
-					});
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					employees = await this.typeOrmEmployeeRepository.find({
-						where: {
-							id: In(entity.employeeApprovals as any)
-						}
-					});
-					break;
-			}
+			const employees = await this.findEmployeesInTenant(entity.employeeApprovals as unknown as ID[], tenantId);
 			const requestApprovalEmployees: IRequestApprovalEmployee[] = [];
 			employees.forEach((employee) => {
 				const raEmployees = new RequestApprovalEmployee();
@@ -381,20 +394,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 
 		if (entity.teams) {
-			let teams: IOrganizationTeam[];
-			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					teams = await this.mikroOrmOrganizationTeamRepository.find({ id: { $in: entity.teams as any } });
-					break;
-				case MultiORMEnum.TypeORM:
-				default:
-					teams = await this.typeOrmOrganizationTeamRepository.find({
-						where: {
-							id: In(entity.teams as any)
-						}
-					});
-					break;
-			}
+			const teams = await this.findTeamsInTenant(entity.teams as unknown as ID[], tenantId);
 			const requestApprovalTeams: IRequestApprovalTeam[] = [];
 			teams.forEach((team) => {
 				const raTeam = new RequestApprovalTeam();

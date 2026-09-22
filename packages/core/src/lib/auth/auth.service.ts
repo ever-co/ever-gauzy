@@ -1,3 +1,4 @@
+// cspell:ignore onboarded
 import {
 	SocialAuthService,
 	OAuthAppAuthorizationRequest,
@@ -42,6 +43,7 @@ import { wrap } from '@mikro-orm/core';
 import { HttpService } from '@nestjs/axios';
 import {
 	BadRequestException,
+	ForbiddenException,
 	Inject,
 	Injectable,
 	InternalServerErrorException,
@@ -53,9 +55,9 @@ import {
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { CommandBus } from '@nestjs/cqrs';
-import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
+import { JsonWebTokenError, JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
-import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
+import { DeepPartial, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { pick } from 'underscore';
 import { AccessTokenService } from '../access-token/access-token.service';
 import { IAccessTokenMetadata } from '../access-token/type.token';
@@ -87,16 +89,25 @@ import { RoleService } from './../role/role.service';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { SocialAccountService } from './social-account/social-account.service';
 import {
-	verifyFacebookToken,
-	verifyGithubToken,
-	verifyGoogleToken,
-	verifyTwitterToken
+	IVerifiedSocialIdentity,
+	SOCIAL_AUTH_FAILED_MESSAGE,
+	verifySocialAccessToken
 } from './social-account/token-verification/verify-oauth-tokens';
+import {
+	isNonEmptyString,
+	PurposeTokenError,
+	signPurposeToken,
+	TokenPurposeEnum,
+	verifyPurposeToken
+} from './purpose-token';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { createClient } from 'redis';
 import { EVER_REDIS_CLIENT } from '../redis/redis.module';
 import { OAuthClientService } from './oauth-client/oauth-client.service';
 import { OAuthClient } from './oauth-client/oauth-client.entity';
+import { TermsAcceptanceService } from '../terms-acceptance/terms-acceptance.service';
+import { passwordResetConsumeWhere } from '../shared/single-use/claim-criteria';
+import { LoginAttemptScope, LoginAttemptService } from './login-attempt.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -107,6 +118,13 @@ export class AuthService extends SocialAuthService {
 	private static readonly OAUTH_CODE_TTL_MS = 10 * 60 * 1000;
 	private static readonly OAUTH_REQUEST_CACHE_PREFIX = 'oauth_app_request:';
 	private static readonly OAUTH_REQUEST_TTL_MS = 10 * 60 * 1000;
+
+	/**
+	 * Authorization-code jti values already claimed by this process, used to make the non-Redis
+	 * token-exchange path single-use. Entries expire with the codes they guard. Deployments with
+	 * Redis wired use GETDEL instead and never touch this set.
+	 */
+	private readonly consumedOAuthCodes = new Set<string>();
 
 	constructor(
 		private readonly typeOrmUserRepository: TypeOrmUserRepository,
@@ -132,7 +150,9 @@ export class AuthService extends SocialAuthService {
 		private readonly accessTokenService: AccessTokenService,
 		private readonly typeOrmPasswordResetRepository: TypeOrmPasswordResetRepository,
 		private readonly mikroOrmPasswordResetRepository: MikroOrmPasswordResetRepository,
-		private readonly oauthClientService: OAuthClientService
+		private readonly oauthClientService: OAuthClientService,
+		private readonly termsAcceptanceService: TermsAcceptanceService,
+		private readonly loginAttemptService: LoginAttemptService
 	) {
 		super();
 	}
@@ -292,8 +312,11 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Enforce that the client is allowed to use the authorization_code grant
-		if (config.allowedGrantTypes && config.allowedGrantTypes.length > 0
-			&& !config.allowedGrantTypes.includes('authorization_code')) {
+		if (
+			config.allowedGrantTypes &&
+			config.allowedGrantTypes.length > 0 &&
+			!config.allowedGrantTypes.includes('authorization_code')
+		) {
 			throw new BadRequestException('Client is not allowed to use authorization_code grant');
 		}
 
@@ -380,9 +403,32 @@ export class AuthService extends SocialAuthService {
 		if (this.redisClient) {
 			// Atomic get-and-delete: prevents race conditions in multi-instance deployments
 			codeState = await this.redisClient.getDel(cacheKey);
+		} else if (this.consumedOAuthCodes.has(payload.jti)) {
+			// Already claimed by an exchange that is still in flight, or by one that completed.
+			codeState = null;
 		} else {
-			// Non-Redis fallback (single-instance safe)
-			codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			// Non-Redis fallback, single instance only. `await get()` followed by `await del()` is
+			// NOT single-use safe on its own: the await between them yields the event loop, so two
+			// exchanges of the same code both observe it as live and both mint an access token —
+			// exactly what RFC 6749 forbids. Node runs one thread, so a SYNCHRONOUS check-and-insert
+			// is the atomic claim that the two-step cache dance cannot be. The claim is recorded
+			// BEFORE the first await, which is what closes the window.
+			this.consumedOAuthCodes.add(payload.jti);
+
+			// The jti cannot be replayed past its own expiry (checked above), so the set only needs
+			// to outlive the code itself. unref() keeps this timer from holding the process open.
+			setTimeout(() => this.consumedOAuthCodes.delete(payload.jti), AuthService.OAUTH_CODE_TTL_MS).unref();
+
+			try {
+				codeState = (await this.cacheManager.get<string>(cacheKey)) ?? null;
+			} catch (error) {
+				// The read failed, so this claim guards a code we never proved was live. Hand it
+				// back, or a transient cache error would lock a legitimate first exchange out for
+				// the code's whole lifetime.
+				this.consumedOAuthCodes.delete(payload.jti);
+				throw error;
+			}
+
 			await this.cacheManager.del(cacheKey);
 		}
 
@@ -422,6 +468,12 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to the authentication response or null
 	 */
 	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
+		// Per-ACCOUNT brute-force control, checked before any credential work and OUTSIDE the catch
+		// below (which rewrites every failure into a 401 — a lockout has to surface as a 429).
+		// The @Throttle on the route is keyed on the client address; this counter is not, so
+		// changing address between attempts no longer buys a fresh allowance.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email);
+
 		try {
 			// Find ALL users by email
 			const users = await this.userService.find({
@@ -496,7 +548,20 @@ export class AuthService extends SocialAuthService {
 			const { user: selectedUser, employee } = userValidations[0];
 
 			// Determine organization context for tokens
-			const organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+			let organizationId = employee?.organizationId || selectedUser.lastOrganizationId;
+
+			// A non-employee user whose preference was never persisted (e.g. a freshly seeded
+			// super admin) has neither source, and a token without an organization claim fails
+			// every consumer of `RequestContext.currentOrganizationId()`. Fall back to the user's
+			// first active organization membership and persist it so subsequent logins skip the
+			// extra lookup. Best-effort: an unresolvable membership issues the token exactly as
+			// before.
+			if (!organizationId) {
+				organizationId = await this.resolveDefaultOrganizationId(selectedUser.id, selectedUser.tenantId);
+				if (organizationId) {
+					await this.userService.setLastOrganizationAndTeam(selectedUser.id, organizationId);
+				}
+			}
 
 			// Generate both access and refresh tokens concurrently
 			const [access_token, refresh_token] = await Promise.all([
@@ -510,6 +575,9 @@ export class AuthService extends SocialAuthService {
 				this.userService.setUserLastLoginTimestamp(selectedUser.id)
 			]);
 
+			// Credentials were good: forget the streak that preceded them.
+			await attempt.succeed();
+
 			return {
 				user: new User({
 					...selectedUser,
@@ -521,7 +589,67 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Log the error with a timestamp and the error message for debugging
 			this.logger.error(`Login failed at ${new Date().toISOString()}: ${error.message}`);
+			// Every rejection of the credentials themselves is raised above as UnauthorizedException, and
+			// only those count against the account. Anything else (a database or token-signing error) says
+			// nothing about the password, and counting it would let an outage lock real users out.
+			if (error instanceof UnauthorizedException) {
+				await attempt.fail();
+			} else {
+				await attempt.release();
+			}
 			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * Last-resort organization scope for a token: the user's first active `UserOrganization`
+	 * membership.
+	 *
+	 * Only consulted when both `employee.organizationId` and `user.lastOrganizationId` are null
+	 * (a non-employee user — e.g. a freshly seeded super admin — whose preference was never
+	 * persisted), so the common login paths never pay for the extra query. Runs outside an
+	 * authenticated request context, which is why the tenant is pinned explicitly in the `where`.
+	 * Defensive by contract: any lookup failure resolves to null and the token is issued without
+	 * an organization claim, exactly as it was before this fallback existed.
+	 *
+	 * @param userId The user to resolve a membership for.
+	 * @param tenantId The tenant the membership must belong to.
+	 * @returns The organization id of the user's first active membership, or null.
+	 */
+	private async resolveDefaultOrganizationId(userId: ID, tenantId: ID): Promise<ID | null> {
+		try {
+			const userOrganization = await this.userOrganizationService.findOneByOptions({
+				where: { userId, tenantId, isActive: true, isArchived: false },
+				order: { createdAt: 'ASC' }
+			});
+			return userOrganization?.organizationId ?? null;
+		} catch {
+			// `findOneByOptions` throws when no membership exists — no membership, no claim.
+			return null;
+		}
+	}
+
+	/**
+	 * Whether `userId` holds an active, non-archived membership of `organizationId` —
+	 * the same criteria `switchOrganization` enforces before scoping a token.
+	 *
+	 * Used to vet a CLIENT-REQUESTED organization before it may become the token's
+	 * `organizationId` claim: the server-persisted preferences never pass through here.
+	 *
+	 * @param userId The user whose membership is checked.
+	 * @param organizationId The requested organization.
+	 * @param tenantId The tenant the membership must belong to.
+	 * @returns True when an active membership backs the request.
+	 */
+	private async hasActiveOrganizationMembership(userId: ID, organizationId: ID, tenantId: ID): Promise<boolean> {
+		try {
+			const membership = await this.userOrganizationService.findOneByOptions({
+				where: { userId, organizationId, tenantId, isActive: true, isArchived: false }
+			});
+			return !!membership;
+		} catch {
+			// `findOneByOptions` throws when no membership exists.
+			return false;
 		}
 	}
 
@@ -539,19 +667,29 @@ export class AuthService extends SocialAuthService {
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { email, password } = input;
 
+		// Same per-account control as `login()`: this route verifies the very same password.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.PASSWORD, email);
+
 		/** Fetching users matching the query */
-		const allUsers = await this.userService.find({
-			where: [
-				{
-					email,
-					isActive: true,
-					isArchived: false,
-					hash: Not(IsNull())
-				}
-			],
-			relations: { tenant: true },
-			order: { createdAt: 'DESC' }
-		});
+		let allUsers: IUser[];
+		try {
+			allUsers = await this.userService.find({
+				where: [
+					{
+						email,
+						isActive: true,
+						isArchived: false,
+						hash: Not(IsNull())
+					}
+				],
+				relations: { tenant: true },
+				order: { createdAt: 'DESC' }
+			});
+		} catch (error) {
+			// No verdict on the password: give the slot back rather than counting a failure.
+			await attempt.release();
+			throw error;
+		}
 
 		// Filter users based on password match using async verification
 		const validatedUsers: IUser[] = [];
@@ -580,8 +718,11 @@ export class AuthService extends SocialAuthService {
 		let users = validatedUsers;
 
 		if (users.length === 0) {
+			await attempt.fail();
 			throw new UnauthorizedException();
 		}
+
+		await attempt.succeed();
 
 		const code = generateAlphaNumericCode();
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
@@ -629,27 +770,58 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Verify OAuth token when signin with social media from Ever Teams
 	 *
+	 * The token must have been issued to one of OUR OAuth clients (audience check) and carry a
+	 * provider-verified email; anything else is a generic 401 (GHSA-58x4-7mw9-gmqg). See
+	 * `verifySocialAccessToken` for the per-provider checks.
+	 *
 	 * @param provider The provider used with user for signin
 	 * @param token The token generated by OAuth provider from Ever Teams frontend
-	 * @returns A promise resolved by the provider name and the account ID, both decode from the token
-	 * @throws A bad request if the provider used by user is not supported
+	 * @returns A promise resolved by the provider name, the account ID and the verified email
+	 * @throws UnauthorizedException when the token cannot be verified
 	 */
-	private async verifyOAuthToken(
-		provider: ProviderEnum,
-		token: string
-	): Promise<{ provider: ProviderEnum; id: string; email: string }> {
-		switch (provider) {
-			case ProviderEnum.GOOGLE:
-				return verifyGoogleToken(this.httpService, token);
-			case ProviderEnum.GITHUB:
-				return verifyGithubToken(this.httpService, token);
-			case ProviderEnum.TWITTER:
-				return verifyTwitterToken(this.httpService, token);
-			case ProviderEnum.FACEBOOK:
-				return verifyFacebookToken(this.httpService, token);
-			default:
-				throw new BadRequestException('Unsupported provider');
+	private async verifyOAuthToken(provider: ProviderEnum, token: string): Promise<IVerifiedSocialIdentity> {
+		return await verifySocialAccessToken(this.httpService, provider, token);
+	}
+
+	/**
+	 * Find the active users that own a provider-verified email.
+	 *
+	 * The email is matched as normalised (lowercased) and as the provider returned it, because
+	 * stored emails keep the case they were registered with.
+	 */
+	private async findActiveUsersBySocialEmail(identity: IVerifiedSocialIdentity): Promise<IUser[]> {
+		const emails = Array.from(new Set([identity?.email, identity?.rawEmail].filter(isNonEmptyString)));
+
+		// Never let an empty email reach the query: an undefined `where` value is dropped by the
+		// ORM and the lookup would match EVERY user (GHSA-58x4-7mw9-gmqg).
+		if (emails.length === 0) {
+			throw new UnauthorizedException(SOCIAL_AUTH_FAILED_MESSAGE);
 		}
+
+		return await this.userService.find({
+			where: emails.map((email) => ({ email, isActive: true, isArchived: false })),
+			relations: { tenant: true },
+			order: { createdAt: 'DESC' }
+		});
+	}
+
+	/**
+	 * Link a provider account to each of the given users that is not linked to it yet. The link
+	 * is saved with the USER's tenant: these are public routes with no request tenant.
+	 */
+	private async linkSocialAccountToUsers(
+		identity: IVerifiedSocialIdentity,
+		users: IUser[]
+	): Promise<ISocialAccount[]> {
+		return await Promise.all(
+			users.map((user: IUser) =>
+				this.socialAccountService.linkSocialAccountToUser({
+					provider: identity.provider,
+					providerAccountId: identity.id,
+					user
+				})
+			)
+		);
 	}
 
 	/**
@@ -668,8 +840,8 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * Authenticate a user by email from social media and return user workspaces.
 	 *
-	 * @param email - The user's email.
-	 * @param password - The user's password.
+	 * @param input - The provider name and the provider access token.
+	 * @param includeTeams - Flag to include teams in the response.
 	 * @returns A promise that resolves to a response with user workspaces.
 	 * @throws UnauthorizedException if authentication fails.
 	 */
@@ -679,41 +851,29 @@ export class AuthService extends SocialAuthService {
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { provider: inputProvider, token } = input;
 
-		const providerData = await this.verifyOAuthToken(inputProvider, token);
+		// Audience-verified AND email-verified, or a generic 401.
+		const identity = await this.verifyOAuthToken(inputProvider, token);
 
-		const { email, id: providerAccountId, provider } = providerData;
+		// Defense in depth: `verifyOAuthToken` already guarantees both. An absent value here would be
+		// dropped from the `where` clauses below and match every user / every link.
+		if (!identity?.email || !identity?.id) {
+			throw new UnauthorizedException(SOCIAL_AUTH_FAILED_MESSAGE);
+		}
+
+		const { email, id: providerAccountId, provider } = identity;
 		const socialAccount = await this.socialAccountService.findAccountByProvider({ provider, providerAccountId });
 
 		/** Fetching users matching the query */
-		let users = await this.userService.find({
-			where: [
-				{
-					email,
-					isActive: true,
-					isArchived: false
-				}
-			],
-			relations: { tenant: true },
-			order: { createdAt: 'DESC' }
-		});
+		const users = await this.findActiveUsersBySocialEmail(identity);
 
 		if (users.length === 0) {
 			throw new UnauthorizedException();
 		}
 
+		// First social sign-in: link the provider account to the users that own the verified email.
+		// Safe only because the token was issued to one of our clients and the email is verified.
 		if (!socialAccount) {
-			await Promise.all(
-				users.map(async (user) => {
-					return await this.socialAccountService.registerSocialAccount({
-						provider,
-						providerAccountId,
-						userId: user.id,
-						user,
-						tenantId: user.tenantId,
-						tenant: user.tenant
-					});
-				})
-			);
+			await this.linkSocialAccountToUsers(identity, users);
 		}
 
 		const code = generateAlphaNumericCode();
@@ -725,13 +885,13 @@ export class AuthService extends SocialAuthService {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				await this.mikroOrmUserRepository.nativeUpdate(
-					{ id: { $in: ids }, email, isActive: true, isArchived: false },
+					{ id: { $in: ids }, isActive: true, isArchived: false },
 					{ code, codeExpireAt }
 				);
 				break;
 			case MultiORMEnum.TypeORM:
 				await this.typeOrmUserRepository.update(
-					{ id: In(ids), email, isActive: true, isArchived: false },
+					{ id: In(ids), isActive: true, isArchived: false },
 					{ code, codeExpireAt }
 				);
 				break;
@@ -758,51 +918,57 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * This method links a user to an oAuth account when signin/signup with a social media provider
 	 *
+	 * The route is public (Ever Teams calls it right after sign-up), so the provider token is the
+	 * only credential: it goes through the same audience + verified-email check as sign-in, and the
+	 * account is linked only to users that own that verified email (GHSA-58x4-7mw9-gmqg).
+	 *
 	 * @param input The body request that contains the token to be verified and the provider name
 	 * @returns A promise that resolved with  an account creation
 	 */
-
 	async linkUserToSocialAccount(input: ISocialAccountLogin): Promise<ISocialAccount> {
+		const { provider: inputProvider, token } = input;
+
+		// A failed verification stays a 401: it must not be reported as "user not found".
+		const identity = await this.verifyOAuthToken(inputProvider, token);
+		if (!identity?.email || !identity?.id) {
+			throw new UnauthorizedException(SOCIAL_AUTH_FAILED_MESSAGE);
+		}
+
 		try {
-			const { provider: inputProvider, token } = input;
-
-			const providerData = await this.verifyOAuthToken(inputProvider, token);
-			const { email, id, provider } = providerData;
-			const user = await this.userService.getUserByEmail(email);
-
-			if (!user) {
+			const users = await this.findActiveUsersBySocialEmail(identity);
+			if (users.length === 0) {
 				throw new BadRequestException('User for these credentials could not be found');
 			}
-			return await this.socialAccountService.registerSocialAccount({
-				provider,
-				providerAccountId: id,
-				userId: user.id,
-				user,
-				tenantId: user.tenantId,
-				tenant: user.tenant
-			});
+
+			// Most recent first: during an Ever Teams sign-up that is the account just registered.
+			const [account] = await this.linkSocialAccountToUsers(identity, users);
+			return account;
 		} catch (error) {
 			throw new BadRequestException('User for these credentials could not be found');
 		}
 	}
 
 	/**
-	 * Generate a JWT token for the given user.
+	 * Generate a workspace sign-in token for the given user.
+	 *
+	 * The token is purpose-typed: `workspaceSigninVerifyToken` accepts nothing else, so no other
+	 * JWT_SECRET-signed token (invite, appointment, password reset, ...) can be exchanged for an
+	 * access token (GHSA-28wv-vrxj-rp4q).
 	 *
 	 * @param user - The user object for which to generate the token.
 	 * @returns The JWT token as a string.
 	 */
 	private generateToken(user: IUser, code: string): string {
-		const payload: JwtPayload = {
-			userId: user.id,
-			email: user.email,
-			tenantId: user.tenant ? user.tenantId : null,
-			code
-		};
-
-		return sign(payload, environment.JWT_SECRET, {
-			expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
-		});
+		return signPurposeToken(
+			TokenPurposeEnum.WORKSPACE_SIGNIN,
+			{
+				userId: user.id,
+				email: user.email,
+				tenantId: user.tenant ? user.tenantId : null,
+				code
+			},
+			{ expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s` }
+		);
 	}
 
 	/**
@@ -838,13 +1004,12 @@ export class AuthService extends SocialAuthService {
 				const { email, tenantId } = user;
 
 				// Generate a dedicated password-reset token (NOT a full access token)
-				const token = sign(
+				const token = signPurposeToken(
+					TokenPurposeEnum.PASSWORD_RESET,
 					{
-						purpose: 'password-reset',
 						id: user.id,
 						tenantId: tenantId || null
 					},
-					environment.JWT_SECRET,
 					{ expiresIn: '10m' } // Short-lived: 10 minutes
 				);
 
@@ -960,11 +1125,59 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Atomically consumes a password-reset record, enforcing single use.
+	 *
+	 * The record is claimed with one conditional DELETE keyed on its primary key.
+	 * Whichever concurrent request wins the row lock deletes it and sees
+	 * `affected === 1`; every other request finds the row already gone and sees
+	 * `affected === 0`. Because the claim and the check are the same statement,
+	 * there is no window between them for a second request to slip through.
+	 *
+	 * This has to be a single statement rather than a lock-then-act pair:
+	 * `SELECT ... FOR UPDATE` throws `LockNotSupportedOnGivenDriverError` on
+	 * better-sqlite3 under TypeORM, and knex silently drops the lock clause for
+	 * sqlite under MikroORM — so pessimistic locking is not portable across the
+	 * databases we support, and better-sqlite3 is the default `DB_TYPE`.
+	 *
+	 * `affected` is a real row count on every driver reachable here (postgres
+	 * `rowCount`, mysql `affectedRows`, better-sqlite3 `changes`; MongoDB is
+	 * rejected at config time), so treating anything other than 1 as a lost race
+	 * fails closed.
+	 *
+	 * @param record - The password reset record to consume.
+	 * @returns `true` if this call claimed the record, `false` if it was already used.
+	 */
+	private async consumePasswordResetToken(record: IPasswordReset): Promise<boolean> {
+		// `id` is optional on IPasswordReset. A loaded record always has one, but an undefined value
+		// would widen the criteria and delete every row in the table, so refuse rather than risk it.
+		if (!record?.id) {
+			return false;
+		}
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const affected = await this.mikroOrmPasswordResetRepository.nativeDelete(
+					passwordResetConsumeWhere(record.id) as any
+				);
+				return affected === 1;
+			}
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmPasswordResetRepository.delete(
+					passwordResetConsumeWhere(record.id)
+				);
+				return affected === 1;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
 	 * Resets the user's password based on a valid password reset token.
 	 *
 	 * @param request - The request object containing the new password and the reset token.
 	 * @returns A boolean indicating whether the password reset was successful.
-	 * @throws {BadRequestException} - If the password reset fails due to an invalid or expired token, or if there is an issue updating the password.
+	 * @throws {BadRequestException} - If the password reset fails due to an invalid, expired or already-used token, or if there is an issue updating the password.
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
@@ -977,18 +1190,12 @@ export class AuthService extends SocialAuthService {
 				throw new BadRequestException('Password Reset Failed: Token has expired.');
 			}
 
-			// Verify the token and extract user information
-			// Validate the purpose claim to ensure this is a dedicated password-reset token
-			const decoded = verify(token, environment.JWT_SECRET) as {
-				purpose?: string;
-				id: ID;
-				tenantId: ID;
-			};
-
-			// Reject tokens without the password-reset purpose claim
-			if (decoded.purpose !== 'password-reset') {
-				throw new BadRequestException('Password Reset Failed: Invalid token type.');
-			}
+			// Verify the token and extract user information: signature (HS256 only), expiry, the
+			// dedicated password-reset purpose, and a non-empty `id`. The `id` requirement matters —
+			// `findOneByIdString(undefined)` would widen the lookup instead of failing closed.
+			const decoded = verifyPurposeToken<{ id: ID; tenantId: ID }>(token, TokenPurposeEnum.PASSWORD_RESET, {
+				requiredClaims: ['id']
+			});
 
 			const { id, tenantId } = decoded;
 
@@ -1002,11 +1209,21 @@ export class AuthService extends SocialAuthService {
 				throw new NotFoundException('Password Reset Failed.');
 			}
 
+			// Claim the token BEFORE changing anything. The record was only read above, so up to
+			// this point two requests carrying the same token are still running side by side; the
+			// conditional delete is what picks a single winner. Doing it after changePassword — as
+			// this flow used to — meant both requests passed validation and both reset the password,
+			// with the last writer silently deciding the final credential.
+			if (!(await this.consumePasswordResetToken(record))) {
+				throw new BadRequestException('Password Reset Failed: Token has already been used.');
+			}
+
 			// Hash the new password using PasswordHashService and update it for the user
 			const hash = await this.passwordHashService.hash(password);
 			await this.userService.changePassword(user.id, hash);
 
-			// Invalidate the used password-reset record and all other records for this user
+			// Sweep up any other password-reset records for this user. The consumed record is already
+			// gone; this only clears leftovers, so a failure here is not worth failing the reset over.
 			try {
 				const deleteWhere = { email: user.email, ...(tenantId ? { tenantId } : {}) };
 				switch (this.ormType) {
@@ -1034,6 +1251,62 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Builds the Employee row that `featureAsEmployee` asks for, from fields this function OWNS.
+	 *
+	 * The registration input used to be spread wholesale (`create({ ...input, user, tenant… })`).
+	 * `register()` is the shared sink for three public routes, so on the invite paths `input` IS the
+	 * request body — and TypeORM's `repository.create()` copies every non-virtual column it finds on
+	 * a plain object, the PRIMARY KEY included. A body of
+	 * `{ featureAsEmployee: true, id: "<a victim's employee uuid>" }` therefore produced an entity
+	 * carrying that id, and `save()` with a primary key present is an UPDATE: the victim's employee
+	 * row was re-pointed at the attacker's brand-new user (and at the invite's tenant and
+	 * organization), after which the issued JWT carried the victim's `employeeId`. The repository is
+	 * a plain `Repository<Employee>`, so none of the tenant-aware create guards applied.
+	 *
+	 * Listing the fields costs nothing on the legitimate path: `RegisterUserDTO` whitelists
+	 * `/auth/register` down to user / password / confirmPassword / organizationId / createdByUserId
+	 * / featureAsEmployee / terms, and `createdByUserId` is the only one of those that is an
+	 * Employee column at all.
+	 *
+	 * @param input The registration input.
+	 * @param user The user row that was just created — the employee is always attached to THAT user.
+	 * @param tenantId The trusted tenant.
+	 * @param organizationId The trusted organization.
+	 * @returns A payload that can only ever describe a new employee row.
+	 */
+	private buildEmployeeRegistrationPayload(
+		input: IUserRegistrationInput,
+		user: IUser,
+		tenantId: ID,
+		organizationId: ID
+	): DeepPartial<Employee> {
+		return {
+			user,
+			tenantId,
+			tenant: { id: tenantId },
+			organizationId,
+			organization: { id: organizationId },
+			// Already reduced to the authenticated caller (or deleted) in step 1.
+			...(input.createdByUserId ? { createdByUserId: input.createdByUserId } : {})
+		};
+	}
+
+	/**
+	 * Refuses an employee entity that already names an existing row.
+	 *
+	 * Registration only ever CREATES. `save()` on an entity that carries a primary key is an UPDATE,
+	 * so an id reaching this point means either a bug or a body field that found its way back into
+	 * the payload — neither is something to silently write over somebody else's record.
+	 *
+	 * @param employee The entity about to be persisted.
+	 */
+	private assertEmployeeRowIsNew(employee: { id?: ID }): void {
+		if (employee?.id) {
+			throw new ForbiddenException('Registration cannot modify an existing employee record');
+		}
+	}
+
+	/**
 	 * Shared method involved in
 	 * 1. Sign up
 	 * 2. Addition of new user to organization
@@ -1050,7 +1323,61 @@ export class AuthService extends SocialAuthService {
 		let tenant = input.user.tenant;
 		const { organizationId } = input;
 
-		// 1. If createdByUserId is provided, get the creating user and use their tenant
+		// -1. This is a CREATION sink reachable from public routes (/auth/register, /invite/accept,
+		// /invite/contact) whose bodies are attacker-controlled. Strip everything that identifies or
+		// privileges an EXISTING account before the payload is spread into create()/save():
+		// a body `user.id` would turn the save into an UPDATE of that row (account takeover), and
+		// hash / verification / token columns must only ever be derived server-side.
+		if (input.user) {
+			const {
+				id: _id,
+				hash: _hash,
+				emailVerifiedAt: _emailVerifiedAt,
+				emailToken: _emailToken,
+				code: _code,
+				codeExpireAt: _codeExpireAt,
+				refreshToken: _refreshToken,
+				...safeUser
+			} = input.user as any;
+			input.user = safeUser;
+		}
+
+		// 0. Validate the terms acceptance BEFORE anything irreversible happens.
+		//
+		// The register form gates its submit button on a hard-required terms
+		// checkbox, and until now the value went nowhere: no field on the DTO,
+		// no column, no row. The invite-acceptance form had the identical
+		// defect. Checking the claims here — ahead of user creation — means a
+		// missing, malformed or unpublished claim rejects the registration
+		// outright rather than leaving a half-created account behind. The check
+		// is pure and synchronous (no storage, no clock, no network), so it is
+		// cheap enough for the hot path.
+		if (isNotEmpty(input.terms)) {
+			this.termsAcceptanceService.assertClaimsArePublished(input.terms);
+		}
+
+		// 0.1 Keep the flat `roleId` column consistent with the `role` relation.
+		//
+		// Every privileged user-creation path funnels through here, and the entity carries both a
+		// `role` relation and a `roleId` FK column that wins when the row is persisted. Callers that
+		// resolve a trusted role server-side (invite accept, organization-contact accept, employee
+		// create) set only `role`, so a caller-supplied `roleId` left in the spread below would
+		// override it and escalate the new account. Where a trusted role object is present it is the
+		// single source of truth; where it is absent, `roleId` has already been authorized upstream.
+		if (input.user?.role?.id) {
+			input.user.roleId = input.user.role.id;
+		}
+
+		// 1. If createdByUserId is provided, get the creating user and use their tenant — but only when
+		// it names the AUTHENTICATED caller. On the public invite routes the field is attacker-controlled
+		// and used to override the invite's tenant with any user's tenant (cross-tenant registration).
+		const authenticatedUserId = RequestContext.currentUserId();
+		if (
+			input.createdByUserId &&
+			(!authenticatedUserId || String(input.createdByUserId) !== String(authenticatedUserId))
+		) {
+			delete input.createdByUserId;
+		}
 		if (input.createdByUserId) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdByUserId, {
 				relations: {
@@ -1059,6 +1386,22 @@ export class AuthService extends SocialAuthService {
 			});
 			tenant = creatingUser.tenant;
 		}
+		// Keep the flat FK consistent with the trusted tenant relation (mirrors the roleId pin above).
+		if (tenant?.id && input.user) {
+			input.user.tenantId = tenant.id;
+		}
+
+		// 1.1 Decide whether this registration is allowed to mint an Employee profile at all.
+		//
+		// `featureAsEmployee` is a PRIVILEGED field: on `/auth/register` it requires an
+		// ADMIN/SUPER_ADMIN JWT (RegisterAuthorizationGuard). The invite routes reach this same
+		// function through the command bus, so that guard never runs for them — and they do not need
+		// the flag either: `InviteAcceptEmployeeHandler` and `InviteAcceptCandidateHandler` create
+		// the employee/candidate row themselves, from the invitation. Honouring a body-supplied flag
+		// here let an invitee of ANY role self-provision an employee profile with attacker-chosen
+		// `allowManualTime` / `allowModifyTime` / `allowDeleteTime` / `billRateValue` /
+		// `isTrackingEnabled`.
+		const featureAsEmployee = !!input.featureAsEmployee && !input.inviteId;
 
 		// 2. Register new user
 		let user: User;
@@ -1074,15 +1417,11 @@ export class AuthService extends SocialAuthService {
 				user = this.serialize(userEntity);
 
 				// 3. Create employee for specific user
-				if (input.featureAsEmployee) {
-					const empEntity = this.mikroOrmEmployeeRepository.create({
-						...input,
-						user: userEntity,
-						tenantId: tenant.id,
-						tenant: { id: tenant.id },
-						organizationId,
-						organization: { id: organizationId }
-					});
+				if (featureAsEmployee) {
+					const empEntity = this.mikroOrmEmployeeRepository.create(
+						this.buildEmployeeRegistrationPayload(input, userEntity, tenant.id, organizationId) as any
+					);
+					this.assertEmployeeRowIsNew(empEntity);
 					await this.mikroOrmEmployeeRepository.persistAndFlush(empEntity);
 				}
 
@@ -1110,17 +1449,12 @@ export class AuthService extends SocialAuthService {
 				user = await this.typeOrmUserRepository.save(entity);
 
 				// 3. Create employee for specific user
-				if (input.featureAsEmployee) {
-					await this.typeOrmEmployeeRepository.save(
-						this.typeOrmEmployeeRepository.create({
-							...input,
-							user,
-							tenantId: tenant.id,
-							tenant: { id: tenant.id },
-							organizationId,
-							organization: { id: organizationId }
-						})
+				if (featureAsEmployee) {
+					const employee = this.typeOrmEmployeeRepository.create(
+						this.buildEmployeeRegistrationPayload(input, user, tenant.id, organizationId)
 					);
+					this.assertEmployeeRowIsNew(employee);
+					await this.typeOrmEmployeeRepository.save(employee);
 				}
 
 				// 4. Email is automatically verified after accepting an invitation
@@ -1139,6 +1473,44 @@ export class AuthService extends SocialAuthService {
 			}
 			default:
 				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+
+		// 5b. Record the terms acceptance, now that the user has an id.
+		//
+		// This is the whole point of the change: the tick becomes a row that
+		// says which document, at which version, of which exact text (pinned by
+		// sha256 to the published legal corpus), in which language, and by what
+		// mechanism. `method` distinguishes the two paths that reach this
+		// function — a checkbox during signup and a checkbox on an invite
+		// acceptance are legally different events, and "we can't tell which
+		// happened" is not a position worth defending.
+		//
+		// Failures are logged and swallowed deliberately. The claims were
+		// already validated against the corpus in step 0, so anything that goes
+		// wrong here is an infrastructure fault, and by this point the user row
+		// exists: throwing would abandon a created account and send the person
+		// back to a form that will now tell them their email is taken. The
+		// write is idempotent, so a retry is safe.
+		if (isNotEmpty(input.terms)) {
+			try {
+				const request = RequestContext.currentRequest();
+
+				await this.termsAcceptanceService.record(user.id, input.terms, {
+					tenantId: tenant?.id ?? null,
+					method: input.inviteId ? 'invite-accept' : 'signup-checkbox',
+					// `hashIp` salts and digests this; the address itself is
+					// never stored. Without TERMS_IP_SALT nothing is recorded.
+					ip: request?.ip ?? null,
+					userAgent: request?.headers?.['user-agent'] ?? null
+				});
+			} catch (error) {
+				this.logger.error(
+					`Failed to record terms acceptance for user ${user.id}: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+					error instanceof Error ? error.stack : undefined
+				);
+			}
 		}
 
 		// 6. If organizationId is provided, add the user to the organization
@@ -1390,7 +1762,10 @@ export class AuthService extends SocialAuthService {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeAccessWhere });
-					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+					employee = (await this.mikroOrmEmployeeRepository.findOne(
+						parsed.where,
+						parsed.mikroOptions
+					)) as Employee;
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
@@ -1692,8 +2067,8 @@ export class AuthService extends SocialAuthService {
 					const users = await this.typeOrmUserRepository.find({
 						where: { email },
 						select: {
-                            id: true
-                        }
+							id: true
+						}
 					});
 					for (const user of users) {
 						await this.typeOrmUserRepository.update(user.id, { code: magicCode, codeExpireAt });
@@ -1762,6 +2137,11 @@ export class AuthService extends SocialAuthService {
 		payload: IUserEmailInput & IUserCodeInput,
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
+		// The magic code is six alphanumeric characters, so the per-account counter is the control
+		// that actually bounds guessing here. Checked outside the catch, which turns everything
+		// into a 401.
+		const attempt = await this.loginAttemptService.begin(LoginAttemptScope.MAGIC_CODE, payload?.email);
+
 		try {
 			const { email, code } = payload;
 
@@ -1809,14 +2189,33 @@ export class AuthService extends SocialAuthService {
 
 			// Return the response if there are matching workspaces
 			if (response.total_workspaces > 0) {
-				// Invalidate the magic code immediately after successful validation.
-				// The signed JWT workspace tokens are the proof of auth from here on.
-				await this.userService.invalidateMagicCode(email, code);
+				// Claim the code before releasing the workspace tokens. The lookup above only READ
+				// it, so two requests carrying the same code are still running side by side here;
+				// the conditional update is what picks a winner, because its WHERE clause still
+				// contains the code and the loser therefore matches zero rows. Invalidating without
+				// checking the count — as this used to — meant both requests were handed valid
+				// signed workspace tokens from a single single-use code.
+				const claimed = await this.userService.invalidateMagicCode(email, code);
+
+				if (claimed === 0) {
+					throw new UnauthorizedException();
+				}
+
+				await attempt.succeed();
+
 				return response;
 			}
 
 			throw new UnauthorizedException();
 		} catch (error) {
+			// A wrong, expired or already-claimed code is raised above as UnauthorizedException; only
+			// that counts against the account. A lookup or claim that failed for infrastructure reasons
+			// says nothing about the code.
+			if (error instanceof UnauthorizedException) {
+				await attempt.fail();
+			} else {
+				await attempt.release();
+			}
 			throw new UnauthorizedException();
 		}
 	}
@@ -1843,19 +2242,29 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			// Verify and decode the JWT token
-			const payload: JwtPayload | string = this.verifyToken(token);
-			if (typeof payload !== 'object') {
+			// Verify and decode the JWT token. Only a workspace sign-in token is accepted, and it must
+			// name its user and email (see `verifyToken`).
+			const payload = this.verifyToken(token);
+
+			const { userId, tenantId } = payload;
+
+			// A tenant-less user (not onboarded yet) legitimately carries `tenantId: null`, which the
+			// lookup below turns into `IS NULL`. Anything else must be a real id: an absent value
+			// would be dropped from the `where` and widen the lookup (GHSA-28wv-vrxj-rp4q).
+			if (tenantId !== null && !isNonEmptyString(tenantId)) {
 				throw new UnauthorizedException();
 			}
 
-			const { userId, tenantId } = payload;
+			// The token was issued for ONE email; it cannot be replayed for another account.
+			if (payload.email.trim().toLowerCase() !== String(email).trim().toLowerCase()) {
+				throw new UnauthorizedException();
+			}
 
 			// The magic code was already consumed by signinWorkspacesByMagicCode.
 			// The signed JWT is the proof of auth — verify identity and account status only.
 			const where = {
 				id: userId,
-				email,
+				email: payload.email,
 				tenantId,
 				isActive: true,
 				isArchived: false
@@ -1886,8 +2295,27 @@ export class AuthService extends SocialAuthService {
 				throw new UnauthorizedException();
 			}
 
-			// Determine organization context for tokens
-			const organizationId = lastOrganizationId ?? user.lastOrganizationId ?? employee?.organizationId;
+			// Determine organization context for tokens. The REQUESTED organization is a
+			// client-supplied hint, not an entitlement: unlike the server-persisted fallbacks
+			// it must be backed by an active membership (the same criteria `switchOrganization`
+			// enforces) before it may scope the token — otherwise any workspace-token holder
+			// could mint a token claiming a sibling organization of the tenant. An unbacked
+			// hint (e.g. a stale client cache after the membership was revoked) falls back to
+			// the persisted values instead of failing the whole signin.
+			let organizationId = user.lastOrganizationId ?? employee?.organizationId;
+			if (
+				lastOrganizationId &&
+				(await this.hasActiveOrganizationMembership(user.id, lastOrganizationId, user.tenantId))
+			) {
+				organizationId = lastOrganizationId;
+			}
+
+			// Same backfill as `login()`: a non-employee user with no persisted preference gets
+			// their first active organization membership so the token carries a usable scope.
+			// `setLastOrganizationAndTeam` below persists whatever is resolved here.
+			if (!organizationId) {
+				organizationId = await this.resolveDefaultOrganizationId(user.id, user.tenantId);
+			}
 
 			// Generate access and refresh tokens concurrently
 			const [accessToken, refreshToken] = await Promise.all([
@@ -1923,19 +2351,29 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Verify the JWT token and return the payload.
+	 * Verify a workspace sign-in token and return its payload.
+	 *
+	 * Every purpose-specific token is signed with the same JWT_SECRET. Accepting any of them here
+	 * let an appointment, invite, estimate or password-reset token (no `userId`, so the lookup
+	 * fell back to the attacker-chosen body email) sign in as another user (GHSA-28wv-vrxj-rp4q).
+	 * Workspace tokens are short-lived, so untyped (legacy) tokens are NOT accepted.
+	 *
 	 * @param token - The JWT token to verify.
 	 * @returns The token payload or throws an error.
 	 */
-	private verifyToken(token: string): JwtPayload | string {
+	private verifyToken(token: string): JwtPayload & { userId: string; email: string; tenantId?: string | null } {
 		try {
-			return verify(token, environment.JWT_SECRET);
+			return verifyPurposeToken<{ userId: string; email: string; tenantId?: string | null }>(
+				token,
+				TokenPurposeEnum.WORKSPACE_SIGNIN,
+				{ requiredClaims: ['userId', 'email'] }
+			);
 		} catch (error) {
-			if (error?.name === 'TokenExpiredError') {
+			if (error instanceof PurposeTokenError && error.reason === 'expired') {
 				throw new BadRequestException('JWT token has expired.');
 			}
-			this.logger.error(`Error while verifying JWT token: ${error?.message}`);
-			throw new UnauthorizedException(error?.message);
+			this.logger.error(`Error while verifying workspace sign-in token: ${error?.message}`);
+			throw new UnauthorizedException();
 		}
 	}
 
@@ -2250,8 +2688,7 @@ export class AuthService extends SocialAuthService {
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
-					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
-                    user = await this.typeOrmUserRepository.findOne({ where, relations });
+					user = await this.typeOrmUserRepository.findOne({ where, relations });
 					break;
 				}
 				default:
@@ -2272,13 +2709,21 @@ export class AuthService extends SocialAuthService {
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const parsed = parseTypeORMFindToMikroOrm<Employee>({ where: employeeWhere, relations: employeeRelations });
-					employee = (await this.mikroOrmEmployeeRepository.findOne(parsed.where, parsed.mikroOptions)) as Employee;
+					const parsed = parseTypeORMFindToMikroOrm<Employee>({
+						where: employeeWhere,
+						relations: employeeRelations
+					});
+					employee = (await this.mikroOrmEmployeeRepository.findOne(
+						parsed.where,
+						parsed.mikroOptions
+					)) as Employee;
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
-					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
-                    employee = await this.typeOrmEmployeeRepository.findOne({ where: employeeWhere, relations: employeeRelations });
+					employee = await this.typeOrmEmployeeRepository.findOne({
+						where: employeeWhere,
+						relations: employeeRelations
+					});
 					break;
 				}
 				default:
@@ -2304,10 +2749,16 @@ export class AuthService extends SocialAuthService {
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					await this.mikroOrmUserRepository.nativeUpdate({ id: user.id, tenantId }, { refreshToken: hashedRefreshToken });
+					await this.mikroOrmUserRepository.nativeUpdate(
+						{ id: user.id, tenantId },
+						{ refreshToken: hashedRefreshToken }
+					);
 					break;
 				case MultiORMEnum.TypeORM:
-					await this.typeOrmUserRepository.update({ id: user.id, tenantId }, { refreshToken: hashedRefreshToken });
+					await this.typeOrmUserRepository.update(
+						{ id: user.id, tenantId },
+						{ refreshToken: hashedRefreshToken }
+					);
 					break;
 			}
 
@@ -2389,8 +2840,7 @@ export class AuthService extends SocialAuthService {
 					break;
 				}
 				case MultiORMEnum.TypeORM: {
-					// TODO(typeorm-v1): `relations` no longer accepts a string array. This value references a variable whose shape can't be determined statically — if it holds `string[]`, wrap it: `Object.fromEntries(<expr>?.map(r => [r, true]) ?? [])` (dot-paths need extra nesting handling). If it already holds the v1 object shape, no change needed.
-                    user = await this.typeOrmUserRepository.findOne({ where, relations });
+					user = await this.typeOrmUserRepository.findOne({ where, relations });
 					break;
 				}
 				default:

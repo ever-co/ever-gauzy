@@ -5,30 +5,32 @@
   </div>
 }
 <div class="main-header">
-  <div class="header-container"
-    [class.left]="position === 'normal'"
-    [class.right]="position === 'inverse'"
-  ></div>
-
-  <div class="header-container">
-    @if (createQuickActionsMenu?.length > 0) {
+  <!-- The breadcrumb trail used to live here. It now renders under the page
+       title (ngx-header-title): the header band is already dense with
+       selectors, and the trail was being squeezed to nothing on pages that
+       show every selector. -->
+  @if (createQuickActionsMenu?.length > 0) {
+    <div class="header-lead">
       <nb-action
         size="small"
         [class.left]="position === 'normal'"
         [class.right]="position === 'inverse'"
         class="show-large-up"
         >
-        <button nbButton class="button create" status="warning" size="small" (click)="openQuickActions()">
+        <button type="button" nbButton class="button create" status="primary" size="small" (click)="openQuickActions()">
           + {{ 'BUTTONS.CREATE' | translate }}
         </button>
       </nb-action>
-    }
+    </div>
+  }
+  <div class="header-container">
     <div class="actions" size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
       @if (showTeamsSelector && !showExtraActions && selectorsVisibility?.team) {
         <nb-action
           class="show-large-up"
           >
           <ga-team-selector
+            dropdownClass="header-entity-select"
             [employeeId]="(employee$ | async)?.id"
             [projectId]="(project$ | async)?.id"
             [shortened]="true"
@@ -42,6 +44,7 @@
           class="show-large-up"
           >
           <ga-project-selector
+            dropdownClass="header-entity-select"
             [employeeId]="(employee$ | async)?.id"
             [shortened]="true"
             class="header-selector project-selector"
@@ -53,12 +56,17 @@
         <nb-action
           class="show-large-up"
           >
-          <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector>
+          <ga-employee-selector
+            dropdownClass="header-entity-select"
+            class="header-selector employee-selector"
+          ></ga-employee-selector>
         </nb-action>
       }
 
       @if (showDateSelector && !showExtraActions && selectorsVisibility?.date) {
-        <nb-action>
+        <!-- .date-range-action: styled `position: static` so the picker's INLINE dropdown
+             escapes the .header-container scroll clip — see header.component.scss. -->
+        <nb-action class="date-range-action">
           @if (organization?.id) {
             <ngx-date-range-picker
               [firstDayOfWeek]="organization.startWeekOn"
@@ -72,7 +80,10 @@
         <nb-action
           class="show-large-up organization-selector-container"
           >
-          <ga-organization-selector class="header-selector organization-selector"></ga-organization-selector>
+          <ga-organization-selector
+            dropdownClass="header-entity-select"
+            class="header-selector organization-selector"
+          ></ga-organization-selector>
         </nb-action>
       }
 
@@ -82,13 +93,9 @@
         (click)="toggleExtraActions()"
       ></nb-action>
 
-      @if (supportContextMenu) {
-        <nb-action
-          icon="message-circle-outline"
-          class="toggle-layout help"
-          [nbContextMenu]="supportContextMenu"
-        ></nb-action>
-      }
+      <!-- The speech-bubble help menu (Support Chat / FAQ / Help / About) used
+           to sit here. Those entries now live in the Quick Settings panel
+           (ngx-theme-settings), which is reached from the gear action below. -->
 
       @if (isEnabledTimeTracking()) {
         <nb-action class="timer-action" (click)="toggleTimerWindow()">
@@ -97,6 +104,10 @@
           <ga-time-tracker-status class="status"></ga-time-tracker-status>
         </nb-action>
       }
+
+      <!-- The AI assistant entry point lives on the sidebar's brand row
+           (`.ai-agent-launch` in one-column.layout.html); a second copy here was
+           redundant, so the header no longer carries a chat control. -->
 
       @for (action of navigationBuilderService.sidebarActions$ | async; track action) {
         <nb-action
@@ -115,6 +126,7 @@
           <h6>{{ 'HEADER.SELECT_TEAM' | translate }}</h6>
         </div>
         <ga-team-selector
+          dropdownClass="header-entity-select"
           [employeeId]="(employee$ | async)?.id"
           [projectId]="(project$ | async)?.id"
           [shortened]="true"
@@ -126,6 +138,7 @@
           <h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
         </div>
         <ga-project-selector
+          dropdownClass="header-entity-select"
           [employeeId]="(employee$ | async)?.id"
           [shortened]="true"
           class="header-selector project-selector"
@@ -137,6 +150,7 @@
         </div>
         @if (showEmployeesSelector) {
           <ga-employee-selector
+            dropdownClass="header-entity-select"
             class="header-selector employee-selector"
           ></ga-employee-selector>
         }
@@ -155,6 +169,7 @@
         </div>
         @if (showOrganizationsSelector) {
           <ga-organization-selector
+            dropdownClass="header-entity-select"
             class="header-selector organization-selector"
           ></ga-organization-selector>
         }

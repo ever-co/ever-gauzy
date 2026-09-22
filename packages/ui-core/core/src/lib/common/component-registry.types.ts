@@ -35,10 +35,15 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'timesheet-details-sections': A sub-page under the timesheet section.
  * - 'integrations-sections': The integrations section of the application.
  * - 'accounting-sections': Children under /pages/accounting.
+ * - 'documents-sections': Children under /pages/documents.
  * - 'employees-sections': Children under /pages/employees.
  * - 'organization-sections': Children under /pages/organization.
  * - 'goals-sections': Children under /pages/goals.
  * - 'reports-sections': Children under /pages/reports.
+ * - 'settings-sections': Children under /pages/settings, rendered inside the
+ *   settings shell (Sidebar | Settings menu | content). Plugin settings pages
+ *   MUST use this rather than 'page-sections', or they render standalone
+ *   without the settings menu.
  * - 'page-sections': Top-level plugin section routes under /pages.
  */
 export type PageRouteLocationId =
@@ -53,10 +58,12 @@ export type PageRouteLocationId =
 	| 'timesheet-details-sections'
 	| 'integrations-sections'
 	| 'accounting-sections'
+	| 'documents-sections'
 	| 'employees-sections'
 	| 'organization-sections'
 	| 'goals-sections'
 	| 'reports-sections'
+	| 'settings-sections'
 	| 'page-sections';
 
 /**
@@ -71,8 +78,14 @@ export type PageRouteLocationId =
  * - 'timesheet-page': The timesheet tab page.
  * - 'time-activity-page': The time and activity tab page.
  * - 'employee-edit-page': The employee edit tab page.
+ * - 'organization-edit-page': The organization edit tab page.
  */
-export type PageTabsetPageId = 'dashboard-page' | 'timesheet-page' | 'time-activity-page' | 'employee-edit-page';
+export type PageTabsetPageId =
+	| 'dashboard-page'
+	| 'timesheet-page'
+	| 'time-activity-page'
+	| 'employee-edit-page'
+	| 'organization-edit-page';
 
 /**
  * @description

@@ -14,7 +14,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { MultiORMEnum } from '../../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -125,6 +125,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getAllPlans(options: BaseQueryDTO<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			const { where } = options;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
@@ -159,7 +163,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 							}),
 						...(isNotEmpty(options) &&
 							isNotEmpty(options.relations) && {
-								relations: options.relations
+								relations: parseFindOptionsRelations(options.relations)
 							})
 					});
 
@@ -205,6 +209,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getTeamDailyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			// Apply optional find options if provided
 			const { where, relations = [] } = options || {};
@@ -235,7 +243,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 					query.setFindOptions({
 						where: isNotEmpty(where) && where,
-						relations: isNotEmpty(relations) && relations
+						relations: isNotEmpty(relations) && parseFindOptionsRelations(relations)
 					});
 
 					// Filter conditions
@@ -307,25 +315,38 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				relations: { tasks: true }
 			});
 		} else {
-			// User is potentially a manager → Check access first
-			// Step 1: Fetch minimal data to get organizationTeamId
-			const planTeamInfo = await this.findOneByOptions({
-				where: {
-					id: planId,
-					employeeId,
-					tenantId,
-					organizationId
-				}
-			});
+			// User is potentially a manager → Check access first.
+			// Step 1: Fetch minimal data to get the plan's owner, team and organization.
+			// This read must run without the automatic employee filter: for a caller without
+			// CHANGE_SELECTED_EMPLOYEE that filter overrides `employeeId` with the caller's own id, so a
+			// plan owned by anyone else would never be found and the manager check below could never run.
+			// The bypass covers this single read only; access is decided before anything is returned.
+			const { success, record: planTeamInfo } = await this.withoutEmployeeFilter(() =>
+				this.findOneOrFailByOptions({
+					where: {
+						id: planId,
+						employeeId,
+						tenantId,
+						organizationId
+					}
+				})
+			);
 
-			// Step 2: Check if current user can manage this employee in this team
+			// Step 2: Check if current user can manage the plan's owner in the plan's team.
+			// The owner and the organization come from the stored plan, not from the request body, so
+			// the check stays anchored to the record itself.
 			// Note: We throw the same generic error whether the plan doesn't exist or the user lacks permission
 			// to avoid leaking information about which plan IDs exist in the system
 			const canManage =
-				planTeamInfo &&
-				(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
+				success &&
+				!!planTeamInfo &&
+				(await this._managedEmployeeService.canManageEmployee(
+					planTeamInfo.employeeId ?? employeeId,
+					planTeamInfo.organizationTeamId,
+					planTeamInfo.organizationId ?? organizationId
+				));
 
-			if (!planTeamInfo || !canManage) {
+			if (!canManage) {
 				throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 			}
 

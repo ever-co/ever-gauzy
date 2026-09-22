@@ -10,7 +10,7 @@
 			"fallbackCurrentVersionResolver": "disk"
 		}
 	},
-	"tags": [],
+	"tags": ["type:shared"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -21,6 +21,13 @@
 				"packageJson": "packages/scheduler/package.json",
 				"main": "packages/scheduler/src/index.ts",
 				"assets": ["packages/scheduler/*.md"]
+			}
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/scheduler/jest.config.ts"
 			}
 		},
 		"nx-release-publish": {

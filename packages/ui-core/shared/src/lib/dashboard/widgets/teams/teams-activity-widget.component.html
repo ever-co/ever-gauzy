@@ -1,0 +1,10 @@
+<ga-teams-counter-card
+	[value]="activityLabel()"
+	suffix="%"
+	[counterValue]="activity()"
+	[total]="100"
+	[progress]="true"
+	[loading]="loading()"
+	[error]="error()"
+	(retry)="refresh()"
+></ga-teams-counter-card>

@@ -54,14 +54,9 @@
 		"resolve": "^1.20.0"
 	},
 	"devDependencies": {
-		"@4tw/cypress-drag-drop": "^2.1.0",
-		"@cypress/browserify-preprocessor": "^3.0.2",
 		"@types/jest": "30.0.0",
 		"concurrently": "^9.2.1",
 		"cross-env": "^10.1.0",
-		"cypress": "^15.9.0",
-		"cypress-cucumber-preprocessor": "^4.3.1",
-		"cypress-file-upload": "^5.0.8",
 		"jasmine-core": "^3.6.0",
 		"jasmine-spec-reporter": "^6.0.0",
 		"jest": "30.0.0",
@@ -73,9 +68,5 @@
 		"karma-jasmine": "^5.1.0",
 		"karma-jasmine-html-reporter": "^1.7.0",
 		"ts-node": "^10.9.2"
-	},
-	"cypress-cucumber-preprocessor": {
-		"nonGlobalStepDefinitions": true,
-		"step_definitions": "src/support/step_definitions/"
 	}
 }

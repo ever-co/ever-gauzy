@@ -23,6 +23,7 @@ export * from './income-amount/income-amount.component';
 export * from './invoice-total-value/invoice-total-value.component';
 export * from './notes-with-tags/notes-with-tags.component';
 export * from './organization-with-tags/organization-with-tags.component';
+export * from './people-list/people-list.component';
 export * from './phone-url/phone-url.component';
 export * from './picture-name-tags/picture-name-tags.component';
 export * from './project-organization-employees/project-organization-employees.component';

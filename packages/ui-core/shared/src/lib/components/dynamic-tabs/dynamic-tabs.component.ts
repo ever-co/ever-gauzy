@@ -1,9 +1,11 @@
 import {
+	AfterViewInit,
 	Component,
 	OnInit,
 	Input,
 	OnDestroy,
 	ChangeDetectorRef,
+	ElementRef,
 	ViewContainerRef,
 	Type,
 	TemplateRef,
@@ -26,7 +28,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 	providers: [],
 	standalone: false
 })
-export class DynamicTabsComponent implements OnInit, OnDestroy {
+export class DynamicTabsComponent implements OnInit, AfterViewInit, OnDestroy {
 	public tabs: CustomNbRouteTab[] = []; // Define the structure of tabs according to your needs
 	public reload$ = new Subject<boolean>(); // Subject to trigger reload of tabs
 
@@ -53,8 +55,16 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 		return tabs.every((tab) => tab.tabsetType === 'route');
 	}
 
+	/**
+	 * The rendered tab links, in the same order as `tabs`.
+	 */
+	private static readonly TAB_LINK_SELECTOR =
+		':scope > nb-route-tabset > .route-tabset > .route-tab > .tab-link, ' +
+		':scope > nb-tabset > .tabset > .tab > .tab-link';
+
 	constructor(
 		private readonly _cdr: ChangeDetectorRef,
+		private readonly _elementRef: ElementRef<HTMLElement>,
 		private readonly _translateService: TranslateService,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
 		readonly _i18n: I18nService
@@ -68,6 +78,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 
 	ngAfterViewInit(): void {
 		this._loadTabsContent(); // Load the tab content for each tab in the tabset
+		this._describeTabs();
 	}
 
 	/**
@@ -76,10 +87,31 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	private _setupReloadTabsListener(): void {
 		this.reload$
 			.pipe(
-				tap(() => this._initializeTabs()),
+				tap(() => {
+					this._initializeTabs();
+					this._describeTabs();
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Puts each tab's full title on its link as a native `title` attribute.
+	 */
+	private _describeTabs(): void {
+		const links = this._elementRef.nativeElement.querySelectorAll<HTMLElement>(
+			DynamicTabsComponent.TAB_LINK_SELECTOR
+		);
+
+		links.forEach((link: HTMLElement, index: number) => {
+			const title = this.tabs[index]?.title;
+			if (title) {
+				link.setAttribute('title', title);
+			} else {
+				link.removeAttribute('title');
+			}
+		});
 	}
 
 	/**
@@ -155,6 +187,17 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 				...(tab.tabIcon && { icon: tab.tabIcon }),
 				...(tab.responsive && { responsive: tab.responsive }),
 				...(tab.activeLinkOptions && { activeLinkOptions: tab.activeLinkOptions }),
+				// The router-link inputs `nb-route-tabset` binds on each tab link. These used to
+				// be dropped here, so a registered tab that asked for `queryParamsHandling: 'merge'`
+				// silently navigated with `undefined` and lost the page's query parameters on
+				// every tab switch.
+				...(tab.queryParams && { queryParams: tab.queryParams }),
+				...(tab.queryParamsHandling && { queryParamsHandling: tab.queryParamsHandling }),
+				...(tab.fragment && { fragment: tab.fragment }),
+				...(tab.preserveFragment && { preserveFragment: tab.preserveFragment }),
+				...(tab.skipLocationChange && { skipLocationChange: tab.skipLocationChange }),
+				...(tab.replaceUrl && { replaceUrl: tab.replaceUrl }),
+				...(tab.state && { state: tab.state }),
 				disabled: !!tab.disabled,
 				active: !!tab.active
 			};

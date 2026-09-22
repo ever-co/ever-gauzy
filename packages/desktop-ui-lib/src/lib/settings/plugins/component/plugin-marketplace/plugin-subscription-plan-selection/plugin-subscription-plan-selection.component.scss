@@ -5,7 +5,8 @@
   position: relative;
   background: var(--gauzy-card-1);
   border-radius: calc(var(--border-radius) * 2);
-  box-shadow: var(--gauzy-shadow);
+  // No `--gauzy-shadow`: it is a 1px ring on the dark canvas and this dialog
+  // already draws a 1px `--border-basic-color-3` border.
   border: 1px solid var(--border-basic-color-3);
 
   // Keyboard Hints Overlay

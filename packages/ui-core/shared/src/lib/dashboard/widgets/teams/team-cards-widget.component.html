@@ -1,0 +1,13 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="teams().length === 0"
+	[skeletonRows]="2"
+	(retry)="refresh()"
+>
+	<div class="team-cards">
+		@for (team of teams(); track team.id) {
+			<ga-team-summary-card [team]="team"></ga-team-summary-card>
+		}
+	</div>
+</ga-teams-widget-state>

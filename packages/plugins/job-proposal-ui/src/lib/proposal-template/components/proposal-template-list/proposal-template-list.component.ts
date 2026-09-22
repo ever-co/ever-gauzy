@@ -30,6 +30,7 @@ import {
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	Nl2BrPipe,
 	PaginationFilterBaseComponent,
 	TruncatePipe
@@ -62,6 +63,13 @@ export class ProposalTemplateListComponent
 	public templates$: Subject<any> = new Subject();
 	public organization: IOrganization;
 	public nbTab$: Subject<string> = new BehaviorSubject(ProposalTemplateTabsEnum.ACTIONS);
+
+	/*
+	 * Read-only View: a proposal template is a small record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedTemplate: IEmployeeProposalTemplate;
+	public viewSections: IRecordViewSection[] = [];
 
 	/** Typed as any to avoid TemplateRef type mismatch across plugin vs workspace @angular/core. */
 	@ViewChild('actionButtons', { static: true }) readonly actionButtons!: any;
@@ -214,6 +222,48 @@ export class ProposalTemplateListComponent
 		this.selectedItem = isSelected ? data : null;
 	}
 
+	/**
+	 * Opens the read-only View of a proposal template in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	viewProposalTemplate(selectedItem?: IEmployeeProposalTemplate): void {
+		if (selectedItem) {
+			this.selectProposalTemplate({ isSelected: true, data: selectedItem });
+		}
+
+		const template = selectedItem ?? this.selectedItem;
+		if (!template) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections();
+		this.viewedTemplate = template;
+	}
+
+	closeView(): void {
+		this.viewedTemplate = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically, plus
+	 * the full template body the grid truncates.
+	 */
+	private buildViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'PROPOSAL_TEMPLATE.EMPLOYEE', key: 'employee', type: 'person' },
+					{ label: 'PROPOSAL_TEMPLATE.NAME', key: 'name' },
+					{ label: 'PROPOSAL_TEMPLATE.IS_DEFAULT', key: 'isDefault', type: 'boolean' }
+				]
+			},
+			{
+				fields: [{ label: 'PROPOSAL_TEMPLATE.DESCRIPTION', key: 'content', type: 'html', wide: true }]
+			}
+		];
+	}
+
 	private _loadSmartTableSettings(): void {
 		const pagination: IPaginationBase = this.getPagination();
 
@@ -357,6 +407,9 @@ export class ProposalTemplateListComponent
 	}
 
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectProposalTemplate({ isSelected: false, data: null });
 	}
 

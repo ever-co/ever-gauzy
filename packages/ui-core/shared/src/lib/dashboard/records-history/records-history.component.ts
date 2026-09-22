@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
@@ -21,12 +21,25 @@ import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent 
 	styleUrls: ['./records-history.component.scss'],
 	standalone: false
 })
-export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
-	type: HistoryType;
-	records: IEmployeeStatisticsHistory[];
+export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit, OnChanges {
+	/**
+	 * Which history to render.
+	 *
+	 * An `@Input()` so the component can be used INLINE (the dashboard-builder
+	 * widget) as well as through `NbDialogService`, which assigns the field
+	 * directly from its `context` and is unaffected by the decorator.
+	 */
+	@Input() type: HistoryType;
+
+	/** The rows to render; see {@link RecordsHistoryComponent.type} on the input. */
+	@Input() records: IEmployeeStatisticsHistory[];
+
 	smartTableSource = new LocalDataSource();
 	translatedType: string;
 	loading: boolean;
+
+	/** Guards {@link ngOnChanges} until the first population has happened in `ngOnInit`. */
+	private _initialized = false;
 	private _recordsHistory$: Subject<any> = this.subject$;
 
 	smartTableSettings: Object = {
@@ -40,8 +53,19 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 		}
 	};
 
-	constructor(translateService: TranslateService, private readonly dialogRef: NbDialogRef<RecordsHistoryComponent>) {
+	constructor(
+		translateService: TranslateService,
+		// Optional so the component can also be rendered inline (the dashboard
+		// builder's Records History widget), where there is no dialog to close and
+		// therefore no `NbDialogRef` in the injector.
+		@Optional() private readonly dialogRef?: NbDialogRef<RecordsHistoryComponent>
+	) {
 		super(translateService);
+	}
+
+	/** True when this instance was opened as a dialog, i.e. when it can be closed. */
+	public get isDialog(): boolean {
+		return !!this.dialogRef;
 	}
 
 	ngOnInit() {
@@ -63,21 +87,49 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 		this._populateSmartTable();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+		this._initialized = true;
+	}
+
+	/**
+	 * Re-renders when the bound history changes.
+	 *
+	 * Only inline usage rebinds — a dialog is opened with a fixed `context` and
+	 * never changes it — so this is inert on the dialog path. `ngOnChanges` also
+	 * runs BEFORE the first `ngOnInit`, which `_initialized` filters out so the
+	 * table is not populated twice on creation.
+	 *
+	 * @param changes - The inputs Angular re-bound.
+	 */
+	ngOnChanges(changes: SimpleChanges): void {
+		if (!this._initialized) {
+			return;
+		}
+		if (changes['type']) {
+			// The columns differ per history type (income has a contact, expenses a
+			// vendor and a category), so the settings have to be rebuilt first.
+			this.loadSettingsSmartTable();
+		}
+		if (changes['type'] || changes['records']) {
+			this._recordsHistory$.next(true);
+		}
 	}
 
 	private _populateSmartTable() {
 		this.loading = true;
 		let viewModel: any;
+		// Defensive: an inline host binds its rows asynchronously, and the expense
+		// branch below would throw on the very first change detection pass.
+		const records = this.records ?? [];
 		switch (this.type) {
 			case HistoryType.INCOME:
 			case HistoryType.BONUS_INCOME:
 			case HistoryType.NON_BONUS_INCOME:
-				viewModel = this.records;
+				viewModel = records;
 				this.translatedType = this.getTranslation('INCOME_PAGE.INCOME').toUpperCase();
 				break;
 			case HistoryType.EXPENSES:
 			case HistoryType.EXPENSES_WITHOUT_SALARY:
-				viewModel = this.records.map(
+				viewModel = records.map(
 					({ valueDate, vendorName, categoryName, amount, notes, isRecurring, source, splitExpense }) => {
 						return {
 							valueDate,
@@ -230,6 +282,6 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 	}
 
 	close() {
-		this.dialogRef.close();
+		this.dialogRef?.close();
 	}
 }

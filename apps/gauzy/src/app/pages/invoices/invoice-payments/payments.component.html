@@ -22,8 +22,10 @@
 							</div>
 							<div>:</div>
 						</div>
+						<!-- `dueDate` is optional and `dateFormat` yields undefined for an
+						     unset one, so this label used to stand over a blank cell. -->
 						<div class="col-6 pr-0 pl-0">
-							{{ invoice ? (invoice.dueDate | dateFormat) : '' }}
+							{{ invoice ? (invoice.dueDate | dateFormat) || '—' : '—' }}
 						</div>
 					</div>
 					<div class="row">
@@ -73,7 +75,7 @@
 							<div>:</div>
 						</div>
 						<div class="col-6 pr-0 pl-0">
-							{{ invoice?.toContact?.name }}
+							{{ invoice?.toContact?.name || '—' }}
 						</div>
 					</div>
 					<div class="row">
@@ -87,7 +89,7 @@
 							<div>:</div>
 						</div>
 						<div class="col-6 pr-0 pl-0">
-							{{ invoice?.fromOrganization?.name }}
+							{{ invoice?.fromOrganization?.name || '—' }}
 						</div>
 					</div>
 				</div>
@@ -100,17 +102,21 @@
 						| position: organization?.currencyPosition
 				}}
 				<span>
+					<!-- The "n% Paid" caption sits BESIDE the meter, not on top of it.
+					     Painted over the bar it was a hard-coded white, which is
+					     unreadable against the track's pale grey — i.e. for every
+					     invoice that is not already mostly paid. -->
 					<div class="progress-bar-container">
 						<div class="progress-bar">
-							<div class="paid-percent">
-								{{ barWidth }}%
-								{{ 'INVOICES_PAGE.PAYMENTS.PAID' | translate }}
-							</div>
 							<span
 								id="progress-bar-inner"
 								class="progress-bar-inner"
 								style="width: 0%"
 							></span>
+						</div>
+						<div class="paid-percent">
+							{{ barWidth }}%
+							{{ 'INVOICES_PAGE.PAYMENTS.PAID' | translate }}
 						</div>
 					</div>
 				</span>
@@ -127,6 +133,7 @@
 			</div>
 			<div class="table-scroll-container">
 				<angular2-smart-table
+					[class.ga-table-loading]="loading"
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"

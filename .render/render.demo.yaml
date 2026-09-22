@@ -29,11 +29,13 @@ services:
           - key: CLIENT_BASE_URL
             value: https://ever-gauzy-webapp.onrender.com
           - key: EXPRESS_SESSION_SECRET
-            value: gauzy
+            generateValue: true
           - key: JWT_SECRET
-            value: secretKey
+            generateValue: true
           - key: JWT_REFRESH_TOKEN_SECRET
-            value: refreshSecretKey
+            generateValue: true
+          - key: JWT_VERIFICATION_TOKEN_SECRET
+            generateValue: true
           - key: JWT_REFRESH_TOKEN_EXPIRATION_TIME
             value: 86400
       healthCheckPath: /api/health

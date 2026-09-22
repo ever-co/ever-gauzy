@@ -1,88 +1,311 @@
 @use 'themes' as *;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Flat (shadcn-like) sidebar rows.
+//
+// WHY this file strips so much: Nebular renders every top level entry as its
+// own <nb-accordion>, and the framework defaults paint that accordion as a
+// CARD — an opaque `accordion-item-background-color` fill, the 0.625rem
+// `accordion-border-radius`, `accordion-shadow`, and a 1px divider under each
+// header. Stacked in a narrow sidebar those cards read as a "rounded block"
+// around every item, which is exactly the look we are removing.
+//
+// The rule from here on: a row paints NOTHING at rest. Only :hover and the
+// active entry get a low contrast overlay on a small radius — never a border,
+// never a per item shadow.
+//
+// The overlays are neutral rgba rather than solid colours on purpose: the same
+// value darkens the light sidebar (#f4f4f5 / #fbfbfb) and lightens the dark one
+// (#141416 / #1e1e22), so no per theme branch is needed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Hover overlay. Resolves the shared `gauzy-hover-tint` token (registered in
+// `$gauzy-density`, i.e. present in all 8 themes) so a sidebar row, a breadcrumb
+// link, a settings-menu row and an overlay menu item light up by exactly the
+// same amount. It used to read `gauzy-sidebar-background-3`, which is 0.10 alpha
+// — a DIFFERENT hover strength from every other row in the app, and undefined in
+// the material-* themes. The literal is only a fallback for a theme that somehow
+// registers neither.
+$menu-row-hover-background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+
+// Active overlay — the shared token, exactly twice the hover alpha. Measured on
+// both surfaces the pair stays distinguishable (light #ededee vs #e2e2e5, dark
+// #2b2b2f vs #313138) while neither reads as a filled block.
+$menu-row-active-background: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+
+// The shared control/row radius. Deliberately NOT nb-theme(border-radius): that
+// is the CARD radius, and a card-sized pill on a 20px row is a large part of why
+// rows looked like blocks.
+$menu-row-radius: var(--gauzy-radius-sm, 0.375rem);
+
+// Resting label colour, muted. Nested fallback because gauzy-text-color-2 is
+// undefined in the material-* themes.
+$menu-row-color: var(--gauzy-text-color-2, var(--text-hint-color));
+
+// Row weights. Deliberately NOT `menu-text-font-weight` (500) and not the 600
+// the active row used to carry: a sidebar is chrome, and at this size on a muted
+// colour those two steps read as semi-bold everywhere, which is what made the
+// nav look heavier than the page it frames. 400 at rest / 500 for the current
+// entry keeps exactly one step of contrast between them, and both are real
+// Inter cuts (the font is loaded at 100..900, so nothing rounds up).
+// The shared token is left alone on purpose — it is also what overlay menus,
+// ng-select rows and the settings menu resolve.
+$menu-row-weight: 400;
+$menu-row-active-weight: 500;
+
+// 14px for every label in the nav — deliberately NOT `menu-text-font-size`
+// (0.8125rem / 13px), which is the app's shared CONTROL text size and is also
+// what overlay menus, ng-select rows and the settings menu resolve. The sidebar
+// runs on its own step; the shared token stays where it is.
+$menu-row-font-size: 0.875rem;
+
+// Row padding, one step tighter than the shared `menu-item-padding`
+// (0.5rem 0.75rem). The bigger label would otherwise push a row from 36px to
+// 38px and the nav would grow taller for no gain — trimming the box back keeps
+// the row at 2rem, so the sidebar holds MORE entries than before at a larger
+// size rather than fewer.
+$menu-row-padding: 0.375rem 0.625rem;
+
+// Fixed icon column so labels line up whatever glyph an entry uses.
+$menu-icon-column: 1rem;
+
+// Room reserved on the trailing edge for the accordion chevron. Nebular pins
+// the indicator at `right: 1rem`, so the gutter has to clear 1rem + the icon.
+$menu-chevron-gutter: 2rem;
+
+// The inline half of `$menu-row-padding`. Needed as a separate literal wherever
+// only one side is given back, because a shorthand cannot be destructured into
+// its longhand properties.
+// KEEP IN SYNC with the inline half of `$menu-row-padding` above.
+$menu-row-inline-padding: 0.625rem;
+
+// Child rows sit one step in from the parent row's icon column:
+// 0.625rem (row padding) + 0.625rem (step).
+$menu-child-indent: 1.25rem;
+
 :host {
   position: relative;
-  nb-accordion-item-body.item-collapsed ::ng-deep .item-body {
-    padding: 4px;
-  }
+  display: block;
+
+  // ── Container: no card fill, no card radius, no shadow ────────────────────
   nb-accordion {
-    box-shadow: unset;
-    border-bottom: 1px solid nb-theme(gauzy-border-default-color);
-    margin-top: 6px;
-    nb-accordion-item.opened {
-      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
-      nb-accordion-item-header {
-        background-color: nb-theme(gauzy-sidebar-background-3);
-        &.accordion-item-header-expanded {
-          border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-        }
-      }
-      nb-accordion-item-body {
-        background-color: nb-theme(gauzy-sidebar-background-4);
-        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-      }
-    }
-    &.focus {
-      box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1);
-      nb-accordion-item-header,
-      i {
-        color: rgba(245, 109, 88, 1);
-      }
-    }
-    nb-accordion-item-header.accordion-item-header-collapsed {
-      border-radius: nb-theme(border-radius);
-    }
-    &.closed {
-      nb-accordion-item-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        i {
-          margin-right: unset;
-        }
-        ::ng-deep nb-icon {
-          display: none;
-        }
-      }
-    }
-    &.application {
-      nb-accordion-item {
-        nb-accordion-item-header {
-          border: 1px solid nb-theme(background-primary-color-1);
-          color: nb-theme(text-primary-color);
-          border-radius: nb-theme(border-radius);
-        }
-        i {
-          color: nb-theme(text-primary-color);
-        }
-        nb-accordion-item-header ::ng-deep nb-icon {
-          border: 1px solid nb-theme(background-primary-color-1);
-          border-radius: nb-theme(border-radius);
-          width: 1.75rem;
-          height: 1.75rem;
-          @include nb-ltr(margin-right, calc(-1.75rem / 4));
-          @include nb-rtl(margin-left, calc(-1.75rem / 4));
-        }
-      }
-    }
-  }
-  hr.custom-separator {
-    border: 0.5px solid nb-theme(gauzy-border-default-color);
-    border-top: none;
-    border-left: none;
-    border-right: none;
-  }
-  i {
-    color: nb-theme(gauzy-text-color-1);
+    // 2px breathing room between rows (shadcn stacks menu rows with a small gap
+    // instead of dividers).
+    margin-top: 0.125rem;
+    background-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
   }
 
+  nb-accordion-item {
+    background-color: transparent;
+    border-radius: 0;
+  }
+
+  // ── The row ───────────────────────────────────────────────────────────────
   nb-accordion-item-header {
-    color: nb-theme(gauzy-text-color-2);
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 18px;
-    letter-spacing: 0em;
-    gap: 0.625rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: $menu-row-padding;
+    // Keep the label clear of the absolutely positioned chevron. Logical
+    // property rather than nb-ltr/nb-rtl: it flips with the inherited
+    // `direction` and does not depend on a [dir] attribute being present.
+    padding-inline-end: $menu-chevron-gutter;
+    border-radius: $menu-row-radius;
+    // Nebular draws a 1px divider above/below every header; flat rows have none.
+    border-width: 0;
+    color: $menu-row-color;
+    font-size: $menu-row-font-size;
+    font-weight: $menu-row-weight;
+    line-height: 1.25rem;
+    letter-spacing: 0;
+    // Sub-pixel rendering thickens light text on a dark sidebar; grayscale
+    // antialiasing is the other half of "less heavy" and costs nothing.
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition:
+      background-color 0.12s ease-in-out,
+      color 0.12s ease-in-out;
+
+    // Icons inherit the row colour (muted at rest, brightening with the label)
+    // and sit in a fixed width column so every label starts at the same x.
+    //
+    // Font Awesome only ships one cut per glyph, so an icon has no weight axis
+    // to turn down — the lever is INK. A step off both the size and the opacity
+    // lets a solid glyph sit at the same optical weight as the 400 label beside
+    // it instead of out-inking it; both come back to full on hover/active,
+    // where the label brightens too.
+    > i {
+      flex: 0 0 auto;
+      width: $menu-icon-column;
+      font-size: 0.875rem;
+      text-align: center;
+      color: inherit;
+      opacity: 0.85;
+      transition: opacity 0.12s ease-in-out;
+    }
+
+    // Label: never wraps, never pushes the chevron — it truncates.
+    > span {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    // Collapsed and expanded headers look identical — the radius must not be
+    // squared off on expand, or the row turns back into the top half of a card.
+    &.accordion-item-header-collapsed,
+    &.accordion-item-header-expanded {
+      border-radius: $menu-row-radius;
+    }
+  }
+
+  // Hover: a tint only. No shadow, no border, no colour shift on the surface
+  // behind it.
+  nb-accordion-item-header:hover {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
+
+    > i {
+      opacity: 1;
+    }
+  }
+
+  // Nebular makes the header focusable (tabindex="0") but paints nothing on
+  // focus, so keyboard users had no row indicator at all. Same tint as hover
+  // plus an inset outline, because the tint alone is a colour-only signal.
+  nb-accordion-item-header:focus-visible {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: -2px;
+
+    > i {
+      opacity: 1;
+    }
+  }
+
+  // Chevron: muted and sized to the row (nb-icon defaults to 1.25rem, which
+  // towers over a 0.8125rem label). Position stays Nebular's.
+  ::ng-deep nb-icon.expansion-indicator {
+    font-size: 1rem;
+    color: inherit;
+    opacity: 0.55;
+  }
+
+  // A leaf entry cannot expand, so it must not advertise a chevron. The body is
+  // only rendered when the entry has children, which is what :has() tests.
+  nb-accordion-item:not(:has(nb-accordion-item-body)) ::ng-deep nb-icon.expansion-indicator {
+    display: none;
+  }
+
+  // ...and with no chevron to clear, the trailing gutter is dead space that
+  // would truncate the label ~1.25rem early in a ~200px sidebar. Give it back.
+  // Same :has() test as above, so the two always agree: a browser without
+  // :has() keeps BOTH the chevron and its gutter.
+  nb-accordion-item:not(:has(nb-accordion-item-body)) > nb-accordion-item-header {
+    padding-inline-end: $menu-row-inline-padding;
+  }
+
+  // ── Active entry ──────────────────────────────────────────────────────────
+  // `.opened` is bound to `selected`, i.e. this entry owns the current route.
+  // Icon and label share `text-basic-color` on purpose: a single brand accent
+  // cannot clear 3:1 on BOTH the tinted light row (#e2e2e5) and the tinted dark
+  // one (#313138) — color-primary-default measures ~5.4:1 light but only ~2.5:1
+  // dark. Tint + weight already say "current" without a colour.
+  // TODO(theme): a per theme `gauzy-menu-item-active-foreground` would let the
+  // icon carry the accent safely (light: color-primary-600, dark: -300).
+  nb-accordion-item.opened > nb-accordion-item-header {
+    background-color: $menu-row-active-background;
+    color: nb-theme(text-basic-color);
+    font-weight: $menu-row-active-weight;
+
+    > i {
+      opacity: 1;
+    }
+  }
+
+  // ...but when the entry has children the fill belongs to the selected CHILD
+  // row. Filling the parent as well would stack two highlighted rows, which is
+  // the "block" look again — so the parent keeps the emphasis (weight/colour)
+  // and drops the fill. Browsers without :has() simply keep the fill above.
+  nb-accordion-item.opened:has(nb-accordion-item-body) > nb-accordion-item-header {
+    background-color: transparent;
+
+    &:hover {
+      background-color: $menu-row-hover-background;
+    }
+  }
+
+  // ── Sub-list ──────────────────────────────────────────────────────────────
+  nb-accordion-item-body {
+    background-color: transparent;
+    border-radius: 0;
+
+    ::ng-deep .item-body {
+      padding: 0.125rem 0 0.25rem;
+    }
+  }
+
+  // Icon rail (sidebar collapsed): the sub-list is a bare stack of glyphs, so
+  // it needs no horizontal gutter at all.
+  nb-accordion-item-body.item-collapsed ::ng-deep .item-body {
+    padding: 0.25rem 0;
+  }
+
+  // ── Icon rail ─────────────────────────────────────────────────────────────
+  // `.closed` mirrors the sidebar's collapsed state: one centred glyph per row,
+  // no label and no chevron (there is no width to spare for either).
+  //
+  // The rail is 3.5rem wide and the menu column gives back 0.5rem on each side
+  // (one-column.layout.scss), so a row is a 2.5rem-wide, 2.25rem-tall target
+  // with the tint centred under the glyph instead of a full-bleed band.
+  nb-accordion.closed {
+    nb-accordion-item-header {
+      justify-content: center;
+      // The glyph is the only thing in the row, so the inline padding is the
+      // chevron gutter's as well — it all goes back to centring the icon.
+      padding-inline: 0;
+      min-height: 2rem;
+
+      > i {
+        margin-right: unset;
+        // A rail glyph is the only thing carrying the entry, so it runs at the
+        // expanded sidebar's icon size rather than the smaller in-row step.
+        font-size: 0.875rem;
+      }
+
+      // No room for the chevron in the rail.
+      ::ng-deep nb-icon {
+        display: none;
+      }
+    }
+  }
+
+  // ── Variants ──────────────────────────────────────────────────────────────
+  // "Focus" entry: keeps its accent label/icon colour (it reads on both the
+  // light and the dark sidebar), but no longer floats on its own drop shadow.
+  nb-accordion.focus {
+    nb-accordion-item-header,
+    i {
+      color: rgba(245, 109, 88, 1);
+    }
+  }
+
+  // "Applications" entry: same flat row as everything else; the boxed icon and
+  // outlined header it used to carry were pure block chrome.
+  nb-accordion.application {
+    nb-accordion-item-header {
+      color: nb-theme(text-basic-color);
+      border-width: 0;
+
+      i {
+        color: nb-theme(color-primary-default);
+      }
+    }
   }
 
   a {
@@ -91,34 +314,60 @@
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Child rows. NOTE: this block is consumed by children-menu-item.component.scss
+// via @use, so `:host` resolves to <ga-children-menu-item> there.
+// ─────────────────────────────────────────────────────────────────────────────
 :host .sub-item {
-  padding: 0px 9px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  color: nb-theme(gauzy-text-color-2);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 16px;
-  letter-spacing: 0em;
+  border-radius: $menu-row-radius;
+  color: $menu-row-color;
+  font-size: $menu-row-font-size;
+  font-weight: $menu-row-weight;
+  line-height: 1.25rem;
+  letter-spacing: 0;
   cursor: pointer;
-  &:hover,
-  &.selected {
-    background-color: nb-theme(gauzy-sidebar-background-3);
-    border-radius: nb-theme(border-radius);
-    font-weight: 600;
-    color: nb-theme(gauzy-text-color-1);
-    border: unset;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 0.12s ease-in-out,
+    color 0.12s ease-in-out;
+
+  // Hover: tint only — the old rule also fired a 10px drop shadow, which is
+  // what made child rows read as floating blocks.
+  &:hover {
+    background-color: $menu-row-hover-background;
+    color: nb-theme(text-basic-color);
+
+    i {
+      opacity: 1;
+    }
   }
 
-  &:hover {
-    box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.15);
+  // Same treatment as an active top level row — see the contrast note there for
+  // why the icon stays neutral instead of taking the brand accent.
+  &.selected {
+    background-color: $menu-row-active-background;
+    color: nb-theme(text-basic-color);
+    font-weight: $menu-row-active-weight;
+
+    i {
+      opacity: 1;
+    }
   }
+
+  // Icon rail: no indent, glyph centred, label hidden by the template.
   &.custom {
-    display: flex;
-    align-items: center;
     justify-content: center;
+
+    .info {
+      justify-content: center;
+      padding-inline: 0;
+    }
   }
+
   &.mouse-hover {
     display: flex;
     flex-direction: row;
@@ -130,9 +379,104 @@
   }
 }
 
-.info {
-  padding: 11px 0;
-  span {
-    margin: 0 0.625rem;
+// The clickable area of a child row. Padding lives here (not on .sub-item) so
+// the whole row height is a hit target, while the tint still spans full width.
+:host .info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: $menu-row-padding;
+  padding-inline-start: $menu-child-indent;
+
+  i {
+    flex: 0 0 auto;
+    width: $menu-icon-column;
+    font-size: 0.875rem;
+    text-align: center;
+    color: inherit;
+    opacity: 0.85;
+    transition: opacity 0.12s ease-in-out;
   }
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+// Icon rail: the glyph is the whole row, so it keeps the full 0.875rem step —
+// same reasoning as the rail header above.
+:host .sub-item.custom .info i {
+  font-size: 0.875rem;
+}
+
+// A flyout row is a panel row, not a sidebar row: the parent's icon column no
+// longer sits to its left, so the child indent that lines the two up in the
+// expanded sidebar would just be dead space inside the panel.
+:host(.rail-flyout-row) .info {
+  padding-inline-start: $menu-row-inline-padding;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rail flyout — the sub-link panel that opens beside an icon while the sidebar
+// is collapsed. In the rail an entry shows nothing but a glyph, so its
+// sub-links were reachable only by first expanding the accordion INSIDE a
+// 3.5rem column, where every child is another unlabelled glyph. Hovering the
+// icon now offers the same list with its labels, one pointer move away.
+//
+// It renders through `nbPopover` (`.cdk-overlay-container`, above the sidebar's
+// z-index) rather than as an absolutely positioned child, because the menu
+// column is a scroll container: an in-flow panel would be clipped at the rail's
+// edge. The container chrome — hairline, shadow, radius, surface — comes from
+// the shared `nb-popover` rules in `static/styles/_overlays.scss`, so this panel
+// is the same surface as every other menu overlay in the app; only its inner
+// metrics live here.
+//
+// These selectors are deliberately NOT nested under `:host`: the template is
+// rendered into the overlay container, outside this component's element, so a
+// `:host`-prefixed rule would never match it. Angular's emulated encapsulation
+// still scopes them by the `_ngcontent` attribute it stamps on the template's
+// own elements.
+// ─────────────────────────────────────────────────────────────────────────────
+.rail-flyout {
+  display: flex;
+  flex-direction: column;
+  // Wide enough for a real label, capped so a long one ellipsizes instead of
+  // stretching the panel across the canvas.
+  min-width: 11rem;
+  max-width: 17rem;
+  // A section with many children stays inside the viewport and scrolls.
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  // The container padding of every other overlay menu in the app, so the first
+  // and last row's hover tint clears the panel's rounded corners.
+  padding: 0.25rem;
+}
+
+// Which section this is — in the rail the parent row has no label of its own,
+// so without this the panel is a list of links from nowhere. Same treatment as
+// the group captions in the overlay menus, but at 10px: it is a caption over
+// the list, and the wider the gap to the rows under it, the more clearly
+// it reads as a label rather than as the first entry.
+.rail-flyout-title {
+  padding: 0.375rem $menu-row-inline-padding 0.25rem;
+  color: nb-theme(text-hint-color);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rail-flyout-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
 }
