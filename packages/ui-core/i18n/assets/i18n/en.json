@@ -3766,7 +3766,7 @@
 		"EMPLOYEE": "Employee",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"CONFIRM_DELETE": "Are you sure you want to delete this proposal template?",
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
