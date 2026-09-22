@@ -84,6 +84,12 @@ jest.mock('@gauzy/core', () => {
 		// own `toConnection` — so the double has to carry it, or the suite fails on a missing function rather
 		// than on an assertion. Same reasoning as the visible-with double above: the real one is used.
 		connectionFromPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').connectionFromPage,
+		// The list fields resolve their window through the kernel too, now that they read the `page` their
+		// SDL declares — and map the page with the offset they read at, which is `connectionFromOffsetPage`.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
 		PaymentAccountHolder: class PaymentAccountHolder {},
 		PaymentMethodToken: class PaymentMethodToken {},
 		PaymentAccountHolderService: class PaymentAccountHolderService {},

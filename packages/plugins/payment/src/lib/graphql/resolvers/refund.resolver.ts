@@ -1,7 +1,10 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard,
+	IConnectionPageSelection,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { RefundService } from '../../refund/refund.service';
@@ -71,17 +74,19 @@ export class RefundResolver {
 		@Args('sort') sort?: IPaymentSort,
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
 		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IRefundConnection> {
-		const page = await this.refundService.findRefunds({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.refundService.findRefunds({
 			where: withoutRange(filter as Record<string, unknown>),
 			order: toOrder(sort, REFUND_SORT_FIELDS),
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {}),
+			skip,
+			take,
 			...(withDeleted ? { withDeleted: true } : {})
 		});
 
-		return toConnection(page, (row) => row.id);
+		return toConnection(listing, skip);
 	}
 
 	/**

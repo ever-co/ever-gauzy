@@ -1,7 +1,10 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard,
+	IConnectionPageSelection,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { RefundLineService } from '../../refund-line/refund-line.service';
@@ -60,16 +63,18 @@ export class RefundLineResolver {
 		@Args('filter') filter?: IRefundLineFilter,
 		@Args('sort') sort?: IPaymentSort,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
 	): Promise<IRefundLineConnection> {
-		const page = await this.refundLineService.findLinesPage({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.refundLineService.findLinesPage({
 			where: withoutRange(filter as Record<string, unknown>),
 			order: toOrder(sort, REFUND_LINE_SORT_FIELDS),
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		});
 
-		return toConnection(page, (row) => row.id);
+		return toConnection(listing, skip);
 	}
 
 	/**

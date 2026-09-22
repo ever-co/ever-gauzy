@@ -7,7 +7,9 @@ import {
 	PaymentAccountHolderService,
 	PermissionGuard,
 	Permissions,
-	TenantPermissionGuard
+	TenantPermissionGuard,
+	IConnectionPageSelection,
+	resolveConnectionWindow
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -74,18 +76,20 @@ export class PaymentAccountHolderResolver {
 		@Args('filter') filter?: IPaymentAccountHolderFilter,
 		@Args('sort') sort?: IPaymentSort,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
 	): Promise<IPaymentAccountHolderConnection> {
-		const page = await this.paymentAccountHolderService.findAll({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.paymentAccountHolderService.findAll({
 			where: withoutRange(filter as Record<string, unknown>),
 			// Newest first when the caller states no order, which is the order the REST list answers in:
 			// a default that differs between the two surfaces is the same resource answering two ways.
 			order: sort?.field ? toOrder(sort, PAYMENT_ACCOUNT_HOLDER_SORT_FIELDS) : { createdAt: 'DESC' },
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		} as never);
 
-		return toConnection(page, (row) => row.id);
+		return toConnection(listing, skip);
 	}
 
 	/**

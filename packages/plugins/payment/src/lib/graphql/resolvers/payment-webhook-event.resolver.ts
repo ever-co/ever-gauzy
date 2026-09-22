@@ -1,7 +1,10 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard,
+	IConnectionPageSelection,
+	resolveConnectionWindow
+} from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { PaymentWebhookEventService } from '../../payment-webhook-event/payment-webhook-event.service';
@@ -59,9 +62,11 @@ export class PaymentWebhookEventResolver {
 		@Args('filter') filter?: IPaymentWebhookEventFilter,
 		@Args('sort') sort?: IPaymentSort,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
 	): Promise<IPaymentWebhookEventConnection> {
-		const page = await this.paymentWebhookEventService.findEvents({
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.paymentWebhookEventService.findEvents({
 			where: withDateRange(
 				withoutRange(filter as Record<string, unknown>, ['receivedAtFrom', 'receivedAtTo']),
 				filter as Record<string, unknown>,
@@ -70,11 +75,11 @@ export class PaymentWebhookEventResolver {
 				'receivedAtTo'
 			),
 			order: toOrder(sort, PAYMENT_WEBHOOK_EVENT_SORT_FIELDS),
-			...(limit ? { take: limit } : {}),
-			...(offset ? { skip: offset } : {})
+			skip,
+			take
 		});
 
-		return toConnection(page, (row) => row.id);
+		return toConnection(listing, skip);
 	}
 
 	/**

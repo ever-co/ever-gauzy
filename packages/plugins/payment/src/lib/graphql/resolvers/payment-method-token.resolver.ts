@@ -8,7 +8,9 @@ import {
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
-	VisibleWith
+	VisibleWith,
+	IConnectionPageSelection,
+	resolveConnectionWindow
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -89,14 +91,16 @@ export class PaymentMethodTokenResolver {
 		@Args('filter') filter?: IPaymentMethodTokenFilter,
 		@Args('sort') sort?: IPaymentSort,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
 	): Promise<IPaymentMethodTokenConnection> {
-		const page = await this.paymentMethodTokenLifecycle.list(withoutRange(filter as Record<string, unknown>) as never, {
-			take: limit,
-			skip: offset
+		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
+		const listing = await this.paymentMethodTokenLifecycle.list(withoutRange(filter as Record<string, unknown>) as never, {
+			take,
+			skip
 		}, sort?.field ? toOrder(sort, PAYMENT_METHOD_TOKEN_SORT_FIELDS) : undefined);
 
-		return toConnection(page, (row) => row.id);
+		return toConnection(listing, skip);
 	}
 
 	/**

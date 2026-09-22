@@ -1,6 +1,6 @@
 import { HttpException } from '@nestjs/common';
 import { IPagination } from '@gauzy/contracts';
-import { connectionFromPage } from '@gauzy/core';
+import { connectionFromOffsetPage } from '@gauzy/core';
 
 /**
  * The shapes every resolver in this package shares.
@@ -98,16 +98,24 @@ export type IResourcePayload<T, K extends string> = IMutationPayload<T> & {
 /**
  * Maps a page of rows onto a connection.
  *
- * The mapping itself is the kernel's `connectionFromPage`, because this package's copy of it was one of
- * three spellings of the same arithmetic across the branch. What stays here is the cursor: a payment row
- * is addressed by its own identifier, which the caller derives.
+ * The mapping itself is the kernel's, because this package's copy of it was one of three spellings of the
+ * same arithmetic across the branch — and the kernel offers two of them, which is the distinction this
+ * function got wrong.
+ *
+ * `connectionFromPage` addresses each row by whatever identifies it, which is right for a resource with a
+ * natural key. Every list field in this package reads a **store-paged** window instead
+ * (`findAll({ skip, take })`), and a store-paged read cannot resume from a value — so the kernel's
+ * `connectionFromOffsetPage` addresses the page by the offset it started at, which is exactly what the
+ * `after` cursor of `resolveConnectionWindow` reads back. Publishing row-id cursors here while accepting
+ * offset cursors meant `after: pageInfo.endCursor` — the walk every client library performs — named a
+ * cursor this field's own window refuses, and the walk was impossible without the client guessing.
  *
  * @param page The page the service returned.
- * @param cursorOf A function deriving a row's cursor, usually its identifier.
+ * @param skip The offset the page started at, which is what makes its boundary true.
  * @returns The connection the SDL promises.
  */
-export function toConnection<T>(page: IPagination<T>, cursorOf: (row: T) => string): IConnection<T> {
-	return connectionFromPage<T>(page, { cursorOf });
+export function toConnection<T>(page: IPagination<T>, skip = 0): IConnection<T> {
+	return connectionFromOffsetPage<T>(page, skip);
 }
 
 /**

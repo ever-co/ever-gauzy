@@ -36,6 +36,9 @@ jest.mock('@gauzy/core', () => {
 			.connectionFromOffsetPage,
 		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
 			.resolveConnectionWindow,
+		// The cursor the window reads is the kernel's own, so the spec mints one with the same codec the
+		// endpoint does rather than with a literal — a literal would keep passing after the encoding changed.
+		encodeOffsetCursor: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').encodeOffsetCursor,
 		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows
 	};
 });
@@ -56,7 +59,7 @@ jest.mock('../../refund/refund.service', () => ({ RefundService: class RefundSer
 jest.mock('../../refund-line/refund-line.service', () => ({ RefundLineService: class RefundLineService {} }));
 
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard, encodeOffsetCursor } from '@gauzy/core';
 import { ObjectTypeDefinitionNode, ObjectTypeExtensionNode } from 'graphql';
 import { PaymentPermission } from '../../payment.permissions';
 import { schemaExtensions } from '../schema-extensions';
@@ -169,10 +172,46 @@ describe('RefundResolver — the soft-delete visibility the REST list route alre
 			{} as never
 		);
 
-		await resolver.refunds(undefined, undefined, undefined, undefined, true);
+		await resolver.refunds(undefined, undefined, undefined, undefined, undefined, true);
 		await resolver.refunds();
 
 		expect(calls[0]).toMatchObject({ withDeleted: true });
 		expect(calls[1]).not.toHaveProperty('withDeleted');
+	});
+
+	it('reads the page the caller states, and reports a boundary that is true of the page it read', async () => {
+		const calls: Array<Record<string, any>> = [];
+		const resolver = new RefundResolver(
+			{
+				findRefunds: async (options: Record<string, any>) => {
+					calls.push(options);
+
+					return { items: [{ id: 'refund-3' }, { id: 'refund-4' }], total: 9 };
+				}
+			} as never,
+			{} as never
+		);
+
+		// The field declared `page: PageInput` and read nothing from it: a client walking a page was
+		// answered the unpaged default. The offset it names is the row the read starts at, and it reaches
+		// the service as `skip`.
+		const connection = await resolver.refunds(undefined, undefined, undefined, undefined, {
+			first: 2,
+			after: encodeOffsetCursor(1)
+		});
+
+		expect(calls[0]).toMatchObject({ skip: 2, take: 2 });
+		expect(connection.pageInfo.hasPreviousPage).toBe(true);
+		expect(connection.pageInfo.hasNextPage).toBe(true);
+
+		// And the boundary it publishes is one its own window accepts back, which is what makes the walk a
+		// walk: the cursors used to name a row while `after` read an offset.
+		const resumed = await resolver.refunds(undefined, undefined, undefined, undefined, {
+			first: 2,
+			after: connection.pageInfo.endCursor ?? undefined
+		});
+
+		expect(calls[1]).toMatchObject({ skip: 4, take: 2 });
+		expect(resumed.nodes).toHaveLength(2);
 	});
 });
