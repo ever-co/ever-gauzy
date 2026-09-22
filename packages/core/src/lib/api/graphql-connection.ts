@@ -101,6 +101,16 @@ export interface ConnectionRequest {
 	readonly before?: string;
 	readonly limit?: number;
 	readonly offset?: number;
+	/**
+	 * Whether retired rows are included.
+	 *
+	 * **`buildConnection` does not read this, and cannot.** It is handed the rows a service already read, so
+	 * soft-delete visibility was decided by that read — the member is here because the request mirrors the
+	 * query protocol's own shape, and a resource that offers the flag states it on the field and passes it to
+	 * its read (the tax resolvers are the worked example:
+	 * `...(withDeleted ? { withDeleted: true } : {})`). A resolver that declared the argument and expected
+	 * this function to apply it would answer the same rows either way, and nothing would say so.
+	 */
 	readonly withDeleted?: boolean;
 }
 
