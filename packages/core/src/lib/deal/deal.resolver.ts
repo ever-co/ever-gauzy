@@ -124,14 +124,15 @@ export class DealResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Deal>> {
 		// The delivered list route binds the query DTO to the query string and hands it to the service.
 		// This surface has no query string to bind, so the read runs with the route's own defaults for
 		// an unstated request — no criterion, no relations, no page — and the connection protocol's
 		// `filter` is applied to the rows the service returns. The tenant is applied to the criterion
 		// by the service, from the credential rather than from the caller.
-		const options = {} as BaseQueryDTO<Deal>;
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<Deal>;
 		const { items }: IPagination<Deal> = await this.dealService.findAll(options);
 
 		return buildConnection<Deal>({

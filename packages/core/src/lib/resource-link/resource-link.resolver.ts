@@ -130,13 +130,14 @@ export class ResourceLinkResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<ResourceLink>> {
 		// The delivered list route hands the service the query DTO it bound from the query string. This
 		// surface has no query string to bind, so the read runs with the route's own defaults — no
 		// criterion, no relations, no page — and the connection protocol's `filter` narrows the rows the
 		// service returns, including the polymorphic pair a client narrows by.
-		const options = {} as BaseQueryDTO<ResourceLink>;
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<ResourceLink>;
 		const { items }: IPagination<ResourceLink> = await this.resourceLinkService.findAll(options);
 
 		return buildConnection<ResourceLink>({

@@ -68,6 +68,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateConnection!
 
 	"One candidacy of the caller's tenant, or null when there is none."

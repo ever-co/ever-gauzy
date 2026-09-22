@@ -197,7 +197,8 @@ export class OrganizationTeamResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<IOrganizationTeam>> {
 		// The delivered list route binds its query DTO to the query string and hands it to the service:
 		// the `where`, the `relations` and the page. This surface has no query string to bind, so the
@@ -207,7 +208,7 @@ export class OrganizationTeamResolver {
 		// which of its two reads to run. Passing nothing made it take the other branch and dereference a
 		// row it had not loaded ("Cannot use 'in' operator to search for 'members' in undefined"), which
 		// is why this states the criterion rather than leaving it out.
-		const options = { where: {} } as BaseQueryDTO<OrganizationTeam>;
+		const options = { where: {}, ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<OrganizationTeam>;
 		const { items }: IPagination<IOrganizationTeam> = await this.organizationTeamService.findAll(options);
 
 		return buildConnection<IOrganizationTeam>({

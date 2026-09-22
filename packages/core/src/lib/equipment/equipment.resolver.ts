@@ -167,9 +167,10 @@ export class EquipmentResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Equipment>> {
-		const options = {} as BaseQueryDTO<Equipment>;
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<Equipment>;
 		const { items }: IPagination<Equipment> = await this.equipmentService.findAll(options);
 
 		return buildConnection<Equipment>({

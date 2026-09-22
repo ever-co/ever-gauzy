@@ -180,7 +180,7 @@ type Query {
   so the connection applies the platform's — newest first, the identifier last so a cursor walk over
   them is stable.
   """
-  candidates(filter: CandidateFilter, sort: [CandidateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateConnection!
+  candidates(filter: CandidateFilter, sort: [CandidateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateConnection!
 
   """One candidacy of the caller's tenant, or null when there is none."""
   candidate(id: ID!): Candidate
@@ -406,7 +406,7 @@ type Query {
   """
   The widgets of the caller's tenant, in the order the dashboards place them.
   """
-  dashboardWidgets(filter: DashboardWidgetFilter, sort: [DashboardWidgetSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): DashboardWidgetConnection!
+  dashboardWidgets(filter: DashboardWidgetFilter, sort: [DashboardWidgetSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): DashboardWidgetConnection!
 
   """
   One widget of the caller's tenant, or null when there is none.
@@ -421,7 +421,7 @@ type Query {
   dashboardWidgetCount: Int
 
   """The dashboards of the caller's tenant, the default one first."""
-  dashboards(filter: DashboardFilter, sort: [DashboardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): DashboardConnection!
+  dashboards(filter: DashboardFilter, sort: [DashboardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): DashboardConnection!
 
   """
   One dashboard of the caller's tenant, or null when there is none.
@@ -436,7 +436,7 @@ type Query {
   dashboardCount: Int
 
   """The deals of the caller's tenant, newest first."""
-  deals(filter: DealFilter, sort: [DealSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): DealConnection!
+  deals(filter: DealFilter, sort: [DealSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): DealConnection!
 
   """One deal of the caller's tenant, or null when there is none."""
   deal(id: ID!): Deal
@@ -467,7 +467,7 @@ type Query {
   so the filters below are how a caller asks after one recipient, one subject or one outcome — which is
   also how one message is read back, since this resource serves no node route.
   """
-  emailHistories(filter: EmailHistoryFilter, sort: [EmailHistorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmailHistoryConnection!
+  emailHistories(filter: EmailHistoryFilter, sort: [EmailHistorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmailHistoryConnection!
 
   """
   The message parts of the caller's tenant, with the organization-less copies the whole tenant falls
@@ -612,7 +612,7 @@ type Query {
   employeeLevelCount: Int
 
   """The notification settings of the caller's tenant, newest first."""
-  employeeNotificationSettings(filter: EmployeeNotificationSettingFilter, sort: [EmployeeNotificationSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeNotificationSettingConnection!
+  employeeNotificationSettings(filter: EmployeeNotificationSettingFilter, sort: [EmployeeNotificationSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeNotificationSettingConnection!
 
   """
   One notification setting of the caller's tenant, or null when there is none.
@@ -623,7 +623,7 @@ type Query {
   employeeNotificationSettingCount: Int
 
   """The notifications of the caller's tenant, newest first."""
-  employeeNotifications(filter: EmployeeNotificationFilter, sort: [EmployeeNotificationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeNotificationConnection!
+  employeeNotifications(filter: EmployeeNotificationFilter, sort: [EmployeeNotificationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeNotificationConnection!
 
   """One notification of the caller's tenant, or null when there is none."""
   employeeNotification(id: ID!): EmployeeNotification
@@ -676,7 +676,7 @@ type Query {
   ): EmployeeRecurringExpenseStartDateUpdateType!
 
   """The settings of the caller's tenant, newest first."""
-  employeeSettings(filter: EmployeeSettingFilter, sort: [EmployeeSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmployeeSettingConnection!
+  employeeSettings(filter: EmployeeSettingFilter, sort: [EmployeeSettingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmployeeSettingConnection!
 
   """One setting of the caller's tenant, or null when there is none."""
   employeeSetting(id: ID!): EmployeeSetting
@@ -911,7 +911,7 @@ type Query {
   equipmentSharingsByEmployee(employeeId: ID!, filter: EquipmentSharingFilter, sort: [EquipmentSharingSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EquipmentSharingConnection!
 
   """The equipment of the caller's tenant, in name order."""
-  equipments(filter: EquipmentFilter, sort: [EquipmentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EquipmentConnection!
+  equipments(filter: EquipmentFilter, sort: [EquipmentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EquipmentConnection!
 
   """One asset of the caller's tenant, or null when there is none."""
   equipment(id: ID!): Equipment
@@ -990,7 +990,7 @@ type Query {
   """
   The categories of the caller's tenant, in the vocabulary's own name order.
   """
-  expenseCategories(filter: ExpenseCategoryFilter, sort: [ExpenseCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ExpenseCategoryConnection!
+  expenseCategories(filter: ExpenseCategoryFilter, sort: [ExpenseCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ExpenseCategoryConnection!
 
   """
   One category of the caller's tenant, or null when there is none.
@@ -1190,7 +1190,7 @@ type Query {
   idempotencyKey(id: ID!): IdempotencyKey
 
   """The images of the caller's tenant, newest first."""
-  imageAssets(filter: ImageAssetFilter, sort: [ImageAssetSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ImageAssetConnection!
+  imageAssets(filter: ImageAssetFilter, sort: [ImageAssetSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ImageAssetConnection!
 
   """One image of the caller's tenant, or null when there is none."""
   imageAsset(id: ID!): ImageAsset
@@ -1412,7 +1412,7 @@ type Query {
   invoiceItemCount: Int
 
   """The invoices and estimates of the caller's tenant, newest first."""
-  invoices(filter: InvoiceFilter, sort: [InvoiceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): InvoiceConnection!
+  invoices(filter: InvoiceFilter, sort: [InvoiceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): InvoiceConnection!
 
   """
   One invoice or estimate of the caller's tenant, or null when there is none.
@@ -1523,7 +1523,7 @@ type Query {
   mentionCount: Int
 
   """The stores of the caller's tenant, newest first."""
-  merchants(filter: MerchantFilter, sort: [MerchantSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): MerchantConnection!
+  merchants(filter: MerchantFilter, sort: [MerchantSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): MerchantConnection!
 
   """One store of the caller's tenant, or null when there is none."""
   merchant(id: ID!): Merchant
@@ -1728,7 +1728,7 @@ type Query {
   same filters, and the page it slices by `take`/`skip` is what this connection's `limit` and
   `offset` state.
   """
-  organizationProjects(filter: OrganizationProjectFilter, sort: [OrganizationProjectSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationProjectConnection!
+  organizationProjects(filter: OrganizationProjectFilter, sort: [OrganizationProjectSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationProjectConnection!
 
   """
   One project of the caller's organization, or null when there is none.
@@ -1896,12 +1896,12 @@ type Query {
   returns. The tenant is applied to the criterion by the service, from the credential rather than from
   the caller, so a filter naming another tenant narrows to nothing rather than reading across tenants.
   """
-  organizationTeamJoinRequests(filter: OrganizationTeamJoinRequestFilter, sort: [OrganizationTeamJoinRequestSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationTeamJoinRequestConnection!
+  organizationTeamJoinRequests(filter: OrganizationTeamJoinRequestFilter, sort: [OrganizationTeamJoinRequestSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationTeamJoinRequestConnection!
 
   """
   The teams of the caller's tenant, in the order the delivered list read answers them.
   """
-  organizationTeams(filter: OrganizationTeamFilter, sort: [OrganizationTeamSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationTeamConnection!
+  organizationTeams(filter: OrganizationTeamFilter, sort: [OrganizationTeamSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationTeamConnection!
 
   """
   The teams of the caller, read through the delivered reader that resolves them from the credential.
@@ -1950,7 +1950,7 @@ type Query {
   """
   The organizations of the caller's tenant, in the order the organization list reads them in.
   """
-  organizations(filter: OrganizationFilter, sort: [OrganizationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationConnection!
+  organizations(filter: OrganizationFilter, sort: [OrganizationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationConnection!
 
   """One organization of the caller's tenant, or null when there is none."""
   organization(id: ID!): Organization
@@ -1962,7 +1962,7 @@ type Query {
   paymentTermSchedule(id: ID!, total: String!, basisDate: String!, currencyDecimals: Int, currency: String): PaymentTermSchedule!
 
   """The payments of the caller's tenant, newest movement first."""
-  payments(filter: PaymentFilter, sort: [PaymentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): PaymentConnection!
+  payments(filter: PaymentFilter, sort: [PaymentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): PaymentConnection!
 
   """
   One payment of the caller's tenant, or null when there is none.
@@ -2036,7 +2036,7 @@ type Query {
   ): [PayrollSummary!]!
 
   """The pipelines of the caller's tenant, newest first."""
-  pipelines(filter: PipelineFilter, sort: [PipelineSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): PipelineConnection!
+  pipelines(filter: PipelineFilter, sort: [PipelineSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): PipelineConnection!
 
   """One pipeline of the caller's tenant, or null when there is none."""
   pipeline(id: ID!): Pipeline
@@ -2245,7 +2245,7 @@ type Query {
   
   The categories a report may be filed under, which is the other half of the menu a client assembles.
   """
-  reportCategories(filter: ReportCategoryFilter, sort: [ReportCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ReportCategoryConnection!
+  reportCategories(filter: ReportCategoryFilter, sort: [ReportCategorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ReportCategoryConnection!
 
   """
   The approval requests of the caller's organization, newest first.
@@ -2303,7 +2303,7 @@ type Query {
   requestApprovalCount: Int
 
   """The links of the caller's tenant, newest first."""
-  resourceLinks(filter: ResourceLinkFilter, sort: [ResourceLinkSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ResourceLinkConnection!
+  resourceLinks(filter: ResourceLinkFilter, sort: [ResourceLinkSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ResourceLinkConnection!
 
   """One link of the caller's tenant, or null when there is none."""
   resourceLink(id: ID!): ResourceLink
@@ -2392,7 +2392,7 @@ type Query {
   sequence(id: ID!): Sequence
 
   """The shares of the caller's tenant, newest first."""
-  sharedEntities(filter: SharedEntityFilter, sort: [SharedEntitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): SharedEntityConnection!
+  sharedEntities(filter: SharedEntityFilter, sort: [SharedEntitySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): SharedEntityConnection!
 
   """One share of the caller's tenant, or null when there is none."""
   sharedEntity(id: ID!): SharedEntity
@@ -2417,7 +2417,7 @@ type Query {
   sharedEntityByToken(token: String!): JSON
 
   """The skills of the caller's tenant, newest first."""
-  skills(filter: SkillFilter, sort: [SkillSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): SkillConnection!
+  skills(filter: SkillFilter, sort: [SkillSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): SkillConnection!
 
   """One skill of the caller's tenant, or null when there is none."""
   skill(id: ID!): Skill
@@ -4253,7 +4253,7 @@ type Query {
   userCount: Int
 
   """The stock locations of the caller's tenant, newest first."""
-  warehouses(filter: WarehouseFilter, sort: [WarehouseSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): WarehouseConnection!
+  warehouses(filter: WarehouseFilter, sort: [WarehouseSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): WarehouseConnection!
 
   """One stock location of the caller's tenant, or null when there is none."""
   warehouse(id: ID!): Warehouse

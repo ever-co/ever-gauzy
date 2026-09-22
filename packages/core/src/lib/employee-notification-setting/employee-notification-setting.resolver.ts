@@ -130,13 +130,14 @@ export class EmployeeNotificationSettingResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<EmployeeNotificationSetting>> {
 		// The reader takes the query DTO the list route binds its query string to. This surface has no
 		// query string to bind: the connection protocol states the same narrowing in `filter`, which is
 		// applied to the rows the service returns, so the read runs with the route's own defaults — no
 		// `where` and no `relations`.
-		const options = {} as BaseQueryDTO<EmployeeNotificationSetting>;
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<EmployeeNotificationSetting>;
 		const { items }: IPagination<EmployeeNotificationSetting> =
 			await this.employeeNotificationSettingService.findAll(options);
 

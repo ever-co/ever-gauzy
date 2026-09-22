@@ -176,7 +176,8 @@ export class OrganizationResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Organization>> {
 		// The delivered list route binds its query DTO to the query string and hands it to the service:
 		// the `where`, the `relations` and the page. This surface has no query string to bind, so the
@@ -184,7 +185,7 @@ export class OrganizationResolver {
 		// no page — and the connection protocol's `filter` is applied to the rows the service returns.
 		// The tenant is applied to the criterion by the service, from the credential rather than from
 		// the caller.
-		const options = {} as BaseQueryDTO<Organization>;
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<Organization>;
 		const { items }: IPagination<Organization> = await this.organizationService.findAll(options);
 
 		return buildConnection<Organization>({

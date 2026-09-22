@@ -138,12 +138,13 @@ export class PipelineResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Pipeline>> {
 		// The delivered list route hands the service the query DTO it bound. This surface has no query
 		// string to bind, so the read runs with the route's own defaults — no criterion, no relations,
 		// no page — and the connection protocol's `filter` narrows the rows the service returns.
-		const options = {} as BaseQueryDTO<Pipeline>;
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<Pipeline>;
 		const { items }: IPagination<Pipeline> = await this.pipelineService.findAll(options);
 
 		return buildConnection<Pipeline>({
