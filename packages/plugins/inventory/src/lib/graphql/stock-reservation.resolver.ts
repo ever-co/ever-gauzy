@@ -70,13 +70,15 @@ export class StockReservationResolver {
 		@Args('referenceType') referenceType: StockReservationReferenceType,
 		@Args('referenceId') referenceId: string,
 		@Args('status') status: StockReservationStatus,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<StockReservation>> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { referenceType, referenceId, status },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		})) as IPagination<StockReservation>;
 
 		return connectionFromOffsetPage(listing, skip);

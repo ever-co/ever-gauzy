@@ -66,14 +66,16 @@ export class ProductPriceResolver {
 		@Args('sort') sort?: IProductPriceSort,
 		@Args('page') page?: IPageInput,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<ProductPriceConnection> {
 		return await readConnection(page, limit, offset, (window) =>
 			this.productPriceService.findAll({
 				where: this.whereOf(filter),
 				order: this.orderOf(sort),
 				take: window.take,
-				skip: window.skip
+				skip: window.skip,
+				...(withDeleted ? { withDeleted: true } : {})
 			})
 		);
 	}

@@ -100,7 +100,8 @@ export class OrderResolver {
 		@Args('fulfillmentStatus', { type: () => String, nullable: true }) fulfillmentStatus?: string,
 		@Args('customerId', { type: () => ID, nullable: true }) customerId?: string,
 		@Args('channelId', { type: () => ID, nullable: true }) channelId?: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<IOrderConnection> {
 		const where: FindOptionsWhere<Order> = {};
 		const { skip, take } = resolveConnectionWindow(page);
@@ -141,7 +142,15 @@ export class OrderResolver {
 			where.channelId = channelId;
 		}
 
-		const listing = (await this.orderService.findAll({ where, skip, take })) as IPagination<Order>;
+		// The visibility the REST list route offers, offered here: its `findAll` is handed the whole
+		// `BaseQueryDTO`, which declares `withDeleted`, while this field builds its criterion from named
+		// arguments — so the flag has to be stated rather than passed through.
+		const listing = (await this.orderService.findAll({
+			where,
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		})) as IPagination<Order>;
 
 		return connectionFromOffsetPage(listing, skip);
 	}

@@ -332,6 +332,7 @@ export const inventorySchemaExtensions = gql`
 			referenceId: ID
 			status: String
 			page: PageInput
+			withDeleted: Boolean
 		): StockReservationConnection!
 		stockReservation(id: ID!): StockReservation
 		stockTransfers(status: String, page: PageInput, withDeleted: Boolean): StockTransferConnection!

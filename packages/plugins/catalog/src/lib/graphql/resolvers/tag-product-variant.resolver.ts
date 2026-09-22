@@ -40,14 +40,16 @@ export class TagProductVariantResolver {
 		@Args('filter') filter: { productVariantId?: ID; tagId?: ID } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<TagProductVariant>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.tagProductVariantService.findAll({
 			where: { ...filter },
 			relations: ['tag'],
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<TagProductVariant>(listing, skip);

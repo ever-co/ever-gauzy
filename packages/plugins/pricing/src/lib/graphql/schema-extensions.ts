@@ -27,6 +27,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PriceListConnection!
 		"One price list by its identifier."
 		priceList(id: ID!): PriceList
@@ -37,6 +38,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): ProductPriceConnection!
 		"One price row by its identifier."
 		productPrice(id: ID!): ProductPrice
@@ -47,6 +49,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PricePreferenceConnection!
 		"One tax-inclusivity preference by its identifier."
 		pricePreference(id: ID!): PricePreference
@@ -57,6 +60,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): ExchangeRateConnection!
 		"One exchange rate by its identifier."
 		exchangeRate(id: ID!): ExchangeRate

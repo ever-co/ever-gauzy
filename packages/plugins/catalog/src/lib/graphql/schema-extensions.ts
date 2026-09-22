@@ -421,6 +421,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): TagProductVariantConnection!
 		productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductPublicationConnection!
 		productPublication(id: ID!): ProductPublication
@@ -429,6 +430,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): ProductVariantPublicationConnection!
 		productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
 		productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!

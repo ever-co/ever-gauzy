@@ -1241,6 +1241,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): CampaignBudgetConnection!
 		"One page of coupons."
 		coupons(filter: CouponFilter, sort: CouponSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CouponConnection!
@@ -1253,6 +1254,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PromotionUsageConnection!
 		"One page of gift cards."
 		giftCards(filter: GiftCardFilter, sort: GiftCardSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): GiftCardConnection!

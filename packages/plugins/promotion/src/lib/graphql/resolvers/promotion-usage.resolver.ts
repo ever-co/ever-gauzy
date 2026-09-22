@@ -73,14 +73,16 @@ export class PromotionUsageResolver {
 		@Args('sort') sort?: ISortInput,
 		@Args('page') page?: IPageInput,
 		@Args('limit') limit?: number,
-		@Args('offset') offset?: number
+		@Args('offset') offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	) {
 		const where = toWhere(filter);
 		const order = toOrder(sort, PROMOTION_USAGE_SORT_COLUMNS);
 		const options = {
 			...(Object.keys(where).length ? { where } : {}),
 			...(order ? { order } : {}),
-			...toWindow(page, limit, offset)
+			...toWindow(page, limit, offset),
+			...(withDeleted ? { withDeleted: true } : {})
 		};
 		const promotionId = where.promotionId as ID | undefined;
 		// A filter that names a promotion is read through the promotion's own usage route, which is the

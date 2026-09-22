@@ -88,13 +88,15 @@ export class ProductPublicationResolver {
 		@Args('filter') filterBy: { variantId?: ID; channelId?: ID; status?: PublicationStatus } = {},
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
-		@Args('page') page?: IConnectionPageSelection
+		@Args('page') page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<ProductVariantChannel>> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productVariantChannelService.findAll({
 			where: { ...filterBy },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return connectionFromOffsetPage<ProductVariantChannel>(listing, skip);

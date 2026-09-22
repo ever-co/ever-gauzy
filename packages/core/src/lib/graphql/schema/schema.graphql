@@ -4304,33 +4304,33 @@ type Query {
   collectionProducts(filter: CollectionProductFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionProductConnection!
   collectionVariants(filter: CollectionVariantFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionVariantConnection!
   collectionChannels(filter: CollectionChannelFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CollectionChannelConnection!
-  productVariantFacets(filter: TagProductVariantFilter, page: PageInput, limit: Int, offset: Int): TagProductVariantConnection!
+  productVariantFacets(filter: TagProductVariantFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): TagProductVariantConnection!
   productPublications(filter: ProductPublicationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductPublicationConnection!
   productPublication(id: ID!): ProductPublication
-  productVariantPublications(filter: ProductVariantPublicationFilter, page: PageInput, limit: Int, offset: Int): ProductVariantPublicationConnection!
+  productVariantPublications(filter: ProductVariantPublicationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantPublicationConnection!
   productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
   productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!
 
   """Price lists of the caller's organization, most useful first."""
-  priceLists(filter: PriceListFilter, sort: PriceListSort, page: PageInput, limit: Int, offset: Int): PriceListConnection!
+  priceLists(filter: PriceListFilter, sort: PriceListSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PriceListConnection!
 
   """One price list by its identifier."""
   priceList(id: ID!): PriceList
 
   """Price rows of the caller's organization."""
-  productPrices(filter: ProductPriceFilter, sort: ProductPriceSort, page: PageInput, limit: Int, offset: Int): ProductPriceConnection!
+  productPrices(filter: ProductPriceFilter, sort: ProductPriceSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductPriceConnection!
 
   """One price row by its identifier."""
   productPrice(id: ID!): ProductPrice
 
   """Tax-inclusivity preferences of the caller's organization."""
-  pricePreferences(filter: PricePreferenceFilter, sort: PricePreferenceSort, page: PageInput, limit: Int, offset: Int): PricePreferenceConnection!
+  pricePreferences(filter: PricePreferenceFilter, sort: PricePreferenceSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PricePreferenceConnection!
 
   """One tax-inclusivity preference by its identifier."""
   pricePreference(id: ID!): PricePreference
 
   """Foreign-exchange rates of the caller's organization."""
-  exchangeRates(filter: ExchangeRateFilter, sort: ExchangeRateSort, page: PageInput, limit: Int, offset: Int): ExchangeRateConnection!
+  exchangeRates(filter: ExchangeRateFilter, sort: ExchangeRateSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ExchangeRateConnection!
 
   """One exchange rate by its identifier."""
   exchangeRate(id: ID!): ExchangeRate
@@ -4380,7 +4380,7 @@ type Query {
   stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
   availableQuantity(warehouseId: ID!, variantId: ID!): Float!
   stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput, withDeleted: Boolean): StockMovementConnection!
-  stockReservations(referenceType: String, referenceId: ID, status: String, page: PageInput): StockReservationConnection!
+  stockReservations(referenceType: String, referenceId: ID, status: String, page: PageInput, withDeleted: Boolean): StockReservationConnection!
   stockReservation(id: ID!): StockReservation
   stockTransfers(status: String, page: PageInput, withDeleted: Boolean): StockTransferConnection!
   stockTransfer(id: ID!): StockTransfer
@@ -4471,7 +4471,7 @@ type Query {
   checkoutSession(id: ID!): CheckoutSession
 
   """List orders of the caller's organization."""
-  orders(status: String, paymentStatus: String, fulfillmentStatus: String, customerId: ID, channelId: ID, page: PageInput): OrderConnection!
+  orders(status: String, paymentStatus: String, fulfillmentStatus: String, customerId: ID, channelId: ID, page: PageInput, withDeleted: Boolean): OrderConnection!
 
   """Read one order."""
   order(id: ID!): Order
@@ -4551,7 +4551,7 @@ type Query {
   """
   One page of campaign ceilings, with the per-value consumption of a split one.
   """
-  campaignBudgets(filter: CampaignBudgetFilter, sort: CampaignBudgetSort, page: PageInput, limit: Int, offset: Int): CampaignBudgetConnection!
+  campaignBudgets(filter: CampaignBudgetFilter, sort: CampaignBudgetSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CampaignBudgetConnection!
 
   """One page of coupons."""
   coupons(filter: CouponFilter, sort: CouponSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): CouponConnection!
@@ -4560,7 +4560,7 @@ type Query {
   coupon(id: ID!): Coupon
 
   """One page of the redemption ledger, most recent first."""
-  promotionUsages(filter: PromotionUsageFilter, sort: PromotionUsageSort, page: PageInput, limit: Int, offset: Int): PromotionUsageConnection!
+  promotionUsages(filter: PromotionUsageFilter, sort: PromotionUsageSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PromotionUsageConnection!
 
   """One page of gift cards."""
   giftCards(filter: GiftCardFilter, sort: GiftCardSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): GiftCardConnection!

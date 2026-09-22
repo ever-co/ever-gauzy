@@ -494,6 +494,7 @@ export const orderSchemaExtensions = gql`
 			customerId: ID
 			channelId: ID
 			page: PageInput
+			withDeleted: Boolean
 		): OrderConnection!
 		"Read one order."
 		order(id: ID!): Order
