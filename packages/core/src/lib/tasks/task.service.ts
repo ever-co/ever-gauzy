@@ -462,6 +462,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async getEmployeeTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -625,6 +629,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: BaseQueryDTO<Task> & IAdvancedTaskFiltering) {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -731,6 +739,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns
 	 */
 	async findTeamTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -1161,6 +1173,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @returns A promise that resolves with pagination task items and total count.
 	 */
 	async findModuleTasks(options: BaseQueryDTO<Task> & IAdvancedTaskFiltering): Promise<IPagination<ITask>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -1416,6 +1432,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @throws {Error} Will throw an error if there is a problem with the database query.
 	 */
 	async getTasksByDateFilters(params: ITaskDateFilterInput): Promise<IPagination<ITask>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(params);
+
 		const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 		try {

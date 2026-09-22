@@ -11,6 +11,13 @@ nb-dialog-container {
     width: 100%;
   }
 }
+// As a dialog PANE this class only ever wraps the View Time Log popup, a 328px
+// card. At 90% / 500px the pane was wider than the card, leaving a transparent
+// band on either side that looks like backdrop but swallows the click, so the
+// popup did not close from there. The pane now takes the card's width.
+.cdk-overlay-pane.view-log-dialog {
+  width: auto;
+}
 .fullscreen {
   nb-dialog-container {
     width: 100%;

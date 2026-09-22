@@ -10,7 +10,7 @@
 			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": ["config", "core", "plugin"],
 	"targets": {
 		"build": {

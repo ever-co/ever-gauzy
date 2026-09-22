@@ -1956,6 +1956,7 @@
 		"EXPECTED": "预期的",
 		"UPDATES": "更新",
 		"UPDATE": "更新",
+		"ALIGNMENTS": "对齐",
 		"COMMENTS": "评论",
 		"KEY_RESULTS": "关键结果",
 		"GROUP_BY": "分组",
@@ -1972,6 +1973,8 @@
 		"GOAL_TEMPLATES": "目标模板",
 		"CREATE_NEW_MENU": "创建新的",
 		"CREATE_FROM_PRESET": "从预设创建",
+		"SELECT_A_PRESET": "选择预设",
+		"ADDITIONAL_DETAILS": "其他详情",
 		"OWNERSHIP": {
 			"EMPLOYEES": "员工",
 			"TEAMS": "团队",
@@ -2001,7 +2004,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "没有要显示的关键结果。",
 			"NO_UPDATES": "目前尚未有任何更新。",
-			"NO_ALIGNMENT": "尚无对齐。"
+			"NO_ALIGNMENT": "尚无对齐。",
+			"NO_PROGRESS_DATA": "尚无可绘制的进度数据。"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "组织",
@@ -2457,6 +2461,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "活动持续时间证明倒计时对话框，它表示给予证明活动的分钟数。",
 				"ENABLE_DETECTION_INACTIVITY": "使员工的不活动能够被检测到",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "截图频率",
 				"SCREENSHOT_FREQUENCY_INFO": "指定更新频率或时间间隔同步。",
 				"RANDOM_SCREENSHOT": "随机截图",
@@ -4436,6 +4442,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "选择客户",
+			"SELECT_PROJECT": "选择项目",
+			"SELECT_TEAM": "选择团队",
+			"SELECT_TASK": "选择任务",
+			"DESCRIPTION": "添加描述"
+		},
 		"IS_BILLABLE": "可收费",
 		"STOP_TIMER": "停止计时器",
 		"START_TIMER": "开始计时器",
@@ -4905,7 +4918,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "截图",
 			"OF": "关于/关于/的/的",
-			"TIME_LOG": "时间日志"
+			"TIME_LOG": "时间日志",
+			"TAKEN_AT": "截图拍摄于 {{ time }}",
+			"POSITION": "第 {{ position }} 张截图，共 {{ total }} 张"
 		},
 		"RUNNING_TIMER_WARNING": "警告。计时器正在运行，只有在停止计时器或在计时器应用程序内才能删除屏幕截图。",
 		"DELETE_CONFIRM": "你确定要删除这些截图和时间记录吗？",

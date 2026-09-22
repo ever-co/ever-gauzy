@@ -326,4 +326,5 @@ export interface IOrganizationTimerSetting {
 	standardWorkHoursPerDay?: number;
 	trackKeyboardMouseActivity?: boolean;
 	trackAllDisplays?: boolean;
+	allowEmployeeToSeeTrackedData?: boolean;
 }

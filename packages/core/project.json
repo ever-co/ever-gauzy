@@ -10,8 +10,8 @@
 			"manifestRootsToUpdate": ["dist/{projectRoot}"]
 		}
 	},
-	"tags": [],
-	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "utils"],
+	"tags": ["type:core"],
+	"implicitDependencies": ["auth", "common", "config", "constants", "contracts", "plugin", "scheduler", "utils"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
@@ -59,6 +59,15 @@
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/core/jest.config.ts"
+			}
+		},
+		"test-migration-smoke": {
+			"executor": "@nx/jest:jest",
+			"options": {
+				"jestConfig": "packages/core/jest.config.ts",
+				"testFile": "src/lib/database/migration-smoke\\.spec\\.ts$",
+				"testPathIgnorePatterns": ["/node_modules/"],
+				"passWithNoTests": false
 			}
 		}
 	}

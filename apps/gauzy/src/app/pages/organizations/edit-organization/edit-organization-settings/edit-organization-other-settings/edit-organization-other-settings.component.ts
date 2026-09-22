@@ -181,7 +181,8 @@ export class EditOrganizationOtherSettingsComponent
 			allowAgentAppExit: [true],
 			allowLogoutFromAgentApp: [true],
 			trackKeyboardMouseActivity: [false],
-			trackAllDisplays: [true]
+			trackAllDisplays: [true],
+			allowEmployeeToSeeTrackedData: [true]
 		});
 	}
 

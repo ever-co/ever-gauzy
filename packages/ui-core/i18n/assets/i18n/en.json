@@ -2442,6 +2442,7 @@
 		"EXPECTED": "Expected",
 		"UPDATES": "Updates",
 		"UPDATE": "Update",
+		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
@@ -2458,6 +2459,8 @@
 		"GOAL_TEMPLATES": "Goal Templates",
 		"CREATE_NEW_MENU": "Create New",
 		"CREATE_FROM_PRESET": "Create from Preset",
+		"SELECT_A_PRESET": "Select a Preset",
+		"ADDITIONAL_DETAILS": "Additional Details",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Employees",
 			"TEAMS": "Teams",
@@ -2487,7 +2490,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
-			"NO_ALIGNMENT": "No Alignments yet."
+			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organization",
@@ -2951,6 +2955,8 @@
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Screenshot Frequency",
 				"SCREENSHOT_FREQUENCY_INFO": "Specify the update frequency or time intervals synchronization.",
 				"RANDOM_SCREENSHOT": "Random Screenshot",
@@ -3764,7 +3770,7 @@
 		"EMPLOYEE": "Employee",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"CONFIRM_DELETE": "Are you sure you want to delete this proposal template?",
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
@@ -5007,6 +5013,13 @@
 	"TIMER_TRACKER": {
 		"MONITORING_ACTIVE": "Monitoring Active: Capturing time and activity",
 		"MONITORING_IDLE": "Agent Idle",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Select Client",
+			"SELECT_PROJECT": "Select Project",
+			"SELECT_TEAM": "Select Team",
+			"SELECT_TASK": "Select Task",
+			"DESCRIPTION": "Add a description"
+		},
 		"IS_BILLABLE": "Is Billable",
 		"STOP_TIMER": "Stop Timer",
 		"START_TIMER": "Start Timer",
@@ -5488,7 +5501,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshots",
 			"OF": "of",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Screenshot taken at {{ time }}",
+			"POSITION": "Screenshot {{ position }} of {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Warning. Timer is running, you can only remove screenshots if you stop timer or Inside Timer app",
 		"DELETE_CONFIRM": "Are you sure to delete this screenshots and time log?",

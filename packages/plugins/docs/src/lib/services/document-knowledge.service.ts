@@ -167,6 +167,10 @@ export class DocumentKnowledgeService {
 						organizationId,
 						reason: scope === 'all' ? 'reindex' : 'model-changed',
 						initiatedByUserId: RequestContext.currentUserId() ?? undefined,
+						// Built by hand rather than via `snapshotOf()`, so the request's correlation id has to be
+						// snapshotted here too — otherwise a sweep's chunk/embed/index logs cannot be tied back
+						// to the request that started it. Null without a request context -> field left absent.
+						correlationId: RequestContext.currentCorrelationId() ?? undefined,
 						force: scope === 'all'
 					},
 					// Low priority — a sweep must never starve interactive pipeline work.

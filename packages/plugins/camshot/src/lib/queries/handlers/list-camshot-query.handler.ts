@@ -65,7 +65,9 @@ export class ListCamshotQueryHandler implements IQueryHandler<ListCamshotQuery> 
 		// Fetch paginated camshots from the service
 		return this.camshotService.paginate({
 			...params,
-			where: { ...where, ...params.where },
+			// The server's keys go LAST: spreading the client's `where` over them let a caller pass
+			// ?where[uploadedById]=<someone else> and read another employee's recordings.
+			where: { ...params.where, ...where },
 			withDeleted: true
 		});
 	}

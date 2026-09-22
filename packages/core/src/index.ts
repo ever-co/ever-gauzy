@@ -70,7 +70,7 @@ export { CreateEntitySubscriptionEvent } from './lib/entity-subscription/events/
 export { FeatureModule } from './lib/feature/feature.module';
 export { FeatureService } from './lib/feature/feature.service';
 export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
-export { RoleModule, RoleService } from './lib/role';
+export { RoleAuthorizationService, RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
@@ -165,6 +165,19 @@ export * from './lib/database/database.module';
 // entity is registered for export automatically, which is right for authored records and wrong for
 // tables the platform rebuilds after an import.
 export { isExportSkipped, SKIP_EXPORT_METADATA, SkipExport, skipExport } from './lib/export-import/skip-export.decorator';
+// Column-level counterpart: mark a credential column so the CSV export writes it masked. Public for
+// the same reason — plugin entities carry credentials too, and `csv-writer` reads properties
+// directly, so class-transformer's `@Exclude` does not reach them (GHSA-j5h5-r956-rxc3).
+export {
+	EXPORT_REDACT_METADATA,
+	ExportRedacted,
+	exportRedacted,
+	getExportRedactedProperties,
+	maskEmbeddedSecret,
+	redactForExport,
+	ExportEntityClass,
+	IExportRedactOptions
+} from './lib/export-import/export-redact.decorator';
 export { ExpenseCreateCommand, ExpenseModule, ExpenseService } from './lib/expense';
 export {
 	ExpenseCategoriesModule,
@@ -175,3 +188,4 @@ export { IncomeCreateCommand, IncomeModule, IncomeService } from './lib/income';
 export { TagTypeModule, TagTypeService } from './lib/tag-type';
 export { AutomationLabelSyncCommand, RelationalTagDTO, Taggable, TagModule, TagService } from './lib/tags';
 export * from './lib/token';
+export * from './lib/auth/purpose-token';

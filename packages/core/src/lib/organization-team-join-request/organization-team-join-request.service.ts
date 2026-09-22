@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
 import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
-import { JwtPayload, sign } from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
@@ -29,6 +29,8 @@ import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { LoginAttemptScope, LoginAttemptService } from '../auth/login-attempt.service';
+import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -41,7 +43,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		private readonly _organizationTeamService: OrganizationTeamService,
 		private readonly _emailService: EmailService,
 		private readonly _inviteService: InviteService,
-		private readonly _roleService: RoleService
+		private readonly _roleService: RoleService,
+		private readonly _loginAttemptService: LoginAttemptService
 	) {
 		super(typeOrmOrganizationTeamJoinRequestRepository, mikroOrmOrganizationTeamJoinRequestRepository);
 	}
@@ -104,7 +107,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				code
 			};
 			/** Generate JWT token using above JWT payload */
-			const token: string = sign(payload, environment.JWT_SECRET, {
+			const token: string = signPurposeToken(TokenPurposeEnum.TEAM_JOIN, payload, {
 				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
 			});
 
@@ -157,6 +160,12 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		options: IOrganizationTeamJoinRequestValidateInput
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { email, token, code, organizationTeamId } = options;
+
+		// The confirmation code is six alphanumeric characters — roughly 2^31 possibilities — so a
+		// per-address rate limit alone leaves it guessable by anything distributed. Count failures
+		// against the email instead, outside the catch that turns everything into a 400.
+		const attempt = await this._loginAttemptService.begin(LoginAttemptScope.TEAM_JOIN_CODE, email);
+
 		try {
 			let record: IOrganizationTeamJoinRequest;
 
@@ -207,8 +216,19 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 			});
 			delete record.id;
+
+			await attempt.succeed();
+
 			return record;
 		} catch (error) {
+			// A request that carried no code or token at all guessed nothing, so it gives its slot back
+			// instead of counting against the email (a buggy client must not lock the join flow). Every
+			// other path — above all the lookup miss of a wrong code — counts: the check fails closed.
+			if (error instanceof BadRequestException) {
+				await attempt.release();
+			} else {
+				await attempt.fail();
+			}
 			throw new BadRequestException();
 		}
 	}
@@ -244,7 +264,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				code
 			};
 			/** Generate JWT token using above JWT payload */
-			const token: string = sign(payload, environment.JWT_SECRET, {
+			const token: string = signPurposeToken(TokenPurposeEnum.TEAM_JOIN, payload, {
 				expiresIn: `${environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME}s`
 			});
 

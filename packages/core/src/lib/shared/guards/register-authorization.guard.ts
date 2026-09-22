@@ -1,13 +1,19 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { environment as env } from '@gauzy/config';
-import { RolesEnum } from '@gauzy/contracts';
+import { ID, IRole, IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { verify } from 'jsonwebtoken';
 import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../role/repository/mikro-orm-role.repository';
+import { RoleAuthorizationService } from '../../role/role-authorization.service';
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
+import { isAccessTokenPayload, JWT_ALGORITHMS } from '../../auth/purpose-token';
+// A dependency-free helper file (no entity imports), so this does not close the `user/` import cycle
+// described on `findCaller` below.
+import { extractRoleIds } from '../../user/role-assignment.helper';
 
 /**
  * Minimal user shape set on the request by this guard when the register route
@@ -15,9 +21,13 @@ import { getORMType, MultiORMEnum } from '../../core/utils';
  * RequestContext.currentTenantId() and related helpers are available for the rest of the request.
  */
 export interface RegisterRequestUser {
-	id: string;
-	tenantId: string;
-	role: RolesEnum;
+	id: ID;
+	tenantId: ID;
+	roleId?: ID;
+	/** The role the caller holds in the DATABASE, not the one their token claims. */
+	role?: IRole;
+	/** Enabled permissions of that role, so RequestContext.hasPermission() is answerable downstream. */
+	permissions?: PermissionsEnum[];
 }
 
 /**
@@ -29,7 +39,7 @@ export interface RegisterRequestUser {
  *
  * If ANY of these fields are present, the guard verifies:
  *  1. A valid JWT is attached to the request
- *  2. The caller is ADMIN or SUPER_ADMIN
+ *  2. The account it names is still active, and is ADMIN or SUPER_ADMIN according to the DATABASE
  *  3. If a roleId is provided, it belongs to the caller's tenant
  *  4. If an organizationId is provided, it belongs to the caller's tenant
  *  5. createdByUserId is overridden with the authenticated caller's ID
@@ -59,8 +69,8 @@ function getIdFromRelation(rel: unknown): string | undefined {
  * The `/api/auth/register` endpoint is @Public() (no global AuthGuard).
  * This guard inspects the request body:
  *  - If no privileged fields are present → pure public registration → allow through.
- *  - If privileged fields are present → require a valid JWT from an ADMIN/SUPER_ADMIN
- *    and verify tenant isolation for any supplied roleId or organizationId.
+ *  - If privileged fields are present → require a valid JWT whose user is, in the database, an
+ *    active ADMIN/SUPER_ADMIN, and verify tenant isolation for any supplied roleId or organizationId.
  */
 @Injectable()
 export class RegisterAuthorizationGuard implements CanActivate {
@@ -68,8 +78,43 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		private readonly typeOrmRoleRepository: TypeOrmRoleRepository,
 		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-		private readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository
+		private readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
+		private readonly roleAuthorizationService: RoleAuthorizationService,
+		private readonly moduleRef: ModuleRef
 	) {}
+
+	/**
+	 * Loads the caller named by the token from the database.
+	 *
+	 * The user repository is resolved when the guard RUNS, not when this file is loaded. This file sits
+	 * on the User entity's own module-initialization chain — `user.entity` -> `core/entities/internal`
+	 * -> `import-history.subscriber` -> `core/file-storage` -> `tenant-setting.module` ->
+	 * `role-permission.module` -> `role-permission.controller` -> `shared/guards` -> here — so a
+	 * top-level import of anything under `user/` closes that cycle: the user repository is then
+	 * evaluated while `user.entity` is still being initialized, `@InjectRepository(User)` receives
+	 * `undefined`, and Nest fails with "A circular dependency has been detected inside
+	 * @InjectRepository()". Deferring the import keeps the cycle open.
+	 *
+	 * @param id The user id carried by the token.
+	 * @returns The user row, or null when it does not exist.
+	 */
+	private async findCaller(id: ID): Promise<IUser | null> {
+		// Never look a user up by an empty id: TypeORM drops an `undefined` where value, so
+		// `findOne({ where: { id: undefined } })` returns the FIRST row in the table.
+		if (!id) {
+			return null;
+		}
+
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			const { MikroOrmUserRepository } = await import('../../user/repository/mikro-orm-user.repository');
+			const repository = this.moduleRef.get(MikroOrmUserRepository, { strict: false });
+			return (await repository.findOne({ id })) as IUser;
+		}
+
+		const { TypeOrmUserRepository } = await import('../../user/repository/type-orm-user.repository');
+		const repository = this.moduleRef.get(TypeOrmUserRepository, { strict: false });
+		return await repository.findOne({ where: { id } });
+	}
 
 	/**
 	 * Checks if the request is authorized to proceed.
@@ -108,17 +153,37 @@ export class RegisterAuthorizationGuard implements CanActivate {
 			);
 		}
 
-		// Verify the JWT and extract the payload
-		let jwtPayload: { id: string; tenantId: string; role: RolesEnum };
+		// Verify the JWT and extract the caller's identity. Only `id` is taken from the token: the
+		// `role` and `tenantId` claims are resolved from the database below instead.
+		let jwtPayload: { id: string };
 		try {
-			jwtPayload = verify(token, env.JWT_SECRET) as any;
+			jwtPayload = verify(token, env.JWT_SECRET, { algorithms: JWT_ALGORITHMS }) as any;
 		} catch {
 			throw new ForbiddenException('Invalid or expired authentication token.');
 		}
 
-		const callerRole = jwtPayload.role;
-		const callerTenantId = jwtPayload.tenantId;
+		// Only an ACCESS token authenticates the caller. A password-reset token also carries `id`
+		// and is signed with the same secret (GHSA-28wv-vrxj-rp4q).
+		if (!isAccessTokenPayload(jwtPayload)) {
+			throw new ForbiddenException('Invalid or expired authentication token.');
+		}
+
 		const callerUserId = jwtPayload.id;
+
+		// The route is @Public(), so JwtStrategy never runs for it and nothing has re-checked this
+		// caller against the database. Do it here rather than trusting the token's `role` / `tenantId`
+		// claims: those are frozen at issuance, so a demoted (or deactivated) admin would otherwise keep
+		// creating users with assigned roles for the token's whole lifetime.
+		const caller = await this.findCaller(callerUserId);
+
+		// Same exact predicates as JwtStrategy and token issuance: an unknown (NULL) status is refused.
+		if (!caller || caller.isActive !== true || caller.isArchived !== false) {
+			throw new ForbiddenException('Invalid or expired authentication token.');
+		}
+
+		const authorization = await this.roleAuthorizationService.getAuthorizationState(caller.roleId);
+		const callerRole = authorization?.role?.name as RolesEnum;
+		const callerTenantId = caller.tenantId;
 
 		if (!callerUserId || !callerTenantId || !callerRole) {
 			throw new ForbiddenException('Authentication token is missing required claims (id, tenantId, role).');
@@ -134,9 +199,12 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// Get ORM type from request context
 		const ormType = getORMType();
 
-		// Validate tenant isolation for roleId (top-level or nested in user)
-		const targetRoleId = body.user?.roleId ?? getIdFromRelation(body.user?.role);
-		if (targetRoleId && typeof targetRoleId === 'string') {
+		// Validate tenant isolation for EVERY role identifier nested in user — `roleId`, and `role` as an
+		// object or a bare id string. Picking one with `roleId ?? role.id` left the other unchecked here,
+		// so the guard's tenant isolation silently depended on the handler's second look
+		// (GHSA-hjcg-633x-qq74 hardening; the string form is GHSA-x4mv-fhwj-g3rp). A role key that is
+		// present but references nothing is refused with a 400 by `extractRoleIds`.
+		for (const targetRoleId of extractRoleIds(body.user)) {
 			try {
 				const whereCondition = {
 					id: targetRoleId,
@@ -206,9 +274,11 @@ export class RegisterAuthorizationGuard implements CanActivate {
 		// The register route is @Public(), so the JWT strategy never runs and never sets req.user.
 		// Without this, RoleShouldExistConstraint (and anything else using RequestContext) sees no tenant.
 		(request as { user?: RegisterRequestUser }).user = {
-			id: callerUserId,
+			id: caller.id,
 			tenantId: callerTenantId,
-			role: callerRole
+			roleId: caller.roleId,
+			role: authorization.role,
+			permissions: authorization.permissions
 		};
 
 		return true;

@@ -1,9 +1,14 @@
 @use 'themes' as *;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
+// The item grid's panel: the recessed surface it always had, now with the
+// hairline and corner every other panel in the app carries, and an even inset
+// instead of a flat 10px.
 .table {
-  margin-top: 20px;
-  padding: 10px;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: var(--border-radius, 0.5rem);
+  box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   background-color: nb-theme(gauzy-card-2);
   // NOTE: `max-height: 17.5rem` is a flat 280px cap on the item list whatever the
   // window, so an invoice of more than about eight lines scrolls internally while
@@ -29,7 +34,15 @@
 // and it scales with the viewport, topping out at the original 100px.
 :host {
   display: block;
-  padding: 25px clamp(1rem, 6vw, 100px) 0;
+  padding: 1rem clamp(1rem, 6vw, 100px) 0;
+}
+
+// The record's own `nb-card-body` sits inside the page's, and both were paying
+// Nebular's 1.5rem — with the host gutter above, that stacked to roughly 100px
+// of nothing between the page title and the record number. The gutter is the
+// host's job; this one only carries the spinner.
+:host nb-card-body {
+  padding: 0;
 }
 
 // ── Table density, without the list-page surface ─────────────────────────────
@@ -50,4 +63,196 @@
 
 :host ::ng-deep angular2-smart-table {
   @include ga-hub.rows();
+}
+
+// ── Type scale ───────────────────────────────────────────────────────────────
+// The read-only invoice / estimate was drawn at the template's bootstrap
+// defaults: an `h4` pair for the number (1.5rem), `font-weight-bold` labels at
+// 1rem, and `mb-5` (3rem) between blocks — so six fields and a four-line item
+// grid filled a screen and the record read louder than the page it opens from.
+// Everything here is the 12px set the rest of the app's records use; the item
+// grid keeps the density block above.
+:host {
+  font-size: 12px;
+  line-height: 1rem;
+
+  // The record's number, the one thing that identifies it.
+  h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Field labels ("Estimate Date:", "From:", "Tax:") — muted, so the values they
+  // name are what the eye lands on.
+  .font-weight-bold {
+    font-size: 12px;
+    font-weight: 600 !important;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  // The heading block keeps its own line; `h4` carries the record number.
+  .font-weight-bold h4 {
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  // Bootstrap's 3rem between blocks and 0.5rem between rows, at this scale.
+  .mb-5 {
+    margin-bottom: 1rem !important;
+  }
+
+  .mt-2 {
+    margin-top: 0.375rem !important;
+  }
+
+  .mt-3 {
+    margin-top: 0.75rem !important;
+  }
+
+  // Money and dates line up down their column.
+  .text-left,
+  .text-right {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ── Row rhythm ───────────────────────────────────────────────────────────────
+// 0.5rem above and below every cell's content, header included, against the
+// 0.1875rem `density-tokens()` sets for one-line list tables — the same rhythm
+// the item grid on the Add / Edit form now uses.
+//
+// After the `density-tokens()` include above, not before: that mixin sets these
+// same tokens on `:host`, so an earlier block of equal specificity loses to it.
+:host {
+  --gauzy-table-cell-padding-y: 0.5rem;
+  --gauzy-table-header-padding-y: 0.5rem;
+}
+
+// ── The figures under the grid ───────────────────────────────────────────────
+// Tax, discount and the total, as rows of label-against-value under the money
+// column of the table, with the internal note beside them. They were two
+// parallel flex columns whose rows only lined up by luck, pinned to the left
+// half of the card while every figure in the table above sat on the right.
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-top: 1rem;
+}
+
+.internal-note {
+  flex: 1 1 16rem;
+  min-width: 0;
+
+  h5 {
+    margin: 0 0 0.25rem;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.125rem;
+    white-space: pre-line;
+  }
+}
+
+.totals {
+  flex: 0 0 auto;
+  min-width: 14rem;
+  margin: 0 0 0 auto;
+  padding: 0;
+}
+
+.total-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.25rem 0;
+
+  dt {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  dd {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1rem;
+    // Money, so the digits line up down the column.
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// The one figure the reader is looking for.
+.total-row-grand {
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+
+  dt,
+  dd {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// ── Dates and parties ────────────────────────────────────────────────────────
+// Every fact on this row reads "Label: value" on one line. From / To used to
+// stack their value under the label in two columns while the dates beside them
+// were already inline, so one row spelled the same kind of fact two ways.
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.25rem 2rem;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+
+  dt {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  dd {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-1, inherit);
+  }
+}
+
+// The parties hug the right edge, under the actions above them.
+.meta-parties .meta-item {
+  justify-content: flex-end;
 }

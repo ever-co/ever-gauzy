@@ -179,7 +179,9 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		}
 
 		const outcome = await this.classifierService.classify(document, job.data);
-		this.logger.log(`docs.classify outcome for document ${document.id}: ${outcome}`);
+		this.logger.log(
+			`docs.classify outcome for document ${document.id}${this.correlationTag(job.data)}: ${outcome}`
+		);
 
 		if (this.isInKnowledgeSystem(document)) {
 			await this.enqueueChained(DOCS_JOB_CHUNK, this.baseOf(job.data), job);
@@ -280,10 +282,13 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 				return;
 			}
 			const outcome = await this.thumbnailService.generate(document, job.data);
-			this.logger.log(`docs.thumbnail outcome for document ${document.id}: ${outcome}`);
+			this.logger.log(
+				`docs.thumbnail outcome for document ${document.id}${this.correlationTag(job.data)}: ${outcome}`
+			);
 		} catch (error) {
 			this.logger.warn(
-				`docs.thumbnail failed for document ${job.data?.documentId}: ${(error as Error).message} ` +
+				`docs.thumbnail failed for document ${job.data?.documentId}${this.correlationTag(job.data)}: ` +
+					`${(error as Error).message} ` +
 					'(cosmetic — the document is unaffected)'
 			);
 		}
@@ -338,7 +343,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 			// Losing the re-queue costs a wait, not the document: the recovery sweep re-drives
 			// stale rows once the feature is back on.
 			this.logger.warn(
-				`Could not park ${jobName} for document ${payload.documentId}: ${(error as Error).message}`
+				`Could not park ${jobName} for document ${payload.documentId}${this.correlationTag(payload)}: ` +
+					`${(error as Error).message}`
 			);
 		}
 		return true;
@@ -413,14 +419,11 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		}
 		try {
 			const force = job.data.reason === 'replace' || job.data.reason === 'reindex';
-			await this.enqueueChained<IDocsThumbnailJob>(
-				DOCS_JOB_THUMBNAIL,
-				{ ...this.baseOf(job.data), force },
-				job
-			);
+			await this.enqueueChained<IDocsThumbnailJob>(DOCS_JOB_THUMBNAIL, { ...this.baseOf(job.data), force }, job);
 		} catch (error) {
 			this.logger.warn(
-				`Could not enqueue docs.thumbnail for document ${document.id}: ${(error as Error).message} ` +
+				`Could not enqueue docs.thumbnail for document ${document.id}${this.correlationTag(job.data)}: ` +
+					`${(error as Error).message} ` +
 					'(cosmetic — extraction is unaffected)'
 			);
 		}
@@ -436,8 +439,23 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 			tenantId: payload.tenantId,
 			organizationId: payload.organizationId,
 			reason: payload.reason,
-			initiatedByUserId: payload.initiatedByUserId
+			initiatedByUserId: payload.initiatedByUserId,
+			// The originating request's correlation id (snapshotted once by
+			// DocumentProcessingService.snapshotOf()), forwarded so every chained stage and requeue
+			// can be tied back to that request in logs.
+			correlationId: payload.correlationId
 		};
+	}
+
+	/**
+	 * ` (correlationId <id>)` for a stage's outcome/failure log line — the worker-side half of the
+	 * `DocsQueueService` "Enqueued ..." line, so a failure on a queue thread can be tied back to the
+	 * request that started the run. `''` when the payload carries none (a system-initiated run, or a
+	 * job enqueued before the field existed), leaving those lines exactly as they were. Reads ONLY
+	 * `correlationId` — no other payload content reaches a log through here.
+	 */
+	private correlationTag(payload: IDocsJobBase | undefined): string {
+		return payload?.correlationId ? ` (correlationId ${payload.correlationId})` : '';
 	}
 
 	/**
@@ -478,9 +496,12 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		const attempts = job.attempts ?? 1;
 		const isFinalAttempt = job.attemptsMade + 1 >= attempts;
 
+		// Built first: the id is optional, and inlining the conditional would nest template literals.
+		const correlationSuffix = job.data?.correlationId ? `, correlationId ${job.data.correlationId}` : '';
+
 		this.logger.error(
 			`docs.${stage} failed for document ${document.id} (attempt ${job.attemptsMade + 1}/${attempts}, ` +
-				`transient=${transient}): ${(error as Error).message}`
+				`transient=${transient}${correlationSuffix}): ${(error as Error).message}`
 		);
 
 		if (transient && !isFinalAttempt) {
@@ -511,7 +532,8 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 	private async deadLetter(jobName: string, job: IDocsStageJob, error: unknown): Promise<void> {
 		const payload = job.data as IDocsJobBase | undefined;
 		this.logger.error(
-			`${jobName} failed inline for document ${payload?.documentId ?? 'n/a'}: ${(error as Error)?.message ?? error}`
+			`${jobName} failed inline for document ${payload?.documentId ?? 'n/a'}${this.correlationTag(payload)}: ` +
+				`${(error as Error)?.message ?? String(error)}`
 		);
 
 		if (jobName === DOCS_JOB_RECONCILE || !payload?.documentId) {
@@ -538,7 +560,7 @@ export class DocsPipelineService implements IDocsPipelineRunner {
 		} catch (markError) {
 			// Nothing left to do but say so — never let the safety net itself reject.
 			this.logger.error(
-				`Failed to dead-letter ${jobName} for document ${payload.documentId}: ` +
+				`Failed to dead-letter ${jobName} for document ${payload.documentId}${this.correlationTag(payload)}: ` +
 					`${(markError as Error).message}`
 			);
 		}

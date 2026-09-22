@@ -19,6 +19,7 @@ import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { JWT_ALGORITHMS } from './purpose-token';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -107,7 +108,9 @@ export class EmailConfirmationService {
 			return;
 		}
 		try {
-			const payload: JwtPayload | string = verify(token, environment.JWT_VERIFICATION_TOKEN_SECRET);
+			const payload: JwtPayload | string = verify(token, environment.JWT_VERIFICATION_TOKEN_SECRET, {
+				algorithms: JWT_ALGORITHMS
+			});
 
 			if (typeof payload === 'object' && 'email' in payload && 'id' in payload) {
 				const { id, email } = payload;

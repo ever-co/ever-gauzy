@@ -9,3 +9,4 @@ export * from './feature-flag.guard';
 export * from './manager-or-permission.guard';
 export * from './register-authorization.guard';
 export * from './subscription-required.guard';
+export * from './employee-tracked-data.guard';

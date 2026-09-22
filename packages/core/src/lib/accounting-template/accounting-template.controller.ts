@@ -29,7 +29,7 @@ import { Permissions, LanguageDecorator } from './../shared/decorators';
 import { AccountingTemplateQuery } from './queries';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateService } from './accounting-template.service';
-import { AccountingTemplateQueryDTO, SaveAccountingTemplateDTO } from './dto';
+import { AccountingTemplatePreviewDTO, AccountingTemplateQueryDTO, SaveAccountingTemplateDTO } from './dto';
 
 @ApiTags('Accounting Template')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -107,7 +107,8 @@ export class AccountingTemplateController extends CrudController<AccountingTempl
 		type: AccountingTemplate
 	})
 	@Post('/template/preview')
-	async generatePreview(@Body() input: any): Promise<any> {
+	@UseValidationPipe({ whitelist: true })
+	async generatePreview(@Body() input: AccountingTemplatePreviewDTO): Promise<any> {
 		return this.accountingTemplateService.generatePreview(input);
 	}
 

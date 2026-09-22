@@ -42,7 +42,26 @@ on:
 # group serializes unrelated builds and silently cancels them (see the image-build starvation
 # incident). Within this workflow+ref, only the newest commit is built.
 concurrency:
-  group: build-${{ github.workflow }}-${{ github.ref }}
+  # Keyed on the HEAD REF, not on `github.ref`, so the two events that fire for one commit land in
+  # the same group. `pull_request:` above is unfiltered, so while a release-cascade PR is open whose
+  # head is a build branch (today: #10257, `stage` -> `stage-apps`), a single push to `stage` starts
+  # BOTH a push run on `refs/heads/stage` AND a pull_request run on `refs/pull/10257/merge`. Under
+  # `github.ref` those are different strings, so neither cancelled the other and the fleet compiled
+  # the same tree twice — two 3-hour builds per push, for as long as the cascade PR stays open.
+  #
+  # The trade-off, stated plainly: the pull_request run builds the MERGE commit and the push run
+  # builds the branch head. For a fast-forward cascade those are the same tree and the second build
+  # is pure waste; if the base has diverged they differ, and collapsing them means only the newer
+  # event's view is compiled. That is acceptable here because no branch declares a required status
+  # check, so nothing is gated on the verdict that loses — but it IS a real narrowing, not a free win.
+  #
+  # Qualified by the head REPOSITORY as well as the ref. Fork pull requests are skipped at the job
+  # level, but a skipped job still creates a run that claims the group first — so without the repo
+  # in the key, a fork branch named `develop` could cancel a genuine `develop` build and then skip.
+  group: >-
+    build-${{ github.workflow }}-${{ github.event_name == 'pull_request'
+    && format('{0}@{1}', github.event.pull_request.head.repo.full_name, github.event.pull_request.head.ref)
+    || format('{0}@{1}', github.repository, github.ref_name) }}
   # Was `github.event_name == 'pull_request'`, which left branch pushes uncancelled:
   # four merges to develop in an hour meant four full 3-h compiles of commits that were
   # already superseded. This job only compiles — nothing outside the run depends on a
@@ -71,6 +90,8 @@ jobs:
     name: build-monorepo-root
     # Moved off the 4-core pool: this is no longer one of five equals, it is the SERIAL CRITICAL PATH
     # for the whole gate, and both halves of its work (yarn install, zstd -T0) scale with cores.
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # 360, not 180. This job now carries the install for the ENTIRE gate, alone, and a cold install
     # here has no yarn tarball cache behind it: test_playwright.yml's equivalent deps job measured the
@@ -175,7 +196,8 @@ jobs:
     # not block a merge — the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
-    if: ${{ !cancelled() }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -240,7 +262,8 @@ jobs:
     # not block a merge — the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
-    if: ${{ !cancelled() }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     services:
@@ -330,7 +353,8 @@ jobs:
     # not block a merge — the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
-    if: ${{ !cancelled() }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
@@ -479,7 +503,8 @@ jobs:
     # The quota concern is now bounded instead of ignored: red Build runs are rare since the gate
     # rework, and retention-days: 1 ages a kept artifact out within a day regardless.
     # `skipped` (build-desktop on PR runs) still allows deletion - only failure/cancelled block it.
-    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

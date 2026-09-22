@@ -1,4 +1,6 @@
-export default {
+// `module.exports`, like every other package's jest config here: with `export default` Jest cannot
+// parse this file when it is run directly (only through the nx executor's ts-node hook).
+module.exports = {
 	displayName: 'integration-plane',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',

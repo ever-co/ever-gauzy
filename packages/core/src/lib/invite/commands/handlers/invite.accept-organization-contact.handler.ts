@@ -1,9 +1,11 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import {
 	InviteStatusEnum,
 	ContactOrganizationInviteStatus,
 	IInvite,
 	IOrganization,
+	IOrganizationContact,
+	IOrganizationCreateInput,
 	ITenant,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -19,6 +21,54 @@ import { TenantService } from '../../../tenant/tenant.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptOrganizationContactCommand } from '../invite.accept-organization-contact.command';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
+
+/**
+ * Columns of the organization (and of its nested `contact`) that identify or own an EXISTING row.
+ *
+ * `POST /invite/contact` is public and `OrganizationService.create()` ends in a repository `save()`:
+ * a body `id` turns that save into an UPDATE of somebody else's organization — re-parenting it into
+ * the tenant this acceptance provisions — and the foreign-key pointers would attach the new
+ * organization to another tenant's contact or image asset.
+ */
+export const CONTACT_ORGANIZATION_OWNED_FIELDS = [
+	'id',
+	'tenant',
+	'tenantId',
+	'contactId',
+	'image',
+	'imageId',
+	'createdByUserId',
+	'updatedByUserId',
+	'deletedByUserId',
+	'deletedAt',
+	'archivedAt'
+] as const;
+
+/**
+ * Returns a copy of the body-supplied organization with the owned columns removed, at the top level
+ * and inside `contact`. Never mutates its argument.
+ *
+ * @param contactOrganization The organization-creation form output from the request body.
+ * @returns The same data minus {@link CONTACT_ORGANIZATION_OWNED_FIELDS}.
+ */
+export function sanitizeContactOrganization(contactOrganization: IOrganizationCreateInput): IOrganizationCreateInput {
+	const omitOwned = (source: Record<string, unknown>): Record<string, unknown> => {
+		const copy = { ...source };
+		for (const field of CONTACT_ORGANIZATION_OWNED_FIELDS) {
+			delete copy[field];
+		}
+		return copy;
+	};
+
+	const sanitized = omitOwned((contactOrganization ?? {}) as unknown as Record<string, unknown>);
+	const { contact } = sanitized;
+	if (contact && typeof contact === 'object' && !Array.isArray(contact)) {
+		sanitized['contact'] = omitOwned(contact as Record<string, unknown>);
+	} else {
+		delete sanitized['contact'];
+	}
+	return sanitized as unknown as IOrganizationCreateInput;
+}
 
 @CommandHandler(InviteAcceptOrganizationContactCommand)
 export class InviteAcceptOrganizationContactHandler
@@ -40,12 +90,12 @@ export class InviteAcceptOrganizationContactHandler
 			input: {
 				user,
 				password,
-				contactOrganization,
 				inviteId,
 				originalUrl
 			},
 			languageCode
 		} = command;
+		let { contactOrganization } = command.input;
 
 		// 0. Claim the invite BEFORE creating anything — see InviteService.claimInvite. This handler
 		// provisions a whole tenant, organization and user account, so two parallel acceptances of
@@ -55,7 +105,33 @@ export class InviteAcceptOrganizationContactHandler
 			throw new ConflictException('Invite has already been accepted');
 		}
 
+		// 0.1 Read the invitation now, before provisioning anything: it decides which address the
+		// account is created for, and a claimed id that is not an organization-contact invite must
+		// stop here rather than after a tenant, organization and roles have been committed. Nothing
+		// has been written yet on this path, so the claim is handed back: otherwise anyone holding a
+		// team-member invite id could burn that invitation through this public route.
+		let invite: IInvite;
+		let organizationContact: IOrganizationContact;
 		try {
+			invite = await this.inviteService.findOneByIdString(inviteId, {
+				relations: {
+					organizationContacts: true
+				}
+			});
+			// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
+			[organizationContact] = invite?.organizationContacts ?? [];
+			if (!organizationContact) {
+				throw new BadRequestException('Invite is not an organization contact invite');
+			}
+		} catch (error) {
+			await this.inviteService.releaseInvite(inviteId);
+			throw error;
+		}
+
+		try {
+			// 0.2 Nothing that identifies or owns an EXISTING row may come from this public body.
+			contactOrganization = sanitizeContactOrganization(contactOrganization);
+
 			// 1. Create new tenant for the contact
 			const { name } = contactOrganization;
 			const tenant: ITenant = await this.tenantService.create({
@@ -72,12 +148,12 @@ export class InviteAcceptOrganizationContactHandler
 				new TenantFeatureOrganizationCreateCommand([tenant])
 			);
 
-			let { contact = {} } = contactOrganization;
-			delete contactOrganization['contact'];
+			const { contact: contactInput = {}, ...organizationInput } = contactOrganization;
+			let contact = contactInput;
 
 			// 4. Create Organization for the contact
 			const organization: IOrganization = await this.organizationService.create({
-				...contactOrganization,
+				...organizationInput,
 				tenant
 			});
 
@@ -110,6 +186,8 @@ export class InviteAcceptOrganizationContactHandler
 				{
 					user: {
 						...user,
+						// The invited address, never a body-supplied one (register may auto-verify it).
+						email: invite.email,
 						tenant,
 						role
 					},
@@ -122,14 +200,6 @@ export class InviteAcceptOrganizationContactHandler
 			);
 
 			// 8. Link newly created contact organization to organization contact invite
-			const { organizationContacts } = await this.inviteService.findOneByIdString(inviteId, {
-				relations: {
-					organizationContacts: true
-				}
-			});
-
-			// TODO Make invite and contact as one to one, since an invite is not shared by multiple contacts
-			const [organizationContact] = organizationContacts;
 			const { id: organizationContactId } = organizationContact;
 
 			await this.organizationContactService.update(organizationContactId, {

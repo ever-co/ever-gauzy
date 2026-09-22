@@ -6,6 +6,7 @@ import { AuthService } from '../../auth.service';
 import { getORMType, MultiORMEnum } from '../../../core/utils';
 import { RequestContext } from '../../../core/context';
 import { UserService } from '../../../user/user.service';
+import { extractRoleIds, normalizeRolePayload } from '../../../user/role-assignment.helper';
 import { TypeOrmRoleRepository } from '../../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../../role/repository/mikro-orm-role.repository';
 
@@ -36,11 +37,12 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
 		// enough either: the `role` RELATION wins over the flat `roleId` when the row is persisted
 		// (AuthService.register pins roleId = role.id), so a body pairing a harmless `roleId` with a
 		// privileged `role: { id }` would be validated as the harmless one and registered as the
-		// privileged one.
-		const targetRoleIds = [input.user?.roleId, input.user?.role?.id].filter((roleId) => !!roleId);
-		if (input.user?.role && !targetRoleIds.length) {
-			throw new BadRequestException('The specified role does not reference a valid role.');
-		}
+		// privileged one. `role` may also arrive as a bare id STRING, which `role?.id` never saw
+		// (GHSA-x4mv-fhwj-g3rp): the shared helpers read every form, refuse a role key that references
+		// nothing (400), refuse a `role`/`roleId` pair that disagrees (400), and pin both fields to the
+		// one id checked below.
+		normalizeRolePayload(input.user);
+		const targetRoleIds = extractRoleIds(input.user);
 
 		if (targetRoleIds.length) {
 			// Get tenant id from request context
