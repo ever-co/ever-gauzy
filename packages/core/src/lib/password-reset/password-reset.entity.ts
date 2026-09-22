@@ -6,6 +6,7 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { TenantBaseEntity } from './../core/entities/tenant-base.entity';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmPasswordResetRepository } from './repository/mikro-orm-password-reset.repository';
+import { ExportRedacted } from './../export-import/export-redact.decorator';
 
 @MultiORMEntity('password_reset', { mikroOrmRepository: () => MikroOrmPasswordResetRepository })
 export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
@@ -26,6 +27,7 @@ export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 	 *
 	 */
 	@ApiProperty({ type: () => String })
+	@ExportRedacted()
 	@IsNotEmpty()
 	@IsString()
 	@ColumnIndex()

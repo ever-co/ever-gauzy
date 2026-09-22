@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	JoinColumn,
-	Unique,
+	Unique as TypeOrmUnique,
 	RelationId,
 	JoinTable
 } from 'typeorm';
+import { Unique as MikroOrmUnique } from '@mikro-orm/core';
 import {
 	IsString,
 	IsNumber,
@@ -38,9 +39,32 @@ import {
 } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { ExportRedacted } from '../export-import/export-redact.decorator';
+import { MultiORMEnum, getORMType } from '../core/utils';
+
+/**
+ * Invoice (and estimate) numbers are unique per tenant, not per installation.
+ *
+ * A global UNIQUE(invoiceNumber) made every tenant share one sequence: a tenant could learn which
+ * numbers other tenants hold from unique-violation errors, and push everyone's "next number" by
+ * saving a huge one (GHSA-57hw-jqpj-ww97). Only the decorator of the active ORM is applied, because
+ * MikroORM validates index properties against the properties registered for it. MikroORM keys on the
+ * `tenant` relation (its `tenantId` property is not persisted); both resolve to the same column.
+ */
+function InvoiceNumberUniquePerTenant(): ClassDecorator {
+	return (target: any) => {
+		const ormType = getORMType();
+		if (ormType === MultiORMEnum.TypeORM) {
+			TypeOrmUnique(['tenantId', 'invoiceNumber'])(target);
+		}
+		if (ormType === MultiORMEnum.MikroORM) {
+			MikroOrmUnique({ properties: ['tenant', 'invoiceNumber'] } as any)(target);
+		}
+	};
+}
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
-@Unique(['invoiceNumber'])
+@InvoiceNumberUniquePerTenant()
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Date })
@@ -194,6 +218,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@MultiORMColumn({ type: Boolean, nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
+	/** Bearer token for the public invoice view. */
+	@ExportRedacted()
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()

@@ -14,6 +14,7 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
 import { IOrganizationTeam } from './organization-team.model';
+import { ITermsAcceptanceInput } from './terms-acceptance.model';
 
 // Define the UserStats type
 export interface UserStats {
@@ -35,6 +36,50 @@ export type ExcludeCreatedByUserFields<T, K extends keyof T = never> = Omit<T, '
 export interface IRelationalUser {
 	user?: IUser; // User who performed the action (if applicable).
 	userId?: ID; // The ID of the user who performed the action (if applicable).
+}
+
+/**
+ * Per-user UI state of the AI chat panel (docked assistant sidebar).
+ *
+ * Stored server-side under `IUserUiPreferences.aiChat` so the panel opens the
+ * way the user left it on any browser/device. Every field is optional: a
+ * missing field means "no preference recorded", and the client falls back to
+ * its local mirror and then to the plugin default.
+ */
+export type IAiChatUiPreferences = {
+	/** Whether the docked panel is open. */
+	expanded?: boolean;
+	/** Which side of the canvas the panel docks to. */
+	position?: 'start' | 'end';
+	/** Panel width in CSS pixels. */
+	width?: number;
+	/** Whether the panel fills the canvas (`Menu | Chat`). */
+	maximized?: boolean;
+};
+
+/** A feature's state: a plain JSON object (the API rejects arrays and primitives at the top level). */
+export type UiPreferenceFeature = { [key: string]: unknown };
+
+/**
+ * Free-form, per-user UI preferences persisted on the `user` row as JSON.
+ *
+ * Keyed by feature (`aiChat`, ...). Each feature owns one object; the API
+ * merges SHALLOWLY per top-level key (a patch replaces the whole feature
+ * object), so features never clobber each other's state.
+ */
+export interface IUserUiPreferences {
+	aiChat?: IAiChatUiPreferences;
+	/** Any other feature: ONE plain (non-array) object per feature key. */
+	[feature: string]: UiPreferenceFeature | undefined;
+}
+
+/**
+ * Body of `PUT /user/ui-preferences`: one or more feature objects to replace — a `null` value
+ * REMOVES that feature's stored state (the endpoint rejects primitives).
+ */
+export interface IUserUiPreferencesUpdateInput {
+	aiChat?: IAiChatUiPreferences | null;
+	[feature: string]: UiPreferenceFeature | null | undefined;
 }
 
 export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset {
@@ -67,6 +112,8 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	preferredLanguage?: string;
 	payments?: IPayment[];
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
+	/** Per-user, per-feature UI state (see {@link IUserUiPreferences}). */
+	uiPreferences?: IUserUiPreferences;
 	fullName?: string;
 	organizations?: IUserOrganization[];
 	isImporting?: boolean;
@@ -94,7 +141,15 @@ export interface IUserFindInput extends IBasePerTenantEntityModel {
 	preferredLanguage?: LanguagesEnum;
 }
 
-export interface IUserRegistrationInput {
+/**
+ * Registration input.
+ *
+ * Extends {@link ITermsAcceptanceInput}, so the `terms` claims a signup form
+ * collected travel with the payload instead of being dropped on the floor. Both
+ * entry points that create a user — `POST /auth/register` and the four
+ * invite-acceptance handlers — funnel through this shape.
+ */
+export interface IUserRegistrationInput extends ITermsAcceptanceInput {
 	user: IUser;
 	password?: string;
 	confirmPassword?: string;

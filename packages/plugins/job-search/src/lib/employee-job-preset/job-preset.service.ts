@@ -15,6 +15,7 @@ import {
 import {
 	LIKE_OPERATOR,
 	MultiORMEnum,
+	parseFindOptionsRelations,
 	RequestContext,
 	TenantAwareCrudService,
 	TypeOrmEmployeeRepository
@@ -244,7 +245,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		// Find the employee with the specified ID and include jobPresets relation
 		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
-			relations: ['customFields.jobPresets']
+			relations: parseFindOptionsRelations(['customFields.jobPresets'])
 		});
 
 		// Return the job presets associated with the employee

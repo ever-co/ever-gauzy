@@ -1,4 +1,4 @@
-import { Injector, InjectionToken, Type } from '@angular/core';
+import { EnvironmentProviders, Injector, InjectionToken, Provider, Type } from '@angular/core';
 import type { PageExtensionDefinition } from './plugin-extension/page-extension-slot.types';
 import type { UiBridgeFramework } from './ui-bridge/ui-bridge.interface';
 
@@ -121,6 +121,25 @@ export interface PluginTabInput {
 	permissions?: unknown | unknown[];
 	/** Hide flag. */
 	hide?: boolean;
+}
+
+/**
+ * A dashboard-builder widget contributed by a plugin.
+ *
+ * Structurally compatible with `WidgetRegistryConfig` from @gauzy/ui-core/core,
+ * declaring only the fields `WidgetRegistryService.registerOrReplaceWidget()`
+ * validates at runtime. Every other `WidgetRegistryConfig` field (title, icon,
+ * loadComponent, ...) rides along structurally. This keeps @gauzy/plugin-ui
+ * dependency-free while still failing at COMPILE time on the mistakes the
+ * registry would otherwise only catch at bootstrap.
+ */
+export interface PluginWidgetInput {
+	/** Page location the widget is registered at (e.g. 'dashboard'). */
+	location: string;
+	/** Globally unique id; persisted on every dashboard placement. */
+	widgetId: string;
+	/** Permissions required to see the widget (empty = everyone). */
+	permissions: string[];
 }
 
 /**
@@ -247,6 +266,21 @@ export interface PluginUiDefinition {
 	tabs?: PluginTabInput[];
 
 	/**
+	 * Dashboard-builder widgets contributed by this plugin.
+	 *
+	 * Each entry is a `WidgetRegistryConfig` (from @gauzy/ui-core/core) and is
+	 * published to the widget palette, so users can drop it onto any custom
+	 * dashboard canvas. Applied by `applyDeclarativeRegistrations()` when a
+	 * `widgetRegistry` service is available.
+	 *
+	 * Structurally typed (rather than importing `WidgetRegistryConfig`) to keep
+	 * @gauzy/plugin-ui free of a build-time dependency on the widget registry,
+	 * while still catching at compile time the three fields the registry
+	 * validates at runtime.
+	 */
+	widgets?: PluginWidgetInput[];
+
+	/**
 	 * Plugin-specific translations keyed by language code.
 	 * Deep-merged into the global @ngx-translate namespace at bootstrap
 	 * via TranslateService.setTranslation(lang, data, shouldMerge: true).
@@ -346,6 +380,22 @@ export interface PluginUiDefinition {
 	 * Only meaningful when `loadModule` is set.
 	 */
 	loadStrategy?: 'eager' | 'lazy' | 'preload';
+
+	/**
+	 * Angular providers to register when the plugin bootstraps.
+	 *
+	 * Providers are instantiated in the root `EnvironmentInjector` context
+	 * during plugin bootstrap. Use for registering services, environment
+	 * initializers, or other DI tokens without a full NgModule.
+	 *
+	 * Works with both `defineDeclarativePlugin` and hand-written `bootstrap`.
+	 *
+	 * @example
+	 * ```ts
+	 * providers: [provideAiChatSidebar()]
+	 * ```
+	 */
+	providers?: Array<Provider | EnvironmentProviders>;
 }
 
 // ─── Plugin Settings Types ──────────────────────────────────────────────────

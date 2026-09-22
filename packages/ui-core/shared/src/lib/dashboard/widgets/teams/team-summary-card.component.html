@@ -1,0 +1,27 @@
+<div class="team-card-headline">
+	<div class="h1 team-card-value">{{ team().countWorking }}</div>
+	<div class="team-card-total">/{{ team().countTotal }}</div>
+</div>
+
+<div class="team-card-name" [title]="team().name">{{ team().name }}</div>
+
+<div class="team-card-legend">
+	<nb-badge
+		status="success"
+		[text]="('DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate) + ' ' + team().countOnline"
+	></nb-badge>
+	<nb-badge
+		status="warning"
+		[text]="('DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate) + ' ' + workingToday()"
+	></nb-badge>
+	<nb-badge
+		status="danger"
+		[text]="('DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate) + ' ' + team().countNotWorking"
+	></nb-badge>
+</div>
+
+@if (showCounter()) {
+	<div class="team-card-counter">
+		<gauzy-counter-point [total]="team().countTotal" [value]="team().countWorking"></gauzy-counter-point>
+	</div>
+}

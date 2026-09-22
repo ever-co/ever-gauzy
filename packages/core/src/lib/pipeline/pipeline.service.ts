@@ -7,6 +7,8 @@ import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context/request-context';
 import { LIKE_OPERATOR } from '../core/util';
+import { assertSensitiveRelationsAllowed } from '../core/util/sensitive-relations.helper';
+import { parseFindOptionsRelations } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
 import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -48,6 +50,11 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		where?: FindOptionsWhere<Pipeline>,
 		relations: string[] = []
 	): Promise<IPagination<IDeal>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		// The deals are read through the deal repository, so the table is walked from `Deal`.
+		assertSensitiveRelationsAllowed(this.typeOrmDealRepository.metadata, relations);
+
 		// Destructure organizationId and tenantId from where; fallback to current tenant if not provided
 		const { organizationId } = where ?? {};
 		const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
@@ -68,7 +75,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		};
 
 		if (relations.length) {
-			queryOptions.relations = relations;
+			queryOptions.relations = parseFindOptionsRelations(relations);
 		}
 
 		try {

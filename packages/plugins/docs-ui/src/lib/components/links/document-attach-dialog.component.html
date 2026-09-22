@@ -1,0 +1,48 @@
+<nb-card class="docs-dialog docs-attach-dialog">
+	<nb-card-header>{{ 'DOCS.LINKS.ATTACH_DIALOG_TITLE' | translate }}</nb-card-header>
+
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
+		<!--
+			The field has no visible label by design (the card header names the dialog), so it needs
+			an explicit accessible name — a placeholder is not one: it is not exposed as the
+			accessible name by every screen reader and it disappears as soon as the user types.
+		-->
+		<input
+			id="docs-attach-search"
+			nbInput
+			fullWidth
+			size="small"
+			type="text"
+			[attr.aria-label]="'DOCS.LINKS.ATTACH_SEARCH_PLACEHOLDER' | translate"
+			[placeholder]="'DOCS.LINKS.ATTACH_SEARCH_PLACEHOLDER' | translate"
+			[disabled]="saving"
+			[ngModel]="search"
+			(ngModelChange)="onSearchChange($event)"
+		/>
+
+		<p class="muted" *ngIf="!loading && !filtered.length">
+			{{ 'DOCS.LINKS.ATTACH_NO_DOCUMENTS' | translate }}
+		</p>
+
+		<div class="docs-attach-list" *ngIf="filtered.length">
+			<button
+				type="button"
+				class="docs-attach-item"
+				*ngFor="let document of filtered; trackBy: trackByDocument"
+				[class.selected]="selectedId === document.id"
+				[disabled]="saving"
+				(click)="selectedId = document.id"
+			>
+				<nb-icon [icon]="iconOf(document)" size="tiny"></nb-icon>
+				<span class="docs-attach-item-name" [title]="document.name">{{ document.name }}</span>
+			</button>
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer class="docs-dialog-footer">
+		<button nbButton ghost [disabled]="saving" (click)="cancel()">{{ 'DOCS.UPLOAD.CANCEL' | translate }}</button>
+		<button nbButton status="primary" [disabled]="!canConfirm" (click)="confirm()">
+			{{ 'DOCS.LINKS.CONFIRM' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

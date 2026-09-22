@@ -1,8 +1,10 @@
 <nb-card class="card-scroll">
   <nb-card-header>
     <h4>
-      <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span
-        >{{ 'SMS_GATEWAY_PAGE.HEADER' | translate }}
+      <ngx-header-title [allowEmployee]="false">
+        <span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span
+          >{{ 'SMS_GATEWAY_PAGE.HEADER' | translate }}
+      </ngx-header-title>
       </h4>
     </nb-card-header>
     <nb-card-body class="permission-items-col">
@@ -15,6 +17,11 @@
           {{ 'SMS_GATEWAY_PAGE.' + provider | translate }}
         </nb-toggle>
       }
-      <div class="content"></div>
+      <!--
+        An empty `<div class="content"></div>` used to close this body. Nothing
+        ever rendered into it, and its stylesheet gave it a near-white fill and a
+        `calc(100vh - 18rem)` height — a page-tall blank panel under the provider
+        toggles as soon as those styles applied. Both are gone.
+      -->
     </nb-card-body>
   </nb-card>

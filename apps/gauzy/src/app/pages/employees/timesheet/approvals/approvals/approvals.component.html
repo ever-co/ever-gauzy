@@ -106,6 +106,7 @@
 				</div>
 				} @else {
 				<ngx-no-data-message
+					[loading]="loading"
 					[message]="'TIMESHEET.NO_DATA.APPROVAL_TIMESHEET' | translate"
 				></ngx-no-data-message>
 				}

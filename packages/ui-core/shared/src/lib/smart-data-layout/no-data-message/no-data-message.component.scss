@@ -7,6 +7,13 @@
   margin: 0;
 }
 
+// `nb-card` carries `display: flex` from Nebular, which beats the UA rule for
+// the `hidden` attribute — so the empty state is parked with an explicit class
+// while the skeleton is up.
+.no-data-found.is-hidden {
+  display: none !important;
+}
+
 h5,
 div {
   color: var(--gauzy-text-color-1);

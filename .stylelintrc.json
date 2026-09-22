@@ -1,4 +1,5 @@
 {
+	"customSyntax": "postcss-scss",
 	"rules": {
 		"selector-type-no-unknown": false
 	}

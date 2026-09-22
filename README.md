@@ -1,5 +1,7 @@
 # Ever Gauzy Platform
 
+<a href="https://trendshift.io/repositories/1775" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1775" alt="ever-co%2Fever-gauzy | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a> <a href="https://trendshift.io/repositories/1775?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-1775" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/1775/daily?language=TypeScript" alt="ever-co%2Fever-gauzy | Trendshift" width="250" height="55"/></a>
+
 [uri_gauzy]: https://gauzy.co
 [uri_license]: https://www.gnu.org/licenses/agpl-3.0.html
 [uri_license_image]: https://img.shields.io/badge/License-AGPL%20v3-blue.svg
@@ -10,10 +12,8 @@
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
 
 ## 💡 What's New
-
-We released [Ever Teams](https://github.com/ever-co/ever-teams) platform for Work & Project Management.
-Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub!
-It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/docs).
+- 🔥🔥🔥 we just released [Ever Works](https://github.com/ever-works/ever-works) - An open agentic runtime that autonomously researches, ships, and maintains entire businesses, 24/7. Please grab it now from <https://github.com/ever-works/ever-works> and make it ⭐⭐⭐ on GitHub!
+- if you like Gauzy, you should also like [Ever Teams](https://github.com/ever-co/ever-teams) - Open Work & Productivity Platform. Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub! It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/docs).
 
 ## 🌟 What is it
 
@@ -26,9 +26,9 @@ It's built with a React (NextJs) / ReactNative (Expo) stack and connects to head
 -   **Work and Project Management** (PM)
 -   **Employee Time-Tracking, Activity & Productivity Tracking**
 
-![overview](https://docs.gauzy.co/overview.png)
-
 Ever® Gauzy™ Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
+
+<img width="1905" height="988" alt="image" src="https://github.com/user-attachments/assets/6197a87a-8ae9-4380-91c3-3f85f8406542" />
 
 ## ✨ Features
 
@@ -108,12 +108,6 @@ Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 -   **<https://docs.gauzy.co>** - Platform Documentation (WIP). See also our [Wiki](https://github.com/ever-co/ever-gauzy/wiki).
 -   **<https://ever.co>** - get more information about our company products.
 
-## 📊 Activity
-
-<a href="https://trendshift.io/repositories/1775" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1775" alt="ever-co%2Fever-gauzy | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-
-![Alt](https://repobeats.axiom.co/api/embed/7c6f6c3bf56fd91647549cf4ae70af49ed5ee106.svg 'Repobeats analytics image')
-
 ## 💻 Demo, Downloads, Testing and Production
 
 ### Demo
@@ -122,7 +116,7 @@ Ever Gauzy Platform Demo at <https://demo.gauzy.co>.
 
 Notes:
 
--   Default super-admin user login is `admin@ever.co` and the password is `admin`
+-   Default super-admin user login is `admin@ever.co` and the password is `admin`. These are DEMO / local-development credentials only: a production install must set `DEMO_SUPER_ADMIN_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `DEMO_EMPLOYEE_PASSWORD` before its first boot, and the API refuses to seed without them.
 -   Content of demo DB resets on each deployment to the demo environment (usually daily)
 -   Demo environment deployed using CI/CD from the `develop` branch
 
@@ -190,7 +184,13 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 ## 🚀 Quick Start
 
-### With Docker Compose
+### Super Quick Start
+
+<https://app.gauzy.co>.
+
+Note: it's currently in Alpha version/testing mode, please use it cautiously!
+
+### Run with Docker Compose
 
 -   Clone repo.
 -   Make sure you have the latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need a minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
@@ -203,9 +203,15 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 -   Login with email `employee@ever.co` and password: `12345678` for Employee user.
 -   Enjoy!
 
+Note: those credentials exist only because this stack runs with `DEMO=true`. They are NOT available in a production deployment — see below.
+
 #### Production
 
--   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.
+-   Edit `.env.compose`: you **must** set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` to strong, unique values (e.g. `openssl rand -hex 64`). The API refuses to start on the shipped blank/default secrets — shared defaults let anyone forge authentication tokens and sessions. Adjust any other settings (e.g. DB type) there too.
+-   You **must** also set `DEMO_SUPER_ADMIN_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `DEMO_EMPLOYEE_PASSWORD` (and optionally the matching `*_EMAIL` variables). The first boot against an empty database seeds a Super Admin, an Admin and an Employee from those variables, and their shipped defaults are documented right here in this README — so the API refuses to seed while they are unset or left at the defaults.
+-   Set `TRUST_PROXY` to the number of proxy hops in front of the API (`1` behind a single nginx/ingress) or to your trusted proxy CIDRs, so the login rate limiter counts against the real client address. Set `THROTTLE_TRUST_CF_CONNECTING_IP=true` only if every request reaches the API through Cloudflare.
+-   Set `REDIS_ENABLED=true` (with `REDIS_URL`, or `REDIS_HOST`/`REDIS_PORT`) when you run more than one API replica: rate-limit buckets are otherwise per-process, so the effective limit is multiplied by the replica count.
+-   Failed sign-ins are also counted per account: once `AUTH_MAX_FAILED_ATTEMPTS` (default 10) consecutive failures for one account have come from at least two different client addresses, that account answers HTTP 429 (with `Retry-After`) for `AUTH_LOCKOUT_SECONDS` (default 900). Failures from a single address never block an account. Because anyone who knows an email address can submit wrong passwords for it, an attacker with several addresses can still block that account for a while; set `AUTH_MAX_FAILED_ATTEMPTS=0` to switch the per-account control off and rely on the per-address rate limit alone.
 -   Run `docker-compose up -d`, if you want to run the platform in minimal production configuration using our prebuilt Docker images. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 
 Note: we recommend using Kubernetes for production workloads instead of Docker Compose!
@@ -235,7 +241,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 -   [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics, and other BI-related features, with UI available on <http://localhost:4000>.
 -   [Zipkin](https://github.com/openzipkin/zipkin) - distributed tracing system.
 
-### Manually
+### Quick Start to manually build & run
 
 #### Required
 
@@ -254,7 +260,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 Notes:
 
 -   during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
--   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+-   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!). The same default-credential check applies: with `NODE_ENV=production` and `DEMO != true` the seed refuses to run unless `DEMO_SUPER_ADMIN_PASSWORD` / `DEMO_ADMIN_PASSWORD` / `DEMO_EMPLOYEE_PASSWORD` are set to non-default values.
 -   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 #### Optional / Recommended for Production
@@ -266,7 +272,7 @@ Notes:
 -   Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however, data ingestion will be disabled for additional analyses / real-time pipelines.
 -   Optionally (recommended for production) install and run [Cube](https://github.com/cube-js/cube). Note: the platform will work without Cube, however some advanced (dynamic) reporting and data processing capabilities will be disabled.
 
-### Production
+### 🏭 Production
 
 #### General information
 
@@ -275,6 +281,7 @@ Notes:
 #### Kubernetes
 
 -   We recommend deploying to Kubernetes (k8s), either manually (see below) or with our [Terraform Modules](https://github.com/ever-co/ever-gauzy-terraform) or [Ever Helm Charts](https://github.com/ever-co/ever-charts).
+
 -   For more simple deployment scenarios with k8s, please see [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
 
 #### DigitalOcean App Platform
@@ -288,6 +295,25 @@ Notes:
 #### Pulumi
 
 -   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
+
+### 🚗 Other self-hosting options
+
+#### Deploy on Hostinger
+
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostg.xyz/aff_c?offer_id=815&aff_id=244060&url_id=6822)
+
+#### Deploy on RepoCloud
+
+Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/details/Ever%20Gauzy/).
+
+#### Deploy on Easypanel
+
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform, and Ever Gauzy has a one-click deployment template there:
+
+[![Deploy on Easypanel][easypanel-btn]][easypanel-deploy]
+
+[easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
+[easypanel-deploy]: https://easypanel.io/templates/ever-gauzy
 
 ## 💌 Contact Us
 
@@ -305,11 +331,11 @@ Notes:
 
 Ever® Gauzy™ follows good security practices, but 100% security cannot be guaranteed in any software!
 Ever® Gauzy™ is provided AS IS without any warranty. Use at your own risk!
-See more details in the [LICENSE](LICENSE.md).
+See more details in the [LICENSES.md](LICENSES.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
-If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on [![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev) and not by creating a GitHub issue.
+If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on [huntr](https://huntr.com) and not by creating a GitHub issue.
 
 ## 🛡️ License
 
@@ -317,13 +343,13 @@ We support the open-source community. If you're building awesome non-profit/open
 
 This software is available under the following licenses:
 
--   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-community-edition-license)
--   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-small-business-license)
--   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/master/LICENSE.md#gauzy-platform-enterprise-license)
+-   [Ever® Gauzy™ Platform Community Edition](https://github.com/ever-co/ever-gauzy/blob/develop/LICENSES.md#ever-gauzy-platform-community-edition-license)
+-   [Ever® Gauzy™ Platform Small Business](https://github.com/ever-co/ever-gauzy/blob/develop/LICENSES.md#ever-gauzy-platform-small-business-license)
+-   [Ever® Gauzy™ Platform Enterprise](https://github.com/ever-co/ever-gauzy/blob/develop/LICENSES.md#ever-gauzy-platform-enterprise-license)
 
 #### The default Ever® Gauzy™ Platform license, without a valid Ever® Gauzy™ Platform Enterprise or Ever® Gauzy™ Platform Small Business License agreement, is the Ever® Gauzy™ Platform Community Edition License
 
-#### Please see [LICENSE](LICENSE.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
+#### Please see [LICENSES.md](LICENSES.md) for more information on licenses. You can also [compare our offering](https://ever.co/compare-gauzy/#compare)
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
 
@@ -349,17 +375,25 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 <img src="https://contributors-img.web.app/image?repo=ever-co/ever-gauzy" />
 
+## 📊 Activity
+
+![Alt](https://repobeats.axiom.co/api/embed/7c6f6c3bf56fd91647549cf4ae70af49ed5ee106.svg 'Repobeats analytics image')
+
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ever-co/ever-gauzy&type=Date)](https://star-history.com/#ever-co/ever-gauzy&Date)
+[![Star History Chart](https://stats-github.ever.co/svg?repos=ever-co/ever-gauzy&type=Date)](https://stats-github.ever.co/#ever-co/ever-gauzy&Date)
 
-## ❤️ Powered By
+## 💪 Powered By
 
 <p>
   <a href="https://www.digitalocean.com/?utm_medium=opensource&utm_source=ever-co">
     <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PoweredByDO/DO_Powered_by_Badge_blue.svg" width="201px">
   </a>
 </p>
+
+## ❤️ Featured On
+
+<a href="https://openalternative.co/ever-gauzy?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-ever-gauzy" target="_blank"><img src="https://openalternative.co/ever-gauzy/badge.svg?theme=dark&width=200&height=50" width="200" height="50" alt="Ever Gauzy badge" loading="lazy" /></a>
 
 ## ©️ Copyright
 

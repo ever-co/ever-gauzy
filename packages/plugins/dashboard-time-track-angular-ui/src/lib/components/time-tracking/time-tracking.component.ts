@@ -4,6 +4,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	ElementRef,
+	inject,
 	OnDestroy,
 	OnInit,
 	QueryList,
@@ -49,6 +50,7 @@ import { GuiDrag, distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset }
 import {
 	DateRangePickerBuilderService,
 	EmployeesService,
+	EmployeeTrackedDataAccessService,
 	OrganizationProjectsService,
 	Store,
 	TimesheetStatisticsService,
@@ -122,6 +124,15 @@ export class TimeTrackingComponent
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
 
+	/**
+	 * Slides per view for the recent-activities carousel, by viewport width.
+	 *
+	 * The base `slides-per-view="3"` on the element is a desktop figure: at phone
+	 * width it cut each screenshot down to roughly 90px, which is not a legible
+	 * thumbnail. Swiper measures against the window, and the windows column is
+	 * already single-column below 1200px, so these thresholds track how much room
+	 * the card actually has.
+	 */
 	public employeeIds: string[] = [];
 	public projectIds: string[] = [];
 	public teamIds: string[] = [];
@@ -149,6 +160,8 @@ export class TimeTrackingComponent
 	public windowsRef: TemplateRef<any>[] = [];
 	public widgets: GuiDrag[];
 	public windows: GuiDrag[];
+
+	private readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -328,7 +341,7 @@ export class TimeTrackingComponent
 			const request: IGetTimeSlotStatistics = this.payloads$.getValue();
 			this.timeSlotEmployees = await this._timesheetStatisticsService.getTimeSlots(request);
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching time slots.');
+			this._notifyError(error, 'An error occurred while fetching time slots.');
 		} finally {
 			this.timeSlotLoading = false;
 		}
@@ -342,7 +355,7 @@ export class TimeTrackingComponent
 			const request: IGetCountsStatistics = this.payloads$.getValue();
 			this.counts = await this._timesheetStatisticsService.getCounts(request);
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching counts.');
+			this._notifyError(error, 'An error occurred while fetching counts.');
 		} finally {
 			this.countsLoading = false;
 		}
@@ -361,7 +374,7 @@ export class TimeTrackingComponent
 				return activity;
 			});
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching activities.');
+			this._notifyError(error, 'An error occurred while fetching activities.');
 		} finally {
 			this.activitiesLoading = false;
 		}
@@ -375,7 +388,7 @@ export class TimeTrackingComponent
 			const request: IGetProjectsStatistics = this.payloads$.getValue();
 			this.projects = await this._timesheetStatisticsService.getProjects(request);
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching projects.');
+			this._notifyError(error, 'An error occurred while fetching projects.');
 		} finally {
 			this.projectsLoading = false;
 		}
@@ -391,7 +404,7 @@ export class TimeTrackingComponent
 			const take = 5;
 			this.tasks = await this._timesheetStatisticsService.getTasksStatistics({ ...request, take });
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching tasks.');
+			this._notifyError(error, 'An error occurred while fetching tasks.');
 		} finally {
 			this.tasksLoading = false;
 		}
@@ -405,7 +418,7 @@ export class TimeTrackingComponent
 			const request: IGetManualTimesStatistics = this.payloads$.getValue();
 			this.manualTimes = await this._timesheetStatisticsService.getManualTimes(request);
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching manual times.');
+			this._notifyError(error, 'An error occurred while fetching manual times.');
 		} finally {
 			this.manualTimeLoading = false;
 		}
@@ -439,10 +452,21 @@ export class TimeTrackingComponent
 				return member;
 			});
 		} catch (error) {
-			this._toastrService.error(error.message || 'An error occurred while fetching members.');
+			this._notifyError(error, 'An error occurred while fetching members.');
 		} finally {
 			this.memberLoading = false;
 		}
+	}
+
+	/**
+	 * Shows a statistics error, except the 403 the API returns while the organization setting
+	 * `allowEmployeeToSeeTrackedData` hides tracked data from this employee: the widgets stay empty.
+	 */
+	private _notifyError(error: any, fallbackMessage: string): void {
+		if (this._employeeTrackedDataAccessService.isHiddenDataError(error)) {
+			return;
+		}
+		this._toastrService.error(error.message || fallbackMessage);
 	}
 
 	onDelete() {

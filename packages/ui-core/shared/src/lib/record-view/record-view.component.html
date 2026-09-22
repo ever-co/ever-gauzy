@@ -1,0 +1,89 @@
+@for (section of resolved; track $index) {
+	<section class="record-section">
+		@if (section.title) {
+			<h6 class="record-section-title">{{ section.title | translate }}</h6>
+		}
+		<dl class="record-rows">
+			@for (row of section.rows; track $index) {
+				<!-- A row may narrow the record's own guard, never widen it. -->
+				@if (row.field.permission) {
+					<ng-template [ngxPermissionsOnly]="row.field.permission">
+						<ng-container *ngTemplateOutlet="recordRow; context: { $implicit: row }"></ng-container>
+					</ng-template>
+				} @else {
+					<ng-container *ngTemplateOutlet="recordRow; context: { $implicit: row }"></ng-container>
+				}
+			}
+		</dl>
+	</section>
+}
+
+<ng-template #recordRow let-row>
+	<div class="record-row" [class.wide]="row.field.wide">
+		<dt class="record-label">{{ row.field.label | translate }}</dt>
+		<dd class="record-value">
+			@if (row.isEmpty) {
+				<span class="record-empty">{{ placeholder }}</span>
+			} @else {
+				@switch (row.type) {
+					@case ('tags') {
+						<ga-only-tags [rowData]="row.tagsHost"></ga-only-tags>
+					}
+					@case ('people') {
+						<ngx-employee-with-links [value]="row.value"></ngx-employee-with-links>
+					}
+					@case ('teams') {
+						<ngx-task-teams [value]="row.value"></ngx-task-teams>
+					}
+					@case ('person') {
+						<span class="record-person">
+							@if (row.person.imageUrl) {
+								<img class="record-person-avatar" [src]="row.person.imageUrl" alt="" />
+							}
+							<span>{{ row.person.name }}</span>
+						</span>
+					}
+					@case ('badge') {
+						<ga-status-badge [value]="row.value"></ga-status-badge>
+					}
+					@case ('money') {
+						<ga-income-amount [value]="row.value" [rowData]="record"></ga-income-amount>
+					}
+					@case ('date') {
+						{{ row.value | dateFormat }}
+					}
+					@case ('datetime') {
+						{{ row.value | dateTimeFormat }}
+					}
+					@case ('boolean') {
+						{{ (row.value ? 'BUTTONS.YES' : 'BUTTONS.NO') | translate }}
+					}
+					@case ('email') {
+						<a class="record-link" [href]="'mailto:' + row.value">{{ row.value }}</a>
+					}
+					@case ('phone') {
+						<a class="record-link" [href]="'tel:' + row.value">{{ row.value }}</a>
+					}
+					@case ('link') {
+						<a
+							class="record-link"
+							[href]="row.field.href || row.value"
+							target="_blank"
+							rel="noopener noreferrer"
+							>{{ row.value }}</a
+						>
+					}
+					@case ('html') {
+						<div class="record-rich" [innerHTML]="row.value"></div>
+					}
+					@case ('multiline') {
+						<div class="record-multiline">{{ row.value }}</div>
+					}
+					@default {
+						{{ row.value }}
+					}
+				}
+			}
+		</dd>
+	</div>
+</ng-template>

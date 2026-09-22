@@ -18,6 +18,7 @@ import { MultiORMEnum } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
+import { assertReferencesAreInScope, IReferenceScope } from './reference-scope.helper';
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
@@ -28,6 +29,34 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		readonly configService: ConfigService
 	) {
 		super(typeOrmEquipmentSharingRepository, mikroOrmEquipmentSharingRepository);
+	}
+
+	/**
+	 * Refuses a referenced Equipment / EquipmentSharingPolicy that is not in the caller's scope.
+	 *
+	 * The update path is a delete-then-recreate that spreads the request body, so a body-supplied
+	 * `equipmentId` or `equipmentSharingPolicyId` is persisted as-is. Pinning the row's own
+	 * organization does not help: nothing validated what it POINTS AT, so an update could re-attach a
+	 * sharing to another organization's equipment. The foreign key only proves the row exists.
+	 *
+	 * Both targets extend TenantOrganizationBaseEntity, so both are scopeable.
+	 *
+	 * @param input - The update/create payload.
+	 * @param scope - The tenant/organization the record belongs to.
+	 * @throws ForbiddenException when a referenced row is outside the scope.
+	 */
+	public async assertReferencesAreInScope(
+		input: Partial<IEquipmentSharingUpdateInput>,
+		scope: IReferenceScope
+	): Promise<void> {
+		await assertReferencesAreInScope(
+			[
+				['equipment', input?.equipmentId as ID],
+				['equipment_sharing_policy', input?.equipmentSharingPolicyId as ID]
+			],
+			scope,
+			(table, where) => this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		);
 	}
 
 	/**
@@ -167,8 +196,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			// Use parent's tenant-scoped delete instead of direct repository access
 			await super.delete(id);
 
-			// Save the new equipment sharing data with tenant scoping
-			const equipmentSharing = await this.save(input);
+			// Save the new equipment sharing data with tenant scoping, under the SAME id: the body is not
+			// guaranteed to carry one, and a delete-then-insert without it replaced the record with a stub
+			// (approve/refuse goes through here).
+			const equipmentSharing = await this.save({ ...input, id });
 
 			// Return the newly saved record
 			return equipmentSharing;
@@ -189,12 +220,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 */
 	async delete(id: ID): Promise<DeleteResult> {
 		try {
-			// Execute both deletion operations concurrently.
-			// Use parent's tenant-scoped delete instead of direct repository access
-			const [equipmentSharing] = await Promise.all([
-				super.delete(id),
-				this.typeOrmRequestApprovalRepository.delete({ requestId: id })
-			]);
+			// The equipment-sharing delete is tenant-scoped (parent); the approval-row delete runs on a RAW
+			// repository, so it must be tenant-scoped explicitly and only run once the sharing row was
+			// really ours — otherwise a foreign UUID deleted another tenant's request_approval row.
+			const tenantId = RequestContext.currentTenantId();
+			const equipmentSharing = await super.delete(id);
+			// Fail CLOSED without a tenant: `...(tenantId ? { tenantId } : {})` would leave
+			// `{ requestId: id }` alone on a RAW repository, deleting any tenant's approval row that
+			// happens to carry this UUID. With no tenant to scope by, the approval row is left for a
+			// context that can prove ownership rather than deleted blind.
+			if (equipmentSharing?.affected && tenantId) {
+				await this.typeOrmRequestApprovalRepository.delete({ requestId: id, tenantId });
+			}
 
 			// Return the result from the equipment sharing deletion.
 			return equipmentSharing;

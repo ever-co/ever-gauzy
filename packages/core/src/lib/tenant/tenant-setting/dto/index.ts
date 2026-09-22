@@ -5,3 +5,4 @@ export * from './wasabi-s3-provider-config.dto';
 export * from './cloudinary-provider-config.dto';
 export * from './digitalocean-s3.provider-config.dto';
 export * from './monitoring-provider-config.dto';
+export * from './ui-preferences-config.dto';

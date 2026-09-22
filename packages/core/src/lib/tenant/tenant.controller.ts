@@ -67,7 +67,11 @@ export class TenantController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/')
-	@UseValidationPipe()
+	// `whitelist` strips anything the DTO does not declare, which the update route below has always
+	// done. Without it this route persisted whatever the body carried — and now that Tenant has a
+	// `stripeCustomerId`, a caller could have pointed their new tenant at somebody else's Stripe
+	// customer and then read or cancelled that customer's subscription through /billing.
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTenantDTO): Promise<ITenant> {
 		const user = RequestContext.currentUser();
 		if (user.tenantId || user.roleId) {

@@ -19,6 +19,7 @@ import { EmailService } from './../email-send/email.service';
 import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
+import { JWT_ALGORITHMS } from './purpose-token';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -107,7 +108,9 @@ export class EmailConfirmationService {
 			return;
 		}
 		try {
-			const payload: JwtPayload | string = verify(token, environment.JWT_VERIFICATION_TOKEN_SECRET);
+			const payload: JwtPayload | string = verify(token, environment.JWT_VERIFICATION_TOKEN_SECRET, {
+				algorithms: JWT_ALGORITHMS
+			});
 
 			if (typeof payload === 'object' && 'email' in payload && 'id' in payload) {
 				const { id, email } = payload;
@@ -162,12 +165,15 @@ export class EmailConfirmationService {
 				}
 
 				// Atomically invalidate the verification code (prevent reuse / TOCTOU race) // cspell:ignore TOCTOU
-				// The update scopes by id + code + codeExpireAt so a concurrent request
-				// that already nullified the code will update zero rows
-				await this.userService.update(user['id'], {
-					code: null,
-					codeExpireAt: null
-				});
+				// The claim scopes by id AND code AND expiry, so a concurrent request that already
+				// nullified the code matches zero rows. Scoping by id alone — as this did until now,
+				// despite the comment claiming otherwise — is not a claim at all: both racers matched
+				// their own row and both confirmed off one code.
+				const claimed = await this.userService.claimEmailVerificationCode(user['id'], code, tenantId);
+
+				if (!claimed) {
+					throw new BadRequestException('Failed to verify email.');
+				}
 
 				return user;
 			}

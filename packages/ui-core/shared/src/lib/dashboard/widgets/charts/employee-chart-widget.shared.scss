@@ -1,0 +1,20 @@
+/*
+ * Host sizing shared by the three fixed-kind employee chart widgets.
+ *
+ * A widget is created by `*ngComponentOutlet` directly inside the widget host's
+ * `nb-card-body`, so its own element is an unstyled inline box by default. The
+ * chart card inside asks for `height: 100%`, which against an auto-height inline
+ * parent resolves to "as tall as the content" — i.e. the chart would collapse to
+ * its minimum. Making the host a full-height block is what gives the card, and
+ * therefore Chart.js, a real box to measure.
+ *
+ * Referenced from several components on purpose: Angular compiles and scopes a
+ * shared stylesheet per component, so this stays three identical rules rather
+ * than a global leak.
+ */
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+}

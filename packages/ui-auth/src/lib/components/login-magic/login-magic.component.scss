@@ -46,7 +46,10 @@
           font-size: 14px;
           font-style: normal;
           font-weight: 400;
-          line-height: 11px;
+          // Was 11px — a line box shorter than the 14px glyphs in it. Same defect
+          // and same fix as login.component.scss; 14/17 is what forgot-password,
+          // reset-password and login-workspace all use for this element.
+          line-height: 17px;
           letter-spacing: 0em;
           margin-bottom: 26px;
           text-align: start;

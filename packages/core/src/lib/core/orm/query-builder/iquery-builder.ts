@@ -1,5 +1,6 @@
 import { QueryBuilder } from '@mikro-orm/knex';
-import { EntityTarget, FindManyOptions, SelectQueryBuilder } from 'typeorm';
+import { EntityTarget, SelectQueryBuilder } from 'typeorm';
+import { LegacyFindManyOptions } from '../../utils';
 
 export interface IQueryBuilder<Entity> {
 	alias: string;
@@ -7,7 +8,7 @@ export interface IQueryBuilder<Entity> {
 	getQueryBuilder(): SelectQueryBuilder<Entity> | QueryBuilder<any>;
 	clone(): this;
 	subQuery(): IQueryBuilder<Entity>;
-	setFindOptions(findOptions: FindManyOptions<Entity>): this;
+	setFindOptions(findOptions: LegacyFindManyOptions<Entity>): this;
 	select(selection: string, selectionAliasName?: string): this;
 	addSelect(selection: string, selectionAliasName?: string): this;
 	from(

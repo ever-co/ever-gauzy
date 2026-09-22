@@ -19,8 +19,13 @@
   a {
     text-decoration: none;
   }
+  // The report description. `height: 27px` fits exactly one line, but the seeded
+  // descriptions run 60-90 characters and the grid track is `minmax(21rem, 1fr)`
+  // — so on most cards the second line spilled out of the box and landed on top
+  // of the screenshot below it. A MIN height keeps the single-line cards aligned
+  // with each other and lets the rest push the image down instead.
   .caption {
-    height: 27px;
+    min-height: 27px;
   }
   .image-container {
     position: relative;
@@ -39,8 +44,12 @@
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  border: nb-theme(border-radius);
-  box-shadow: var(--gauzy-shadow);
+  // No edge of its own. This div is a pure wrapper around a flush
+  // `<nb-card class="border-0 m-0 card-nb">` (zero margin, zero border), and the
+  // card already draws the shared 1px `card-shadow` ring — so the two hairlines
+  // landed on top of each other, ~0px apart. `border: nb-theme(border-radius)`
+  // was also a typo for `border-radius` that resolved to `border: 0.5rem` with
+  // style `none`, i.e. a computed width of 0: it never painted anything.
   border-radius: nb-theme(border-radius);
   & .custom-button {
     height: 40px;
@@ -79,9 +88,11 @@ nb-card-body {
   border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 }
 
-::-webkit-scrollbar {
-  display: none;
-}
+// NOTE: `::-webkit-scrollbar { display: none }` used to sit here. Emulated
+// encapsulation scopes it to this component's own elements, so it hid the
+// scrollbar on the card body holding the whole report grid: the page still
+// scrolled — several category rows deep — with nothing on screen saying so, and
+// it was the only page in this area without the normal scrollbar.
 
 .report-category-name {
   font-size: 16px;

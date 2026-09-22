@@ -1,0 +1,63 @@
+import React, { forwardRef, useCallback, useImperativeHandle, useRef, type ReactNode } from 'react';
+
+/** Imperative handle mirroring the two Swiper calls the Angular template makes. */
+export interface ScreenshotCarouselHandle {
+	slideNext: () => void;
+	slidePrev: () => void;
+}
+
+export interface ScreenshotCarouselProps {
+	/** One slide per child (each `<swiper-slide>`). */
+	children: ReactNode;
+	/** Slides per view / per group (Angular: `slides-per-view="3" slides-per-group="3"`). */
+	slidesPerView?: number;
+	className?: string;
+}
+
+/**
+ * A dependency-free stand-in for `<swiper-container slides-per-view="3" space-between="16"
+ * slides-per-group="3">`: a horizontally scrolling, scroll-snapping track showing three slides
+ * per view with a 16px gap; `slideNext()` / `slidePrev()` scroll by one group (three slides),
+ * which is what the prev/next arrows in the Recent Activities header call.
+ */
+export const ScreenshotCarousel = forwardRef<ScreenshotCarouselHandle, ScreenshotCarouselProps>(function ScreenshotCarousel(
+	{ children, slidesPerView = 3, className },
+	ref
+) {
+	const scrollerRef = useRef<HTMLDivElement>(null);
+
+	const scrollByGroup = useCallback(
+		(direction: 1 | -1) => {
+			const scroller = scrollerRef.current;
+			if (!scroller) return;
+			// One group = `slidesPerView` slides — measured off the first slide, so a narrow
+			// canvas (where fewer, wider slides fit) still advances by whole slides.
+			const slide = scroller.querySelector<HTMLElement>('.gz-rtt-carousel-slide');
+			// The gap lives in ONE place — the `--gz-rtt-slide-gap` custom property in styles.ts.
+			const gap = parseFloat(getComputedStyle(scroller).getPropertyValue('--gz-rtt-slide-gap')) || 16;
+			const distance = slide ? (slide.offsetWidth + gap) * slidesPerView * direction : scroller.clientWidth * direction;
+			scroller.scrollBy({ left: distance, behavior: 'smooth' });
+		},
+		[slidesPerView]
+	);
+
+	useImperativeHandle(
+		ref,
+		() => ({
+			slideNext: () => scrollByGroup(1),
+			slidePrev: () => scrollByGroup(-1)
+		}),
+		[scrollByGroup]
+	);
+
+	return (
+		<div
+			ref={scrollerRef}
+			className={`gz-rtt-carousel${className ? ` ${className}` : ''}`}
+			style={{ '--gz-rtt-slides': slidesPerView } as React.CSSProperties}
+			data-slides-per-view={slidesPerView}
+		>
+			<div className="gz-rtt-carousel-track">{children}</div>
+		</div>
+	);
+});

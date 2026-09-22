@@ -1,4 +1,5 @@
 @use 'themes';
+@use '../legal-document';
 
 :host {
   background-color: var(--gauzy-card-2);
@@ -335,8 +336,9 @@
   }
 
   .box_primary {
-    -webkit-box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
-    box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
+    // The trailing `(0 0 0 / 15%)` left behind by an old find-and-replace made
+    // both declarations invalid, so this box drew no edge at all.
+    box-shadow: var(--gauzy-shadow) !important;
     border: unset !important;
     border-radius: var(--border-radius) !important;
     background: var(--gauzy-card-4) !important;
@@ -623,7 +625,11 @@
 
   .iub_container-fluid {
     position: relative;
-    min-width: 940px;
+    // Was `min-width: 940px` (iubenda's own boilerplate). This is a page inside
+    // the layout column, which loses up to 860px to the expanded AI chat; a
+    // fixed floor only overflowed the canvas. The document is running text —
+    // it reflows to any width.
+    min-width: 0;
     padding-left: 20px !important;
     padding-right: 20px;
     zoom: 1;
@@ -1384,8 +1390,9 @@
   }
 
   .iubenda_vip_policy .box_primary {
-    -webkit-box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
-    box-shadow: var(--gauzy-shadow) (0 0 0 / 15%) !important;
+    // The trailing `(0 0 0 / 15%)` left behind by an old find-and-replace made
+    // both declarations invalid, so this box drew no edge at all.
+    box-shadow: var(--gauzy-shadow) !important;
     border: unset !important;
     border-radius: var(--border-radius) !important;
     background: var(--gauzy-card-4) !important;
@@ -1398,5 +1405,18 @@
 
   .iubenda_vip_policy .legal_pp .one_line_col {
     padding-bottom: 21px;
+  }
+}
+
+// Presentation for the bundled `@ever-co/legal` corpus: the document header rendered from the
+// corpus index, plus the tables the previous content provider never produced.
+::ng-deep {
+  .privacy__policy,
+  .cookie__policy {
+    @include legal-document.legal-document;
+  }
+
+  .cookie__policy {
+    margin-top: 2rem;
   }
 }

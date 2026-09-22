@@ -1,0 +1,267 @@
+@use 'themes' as *;
+
+:host {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+.widget-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+  background-color: var(--background-basic-color-1);
+  box-shadow: 0 6px 20px 0 rgb(0 0 0 / 5%);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+
+  &.is-editing {
+    // Make the frame legible while widgets are being arranged.
+    border: 1px dashed var(--gauzy-border-default-color);
+  }
+
+  &.is-hidden {
+    opacity: 0.55;
+  }
+}
+
+/*
+ * Chrome density.
+ *
+ * The header and body paddings are the widget frame's fixed overhead: they are
+ * paid by EVERY card on the canvas, at every size, and they used to consume
+ * ~2.4rem of a 2-row (now ~116px) widget before its content got a pixel. Tight
+ * here so the grid can be tight.
+ */
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.625rem 0.25rem;
+  background-color: transparent;
+}
+
+.widget-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.widget-badge {
+  flex: 0 0 auto;
+  padding: 0 0.375rem;
+  border-radius: nb-theme(border-radius);
+  background-color: var(--gauzy-card-2);
+  color: var(--gauzy-text-color-2);
+  font-size: nb-theme(text-caption-2-font-size);
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.widget-menu-trigger {
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.widget-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0.625rem 0.625rem;
+  // The canvas sizes a card from its placement, not from its content, so the
+  // overflow has to live here — otherwise a widget taller than its footprint
+  // would either clip or push the whole grid row open.
+  overflow: auto;
+}
+
+// Counter widgets use the compact card-body composition from the standard
+// Time Tracking dashboard; list widgets keep the regular header spacing.
+.widget-card:has(gz-time-track-counter-card) {
+  .widget-header {
+    padding: 0.5rem 0.625rem 0;
+  }
+
+  .widget-title {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .widget-body {
+    padding: 0 0.625rem 0.5rem;
+  }
+}
+
+/* ---------- Loading skeleton ---------- */
+
+.widget-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.25rem 0;
+
+  .skeleton-line {
+    display: block;
+    height: 0.75rem;
+    border-radius: nb-theme(border-radius);
+    background: linear-gradient(
+      90deg,
+      nb-theme(background-basic-color-3) 25%,
+      nb-theme(background-basic-color-2) 50%,
+      nb-theme(background-basic-color-3) 75%
+    );
+    background-size: 200% 100%;
+    animation: ga-widget-skeleton 1.4s ease-in-out infinite;
+
+    &.w-60 {
+      width: 60%;
+    }
+    &.w-75 {
+      width: 75%;
+    }
+    &.w-90 {
+      width: 90%;
+    }
+  }
+}
+
+@keyframes ga-widget-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Respect users who asked the OS for less motion.
+@media (prefers-reduced-motion: reduce) {
+  .widget-skeleton .skeleton-line {
+    animation: none;
+  }
+}
+
+/* ---------- Placeholders (missing / forbidden / error) ---------- */
+
+.widget-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  height: 100%;
+  min-height: 3.5rem;
+  padding: 0.5rem;
+  text-align: center;
+  color: nb-theme(text-hint-color);
+
+  nb-icon {
+    font-size: 1.5rem;
+    color: nb-theme(text-hint-color);
+  }
+
+  .placeholder-title {
+    margin: 0;
+    font-size: nb-theme(text-subtitle-2-font-size);
+    color: nb-theme(gauzy-text-color-1);
+  }
+
+  .placeholder-hint {
+    margin: 0;
+    font-size: nb-theme(text-caption-font-size);
+    overflow-wrap: anywhere;
+  }
+
+  .placeholder-id {
+    font-size: nb-theme(text-caption-2-font-size);
+    color: nb-theme(text-hint-color);
+    overflow-wrap: anywhere;
+  }
+
+  &.is-error {
+    nb-icon,
+    .placeholder-title {
+      color: nb-theme(color-danger-default);
+    }
+  }
+}
+
+/* ---------- Kebab menu ---------- */
+
+.widget-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 11rem;
+  padding: 0.25rem;
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    border-radius: nb-theme(border-radius);
+    background: transparent;
+    color: nb-theme(gauzy-text-color-1);
+    font-size: nb-theme(text-button-tiny-font-size);
+    text-align: start;
+    cursor: pointer;
+
+    nb-icon {
+      font-size: 1rem;
+    }
+
+    &:hover {
+      background-color: nb-theme(background-basic-color-3);
+    }
+
+    &.is-danger {
+      color: nb-theme(color-danger-default);
+
+      nb-icon {
+        color: nb-theme(color-danger-default);
+      }
+    }
+  }
+
+  .menu-section {
+    padding: 0.375rem 0.5rem 0.125rem;
+    color: nb-theme(text-hint-color);
+    font-size: nb-theme(text-caption-2-font-size);
+    text-transform: uppercase;
+  }
+
+  .menu-sizes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0 0.5rem 0.375rem;
+
+    .size-option {
+      min-width: 1.75rem;
+      padding: 0.125rem 0.375rem;
+      border: 1px solid nb-theme(border-basic-color-4);
+      border-radius: nb-theme(border-radius);
+      background: transparent;
+      color: nb-theme(gauzy-text-color-2);
+      font-size: nb-theme(text-caption-font-size);
+      cursor: pointer;
+
+      &:hover {
+        background-color: nb-theme(background-basic-color-3);
+      }
+
+      &.selected {
+        border-color: nb-theme(color-primary-default);
+        background-color: nb-theme(color-primary-transparent-100);
+        color: nb-theme(color-primary-default);
+      }
+    }
+  }
+}

@@ -405,7 +405,17 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 */
 	setInvitationPeriodFormValue(organization: IOrganization) {
 		if (organization.invitesAllowed) {
-			const inviteExpiryPeriod = organization.inviteExpiryPeriod || InvitationExpirationEnum.TWO_WEEK;
+			/**
+			 * The organization stores `inviteExpiryPeriod` as a free number of days (its settings form only
+			 * enforces a minimum), but the invite endpoint accepts only `InvitationExpirationEnum` values.
+			 * Anything else matches no option — the select renders blank and the invite is rejected with
+			 * "invitationExpirationPeriod must be one of the following values" — so fall back to the default.
+			 */
+			const storedExpiryPeriod = organization.inviteExpiryPeriod;
+			const isSupportedExpiryPeriod = this.invitationExpiryOptions.some(
+				(option) => option.value === storedExpiryPeriod
+			);
+			const inviteExpiryPeriod = isSupportedExpiryPeriod ? storedExpiryPeriod : InvitationExpirationEnum.TWO_WEEK;
 
 			this.form.get('invitationExpirationPeriod').setValue(inviteExpiryPeriod);
 			this.form.get('invitationExpirationPeriod').updateValueAndValidity();

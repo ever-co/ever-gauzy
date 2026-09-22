@@ -5,13 +5,6 @@
         {{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT' | translate }}
       </ngx-header-title>
     </h4>
-    @if (selectedDateRange?.startDate && selectedDateRange?.endDate) {
-      <ngx-date-range-title
-        [start]="selectedDateRange?.startDate"
-        [end]="selectedDateRange?.endDate"
-        [format]="'dddd, LL'"
-      ></ngx-date-range-title>
-    }
   </nb-card-header>
   <nb-card-body>
     <gauzy-project-management-details></gauzy-project-management-details>

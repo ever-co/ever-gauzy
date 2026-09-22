@@ -41,6 +41,12 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 	 */
 	public async execute(command: TimesheetRecalculateCommand): Promise<ITimesheet> {
 		const { id } = command;
+		// TimeLog.timesheetId is nullable: a log without a timesheet has nothing to recalculate. An
+		// empty id used to be dropped from the lookup, so the FIRST timesheet of the tenant was loaded
+		// and overwritten with totals computed for a different employee window.
+		if (!id) {
+			return null;
+		}
 		const timesheet = await this.timesheetService.findOneByIdString(id);
 
 		const tenantId = RequestContext.currentTenantId();

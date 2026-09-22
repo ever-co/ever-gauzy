@@ -508,15 +508,6 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			this.sourceSmartTable = new ServerDataSource(this._httpClient, {
 				endPoint: `${API_PREFIX}/time-off-request/pagination`,
 				relations: ['policy', 'document', 'employees.user'],
-				join: {
-					alias: 'time_off_request',
-					leftJoin: {
-						policy: 'time_off_request.policy',
-						employees: 'time_off_request.employees',
-						user: 'employees.user'
-					},
-					...(this.filters.join ? this.filters.join : {})
-				},
 				where: {
 					organizationId,
 					tenantId,

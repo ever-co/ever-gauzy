@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException } from '@nestjs/common';
 import { ID, IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
@@ -42,7 +42,31 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 
+			// The update is a delete-then-recreate, and `translations` cascades on delete. Load the
+			// current row (tenant-scoped, translations are eager) so the payload can be rebuilt under the
+			// VERIFIED path id — never a body-supplied one, since a recreate with a foreign id would
+			// write into another tenant's row — and so omitting `translations` does not erase them.
+			// Throws NotFoundException when the row is not in the caller's tenant.
+			const existing = await this.findOneByIdString(id);
+
+			const payload = {
+				...entity,
+				id,
+				...(isNotEmpty(tenantId) ? { tenantId } : {}),
+				// A translation row is deleted with its parent, so the carried-over copies must be NEW
+				// rows: keeping their old ids would make TypeORM issue an UPDATE that matches nothing.
+				// `undefined`, not `isNotEmpty`: an explicit `translations: []` means "remove them", and
+				// treating it as omitted would make the list impossible to clear.
+				translations:
+					entity?.translations !== undefined && entity?.translations !== null
+						? entity.translations
+					: (existing.translations ?? []).map(({ id: _translationId, ...translation }: any) => translation)
+			};
+
 			if (this.ormType === MultiORMEnum.TypeORM) {
+				// The transactional manager below is raw: TenantAwareCrudService's create/save guards do not
+				// run, so the ownership check has to be explicit here.
+				await this.assertNotForeignRow({ id } as any, tenantId);
 				return await this.typeOrmRepository.manager.transaction(async (transactionalEntityManager) => {
 					// 1. Ensure delete is scoped to the current tenant
 					await transactionalEntityManager.delete(ProductType, {
@@ -50,17 +74,23 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 						...(isNotEmpty(tenantId) ? { tenantId } : {})
 					});
 
-					// 2. Ensure the entity injected has the correct tenantId before reproduction
-					if (isNotEmpty(tenantId)) {
-						entity.tenantId = tenantId;
-					}
-
-					return await transactionalEntityManager.save(entity);
+					// 2. Save with an EXPLICIT entity target and a plain payload. The route validates with
+					// `transform: true`, so `entity` is a ProductTypeDTO instance; EntityManager.save()
+					// resolves metadata from the constructor and threw EntityMetadataNotFoundError for it —
+					// rolling the transaction back and turning every update into a 400.
+					return await transactionalEntityManager.save(ProductType, payload);
 				});
 			}
 			await super.delete(id);
-			return await this.save(entity);
+			// NOT `save()`: on MikroORM that is `upsert()`, which does not cascade relations, so the
+			// rebuilt `translations` were silently dropped and the row came back with none. `create()`
+			// goes through persistAndFlush, which does cascade.
+			return await this.create(payload);
 		} catch (err) {
+			// Preserve intentional HTTP exceptions (404 above, ForbiddenException from the ownership guard)
+			if (err instanceof HttpException) {
+				throw err;
+			}
 			throw new BadRequestException(err);
 		}
 	}

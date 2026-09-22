@@ -1,13 +1,17 @@
-@if (value) {
-  @for (team of value; track team; let i = $index) {
-    <span>
-      <div>{{ team.name || team }}</div>
-      @if (team?.members) {
-        <div [style.font-size]="'11px'">Members {{ team?.members?.length }}</div>
-      }
-      @if (i !== value.length - 1) {
-        <span>, </span>
-      }
-    </span>
-  }
+<!--
+  Teams sit next to the people list in the same cell (Tasks, Approvals,
+  Projects), so they follow the same rules: one line, no per-item box, and a
+  name that truncates on width rather than on a character count.
+-->
+@if (value?.length > 0) {
+	<div class="teams">
+		@for (team of value; track $index) {
+			<span class="team" [nbTooltip]="team?.name || team">
+				<span class="team-name">{{ team?.name || team }}</span>
+				@if (team?.members?.length) {
+					<span class="team-count">{{ team.members.length }}</span>
+				}
+			</span>
+		}
+	</div>
 }

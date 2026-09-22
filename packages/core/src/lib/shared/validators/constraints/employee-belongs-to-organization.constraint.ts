@@ -30,11 +30,51 @@ export class EmployeeBelongsToOrganizationConstraint implements ValidatorConstra
 	async validate(value: ID | IEmployee, args: ValidationArguments): Promise<boolean> {
 		if (isEmpty(value)) return true;
 
-		const employeeId: string = typeof value === 'string' ? value : value.id;
-		const object = args.object as { organizationId?: string; organization?: { id: string } };
+		const employeeId: string = typeof value === 'string' ? value : value?.id;
 
-		const organizationId = object.organizationId || object.organization?.id;
-		if (!organizationId) return true; // No organization ID provided
+		// The UI ships an ALL_EMPLOYEES_SELECTED sentinel (`{ id: null, firstName: 'All Employees', ... }`)
+		// whenever no concrete employee is picked, so `value` can be a NON-empty object carrying an EMPTY
+		// id — the `isEmpty(value)` early-out above does not catch that shape. There is no employee to
+		// validate in that case: the record is organization-level and `employeeId` is legitimately null.
+		// Never issue the lookup with an empty id — `findOneByOrFail({ id: null, ... })` used to have its
+		// `id` predicate silently dropped and matched the FIRST employee of the organization (the exact
+		// widening GHSA-44pv-34gx-q9p4 closed); it now compiles to `id IS NULL`, finds nothing, and
+		// rejects a perfectly legal org-level record with a 400.
+		if (isEmpty(employeeId)) {
+			return true;
+		}
+
+		const object = args.object as { organizationId?: unknown; organization?: unknown };
+
+		// A payload that NAMES an organization but gives no usable id (`organization: {}`,
+		// `{ id: null }`, or a relation filter such as `{ isActive: true }`) must not clear this check:
+		// the lookup would run without an organization predicate — TypeORM drops an `undefined` where
+		// key — and accept an employee of ANY organization of the tenant (GHSA-44pv-34gx-q9p4).
+		const { organization } = object;
+		// An organization can be named as the bare id (`organization=<uuid>` on a query DTO that does not
+		// extend `TenantOrganizationBaseDTO`, which is where `@IsObject()` would refuse a string) or as the
+		// object. Resolve both shapes ONCE, so the same value that passes the "names something usable"
+		// check below is also the one the membership lookup runs with — reading only `organization.id`
+		// here dropped the string form and fell through to the permissive no-organization branch.
+		const named = typeof organization === 'string' ? organization : (organization as { id?: unknown })?.id;
+		if (organization !== undefined && organization !== null) {
+			if (typeof named !== 'string' || isEmpty(named)) {
+				return false;
+			}
+		}
+
+		const organizationId =
+			(typeof object.organizationId === 'string' && object.organizationId) ||
+			(typeof named === 'string' && named) ||
+			undefined;
+
+		// No organization named at all. The employee cannot be checked against one here, so the scope has
+		// to come from the DTO (`TenantOrganizationBaseDTO` requires an organization unless the payload
+		// carries `sentTo`) or from the service. Kept permissive on purpose: organization-level records,
+		// and the `sentTo` payloads the invoice flows send, legitimately carry no organization.
+		if (!organizationId || typeof organizationId !== 'string') {
+			return true;
+		}
 
 		try {
 			const tenantId = RequestContext.currentTenantId();

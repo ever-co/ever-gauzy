@@ -9,7 +9,8 @@
 	background: var(--gauzy-card-1);
 	border: 1px solid var(--border-basic-color-3);
 	border-radius: calc(var(--border-radius) * 1.25);
-	box-shadow: var(--gauzy-shadow);
+	// No `--gauzy-shadow`: it is a 1px ring on the dark canvas and this card
+	// already draws a 1px `--border-basic-color-3` border.
 	overflow: hidden;
 }
 

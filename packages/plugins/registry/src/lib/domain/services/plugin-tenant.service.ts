@@ -1,5 +1,5 @@
 import { IPagination, PluginScope } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { parseFindOptionsRelations, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
@@ -133,7 +133,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 
 		const result = await this.findAll({
 			where: { pluginId },
-			relations,
+			relations: parseFindOptionsRelations(relations),
 			order: { createdAt: 'DESC' },
 			...(skip !== undefined && { skip }),
 			...(take !== undefined && { take })
@@ -168,7 +168,7 @@ export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
 
 		const result = await this.findAll({
 			where,
-			relations,
+			relations: parseFindOptionsRelations(relations),
 			order: { createdAt: 'DESC' },
 			...(skip !== undefined && { skip }),
 			...(take !== undefined && { take })

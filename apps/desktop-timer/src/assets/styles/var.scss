@@ -17,6 +17,13 @@ $break-dsk: 1532px;
   @return #{$em}rem;
 }
 
+// Mirrors packages/ui-core/static/styles/var.scss (keep the values identical). This app lists its own
+// styles dir ahead of ui-core's in `stylePreprocessorOptions.includePaths`, so this file shadows that one:
+// shared ui-core sheets that `@use 'var'` (includes/_tabset.scss, gauzy/_tabset-actions.scss) bind to this
+// copy and fail the build with "Undefined variable" unless the tokens they read are defined here as well.
+$tabset-dsk-tab-padding-block: px2rem(16px);
+$tabset-dsk-tab-padding-inline: px2rem(16px);
+
 @mixin respond($media) {
   @if $media==xs {
     @media only screen and (max-width: $break-xs) {

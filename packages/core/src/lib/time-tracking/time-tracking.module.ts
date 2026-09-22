@@ -6,6 +6,7 @@ import { StatisticModule } from './statistic';
 import { TimeLogModule } from './time-log/time-log.module';
 import { TimerModule } from './timer/timer.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
+import { TimesheetProjectChangeRequestModule } from './timesheet/timesheet-project-change-request.module';
 import { TimeSlotModule } from './time-slot/time-slot.module';
 @Module({
 	controllers: [],
@@ -17,7 +18,8 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 		TimeSlotModule,
 		ScreenshotModule,
 		StatisticModule,
-		TimesheetModule
+		TimesheetModule,
+		TimesheetProjectChangeRequestModule
 	]
 })
 export class TimeTrackingModule {}

@@ -9,10 +9,9 @@ import {
 	NbSelectModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { HelpCenterArticleService } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { EmployeeMultiSelectModule } from '@gauzy/ui-core/shared';
+import { EmployeeMultiSelectModule, RichTextEditorModule } from '@gauzy/ui-core/shared';
 import { AddArticleComponent } from './add-article.component';
 
 @NgModule({
@@ -26,7 +25,7 @@ import { AddArticleComponent } from './add-article.component';
 		NbInputModule,
 		NbSelectModule,
 		NbToggleModule,
-		CKEditorModule,
+		RichTextEditorModule,
 		TranslateModule.forChild(),
 		EmployeeMultiSelectModule
 	],

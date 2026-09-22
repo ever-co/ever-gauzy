@@ -1,6 +1,7 @@
 <div class="row col-auto main-wrapper">
   <div class="col-auto ml-auto">
     <div class="row filter-item-list align-items-end">
+      <ng-content></ng-content>
       @if (hasTimeZoneFilter) {
         <div class="col-auto single-filter-wrapper">
           <ga-timezone-filter
@@ -11,9 +12,10 @@
         </div>
       }
       @if (hasSourceFilter) {
-        <div class="col-auto filter-item single-filter-wrapper">
+        <div class="col-auto filter-item single-filter-wrapper source-filter">
           <nb-select
             multiple
+            optionsListClass="nb-options gauzy-filters-options"
             [placeholder]="'TIMESHEET.SELECT_SOURCE' | translate"
             [(selected)]="filters.source"
             (selectedChange)="triggerFilterChange()"
@@ -27,13 +29,14 @@
         </div>
       }
       @if (hasActivityLevelFilter) {
-        <div class="col-auto filter-item single-filter-wrapper">
+        <div class="col-auto filter-item single-filter-wrapper activity-level-item">
           <button
             class="activity-level-filter text-capitalize"
             nbButton
             status="basic"
             outline
             nbPopoverPlacement="bottom"
+            nbPopoverClass="gauzy-filters-popover"
             [nbPopover]="activityLevelSliderTemplate"
             nbPopoverTrigger="click"
             >
@@ -51,9 +54,10 @@
         </div>
       }
       @if (hasLogTypeFilter) {
-        <div class="col-auto filter-item single-filter-wrapper">
+        <div class="col-auto filter-item single-filter-wrapper log-type-filter">
           <nb-select
             multiple
+            optionsListClass="nb-options gauzy-filters-options"
             [placeholder]="'TIMESHEET.SELECT_LOG_TYPE' | translate"
             [(selected)]="filters.logType"
             (selectedChange)="triggerFilterChange()"
@@ -67,7 +71,7 @@
         </div>
       }
       @if (hasFilterApplies) {
-        <div class="col-auto single-filter-wrapper clear-fitlers">
+        <div class="col-auto single-filter-wrapper clear-filters">
           <button nbButton status="danger" (click)="clearFilters()">
             {{ 'BUTTONS.CLEAR' | translate }}
           </button>

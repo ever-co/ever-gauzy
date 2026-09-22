@@ -1,31 +1,69 @@
 export const ManageEmployeesPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	inviteButtonCss: 'div.mb-3 > button[status="primary"]',
+	inviteButtonCss: 'button.action[status="info"]',
 	emailsInputCss: '#emails',
+	// Invite dialog's "Date when started work" (the invite dialog is the only thing open at that point).
 	dateInputCss: '[formcontrolname="startedWorkOn"]',
+	// Add-Employee dialog's own start-work date. It has NO id, so the bare
+	// `[formcontrolname="startedWorkOn"]` matches this AND the invite dialog's field whenever the
+	// invite dialog is still mounted (e.g. its Send failed), and clearField()/enterInput() — which have
+	// no .first() — die on a Playwright strict-mode violation instead of reporting the real problem.
+	employeeDateInputCss: 'ga-employee-mutation [formcontrolname="startedWorkOn"]',
 	selectProjectDropdownCss: '#projectSelection',
 	selectProjectDropdownOptionCss: 'div.ng-option > span.ng-option-label',
-	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	addEmployeeButtonCss: 'button[status="success"]',
-	editEmployeeButtonCss: 'div.mb-3 > button[status="info"]',
+	sendInviteButtonCss: 'nb-card-footer > button[status="success"]',
+	addEmployeeButtonCss: 'button[status="success"]:has-text("Add")',
+	editEmployeeButtonCss: 'button.action.primary',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	deleteEmployeeButtonCss: 'div.mb-3 > button[status="danger"]',
+	// Full Name column filter input in the smart-table header (tr.angular2-smart-filters). Typing the
+	// created employee's name filters the grid down to just that record so row 0 is the one we created,
+	// not a seeded employee (the fresh seed renders Super Admin + Default Employee ahead of it).
+	nameFilterInputCss: 'th.angular2-smart-th.fullName input',
+	deleteEmployeeButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
-	endWorkButtonCss: 'div.mb-3 > button[status="warning"]',
+	endWorkButtonCss: 'button.action.orange',
 	endWorkDateInputCss: '[placeholder="Pick a Date"]',
-	confirmEndWorkButtonCss: 'nb-card-footer.text-right > button[status="success"]',
+	confirmEndWorkButtonCss: 'nb-card-footer > button[status="success"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	usernameInputCss: '#username',
 	emailInputCss: '#email',
-	passwordInputCss: '#password',
-	addTagsDropdownCss: 'ng-select#addTags>div>span',
+	// ngx-password-form-field reflects id onto BOTH its host element and the inner input; scope to
+	// input# so enterInput's fill() (no .first()) doesn't hit a strict-mode violation.
+	passwordInputCss: 'input#password',
+	// MUST stay scoped to the Add-Employee dialog. The employees grid's Tags column filter is a
+	// TagsColorFilterComponent -> <ga-tags-color-input> -> <ng-select id="addTags">, i.e. a SECOND
+	// #addTags that sits EARLIER in the DOM than the dialog's (the dialog lives in the cdk-overlay
+	// container appended at the end of <body>), so a bare '#addTags' + .first() drove the GRID filter
+	// while the dialog was open. That is not merely "the tag went to the wrong control": when no tag
+	// exists yet in the org (edit-employee is the first spec in its shard and seeds its tag only AFTER
+	// this call), the option list stays empty and the ng-select driver falls into its re-open branch,
+	// `.ng-select-container.click({ force: true })`. force only skips the actionability CHECK — the
+	// click is still delivered at screen coordinates, which for a control BEHIND the modal means the
+	// dialog's cdk-overlay-backdrop; NbDialogService.open(EmployeeMutationComponent) takes the default
+	// closeOnBackdropClick: true, so the whole Add Employee form was dismissed mid-fill. The visible
+	// symptom was several steps later ("#inputImageUrl input[type=text]" not found), because the
+	// clickCardBody() in between is wrapped in .catch(). Same fix already applied to the candidates,
+	// payments, departments, income and teams page objects for this exact clash.
+	addTagsDropdownCss: 'ga-employee-mutation #addTags',
 	tagsDropdownOption: 'div.ng-option',
-	imgInputCss: '#inputImageUrl',
-	nextButtonCss: 'button[type="submit"]',
-	nextStepButtonCss: 'button[type="submit"]',
-	lastStepButtonCss: 'button.mr-3.ml-3',
-	saveEditButtonCss: 'button[status="success"]',
+	// ngx-file-uploader-input renders TWO inputs (text URL + hidden file); target the text one only,
+	// else enterInput's fill() (no .first()) hits a strict-mode violation.
+	imgInputCss: '#inputImageUrl input[type="text"]',
+	// Scope stepper buttons to the dialog: nb-stepper only renders the ACTIVE step's content, so an
+	// unscoped 'button.green' could match a different overlay; inside the dialog it's the current
+	// step's nbStepperNext.
+	nextButtonCss: 'nb-dialog-container button.green',
+	nextStepButtonCss: 'nb-dialog-container button.green',
+	// Step-3's "Finished adding" is (click)="add()" — the ONLY button that calls createBulk() and
+	// persists the employee. It is status="success", BUT so is step-2's "Add Another Employee"
+	// (addEmployee(), which pushes then RESETS the form/stepper and NEVER persists). If step 2 -> 3 ever
+	// failed to advance, a bare button[status="success"] would click "Add Another Employee" and the
+	// employee would silently never be created (the empty "You have not created any employees" grid).
+	// Scope to the step-3 button by its unique label ("I've Added All Current Employees" -> match the
+	// apostrophe-free substring) so we only ever fire add() from the real last step.
+	lastStepButtonCss: 'nb-dialog-container button[status="success"]:has-text("Added All Current Employees")',
+	saveEditButtonCss: 'div.actions > button[status="success"]',
 	backButtonCss: 'div.main > button[status="primary"]',
 	usernameEditInputCss: '#username',
 	emailEditInputCss: '#email',
@@ -39,12 +77,17 @@ export const ManageEmployeesPage = {
 	preferredLanguageOptionCss: 'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'ga-employee-mutation nb-card-body',
 	manageInvitesButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
-	copyLinkButtonCss: 'button[status="success"]',
-	resendInviteButtonCss: 'button[status="warning"]',
-	deleteInviteButtonCss: 'button[status="danger"]',
+	// Email-column filter input in the invites smart-table header. The invites grid accumulates invites
+	// from earlier specs (shared serial DB), so a blind row-0 pick can grab another spec's invite (whose
+	// status may not be INVITED -> Copy/Resend buttons wouldn't render). Filter by THIS spec's invited
+	// email so the spec's own invite is the only/first data row.
+	inviteEmailFilterInputCss: 'th.angular2-smart-th.email input',
+	copyLinkButtonCss: 'button.action.success',
+	resendInviteButtonCss: 'button.action.warning',
+	deleteInviteButtonCss: 'button.action:has(nb-icon[icon="trash-2-outline"])',
 	confirmResendInviteButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmDeleteInviteButtonCss: 'nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyEmployeeCss: 'div.d-block',
-	verifyInviteCss: 'div.ng-star-inserted'
+	verifyEmployeeCss: 'angular2-smart-table',
+	verifyInviteCss: 'angular2-smart-table'
 };

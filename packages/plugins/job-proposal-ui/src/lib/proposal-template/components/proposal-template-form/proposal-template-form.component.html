@@ -52,7 +52,12 @@
 				<label class="d-block">
 					{{ 'PROPOSAL_TEMPLATE.CONTENT' | translate }}
 				</label>
-				<ckeditor formControlName="content" [config]="ckConfig"></ckeditor>
+				<ga-rich-text-editor
+					formControlName="content"
+					preset="standard"
+					outputFormat="html"
+					minHeight="320px"
+				></ga-rich-text-editor>
 			</div>
 		</form>
 	</nb-card-body>

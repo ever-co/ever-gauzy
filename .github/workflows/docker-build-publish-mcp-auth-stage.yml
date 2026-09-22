@@ -10,12 +10,22 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  # One group PER WORKFLOW (never a group shared across the six non-prod image builds:
+  # that shared `gauzy-docker-build` group did not queue them, it STARVED them — GitHub
+  # keeps exactly one pending run per group, so an unrelated workflow's run cancelled
+  # whichever run was waiting, and environments silently kept serving their old image).
+  #
+  # Within this workflow the newest commit wins, matching the prod image builds. The
+  # trade-off is deliberate: an intermediate version tag can end up without an image,
+  # which is inert here because demo/stage deploy from `:latest` and only the release
+  # that actually ships needs its own tagged image. The alternative — letting a
+  # superseded build run for three hours on a fleet where one install takes 2-3 h —
+  # delays the image that IS wanted by exactly that long.
+  group: gauzy-docker-build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   gauzy-mcp-auth:
-    runs-on: ubicloud-standard-8
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
@@ -40,13 +50,17 @@ jobs:
             ghcr.io/ever-co/gauzy-mcp-auth-stage:latest
             everco/gauzy-mcp-auth-stage:latest
             registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-mcp-auth-stage:latest
           cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-mcp-auth-stage:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+          # VERDACCIO_TOKEN is a BuildKit build SECRET, never a build-arg: build-args are recorded
+          # in the image config blob and these ghcr packages are public, so a build-arg is readable
+          # via `docker history`. See the header on .deploy/mcp*/Dockerfile.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
 
       - name: Docker images list
@@ -64,14 +78,17 @@ jobs:
           docker push everco/gauzy-mcp-auth-stage:latest
 
       - name: Install doctl
+        if: ${{ vars.DO_ENABLED == 'true' }}
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: doctl registry login --expiry-seconds 3600
 
       - name: Push to DigitalOcean Registry
+        if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
           docker push registry.digitalocean.com/ever/gauzy-mcp-auth-stage:latest
 

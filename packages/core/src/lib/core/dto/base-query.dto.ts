@@ -4,6 +4,7 @@ import { plainToClass, Transform, TransformFnParams, Type } from 'class-transfor
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
 import { PlainObject } from '@gauzy/contracts';
 import { parseObject, parseToBoolean } from '@gauzy/utils';
+import { canonicalizeFindOptionsRelations } from '../utils';
 import { TenantOrganizationBaseDTO } from './tenant-organization-base.dto';
 
 /**
@@ -20,8 +21,25 @@ export class FindSelectQueryDTO<T = any> {
  * Base DTO for 'relations' to load (joined entities).
  */
 export class FindRelationsQueryDTO<T = any> extends FindSelectQueryDTO<T> {
+	/**
+	 * Canonicalized into TypeORM's nested object form WHEN the route's `ValidationPipe` runs with
+	 * `transform: true`, whichever representation the client used: a comma-separated string, the
+	 * legacy string array the Angular clients send as `relations[0]=…`, or the nested object form
+	 * Express's extended query parser builds from `?relations[organization][payments]=x`.
+	 *
+	 * This is a convenience, NOT the security boundary. Nest's `ValidationPipe` only returns the
+	 * transformed instance when `transform` is enabled; on a route with a bare `@UseValidationPipe()`,
+	 * or with no pipe at all, the handler still receives the raw query value. Authorization therefore
+	 * never relies on this transform: `SensitiveRelationsInterceptor` and
+	 * `CrudService.assertRelationsPermitted` each canonicalize the value they are given themselves, in
+	 * every representation (GHSA-c3cj-m3xm-7j5h).
+	 *
+	 * Where it does run, the transform never widens a query: an object-form key is kept only when
+	 * TypeORM would have joined it (a `true` or object leaf), and malformed input is refused.
+	 */
 	@ApiPropertyOptional({ type: Object })
 	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => canonicalizeFindOptionsRelations(value))
 	readonly relations?: FindOptionsRelations<T>;
 }
 

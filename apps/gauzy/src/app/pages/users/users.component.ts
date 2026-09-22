@@ -14,6 +14,7 @@ import {
 	RolesEnum,
 	IUser,
 	ComponentLayoutStyleEnum,
+	IRole,
 	IRolePermission,
 	IUserViewModel,
 	IUserOrganization,
@@ -33,6 +34,7 @@ import {
 	DeleteConfirmationComponent,
 	EmailComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	InviteMutationComponent,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
@@ -58,6 +60,8 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	public userName = 'User';
 	public loading: boolean;
 	public hasSuperAdminPermission: boolean = false;
+	/** True while the selected row is a SUPER_ADMIN the viewer may not mutate. */
+	public restrictedRow: boolean = false;
 	public organizationInvitesAllowed: boolean = false;
 	public showAddCard: boolean;
 	public disableButton = true;
@@ -65,6 +69,14 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public organization: IOrganization;
+
+	/*
+	 * Read-only View: a user row is a small flat record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedUser: IUserViewModel;
+	public viewSections: IRecordViewSection[] = [];
+
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
@@ -89,6 +101,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		this.subject$
 			.pipe(
 				debounceTime(300),
+				tap(() => this.clearItem()),
 				tap(() => this.getUsers()),
 				tap(() => this.cancel()),
 				untilDestroyed(this)
@@ -112,6 +125,13 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			)
 			.subscribe(() => {
 				this.hasSuperAdminPermission = this.store.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT);
+				// A permission change mid-session re-derives the gate for the
+				// currently selected row; selectUser() keeps it fresh otherwise.
+				// Same cast as buildViewSections: the view model types `role` as a
+				// string but getUsers() keeps the full relation on the row.
+				this.restrictedRow =
+					(this.selectedUser?.role as unknown as IRole)?.name === RolesEnum.SUPER_ADMIN &&
+					!this.hasSuperAdminPermission;
 			});
 		this.route.queryParamMap
 			.pipe(
@@ -195,6 +215,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	 * @param param0.data - The data object of the selected user.
 	 */
 	selectUser({ isSelected, data }: { isSelected: boolean; data: any }): void {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
+
 		// Toggle the button state and update the selected user
 		this.disableButton = !isSelected;
 		this.selectedUser = isSelected ? data : null;
@@ -202,11 +225,14 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		// Set the user's display name or default to 'User'
 		this.userName = data?.fullName?.trim() || 'User';
 
-		// Handle SUPER_ADMIN role-specific logic
-		if (data?.role?.name === RolesEnum.SUPER_ADMIN) {
-			this.disableButton = this.hasSuperAdminPermission;
-			this.selectedUser = this.hasSuperAdminPermission ? this.selectedUser : null;
-		}
+		// A SUPER_ADMIN row may only be MUTATED by a SUPER_ADMIN_EDIT holder.
+		// The selection itself stays: View is a read (the row is already on
+		// screen under ORG_USERS_VIEW), so only the mutation buttons key off
+		// this flag. The old logic cleared the selection instead — which also
+		// silently no-op'ed every action for the unauthorized case — and set
+		// `disableButton` to the PRESENCE of the permission, locking the
+		// toolbar for exactly the people allowed to use it.
+		this.restrictedRow = data?.role?.name === RolesEnum.SUPER_ADMIN && !this.hasSuperAdminPermission;
 	}
 
 	/**
@@ -279,6 +305,57 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 
 		// Wait for the dialog to close and handle any resulting actions (if needed)
 		await firstValueFrom(dialog.onClose);
+	}
+
+	/**
+	 * Opens the read-only View of the selected user in the right-side drawer.
+	 *
+	 * The action bar template exposes no row context (`let-selectedItem`), so the
+	 * record always comes from the current selection.
+	 */
+	view(): void {
+		const user = this.selectedUser;
+		if (!user) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(user);
+		this.viewedUser = user;
+	}
+
+	closeView(): void {
+		this.viewedUser = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically.
+	 */
+	private buildViewSections(user: IUserViewModel): IRecordViewSection[] {
+		// The view model types `role` as a string, but getUsers() keeps the full
+		// IRole relation on the row — read the name off what the row actually holds.
+		const role = user.role as unknown as IRole;
+		return [
+			{
+				fields: [
+					// The row itself is the person: `toPerson` reads the view model's
+					// own fullName/imageUrl, matching the grid's first column.
+					{ label: 'SM_TABLE.FULL_NAME', type: 'person', value: user },
+					{ label: 'SM_TABLE.EMAIL', key: 'email', type: 'email' },
+					{ label: 'SM_TABLE.ROLE', value: role?.name?.replace(/_/g, ' ') },
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true },
+					{ label: 'USERS_PAGE.ACTIVE', key: 'isActive', type: 'boolean' }
+				]
+			},
+			{
+				fields: [
+					{ label: 'SM_TABLE.EMPLOYEE', type: 'boolean', value: !!user.employeeId },
+					// Employee-only rows: empty for plain users, so they hide by default.
+					{ label: 'SM_TABLE.START_DATE', key: 'startedWorkOn', type: 'date' },
+					{ label: 'SM_TABLE.END_DATE', key: 'endWork', type: 'date' },
+					{ label: 'SM_TABLE.TIME_TRACKING', key: 'isTrackingEnabled', type: 'boolean' }
+				]
+			}
+		];
 	}
 
 	/**
@@ -605,6 +682,9 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectUser({
 			isSelected: false,
 			data: null

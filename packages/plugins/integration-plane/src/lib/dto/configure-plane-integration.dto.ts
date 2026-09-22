@@ -25,19 +25,25 @@ export class ConfigurePlaneIntegrationDto {
 	readonly planeWebUrl!: string;
 
 	@ApiPropertyOptional({
-		description: 'Plane admin panel URL',
+		description: 'Plane admin panel URL (optional; not used in shared mode)',
 		example: 'https://admin.plane.example.com'
 	})
-	@IsOptional()
+	// Admin URL is always optional. Validate the URL only when a non-empty value is
+	// supplied, so a blank string (common from a cleared form field) is treated as
+	// absent instead of failing @IsUrl — which would 400 an otherwise-valid request.
+	@ValidateIf((o) => o.planeAdminUrl != null && o.planeAdminUrl !== '')
 	@IsString()
 	@IsUrl({ require_tld: false, require_protocol: true })
 	readonly planeAdminUrl?: string;
 
 	@ApiPropertyOptional({
-		description: 'Plane public space URL',
+		description: 'Plane public space URL (required in custom mode)',
 		example: 'https://space.plane.example.com'
 	})
-	@IsOptional()
+	// Required (and validated) only in custom mode; in shared mode the space URL is
+	// irrelevant, so validation is skipped and a blank/absent value is accepted.
+	@ValidateIf((o) => o.mode === 'custom')
+	@IsNotEmpty()
 	@IsString()
 	@IsUrl({ require_tld: false, require_protocol: true })
 	readonly planeSpaceUrl?: string;

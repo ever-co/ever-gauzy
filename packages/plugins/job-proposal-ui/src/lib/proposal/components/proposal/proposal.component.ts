@@ -65,9 +65,13 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 	public viewComponentName: ComponentEnum = ComponentEnum.PROPOSALS;
 	public selectedProposal: IProposalViewModel;
 	public proposalStatusEnum = ProposalStatusEnum;
-	public successRate: string;
-	public totalProposals: number;
+	// Initialized so the header stat cards never render a blank value while
+	// the first page of data is still loading.
+	public successRate: string = '0 %';
+	public totalProposals: number = 0;
 	public countAccepted: number = 0;
+	/** Monotonic guard so an older statistics response cannot overwrite a newer one. */
+	private statisticsRequestId = 0;
 	public loading: boolean = false;
 	public disableButton: boolean = true;
 	public organization: IOrganization;
@@ -598,27 +602,49 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 
 	/**
 	 * Calculates and updates statistics related to proposals.
+	 *
+	 * Over the whole filtered set, not the current page: the old version read
+	 * `smartTableSource.getData()`, so with server pagination the cards
+	 * described whichever page happened to be loaded. One relation-free query
+	 * scoped by the same org/employee/date-range window the table uses keeps
+	 * the numbers honest; it is bounded by the selected date range.
 	 */
-	private calculateStatistics(): void {
-		// Reset the count of accepted proposals
-		this.countAccepted = 0;
+	private async calculateStatistics(): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
+		// Overlapping refreshes resolve out of order; only the newest request
+		// may write the cards, or stale criteria overwrite fresh values.
+		const requestId = ++this.statisticsRequestId;
 
-		// Retrieve the proposals from the smart table source
-		const proposals = this.smartTableSource.getData();
+		try {
+			const { items, total } = await this._proposalsService.getAll([], {
+				organizationId,
+				tenantId,
+				...(this.selectedEmployeeId ? { employeeId: this.selectedEmployeeId } : {}),
+				valueDate: {
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+				},
+				// The same column filters the table query applies — without them
+				// the cards would describe a different proposal set than the rows.
+				...(this.filters.where ? this.filters.where : {})
+			} as any);
 
-		// Count the accepted proposals using Array.reduce
-		this.countAccepted = proposals.reduce(
-			(count, proposal) => count + (proposal.status === ProposalStatusEnum.ACCEPTED ? 1 : 0),
-			0
-		);
-
-		// Update the total number of proposals
-		this.totalProposals = proposals.length;
-
-		// Calculate the success rate
-		this.successRate = this.totalProposals
-			? `${((this.countAccepted / this.totalProposals) * 100).toFixed(0)} %`
-			: '0 %';
+			if (requestId !== this.statisticsRequestId) {
+				return;
+			}
+			this.totalProposals = total;
+			this.countAccepted = items.filter((proposal) => proposal.status === ProposalStatusEnum.ACCEPTED).length;
+			this.successRate = this.totalProposals
+				? `${((this.countAccepted / this.totalProposals) * 100).toFixed(0)} %`
+				: '0 %';
+		} catch {
+			// The cards are decoration on a list page — a failed aggregate must
+			// never take the table down with it. The last shown values stay.
+		}
 	}
 
 	/**

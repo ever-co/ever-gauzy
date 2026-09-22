@@ -1,9 +1,9 @@
 import { IPlugin } from '@gauzy/contracts';
+import { LegacyFindOneOptions } from '@gauzy/core';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsObject, IsOptional } from 'class-validator';
-import { FindOneOptions } from 'typeorm';
 
-export class PluginQueryOptions implements FindOneOptions<IPlugin> {
+export class PluginQueryOptions implements LegacyFindOneOptions<IPlugin> {
 	@ApiPropertyOptional({
 		description: 'Conditions to find a specific plugin',
 		type: () => Object

@@ -1,104 +1,174 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { FindManyOptions, IsNull } from 'typeorm';
+import { Injectable, Logger } from '@nestjs/common';
+import { FindManyOptions, IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
-import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as archiver from 'archiver';
 import * as csv from 'csv-writer';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as fse from 'fs-extra';
-import { ConfigService } from '@gauzy/config';
-import { isNotEmpty } from '@gauzy/utils';
+import * as fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { isFunction, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
+import { ExportEntityClass, redactForExport } from '../export-redact.decorator';
+import { toSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
+import { writeExportManifest } from '../export-manifest';
 
 import { IColumnRelationMetadata, IRepositoryModel, RepositoriesService } from '../repositories/repositories.service';
 
+/**
+ * Everything one `/export` request needs to know about its own files.
+ *
+ * 🛑 This used to live on the service as `idCsv`/`idZip` RxJS subjects plus a `_dirname` field, and
+ * `ExportService` is an ordinary singleton provider. A full export loops every repository in the
+ * graph with a database round-trip each, so it spans seconds of real async I/O — long enough for a
+ * second tenant's request to call `createFolders()` in the middle of the first one and move the
+ * shared ids out from under it. Tenant A then archived tenant B's directory, or deleted it
+ * (GHSA-g235-c4fm-4fc7). Passing the job explicitly is what makes the singleton safe; it is not a
+ * style preference.
+ */
+export interface IExportJob {
+	/** Unique id of this job. Also the stem of the archive's file name. */
+	readonly id: string;
+	/** Private scratch root for this job, removed by {@link ExportService.cleanup}. */
+	readonly workDir: string;
+	/** Directory the per-table CSVs are written into; becomes the archive's root. */
+	readonly csvDir: string;
+	/** Absolute path of the ZIP that is streamed to the caller. */
+	readonly archivePath: string;
+	/** File name the caller sees in `Content-Disposition` — unchanged: `<uuid>_export.zip`. */
+	readonly archiveName: string;
+}
+
 @Injectable()
-export class ExportService implements OnModuleInit {
-	private _dirname: string;
-	private _basename = '/export';
+export class ExportService {
+	private readonly logger = new Logger(ExportService.name);
 
-	public idZip = new BehaviorSubject<string>('');
-	public idCsv = new BehaviorSubject<string>('');
+	/**
+	 * The export/import repository graph, built once.
+	 *
+	 * It is derived entirely from `RepositoriesService`'s module-init state (core repositories plus
+	 * the plugin entities discovered at boot) and never from the request, so one shared copy is
+	 * correct — unlike the file paths above. Caching it also fixes `/export/template`, which never
+	 * called `registerAllRepositories()` and therefore produced an EMPTY template archive unless
+	 * some earlier `/export` request happened to have populated the field first.
+	 */
+	private repositories: Promise<IRepositoryModel[]> | null = null;
 
-	private repositories: IRepositoryModel[] = [];
+	constructor(private repositoriesServices: RepositoriesService) {}
 
-	constructor(private repositoriesServices: RepositoriesService, private readonly configService: ConfigService) {}
-
-	async onModuleInit() {
-		const public_path = this.configService.assetOptions.assetPublicPath || __dirname;
-		//base import csv directory path
-		this._dirname = path.join(public_path, this._basename);
+	/**
+	 * Builds (once) and returns the repository graph to export.
+	 */
+	private async getRepositories(): Promise<IRepositoryModel[]> {
+		if (!this.repositories) {
+			// Do not cache a rejection: a transient failure must not poison every later request.
+			this.repositories = this.repositoriesServices.buildRepositoriesRelationsGraph().catch((error) => {
+				this.repositories = null;
+				throw error;
+			});
+		}
+		return this.repositories;
 	}
 
-	public async registerAllRepositories() {
-		this.repositories = await this.repositoriesServices.buildRepositoriesRelationsGraph();
+	/**
+	 * Creates a private scratch directory for one export request.
+	 *
+	 * 🛑 The scratch root is `os.tmpdir()`, deliberately NOT `assetOptions.assetPublicPath`. That
+	 * directory is mounted by `ServeStaticModule` at `/public/` with no authentication, so every
+	 * intermediate CSV and the finished ZIP used to be downloadable over HTTP for as long as they
+	 * existed — and forever when a request failed before the delete step.
+	 *
+	 * `mkdtemp` creates the directory owner-only (0700) on POSIX, so other local users of a shared
+	 * `/tmp` cannot list or read another tenant's CSVs; the `csv` subdirectory is created 0700 too.
+	 *
+	 * If setup fails after the scratch root exists, the root is removed before the error propagates:
+	 * the caller never receives a job handle in that case, so nothing else could clean it up.
+	 *
+	 * @returns The job handle to thread through the rest of the export.
+	 */
+	async createExportJob(): Promise<IExportJob> {
+		const id = uuidv4();
+		const workDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'gauzy-export-'));
+
+		try {
+			const csvDir = path.join(workDir, 'csv');
+			await fsp.mkdir(csvDir, { recursive: true, mode: 0o700 });
+
+			const archiveName = `${id}_export.zip`;
+
+			return { id, workDir, csvDir, archivePath: path.join(workDir, archiveName), archiveName };
+		} catch (error) {
+			await fsp.rm(workDir, { recursive: true, force: true }).catch((cleanupError) => {
+				this.logger.error(`Failed to remove export scratch directory ${workDir}`, cleanupError?.stack);
+			});
+			throw error;
+		}
 	}
 
-	async createFolders(): Promise<any> {
-		return new Promise((resolve, reject) => {
-			const id = uuidv4();
-			this.idCsv.next(id);
-			fs.access(`${this._dirname}/${id}/csv`, (error) => {
-				if (!error) {
-					return null;
+	/**
+	 * Removes everything this job wrote. Safe to call twice, and safe to call on a job whose export
+	 * threw half-way — which is exactly why the controller calls it from a `finally`.
+	 *
+	 * @param job - The job to clean up.
+	 */
+	async cleanup(job: IExportJob): Promise<void> {
+		if (!job?.workDir) {
+			return;
+		}
+		try {
+			await fsp.rm(job.workDir, { recursive: true, force: true });
+		} catch (error) {
+			// Never fail a finished request because its scratch directory would not go away.
+			this.logger.error(`Failed to remove export scratch directory ${job.workDir}`, error?.stack);
+		}
+	}
+
+	/**
+	 * Zips this job's CSV directory into this job's archive.
+	 *
+	 * @param job - The job being exported.
+	 */
+	async archiveAndDownload(job: IExportJob): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			const output = fs.createWriteStream(job.archivePath);
+			const archive = archiver('zip', { zlib: { level: 9 } });
+
+			output.on('close', () => resolve());
+			output.on('error', (error) => reject(error));
+
+			archive.on('warning', (error: any) => {
+				if (error.code === 'ENOENT') {
+					reject(error);
 				} else {
-					fs.mkdir(`${this._dirname}/${id}/csv`, { recursive: true }, (err) => {
-						if (err) reject(err);
-						resolve('');
-					});
+					this.logger.warn(`Unexpected archiver warning while exporting: ${error?.message}`);
 				}
 			});
+			archive.on('error', (error) => reject(error));
+
+			archive.pipe(output);
+			archive.directory(job.csvDir, false);
+
+			// `finalize()` returns a promise; an unhandled rejection here used to leave the request
+			// hanging until the client timed out.
+			Promise.resolve(archive.finalize()).catch(reject);
 		});
 	}
 
-	async archiveAndDownload(): Promise<any> {
-		return new Promise((resolve, reject) => {
-			{
-				const id = uuidv4();
-				const fileNameS = id + '_export.zip';
-				this.idZip.next(fileNameS);
-
-				const output = fs.createWriteStream(`${this._dirname}/${fileNameS}`);
-
-				const archive = archiver('zip', {
-					zlib: { level: 9 }
-				});
-
-				output.on('close', function () {
-					resolve('');
-				});
-
-				output.on('end', function () {
-					console.log('Data has been drained');
-				});
-
-				archive.on('warning', function (err) {
-					if (err.code === 'ENOENT') {
-						reject(err);
-					} else {
-						console.log('Unexpected error!');
-					}
-				});
-
-				archive.on('error', function (err) {
-					reject(err);
-				});
-
-				let id$ = '';
-				this.idCsv.subscribe((idCsv) => {
-					id$ = idCsv;
-				});
-
-				archive.pipe(output);
-				archive.directory(`${this._dirname}/${id$}/csv`, false);
-				archive.finalize();
-			}
-		});
-	}
-
-	async getAsCsv(item: IRepositoryModel, where: { tenantId: string }, organizationId?: string): Promise<any> {
+	/**
+	 * Reads one table and writes it as a CSV inside the job's directory.
+	 *
+	 * @param job - The job being exported.
+	 * @param item - The repository graph entry to export.
+	 * @param where - Tenant scope of the export.
+	 * @param organizationId - Organization the global default rows are stamped with.
+	 */
+	async getAsCsv(
+		job: IExportJob,
+		item: IRepositoryModel,
+		where: { tenantId: string },
+		organizationId?: string
+	): Promise<boolean> {
 		const conditions: FindManyOptions = {};
 		if (item.isTenantBased !== false) {
 			conditions['where'] = {
@@ -155,178 +225,206 @@ export class ExportService implements OnModuleInit {
 		}
 
 		if (count > 0) {
-			return await this.csvWriter(nameFile, [...items, ...defaultItems]);
+			const rows = this.redactRows(repository, [...items, ...defaultItems]);
+			await this.csvWriter(job, nameFile, rows);
+			return true;
 		}
 
 		return false;
 	}
 
-	async csvWriter(filename: string, items: any[]): Promise<boolean | any> {
-		return new Promise((resolve, reject) => {
-			try {
-				const createCsvWriter = csv.createObjectCsvWriter;
-				const dataIn = [];
-				const dataKeys = Object.keys(items[0]);
+	/**
+	 * Turns hydrated entities into the plain rows that go into the archive.
+	 *
+	 * 🛑 This is the single choke point for secret masking on the export path, and it has to be here
+	 * rather than in the writer: `csv-writer` reads `object[property]` directly and never runs
+	 * `class-transformer`, so `@Exclude({ toPlainOnly: true })` and the `@Expose`d `wrapSecret*`
+	 * mirrors — the whole of the JSON path's masking — simply do not apply to a CSV
+	 * (GHSA-j5h5-r956-rxc3). Columns opt in declaratively with `@ExportRedacted()`.
+	 *
+	 * Rows are also projected onto the entity's persisted columns, which drops the properties
+	 * subscribers attach on load (`IntegrationSettingSubscriber.wrapSecretValue`) and the computed
+	 * `@VirtualMultiOrmColumn` ones. Neither round-trips, and both are a route for a future
+	 * subscriber to put a cleartext credential back into the archive behind the column marks' back.
+	 *
+	 * @param repository - The repository the rows were loaded from.
+	 * @param rows - Hydrated entities.
+	 * @returns Plain objects safe to hand to `csv-writer`.
+	 */
+	private redactRows(repository: Repository<any>, rows: unknown[]): Record<string, unknown>[] {
+		const entity = repository.metadata.target;
+		const columns = repository.metadata.columns.map((column: ColumnMetadata) => column.propertyName);
 
-				for (const count of dataKeys) {
-					dataIn.push({ id: count, title: count });
-				}
-
-				let id$ = '';
-				this.idCsv.subscribe((id) => {
-					id$ = id;
-				});
-
-				const csvWriter = createCsvWriter({
-					path: `${this._dirname}/${id$}/csv/${filename}.csv`,
-					header: dataIn
-				});
-
-				csvWriter.writeRecords(items).then(() => {
-					resolve(items);
-				});
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
-
-	async csvTemplateWriter(filename: string, columns: any): Promise<any> {
-		if (columns) {
-			return new Promise((resolve) => {
-				const createCsvWriter = csv.createObjectCsvWriter;
-				const dataIn = [];
-				const dataKeys = columns;
-
-				for (const count of dataKeys) {
-					dataIn.push({ id: count, title: count });
-				}
-
-				let id$ = '';
-				this.idCsv.subscribe((id) => {
-					id$ = id;
-				});
-
-				const csvWriter = createCsvWriter({
-					path: `${this._dirname}/${id$}/csv/${filename}.csv`,
-					header: dataIn
-				});
-
-				csvWriter.writeRecords([]).then(() => {
-					resolve('');
-				});
-			});
+		// Fail closed, loudly: a table whose entity class cannot be resolved is a table whose secret
+		// columns cannot be known, and writing it "just in case" is how the cleartext got out.
+		if (!isFunction(entity)) {
+			throw new TypeError(
+				`Refusing to export "${repository.metadata.tableName}": its entity class could not be resolved, so redaction marks cannot be read`
+			);
 		}
-		return false;
+
+		return rows.map((row) => redactForExport(entity as ExportEntityClass, row as object, columns));
 	}
 
-	async downloadToUser(res): Promise<any> {
-		return new Promise((resolve) => {
-			let fileName = '';
+	/**
+	 * Writes one CSV file into the job's directory.
+	 *
+	 * @param job - The job being exported.
+	 * @param filename - Table name (the CSV's stem).
+	 * @param items - Plain rows to write.
+	 */
+	async csvWriter(job: IExportJob, filename: string, items: Record<string, unknown>[]): Promise<void> {
+		if (!isNotEmpty(items)) {
+			return;
+		}
 
-			this.idZip.subscribe((filename) => {
-				fileName = filename;
-			});
+		const header = Object.keys(items[0]).map((key) => ({ id: key, title: key }));
 
-			res.download(`${this._dirname}/${fileName}`);
-			resolve('');
+		const csvWriter = csv.createObjectCsvWriter({
+			path: path.join(job.csvDir, `${filename}.csv`),
+			header,
+			// 🛑 Quote every field. By default `csv-writer` quotes only on `,`, `\n` or `"`, so a value
+			// such as `Acme\r=HYPERLINK(...)` is written bare, and Excel/LibreOffice read the bare CR as
+			// a row break — the payload then starts a cell of its own and the leading-character escape
+			// below never sees it (GHSA-7xp5-j564-4752). `csv-parser` on the import side reads quoted
+			// fields the same as bare ones; empty values stay empty.
+			alwaysQuote: true
 		});
+
+		// Every cell of every row — table rows, the `/export/filter` tables and the junction tables all
+		// come through here — is escaped so a stored formula is shown as text, not evaluated, when the
+		// archive is opened in a spreadsheet (GHSA-7xp5-j564-4752). The import side undoes it.
+		const rows = items.map((row) => toSpreadsheetSafeCsvRow(row));
+
+		// Awaited, not `.then()`-ed: the old code dropped the rejection, so a write failure (another
+		// request's cleanup removing the directory, a full disk) left the promise pending forever.
+		await csvWriter.writeRecords(rows);
 	}
 
-	async deleteCsvFiles(): Promise<any> {
-		return new Promise((resolve) => {
-			let id$ = '';
+	/**
+	 * Writes an empty CSV carrying only the table's column headers.
+	 *
+	 * @param job - The job being exported.
+	 * @param filename - Table name (the CSV's stem).
+	 * @param columns - Column names to use as the header.
+	 */
+	async csvTemplateWriter(job: IExportJob, filename: string, columns: string[]): Promise<void> {
+		if (!isNotEmpty(columns)) {
+			return;
+		}
 
-			this.idCsv.subscribe((id) => {
-				id$ = id;
-			});
+		const header = columns.map((key) => ({ id: key, title: key }));
 
-			fs.access(`${this._dirname}/${id$}`, (error) => {
+		const csvWriter = csv.createObjectCsvWriter({
+			path: path.join(job.csvDir, `${filename}.csv`),
+			header
+		});
+
+		await csvWriter.writeRecords([]);
+	}
+
+	/**
+	 * Streams this job's archive to the caller.
+	 *
+	 * Resolves only once the response has actually been written, so the controller's `finally` can
+	 * delete the file without racing the stream (which truncates downloads on Windows/Electron).
+	 *
+	 * @param job - The job whose archive to send.
+	 * @param res - The Express response.
+	 */
+	async downloadToUser(job: IExportJob, res): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			res.download(job.archivePath, job.archiveName, (error: Error) => {
 				if (!error) {
-					fse.removeSync(`${this._dirname}/${id$}`);
-					resolve('');
-				} else {
-					return null;
+					return resolve();
 				}
-			});
-		});
-	}
-	async deleteArchive(): Promise<any> {
-		return new Promise((resolve) => {
-			let fileName = '';
-			this.idZip.subscribe((fileName$) => {
-				fileName = fileName$;
-			});
-			fs.access(`${this._dirname}/${fileName}`, (error) => {
-				if (!error) {
-					fse.removeSync(`${this._dirname}/${fileName}`);
-					resolve('');
-				} else {
-					return null;
+				// Once bytes are on the wire there is nothing to report to the client; surface the
+				// failure only while a proper error response is still possible.
+				if (res.headersSent) {
+					this.logger.error(`Export download failed after headers were sent: ${error.message}`);
+					return resolve();
 				}
-			});
-		});
-	}
-
-	async exportTables(organizationId: string) {
-		return new Promise(async (resolve, reject) => {
-			try {
-				for await (const item of this.repositories) {
-					await this.getAsCsv(
-						item,
-						{
-							tenantId: RequestContext.currentTenantId()
-						},
-						organizationId
-					);
-
-					// export pivot relational tables
-					if (isNotEmpty(item.relations)) {
-						await this.exportRelationalTables(item, {
-							tenantId: RequestContext.currentTenantId()
-						});
-					}
-				}
-				resolve(true);
-			} catch (error) {
 				reject(error);
-			}
+			});
 		});
 	}
 
-	async exportSpecificTables(names: string[], organizationId?: string) {
-		return new Promise(async (resolve, reject) => {
-			try {
-				for await (const item of this.repositories) {
-					const nameFile = item.repository.metadata.tableName;
-					if (names.includes(nameFile)) {
-						await this.getAsCsv(
-							item,
-							{
-								tenantId: RequestContext.currentTenantId()
-							},
-							organizationId
-						);
+	/**
+	 * Exports every table in the graph.
+	 *
+	 * @param job - The job being exported.
+	 * @param organizationId - Organization the global default rows are stamped with.
+	 */
+	async exportTables(job: IExportJob, organizationId: string): Promise<boolean> {
+		const repositories = await this.getRepositories();
 
-						// export pivot relational tables
-						if (isNotEmpty(item.relations)) {
-							await this.exportRelationalTables(item, {
-								tenantId: RequestContext.currentTenantId()
-							});
-						}
-					}
-				}
-				resolve(true);
-			} catch (error) {
-				reject(error);
+		// Marks the archive as one whose cells carry the spreadsheet-formula escape, so the import side
+		// knows it may reverse that escape — and leaves an archive without the marker untouched.
+		await writeExportManifest(job.csvDir);
+
+		for await (const item of repositories) {
+			await this.getAsCsv(
+				job,
+				item,
+				{
+					tenantId: RequestContext.currentTenantId()
+				},
+				organizationId
+			);
+
+			// export pivot relational tables
+			if (isNotEmpty(item.relations)) {
+				await this.exportRelationalTables(job, item, {
+					tenantId: RequestContext.currentTenantId()
+				});
 			}
-		});
+		}
+
+		return true;
+	}
+
+	/**
+	 * Exports only the named tables.
+	 *
+	 * @param job - The job being exported.
+	 * @param names - Table names requested by the caller.
+	 * @param organizationId - Organization the global default rows are stamped with.
+	 */
+	async exportSpecificTables(job: IExportJob, names: string[], organizationId?: string): Promise<boolean> {
+		const repositories = await this.getRepositories();
+
+		// Same marker as a full export: these CSVs are escaped the same way. `/export/template` is
+		// deliberately NOT marked — an operator fills it in by hand, so nothing there was ever escaped.
+		await writeExportManifest(job.csvDir);
+
+		for await (const item of repositories) {
+			const nameFile = item.repository.metadata.tableName;
+			if (names.includes(nameFile)) {
+				await this.getAsCsv(
+					job,
+					item,
+					{
+						tenantId: RequestContext.currentTenantId()
+					},
+					organizationId
+				);
+
+				// export pivot relational tables
+				if (isNotEmpty(item.relations)) {
+					await this.exportRelationalTables(job, item, {
+						tenantId: RequestContext.currentTenantId()
+					});
+				}
+			}
+		}
+
+		return true;
 	}
 
 	/*
 	 * Export Many To Many Pivot Table Using TypeORM Relations
 	 */
-	async exportRelationalTables(entity: IRepositoryModel, where: { tenantId: string }) {
+	async exportRelationalTables(job: IExportJob, entity: IRepositoryModel, where: { tenantId: string }) {
 		const { repository, relations } = entity;
 		const masterTable = repository.metadata.givenTableName as string;
 
@@ -355,36 +453,82 @@ export class ExportService implements OnModuleInit {
 
 					const items = await repository.manager.query(sql);
 					if (isNotEmpty(items)) {
-						await this.csvWriter(referenceTableName, items);
+						// Junction rows are raw SQL results with no entity class to resolve redaction
+						// marks against, so they bypass `redactRows`. That is only safe while they hold
+						// nothing but the junction's own foreign-key columns — enforced, not assumed.
+						this.assertJunctionRowsOnly(item.junctionEntityMetadata, referenceTableName, items);
+						await this.csvWriter(job, referenceTableName, items);
 					}
 				}
 			}
 		}
 	}
 
-	async exportSpecificTablesSchema() {
-		return new Promise(async (resolve, reject) => {
-			try {
-				for await (const item of this.repositories) {
-					const { repository, relations } = item;
-					const nameFile = repository.metadata.tableName;
-					const columns = repository.metadata.ownColumns.map((column: ColumnMetadata) => column.propertyName);
+	/**
+	 * Refuses to write junction rows that carry anything besides the junction table's own columns.
+	 *
+	 * `exportRelationalTables` selects `<junction>.*` as raw SQL and cannot redact, because there is no
+	 * entity class behind the rows. Today a many-to-many junction holds only its two foreign keys; if a
+	 * future junction (or a mis-resolved table name) returns other columns, fail closed rather than
+	 * write them without redaction.
+	 *
+	 * @param junction - Metadata of the junction entity the rows should belong to.
+	 * @param tableName - The table the rows were read from, for the error message.
+	 * @param rows - The raw rows returned by the query.
+	 * @throws TypeError when a row carries a column the junction does not declare as a foreign key.
+	 */
+	assertJunctionRowsOnly(
+		junction: { columns: ColumnMetadata[] } | undefined,
+		tableName: string,
+		rows: Record<string, unknown>[]
+	): void {
+		const allowed = new Set(
+			(junction?.columns ?? [])
+				.filter((column: ColumnMetadata) => column.relationMetadata || column.referencedColumn)
+				.map((column: ColumnMetadata) => column.databaseName)
+		);
 
-					await this.csvTemplateWriter(nameFile, columns);
-
-					// export pivot relational tables
-					if (isNotEmpty(relations)) {
-						await this.exportRelationalTablesSchema(item);
-					}
-				}
-				resolve(true);
-			} catch (error) {
-				reject(error);
+		for (const row of rows) {
+			const unexpected = Object.keys(row).filter((key) => !allowed.has(key));
+			if (unexpected.length > 0) {
+				throw new TypeError(
+					`Refusing to export junction table "${tableName}": unexpected column(s) ${unexpected.join(', ')} cannot be redacted`
+				);
 			}
-		});
+		}
 	}
 
-	async exportRelationalTablesSchema(entity: IRepositoryModel) {
+	/**
+	 * Writes a header-only CSV for every table in the graph (the import template).
+	 *
+	 * @param job - The job being exported.
+	 */
+	async exportSpecificTablesSchema(job: IExportJob): Promise<boolean> {
+		const repositories = await this.getRepositories();
+
+		for await (const item of repositories) {
+			const { repository, relations } = item;
+			const nameFile = repository.metadata.tableName;
+			const columns = repository.metadata.ownColumns.map((column: ColumnMetadata) => column.propertyName);
+
+			await this.csvTemplateWriter(job, nameFile, columns);
+
+			// export pivot relational tables
+			if (isNotEmpty(relations)) {
+				await this.exportRelationalTablesSchema(job, item);
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Writes header-only CSVs for the many-to-many junction tables.
+	 *
+	 * @param job - The job being exported.
+	 * @param entity - The repository graph entry whose relations to describe.
+	 */
+	async exportRelationalTablesSchema(job: IExportJob, entity: IRepositoryModel) {
 		const { repository, relations } = entity;
 		for await (const item of repository.metadata.manyToManyRelations) {
 			const relation = relations.find(
@@ -396,7 +540,7 @@ export class ExportService implements OnModuleInit {
 					(column: ColumnMetadata) => column.propertyName
 				);
 
-				await this.csvTemplateWriter(referenceTableName, columns);
+				await this.csvTemplateWriter(job, referenceTableName, columns);
 			}
 		}
 	}

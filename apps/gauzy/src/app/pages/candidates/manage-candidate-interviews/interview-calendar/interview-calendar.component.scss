@@ -34,12 +34,6 @@
     @include nb-ltr(padding, 0.75rem 0.5rem 0.75rem 0.75rem !important);
     @include nb-rtl(padding, 0.75rem 0.75rem 0.75rem 0.5rem !important);
   }
-  h5 {
-	font-size: 18px;
-	font-weight: 600;
-	line-height: 22px;
-	letter-spacing: 0em;
-  }
   .custom-calendar {
     overflow-y: auto;
     height: calc(100vh - 21.75rem);

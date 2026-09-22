@@ -57,7 +57,15 @@ export const createProbot = async (config: ProbotConfig): Promise<Probot> => {
 		const parsedConfig = await parseConfig(config);
 
 		return new Probot({
-			...parsedConfig // Spread the parsed configuration properties
+			...parsedConfig, // Spread the parsed configuration properties
+			// Probot's constructor reads `options.secret` (`webhookSecret: options.secret ||
+			// defaultWebhookSecret`), NOT `webhookSecret`. Spreading the parsed config alone therefore
+			// dropped the configured secret on the floor and keyed Probot's internal `@octokit/webhooks`
+			// instance with its literal default, `"development"` — so anything built on
+			// `probot.webhooks.verify` would have validated against a public constant. The receiver in
+			// `ProbotDiscovery` verifies the HMAC itself, but the option is corrected here too so the
+			// two can never disagree.
+			secret: parsedConfig.webhookSecret
 		});
 	} catch (error) {
 		console.error('Error importing probot:', error);

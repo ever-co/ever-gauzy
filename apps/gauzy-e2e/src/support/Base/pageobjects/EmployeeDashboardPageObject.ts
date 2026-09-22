@@ -1,18 +1,18 @@
 export const EmployeeDashboardPage = {
-	addNewExpenseButtonCss: 'nb-card > nb-card-body > button[status="success"]',
+	addNewExpenseButtonCss: 'button.action[status="success"]',
 	employeeDropdownCss: '[placeholder="Employee"]',
 	dropdownOptionCss: 'div.ng-option',
-	expenseDropdownCss: '#positionInput',
+	expenseDropdownCss: '#categoryInput',
 	valueInputCss: '#valueInput',
 	saveExpenseButtonCss:
-		'nb-card-footer.text-right > button[status="success"]',
+		'nb-card-footer > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	menuButtonsCss: 'nb-menu > ul.menu-items > li',
 	employeeSelectorCss: 'ga-employee-selector',
 	selectEmployeeDropdownOptionCss: 'ng-dropdown-panel > div[class="ng-dropdown-panel-items scroll-host"] > div > div.ng-star-inserted',
-	salaryCss: 'div.header-container > div > div[class="employee-details employee-salary ng-star-inserted"]',
+	salaryCss: 'div.header-container div.employee-salary',
 	incomeBtn: 'a[title="Income"]',
-	addNewIncomeBtnCss: 'nb-card-body > div > button[status="success"]',
+	addNewIncomeBtnCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	gridButtonCss: 'div.layout-switch > button',
 	addIncomeButtonCss: 'div.mb-3 > button[status="success"]',
 	selectEmployeeDropdownCss: 'ga-employee-selector.employees',
@@ -25,9 +25,9 @@ export const EmployeeDashboardPage = {
 	notesInputCss: '[formcontrolname="notes"]',
 	saveIncomeButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyIncomeCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
-	verifyDashboardIncomeCss: 'ga-info-block[ng-reflect-title="Total Income"]',
-	verifyDashboardBonusCss: 'div[class="bonus ng-star-inserted"]',
-	currencyFieldCss: 'nb-select[id="currencySelect"]',
-	currencyOptionCss: 'ul.option-list > nb-option'
+	verifyDashboardIncomeCss: 'ga-info-block[color="#089c17"]',
+	verifyDashboardBonusCss: 'div.bonus',
+	currencyFieldCss: 'ng-select.currency-selector',
+	currencyOptionCss: 'div.ng-option'
 
 };

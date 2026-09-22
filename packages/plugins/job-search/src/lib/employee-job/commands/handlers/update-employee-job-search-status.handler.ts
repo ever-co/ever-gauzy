@@ -28,6 +28,14 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 			// Filter by current employee ID if the permission is not present
 			employeeId = RequestContext.currentEmployeeId();
 		}
+		// Never query with an empty id: `where: { id: null }` used to drop the predicate and resolve
+		// to an arbitrary employee of the tenant.
+		if (!employeeId) {
+			throw new BadRequestException('Employee context is required to update the job search status.');
+		}
+		if (!tenantId) {
+			throw new BadRequestException('Tenant context is required to update the job search status.');
+		}
 
 		// Find the employee by ID
 		const employee = await this.employeeService.findOneByIdString(employeeId, {
@@ -73,7 +81,8 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 			console.error('Error while syncing employee with Gauzy AI:', error.message);
 		}
 
-		// Update the employee's job search status locally
-		return await this.employeeService.update(employeeId, { isJobSearchActive });
+		// Update the employee's job search status locally — scoped to the tenant explicitly (the
+		// tenant-aware update relies on a request user, which this handler may run without).
+		return await this.employeeService.update({ id: employeeId, tenantId }, { isJobSearchActive });
 	}
 }

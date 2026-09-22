@@ -14,6 +14,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
+			/** Payroll Permissions Start */
+			PermissionsEnum.ORG_PAYROLL_VIEW,
+			PermissionsEnum.ORG_PAYROLL_EDIT,
+			PermissionsEnum.ORG_PAYROLL_APPROVE,
+			/** Payroll Permissions End */
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_EXPENSES_EDIT,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
@@ -148,6 +153,19 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INTEGRATION_EDIT,
 			PermissionsEnum.INTEGRATION_DELETE,
 			/** Integration CRUD Permissions End */
+			/** AI Chat Permissions Start */
+			PermissionsEnum.AI_CHAT_ACCESS,
+			PermissionsEnum.AI_CHAT_SETTINGS,
+			/** AI Chat Permissions End */
+			/** Documents Permissions Start */
+			PermissionsEnum.DOCS_READ,
+			PermissionsEnum.DOCS_CREATE,
+			PermissionsEnum.DOCS_UPDATE,
+			PermissionsEnum.DOCS_DELETE,
+			PermissionsEnum.DOCS_MANAGE,
+			PermissionsEnum.DOCS_REVIEW,
+			PermissionsEnum.DOCS_AI_IMPORT,
+			/** Documents Permissions End */
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -248,6 +266,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
+			/** Payroll Permissions Start */
+			PermissionsEnum.ORG_PAYROLL_VIEW,
+			PermissionsEnum.ORG_PAYROLL_EDIT,
+			PermissionsEnum.ORG_PAYROLL_APPROVE,
+			/** Payroll Permissions End */
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_EXPENSES_EDIT,
 			PermissionsEnum.EMPLOYEE_EXPENSES_VIEW,
@@ -387,6 +410,21 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.INTEGRATION_DELETE,
 			/** Integration CRUD Permissions End */
 
+			/** AI Chat Permissions Start */
+			PermissionsEnum.AI_CHAT_ACCESS,
+			PermissionsEnum.AI_CHAT_SETTINGS,
+			/** AI Chat Permissions End */
+
+			/** Documents Permissions Start */
+			PermissionsEnum.DOCS_READ,
+			PermissionsEnum.DOCS_CREATE,
+			PermissionsEnum.DOCS_UPDATE,
+			PermissionsEnum.DOCS_DELETE,
+			PermissionsEnum.DOCS_MANAGE,
+			PermissionsEnum.DOCS_REVIEW,
+			PermissionsEnum.DOCS_AI_IMPORT,
+			/** Documents Permissions End */
+
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -508,6 +546,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_HELP_CENTER_EDIT,
 			PermissionsEnum.PROFILE_EDIT,
 			PermissionsEnum.SELECT_EMPLOYEE,
+			/** Documents Permissions Start */
+			PermissionsEnum.DOCS_READ,
+			PermissionsEnum.DOCS_CREATE,
+			PermissionsEnum.DOCS_UPDATE,
+			/** Documents Permissions End */
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -527,6 +570,14 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
 			PermissionsEnum.SELECT_EMPLOYEE,
+			/** AI Chat Permissions Start */
+			PermissionsEnum.AI_CHAT_ACCESS,
+			/** AI Chat Permissions End */
+			/** Documents Permissions Start */
+			PermissionsEnum.DOCS_READ,
+			PermissionsEnum.DOCS_CREATE,
+			PermissionsEnum.DOCS_UPDATE,
+			/** Documents Permissions End */
 			/** Time Off Permissions Start */
 			PermissionsEnum.TIME_OFF_VIEW,
 			/** Time Off Permissions End */
@@ -660,6 +711,14 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Documents Permissions Start */
+			PermissionsEnum.DOCS_READ,
+			PermissionsEnum.DOCS_CREATE,
+			PermissionsEnum.DOCS_UPDATE,
+			PermissionsEnum.DOCS_DELETE,
+			PermissionsEnum.DOCS_REVIEW,
+			PermissionsEnum.DOCS_AI_IMPORT,
+			/** Documents Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -676,6 +735,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.VIEWER,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			/** Documents Permissions Start */
+			PermissionsEnum.DOCS_READ,
+			/** Documents Permissions End */
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER
 		]

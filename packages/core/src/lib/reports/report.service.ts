@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GetReportMenuItemsInput, IPagination, IReport } from '@gauzy/contracts';
 import { CrudService } from '../core/crud';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { RequestContext } from './../core/context';
 import { Report } from './report.entity';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
@@ -25,6 +25,10 @@ export class ReportService extends CrudService<Report> {
 	 * @returns A promise that resolves to an object containing paginated report items and total count.
 	 */
 	public async findAllReports(filter?: any): Promise<IPagination<Report>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(filter);
+
 		console.time(`ReportService.findAll took seconds`);
 		// Extract organizationId and tenantId from filter
 		const { organizationId } = filter;
@@ -62,7 +66,7 @@ export class ReportService extends CrudService<Report> {
 				// Fetch all reports and their associated organizations in a single query
 				const qb = this.typeOrmRepository.createQueryBuilder('report');
 				qb.setFindOptions({
-					...(filter.relations ? { relations: filter.relations } : {})
+					...(filter.relations ? { relations: parseFindOptionsRelations(filter.relations) } : {})
 				});
 				qb.leftJoinAndSelect(
 					'report.reportOrganizations',

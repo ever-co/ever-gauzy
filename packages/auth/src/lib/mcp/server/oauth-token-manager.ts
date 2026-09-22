@@ -33,6 +33,47 @@ export interface TokenPayload {
 	[key: string]: any;
 }
 
+/**
+ * Thrown by {@link OAuth2TokenManager.refreshAccessToken} when the account lookup could not be
+ * carried out at all — a database outage, a timeout, a broken provider — as opposed to answering
+ * "this account can no longer sign in".
+ *
+ * The two must not collapse into the same response. `invalid_grant` tells an OAuth client its
+ * refresh token is dead and well-behaved clients throw it away, so returning it for a transient
+ * failure would sign an active user out for good over one database blip. The grant handler answers
+ * `temporarily_unavailable` (503) instead, and the refresh token is left untouched either way.
+ */
+export class UserLookupUnavailableError extends Error {
+	/**
+	 * Stable marker read by {@link UserLookupUnavailableError.is}. `instanceof` alone is not enough
+	 * here: this package is consumed both as source and as a bundle, and `extends Error` compiled for
+	 * a pre-ES6 target silently breaks the prototype chain — which would turn a database outage back
+	 * into `invalid_grant`, the exact failure this class exists to prevent.
+	 */
+	readonly isUserLookupUnavailableError = true;
+
+	constructor(readonly userId: string, readonly cause?: unknown) {
+		super(`Account lookup failed for user ${userId}`);
+		this.name = 'UserLookupUnavailableError';
+		// Restores the prototype chain when this file is emitted for a pre-ES6 target.
+		Object.setPrototypeOf(this, UserLookupUnavailableError.prototype);
+	}
+
+	/**
+	 * Whether `error` is an unavailable-lookup failure, across realms and bundles.
+	 *
+	 * @param error - The caught value.
+	 */
+	static is(error: unknown): error is UserLookupUnavailableError {
+		return (
+			error instanceof UserLookupUnavailableError ||
+			(typeof error === 'object' &&
+				error !== null &&
+				(error as { isUserLookupUnavailableError?: unknown }).isUserLookupUnavailableError === true)
+		);
+	}
+}
+
 export interface RefreshToken {
 	tokenId: string;
 	userId: string;
@@ -183,8 +224,36 @@ export class OAuth2TokenManager {
 
 	/**
 	 * Refresh access token using refresh token
+	 *
+	 * @param refreshTokenString - The refresh token presented by the client.
+	 * @param clientId - The authenticated client.
+	 * @param resolveUser - Re-reads the token's user. It MUST resolve to `null` only when the account
+	 * can no longer sign in (deactivated, archived or deleted) and MUST reject when the lookup itself
+	 * could not be performed. Account status is otherwise checked only at login, so without this a
+	 * refresh token kept minting access tokens for a deactivated user for its whole 30-day lifetime
+	 * (GHSA-3cgp-wmrg-4fqg). Required, so a caller cannot silently opt out of the check.
+	 * @returns A new token pair, or `null` when the refresh token is invalid, expired, revoked, bound
+	 * to another client, or belongs to an account that can no longer sign in. The refresh token is
+	 * NOT revoked in the last case — refusing already blocks every use of it, and revoking on a
+	 * lookup result would make the decision permanent.
+	 * @throws {UserLookupUnavailableError} When `resolveUser` rejects, so the caller can answer with a
+	 * retryable error instead of `invalid_grant`.
 	 */
-	async refreshAccessToken(refreshTokenString: string, clientId: string): Promise<TokenPair | null> {
+	async refreshAccessToken(
+		refreshTokenString: string,
+		clientId: string,
+		resolveUser: (userId: string) => Promise<unknown>
+	): Promise<TokenPair | null> {
+		// Fail closed, loudly, rather than skipping the check: TypeScript makes `resolveUser` required,
+		// but a JavaScript caller (or a stale compiled one) can still reach here with two arguments,
+		// and silently minting tokens for a deactivated user is the bug this parameter exists to fix.
+		// It is thrown OUTSIDE the try below so it cannot be flattened into `null` / `invalid_grant`;
+		// the token endpoint reports it as `server_error`, exactly like a missing userInfoProvider.
+		if (typeof resolveUser !== 'function') {
+			this.securityLogger.error('Refusing refresh: no account resolver was supplied');
+			throw new Error('refreshAccessToken requires a resolveUser callback to re-check account status');
+		}
+
 		try {
 			// Verify refresh token
 			const payload = await this.verifyToken(refreshTokenString);
@@ -214,6 +283,28 @@ export class OAuth2TokenManager {
 				return null;
 			}
 
+			// Re-check the account on every refresh, not only when the refresh token was issued.
+			// A rejection here is an infrastructure failure, NOT a verdict on the account: it is
+			// re-thrown as UserLookupUnavailableError so the grant handler can answer with a retryable
+			// error rather than telling the client its refresh token is dead.
+			let user: unknown;
+			try {
+				user = await resolveUser(refreshTokenMeta.userId);
+			} catch (lookupError) {
+				this.securityLogger.error(
+					`Refresh aborted, account lookup failed for user ${refreshTokenMeta.userId}`,
+					lookupError as Error
+				);
+				throw new UserLookupUnavailableError(refreshTokenMeta.userId, lookupError);
+			}
+			// The refresh is refused but the token is NOT revoked: refusing already blocks every use
+			// of it, and a revocation taken on one lookup could not be undone if the account is
+			// re-activated.
+			if (!user) {
+				this.securityLogger.warn(`Refresh denied, user is not active: ${refreshTokenMeta.userId}`);
+				return null;
+			}
+
 			// Generate new access token
 			const newTokenPair = await this.generateTokenPair(
 				refreshTokenMeta.userId,
@@ -226,6 +317,11 @@ export class OAuth2TokenManager {
 			return newTokenPair;
 
 		} catch (error: any) {
+			// An unavailable account lookup is not a token problem: let it reach the caller so the
+			// response stays retryable instead of collapsing into `invalid_grant`.
+			if (UserLookupUnavailableError.is(error)) {
+				throw error;
+			}
 			this.securityLogger.error('Refresh token validation failed:', error as Error);
 			return null;
 		}

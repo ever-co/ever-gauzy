@@ -1,8 +1,14 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
 :host {
+    // The "Add existing user" panel that drops in above the users table.
+    // `rgba(50, 50, 50, 0.06)` is a hand-doubled copy of the LIGHT theme's
+    // `--gauzy-card-2` (`rgba(50, 50, 50, 0.03)`); as a literal it kept
+    // darkening an already near-black surface on the dark themes, so the panel
+    // had no edge against the page behind it. Read the token instead: light is
+    // effectively unchanged and dark gets the surface the other cards use.
     nb-card {
-        background: rgba(50, 50, 50, 0.06);
+        background: var(--gauzy-card-2);
     }
     .add-organization-action{
         gap: 1rem;

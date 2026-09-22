@@ -1,0 +1,93 @@
+@use 'themes' as *;
+
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.widget-error {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
+
+	.widget-error-text {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		color: nb-theme(text-hint-color);
+		font-size: 12px;
+		line-height: 15px;
+	}
+
+	.widget-error-label {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	nb-icon {
+		height: 14px;
+		width: 14px;
+	}
+}
+
+.widget-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	height: 100%;
+	padding: 1rem;
+	text-align: center;
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+
+	nb-icon {
+		height: 16px;
+		width: 16px;
+		flex-shrink: 0;
+	}
+}
+
+// Loading state — shimmering bars standing in for the rows, so the widget does
+// not change height while fetching.
+.widget-skeleton {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	width: 100%;
+
+	.skeleton-line {
+		height: 28px;
+		width: 100%;
+		border-radius: nb-theme(border-radius);
+		background: linear-gradient(
+			90deg,
+			nb-theme(background-basic-color-2) 25%,
+			nb-theme(background-basic-color-3) 37%,
+			nb-theme(background-basic-color-2) 63%
+		);
+		background-size: 400% 100%;
+		animation: teams-widget-skeleton-shimmer 1.4s ease infinite;
+	}
+}
+
+// Respect users who asked the OS to reduce motion.
+@media (prefers-reduced-motion: reduce) {
+	.widget-skeleton .skeleton-line {
+		animation: none;
+	}
+}
+
+@keyframes teams-widget-skeleton-shimmer {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0 50%;
+	}
+}

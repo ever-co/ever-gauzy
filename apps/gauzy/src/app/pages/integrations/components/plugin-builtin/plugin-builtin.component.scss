@@ -43,9 +43,10 @@
   margin-bottom: 1.5rem;
   padding: 1rem 1.5rem;
   background: var(--gauzy-card-1);
+  // ONE hairline: the themed border. `--gauzy-shadow` is a ring on the dark
+  // canvas, so keeping both drew a 1px border with a second 1px line hugging it.
   border: 1px solid var(--border-basic-color-3);
   border-radius: calc(var(--border-radius) * 1.5);
-  box-shadow: var(--gauzy-shadow);
 
   .header-icon-container {
     width: 2.5rem;
@@ -56,7 +57,6 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: var(--gauzy-shadow);
 
     nb-icon {
       font-size: 1.5rem;
@@ -138,7 +138,9 @@
 
     &:hover {
       transform: translateY(-3px);
-      box-shadow: var(--gauzy-shadow);
+      // The card already carries a 1px border, and changing its colour IS the
+      // hover state. Adding `--gauzy-shadow` on top put a second hairline
+      // immediately outside it on the dark canvas.
       border-color: var(--color-primary-300);
     }
 

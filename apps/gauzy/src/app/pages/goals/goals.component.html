@@ -26,31 +26,29 @@
 		<div class="goals-container">
 			@if (noGoals === true) {
 			<div class="h-100">
-				<ngx-no-data-message [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
+				<ngx-no-data-message [loading]="loading" [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
 			</div>
 			} @for (group of activeGroups; track group) {
-			<div>
+			<div class="goal-group-block">
 				@if (noGoals === false) {
-				<h6>{{ group }}</h6>
-				} @for (goal of goalsForGroup(group); track goal.id; let index = $index) {
-				<nb-accordion class="my-3">
+				<h6 class="goal-group">{{ group }}</h6>
+				} @for (goal of goalsForGroup(group); track goal.id) {
+				<nb-accordion class="goal">
 					<nb-accordion-item>
-						<nb-accordion-item-header (click)="onClickObjective(goal, index)">
-							<div class="w-100 d-flex align-items-center justify-content-between">
-								{{ goal.name }}
-								<div class="w-25 d-flex align-items-center mr-5 ml-5">
-									<span class="ml-3">{{ goal.progress }}%</span>
-									<nb-progress-bar
-										nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
-										class="ml-4"
-										[value]="goal.progress"
-										[status]="
-											goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'
-										"
-										size="small"
-									>
-									</nb-progress-bar>
-								</div>
+						<!-- Name, percentage and bar on one grid, shared with the key-result
+						     rows below so the three columns line up down the page. -->
+						<nb-accordion-item-header (click)="onClickObjective(goal, goalIndex(goal))">
+							<div class="goal-row">
+								<span class="goal-name">{{ goal.name }}</span>
+								<span class="goal-percent">{{ goal.progress }}%</span>
+								<nb-progress-bar
+									class="goal-bar"
+									nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
+									[value]="goal.progress"
+									[status]="goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'"
+									size="tiny"
+								>
+								</nb-progress-bar>
 							</div>
 						</nb-accordion-item-header>
 						@for (keyResult of goal.keyResults; track keyResult.id) {
@@ -62,44 +60,38 @@
 							"
 						>
 							<div
-								(click)="onClickKeyResult(keyResult, index)"
-								class="w-100 d-flex align-items-center justify-content-between keyResult"
+								(click)="onClickKeyResult(keyResult, goalIndex(goal))"
+								class="goal-row key-result keyResult"
 							>
-								{{ keyResult.name }}
-								<div class="w-25 d-flex align-items-center">
-									<span class="ml-3">{{ keyResult.progress }}%</span>
-									<nb-progress-bar
-										nbTooltip="{{
-											'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
-												| translate
-													: {
-															weight: calculateKeyResultWeight(keyResult.weight, goal)
-													  }
-										}}"
-										class="ml-3"
-										[value]="keyResult.progress"
-										[status]="
-											keyResult.progress < 50
-												? 'warning'
-												: keyResult.progress < 75
-												? 'info'
-												: 'success'
-										"
-										size="small"
-									>
-									</nb-progress-bar>
-								</div>
+								<span class="goal-name">{{ keyResult.name }}</span>
+								<span class="goal-percent">{{ keyResult.progress }}%</span>
+								<nb-progress-bar
+									class="goal-bar"
+									nbTooltip="{{
+										'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
+											| translate : { weight: calculateKeyResultWeight(keyResult.weight, goal) }
+									}}"
+									[value]="keyResult.progress"
+									[status]="
+										keyResult.progress < 50
+											? 'warning'
+											: keyResult.progress < 75
+											? 'info'
+											: 'success'
+									"
+									size="tiny"
+								>
+								</nb-progress-bar>
 							</div>
 						</nb-accordion-item-body>
 						}
-						<nb-accordion-item-body>
+						<nb-accordion-item-body class="add-key-result">
 							<button
 								nbButton
 								status="success"
-								class="gen"
 								outline
 								size="small"
-								(click)="addKeyResult(index, true)"
+								(click)="addKeyResult(goalIndex(goal), true)"
 							>
 								<nb-icon icon="plus-outline"></nb-icon>
 								{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
@@ -173,18 +165,19 @@
 		status="success"
 		nbPopoverTrigger="click"
 		nbPopoverPlacement="bottom"
+		nbPopoverClass="goals-popover"
 		[nbPopover]="createObjectivePopover"
 		size="small"
-		class="custom-success"
 	>
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'GOALS_PAGE.ADD_NEW_OBJECTIVE' | translate }}
 	</button>
 	<button
 		nbButton
-		status="primary"
+		status="basic"
 		nbPopoverTrigger="click"
 		nbPopoverPlacement="bottom"
+		nbPopoverClass="goals-popover"
 		[nbPopover]="groupByPopover"
 		size="small"
 		class="action"
@@ -193,9 +186,10 @@
 	</button>
 	<button
 		nbButton
-		status="primary"
+		status="basic"
 		nbPopoverTrigger="click"
 		nbPopoverPlacement="bottom"
+		nbPopoverClass="goals-popover"
 		[nbPopover]="filterPopover"
 		size="small"
 		class="action"

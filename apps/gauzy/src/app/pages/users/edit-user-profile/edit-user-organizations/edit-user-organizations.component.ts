@@ -154,29 +154,35 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 	}
 
 	private async loadOrganizations() {
-		const { tenantId } = this.store.user;
-		const users = await this.userOrganizationsService.getAll(['user', 'user.role'], { tenantId });
+		try {
+			const { tenantId } = this.store.user;
+			const users = await this.userOrganizationsService.getAll(['user', 'user.role'], { tenantId });
 
-		const { items } = await this.userOrganizationsService.getAll(['user'], {
-			userId: this.paramId,
-			tenantId
-		});
+			const { items } = await this.userOrganizationsService.getAll(['user'], {
+				userId: this.paramId,
+				tenantId
+			});
 
-		this.selectedUserId = items[0].userId;
+			this.selectedUserId = items[0].userId;
 
-		const user = items[0]['user'];
-		this.selectedUserName = user.name || '';
+			const user = items[0]['user'];
+			this.selectedUserName = user.name || '';
 
-		const { items: organizations } = await this.organizationsService.getAll({
-			tenantId
-		});
+			const { items: organizations } = await this.organizationsService.getAll({
+				tenantId
+			});
 
-		const includedOrgs = users.items.filter((item) => item.user.id === items[0].userId);
+			const includedOrgs = users.items.filter((item) => item.user.id === items[0].userId);
 
-		const filtered = organizations.filter((a) => includedOrgs.filter((b) => b.organizationId === a.id).length);
+			const filtered = organizations.filter((a) => includedOrgs.filter((b) => b.organizationId === a.id).length);
 
-		this.organizations = filtered;
-		this.loading = false;
+			this.organizations = filtered;
+		} catch (error) {
+			console.error('Error while retrieving user organizations', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	cancel() {

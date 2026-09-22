@@ -1,13 +1,21 @@
 import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, switchMap, tap } from 'rxjs';
+import { catchError, combineLatest, EMPTY, filter, startWith, Subject, switchMap, tap } from 'rxjs';
 import { IOrganization } from '@gauzy/contracts';
-import { IPlaneRegenerateKeyResponse, PlaneService, IPlaneSettingsResponse, Store } from '@gauzy/ui-core/core';
+import {
+	ErrorHandlingService,
+	IPlaneRegenerateKeyResponse,
+	PlaneService,
+	IPlaneSettingsResponse,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { INTEGRATION_PLANE_PAGE_LINK } from '../../integration-plane.routes';
 import { PlaneApiKeyDialogComponent } from '../api-key-dialog/api-key-dialog.component';
@@ -32,6 +40,8 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	private readonly _store = inject(Store);
 	private readonly _planeService = inject(PlaneService);
 	private readonly _dialogService = inject(NbDialogService);
+	private readonly _toastrService = inject(ToastrService);
+	private readonly _errorHandlingService = inject(ErrorHandlingService);
 
 	readonly organization = signal<IOrganization | null>(null);
 	readonly integrationTenantId = signal<string | null>(null);
@@ -39,6 +49,12 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	readonly saving = signal<boolean>(false);
 	readonly settings = signal<IPlaneSettingsResponse | null>(null);
 	readonly isEditing = signal<boolean>(false);
+	/** True when a settings load failed (non-404), so the UI shows an error/retry
+	 * state instead of rendering a misleading empty shared-mode page. */
+	readonly loadFailed = signal<boolean>(false);
+
+	/** Emits to re-trigger the settings load (retry after a failed load). */
+	private readonly _retry$ = new Subject<void>();
 
 	form = new FormGroup({
 		planeWebUrl: new FormControl('', [Validators.required, Validators.pattern(URL_PATTERN)]),
@@ -60,32 +76,64 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 			)
 			.subscribe();
 
-		// Load settings when organization is available
-		this._store.selectedOrganization$
+		// Load settings whenever the organization changes or a retry is requested.
+		// combineLatest + switchMap means an org switch (or a retry) cancels any
+		// in-flight load, so a stale response can't overwrite the current org.
+		combineLatest([
+			this._store.selectedOrganization$.pipe(filter((org): org is IOrganization => !!org)),
+			this._retry$.pipe(startWith(undefined))
+		])
 			.pipe(
-				filter((org): org is IOrganization => !!org),
-				tap((org) => this.organization.set(org)),
-				switchMap((org) => {
+				tap(([org]) => this.organization.set(org)),
+				switchMap(([org]) => {
 					this.loading.set(true);
-					return this._planeService.getSettings(org.id);
+					return this._planeService.getSettings(org.id).pipe(
+						catchError((error: HttpErrorResponse) => {
+							this.loading.set(false);
+							// Only bounce to the setup screen when the integration is
+							// genuinely not configured (HTTP 404). A transient/5xx error is
+							// surfaced and the user stays put, instead of a configured tenant
+							// being silently kicked back to "set up Plane". Recover to EMPTY
+							// so the outer organization stream stays alive and future org
+							// switches still reload settings.
+							if (error?.status === 404) {
+								this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
+							} else {
+								// Clear ALL loaded state (settings, form values, edit mode) so a
+								// failed org switch doesn't leave the previous org's settings/URLs
+								// on screen as a misleading "shared-mode" page, then surface the
+								// error.
+								this.settings.set(null);
+								this.isEditing.set(false);
+								this.loadFailed.set(true);
+								this.form.reset({ planeWebUrl: '', planeAdminUrl: '', planeSpaceUrl: '' });
+								this._errorHandlingService.handleError(error);
+							}
+							return EMPTY;
+						})
+					);
 				}),
 				tap((settings: IPlaneSettingsResponse) => {
 					this.settings.set(settings);
 					this._patchForm(settings);
+					this.loadFailed.set(false);
 					this.loading.set(false);
 				}),
 				untilDestroyed(this)
 			)
-			.subscribe({
-				error: () => {
-					this.loading.set(false);
-					this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
-				}
-			});
+			.subscribe();
 	}
 
 	goBack(): void {
 		this._location.back();
+	}
+
+	/**
+	 * Retry loading settings after a failed load. Re-triggers the same reactive
+	 * load pipeline, so an in-flight retry is cancelled if the organization changes.
+	 */
+	retryLoad(): void {
+		this._retry$.next();
 	}
 
 	/**
@@ -101,7 +149,11 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 	 */
 	openPlane(): void {
 		const token = this._store.token;
-		if (!token) return;
+		if (!token) {
+			// Surface why nothing opened instead of a silent no-op.
+			this._toastrService.warning('INTEGRATIONS.PLANE_PAGE.SESSION_EXPIRED');
+			return;
+		}
 
 		const url = this.settings()?.planeWebUrl?.trim() || SHARED_PLANE_WEB_URL;
 		window.open(`${url}/?sso=${token}`, '_blank');
@@ -151,11 +203,13 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				next: () => {
 					this.saving.set(false);
 					this.isEditing.set(false);
+					this._toastrService.success('INTEGRATIONS.PLANE_PAGE.SETTINGS_SAVED');
 					// Refresh settings
 					this._refreshSettings();
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.saving.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}
@@ -178,10 +232,12 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 			.subscribe({
 				next: () => {
 					this.loading.set(false);
+					this._toastrService.success('INTEGRATIONS.PLANE_PAGE.INTEGRATION_REMOVED');
 					this._router.navigate([INTEGRATION_PLANE_PAGE_LINK]);
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.loading.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}
@@ -206,8 +262,9 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 					this.loading.set(false);
 					this._showApiKeyDialog(result.apiKey, result.apiSecret);
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.loading.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}
@@ -241,7 +298,8 @@ export class PlaneSettingsComponent extends TranslationBaseComponent implements 
 				next: (settings) => {
 					this.settings.set(settings);
 					this._patchForm(settings);
-				}
+				},
+				error: (error: HttpErrorResponse) => this._errorHandlingService.handleError(error)
 			});
 	}
 }

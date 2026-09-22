@@ -1,0 +1,13 @@
+@use 'themes' as *;
+
+// The legacy panel outlines this row instead of filling it, which is what tells
+// it apart from the Today list when both cards sit side by side. Kept, with the
+// theme's border token in place of the hard coded one.
+.assigned-row {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+	background-color: transparent;
+	border: 1px solid nb-theme(border-basic-color-3);
+}

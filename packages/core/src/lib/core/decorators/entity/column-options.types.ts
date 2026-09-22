@@ -5,6 +5,15 @@ import { ColumnType as TypeORMColumnType, ColumnOptions as TypeORMColumnOptions 
 type CommonColumnOptions<T> = Omit<MikroORMColumnOptions<T>, 'type' | 'default'> & Omit<TypeORMColumnOptions, 'type'> & {
     type?: ColumnDataType;
     relationId?: boolean; // Need to prevent Mikro-orm property decorator when relationId column
+    // Restated explicitly (both TypeORM's ColumnOptions and MikroORM's PropertyOptions already
+    // declare it) so the option is documented rather than silently inherited: MultiORMColumn
+    // honors it on BOTH sides - TypeORM's @Column({ primary: true }) and MikroORM's @PrimaryKey().
+    primary?: boolean;
+    // MikroORM-only, restated for the same reason: `hidden: true` reaches MikroORM's @Property() and
+    // drops the property from `wrap(entity).toJSON()` - which `CrudService.serialize()` applies to every
+    // read under DB_ORM=mikro-orm, so a hidden column is not readable from those results either.
+    // MultiORMColumn does not forward it to TypeORM.
+    hidden?: boolean;
 };
 
 // Represents MikroORM-specific column options, using MikroORM's PropertyOptions.

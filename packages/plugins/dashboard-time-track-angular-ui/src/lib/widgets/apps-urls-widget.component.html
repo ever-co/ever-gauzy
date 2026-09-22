@@ -1,0 +1,30 @@
+<gz-time-track-widget-state
+	[loading]="loading()"
+	[error]="errorMessage()"
+	[empty]="isEmpty()"
+	[emptyMessageKey]="emptyMessageKey()"
+	[skeletonRows]="5"
+	(retry)="refresh()"
+>
+	<div class="list-panel">
+		<div class="list-actions">
+			<button nbButton ghost size="tiny" status="primary" type="button" (click)="openReport()">
+				{{ 'BUTTONS.VIEW_REPORT' | translate }}
+			</button>
+		</div>
+
+		<div class="list-scroll">
+			<!--
+				`$index`, not the title: an activity bucket carries no id, and two
+				rows CAN share a title — which `@for` rejects at runtime as a
+				duplicate key. The whole array is replaced on every fetch anyway, so
+				there is no identity to preserve.
+			-->
+			@for (activity of rows(); track $index) {
+				<div class="list-row activity-row">
+					<ngx-activity-item [item]="activity" [isDashboard]="true"></ngx-activity-item>
+				</div>
+			}
+		</div>
+	</div>
+</gz-time-track-widget-state>

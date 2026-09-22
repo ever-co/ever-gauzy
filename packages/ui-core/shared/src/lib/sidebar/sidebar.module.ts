@@ -13,7 +13,6 @@ import {
 	NbSidebarModule
 } from '@nebular/theme';
 import { TreeModule } from '@ali-hm/angular-tree-component';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 import { AddIconModule } from './add-icon/add-icon.module';
@@ -27,7 +26,6 @@ import { DeleteBaseModule } from './delete-base/delete-base.module';
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		CKEditorModule,
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,

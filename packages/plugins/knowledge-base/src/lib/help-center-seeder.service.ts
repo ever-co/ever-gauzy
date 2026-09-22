@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Not } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import { getDefaultOrganizations, getDefaultEmployees, SeedDataService, Tenant, Employee } from '@gauzy/core';
+import { getDefaultOrganizations, getDefaultEmployees, SeedDataService, Tenant, Employee, parseFindOptionsRelations } from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
 import { createDefaultHelpCenterAuthor, createRandomHelpCenterAuthor } from './help-center-author';
@@ -69,7 +69,7 @@ export class HelpCenterSeederService {
 			where: {
 				name: Not(name)
 			},
-			relations: ['organizations']
+			relations: parseFindOptionsRelations(['organizations'])
 		});
 
 		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();

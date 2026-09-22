@@ -1,0 +1,15 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../dist/out-tsc/tools-audit",
+		"rootDir": "..",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"target": "ES2022",
+		"lib": ["ES2022", "dom"],
+		"types": ["node"],
+		"noEmit": true,
+		"skipLibCheck": true
+	},
+	"include": ["scripts/legacy-rich-text-audit.ts", "scripts/legacy-rich-text-audit.dom.ts"]
+}

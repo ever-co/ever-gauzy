@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, firstValueFrom, Subject, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ID, IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, ID, IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -212,6 +212,28 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 				order: 8,
 				responsive: true,
 				route: this.getRoute('settings')
+			},
+			{
+				// Record-side Documents panel (spec 00 §6.14 R-LNK-02).
+				//
+				// 🛑 Gated with `hide`, not only with `permissions`: `DynamicTabsComponent`
+				// renders `getPageTabset()` filtered on `hide` alone — `permissions` is
+				// honoured by `getPermittedPageTabset()`, which the renderer does not call.
+				// It is declared as well so the tab is still correct if it ever does.
+				// `_registerPageTabs()` re-runs on every route change, so a feature flip
+				// or an org switch re-evaluates this.
+				tabsetId: this.tabsetId,
+				tabId: 'documents',
+				tabIcon: 'file-text-outline',
+				tabsetType: 'route',
+				tabTitle: (_i18n) => _i18n.getTranslation('DOCS.LINKS.PANEL_TITLE'),
+				order: 9,
+				responsive: true,
+				route: this.getRoute('documents'),
+				permissions: [PermissionsEnum.DOCS_READ],
+				hide:
+					!this._store.hasPermission(PermissionsEnum.DOCS_READ) ||
+					!this._store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
 			}
 		];
 	}

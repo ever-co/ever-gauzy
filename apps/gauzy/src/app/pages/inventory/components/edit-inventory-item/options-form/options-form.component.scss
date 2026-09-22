@@ -27,8 +27,14 @@
   }
 }
 
+// The edit / remove icons on an option row. `color-basic-300` is #edf1f7 in
+// every registered theme (it is a fixed palette step, not a role token), and
+// the row it sits on is `--gauzy-sidebar-background-3` — a pale grey on the
+// light themes. Near-white on pale grey is an invisible control; the icons only
+// appeared at all on hover, when the rule below repaints them. Match the row's
+// own label colour instead.
 .option-row-icon {
-  color: nb-theme(color-basic-300);
+  color: var(--text-hint-color);
 }
 
 .option-group-form {

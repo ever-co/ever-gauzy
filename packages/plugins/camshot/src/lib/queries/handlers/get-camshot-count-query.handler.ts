@@ -29,6 +29,12 @@ export class GetCamshotCountQueryHandler implements IQueryHandler<GetCamshotCoun
 		const { organizationId, tenantId } = options;
 		// Check if the current user has the permission
 		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		// Without the permission the caller only counts their own camshots — and a caller with no
+		// employee identity counts none (same guard as the soundshot sibling; a null uploadedById used
+		// to be dropped from the SQL and return the organization-wide count).
+		if (!permission && !RequestContext.currentEmployeeId()) {
+			return 0;
+		}
 		// Fetch the count of camshot entities from the database
 		return this.camshotService.count({
 			where: {

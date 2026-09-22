@@ -1,0 +1,26 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="teams().length === 0"
+	[skeletonRows]="3"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_OVERVIEW.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="team-overview">
+		@for (team of teams(); track team.id) {
+			<section class="team-overview-card">
+				<ga-team-summary-card [team]="team" [showCounter]="false"></ga-team-summary-card>
+
+				<div class="team-overview-members">
+					@for (member of team.members; track member.id) {
+						<ga-team-member-row [member]="member"></ga-team-member-row>
+					} @empty {
+						<div class="team-overview-empty">
+							{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.TEAM_OVERVIEW.NO_MEMBERS' | translate }}
+						</div>
+					}
+				</div>
+			</section>
+		}
+	</div>
+</ga-teams-widget-state>

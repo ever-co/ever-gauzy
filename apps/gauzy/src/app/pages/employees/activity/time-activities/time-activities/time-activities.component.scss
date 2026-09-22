@@ -1,26 +1,296 @@
 @use 'themes' as *;
+@use 'var' as *;
 
 :host .custom-card {
   border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
   background-color: nb-theme(gauzy-card-2);
   @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
   @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 10.5rem);
+  height: calc(100dvh - 10.5rem);
+
   .custom-card-body {
     overflow-y: overlay;
     overflow-x: hidden;
-    padding-right: 11px;
-    height: calc(100vh - 31.25rem);
+    // The scrollbar draws on this element's own trailing edge, so the way to move
+    // it off the card's edge is to narrow the element rather than pad its content.
+    // Inset by 11px and the 5px bar sits inside that, putting the table's trailing
+    // edge on the same 16px inset the filter row above uses.
+    @include nb-ltr(margin-right, 11px);
+    @include nb-rtl(margin-left, 11px);
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
-:host .filters {
-  @include nb-ltr(padding-right, 0.5rem);
-  @include nb-rtl(padding-left, 0.5rem);
+// Summary cards on the leading edge, filters on the trailing edge, one row.
+// Top-aligned, so the filter controls sit level with the top of the cards rather
+// than floating at their vertical centre.
+:host .header-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 0.75rem 1rem;
+  flex: 0 0 auto;
+  // The table below ends at a 16px inset: the scroll container is held 11px off
+  // the card's edge and the 5px scrollbar sits inside that. The filter row does
+  // not end there on its own — `.filter-item-list` is a bootstrap `.row` whose
+  // negative gutters are never reset, so its trailing item overhangs the wrapper
+  // it sits in. Carry the difference here instead; the value is set against the
+  // rendered result rather than derived, since the overhang comes from gutters
+  // this page does not own.
+  @include nb-ltr(padding-right, 27px);
+  @include nb-rtl(padding-left, 27px);
+
+  .header-statistics {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  // A flex slot that ends its content, so the filter row lands on the trailing
+  // edge of the header rather than starting wherever its box happens to begin.
+  .header-filters {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+// `ga-daily-statistics` lays its cards out as a 25%-wide grid meant for a
+// full-width row; sharing the line with the filters, they size to their content
+// instead so the two blocks can sit side by side.
+:host ga-daily-statistics ::ng-deep {
+  .main-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    width: auto;
+  }
+
+  .daily-item {
+    flex: 0 0 15rem;
+  }
+
+  nb-card-body {
+    padding: 0.75rem 1rem;
+  }
+
+  .h1 {
+    margin-bottom: 0.25rem;
+  }
+}
+
+// The filter row is authored as a right-aligned bootstrap row; inside a flex
+// item those negative gutters and the `ml-auto` push are no longer needed.
+:host ngx-gauzy-filters ::ng-deep {
+  .main-wrapper {
+    margin: 0;
+    flex-wrap: nowrap;
+    // The bar is authored as `space-between` plus an `ml-auto` push on its inner
+    // column — and the `.col-auto.ml-auto` reset below drops that push, since the
+    // negative gutters it went with are gone. So the row has to be ended here
+    // instead: full width of its slot, contents flush to the trailing edge.
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  // `align-items-end` on the filter list is a bootstrap utility (`!important`), so
+  // the top alignment has to be restated here rather than inherited from the row.
+  .filter-item-list {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start;
+    column-gap: 0.5rem;
+    row-gap: 0.5rem;
+  }
+
+  .main-wrapper {
+    padding: 0 0.5rem;
+  }
+
+  .col-auto.ml-auto {
+    @include nb-ltr(margin-left, 0 !important);
+    @include nb-rtl(margin-right, 0 !important);
+    padding: 0;
+  }
+
+  .filter-item-list > .col-auto {
+    @include nb-ltr(padding-left, 0);
+    @include nb-rtl(padding-right, 0);
+  }
+
+  .main-wrapper .filter-item-list .filter-item {
+    min-width: 6.5rem;
+  }
+
+  .main-wrapper .filter-item-list .source-filter,
+  .main-wrapper .filter-item-list .log-type-filter {
+    min-width: 4.5rem;
+    max-width: 9rem;
+  }
+
+  .source-filter .select-button > span,
+  .log-type-filter .select-button > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .filter-item-list nb-select {
+    min-width: 0;
+  }
+
+  ga-timezone-filter .popover-button[nbButton] > div {
+    max-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+:host .header-bar .group-by-filter {
+  padding-right: 0;
+  margin-bottom: 5px;
+
+  .group-by-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+  }
+
+  .label {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--gauzy-text-color-2);
+  }
+
+  nb-select {
+    min-width: 6.5rem;
+  }
+}
+
+@include respond(xxl) {
+  :host .header-bar {
+    flex-wrap: wrap;
+  }
 }
 
 :host ga-daily-grid ::ng-deep {
   .no-data {
     min-height: 10rem;
-    height: calc(100vh - 34rem) !important;
+    height: calc(100vh - 29.75rem) !important;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Typography cap — shared by every Time & Activity tab.
+//
+// This file is forwarded by the Screenshots and Apps / Visited Sites tabs, so
+// the chrome all three share is capped once here. Nothing in a tab BODY is a
+// heading in its own right, so anything above `gauzy-table-header-font-size`
+// (0.75rem) comes down to it. The four headline figures in the stat strip are
+// display type and keep their size — only their labels are capped.
+// ---------------------------------------------------------------------------
+:host ga-daily-statistics ::ng-deep p {
+  font-size: nb-theme(gauzy-table-header-font-size);
+  line-height: nb-theme(gauzy-table-header-line-height);
+}
+
+:host ngx-no-data-message ::ng-deep {
+  h5,
+  div {
+    font-size: nb-theme(gauzy-table-header-font-size);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Time & Activities grid — the whole `.grid-container` runs at the table-header
+// scale (0.75rem / 12px).
+//
+// Most of the table carries no size of its own, so the declaration on the
+// container inherits down and does the bulk of the work. Everything listed
+// under it is an element that DOES declare a size and would otherwise ignore
+// the container: the shared `report.scss` chrome, and the nested cell
+// components, each of which ships its own scale.
+//
+// The size is taken from `gauzy-table-header-font-size` rather than written as
+// a literal, so the grid tracks the same scale as the group-by label and the
+// stat-strip labels capped above.
+//
+// Line-height is restated wherever the size is, because these components pair a
+// px size with a px leading — dropping the size alone would leave leading set
+// for larger text and the rows would read as loosely set.
+// ---------------------------------------------------------------------------
+:host .grid-container {
+  font-size: nb-theme(gauzy-table-header-font-size);
+  line-height: nb-theme(gauzy-table-header-line-height);
+}
+
+:host .grid-container ga-daily-grid ::ng-deep {
+  // `report.scss` chrome: the column-heading strip, the activity badge (14px),
+  // and the header the mobile breakpoint switches on (16px).
+  .day-grid-container,
+  .columns-header,
+  .responsive-table-header,
+  .responsive-table-content,
+  nb-accordion-item-header,
+  nb-badge {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+  }
+
+  // Nested cell components. Each sets a px size on its own inner text, so the
+  // container's inheritance stops at their host element.
+  ngx-avatar {
+    .link-text,
+    .caption {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: nb-theme(gauzy-table-header-line-height);
+    }
+  }
+
+  ga-project-column-view {
+    .main-header,
+    .employees-count {
+      font-size: nb-theme(gauzy-table-header-font-size);
+      line-height: nb-theme(gauzy-table-header-line-height);
+    }
+  }
+
+  // The client cell. Its `.link-text` carries the size, so the host declaration
+  // alone would not reach it. The 8px counter chip further in is left alone —
+  // it is a count badge rather than body text.
+  ngx-contact-links .link-text {
+    font-size: nb-theme(gauzy-table-header-font-size);
+    line-height: nb-theme(gauzy-table-header-line-height);
+  }
+
+  // `report.scss` gives every row a fixed 86px box, pads it 10px/20px and pins
+  // the content to the top. That was sized for the old scale; at the table-header
+  // size the single `.table-inner-wrapper` fills a little over half of it and the
+  // rest reads as a gap under each row. Let the content set the height and pad it
+  // evenly, so the row is only as tall as what it holds.
+  .table-row {
+    height: auto;
+    justify-content: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  // Durations move off the near-white `--gauzy-text-color-1` onto the muted
+  // numeric colour, so a row reads as one line with the badge carrying the
+  // emphasis rather than as a block of white.
+  .time-column .responsive-table-content,
+  nb-accordion-item-header .time-column span {
+    font-variant-numeric: tabular-nums;
+    color: var(--gauzy-text-color-2);
   }
 }

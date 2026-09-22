@@ -1,46 +1,22 @@
-@use 'gauzy/_gauzy-cards' as *;
+@use '@shared/employee-tab-panel' as *;
 
-$radius: nb-theme(border-radius);
-
-.notes {
-  margin-top: 16px;
-  padding: 10px;
-  border-radius: var(--border-radius);
-  background-color: var(--color-warning-transparent-100);
+:host {
+  @include employee-tab-host;
 }
-.notes p {
-  margin: 0;
+
+@include employee-tab-panel;
+
+.tab__note {
+  margin: 0.5rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: nb-theme(border-radius);
+  background-color: var(--color-warning-transparent-100);
   color: var(--color-warning-default);
   font-size: 0.75rem;
   font-weight: 600;
-  text-align: justify;
+  line-height: 1.125rem;
 }
-.card {
-  background-color: var(--gauzy-card-2);
-  border: unset;
-}
-:host {
-  background: var(--gauzy-card-2);
-  overflow-y: auto;
 
-  @include nb-card_overrides(
-    auto,
-    calc($default-card-height + 0.25rem),
-    $default-radius
-  );
-
-  nb-card {
-    border-radius: 0;
-  }
-
-  nb-card-body {
-    background-color: var(--gauzy-card-2);
-    padding: 1rem;
-
-    .form-container {
-      background-color: var(--gauzy-sidebar-background-2);
-      border-radius: var(--border-radius);
-      padding: 1rem;
-    }
-  }
+.rich-text-editor-wrap {
+  min-width: 0;
 }

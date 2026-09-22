@@ -1,4 +1,5 @@
 import {
+	createEnvironmentInjector,
 	EnvironmentInjector,
 	inject,
 	InjectionToken,
@@ -26,12 +27,14 @@ import {
 	IDeclarativeNavBuilder,
 	IDeclarativePageRouteRegistry,
 	IDeclarativePageTabRegistry,
+	IDeclarativeWidgetRegistry,
 	IPluginTranslateService,
 	IPluginPermissionChecker,
 	IPluginFeatureChecker,
 	PLUGIN_NAV_BUILDER,
 	PLUGIN_ROUTE_REGISTRY,
 	PLUGIN_TAB_REGISTRY,
+	PLUGIN_WIDGET_REGISTRY,
 	PLUGIN_TRANSLATE_SERVICE,
 	PLUGIN_PERMISSION_CHECKER,
 	PLUGIN_FEATURE_CHECKER
@@ -56,6 +59,8 @@ export interface PluginUiServices {
 	routeRegistry?: Type<IDeclarativePageRouteRegistry>;
 	/** Page-tab registry (bound to PLUGIN_TAB_REGISTRY). */
 	tabRegistry?: Type<IDeclarativePageTabRegistry>;
+	/** Dashboard widget registry (bound to PLUGIN_WIDGET_REGISTRY). */
+	widgetRegistry?: Type<IDeclarativeWidgetRegistry>;
 	/** Translate service for plugin translations (bound to PLUGIN_TRANSLATE_SERVICE). */
 	translateService?: Type<IPluginTranslateService>;
 	/** Permission checker for extension visibility (bound to PLUGIN_PERMISSION_CHECKER). */
@@ -69,6 +74,7 @@ const SERVICE_TOKEN_MAP: Record<keyof PluginUiServices, InjectionToken<any>> = {
 	navBuilder: PLUGIN_NAV_BUILDER,
 	routeRegistry: PLUGIN_ROUTE_REGISTRY,
 	tabRegistry: PLUGIN_TAB_REGISTRY,
+	widgetRegistry: PLUGIN_WIDGET_REGISTRY,
 	translateService: PLUGIN_TRANSLATE_SERVICE,
 	permissionChecker: PLUGIN_PERMISSION_CHECKER,
 	featureChecker: PLUGIN_FEATURE_CHECKER
@@ -107,6 +113,9 @@ export class PluginUiModule implements OnDestroy {
 
 	/** Definitions of bootstrap-only plugins (no NgModule). Tracked separately for extension cleanup on destroy. */
 	private readonly _declarativePluginDefs: PluginUiDefinition[] = [];
+
+	/** Child EnvironmentInjectors created for declarative plugins with providers. Destroyed with the module. */
+	private readonly _pluginEnvInjectors: EnvironmentInjector[] = [];
 
 	/**
 	 * Configure the PluginUiModule.
@@ -179,6 +188,17 @@ export class PluginUiModule implements OnDestroy {
 				this._extRegistry.deregisterByPlugin(definition.id);
 			}
 		}
+
+		// Destroy the child EnvironmentInjectors created for declarative plugins
+		// so their providers' ngOnDestroy hooks run and references are released.
+		for (const injector of this._pluginEnvInjectors) {
+			try {
+				injector.destroy();
+			} catch (e: unknown) {
+				console.error('[PluginUiModule] Error destroying plugin environment injector', e);
+			}
+		}
+		this._pluginEnvInjectors.length = 0;
 	}
 
 	// ─── Bootstrap ───────────────────────────────────────────────
@@ -384,7 +404,16 @@ export class PluginUiModule implements OnDestroy {
 				}
 
 				this._health.recordBootStart(definition.id);
-				const result = runInInjectionContext(this._envInjector, () => definition.bootstrap!(this._envInjector));
+
+				// Create a child EnvironmentInjector with plugin providers (if any)
+				const pluginInjector = definition.providers?.length
+					? createEnvironmentInjector(definition.providers, this._envInjector)
+					: this._envInjector;
+				if (pluginInjector !== this._envInjector) {
+					this._pluginEnvInjectors.push(pluginInjector);
+				}
+
+				const result = runInInjectionContext(pluginInjector, () => definition.bootstrap!(pluginInjector));
 				if (result instanceof Promise) await result;
 				this._declarativePluginDefs.push(definition);
 				this._health.recordBootEnd(definition.id);

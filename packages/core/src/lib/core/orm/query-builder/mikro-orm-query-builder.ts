@@ -1,7 +1,8 @@
 import { EntityRepository, QueryBuilder, QueryOrder } from '@mikro-orm/knex';
 import { IQueryBuilder } from './iquery-builder';
-import { Brackets, EntityTarget, FindManyOptions } from 'typeorm';
+import { Brackets, EntityTarget } from 'typeorm';
 import { convertTypeOrmConationAndParamsToMikroOrm, getConationFromQuery } from '../utils';
+import { flatten, LegacyFindManyOptions } from '../../utils';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
 
@@ -46,7 +47,9 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return qb;
     }
 
-    setFindOptions(findOptions: FindManyOptions<Entity>): this {
+    setFindOptions(findOptions: LegacyFindManyOptions<Entity>): this {
+        // MikroORM natively accepts the string-array `relations`/`select` form (it flattens to
+        // populate/fields), so no conversion is needed here — only the widened parameter type.
         const { select, where, order, skip, take, relations } = findOptions;
 
         if (select) {
@@ -67,7 +70,9 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         }
 
         if (relations) {
-            this.applyRelationsToQueryBuilder(this.qb, relations as any);
+            // The widened option type accepts both the legacy string[] and the v1 object form;
+            // flatten() normalizes either to the dot-notated string[] applyRelationsToQueryBuilder expects.
+            this.applyRelationsToQueryBuilder(this.qb, flatten(relations) as any);
             //    this.qb.populate(relations as any);
         }
 
@@ -119,7 +124,7 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
     }
 
     addFrom(_entityTarget: ((qb: QueryBuilder<any>) => QueryBuilder<any>) | EntityTarget<Entity>, _aliasName?: string): this {
-        throw new Error(`Note: This is conceptual; MikrORM typically don't support multiple FROMs like typeORM. You might use this for sub-queries or additional joins instead.`);
+        throw new Error(`Note: This is conceptual; MikroORM typically don't support multiple FROMs like typeORM. You might use this for sub-queries or additional joins instead.`);
     }
 
     innerJoin(propertyPath: string, alias: string, condition?: any): this {

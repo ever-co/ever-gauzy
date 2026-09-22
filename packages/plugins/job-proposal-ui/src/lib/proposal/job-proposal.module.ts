@@ -2,7 +2,6 @@ import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { BaseChartDirective } from 'ng2-charts';
 import {
 	applyDeclarativeRegistrations,
@@ -21,6 +20,7 @@ import {
 	ContactSelectModule,
 	ProposalTemplateSelectModule,
 	CardGridModule,
+	RichTextEditorModule,
 	UserFormsModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -32,7 +32,7 @@ import { COMPONENTS } from './components';
 @NgModule({
 	imports: [
 		RouterModule.forChild([]),
-		CKEditorModule,
+		RichTextEditorModule,
 		NgSelectModule,
 		TranslateModule.forChild(),
 		NebularModule,

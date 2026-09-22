@@ -4,13 +4,8 @@
     padding: 0;
 }
 
-h4 {
-	font-size: 24px;
-	font-weight: 600;
-	line-height: 30px;
-	letter-spacing: 0em;
-
-	.menu-setting {
-		font-weight: 400;
-	}
+// "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits
+// that component's size, and only the weight makes it recede.
+.menu-setting {
+	font-weight: 400;
 }

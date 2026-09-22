@@ -1,0 +1,143 @@
+{
+	"AI_CHAT": {
+		"TITLE": "AI Assistant",
+		"PLACEHOLDER": "Type a message…",
+		"SEND": "Send",
+		"STOP": "Stop",
+		"THINKING": "Thinking…",
+		"EMPTY_STATE": "Start a conversation with the AI assistant.",
+		"ERROR": "Something went wrong. Please try again.",
+		"COLLAPSE": "Close chat",
+		"EXPAND": "Open AI Chat",
+		"NEW_CHAT": "New conversation",
+		"WELCOME_TITLE": "Hi! I'm your AI Assistant",
+		"WELCOME_SUBTITLE": "Ask me anything about your workspace, tasks, or projects.",
+		"POWERED_BY": "Powered by AI"
+	},
+	"SETTINGS": {
+		"TITLE": "AI Providers",
+		"MENU_ITEM": "AI Providers",
+		"DESCRIPTION": "Bring your own API keys: configure per-tenant credentials for the registered AI providers used by the AI chat.",
+		"NO_PROVIDERS": "No AI providers are registered on the server.",
+		"MODELS": "Models",
+		"PLATFORM_NOTICE": "You are using the shared free tier — no API key of your own is configured. Free models are rate limited and the limit is shared with everyone else using it. Connect your own account or enter an API key below for uninterrupted access and the full model list.",
+		"BADGE": {
+			"TENANT_KEY": "Tenant key",
+			"TENANT_URL": "Tenant server",
+			"SERVER_ENV": "Server environment",
+			"PLATFORM_FREE": "Free tier",
+			"NOT_CONFIGURED": "Not configured",
+			"CHAT": "Chat",
+			"SPEECH": "Speech-to-text",
+			"LOCAL": "Local"
+		},
+		"FORM": {
+			"API_KEY": "API key",
+			"API_KEY_PLACEHOLDER": "Enter API key",
+			"API_KEY_KEEP": "Leave blank to keep the current key.",
+			"API_KEY_REQUIRED": "API key is required.",
+			"SHOW_KEY": "Show API key",
+			"HIDE_KEY": "Hide API key",
+			"BASE_URL": "Base URL (optional)",
+			"BASE_URL_PLACEHOLDER": "https://api.example.com",
+			"BASE_URL_INVALID": "Base URL must be a valid HTTP or HTTPS URL.",
+			"DEFAULT_MODEL": "Default model",
+			"DEFAULT_MODEL_NONE": "Provider default",
+			"DEFAULT_MODEL_CUSTOM": "Custom model…",
+			"CUSTOM_MODEL_PLACEHOLDER": "Enter a model id (e.g. claude-sonnet-5)",
+			"MODELS_NOT_FOUND": "No matching model — pick \"Custom model…\" to type an id.",
+			"MODELS_PLATFORM": "Limited to the free models available on the shared key. Add your own API key to use any model.",
+			"MODELS_PLATFORM_UNAVAILABLE": "The shared free-tier model list could not be loaded, so no model can be selected. Add your own API key to use this provider.",
+			"MODELS_CUSTOM_ENDPOINT": "This provider uses a custom base URL, so its model list is not fetched — your key belongs to that endpoint, not to the vendor. Pick \"Custom model…\" to enter a model id.",
+			"MODELS_CURATED_NO_KEY": "Showing known models. Save an API key to load everything this provider offers.",
+			"MODELS_CURATED_UNAVAILABLE": "Showing known models — the provider's full list could not be loaded just now.",
+			"MODELS_STALE": "Showing the last known list — the provider's catalogue could not be refreshed.",
+			"MODELS_NOT_CHAT_CAPABLE": "Chat through this provider is not available yet — pick another provider to chat. A key saved here takes effect once support ships.",
+			"ENABLED": "Enabled",
+			"USE_AS_DEFAULT": "Use as default provider",
+			"GET_KEY": "Get API key",
+			"API_KEY_LABEL_OPTIONAL": "API key (optional)",
+			"API_KEY_OPTIONAL": "Optional — this server usually runs without an API key. Leave it blank unless yours is behind an authenticating proxy.",
+			"BASE_URL_REQUIRED_LABEL": "Base URL",
+			"BASE_URL_REQUIRED": "A base URL is required for this provider — enter the address of your server.",
+			"BASE_URL_GATEWAY_HINT": "The address of your OpenAI-compatible server or gateway, e.g. http://localhost:11434/v1 (Ollama), http://localhost:1234/v1 (LM Studio), http://localhost:8000/v1 (vLLM).",
+			"BASE_URL_LOCAL_HINT": "The address of your local server. The usual default is prefilled — change it if your server listens elsewhere.",
+			"SPEECH_MODEL": "Speech model (dictation)",
+			"SPEECH_MODEL_NONE": "Provider default",
+			"SPEECH_MODEL_CUSTOM": "Custom speech model…",
+			"SPEECH_MODEL_HINT": "The speech-to-text model used when this provider transcribes dictation in the AI chat.",
+			"CUSTOM_SPEECH_MODEL_PLACEHOLDER": "Enter a speech model id (e.g. whisper-1)",
+			"USE_AS_VOICE_DEFAULT": "Use as default voice provider (dictation)",
+			"USE_AS_VOICE_DEFAULT_HINT": "Dictation in the AI chat tries this provider first. Without a default, the first configured provider that can transcribe is used.",
+			"VOICE_ONLY_NOTICE": "This provider transcribes speech for dictation only — it has no chat models. Choose another provider for chat."
+		},
+		"ACTIONS": {
+			"SAVE": "Save",
+			"DELETE": "Delete",
+			"ADD_PROVIDER": "Add AI Provider",
+			"ADD_VOICE_PROVIDER": "Add AI Voice Provider",
+			"BACK": "Back",
+			"CONFIGURE": "Configure"
+		},
+		"VOICE": {
+			"TITLE": "Voice (dictation)",
+			"DESCRIPTION": "Providers that can transcribe speech for dictation in the AI chat. The default is tried first; the others are fallbacks.",
+			"MODEL": "Speech model",
+			"DEFAULT": "Default voice",
+			"FALLBACK": "Fallback",
+			"EMPTY": "No voice provider yet — dictation in the AI chat is off.",
+			"EMPTY_HINT": "Add a provider that supports speech-to-text: OpenAI, Groq, Mistral, Deepgram, ElevenLabs — or a local server (Speaches, LocalAI, whisper.cpp) that needs no API key.",
+			"ADD": "Add a voice provider"
+		},
+		"DELETE_CONFIRM": {
+			"TITLE": "Delete credential",
+			"MESSAGE": "Delete the {{provider}} API credential for this tenant? AI chat may stop working for this provider."
+		},
+		"TOASTR": {
+			"SUCCESS_TITLE": "Success",
+			"ERROR_TITLE": "Error",
+			"SAVED": "{{provider}} credential saved.",
+			"DELETED": "{{provider}} credential deleted.",
+			"ERROR": "Something went wrong. Please try again.",
+			"CONNECTED": "{{ provider }} connected successfully.",
+			"CONNECT_WORKSPACE_MISMATCH": "This Connect flow was started in a different workspace. Switch back to that workspace and try again.",
+			"CONNECT_SESSION_EXPIRED": "The Connect session has expired or was started in another tab. Please click Connect again."
+		},
+		"LIST": {
+			"EMPTY": "Connect a provider to enable the AI chat and assistant features.",
+			"NAME": "Provider",
+			"SOURCE": "Credential",
+			"ENABLED": "Enabled",
+			"DEFAULT": "Default",
+			"VIA_ENV": "Managed via server environment",
+			"EMPTY_TITLE": "No AI providers yet",
+			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok · Groq · Mistral · LocalAI · OpenAI-compatible — voice: Deepgram · ElevenLabs · Speaches · whisper.cpp"
+		},
+		"CATALOG": {
+			"TITLE": "Add AI Provider",
+			"DESCRIPTION": "Choose a provider to connect or configure with your own API key.",
+			"VOICE_TITLE": "Add AI Voice Provider",
+			"VOICE_DESCRIPTION": "Choose a provider that can transcribe speech for dictation in the AI chat — a cloud service with your own API key, or a local server running on your own hardware (no key needed).",
+			"NO_VOICE_PROVIDERS": "No speech-capable AI provider is registered on this server.",
+			"SUPPORTS_CONNECT": "Connect"
+		},
+		"CONNECT": {
+			"BUTTON": "Connect {{ provider }}",
+			"HINT": "Opens the provider website — authorize there and you will be brought back with the connection ready. No copy/paste needed.",
+			"OR_MANUAL": "or enter an API key manually"
+		},
+		"STATUS": {
+			"READY_TITLE": "AI chat is ready",
+			"READY_HINT": "Open it any time from the \"AI Chat\" button in the header, at the top right of every page.",
+			"OPEN_CHAT": "Open AI chat",
+			"NO_PERMISSION_TITLE": "AI chat is configured, but hidden for your role",
+			"NO_PERMISSION_HINT": "Your role does not have AI chat access — ask an admin to enable the AI_CHAT_ACCESS permission.",
+			"GLOBALLY_DISABLED_TITLE": "AI chat is turned off on this server",
+			"GLOBALLY_DISABLED_HINT": "AI chat is disabled by server configuration (GAUZY_AI_CHAT_ENABLED). Ask your system administrator to enable it.",
+			"CREDENTIALS_UNUSABLE_TITLE": "Saved credentials cannot be used",
+			"CREDENTIALS_UNUSABLE_HINT": "A credential is saved, but the server cannot use it. Make sure the provider is enabled, then enter the API key again.",
+			"UNREACHABLE_TITLE": "AI chat status is unknown",
+			"UNREACHABLE_HINT": "The AI chat configuration could not be loaded. Reload the page or try again in a moment."
+		}
+	}
+}

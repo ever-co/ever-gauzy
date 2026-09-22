@@ -57,6 +57,38 @@ import { JobTitleDescriptionDetailsComponent } from '../job-title-description-de
 	standalone: false
 })
 export class JobSearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobSearch = Object.freeze(['ORG_JOB_SEARCH']) as string[];
+
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateAllOrgView = Object.freeze(['ALL_ORG_VIEW']) as string[];
+
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobApply = Object.freeze(['ORG_JOB_APPLY']) as string[];
+
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEdit = Object.freeze(['ORG_JOB_EDIT']) as string[];
+
 	loading: boolean = false;
 	isRefresh: boolean = false;
 	autoRefresh: boolean = false;

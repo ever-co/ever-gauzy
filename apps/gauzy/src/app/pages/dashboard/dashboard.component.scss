@@ -1,159 +1,178 @@
 @use 'var' as *;
 
-.header {
-  padding: 30px;
-
-  .header-container {
-    display: flex;
-    justify-content: space-between;
-
-    .employee-info,
-    .org-info {
-      display: flex;
-
-      .employee-image,
-      .org-image {
-        max-width: 70px;
-        max-height: 70px;
-        border-radius: 13px;
-        margin-right: 24px;
-        margin-left: 24px;
-      }
-    }
-
-    .employee-details,
-    .org-details {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-
-      .employee-name,
-      .org-name {
-        font-weight: bold;
-        font-size: 18px;
-      }
-
-      .employee-position,
-      .org-position {
-        font-size: 14px;
-      }
-    }
-  }
+/*
+ * ── The dashboard page is the ONE scroll surface ─────────────────────────────
+ *
+ * `packages/ui-core/static/styles/_overrides.scss` clamps
+ * `nb-layout:has(ga-dashboard-layout) .scrollable-container` to
+ * `overflow-y: hidden` so the fixed header and the app footer stay in view.
+ * Something inside this page therefore has to scroll, and it used to be every
+ * widget panel individually: each was pinned to `calc(100vh - header - footer -
+ * 11.5rem)` and scrolled internally, which put a second scrollbar inside the
+ * page ("no scrolling in that block where we display widgets!").
+ *
+ * That hand-tuned offset also stopped describing reality — the density pass
+ * changed the tab / card / button metrics and an always-visible chips row was
+ * added above the tabs — so the widget grid was both clipped AND scrollable.
+ *
+ * Now the page column scrolls and the widget blocks grow to their natural
+ * height (the clamps are gone from the time-track plugin page and from the
+ * custom-dashboard canvas). Nothing here depends on a measured chrome height:
+ * the container simply fills the layout column and scrolls whatever it holds.
+ */
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
 }
 
-.open {
-  cursor: pointer;
-}
+$tab-height: 2.25rem;
 
-.body {
-  padding: 36px;
+$tab-inline-inset: 0.75rem;
+
+$tab-actions-inset: $tab-inline-inset - 0.5rem;
+
+$tab-min-width: 5rem;
+
+.dashboard-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
 
-  .half-content {
-    width: 49%;
+  > ga-dashboard-switcher {
+    flex: 0 0 auto;
   }
 
-  .info-block {
-    &:hover {
-      box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
-      transform: translateY(-1px);
-    }
+  > gz-dynamic-tabs {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 
+  > ga-dashboard-switcher:not(:has(.chips-area)) {
+    position: absolute;
+    top: 0;
+    inset-inline-end: $tab-actions-inset;
+    z-index: 2;
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    width: 100%;
-    height: 84px;
-    border-radius: 4px;
-    padding: 29px;
-    background-color: #f6f9fc;
-    cursor: pointer;
-    .info-text,
-    .info-value {
-      display: flex;
-      font-size: 18px;
-      color: #333333;
+    align-items: center;
+    height: $tab-height;
 
-      .profit-positive-color {
-        color: #66de0b;
-      }
-
-      .profit-negative-color {
-        color: #ff7b00;
-      }
-
-      .expense-color {
-        color: #dbc300;
-      }
-
-      .income-color {
-        color: #089c17;
-      }
-    }
-
-    .info-text {
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .info-value {
-      flex-direction: row;
-      align-items: center;
-
-      span {
-        font-size: 24px;
-        margin-right: 12px;
-      }
+    .dashboard-switcher {
+      padding: 0;
     }
   }
 
-  .bonus {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    width: 100%;
-
-    .bonus-value {
-      margin-right: 39px;
-
-      :first-child {
-        text-align: right;
-        font-size: 16px;
-        margin-bottom: 15px;
-        margin-right: 3px;
-      }
-
-      :last-child {
-        font-size: 46px;
-        font-weight: bold;
-        color: #0091ff;
-      }
-
-      .negative-bonus-color {
-        color: red;
-      }
-    }
-
-    .bonus-disclaimer {
-      margin-top: 15px;
-      margin-right: 39px;
-      font-size: 0.7rem;
-      width: 215px;
-    }
+  > ga-dashboard-switcher:not(:has(.chips-area)) + gz-dynamic-tabs ::ng-deep .route-tabset {
+    padding-inline-end: calc(2rem + #{$tab-inline-inset});
   }
 }
 
-::ng-deep nb-route-tabset .route-tab .tab-link {
-  border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-  svg {
-    fill: nb-theme(text-primary-color);
+/*
+ * A custom dashboard brings its own tab strip, so the STANDARD tabset's tab bar
+ * is hidden while one is open.
+ *
+ * Only the BAR. Nebular's `nb-route-tabset` template is
+ * `<ul class="route-tabset">` followed by `<router-outlet>`, so the routed page
+ * — the custom dashboard itself — renders INSIDE `gz-dynamic-tabs`. Hiding the
+ * host element would blank the very page the flag is set for.
+ *
+ * `display: none` (not `visibility` / zero height) so no empty band is left
+ * behind, and the rule lives here rather than borrowing a global `.hidden`
+ * utility: Bootstrap dropped `.hidden` after v3, which is why the binding was a
+ * no-op and the empty tab band survived.
+ */
+:host ::ng-deep gz-dynamic-tabs.hidden {
+  > nb-route-tabset > .route-tabset,
+  > nb-tabset > .tabset {
+    display: none;
   }
-  span {
+}
+
+:host ::ng-deep gz-dynamic-tabs nb-route-tabset .route-tab .tab-link {
+  min-height: $tab-height;
+  padding-block: 0;
+  padding-inline: $tab-inline-inset;
+  font-size: 0.75rem;
+  vertical-align: top;
+  gap: 0.375rem;
+  min-width: 0;
+  max-width: 100%;
+
+  nb-icon {
+    font-size: 1.25em;
+    height: 1em;
+    width: 1em;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .tab-text {
     display: inline-block;
     text-transform: initial;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
     &:first-letter {
       text-transform: uppercase;
+    }
+  }
+}
+
+:host ::ng-deep gz-dynamic-tabs nb-route-tabset .route-tabset {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+
+  .route-tab {
+    flex: 0 1 auto;
+    margin-bottom: 0;
+
+    @media screen and (min-width: 36.0625rem) {
+      min-width: $tab-min-width;
+    }
+  }
+}
+
+:host ::ng-deep gz-dynamic-tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    > router-outlet ~ * > nb-card {
+      border-radius: 0;
     }
   }
 }

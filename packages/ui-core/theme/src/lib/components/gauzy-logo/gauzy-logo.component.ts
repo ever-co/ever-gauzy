@@ -10,12 +10,13 @@ import {
 	Inject
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { tap, debounceTime, filter } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { tap, debounceTime, map } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { IOrganization } from '@gauzy/contracts';
+import { IUser, IWorkSpace } from '@gauzy/contracts';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { DEFAULT_SVG, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../../themes';
 
@@ -29,9 +30,11 @@ import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../..
 export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	public theme: string;
 	public isCollapse = true;
-	public organization: IOrganization;
 	public logoUrl: SafeResourceUrl;
-	public isWorkspaceOpen = false;
+
+	/** Active tenant (workspace) shown by the sidebar switcher. */
+	public tenantName = '';
+	public tenantLogo: string = DEFAULT_SVG;
 
 	private _controlled = true;
 	@Input()
@@ -45,6 +48,19 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	@Input() isAccordion = true;
+
+	/**
+	 * Whether the workspace panel is currently open.
+	 *
+	 * Owned by the parent layout, which is what actually renders the panel
+	 * (`@if (isWorkspaceOpen())` in `one-column.layout.html`). This used to be a
+	 * private boolean flipped only by `toggleWorkspace()`, which went stale as
+	 * soon as the panel closed itself on an outside click — the switcher then
+	 * still believed it was open and the next click on it emitted `false`, so
+	 * the panel did not reopen and the click read as dead. Reading the parent's
+	 * state keeps one source of truth.
+	 */
+	@Input() isWorkspaceOpen = false;
 	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 	@Output() onWorkspaceToggle: EventEmitter<boolean> = new EventEmitter<boolean>();
 
@@ -68,13 +84,24 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		this._store.selectedOrganization$
+		// The switcher identifies the TENANT. `selectedWorkspace` only exists once
+		// the switcher panel has fetched the workspace list, so the signed-in
+		// user's own tenant is the authoritative source until then (and the only
+		// one available to users with a single tenant, who never load the list).
+		combineLatest([this._store.user$, this._store.selectedWorkspace$])
 			.pipe(
 				debounceTime(100),
+				// Narrow to the two values actually rendered BEFORE the equality
+				// check — `user$` carries the whole user graph, and comparing that
+				// on every emission is pure waste.
+				map(([user, workspace]: [IUser, IWorkSpace]) => ({
+					name: workspace?.name || user?.tenant?.name || '',
+					logo: workspace?.imgUrl || user?.tenant?.logo || DEFAULT_SVG
+				})),
 				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => {
-					this.organization = organization;
+				tap(({ name, logo }) => {
+					this.tenantName = name;
+					this.tenantLogo = logo;
 				}),
 				untilDestroyed(this)
 			)
@@ -101,8 +128,9 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	 * Toggles the workspace dropdown.
 	 */
 	toggleWorkspace(): void {
-		this.isWorkspaceOpen = !this.isWorkspaceOpen;
-		this.onWorkspaceToggle.emit(this.isWorkspaceOpen);
+		// Derived from the parent's state, never from a local copy — see the
+		// `isWorkspaceOpen` input above.
+		this.onWorkspaceToggle.emit(!this.isWorkspaceOpen);
 	}
 
 	/**

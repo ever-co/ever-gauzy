@@ -1,0 +1,36 @@
+<gz-time-track-widget-state
+	[loading]="loading()"
+	[error]="errorMessage()"
+	[empty]="isEmpty()"
+	[emptyMessageKey]="emptyMessageKey()"
+	[skeletonRows]="5"
+	(retry)="refresh()"
+>
+	<div class="list-panel">
+		<div class="list-actions">
+			<button nbButton ghost size="tiny" status="primary" type="button" (click)="openTasks()">
+				{{ 'BUTTONS.VIEW_ALL' | translate }}
+			</button>
+		</div>
+
+		<div class="list-scroll">
+			@for (task of rows(); track task.id) {
+				<div class="list-row progress-row">
+					<span class="cell-text" [title]="task?.title">{{ task?.title }}</span>
+
+					<div class="cell-progress">
+						<span class="progress-value">{{ sharePercentage(task) }}%</span>
+						<nb-progress-bar
+							size="tiny"
+							[displayValue]="false"
+							[status]="statusFor(sharePercentage(task))"
+							[value]="sharePercentage(task)"
+						></nb-progress-bar>
+					</div>
+
+					<span class="cell-numeric cell-muted">{{ task?.duration || 0 | durationFormat }}</span>
+				</div>
+			}
+		</div>
+	</div>
+</gz-time-track-widget-state>

@@ -20,7 +20,7 @@
         </ngx-gauzy-button-action>
       </div>
     }
-    <nb-tabset class="nb-tabset" (changeTab)="tabChange($event)">
+    <nb-tabset (changeTab)="tabChange($event)">
       <nb-tab
         tabId="general"
         tabTitle="{{ 'GOALS_PAGE.SETTINGS.GENERAL' | translate }}"
@@ -28,161 +28,109 @@
         <div class="card-general-container">
           <nb-card>
             <nb-card-body class="card-general">
-              <form
-                [formGroup]="generalSettingsForm"
-                (change)="saveGeneralSettings()"
-                >
-                <div class="row">
-                  <div class="col-md-4">
-                    <p class="font-weight-bold">
-                      {{
-                      'GOALS_PAGE.SETTINGS.MAX_ENTITIES'
-                      | translate
-                      }}
-                    </p>
-                    <div class="row">
-                      <div class="col-md-4">
-                        <label
-                          class="label"
-                          for="max-goals"
-                          >
-                          {{
-                          'GOALS_PAGE.FORM.LABELS.OBJECTIVE'
-                          | translate
-                          }}
-                        </label>
-                        <input
-                          nbInput
-                          id="max-goals"
-                          min="5"
-                          fullWidth
-                          formControlName="maxObjectives"
-                          type="number"
-                          />
-                        </div>
-                        <div class="col-md-4">
-                          <label
-                            class="label"
-                            for="max-key-result"
-                            >
-                            {{
-                            'GOALS_PAGE.FORM.LABELS.KEY_RESULT'
-                            | translate
-                            }}
-                          </label>
-                          <input
-                            nbInput
-                            id="max-key-result"
-                            fullWidth
-                            formControlName="maxKeyResults"
-                            min="5"
-                            type="number"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-md-4">
-                        <p class="font-weight-bold">
-                          {{
-                          'GOALS_PAGE.SETTINGS.EMPLOYEE_OBJECTIVES'
-                          | translate
-                          }}
-                        </p>
-                        <nb-toggle
-                          formControlName="employeeCanCreateObjective"
-                        ></nb-toggle>
-                      </div>
+              <form class="settings-form" [formGroup]="generalSettingsForm" (change)="saveGeneralSettings()">
+                <!-- A settings list: one setting per row, its label on the left and its
+                     control in a column the whole list shares, so every control starts
+                     on one line and no row has to be padded out to match another. -->
+                <section class="settings-group">
+                  <h6 class="settings-title">
+                    {{ 'GOALS_PAGE.SETTINGS.MAX_ENTITIES' | translate }}
+                  </h6>
+                  <div class="settings-row">
+                    <label class="settings-label" for="max-goals">
+                      {{ 'GOALS_PAGE.FORM.LABELS.OBJECTIVE' | translate }}
+                    </label>
+                    <div class="settings-control">
+                      <input
+                        nbInput
+                        fieldSize="small"
+                        id="max-goals"
+                        min="5"
+                        formControlName="maxObjectives"
+                        type="number"
+                        />
                     </div>
+                  </div>
+                  <div class="settings-row">
+                    <label class="settings-label" for="max-key-result">
+                      {{ 'GOALS_PAGE.FORM.LABELS.KEY_RESULT' | translate }}
+                    </label>
+                    <div class="settings-control">
+                      <input
+                        nbInput
+                        fieldSize="small"
+                        id="max-key-result"
+                        min="5"
+                        formControlName="maxKeyResults"
+                        type="number"
+                        />
+                    </div>
+                  </div>
+                </section>
 
-                    <div class="row mt-3">
-                      <div class="col-md-4">
-                        <p class="mt-3 font-weight-bold">
-                          {{
-                          'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_OBJECTIVES'
-                          | translate
-                          }}
-                        </p>
-                        <nb-select
-                          fullWidth
-											(selectedChange)="
-												saveGeneralSettings()
-											"
-                          formControlName="canOwnObjectives"
-                          >
-                          @for (
-                            level of goalOwnershipEnum
-                            | keyvalue
-                            ; track
-                            level) {
-                            <nb-option
-                              [value]="level.value"
-                              >
-                              {{
-                              'GOALS_PAGE.OWNERSHIP.' +
-                              level.key | translate
-                              }}
-                            </nb-option>
-                          }
-                        </nb-select>
-                      </div>
-                      <div class="col-md-4">
-                        <p class="mt-3 font-weight-bold">
-                          {{
-                          'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_KEY_RESULTS'
-                          | translate
-                          }}
-                        </p>
-                        <nb-select
-                          fullWidth
-											(selectedChange)="
-												saveGeneralSettings()
-											"
-                          formControlName="canOwnKeyResult"
-                          >
-                          @for (
-                            level of goalOwnershipEnum
-                            | keyvalue
-                            ; track
-                            level) {
-                            <nb-option
-                              [value]="level.value"
-                              >
-                              {{
-                              'GOALS_PAGE.OWNERSHIP.' +
-                              level.key | translate
-                              }}
-                            </nb-option>
-                          }
-                        </nb-select>
-                      </div>
+                <section class="settings-group">
+                  <div class="settings-row">
+                    <span class="settings-label">
+                      {{ 'GOALS_PAGE.SETTINGS.EMPLOYEE_OBJECTIVES' | translate }}
+                    </span>
+                    <div class="settings-control">
+                      <nb-toggle formControlName="employeeCanCreateObjective"></nb-toggle>
                     </div>
-                    <div class="row mt-3">
-                      <div class="col-md-4">
-                        <p class="mt-3 font-weight-bold">
-                          {{
-                          'GOALS_PAGE.SETTINGS.ADD_KPI_TO_KEY_RESULT'
-                          | translate
-                          }}
-                        </p>
-                        <nb-toggle
-                          status="basic"
-                          formControlName="krTypeKPI"
-                        ></nb-toggle>
-                      </div>
-                      <div class="col-md-4">
-                        <p class="mt-3 font-weight-bold">
-                          {{
-                          'GOALS_PAGE.SETTINGS.ADD_TASK_TO_KEY_RESULT'
-                          | translate
-                          }}
-                        </p>
-                        <nb-toggle
-                          status="basic"
-                          formControlName="krTypeTask"
-                        ></nb-toggle>
-                      </div>
+                  </div>
+                  <div class="settings-row">
+                    <span class="settings-label">
+                      {{ 'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_OBJECTIVES' | translate }}
+                    </span>
+                    <div class="settings-control">
+                      <nb-select
+                        fullWidth
+                        (selectedChange)="saveGeneralSettings()"
+                        formControlName="canOwnObjectives"
+                        >
+                        @for (level of goalOwnershipEnum | keyvalue; track level) {
+                          <nb-option [value]="level.value">
+                            {{ 'GOALS_PAGE.OWNERSHIP.' + level.key | translate }}
+                          </nb-option>
+                        }
+                      </nb-select>
                     </div>
-                  </form>
+                  </div>
+                  <div class="settings-row">
+                    <span class="settings-label">
+                      {{ 'GOALS_PAGE.SETTINGS.WHO_CAN_OWN_KEY_RESULTS' | translate }}
+                    </span>
+                    <div class="settings-control">
+                      <nb-select
+                        fullWidth
+                        (selectedChange)="saveGeneralSettings()"
+                        formControlName="canOwnKeyResult"
+                        >
+                        @for (level of goalOwnershipEnum | keyvalue; track level) {
+                          <nb-option [value]="level.value">
+                            {{ 'GOALS_PAGE.OWNERSHIP.' + level.key | translate }}
+                          </nb-option>
+                        }
+                      </nb-select>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <span class="settings-label">
+                      {{ 'GOALS_PAGE.SETTINGS.ADD_KPI_TO_KEY_RESULT' | translate }}
+                    </span>
+                    <div class="settings-control">
+                      <nb-toggle status="basic" formControlName="krTypeKPI"></nb-toggle>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <span class="settings-label">
+                      {{ 'GOALS_PAGE.SETTINGS.ADD_TASK_TO_KEY_RESULT' | translate }}
+                    </span>
+                    <div class="settings-control">
+                      <nb-toggle status="basic" formControlName="krTypeTask"></nb-toggle>
+                    </div>
+                  </div>
+                </section>
+              </form>
                 </nb-card-body>
                 <!--Please do not remove this comment section-->
                 <!-- <nb-card-footer>
@@ -259,32 +207,19 @@
       </ng-template>
       <ng-template #actionButtons let-selectedItem="selectedItem">
         <div class="btn-group actions">
-          @if (selectedTab === 'kpi') {
-            <button
-              nbButton
-              status="basic"
-              class="action secondary"
-              [disabled]="disableButton"
-              size="small"
-              underConstruction
-              >
-              <nb-icon icon="eye-outline" pack="eva"></nb-icon>
-              {{ 'BUTTONS.VIEW' | translate }}
-            </button>
-          }
-          @if (selectedTab !== 'kpi') {
-            <button
-              nbButton
-              status="basic"
-              class="action secondary"
-              [disabled]="disableButton"
-              size="small"
-              underConstruction
-              >
-              <nb-icon icon="eye-outline" pack="eva"></nb-icon>
-              {{ 'BUTTONS.VIEW' | translate }}
-            </button>
-          }
+          <!-- One View for both tabs — the route carries no view permission
+               (feature-gated only), so the button carries none either. -->
+          <button
+            nbButton
+            status="basic"
+            class="action secondary"
+            [disabled]="!selectedItem && disableButton"
+            (click)="view(selectedItem)"
+            size="small"
+            >
+            <nb-icon icon="eye-outline" pack="eva"></nb-icon>
+            {{ 'BUTTONS.VIEW' | translate }}
+          </button>
           @if (selectedTab !== 'kpi') {
             <button
               nbButton
@@ -341,6 +276,7 @@
       <ng-template #tableLayout>
         <div class="table-scroll-container">
           <angular2-smart-table
+            [class.ga-table-loading]="loading"
             [settings]="smartTableSettings"
             [source]="smartTableData"
             (userRowSelect)="selectRow($event)"
@@ -357,6 +293,7 @@
       </ng-template>
       <ng-template #gridLayout>
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="smartTableSettings"
           [source]="goalTimeFrames"
@@ -364,3 +301,16 @@
           (scroll)="onScroll()"
         ></ga-card-grid>
       </ng-template>
+
+      <!-- Read-only View. The projected content is gated here (not inside the drawer)
+           so the record renderer is built fresh for each entry that is opened. -->
+      <ngx-record-view-drawer
+        [open]="!!viewedRecord"
+        [heading]="viewHeading"
+        [subtitle]="viewedRecord?.name"
+        (closed)="closeView()"
+        >
+        @if (viewedRecord) {
+          <ngx-record-view [record]="viewedRecord" [sections]="viewSections"></ngx-record-view>
+        }
+      </ngx-record-view-drawer>

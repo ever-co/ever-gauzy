@@ -1,0 +1,31 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="tasks().length === 0"
+	[skeletonRows]="4"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.PROJECT_MANAGEMENT.MY_TASKS.EMPTY"
+	(retry)="refresh()"
+>
+	<div class="pm-panel">
+		<div class="pm-list">
+			@for (task of tasks(); track task.id) {
+				<div class="pm-row task-row">
+					<span class="task-dot" [class.checked]="isCompleted(task)" [attr.aria-hidden]="true"></span>
+					<div class="task-body">
+						<div class="task-status">{{ task.status }}</div>
+						<div class="pm-title" [title]="task.title">{{ task.title }}</div>
+					</div>
+				</div>
+			}
+		</div>
+
+		@if (hasMore()) {
+			<div class="pm-footer">
+				{{
+					'DASHBOARD_PAGE.BUILDER.WIDGETS.PROJECT_MANAGEMENT.SHOWING'
+						| translate: { shown: tasks().length, total: total() }
+				}}
+			</div>
+		}
+	</div>
+</ga-teams-widget-state>

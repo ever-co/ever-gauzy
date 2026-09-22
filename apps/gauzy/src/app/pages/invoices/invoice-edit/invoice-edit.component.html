@@ -320,7 +320,7 @@
                                 </div>
                                 <div class="col-sm-6">
                                   <div class="form-group">
-                                    <label for="inputTaxType" class="label">{{
+                                    <label for="inputTax2Type" class="label">{{
                                       'INVOICES_PAGE.TAX_TYPE' | translate
                                     }}</label>
                                     <nb-select
@@ -329,7 +329,7 @@
 											'INVOICES_PAGE.TAX_TYPE' | translate
 										}}"
                                       (ngModelChange)="calculateTotal()"
-                                      id="inputTaxType"
+                                      id="inputTax2Type"
                                       fullWidth
                                       >
                                       @for (
@@ -365,15 +365,15 @@
                         </div>
                       </form>
                       @if (shouldLoadTable) {
-                        <div>
+                        <div class="items">
                           <div class="table-scroll-container custom-table">
                             <angular2-smart-table
+                              [class.ga-table-loading]="loading"
                               class="table"
                               style="cursor: pointer"
                               [settings]="settingsSmartTable"
                               [source]="smartTableSource"
                               (createConfirm)="onCreateConfirm($event)"
-                              (edit)="onEditRowSelect($event)"
                               (editConfirm)="onEditConfirm($event)"
                               (deleteConfirm)="onDeleteConfirm($event)"
                               (userRowSelect)="selectItem($event)"
@@ -416,15 +416,28 @@
                           </div>
                         </div>
                       }
+                      <!--
+                        Record-side Documents panel (spec 00 §6.14 R-LNK-02): the edit
+                        surface carries the full panel — attach existing, upload new,
+                        unlink — while the view page mounts it read-only. It gates
+                        itself on DOCS_READ + FEATURE_DOCUMENTS.
+                      -->
+                      @if (invoice) {
+                        <gz-document-links-panel
+                          class="invoice-documents"
+                          [entity]="documentEntity"
+                          [entityId]="invoice.id"
+                          [entityLabel]="documentLabel(invoice)"
+                        ></gz-document-links-panel>
+                      }
                     </nb-card-body>
                     <nb-card-footer>
                       @if (!duplicate) {
                         <button
-                          status="danger"
-                          class="mr-3"
+                          class="cancel-action"
                           status="basic"
                           size="small"
-                          outline
+                          ghost
                           (click)="cancel()"
                           nbButton
                           >
@@ -432,18 +445,17 @@
                         </button>
                       }
                       <button
-                        class="mr-3"
+                        outline
                         (click)="updateInvoice('DRAFT')"
                         [disabled]="form.invalid"
                         size="small"
                         status="primary"
-                        class="gray"
                         nbButton
                         >
                         {{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
                       </button>
                       <button
-                        class="mr-3"
+                        outline
                         (click)="sendToContact()"
                         status="success"
                         size="small"
@@ -453,7 +465,7 @@
                         {{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
                       </button>
                       <button
-                        class="mr-3"
+                        class="primary-action"
                         (click)="sendViaEmail()"
                         status="success"
                         size="small"

@@ -1,16 +1,8 @@
-.notes {
-  margin-top: 16px;
-  padding: 10px;
-  border-radius: 5px;
-  text-indent: 1em;
-}
-
-.notes p {
-  margin: 0;
-  color: #eac72d;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
+// REMOVED: a `.notes` / `.notes p { color: #eac72d }` pair. This template has no
+// `.notes` element — the sibling employee tab is the one that renders a note,
+// and its own stylesheet already paints it from
+// `--color-warning-transparent-100` / `--color-warning-default`. What was here
+// was a stale copy carrying a literal mustard `#eac72d` and no background at all.
 :host {
   overflow-y: auto;
   max-height: calc(100vh - 28rem);

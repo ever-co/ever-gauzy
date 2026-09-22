@@ -23,7 +23,11 @@ export class SettingsNavMenuComponent extends BaseNavMenuComponent implements On
 		// Subscribe to the menuConfig$ observable provided by _navMenuBuilderService
 		this.settingsMenuConfig$ = this._navMenuBuilderService.menuConfig$.pipe(
 			map((sections: NavMenuSectionItem[]) =>
-				this.mapMenuSections(sections ?? []).filter((section) => section.menuCategory === 'settings')
+				this.mapMenuSections(sections ?? [])
+					.filter((section) => section.menuCategory === 'settings')
+					// Render each settings section as a plain link (no inline accordion):
+					// the full settings menu now lives on the /pages/settings page itself.
+					.map((section) => ({ ...section, children: undefined }))
 			),
 			untilDestroyed(this)
 		);

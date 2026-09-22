@@ -1,4 +1,4 @@
-<nb-card class="card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary">
+<nb-card class="card-scroll">
 	<nb-card-header class="d-flex justify-content-between">
 		<h4 class="email-history-header">
 			<ngx-header-title>
@@ -17,7 +17,7 @@
 			</button>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
 		<div class="content-container">
 			<aside class="email-list">
 				<nb-list nbInfiniteList [threshold]="20" (bottomThreshold)="loadNext()">

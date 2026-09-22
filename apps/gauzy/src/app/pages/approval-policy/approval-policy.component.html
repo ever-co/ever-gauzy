@@ -1,8 +1,5 @@
 <ng-template ngxPermissionsOnly="APPROVALS_POLICY_VIEW">
   <nb-card
-    [nbSpinner]="loading"
-    nbSpinnerStatus="primary"
-    nbSpinnerSize="large"
     class="card-scroll"
     >
     <nb-card-header class="d-flex flex-column pb-0">
@@ -23,10 +20,11 @@
         ></ngx-gauzy-button-action>
       </div>
     </nb-card-header>
-    <nb-card-body>
+    <nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
       @if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
         <div class="table-scroll-container custom-table">
           <angular2-smart-table
+            [class.ga-table-loading]="loading"
             style="cursor: pointer"
             (userRowSelect)="selectApprovalPolicy($event)"
             [settings]="settingsSmartTable"
@@ -43,6 +41,7 @@
       }
       @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="settingsSmartTable"
           [source]="approvalPolicies"

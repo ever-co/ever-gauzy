@@ -1,6 +1,74 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{ 'HELP_PAGE.HELP' | translate }}</h4>
+		<h4>
+			<!-- Product-level page: the "for <Organization>" suffix is off — help content
+			     has nothing to do with the selected organization. -->
+			<ngx-header-title [allowEmployee]="false" [allowOrganization]="false">
+				{{ 'HELP_PAGE.HELP' | translate }}
+			</ngx-header-title>
+		</h4>
 	</nb-card-header>
-	<nb-card-body> </nb-card-body>
+	<nb-card-body class="help-body">
+		<p class="intro">{{ 'HELP_PAGE.INTRO' | translate }}</p>
+
+		<div class="tiles">
+			<a class="tile" href="https://docs.gauzy.co" target="_blank" rel="noopener">
+				<nb-icon icon="book-open-outline"></nb-icon>
+				<span class="text">
+					<span class="title">{{ 'HELP_PAGE.DOCUMENTATION' | translate }}</span>
+					<span class="desc">{{ 'HELP_PAGE.DOCUMENTATION_DESC' | translate }}</span>
+				</span>
+			</a>
+
+			<a class="tile" href="https://docs.gauzy.co/reference/faq" target="_blank" rel="noopener">
+				<nb-icon icon="clipboard-outline"></nb-icon>
+				<span class="text">
+					<span class="title">{{ 'HELP_PAGE.FAQ' | translate }}</span>
+					<span class="desc">{{ 'HELP_PAGE.FAQ_DESC' | translate }}</span>
+				</span>
+			</a>
+
+			@if (isSupportChatAvailable) {
+				<button type="button" class="tile" (click)="openSupportChat()">
+					<nb-icon icon="message-square-outline"></nb-icon>
+					<span class="text">
+						<span class="title">{{ 'HELP_PAGE.SUPPORT_CHAT' | translate }}</span>
+						<span class="desc">{{ 'HELP_PAGE.SUPPORT_CHAT_DESC' | translate }}</span>
+					</span>
+				</button>
+			}
+
+			<a class="tile" [href]="repoBaseUrl + '/issues'" target="_blank" rel="noopener">
+				<nb-icon icon="alert-circle-outline"></nb-icon>
+				<span class="text">
+					<span class="title">{{ 'HELP_PAGE.REPORT_ISSUE' | translate }}</span>
+					<span class="desc">{{ 'HELP_PAGE.REPORT_ISSUE_DESC' | translate }}</span>
+				</span>
+			</a>
+
+			<a class="tile" [href]="repoBaseUrl" target="_blank" rel="noopener">
+				<nb-icon icon="github-outline"></nb-icon>
+				<span class="text">
+					<span class="title">{{ 'HELP_PAGE.GITHUB' | translate }}</span>
+					<span class="desc">{{ 'HELP_PAGE.GITHUB_DESC' | translate }}</span>
+				</span>
+			</a>
+
+			<a class="tile" href="https://gauzy.co" target="_blank" rel="noopener">
+				<nb-icon icon="globe-outline"></nb-icon>
+				<span class="text">
+					<span class="title">{{ 'HELP_PAGE.WEBSITE' | translate }}</span>
+					<span class="desc">{{ 'HELP_PAGE.WEBSITE_DESC' | translate }}</span>
+				</span>
+			</a>
+
+			<a class="tile" routerLink="/pages/about">
+				<nb-icon icon="info-outline"></nb-icon>
+				<span class="text">
+					<span class="title">{{ 'HELP_PAGE.ABOUT_LINK' | translate }}</span>
+					<span class="desc">{{ 'HELP_PAGE.ABOUT_LINK_DESC' | translate }}</span>
+				</span>
+			</a>
+		</div>
+	</nb-card-body>
 </nb-card>

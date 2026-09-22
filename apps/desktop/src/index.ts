@@ -30,6 +30,8 @@ import {
 	DesktopThemeListener,
 	DesktopUpdater,
 	DialogErrorHandler,
+	desktopSecretsToEnv,
+	ensureDesktopSecrets,
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
@@ -37,6 +39,7 @@ import {
 	LocalStore,
 	ProtocolRouter,
 	ProviderFactory,
+	redactSecretsForLog,
 	TranslateLoader,
 	TranslateService,
 	TrayIconFactory,
@@ -333,7 +336,7 @@ function setGlobalVariable(setupConfig: {
 }
 
 async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
-	console.log('Starting the Server...', setupConfig);
+	console.log('Starting the Server...', redactSecretsForLog(setupConfig));
 
 	setGlobalVariable(setupConfig);
 
@@ -355,6 +358,13 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		process.env.DB_NAME = setupConfig['postgres']?.dbName;
 		process.env.DB_USER = setupConfig['postgres']?.dbUsername;
 		process.env.DB_PASS = setupConfig['postgres']?.dbPassword;
+	}
+
+	if (setupConfig.isLocalServer) {
+		// Per-install random signing/session secrets for the integrated API, generated on first start
+		// and replacing a stored published default on upgrade. Stored with the config below so restarts
+		// keep the same keys (GHSA-39j7-x845-4w3c).
+		setupConfig = { ...setupConfig, secret: ensureDesktopSecrets(setupConfig.secret).secret };
 	}
 
 	try {
@@ -386,11 +396,8 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
 
-		if (!setupConfig.secret || !setupConfig.secret.jwt || !setupConfig.secret.refresh_token) {
-			throw new AppError('MAINSTRSERVER', new Error('JWT secrets are required for local server startup'));
-		}
-		process.env.JWT_SECRET = setupConfig.secret.jwt;
-		process.env.JWT_REFRESH_TOKEN_SECRET = setupConfig.secret.refresh_token;
+		// All four are already provisioned above, so this returns them unchanged.
+		Object.assign(process.env, desktopSecretsToEnv(ensureDesktopSecrets(setupConfig.secret).secret));
 
 		console.log('Setting additional environment variables...', process.env.API_PORT);
 		console.log('Setting additional environment variables...', process.env.API_HOST);

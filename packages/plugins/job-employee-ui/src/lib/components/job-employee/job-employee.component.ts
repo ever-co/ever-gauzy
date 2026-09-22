@@ -6,9 +6,10 @@ import { BehaviorSubject, combineLatest, merge, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
+import { NbIconLibraries } from '@nebular/theme';
 import { Cell } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { ID, IEmployee, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IEmployee, IEmployeeJobsStatistics, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX, distinctUntilChange, isNotNullOrUndefined } from '@gauzy/ui-core/common';
 import {
 	PageDataTableRegistryService,
@@ -24,6 +25,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	NumberEditorComponent,
 	EmployeeLinkEditorComponent,
 	PaginationFilterBaseComponent,
@@ -42,6 +44,9 @@ export enum JobSearchTabsEnum {
 	HISTORY = 'HISTORY'
 }
 
+/** Row shape served by `/employee-job/statistics`: the employee record enriched with its job counters. */
+type JobEmployeeRow = IEmployee & Partial<IEmployeeJobsStatistics>;
+
 /**
  * Job Employee Component
  *
@@ -59,6 +64,22 @@ export enum JobSearchTabsEnum {
 	standalone: false
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEmployeeView = Object.freeze(['ORG_JOB_EMPLOYEE_VIEW']) as string[];
+
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobEmployeeViewOrgEmployeesEdit = Object.freeze(['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']) as string[];
+
 	private readonly _http = inject(HttpClient);
 	private readonly _route = inject(ActivatedRoute);
 	private readonly _router = inject(Router);
@@ -71,6 +92,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	private readonly _i18nService = inject(I18nService);
 	private readonly _pageDataTableRegistryService = inject(PageDataTableRegistryService);
 	private readonly _pageTabRegistryService = inject(PageTabRegistryService);
+	private readonly _iconLibraries = inject(NbIconLibraries);
 
 	public readonly jobSearchTabsEnum = JobSearchTabsEnum;
 	public readonly employees$ = new Subject<boolean>();
@@ -82,6 +104,13 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public selectedEmployeeId: ID | null = null;
 	public selectedEmployee: IEmployee | null = null;
 	public disableButton = true;
+
+	/*
+	 * Read-only View: a job-search row is a small flat record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedEmployee: JobEmployeeRow | null = null;
+	public viewSections: IRecordViewSection[] = [];
 
 	public readonly tabsetId: PageTabsetPageId = this._route.snapshot.data['tabsetId'];
 	public readonly dataTableId: PageDataTablePageId = this._route.snapshot.data['dataTableId'];
@@ -111,6 +140,9 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		this.employees$
 			.pipe(
 				debounceTime(100),
+				// The list is about to be reloaded, so whatever the drawer is showing
+				// is about to go stale — close it rather than leave a detached record open.
+				tap(() => this.closeView()),
 				tap(() => this.getActiveJobEmployees()),
 				untilDestroyed(this)
 			)
@@ -419,23 +451,100 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
 			isEditable: true,
 			actions: {
+				// The library's fallback header title is a hardcoded, untranslated 'Actions'.
+				columnTitle: this.getTranslation('SM_TABLE.ACTIONS'),
 				delete: false,
-				add: true
+				// The toolbar's own Add button handles creation (navigates to the
+				// employees page); the table's inline-create was never wired up.
+				add: false
 			},
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			edit: {
-				editButtonContent: '<i class="nb-edit"></i>',
-				saveButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
+				// This is the real per-row action: it puts the row into inline edit of
+				// the two rate columns (plus the status toggle).
+				editButtonContent: this.renderActionIcon('edit-outline', this.getTranslation('BUTTONS.EDIT')),
+				saveButtonContent: this.renderActionIcon('checkmark-outline', this.getTranslation('BUTTONS.SAVE')),
+				cancelButtonContent: this.renderActionIcon('close-outline', this.getTranslation('BUTTONS.CANCEL')),
+				// `renderActionIcon` returns an inline `<svg>`, and Angular's HTML
+				// sanitizer allows no SVG element at all — without this the anchors
+				// render empty.
+				//
+				// `sanitizer` is the library's own supported opt-out, not an ad-hoc key:
+				// `EditAction.sanitizer?: SanitizerSettings` in angular2-smart-table, read
+				// as `settings.edit?.sanitizer?.bypassHtml` by both anchor rows (the edit
+				// button and the save/cancel pair) to pick the mode its `bypassSecurityTrust`
+				// pipe hands to `DomSanitizer.bypassSecurityTrustHtml` before the
+				// `[innerHTML]` binding. So this IS the DomSanitizer path — the library just
+				// owns the call.
+				//
+				// Safe here because every part of that string is ours: the glyph comes
+				// straight out of the registered icon pack and the label is an i18n string,
+				// escaped before it is interpolated.
+				sanitizer: { bypassHtml: true },
 				confirmSave: true
 			},
 			columns: {
 				...this._pageDataTableRegistryService.getPageDataTableColumns('job-employee-page')
 			}
 		};
+	}
+
+	/**
+	 * Builds the inner markup for one of the table's row-action anchors.
+	 *
+	 * `editButtonContent` and its siblings take a STRING, which the library injects
+	 * with `[innerHTML]`, so an `<nb-icon>` written in there is never instantiated —
+	 * which is why these three anchors used to carry FontAwesome glyphs while every
+	 * other icon on the page came from the app's own pack. Reading the SVG straight
+	 * out of that pack closes the gap: `edit-outline` here draws exactly what
+	 * `<nb-icon icon="edit-outline">` draws in the toolbar above the table, and it
+	 * keeps drawing the same thing if the pack is ever re-pointed (it already maps
+	 * the Eva names to Tabler icons — see `TablerIconsModule`).
+	 *
+	 * @param icon - Icon name in the registered `eva` pack.
+	 * @param label - Translated accessible name for the action.
+	 * @returns The anchor's inner markup, or the bare label if the pack is unavailable.
+	 */
+	private renderActionIcon(icon: string, label: string): string {
+		const safeLabel = this.escapeHtml(label);
+
+		let glyph = '';
+		try {
+			glyph = this._iconLibraries.getSvgIcon(icon, 'eva')?.icon?.getContent() ?? '';
+		} catch {
+			// `getSvgIcon` throws when the pack is not registered — outside the app
+			// shell, e.g. in an isolated test. The label alone is the library's own
+			// default content, so the button still works and still reads.
+			glyph = '';
+		}
+
+		if (!glyph) {
+			return safeLabel;
+		}
+
+		// Native `title` rather than `nbTooltip`: this is raw markup, where
+		// directives never bind. The label is repeated as visually hidden text so
+		// the action is not icon-only to a screen reader.
+		return `<span class="ga-action-glyph" title="${safeLabel}" aria-hidden="true">${glyph}</span><span class="sr-only">${safeLabel}</span>`;
+	}
+
+	/**
+	 * Escapes a translated label for interpolation into the raw action markup above,
+	 * which is rendered with the sanitizer bypassed.
+	 *
+	 * @param value - The label to escape.
+	 * @returns The label with HTML-significant characters replaced by entities.
+	 */
+	private escapeHtml(value: string): string {
+		return value
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	/**
@@ -515,8 +624,63 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * @returns void
 	 */
 	onSelectEmployee({ isSelected, data }: { isSelected: boolean; data: IEmployee }): void {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
+	}
+
+	/**
+	 * Opens the read-only View of a job employee row in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	view(selectedItem?: IEmployee): void {
+		if (selectedItem) {
+			this.onSelectEmployee({ isSelected: true, data: selectedItem });
+		}
+
+		const employee: JobEmployeeRow | null = selectedItem ?? this.selectedEmployee;
+		if (!employee) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections(employee);
+		this.viewedEmployee = employee;
+	}
+
+	closeView(): void {
+		this.viewedEmployee = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically.
+	 * Derived cells (zero-defaulted job counters, currency-formatted rates) are
+	 * pre-computed here exactly as the grid's valuePrepareFunctions render them.
+	 */
+	private buildViewSections(employee: JobEmployeeRow): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'JOB_EMPLOYEE.EMPLOYEE', key: 'user', type: 'person' },
+					{ label: 'JOB_EMPLOYEE.AVAILABLE_JOBS', value: employee.availableJobs ?? 0 },
+					{ label: 'JOB_EMPLOYEE.APPLIED_JOBS', value: employee.appliedJobs ?? 0 },
+					{
+						label: 'JOB_EMPLOYEE.BILLING_RATE',
+						value: this._currencyPipe.transform(employee.billRateValue, employee.billRateCurrency)
+					},
+					{
+						label: 'JOB_EMPLOYEE.MINIMUM_BILLING_RATE',
+						value: this._currencyPipe.transform(employee.minimumBillingRate, employee.billRateCurrency)
+					},
+					{
+						label: 'JOB_EMPLOYEE.JOB_SEARCH_STATUS',
+						value: employee.isJobSearchActive ?? false,
+						type: 'boolean'
+					}
+				]
+			}
+		];
 	}
 
 	/**

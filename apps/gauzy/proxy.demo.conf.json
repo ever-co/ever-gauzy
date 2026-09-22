@@ -1,0 +1,12 @@
+{
+	"/api": {
+		"target": "https://apidemo.gauzy.co",
+		"secure": true,
+		"changeOrigin": true,
+		"headers": {
+			"Origin": "https://demo.gauzy.co",
+			"Referer": "https://demo.gauzy.co/"
+		},
+		"logLevel": "debug"
+	}
+}

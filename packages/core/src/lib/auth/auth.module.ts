@@ -13,6 +13,14 @@ import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { RefreshTokenModule } from '../refresh-token/refresh-token.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
+// Deep path, not the '../shared/billing' barrel. The barrel re-exports BillingModule, which
+// imports TenantModule, which imports this module — so importing the barrel here closes a
+// require cycle (billing.module -> tenant.module -> auth.module -> billing/index ->
+// billing.module). TenantModule is then still mid-evaluation when BillingModule's @Module()
+// decorator runs, and its imports array gets `undefined` where TenantModule should be, which
+// Nest rejects at boot on every deployment — including self-hosted installs that never
+// configure Stripe. tenant.module.ts imports this service by the deep path for the same reason.
+import { StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from '../user/user.module';
@@ -21,12 +29,21 @@ import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
+import { LoginAttemptModule } from './login-attempt.module';
 import { SocialAccountModule } from './social-account/social-account.module';
 import { OAuthClientModule } from './oauth-client/oauth-client.module';
+import { TermsAcceptanceModule } from '../terms-acceptance/terms-acceptance.module';
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 
 // Core service providers for handling authentication and related functionalities
-const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
+const providers = [
+	AuthService,
+	EmailConfirmationService,
+	UserOrganizationService,
+	// Backs SubscriptionRequiredGuard on the register route. Inert unless STRIPE_SECRET_KEY is set,
+	// so self-hosted installs are unaffected by its presence here.
+	StripeSubscriptionService
+];
 
 // Authentication strategies for token validation and management
 const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
@@ -51,7 +68,9 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				RolePermissionModule,
 				AccessTokenModule,
 				RefreshTokenModule,
-				OAuthClientModule
+				OAuthClientModule,
+				TermsAcceptanceModule,
+				LoginAttemptModule
 			],
 			useClass: AuthService
 		}),
@@ -70,7 +89,9 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		RolePermissionModule,
 		AccessTokenModule,
 		RefreshTokenModule,
-		OAuthClientModule
+		OAuthClientModule,
+		TermsAcceptanceModule,
+		LoginAttemptModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],

@@ -1,0 +1,50 @@
+<gz-time-track-widget-state
+	[loading]="loading()"
+	[error]="errorMessage()"
+	[empty]="isEmpty()"
+	[emptyMessageKey]="emptyMessageKey()"
+	[skeletonRows]="4"
+	(retry)="refresh()"
+>
+	<div class="list-panel">
+		<div class="list-actions">
+			<button nbButton ghost size="tiny" status="primary" type="button" (click)="openReport()">
+				{{ 'BUTTONS.VIEW_REPORT' | translate }}
+			</button>
+		</div>
+
+		<div class="list-scroll">
+			<div class="list-head manual-time-row">
+				<span class="cell-text">{{ 'TIMESHEET.MEMBER' | translate }}</span>
+				<span class="cell-text">{{ 'TIMESHEET.PROJECT' | translate }}</span>
+				<span class="cell-numeric">{{ 'TIMESHEET.DURATION' | translate }}</span>
+				<span class="cell-numeric manual-time-date">{{ 'TIMESHEET.DATE' | translate }}</span>
+			</div>
+
+			@for (manualTime of rows(); track manualTime.id) {
+				<div class="list-row manual-time-row">
+					<ngx-avatar
+						class="avatar-dashboard"
+						size="sm"
+						[name]="manualTime?.user?.name"
+						[src]="manualTime?.user?.imageUrl"
+						[id]="manualTime?.employeeId"
+						[employee]="manualTime?.employee"
+					></ngx-avatar>
+
+					<span class="cell-text" [title]="manualTime?.project?.name">
+						{{ manualTime?.project?.name }}
+					</span>
+
+					<span class="cell-numeric cell-muted">
+						{{ manualTime?.duration || 0 | durationFormat }}
+					</span>
+
+					<span class="cell-numeric cell-muted manual-time-date">
+						{{ manualTime?.startedAt | dateFormat }}
+					</span>
+				</div>
+			}
+		</div>
+	</div>
+</gz-time-track-widget-state>

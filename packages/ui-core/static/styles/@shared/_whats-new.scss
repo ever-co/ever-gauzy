@@ -34,55 +34,17 @@
     margin-bottom: 19px;
     padding-left: 5px;
   }
-  & .entry {
+  // Card internals live in the shared ngx-changelog-entry component
+  // (ui-core/shared); only inter-card spacing is the wrapper's concern, so the
+  // login panel and the sidebar keep their differing bottom reserve.
+  & ngx-changelog-entry {
+    display: block;
     margin-bottom: 15px;
-    border-bottom: 1px solid lightgray;
-    padding-left: 5px;
-    padding-right: 5px;
     &:last-of-type {
       margin-bottom: 83px;
       @include mobile-screen {
         margin-bottom: 0;
       }
-    }
-    & .entry-headings-wrapper {
-      display: flex;
-      margin-bottom: 5px;
-      & .icon {
-        margin-right: 15px;
-        height: 14px;
-        margin-top: 3px;
-        color: nb-theme(text-primary-color);
-      }
-      & .entry-header {
-        font-family: Inter;
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 17px;
-        letter-spacing: 0em;
-        text-align: left;
-        margin-bottom: 5px;
-      }
-      & .entry-header-date {
-        font-family: Inter;
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 16px;
-        letter-spacing: 0em;
-        text-align: left;
-        color: var(--gauzy-text-2);
-      }
-    }
-    & .paragraph {
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 400;
-      line-height: 16px;
-      letter-spacing: 0em;
-      text-align: left;
     }
   }
 }

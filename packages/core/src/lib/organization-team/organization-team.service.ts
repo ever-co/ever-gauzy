@@ -27,7 +27,13 @@ import {
 import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
-import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';
+import {
+	MultiORMEnum,
+	enhanceWhereWithTenantId,
+	parseTypeORMFindToMikroOrm,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect
+} from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -416,6 +422,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to an object containing paginated organization teams.
 	 */
 	public async findAll(options?: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+		// This method builds its own query instead of going through the CRUD read methods, so the
+		// sink-level check in `CrudService` never runs for it. Assert the sensitive-relation table
+		// here too: every tenant-scoped entity exposes an `organization` relation, so a client-supplied
+		// `relations` reaches the protected rows from any entity, not only from the ones whose
+		// controller mounts `SensitiveRelationsInterceptor`.
+		this.assertRelationsPermitted(options);
+
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
@@ -560,8 +573,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					typeOrmQueryBuilder.setFindOptions({
 						...(options.skip ? { skip: options.take * (options.skip - 1) } : {}),
 						...(options.take ? { take: options.take } : {}),
-						...(options.select ? { select: options.select } : {}),
-						...(options.relations ? { relations: options.relations } : {}),
+						...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
+						...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 						...(options.where ? { where: options.where } : {}),
 						...(options.order ? { order: options.order } : {})
 					});
@@ -597,14 +610,23 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { organizationId } = options;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
+			// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team — which
+			// requires an employee identity. Fail closed when there is none: an empty employeeId used to
+			// be dropped from the where, degrading the check to "the team has any manager".
+			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			const employeeId = RequestContext.currentEmployeeId();
+			if (!canChangeSelectedEmployee && !employeeId) {
+				throw new ForbiddenException('You do not have permission to delete this team.');
+			}
+
 			const team = await this.findOneByIdString(teamId, {
 				where: {
 					tenantId,
 					organizationId,
-					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					...(!canChangeSelectedEmployee
 						? {
 								members: {
-									employeeId: RequestContext.currentEmployeeId(),
+									employeeId,
 									role: {
 										name: RolesEnum.MANAGER
 									}

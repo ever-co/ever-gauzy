@@ -7,12 +7,13 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
+	NbRadioModule,
 	NbRouteTabsetModule,
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { FeatureToggleModule } from '@gauzy/ui-core/shared';
+import { FeatureToggleModule, SharedModule } from '@gauzy/ui-core/shared';
 import { GeneralSettingRoutingModule } from './general-setting-routing.module';
 import { GeneralSettingComponent } from './general-setting.component';
 
@@ -25,12 +26,14 @@ import { GeneralSettingComponent } from './general-setting.component';
 		NbCardModule,
 		NbIconModule,
 		NbInputModule,
+		NbRadioModule,
 		NbRouteTabsetModule,
 		NbSpinnerModule,
 		NbToggleModule,
 		TranslateModule.forChild(),
 		GeneralSettingRoutingModule,
-		FeatureToggleModule
+		FeatureToggleModule,
+		SharedModule
 	],
 	declarations: [GeneralSettingComponent]
 })

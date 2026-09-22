@@ -1,6 +1,15 @@
-<nb-card class="profit-history" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+  class="profit-history"
+  [class.inline]="!isDialog"
+  [nbSpinner]="loading"
+  nbSpinnerStatus="primary"
+  nbSpinnerSize="large"
+>
   <nb-card-header>
-    <span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+    <!-- Rendered only as a dialog: inline (dashboard widget) there is nothing to close. -->
+    @if (isDialog) {
+      <span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+    }
     <h5 class="title mb-3">
       {{ 'DASHBOARD_PAGE.PROFIT_HISTORY.PROFIT_REPORT' | translate }}
     </h5>
@@ -34,6 +43,7 @@
   <nb-card-body>
     <div class="table-scroll-container">
       <angular2-smart-table
+        [class.ga-table-loading]="loading"
         class="table"
         [settings]="smartTableSettings"
         [source]="smartTableSource"

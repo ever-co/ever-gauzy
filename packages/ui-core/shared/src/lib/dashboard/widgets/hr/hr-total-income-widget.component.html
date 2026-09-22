@@ -1,0 +1,14 @@
+<ga-hr-info-card
+	titleKey="DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME"
+	[metaKey]="metaKey()"
+	[metaParams]="metaParams()"
+	[value]="value()"
+	[color]="color"
+	[rows]="rows()"
+	[loading]="loading()"
+	[error]="error()"
+	[hasEmployee]="hasEmployee()"
+	(openInfo)="openHistory(historyType)"
+	(openRow)="openHistory($event.historyType)"
+	(retry)="refresh()"
+></ga-hr-info-card>

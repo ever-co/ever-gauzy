@@ -1,14 +1,14 @@
-<nb-card>
+<nb-card class="public-link-dialog">
 	<nb-card-header>
-		<span class="cancel">
-			<i class="fas fa-times" (click)="close()"></i>
-		</span>
 		<h5 class="title">
 			{{ 'INVOICES_PAGE.PUBLIC_LINK.HEADER' | translate }}
 		</h5>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="close()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
+		<p class="hint">
 			{{
 				'INVOICES_PAGE.PUBLIC_LINK.ACCESS'
 					| translate
@@ -16,28 +16,27 @@
 								text: invoice.isEstimate ? 'estimate' : 'invoice'
 						  }
 			}}
-		</div>
-		<div>
-			<label for="publicLink" class="label">
-				{{ 'FORM.LABELS.PUBLIC_LINK' | translate }}
-			</label>
-			<input id="publicLink" [ngModel]="publicLink" readonly nbInput fullWidth #inputTarget />
-		</div>
+		</p>
+		<label for="publicLink" class="label">
+			{{ 'FORM.LABELS.PUBLIC_LINK' | translate }}
+		</label>
+		<input id="publicLink" [ngModel]="publicLink" readonly nbInput fullWidth #inputTarget />
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button outline nbButton status="basic" class="mr-3" (click)="close()" type="button">
+		<button nbButton ghost status="basic" size="small" (click)="close()" type="button">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			[ngxClipboard]="inputTarget"
-			class="mr-3"
 			status="success"
 			nbButton
+			size="small"
 			type="button"
 			[disabled]="isCopied"
 			(click)="copyLink()"
 			[nbTooltip]="'INVOICES_PAGE.PUBLIC_LINK.COPY_TO_CLIPBOARD_TOOLTIP' | translate"
 		>
+			<nb-icon [icon]="isCopied ? 'checkmark-outline' : 'copy-outline'"></nb-icon>
 			{{ isCopied ? ('BUTTONS.COPIED' | translate) : ('BUTTONS.COPY_LINK' | translate) }}
 		</button>
 	</nb-card-footer>

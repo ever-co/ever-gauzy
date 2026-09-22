@@ -1,6 +1,11 @@
 export interface Environment {
 	production: boolean;
 
+	/** Deployed release version — the git tag the web build came from (e.g. 'v111.2.10'). Empty when unknown. */
+	version?: string;
+	/** Full git commit SHA the web build came from. Empty when unknown. */
+	commit?: string;
+
 	API_BASE_URL: string;
 	CLIENT_BASE_URL: string;
 	COOKIE_DOMAIN?: string;
