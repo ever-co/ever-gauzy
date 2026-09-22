@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
 import { IEmployee, isEEAOrUKRegion } from '@gauzy/contracts';
-import { EmployeeStore } from '@gauzy/ui-core/core';
+import { EmployeeStore, applyEEAUKFormRestrictions, bindAgentRestrictionListeners } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -130,41 +130,13 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 
-		const allowAgentAppExitControl = <FormControl>this.form.get('allowAgentAppExit');
-		allowAgentAppExitControl.valueChanges
-			.pipe(
-				tap((canExit: boolean) => {
-					if (canExit === false && !this.isEEAOrUK) {
-						this.handleAgentRestrictionAcknowledgement('allowAgentAppExit');
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		const allowLogoutFromAgentAppControl = <FormControl>this.form.get('allowLogoutFromAgentApp');
-		allowLogoutFromAgentAppControl.valueChanges
-			.pipe(
-				tap((canLogout: boolean) => {
-					if (canLogout === false && !this.isEEAOrUK) {
-						this.handleAgentRestrictionAcknowledgement('allowLogoutFromAgentApp');
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	private handleAgentRestrictionAcknowledgement(field: 'allowAgentAppExit' | 'allowLogoutFromAgentApp'): void {
-		const title = this.translateService.instant('ORGANIZATIONS_PAGE.EDIT.SETTINGS.RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE');
-		const body = this.translateService.instant('ORGANIZATIONS_PAGE.EDIT.SETTINGS.RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY');
-
-		const confirmed = window.confirm(`${title}\n\n${body}`);
-		if (confirmed) {
-			this.acknowledgeAgentExitLogoutRestriction = true;
-		} else {
-			this.form.get(field)?.setValue(true, { emitEvent: false });
-		}
+		bindAgentRestrictionListeners(
+			this.form,
+			() => this.isEEAOrUK,
+			this.translateService,
+			untilDestroyed(this),
+			() => (this.acknowledgeAgentExitLogoutRestriction = true)
+		);
 	}
 
 	/**
@@ -204,15 +176,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackAllDisplays: trackAllDisplays ?? true
 		});
 
-		if (this.isEEAOrUK) {
-			this.form.get('allowAgentAppExit')?.setValue(true, { emitEvent: false });
-			this.form.get('allowAgentAppExit')?.disable({ emitEvent: false });
-			this.form.get('allowLogoutFromAgentApp')?.setValue(true, { emitEvent: false });
-			this.form.get('allowLogoutFromAgentApp')?.disable({ emitEvent: false });
-		} else {
-			this.form.get('allowAgentAppExit')?.enable({ emitEvent: false });
-			this.form.get('allowLogoutFromAgentApp')?.enable({ emitEvent: false });
-		}
+		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
 
 		this.form.updateValueAndValidity();
 	}
