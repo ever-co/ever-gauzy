@@ -718,6 +718,16 @@ describe('StockLevelController — the level resource (doc 02 §3.4)', () => {
 		expect(levels[0]).toMatchObject({ variantId: FOREIGN_VARIANT, quantity: 99, availableQuantity: 99 });
 	});
 
+	it('states the window the route is given, so the REST list pages like the connection beside it', async () => {
+		const fixture = levelResourceFixture();
+
+		// The route took a `take` and no offset, so a client could read the first page over REST and no other,
+		// while the GraphQL connection beside it pages by cursor. A skip past the two rows the fixture holds is
+		// the cheapest proof that the offset reaches the read rather than being dropped on the way.
+		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '10', '5')).resolves.toEqual([]);
+		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '1')).resolves.toHaveLength(1);
+	});
+
 	it('reads one level by id, with the location the join resolves', async () => {
 		const fixture = levelResourceFixture();
 

@@ -57,12 +57,21 @@ export class StockLevelController {
 	async findAll(
 		@Query('warehouseId', new ParseUUIDPipe({ optional: true })) warehouseId?: ID,
 		@Query('variantId', new ParseUUIDPipe({ optional: true })) variantId?: ID,
-		@Query('take') take?: number
+		@Query('take') take?: number,
+		@Query('skip') skip?: number,
+		@Query('withDeleted') withDeleted?: string
 	): Promise<IStockAvailability[]> {
+		// `skip` and `withDeleted` are what the GraphQL connection beside this route offers, and a route that
+		// cannot express them answers a narrower question than the field: the client that pages over GraphQL
+		// and the client that pages over REST must be able to ask for the same rows. `withDeleted` arrives as
+		// the string a query parameter always is, so `true` is the only value that lifts the soft-delete
+		// filter — an absent or unreadable one leaves the read exactly as it was.
 		return await this.stockLevelService.findLevels({
 			warehouseId,
 			variantId,
-			take: take ? Number(take) : undefined
+			take: take ? Number(take) : undefined,
+			skip: skip ? Number(skip) : undefined,
+			withDeleted: String(withDeleted).toLowerCase() === 'true'
 		});
 	}
 

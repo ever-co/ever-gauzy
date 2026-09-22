@@ -260,13 +260,18 @@ export class StockLevelService {
 		warehouseId?: ID;
 		variantId?: ID;
 		take?: number;
+		skip?: number;
 		withDeleted?: boolean;
 	}): Promise<IStockAvailability[]> {
 		const query = this.levelReadOf(filter);
 
 		// No count here: this read answers a list, and counting the set it was cut from is a query the caller
 		// never reads the answer to.
-		const rows = await query.orderBy('level.id', 'ASC').limit(filter.take ?? 100).getMany();
+		const rows = await query
+			.orderBy('level.id', 'ASC')
+			.offset(Math.max(filter.skip ?? 0, 0))
+			.limit(filter.take ?? 100)
+			.getMany();
 
 		return this.toAvailabilities(rows as any[]);
 	}
