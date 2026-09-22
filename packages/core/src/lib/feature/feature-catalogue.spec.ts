@@ -10,7 +10,13 @@ jest.mock('uuid', () => {
 import { QueryRunner } from 'typeorm';
 import { gauzyToggleFeatures, DatabaseTypeEnum } from '@gauzy/config';
 import { FeatureEnum, IFeature } from '@gauzy/contracts';
-import { COMMERCE_CATALOGUE, DEFAULT_ENABLED_FEATURES, IFeatureCatalogueEntry } from './commerce-feature-catalogue';
+import {
+	COMMERCE_CATALOGUE,
+	DEFAULT_ENABLED_FEATURES,
+	DETAIL_FEATURES,
+	IFeatureCatalogueEntry,
+	MODULE_FEATURES
+} from './commerce-feature-catalogue';
 import { DEFAULT_FEATURES } from './default-features';
 import { SeedCoreFeatures1791000000510 } from '../database/migrations/1791000000510-SeedCoreFeatures';
 
@@ -137,9 +143,15 @@ const toggledCodes = (type: DatabaseTypeEnum, executed: ExecutedQuery[]): string
 };
 
 describe('the commerce feature catalogue', () => {
-	it('is the 32 codes the programme introduces, each exactly once', () => {
-		expect(COMMERCE_CATALOGUE).toHaveLength(32);
-		expect(new Set(catalogueCodes).size).toBe(32);
+	it('is the 33 codes the programme introduces, each exactly once', () => {
+		// Counted in its two halves as well as whole, so the number says where it comes from rather than
+		// standing as a bare total: sixteen module capabilities and seventeen detail capabilities. The
+		// thirty-third is the marketplace payouts code, which the payout scheduler gained a flag of its
+		// own for — a capability that could not be switched from the marketplace flag beside it.
+		expect(MODULE_FEATURES).toHaveLength(16);
+		expect(DETAIL_FEATURES).toHaveLength(17);
+		expect(COMMERCE_CATALOGUE).toHaveLength(33);
+		expect(new Set(catalogueCodes).size).toBe(33);
 		catalogueCodes.forEach((code) => expect(code).toMatch(/^FEATURE_[A-Z0-9_]+$/));
 	});
 

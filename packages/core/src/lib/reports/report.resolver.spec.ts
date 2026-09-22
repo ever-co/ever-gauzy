@@ -194,10 +194,25 @@ function fieldArgs(operation: 'Query' | 'Mutation', field: string): string[] {
 	return (root?.getFields()?.[field]?.args ?? []).map((argument) => argument.name);
 }
 
-/** The root fields this domain contributes, which are the ones that name its concepts. */
+/**
+ * The root fields this domain declares, read off this domain's own documents.
+ *
+ * Ownership is not the name. The time-tracking domain declares report fields of its own —
+ * `timeLogWeeklyReport`, `timeLogOwedAmountReport`, `dailyActivitiesReport` and their siblings — and
+ * those mirror its routes, not this domain's. A filter on the word "report" adopts every one of them
+ * the moment they are added, and then reports this domain as declaring capabilities it never declared;
+ * asking the documents that would have to declare a field is what keeps the two apart.
+ */
 function ownedRootFields(operation: 'Query' | 'Mutation'): string[] {
+	const documents = readdirSync(join(__dirname, 'schema'))
+		.filter((name) => name.endsWith('.gql'))
+		.map((name) => readFileSync(join(__dirname, 'schema', name), 'utf8'))
+		.join('\n');
+
+	// A root field is declared here when this document states its name at the start of a member — as a
+	// field with arguments or without one — and the composed schema agrees that the field exists.
 	return rootFields(operation)
-		.filter((field) => field.toLowerCase().includes('report'))
+		.filter((field) => new RegExp(`(^|\\n)[\\t ]*${field}[\\t ]*[(:\n]`).test(documents))
 		.sort();
 }
 

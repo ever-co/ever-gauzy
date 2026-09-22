@@ -28,13 +28,32 @@ function uniqueViolation(): Error {
 	return Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
 }
 
-/** One column's criteria, including the operators TypeORM builds for `In` and friends. */
-function matches(row: Row, criteria: Row = {}): boolean {
+/**
+ * Whether one row answers a criterion, including the operators TypeORM builds for `In`, `IsNull` and
+ * friends.
+ *
+ * A criterion is one criteria object or TypeORM's array form, which ORs the objects in it — and that
+ * array is how every scoped read in this service states "the caller's own organization **or** the
+ * tenant-wide row". It is modelled rather than tolerated: an array read as a single object matches no
+ * row at all, so a record that is present is answered as missing, which is a `404` manufactured by the
+ * double for the very case this suite exists to check.
+ */
+function matches(row: Row, criteria: Row | Row[] = {}): boolean {
+	if (Array.isArray(criteria)) {
+		return criteria.some((alternative) => matches(row, alternative));
+	}
+
 	return Object.entries(criteria).every(([column, condition]) => {
 		const operator = condition as { _type?: string; _value?: unknown };
 
 		if (operator && typeof operator === 'object' && operator._type === 'in' && Array.isArray(operator._value)) {
 			return operator._value.includes(row[column]);
+		}
+
+		// The other half of the same scope: an event appended with no organization is the tenant-wide
+		// fact, and it is invisible to an equality test against the `FindOperator` object that asks for it.
+		if (operator && typeof operator === 'object' && operator._type === 'isNull') {
+			return (row[column] ?? null) === null;
 		}
 
 		return (row[column] ?? null) === (condition ?? null);

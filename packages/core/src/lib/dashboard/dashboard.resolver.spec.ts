@@ -383,9 +383,12 @@ describe('DashboardResolver — the SDL declares the capabilities the REST route
 		expect(members).toContain('deletedAt');
 	});
 
-	it('offers no argument it cannot honour', () => {
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(fieldArgs('Query', 'dashboards')).not.toContain('withDeleted');
+	it('offers the soft-delete switch its own route offers, and no filter it could not honour', () => {
+		// `BaseQueryDTO` carries `withDeleted` and the list route hands its query string straight to the
+		// same read, so a REST caller can ask for withdrawn dashboards — and the connection has to be able
+		// to ask for the same rows, or it hides what the route serves. The field declares it; that it is
+		// passed through rather than declared and dropped is asserted with the connection contract below.
+		expect(fieldArgs('Query', 'dashboards')).toContain('withDeleted');
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.
 		expect(fieldArgs('Query', 'dashboardCount')).toEqual([]);
@@ -416,6 +419,18 @@ describe('DashboardResolver — the connection contract', () => {
 		// The default is the one the caller's session opens in, so it leads the list the switcher reads,
 		// even though it is the older row.
 		expect(connection.nodes.map((node) => node.id)).toEqual([OTHER, LAYOUT]);
+	});
+
+	it('passes the soft-delete switch through to the read rather than declaring it and dropping it', async () => {
+		const { resolver, dashboardService } = surfaces();
+
+		// A stated switch is the route's own option travelling the same way: a withdrawn dashboard is
+		// answered only when the caller asks, and asking has to reach the read. An argument that was
+		// declared in the schema and never forwarded would pass every SDL assertion in this file while
+		// quietly refusing the caller the rows the delivered route hands them.
+		await resolver.dashboards(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+
+		expect(dashboardService.findAll).toHaveBeenCalledWith({ withDeleted: true });
 	});
 
 	it('narrows by the fields the filter declares, the layout document included', async () => {
