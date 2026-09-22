@@ -158,7 +158,7 @@ describe('RolePermissionUtils.migrateRolePermissions', () => {
 		});
 
 		it('never issues the per-permission existence probe', () => {
-			// The old `checkPermissionExistence` query is recognisable by its `distinctAlias`
+			// The old `checkPermissionExistence` query is recognizable by its `distinctAlias`
 			// subquery. It is retained on the class, but the migration must not call it.
 			expect(recorded.filter((r) => isPerPermissionProbe(r.sql))).toHaveLength(0);
 		});
@@ -239,7 +239,7 @@ describe('RolePermissionUtils.migrateRolePermissions', () => {
 			const enabledByDefault = (defaults?.defaultEnabledPermissions ?? [])[0] as string;
 
 			// An operator has deliberately turned OFF a permission that the defaults enable. The
-			// migration only ever INSERTS missing rows, so this customisation must survive.
+			// migration only ever INSERTS missing rows, so this customization must survive.
 			await dataSource.manager.query(
 				`UPDATE "role_permission" SET "enabled" = 0 WHERE "roleId" = ? AND "permission" = ?`,
 				[roleId, enabledByDefault]
