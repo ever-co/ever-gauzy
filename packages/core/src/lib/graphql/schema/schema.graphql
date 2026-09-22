@@ -1698,7 +1698,7 @@ type Query {
   
   `totalCount` is the count of the rows this read answered rather than of every module in the store.
   """
-  employeeProjectModules(filter: OrganizationProjectModuleFilter, sort: [OrganizationProjectModuleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationProjectModuleConnection!
+  employeeProjectModules(filter: OrganizationProjectModuleFilter, sort: [OrganizationProjectModuleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationProjectModuleConnection!
 
   """
   The modules the caller's own teams share, read through the delivered reader that joins the team
@@ -1706,7 +1706,7 @@ type Query {
   
   `totalCount` is the count of the rows this read answered rather than of every module in the store.
   """
-  teamProjectModules(filter: OrganizationProjectModuleFilter, sort: [OrganizationProjectModuleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationProjectModuleConnection!
+  teamProjectModules(filter: OrganizationProjectModuleFilter, sort: [OrganizationProjectModuleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationProjectModuleConnection!
 
   """
   The modules one employee works, read through the delivered reader that joins the module-member pivot
