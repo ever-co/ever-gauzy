@@ -21,5 +21,5 @@
 # It has no input. The two routes that narrow do so through a `data` query member and an `Organization-Id`
 # header, and both narrow *which tables are written into the archive* rather than which rows are answered.
 #
-# The delivered routes themselves are described in `export.api.gql` beside this file, together with the
+# The delivered routes themselves are described in `export.api.md` beside this file, together with the
 # reason a streamed download is not a value this schema can declare.

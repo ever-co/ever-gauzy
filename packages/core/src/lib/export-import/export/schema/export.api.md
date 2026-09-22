@@ -34,7 +34,7 @@
 #
 # - **No type is declared here.** There is no row behind an export — the domain owns no entity, the
 #   archive is assembled from every repository the platform registers, and nothing about it outlives the
-#   request. `export.type.gql` therefore declares nothing either, and says so.
+#   request. `export.type.md` therefore declares nothing either, and says so.
 # - **No mutation is declared for it.** An export would be a read if it were expressible at all: the
 #   delivered routes change no row. The reason there is no field is the answer's shape and not a missing
 #   capability.

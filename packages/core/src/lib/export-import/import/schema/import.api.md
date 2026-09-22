@@ -33,7 +33,7 @@
 # have to reproduce the storage step, the format filter and the size limit that the delivered route
 # enforces at the transport, and it would let a caller name any file the server can read.
 #
-# No type is declared in `import.type.gql` beside this file, for the same reason: the domain owns no
+# No type is declared in `import.type.md` beside this file, for the same reason: the domain owns no
 # entity — the rows it writes belong to the tables the archive names, and the ledger row belongs to the
 # import-history domain. A client that needs an import reaches `POST /api/import`, and reads what became
 # of it through `importHistories`.

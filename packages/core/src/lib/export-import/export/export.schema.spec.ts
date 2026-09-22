@@ -86,7 +86,10 @@ describe('ExportController — the routes the absence of a surface rests on', ()
 		// wrong rather than merely stale.
 		const source = readFileSync(join(__dirname, 'export.controller.ts'), 'utf8');
 		expect(source.match(/@Res\(\)/g) ?? []).toHaveLength(ROUTES.length);
-		expect(source).toContain('downloadToUser(res)');
+		// Each handler streams through the service rather than answering a value, once per route; the job
+		// it hands over names the archive being written. Counted rather than merely contained, so a
+		// handler that stopped streaming — and answered something a field could declare — fails here.
+		expect(source.match(/downloadToUser\(job, res\)/g) ?? []).toHaveLength(ROUTES.length);
 	});
 });
 
@@ -97,18 +100,31 @@ describe('ExportController — the composed schema carries no field of this doma
 		}
 	});
 
-	it('declares no type of its own, because there is no row behind an export', () => {
-		expect(isCommentOnly(document('export.type.gql'))).toBe(true);
-		expect(isCommentOnly(document('export.api.gql'))).toBe(true);
+	it('contributes no document at all, which is what keeps the domain out of the composition', () => {
+		// Not "a document that declares nothing": the parser refuses a file with no definition
+		// ("Unexpected <EOF>") and the boot composes every `*.gql` under a `schema/` directory, so a
+		// comment-only document here would break the boot rather than satisfy this suite. The domain
+		// ships none, and the absence is itself the statement.
+		expect(readdirSync(join(__dirname, 'schema')).filter((name) => name.endsWith('.gql'))).toEqual([]);
 	});
 
 	it('writes the reason down where the next reader will find it', () => {
-		const api = document('export.api.gql');
+		const api = document('export.api.md');
+		const type = document('export.type.md');
+
+		// Documentation, and the file's own header says so: not every line is a GraphQL comment, which is
+		// the property that keeps it out of the composition and the reason the extension is not `.gql`.
+		expect(isCommentOnly(api)).toBe(false);
+		expect(api).toContain('not SDL');
 
 		// The document states what each route answers, and why a streamed archive is not a field.
 		expect(api).toContain('GET /');
 		expect(api).toContain('GET /template');
 		expect(api).toContain('GET /filter');
 		expect(api).toContain('download');
+
+		// The two documents name each other, so a reader who opens either one finds the other.
+		expect(api).toContain('export.type.md');
+		expect(type).toContain('export.api.md');
 	});
 });

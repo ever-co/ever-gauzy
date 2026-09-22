@@ -18,5 +18,5 @@
 # reads the ledger is declared beside it. Declaring it again here would be a second declaration of one
 # concept, which the composition pass refuses and which would diverge the moment either copy was edited.
 #
-# The delivered route itself is described in `import.api.gql` beside this file, together with the reason
+# The delivered route itself is described in `import.api.md` beside this file, together with the reason
 # an uploaded archive is not an argument this schema can declare.

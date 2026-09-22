@@ -108,17 +108,25 @@ describe('ImportController — the composed schema carries no field of this doma
 		}
 	});
 
-	it('declares no type of its own, because the row it answers has an owner', () => {
-		expect(isCommentOnly(document('import.type.gql'))).toBe(true);
-		expect(isCommentOnly(document('import.api.gql'))).toBe(true);
+	it('contributes no document at all, because the row it answers has an owner', () => {
+		// The same absence the export domain states, for a second reason: this domain owns no entity, so
+		// there is no type to declare, and a document with no definition is refused by the parser and
+		// globbed by the boot. What it would have declared is declared by `import-history`, once.
+		expect(readdirSync(join(__dirname, 'schema')).filter((name) => name.endsWith('.gql'))).toEqual([]);
+		expect(isCommentOnly(document('import.api.md'))).toBe(false);
 	});
 
 	it('names the domain that declares the ledger row rather than restating it', () => {
-		const type = document('import.type.gql');
+		const type = document('import.type.md');
+		const api = document('import.api.md');
 
 		expect(type).toContain('ImportHistory');
 		expect(type).toContain('import-history');
 		// The row is declared once in the whole schema, and by that domain.
 		expect(schema.getType('ImportHistory')).toBeDefined();
+
+		// The two documents name each other, so a reader who opens either one finds the other.
+		expect(type).toContain('import.api.md');
+		expect(api).toContain('import.type.md');
 	});
 });
