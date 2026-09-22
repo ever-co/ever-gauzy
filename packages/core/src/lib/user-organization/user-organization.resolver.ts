@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -12,7 +12,8 @@ import {
 } from '../api/graphql-connection';
 import { FeatureFlag } from '@gauzy/common';
 import { BaseQueryDTO } from '../core/crud';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { UserOrganization } from './user-organization.entity';
 import { UserOrganizationService } from './user-organization.services';
@@ -100,9 +101,19 @@ const USER_ORGANIZATION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * capability. `FeatureFlagGuard` reads that code from `FEATURE_METADATA`, over the handler and then the
  * class, which is why the gate is stated on the class rather than restated on each field — and why it is
  * appended to the guard chain the routes below already carry rather than replacing any part of it.
+ *
+ * **The permission is the route's too.** Five of the routes below state `ORG_USERS_EDIT`, because
+ * adding a person to an organization, editing that membership and removing it are administrative acts.
+ * The mutations that mirror them state the same permission, so `PermissionGuard` sits on the class
+ * beside the guards the routes carry. Without it this surface would serve a caller the REST route
+ * refuses: the field would be reachable by any authenticated member of the tenant while the route it
+ * mirrors demands `ORG_USERS_EDIT`, which is one capability decided two different ways. The guard is on
+ * the class and the permission on the five fields — the same split the controller uses — and a field
+ * that states no permission is unaffected, because `PermissionGuard` allows a handler that asks for
+ * none. That is what keeps the reads open exactly as wide as the read routes.
  */
 @Resolver('UserOrganization')
-@UseGuards(TenantPermissionGuard, FeatureFlagGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class UserOrganizationResolver {
 	constructor(
@@ -210,6 +221,7 @@ export class UserOrganizationResolver {
 	 * overwrites whatever a body states, so a caller states which person and which organization the
 	 * membership joins and never which tenant it is written into.
 	 */
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Mutation('createUserOrganization')
 	async createUserOrganization(@Args('input') input: ICreateUserOrganizationInput): Promise<UserOrganization> {
 		return await this.userOrganizationService.create(input as unknown as UserOrganization);
@@ -227,6 +239,7 @@ export class UserOrganizationResolver {
 	 * answers the store's own update result — a statement about the write, `{ affected }` — which is
 	 * not a row and not what a GraphQL field named `updateUserOrganization` may return.
 	 */
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Mutation('updateUserOrganization')
 	async updateUserOrganization(@Args('input') input: IUpdateUserOrganizationInput): Promise<UserOrganization> {
 		const { id, ...values } = input;
@@ -247,6 +260,7 @@ export class UserOrganizationResolver {
 	 * The answer is whether the removal happened rather than the removed row, because there is no one
 	 * row to answer with: the handler's outcome is either a membership or an account.
 	 */
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Mutation('deleteUserOrganization')
 	async deleteUserOrganization(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.commandBus.execute(new UserOrganizationDeleteCommand(id));
@@ -261,6 +275,7 @@ export class UserOrganizationResolver {
 	 * The delivered route declares no query parameter of its own and passes the service the option
 	 * list it bound from the query string, so the field states none either.
 	 */
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Mutation('softDeleteUserOrganization')
 	async softDeleteUserOrganization(@Args('id', { type: () => ID }) id: Id): Promise<UserOrganization> {
 		return await this.userOrganizationService.softRemove(id);
@@ -269,6 +284,7 @@ export class UserOrganizationResolver {
 	/**
 	 * Puts a withdrawn membership back, clearing the marker the withdrawal set.
 	 */
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@Mutation('recoverUserOrganization')
 	async recoverUserOrganization(@Args('id', { type: () => ID }) id: Id): Promise<UserOrganization> {
 		return await this.userOrganizationService.softRecover(id);

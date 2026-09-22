@@ -644,28 +644,34 @@ const ROUTE_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 ];
 
 describe('UserOrganizationResolver — the guard stack is the controller’s, field by field', () => {
-	it('guards the resolver the way the controller is guarded, and states no permission either', () => {
+	it('guards the resolver with the controller’s class chain, plus the gate the endpoint adds', () => {
 		const controllerGuards = Reflect.getMetadata('__guards__', UserOrganizationController) ?? [];
 		const resolverGuards = Reflect.getMetadata('__guards__', UserOrganizationResolver) ?? [];
 
-		expect(controllerGuards).toEqual(expect.arrayContaining([TenantPermissionGuard]));
+		// The scope guard is the part both surfaces carry; the gate is this surface's own, because a
+		// capability is asked of the endpoint rather than of the resource behind it. The controller carries
+		// the permission guard at class level and states the permission per route, so the resolver's chain
+		// has to contain the controller's — otherwise the five administrative routes below are reachable
+		// here by a caller those routes refuse.
+		expect(controllerGuards).toEqual(expect.arrayContaining([TenantPermissionGuard, PermissionGuard]));
 		expect(resolverGuards).toEqual(expect.arrayContaining([TenantPermissionGuard]));
+		expect(resolverGuards).toEqual(expect.arrayContaining(controllerGuards));
 
-		// The controller states no permission on any of its routes, so neither surface carries the
-		// permission guard: two scopes for one concept is what the two-protocol rule forbids, and a
-		// permission here would refuse a caller the REST route serves.
-		expect(controllerGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
-		expect(resolverGuards).not.toEqual(expect.arrayContaining([PermissionGuard]));
+		// Neither surface states a permission at class level: one there would gate the reads as well, and
+		// the reads are served to any member of the tenant on both protocols.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, UserOrganizationController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, UserOrganizationResolver)).toBeUndefined();
 	});
 
-	it('holds every route of the resource to the class guard and no permission', () => {
+	it('runs every route under the class chain, each stating its own permission and no guard of its own', () => {
+		const declared = (Reflect.getMetadata('__guards__', UserOrganizationController) ?? []) as unknown[];
+
 		for (const { route } of ROUTE_PARITY) {
-			expect(
-				Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(UserOrganizationController)[route])
-			).toBeUndefined();
-			expect(guardsOfRoute(UserOrganizationController, route)).toEqual([TenantPermissionGuard]);
+			// No route adds a guard of its own and none pushes its permission up to the class, so the split
+			// is the same on both surfaces — which is what lets the comparison below read the route's own
+			// metadata instead of a table of permission names written out in this file.
+			expect(Reflect.getMetadata('__guards__', handlersOf(UserOrganizationController)[route])).toBeUndefined();
+			expect(guardsOfRoute(UserOrganizationController, route)).toEqual(declared);
 		}
 	});
 
@@ -682,12 +688,18 @@ describe('UserOrganizationResolver — the guard stack is the controller’s, fi
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(UserOrganizationController, route));
 	});
 
-	it('states no permission on any field, because no route of this resource states one', () => {
-		for (const { field } of ROUTE_PARITY) {
-			expect(
-				Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(UserOrganizationResolver)[field])
-			).toBeUndefined();
-			expect(permissionOfField(field)).toBeUndefined();
+	it('states on every field exactly what its own route states, read from the route', () => {
+		// Read from both surfaces rather than restated here: a table of permission names would agree with
+		// the resolver while disagreeing with the controller, which is the failure this half of the
+		// doctrine exists to catch. Five of these routes demand `ORG_USERS_EDIT`, so their fields must too
+		// — a field that mirrored an ungated route would be the whole of this assertion's point.
+		expect(ROUTE_PARITY.some(({ route }) => permissionOfRoute(UserOrganizationController, route))).toBe(true);
+
+		for (const { field, route } of ROUTE_PARITY) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(UserOrganizationResolver)[field])).toEqual(
+				Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(UserOrganizationController)[route])
+			);
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(UserOrganizationController, route));
 		}
 	});
 });
