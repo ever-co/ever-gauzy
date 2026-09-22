@@ -222,6 +222,26 @@
 }
 
 /*
+ * The insert indicator, shown wherever the dragged entry would land.
+ *
+ * It is styled HERE rather than in the canvas sheet because CDK renders it from
+ * this component's template: it carries this component's style attribute, so a
+ * canvas-scoped rule would never match it. The grid spans are what the canvas
+ * needs (they are inert in the palette's own block list) and match the most
+ * common widget footprint, since the real one is only known once the drop
+ * resolves the widget's `defaultSize`.
+ */
+.palette-drop-slot {
+	grid-column: span 4;
+	grid-row: span 2;
+	min-height: 3.5rem;
+	margin-bottom: 0.25rem;
+	border: 2px dashed nb-theme(color-primary-default);
+	border-radius: nb-theme(border-radius);
+	background-color: nb-theme(color-primary-transparent-100);
+}
+
+/*
  * Custom drag preview (a compact chip). It is teleported to the <body> but keeps
  * this component's style attribute, so the scoped rule still matches it.
  */
