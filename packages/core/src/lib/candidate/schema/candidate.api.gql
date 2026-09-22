@@ -91,6 +91,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateDocumentConnection!
 
 	"One document, or null when there is none."
@@ -110,6 +111,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateEducationConnection!
 
 	"One course of study, or null when there is none."
@@ -129,6 +131,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateExperienceConnection!
 
 	"One prior engagement, or null when there is none."
@@ -148,6 +151,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateSkillConnection!
 
 	"One skill, or null when there is none."
@@ -170,6 +174,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): CandidateSourceConnection!
 
 	"One origin, or null when there is none."

@@ -191,7 +191,7 @@ type Query {
   """
   The documents filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file.
   """
-  candidateDocuments(filter: CandidateDocumentFilter, sort: [CandidateDocumentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateDocumentConnection!
+  candidateDocuments(filter: CandidateDocumentFilter, sort: [CandidateDocumentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateDocumentConnection!
 
   """One document, or null when there is none."""
   candidateDocument(id: ID!): CandidateDocument
@@ -202,7 +202,7 @@ type Query {
   """
   The courses of study filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file.
   """
-  candidateEducations(filter: CandidateEducationFilter, sort: [CandidateEducationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateEducationConnection!
+  candidateEducations(filter: CandidateEducationFilter, sort: [CandidateEducationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateEducationConnection!
 
   """One course of study, or null when there is none."""
   candidateEducation(id: ID!): CandidateEducation
@@ -213,7 +213,7 @@ type Query {
   """
   The prior engagements filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file.
   """
-  candidateExperiences(filter: CandidateExperienceFilter, sort: [CandidateExperienceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateExperienceConnection!
+  candidateExperiences(filter: CandidateExperienceFilter, sort: [CandidateExperienceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateExperienceConnection!
 
   """One prior engagement, or null when there is none."""
   candidateExperience(id: ID!): CandidateExperience
@@ -224,7 +224,7 @@ type Query {
   """
   The skills filed under the candidacies of the caller's tenant. `candidateId` narrows them to one person's file.
   """
-  candidateSkills(filter: CandidateSkillFilter, sort: [CandidateSkillSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateSkillConnection!
+  candidateSkills(filter: CandidateSkillFilter, sort: [CandidateSkillSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateSkillConnection!
 
   """One skill, or null when there is none."""
   candidateSkill(id: ID!): CandidateSkill
@@ -236,7 +236,7 @@ type Query {
   The origins the caller's tenant records, which is a vocabulary rather than one person's file: the
   row a candidacy points at through its own `sourceId` is read from `candidateSource(id)`.
   """
-  candidateSources(filter: CandidateSourceFilter, sort: [CandidateSourceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): CandidateSourceConnection!
+  candidateSources(filter: CandidateSourceFilter, sort: [CandidateSourceSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): CandidateSourceConnection!
 
   """One origin, or null when there is none."""
   candidateSource(id: ID!): CandidateSource

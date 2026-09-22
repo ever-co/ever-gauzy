@@ -272,10 +272,11 @@ export class CandidateProfileResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateDocument>> {
 		return await this.list(
-			await this.candidateDocumentsService.findAll({}),
+			await this.candidateDocumentsService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			DOCUMENT_FILTERABLE,
 			DOCUMENT_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }
@@ -363,10 +364,11 @@ export class CandidateProfileResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateEducation>> {
 		return await this.list(
-			await this.candidateEducationService.findAll({}),
+			await this.candidateEducationService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			EDUCATION_FILTERABLE,
 			EDUCATION_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }
@@ -460,10 +462,11 @@ export class CandidateProfileResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateExperience>> {
 		return await this.list(
-			await this.candidateExperienceService.findAll(),
+			await this.candidateExperienceService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			EXPERIENCE_FILTERABLE,
 			EXPERIENCE_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }
@@ -544,10 +547,11 @@ export class CandidateProfileResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateSkill>> {
 		return await this.list(
-			await this.candidateSkillService.findAll({}),
+			await this.candidateSkillService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			SKILL_FILTERABLE,
 			SKILL_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }
@@ -636,10 +640,11 @@ export class CandidateProfileResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<CandidateSource>> {
 		return await this.list(
-			await this.candidateSourceService.findAll({}),
+			await this.candidateSourceService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) }),
 			SOURCE_FILTERABLE,
 			SOURCE_SORTABLE,
 			{ filter, sort, page, first, after, last, before, limit, offset }
