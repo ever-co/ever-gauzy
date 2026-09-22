@@ -145,14 +145,15 @@ export class AccountingTemplateResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<AccountingTemplate>> {
 		// The same read the list route performs, through the same query it dispatches. This surface has no
 		// query string to bind, so the DTO carries the one narrowing a request that states nothing carries:
 		// an empty criterion. The read adds the caller's own tenant and the rows belonging to no tenant at
 		// all from the credential — which is what makes the two protocols answer the same set of rows — and
 		// it dereferences the criterion, which is why the field is present rather than absent.
-		const options = { where: {} } as BaseQueryDTO<AccountingTemplate>;
+		const options = { where: {}, ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<AccountingTemplate>;
 		const { items }: IPagination<AccountingTemplate> = await this.queryBus.execute(
 			new AccountingTemplateQuery(options)
 		);

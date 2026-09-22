@@ -53,7 +53,12 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				? {
 						relations: options.relations
 				  }
-				: {})
+				: {}),
+			// This reader builds its options by *naming* the members it forwards, so anything it does not name is
+			// dropped — and `withDeleted` is not a criterion, so leaving it out would answer the live rows to a
+			// caller that asked for the retired ones, with nothing to tell it so. The REST list route beside this
+			// one inherits the flag from `BaseQueryDTO`, so both surfaces have to honour it.
+			...(options && options.withDeleted ? { withDeleted: true } : {})
 		});
 	}
 

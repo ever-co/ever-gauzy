@@ -160,14 +160,15 @@ export class OrganizationStrategicInitiativeResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationStrategicInitiative>> {
 		// The delivered list route binds the query DTO to the query string and hands it to the read. This
 		// surface has no query string to bind, so the read runs with the route's own default for an
 		// unstated request — the delivered service forces the relations its visibility rule needs onto
 		// whatever it is handed, so naming none here does not hide the rows the rule is computed from —
 		// and the connection protocol's `filter` is applied to the rows it returns.
-		const options = {} as BaseQueryDTO<OrganizationStrategicInitiative> &
+		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<OrganizationStrategicInitiative> &
 			IOrganizationStrategicInitiativeFindInput;
 		const { items }: IPagination<IOrganizationStrategicInitiative> = await this.queryBus.execute(
 			new OrganizationStrategicInitiativeFindAllQuery(options)

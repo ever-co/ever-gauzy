@@ -148,7 +148,8 @@ export class EmailTemplateResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<EmailTemplate>> {
 		// The same read the list route performs, through the same query it dispatches. This surface has no
 		// query string to bind, so the DTO carries the one narrowing a well-formed REST request states: the
@@ -156,6 +157,7 @@ export class EmailTemplateResolver {
 		// credential's value for whatever the DTO holds — and it adds the copies belonging to no tenant at
 		// all beside them, so naming it is what makes the two protocols answer the same set of rows.
 		const options = {
+			...(withDeleted ? { withDeleted: true } : {}),
 			where: { tenantId: RequestContext.currentTenantId() }
 		} as unknown as BaseQueryDTO<EmailTemplate>;
 		const { items }: IPagination<EmailTemplate> = await this.queryBus.execute(new EmailTemplateQuery(options));

@@ -3,7 +3,7 @@ type Query {
   The accounting templates of the caller's tenant, with the copies the platform ships that belong to no
   tenant and no organization.
   """
-  accountingTemplates(filter: AccountingTemplateFilter, sort: [AccountingTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): AccountingTemplateConnection!
+  accountingTemplates(filter: AccountingTemplateFilter, sort: [AccountingTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): AccountingTemplateConnection!
 
   """
   One accounting template, or null when there is none.
@@ -99,7 +99,7 @@ type Query {
   delivered `GET /request-approval` route serves: the policies an approval request may be filed
   under.
   """
-  approvalPolicies(filter: ApprovalPolicyFilter, sort: [ApprovalPolicySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ApprovalPolicyConnection!
+  approvalPolicies(filter: ApprovalPolicyFilter, sort: [ApprovalPolicySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): ApprovalPolicyConnection!
 
   """
   One approval policy of the caller's tenant, or null when there is none.
@@ -473,7 +473,7 @@ type Query {
   The message parts of the caller's tenant, with the organization-less copies the whole tenant falls
   back to, in the order of the address they are read by.
   """
-  emailTemplates(filter: EmailTemplateFilter, sort: [EmailTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): EmailTemplateConnection!
+  emailTemplates(filter: EmailTemplateFilter, sort: [EmailTemplateSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): EmailTemplateConnection!
 
   """
   One message part of the caller's tenant, or null when there is none.
@@ -1862,7 +1862,7 @@ type Query {
   organizationSprintCount: Int
 
   """The strategic initiatives the caller may see, newest first."""
-  organizationStrategicInitiatives(filter: OrganizationStrategicInitiativeFilter, sort: [OrganizationStrategicInitiativeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationStrategicInitiativeConnection!
+  organizationStrategicInitiatives(filter: OrganizationStrategicInitiativeFilter, sort: [OrganizationStrategicInitiativeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationStrategicInitiativeConnection!
 
   """
   One strategic initiative, or null when there is none — or when the caller may not see this one. The

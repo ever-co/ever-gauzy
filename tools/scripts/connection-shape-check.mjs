@@ -68,12 +68,11 @@ const PROGRAMME_WITHOUT_WITH_DELETED = new Set([
 ]);
 
 const PLATFORM_WITHOUT_WITH_DELETED = new Set([
-	'accountingTemplates', 'activities', 'activityLogs', 'addresses',
-	'apiCallLogs', 'approvalPolicies',
+	'activities', 'activityLogs', 'addresses',
+	'apiCallLogs',
 	'channelDomains', 'contactBuyers',
 	'contactCredentials', 'contactGroups',
 	'dailyPlans', 'dailyPlansForTask',
-	'emailTemplates',
 	'employeeDailyPlans', 'employeeMembers',
 	'employeeRecentVisits',
 	'employeeTasks',
@@ -90,7 +89,6 @@ const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'operations', 'operationsByAggregate',
 	'organizationContacts', 'organizationDepartmentsByEmployee',
 	'organizationProjectModulesByEmployee',
-	'organizationStrategicInitiatives',
 	'payrollRuns', 'pipelineDeals',
 	'productCategories',
 	'productTypes',
