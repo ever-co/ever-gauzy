@@ -57,10 +57,6 @@ const schema = readFileSync(SDL, 'utf8')
  * conversion has to leave the list it was in.
  */
 const PROGRAMME_WITHOUT_WITH_DELETED = new Set([
-	// Its read builds its own query builder over the level table and destructures the filter down to the two
-	// ids it uses, so a flag spread into that filter is dropped rather than honoured — and an argument the
-	// read ignores is worse than a missing one, because the client is told it can ask.
-	'stockLevels',
 	// Its read answers a derived balance per (bin, variant) from the stock ledger's aggregation, not rows the
 	// soft-delete filter ever applied to. There is no retired balance for the flag to reach.
 	'warehouseBinContents',

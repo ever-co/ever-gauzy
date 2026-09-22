@@ -4376,7 +4376,7 @@ type Query {
   filters select on one predicate — the two things a connection owes its caller and the reason this
   field was a bare list until that read existed.
   """
-  stockLevels(warehouseId: ID, variantId: ID, page: PageInput): StockLevelConnection!
+  stockLevels(warehouseId: ID, variantId: ID, page: PageInput, withDeleted: Boolean): StockLevelConnection!
   stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
   availableQuantity(warehouseId: ID!, variantId: ID!): Float!
   stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput, withDeleted: Boolean): StockMovementConnection!

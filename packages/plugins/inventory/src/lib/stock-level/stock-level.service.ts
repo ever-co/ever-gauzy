@@ -256,7 +256,12 @@ export class StockLevelService {
 	 * This is the route's read: it answers a list and fixes its own ceiling. A caller that pages reads
 	 * {@link listLevels}, which is the same read with a window and a count beside it.
 	 */
-	public async findLevels(filter: { warehouseId?: ID; variantId?: ID; take?: number }): Promise<IStockAvailability[]> {
+	public async findLevels(filter: {
+		warehouseId?: ID;
+		variantId?: ID;
+		take?: number;
+		withDeleted?: boolean;
+	}): Promise<IStockAvailability[]> {
 		const query = this.levelReadOf(filter);
 
 		// No count here: this read answers a list, and counting the set it was cut from is a query the caller
@@ -280,6 +285,7 @@ export class StockLevelService {
 		variantId?: ID;
 		skip?: number;
 		take?: number;
+		withDeleted?: boolean;
 	}): Promise<IPagination<IStockAvailability>> {
 		const query = this.levelReadOf(filter);
 
@@ -299,9 +305,18 @@ export class StockLevelService {
 	 * Both reads above start here so that the filters, the join and the tenant scope are one statement: a
 	 * second builder assembled beside this one is how a paged read and a list read end up answering different
 	 * sets for the same arguments.
+	 *
+	 * **`withDeleted` is stated on the builder rather than spread into a filter object**, which is why this
+	 * read can honour it while a caller that only forwards options cannot: a query builder applies its own
+	 * soft-delete condition, and `withDeleted()` is how it is lifted. The flag travels with the filters so a
+	 * GraphQL field can offer the same visibility the REST route does.
 	 */
-	private levelReadOf(filter: { warehouseId?: ID; variantId?: ID }) {
+	private levelReadOf(filter: { warehouseId?: ID; variantId?: ID; withDeleted?: boolean }) {
 		const query = this.levelRead();
+
+		if (filter.withDeleted) {
+			query.withDeleted();
+		}
 
 		if (filter.warehouseId) {
 			query.andWhere('aggregate.warehouseId = :warehouseId', { warehouseId: filter.warehouseId });

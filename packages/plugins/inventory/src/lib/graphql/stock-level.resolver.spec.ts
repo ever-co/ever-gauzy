@@ -259,7 +259,9 @@ describe('StockLevelResolver — one concept, two protocols, the same names (doc
 
 		expect(service.listLevels).toHaveBeenCalledWith({ warehouseId: WAREHOUSE, variantId: VARIANT, skip: 0, take: 25 });
 		expect(connection.pageInfo.hasNextPage).toBe(false);
-		expect(schemaText).toMatch(/stockLevels\(warehouseId: ID, variantId: ID, page: PageInput\): StockLevelConnection!/);
+		expect(schemaText).toMatch(
+			/stockLevels\(warehouseId: ID, variantId: ID, page: PageInput, withDeleted: Boolean\): StockLevelConnection!/
+		);
 		expect(schemaText).toMatch(/type StockLevelConnection \{\s*nodes: \[StockLevel!\]!\s*edges: \[StockLevelEdge!\]!\s*totalCount: Int!\s*pageInfo: PageInfo!\s*\}/);
 	});
 

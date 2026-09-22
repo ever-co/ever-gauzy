@@ -353,7 +353,9 @@ describe('the inventory list surface answers the connection contract', () => {
 		// read is the service's own query builder rather than `findAll`. It was the last list field holding
 		// out, on the grounds that its read answered neither a window nor a count; both exist now, so the
 		// exemption it used to carry is gone rather than merely unasserted.
-		expect(described).toMatch(/stockLevels\(warehouseId: ID, variantId: ID, page: PageInput\): StockLevelConnection!/);
+		expect(described).toMatch(
+			/stockLevels\(warehouseId: ID, variantId: ID, page: PageInput, withDeleted: Boolean\): StockLevelConnection!/
+		);
 		expect(typeBody('StockLevelConnection')).toContain('nodes: [StockLevel!]!');
 		expect(typeBody('StockLevelConnection')).toContain('edges: [StockLevelEdge!]!');
 		expect(typeBody('StockLevelEdge')).toContain('cursor: String!');

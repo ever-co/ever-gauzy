@@ -62,6 +62,10 @@ export class StockLevelResolver {
 	 * The page comes from `listLevels`, which reads the window *and* counts the set the filters select. The
 	 * `take` argument this field used to carry is gone with it: `page: { first: n }` is the page size now, and
 	 * a field with two ways to state one thing is a field whose two ways drift.
+	 *
+	 * `withDeleted` is honoured by the read's own query builder rather than dropped: the builder applies its
+	 * soft-delete condition, and the service lifts it when the caller asks for the retired levels — the same
+	 * visibility the REST list route offers through `BaseQueryDTO`.
 	 */
 	@Query('stockLevels')
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
@@ -69,10 +73,17 @@ export class StockLevelResolver {
 	async stockLevels(
 		@Args('warehouseId') warehouseId: string,
 		@Args('variantId') variantId: string,
-		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection
+		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<IStockAvailability>> {
 		const { skip, take } = resolveConnectionWindow(page);
-		const listing = await this.service.listLevels({ warehouseId, variantId, skip, take });
+		const listing = await this.service.listLevels({
+			warehouseId,
+			variantId,
+			skip,
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 
 		return connectionFromOffsetPage(listing, skip);
 	}
