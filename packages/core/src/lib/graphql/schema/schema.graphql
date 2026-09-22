@@ -1671,7 +1671,7 @@ type Query {
   organizationPositionCount: Int
 
   """The project modules of the caller's tenant, newest first."""
-  organizationProjectModules(filter: OrganizationProjectModuleFilter, sort: [OrganizationProjectModuleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationProjectModuleConnection!
+  organizationProjectModules(filter: OrganizationProjectModuleFilter, sort: [OrganizationProjectModuleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationProjectModuleConnection!
 
   """
   One project module of the caller's tenant, or null when there is none.

@@ -172,7 +172,8 @@ export class OrganizationProjectModuleResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationProjectModule>> {
 		// The delivered list route binds its query DTO to the query string and hands it to the service:
 		// the `where`, the `relations` and the page. This surface has no query string to bind, so the
@@ -180,7 +181,14 @@ export class OrganizationProjectModuleResolver {
 		// no page — and the connection protocol's `filter` is applied to the rows the service returns.
 		// The tenant is applied to the criterion by the service, from the credential rather than from
 		// the caller.
-		const options = {} as BaseQueryDTO<OrganizationProjectModule>;
+		//
+		// `withDeleted` is the one option the route's DTO carries that this surface must state for itself,
+		// and it belongs here rather than in the connection's request: the service hands these options to
+		// the base read, which is what lifts the soft-delete filter, and the rows are read before the
+		// connection ever sees them.
+		const options = {
+			...(withDeleted ? { withDeleted: true } : {})
+		} as BaseQueryDTO<OrganizationProjectModule>;
 		const { items }: IPagination<OrganizationProjectModule> =
 			await this.organizationProjectModuleService.findAll(options);
 

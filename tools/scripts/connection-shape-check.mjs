@@ -94,7 +94,7 @@ const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'myTasks', 'myTimeOffBalances', 'oauthClients', 'officialHolidays',
 	'operations', 'operationsByAggregate', 'orders', 'organizationAwards',
 	'organizationContacts', 'organizationDepartments', 'organizationDepartmentsByEmployee', 'organizationDocuments',
-	'organizationEmploymentTypes', 'organizationLanguages', 'organizationPositions', 'organizationProjectModules',
+	'organizationEmploymentTypes', 'organizationLanguages', 'organizationPositions',
 	'organizationProjectModulesByEmployee', 'organizationProjects', 'organizationRecurringExpenses', 'organizationSprints',
 	'organizationStrategicInitiatives', 'organizationTeamJoinRequests', 'organizationTeams', 'organizationVendors',
 	'organizations', 'paymentAccountHolders', 'paymentCaptures', 'paymentCollections',
