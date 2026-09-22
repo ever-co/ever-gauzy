@@ -1,0 +1,120 @@
+name: 'CodeQL'
+
+# CodeQL moved from GitHub's DEFAULT SETUP to advanced setup for exactly one reason:
+# default setup cannot be given a concurrency policy.
+#
+# Default setup has no workflow file — GitHub generates the run server-side, which is why its
+# runs show up under the path `dynamic/github-code-scanning/codeql` instead of this directory.
+# There is nowhere to put a `concurrency:` block, and GitHub does not supersede its own runs, so
+# every push to a pull request started ANOTHER full analysis alongside the ones already running.
+# Measured on #10254 on 2026-09-21: runs 35547460875 (00:21→00:52) and 35548451790 (00:40→01:14)
+# overlapped by 12 minutes, and 35580875040 / 35582701347 / 35582925033 were all in flight at
+# 09:22. Each run is two jobs of roughly 25-35 minutes on the 4-vCPU ARC pool, so every overlap
+# pinned two extra self-hosted runner pods to a commit that had already been superseded.
+#
+# This file reproduces what default setup was configured to do — same languages, the default
+# query suite, the default (remote) threat model, the same weekly schedule and the same runner
+# label — and adds the one thing it could not have.
+#
+# Parity note: default setup listed four languages (actions, javascript, javascript-typescript,
+# typescript), but `javascript`, `typescript` and `javascript-typescript` are three names for one
+# analysis — its runs only ever produced two jobs, and the uploaded analyses only ever carried the
+# categories `/language:javascript-typescript` and `/language:actions`. The matrix below is those
+# two, which is the same coverage and not a reduction.
+
+# Branch list is parity, not a widening. Default setup scans the default branch AND every
+# protected branch, plus pull requests targeting them — and `develop`, `stage` and `master` are
+# all protected on this repository, so default setup was already scanning all three. Confirmed
+# against the uploaded analyses, which include `refs/heads/stage` as well as `refs/heads/develop`.
+# Listing only `develop` here would have quietly dropped CodeQL from the release cascade.
+on:
+  push:
+    branches:
+      - develop
+      - stage
+      - master
+  pull_request:
+    branches:
+      - develop
+      - stage
+      - master
+  # Default setup ran a weekly scan so that a new CodeQL release re-examines unchanged code.
+  # Keeping it means an advisory published after a file was last touched still finds it.
+  schedule:
+    - cron: '27 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  # The point of this file. A newer commit on the same ref wins and the superseded analysis is
+  # killed. Safe here in a way it is not for the deploy and release workflows: this job only reads
+  # the checkout and uploads a SARIF result, so a half-finished run leaves nothing behind — the
+  # next run re-uploads the complete picture for that ref. Nothing downstream is wired to this
+  # workflow's conclusion (no `workflow_run` consumer), and none of develop/stage/master declares
+  # a required status check, so a cancelled run cannot wedge a pull request's merge gate either.
+  # If required checks are ever introduced, re-check this line before trusting it.
+  #
+  # Keyed on the HEAD REF rather than `github.ref`, for the same reason and with the same trade-off
+  # as `build.yml`: both triggers above cover develop/stage/master, so while a cascade pull request
+  # is open (develop -> stage), one push to `develop` fires a push run on `refs/heads/develop` AND a
+  # pull_request run on `refs/pull/N/merge`. Under `github.ref` those are different strings, so
+  # neither could cancel the other and the same tree was analyzed twice. Qualified by the head
+  # REPOSITORY as well, because a fork pull request's run claims the group before its job skips.
+  group: >-
+    ${{ github.workflow }}-${{ github.event_name == 'pull_request'
+    && format('{0}@{1}', github.event.pull_request.head.repo.full_name, github.event.pull_request.head.ref)
+    || format('{0}@{1}', github.repository, github.ref_name) }}
+  cancel-in-progress: true
+
+# Least privilege at the workflow level; the analyze job widens only what CodeQL needs.
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    # Same pool default setup used (`runner_label: ever-k8s-linux-x64-4`), read through the repo
+    # variable the rest of this directory uses so a fleet rename is a one-place change. The
+    # fallback keeps the workflow runnable if the ARC pool is ever unavailable.
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    permissions:
+      # Upload the SARIF results to the code scanning API. Required by every advanced setup.
+      security-events: write
+      # Lets the `actions` language analysis read workflow definitions and run metadata.
+      actions: read
+      # Fetching CodeQL query packs.
+      packages: read
+      contents: read
+    strategy:
+      # One language failing must not hide the other language's findings.
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Analysis only reads the tree; the checkout credential does not need to outlive the step.
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # No `queries:` and no `config:` on purpose. Default setup ran `query_suite: default`
+          # with `threat_model: remote`, and both of those ARE the action's defaults — naming them
+          # explicitly would not change the analysis, it would only create a second place to keep
+          # in sync. Widen to `security-extended` here if the team ever decides to.
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          # Produces the same `/language:<lang>` category default setup uploaded, so the existing
+          # alerts are matched rather than duplicated as a new tool's findings.
+          category: '/language:${{ matrix.language }}'
