@@ -15,6 +15,7 @@ import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '
 import {
 	DEFAULT_DATE_PICKER_CONFIG,
 	DateRangePickerBuilderService,
+	IDatePickerConfig,
 	NavigationService,
 	OrganizationsService,
 	SelectorBuilderService,
@@ -45,6 +46,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	public ranges: DateRanges; // Define ngx-daterangepicker-material range configuration
 	private readonly dates$: BehaviorSubject<IDateRangePicker> = this._dateRangePickerBuilderService.dates$; // Default selected date picker ranges
 	private readonly range$: Subject<IDateRangePicker> = new Subject(); // Local store date picker ranges
+
+	/**
+	 * The date picker configuration this picker has already applied. The config object is rebuilt
+	 * once per route RESOLUTION, so a change of reference means "a new route settled", which is what
+	 * separates a route-driven unit from an in-page one the user chose from the ranges menu.
+	 */
+	private _appliedDatePickerConfig: IDatePickerConfig | null = null;
 
 	// Declaration of arrow variables
 	private arrow: Arrow = new Arrow();
@@ -244,6 +252,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		// issues through the router (replaceState never made it emit), and each
 		// emission costs an organization round-trip plus a re-derivation — narrow +
 		// distinct so only an actual unit change (or the first load) wakes it.
+		//
+		// This is the IN-PAGE signal only: it carries a unit the user chose from the
+		// ranges menu between two route resolutions. The authority on what unit a
+		// route runs at is the resolved date picker config — see the tap below.
 		const queryParamsUnitOfTime$ = this._route.queryParams.pipe(
 			map((params) => params['unit_of_time'] as moment.unitOfTime.Base | undefined),
 			distinctUntilChanged()
@@ -293,10 +305,30 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
 
-					// Query-param values are `string | undefined`, never null — the explicit
-					// `??` keeps the ROUTE-CONFIG unit as the fallback (the setter's own
-					// internal fallback is the global default, wrong for month routes).
-					this.unitOfTime = unitOfTimeFromQuery ?? datePickerConfig.unitOfTime;
+					// The route config and the URL each carry a unit, and during a route
+					// transition they disagree: `route.queryParams` emits BEFORE NavigationEnd
+					// hands this picker the new route's config, so for one turn the OLD config
+					// is paired with the new URL. The picker's own derivation then wrote that
+					// stale unit back into the URL, where — because the URL used to outrank the
+					// route unconditionally — it beat every config that arrived afterwards. That
+					// is what left day-locked pages (Employees → Time & Activity) showing a
+					// single date in the input while WEEK was the selected range.
+					//
+					// A FRESH config wins, because the resolver has already folded the URL's
+					// `unit_of_time` into it (honouring it only on routes that let the user
+					// change the unit). BETWEEN resolutions the URL wins, which is the in-page
+					// case the query param exists for: the user picking a different range from
+					// the menu, or stepping back to it in history. Comparing against the current
+					// unit also drops this picker's own echo — the query param re-emitting the
+					// value it just wrote — instead of re-deriving and writing again.
+					const isNewRouteConfig = datePickerConfig !== this._appliedDatePickerConfig;
+					this._appliedDatePickerConfig = datePickerConfig;
+
+					if (isNewRouteConfig) {
+						this.unitOfTime = datePickerConfig.unitOfTime;
+					} else if (unitOfTimeFromQuery && unitOfTimeFromQuery !== this.unitOfTime) {
+						this.unitOfTime = unitOfTimeFromQuery;
+					}
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
