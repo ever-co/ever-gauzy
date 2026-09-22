@@ -65,13 +65,15 @@ export class PaymentSessionResolver {
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 	): Promise<IPaymentSessionConnection> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.paymentSessionService.findSessions({
 			where: withoutRange(filter as Record<string, unknown>),
 			order: toOrder(sort, PAYMENT_SESSION_SORT_FIELDS),
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return toConnection(listing, skip);

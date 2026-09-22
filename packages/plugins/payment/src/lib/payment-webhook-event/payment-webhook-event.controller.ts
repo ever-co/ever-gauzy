@@ -72,9 +72,12 @@ export class PaymentWebhookEventController extends CrudController<PaymentWebhook
 	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_VIEW as PermissionsEnum)
 	@Get()
 	async findAll(@Query() filter?: BaseQueryDTO<PaymentWebhookEvent>): Promise<IPagination<IPaymentWebhookEvent>> {
-		return this.paymentWebhookEventService.findEvents({
-			where: { ...((filter ?? {}) as Record<string, unknown>) }
-		});
+		// The DTO is the find-options object, not a criterion, so it is spread whole. Nesting it under
+		// `where` — which is what this route used to do — turns the DTO’s own members (`take`, `skip`,
+		// `withDeleted`) into predicates on columns that do not exist, so every paged or soft-delete-aware
+		// request answered `500 Property "take" was not found in "PaymentWebhookEvent"` while a bare read looked fine:
+		// the query string this route advertises was unusable.
+		return this.paymentWebhookEventService.findEvents({ ...(filter ?? {}) });
 	}
 
 	/**

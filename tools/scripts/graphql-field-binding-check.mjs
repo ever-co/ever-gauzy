@@ -102,6 +102,53 @@ function rootFields(type) {
 	return new Set(typeBodies(type).flatMap((body) => fieldsOf(body)));
 }
 
+/**
+ * Each field a type body declares, with the text of its own declaration — arguments included.
+ *
+ * `fieldsOf` answers *whether* a field exists; the soft-delete agreement below needs the field's own arguments,
+ * and an argument belongs to the field whose parentheses enclose it. A field begins on a line at the body's own
+ * indentation and its arguments follow on deeper ones, so the indent is *derived* from the body rather than
+ * assumed: the snapshot indents `Query` with two spaces, and a reader written for tabs found none of its 671
+ * fields while reporting success.
+ *
+ * The caller compares this function's count against `fieldsOf`'s and refuses to run when they disagree, so a
+ * reader that stops matching is a failure rather than a vacuous pass — the failure mode two other gates in this
+ * repository were written to stop repeating.
+ */
+function fieldTexts(type) {
+	const declared = [];
+
+	for (const body of typeBodies(type)) {
+		const lines = body.split('\n');
+		const fieldPattern = /^(\s+)([A-Za-z_]\w*)\s*[(:]/;
+		const indent = lines.map((line) => fieldPattern.exec(line)?.[1]).find((found) => found !== undefined);
+
+		if (indent === undefined) continue;
+
+		let current = null;
+
+		for (const line of lines) {
+			const start = fieldPattern.exec(line);
+
+			if (start && start[1] === indent) {
+				current = { name: start[2], text: line };
+				declared.push(current);
+			} else if (current) {
+				current.text += '\n' + line;
+			}
+		}
+	}
+
+	return declared;
+}
+
+/** The text the schema gives each field of a root type, keyed by field name. */
+function declaredFieldTexts(type) {
+	const texts = new Map();
+	for (const field of fieldTexts(type)) texts.set(field.name, (texts.get(field.name) ?? '') + field.text);
+	return texts;
+}
+
 /** The index of the `)` closing the call opened at `open`, skipping string literals. */
 function closingParen(text, open) {
 	let depth = 0;
@@ -188,6 +235,43 @@ function resolverClasses(source) {
 	});
 }
 
+/**
+ * The parameter list of the method a root-field decorator precedes.
+ *
+ * Further decorators may sit between the binding and the method — `@Permissions(...)`, `@Idempotent(...)` —
+ * so they are stepped over one at a time until the signature is reached. `null` means the method was not
+ * found, which the agreement check treats as "states nothing" rather than as agreement.
+ */
+function methodParameters(source, decoratorOpen) {
+	const close = closingParen(source, decoratorOpen);
+	if (close === -1) return null;
+
+	let at = close + 1;
+
+	for (;;) {
+		const rest = source.slice(at);
+		const decorator = /^\s*@[\w.]+/.exec(rest);
+		if (!decorator) break;
+
+		const after = at + decorator[0].length;
+		if (source[after] === '(') {
+			const end = closingParen(source, after);
+			if (end === -1) return null;
+			at = end + 1;
+		} else {
+			at = after;
+		}
+	}
+
+	const signature = /^\s*(?:(?:public|private|protected)\s+)?(?:async\s+)?[\w$]+\s*\(/.exec(source.slice(at));
+	if (!signature) return null;
+
+	const open = at + signature[0].length - 1;
+	const end = closingParen(source, open);
+
+	return end === -1 ? null : source.slice(open + 1, end);
+}
+
 /** Every `.resolver.ts` under a directory, skipping build output and suites. */
 function resolverFiles(dir, found = []) {
 	for (const entry of readdirSync(dir)) {
@@ -207,6 +291,17 @@ const RESOLVER_ROOTS = [PLUGINS, join(ROOT, 'packages', 'core', 'src', 'lib')];
 const failures = [];
 const checked = { fields: 0, roots: 0, resolvers: 0, abstractTypes: 0, rootOnlyTypes: 0, typelessResolvers: 0 };
 const boundRootFields = { Query: new Set(), Mutation: new Set(), Subscription: new Set() };
+
+/**
+ * The root fields whose *resolver* states `withDeleted`, by the field it binds.
+ *
+ * The schema half of the same question is read from the snapshot below. The two must agree, and the reason is
+ * the shape of the failure rather than tidiness: an argument the resolver accepts and the SDL does not declare
+ * is refused by the endpoint as an unknown argument, while an argument the SDL declares and the resolver never
+ * reads is *accepted* and silently ignored — a client asking for retired rows is answered with the live ones
+ * and has no way to tell. Neither is visible in the source of one side alone.
+ */
+const withDeletedBound = new Map();
 
 for (const file of RESOLVER_ROOTS.flatMap((root) => resolverFiles(root))) {
 	const source = readFileSync(file, 'utf8');
@@ -278,6 +373,13 @@ for (const file of RESOLVER_ROOTS.flatMap((root) => resolverFiles(root))) {
 
 			if (field) {
 				boundRootFields[match[1]].add(field);
+
+				// The decorator's own `(` is the one the match ends on, which `methodParameters` steps past.
+				const parameters = methodParameters(source, resolver.start + match.index + match[0].length - 1);
+
+				if (parameters !== null && /['"]withDeleted['"]|\bwithDeleted\b/.test(parameters)) {
+					withDeletedBound.set(`${match[1]}.${field}`, `${path}:${source.slice(0, resolver.start + match.index).split('\n').length}`);
+				}
 			}
 		}
 	}
@@ -342,6 +444,53 @@ if (boundButRecorded.length > 0) {
 	process.exit(1);
 }
 
+/**
+ * The third check: the schema and the resolvers must agree on `withDeleted`, in both directions.
+ *
+ * The snapshot is regenerated from the resolvers, so a disagreement cannot survive a rebuild — but it is
+ * exactly the disagreement a *partial* edit produces, and the two halves live in different files. Recorded
+ * connection by connection, this is what makes "the field offers the soft-delete visibility its REST route
+ * offers" a fact about the endpoint rather than about a list in a gate.
+ */
+const declaredWithDeleted = new Map();
+
+for (const [name, text] of declaredFieldTexts('Query')) {
+	if (/withDeleted/.test(text)) declaredWithDeleted.set(`Query.${name}`, text);
+}
+
+// The count is what proves the argument reader above saw the fields at all: if its formatting assumption broke,
+// this would be zero and every comparison below would pass by finding nothing to compare.
+const queryFieldCount = rootFields('Query').size;
+const queryTextCount = declaredFieldTexts('Query').size;
+
+if (queryTextCount !== queryFieldCount) {
+	console.error(
+		`FAILED — the root-field argument reader saw ${queryTextCount} of Query's ${queryFieldCount} field(s), ` +
+			'so it cannot answer whether they agree with their resolvers.'
+	);
+	console.error('The snapshot’s field indentation is what it reads; fix the reader rather than this count.');
+	process.exit(1);
+}
+
+const declaredButIgnored = [...declaredWithDeleted.keys()].filter((field) => !withDeletedBound.has(field));
+const boundButUndeclared = [...withDeletedBound.keys()].filter((field) => !declaredWithDeleted.has(field));
+
+if (declaredButIgnored.length > 0) {
+	console.error('FAILED — the schema offers `withDeleted` on fields whose resolver never reads it:');
+	for (const field of declaredButIgnored) console.error(`  ${field} (resolver: ${withDeletedBound.get(field) ?? 'none'})`);
+	console.error('');
+	console.error('Such a field accepts the argument and answers the live rows anyway, so a client cannot tell.');
+	process.exit(1);
+}
+
+if (boundButUndeclared.length > 0) {
+	console.error('FAILED — resolvers read `withDeleted` on fields the schema does not declare it for:');
+	for (const field of boundButUndeclared) console.error(`  ${field} (${withDeletedBound.get(field)})`);
+	console.error('');
+	console.error('Every such request is refused as an unknown argument, so the resolver is unreachable.');
+	process.exit(1);
+}
+
 console.log(
 	`PASSED — ${checked.fields} resolved field(s) and ${checked.roots} root field(s) across ` +
 		`${checked.resolvers} resolver(s) all exist on the type that resolves them` +
@@ -349,5 +498,6 @@ console.log(
 		(checked.rootOnlyTypes > 0 ? ` (${checked.rootOnlyTypes} root-only resolver(s) name no schema type)` : '') +
 		(checked.typelessResolvers > 0 ? ` (${checked.typelessResolvers} typeless resolver(s) bind root fields)` : '') +
 		`; ${declaredRoots.length - recorded.length} of ${declaredRoots.length} declared root field(s) are ` +
-		`bound, and ${recorded.length} are recorded as unbound with their reason.`
+		`bound, and ${recorded.length} are recorded as unbound with their reason; ` +
+		`${declaredWithDeleted.size} field(s) offer \`withDeleted\` and every one of them reads it.`
 );

@@ -60,6 +60,7 @@ export class PaymentCaptureResolver {
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 	): Promise<IPaymentCaptureConnection> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.paymentCaptureService.findCaptures({
@@ -72,7 +73,8 @@ export class PaymentCaptureResolver {
 			),
 			order: toOrder(sort, PAYMENT_CAPTURE_SORT_FIELDS),
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return toConnection(listing, skip);

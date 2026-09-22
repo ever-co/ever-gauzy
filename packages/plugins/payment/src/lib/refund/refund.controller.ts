@@ -72,7 +72,12 @@ export class RefundController extends CrudController<Refund> {
 	@Permissions(PaymentPermission.REFUNDS_VIEW as PermissionsEnum)
 	@Get()
 	async findAll(@Query() filter?: BaseQueryDTO<Refund>): Promise<IPagination<IRefund>> {
-		return this.refundService.findRefunds({ where: { ...((filter ?? {}) as Record<string, unknown>) } });
+		// The DTO is the find-options object, not a criterion, so it is spread whole. Nesting it under
+		// `where` — which is what this route used to do — turns the DTO’s own members (`take`, `skip`,
+		// `withDeleted`) into predicates on columns that do not exist, so every paged or soft-delete-aware
+		// request answered `500 Property "take" was not found in "Refund"` while a bare read looked fine:
+		// the query string this route advertises was unusable.
+		return this.refundService.findRefunds({ ...(filter ?? {}) });
 	}
 
 	/**

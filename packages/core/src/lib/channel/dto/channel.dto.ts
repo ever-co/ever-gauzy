@@ -344,6 +344,20 @@ export class ChannelQueryDTO extends ChannelFilterDTO {
 	@IsArray()
 	@IsEnum(['domains', 'regions'], { each: true })
 	readonly expand?: string[];
+
+	/**
+	 * Whether retired channels are included, which is what the GraphQL connection's `withDeleted` states.
+	 *
+	 * The two surfaces must offer the same visibility: a client that can ask the connection for a
+	 * soft-deleted channel and cannot ask this route for it has two answers to one question. Stated the
+	 * same way `isDefault` is, because a query string carries text — `?withDeleted=false` must not read as
+	 * the word "false" being truthy.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	@IsBoolean()
+	readonly withDeleted?: boolean;
 }
 
 /**

@@ -102,10 +102,12 @@ const CHANNEL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * resumes here — and the same refusal codes, so a client that branches on `QUERY_SORT_NOT_ALLOWED`
  * over one surface branches on it over the other.
  *
- * **`withDeleted` is deliberately absent.** §7.2 of the GraphQL specification lists it among the
- * connection arguments, and the delivered list methods read live rows only — a repository option
- * they do not expose and this delivery may not add. Offering an argument that cannot be honoured
- * would be the one thing worse than not offering it.
+ * **`withDeleted` is offered, and it is honoured.** §7.2 of the GraphQL specification lists it among the
+ * connection arguments, and the SDL declared it here for a while without this method reading it — so the
+ * endpoint accepted the argument and answered the live rows anyway, which is the one outcome worse than either
+ * offering it or not: a client asking for retired channels could not tell that it had been ignored. It is
+ * honoured on both surfaces now: `ChannelQueryDTO` carries the member, `listChannels` passes it to the kernel
+ * read, and `graphql-field-binding-check` fails if the two halves ever drift apart again.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -139,9 +141,10 @@ export class ChannelResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<IChannel>> {
-		const rows = await this.channelService.listChannels();
+		const rows = await this.channelService.listChannels({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<IChannel>({
 			rows,

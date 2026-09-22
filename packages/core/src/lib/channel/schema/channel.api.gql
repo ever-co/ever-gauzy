@@ -9,6 +9,12 @@
 # `filter`, the same keys in `sort`, the same page in `page` — and answers with the same shape the
 # kernel's `PageInfo` gives every other connection, so a cursor obtained over one surface resumes on
 # the other.
+#
+# `withDeleted` is part of that protocol here as it is everywhere else, and both surfaces honour it:
+# `ChannelQueryDTO` carries the member and `listChannels` passes it to the kernel read. It was
+# declared without being honoured for a while — the argument was accepted and the live rows were
+# answered anyway, so a client asking for retired channels could not tell that it had been ignored.
+# `graphql-field-binding-check` now fails on exactly that disagreement.
 
 extend type Query {
 	"""

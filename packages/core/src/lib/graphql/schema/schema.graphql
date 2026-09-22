@@ -4504,25 +4504,25 @@ type Query {
 
   """How much of one order line is left to bill."""
   orderLineInvoicingPosition(orderLineId: ID!, basisQuantity: Decimal): OrderLineInvoicingPosition!
-  paymentProviders(filter: PaymentProviderFilter, sort: PaymentProviderSort, page: PageInput, limit: Int, offset: Int): PaymentProviderConnection!
+  paymentProviders(filter: PaymentProviderFilter, sort: PaymentProviderSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentProviderConnection!
   paymentProvider(id: ID!): PaymentProvider
-  paymentCollections(filter: PaymentCollectionFilter, sort: PaymentCollectionSort, page: PageInput, limit: Int, offset: Int): PaymentCollectionConnection!
+  paymentCollections(filter: PaymentCollectionFilter, sort: PaymentCollectionSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentCollectionConnection!
   paymentCollection(id: ID!): PaymentCollection
-  paymentSessions(filter: PaymentSessionFilter, sort: PaymentSessionSort, page: PageInput, limit: Int, offset: Int): PaymentSessionConnection!
+  paymentSessions(filter: PaymentSessionFilter, sort: PaymentSessionSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentSessionConnection!
   paymentSession(id: ID!): PaymentSession
-  paymentCaptures(filter: PaymentCaptureFilter, sort: PaymentCaptureSort, page: PageInput, limit: Int, offset: Int): PaymentCaptureConnection!
+  paymentCaptures(filter: PaymentCaptureFilter, sort: PaymentCaptureSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentCaptureConnection!
   paymentCapture(id: ID!): PaymentCapture
   refunds(filter: RefundFilter, sort: RefundSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): RefundConnection!
   refund(id: ID!): Refund
-  refundReasons(filter: RefundReasonFilter, sort: RefundReasonSort, page: PageInput, limit: Int, offset: Int): RefundReasonConnection!
+  refundReasons(filter: RefundReasonFilter, sort: RefundReasonSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): RefundReasonConnection!
   refundReason(id: ID!): RefundReason
-  refundLines(filter: RefundLineFilter, sort: RefundLineSort, page: PageInput, limit: Int, offset: Int): RefundLineConnection!
+  refundLines(filter: RefundLineFilter, sort: RefundLineSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): RefundLineConnection!
   refundLine(id: ID!): RefundLine
-  paymentWebhookEvents(filter: PaymentWebhookEventFilter, sort: PaymentWebhookEventSort, page: PageInput, limit: Int, offset: Int): PaymentWebhookEventConnection!
+  paymentWebhookEvents(filter: PaymentWebhookEventFilter, sort: PaymentWebhookEventSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentWebhookEventConnection!
   paymentWebhookEvent(id: ID!): PaymentWebhookEvent
-  paymentAccountHolders(filter: PaymentAccountHolderFilter, sort: PaymentAccountHolderSort, page: PageInput, limit: Int, offset: Int): PaymentAccountHolderConnection!
+  paymentAccountHolders(filter: PaymentAccountHolderFilter, sort: PaymentAccountHolderSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentAccountHolderConnection!
   paymentAccountHolder(id: ID!): PaymentAccountHolder
-  paymentMethodTokens(filter: PaymentMethodTokenFilter, sort: PaymentMethodTokenSort, page: PageInput, limit: Int, offset: Int): PaymentMethodTokenConnection!
+  paymentMethodTokens(filter: PaymentMethodTokenFilter, sort: PaymentMethodTokenSort, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): PaymentMethodTokenConnection!
   paymentMethodToken(id: ID!): PaymentMethodToken
 
   """

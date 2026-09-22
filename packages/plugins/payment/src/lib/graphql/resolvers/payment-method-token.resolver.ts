@@ -93,11 +93,13 @@ export class PaymentMethodTokenResolver {
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 	): Promise<IPaymentMethodTokenConnection> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.paymentMethodTokenLifecycle.list(withoutRange(filter as Record<string, unknown>) as never, {
 			take,
-			skip
+			skip,
+			...(withDeleted ? { withDeleted: true } : {})
 		}, sort?.field ? toOrder(sort, PAYMENT_METHOD_TOKEN_SORT_FIELDS) : undefined);
 
 		return toConnection(listing, skip);

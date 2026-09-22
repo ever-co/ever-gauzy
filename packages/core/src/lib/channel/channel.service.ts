@@ -176,7 +176,7 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 	/**
 	 * Lists the channels of the caller's organization.
 	 *
-	 * @param filter Optional narrowing by status, code or default flag.
+	 * @param filter Optional narrowing by status, code, default flag and soft-delete visibility.
 	 * @returns The channels, default first and then newest first.
 	 */
 	async listChannels(filter: IChannelFindInput = {}): Promise<IChannel[]> {
@@ -187,7 +187,10 @@ export class ChannelService extends TenantAwareCrudService<Channel> {
 				...(filter.isDefault !== undefined ? { isDefault: filter.isDefault } : {}),
 				...this.scope
 			},
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			// Stated only when asked for: the kernel reads live rows by default, and writing
+			// `withDeleted: false` would be asking for the same rows through a different path.
+			...(filter.withDeleted ? { withDeleted: true } : {})
 		} as never);
 
 		return (channels ?? []).slice().sort((a, b) => Number(b.isDefault) - Number(a.isDefault));

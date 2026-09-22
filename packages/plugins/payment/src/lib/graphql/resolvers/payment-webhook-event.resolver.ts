@@ -64,6 +64,7 @@ export class PaymentWebhookEventResolver {
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 	): Promise<IPaymentWebhookEventConnection> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.paymentWebhookEventService.findEvents({
@@ -76,7 +77,8 @@ export class PaymentWebhookEventResolver {
 			),
 			order: toOrder(sort, PAYMENT_WEBHOOK_EVENT_SORT_FIELDS),
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		});
 
 		return toConnection(listing, skip);

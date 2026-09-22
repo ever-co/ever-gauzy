@@ -31,6 +31,13 @@ export interface IPaymentMethodTokenQuery {
 export interface IPaymentMethodTokenPage {
 	readonly take?: number;
 	readonly skip?: number;
+	/**
+	 * Whether retired instruments are included, which is what the list route's `withDeleted` states.
+	 *
+	 * It travels with the page rather than as its own argument because the page is what the caller states
+	 * about *how much* to read; visibility is stated the same way and reaches the same read.
+	 */
+	readonly withDeleted?: boolean;
 }
 
 /**
@@ -135,7 +142,8 @@ export class PaymentMethodTokenLifecycleService {
 			// caller that states an order is obeyed instead: "defaults first" is the default, not a rule.
 			order: order ?? { isDefault: 'DESC', lastUsedAt: 'DESC', createdAt: 'DESC' },
 			...(page.take !== undefined ? { take: page.take } : {}),
-			...(page.skip !== undefined ? { skip: page.skip } : {})
+			...(page.skip !== undefined ? { skip: page.skip } : {}),
+			...(page.withDeleted ? { withDeleted: true } : {})
 		} as never);
 
 		return {

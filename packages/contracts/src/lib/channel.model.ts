@@ -133,6 +133,14 @@ export interface IChannelFindInput extends IBasePerTenantAndOrganizationEntityMo
 	isDefault?: boolean;
 	/** Restrict to the channel under one code. */
 	code?: string;
+	/**
+	 * Include the channels that have been soft-deleted.
+	 *
+	 * Stated as part of the narrowing rather than beside it because it is one: the same read answers both,
+	 * and a caller that could ask for a retired channel over GraphQL but not over REST would have two
+	 * answers to one question.
+	 */
+	withDeleted?: boolean;
 }
 
 /**

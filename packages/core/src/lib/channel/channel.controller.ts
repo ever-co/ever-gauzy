@@ -329,8 +329,14 @@ export class ChannelController extends CrudController<Channel> {
 		status?: ChannelStatus;
 		code?: string;
 		isDefault?: boolean;
+		withDeleted?: boolean;
 	} {
-		const stated: { status?: ChannelStatus; code?: string; isDefault?: boolean } = {};
+		const stated: {
+			status?: ChannelStatus;
+			code?: string;
+			isDefault?: boolean;
+			withDeleted?: boolean;
+		} = {};
 
 		for (const member of ['status', 'code', 'isDefault'] as const) {
 			const value = query?.[member] ?? query?.filter?.[member];
@@ -338,6 +344,13 @@ export class ChannelController extends CrudController<Channel> {
 			if (value !== undefined && value !== null) {
 				stated[member] = value as never;
 			}
+		}
+
+		// Visibility is not a member of the bracketed filter — it is the same on both surfaces and is stated
+		// flat — and it is kept only when true, because `false` here asks for exactly what omitting it asks
+		// for. The read is what turns it into the kernel's option.
+		if (query?.withDeleted) {
+			stated.withDeleted = true;
 		}
 
 		return stated;

@@ -1084,6 +1084,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentProviderConnection!
 		paymentProvider(id: ID!): PaymentProvider
 		paymentCollections(
@@ -1092,6 +1093,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentCollectionConnection!
 		paymentCollection(id: ID!): PaymentCollection
 		paymentSessions(
@@ -1100,6 +1102,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentSessionConnection!
 		paymentSession(id: ID!): PaymentSession
 		paymentCaptures(
@@ -1108,6 +1111,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentCaptureConnection!
 		paymentCapture(id: ID!): PaymentCapture
 		refunds(
@@ -1125,6 +1129,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): RefundReasonConnection!
 		refundReason(id: ID!): RefundReason
 		refundLines(
@@ -1133,6 +1138,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): RefundLineConnection!
 		refundLine(id: ID!): RefundLine
 		paymentWebhookEvents(
@@ -1141,6 +1147,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentWebhookEventConnection!
 		paymentWebhookEvent(id: ID!): PaymentWebhookEvent
 		paymentAccountHolders(
@@ -1149,6 +1156,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentAccountHolderConnection!
 		paymentAccountHolder(id: ID!): PaymentAccountHolder
 		paymentMethodTokens(
@@ -1157,6 +1165,7 @@ export const schemaExtensions = gql`
 			page: PageInput
 			limit: Int
 			offset: Int
+			withDeleted: Boolean
 		): PaymentMethodTokenConnection!
 		paymentMethodToken(id: ID!): PaymentMethodToken
 	}

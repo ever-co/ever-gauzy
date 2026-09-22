@@ -78,6 +78,7 @@ export class PaymentAccountHolderResolver {
 		@Args('limit') limit?: number,
 		@Args('offset') offset?: number,
 		@Args('page', { type: () => Object, nullable: true }) page?: IConnectionPageSelection,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean,
 	): Promise<IPaymentAccountHolderConnection> {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.paymentAccountHolderService.findAll({
@@ -86,7 +87,8 @@ export class PaymentAccountHolderResolver {
 			// a default that differs between the two surfaces is the same resource answering two ways.
 			order: sort?.field ? toOrder(sort, PAYMENT_ACCOUNT_HOLDER_SORT_FIELDS) : { createdAt: 'DESC' },
 			skip,
-			take
+			take,
+			...(withDeleted ? { withDeleted: true } : {})
 		} as never);
 
 		return toConnection(listing, skip);
