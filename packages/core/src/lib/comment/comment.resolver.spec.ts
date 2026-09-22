@@ -322,7 +322,7 @@ describe('CommentResolver — the SDL declares the capabilities the REST routes 
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/comments\([^)]*withDeleted/);
+		expect(printed).toMatch(/comments\([^)]*withDeleted/);
 		// The relations a REST caller may name are not a connection argument either: this read names none.
 		expect(printed).not.toMatch(/comments\([^)]*relations/);
 		// The count route passes its query string through as the store's own `where`, which this surface

@@ -248,7 +248,7 @@ describe('KeyResultUpdateResolver — the SDL declares the capabilities the REST
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/keyResultUpdates\([^)]*withDeleted/);
+		expect(printed).toMatch(/keyResultUpdates\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/keyResultUpdateCount\(/);
 	});
 });

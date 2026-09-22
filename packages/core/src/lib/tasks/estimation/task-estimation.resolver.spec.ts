@@ -196,7 +196,7 @@ describe('TaskEstimationResolver — the SDL declares the capabilities the REST 
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/taskEstimations\([^)]*withDeleted/);
+		expect(printed).toMatch(/taskEstimations\([^)]*withDeleted/);
 		expect(printed).toMatch(/taskEstimationCount: Int\n/);
 	});
 });

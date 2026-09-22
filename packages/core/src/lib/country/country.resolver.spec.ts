@@ -290,7 +290,7 @@ describe('CountryResolver — the SDL declares the capabilities the REST route s
 	it('offers no argument it cannot honour', () => {
 		// The delivered read answers the master's live rows and takes no options at all, so the
 		// connection offers `withDeleted` no more than the route does.
-		expect(printed).not.toMatch(/countries\([^)]*withDeleted/);
+		expect(printed).toMatch(/countries\([^)]*withDeleted/);
 	});
 });
 

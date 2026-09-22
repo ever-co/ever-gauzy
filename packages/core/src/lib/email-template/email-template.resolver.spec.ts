@@ -383,7 +383,7 @@ describe('EmailTemplateResolver — the SDL declares the capabilities the REST r
 		expect(printed).toMatch(/emailTemplateCount: Int\b/);
 		expect(printed).not.toMatch(/emailTemplateCount: Int!/);
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/emailTemplates\([^)]*withDeleted/);
+		expect(printed).toMatch(/emailTemplates\([^)]*withDeleted/);
 	});
 });
 

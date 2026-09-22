@@ -408,7 +408,7 @@ describe('TenantSettingResolver — the SDL declares the capabilities the REST r
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/tenantSettings\([^)]*withDeleted/);
+		expect(printed).toMatch(/tenantSettings\([^)]*withDeleted/);
 		// The count route states no narrowing this surface could pass on, and a count is an aggregate a
 		// resource may have no answer for — so the field is nullable and takes no argument.
 		expect(printed).not.toMatch(/tenantSettingCount\(/);

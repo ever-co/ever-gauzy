@@ -254,7 +254,7 @@ describe('OrganizationEmploymentTypeResolver — the SDL declares the capabiliti
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/organizationEmploymentTypes\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationEmploymentTypes\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/organizationEmploymentTypeCount\(/);
 	});
 

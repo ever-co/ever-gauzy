@@ -259,7 +259,7 @@ describe('OrganizationLanguageResolver — the SDL declares the capabilities the
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/organizationLanguages\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationLanguages\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/organizationLanguageCount\(/);
 	});
 

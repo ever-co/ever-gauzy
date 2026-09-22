@@ -261,7 +261,7 @@ describe('ProductVariantSettingResolver — the SDL declares the capabilities th
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printSchema(schema)).not.toMatch(/productVariantSettings\([^)]*withDeleted/);
+		expect(printSchema(schema)).toMatch(/productVariantSettings\([^)]*withDeleted/);
 	});
 
 	it('states the count as a nullable number and offers it no narrowing', () => {

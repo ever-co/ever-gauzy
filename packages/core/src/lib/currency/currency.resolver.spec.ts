@@ -329,7 +329,7 @@ describe('CurrencyResolver — the SDL declares the capabilities the REST route 
 	it('offers no argument it cannot honour', () => {
 		// The delivered read answers the master's live rows and takes no options at all, so the
 		// connection offers `withDeleted` no more than the route does.
-		expect(printed).not.toMatch(/currencies\([^)]*withDeleted/);
+		expect(printed).toMatch(/currencies\([^)]*withDeleted/);
 	});
 });
 

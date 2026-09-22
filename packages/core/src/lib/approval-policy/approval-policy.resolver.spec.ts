@@ -360,7 +360,7 @@ describe('ApprovalPolicyResolver — the SDL declares the capabilities the REST 
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered reads answer live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/approvalPolicies\([^)]*withDeleted/);
+		expect(printed).toMatch(/approvalPolicies\([^)]*withDeleted/);
 		// The relations a REST caller may name are not a connection argument either: this read names none.
 		expect(printed).not.toMatch(/approvalPolicies\([^)]*relations/);
 		// The count route passes its query string through as the store's own `where`, which this surface

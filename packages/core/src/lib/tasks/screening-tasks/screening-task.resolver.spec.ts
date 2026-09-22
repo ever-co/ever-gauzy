@@ -207,7 +207,7 @@ describe('ScreeningTaskResolver — the SDL declares the capabilities the REST r
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/screeningTasks\([^)]*withDeleted/);
+		expect(printed).toMatch(/screeningTasks\([^)]*withDeleted/);
 		expect(printed).toMatch(/screeningTaskCount: Int\n/);
 	});
 });

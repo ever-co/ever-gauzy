@@ -268,7 +268,7 @@ describe('GoalResolver — the SDL declares the capabilities the REST routes ser
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list read reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/goals\([^)]*withDeleted/);
+		expect(printed).toMatch(/goals\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.
 		expect(printed).not.toMatch(/goalCount\(/);

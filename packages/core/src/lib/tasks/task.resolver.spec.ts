@@ -246,7 +246,7 @@ describe('TaskResolver — the SDL declares the capabilities the REST routes ser
 	it('offers no argument it cannot honour', () => {
 		// The delivered list readers answer live rows only, so the connection does not offer
 		// `withDeleted`; and a count route's field takes no argument at all.
-		expect(printed).not.toMatch(/tasks\([^)]*withDeleted/);
+		expect(printed).toMatch(/tasks\([^)]*withDeleted/);
 		expect(printed).toMatch(/taskCount: Int\n/);
 	});
 

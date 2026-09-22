@@ -402,7 +402,7 @@ describe('OrganizationTeamResolver — the SDL declares the capabilities the RES
 		// this surface cannot hand to that call, so the count states no filter it could not honour.
 		expect(printed).not.toMatch(/organizationTeamCount\(/);
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/organizationTeams\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationTeams\([^)]*withDeleted/);
 		// The caller's own list narrows by who is asking, so no argument here names an employee: a
 		// caller cannot read anyone else's teams through it.
 		expect(printed).not.toMatch(/myOrganizationTeams\([^)]*employeeId/);

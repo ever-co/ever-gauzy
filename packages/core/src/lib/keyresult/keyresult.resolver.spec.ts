@@ -277,7 +277,7 @@ describe('KeyResultResolver — the SDL declares the capabilities the REST route
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/keyResults\([^)]*withDeleted/);
+		expect(printed).toMatch(/keyResults\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/keyResultCount\(/);
 	});
 });

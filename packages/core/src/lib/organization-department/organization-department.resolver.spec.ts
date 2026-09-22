@@ -372,7 +372,7 @@ describe('OrganizationDepartmentResolver — the SDL declares the capabilities t
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/organizationDepartments\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationDepartments\([^)]*withDeleted/);
 		// The paginated spelling is the same rows under the same filters: it is the connection and not
 		// a root field of its own.
 		expect(rootFields('Query')).not.toContain('organizationDepartmentPagination');

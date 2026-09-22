@@ -246,7 +246,7 @@ describe('GoalKpiResolver — the SDL declares the capabilities the REST routes 
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/goalKpis\([^)]*withDeleted/);
+		expect(printed).toMatch(/goalKpis\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/goalKpiCount\(/);
 	});
 });

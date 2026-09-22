@@ -244,7 +244,7 @@ describe('KeyResultTemplateResolver — the SDL declares the capabilities the RE
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/keyResultTemplates\([^)]*withDeleted/);
+		expect(printed).toMatch(/keyResultTemplates\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/keyResultTemplateCount\(/);
 	});
 });

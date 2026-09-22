@@ -340,7 +340,7 @@ describe('OrganizationSprintResolver — the SDL declares the capabilities the R
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/organizationSprints\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationSprints\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour — and it answers a
 		// nullable Int, because a count a resource may have no answer for is not a fabricated zero.

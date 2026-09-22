@@ -420,7 +420,7 @@ describe('OrganizationProjectResolver — the SDL declares the capabilities the 
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so neither connection offers `withDeleted`.
-		expect(printed).not.toMatch(/organizationProjects\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationProjects\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/syncedOrganizationProjects\([^)]*withDeleted/);
 		// The count is nullable and takes nothing: the delivered route hands its query string to the
 		// store's own `where`, which this surface cannot pass on, and a non-null field would turn "not

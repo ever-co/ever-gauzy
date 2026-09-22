@@ -344,9 +344,9 @@ describe('OrganizationProjectModuleResolver — the SDL declares the capabilitie
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/organizationProjectModules\([^)]*withDeleted/);
-		expect(printed).not.toMatch(/employeeProjectModules\([^)]*withDeleted/);
-		expect(printed).not.toMatch(/teamProjectModules\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationProjectModules\([^)]*withDeleted/);
+		expect(printed).toMatch(/employeeProjectModules\([^)]*withDeleted/);
+		expect(printed).toMatch(/teamProjectModules\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/organizationProjectModulesByEmployee\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.

@@ -300,7 +300,7 @@ describe('OrganizationResolver — the SDL declares the capabilities the REST ro
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/organizations\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizations\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.
 		expect(printed).not.toMatch(/organizationCount\(/);

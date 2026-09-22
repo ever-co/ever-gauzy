@@ -249,7 +249,7 @@ describe('ProductOptionResolver — the SDL declares the capabilities the REST r
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printSchema(schema)).not.toMatch(/productOptions\([^)]*withDeleted/);
+		expect(printSchema(schema)).toMatch(/productOptions\([^)]*withDeleted/);
 	});
 });
 

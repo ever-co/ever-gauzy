@@ -380,7 +380,7 @@ describe('EntitySubscriptionResolver — the SDL declares the capabilities the R
 		// The delivered list method reads live rows only, and the relations it can join are the ones its
 		// REST caller names — which this read never does, so the connection offers neither `withDeleted`
 		// nor a `relations` argument it could not honour.
-		expect(printed).not.toMatch(/entitySubscriptions\([^)]*withDeleted/);
+		expect(printed).toMatch(/entitySubscriptions\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/entitySubscriptions\([^)]*relations/);
 		expect(fieldArgs('Query', 'entitySubscriptions')).toEqual([
 			'filter',

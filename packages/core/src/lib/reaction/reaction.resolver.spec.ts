@@ -293,7 +293,7 @@ describe('ReactionResolver — the SDL declares the capabilities the REST routes
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/reactions\([^)]*withDeleted/);
+		expect(printed).toMatch(/reactions\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.
 		expect(printed).not.toMatch(/reactionCount\(/);

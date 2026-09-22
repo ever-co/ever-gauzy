@@ -332,8 +332,8 @@ describe('EmployeeSettingResolver — the SDL declares the capabilities the REST
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/employeeSettings\([^)]*withDeleted/);
+		// The read hands its options to `findAll`, which carries `withDeleted` to the store on both dialects, so the connection offers it — the same visibility the REST list route inherits from `BaseQueryDTO`.
+		expect(printed).toMatch(/employeeSettings\([^)]*withDeleted/);
 		// The one-row route binds its query string to `FindOptionsQueryDTO`, which names relations this
 		// schema's type does not carry, so the field takes no argument for them.
 		expect(printed).toMatch(/employeeSetting\(id: ID!\): EmployeeSetting\n/);

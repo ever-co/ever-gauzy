@@ -244,7 +244,7 @@ describe('GoalGeneralSettingResolver — the SDL declares the capabilities the R
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/goalGeneralSettings\([^)]*withDeleted/);
+		expect(printed).toMatch(/goalGeneralSettings\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/goalGeneralSettingCount\(/);
 	});
 });

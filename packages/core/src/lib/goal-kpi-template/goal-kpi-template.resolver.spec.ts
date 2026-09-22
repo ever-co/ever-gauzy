@@ -239,7 +239,7 @@ describe('GoalKpiTemplateResolver — the SDL declares the capabilities the REST
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/goalKpiTemplates\([^)]*withDeleted/);
+		expect(printed).toMatch(/goalKpiTemplates\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/goalKpiTemplateCount\(/);
 	});
 });

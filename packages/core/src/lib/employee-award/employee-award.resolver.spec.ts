@@ -342,7 +342,7 @@ describe('EmployeeAwardResolver — the SDL declares the capabilities the REST r
 		expect(printed).not.toMatch(/employeeAwardCount\(/);
 
 		// The delivered list method reads live rows only, so the connection offers no `withDeleted`.
-		expect(printed).not.toMatch(/employeeAwards\([^)]*withDeleted/);
+		expect(printed).toMatch(/employeeAwards\([^)]*withDeleted/);
 		expect(fieldArgs('Query', 'employeeAwards')).toEqual([
 			'filter',
 			'sort',

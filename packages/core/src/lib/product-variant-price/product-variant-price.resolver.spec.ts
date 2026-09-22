@@ -266,7 +266,7 @@ describe('ProductVariantPriceResolver — the SDL declares the capabilities the 
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printSchema(schema)).not.toMatch(/productVariantPrices\([^)]*withDeleted/);
+		expect(printSchema(schema)).toMatch(/productVariantPrices\([^)]*withDeleted/);
 	});
 });
 

@@ -237,7 +237,7 @@ describe('GoalTimeFrameResolver — the SDL declares the capabilities the REST r
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/goalTimeFrames\([^)]*withDeleted/);
+		expect(printed).toMatch(/goalTimeFrames\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/goalTimeFrameCount\(/);
 	});
 });

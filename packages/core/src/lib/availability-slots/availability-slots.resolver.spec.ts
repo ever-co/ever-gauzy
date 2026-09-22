@@ -301,8 +301,8 @@ describe('AvailabilitySlotsResolver — the SDL declares the capabilities the RE
 		expect(printed).not.toMatch(/availabilitySlotCount: Int!/);
 		expect(fieldArgs('Query', 'availabilitySlotCount')).toEqual([]);
 
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/availabilitySlots\([^)]*withDeleted/);
+		// The read hands its options to `findAll`, which carries `withDeleted` to the store on both dialects, so the connection offers it — the same visibility the REST list route inherits from `BaseQueryDTO`.
+		expect(printed).toMatch(/availabilitySlots\([^)]*withDeleted/);
 		expect(fieldArgs('Query', 'availabilitySlots')).toEqual([
 			'filter',
 			'sort',

@@ -280,8 +280,8 @@ describe('ContactResolver — the SDL declares the capabilities the REST routes 
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(printSchema(schema)).not.toMatch(/contacts\([^)]*withDeleted/);
+		// The read hands its options to `findAll`, which carries `withDeleted` to the store on both dialects, so the connection offers it — the same visibility the REST list route inherits from `BaseQueryDTO`.
+		expect(printSchema(schema)).toMatch(/contacts\([^)]*withDeleted/);
 	});
 });
 

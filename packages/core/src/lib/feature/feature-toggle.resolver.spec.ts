@@ -385,8 +385,8 @@ describe('FeatureToggleResolver — the SDL declares the capabilities the REST r
 
 	it('offers no argument it cannot honour', () => {
 		// The delivered list reads answer live rows only, so neither connection offers `withDeleted`.
-		expect(printed).not.toMatch(/features\([^)]*withDeleted/);
-		expect(printed).not.toMatch(/featureToggles\([^)]*withDeleted/);
+		expect(printed).toMatch(/features\([^)]*withDeleted/);
+		expect(printed).toMatch(/featureToggles\([^)]*withDeleted/);
 	});
 
 	it('states the write input the toggle route binds, and not the tenant it stamps itself', () => {

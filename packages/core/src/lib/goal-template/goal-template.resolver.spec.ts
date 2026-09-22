@@ -230,7 +230,7 @@ describe('GoalTemplateResolver — the SDL declares the capabilities the REST ro
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/goalTemplates\([^)]*withDeleted/);
+		expect(printed).toMatch(/goalTemplates\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/goalTemplateCount\(/);
 	});
 });

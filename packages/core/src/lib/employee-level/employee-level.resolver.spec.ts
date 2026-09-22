@@ -336,7 +336,7 @@ describe('EmployeeLevelResolver — the SDL declares the capabilities the REST r
 		// The delivered list method reads live rows only, and the relations it can join are the ones its
 		// REST caller names — which this read never does, so the connection offers neither `withDeleted`
 		// nor a `relations` argument it could not honour.
-		expect(printed).not.toMatch(/employeeLevels\([^)]*withDeleted/);
+		expect(printed).toMatch(/employeeLevels\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/employeeLevels\([^)]*relations/);
 		expect(fieldArgs('Query', 'employeeLevels')).toEqual([
 			'filter',

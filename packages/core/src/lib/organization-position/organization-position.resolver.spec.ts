@@ -247,7 +247,7 @@ describe('OrganizationPositionResolver — the SDL declares the capabilities the
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/organizationPositions\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationPositions\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/organizationPositionCount\(/);
 	});
 

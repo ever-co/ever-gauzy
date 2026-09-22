@@ -316,7 +316,7 @@ describe('OrganizationStrategicInitiativeResolver — the SDL declares the capab
 	});
 
 	it('offers no argument it cannot honour', () => {
-		expect(printed).not.toMatch(/organizationStrategicInitiatives\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationStrategicInitiatives\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/organizationStrategicInitiativeCount\(/);
 		// The project read mirrors a route with no page, so it answers a bare list rather than a
 		// connection: a page argument here would be one the delivered read cannot take.

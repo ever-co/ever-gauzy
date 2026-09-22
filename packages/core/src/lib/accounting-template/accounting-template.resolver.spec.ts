@@ -278,8 +278,8 @@ describe('AccountingTemplateResolver — the SDL declares the capabilities the R
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/accountingTemplates\([^)]*withDeleted/);
+		// The read hands its options to `findAll`, which carries `withDeleted` to the store on both dialects, so the connection offers it — the same visibility the REST list route inherits from `BaseQueryDTO`.
+		expect(printed).toMatch(/accountingTemplates\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.
 		expect(printed).not.toMatch(/accountingTemplateCount\(/);

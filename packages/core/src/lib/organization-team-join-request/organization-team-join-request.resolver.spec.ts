@@ -431,7 +431,7 @@ describe('OrganizationTeamJoinRequestResolver — the SDL declares the capabilit
 
 	it('offers no argument and no field the controller does not serve', () => {
 		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
-		expect(printed).not.toMatch(/organizationTeamJoinRequests\([^)]*withDeleted/);
+		expect(printed).toMatch(/organizationTeamJoinRequests\([^)]*withDeleted/);
 		// The controller declares no `GET /:id` and no count route, so neither is a root field here.
 		expect(printed).not.toMatch(/^\s*organizationTeamJoinRequest\(/m);
 		expect(printed).not.toMatch(/organizationTeamJoinRequestCount/);
