@@ -5,7 +5,7 @@ import { Permissions, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe
 import { InventoryPermission } from './../inventory.permissions';
 import { StockCountLine } from './stock-count-line.entity';
 import { StockCountLineService } from './stock-count-line.service';
-import { StockCountLineDTO } from './dto';
+import { StockCountLineDTO, StockCountLineQueryDTO  } from './dto';
 
 /**
  * The count-line resource, read-only by design.
@@ -21,8 +21,15 @@ export class StockCountLineController {
 	@ApiOperation({ summary: 'List stock count lines' })
 	@ApiResponse({ status: 200, description: 'Lines found.' })
 	@Get()
-	async findAll(@Query() filter: StockCountLineDTO): Promise<IPagination<StockCountLine>> {
-		return await this.stockCountLineService.findLines({ where: filter as any });
+	async findAll(@Query() filter: StockCountLineQueryDTO): Promise<IPagination<StockCountLine>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockCountLineService.findLines({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one count line. */

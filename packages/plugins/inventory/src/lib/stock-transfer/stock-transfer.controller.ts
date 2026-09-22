@@ -17,9 +17,9 @@ import {
 	CreateStockTransferDTO,
 	ReceiveStockTransferDTO,
 	ShipStockTransferDTO,
-	StockTransferDTO,
+	StockTransferDTO, StockTransferQueryDTO,
 	UpdateStockTransferDTO
-} from './dto';
+ } from './dto';
 
 /**
  * The transfer resource: draft it, approve it, dispatch it, receive it.
@@ -41,8 +41,15 @@ export class StockTransferController {
 	@ApiOperation({ summary: 'List stock transfers' })
 	@ApiResponse({ status: 200, description: 'Transfers found.' })
 	@Get()
-	async findAll(@Query() filter: StockTransferDTO): Promise<IPagination<StockTransfer>> {
-		return await this.stockTransferService.findTransfers({ where: filter as any });
+	async findAll(@Query() filter: StockTransferQueryDTO): Promise<IPagination<StockTransfer>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockTransferService.findTransfers({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one transfer. */

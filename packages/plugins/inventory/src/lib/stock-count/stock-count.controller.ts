@@ -13,7 +13,7 @@ import {
 import { InventoryPermission } from './../inventory.permissions';
 import { StockCount } from './stock-count.entity';
 import { StockCountService } from './stock-count.service';
-import { CreateStockCountDTO, RecordStockCountLinesDTO, StockCountDTO } from './dto';
+import { CreateStockCountDTO, RecordStockCountLinesDTO, StockCountDTO, StockCountQueryDTO  } from './dto';
 
 /**
  * The physical-count resource: create a session, open it, record readings, close it.
@@ -29,8 +29,15 @@ export class StockCountController {
 	@ApiOperation({ summary: 'List stock count sessions' })
 	@ApiResponse({ status: 200, description: 'Sessions found.' })
 	@Get()
-	async findAll(@Query() filter: StockCountDTO): Promise<IPagination<StockCount>> {
-		return await this.stockCountService.findCounts({ where: filter as any });
+	async findAll(@Query() filter: StockCountQueryDTO): Promise<IPagination<StockCount>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockCountService.findCounts({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one session. */

@@ -11,7 +11,7 @@ import {
 import { InventoryPermission } from './../inventory.permissions';
 import { StockTransferLine } from './stock-transfer-line.entity';
 import { StockTransferLineService } from './stock-transfer-line.service';
-import { CreateStockTransferLineDTO, StockTransferLineDTO } from './dto';
+import { CreateStockTransferLineDTO, StockTransferLineDTO, StockTransferLineQueryDTO  } from './dto';
 
 /**
  * The lines of a transfer, exposed so a caller can read and extend a draft.
@@ -27,8 +27,15 @@ export class StockTransferLineController {
 	@ApiOperation({ summary: 'List stock transfer lines' })
 	@ApiResponse({ status: 200, description: 'Lines found.' })
 	@Get()
-	async findAll(@Query() filter: StockTransferLineDTO): Promise<IPagination<StockTransferLine>> {
-		return await this.stockTransferLineService.findLines({ where: filter as any });
+	async findAll(@Query() filter: StockTransferLineQueryDTO): Promise<IPagination<StockTransferLine>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockTransferLineService.findLines({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one transfer line. */

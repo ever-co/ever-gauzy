@@ -14,7 +14,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { StockReservationReferenceType } from './../inventory.enums';
 import { StockReservation } from './stock-reservation.entity';
 import { StockReservationService } from './stock-reservation.service';
-import { CreateStockReservationDTO, StockReservationDTO, UpdateStockReservationDTO } from './dto';
+import { CreateStockReservationDTO, StockReservationDTO, StockReservationQueryDTO, UpdateStockReservationDTO  } from './dto';
 
 /**
  * The reservation resource: hold stock, release it, consume it, push its expiry out.
@@ -30,8 +30,15 @@ export class StockReservationController {
 	@ApiOperation({ summary: 'List stock reservations' })
 	@ApiResponse({ status: 200, description: 'Reservations found.' })
 	@Get()
-	async findAll(@Query() filter: StockReservationDTO): Promise<IPagination<StockReservation>> {
-		return await this.stockReservationService.findReservations({ where: filter as any });
+	async findAll(@Query() filter: StockReservationQueryDTO): Promise<IPagination<StockReservation>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.stockReservationService.findReservations({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one hold. */

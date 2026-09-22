@@ -11,7 +11,7 @@ import {
 import { InventoryPermission } from './../inventory.permissions';
 import { ChannelWarehouse } from './channel-warehouse.entity';
 import { ChannelWarehouseService } from './channel-warehouse.service';
-import { AssignChannelWarehouseDTO, ChannelWarehouseDTO } from './dto';
+import { AssignChannelWarehouseDTO, ChannelWarehouseDTO, ChannelWarehouseQueryDTO  } from './dto';
 
 /**
  * The channel-assignment resource.
@@ -27,8 +27,15 @@ export class ChannelWarehouseController {
 	@ApiOperation({ summary: 'List channel warehouse assignments' })
 	@ApiResponse({ status: 200, description: 'Assignments found.' })
 	@Get()
-	async findAll(@Query() filter: ChannelWarehouseDTO): Promise<IPagination<ChannelWarehouse>> {
-		return await this.channelWarehouseService.findAssignments({ where: filter as any });
+	async findAll(@Query() filter: ChannelWarehouseQueryDTO): Promise<IPagination<ChannelWarehouse>> {
+		const { take, skip, withDeleted, ...where } = filter;
+
+		return await this.channelWarehouseService.findAssignments({
+			where: where as any,
+			...(take ? { take: Number(take) } : {}),
+			...(skip ? { skip: Number(skip) } : {}),
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/** Reads one assignment. */
