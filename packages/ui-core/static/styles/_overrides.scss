@@ -1746,9 +1746,18 @@ angular2-smart-table {
     }
   }
 
+  // The row-action containers, kept on one line: the anchors inside them are
+  // inline, so in a narrow actions column they wrap and the pair stacks.
+  //
+  // `angular2-st-tbody-create-cancel` used to be listed here and matches nothing
+  // — the library has no such element. The two that do hold a PAIR of actions are
+  // the save/cancel of a row being edited and the create/cancel of the add row,
+  // which were therefore the only two that still stacked.
   angular2-st-actions,
   angular2-st-tbody-edit-delete,
-  angular2-st-tbody-create-cancel {
+  angular2-st-tbody-save-cancel,
+  angular2-st-thead-create-cancel {
     display: flex;
+    align-items: center;
   }
 }

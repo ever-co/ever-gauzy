@@ -1,5 +1,19 @@
 @use 'gauzy/_gauzy-dialogs' as *;
+@use '../invoice-dialog' as *;
 
-.internal-note-input {
-  height: 200px;
+// The internal note dialog on the shared invoice-dialog frame: a header row, a
+// note field, and Cancel beside Save on the trailing edge. The note box was a
+// flat 200px in a dialog with no width of its own.
+.add-internal-note {
+  width: min(calc(100vw - 2rem), 30rem);
+}
+
+:host {
+  @include invoice-dialog();
+
+  .internal-note-input {
+    height: 8rem;
+    min-height: 8rem !important;
+    resize: vertical;
+  }
 }
