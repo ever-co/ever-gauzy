@@ -563,7 +563,14 @@ describe('CountryResolver — why this surface carries no feature gate', () => {
 		// so a gate installed here answered "disabled" for every caller — including the tenants that have
 		// the capability switched on. That is the observation this case pins, and the reason the exemption
 		// is recorded rather than the decorator being restored.
-		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		//
+		// The code the guard asks about is therefore **absent rather than the shared one**: the exemption is
+		// what removed the class-level `@FeatureFlag`, so `getAllAndOverride` resolves nothing and the guard
+		// asks with `undefined`. Both halves are stated — that the shared code is *not* what this surface is
+		// gated by, and that the guard still refuses — because it is the refusal below, not the code, that
+		// states what the exemption is for.
+		expect(featureService.isFeatureEnabled).not.toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(undefined);
 		expect(refusal).toBeInstanceOf(NotFoundException);
 		expect((refusal as NotFoundException).getStatus()).toBe(404);
 	});
