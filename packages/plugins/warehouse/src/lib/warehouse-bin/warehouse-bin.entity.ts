@@ -55,8 +55,9 @@ export class WarehouseBin extends TenantOrganizationBaseEntity implements IWareh
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
+	@RelationId((it: WarehouseBin) => it.warehouse)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	warehouseId?: ID;
 
 	/**

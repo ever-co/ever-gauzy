@@ -33,8 +33,9 @@ export class PickWave extends TenantOrganizationBaseEntity implements IPickWave 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
+	@RelationId((it: PickWave) => it.warehouse)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	warehouseId?: ID;
 
 	/** The sales channel the wave was planned for; absent when it spans channels. */

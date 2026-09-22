@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import {
 	IsDate,
 	IsEnum,
@@ -45,8 +45,9 @@ export class CarrierManifest extends TenantOrganizationBaseEntity implements ICa
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
+	@RelationId((it: CarrierManifest) => it.warehouse)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	warehouseId?: ID;
 
 	/** The carrier code, exactly as it is written on the shipment records it groups. */

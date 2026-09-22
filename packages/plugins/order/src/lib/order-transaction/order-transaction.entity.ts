@@ -1,4 +1,4 @@
-import { JoinColumn } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID, IOrderTransaction, OrderTransactionType } from '@gauzy/contracts';
@@ -93,7 +93,10 @@ export class OrderTransaction extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@MultiORMColumn({ nullable: true })
+	// As in OrderSummary: re-declaring the base entity's id without this pair gives MikroORM two properties for
+	// one column, and it refuses the metadata — so the application does not boot on that ORM.
+	@RelationId((it: OrderTransaction) => it.createdByUser)
+	@MultiORMColumn({ nullable: true, relationId: true })
 	createdByUserId?: ID;
 
 	/** The provider's response fragment and the gateway reference, retained for reconciliation. */

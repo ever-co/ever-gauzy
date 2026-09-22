@@ -6,8 +6,8 @@ import {
 	ColumnNumericTransformerPipe,
 	MultiORMColumn,
 	MultiORMEntity,
-	MultiORMManyToOne,
 	MultiORMOneToMany,
+	MultiORMOneToOne,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { DecimalString, ID } from '@gauzy/contracts';
@@ -88,8 +88,23 @@ export class CampaignBudget extends TenantOrganizationBaseEntity implements ICam
 	/**
 	 * The campaign the budget belongs to. The relation owns the foreign key, so the budget cannot
 	 * exist without a campaign and a deleted campaign takes its budget with it.
+	 *
+	 * **One-to-one, not many-to-one**, which is what both the campaign's side and the table already say: the
+	 * migration creates `UQ_campaign_budget` as a UNIQUE index on `campaignId`, and `Campaign.budget` is declared
+	 * one-to-one. Declaring the owning side many-to-one contradicted both, and MikroORM refuses the metadata
+	 * outright — *"Campaign.budget is of type 1:1 which is incompatible with its owning side
+	 * CampaignBudget.campaign of type m:1"* — so the application did not boot on that ORM at all.
+	 *
+	 * `owner: true` is what states which of the two sides owns the key on MikroORM, whose `@OneToOne` has no
+	 * `@JoinColumn()` to infer it from; the kernel maps it to the join column, and the inverse side gets
+	 * `mappedBy`. It is the shape 77 entities in this workspace already use. Without it MikroORM reports *"Both
+	 * Campaign.budget and CampaignBudget.campaign are defined as owning sides"* and refuses again.
 	 */
-	@MultiORMManyToOne(() => Campaign, (campaign) => campaign.budget, { nullable: false, onDelete: 'CASCADE' })
+	@MultiORMOneToOne(() => Campaign, (campaign) => campaign.budget, {
+		owner: true,
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	campaign?: ICampaign;
 

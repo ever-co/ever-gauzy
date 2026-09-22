@@ -1,4 +1,4 @@
-import { JoinColumn } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID, IOrderSummary } from '@gauzy/contracts';
@@ -60,7 +60,11 @@ export class OrderSummary extends TenantOrganizationBaseEntity implements IOrder
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@MultiORMColumn({ nullable: true })
+	// The base entity already maps this pair; re-declaring the id alone gave MikroORM two properties for one
+	// column, which it refuses at metadata discovery — so the application would not boot on that ORM at all.
+	// The decorator and the flag are what say "this is the relation's column", not a second one beside it.
+	@RelationId((it: OrderSummary) => it.createdByUser)
+	@MultiORMColumn({ nullable: true, relationId: true })
 	createdByUserId?: ID;
 
 	/** Why the totals changed: the change action or the source operation. */

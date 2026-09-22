@@ -280,3 +280,13 @@ jobs:
       - name: Durable event names spell their aggregate in snake_case
         if: always()
         run: node tools/scripts/event-name-check.mjs
+
+      # This workspace is dual-ORM and the entity mappings are written once for both. TypeORM is the permissive
+      # one, so a mapping it accepts can be one MikroORM refuses — and the refusal is `MetadataError` during
+      # discovery, which means the application never boots on that ORM at all. Nothing on the default path can
+      # see it, so the shapes MikroORM rejects are checked here instead: a column that duplicates a relation's
+      # field name, a relation pair whose two sides disagree about cardinality, and a one-to-one whose owning
+      # side is stated only for TypeORM. Starting the API with `DB_ORM=mikro-orm` is what found them.
+      - name: Entity mappings are ones both ORMs can build metadata for
+        if: always()
+        run: node tools/scripts/dual-orm-metadata-check.mjs

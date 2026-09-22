@@ -1,4 +1,4 @@
-import { JoinColumn } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ID, IShippingOption, ShippingPriceType } from '@gauzy/contracts';
@@ -97,8 +97,9 @@ export class ShippingOption extends TenantOrganizationBaseEntity implements IShi
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
+	@RelationId((it: ShippingOption) => it.profile)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	profileId?: ID;
 
 	/** The channel this option is offered on. Null means every channel. */

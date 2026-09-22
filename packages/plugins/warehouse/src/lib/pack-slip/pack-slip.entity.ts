@@ -47,8 +47,9 @@ export class PackSlip extends TenantOrganizationBaseEntity implements IPackSlip 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
+	@RelationId((it: PackSlip) => it.warehouse)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	warehouseId?: ID;
 
 	/**

@@ -36,8 +36,9 @@ export class PickList extends TenantOrganizationBaseEntity implements IPickList 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
+	@RelationId((it: PickList) => it.warehouse)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	warehouseId?: ID;
 
 	/**
