@@ -110,7 +110,7 @@ const PLATFORM_WITHOUT_WITH_DELETED = new Set([
 	'syncedOrganizationProjects', 'tagTypes', 'tags', 'tagsByLevel',
 	'taskEstimations', 'taskLinkedIssues', 'taskPriorities', 'taskRelatedIssueTypes',
 	'taskSizes', 'taskStatuses', 'taskVersions', 'taskViews',
-	'tasks', 'tasksByDate', 'tasksByView', 'teamDailyPlans',
+	'tasksByDate', 'tasksByView', 'teamDailyPlans',
 	'teamTasks', 'tenantRoles', 'tenantSettings',
 	'timeLogs', 'timeOffBalances', 'timeOffPolicies', 'timeOffRequests',
 	'timeSlots', 'timesheetProjectChangeRequests', 'timesheets', 'userOrganizations',

@@ -198,11 +198,14 @@ export class TaskResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Task>> {
-		const { items }: IPagination<Task> = await this.taskService.findAll(
-			{} as BaseQueryDTO<Task> & IAdvancedTaskFiltering
-		);
+		// The read hands its options to the base read, which is what lifts the soft-delete filter, so the flag
+		// belongs here rather than in the connection's request — the rows are read before it ever sees them.
+		const { items }: IPagination<Task> = await this.taskService.findAll({
+			...(withDeleted ? { withDeleted: true } : {})
+		} as BaseQueryDTO<Task> & IAdvancedTaskFiltering);
 
 		return this.connection(items, { filter, sort, page, first, after, last, before, limit, offset });
 	}

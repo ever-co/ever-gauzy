@@ -2463,7 +2463,7 @@ type Query {
   tagCount: Int
 
   """The tasks of the caller's tenant and organization."""
-  tasks(filter: TaskFilter, sort: [TaskSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): TaskConnection!
+  tasks(filter: TaskFilter, sort: [TaskSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): TaskConnection!
 
   """
   The tasks assigned to the caller, read through the delivered reader that resolves the employee
