@@ -246,6 +246,13 @@ jobs:
         if: always()
         run: node tools/scripts/money-type-check.mjs
 
+      # Owner decision (2026-09-21): a pull request into develop does not start a workflow - the Actions
+      # minutes belonged to every commit of the branch being merged, and the run belongs to the merge. The
+      # decision is a trigger, so a job-level guard cannot express it and only this check can keep it.
+      - name: A pull request into develop does not start a workflow
+        if: always()
+        run: node tools/scripts/pr-trigger-check.mjs
+
       # An event name is an API contract for subscribers and webhook receivers, and the doctrine spells
       # its aggregate segment the way the table it names is spelled. A name whose aggregate follows the
       # *package* spelling instead (`seller-offering.created`) names one concept two ways and cannot be
