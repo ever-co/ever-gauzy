@@ -2,16 +2,47 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-// Row actions of the invoice-item grid. These were painted with literals: the
-// add/save pill as `#00d68f` and — the visible one — the cancel/delete pill as a
-// flat `white`, i.e. a bright white block on every item row of the four dark
-// themes. Same colours, read from the theme instead of spelled out, and the
-// delete pill takes the hairline ring every other button in the app carries
-// rather than a black drop shadow.
-:host ::ng-deep angular2-smart-table .angular2-smart-actions-title a {
-  background-color: nb-theme(color-success-default) !important;
-  color: nb-theme(text-control-color);
-  transform: scale(0.9);
+// ── The "add row" button ─────────────────────────────────────────────────────
+// The library puts the create trigger in the filter row's action cell, and it
+// was a saturated green slab: 36px around a 28px glyph, twice the height of the
+// filter fields beside it and the loudest thing on a form whose subject is the
+// figures below it.
+//
+// It is the same icon button as the row actions below — at the grid's one
+// control height, so the whole widget row lines up — and it carries the success
+// accent because adding a line is what it does.
+//
+// The glyph is sized on the `<i>`: `_overrides.scss` pins every smart-table
+// action anchor to `font-size: 1.75rem !important`, which the icon only INHERITS,
+// and any direct declaration beats an inherited value without an `!important` of
+// its own.
+:host ::ng-deep angular2-smart-table th.angular2-smart-actions-title a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--gauzy-table-control-height, 1.75rem);
+  height: var(--gauzy-table-control-height, 1.75rem);
+  padding: 0;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: nb-theme(color-success-transparent-200);
+  box-shadow: $action-hairline;
+  color: nb-theme(color-success-default);
+  line-height: 1;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  i {
+    font-size: 0.875rem;
+    line-height: 1;
+  }
+
+  &:hover {
+    background-color: nb-theme(color-success-transparent-300);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
 }
 
 // `transform: scale(0.6)` shrank the anchor's PAINT but not its box, so each
@@ -65,7 +96,10 @@
 // Each action in the colour of what it does, named by its own class rather than
 // its position: in edit mode the row swaps Edit / Delete for Save / Cancel, so
 // `:nth-child(2)` painted Cancel — which changes nothing — in the delete red.
-:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-save {
+// The add row (the one the button above opens) carries the same pair under its
+// own `-add-` names, so both are listed wherever one is.
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-save,
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-add-create {
   color: nb-theme(color-success-default);
 
   &:hover {
@@ -74,7 +108,8 @@
 }
 
 // Cancel backs out of an edit; it is not destructive, so it stays neutral.
-:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-cancel {
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-edit-cancel,
+:host ::ng-deep angular2-smart-table .angular2-smart-actions a.angular2-smart-action-add-cancel {
   color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
 
   &:hover {
