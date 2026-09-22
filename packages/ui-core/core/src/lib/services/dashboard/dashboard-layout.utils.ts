@@ -196,6 +196,136 @@ export function packLayout(placements: IDashboardWidgetPlacement[]): IDashboardW
 }
 
 /**
+ * Sorts placements into reading order: top-to-bottom, then left-to-right.
+ *
+ * This is the order the canvas renders in, and therefore the order the CDK drag
+ * indices of a drop event refer to.
+ *
+ * @param placements - The placements of a single tab.
+ * @returns A new array, sorted.
+ */
+export function readingOrder(placements: IDashboardWidgetPlacement[]): IDashboardWidgetPlacement[] {
+	return [...(placements ?? [])].sort((a, b) => (a.y === b.y ? a.x - b.x : a.y - b.y));
+}
+
+/**
+ * Assigns grid coordinates to placements, in the order they are GIVEN.
+ *
+ * Unlike {@link packLayout} — which only ever corrects `y`, leaving `x` exactly
+ * where it was — this assigns both coordinates. That is what makes a canvas
+ * re-arrangeable at all: the builder offers no way to place a widget at an
+ * arbitrary column (widgets are appended, reordered by drag, and resized from a
+ * menu), so the arrangement IS the order of this array. A reorder that could not
+ * move a widget horizontally was a silent no-op for every pair of widgets
+ * sharing a row, because the reading-order sort read the untouched `x` values
+ * back and restored the original order.
+ *
+ * ── Why this mirrors CSS grid auto-placement ─────────────────────────────────
+ *
+ * The canvas renders its cells with spans only (`grid-column: span w`) and lets
+ * the browser place them, because CDK shows a drag by MOVING THE PLACEHOLDER
+ * NODE between cells — pinning each cell to an absolute column would make DOM
+ * order, and therefore the whole drag, invisible.
+ *
+ * So the browser owns where a widget actually appears, and this function has to
+ * agree with it or the persisted `x`/`y` would describe a layout nobody sees.
+ * It is therefore the "sparse" packing algorithm from CSS Grid §8.5 step 4: a
+ * cursor that only ever moves forwards, and each item taking the first column at
+ * or after it where its footprint does not overlap something already placed.
+ * Sparse, not dense: dense back-fills earlier gaps, which would let a widget
+ * render before one that precedes it in the array — and the index CDK reports
+ * for a drop is a position in that array.
+ *
+ * The result is stable — reading order and array order agree afterwards — so the
+ * indices of the next drag line up with what the user sees. It also closes the
+ * column gap a removed or narrowed widget leaves behind, which vertical-only
+ * packing cannot do.
+ *
+ * @param placements - The placements of a single tab, in the intended order.
+ * @returns A new array with `x`/`y` assigned, free of overlaps and column gaps.
+ */
+export function flowLayout(placements: IDashboardWidgetPlacement[]): IDashboardWidgetPlacement[] {
+	const flowed: IDashboardWidgetPlacement[] = [];
+	// The auto-placement cursor. Its row never decreases, which is what keeps
+	// reading order and array order identical.
+	let cursorRow = 0;
+	let cursorColumn = 0;
+
+	for (const candidate of placements ?? []) {
+		const placement = clampPlacement(candidate);
+		let row = cursorRow;
+		let column = cursorColumn;
+
+		// `clampPlacement` caps `w` at the column count, so a widget always fits on
+		// an empty row: the scan can never run past the bottom of the content.
+		for (;;) {
+			if (column + placement.w > DASHBOARD_GRID_COLUMNS) {
+				row++;
+				column = 0;
+			} else if (flowed.some((other) => collides({ ...placement, x: column, y: row }, other))) {
+				column++;
+			} else {
+				break;
+			}
+		}
+
+		flowed.push({ ...placement, x: column, y: row });
+		cursorRow = row;
+		cursorColumn = column + placement.w;
+	}
+	return flowed;
+}
+
+/** A canvas cell's box on screen, in viewport coordinates. */
+export interface ICanvasCellRect {
+	top: number;
+	right: number;
+	bottom: number;
+	left: number;
+}
+
+/**
+ * Is a point inside a cell's box?
+ *
+ * @param rect - The cell's box.
+ * @param point - A viewport-space point.
+ */
+export function isPointInRect(rect: ICanvasCellRect, point: { x: number; y: number }): boolean {
+	return point.x >= rect.left && point.x < rect.right && point.y >= rect.top && point.y < rect.bottom;
+}
+
+/**
+ * Reading-order position a point belongs at, for a drop that landed in the
+ * canvas' empty space rather than on a cell.
+ *
+ * CDK only re-sorts while the pointer is over ANOTHER cell — its mixed strategy
+ * resolves the target with `elementFromPoint` — so releasing over a gap, over
+ * the ragged space beside a tall widget, or over the run-off below the last row
+ * silently keeps whatever index the last cell the pointer crossed produced. A
+ * user dragging a widget down to the bottom of the canvas therefore watched it
+ * land back near where it started, which reads as "drag and drop is broken".
+ *
+ * A cell counts as preceding the point when it ends above it, or when it shares
+ * the point's row band and its horizontal midpoint is to the left — i.e. exactly
+ * the reading order the canvas lays out in. The count is the insert position.
+ *
+ * @param rects - The cells' boxes, in reading order.
+ * @param point - Where the pointer was released, in viewport coordinates.
+ * @returns An index in `[0, rects.length]`.
+ */
+export function dropIndexAtPoint(rects: readonly ICanvasCellRect[], point: { x: number; y: number }): number {
+	let index = 0;
+	for (const rect of rects) {
+		const endsAbove = rect.bottom <= point.y;
+		const sharesRow = point.y >= rect.top && point.y < rect.bottom;
+		if (endsAbove || (sharesRow && (rect.left + rect.right) / 2 <= point.x)) {
+			index++;
+		}
+	}
+	return index;
+}
+
+/**
  * Inserts a new placement into a tab at the requested grid position, then
  * repacks so nothing overlaps.
  *
@@ -210,8 +340,8 @@ export function addPlacement(
 }
 
 /**
- * Moves the placement identified by `instanceId` to a new index in reading
- * order (used by the PR-1 ordered-list drag), then repacks.
+ * Moves a placement to a new index in reading order, then re-flows the tab so
+ * the new order is what the grid actually shows.
  *
  * @param placements - Existing placements.
  * @param fromIndex - The index the placement was dragged from.
@@ -222,9 +352,9 @@ export function movePlacement(
 	fromIndex: number,
 	toIndex: number
 ): IDashboardWidgetPlacement[] {
-	const ordered = [...(placements ?? [])].sort((a, b) => (a.y === b.y ? a.x - b.x : a.y - b.y));
+	const ordered = readingOrder(placements);
 	if (fromIndex < 0 || fromIndex >= ordered.length) {
-		return packLayout(ordered);
+		return flowLayout(ordered);
 	}
 	const [moved] = ordered.splice(fromIndex, 1);
 	// `clamp(NaN, ...)` is NaN and `splice(NaN, ...)` silently inserts at 0, so an
@@ -232,8 +362,10 @@ export function movePlacement(
 	// it where it was. Anything non-finite therefore lands at the end.
 	const target = Number.isFinite(toIndex) ? clamp(Math.round(toIndex), 0, ordered.length) : ordered.length;
 	ordered.splice(target, 0, moved);
-	// Re-assign rows in the new reading order before packing so the drop sticks.
-	return packLayout(ordered.map((placement, index) => ({ ...placement, y: index })));
+	// Re-FLOW, not repack: packing only corrects `y`, so a move between two
+	// widgets on the same row left both `x` values untouched and the next
+	// reading-order sort put them straight back. See {@link flowLayout}.
+	return flowLayout(ordered);
 }
 
 /** Removes a placement by instance id. */
