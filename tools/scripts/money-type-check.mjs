@@ -15,7 +15,7 @@
  *
  * Run from the repository root: `node tools/scripts/money-type-check.mjs`
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -109,12 +109,89 @@ for (const line of schema.split(/\r?\n/)) {
 	}
 }
 
+/**
+ * Code-first declarations of money, which the composed schema does not serve.
+ *
+ * The rule above reads the SDL because the SDL is what the endpoint serves. A package may also *declare* its
+ * types code-first (`@ObjectType`/`@Field(() => Float)`), and in a schema-first plugin those classes are not
+ * composed into the schema at all — so they cannot break the wire, and they can drift from it without anything
+ * noticing. That is how `marketplace.types.ts` came to declare forty-one members as `Float`, several of them
+ * amounts (`grossAmount`, `commissionAmount`, `netAmount`, the balances) while the SDL beside them says
+ * `Decimal`.
+ *
+ * They are counted and named here rather than corrected, because correcting them needs the decision the drift
+ * itself raises: either the classes are redundant and should stop restating the schema, or they need a
+ * code-first `Decimal` scalar to restate it faithfully — and neither is this gate's call. A *new* one fails, so
+ * the pile cannot grow unnoticed, and the count is printed so it can only shrink deliberately.
+ */
+const CODE_FIRST_BASELINE = 25;
+
+const codeFirst = [];
+let codeType = null;
+
+for (const root of ['packages/plugins', 'packages/core/src']) {
+	const walk = (current) => {
+		let entries;
+		try {
+			entries = readdirSync(current, { withFileTypes: true });
+		} catch (error) {
+			return;
+		}
+
+		for (const entry of entries) {
+			const child = join(current, entry.name);
+			if (entry.isDirectory()) {
+				if (entry.name !== 'node_modules' && entry.name !== 'dist') walk(child);
+				continue;
+			}
+			if (!entry.name.endsWith('.ts') || entry.name.includes('.spec.')) continue;
+
+			let pendingFloat = false;
+
+			for (const line of readFileSync(child, 'utf8').split(/\r?\n/)) {
+				const declared = /export class (\w+)/.exec(line);
+				if (declared) codeType = declared[1];
+
+				// The decorator and the member it decorates are on separate lines, so the decorator arms the
+				// next member rather than being matched against the same line as it.
+				if (/@Field\(\(\) => Float/.test(line)) {
+					pendingFloat = true;
+					continue;
+				}
+
+				const member = /^\s*(?:readonly )?(\w+)\??\s*:/.exec(line);
+				if (!member) {
+					if (line.trim() !== '') pendingFloat = false;
+					continue;
+				}
+
+				if (pendingFloat && codeType && MONEY.test(member[1]) && !NOT_MONEY.test(member[1])) {
+					codeFirst.push(`${codeType}.${member[1]}`);
+				}
+
+				pendingFloat = false;
+			}
+		}
+	};
+	walk(root);
+}
+
 for (const name of EXEMPT.keys()) {
 	if (!found.some((field) => `${field.type}.${field.name}` === name)) {
 		stale.push(`${name} is no longer a money-named field — take it out of EXEMPT (${EXEMPT.get(name)})`);
 	} else if (!/^\[?Float!?\]?!?$/.test(found.find((field) => `${field.type}.${field.name}` === name).fieldType)) {
 		stale.push(`${name} is not a \`Float\` any more — take it out of EXEMPT (${EXEMPT.get(name)})`);
 	}
+}
+
+if (codeFirst.length > CODE_FIRST_BASELINE) {
+	console.error('FAILED — more code-first money is declared as a float than the recorded baseline:');
+	for (const name of codeFirst) console.error(`  ${name}`);
+	console.error('');
+	console.error(`The baseline is ${CODE_FIRST_BASELINE} and ${codeFirst.length} were found. A schema-first plugin's`);
+	console.error('code-first classes are not composed into the schema, so they can drift from it unnoticed — add the');
+	console.error('new declaration to the schema first, or point it at the SDL\u2019s own \`Decimal\`.');
+	process.exit(1);
 }
 
 if (!/^scalar Decimal$/m.test(schema)) {
@@ -142,5 +219,6 @@ if (stale.length > 0) {
 console.log(
 	`PASSED — ${found.length} money-named field(s) read across ${new Set(found.map((field) => field.type)).size} ` +
 		`type(s), and none of them is a \`Float\`: every amount on this surface is the \`Decimal\` scalar` +
-		(EXEMPT.size > 0 ? `, with ${EXEMPT.size} exempted by name with its reason.` : '.')
+		(EXEMPT.size > 0 ? `, with ${EXEMPT.size} exempted by name with its reason` : '') +
+		`. ${codeFirst.length} code-first declaration(s) of money as a \`Float\` are recorded in classes the composed schema does not serve.`
 );
