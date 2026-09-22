@@ -15,9 +15,23 @@ jest.mock('@gauzy/config', () => {
 });
 
 jest.mock('../core/crud/crud.service', () => {
-	// The subject is the allocation, not the CRUD surface, so the base class is replaced by the one
-	// thing a subclass inherits from it: a constructor.
-	class CrudService {}
+	// The subject is the allocation, not the CRUD base, so the base is replaced by the two members this
+	// service actually inherits: a constructor, and the read and the write a claim is answered and
+	// settled through — which pass straight to the repository the double was built with, and that
+	// repository answers for the table. An empty stand-in carrying only a constructor used to sit here,
+	// and `this.find` came back undefined — reported, because the call is in another file, as
+	// `this.find is not a function` from the ledger rather than as an incomplete stub here.
+	class CrudService {
+		constructor(protected readonly typeOrmRepository: any) {}
+
+		find(options?: unknown): Promise<any[]> {
+			return this.typeOrmRepository.find(options);
+		}
+
+		save(entity: unknown): Promise<any> {
+			return this.typeOrmRepository.save(entity);
+		}
+	}
 
 	return { CrudService };
 });
@@ -111,6 +125,7 @@ class SeriesStore {
 	get repository(): unknown {
 		return {
 			manager: this.manager,
+			find: async (options: { where: Row; take?: number }) => this.findAll(options?.where ?? {}),
 			findOne: async (options: { where: Row }) => this.find(options.where),
 			create: (input: Row) => ({ id: `seq-${this.rows.length + 1}`, ...input }),
 			save: async (row: SeriesRow) => this.persist(row)
@@ -191,14 +206,22 @@ class SeriesStore {
 		return builder;
 	}
 
-	private async find(where: Row): Promise<SeriesRow | null> {
+	/**
+	 * Every row a criteria object matches, in table order.
+	 *
+	 * The repository's `find` answers with all of them and its `findOne` with the first, so both go
+	 * through here. One matching rule means a case cannot pass against `findOne` and fail against
+	 * `find` for a reason that is really about the double rather than about the service.
+	 */
+	private async findAll(where: Row): Promise<SeriesRow[]> {
 		this.reads.push(this.depth);
 		await Promise.resolve();
 
-		return (
-			this.rows.find((row) => Object.entries(where).every(([column, value]) => matches(row[column], value))) ??
-			null
-		);
+		return this.rows.filter((row) => Object.entries(where).every(([column, value]) => matches(row[column], value)));
+	}
+
+	private async find(where: Row): Promise<SeriesRow | null> {
+		return (await this.findAll(where))[0] ?? null;
 	}
 
 	private persist(row: SeriesRow): SeriesRow {
