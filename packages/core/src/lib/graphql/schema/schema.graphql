@@ -1044,7 +1044,7 @@ type Query {
   importHistories(filter: ImportHistoryFilter, sort: [ImportHistorySort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): ImportHistoryConnection!
 
   """The markers of the caller's tenant, newest first."""
-  favorites(filter: FavoriteFilter, sort: [FavoriteSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): FavoriteConnection!
+  favorites(filter: FavoriteFilter, sort: [FavoriteSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): FavoriteConnection!
 
   """One marker of the caller's tenant, or null when there is none."""
   favorite(id: ID!): Favorite
@@ -1081,13 +1081,13 @@ type Query {
   The catalogue of capabilities of this installation, in the order the delivered parent route fixes
   for the same rows.
   """
-  features(filter: FeatureFilter, sort: [FeatureSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): FeatureConnection!
+  features(filter: FeatureFilter, sort: [FeatureSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): FeatureConnection!
 
   """
   The caller's tenant's toggle rows: which capability is on, for which scope. A tenant-wide row and
   an organization's own row are both answered, and `organizationId` is what tells them apart.
   """
-  featureToggles(filter: FeatureToggleFilter, sort: [FeatureToggleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): FeatureToggleConnection!
+  featureToggles(filter: FeatureToggleFilter, sort: [FeatureToggleSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): FeatureToggleConnection!
 
   """
   The toggle definitions this installation's provider declares for the platform's own codes, as the
@@ -1483,7 +1483,7 @@ type Query {
   The key results of the caller's tenant, newest first. An objective's key results are this
   connection narrowed by `goalId`; one employee's are the same connection narrowed by `ownerId`.
   """
-  keyResults(filter: KeyResultFilter, sort: [KeyResultSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): KeyResultConnection!
+  keyResults(filter: KeyResultFilter, sort: [KeyResultSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): KeyResultConnection!
 
   """
   One key result of the caller's tenant, or null when there is none.
@@ -1500,14 +1500,14 @@ type Query {
   keyResultCount: Int
 
   """The languages the platform knows."""
-  languages(filter: LanguageFilter, sort: [LanguageSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): LanguageConnection!
+  languages(filter: LanguageFilter, sort: [LanguageSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): LanguageConnection!
   unitCategories: [UnitCategory!]!
   unitCategory(id: ID!): UnitCategory
   units(categoryId: ID): [Unit!]!
   unit(id: ID!): Unit
 
   """The mentions of the caller's tenant, newest first."""
-  mentions(filter: MentionFilter, sort: [MentionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): MentionConnection!
+  mentions(filter: MentionFilter, sort: [MentionSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): MentionConnection!
 
   """One mention of the caller's tenant, or null when there is none."""
   mention(id: ID!): Mention
@@ -1567,7 +1567,7 @@ type Query {
   operationsByAggregate(aggregateType: String!, aggregateId: ID!, filter: OperationFilter, sort: [OperationSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OperationConnection!
 
   """The awards of the caller's tenant, newest first."""
-  organizationAwards(filter: OrganizationAwardFilter, sort: [OrganizationAwardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationAwardConnection!
+  organizationAwards(filter: OrganizationAwardFilter, sort: [OrganizationAwardSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationAwardConnection!
 
   """One award of the caller's tenant, or null when there is none."""
   organizationAward(id: ID!): OrganizationAward
@@ -1633,7 +1633,7 @@ type Query {
   organizationDepartmentsByEmployee(employeeId: ID!): OrganizationDepartmentConnection!
 
   """The documents of the caller's tenant, newest first."""
-  organizationDocuments(filter: OrganizationDocumentFilter, sort: [OrganizationDocumentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationDocumentConnection!
+  organizationDocuments(filter: OrganizationDocumentFilter, sort: [OrganizationDocumentSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationDocumentConnection!
 
   """One document of the caller's tenant, or null when there is none."""
   organizationDocument(id: ID!): OrganizationDocument
@@ -1642,7 +1642,7 @@ type Query {
   organizationDocumentCount: Int
 
   """The employment types of the caller's tenant, newest first."""
-  organizationEmploymentTypes(filter: OrganizationEmploymentTypeFilter, sort: [OrganizationEmploymentTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int): OrganizationEmploymentTypeConnection!
+  organizationEmploymentTypes(filter: OrganizationEmploymentTypeFilter, sort: [OrganizationEmploymentTypeSort!], page: PageInput, first: Int, after: String, last: Int, before: String, limit: Int, offset: Int, withDeleted: Boolean): OrganizationEmploymentTypeConnection!
 
   """
   One employment type of the caller's tenant, or null when there is none.

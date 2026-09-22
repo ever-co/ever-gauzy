@@ -143,14 +143,15 @@ export class FavoriteResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Favorite>> {
 		// The reader takes the query DTO the list route binds its query string to. This surface has no
 		// query string to bind: the connection protocol states the same narrowing in `filter`, which is
 		// applied to the rows the service returns, so the read runs with the route's own defaults — no
 		// `where` and no `relations`. The tenant is applied to the criterion by the service, from the
 		// credential rather than from the caller.
-		const { items }: IPagination<Favorite> = await this.favoriteService.findAll({} as BaseQueryDTO<Favorite>);
+		const { items }: IPagination<Favorite> = await this.favoriteService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<Favorite>);
 
 		return buildConnection<Favorite>({
 			rows: items ?? [],

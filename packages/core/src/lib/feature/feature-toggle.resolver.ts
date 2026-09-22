@@ -183,9 +183,10 @@ export class FeatureToggleResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<IFeature>> {
-		const { items }: IPagination<IFeature> = await this.featureService.findAll();
+		const { items }: IPagination<IFeature> = await this.featureService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<IFeature>({
 			rows: items ?? [],
@@ -216,9 +217,10 @@ export class FeatureToggleResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<IFeatureOrganization>> {
-		const { items }: IPagination<IFeatureOrganization> = await this.featureOrganizationService.findAll();
+		const { items }: IPagination<IFeatureOrganization> = await this.featureOrganizationService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<IFeatureOrganization>({
 			rows: items ?? [],

@@ -112,7 +112,8 @@ export class OrganizationEmploymentTypeResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<OrganizationEmploymentType>> {
 		// The delivered list route binds `findInput` and `relations` out of its `data` query parameter
 		// and hands them to the service. This surface has no query string to bind, so the read runs with
@@ -120,7 +121,7 @@ export class OrganizationEmploymentTypeResolver {
 		// connection protocol's `filter` is applied to the rows the service returns. The tenant is
 		// applied to the criterion by the service, from the credential rather than from the caller.
 		const { items }: IPagination<OrganizationEmploymentType> =
-			await this.organizationEmploymentTypeService.findAll({});
+			await this.organizationEmploymentTypeService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<OrganizationEmploymentType>({
 			rows: items ?? [],

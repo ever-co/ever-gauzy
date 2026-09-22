@@ -63,6 +63,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): FeatureConnection!
 
 	"""
@@ -79,6 +80,7 @@ extend type Query {
 		before: String
 		limit: Int
 		offset: Int
+		withDeleted: Boolean
 	): FeatureToggleConnection!
 
 	"""

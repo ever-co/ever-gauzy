@@ -169,9 +169,10 @@ export class KeyResultResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<KeyResult>> {
-		const { items }: IPagination<KeyResult> = await this.keyResultService.findAll({} as never);
+		const { items }: IPagination<KeyResult> = await this.keyResultService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) } as never);
 
 		return this.connection(items, { filter, sort, page, first, after, last, before, limit, offset });
 	}

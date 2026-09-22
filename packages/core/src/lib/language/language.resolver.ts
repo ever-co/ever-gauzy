@@ -114,9 +114,10 @@ export class LanguageResolver {
 		@Args('last', { type: () => Int, nullable: true }) last?: number,
 		@Args('before', { type: () => String, nullable: true }) before?: string,
 		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
-		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number,
+		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<GraphqlConnection<Language>> {
-		const { items }: IPagination<Language> = await this.languageService.findAll();
+		const { items }: IPagination<Language> = await this.languageService.findAll({ ...(withDeleted ? { withDeleted: true } : {}) });
 
 		return buildConnection<Language>({
 			rows: items ?? [],
