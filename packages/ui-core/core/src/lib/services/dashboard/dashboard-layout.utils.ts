@@ -138,6 +138,25 @@ export function emptyTab(name = 'Overview'): IDashboardTab {
 	return { id: createId(), name, order: 0, widgets: [] };
 }
 
+/**
+ * The footprint a widget is added at, from the `defaultSize` it registered.
+ *
+ * Shared so that what the palette PREVIEWS while dragging and what the canvas
+ * actually inserts on drop are the same numbers: the drop slot used to be a
+ * hard-coded 4x2, so dropping any widget that had registered something else
+ * (a chart at 8x5, say) re-arranged the grid the moment the real cell replaced
+ * the preview, and the widget did not land where it had been aimed.
+ *
+ * @param size - The registered `defaultSize`, if the widget declared one.
+ * @returns A footprint clamped to the grid, defaulting to {@link DEFAULT_WIDGET_SIZE}.
+ */
+export function widgetFootprint(size?: { w?: number; h?: number } | null): { w: number; h: number } {
+	return {
+		w: clamp(Math.round(size?.w ?? 0) || DEFAULT_WIDGET_SIZE.w, 1, DASHBOARD_GRID_COLUMNS),
+		h: Math.max(Math.round(size?.h ?? 0) || DEFAULT_WIDGET_SIZE.h, 1)
+	};
+}
+
 /** Clamps a placement's geometry into the grid and enforces positive spans. */
 export function clampPlacement(placement: IDashboardWidgetPlacement): IDashboardWidgetPlacement {
 	const w = clamp(Math.round(placement.w) || DEFAULT_WIDGET_SIZE.w, 1, DASHBOARD_GRID_COLUMNS);

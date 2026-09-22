@@ -4,14 +4,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { IDashboardTab, IDashboardWidgetPlacement } from '@gauzy/contracts';
 import {
 	createId,
-	DASHBOARD_GRID_COLUMNS,
-	DEFAULT_WIDGET_SIZE,
 	dropIndexAtPoint,
 	flowLayout,
 	ICanvasCellRect,
 	isPointInRect,
 	movePlacement,
 	readingOrder,
+	widgetFootprint,
 	WidgetRegistryService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -218,9 +217,9 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	 */
 	public addWidget(widgetId: string, index?: number): void {
 		const config = this._widgetRegistry.getWidget(widgetId);
-		const size = config?.defaultSize ?? DEFAULT_WIDGET_SIZE;
-		const w = Math.min(Math.max(Math.round(size.w) || DEFAULT_WIDGET_SIZE.w, 1), DASHBOARD_GRID_COLUMNS);
-		const h = Math.max(Math.round(size.h) || DEFAULT_WIDGET_SIZE.h, 1);
+		// Same helper the palette sizes its drop slot with, so the slot the user
+		// aimed at is the footprint the widget actually takes.
+		const { w, h } = widgetFootprint(config?.defaultSize);
 
 		// `x`/`y` are placeholders: `_emit` flows the list, so the only thing that
 		// decides where the widget lands is its POSITION IN THE LIST — which is
@@ -342,7 +341,7 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	 * @param placement - The placement being dragged.
 	 * @returns A literal, or a translation key for the template's `translate` pipe.
 	 */
-	public titleFor(placement: IDashboardWidgetPlacement): string {
+	protected titleFor(placement: IDashboardWidgetPlacement): string {
 		if (placement.title) {
 			return placement.title;
 		}
@@ -355,7 +354,7 @@ export class DashboardCanvasComponent extends TranslationBaseComponent {
 	 *
 	 * @param placement - The placement being dragged.
 	 */
-	public iconFor(placement: IDashboardWidgetPlacement): string {
+	protected iconFor(placement: IDashboardWidgetPlacement): string {
 		return this._widgetRegistry.getWidget(placement.widgetId)?.icon || 'cube-outline';
 	}
 

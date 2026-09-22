@@ -226,14 +226,12 @@
  *
  * It is styled HERE rather than in the canvas sheet because CDK renders it from
  * this component's template: it carries this component's style attribute, so a
- * canvas-scoped rule would never match it. The grid spans are what the canvas
- * needs (they are inert in the palette's own block list) and match the most
- * common widget footprint, since the real one is only known once the drop
- * resolves the widget's `defaultSize`.
+ * canvas-scoped rule would never match it. The grid spans that size it on the
+ * canvas are bound in the template from the dragged widget's own footprint —
+ * they are deliberately NOT set here, because a fixed guess reserved the wrong
+ * space for every widget registering something else.
  */
 .palette-drop-slot {
-	grid-column: span 4;
-	grid-row: span 2;
 	min-height: 3.5rem;
 	margin-bottom: 0.25rem;
 	border: 2px dashed nb-theme(color-primary-default);
