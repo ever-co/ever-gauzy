@@ -3,6 +3,9 @@ import {
 	addPlacement,
 	clampPlacement,
 	DASHBOARD_GRID_COLUMNS,
+	dropIndexAtPoint,
+	flowLayout,
+	isPointInRect,
 	isLayoutV2,
 	movePlacement,
 	normalizeLayout,
@@ -163,6 +166,126 @@ describe('packLayout', () => {
 	});
 });
 
+describe('flowLayout', () => {
+	it('wraps across the 12 columns in the order it is given', () => {
+		const flowed = flowLayout([
+			place({ instanceId: 'a', w: 6, h: 2 }),
+			place({ instanceId: 'b', w: 6, h: 2 }),
+			place({ instanceId: 'c', w: 6, h: 2 })
+		]);
+		expect(flowed.map((p) => [p.x, p.y])).toEqual([
+			[0, 0],
+			[6, 0],
+			[0, 2]
+		]);
+	});
+
+	it('assigns x, so reordering two widgets on the same row actually moves them', () => {
+		const flowed = flowLayout([place({ instanceId: 'b', x: 6, w: 6 }), place({ instanceId: 'a', x: 0, w: 6 })]);
+		expect(flowed.find((p) => p.instanceId === 'b')?.x).toBe(0);
+		expect(flowed.find((p) => p.instanceId === 'a')?.x).toBe(6);
+	});
+
+	it('leaves reading order equal to array order, so it is stable', () => {
+		const flowed = flowLayout([
+			place({ instanceId: 'a', w: 4, h: 3 }),
+			place({ instanceId: 'b', w: 4, h: 1 }),
+			place({ instanceId: 'c', w: 4, h: 2 }),
+			place({ instanceId: 'd', w: 8, h: 2 })
+		]);
+		expect(flowLayout(flowed)).toEqual(flowed);
+		expect([...flowed].sort((a, b) => (a.y === b.y ? a.x - b.x : a.y - b.y))).toEqual(flowed);
+	});
+
+	it('packs like CSS grid auto-placement, which is what actually renders', () => {
+		// Verified against a real browser: the canvas renders cells with spans only
+		// (so CDK's drag can reorder them), which makes the GRID the authority on
+		// where a widget sits. `d` tucks in beside the tall `a` at column 4 rather
+		// than starting a fresh row — if this drifts, the persisted x/y stops
+		// describing the layout the user is looking at.
+		const flowed = flowLayout([
+			place({ instanceId: 'a', w: 4, h: 3 }),
+			place({ instanceId: 'b', w: 4, h: 1 }),
+			place({ instanceId: 'c', w: 4, h: 2 }),
+			place({ instanceId: 'd', w: 8, h: 2 }),
+			place({ instanceId: 'e', w: 4, h: 2 })
+		]);
+		expect(flowed.map((p) => [p.x, p.y])).toEqual([
+			[0, 0],
+			[4, 0],
+			[8, 0],
+			[4, 2],
+			[0, 3]
+		]);
+		assertNoOverlap(flowed);
+	});
+
+	it('closes the column gap a removed widget leaves behind', () => {
+		const flowed = flowLayout([place({ instanceId: 'a', x: 0, w: 3 }), place({ instanceId: 'c', x: 6, w: 3 })]);
+		expect(flowed.map((p) => p.x)).toEqual([0, 3]);
+	});
+
+	it('never overlaps and never overflows the grid', () => {
+		const flowed = flowLayout(
+			Array.from({ length: 20 }, (_, i) =>
+				place({ instanceId: String(i), x: (i * 5) % 10, y: (i * 3) % 7, w: ((i % 4) + 1) * 3, h: (i % 3) + 1 })
+			)
+		);
+		assertNoOverlap(flowed);
+		expect(flowed.every((p) => p.x + p.w <= DASHBOARD_GRID_COLUMNS)).toBe(true);
+	});
+
+	it('handles an empty or nullish list', () => {
+		expect(flowLayout([])).toEqual([]);
+		expect(flowLayout(undefined as never)).toEqual([]);
+	});
+});
+
+describe('drop point geometry', () => {
+	/** Two rows of three 100x50 cells, laid out like the canvas does. */
+	const grid = [
+		{ left: 0, right: 100, top: 0, bottom: 50 },
+		{ left: 110, right: 210, top: 0, bottom: 50 },
+		{ left: 220, right: 320, top: 0, bottom: 50 },
+		{ left: 0, right: 100, top: 60, bottom: 110 },
+		{ left: 110, right: 210, top: 60, bottom: 110 },
+		{ left: 220, right: 320, top: 60, bottom: 110 }
+	];
+
+	it('places a point below every cell at the end', () => {
+		expect(dropIndexAtPoint(grid, { x: 160, y: 400 })).toBe(6);
+	});
+
+	it('places a point in the gutter between two cells between them', () => {
+		// x = 105 is the gap between cell 0 and cell 1 on the first row.
+		expect(dropIndexAtPoint(grid, { x: 105, y: 25 })).toBe(1);
+	});
+
+	it('reads the second row as coming after the whole first row', () => {
+		expect(dropIndexAtPoint(grid, { x: 105, y: 85 })).toBe(4);
+	});
+
+	it('places a point left of everything at the front', () => {
+		expect(dropIndexAtPoint(grid, { x: -20, y: 25 })).toBe(0);
+	});
+
+	it('places a point right of a row at the end of that row', () => {
+		expect(dropIndexAtPoint(grid, { x: 500, y: 25 })).toBe(3);
+	});
+
+	it('answers 0 for an empty canvas', () => {
+		expect(dropIndexAtPoint([], { x: 10, y: 10 })).toBe(0);
+	});
+
+	it('detects whether a point is inside a cell', () => {
+		expect(isPointInRect(grid[0], { x: 50, y: 25 })).toBe(true);
+		expect(isPointInRect(grid[0], { x: 105, y: 25 })).toBe(false);
+		// Half-open, so neighbouring cells can never both claim an edge.
+		expect(isPointInRect(grid[0], { x: 0, y: 0 })).toBe(true);
+		expect(isPointInRect(grid[0], { x: 100, y: 25 })).toBe(false);
+	});
+});
+
 describe('placement mutations', () => {
 	it('adds a placement without overlapping existing ones', () => {
 		const existing = [place({ instanceId: '1', x: 0, y: 0, w: 12, h: 2 })];
@@ -195,6 +318,20 @@ describe('placement mutations', () => {
 		const moved = movePlacement(placements, 0, 2);
 		const order = [...moved].sort((x, y) => x.y - y.y).map((p) => p.instanceId);
 		expect(order).toEqual(['b', 'c', 'a']);
+	});
+
+	it('moves a widget between two others sharing its row', () => {
+		// The row is [a][b][c]; dragging `a` onto `c`'s slot must actually change
+		// what the grid shows. Repacking alone could not: it only corrects `y`.
+		const row = flowLayout([
+			place({ instanceId: 'a', w: 4 }),
+			place({ instanceId: 'b', w: 4 }),
+			place({ instanceId: 'c', w: 4 })
+		]);
+		const moved = movePlacement(row, 0, 2);
+		expect(moved.map((p) => p.instanceId)).toEqual(['b', 'c', 'a']);
+		expect(moved.map((p) => p.x)).toEqual([0, 4, 8]);
+		expect(moved.every((p) => p.y === 0)).toBe(true);
 	});
 
 	it('ignores an out-of-range move index', () => {

@@ -46,35 +46,31 @@ export class RolePermissionUtils {
 				// Get role ID
 				const roleId = role.id;
 
-				// Loop through all permissions
-				for await (const permission of permissions) {
-					// Check permission existence
-					const isPermissionExisted = await this.checkPermissionExistence(
+				// Read every permission this role already has in ONE query, instead of asking the
+				// database once per permission. The per-permission check made this migration issue
+				// `tenants x roles x permissions` sequential round-trips - on a 5,236-tenant
+				// production database that is ~8.8M queries and over five hours, while the pod's
+				// startup probe allows fifty minutes, so the container was killed and restarted
+				// from the beginning forever and the API could never boot.
+				const existingPermissions = await this.getExistingPermissions(queryRunner, tenantId, roleId);
+
+				// Only the permissions this role is missing. As before we never disable or remove
+				// an existing grant, so re-running stays safe.
+				const missingPermissions = permissions.filter((permission) => !existingPermissions.has(permission));
+
+				if (isNotEmpty(missingPermissions)) {
+					const timestamp = moment().format('DD.MM.YYYY HH:mm:ss');
+					const message = `${timestamp} unlocked ${missingPermissions.length} missing permission(s) for the tenant: ${tenantName}`;
+					console.log(chalk.magenta(message, roleEnum));
+
+					// Insert the missing rows in batches rather than one statement per row.
+					await this.insertMissingRolePermissions(
 						queryRunner,
 						tenantId,
 						roleId,
-						permission
+						missingPermissions,
+						defaultEnabledPermissions
 					);
-
-					// If permission does not exist
-					if (!isPermissionExisted) {
-						// Log missing permission
-						const timestamp = moment().format('DD.MM.YYYY HH:mm:ss');
-						const message = `${timestamp} unlocked missing permission for the tenant: ${tenantName}`;
-						console.log(chalk.magenta(message, roleEnum, permission));
-
-						// Missing role permission payload for insert into database
-						const payload = await this.getInsertPayload(
-							queryRunner,
-							tenantId,
-							roleId,
-							permission,
-							defaultEnabledPermissions.includes(permission)
-						);
-
-						// Insert role permission into database
-						await this.insertRolePermissions(queryRunner, payload);
-					}
 				}
 			}
 		}
@@ -103,6 +99,100 @@ export class RolePermissionUtils {
 		query = replacePlaceholders(query, queryRunner.dataSource.options.type as DatabaseTypeEnum);
 
 		return await queryRunner.dataSource.manager.query(query, [tenantId]);
+	}
+
+	/**
+	 * Get every permission a role already holds, as a Set, in a single query.
+	 *
+	 * This replaces calling `checkPermissionExistence` once per permission. The old shape cost
+	 * one round-trip per (tenant, role, permission) triple, which is `roles x permissions`
+	 * queries per tenant; the batched read is one query per role, so the whole migration drops
+	 * from ~8.8M sequential round-trips to roughly the number of roles.
+	 *
+	 * @param queryRunner - The QueryRunner instance
+	 * @param tenantId - The tenant ID
+	 * @param roleId - The role ID
+	 * @returns A Set of the permissions already granted to that role
+	 */
+	private static async getExistingPermissions(
+		queryRunner: QueryRunner,
+		tenantId: ID,
+		roleId: ID
+	): Promise<Set<string>> {
+		const dbType = queryRunner.dataSource.options.type as DatabaseTypeEnum;
+
+		let query = p(`SELECT "permission" FROM "role_permission" WHERE "tenantId" = $1 AND "roleId" = $2`);
+		query = replacePlaceholders(query, dbType);
+
+		const rows = await queryRunner.dataSource.manager.query(query, [tenantId, roleId]);
+
+		return new Set((rows || []).map((row: { permission: string }) => row.permission));
+	}
+
+	/**
+	 * Insert the permissions a role is missing, in batches.
+	 *
+	 * Mirrors `getInsertPayload` + `insertRolePermissions` exactly - same columns, same `enabled`
+	 * semantics, same explicit id for the databases that have no UUID column default - but sends
+	 * many rows per statement instead of one statement per row.
+	 *
+	 * @param queryRunner - The QueryRunner instance
+	 * @param tenantId - The tenant ID
+	 * @param roleId - The role ID
+	 * @param missingPermissions - The permissions to grant
+	 * @param defaultEnabledPermissions - Permissions enabled by default for this role
+	 */
+	private static async insertMissingRolePermissions(
+		queryRunner: QueryRunner,
+		tenantId: ID,
+		roleId: ID,
+		missingPermissions: PermissionsEnum[],
+		defaultEnabledPermissions: PermissionsEnum[]
+	): Promise<void> {
+		const dbType = queryRunner.dataSource.options.type as DatabaseTypeEnum;
+
+		// MySQL and the SQLite drivers have no UUID column default, so the id is generated here -
+		// exactly as `getInsertPayload` does.
+		const needsExplicitId =
+			dbType === DatabaseTypeEnum.sqlite ||
+			dbType === DatabaseTypeEnum.betterSqlite3 ||
+			dbType === DatabaseTypeEnum.mysql;
+
+		const columns = needsExplicitId
+			? `("tenantId", "roleId", "permission", "enabled", "id")`
+			: `("tenantId", "roleId", "permission", "enabled")`;
+		const columnsPerRow = needsExplicitId ? 5 : 4;
+
+		// Keep each statement well inside the strictest driver's bind-parameter ceiling
+		// (SQLite defaults to 999 in older builds).
+		const maxRowsPerStatement = Math.max(1, Math.floor(900 / columnsPerRow));
+
+		for (let offset = 0; offset < missingPermissions.length; offset += maxRowsPerStatement) {
+			const chunk = missingPermissions.slice(offset, offset + maxRowsPerStatement);
+
+			const values: any[] = [];
+			const placeholderGroups: string[] = [];
+
+			for (const permission of chunk) {
+				const payload = await this.getInsertPayload(
+					queryRunner,
+					tenantId,
+					roleId,
+					permission,
+					defaultEnabledPermissions.includes(permission)
+				);
+
+				placeholderGroups.push(`(${payload.map((_, index) => `$${values.length + index + 1}`).join(', ')})`);
+				values.push(...payload);
+			}
+
+			let query = p(`INSERT INTO "role_permission" ${columns} VALUES ${placeholderGroups.join(', ')}`);
+			query = replacePlaceholders(query, dbType);
+
+			await queryRunner.dataSource.manager.query(query, values);
+		}
+
+		console.log(chalk.green(`Inserted ${missingPermissions.length} role permission(s) for ${dbType}`));
 	}
 
 	/**
