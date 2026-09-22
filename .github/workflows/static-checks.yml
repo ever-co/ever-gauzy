@@ -3,18 +3,18 @@ name: 'Static Checks'
 # Three checks that nothing in CI did before. The first two were added after a duplicated
 # `transformIgnorePatterns` key sat in `packages/core/jest.config.ts` undetected (TS1117):
 #
-#   * `typecheck-configs` — `tsc --noEmit` over every jest.config.ts, sub-second for the compile
+#   * `typecheck-configs` - `tsc --noEmit` over every jest.config.ts, sub-second for the compile
 #     itself and under a minute for the whole job. This one is REAL: it is green today and it
 #     fails the job if it ever stops being. It is the check that would have caught that bug.
-#   * `lint` — reports the ESLint backlog. Deliberately NON-BLOCKING (`continue-on-error`), and
+#   * `lint` - reports the ESLint backlog. Deliberately NON-BLOCKING (`continue-on-error`), and
 #     it must stay that way until the backlog below is worked through. As of the repair in
 #     #10117 the workspace reports roughly 2,650 errors and 6,100 warnings, so a blocking lint
 #     gate would wedge every PR on day one. The tracking task lives in the agent workspace at
 #     `knowledge/TASKS.md` ("Burn down the ESLint backlog").
-#   * `platform-gates` — the structural rules the platform-extensions programme added under
+#   * `platform-gates` - the structural rules the platform-extensions programme added under
 #     `tools/scripts/`. They existed and were green, and nothing in CI ran a single one of them,
 #     so the rules they state could be broken by any pull request without a word. Each reads the
-#     source tree with `node:fs` alone — no install, no compiler, no database — which is why this
+#     source tree with `node:fs` alone - no install, no compiler, no database - which is why this
 #     job needs nothing but Node and finishes in seconds. REAL: green today, and it fails the job
 #     if it stops being.
 #
@@ -24,9 +24,13 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
+  # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
+  # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
+  # trigger below runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # replace this comment with:
+  #   pull_request:
+  #     branches:
+  #       - develop
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -56,14 +60,14 @@ jobs:
         with:
           node-version: 24
 
-      # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone — `types: []`,
-      # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` — precisely so
+      # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone - `types: []`,
+      # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` - precisely so
       # this job needs nothing but the compiler. The compile itself is well under a second across
       # all 95 configs; fetching the compiler dominates. Against the hours a cold `yarn install`
       # costs on this fleet, that is the whole trade.
       #
       # Installed rather than run through `npx --yes`, which fetches on demand and runs the
-      # fetched package's lifecycle scripts — Sonar flags that as a vulnerability (rules S6505
+      # fetched package's lifecycle scripts - Sonar flags that as a vulnerability (rules S6505
       # and S8543). Exact version, no scripts, no lockfile writes, and into RUNNER_TEMP so it
       # cannot disturb the checkout. It is also faster: ~4s to install against ~37s for npx.
       - name: Install TypeScript
@@ -79,8 +83,8 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     # Non-blocking at the JOB level, not just on the ESLint step. The step-level flag below keeps
-    # a red lint result from failing the job; this keeps anything else in the job — a cache miss,
-    # a registry hiccup, an install failure on the fleet — from doing it either. The requirement
+    # a red lint result from failing the job; this keeps anything else in the job - a cache miss,
+    # a registry hiccup, an install failure on the fleet - from doing it either. The requirement
     # is that this job cannot redden CI for anyone, and a job that goes red because a runner had
     # a bad day would break that just as surely as a lint error would.
     continue-on-error: true
@@ -110,7 +114,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       # Placed AFTER the cache restore because this action rewrites yarn.lock's resolved URLs, and
-      # `hashFiles()` in the key above evaluates at step runtime — configuring the registry first
+      # `hashFiles()` in the key above evaluates at step runtime - configuring the registry first
       # would move the key and split the cache namespace by VIP reachability.
       - name: Configure Registry
         uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
@@ -146,7 +150,7 @@ jobs:
               echo "This job can now be promoted to blocking: drop \`continue-on-error\` from the"
               echo "\`Run ESLint\` step in \`.github/workflows/static-checks.yml\`."
             else
-              echo "\`nx run-many -t lint\` reported problems. **This does not fail CI** — the"
+              echo "\`nx run-many -t lint\` reported problems. **This does not fail CI** - the"
               echo "backlog predates the job (see \`knowledge/TASKS.md\` in the agent workspace)."
               echo
               echo "Full output is in the \`Run ESLint (report only)\` step above."
@@ -175,7 +179,7 @@ jobs:
       #
       # Each gate is its own step so the run page names which rule broke, rather than one step that
       # says a loop exited non-zero. `if: always()` on every step after the first so one red gate
-      # still lets the rest report — otherwise the first failure hides the others and each fix costs
+      # still lets the rest report - otherwise the first failure hides the others and each fix costs
       # another full run to find the next one.
       - name: Plugin package contract
         run: node tools/scripts/plugin-contract-check.mjs
@@ -220,14 +224,14 @@ jobs:
         run: node tools/scripts/mutating-route-permission-check.mjs
 
       # `@nestjs/graphql` refuses to build the schema when a resolver claims a field its own type does not
-      # declare — that is a boot failure, and it is invisible until the resolvers are actually registered.
+      # declare - that is a boot failure, and it is invisible until the resolvers are actually registered.
       # This gate compares every resolver field against the composed schema.
       - name: Resolver fields exist on the type that resolves them
         if: always()
         run: node tools/scripts/graphql-field-binding-check.mjs
 
       # The list surface is where GraphQL parity is easiest to lose: a bare array cannot be paged,
-      # filtered or counted, so the client that has the REST list has no counterpart to move to — and a
+      # filtered or counted, so the client that has the REST list has no counterpart to move to - and a
       # connection that offers no `withDeleted` tells a client the retired rows are unreachable while the
       # REST route beside it reaches them. The gate names whatever is still off the contract, so the
       # remainder is countable and a new one cannot appear unnoticed.
@@ -236,7 +240,7 @@ jobs:
         run: node tools/scripts/connection-shape-check.mjs
 
       # Money is an exact decimal on this platform, and a field declared `Float` tells every generated
-      # client to parse the amount as a double — the loss then happens in the client, silently, after
+      # client to parse the amount as a double - the loss then happens in the client, silently, after
       # the server did everything right. The gate reads every money-named field in the composed schema.
       - name: Money is never declared as a float
         if: always()
