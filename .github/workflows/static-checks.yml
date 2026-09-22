@@ -255,12 +255,16 @@ jobs:
 
       # Two gates existed and neither ran here: a check nothing invokes is a check that measures nothing, and
       # the GraphQL schema is exactly the surface those two guard (one composes it and proves every kernel type
-      # is declared once, the other compares it against the committed classification).
-      - name: The GraphQL schema composes, and is unchanged
+      # is declared once, the other compares it against the committed classification). One gate per step: a
+      # `run: |` block stops at the first failure, so the second gate in it would go unrun in the run that
+      # mattered — the same hiding this workflow's own comment warns about, one level further in.
+      - name: The GraphQL schema composes
         if: always()
-        run: |
-          node tools/scripts/check-graphql-composition.js
-          node tools/scripts/check-graphql-schema.js
+        run: node tools/scripts/check-graphql-composition.js
+
+      - name: The GraphQL schema is unchanged
+        if: always()
+        run: node tools/scripts/check-graphql-schema.js
 
       # And the wiring itself is checked, so the next gate cannot be added and left uninvoked. This one caught
       # itself before it was added here, which is the proof that it reads what it claims to.

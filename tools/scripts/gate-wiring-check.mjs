@@ -72,6 +72,7 @@ function steps() {
 const allSteps = steps();
 
 const hidden = [];
+const crowded = [];
 
 for (const name of gates) {
 	if (unwired.includes(name)) continue;
@@ -81,9 +82,13 @@ for (const name of gates) {
 	if (!step) continue;
 
 	// The first step of a job cannot be hidden by anything: there is nothing before it to fail.
-	if (step.first) continue;
+	if (!step.first && !step.lines.some((line) => /^\s*if:\s*always\(\)\s*$/.test(line))) hidden.push(name);
 
-	if (!step.lines.some((line) => /^\s*if:\s*always\(\)\s*$/.test(line))) hidden.push(name);
+	// Nor can a gate sharing a step with another: a `run: |` block stops at the first failure, so the second gate
+	// in it goes unrun in exactly the run where it mattered — the same hiding, one level further in.
+	const sharing = gates.filter((other) => other !== name && step.lines.join('\n').includes(`tools/scripts/${other}`));
+
+	if (sharing.length > 0) crowded.push(`${name} shares its step with ${sharing.join(', ')}`);
 }
 
 if (unwired.length > 0) {
@@ -102,6 +107,15 @@ if (hidden.length > 0) {
 	console.error('Add `if: always()` to its step — the convention this workflow already states in a comment. A failing');
 	console.error('run is the one where the remaining gates matter most, and a report that stops at the first failure');
 	console.error('reads as a complete one.');
+	process.exit(1);
+}
+
+if (crowded.length > 0) {
+	console.error('FAILED — a gate shares its step with another gate:');
+	for (const entry of crowded) console.error(`  ${entry}`);
+	console.error('');
+	console.error('Give each gate its own step. A `run: |` block stops at the first failure, so the second gate in it');
+	console.error('does not run in exactly the run where it mattered.');
 	process.exit(1);
 }
 
