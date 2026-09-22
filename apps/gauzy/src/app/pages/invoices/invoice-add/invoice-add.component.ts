@@ -200,6 +200,23 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		});
 	}
 
+	/**
+	 * A figure with the record’s currency in front of it, and nothing at all when
+	 * there is no figure yet.
+	 *
+	 * Every column’s prepare function also runs on the EMPTY add row, and it feeds
+	 * the inline editor as well as the cell — which is why an untouched add row used
+	 * to open with "BGN undefined" already typed into the price box and "BGN NaN" in
+	 * the total beside it.
+	 */
+	private formatMoney(value: any): string {
+		const amount = Number(value);
+		if (value === null || value === undefined || value === '' || !Number.isFinite(amount)) {
+			return '';
+		}
+		return `${this.currency.value} ${value}`;
+	}
+
 	loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
@@ -319,7 +336,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+					return this.formatMoney(cell);
 				}
 			};
 			quantity = {
@@ -339,7 +356,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell) => {
-					return `${this.currency.value} ${cell}`;
+					return this.formatMoney(cell);
 				}
 			};
 			quantity = {
@@ -362,7 +379,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			addable: false,
 			editable: false,
 			valuePrepareFunction: (cell) => {
-				return `${this.currency.value} ${cell}`;
+				return this.formatMoney(cell);
 			},
 			isFilterable: false,
 			width: '13%'
