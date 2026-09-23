@@ -63,6 +63,30 @@ export class ProductRelationResolver {
 	}
 
 	/**
+	 * Reads one product relation by id.
+	 *
+	 * The route it mirrors is `GET /product-relations/:id`, inherited from `CrudController` — the
+	 * controller declares no route of its own for it — so the read is the base's
+	 * `findOneByIdString(id)` and the permission is the controller's class-level `PRODUCTS_VIEW`,
+	 * which is what `PermissionGuard` resolves for a handler that states none of its own. Without
+	 * this field a caller that had just been handed a relation identifier — from `createProductRelation`
+	 * or from a page of `productRelations` — had no way to read that one row over GraphQL, while the
+	 * REST caller beside it did.
+	 *
+	 * The answer is nullable because a miss is the row's absence rather than a refusal: the
+	 * publication node query beside it answers a miss the same way, and an id the caller invented is
+	 * not an authorisation question.
+	 *
+	 * @param id The relation to read.
+	 * @returns The relation, or null when no such row is visible to the caller.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
+	@Query('productRelation')
+	async productRelation(@Args('id') id: ID): Promise<ProductRelation> {
+		return this.productRelationService.findOneByIdString(id);
+	}
+
+	/**
 	 * Creates a directed relation between two products.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))

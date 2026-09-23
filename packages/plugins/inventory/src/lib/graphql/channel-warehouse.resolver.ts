@@ -16,6 +16,7 @@ import {
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	Versioned,
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
@@ -73,6 +74,29 @@ export class ChannelWarehouseResolver {
 		})) as IPagination<ChannelWarehouse>;
 
 		return connectionFromOffsetPage(listing, skip);
+	}
+
+	/**
+	 * Reads one assignment by id.
+	 *
+	 * The route it mirrors is `GET /channel-warehouses/:id`, declared by this resource's controller
+	 * and calling the same `findOneByIdString(id)` below. The permission is the one that route runs
+	 * under: the handler states none of its own, so `PermissionGuard` resolves the controller's
+	 * class-level `STOCK_VIEW`, stated here rather than inherited so both surfaces read the same
+	 * requirement. The listing above answers a channel's or a location's assignments; this answers the
+	 * one row a caller holding its identifier asks about.
+	 *
+	 * The answer is nullable because a miss is the row's absence rather than a refusal, which is how
+	 * the sibling node queries of this package answer one.
+	 *
+	 * @param id The assignment to read.
+	 * @returns The assignment, or null when no such row is visible to the caller.
+	 */
+	@Query('channelWarehouse')
+	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
+	async channelWarehouse(@Args('id') id: string): Promise<any> {
+		return await this.service.findOneByIdString(id);
 	}
 
 	/** Enables a location for a context. */

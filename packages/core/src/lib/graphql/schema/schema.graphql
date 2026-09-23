@@ -4309,6 +4309,7 @@ type Query {
   productPublication(id: ID!): ProductPublication
   productVariantPublications(filter: ProductVariantPublicationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantPublicationConnection!
   productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
+  productRelation(id: ID!): ProductRelation
   productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!
 
   """Price lists of the caller's organization, most useful first."""
@@ -4380,6 +4381,7 @@ type Query {
   stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
   availableQuantity(warehouseId: ID!, variantId: ID!): Float!
   stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput, withDeleted: Boolean): StockMovementConnection!
+  stockMovement(id: ID!): StockMovement
   stockReservations(referenceType: String, referenceId: ID, status: String, page: PageInput, withDeleted: Boolean): StockReservationConnection!
   stockReservation(id: ID!): StockReservation
   stockTransfers(status: String, page: PageInput, withDeleted: Boolean): StockTransferConnection!
@@ -4387,13 +4389,16 @@ type Query {
   stockTransferLines(transferId: ID!, page: PageInput, withDeleted: Boolean): StockTransferLineConnection!
   stockTransferLine(id: ID!): StockTransferLine
   stockAlerts(variantId: ID, isActive: Boolean, page: PageInput, withDeleted: Boolean): StockAlertConnection!
+  stockAlert(id: ID!): StockAlert
   stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput, withDeleted: Boolean): StockAdjustmentConnection!
+  stockAdjustment(id: ID!): StockAdjustment
   stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput, withDeleted: Boolean): StockCountConnection!
   stockCount(id: ID!): StockCount
   stockCountLines(stockCountId: ID!, page: PageInput, withDeleted: Boolean): StockCountLineConnection!
   stockCountLine(id: ID!): StockCountLine
   stockCountVariance(stockCountId: ID!): StockCountVariance!
   channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput, withDeleted: Boolean): ChannelWarehouseConnection!
+  channelWarehouse(id: ID!): ChannelWarehouse
 
   """Zones of the caller's organization."""
   warehouseZones(filter: WarehouseZoneFilter, page: PageInput, withDeleted: Boolean): WarehouseZoneConnection!

@@ -80,6 +80,28 @@ export class StockAdjustmentResolver {
 		return connectionFromOffsetPage(listing, skip);
 	}
 
+	/**
+	 * Reads one instruction by id.
+	 *
+	 * The route it mirrors is `GET /stock-adjustments/:id`, which this resource's controller declares
+	 * and which calls the same `findOneByIdString(id)` below. The permission is the one that route
+	 * runs under: the handler states none of its own, so `PermissionGuard` resolves the controller's
+	 * class-level `STOCK_VIEW` — the read grant, stated here rather than inherited, so a reader of
+	 * either surface sees the same requirement.
+	 *
+	 * The answer is nullable because a miss is the row's absence rather than a refusal, which is how
+	 * the sibling node queries of this package answer one.
+	 *
+	 * @param id The adjustment to read.
+	 * @returns The adjustment, or null when no such row is visible to the caller.
+	 */
+	@Query('stockAdjustment')
+	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
+	async stockAdjustment(@Args('id') id: string): Promise<any> {
+		return await this.service.findOneByIdString(id);
+	}
+
 	/** Drafts a manual correction. */
 	@Mutation('adjustStock')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)

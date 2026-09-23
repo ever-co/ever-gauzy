@@ -327,6 +327,7 @@ export const inventorySchemaExtensions = gql`
 		stockLevel(warehouseId: ID!, variantId: ID!): StockLevel
 		availableQuantity(warehouseId: ID!, variantId: ID!): Float!
 		stockMovements(warehouseId: ID!, variantId: ID!, page: PageInput, withDeleted: Boolean): StockMovementConnection!
+		stockMovement(id: ID!): StockMovement
 		stockReservations(
 			referenceType: String
 			referenceId: ID
@@ -340,13 +341,16 @@ export const inventorySchemaExtensions = gql`
 		stockTransferLines(transferId: ID!, page: PageInput, withDeleted: Boolean): StockTransferLineConnection!
 		stockTransferLine(id: ID!): StockTransferLine
 		stockAlerts(variantId: ID, isActive: Boolean, page: PageInput, withDeleted: Boolean): StockAlertConnection!
+		stockAlert(id: ID!): StockAlert
 		stockAdjustments(warehouseId: ID, variantId: ID, status: String, page: PageInput, withDeleted: Boolean): StockAdjustmentConnection!
+		stockAdjustment(id: ID!): StockAdjustment
 		stockCounts(warehouseId: ID, status: String, mode: String, page: PageInput, withDeleted: Boolean): StockCountConnection!
 		stockCount(id: ID!): StockCount
 		stockCountLines(stockCountId: ID!, page: PageInput, withDeleted: Boolean): StockCountLineConnection!
 		stockCountLine(id: ID!): StockCountLine
 		stockCountVariance(stockCountId: ID!): StockCountVariance!
 		channelWarehouses(channelId: ID, warehouseId: ID, page: PageInput, withDeleted: Boolean): ChannelWarehouseConnection!
+		channelWarehouse(id: ID!): ChannelWarehouse
 	}
 
 	extend type Mutation {

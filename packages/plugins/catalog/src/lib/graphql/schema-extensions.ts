@@ -433,6 +433,7 @@ export const schemaExtensions = gql`
 			withDeleted: Boolean
 		): ProductVariantPublicationConnection!
 		productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
+		productRelation(id: ID!): ProductRelation
 		productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!
 	}
 

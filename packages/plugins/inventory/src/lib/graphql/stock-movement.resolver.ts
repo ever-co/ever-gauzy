@@ -16,6 +16,7 @@ import {
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	Versioned,
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
@@ -77,5 +78,28 @@ export class StockMovementResolver {
 		})) as IPagination<StockMovement>;
 
 		return connectionFromOffsetPage(listing, skip);
+	}
+
+	/**
+	 * Reads one ledger row by id.
+	 *
+	 * The route it mirrors is `GET /stock-movements/:id`, declared by this resource's controller and
+	 * calling the same `findOneByIdString(id)` below. The permission is the one that route runs under:
+	 * the handler states none of its own, so `PermissionGuard` resolves the controller's class-level
+	 * `STOCK_VIEW`, stated here rather than inherited so both surfaces read the same requirement. The
+	 * listing above is the ledger of a level; this is the one entry a caller holding its identifier
+	 * asks about, which the REST caller beside it can already do.
+	 *
+	 * The answer is nullable because a miss is the row's absence rather than a refusal, which is how
+	 * the sibling node queries of this package answer one.
+	 *
+	 * @param id The movement to read.
+	 * @returns The movement, or null when no such row is visible to the caller.
+	 */
+	@Query('stockMovement')
+	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
+	async stockMovement(@Args('id') id: string): Promise<any> {
+		return await this.service.findOneByIdString(id);
 	}
 }

@@ -17,6 +17,7 @@ import {
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	Versioned,
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
@@ -73,6 +74,27 @@ export class StockAlertResolver {
 		})) as IPagination<StockAlert>;
 
 		return connectionFromOffsetPage(listing, skip);
+	}
+
+	/**
+	 * Reads one alert rule by id.
+	 *
+	 * The route it mirrors is `GET /stock-alerts/:id`, declared by this resource's controller and
+	 * calling the same `findOneByIdString(id)` below. The permission is the one that route runs under:
+	 * the handler states none of its own, so `PermissionGuard` resolves the controller's class-level
+	 * `STOCK_VIEW`, stated here rather than inherited so both surfaces read the same requirement.
+	 *
+	 * The answer is nullable because a miss is the rule's absence rather than a refusal, which is how
+	 * the sibling node queries of this package answer one.
+	 *
+	 * @param id The alert rule to read.
+	 * @returns The rule, or null when no such row is visible to the caller.
+	 */
+	@Query('stockAlert')
+	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
+	@Versioned({ write: false })
+	async stockAlert(@Args('id') id: string): Promise<any> {
+		return await this.service.findOneByIdString(id);
 	}
 
 	/**
