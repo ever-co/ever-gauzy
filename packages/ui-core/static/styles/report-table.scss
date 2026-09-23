@@ -129,7 +129,12 @@ $report-budget-amount-width: 140px;
 	// The group label — a date, an employee chip or a project chip. `report.scss`
 	// gives every `nb-card-header` on a report page 20px of padding, which is the
 	// PAGE card's step; this one heads a row of ~36px and needs the tighter one.
-	:host .card nb-card-header.card-title {
+	//
+	// Two element names because two of these reports build a group from an
+	// accordion rather than a card — Time & Activity and the manual time edits —
+	// and both spell the group with the same `.card` / `.card-title` classes.
+	:host .card nb-card-header.card-title,
+	:host .card nb-accordion-item-header.card-title {
 		padding: 12px $report-row-gutter 10px;
 		font-size: 13px;
 		font-weight: 600;
@@ -151,7 +156,8 @@ $report-budget-amount-width: 140px;
 	//     could be shrunk by its container;
 	//   * `.budget-container`'s `padding-bottom: 6px !important`, which can only
 	//     be answered in kind.
-	:host .card nb-card-body {
+	:host .card nb-card-body,
+	:host .card nb-accordion-item-body .item-body {
 		flex: 0 0 auto;
 		height: auto;
 		padding: 0;
@@ -167,6 +173,14 @@ $report-budget-amount-width: 140px;
 		&.budget-container {
 			padding-bottom: 0 !important;
 		}
+	}
+
+	// `report.scss` paints the accordion body with `gauzy-sidebar-background-2`,
+	// a different surface again from the card it sits in, so an expanded group
+	// read as a panel inside a panel exactly as the nested row wrappers used to.
+	:host .card nb-accordion-item-body {
+		background-color: transparent;
+		border-radius: 0;
 	}
 
 	// ── Column header ───────────────────────────────────────────────────────
@@ -285,6 +299,20 @@ $report-budget-amount-width: 140px;
 	// The project chip carries the same 5px nudge, for the same reason.
 	:host ::ng-deep ga-project-column-view .single-project-template {
 		padding-top: 0;
+	}
+
+	// The activity badge. `report.scss` sets it at 14px, which was the row's own
+	// size — but with the table at 12 it became the single largest piece of text
+	// in the row, so a percentage outranked the employee it belonged to. Same
+	// size as the figures beside it now, with enough padding to still read as a
+	// pill rather than as a coloured word.
+	:host nb-badge {
+		padding: 2px 6px;
+		font-size: $report-cell-font-size;
+		font-weight: 600;
+		line-height: 16px;
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: 'tnum' 1;
 	}
 
 	// Lining figures for every numeric cell, so a column of durations, hours and
