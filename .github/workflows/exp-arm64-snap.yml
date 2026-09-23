@@ -2,21 +2,24 @@ name: EXPERIMENT arm64 snap vs snapcraft version
 
 # Throwaway diagnostic, lives ONLY on branch exp/arm64-snap-snapcraft-version.
 #
-# Question: why does electron-builder's snap target fail on linux-arm64 with
-#   "Error installing snap 'gnome-3-28-1804' from channel 'latest/stable'"
-# while the same target succeeds on x64?
+# ROUND 1 RESULT (run 35895302909): arm64 failed on all four snapcraft sources
+# (7.x, 8.x, latest, action-snapcraft@v2); x64 passed on all four. So the snapcraft
+# version is NOT the cause. Snapcraft's own log finally showed the real failure:
+#   Command '['snap', 'install', 'gtk-common-themes']' returned non-zero exit status 1.
+# i.e. in host mode snapcraft installs its build-time snaps by calling `snap install`
+# as the unprivileged runner user, without sudo.
 #
-# Already ruled out (see the 2026-09-22 handover): the runner (identical failure on
-# ubicloud and on GitHub-hosted arm64), gnome-3-28-1804 availability (it IS in
-# latest/stable for arm64, rev 199), and SNAPCRAFT_BUILD_ENVIRONMENT=host (it was on
-# when arm64 last succeeded, 2026-05-07). The one variable left is the snapcraft
-# version: May's success used unpinned action-snapcraft, every failure ran 7.5.9.
+# ROUND 2 hypothesis: on the x64 image those build snaps are already installed, so
+# snapcraft never needs to install anything; on arm64 they are absent, the install is
+# attempted without privileges, and it fails.
 #
-# This harness packages a trivial Electron app with the SAME electron-builder
-# (26.0.3), Electron (38.2.2) and snap config (base: core22) as apps/desktop, so it
-# exercises the exact app-builder snap code path in minutes instead of rebuilding the
-# monorepo. It never publishes and uses no secrets. The x64 rows are the CONTROL: if
-# they pass, the harness is proven able to succeed and an arm64 failure is real.
+# Rows:
+#   x64   baseline   -> record `snap list` (are the build snaps pre-installed?)
+#   arm64 baseline   -> record `snap list`, then on failure capture snap's own refusal
+#                       message and whether the same install succeeds WITH sudo
+#   arm64 preinstall -> THE FIX UNDER TEST: when snapcraft names a snap it cannot
+#                       install, install it with sudo and retry, until the build passes
+#                       or the attempts run out; prints the full list it needed.
 
 on:
   push:
@@ -29,34 +32,34 @@ permissions:
 
 jobs:
   snap:
-    name: ${{ matrix.runner }} / snapcraft ${{ matrix.snapcraft }}
+    name: ${{ matrix.runner }} / ${{ matrix.mode }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-24.04-arm, ubuntu-24.04]
-        snapcraft: ['7.x/stable', '8.x/stable', 'latest/stable', 'action-snapcraft@v2']
+        include:
+          - runner: ubuntu-24.04
+            mode: baseline
+          - runner: ubuntu-24.04-arm
+            mode: baseline
+          - runner: ubuntu-24.04-arm
+            mode: preinstall
 
     steps:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
 
-      - name: Install snapcraft from ${{ matrix.snapcraft }}
-        if: matrix.snapcraft != 'action-snapcraft@v2'
-        run: sudo snap install snapcraft --classic --channel=${{ matrix.snapcraft }}
+      - name: Install snapcraft 7.x (the prod pin)
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
 
-      - name: Install snapcraft via samuelmeuli/action-snapcraft@v2 (what May used)
-        if: matrix.snapcraft == 'action-snapcraft@v2'
-        uses: samuelmeuli/action-snapcraft@v2
-
-      - name: Record environment
+      - name: Record environment, including which snaps are already installed
         run: |
           echo "== arch ==";       uname -m
           echo "== os ==";         lsb_release -ds || cat /etc/os-release
           echo "== snapcraft =="; snapcraft --version || true
-          echo "== snapd ==";      snap version || true
+          echo "== snap list (pre-build) =="; snap list || true
 
       - name: Create minimal Electron app with the desktop app's snap config
         run: |
@@ -83,8 +86,9 @@ jobs:
           echo "require('electron').app.quit()" > main.js
           npm install --no-audit --no-fund --save-dev electron@38.2.2 electron-builder@26.0.3
 
-      - name: Build snap (same env as the prod arm64 job)
-        id: build
+      - name: Build snap - baseline (exactly as prod does it)
+        if: matrix.mode == 'baseline'
+        id: baseline
         working-directory: harness
         env:
           SNAPCRAFT_BUILD_ENVIRONMENT: host
@@ -92,19 +96,62 @@ jobs:
           ARCH=$([ "$(uname -m)" = "aarch64" ] && echo --arm64 || echo --x64)
           npx electron-builder --linux snap $ARCH --publish never
 
-      - name: Snapcraft's own execution log (the part CI never showed us)
+      - name: Build snap - preinstall build snaps with sudo, auto-discovering the list
+        if: matrix.mode == 'preinstall'
+        id: preinstall
+        working-directory: harness
+        env:
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
+        run: |
+          ARCH=$([ "$(uname -m)" = "aarch64" ] && echo --arm64 || echo --x64)
+          NEEDED=""
+          for attempt in 1 2 3 4 5 6 7 8; do
+            echo "::group::attempt $attempt"
+            if npx electron-builder --linux snap $ARCH --publish never 2>&1 | tee build.log; then
+              echo "::endgroup::"
+              echo "BUILD PASSED on attempt $attempt"
+              echo "PREINSTALL LIST: ${NEEDED:-<none needed>}"
+              exit 0
+            fi
+            echo "::endgroup::"
+            # sed, not `grep -oP`: -P depends on the locale supporting UTF-8. `|| true` because
+            # under pipefail an early-exiting `head` can SIGPIPE sed and abort the script.
+            SNAP=$(sed -n "s/.*Error installing snap '\([^']*\)'.*/\1/p" build.log | head -1 || true)
+            if [ -z "$SNAP" ]; then
+              echo "::error::build failed for a reason OTHER than a snap install - see attempt $attempt"
+              echo "PREINSTALL LIST so far: ${NEEDED:-<none>}"
+              exit 1
+            fi
+            case " $NEEDED " in *" $SNAP "*)
+              echo "::error::$SNAP still failing after a sudo install - privileges are NOT the whole story"
+              exit 1;;
+            esac
+            echo "snapcraft could not install '$SNAP' - installing it with sudo and retrying"
+            sudo snap install "$SNAP"
+            NEEDED="$NEEDED $SNAP"
+          done
+          echo "::error::gave up after 8 attempts; needed so far:$NEEDED"
+          exit 1
+
+      - name: Diagnose - snap's own refusal, and whether sudo would have worked
+        if: failure() && matrix.mode == 'baseline'
+        run: |
+          echo "== as the runner user (what snapcraft does) =="
+          snap install gtk-common-themes 2>&1 || echo "exit=$?"
+          echo
+          echo "== with sudo =="
+          sudo snap install gtk-common-themes 2>&1 && echo "SUDO INSTALL WORKED" || echo "sudo exit=$?"
+
+      - name: Snapcraft's own execution log
         if: always()
         run: |
           shopt -s nullglob
           logs=(~/.local/state/snapcraft/log/*.log)
-          if [ ${#logs[@]} -eq 0 ]; then echo "no snapcraft log written"; exit 0; fi
-          for f in "${logs[@]}"; do
-            echo "===== $f ====="
-            tail -n 120 "$f"
-          done
+          [ ${#logs[@]} -eq 0 ] && { echo "no snapcraft log written"; exit 0; }
+          for f in "${logs[@]}"; do echo "===== $f ====="; tail -n 60 "$f"; done
 
       - name: Result
         if: always()
         run: |
-          echo "RESULT runner=${{ matrix.runner }} snapcraft=${{ matrix.snapcraft }} build=${{ steps.build.outcome }}"
+          echo "RESULT runner=${{ matrix.runner }} mode=${{ matrix.mode }} baseline=${{ steps.baseline.outcome }} preinstall=${{ steps.preinstall.outcome }}"
           ls -la harness/dist/*.snap 2>/dev/null || echo "no .snap produced"
