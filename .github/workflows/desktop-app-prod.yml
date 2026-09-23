@@ -329,7 +329,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubicloud-standard-8-arm]
+        os: ["${{ vars.RUNNER_LINUX_ARM64 || 'ubuntu-24.04-arm' }}"]
 
     steps:
       - name: Check out Git repository
