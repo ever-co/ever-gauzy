@@ -32,6 +32,7 @@ import {
 } from './filters';
 import {
 	IOrderChangeConnection,
+	IOrderDeleteResult,
 	IOrderSummaryConnection,
 	IOrderTransactionConnection,
 	OrderChange,
@@ -271,6 +272,62 @@ export class OrderChangeResolver {
 	}
 
 	/**
+	 * Amends a pending change's own columns.
+	 *
+	 * The route it mirrors is `PUT /order-changes/:id`, which hands the service `commitChange` the body's
+	 * members and the version the caller stated, and which the controller declares with `@Versioned({})`
+	 * rather than with a resource: a change has no version of its own, so the guard reads and validates
+	 * what the caller presented and `commitChange` resolves the order the change belongs to and predicated
+	 * the order's own write on it. The field states the same declaration and takes the same version as the
+	 * nullable `version` argument every mutation of this resolver states it as.
+	 *
+	 * Amending a pending change is a designed capability of this domain rather than a spare route: the
+	 * endpoint table declares `PUT /order-changes/:id/actions` for the draft-change case, and a change that
+	 * has been confirmed is reversed by a new change of type `UNDO` rather than by an edit — which is what
+	 * this route's own contract leaves to `requestOrderEdit`.
+	 *
+	 * The permission is the route's own — `ORDERS_EDIT` — and not the class-level view grant.
+	 *
+	 * @param id The change.
+	 * @param input The members to change.
+	 * @param version The order version the caller read the change's order at.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The change, as it now stands.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({})
+	@Mutation(() => Object, { name: 'updateOrderChange' })
+	async updateOrderChange(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<OrderChange> {
+		return this.changeService.commitChange(id, input as any, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Deletes a change outright, with the actions it carries.
+	 *
+	 * The route it mirrors is `DELETE /order-changes/:id`, declared by the controller and overridden only
+	 * to state the permission the base class leaves unstated. It is the destructive half of what the pair
+	 * above does recoverably: a change retained explains a modification after the fact, and this is how a
+	 * change recorded in error is removed rather than retired.
+	 *
+	 * The permission is the route's own — `ORDERS_EDIT`.
+	 *
+	 * @param id The change to delete.
+	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrderChange' })
+	async deleteOrderChange(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		const result = await this.changeService.delete(id);
+
+		return { id, deleted: Number(result?.affected ?? 0) > 0 };
+	}
+
+	/**
 	 * Retires one action of a change recoverably.
 	 *
 	 * The route it mirrors is `DELETE /order-change-actions/:id/soft`, inherited from `CrudController` and
@@ -303,6 +360,57 @@ export class OrderChangeResolver {
 	@Mutation(() => Object, { name: 'recoverOrderChangeAction' })
 	async recoverOrderChangeAction(@Args('id', { type: () => ID }) id: string): Promise<OrderChangeAction> {
 		return this.actionService.softRecover(id);
+	}
+
+	/**
+	 * Amends one action of a pending change.
+	 *
+	 * The route it mirrors is `PUT /order-change-actions/:id`, declared by the controller with the
+	 * action's writable surface as its body — what it does, its payload, its amount, what it references
+	 * and where it sits in the sequence — and overridden from `CrudController` only to state the
+	 * permission the base class leaves unstated. An action is the unit a change is applied as, so this is
+	 * how the plan of a change that has not run yet is corrected.
+	 *
+	 * **Two calls, because the route's own answer is a count.** The route hands the service
+	 * `update(id, entity)` and passes its return on, which on this platform's ORM path is the driver's
+	 * `UpdateResult` rather than the row; every sibling mutation of this resource answers the row instead,
+	 * and the schema declares this field as answering one. The row is therefore read back with the same
+	 * base read the write itself performs as its precondition, exactly as the route's write does. Nothing
+	 * else is added: no version is stated, because the route states none.
+	 *
+	 * @param id The action.
+	 * @param input The members to change.
+	 * @returns The action, as it now stands.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'updateOrderChangeAction' })
+	async updateOrderChangeAction(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<OrderChangeAction> {
+		await this.actionService.update(id, input as any);
+
+		return this.actionService.findOneByIdString(id);
+	}
+
+	/**
+	 * Deletes one action of a pending change outright.
+	 *
+	 * The route it mirrors is `DELETE /order-change-actions/:id`, declared by the controller and
+	 * overridden only to state the permission the base class leaves unstated. The withdrawal beside it
+	 * keeps the row that explains a modification; this removes it.
+	 *
+	 * The permission is the route's own — `ORDERS_EDIT`.
+	 *
+	 * @param id The action to delete.
+	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrderChangeAction' })
+	async deleteOrderChangeAction(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		const result = await this.actionService.delete(id);
+
+		return { id, deleted: Number(result?.affected ?? 0) > 0 };
 	}
 
 	/**

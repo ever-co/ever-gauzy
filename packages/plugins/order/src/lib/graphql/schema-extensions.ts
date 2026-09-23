@@ -485,6 +485,45 @@ export const orderSchemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	"The writable surface of an order change, as the change's own update route states it."
+	input UpdateOrderChangeInput {
+		orderId: ID
+		changeType: String
+		note: String
+		metadata: JSON
+	}
+
+	"The writable surface of one action inside a change, as the action's own update route states it."
+	input UpdateOrderChangeActionInput {
+		"The change the action belongs to, when the action is to be re-parented."
+		changeId: ID
+		"What the action does; the set of them is enumerated by \`order.change.action\`."
+		action: String
+		"The action's own payload."
+		details: JSON
+		"The signed money effect of the action on the order's grand total."
+		amount: Decimal
+		referenceType: String
+		referenceId: ID
+		"Where the action sits in the sequence the change is applied in."
+		ordering: Int
+		"Whether the apply step has run for this action."
+		applied: Boolean
+	}
+
+	"The writable surface of a credit line, as the credit line's own update route states it."
+	input UpdateOrderCreditLineInput {
+		orderId: ID
+		"The order version the credit was applied against."
+		version: Int
+		referenceType: String
+		referenceId: ID
+		"The credit, as a positive magnitude: a credit reduces what the customer owes."
+		amount: Decimal
+		currency: String
+		description: String
+	}
+
 	extend type Query {
 		"List orders of the caller's organization."
 		orders(
@@ -603,6 +642,33 @@ export const orderSchemaExtensions = gql`
 		softDeleteOrderTransaction(id: ID!): OrderTransaction!
 		"Restores a soft-deleted ledger transaction."
 		recoverOrderTransaction(id: ID!): OrderTransaction!
+		# The write routes of this domain whose capability no field answered: the destructive delete five
+		# of its resources serve — a different act from the recoverable withdrawal above, which keeps the
+		# row — and the update of the three whose own DTO is the resource's writable surface. Each mirrors
+		# one route: the same service method, the same identifier, and the same ORDERS_EDIT grant the route
+		# states. The ledger, the timeline and the totals history declare no update and no delete, because
+		# 10-orders-payments-and-returns-spec.md §4.2 states those rows are written by the writer that owns
+		# them and — for the ledger and the timeline — never edited or deleted at all.
+		"Deletes an order outright, dropping the row and every satellite of it."
+		deleteOrder(id: ID!): OrderDeleteResult!
+		"Deletes a frozen address outright. \`softDeleteOrderAddress\` retires it recoverably instead."
+		deleteOrderAddress(id: ID!): OrderDeleteResult!
+		"""
+		Amends a pending change's own columns. The version argument is the version of the ORDER the change
+		belongs to — a change has no version of its own, because the \`version\` column on it is the order
+		version the change produces — and an order that has moved past it answers a conflict.
+		"""
+		updateOrderChange(id: ID!, input: UpdateOrderChangeInput!, version: Int): OrderChange!
+		"Deletes a change outright, with the actions it carries."
+		deleteOrderChange(id: ID!): OrderDeleteResult!
+		"Amends one action of a pending change, before the change is applied."
+		updateOrderChangeAction(id: ID!, input: UpdateOrderChangeActionInput!): OrderChangeAction!
+		"Deletes one action of a pending change outright."
+		deleteOrderChangeAction(id: ID!): OrderDeleteResult!
+		"Amends a credit line that was applied to an order."
+		updateOrderCreditLine(id: ID!, input: UpdateOrderCreditLineInput!): OrderCreditLine!
+		"Deletes a credit line outright. \`softDeleteOrderCreditLine\` retires it recoverably instead."
+		deleteOrderCreditLine(id: ID!): OrderDeleteResult!
 	}
 
 	"The request that records one refund against an order line."
@@ -619,6 +685,20 @@ export const orderSchemaExtensions = gql`
 	"What removing a link did."
 	type DeleteOrderLineInvoicePayload {
 		id: ID!
+		deleted: Boolean!
+	}
+
+	"""
+	What a destructive delete of one of this domain's rows did.
+	One type for the domain rather than one per resource: the answer is the same three facts whatever was
+	removed — which row the delete named, and whether a row was there to remove. The recoverable
+	withdrawal beside each of these fields answers that resource's own type instead, because it answers
+	the row it retired.
+	"""
+	type OrderDeleteResult {
+		"The identifier the delete named."
+		id: ID!
+		"Whether a row was there to remove; a delete of one that was not answers false."
 		deleted: Boolean!
 	}
 `;

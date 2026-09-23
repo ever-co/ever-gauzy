@@ -35,6 +35,7 @@ import {
 } from './filters';
 import {
 	IOrderConnection,
+	IOrderDeleteResult,
 	Order,
 	OrderAddress,
 	OrderChange,
@@ -363,6 +364,31 @@ export class OrderResolver {
 	}
 
 	/**
+	 * Deletes an order outright, dropping the row and every satellite of it.
+	 *
+	 * The route it mirrors is `DELETE /orders/:id`, declared by the controller itself and overridden from
+	 * `CrudController` only to state the permission the base class leaves unstated. It is a different act
+	 * from the withdrawal above rather than a second spelling of it — that one keeps the row and every
+	 * satellite, and this removes them — which is why both are served rather than one standing in for the
+	 * other: a caller that may retire an order recoverably is not thereby a caller that may destroy one,
+	 * and the destroy is the half that cannot be undone.
+	 *
+	 * The permission is the route's own — `ORDERS_EDIT` — and not the class-level view grant, because an
+	 * order that placed tax lines, issued invoices and wrote a money ledger is exactly the record a reader
+	 * must not be able to remove.
+	 *
+	 * @param id The order to delete.
+	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrder' })
+	async deleteOrder(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		const result = await this.orderService.delete(id);
+
+		return { id, deleted: Number(result?.affected ?? 0) > 0 };
+	}
+
+	/**
 	 * Retires a frozen address recoverably, keeping the row an order was placed with.
 	 *
 	 * The route it mirrors is `DELETE /order-addresses/:id/soft`, inherited from `CrudController` and
@@ -400,6 +426,31 @@ export class OrderResolver {
 	}
 
 	/**
+	 * Deletes a frozen address outright.
+	 *
+	 * The route it mirrors is `DELETE /order-addresses/:id`, declared by the controller and overridden
+	 * only to state the permission the base class leaves unstated. The address route is the one satellite
+	 * of this domain whose destructive delete no write path of the order can reach: a line, a delivery
+	 * choice and a credit line are all removed by an action of a change this domain applies, and an
+	 * address is only ever created or rewritten by `ADDRESS_UPDATE` — so a caller that has to remove a
+	 * duplicate snapshot the placement wrote has this route and, before this field, had no way to say so
+	 * over GraphQL.
+	 *
+	 * The permission is the route's own — `ORDERS_EDIT` — because the row is the address the order was
+	 * shipped to as it stood when it was placed.
+	 *
+	 * @param id The frozen address to delete.
+	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrderAddress' })
+	async deleteOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		const result = await this.addressService.delete(id);
+
+		return { id, deleted: Number(result?.affected ?? 0) > 0 };
+	}
+
+	/**
 	 * Retires a credit line recoverably, keeping what the order was reduced by.
 	 *
 	 * The route it mirrors is `DELETE /order-credit-lines/:id/soft`, inherited from `CrudController` and
@@ -432,6 +483,55 @@ export class OrderResolver {
 	@Mutation(() => Object, { name: 'recoverOrderCreditLine' })
 	async recoverOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
 		return this.creditLineService.softRecover(id);
+	}
+
+	/**
+	 * Amends a credit line that was applied to an order.
+	 *
+	 * The route it mirrors is `PUT /order-credit-lines/:id`, declared by the controller with the
+	 * resource's writable surface as its body — amount, currency, reference and description — and
+	 * overridden from `CrudController` only to state the permission the base class leaves unstated. The
+	 * credit is what reduces what the customer owes, and its route is the one place a figure the totals
+	 * were computed from is corrected in place rather than by a new credit.
+	 *
+	 * The route states no version: a credit line has no version of its own — the `version` column on it is
+	 * the order version the credit was applied against — so nothing is predicated on one, on either
+	 * surface.
+	 *
+	 * @param id The credit line.
+	 * @param input The members to change.
+	 * @returns The credit line, as it now stands.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'updateOrderCreditLine' })
+	async updateOrderCreditLine(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<OrderCreditLine> {
+		await this.creditLineService.update(id, input as any);
+
+		return this.creditLineService.findOneByIdString(id);
+	}
+
+	/**
+	 * Deletes a credit line outright.
+	 *
+	 * The route it mirrors is `DELETE /order-credit-lines/:id`, declared by the controller and overridden
+	 * only to state the permission the base class leaves unstated. Like the order's own delete it is a
+	 * different act from the withdrawal beside it: the recoverable one keeps the row for the arithmetic
+	 * the order was reduced by, and this removes it.
+	 *
+	 * The permission is the route's own — `ORDERS_EDIT`.
+	 *
+	 * @param id The credit line to delete.
+	 * @returns The identifier the delete named, and whether a row was there to remove.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'deleteOrderCreditLine' })
+	async deleteOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<IOrderDeleteResult> {
+		const result = await this.creditLineService.delete(id);
+
+		return { id, deleted: Number(result?.affected ?? 0) > 0 };
 	}
 
 	/**

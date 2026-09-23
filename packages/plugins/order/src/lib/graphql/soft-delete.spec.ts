@@ -31,6 +31,15 @@
  * nothing would have the comparison pass on two absences; and the base controller's two lifecycle
  * handlers are restated in the shape `packages/core/src/lib/core/crud/crud.controller.ts` declares them,
  * handing the service the rest parameter as an ARRAY, because the real class reaches the entity graph.
+ *
+ * **The eight write routes beside the pair are held to the same three properties.** Five destructive
+ * deletes — of the order, a frozen address, a change, one of a change's actions and a credit line — and
+ * three updates — of a change, of one of its actions and of a credit line — answered no field at all.
+ * They are not the withdrawals above: the pair keeps the row and these remove it, which is why both
+ * halves are served. The audit that reads route handler names against field names reported thirty-six
+ * candidates for this plugin, and the rest of them are mirrored under other names or served through the
+ * change a caller raises and confirms; the table below states the eight that were genuinely unserved,
+ * and the comment above it states where the other twenty-eight are answered.
  */
 jest.mock('@gauzy/plugin-cart', () => ({
 	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
@@ -65,6 +74,13 @@ jest.mock('@gauzy/core', () => {
 
 			async softRecover(id: any, ...options: any[]): Promise<any> {
 				return await this.service.softRecover(id, options);
+			}
+
+			// The destructive route of the same base class, in the shape the kernel declares it: it hands
+			// the service the identifier and nothing else, and what comes back is the driver's result
+			// rather than the row.
+			async delete(id: any): Promise<any> {
+				return this.service.delete(id);
 			}
 		},
 		BaseQueryDTO: class {},
@@ -137,6 +153,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { FieldDefinitionNode, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, TypeNode } from 'graphql';
+import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { ORDER_PERMISSIONS } from '../order.permissions';
@@ -170,6 +187,50 @@ const ID = '00000000-0000-4000-8000-000000000010';
  */
 const RETIRED = { id: ID, deletedAt: new Date('2026-02-01T00:00:00.000Z') };
 const RESTORED = { id: ID, deletedAt: null };
+
+/**
+ * What the other two kinds of write answer with.
+ *
+ * A destructive delete cannot answer the row — the row is gone — so the driver's own result is what the
+ * route hands back and what the field reads a count from; an update hands the ORM's result to the route,
+ * while the field answers the row, because that is what the resource's sibling mutations answer.
+ */
+const DELETED = { affected: 1 };
+const UPDATED = { id: ID, note: 'Bulk order' };
+
+/**
+ * What a handler declares about retrying it, and about the version it carries.
+ *
+ * Both are read off the declarations rather than restated: a route that adopted either convention has its
+ * field compared against it, and a route that states neither is asserted to be mirrored by a field that
+ * states neither.
+ */
+const { IDEMPOTENT_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy');
+const { VERSIONED_METADATA_KEY, VERSION_EXPECTATION_PROPERTY } = jest.requireActual(
+	'@gauzy/core/src/lib/concurrency/version.util'
+);
+
+const reflector = new Reflector();
+
+/** What a handler declares about retrying it. */
+const retryOf = (handler: any): any => reflector.get(IDEMPOTENT_METADATA_KEY, handler);
+
+/** What a handler declares about the version it carries. */
+const versionedOf = (handler: any): any => reflector.get(VERSIONED_METADATA_KEY, handler);
+
+/**
+ * The two surfaces of a versioned route, as the guard leaves them.
+ *
+ * A route declares the version its write is predicated on and the guard is what accepts it: it reads the
+ * `If-Match` header, validates it against the row, and leaves the value on the request under
+ * `VERSION_EXPECTATION_PROPERTY`. The GraphQL transport has no header to read, so a mutation states the
+ * same value as a nullable argument and the resolver translates it into the same property on the same
+ * request. This suite drives both shapes, which is what makes "the two call the service with the same
+ * expectation" a comparison rather than a restatement.
+ */
+const EXPECTATION = { wildcard: false, versions: [3] };
+const REQUEST: Row = { [VERSION_EXPECTATION_PROPERTY]: EXPECTATION };
+const CONTEXT: Row = { req: REQUEST };
 
 /**
  * The collaborators each resolver's constructor takes, in order, as this suite names them.
@@ -319,6 +380,117 @@ const PARITY: IParity[] = RESOURCES.flatMap((resource) => [
 	{ ...resource, field: `recover${resource.name}`, route: 'softRecover', method: 'softRecover' }
 ]);
 
+/**
+ * One resource of the table above, by the name the domain gives it.
+ *
+ * The write routes below are declared over the same eleven resources, so the service each of them owns,
+ * the resolver that carries its fields and the controller that serves its routes are stated once, above,
+ * rather than a second time here.
+ *
+ * @param name The resource's name, as `RESOURCES` states it.
+ * @returns The resource's entry.
+ */
+function resource(name: string): IResource {
+	const found = RESOURCES.find((entry) => entry.name === name);
+
+	if (!found) {
+		throw new Error(`the suite declares no resource named "${name}"`);
+	}
+
+	return found;
+}
+
+/**
+ * One write route of this domain that no field answered, and the field that now mirrors it.
+ *
+ * `route` is the handler the controller declares and `method` the service method both surfaces must
+ * reach; they are the same word for seven of the eight and differ once, because the change's update
+ * route reaches `commitChange` — the method that writes a change's columns under the version of the
+ * order it belongs to — rather than the base class's `update`.
+ */
+interface IWrite {
+	resource: IResource;
+	field: string;
+	route: string;
+	method: string;
+	/** The body the route takes, as its own DTO states it; the delete routes take none. */
+	body?: Row;
+	/** The type the field answers with. */
+	answers: string;
+}
+
+/**
+ * The eight write routes of this domain whose capability no field answered.
+ *
+ * Five of them are destructive deletes — of the order, a frozen address, a change, one of a change's
+ * actions and a credit line — and three are updates: of a change, of one of its actions and of a credit
+ * line. The five deletes are not the recoverable withdrawals beside them: the pair keeps the row, and
+ * these remove it, which is why the plugin serves both halves rather than one standing in for the other.
+ *
+ * The rest of the audit's thirty-six are accounted for elsewhere: the six action routes of the order
+ * controller and the two of the register are mirrored under other names (`place` and `placeOrder` were
+ * the same pair), the child resources' creates and the line, delivery and address writes are served
+ * through the change a caller raises and confirms, and the ledger, the timeline and the totals history
+ * carry no update and no delete field at all, because `10-orders-payments-and-returns-spec.md` §4.2
+ * states those rows are written by the writer that owns them and — for the ledger and the timeline —
+ * never edited or deleted.
+ */
+const WRITES: IWrite[] = [
+	{ resource: resource('Order'), field: 'deleteOrder', route: 'delete', method: 'delete', answers: 'OrderDeleteResult' },
+	{
+		resource: resource('OrderAddress'),
+		field: 'deleteOrderAddress',
+		route: 'delete',
+		method: 'delete',
+		answers: 'OrderDeleteResult'
+	},
+	{
+		resource: resource('OrderChange'),
+		field: 'updateOrderChange',
+		route: 'update',
+		method: 'commitChange',
+		body: { note: 'Bulk order' },
+		answers: 'OrderChange'
+	},
+	{
+		resource: resource('OrderChange'),
+		field: 'deleteOrderChange',
+		route: 'delete',
+		method: 'delete',
+		answers: 'OrderDeleteResult'
+	},
+	{
+		resource: resource('OrderChangeAction'),
+		field: 'updateOrderChangeAction',
+		route: 'update',
+		method: 'update',
+		body: { amount: 12.5 },
+		answers: 'OrderChangeAction'
+	},
+	{
+		resource: resource('OrderChangeAction'),
+		field: 'deleteOrderChangeAction',
+		route: 'delete',
+		method: 'delete',
+		answers: 'OrderDeleteResult'
+	},
+	{
+		resource: resource('OrderCreditLine'),
+		field: 'updateOrderCreditLine',
+		route: 'update',
+		method: 'update',
+		body: { amount: 5 },
+		answers: 'OrderCreditLine'
+	},
+	{
+		resource: resource('OrderCreditLine'),
+		field: 'deleteOrderCreditLine',
+		route: 'delete',
+		method: 'delete',
+		answers: 'OrderDeleteResult'
+	}
+];
+
 /** The grant every one of these routes states, which is what every field must state. */
 const EDIT = ORDER_PERMISSIONS.ORDERS_EDIT;
 
@@ -336,14 +508,21 @@ const VIEW = ORDER_PERMISSIONS.ORDERS_VIEW;
  * @param entry The resource whose two surfaces are built.
  * @returns The stub, the controller and the resolver over it.
  */
-function surfaces(entry: IParity): { service: Row; controller: Row; resolver: Row } {
+function surfaces(entry: IResource): { service: Row; controller: Row; resolver: Row } {
 	const stubs = new Map<string, Row>();
 
 	for (const name of entry.deps) {
 		if (!stubs.has(name)) {
 			stubs.set(name, {
 				softRemove: jest.fn().mockResolvedValue(RETIRED),
-				softRecover: jest.fn().mockResolvedValue(RESTORED)
+				softRecover: jest.fn().mockResolvedValue(RESTORED),
+				// The three writes the routes below the pair reach: the destructive delete of the base
+				// class, the update of a resource's own columns, and the change's own commit, which is the
+				// update route that is predicated on the version of the order the row belongs to.
+				delete: jest.fn().mockResolvedValue(DELETED),
+				update: jest.fn().mockResolvedValue(UPDATED),
+				findOneByIdString: jest.fn().mockResolvedValue(UPDATED),
+				commitChange: jest.fn().mockResolvedValue(UPDATED)
 			});
 		}
 	}
@@ -588,5 +767,196 @@ describe('the soft-delete pair — the permission and the guards are the route�
 			expect(guardsOf(controller, route)).toEqual(expect.arrayContaining(routeGuards));
 			expect(guardsOf(resolver, field)).toEqual(expect.arrayContaining(guardsOf(controller, route)));
 		}
+	});
+});
+
+/**
+ * The schema's half of the write routes no field answered.
+ *
+ * The same three properties the pair is held to, for the eight fields beside it: each is declared with
+ * the identifier its route takes and the body an update route takes, answers the row the resource's
+ * siblings answer — or, for a delete, the identity that is left — and is declared beside the four types
+ * it needs, so that a field a client cannot express fails here rather than at boot.
+ */
+describe('the order document — the write routes no field answered are declared', () => {
+	it.each(WRITES)('declares $field in the mutation block', ({ field }) => {
+		expect(mutationField(field).name.value).toBe(field);
+	});
+
+	it('takes the identifier, the body an update route takes, and nothing else', () => {
+		for (const { field, body } of WRITES) {
+			const args = (mutationField(field).arguments ?? []).map((argument) => argument.name.value);
+
+			expect(args[0]).toBe('id');
+			expect(args.includes('input')).toBe(Boolean(body));
+			// The change's update also states the version it is predicated on, as every mutation of that
+			// resolver states it: a change has no version of its own, so the version is the order's.
+			expect(args.filter((name) => !['id', 'input', 'version'].includes(name))).toEqual([]);
+		}
+	});
+
+	it('answers the row an update answers, and the identity a delete has left', () => {
+		for (const { field, answers } of WRITES) {
+			expect(namedTypeOf(mutationField(field))).toBe(answers);
+		}
+	});
+
+	it('declares the result and the three inputs the fields are written against', () => {
+		const declared = orderSchemaExtensions.definitions
+			.filter(
+				(definition) =>
+					definition.kind === 'ObjectTypeDefinition' || definition.kind === 'InputObjectTypeDefinition'
+			)
+			.map((definition) => definition.name.value);
+
+		for (const name of [
+			'OrderDeleteResult',
+			'UpdateOrderChangeInput',
+			'UpdateOrderChangeActionInput',
+			'UpdateOrderCreditLineInput'
+		]) {
+			expect(declared).toContain(name);
+		}
+	});
+});
+
+/**
+ * The authorisation is the route's, field by field — and so is the version declaration where the route
+ * states one.
+ *
+ * Three of the eight are updates of a row the order's totals were read from and five remove a row
+ * outright, so a field that left the grant to its class would turn the read permission into a write on
+ * both surfaces at once. The change's update route is the one of the eight that states `@Versioned({})`,
+ * so its field states the same declaration and takes the version as the argument this resolver's other
+ * change mutations take it as; none of the eight declares a retry scope, which is asserted rather than
+ * assumed, because a keyless GraphQL retry would not dedupe where a REST route does.
+ */
+describe('the write routes — the permission, the guards and the version are the route’s', () => {
+	it('states on every field exactly what its own route states, read from the route', () => {
+		// A control first: the routes are not all ungated, so the comparison below cannot pass on two
+		// absences.
+		expect(WRITES.some(({ route, resource }) => permissionOfRoute(resource.controller, route))).toBe(true);
+
+		for (const { field, route, resource } of WRITES) {
+			// The declaration is asserted to be there before the two readings are compared, because that is
+			// what makes the route's own metadata the thing being mirrored rather than the base's silence.
+			expect(typeof handlersOf(resource.controller)[route]).toBe('function');
+
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(resource.resolver)[field])).toEqual(
+				Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(resource.controller)[route])
+			);
+			expect(permissionOfField(resource.resolver, field)).toEqual(
+				permissionOfRoute(resource.controller, route)
+			);
+		}
+	});
+
+	it('demands the editing grant, which is the grant each of these routes states', () => {
+		for (const { field, route, resource } of WRITES) {
+			expect(permissionOfField(resource.resolver, field)).toEqual([EDIT]);
+			expect(permissionOfRoute(resource.controller, route)).toEqual([EDIT]);
+		}
+	});
+
+	it('runs the fields under the guard chain the routes run under', () => {
+		for (const { field, route, resource } of WRITES) {
+			expect(guardsOf(resource.controller, route)).toEqual(
+				expect.arrayContaining([TenantPermissionGuard, PermissionGuard])
+			);
+			expect(guardsOf(resource.resolver, field)).toEqual(
+				expect.arrayContaining(guardsOf(resource.controller, route))
+			);
+		}
+	});
+
+	it('carries the versioned declaration the change update route states', () => {
+		const route = versionedOf(OrderChangeController.prototype.update);
+
+		// The control: the route states one, so the comparison below is not two absences agreeing.
+		expect(route).toEqual({});
+		expect(versionedOf(OrderChangeResolver.prototype.updateOrderChange)).toEqual(route);
+	});
+
+	it('states no retry scope, because none of these routes declares one', () => {
+		for (const { field, route, resource } of WRITES) {
+			expect(retryOf(handlersOf(resource.controller)[route])).toBeUndefined();
+			expect(retryOf(fieldsOf(resource.resolver)[field])).toBeUndefined();
+		}
+	});
+});
+
+/**
+ * One capability, two protocols, the same delegation — for the eight writes beside the pair.
+ *
+ * The route is driven as well as the field, so what is compared is the call each of them makes on one
+ * stub rather than a service method named in this file. The update fields answer the row their resource's
+ * siblings answer even though the route's own answer is the ORM's result, which is asserted as the second
+ * call rather than hidden: a `PUT` that answered a bare `UpdateResult` over GraphQL would be a shape no
+ * other field of this domain has.
+ */
+describe('the write routes — the two protocols write the same row', () => {
+	it.each(WRITES.filter(({ body }) => Boolean(body)))(
+		'$field reaches the service method the $route route reaches, with the same body',
+		async (entry) => {
+			const { service, controller, resolver } = surfaces(entry.resource);
+
+			const overRest = await controller[entry.route](ID, entry.body, REQUEST);
+			const overGraphql = await resolver[entry.field](ID, entry.body, EXPECTATION.versions[0], CONTEXT);
+			const method = service[entry.method];
+
+			expect(method).toHaveBeenCalledTimes(2);
+			expect(method.mock.calls.map((call: Row[]) => call[0])).toEqual([ID, ID]);
+			expect(method.mock.calls.map((call: Row[]) => call[1])).toEqual([entry.body, entry.body]);
+			// Whatever either surface states beyond the body — the change route's version expectation — is
+			// one value produced by one reader from the one the caller stated, so the two calls agree on it
+			// argument for argument.
+			expect(method.mock.calls[0].slice(2)).toEqual(method.mock.calls[1].slice(2));
+
+			// The control for the comparison above: the one versioned route of the three really does hand
+			// the expectation over, so the agreement is not two absences agreeing.
+			if (entry.method === 'commitChange') {
+				expect(method.mock.calls[1][2]).toEqual(EXPECTATION);
+			} else {
+				expect(method.mock.calls[1]).toHaveLength(2);
+			}
+
+			// The change's update answers the row through the service's own `commitChange`; the other two
+			// read it back, which is the call below. Both answer the row, and the field answers it once.
+			if (entry.method !== 'commitChange') {
+				expect(service.findOneByIdString).toHaveBeenCalledWith(ID);
+			}
+
+			expect(overGraphql).toBe(UPDATED);
+			expect(overGraphql).toBe(entry.method === 'commitChange' ? overRest : UPDATED);
+		}
+	);
+
+	it.each(WRITES.filter(({ body }) => !body))(
+		'$field reaches the service method the $route route reaches',
+		async (entry) => {
+			const { service, controller, resolver } = surfaces(entry.resource);
+
+			const overRest = await controller[entry.route](ID);
+			const overGraphql = await resolver[entry.field](ID);
+
+			expect(service.delete).toHaveBeenCalledTimes(2);
+			expect(service.delete.mock.calls.map((call: Row[]) => call[0])).toEqual([ID, ID]);
+
+			// The route answers the driver's result; the field answers what a delete has left — the
+			// identity it named and whether the row was there — which is the shape this domain's one
+			// pre-existing delete field answers with.
+			expect(overRest).toBe(DELETED);
+			expect(overGraphql).toEqual({ id: ID, deleted: true });
+		}
+	);
+
+	it('answers `deleted: false` when the row the delete named was not there', async () => {
+		// The control for the count above: the field reports what the driver reported rather than a
+		// constant, so a delete of a row that was already gone is distinguishable from one that removed it.
+		const { service, resolver } = surfaces(resource('Order'));
+
+		service.delete.mockResolvedValueOnce({ affected: 0 });
+
+		expect(await resolver.deleteOrder(ID)).toEqual({ id: ID, deleted: false });
 	});
 });
