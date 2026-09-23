@@ -312,7 +312,7 @@ describe('AvailabilitySlotsResolver — the SDL declares the capabilities the RE
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 	});

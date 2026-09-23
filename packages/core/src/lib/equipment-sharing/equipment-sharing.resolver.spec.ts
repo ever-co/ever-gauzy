@@ -443,7 +443,7 @@ describe('EquipmentSharingResolver — the SDL declares the capabilities the RES
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 		expect(fieldArgs('Query', 'equipmentSharingsByOrganization')[0]).toBe('organizationId');

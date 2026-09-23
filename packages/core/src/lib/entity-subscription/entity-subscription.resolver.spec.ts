@@ -391,7 +391,7 @@ describe('EntitySubscriptionResolver — the SDL declares the capabilities the R
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 	});

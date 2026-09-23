@@ -327,7 +327,7 @@ describe('EmployeeSettingResolver — the SDL declares the capabilities the REST
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 	});

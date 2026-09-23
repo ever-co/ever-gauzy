@@ -406,7 +406,7 @@ describe('EquipmentResolver — the SDL declares the capabilities the REST route
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 		// The count route binds its query string to the store's own `where`, which is a shape no schema

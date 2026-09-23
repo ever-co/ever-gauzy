@@ -339,7 +339,7 @@ describe('EmployeeNotificationSettingResolver — the SDL declares the capabilit
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 	});

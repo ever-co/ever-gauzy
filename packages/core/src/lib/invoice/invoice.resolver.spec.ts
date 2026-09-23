@@ -462,7 +462,7 @@ describe('InvoiceResolver — the SDL declares the capabilities the REST routes 
 			'last',
 			'before',
 			'limit',
-			'offset'
+			'offset',
 			'withDeleted',
 		]);
 		expect(fieldArgs('Query', 'invoices')).not.toContain('relations');
