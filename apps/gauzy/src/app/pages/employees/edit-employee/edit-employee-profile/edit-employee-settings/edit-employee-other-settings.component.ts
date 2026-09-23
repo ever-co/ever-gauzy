@@ -32,9 +32,10 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 
 	public get isEEAOrUK(): boolean {
 		if (!this.selectedEmployee) return false;
+		const formTimeZone = this.form?.get('timeZone')?.value;
 		return isEEAOrUKRegion({
 			regionCode: this.selectedEmployee.organization?.regionCode || this.selectedEmployee.contact?.regionCode,
-			timeZone: this.selectedEmployee.user?.timeZone || this.selectedEmployee.organization?.timeZone,
+			timeZone: formTimeZone || this.selectedEmployee.user?.timeZone || this.selectedEmployee.organization?.timeZone,
 			country: this.selectedEmployee.contact?.country || this.selectedEmployee.organization?.contact?.country
 		});
 	}
@@ -137,6 +138,14 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			untilDestroyed(this),
 			() => (this.acknowledgeAgentExitLogoutRestriction = true)
 		);
+
+		// Reapply EEA/UK form restrictions when the timezone changes
+		this.form.get('timeZone')?.valueChanges
+			.pipe(
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -206,7 +215,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			allowLogoutFromAgentApp,
 			trackKeyboardMouseActivity,
 			trackAllDisplays
-		} = this.form.value;
+		} = this.form.getRawValue();
 
 		this.employeeStore.updateUserForm({ timeZone, timeFormat });
 		this.employeeStore.updateEmployeeForm({
@@ -224,7 +233,6 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackAllDisplays,
 			acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
 		});
-		this.acknowledgeAgentExitLogoutRestriction = false;
 	}
 
 	/**

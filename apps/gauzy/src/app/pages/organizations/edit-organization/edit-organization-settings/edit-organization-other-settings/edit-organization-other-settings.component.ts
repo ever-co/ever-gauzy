@@ -526,7 +526,7 @@ export class EditOrganizationOtherSettingsComponent
 
 		try {
 			const organization: IOrganization = await this._organizationService.update(organizationId, {
-				...this.form.value,
+				...this.form.getRawValue(),
 				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
 			});
 			this.acknowledgeAgentExitLogoutRestriction = false;
