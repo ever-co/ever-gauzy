@@ -1153,7 +1153,11 @@
 		"APPLICATIONS": "Aplikacje",
 		"OPEN_GA_BROWSER": "Otwórz Gauzy w przeglądarce",
 		"START_SERVER": "Uruchom serwer",
-		"STOP_SERVER": "Zatrzymaj serwer"
+		"STOP_SERVER": "Zatrzymaj serwer",
+		"DOCUMENTS": "Dokumenty",
+		"BILLING": "Fakturacja",
+		"MONITORING": "Monitorowanie",
+		"ADD_ITEM": "Dodaj {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -5302,7 +5306,8 @@
 				"TERMS_AND_CONDITIONS": "Regulamin",
 				"AND": " oraz ",
 				"PRIVACY_POLICY": "Polityka prywatności"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Hasło powinno zawierać co najmniej 4 znaki"
 		}
 	},
 	"LOGIN_PAGE": {
