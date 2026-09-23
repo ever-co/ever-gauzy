@@ -8,6 +8,8 @@ import {
 	ICampaignBudget,
 	ICampaignBudgetUsage,
 	ICoupon,
+	ICouponBatchResult,
+	ICouponCodeFormat,
 	IGiftCard,
 	IGiftCardTransaction,
 	IPromotion,
@@ -235,12 +237,16 @@ export type UpdateCampaignPayload = IMutationPayload<'campaign', unknown>;
 export type DeleteCampaignPayload = IMutationPayload<'campaign', unknown>;
 /** The outcome of setting a campaign's ceiling. */
 export type UpdateCampaignBudgetPayload = IMutationPayload<'budget', unknown>;
+/** The outcome of re-opening a campaign's ceiling. */
+export type ResetCampaignBudgetPayload = IMutationPayload<'budget', ICampaignBudget>;
 /** The outcome of creating a coupon. */
 export type CreateCouponPayload = IMutationPayload<'coupon', ICoupon>;
 /** The outcome of changing a coupon. */
 export type UpdateCouponPayload = IMutationPayload<'coupon', ICoupon>;
 /** The outcome of deleting a coupon. */
 export type DeleteCouponPayload = IMutationPayload<'coupon', ICoupon>;
+/** The outcome of minting a batch of codes. */
+export type CreateCouponBatchPayload = IMutationPayload<'batch', ICouponBatchResult>;
 /** The outcome of issuing a gift card. */
 export type IssueGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
 /** The outcome of spending part of a card's balance. */
@@ -249,6 +255,16 @@ export type RedeemGiftCardPayload = IMutationPayload<'giftCard', IGiftCard> & {
 };
 /** The outcome of withdrawing a card from circulation. */
 export type VoidGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
+/** The outcome of changing what a card says about itself. */
+export type UpdateGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
+/** The outcome of returning value to a card. */
+export type RefundGiftCardPayload = IMutationPayload<'giftCard', IGiftCard> & {
+	readonly applied?: DecimalString;
+};
+/** The outcome of correcting a card's balance by hand. */
+export type AdjustGiftCardPayload = IMutationPayload<'giftCard', IGiftCard> & {
+	readonly applied?: DecimalString;
+};
 /** The outcome of stopping a promotion. */
 export type DeactivatePromotionPayload = IMutationPayload<'promotion', IPromotion>;
 /** The outcome of replacing a promotion's action set. */
@@ -384,6 +400,11 @@ export interface IUpdateCampaignBudgetInput {
 	readonly currency?: string;
 }
 
+/** Why a campaign's ceiling is being re-opened. */
+export interface IResetCampaignBudgetInput {
+	readonly reason?: string;
+}
+
 /** The fields a coupon is created with. */
 export interface ICreateCouponInput {
 	readonly code: string;
@@ -398,6 +419,18 @@ export interface ICreateCouponInput {
 
 /** The fields of a coupon that may be changed. */
 export interface IUpdateCouponInput extends Partial<Omit<ICreateCouponInput, 'code'>> {}
+
+/**
+ * The batch of codes to mint.
+ *
+ * `code` is declared because the route's body is the create shape plus the two members a batch adds,
+ * and it is optional here because a batch mints every code it writes: the member is accepted and never
+ * read, which is what the service does with it too.
+ */
+export interface ICreateCouponBatchInput extends Partial<ICreateCouponInput> {
+	readonly count: number;
+	readonly couponCodeFormat?: ICouponCodeFormat;
+}
 
 /** The fields a gift card is issued with. */
 export interface IIssueGiftCardInput {
@@ -421,6 +454,39 @@ export interface IRedeemGiftCardInput {
 /** Why a card is being withdrawn. */
 export interface IVoidGiftCardInput {
 	readonly reason?: string;
+}
+
+/**
+ * The fields of a gift card that may be changed.
+ *
+ * The route's body declares three members this interface does not, and each is a write the card's own
+ * rules refuse: `initialAmount` is the base its balance is derived from, `balance` is the materialised
+ * cache of that derivation, and `pin` is the second factor stored as a digest. The route's own DTO
+ * admits them because it is a `PartialType` of the create shape rather than a statement about editing;
+ * the field's input states the editing surface, so a GraphQL caller cannot rewrite the ledger's
+ * arithmetic through a field that claims to change a card's window or its holder.
+ */
+export interface IUpdateGiftCardInput {
+	readonly code?: string;
+	readonly currency?: string;
+	readonly status?: GiftCardStatus;
+	readonly customerId?: ID;
+	readonly orderId?: ID;
+	readonly expiresAt?: Date;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/** How much of a card is returned, and against what. */
+export interface IRefundGiftCardInput {
+	readonly amount: DecimalString;
+	readonly orderId?: ID;
+	readonly note?: string;
+}
+
+/** The correction to make to a card's balance; the note is what explains the movement. */
+export interface IAdjustGiftCardInput {
+	readonly amount: DecimalString;
+	readonly note: string;
 }
 
 /** Why a promotion is being closed before its window ends. */

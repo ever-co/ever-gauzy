@@ -406,6 +406,24 @@ export const schemaExtensions = gql`
 		isPrimary: Boolean
 	}
 
+	# The two publication rows' writable surface: every member optional, because an update states what
+	# changed rather than restating the row — which is what UpdateProductChannelDTO and
+	# UpdateProductVariantChannelDTO declare on the REST route each one mirrors.
+	input UpdateProductPublicationInput {
+		status: PublicationStatus
+		publishedAt: DateTime
+		unpublishedAt: DateTime
+		sortOrder: Int
+		isFeatured: Boolean
+	}
+
+	input UpdateProductVariantPublicationInput {
+		status: PublicationStatus
+		publishedAt: DateTime
+		unpublishedAt: DateTime
+		sortOrder: Int
+	}
+
 	# The catalog's lists take the page in either of the protocol's two spellings and refuse a request that
 	# states both: PageInput walks by cursor, limit/offset walks by position — where offset is the row to
 	# start at, which is what the name says and what the connection's boundary reports back.
@@ -452,6 +470,8 @@ export const schemaExtensions = gql`
 		"Restores a soft-deleted collection membership."
 		recoverCollectionProduct(id: ID!): CollectionProduct!
 		addCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
+		"Writes the whole variant set of a collection in one call, which is the operation the service defines."
+		replaceCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
 		removeCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
 		"Retires one collection variant membership recoverably, so the variant keeps its place in the collection."
 		softDeleteCollectionVariant(id: ID!): CollectionVariant!
@@ -471,6 +491,8 @@ export const schemaExtensions = gql`
 		recoverCollectionChannel(id: ID!): CollectionChannel!
 		publishProduct(productId: ID!, channelIds: [ID!]!, publishedAt: DateTime): [ProductPublication!]!
 		unpublishProduct(productId: ID!, channelIds: [ID!]!, unpublishedAt: DateTime): [ProductPublication!]!
+		"Updates one product publication: its status, its dates and its place in the channel's listing."
+		updateProductChannel(id: ID!, input: UpdateProductPublicationInput!): ProductPublication!
 		"Retires one product publication recoverably, so the placement keeps its status and its date."
 		softDeleteProductChannel(id: ID!): ProductPublication!
 		"Restores a soft-deleted product publication."
@@ -480,6 +502,8 @@ export const schemaExtensions = gql`
 			input: [ProductVariantPublicationInput!]!
 		): [ProductVariantPublication!]!
 		unpublishProductVariant(variantId: ID!, channelIds: [ID!]!): [ProductVariantPublication!]!
+		"Updates one variant publication: its status, its dates and its place in the channel's listing."
+		updateProductVariantChannel(id: ID!, input: UpdateProductVariantPublicationInput!): ProductVariantPublication!
 		"Retires one variant publication recoverably, so the placement keeps its status and its date."
 		softDeleteProductVariantChannel(id: ID!): ProductVariantPublication!
 		"Restores a soft-deleted variant publication."

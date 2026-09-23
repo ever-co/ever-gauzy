@@ -13,17 +13,23 @@ import { GiftCardService } from '../../gift-card/gift-card.service';
 import { GiftCardTransactionService } from '../../gift-card-transaction/gift-card-transaction.service';
 import { toDecimal, toUserError, toWhere } from '../wire';
 import {
+	AdjustGiftCardPayload,
 	IGiftCardBalancePayload,
 	IGiftCardRedeemedPayload,
 	IIssueGiftCardInput,
 	IPageInput,
+	IAdjustGiftCardInput,
 	IRedeemGiftCardInput,
+	IRefundGiftCardInput,
 	ISortInput,
+	IUpdateGiftCardInput,
 	IVoidGiftCardInput,
 	IssueGiftCardPayload,
 	RedeemGiftCardPayload,
 	RecoverGiftCardPayload,
+	RefundGiftCardPayload,
 	SoftDeleteGiftCardPayload,
+	UpdateGiftCardPayload,
 	VoidGiftCardPayload,
 	cursorOffset,
 	toAsyncIterable,
@@ -208,6 +214,78 @@ export class GiftCardResolver {
 	}
 
 	/**
+	 * Returns value to a card, on a refund that was paid back onto it.
+	 *
+	 * The route it mirrors is `POST /gift-cards/:id/refund`, and the amount returned is the smaller of
+	 * what was asked for and what the card paid out and has not already been given back: a card can
+	 * never be refunded more than it was spent from. The payload reports the figure actually applied
+	 * rather than the one requested, because the two differ whenever the request exceeds what is
+	 * returnable — which is the difference between an answer a caller can reconcile and a number it
+	 * has to recompute.
+	 *
+	 * The context is handed over as the route hands its body over, so both protocols reach one service
+	 * call with one set of arguments. The permission is the route's own, `GIFT_CARDS_EDIT`.
+	 *
+	 * @param id The card to credit.
+	 * @param input The amount to return and the order it came from.
+	 * @returns The payload, carrying the amount actually returned.
+	 */
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Mutation('refundGiftCard')
+	async refundGiftCard(
+		@Args('id') id: ID,
+		@Args('input') input: IRefundGiftCardInput
+	): Promise<RefundGiftCardPayload> {
+		try {
+			const { card, applied } = await this.giftCardService.refund(id, input.amount, input);
+
+			return {
+				giftCard: card,
+				applied: toDecimal(applied) ?? '0.000000',
+				operation: null,
+				userErrors: []
+			};
+		} catch (error) {
+			return { giftCard: null, applied: '0.000000', operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Corrects a card's balance by hand, in either direction.
+	 *
+	 * The route it mirrors is `POST /gift-cards/:id/adjust`. A correction is this field and never an
+	 * edit of a ledger row, which is what keeps the chain of balances a card is explained by
+	 * replayable; the note is required by the service, and a caller that states none is refused rather
+	 * than given a movement nobody can explain — the ledger row is the only place the correction will
+	 * ever be accounted for.
+	 *
+	 * The permission is the route's own, `GIFT_CARDS_EDIT`.
+	 *
+	 * @param id The card to correct.
+	 * @param input The signed amount and the reason for it.
+	 * @returns The payload, carrying the amount actually applied.
+	 */
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Mutation('adjustGiftCard')
+	async adjustGiftCard(
+		@Args('id') id: ID,
+		@Args('input') input: IAdjustGiftCardInput
+	): Promise<AdjustGiftCardPayload> {
+		try {
+			const { card, applied } = await this.giftCardService.adjust(id, input.amount, input.note);
+
+			return {
+				giftCard: card,
+				applied: toDecimal(applied) ?? '0.000000',
+				operation: null,
+				userErrors: []
+			};
+		} catch (error) {
+			return { giftCard: null, applied: '0.000000', operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Withdraws a card from circulation.
 	 *
 	 * The card is cancelled rather than deleted and its ledger is left intact: the money that was spent
@@ -222,6 +300,41 @@ export class GiftCardResolver {
 	async voidGiftCard(@Args('id') id: ID, @Args('input') input?: IVoidGiftCardInput): Promise<VoidGiftCardPayload> {
 		try {
 			return { giftCard: await this.giftCardService.cancel(id, input?.reason), operation: null, userErrors: [] };
+		} catch (error) {
+			return { giftCard: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Changes what a card says about itself: its code, its placement, its status and its window.
+	 *
+	 * The route it mirrors is `PUT /gift-cards/:id`. **The card is read back after the write**, exactly
+	 * as the route reads it back: the CRUD base's `update` answers the row *or* an `UpdateResult`, and
+	 * this field's type is a non-null row, so returning the write's own result would break the type it
+	 * declares.
+	 *
+	 * The input is the route's body minus the three members whose write the card's own rules refuse —
+	 * the ledger's base (`initialAmount`), its materialised balance and its second factor (`pin`). The
+	 * route's DTO admits them because it is a `PartialType` of the create shape; a field that claims to
+	 * change a card's expiry or its holder is not a door to the arithmetic its balance is derived from,
+	 * and no other field of this schema writes any of the three either.
+	 *
+	 * The permission is the route's own, `GIFT_CARDS_EDIT`.
+	 *
+	 * @param id The card to change.
+	 * @param input The fields to change.
+	 * @returns The payload, carrying the card as it stands after the write.
+	 */
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Mutation('updateGiftCard')
+	async updateGiftCard(
+		@Args('id') id: ID,
+		@Args('input') input: IUpdateGiftCardInput
+	): Promise<UpdateGiftCardPayload> {
+		try {
+			await this.giftCardService.update(id, input as never);
+
+			return { giftCard: await this.giftCardService.findCardOrFail(id), operation: null, userErrors: [] };
 		} catch (error) {
 			return { giftCard: null, operation: null, userErrors: [toUserError(error)] };
 		}

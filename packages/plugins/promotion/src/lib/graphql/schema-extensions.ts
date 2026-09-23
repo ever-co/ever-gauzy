@@ -945,7 +945,16 @@ export const schemaExtensions = gql`
 
 	"One action of a promotion, as it is written."
 	input PromotionActionInput {
-		"The action to replace; omit it to add a new one."
+		"""
+		The action this entry names; omit it to add a new one.
+
+		The identifier is accepted and **not** honoured as an identity: a replacement rewrites the
+		promotion's whole action set — every stored row is deleted and the set this input carries is written
+		in its place — so an action named here does not keep its row across the write, and the identifiers
+		the mutation answers with are the new ones. It is carried for symmetry with the action resource's own
+		identifier-addressed routes, and a caller that needs a particular action to keep its identity has to
+		read the stored set back and address the row it finds.
+		"""
 		id: ID
 		type: PromotionActionType!
 		targetType: PromotionActionTargetType!
@@ -1053,6 +1062,17 @@ export const schemaExtensions = gql`
 		currency: String
 	}
 
+	"""
+	Why a campaign's ceiling is being re-opened.
+
+	The reason is optional and is not passed to the service, which keeps none: the figure is reset and
+	the explanation belongs with the activity log entry that recorded the act, which is where the route
+	leaves it too.
+	"""
+	input ResetCampaignBudgetInput {
+		reason: String
+	}
+
 	"The fields a coupon is created with."
 	input CreateCouponInput {
 		code: String!
@@ -1087,6 +1107,116 @@ export const schemaExtensions = gql`
 		orderId: ID
 		expiresAt: DateTime
 		metadata: JSON
+	}
+
+	"""
+	The code format a batch is minted in.
+
+	Every member is optional, and the platform's own alphabet, length and grouping stand in for the ones
+	a caller leaves out — so a batch that states no format is generated the way the platform generates
+	one, which is what makes the format a narrowing of the default rather than a thing to restate.
+	"""
+	input CouponCodeFormatInput {
+		"Regular expression every generated code matches."
+		pattern: String
+		"Alphabet the significant characters are drawn from."
+		alphabet: String
+		"Number of significant characters."
+		significantLength: Int
+		"Characters per group."
+		groupSize: Int
+		"Separator between groups."
+		separator: String
+		"Optional fixed prefix."
+		prefix: String
+		"Optional fixed suffix."
+		suffix: String
+	}
+
+	"""
+	The batch of codes to mint.
+
+	\`code\` is carried because the route's body is the create shape plus the two members a batch adds, and
+	it names nothing here: every code of a batch is minted from the format, so the member is accepted and
+	never read, exactly as it is on the route. \`count\` is the one member a batch cannot do without.
+
+	The remaining members are the shared fields of every code in the batch — they are what makes a
+	mailing one request rather than a thousand, and they are applied to each code as it is written.
+	"""
+	input CreateCouponBatchInput {
+		"Accepted and never read: a batch mints its own codes."
+		code: String
+		"The promotion every code of the batch grants."
+		promotionId: ID
+		"Groups the codes of this batch; generated when absent."
+		batchId: String
+		"Per-code cap; null inherits the promotion limit."
+		usageLimit: Int
+		"Per-code, per-customer cap."
+		perCustomerLimit: Int
+		"Start of the window every code shares."
+		startsAt: DateTime
+		"End of the window every code shares, exclusive."
+		endsAt: DateTime
+		"Issued-to, mailing and single-use markers carried onto every code."
+		metadata: JSON
+		"How many codes to mint. Required: a batch of nothing is not a batch."
+		count: Int!
+		"The format the codes are minted in; the platform's own when absent."
+		couponCodeFormat: CouponCodeFormatInput
+	}
+
+	"""
+	The fields of a gift card that may be changed.
+
+	The shape is the route's own body minus the three members whose write the card's rules refuse.
+	\`initialAmount\` is the base the balance is derived from, so changing it after the card was issued
+	rewrites the derivation rather than the card; \`balance\` is the materialised cache of that derivation,
+	whose correction is \`adjustGiftCard\`; and \`pin\` is the second factor, which is stored as a digest and
+	which no field of this schema reads or writes. Carrying them would hand a GraphQL caller a write over
+	the ledger's own arithmetic — a write no act of the domain offers on either surface.
+
+	Every member is optional, because an update states what changed rather than restating the card.
+	"""
+	input UpdateGiftCardInput {
+		"The redeemable string."
+		code: String
+		"The card currency. A card is only redeemable against an order in it."
+		currency: String
+		"Active, redeemed, expired or canceled."
+		status: GiftCardStatus
+		"The registered holder."
+		customerId: ID
+		"The order that issued the card, on a refund-to-card flow."
+		orderId: ID
+		"Expiry instant; null means the card never expires."
+		expiresAt: DateTime
+		"Reloadable marker, issuer, recipient and message."
+		metadata: JSON
+	}
+
+	"How much of a card is returned, and against what."
+	input RefundGiftCardInput {
+		"The amount to return. Exact decimal."
+		amount: Decimal!
+		"The order the value came from."
+		orderId: ID
+		"Why the value is being returned; the movement carries it."
+		note: String
+	}
+
+	"""
+	The correction to make to a card's balance.
+
+	The note is required here as it is on the route, because the movement this writes is the only place
+	the correction is ever explained: an adjustment without a reason is indistinguishable from a defect,
+	and a caller that has no reason to state has no correction to make.
+	"""
+	input AdjustGiftCardInput {
+		"The signed amount. Exact decimal: negative debits the card, positive credits it."
+		amount: Decimal!
+		"Why the correction was made."
+		note: String!
 	}
 
 	"How much of a card is spent, and against what."
@@ -1407,6 +1537,14 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"The outcome of re-opening a campaign's ceiling."
+	type ResetCampaignBudgetPayload {
+		"The ceiling after the reset, with its consumption back at zero."
+		budget: CampaignBudget
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
 	"The outcome of creating a coupon."
 	type CreateCouponPayload {
 		coupon: Coupon
@@ -1424,6 +1562,34 @@ export const schemaExtensions = gql`
 	"The outcome of deleting a coupon."
 	type DeleteCouponPayload {
 		coupon: Coupon
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"""
+	What a batch of codes adds up to.
+
+	The identifier and the two counts travel together because the batch is all-or-nothing: a caller that
+	holds the identifier its mailing is keyed on and the counts it was answered with can prove the
+	mailing it asked for is the mailing it got, without counting rows. \`failed\` is not a partial success
+	to be retried one code at a time — it is the figure that says the request did not deliver, which is
+	why the service refuses a shortfall rather than reporting one.
+	"""
+	type CouponBatchResult {
+		"The identifier every code of the batch carries."
+		batchId: String!
+		"How many codes were asked for."
+		requested: Int!
+		"How many codes were written."
+		created: Int!
+		"How many codes were not."
+		failed: Int!
+	}
+
+	"The outcome of minting a batch of codes."
+	type CreateCouponBatchPayload {
+		"The batch identifier and the counts."
+		batch: CouponBatchResult
 		operation: Operation
 		userErrors: [UserError!]!
 	}
@@ -1447,6 +1613,31 @@ export const schemaExtensions = gql`
 	"The outcome of withdrawing a card from circulation."
 	type VoidGiftCardPayload {
 		giftCard: GiftCard
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of changing what a card says about itself."
+	type UpdateGiftCardPayload {
+		giftCard: GiftCard
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of returning value to a card."
+	type RefundGiftCardPayload {
+		giftCard: GiftCard
+		"The amount actually returned, which is never more than the card was spent from. Exact decimal."
+		applied: Decimal!
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of correcting a card's balance by hand."
+	type AdjustGiftCardPayload {
+		giftCard: GiftCard
+		"The signed amount actually applied. Exact decimal."
+		applied: Decimal!
 		operation: Operation
 		userErrors: [UserError!]!
 	}
@@ -1665,6 +1856,14 @@ export const schemaExtensions = gql`
 		recoverCampaign(id: ID!): RecoverCampaignPayload!
 		"Sets or replaces the single budget of a campaign."
 		updateCampaignBudget(campaignId: ID!, input: UpdateCampaignBudgetInput!): UpdateCampaignBudgetPayload!
+		"""
+		Resets the consumption of a campaign's ceiling, re-opening a budget that has been spent.
+
+		It is the one act that makes a ceiling forget what it paid out, which is why it is a field of its
+		own rather than a member of \`updateCampaignBudget\`: moving a ceiling leaves the consumption
+		recorded against it alone, and an operator has to be able to tell the two acts apart.
+		"""
+		resetCampaignBudget(campaignId: ID!, input: ResetCampaignBudgetInput): ResetCampaignBudgetPayload!
 		"Retires a campaign's ceiling recoverably, so the spend behind it stays attributable."
 		softDeleteCampaignBudget(id: ID!): SoftDeleteCampaignBudgetPayload!
 		"Restores a soft-deleted campaign ceiling."
@@ -1675,6 +1874,14 @@ export const schemaExtensions = gql`
 		recoverCampaignBudgetUsage(id: ID!): RecoverCampaignBudgetUsagePayload!
 		"Creates one coupon."
 		createCoupon(input: CreateCouponInput!): CreateCouponPayload!
+		"""
+		Mints a batch of codes that share one promotion, one window and one set of limits.
+
+		The batch is all-or-nothing, because a mailing that quietly comes back a thousand codes short is
+		worse than a request that fails and is retried: the service refuses a shortfall rather than
+		reporting one, and a refusal reaches the caller as a \`userError\` on this payload.
+		"""
+		createCouponBatch(input: CreateCouponBatchInput!): CreateCouponBatchPayload!
 		"Changes a coupon's promotion, window or limits."
 		updateCoupon(id: ID!, input: UpdateCouponInput!): UpdateCouponPayload!
 		"Deletes a coupon."
@@ -1687,8 +1894,35 @@ export const schemaExtensions = gql`
 		issueGiftCard(input: IssueGiftCardInput!): IssueGiftCardPayload!
 		"Spends part of a card's balance against an order."
 		redeemGiftCard(id: ID!, input: RedeemGiftCardInput!): RedeemGiftCardPayload!
+		"""
+		Returns value to a card, on a refund that was paid back onto it.
+
+		The amount returned is the smaller of what was asked for and what the card paid out and has not
+		already been given back, so a card can never be refunded more than it was spent from. The payload
+		carries the figure actually applied rather than the one requested, because the two differ whenever
+		the request exceeds what is returnable.
+		"""
+		refundGiftCard(id: ID!, input: RefundGiftCardInput!): RefundGiftCardPayload!
+		"""
+		Corrects a card's balance by hand, in either direction.
+
+		A correction is this field and never an edit of a ledger row, which is what keeps the chain of
+		balances a card is explained by replayable. The note is required: the movement written here is the
+		only place the correction is ever explained, and an adjustment without a reason is
+		indistinguishable from a defect.
+		"""
+		adjustGiftCard(id: ID!, input: AdjustGiftCardInput!): AdjustGiftCardPayload!
 		"Withdraws a card from circulation, keeping its ledger."
 		voidGiftCard(id: ID!, input: VoidGiftCardInput): VoidGiftCardPayload!
+		"""
+		Changes what a card says about itself: its code, its placement, its status and its window.
+
+		The ledger is not editable through this field. \`initialAmount\` is the base the balance is derived
+		from, \`balance\` is the materialised cache of that derivation whose correction is \`adjustGiftCard\`,
+		and \`pin\` is the second factor — none of the three is on the input, because none of the three is
+		an act the card's own rules offer.
+		"""
+		updateGiftCard(id: ID!, input: UpdateGiftCardInput!): UpdateGiftCardPayload!
 		"Retires a card recoverably; its ledger and its balance are kept."
 		softDeleteGiftCard(id: ID!): SoftDeleteGiftCardPayload!
 		"Restores a soft-deleted gift card."

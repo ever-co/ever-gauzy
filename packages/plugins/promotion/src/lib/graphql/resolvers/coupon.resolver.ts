@@ -13,10 +13,12 @@ import { PromotionService } from '../../promotion/promotion.service';
 import { PromotionUsageService } from '../../promotion-usage/promotion-usage.service';
 import { toUserError, toWhere } from '../wire';
 import {
+	CreateCouponBatchPayload,
 	CreateCouponPayload,
 	DeleteCouponPayload,
 	ICouponValidationPayload,
 	ICouponRedeemedPayload,
+	ICreateCouponBatchInput,
 	ICreateCouponInput,
 	IPageInput,
 	ISortInput,
@@ -162,6 +164,37 @@ export class CouponResolver {
 			return { coupon: await this.couponService.createCoupon(input), operation: null, userErrors: [] };
 		} catch (error) {
 			return { coupon: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Mints a batch of codes that share one promotion, one window and one set of limits.
+	 *
+	 * The route it mirrors is `POST /coupons/batch`, and this field is the only door to the capability:
+	 * `createCoupon` mints the one code its input names, and a mailing of a thousand codes is one
+	 * request here rather than a thousand there. The input is the route's body member for member —
+	 * including `code`, which the route's body also declares and which a batch never reads, because
+	 * every code it writes is generated from the format.
+	 *
+	 * The permission is the route's own, `COUPONS_CREATE`. The batch is all-or-nothing: the service
+	 * refuses a count outside its range with `COUPON_INVALID`, which reaches the caller as a `userError`
+	 * on this payload rather than as a transport failure — the same answer the route's 400 carries.
+	 *
+	 * @param input The batch request.
+	 * @returns The payload, carrying the batch identifier and the counts.
+	 */
+	@Permissions(PromotionPermission.COUPONS_CREATE as PermissionsEnum)
+	@Mutation('createCouponBatch')
+	async createCouponBatch(@Args('input') input: ICreateCouponBatchInput): Promise<CreateCouponBatchPayload> {
+		try {
+			// Handed over as the route hands its body over. The one member the create shape requires and
+			// a batch does not is `code`, which the service overwrites for every row it writes: a caller
+			// that had to state one would be stating a value nothing reads.
+			const batch = await this.couponService.createBatch(input as never);
+
+			return { batch, operation: null, userErrors: [] };
+		} catch (error) {
+			return { batch: null, operation: null, userErrors: [toUserError(error)] };
 		}
 	}
 

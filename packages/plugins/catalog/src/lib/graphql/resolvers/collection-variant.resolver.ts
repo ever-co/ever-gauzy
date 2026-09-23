@@ -62,6 +62,36 @@ export class CollectionVariantResolver {
 	}
 
 	/**
+	 * Replaces the manual variant set of one collection, in the order the caller states.
+	 *
+	 * The route it mirrors is `PUT /collection-variants/by-collection/:collectionId`, which writes the
+	 * whole set — additions, removals and the new positions — inside one transaction, because a shelf is
+	 * reordered as a whole and an endpoint that edits one membership leaves the positions of the rows
+	 * nobody touched to be repaired by whoever notices. No field reached it: this document declares
+	 * `addCollectionVariants` and `removeCollectionVariants`, and neither has a resolver, so the
+	 * resource's set had no working door over GraphQL at all — the pair is recorded as unbound in
+	 * `tools/scripts/graphql-field-binding-check.mjs`, with the note "the variant service replaces a whole
+	 * membership set; an add is not defined". This field is the door the service does define.
+	 *
+	 * The permission is the controller's own for the route — `COLLECTIONS_EDIT` — because writing the set
+	 * changes what the collection contains, and the call is the one the route makes: the same method, the
+	 * same two arguments. The route declares no `@Idempotent` scope and no `@Versioned` expectation, so
+	 * neither does the field.
+	 *
+	 * @param collectionId The collection whose membership is being written.
+	 * @param variantIds The complete set of variant ids the collection should contain, in order.
+	 * @returns The membership rows after the write.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('replaceCollectionVariants')
+	async replaceCollectionVariants(
+		@Args('collectionId') collectionId: ID,
+		@Args('variantIds') variantIds: ID[]
+	): Promise<CollectionVariant[]> {
+		return this.collectionVariantService.replaceVariants(collectionId, variantIds);
+	}
+
+	/**
 	 * Retires one variant membership row recoverably, keeping the variant in the collection's set.
 	 *
 	 * The route it mirrors is `DELETE /collection-variants/:id/soft`, inherited from `CrudController`

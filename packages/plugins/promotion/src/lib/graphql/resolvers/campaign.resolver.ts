@@ -15,10 +15,12 @@ import {
 	DeleteCampaignPayload,
 	ICreateCampaignInput,
 	IPageInput,
+	IResetCampaignBudgetInput,
 	ISortInput,
 	IUpdateCampaignBudgetInput,
 	IUpdateCampaignInput,
 	RecoverCampaignPayload,
+	ResetCampaignBudgetPayload,
 	SoftDeleteCampaignPayload,
 	UpdateCampaignBudgetPayload,
 	UpdateCampaignPayload,
@@ -259,6 +261,40 @@ export class CampaignResolver {
 
 			return {
 				budget: await this.campaignBudgetService.setBudget(campaignId, ceiling),
+				operation: null,
+				userErrors: []
+			};
+		} catch (error) {
+			return { budget: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Re-opens a campaign's ceiling by resetting the consumption recorded against it.
+	 *
+	 * The route it mirrors is `POST /campaigns/:id/budget/reset`, and it is a field of its own rather
+	 * than a member of the set mutation because the two acts differ in exactly the way that matters: a
+	 * set moves the ceiling and leaves the consumption alone, while a reset makes the ceiling forget
+	 * what it paid out. The reason is not passed on — the service keeps none, and an operator's
+	 * explanation belongs with the activity log entry that recorded the act, which is where the route
+	 * leaves it too.
+	 *
+	 * The permission is the route's own, `PROMOTIONS_EDIT`: re-opening a spent budget changes what the
+	 * next reservation may take, and the class-level view grant must not carry it.
+	 *
+	 * @param campaignId The campaign whose ceiling is re-opened.
+	 * @param input The reason it is being re-opened, when the caller states one.
+	 * @returns The payload, carrying the ceiling as the reset left it.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_EDIT as PermissionsEnum)
+	@Mutation('resetCampaignBudget')
+	async resetCampaignBudget(
+		@Args('campaignId') campaignId: ID,
+		@Args('input') input?: IResetCampaignBudgetInput
+	): Promise<ResetCampaignBudgetPayload> {
+		try {
+			return {
+				budget: await this.campaignBudgetService.resetConsumption(campaignId, input?.reason),
 				operation: null,
 				userErrors: []
 			};

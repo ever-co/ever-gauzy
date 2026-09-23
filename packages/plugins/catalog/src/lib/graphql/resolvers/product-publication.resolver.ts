@@ -139,6 +139,43 @@ export class ProductPublicationResolver {
 	}
 
 	/**
+	 * Updates one product publication: its status, the moments it took effect, and its place in the
+	 * channel's listing.
+	 *
+	 * The route it mirrors is `PUT /product-channels/:id`, whose body is `UpdateProductChannelDTO` —
+	 * every member optional, because an update states what changed rather than restating the row. The
+	 * status moves are already reachable through `publishProduct` and `unpublishProduct` above, which
+	 * take the channels they apply to; the two placement members are what no field reached: `sortOrder`
+	 * is the position this product takes in the channel's listing (`ProductChannelService.findByProduct`
+	 * orders by it) and `isFeatured` is the featured placement, and both are members of the route's body
+	 * and read fields on this type. A caller could therefore set a publication's rank over REST and had
+	 * no way to state it over GraphQL.
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_EDIT` — and the call is the one
+	 * the route makes, with the same two arguments. The route declares no `@Idempotent` scope and no
+	 * `@Versioned` expectation, so neither does the field.
+	 *
+	 * The payload is the row read back rather than the service's answer: the CRUD base's `update`
+	 * answers the updated row *or* an `UpdateResult`, and a field that returned the second would violate
+	 * the non-null row this type promises. The read is the one the cart's session update makes for the
+	 * same reason, and it is a read of the row the route just wrote.
+	 *
+	 * @param id The publication to update.
+	 * @param input The members the update states.
+	 * @returns The publication as the update left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Mutation('updateProductChannel')
+	async updateProductChannel(
+		@Args('id') id: ID,
+		@Args('input') input: Partial<ProductChannel>
+	): Promise<ProductChannel> {
+		await this.productChannelService.update(id, input);
+
+		return this.productChannelService.findOneByIdString(id);
+	}
+
+	/**
 	 * Retires one product publication recoverably, keeping the row.
 	 *
 	 * The route it mirrors is `DELETE /product-channels/:id/soft`, inherited from `CrudController` and
@@ -206,6 +243,40 @@ export class ProductPublicationResolver {
 				.filter((row) => !channelIds.includes(row.channelId))
 				.map((row) => ({ channelId: row.channelId, status: row.status, publishedAt: row.publishedAt }))
 		);
+	}
+
+	/**
+	 * Updates one variant publication: its status, the moments it took effect, and its place in the
+	 * channel's listing.
+	 *
+	 * The route it mirrors is `PUT /product-variant-channels/:id`, whose body is
+	 * `UpdateProductVariantChannelDTO` — every member optional, because an update states what changed
+	 * rather than restating the row. `publishProductVariant` above rewrites the variant's whole
+	 * publication set, so the status and the date are reachable through it; `sortOrder` is not reachable
+	 * through any field, and it is the position this variant takes in the channel's listing
+	 * (`ProductVariantChannelService.findByVariant` orders by it).
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_EDIT` — and the call is the one
+	 * the route makes, with the same two arguments. The route declares no `@Idempotent` scope and no
+	 * `@Versioned` expectation, so neither does the field.
+	 *
+	 * The payload is the row read back rather than the service's answer, for the reason the product
+	 * publication's update states: the CRUD base's `update` answers the row or an `UpdateResult`, and
+	 * this type is a non-null row.
+	 *
+	 * @param id The variant publication to update.
+	 * @param input The members the update states.
+	 * @returns The variant publication as the update left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Mutation('updateProductVariantChannel')
+	async updateProductVariantChannel(
+		@Args('id') id: ID,
+		@Args('input') input: Partial<ProductVariantChannel>
+	): Promise<ProductVariantChannel> {
+		await this.productVariantChannelService.update(id, input);
+
+		return this.productVariantChannelService.findOneByIdString(id);
 	}
 
 	/**
