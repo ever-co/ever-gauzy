@@ -1,5 +1,6 @@
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { OrderPlugin } from '@gauzy/plugin-order';
 
 /**
  * The plugins the WORKER process hosts.
@@ -38,5 +39,24 @@ export const plugins = [
 	 * nothing. The plugin's own gate still applies — with no queue root `CartMaintenanceModule` is
 	 * not imported at all — so a single-container installation is unchanged.
 	 */
-	CartPlugin
+	CartPlugin,
+	/**
+	 * The order — hosted here for its two sweeps, on the same reasoning as the cart.
+	 *
+	 * **A scheduled entry that is not hosted in this process is a scheduled entry that never
+	 * fires**, and this package's two were added without one: the ADR-26 reconciliation, which
+	 * derives each recently-touched order from its ledgers and repairs a status a missed recompute
+	 * left stale, and the stale-change sweep, which is the only thing that releases an order's
+	 * exclusive change slot after a request was abandoned. Both are ordinary providers of
+	 * `OrderModule`, so both are discovered wherever the plugin is loaded — and the API, which loads
+	 * it, registers the scheduler root with `enabled: false` and skips every schedule on purpose.
+	 * Hosting the plugin here is therefore what makes them run at all, exactly as it is for the
+	 * cart's expiry and abandonment passes.
+	 *
+	 * This does start the package's BullMQ workers in this process, which is why the note above says
+	 * not to add a plugin just because the API has it. The order package owns no queue of its own
+	 * today — what travels here is the module graph the two entries are declared in — and a single
+	 * container that runs neither process is unchanged, because it has no scheduler root at all.
+	 */
+	OrderPlugin
 ];

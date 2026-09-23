@@ -21,7 +21,7 @@ import {
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
 import { MikroOrmOrderChangeRepository } from './repository/mikro-orm-order-change.repository';
-import { ANY_ORDER_VERSION, OrderVersionExpectation } from '../order.types';
+import { ANY_ORDER_VERSION, ORDER_CHANGE_STALE_HOURS, OrderVersionExpectation } from '../order.types';
 import { OrderChangeAction } from '../order-change-action/order-change-action.entity';
 import { OrderChangeActionService } from '../order-change-action/order-change-action.service';
 import { OrderCreditLine } from '../order-credit-line/order-credit-line.entity';
@@ -412,10 +412,23 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	/**
 	 * Cancels every change that has sat unapplied for longer than the configured window.
 	 *
+	 * **This is the only thing that gives an order's exclusivity slot back.** An open change occupies
+	 * it, `create` refuses a second one while it stands, and no other path closes a change nobody acted
+	 * on — so the sweep is what keeps one operator's abandoned request from keeping every later change
+	 * out of the order for ever. It is called by the scheduled entry that states the window's cost
+	 * (`OrderChangeStalenessScheduler`), and the window itself is {@link ORDER_CHANGE_STALE_HOURS},
+	 * stated once so the job and this method cannot come to disagree about it.
+	 *
+	 * **The age is read from `requestedAt` and falls back to `createdAt`.** `create` always states
+	 * `requestedAt`, so the fallback is not a live path — but the column is nullable, and a row that
+	 * reached the table by a path the write path does not guard, an import or a data fix applied by
+	 * hand, would otherwise be skipped by the sweep for ever and hold its order exactly as an
+	 * abandoned request does. The fallback costs one comparison and closes that.
+	 *
 	 * @param staleChangeHours How long a change may sit before it is stale.
 	 * @returns The ids of the changes that were cancelled.
 	 */
-	public async cancelStaleChanges(staleChangeHours = 24): Promise<ID[]> {
+	public async cancelStaleChanges(staleChangeHours = ORDER_CHANGE_STALE_HOURS): Promise<ID[]> {
 		const changes = (await this.findAll({})) as IPagination<OrderChange>;
 		const cutoff = Date.now() - staleChangeHours * 60 * 60 * 1000;
 		const cancelled: ID[] = [];
@@ -425,9 +438,10 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				continue;
 			}
 
-			const requestedAt = change.requestedAt ? new Date(change.requestedAt).getTime() : 0;
+			const askedAt = change.requestedAt ?? change.createdAt;
+			const age = askedAt ? new Date(askedAt).getTime() : 0;
 
-			if (requestedAt > 0 && requestedAt <= cutoff) {
+			if (age > 0 && age <= cutoff) {
 				await this.cancel(change.id, 'STALE_CHANGE_CLEANUP');
 				cancelled.push(change.id);
 			}

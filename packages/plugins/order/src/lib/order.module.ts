@@ -66,6 +66,8 @@ import { TypeOrmOrderHistoryRepository } from './order-history/repository/type-o
 import { MikroOrmOrderHistoryRepository } from './order-history/repository/mikro-orm-order-history.repository';
 import { OrderCheckoutHandler } from './checkout/order-checkout.handler';
 import { OrderTotalsService } from './order-totals/order-totals.service';
+import { OrderTotalsReconciliationScheduler } from './order-totals/order-totals-reconciliation.scheduler';
+import { OrderChangeStalenessScheduler } from './order-change/order-change-staleness.scheduler';
 import { SubscriptionOrderService } from './subscription-order/subscription-order.service';
 
 /**
@@ -172,6 +174,17 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		OrderHistoryService,
 		TypeOrmOrderHistoryRepository,
 		MikroOrmOrderHistoryRepository,
+		// The package's two scheduled entries. They are ordinary providers rather than a scheduler
+		// registration, because neither of them targets a queue: the scheduler discovers a decorated
+		// method by scanning the providers of every module, so a job that runs inline where it is
+		// declared needs nothing but to be declared — while a job that fans out to a queue would need
+		// `SchedulerModule.forFeature` and a BullMQ root, and would then not run at all in a process
+		// without one. Both of these restore an invariant nothing else restores, so neither may be
+		// absent exactly where the platform is smallest: the totals reconciliation repairs an order
+		// whose derived columns a missed recompute left stale (ADR-26), and the staleness sweep
+		// releases an order whose exclusive change slot an abandoned request still holds.
+		OrderTotalsReconciliationScheduler,
+		OrderChangeStalenessScheduler,
 		// The GraphQL resolvers are providers of this module, beside their controllers. Nest discovers a
 		// resolver by scanning the providers of every module, so a resolver a plugin declares only in its
 		// plugin metadata — `extensions.resolvers` — is never registered: the schema advertises its

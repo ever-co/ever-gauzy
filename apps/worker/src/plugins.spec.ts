@@ -4,9 +4,11 @@
  */
 jest.mock('@gauzy/plugin-docs', () => ({ DocsPlugin: class DocsPlugin {} }));
 jest.mock('@gauzy/plugin-cart', () => ({ CartPlugin: class CartPlugin {} }));
+jest.mock('@gauzy/plugin-order', () => ({ OrderPlugin: class OrderPlugin {} }));
 
 import { CartPlugin } from '@gauzy/plugin-cart';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { OrderPlugin } from '@gauzy/plugin-order';
 import { plugins } from './plugins';
 
 describe('worker plugins', () => {
@@ -20,6 +22,14 @@ describe('worker plugins', () => {
 		// schedules. The cart's expiry and abandonment passes are loaded by its own plugin, so a cart
 		// plugin that is not hosted here contributes its worker and never its cron.
 		expect(plugins).toContain(CartPlugin);
+	});
+
+	it('registers the order, whose two sweeps are the only thing that repairs a stale status or frees a slot', () => {
+		// The same rule, and it was nearly walked into: both entries are ordinary providers of the
+		// order module rather than a queue registration, so they are discovered wherever the plugin is
+		// loaded — and the API loads it while skipping every schedule. A plugin hosted only by the API
+		// therefore contributes nothing to the schedule at all, and every piece still looks healthy.
+		expect(plugins).toContain(OrderPlugin);
 	});
 
 	it('lists each plugin once, so no queue is registered twice in one process', () => {

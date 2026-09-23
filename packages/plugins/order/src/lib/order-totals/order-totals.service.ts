@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { In, MoreThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
@@ -26,6 +27,8 @@ import {
 	ANY_ORDER_VERSION,
 	ORDER_AGGREGATE_TYPE,
 	ORDER_AGGREGATE_WRITER,
+	ORDER_TOTALS_AUDIT_WINDOW_DAYS,
+	ORDER_TOTALS_RECONCILED_REASON,
 	OrderVersionExpectation
 } from '../order.types';
 import { OrderCreditLine } from '../order-credit-line/order-credit-line.entity';
@@ -89,6 +92,82 @@ export interface IOrderRecalculation {
 	 * be ignored — the conditional update decides the version, never the caller.
 	 */
 	patch?: Record<string, unknown>;
+}
+
+/**
+ * The order columns the reconciliation derives and compares.
+ *
+ * They are the columns `recompute` writes from the ledgers, less `promisedAt`, `sellerCount` and
+ * `version`: the first is a policy answer rather than a derivation, the second is a count of sellers
+ * a read answers afresh on every request, and the third is the write's own pointer. A column the
+ * ledger does not determine has no expectation to compare against, and comparing one would mean
+ * inventing a second definition of what the sweep is checking.
+ */
+const ORDER_TOTALS_MONEY_COLUMNS = [
+	'itemSubtotal',
+	'itemDiscountTotal',
+	'itemTaxTotal',
+	'shippingSubtotal',
+	'shippingDiscountTotal',
+	'shippingTaxTotal',
+	'discountTotal',
+	'taxTotal',
+	'grandTotal',
+	'creditTotal',
+	'paidTotal',
+	'refundedTotal',
+	'outstandingTotal'
+] as const;
+
+/** The two materialised statuses, compared as values rather than as amounts. */
+const ORDER_TOTALS_STATUS_COLUMNS = ['paymentStatus', 'fulfillmentStatus'];
+
+/**
+ * One order whose stored derived columns disagree with the ledgers they are derived from.
+ *
+ * It carries both sides rather than a verdict, because the reader of a drift report is deciding
+ * whether the sweep's arithmetic or the writer that missed is the one at fault, and a report that
+ * said only "this order drifted" would send them to the code to find out what the two values were.
+ */
+export interface IOrderTotalsDrift {
+	/** The order that disagrees. */
+	orderId: ID;
+	/** The columns that disagree, in the order the sweep compares them. */
+	columns: string[];
+	/** What the order row holds, for those columns. */
+	stored: Record<string, string>;
+	/** What the ledgers derive, for those columns. */
+	derived: Record<string, string>;
+}
+
+/** One order the sweep could not examine, and why. */
+export interface IOrderTotalsAuditFailure {
+	/** The order the derivation failed for. */
+	orderId: ID;
+	/** The failure, as one line. */
+	message: string;
+}
+
+/**
+ * What one reconciliation pass examined, found and repaired.
+ *
+ * `examined` is reported beside `drifted` because the two answer different questions: an empty drift
+ * list over an empty window is not evidence of agreement, and a report that carried only the drift
+ * would let a sweep that read nothing look like a sweep that found nothing wrong.
+ */
+export interface IOrderTotalsAuditReport {
+	/** How far back the pass looked, in days. */
+	windowDays: number;
+	/** The instant the window opened at, as the query stated it. */
+	since: string;
+	/** How many orders the pass read. */
+	examined: number;
+	/** The orders that disagreed with their ledgers, examined rather than repaired. */
+	drifted: IOrderTotalsDrift[];
+	/** The orders the pass repaired, in the order it repaired them. */
+	repaired: ID[];
+	/** The orders the pass could not examine. */
+	failed: IOrderTotalsAuditFailure[];
 }
 
 /**
@@ -198,8 +277,10 @@ export class OrderTotalsService {
 		});
 
 		// One row per committed version, written in the same transaction as the columns it describes.
-		// The row for the current version always equals the denormalised totals; the nightly audit
-		// verifies exactly that.
+		// The row for the current version therefore equals the denormalised totals by construction —
+		// unless a write bypassed this method, and that class is what the reconciliation catches: it
+		// compares the columns against the ledgers they are derived from, which is the check a
+		// summary-row comparison would only approximate.
 		await this.summaryService.create({
 			orderId,
 			version,
@@ -213,6 +294,192 @@ export class OrderTotalsService {
 		}
 
 		return this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+	}
+
+	/**
+	 * Examines the orders the last window touched, reports every disagreement it finds and repairs it.
+	 *
+	 * **This is the compensating measure for a materialised column, and ADR-26 names it as such.** The
+	 * contract the ADR states is that `paymentStatus` and `fulfillmentStatus` are recomputed by one
+	 * function every time a transaction, fulfilment, return, claim or exchange changes — and the
+	 * contract it states beside that is this job, which exists because the first half is an obligation
+	 * every writer has to keep rather than something the schema can enforce. A writer that forgets
+	 * leaves a status that disagrees with the ledgers it is derived from, nothing errors, and every
+	 * read of the order reports it as fact. This is what turns that class of failure from a latent
+	 * defect into a measured one.
+	 *
+	 * **The comparison is derived-from-the-ledgers against stored-on-the-row, and the derivation is the
+	 * same one a write performs.** `computeTotals`, `derivePaymentStatus` and `deriveFulfillmentStatus`
+	 * are the functions `recompute` calls, and this method calls them without writing: the expected
+	 * values are computed from the rows the order's own ledgers hold, compared against the columns the
+	 * order carries, and only an order that disagrees is written. **A sweep that recomputed every order
+	 * it read would be a different and worse job**: `recompute` bumps `order.version` and appends a
+	 * summary row, so a nightly pass over a week of orders would spend a version and a history row per
+	 * order per night to write the values those orders already hold — and the version is a public
+	 * concurrency token, so every client holding an `ETag` would see every recent order move while
+	 * nothing about it changed.
+	 *
+	 * **`promisedAt` is deliberately not compared.** The ADR names the two statuses and the totals, and
+	 * the promise date is a policy answer — the lead time a warehouse's calendar gives — rather than a
+	 * derivation from a ledger: a disagreement there is a configuration change, not a missed write.
+	 *
+	 * **One order's failure does not end the sweep.** A row the derivation cannot be computed for is
+	 * recorded and the pass continues, because a sweep that stops at the first bad row leaves every
+	 * order after it unexamined for as long as that row exists — and the failing row is reported rather
+	 * than swallowed, which is the whole reason the report has a `failed` list.
+	 *
+	 * The read carries no tenant criterion, deliberately: this runs with no request behind it, over
+	 * every tenant, which is the same position `recompute` is written for — the tenancy columns of each
+	 * order's own write are read from the row rather than from a context. The core CRUD service leaves
+	 * a filter untouched when there is no current user, so an unscoped read here is the platform's own
+	 * behaviour on a request-less path rather than a criterion this service had to defeat.
+	 *
+	 * @param windowDays How far back to look. Defaults to the ADR's window.
+	 * @returns What the pass examined, what it found, what it repaired and what it could not examine.
+	 */
+	public async auditRecent(windowDays: number = ORDER_TOTALS_AUDIT_WINDOW_DAYS): Promise<IOrderTotalsAuditReport> {
+		const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+		const candidates = await this.candidateOrderIds(since);
+		const drifted: IOrderTotalsDrift[] = [];
+		const repaired: ID[] = [];
+		const failed: IOrderTotalsAuditFailure[] = [];
+
+		if (candidates.length === 0) {
+			return { windowDays, since: since.toISOString(), examined: 0, drifted, repaired, failed };
+		}
+
+		const orders = await this.typeOrmOrderRepository.find({
+			where: { id: In(candidates) },
+			order: { updatedAt: 'ASC' }
+		});
+
+		for (const order of orders) {
+			try {
+				const drift = await this.detectDrift(order);
+
+				if (!drift) {
+					continue;
+				}
+
+				drifted.push(drift);
+
+				await this.recompute(order.id, ORDER_TOTALS_RECONCILED_REASON);
+				repaired.push(order.id);
+			} catch (error) {
+				failed.push({ orderId: order.id, message: describe(error) });
+			}
+		}
+
+		return { windowDays, since: since.toISOString(), examined: orders.length, drifted, repaired, failed };
+	}
+
+	/**
+	 * The orders the window touched, read from the ledgers that move them rather than from the order row.
+	 *
+	 * **This is the difference between a sweep that finds drift and one that finds only agreement, and
+	 * the first draft of this method had it wrong.** The failure ADR-26 exists to catch is a writer
+	 * that moved a ledger and did not recompute the order — or recomputed it and failed — and in both
+	 * cases **the order row is the one row the move did not write**: its `updatedAt` still says when the
+	 * last *successful* write happened, so a window over that column selects the orders that were
+	 * recomputed and misses precisely the ones that were not. An order placed three weeks ago and
+	 * shipped this morning, with a re-derivation that failed in between, is exactly the case, and an
+	 * `order.updatedAt` window never looks at it.
+	 *
+	 * So the candidates are the orders whose *ledgers* moved: an order whose own row was written in the
+	 * window, an order with a line written in the window, and an order with a transaction that occurred
+	 * in it. **The three together are the five writers the ADR names.** A fulfilment, a return, a claim
+	 * and an exchange all move an `order_line` counter — the line is where "how much of this actually
+	 * left the building, came back or was written off" is recorded — and a payment moves an
+	 * `order_transaction`; the order row's own window is kept as well, because a write that changed only
+	 * the totals still has to be checked against the ledgers it was derived from. The line table is read
+	 * for its order reference alone, since the sweep derives each order in full and a row's other
+	 * columns would be read to be discarded.
+	 *
+	 * @param since The instant the window opens at.
+	 * @returns The distinct orders to examine.
+	 */
+	private async candidateOrderIds(since: Date): Promise<ID[]> {
+		const ids = new Set<ID>();
+		const rows = await this.typeOrmOrderRepository.find({ where: { updatedAt: MoreThanOrEqual(since) } });
+
+		for (const order of rows) {
+			ids.add(order.id);
+		}
+
+		const lines = (await this.lineService.findAll({
+			where: { updatedAt: MoreThanOrEqual(since) },
+			select: { orderId: true }
+		})) as IPagination<OrderLine>;
+
+		for (const line of lines?.items ?? []) {
+			if (line.orderId) {
+				ids.add(line.orderId);
+			}
+		}
+
+		const transactions = (await this.transactionService.findAll({
+			where: { occurredAt: MoreThanOrEqual(since) },
+			select: { orderId: true }
+		})) as IPagination<OrderTransaction>;
+
+		for (const transaction of transactions?.items ?? []) {
+			if (transaction.orderId) {
+				ids.add(transaction.orderId);
+			}
+		}
+
+		return [...ids];
+	}
+
+	/**
+	 * Reports how an order's stored derived columns disagree with the ledgers they are derived from.
+	 *
+	 * The two materialised statuses are compared as the values they are, and the money columns are
+	 * compared through the platform's exact-decimal comparison rather than as numbers: `10.000000` and
+	 * `10` are the same amount, and a reconciliation that reported them as drift would report every
+	 * order whose totals were read back at a different scale.
+	 *
+	 * @param order The order to examine, as the row holds it.
+	 * @returns The disagreement, or `null` when the row agrees with its ledgers.
+	 */
+	private async detectDrift(order: Order): Promise<IOrderTotalsDrift | null> {
+		const snapshot = await this.computeTotals(order);
+		const paymentStatus = await this.derivePaymentStatus(order, snapshot);
+		const fulfillmentStatus = await this.deriveFulfillmentStatus(order);
+
+		const derived: Record<string, string> = {
+			paymentStatus: String(paymentStatus),
+			fulfillmentStatus: String(fulfillmentStatus)
+		};
+
+		for (const column of ORDER_TOTALS_MONEY_COLUMNS) {
+			derived[column] = amountOf((snapshot as unknown as Record<string, unknown>)[column]);
+		}
+
+		const columns = Object.keys(derived).filter((column) => {
+			const stored = amountOf((order as unknown as Record<string, unknown>)[column]);
+
+			return (ORDER_TOTALS_STATUS_COLUMNS as string[]).includes(column)
+				? stored !== derived[column]
+				: compareDecimalStrings(stored, derived[column]) !== 0;
+		});
+
+		if (columns.length === 0) {
+			return null;
+		}
+
+		const stored: Record<string, string> = {};
+
+		for (const column of columns) {
+			stored[column] = amountOf((order as unknown as Record<string, unknown>)[column]);
+		}
+
+		return {
+			orderId: order.id,
+			columns,
+			stored,
+			derived: Object.fromEntries(columns.map((column) => [column, derived[column]]))
+		};
 	}
 
 	/**
@@ -651,4 +918,31 @@ export class OrderTotalsService {
 	public canComplete(order: Order): boolean {
 		return [OrderStatus.CONFIRMED, OrderStatus.PROCESSING].includes(order.status);
 	}
+}
+
+/**
+ * A value as the reconciliation prints and compares it.
+ *
+ * A column that was never written reads as an empty string rather than as `NaN` or `undefined`, so a
+ * comparison between a stored zero and a derived zero is a comparison of two amounts and not of two
+ * spellings of absence — which is the difference between a sweep that reports real drift and one that
+ * reports every order it reads.
+ *
+ * @param value Whatever the row or the snapshot holds.
+ * @returns The value as a string, with absence read as zero.
+ */
+function amountOf(value: unknown): string {
+	if (value === undefined || value === null || value === '') {
+		return '0';
+	}
+
+	return String(value);
+}
+
+/**
+ * @param error The failure.
+ * @returns The failure as one line, so a report row stays a row.
+ */
+function describe(error: unknown): string {
+	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
 }

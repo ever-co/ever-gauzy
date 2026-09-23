@@ -15,6 +15,27 @@ jest.mock('@gauzy/plugin-cart', () => ({
 	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
 }));
 
+/**
+ * The scheduler is doubled at the module boundary, and the double **records what it was applied to**.
+ *
+ * A scheduled entry is `@ScheduledJob(...)` on a method, and the two facts a suite has to be able to
+ * assert about it are exactly those: which method the decorator landed on, and the schedule it was
+ * applied with. A no-op double would assert neither — the schedule would be a fact nothing in this
+ * repository reads — and loading the real module would pull the platform's queue stack into a suite
+ * about one cron entry, so the double keeps a ledger instead and the test reads it back through
+ * `jest.requireMock`, which is the one way to reach a factory's own scope from a test body.
+ */
+jest.mock('@gauzy/scheduler', () => {
+	const scheduled: Array<{ key: string; options: Record<string, any> }> = [];
+	const decorator = (options: Record<string, any>) => (_target: unknown, key: string, descriptor: unknown) => {
+		scheduled.push({ key, options });
+
+		return descriptor;
+	};
+
+	return { __scheduled: scheduled, ScheduledJob: decorator };
+});
+
 jest.mock('@gauzy/core', () => {
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
@@ -98,7 +119,12 @@ import {
 	OrderTransactionType,
 	TaxLineOwnerType
 } from '@gauzy/contracts';
+import { CronExpression } from '@nestjs/schedule';
 import { OrderTotalsService } from './order-totals.service';
+import {
+	ORDER_TOTALS_RECONCILIATION_SCHEDULE,
+	OrderTotalsReconciliationScheduler
+} from './order-totals-reconciliation.scheduler';
 
 /**
  * The only writer of an order's total columns.
@@ -158,6 +184,8 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		paymentStatus: OrderPaymentStatus.NOT_PAID,
 		fulfillmentStatus: FulfillmentStatus.NOT_FULFILLED,
 		version: 1,
+		// The reconciliation's window query reads the order's own updated time, so the row carries one.
+		updatedAt: new Date(),
 		...order
 	};
 	const lines: any[] = [];
@@ -170,7 +198,12 @@ function orderFixture(order: Record<string, unknown> = {}) {
 
 	const collection = (rows: any[]) => ({
 		findAll: async ({ where }: any = {}) => ({
-			items: rows.filter((candidate) => String(candidate.orderId) === String(where?.orderId)),
+			// A read that names no order is the reconciliation's own window over this ledger, so it
+			// sees every row. Every other call in this service states the order it is about.
+			items:
+				where?.orderId === undefined
+					? rows
+					: rows.filter((candidate) => String(candidate.orderId) === String(where.orderId)),
 			total: rows.length
 		})
 	});
@@ -198,6 +231,9 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		// The entity manager the conditional update, the summary row and the event all go through.
 		manager: { name: 'order-manager' },
 		findOne: async ({ where }: any = {}) => (String(where?.id) === String(row.id) ? { ...row } : null),
+		// The window read the reconciliation performs. A test that drives the sweep replaces this with
+		// the rows it wants examined, which is why the fixture hands the repository back below.
+		find: async () => [{ ...row }],
 		update: async (criteria: any, partial: any) => {
 			const expected = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
 			const matches = Object.entries(expected).every(
@@ -239,6 +275,7 @@ function orderFixture(order: Record<string, unknown> = {}) {
 	return {
 		service,
 		order: row,
+		repository: typeOrmOrderRepository,
 		lines,
 		shippingMethods,
 		creditLines,
@@ -746,5 +783,195 @@ describe('OrderTotalsService — the conditions the lifecycle asks it for', () =
 				canComplete: false
 			});
 		}
+	});
+});
+
+/**
+ * The compensating measure ADR-26 states beside the obligation.
+ *
+ * The materialised columns are recomputed by every writer that moves a ledger — an obligation five
+ * writers keep and the schema cannot enforce — and this is what turns a writer that missed from a
+ * latent defect into a measured one. The suite drives the three answers that matter:
+ *
+ * - **an order the writer just produced is not written again.** The control that makes the sweep a
+ *   reconciliation rather than a nightly rewrite: `recompute` bumps `order.version` and appends a
+ *   summary row, so a pass that recomputed every order it read would move the public concurrency
+ *   token of every recent order while nothing about any of them had changed;
+ * - **an order whose stored status disagrees with its ledgers is reported as drift and repaired**,
+ *   with both values in the report, and the repair carries a reason of its own rather than borrowing
+ *   the move that should have written it;
+ * - **one order the sweep cannot examine does not end the sweep**, because a pass that stopped at the
+ *   first bad row would leave every order after it unexamined for as long as that row existed.
+ *
+ * The expected values are read out of the derivation rather than written into the test: the status a
+ * fulfilled line produces is `deriveFulfillmentStatus`'s answer, and a test that hard-coded
+ * `FULFILLED` would be asserting this suite's idea of the policy rather than the service's.
+ */
+describe('OrderTotalsService — the reconciliation (ADR-26)', () => {
+	it('finds no drift in an order whose columns the writer just produced, and writes nothing', async () => {
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 2, unitPrice: 19.99, fulfilledQuantity: 2 }));
+		await fixture.service.recompute('order-1', 'PLACED');
+
+		const version = fixture.order.version;
+		const summaries = fixture.summaries.length;
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.examined).toBe(1);
+		expect(report.drifted).toEqual([]);
+		expect(report.repaired).toEqual([]);
+		expect(report.failed).toEqual([]);
+		// The control: no write, so no version move and no summary row.
+		expect(fixture.order.version).toBe(version);
+		expect(fixture.summaries).toHaveLength(summaries);
+	});
+
+	it('reports the columns that disagree with the ledgers, and repairs them', async () => {
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 2, unitPrice: 19.99, fulfilledQuantity: 2 }));
+		await fixture.service.recompute('order-1', 'PLACED');
+
+		// What the derivation says, read from the service rather than assumed by this suite.
+		const expected = String(fixture.order.fulfillmentStatus);
+		const wrong =
+			expected === FulfillmentStatus.FULFILLED ? FulfillmentStatus.NOT_FULFILLED : FulfillmentStatus.FULFILLED;
+		// A writer that moved the ledger and never recomputed: the line is fulfilled and the order
+		// still answers with the status it held before.
+		fixture.order.fulfillmentStatus = wrong;
+
+		const version = fixture.order.version;
+		const report = await fixture.service.auditRecent();
+
+		expect(report.examined).toBe(1);
+		expect(report.drifted).toHaveLength(1);
+		expect(report.drifted[0].orderId).toBe('order-1');
+		expect(report.drifted[0].columns).toEqual(['fulfillmentStatus']);
+		// Both sides of the disagreement, which is what makes the report actionable.
+		expect(report.drifted[0].stored).toEqual({ fulfillmentStatus: wrong });
+		expect(report.drifted[0].derived).toEqual({ fulfillmentStatus: expected });
+		expect(report.repaired).toEqual(['order-1']);
+
+		// The repair is a real write: the column now holds what the ledgers derive, the version moved,
+		// and the summary row says a repair wrote it rather than the move that should have.
+		expect(fixture.order.fulfillmentStatus).toBe(expected);
+		expect(fixture.order.version).toBe(version + 1);
+		expect(fixture.summaries.map((summary) => summary.reason)).toContain('DRIFT_REPAIRED');
+	});
+
+	it('reports a sum that disagrees, so the money columns are checked and not only the statuses', async () => {
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 2, unitPrice: 19.99 }));
+		await fixture.service.recompute('order-1', 'PLACED');
+
+		// A stored total that is a cent away: the comparison has to be exact, and a sweep that compared
+		// numbers rather than decimal strings would report `10.000000` against `10` as drift.
+		fixture.order.grandTotal = '0.01';
+
+		const report = await fixture.service.auditRecent();
+		const drift = report.drifted[0];
+
+		expect(drift.columns).toEqual(['grandTotal']);
+		expect(drift.stored).toEqual({ grandTotal: '0.01' });
+		expect(drift.derived.grandTotal).toBe('39.98');
+		expect(report.repaired).toEqual(['order-1']);
+	});
+
+	it('examines an order whose ledger moved even though its own row did not', async () => {
+		const fixture = orderFixture();
+
+		// The order row was last written a month ago, so a window over `order.updatedAt` does not select
+		// it — and the case ADR-26 exists to catch is exactly this one: a line moved today, the
+		// re-derivation did not happen, and the only row the move did not write is the order's.
+		fixture.order.updatedAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 10, updatedAt: new Date() }));
+
+		// The window read answers nothing, so the ledger is the only thing that can put this order in
+		// front of the sweep. Without it the report below would be `examined: 0`.
+		fixture.repository.find = async ({ where }: any = {}) => (where?.updatedAt ? [] : [{ ...fixture.order }]);
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.examined).toBe(1);
+		expect(report.drifted.map((drift) => drift.orderId)).toEqual(['order-1']);
+		// A line of ten that no stored total accounts for, which is the disagreement it was selected for.
+		expect(report.drifted[0].columns).toContain('grandTotal');
+		expect(report.repaired).toEqual(['order-1']);
+	});
+
+	it('records an order it cannot examine and sweeps the rest', async () => {
+		const fixture = orderFixture();
+		const second = { ...fixture.order, id: 'order-2' };
+
+		// The second order's stored grand total disagrees with the nothing its ledgers hold, so the
+		// sweep has something to report about it — which is how this case shows the pass continued past
+		// the first order's failure rather than stopping at it. A corrupted status would not do: an
+		// order with no lines derives a status, and the test cannot know which one without asking the
+		// service, so the money column is the one that cannot coincide.
+		second.grandTotal = '0.01';
+
+		fixture.repository.find = async () => [fixture.order, second];
+
+		const compute = jest.spyOn(fixture.service, 'computeTotals');
+
+		compute.mockRejectedValueOnce(new Error('the ledger could not be read'));
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.examined).toBe(2);
+		expect(report.failed.find((failure) => failure.orderId === 'order-1')?.message).toBe(
+			'the ledger could not be read'
+		);
+		// The sweep went on: the second order was examined and its disagreement reported.
+		expect(report.drifted.map((drift) => drift.orderId)).toContain('order-2');
+	});
+});
+
+/**
+ * The entry that runs the reconciliation, and the schedule it runs on.
+ *
+ * The schedule is asserted as the decorator was applied with it rather than as a configuration file
+ * says, because that is where the fact lives: a job is a decorated method, and a file that stated a
+ * cron nothing applied would be a comment. The run itself is asserted for the two answers it has —
+ * the report, and the caught failure — since what it hands back is what a test and the log both read.
+ */
+describe('OrderTotalsReconciliationScheduler — the schedule and the run', () => {
+	it('is scheduled nightly, on the method that runs the pass, with overlap prevented', () => {
+		const { __scheduled } = jest.requireMock('@gauzy/scheduler') as {
+			__scheduled: Array<{ key: string; options: Record<string, any> }>;
+		};
+		const entry = __scheduled.find((job) => job.options.name === ORDER_TOTALS_RECONCILIATION_SCHEDULE);
+
+		expect(entry?.key).toBe('reconcileOrderTotals');
+		expect(entry?.options.cron).toBe(CronExpression.EVERY_DAY_AT_3AM);
+		expect(entry?.options.preventOverlap).toBe(true);
+	});
+
+	it('answers what the pass examined, found and repaired', async () => {
+		const report = {
+			windowDays: 7,
+			since: '2026-01-01T00:00:00.000Z',
+			examined: 0,
+			drifted: [],
+			repaired: [],
+			failed: []
+		};
+		const totals = { auditRecent: jest.fn().mockResolvedValue(report) };
+		const scheduler = new OrderTotalsReconciliationScheduler(totals as never);
+
+		// The same object, not a copy: the run answers the audit's own report, so a test asserts what
+		// the sweep produced rather than what the job restated.
+		await expect(scheduler.reconcileOrderTotals()).resolves.toBe(report);
+		expect(totals.auditRecent).toHaveBeenCalledWith();
+	});
+
+	it('answers nothing rather than throwing when the pass cannot run', async () => {
+		const totals = { auditRecent: jest.fn().mockRejectedValue(new Error('the database is unreachable')) };
+		const scheduler = new OrderTotalsReconciliationScheduler(totals as never);
+
+		await expect(scheduler.reconcileOrderTotals()).resolves.toBeUndefined();
 	});
 });

@@ -156,6 +156,39 @@ export interface IOrderLineFulfillment {
 }
 
 /**
+ * How far back the order-totals reconciliation looks for an order to examine.
+ *
+ * The window is what makes the sweep a sweep rather than a full-table pass: an order whose ledgers
+ * moved more than a week ago and whose status is stale is a fact nothing in the running system
+ * still depends on, and widening the window would trade a bounded read for a pass over every order
+ * the installation has ever taken. Seven days is the window the ADR's "orders touched in the last N
+ * days" leaves open, and it is chosen against the number the check it feeds is about: everything
+ * that moves an order's ledgers — a transaction, a fulfilment, a return, a claim, an exchange —
+ * writes the order row through the totals writer, so an order the check still has to repair is one
+ * that moved inside this window.
+ */
+export const ORDER_TOTALS_AUDIT_WINDOW_DAYS = 7;
+
+/**
+ * The reason the reconciliation records on the summary row of an order it repaired.
+ *
+ * `order_summary.reason` is a fact the next reader interprets, so a repair writes a reason of its
+ * own rather than borrowing the move that should have made it: `PLACED` on a row written a week
+ * after the placement would say the placement wrote it, and the whole value of the row is that it
+ * says which move committed that version.
+ */
+export const ORDER_TOTALS_RECONCILED_REASON = 'DRIFT_REPAIRED';
+
+/**
+ * How long a change may sit unapplied before the staleness sweep cancels it.
+ *
+ * An open change occupies an order's exclusivity slot, so this number is the answer to "how long
+ * may one operator's abandoned request keep every other caller out of the order?" — and the sweep
+ * that reads it is the only thing that ever gives the slot back.
+ */
+export const ORDER_CHANGE_STALE_HOURS = 24;
+
+/**
  * What one line's counters say, and how the status follows from them.
  *
  * The basis is the quantity the line is invoiced against: the ordered quantity under a

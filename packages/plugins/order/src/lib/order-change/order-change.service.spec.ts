@@ -12,6 +12,26 @@ jest.mock('@gauzy/plugin-cart', () => ({
 	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
 }));
 
+/**
+ * The scheduler is doubled at the module boundary, and the double **records what it was applied to**.
+ *
+ * A scheduled entry is `@ScheduledJob(...)` on a method, so the facts a suite has to be able to assert
+ * about it are which method the decorator landed on and the schedule it was applied with — and a no-op
+ * double would assert neither, leaving the window and the cadence as facts nothing in this repository
+ * reads. The ledger the factory keeps is reached from a test body through `jest.requireMock`, which is
+ * the one way to a factory's own scope.
+ */
+jest.mock('@gauzy/scheduler', () => {
+	const scheduled: Array<{ key: string; options: Record<string, any> }> = [];
+	const decorator = (options: Record<string, any>) => (_target: unknown, key: string, descriptor: unknown) => {
+		scheduled.push({ key, options });
+
+		return descriptor;
+	};
+
+	return { __scheduled: scheduled, ScheduledJob: decorator };
+});
+
 jest.mock('@gauzy/core', () => {
 	const { NotFoundException } = require('@nestjs/common');
 
@@ -154,6 +174,7 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { NotFoundException } from '@nestjs/common';
+import { CronExpression } from '@nestjs/schedule';
 import {
 	AdjustmentOwnerType,
 	AddressType,
@@ -176,6 +197,11 @@ import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderChangeService } from './order-change.service';
+import {
+	ORDER_CHANGE_STALENESS_SCHEDULE,
+	OrderChangeStalenessScheduler
+} from './order-change-staleness.scheduler';
+import { ORDER_CHANGE_STALE_HOURS } from '../order.types';
 
 /**
  * Post-placement modifications of an order.
@@ -1294,5 +1320,87 @@ describe('OrderChangeService — exclusivity and validation (doc 10 §6.2, §6.4
 		// A terminal change is never swept, however old it is.
 		expect(fixture.tables.order_change[1].status).toBe(OrderChangeStatus.DECLINED);
 		expect(await fixture.service.findOpenForOrder('order-1')).toEqual([]);
+	});
+
+	it('sweeps a change whose age has to be read from when it was created', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+		const note = [{ action: OrderChangeActionType.NOTE_ADD, details: { title: 'note' } }];
+
+		const orphan = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: note
+		} as never);
+
+		// A row that reached the table by a path the write path does not guard — an import, a data fix,
+		// a restore. `create` always states `requestedAt`, and the column is nullable, so the sweep
+		// reads the age it can rather than skipping the row for ever and leaving its order locked.
+		fixture.tables.order_change[0].requestedAt = undefined;
+		fixture.tables.order_change[0].createdAt = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+		expect(await fixture.service.cancelStaleChanges()).toEqual([orphan.id]);
+		expect(fixture.tables.order_change[0].status).toBe(OrderChangeStatus.CANCELED);
+	});
+
+	it('sweeps a row with neither stamp only when it is old enough to be judged by nothing else', async () => {
+		const fixture = orderFixture({ lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+		const note = [{ action: OrderChangeActionType.NOTE_ADD, details: { title: 'note' } }];
+
+		const undated = await fixture.service.create({
+			orderId: 'order-1',
+			changeType: OrderChangeType.EDIT,
+			actions: note
+		} as never);
+
+		// Both stamps absent: there is no age to compare, and cancelling a change on no evidence would
+		// release a slot a caller may still be using. It stays, and it is the one row the sweep cannot
+		// judge — which is why the fallback above is worth having and this case is worth stating.
+		fixture.tables.order_change[0].requestedAt = undefined;
+		fixture.tables.order_change[0].createdAt = undefined;
+
+		expect(await fixture.service.cancelStaleChanges()).toEqual([]);
+		expect(fixture.tables.order_change[0].status).toBe(OrderChangeStatus.PENDING);
+		expect(await fixture.service.findOpenForOrder('order-1')).toHaveLength(1);
+		expect(undated.id).toBeDefined();
+	});
+});
+
+/**
+ * The entry that runs the sweep, and the schedule it runs on.
+ *
+ * The sweep is the only thing that ever gives an order's exclusive change slot back, so the two facts
+ * asserted here are the two that decide whether it happens at all: the window it states, read from the
+ * constant the service itself defaults to, and that a failure inside a run is caught rather than
+ * thrown at the scheduler — a sweep that throws at three in the morning is a slot that is never
+ * released.
+ */
+describe('OrderChangeStalenessScheduler — the schedule and the run', () => {
+	it('is scheduled hourly, on the method that sweeps, with overlap prevented', () => {
+		const { __scheduled } = jest.requireMock('@gauzy/scheduler') as {
+			__scheduled: Array<{ key: string; options: Record<string, any> }>;
+		};
+		const entry = __scheduled.find((job) => job.options.name === ORDER_CHANGE_STALENESS_SCHEDULE);
+
+		expect(entry?.key).toBe('cancelStaleOrderChanges');
+		// The platform's own expression rather than a literal: `@nestjs/schedule` spells the hourly
+		// entry `0 0-23/1 * * *`, and a test that restated the string would fail on its next revision
+		// for a reason that is not about this job.
+		expect(entry?.options.cron).toBe(CronExpression.EVERY_HOUR);
+		expect(entry?.options.preventOverlap).toBe(true);
+	});
+
+	it('asks the service for the window the package states, and answers what it cancelled', async () => {
+		const changes = { cancelStaleChanges: jest.fn().mockResolvedValue(['change-1']) };
+		const scheduler = new OrderChangeStalenessScheduler(changes as never);
+
+		await expect(scheduler.cancelStaleOrderChanges()).resolves.toEqual(['change-1']);
+		expect(changes.cancelStaleChanges).toHaveBeenCalledWith(ORDER_CHANGE_STALE_HOURS);
+	});
+
+	it('answers nothing rather than throwing when the sweep cannot run', async () => {
+		const changes = { cancelStaleChanges: jest.fn().mockRejectedValue(new Error('the table is locked')) };
+		const scheduler = new OrderChangeStalenessScheduler(changes as never);
+
+		await expect(scheduler.cancelStaleOrderChanges()).resolves.toBeUndefined();
 	});
 });
