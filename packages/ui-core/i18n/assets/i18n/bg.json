@@ -1183,7 +1183,11 @@
 		"APPLICATIONS": "Приложения",
 		"OPEN_GA_BROWSER": "Отвори Gauzy в браузъра",
 		"START_SERVER": "Стартирай Сървъра",
-		"STOP_SERVER": "Спри Сървъра"
+		"STOP_SERVER": "Спри Сървъра",
+		"DOCUMENTS": "Документи",
+		"BILLING": "Фактуриране",
+		"MONITORING": "Наблюдение",
+		"ADD_ITEM": "Добавете {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -5331,7 +5335,8 @@
 				"TERMS_AND_CONDITIONS": "Общи условия",
 				"AND": " и ",
 				"PRIVACY_POLICY": "Политика за поверителност"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Паролата трябва да съдържа поне 4 знака"
 		}
 	},
 	"LOGIN_PAGE": {
