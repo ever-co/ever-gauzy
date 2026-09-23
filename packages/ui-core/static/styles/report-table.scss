@@ -230,6 +230,29 @@ $report-budget-amount-width: 140px;
 		gap: $report-column-gap;
 	}
 
+	// An empty GROUP — a date card on the limit reports with nobody on it.
+	//
+	// Deliberately not `ngx-no-data-message`: that is the WHOLE report's empty
+	// state and draws a 48px icon at `height: 100%`, so one per date card would
+	// be several times louder than the data it is standing in for, and a week of
+	// quiet days would fill the page with chart icons.
+	//
+	// This reads as the card's own content area instead — the rule the column
+	// header would have drawn, the gutter a row would have used, and the muted
+	// colour the column labels use. It was a bare `.ml-3` div before: a bootstrap
+	// left margin and nothing else, so once the card body's padding went it sat
+	// hard against the date above it with no vertical space at all.
+	.report-empty-group {
+		display: flex;
+		align-items: center;
+		min-height: $row-min-height;
+		padding: $report-row-padding-y $report-row-gutter;
+		border-top: 1px solid nb-theme(border-basic-color-2);
+		font-size: $report-cell-font-size;
+		line-height: 16px;
+		color: nb-theme(text-hint-color);
+	}
+
 	// The only hover surface in the table, and it is per-ROW. Where a page merges
 	// a cell down a group — the employee and project cells on Apps & URLs —
 	// lighting the whole group would highlight cells that belong to every row in
