@@ -122,6 +122,10 @@ jest.mock('@gauzy/core', () => {
 		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
 		versionExpectationOf: versionedWrite.versionExpectationOf,
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// Added when the receipt grew its order-line counter move: the line service now subtracts two
+		// exact decimals to state the delta, and a double that omits the helper makes the code under
+		// test call nothing — which fails the suite for a reason that is not its own.
+		subtractDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').subtractDecimalStrings,
 		SequenceService: class SequenceService {},
 		EventOutboxService: class EventOutboxService {},
 		TenantSettingService: class TenantSettingService {},
@@ -440,10 +444,18 @@ function returnFixture(
 			unitPrice: '10.00'
 		}
 	];
+	/** Every move of the order's received-return counter this package asked the order capability for. */
+	const recordedReceipts: Array<{ orderId: string; moves: Array<{ orderLineId: string; quantityDelta: string }> }> =
+		[];
 	const fulfillment =
 		options.withFulfillment === false
 			? undefined
-			: { getFulfilledLines: async () => fulfilled };
+			: {
+					getFulfilledLines: async () => fulfilled,
+					recordReturnReceipt: async (orderId: string, moves: Array<{ orderLineId: string; quantityDelta: string }>) => {
+						recordedReceipts.push({ orderId, moves });
+					}
+			  };
 	const lineService = new OrderReturnLineService(
 		typeOrmOrderReturnLineRepository as never,
 		{} as never,
@@ -561,6 +573,7 @@ function returnFixture(
 		totalsCalls,
 		manager: (typeOrmOrderReturnRepository as Row).manager,
 		movements,
+		recordedReceipts,
 		refundCalls,
 		shipmentCalls,
 		sequenceCalls,
@@ -1100,6 +1113,71 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 		expect(fixture.movements.reduce((total, movement) => total + Number(movement.quantity), 0)).toBe(10);
 	});
 
+	it('asks the order capability for each delivery’s own units, not for the running total', async () => {
+		// The order line's received-return counter is the order's cache of what came back, and the
+		// order package moves it by a delta rather than setting it — so each delivery states the units it
+		// brought. Sending the running total twice would double the first delivery in the order's columns,
+		// and the derivation that reads them would then call a two-unit return fully received.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '10.000000' })]
+		});
+
+		await fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '4' }]);
+		await fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '6' }]);
+
+		expect(fixture.recordedReceipts).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '4.000000' }] },
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '6.000000' }] }
+		]);
+	});
+
+	it('states one move per order line, for the order lines the return’s own lines point at', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [
+				lineRow('line-1', { quantity: '3.000000', orderLineId: ORDER_LINE }),
+				lineRow('line-2', { quantity: '2.000000', orderLineId: SECOND_ORDER_LINE })
+			]
+		});
+
+		await fixture.service.receive('return-1', [
+			{ lineId: 'line-1', receivedQuantity: '2' },
+			{ lineId: 'line-2', receivedQuantity: '2' }
+		]);
+
+		expect(fixture.recordedReceipts).toEqual([
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' },
+					{ orderLineId: SECOND_ORDER_LINE, quantityDelta: '2.000000' }
+				]
+			}
+		]);
+	});
+
+	it('moves the order’s counter back when the receipt is compensated', async () => {
+		// The order line counter is part of doc 10 §11.6 step 2, so it is compensated with the lines it
+		// was moved for: a receipt the ledger refused must leave neither the return nor the order claiming
+		// the goods arrived — the order's counter is what its `fulfillmentStatus` is derived from, and a
+		// counter left behind would show the customer a returned order that never came back.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '10.000000' })],
+			withLedger: false
+		});
+
+		await expect(
+			fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }])
+		).rejects.toThrow(/RETURN_STOCK_LEDGER_UNAVAILABLE/);
+
+		expect(fixture.recordedReceipts).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '5.000000' }] },
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }] }
+		]);
+	});
+
 	it('refuses a receipt on another organization’s return', async () => {
 		const fixture = returnFixture({
 			returns: [returnRow('return-1', { organizationId: OTHER_ORG, status: OrderReturnStatus.APPROVED })]
@@ -1261,7 +1339,7 @@ describe('OrderReturnService — the money that follows the goods (doc 10 §11.6
 });
 
 /**
- * The order's derived columns, and the one returns move that changes them (ADR-26).
+ * The order's derived columns, and the two returns moves that change them (ADR-26).
  *
  * ADR-26 requires the order's `fulfillmentStatus`, its totals and its `paymentStatus` to be "recomputed
  * by a single function from the ledgers every time a transaction, fulfillment, **return**, claim or
@@ -1274,12 +1352,18 @@ describe('OrderReturnService — the money that follows the goods (doc 10 §11.6
  * tax lines and its `order_transaction` ledger; `derivePaymentStatus` from the order's status, that
  * snapshot and the same ledger; and `deriveFulfillmentStatus` from the order's status and five sums over
  * its lines — `quantity`, `writtenOffQuantity`, `returnDismissedQuantity`, `fulfilledQuantity` and
- * `returnReceivedQuantity`. A returns move can reach the first two only by appending an
- * `order_transaction`, which happens in exactly one place in this package: the refund this service
- * issues through the payment capability. It reaches the third by nothing at all — this package writes
- * none of those five counters, and the only writer of any of them anywhere in the repository is the
- * order package's own change service. So the recompute is owed where a refund was issued, and nowhere
- * else, and the transitions that owe nothing are asserted here beside the ones that do.
+ * `returnReceivedQuantity`.
+ *
+ * **Two returns moves reach those inputs, and the second one is this revision's change.** A refund
+ * appends an `order_transaction`, which is the first two derivations' ledger. A **receipt** writes the
+ * order line's `returnReceivedQuantity` — the counter `deriveFulfillmentStatus` sums to decide
+ * `PARTIALLY_RETURNED` against `RETURNED` — through the fulfillment port, which is why every receipt
+ * owes a recompute whether or not money moves, and why the receipt's reason is `RETURN_RECEIVED`
+ * rather than the refund's `PAYMENT_RECONCILED`. **Before that counter had a writer, this suite
+ * asserted the opposite** — that a receipt refunding nothing was owed nothing — and the assertion was
+ * correct about the code and wrong about the design: the order answered `NOT_FULFILLED` for goods its
+ * own warehouse was holding. The transitions that still owe nothing are asserted beside the ones that
+ * do.
  */
 describe('OrderReturnService — the order columns a refund moves (ADR-26)', () => {
 	beforeEach(() => {
@@ -1319,11 +1403,11 @@ describe('OrderReturnService — the order columns a refund moves (ADR-26)', () 
 		]);
 	});
 
-	it('asks for it when a receipt issues the refund, and not when it does not', async () => {
-		// The receipt is the other path that can refund — `returns.refundTrigger = 'ON_RECEIVE'` is what
-		// doc 10 §11.3 makes the default — and it reaches the same private settlement, so it is owed the
-		// same call. A receipt that refunds nothing appends no ledger row, so it is owed none: a recompute
-		// there would write an `order_summary` row saying nothing had changed.
+	it('asks for it on every receipt — once for the goods, and once more when the receipt refunds', async () => {
+		// A receipt moves the order's received-return counter, so it is owed a recompute whether or not
+		// money moves, with the reason that names the goods. A receipt that also refunds appends a ledger
+		// row on top, which is a second change to the inputs the derivation reads — so it is owed a
+		// second call, and the two reasons say which move each one is answering for.
 		const settling = returnFixture({
 			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
 			lines: [lineRow('line-1', { quantity: '5.000000' })]
@@ -1333,7 +1417,10 @@ describe('OrderReturnService — the order columns a refund moves (ADR-26)', () 
 			refund: '25.00'
 		});
 
-		expect(settling.totalsCalls).toEqual([{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }]);
+		expect(settling.totalsCalls).toEqual([
+			{ orderId: ORDER, reason: 'RETURN_RECEIVED' },
+			{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }
+		]);
 
 		const restocking = returnFixture({
 			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
@@ -1343,7 +1430,7 @@ describe('OrderReturnService — the order columns a refund moves (ADR-26)', () 
 		await restocking.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }]);
 
 		expect(restocking.movements).toHaveLength(1);
-		expect(restocking.totalsCalls).toEqual([]);
+		expect(restocking.totalsCalls).toEqual([{ orderId: ORDER, reason: 'RETURN_RECEIVED' }]);
 	});
 
 	it('asks for nothing on the transitions that append no ledger row', async () => {

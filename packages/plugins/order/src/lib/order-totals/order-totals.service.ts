@@ -215,7 +215,7 @@ export class OrderTotalsService {
 	 *
 	 * @param orderId The order.
 	 * @param reason Why the totals moved, recorded on the summary row: `PLACED`, `CHANGE_CONFIRMED`,
-	 * `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED`, `CASH_ROUNDED`.
+	 * `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED`, `RETURN_RECEIVED`, `DRIFT_REPAIRED`, `CASH_ROUNDED`.
 	 * @param options The version the caller read the order at, and the columns the move commits with
 	 * the totals.
 	 * @returns The order, as written.

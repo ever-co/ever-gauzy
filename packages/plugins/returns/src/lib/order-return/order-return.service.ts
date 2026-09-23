@@ -12,6 +12,7 @@ import {
 	IStockLedgerPort,
 	OrderReturnStatus,
 	RETURNS_ORDER_TOTALS,
+	RETURNS_RECEIPT_REASON,
 	RETURNS_REFUND_GATEWAY,
 	RETURNS_SHIPMENT_GATEWAY,
 	RETURNS_STOCK_LEDGER,
@@ -405,6 +406,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 					: OrderReturnStatus.PARTIALLY_RECEIVED;
 
 			await this.lineService.applyReceipt(plan);
+			// Step 2 of doc 10 §11.6 is one step, not two: the return's own lines and the order's
+			// received-return counter move together, because the counter is what the order's
+			// `fulfillmentStatus` is derived from and a receipt the order was never told about leaves it
+			// answering a status the goods in its own warehouse deny. The compensation below is owed
+			// both halves for the same reason.
+			await this.lineService.applyOrderLineReceipt(orderReturn.orderId, plan);
 
 			for (const movement of movements) {
 				posted.push(await this.postMovement(orderReturn, movement));
@@ -437,6 +444,15 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		}
 
 		const updated = await this.findOneScoped(id);
+
+		// The receipt moved the order's own received-return counter, and that counter is one of the five
+		// sums `deriveFulfillmentStatus` reads — so this is a move ADR-26 owes a recompute for, and it is
+		// owed whether or not a refund follows: a receipt that refunds nothing has still moved the goods
+		// half of the return, which is what decides `PARTIALLY_RETURNED` against `RETURNED` (doc 10
+		// §11.7). A refunding receipt is recomputed twice — once here for the goods and once in
+		// `settleRefund` for the money — because the two moves are two changes to the ledgers the
+		// derivation reads, which is exactly what the ADR says to recompute on.
+		await this.refreshOrderTotals(orderReturn.orderId, RETURNS_RECEIPT_REASON);
 
 		let refund: IRefundResult | undefined;
 
@@ -594,18 +610,23 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * carries no retry key, so the caller's retry would issue it a second time. Stale derived columns
 	 * that the reconciliation job finds are the smaller error, and they are the one this method chooses.
 	 *
+	 * The same holds for the receipt that calls it with `RETURN_RECEIVED`: the goods are in the
+	 * warehouse and the movements are posted, so a failure to refresh what describes them is not
+	 * answered as a failure of the receipt.
+	 *
 	 * @param orderId The order whose ledger moved.
+	 * @param reason Why the ledger moved, recorded on the summary row the recompute writes.
 	 */
-	private async refreshOrderTotals(orderId?: ID): Promise<void> {
+	private async refreshOrderTotals(orderId?: ID, reason: string = RETURNS_TOTALS_REASON): Promise<void> {
 		if (!this.orderTotals || !orderId) {
 			return;
 		}
 
 		try {
-			await this.orderTotals.recompute(orderId, RETURNS_TOTALS_REASON);
+			await this.orderTotals.recompute(orderId, reason);
 		} catch {
-			// Argued above: the money has moved, so a failure to refresh what describes it is not answered
-			// as a failure of the move. The order package's reconciliation job re-derives it.
+			// Argued above: the ledger has moved, so a failure to refresh what describes it is not
+			// answered as a failure of the move. The order package's reconciliation job re-derives it.
 		}
 	}
 
@@ -1058,6 +1079,9 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	): Promise<void> {
 		await this.reverseMovements(orderReturn, posted);
 		await this.lineService.restoreReceipt(plan);
+		// The order's counter goes back with the lines it was moved for: it is the same step, so a
+		// receipt that is undone must leave neither the return nor the order claiming the goods arrived.
+		await this.lineService.restoreOrderLineReceipt(orderReturn.orderId, plan);
 
 		// The header is restored under whatever version it holds at this moment rather than under the
 		// one the caller stated: this write undoes a receipt that failed, so it must land whether or not

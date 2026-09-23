@@ -156,6 +156,22 @@ export interface IOrderLineFulfillment {
 }
 
 /**
+ * One movement of an order line's received-return counter, as a post-purchase flow states it.
+ *
+ * The counter is `order_line.returnReceivedQuantity`: the goods half of a return, and one of the five
+ * sums `deriveFulfillmentStatus` reads to decide between `PARTIALLY_RETURNED` and `RETURNED`. It is
+ * declared here as the shape the order package accepts rather than imported from the package that
+ * sends it, for the same reason {@link IOrderLineFulfillment} is: the caller and this package share a
+ * contract, not a module.
+ */
+export interface IOrderLineReceiptMove {
+	/** The order line the goods belong to. */
+	readonly orderLineId: ID;
+	/** How much this delivery moves the counter: positive on a receipt, negative when one is undone. */
+	readonly quantityDelta: DecimalString;
+}
+
+/**
  * How far back the order-totals reconciliation looks for an order to examine.
  *
  * The window is what makes the sweep a sweep rather than a full-table pass: an order whose ledgers

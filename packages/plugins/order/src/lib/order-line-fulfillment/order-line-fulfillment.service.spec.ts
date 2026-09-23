@@ -36,6 +36,10 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// Added with the received-return counter's writer: the counter is moved by adding two exact
+		// decimals, and a double that omits the helper makes the code under test call nothing — which
+		// fails the suite for a reason that is not its own.
+		addDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').addDecimalStrings,
 		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
 		// The double answers with the fixture's scope, which is what a request-scoped read resolves to.
@@ -84,6 +88,13 @@ const OTHER_ORG = 'organization-2';
 const ORDER = 'order-1';
 const OTHER_ORDER = 'order-2';
 
+/**
+ * The tenancy cases below re-point `RequestContext` with a spy, and a spy on a module-level object
+ * outlives the case that set it: without this, everything after the first tenancy case runs scoped to
+ * whichever organization that case named, and a later case fails for a reason that is not its own.
+ */
+afterEach(() => jest.restoreAllMocks());
+
 /** The price the fixture's lines were sold at, as the numeric transformer reads a `numeric(20,6)`. */
 const SOLD_AT = 12.5;
 const SECOND_SOLD_AT = 19.99;
@@ -97,6 +108,7 @@ interface ILineRow {
 	variantId?: string;
 	position?: number;
 	fulfilledQuantity?: number;
+	returnReceivedQuantity?: number;
 	unitPrice?: number;
 }
 
@@ -119,9 +131,11 @@ function matches(row: object, where: Record<string, unknown> | undefined): boole
  */
 function repository(rows: object[]) {
 	const options: Array<Record<string, unknown>> = [];
+	const updates: Array<{ id: unknown; partial: Record<string, unknown> }> = [];
 
 	return {
 		options,
+		updates,
 		find: async (stated: Record<string, unknown> = {}) => {
 			options.push(stated);
 
@@ -131,6 +145,23 @@ function repository(rows: object[]) {
 			options.push(stated);
 
 			return rows.filter((row) => matches(row, stated.where as Record<string, unknown>))[0] ?? null;
+		},
+		// The one write this service performs. It narrows by the same criteria a read does, so a case
+		// that points the scope at another organization sees the row it named go unwritten — which is
+		// the difference between a refused write and a write that quietly missed.
+		update: async (criteria: unknown, partial: Record<string, unknown>) => {
+			const id = typeof criteria === 'string' ? criteria : (criteria as Record<string, unknown>)?.id;
+			const row = rows.find((candidate) => String((candidate as Record<string, unknown>).id) === String(id));
+
+			updates.push({ id, partial });
+
+			if (!row) {
+				return { affected: 0 };
+			}
+
+			Object.assign(row, partial);
+
+			return { affected: 1 };
 		}
 	};
 }
@@ -274,5 +305,112 @@ describe('OrderLineFulfillmentService — the ceiling a post-purchase flow is me
 
 		await expect(service.getFulfilledLines(undefined as never)).rejects.toThrow(/ORDER_FULFILLMENT_ORDER_REQUIRED/);
 		expect(orders.options).toEqual([]);
+	});
+});
+
+/**
+ * The received-return counter's writer, which the column never had.
+ *
+ * `order_line.returnReceivedQuantity` is one of the five sums `deriveFulfillmentStatus` reads to decide
+ * `PARTIALLY_RETURNED` against `RETURNED`, and until this method existed nothing in the repository ever
+ * assigned it — so those two states were unreachable in production and the order answered
+ * `NOT_FULFILLED` for goods its own warehouse was holding. What the cases below pin is the arithmetic
+ * and the four refusals, because both are what keeps the order's cache equal to the goods it describes:
+ *
+ * - **the counter is moved, not set.** A delivery adds its delta to what earlier deliveries recorded, so
+ *   a line received in two parts ends at the sum and not at the last part;
+ * - **a negative delta moves it back**, which is what the receipt's compensation sends;
+ * - **it never goes below zero**, because a negative "received" is not a state the column can be in and a
+ *   compensation that overshot would otherwise write one;
+ * - **the scope is checked before the write**, so a foreign order or a line of another order is refused
+ *   rather than quietly missed — the same scoped read the reader above performs.
+ */
+describe('OrderLineFulfillmentService — moving the received-return counter', () => {
+	it('adds the delivery to what earlier deliveries recorded, exactly', async () => {
+		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '3' }]);
+
+		// The counter is the sum, not the delivery: `2 + 3`, written as the exact decimal the column holds.
+		expect(orderLines.updates).toEqual([{ id: 'line-1', partial: { returnReceivedQuantity: '5' } }]);
+	});
+
+	it('moves the counter back when a receipt is undone', async () => {
+		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 5 })]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }]);
+
+		expect(orderLines.updates).toEqual([{ id: 'line-1', partial: { returnReceivedQuantity: '3' } }]);
+	});
+
+	it('moves several lines in one call, and only the lines it was given', async () => {
+		const { service, orderLines } = fixture([
+			line({ id: 'line-1', returnReceivedQuantity: 0.5, position: 1 }),
+			line({ id: 'line-2', returnReceivedQuantity: 1, position: 2 }),
+			line({ id: 'line-3', returnReceivedQuantity: 0, position: 3 })
+		]);
+
+		await service.recordReturnReceipt(ORDER, [
+			{ orderLineId: 'line-1', quantityDelta: '0.25' },
+			{ orderLineId: 'line-2', quantityDelta: '1' }
+		]);
+
+		expect(orderLines.updates).toEqual([
+			{ id: 'line-1', partial: { returnReceivedQuantity: '0.75' } },
+			{ id: 'line-2', partial: { returnReceivedQuantity: '2' } }
+		]);
+	});
+
+	it('refuses a move that would leave a line having received less than nothing', async () => {
+		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+		// The refusal is the point: nothing is written, so the counter never reaches the invalid state.
+		expect(orderLines.updates).toEqual([]);
+	});
+
+	it('refuses an order of another organization, and reads no line of it', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
+		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }])
+		).rejects.toThrow(/ORDER_NOT_FOUND/);
+		expect(orderLines.updates).toEqual([]);
+	});
+
+	it('refuses a line that belongs to another order', async () => {
+		const { service, orderLines } = fixture([
+			line({ id: 'line-1', returnReceivedQuantity: 1 }),
+			line({ id: 'line-of-another-order', orderId: OTHER_ORDER, returnReceivedQuantity: 1 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-of-another-order', quantityDelta: '1' }])
+		).rejects.toThrow(/ORDER_LINE_NOT_FOUND/);
+		expect(orderLines.updates).toEqual([]);
+	});
+
+	it('refuses to move anything when no order was named', async () => {
+		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+
+		await expect(
+			service.recordReturnReceipt(undefined as never, [{ orderLineId: 'line-1', quantityDelta: '1' }])
+		).rejects.toThrow(/ORDER_FULFILLMENT_ORDER_REQUIRED/);
+		expect(orderLines.updates).toEqual([]);
+	});
+
+	it('writes nothing for a delivery that moved nothing', async () => {
+		// A receipt whose lines all state the quantity they already held is not an error; it is a
+		// statement that nothing arrived, and the counter is left alone rather than written with its
+		// own value — which would be a write on a row a concurrent delivery may be holding.
+		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+
+		await service.recordReturnReceipt(ORDER, []);
+
+		expect(orderLines.updates).toEqual([]);
+		expect(orderLines.options).toEqual([]);
 	});
 });

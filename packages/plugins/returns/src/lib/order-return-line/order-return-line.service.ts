@@ -1,10 +1,11 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { In, Not } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService, subtractDecimalStrings } from '@gauzy/core';
 import {
 	IOrderFulfillmentPort,
 	IOrderLineFulfillment,
+	IOrderLineReceiptMove,
 	IOrderReturnLineInput,
 	IOrderReturnReceiptInput,
 	OrderReturnStatus,
@@ -382,6 +383,92 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	}
 
 	/**
+	 * Moves the order's received-return counter by the units a receipt brought.
+	 *
+	 * **The order has to be told, and this is the only place that knows by how much.** An order line's
+	 * `returnReceivedQuantity` is the order's own cache of what came back — `deriveFulfillmentStatus`
+	 * sums it, which is what makes `PARTIALLY_RETURNED` and `RETURNED` reachable at all — and the
+	 * delta is this package's fact: the return line already held what earlier deliveries recorded, so
+	 * the difference between what the receipt states and what it replaces is exactly what this
+	 * delivery added. The call travels through the fulfillment port, the seam that exists so that no
+	 * other package reads or writes `order_line`.
+	 *
+	 * It is called beside `applyReceipt` inside the receipt's own attempt, because doc 10 §11.6 puts
+	 * it in step 2 (`receive-lines`: "order line `returnReceivedQuantity` updated") and because a
+	 * failure after it must be undone by the same compensation the lines get.
+	 *
+	 * @param orderId The order whose line counters move.
+	 * @param plan The validated receipt.
+	 */
+	public async applyOrderLineReceipt(orderId: ID, plan: readonly IOrderReturnReceiptPlan[]): Promise<void> {
+		await this.moveOrderLineReceipt(orderId, plan, 1);
+	}
+
+	/**
+	 * Puts the order's received-return counter back to what it held before a receipt.
+	 *
+	 * The mirror of {@link applyOrderLineReceipt}, and the same call with the sign reversed: the
+	 * counter is a move rather than a value, so undoing one is moving it back.
+	 *
+	 * @param orderId The order whose line counters move.
+	 * @param plan The receipt being undone.
+	 */
+	public async restoreOrderLineReceipt(orderId: ID, plan: readonly IOrderReturnReceiptPlan[]): Promise<void> {
+		await this.moveOrderLineReceipt(orderId, plan, -1);
+	}
+
+	/**
+	 * States one receipt's effect on the order's line counters.
+	 *
+	 * A line the receipt did not move is left out rather than sent as a zero: the order package reads
+	 * every entry as a write, and a delta of nothing would be a write that changes nothing on a row a
+	 * concurrent delivery may be holding.
+	 *
+	 * @param orderId The order whose line counters move.
+	 * @param plan The receipt.
+	 * @param direction `1` to apply it, `-1` to undo it.
+	 * @throws BadRequestException when no order capability is registered, or when a line whose
+	 * quantity moved names no order line — a receipt the order cannot be told about would leave the
+	 * order answering a fulfilment status the goods in its own warehouse deny.
+	 */
+	private async moveOrderLineReceipt(
+		orderId: ID,
+		plan: readonly IOrderReturnReceiptPlan[],
+		direction: 1 | -1
+	): Promise<void> {
+		const moves: IOrderLineReceiptMove[] = [];
+
+		for (const entry of plan) {
+			const delta = subtractDecimalStrings(entry.receipt.receivedQuantity, entry.previous.receivedQuantity);
+
+			if (delta === '0') {
+				continue;
+			}
+
+			if (!entry.line.orderLineId) {
+				throw new BadRequestException(
+					`RETURN_ORDER_LINE_UNLINKED: return line ${entry.line.id} received ${delta} unit(s) and names no order ` +
+						'line, so what arrived cannot be recorded against the order.'
+				);
+			}
+
+			moves.push({ orderLineId: entry.line.orderLineId, quantityDelta: direction === 1 ? delta : negate(delta) });
+		}
+
+		if (moves.length === 0) {
+			return;
+		}
+
+		if (!this.fulfillment) {
+			throw new BadRequestException(
+				'RETURN_FULFILLMENT_UNAVAILABLE: the order capability is not registered, so the quantities that arrived cannot be recorded against the order.'
+			);
+		}
+
+		await this.fulfillment.recordReturnReceipt(orderId, moves);
+	}
+
+	/**
 	 * Records what physically arrived against a return's lines.
 	 *
 	 * @param returnId The return being received.
@@ -480,4 +567,19 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 			}
 		});
 	}
+}
+
+/**
+ * The same quantity, moving the other way.
+ *
+ * The order line's counter is moved by a signed delta, and undoing a receipt is moving it back — so
+ * the compensation sends the value it sent before, with the sign flipped, rather than a second
+ * quantity the two could disagree about. A zero never reaches here: a delta of nothing is left out of
+ * the moves, which is why the result is never `-0`.
+ *
+ * @param value An exact decimal quantity.
+ * @returns The quantity with its sign reversed.
+ */
+function negate(value: DecimalString): DecimalString {
+	return value.startsWith('-') ? value.slice(1) : `-${value}`;
 }

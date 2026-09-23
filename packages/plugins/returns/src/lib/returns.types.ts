@@ -245,16 +245,92 @@ export interface IOrderLineFulfillment {
 }
 
 /**
+ * One movement of an order line's received-return counter.
+ *
+ * The counter is the order's own cache of what came back — `order_line.returnReceivedQuantity`, which
+ * is the goods half of a return and the input `deriveFulfillmentStatus` sums to decide between
+ * `PARTIALLY_RETURNED` and `RETURNED` — so it is moved by a delta rather than set to a value. A
+ * delta is what the receipt has: the return line already holds what earlier deliveries recorded, and
+ * this call is about the units this delivery brought.
+ */
+export interface IOrderLineReceiptMove {
+	/** The order line the goods belong to. */
+	readonly orderLineId: ID;
+	/**
+	 * How much this delivery moves the counter.
+	 *
+	 * **Positive on a receipt and negative when one is undone.** The receipt's compensating action has
+	 * to put the counter back, and a counter moved by a signed delta is moved back by the same call
+	 * with the sign reversed rather than by a second method that could disagree with this one about
+	 * the floor or the units.
+	 */
+	readonly quantityDelta: DecimalString;
+}
+
+/**
  * The order's fulfilled quantities as this domain sees them.
  *
  * A return may only cover what was actually shipped, and only the order domain knows that number —
  * an order line that was never fulfilled cannot be returned, and a partially fulfilled line can be
  * returned only up to the part that left. Reading it here rather than caching it means the ceiling
  * follows later fulfilment of the same order.
+ *
+ * **The port carries both directions of the same fact, and that is why it keeps its name.** What a
+ * line has shipped is read to measure a request against it; what came back is written when the units
+ * arrive, and it is the same counter the derivation reads. A separate port for the writer would be
+ * two seams onto one table, which is the shape this package avoids everywhere else — and the seam
+ * itself states its rule: it exists so that no other package ever reads or writes `order_line`.
  */
 export interface IOrderFulfillmentPort {
+	/**
+	 * Reads what each line of an order has fulfilled.
+	 *
+	 * @param orderId The order to read.
+	 * @returns One entry per line with something fulfilled; a line that never shipped is absent.
+	 */
 	getFulfilledLines(orderId: ID): Promise<IOrderLineFulfillment[]>;
+
+	/**
+	 * Moves the received-return counter of the named order lines.
+	 *
+	 * @param orderId The order whose lines are moved, which is also the scope the write is checked in.
+	 * @param moves One entry per order line this delivery touched.
+	 * @returns Nothing: the caller's own rows say what arrived, and this counter is the order's cache of it.
+	 */
+	recordReturnReceipt(orderId: ID, moves: readonly IOrderLineReceiptMove[]): Promise<void>;
 }
+
+/**
+ * Why a returns move says the order's totals moved, when the move is the goods arriving.
+ *
+ * `RETURN_RECEIVE` writes the order line's received-return counter (doc 10 §11.6 step 2), and that
+ * counter is one of the five sums `deriveFulfillmentStatus` reads — so a receipt moves the order's
+ * `fulfillmentStatus`, and ADR-26 owes a recompute for it with a reason that names the move. It is
+ * deliberately **not** `PAYMENT_RECONCILED`, which the refund's own recompute states: a receipt that
+ * refunds nothing has moved no money at all, and a summary row claiming a payment was reconciled
+ * would name a move that did not happen.
+ */
+export const RETURNS_RECEIPT_REASON = 'RETURN_RECEIVED';
+
+/**
+ * Why a returns move says the order's totals moved.
+ *
+ * `OrderTotalsService.recompute` records the reason on the `order_summary` row it writes and documents
+ * six: `PLACED`, `CHANGE_CONFIRMED`, `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED`, `RETURN_RECEIVED`
+ * and `CASH_ROUNDED`. A returns move that appends a ledger row is a **money** move — the only ledger
+ * row this package appends is the refund's `order_transaction`, and the service that appends it moves
+ * the payment's refunded total with it — so this reason is `PAYMENT_RECONCILED`.
+ *
+ * It is deliberately **not** `FULFILLMENT_COMMITTED`, which the same service documents for the
+ * fulfilment write. `deriveFulfillmentStatus` reads the order's status and five sums over its lines —
+ * `quantity`, `writtenOffQuantity`, `returnDismissedQuantity`, `fulfilledQuantity` and
+ * `returnReceivedQuantity` — and while this package **does** now write the last of them, it writes it
+ * on the receipt and says so with `RETURN_RECEIVED`; a summary row claiming a fulfilment was committed
+ * would name a shipment that did not happen. The string is stated once, here, because it is read by
+ * the order domain as a fact rather than as a log line: a typo would record a reason no reader of
+ * `order_summary` recognises.
+ */
+export const RETURNS_TOTALS_REASON = 'PAYMENT_RECONCILED';
 
 /**
  * The order's derived columns, as this domain sees them.
@@ -279,25 +355,6 @@ export interface IOrderTotalsPort {
 	 */
 	recompute(orderId: ID, reason: string): Promise<unknown>;
 }
-
-/**
- * Why a returns move says the order's totals moved.
- *
- * `OrderTotalsService.recompute` records the reason on the `order_summary` row it writes and documents
- * five: `PLACED`, `CHANGE_CONFIRMED`, `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED` and `CASH_ROUNDED`.
- * A returns move is a **money** move — the only ledger row this package can append is the refund's
- * `order_transaction`, and the service that appends it moves the payment's refunded total with it — so
- * the reason is `PAYMENT_RECONCILED`.
- *
- * It is deliberately **not** `FULFILLMENT_COMMITTED`, which the same service documents for the
- * fulfilment write. `deriveFulfillmentStatus` reads the order's status and five sums over its lines —
- * `quantity`, `writtenOffQuantity`, `returnDismissedQuantity`, `fulfilledQuantity` and
- * `returnReceivedQuantity` — and this package writes **none** of them, so a summary row claiming a
- * fulfilment was committed would name a move that did not happen. The string is stated once, here,
- * because it is read by the order domain as a fact rather than as a log line: a typo would record a
- * reason no reader of `order_summary` recognises.
- */
-export const RETURNS_TOTALS_REASON = 'PAYMENT_RECONCILED';
 
 /** One request to send the goods back: the return leg of a return or an exchange. */
 export interface IReturnShipmentRequest {
