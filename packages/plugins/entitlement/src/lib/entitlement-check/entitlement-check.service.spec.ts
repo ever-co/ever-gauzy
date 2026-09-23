@@ -25,6 +25,7 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseDTO: class {},
 		MikroOrmBaseEntityRepository: class {},
 		ColumnIndex: decorator,
+		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
 		MultiORMManyToOne: decorator,
