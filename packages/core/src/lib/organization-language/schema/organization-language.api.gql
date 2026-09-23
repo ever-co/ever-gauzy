@@ -19,8 +19,9 @@
 # The list is a connection rather than a bare array. It takes the same query protocol the REST list
 # route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
 # answers with the same shape the kernel's `PageInfo` gives every other connection. `withDeleted` is
-# deliberately absent: the delivered list method reads live rows only, and offering an argument that
-# cannot be honoured would be worse than not offering it.
+# offered because the delivered list route offers it: the paginated spelling of that list takes
+# `BaseQueryDTO`, which carries the member, and hands its query string straight to the same read — so
+# a REST caller can ask for withdrawn rows and a connection that could not would hide them.
 #
 # `organizationLanguageCount` takes no filter, and that is a statement rather than an omission. The
 # delivered count route passes its query string through as the store's own `where`, which the

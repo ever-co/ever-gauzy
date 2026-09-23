@@ -26,8 +26,9 @@
 # with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
 # surface resumes on the other. `GET /pagination` has no field of its own: it is the same rows under the
 # same filters, and the page it slices by `take`/`skip` is what the connection's `page`, `limit` and
-# `offset` state. `withDeleted` is deliberately absent: the delivered list method reads live rows only,
-# and offering an argument that cannot be honoured would be worse than not offering it.
+# `offset` state. `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO`
+# carries it and that route hands its query string straight to the same read, so a REST caller can ask
+# for withdrawn rows and a connection that could not would hide them.
 #
 # **The three further reads are root fields of their own rather than filters on the connection**, and
 # that is a decision about the delivered reads rather than a second spelling of the same one. Each joins

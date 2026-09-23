@@ -20,8 +20,9 @@
 # resumes on the other. The delivered list route binds a `data` query string rather than a query protocol:
 # the narrowing it carries (`findInput`) is stated here in `filter`, which is that same narrowing in the
 # connection protocol's own vocabulary, and the `relations` it can name are not offered because no read
-# this surface performs names any. `withDeleted` is deliberately absent: the delivered read answers live
-# rows only, and an argument that cannot be honoured is worse than one that is not offered.
+# this surface performs names any. `withDeleted` is offered because the delivered list route offers it:
+# the `data` query string it binds is handed straight to the same read, which carries the member to the
+# store, so a REST caller can ask for withdrawn slots and a connection that could not would hide them.
 #
 # The controller serves its list twice — `GET /` and the `GET /pagination` it inherits — and the two
 # answer the same rows, one of them sliced by a page and the other not. That is one capability, so it is

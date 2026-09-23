@@ -13,9 +13,9 @@
 # The list is a connection rather than a bare array. It takes the same query protocol the REST list
 # route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
 # answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
-# over one surface resumes on the other. `withDeleted` is deliberately absent: the delivered list read
-# answers live rows only, and offering an argument that cannot be honoured would be worse than not
-# offering it.
+# over one surface resumes on the other. `withDeleted` is offered because the delivered list route offers
+# it: `BaseQueryDTO` carries it and that route hands its query string straight to the same read, so a REST
+# caller can ask for withdrawn standing costs and a connection that could not would hide them.
 #
 # **Three delivered reads are one capability here.** The controller serves the list twice — `GET /` and
 # the inherited `GET /pagination` — and the two answer the same rows under the same criterion, one of

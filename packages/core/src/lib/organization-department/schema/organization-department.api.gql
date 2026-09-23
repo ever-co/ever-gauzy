@@ -3,15 +3,19 @@
 # `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
-# **No field here states a permission, with one exception, and that is the parity rather than an
-# omission.** The delivered controller carries `TenantPermissionGuard` on the class and states no
-# `@Permissions` on the class at all, so the routes it declares and the six it inherits from the CRUD
-# base resolve to no permission between them. Two of its routes state one of their own, and each is
-# mirrored by the field that serves the same capability: the employee assignment carries
-# `ORG_EMPLOYEES_EDIT`, and the paginated spelling of the list carries `ORG_INCOMES_VIEW`. A field
-# that demanded a permission its route does not would refuse a caller the REST route serves, and one
-# that demanded less would be a way around the permission model; tightening the resource is a change
-# to make in both places at once, and it is not this delivery's to make.
+# **The guard chain and the permission are the route's, field by field.** The delivered controller
+# carries `TenantPermissionGuard` on the class and states no `@Permissions` on the class at all, but
+# what its routes state is not uniform: the five writing routes it declares — the create, the edit,
+# the removal, the withdrawal and the restoration — each add `PermissionGuard` with `ALL_ORG_EDIT` and
+# `ORG_EMPLOYEES_EDIT`, and the employee assignment adds it with `ORG_EMPLOYEES_EDIT`. Each of those
+# six is mirrored by the field that serves the same capability under the same guard and the same
+# permission. The list route and the employee read state nothing, and the one-row read and the count
+# the controller inherits from the CRUD base state nothing either. The paginated spelling of the list
+# states `ORG_INCOMES_VIEW` of its own; that declaration belongs to the route, and folding the route
+# into the connection below does not restate it here. A field that demanded a permission its route
+# does not would refuse a caller the REST route serves, and one that demanded less would be a way
+# around the permission model; tightening the reads is a change to make in both places at once, and
+# it is not this delivery's to make.
 #
 # **The paginated spelling folds into the connection and gets no field of its own.** `GET
 # /organization-department/pagination` answers the same rows under the same filters as `GET
@@ -33,8 +37,10 @@
 # The connection takes the same query protocol the REST list route takes — the same filters in
 # `filter`, the same keys in `sort`, the same page in `page` — and answers with the same shape the
 # kernel's `PageInfo` gives every other connection, so a cursor obtained over one surface resumes on
-# the other. `withDeleted` is deliberately absent: the delivered list method reads live rows only,
-# and offering an argument that cannot be honoured would be worse than not offering it.
+# the other. `withDeleted` is offered because the delivered list route offers it: the paginated spelling
+# of that list takes `BaseQueryDTO`, which carries the member, and hands its query string straight to
+# the same read — so a REST caller can ask for withdrawn rows and a connection that could not would
+# hide them.
 
 extend type Query {
 	"""

@@ -18,9 +18,9 @@
 # the page is what the connection answers with, so a second field for it would be a second surface
 # that could disagree with this one. The count does have one — a bare number is not a connection, and
 # `totalCount` is not that number: it is the count of the rows the connection narrowed to, while the
-# count route counts the caller's own rows. `withDeleted` is deliberately absent: the delivered list
-# method reads live rows only, and offering an argument that cannot be honoured would be worse than
-# not offering it.
+# count route counts the caller's own rows. `withDeleted` is offered because the delivered list route
+# offers it: `BaseQueryDTO` carries it and that route hands its query string straight to the same
+# read, so a REST caller can ask for withdrawn rows and a connection that could not would hide them.
 
 extend type Query {
 	"""

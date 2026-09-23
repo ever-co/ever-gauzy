@@ -21,8 +21,9 @@
 # answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
 # obtained over one surface resumes on the other. The delivered list read states no order of its own,
 # so the connection applies the platform's: newest first, the identifier last so the order is total and
-# a walk over it is stable. `withDeleted` is deliberately absent: the delivered list method reads live
-# rows only, and offering an argument that cannot be honoured would be worse than not offering it.
+# a walk over it is stable. `withDeleted` is offered because the delivered list route offers it:
+# `BaseQueryDTO` carries it and that route hands its query string straight to the same read, so a REST
+# caller can ask for withdrawn notification settings and a connection that could not would hide them.
 #
 # **`GET /pagination` has no root field.** It answers the same rows under the same narrowing as
 # `GET /` — one of them sliced by `take`/`skip` and the other not — and the connection's own
