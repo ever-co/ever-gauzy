@@ -1162,7 +1162,11 @@
 		"APPLICATIONS": "Заявления",
 		"OPEN_GA_BROWSER": "Открыть Gauzy в браузере",
 		"START_SERVER": "Запустить сервер",
-		"STOP_SERVER": "Остановить сервер"
+		"STOP_SERVER": "Остановить сервер",
+		"DOCUMENTS": "Документы",
+		"BILLING": "Биллинг",
+		"MONITORING": "Мониторинг",
+		"ADD_ITEM": "Добавить {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -5301,7 +5305,8 @@
 				"TERMS_AND_CONDITIONS": "Условиями использования",
 				"AND": " и ",
 				"PRIVACY_POLICY": "Политикой конфиденциальности"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Пароль должен содержать не менее 4 символов"
 		}
 	},
 	"LOGIN_PAGE": {
