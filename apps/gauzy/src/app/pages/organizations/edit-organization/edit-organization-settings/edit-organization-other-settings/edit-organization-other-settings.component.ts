@@ -529,6 +529,7 @@ export class EditOrganizationOtherSettingsComponent
 				...this.form.value,
 				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
 			});
+			this.acknowledgeAgentExitLogoutRestriction = false;
 
 			// Update the organization in the store
 			this._organizationEditStore.organizationAction = {
@@ -850,6 +851,7 @@ export class EditOrganizationOtherSettingsComponent
 		if (!this.organization) {
 			return;
 		}
+		this.acknowledgeAgentExitLogoutRestriction = false;
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 

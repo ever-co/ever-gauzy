@@ -148,6 +148,8 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	private _patchFormValue(employee: IEmployee): void {
 		if (!employee) return;
 
+		this.acknowledgeAgentExitLogoutRestriction = false;
+
 		const {
 			user,
 			upworkId,
@@ -222,6 +224,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackAllDisplays,
 			acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
 		});
+		this.acknowledgeAgentExitLogoutRestriction = false;
 	}
 
 	/**
