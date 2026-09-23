@@ -248,7 +248,9 @@ describe('ProductOptionResolver — the SDL declares the capabilities the REST r
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
+		// `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO` carries it
+		// and that route hands its query string straight to the same read, so a REST caller can ask for
+		// withdrawn rows and a connection that could not would hide them.
 		expect(printSchema(schema)).toMatch(/productOptions\([^)]*withDeleted/);
 	});
 });

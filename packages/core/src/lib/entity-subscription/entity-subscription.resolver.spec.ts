@@ -377,9 +377,11 @@ describe('EntitySubscriptionResolver — the SDL declares the capabilities the R
 		expect(fieldArgs('Query', 'entitySubscriptionCount')).toEqual([]);
 		expect(printed).not.toMatch(/entitySubscriptionCount\(/);
 
-		// The delivered list method reads live rows only, and the relations it can join are the ones its
-		// REST caller names — which this read never does, so the connection offers neither `withDeleted`
-		// nor a `relations` argument it could not honour.
+		// `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO` carries it
+		// and that route hands its query string straight to the same read, so a REST caller can ask for
+		// withdrawn rows and a connection that could not would hide them. The relations it can join are the
+		// ones its REST caller names — which this read never does — so the connection offers no
+		// `relations` argument it could not honour.
 		expect(printed).toMatch(/entitySubscriptions\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/entitySubscriptions\([^)]*relations/);
 		expect(fieldArgs('Query', 'entitySubscriptions')).toEqual([

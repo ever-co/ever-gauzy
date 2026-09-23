@@ -333,9 +333,11 @@ describe('EmployeeLevelResolver — the SDL declares the capabilities the REST r
 		expect(fieldArgs('Query', 'employeeLevelCount')).toEqual([]);
 		expect(printed).not.toMatch(/employeeLevelCount\(/);
 
-		// The delivered list method reads live rows only, and the relations it can join are the ones its
-		// REST caller names — which this read never does, so the connection offers neither `withDeleted`
-		// nor a `relations` argument it could not honour.
+		// `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO` carries it
+		// and that route hands its query string straight to the same read, so a REST caller can ask for
+		// withdrawn rows and a connection that could not would hide them. The relations it can join are the
+		// ones its REST caller names — which this read never does — so the connection offers no
+		// `relations` argument it could not honour.
 		expect(printed).toMatch(/employeeLevels\([^)]*withDeleted/);
 		expect(printed).not.toMatch(/employeeLevels\([^)]*relations/);
 		expect(fieldArgs('Query', 'employeeLevels')).toEqual([

@@ -430,7 +430,9 @@ describe('OrganizationTeamJoinRequestResolver — the SDL declares the capabilit
 	});
 
 	it('offers no argument and no field the controller does not serve', () => {
-		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
+		// `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO` carries it
+		// and that route hands its query string straight to the same read, so a REST caller can ask for
+		// withdrawn rows and a connection that could not would hide them.
 		expect(printed).toMatch(/organizationTeamJoinRequests\([^)]*withDeleted/);
 		// The controller declares no `GET /:id` and no count route, so neither is a root field here.
 		expect(printed).not.toMatch(/^\s*organizationTeamJoinRequest\(/m);

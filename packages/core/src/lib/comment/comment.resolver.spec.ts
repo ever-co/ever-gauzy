@@ -321,9 +321,11 @@ describe('CommentResolver — the SDL declares the capabilities the REST routes 
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
+		// `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO` carries it
+		// and that route hands its query string straight to the same read, so a REST caller can ask for
+		// withdrawn rows and a connection that could not would hide them.
 		expect(printed).toMatch(/comments\([^)]*withDeleted/);
-		// The relations a REST caller may name are not a connection argument either: this read names none.
+		// The relations a REST caller may name are not a connection argument: this read names none.
 		expect(printed).not.toMatch(/comments\([^)]*relations/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.

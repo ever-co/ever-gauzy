@@ -343,7 +343,11 @@ describe('OrganizationProjectModuleResolver — the SDL declares the capabilitie
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
+		// `withDeleted` is offered because the three delivered list routes offer it: each binds
+		// `BaseQueryDTO`, which carries the member, and hands its query string straight to the same read, so
+		// a REST caller can ask for withdrawn rows and a connection that could not would hide them. The
+		// employee-scoped read binds `OrganizationProjectModuleFindInputDTO` rather than `BaseQueryDTO`, so
+		// its connection states no such argument.
 		expect(printed).toMatch(/organizationProjectModules\([^)]*withDeleted/);
 		expect(printed).toMatch(/employeeProjectModules\([^)]*withDeleted/);
 		expect(printed).toMatch(/teamProjectModules\([^)]*withDeleted/);

@@ -401,7 +401,9 @@ describe('OrganizationTeamResolver — the SDL declares the capabilities the RES
 		// The delivered count route passes its query string through as the store's own `where`, which
 		// this surface cannot hand to that call, so the count states no filter it could not honour.
 		expect(printed).not.toMatch(/organizationTeamCount\(/);
-		// The delivered list method reads live rows only, so the connection does not offer `withDeleted`.
+		// `withDeleted` is offered because the delivered list route offers it: `BaseQueryDTO` carries it
+		// and that route hands its query string straight to the same read, so a REST caller can ask for
+		// withdrawn rows and a connection that could not would hide them.
 		expect(printed).toMatch(/organizationTeams\([^)]*withDeleted/);
 		// The caller's own list narrows by who is asking, so no argument here names an employee: a
 		// caller cannot read anyone else's teams through it.
