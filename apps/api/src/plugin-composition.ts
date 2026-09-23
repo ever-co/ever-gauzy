@@ -12,6 +12,7 @@ import {
 	OrderLineFulfillmentService,
 	OrderLineService,
 	OrderModule,
+	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
 import { PricingModule, RecurringPriceService } from '@gauzy/plugin-pricing';
@@ -25,6 +26,7 @@ import {
 import { ENTITLEMENT_CATALOG_PORT } from '@gauzy/plugin-entitlement';
 import {
 	RETURNS_ORDER_FULFILLMENT,
+	RETURNS_ORDER_TOTALS,
 	RETURNS_REFUND_GATEWAY,
 	RETURNS_SHIPMENT_GATEWAY,
 	RETURNS_STOCK_LEDGER
@@ -150,11 +152,20 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		{ provide: WAREHOUSE_FULFILLMENT, useExisting: WarehouseFulfillmentService },
 		{ provide: RETURNS_SHIPMENT_GATEWAY, useExisting: ReturnShipmentService },
 		// A return's money is refunded by the payment package, which owns the refund register.
-		{ provide: RETURNS_REFUND_GATEWAY, useExisting: ReturnRefundService }
+		{ provide: RETURNS_REFUND_GATEWAY, useExisting: ReturnRefundService },
+		// A return that gives money back moves the order's ledger, so the order's materialised totals and
+		// status are re-derived from it — the same single function every other domain writer calls, bound to
+		// the same instance. Without this binding the port is declared, injected and called by nothing that
+		// can answer it: the recompute is inert and the order's cached status goes stale in silence, which is
+		// the failure the binding exists to prevent. (ADR-26's "inside the same transaction" half is unmet on
+		// this path — `recompute` takes no entity manager and this side opens no transaction — and that is
+		// recorded rather than hidden; what the binding buys is that the recompute happens at all.)
+		{ provide: RETURNS_ORDER_TOTALS, useExisting: OrderTotalsService }
 	],
 	exports: [
 		PAYMENT_ORDER_LINE_REFUND,
 		RETURNS_ORDER_FULFILLMENT,
+		RETURNS_ORDER_TOTALS,
 		SUBSCRIPTION_PRICING,
 		SUBSCRIPTION_CATALOG,
 		ENTITLEMENT_CATALOG_PORT,

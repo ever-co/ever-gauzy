@@ -263,7 +263,12 @@ function fixture(options: { shipments?: Row[]; shippingOptions?: Row[] } = {}) {
 		// constructor gained it when the fulfilment lifecycle started announcing itself, and a double
 		// that stops matching the constructor is a suite that fails to compile rather than one that
 		// tests the old behaviour.
-		{ append: jest.fn() } as never
+		{ append: jest.fn() } as never,
+		// The order aggregate's re-derivation, added for the same reason and stubbed for one more: the
+		// leg this suite raises is a `RETURN`, which moves none of the counters `order.fulfillmentStatus`
+		// is derived from, so a correct `createReturnLeg` never asks for it. A resolved double is used
+		// rather than a throwing one so that this double cannot be mistaken for an assertion about that.
+		{ recompute: jest.fn().mockResolvedValue({}) } as never
 	);
 	const shippingOptionService = new ShippingOptionService(optionRepository as never, {} as never);
 	const service = new ReturnShipmentService(fulfillmentService, shippingOptionService);

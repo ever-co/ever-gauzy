@@ -140,4 +140,27 @@ export class StockCountResolver {
 
 		return await this.service.close(id).then((result) => result.count);
 	}
+
+	/**
+	 * Cancels a session without writing its corrections.
+	 *
+	 * The route it mirrors is `POST /stock-counts/:id/cancel`, which the domain's own surface table states
+	 * in the same row as the open, the count and the close — so the capability is one the specification
+	 * names rather than one this wave inferred from a handler. Nothing is moved by a cancel: the session
+	 * ends and every level stays where it was, which is why the session's status is the whole answer.
+	 *
+	 * The permission is the route's own — `STOCK_EDIT` — and not the class-level `STOCK_VIEW`: closing a
+	 * sheet is an inventory write whichever end of it a caller takes, and the route demands the edit grant
+	 * for the cancel exactly as it does for the close. The route declares no retry scope and no version
+	 * expectation, and the domain's own list of the actions that honour an `Idempotency-Key` omits the
+	 * cancel — so the field declares neither, and a second cancel is answered by the row's own status.
+	 *
+	 * @param id The session to cancel.
+	 * @returns The session, ended.
+	 */
+	@Mutation('cancelStockCount')
+	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	async cancelStockCount(@Args('id') id: string): Promise<any> {
+		return await this.service.cancel(id);
+	}
 }

@@ -362,9 +362,25 @@ export const inventorySchemaExtensions = gql`
 		identically.
 		"""
 		applyStockAdjustment(id: ID!, idempotencyKey: String): StockAdjustment!
+		"""
+		Cancels a drafted correction, so that it can never be applied.
+
+		The counterpart of the apply beside it and not a variant of it: an apply writes the correction's
+		ledger row and closes the instruction as applied, while a cancel closes it without writing
+		anything, because a correction that was never made has no movement to explain.
+		"""
+		cancelStockAdjustment(id: ID!): StockAdjustment!
 		createStockReservation(input: StockReservationInput!): StockReservation!
 		releaseStockReservation(id: ID!, reason: String, idempotencyKey: String): StockReservation!
 		consumeStockReservation(id: ID!): StockReservation!
+		"""
+		Pushes the expiry of every active hold of a document.
+
+		The path member is the document, not the kind of document: the kind is what a caller states
+		beside it, and a caller that states none is answered for every active hold of that document. What
+		comes back is how many holds were pushed out, which is what the route answers.
+		"""
+		extendStockReservation(id: ID!, expiresAt: DateTime!, referenceType: String): Int!
 		createStockTransfer(input: StockTransferInput!): StockTransfer!
 		updateStockTransfer(id: ID!, note: String): StockTransfer!
 		requestStockTransfer(id: ID!): StockTransfer!
@@ -380,6 +396,15 @@ export const inventorySchemaExtensions = gql`
 		openStockCount(id: ID!): StockCount!
 		recordStockCountLine(id: ID!, lines: [StockCountLineInput!]!, idempotencyKey: String): StockCount!
 		closeStockCount(id: ID!, idempotencyKey: String): StockCount!
+		"""
+		Cancels a session without writing its corrections.
+
+		The counterpart of the close beside it and not a variant of it: a close writes one correction per
+		counted line, while a cancel ends the session and leaves the levels exactly where they were — the
+		session was refused, not performed. The domain states both transitions in one row of its own
+		surface table, and this is the second of them.
+		"""
+		cancelStockCount(id: ID!): StockCount!
 		assignChannelWarehouse(input: ChannelWarehouseInput!): ChannelWarehouse!
 		unassignChannelWarehouse(channelId: ID!, warehouseId: ID!): Boolean!
 	}

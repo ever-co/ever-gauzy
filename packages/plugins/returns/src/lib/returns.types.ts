@@ -256,6 +256,49 @@ export interface IOrderFulfillmentPort {
 	getFulfilledLines(orderId: ID): Promise<IOrderLineFulfillment[]>;
 }
 
+/**
+ * The order's derived columns, as this domain sees them.
+ *
+ * Provided by the order capability and injected under `RETURNS_ORDER_TOTALS`. A return that gives money
+ * back appends an `order_transaction` row, and the order's totals, `paymentStatus`, `fulfillmentStatus`
+ * and version are all derived from that ledger — plus the order's lines and credit lines — by one
+ * function the order package owns. ADR-26 requires the move that changed the ledger to recompute them
+ * from it, and the recompute is the order package's to perform: an order row is not this domain's to
+ * write, so the call travels through this port rather than through a repository.
+ *
+ * The answer is deliberately untyped. It is the order's row, which this domain has no business naming,
+ * and a caller here reads nothing from it — the write either landed or it did not.
+ */
+export interface IOrderTotalsPort {
+	/**
+	 * Recomputes an order's totals, statuses and version from the ledgers that decide them.
+	 *
+	 * @param orderId The order the returns move changed.
+	 * @param reason Why the totals moved, recorded on the summary row the recompute writes.
+	 * @returns The order as written, which this domain does not read.
+	 */
+	recompute(orderId: ID, reason: string): Promise<unknown>;
+}
+
+/**
+ * Why a returns move says the order's totals moved.
+ *
+ * `OrderTotalsService.recompute` records the reason on the `order_summary` row it writes and documents
+ * five: `PLACED`, `CHANGE_CONFIRMED`, `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED` and `CASH_ROUNDED`.
+ * A returns move is a **money** move — the only ledger row this package can append is the refund's
+ * `order_transaction`, and the service that appends it moves the payment's refunded total with it — so
+ * the reason is `PAYMENT_RECONCILED`.
+ *
+ * It is deliberately **not** `FULFILLMENT_COMMITTED`, which the same service documents for the
+ * fulfilment write. `deriveFulfillmentStatus` reads the order's status and five sums over its lines —
+ * `quantity`, `writtenOffQuantity`, `returnDismissedQuantity`, `fulfilledQuantity` and
+ * `returnReceivedQuantity` — and this package writes **none** of them, so a summary row claiming a
+ * fulfilment was committed would name a move that did not happen. The string is stated once, here,
+ * because it is read by the order domain as a fact rather than as a log line: a typo would record a
+ * reason no reader of `order_summary` recognises.
+ */
+export const RETURNS_TOTALS_REASON = 'PAYMENT_RECONCILED';
+
 /** One request to send the goods back: the return leg of a return or an exchange. */
 export interface IReturnShipmentRequest {
 	/** Return the goods belong to. */
@@ -313,6 +356,15 @@ export const RETURNS_ORDER_FULFILLMENT = Symbol('RETURNS_ORDER_FULFILLMENT');
 
 /** Token the return-leg shipping capability is injected under. */
 export const RETURNS_SHIPMENT_GATEWAY = Symbol('RETURNS_SHIPMENT_GATEWAY');
+
+/**
+ * Token the order's derived columns are refreshed through.
+ *
+ * Optional on purpose, like the four above: a tenant without the order capability still takes a return
+ * and refunds it, and the order's own columns are then the order package's to bring up to date — which
+ * its reconciliation job does rather than this domain guessing at them.
+ */
+export const RETURNS_ORDER_TOTALS = Symbol('RETURNS_ORDER_TOTALS');
 
 
 /*

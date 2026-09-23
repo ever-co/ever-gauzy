@@ -26,7 +26,7 @@ import {
 	compareDecimalStrings,
 	subtractDecimalStrings
 } from '@gauzy/core';
-import { OrderLineService } from '@gauzy/plugin-order';
+import { OrderLineService, OrderTotalsService } from '@gauzy/plugin-order';
 import { Fulfillment } from './fulfillment.entity';
 import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.repository';
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
@@ -69,6 +69,19 @@ const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDeta
 };
 
 /**
+ * The reason `OrderTotalsService.recompute` records for a write that moved a fulfilment.
+ *
+ * The string is the order package's own: `recompute`'s docstring
+ * (`packages/plugins/order/src/lib/order-totals/order-totals.service.ts`) names `FULFILLMENT_COMMITTED`
+ * as the reason for exactly this write, beside `PLACED`, `CHANGE_CONFIRMED`, `PAYMENT_RECONCILED` and
+ * `CASH_ROUNDED`. It is restated here rather than imported because the order package publishes it as
+ * prose and not as a value, and it is stated once in this package so the two call sites below cannot
+ * disagree about it. Until this wave it had no caller anywhere in the repository: the reason a summary
+ * row exists to record was one no production write ever recorded.
+ */
+const FULFILLMENT_COMMITTED = 'FULFILLMENT_COMMITTED';
+
+/**
  * Shipments against orders.
  *
  * The lifecycle is owned here, in one place, because it is the reason the table exists: **a delivered
@@ -78,13 +91,42 @@ const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDeta
  *
  * Quantity is checked against what the order line has **left**, not against what was ordered: a second
  * partial shipment of the same line is a second fulfilment, and the order line's own counters are the
- * authority on how much is outstanding. Those counters are maintained by the line service, in the same
- * transaction as the row that causes them.
+ * authority on how much is outstanding. Those counters are maintained here, one statement at a time:
+ * **this path holds no transaction** — neither this service nor the concurrency kernel opens one, and
+ * `CrudService.create` and `CrudService.update` each run one statement — so a failure between two of
+ * them leaves the earlier one committed. The consequence is stated where it matters rather than
+ * implied, and it is the reason the recompute below is a second write rather than part of the first.
  *
  * Every quantity on that path is an exact decimal and is computed as one — the remainder, the
  * comparison against it and the counters themselves all go through `fulfillment.quantity.ts` — because
  * a partial shipment of a measured good lands exactly on a boundary that binary floating point cannot
  * represent.
+ *
+ * **The order's materialised fulfilment state is re-derived by the two writes that can move it.** ADR-26
+ * makes `order.fulfillmentStatus` a cache of the fulfilments and their lines, "recomputed by a single
+ * function from the ledgers every time a transaction, fulfillment, return, claim or exchange changes",
+ * and that single function is `OrderTotalsService.recompute` — which the order package owns, exports and
+ * already had its dependency wired for. The derivation is what decides which writes call it:
+ * `OrderStateMachine.deriveFulfillmentStatus` reads the order's `orderedQuantity`, `writtenOffQuantity`,
+ * `dismissedQuantity`, `fulfilledQuantity` and `receivedReturnQuantity`, and of those this service writes
+ * exactly one — `fulfilledQuantity`, moved by `create` for an outbound shipment and given back by
+ * `cancel`. `ship`, `markInTransit` and `deliver` move `shippedQuantity` and `deliveredQuantity`, which
+ * the derivation never reads, so re-deriving on them would rewrite identical columns and bump the order's
+ * version — a write that buys nothing and invalidates every client holding the order's `ETag`. They are
+ * therefore left alone deliberately, not by omission.
+ *
+ * **The recompute is awaited and its failure is left to surface**, which is what every caller of
+ * `recompute` inside the order package already does. That is safe here for a reason worth stating: a
+ * `create` that throws after its own write is answered on a retry by the idempotency kernel replaying the
+ * stored refusal rather than running the body again — the key stays claimed under `FAILED`
+ * (`IdempotencyService.fail`: "a client that retries under a key whose request was refused gets the
+ * refusal replayed") — so a failed re-derivation cannot ship the same goods twice. A `cancel` that
+ * throws after its own write finds the shipment already `CANCELED` on the retry and takes this service's
+ * own no-op path, so the counters are not given back twice either. What is *not* delivered is ADR-26's
+ * "inside the same transaction as the change": there is no transaction on this path to be inside, and
+ * creating one means threading a manager through `commitVersionedUpdate`, which takes a `CrudService` and
+ * lives in the concurrency kernel. That is a change to `packages/core` and to the order package rather
+ * than to this file, and it is reported rather than faked.
  *
  * One capability is reached through a port rather than implemented here, because it belongs to the
  * carrier: the label a shipment travels with is issued by a provider this domain does not own. The
@@ -101,6 +143,12 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		private readonly lineService: FulfillmentLineService,
 		private readonly orderLineService: OrderLineService,
 		private readonly outbox: EventOutboxService,
+		// The order aggregate's single re-derivation, injected rather than reached through the module
+		// reference the order package uses for its own writer: this is a required collaborator, and a
+		// late lookup would turn a missing registration into a write that silently stopped re-deriving.
+		// `FulfillmentModule` already imports `OrderModule`, which exports this, so the dependency was
+		// wired and unused before this wave rather than added by it.
+		private readonly orderTotals: OrderTotalsService,
 		@Optional()
 		@Inject(FULFILLMENT_LABEL_PROVIDER)
 		private readonly labelProvider?: IFulfillmentLabelProviderPort
@@ -180,6 +228,13 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			if (direction !== FulfillmentDirection.RETURN) {
 				await this.bumpOrderLineCounters(line.orderLineId as ID, line.quantity as Quantity, 'FULFILLED');
 			}
+		}
+
+		// The counters above are the only input of the order's derived fulfilment state that this write
+		// moved, so this is where the state is re-derived. A return direction moved none of them — the
+		// rule stated on `createReturnLeg` below — so it has nothing to re-derive and no call is made.
+		if (direction !== FulfillmentDirection.RETURN) {
+			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
 		}
 
 		// Announced after the lines exist, because a picking list is what a consumer of this event
@@ -420,6 +475,12 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 					'FULFILLED'
 				);
 			}
+
+			// The counters were given back above, so the order's derived fulfilment state has moved with
+			// them and is re-derived here. The repeat path returns before this — a shipment that is
+			// already `CANCELED` gives nothing back a second time — so a retried cancel re-derives
+			// nothing, which is what keeps the status from moving on a no-op.
+			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
 		}
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
@@ -806,6 +867,39 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		}
 
 		await this.orderLineService.update(orderLineId, changes as any);
+	}
+
+	/**
+	 * Re-derives the order's materialised state from its own rows, after this service moved one of them.
+	 *
+	 * One call, because the platform has one function for this: `OrderTotalsService.recompute` re-derives
+	 * `fulfillmentStatus` through `OrderStateMachine.deriveFulfillmentStatus`, and beside it the totals,
+	 * `paymentStatus`, `promisedAt` and `sellerCount`. Writing the status here instead would be a second
+	 * opinion about a derivation the order package owns, which is the defect ADR-26 exists to prevent —
+	 * so this states the reason and delegates rather than narrowing the write to the one column that
+	 * moved. That it also recomputes the money is not waste: those columns read the order's lines,
+	 * shipping methods, credit lines, transactions, adjustments and tax lines, none of which a fulfilment
+	 * transition writes, so the values it re-derives are the values already there.
+	 *
+	 * **Why the reason string is `FULFILLMENT_COMMITTED`.** It is the reason `recompute`'s own docstring
+	 * names for this write, and it is recorded on the `order_summary` row the call writes and on the
+	 * `order.*` event when the caller states one — so a reader of the summary can tell a fulfilment
+	 * commit from a placement, a confirmed change, a reconciled payment or a rounding. It is passed
+	 * rather than left blank because a summary row whose reason says nothing is a row an operator cannot
+	 * explain, and because the string had no production caller at all before this wave.
+	 *
+	 * **Awaited, and its failure is not swallowed.** A re-derivation that could not run is a
+	 * `fulfillmentStatus` that is wrong until somebody notices, and the nightly reconciliation that would
+	 * notice it does not exist (the order package registers no scheduled job, and nothing outside it calls
+	 * `recompute`). Failing the caller's request is therefore the only signal this platform produces, and
+	 * it is a safe one on both call sites: `create` is idempotent by a required key, so a retry replays
+	 * the stored refusal instead of shipping the goods twice, and a retried `cancel` finds the shipment
+	 * already cancelled and returns without giving the counters back again.
+	 *
+	 * @param orderId The order the moved shipment belongs to.
+	 */
+	private async recomputeOrderFulfillmentStatus(orderId: ID): Promise<void> {
+		await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
 	}
 
 	/**

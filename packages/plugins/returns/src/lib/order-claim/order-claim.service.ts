@@ -3,11 +3,14 @@ import { ID } from '@gauzy/contracts';
 import { Money, RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import {
 	IOrderClaimLineInput,
+	IOrderTotalsPort,
 	IRefundGatewayPort,
 	IRefundResult,
 	OrderClaimStatus,
 	OrderClaimType,
-	RETURNS_REFUND_GATEWAY
+	RETURNS_ORDER_TOTALS,
+	RETURNS_REFUND_GATEWAY,
+	RETURNS_TOTALS_REASON
 } from '../returns.types';
 import { OrderClaimLineService } from '../order-claim-line/order-claim-line.service';
 import { OrderClaimLine } from '../order-claim-line/order-claim-line.entity';
@@ -44,7 +47,10 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 		private readonly sequenceService: SequenceService,
 		@Optional()
 		@Inject(RETURNS_REFUND_GATEWAY)
-		private readonly refundGateway?: IRefundGatewayPort
+		private readonly refundGateway?: IRefundGatewayPort,
+		@Optional()
+		@Inject(RETURNS_ORDER_TOTALS)
+		private readonly orderTotals?: IOrderTotalsPort
 	) {
 		super(typeOrmOrderClaimRepository, mikroOrmOrderClaimRepository);
 	}
@@ -323,7 +329,7 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			throw new BadRequestException('A refund must be for a positive amount.');
 		}
 
-		return await this.refundGateway.createRefund({
+		const refund = await this.refundGateway.createRefund({
 			orderId: claim.orderId,
 			// Which of the three post-purchase flows owes this money, so a refund that names no return
 			// and no exchange is still attributable to the claim that produced it.
@@ -332,6 +338,39 @@ export class OrderClaimService extends TenantAwareCrudService<OrderClaim> {
 			currency: claim.currency,
 			note
 		});
+
+		// A claim that settles in money answered by appending an `order_transaction`, so the order's
+		// derived columns are recomputed from the ledger that moved. The reasoning — the reason string,
+		// the transaction gap and why a failure here is not reported — is stated once, on
+		// `OrderReturnService.refreshOrderTotals`, and it holds here unchanged.
+		await this.refreshOrderTotals(claim.orderId);
+
+		return refund;
+	}
+
+	/**
+	 * Refreshes the order columns the claim's refund just moved.
+	 *
+	 * The claim is the third flow that can owe money back, and a refund it settles is recorded against
+	 * the order's own ledger exactly as a return's is — so the same recompute is owed. A `REPLACE` claim
+	 * settles by shipping rather than by paying, appends no ledger row and calls nothing here: the
+	 * difference is the whole of it, and a recompute on a ledger that did not move writes a summary row
+	 * that says nothing changed.
+	 *
+	 * @param orderId The order whose ledger moved.
+	 */
+	private async refreshOrderTotals(orderId?: ID): Promise<void> {
+		if (!this.orderTotals || !orderId) {
+			return;
+		}
+
+		try {
+			await this.orderTotals.recompute(orderId, RETURNS_TOTALS_REASON);
+		} catch {
+			// Argued on `OrderReturnService.refreshOrderTotals`: the refund is committed before this runs,
+			// so a failure to describe it is not answered as a failure of the money, and the order
+			// package's reconciliation job re-derives what is stale.
+		}
 	}
 
 	/**

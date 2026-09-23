@@ -1,4 +1,4 @@
-import { DecimalString, ID } from '@gauzy/contracts';
+import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { TaxCategory } from '../tax-category/tax-category.entity';
 import { TaxRate } from '../tax-rate/tax-rate.entity';
 import { TaxRatePart } from '../tax-rate-part/tax-rate-part.entity';
@@ -8,7 +8,11 @@ import {
 	IResolvedTaxPart,
 	IResolvedTaxRate,
 	IResolvedTaxRegime,
+	ITaxLineDraft,
 	TaxAmountType,
+	TaxCalculationLineResult,
+	TaxCalculationResult,
+	TaxDestination,
 	TaxDirection,
 	TaxPartType,
 	TaxRegimeMatchLevel
@@ -205,6 +209,52 @@ export interface ResolveTaxRateInput {
 
 /** The resolution's result, which is the chain the caller applies. */
 export type ResolvedTaxRate = IResolvedTaxRate;
+
+/** One line to compute tax for, as the schema declares it. */
+export interface TaxCalculationLineInput extends TaxDestination {
+	/** The caller's identifier for the line, echoed back so a result can be matched to its line. */
+	referenceId?: ID;
+	/** The category to tax the line in; the organization default applies when omitted. */
+	taxCategoryId: ID;
+	/** Net or gross amount of the line, as an exact decimal string. */
+	amount: DecimalString;
+	/** The quantity a fixed part is applied per unit of; one when omitted. */
+	quantity?: DecimalString;
+}
+
+/**
+ * What a caller supplies to compute the tax of a set of amounts.
+ *
+ * The destination members are the request-level defaults for the lines that state none, so this shape
+ * is the domain's own `TaxCalculationRequest` with the two members a caller cannot supply — the rule
+ * matcher, which belongs to whoever owns the evaluation context, and the resolved `now`, which is the
+ * `at` instant this input states instead.
+ */
+export interface TaxCalculationInput extends TaxDestination {
+	/** Currency the amounts are expressed in. */
+	currency: CurrencyCode;
+	/** The lines to compute. */
+	lines: TaxCalculationLineInput[];
+	/** The regime manually assigned to the party; the destination is matched when it is omitted. */
+	taxRegimeId?: ID;
+	/** Whether the party carries a usable tax registration number, as a regime may require. */
+	partyTaxRegistrationPresent?: boolean;
+	/** The direction of the document being taxed; a sale when it is omitted. */
+	documentDirection?: TaxDirection;
+	/** Tax a destination no rate matches at zero instead of refusing the calculation. */
+	allowUntaxedCatalog?: boolean;
+	/** The moment the rates' windows are evaluated at; the current time when omitted. */
+	at?: Date;
+}
+
+/** The tax of a set of lines, which is the breakdown the caller persists through the tax ledger. */
+export type TaxCalculation = TaxCalculationResult;
+
+/** The tax of one line. */
+export type TaxCalculationLine = TaxCalculationLineResult;
+
+/** One rate's contribution to one line, in the shape of a tax-line row. */
+export type TaxLineDraft = ITaxLineDraft;
 
 /** One part of a resolved rate, as it will be applied to a document. */
 export type ResolvedTaxPart = IResolvedTaxPart;

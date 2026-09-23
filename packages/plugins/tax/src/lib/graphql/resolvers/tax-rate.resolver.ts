@@ -6,7 +6,7 @@ import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard }
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
-import { IResolvedTaxRate, TaxWriteInput } from '../../tax.types';
+import { IResolvedTaxRate, TaxCalculationResult, TaxWriteInput } from '../../tax.types';
 import { TaxRatePart } from '../../tax-rate-part/tax-rate-part.entity';
 import { TaxRatePartService } from '../../tax-rate-part/tax-rate-part.service';
 import { TaxRate } from '../../tax-rate/tax-rate.entity';
@@ -19,6 +19,7 @@ import {
 	ResolveTaxRateInput,
 	SetTaxRatePartsInput,
 	SortInput,
+	TaxCalculationInput,
 	TaxRateConnection,
 	TaxRateFilterInput,
 	TaxRateSortField,
@@ -136,6 +137,53 @@ export class TaxRateResolver {
 	@Query('taxRateParts')
 	async taxRateParts(@Args('id') id: ID): Promise<TaxRatePart[]> {
 		return await this.taxRateService.listParts(id);
+	}
+
+	/**
+	 * Computes the tax of a set of amounts.
+	 *
+	 * The route it mirrors is `POST /tax-rates/calculate`, and the mapping is the route's own, member for
+	 * member: the lines lose everything the computation does not read — a line's own destination is kept
+	 * and its identity is not — and the request-level members are forwarded as they stand. The one member
+	 * that is not forwarded verbatim is `at`, which the route turns into the `now` instant the validity
+	 * windows are evaluated at; the field turns it into the same instant, so a caller that states one gets
+	 * the same chain from either surface.
+	 *
+	 * The permission is the route's, which is the view grant: nothing is written, so this field is a query
+	 * rather than a mutation, which is what its own type declares and what a generated client needs to be
+	 * told. `06-api-specification.md` §7.6 spells the route `/tax/calculate` and this controller serves it
+	 * at `/tax-rates/calculate`, and the spec's request admits a `cartId` this DTO has never carried — both
+	 * are reported by this wave rather than resolved from one side.
+	 *
+	 * @param input The amounts and the destination they are taxed at.
+	 * @returns The breakdown, which the caller persists through the tax ledger.
+	 */
+	@Query('calculateTax')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_VIEW))
+	async calculateTax(@Args('input') input: TaxCalculationInput): Promise<TaxCalculationResult> {
+		return await this.taxRateService.calculate({
+			currency: input.currency,
+			lines: (input.lines ?? []).map((line) => ({
+				referenceId: line.referenceId,
+				taxCategoryId: line.taxCategoryId,
+				amount: line.amount,
+				quantity: line.quantity,
+				regionId: line.regionId,
+				countryCode: line.countryCode,
+				provinceCode: line.provinceCode,
+				postalCode: line.postalCode
+			})),
+			taxRegimeId: input.taxRegimeId,
+			partyTaxRegistrationPresent: input.partyTaxRegistrationPresent,
+			documentDirection: input.documentDirection,
+			regionId: input.regionId,
+			countryCode: input.countryCode,
+			provinceCode: input.provinceCode,
+			postalCode: input.postalCode,
+			regionTaxInclusive: input.regionTaxInclusive,
+			allowUntaxedCatalog: input.allowUntaxedCatalog,
+			now: input.at ? new Date(input.at) : undefined
+		});
 	}
 
 	/**

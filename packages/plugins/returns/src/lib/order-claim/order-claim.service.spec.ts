@@ -250,6 +250,9 @@ const claimRow = (id: string, overrides: Row = {}): Row => ({
  * @param options.withRefund Whether the payment capability is registered.
  * @param options.refundReturns What the payment capability answers with, when it answers with something
  * other than the amount it was asked for.
+ * @param options.withTotals Whether the order capability that recomputes the order's derived columns is
+ * registered.
+ * @param options.totalsFail Whether that capability answers by throwing.
  * @param options.numberSeries Whether the organization has a `CLAIM` series.
  */
 function claimFixture(
@@ -259,6 +262,8 @@ function claimFixture(
 		exchanges?: Row[];
 		withRefund?: boolean;
 		refundReturns?: string;
+		withTotals?: boolean;
+		totalsFail?: boolean;
 		numberSeries?: boolean;
 	} = {}
 ) {
@@ -304,19 +309,37 @@ function claimFixture(
 						};
 					}
 			  };
+	/** Every recompute the service asked the order capability for. */
+	const totalsCalls: Row[] = [];
+	const orderTotals =
+		options.withTotals === false
+			? undefined
+			: {
+					recompute: async (orderId: string, reason: string) => {
+						totalsCalls.push({ orderId, reason });
+
+						if (options.totalsFail === true) {
+							throw new Error('the order capability is unreachable');
+						}
+
+						return { id: orderId };
+					}
+			  };
 	const service = new OrderClaimService(
 		typeOrmOrderClaimRepository as never,
 		{} as never,
 		repository(tables, 'order_exchange') as never,
 		lineService,
 		sequenceService as never,
-		refundGateway as never
+		refundGateway as never,
+		orderTotals as never
 	);
 
 	return {
 		service,
 		tables,
 		refundCalls,
+		totalsCalls,
 		sequenceCalls,
 		claim: (id: string) => tables.order_claim.find((row) => row.id === id),
 		liveLines: () => tables.order_claim_line.filter((row) => !row.deletedAt)
@@ -525,6 +548,129 @@ describe('OrderClaimService — a refund claim settles in money (doc 10 §12.1)'
 
 		expect(outcome.refund?.amount).toBe('20.000000');
 		expect(fixture.claim('claim-1')?.refundAmount).toBe('20.000000');
+	});
+});
+
+/**
+ * The order's derived columns, and the one claim move that changes them (ADR-26).
+ *
+ * ADR-26 names a claim among the moves that must recompute the order's totals, its `paymentStatus` and
+ * its `fulfillmentStatus` from the ledgers. Read out of the derivation, only one of this service's moves
+ * can: `computeTotals` and `derivePaymentStatus` are computed from the order's lines, its shipping
+ * methods, its credit lines, its adjustments, its tax lines and its `order_transaction` ledger, and the
+ * only claim move that appends to that ledger is a `REFUND` claim's approval. A `REPLACE` claim settles
+ * by shipping — it appends a reservation and an `ITEM_ADD` change, neither of which any of the three
+ * derivations reads — so wiring it would write an `order_summary` row saying nothing had changed.
+ */
+describe('OrderClaimService — the order columns a refund claim moves (ADR-26)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('asks for the recompute when the claim settles in money', async () => {
+		const fixture = claimFixture({
+			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }]
+		});
+
+		await fixture.service.approve('claim-1', '25.00');
+
+		expect(fixture.totalsCalls).toEqual([{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }]);
+	});
+
+	it('asks for nothing when the claim settles in goods', async () => {
+		// A replacement claim is resolved by shipping: the approval writes the claim's own status and the
+		// difference it priced, and appends no `order_transaction`. Nothing the order's totals, payment
+		// status or fulfilment status is derived from has moved.
+		const fixture = claimFixture({
+			claims: [
+				{
+					id: 'claim-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					orderId: ORDER,
+					number: 'CLM-000001',
+					type: OrderClaimType.REPLACE,
+					status: OrderClaimStatus.REQUESTED,
+					currency: 'USD',
+					refundAmount: '0.000000'
+				}
+			],
+			lines: [
+				{
+					id: 'line-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					claimId: 'claim-1',
+					variantId: VARIANT,
+					isAdditionalItem: true,
+					quantity: '1.000000'
+				}
+			]
+		});
+
+		await fixture.service.approve('claim-1', undefined, 'shipped as a replacement');
+
+		expect(fixture.claim('claim-1')).toMatchObject({ status: OrderClaimStatus.APPROVED });
+		expect(fixture.refundCalls).toEqual([]);
+		expect(fixture.totalsCalls).toEqual([]);
+	});
+
+	it('asks for nothing when the claim is rejected, cancelled or edited', async () => {
+		// The control: none of the three appends a ledger row, so none is owed a version-bumping write on
+		// the order.
+		const claim = (id: string, number: string) => ({
+			id,
+			tenantId: TENANT,
+			organizationId: ORG,
+			orderId: ORDER,
+			number,
+			type: OrderClaimType.REFUND,
+			status: OrderClaimStatus.REQUESTED,
+			currency: 'USD'
+		});
+		const fixture = claimFixture({
+			claims: [claim('rejected', 'CLM-1'), claim('cancelled', 'CLM-2'), claim('edited', 'CLM-3')],
+			lines: []
+		});
+
+		await fixture.service.reject('rejected', 'outside the policy');
+		await fixture.service.cancel('cancelled', 'customer withdrew it');
+		await fixture.service.update('edited', { note: 'a corrected note' } as never);
+
+		expect(fixture.totalsCalls).toEqual([]);
+	});
+
+	it('does not answer a settled claim as a failure when the recompute fails', async () => {
+		// The money has moved by the time the recompute runs, so its failure is not reported as the
+		// refund's — the reasoning is stated once, on `OrderReturnService.refreshOrderTotals`.
+		const fixture = claimFixture({
+			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }],
+			totalsFail: true
+		});
+
+		const outcome = await fixture.service.approve('claim-1', '25.00');
+
+		expect(outcome.refund).toMatchObject({ refundId: 'refund-1', amount: '25.000000' });
+		expect(outcome.claim).toMatchObject({ status: OrderClaimStatus.CLOSED });
+		expect(fixture.totalsCalls).toEqual([{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }]);
+	});
+
+	it('settles in money when no order capability is registered', async () => {
+		// The port is optional, like the one beside it: a tenant without the order plugin still settles a
+		// claim, and the order's own columns are the order package's to bring up to date.
+		const fixture = claimFixture({
+			lines: [{ id: 'line-1', tenantId: TENANT, organizationId: ORG, claimId: 'claim-1', orderLineId: ORDER_LINE }],
+			withTotals: false
+		});
+
+		await expect(fixture.service.approve('claim-1', '25.00')).resolves.toMatchObject({
+			claim: { status: OrderClaimStatus.CLOSED }
+		});
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.totalsCalls).toEqual([]);
 	});
 });
 

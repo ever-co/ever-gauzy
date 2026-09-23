@@ -586,6 +586,94 @@ describe('OrderExchangeService — pricing the difference (doc 10 §12.5)', () =
 	});
 });
 
+/**
+ * The exchange's own answer to ADR-26, asserted rather than argued in a comment.
+ *
+ * ADR-26 names an exchange among the moves that must recompute the order's totals, its `paymentStatus`
+ * and its `fulfillmentStatus` from the ledgers, and **this service is the one writer of the five that
+ * asks for none**. The reading that decides it is the derivations': `computeTotals` reads the order's
+ * lines, its shipping methods, its credit lines, its adjustments, its tax lines and its
+ * `order_transaction` ledger; `derivePaymentStatus` reads the order's status, that snapshot and the same
+ * ledger; `deriveFulfillmentStatus` reads the order's status and five sums over its lines. Every method
+ * of this service writes the exchange's own row and its own lines — it injects no refund gateway, no
+ * stock ledger and no reservation port, so it cannot append a ledger row even by accident — and
+ * `order_exchange.returnId` is a link rather than a counter.
+ *
+ * Doc 10 §12.5's `settle-difference` step, which *would* move a ledger and would owe a recompute, is not
+ * implemented here: the difference is priced onto the row and left there. That is what these two tests
+ * pin, so the day the step lands, the test that has to change is this one.
+ */
+describe('OrderExchangeService — resolving writes nothing the order derives from (ADR-26)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('prices the difference onto its own row and appends nothing beside it', async () => {
+		// A downgrade, so the customer is owed: the case §12.5 would settle with a refund if the step
+		// existed. It is priced, signed, and left — no refund is raised, no second document is numbered,
+		// and no line of either half is written.
+		const fixture = pricedExchange({
+			exchange: { status: OrderExchangeStatus.REQUESTED },
+			// The downgrade the pricing suite already pins: a replacement the fulfilled map cannot price is
+			// valued at the line's own snapshotted price, so the customer is owed the difference.
+			outbound: [
+				outboundRow('out-1', {
+					orderLineId: SECOND_ORDER_LINE,
+					variantId: SECOND_VARIANT,
+					quantity: '1.000000',
+					unitPrice: '4.500000'
+				})
+			],
+			inbound: [inboundRow('in-1', { orderLineId: ORDER_LINE, quantity: '1.000000' })]
+		});
+		const sequencesBefore = [...fixture.sequenceCalls];
+		const outboundBefore = fixture.tables.order_exchange_line.length;
+		const inboundBefore = fixture.tables.order_return_line.length;
+
+		const approved = await fixture.service.approve('exchange-1');
+
+		expect(approved).toMatchObject({ status: OrderExchangeStatus.APPROVED, differenceDue: '-15.490000' });
+		expect(fixture.tables.order_exchange_line).toHaveLength(outboundBefore);
+		expect(fixture.tables.order_return_line).toHaveLength(inboundBefore);
+		expect(fixture.sequenceCalls).toEqual(sequencesBefore);
+	});
+
+	it('writes only its own row on the three transitions that end or withdraw it', async () => {
+		// The other three candidate call sites. Each writes a status on the exchange and nothing else, which
+		// is the whole of the answer: there is no input of any derivation for a recompute to move.
+		const fixture = exchangeFixture({
+			exchanges: [
+				exchangeRow('rejected', { status: OrderExchangeStatus.REQUESTED }),
+				exchangeRow('cancelled', { status: OrderExchangeStatus.REQUESTED }),
+				exchangeRow('closed', { returnId: RETURN, status: OrderExchangeStatus.APPROVED })
+			]
+		});
+		const outboundBefore = fixture.tables.order_exchange_line.length;
+		const sequencesBefore = [...fixture.sequenceCalls];
+
+		await expect(fixture.service.reject('rejected', 'out of policy')).resolves.toMatchObject({
+			status: OrderExchangeStatus.REJECTED
+		});
+		await expect(fixture.service.cancel('cancelled', 'customer withdrew')).resolves.toMatchObject({
+			status: OrderExchangeStatus.CANCELED
+		});
+		await expect(fixture.service.close('closed')).resolves.toMatchObject({
+			status: OrderExchangeStatus.CLOSED
+		});
+
+		expect(fixture.tables.order_exchange_line).toHaveLength(outboundBefore);
+		expect(fixture.sequenceCalls).toEqual(sequencesBefore);
+		expect(fixture.tables.order_exchange.map((row) => row.status)).toEqual([
+			OrderExchangeStatus.REJECTED,
+			OrderExchangeStatus.CANCELED,
+			OrderExchangeStatus.CLOSED
+		]);
+	});
+});
+
 describe('OrderExchangeService — approval requires both halves (doc 10 §12.1, §12.2)', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);

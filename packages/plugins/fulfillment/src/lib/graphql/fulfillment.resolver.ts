@@ -398,8 +398,18 @@ export class FulfillmentResolver {
 	 * `@Idempotent` and no `@Versioned`, and a scope invented here would replay a GraphQL retry that the
 	 * REST route lets through — a difference in behaviour rather than in transport.
 	 *
+	 * **What the boolean says, and what it does not.** The route answers the ORM's `DeleteResult`; this
+	 * field answers a boolean, because that is what the two delete fields of this document already answer
+	 * and a third shape would be a second vocabulary for one act. `Boolean(result)` is `true` whenever the
+	 * delete statement ran without raising, **including when it matched no row at all** —
+	 * `TenantAwareCrudService.delete` checks no existence, so an identifier that was never there answers
+	 * `true` here where the route's own body would carry `affected: 0`. That divergence is recorded rather
+	 * than settled: answering `result.affected > 0` would close it, and would have to be made on
+	 * `deleteShippingProfile` and `deleteShippingOption` in the same change, or this domain would hold two
+	 * conventions for one answer.
+	 *
 	 * @param id The shipment to remove.
-	 * @returns True when the shipment was removed, which is what the route's own `DeleteResult` reports.
+	 * @returns True when the removal statement ran, which is not the same as a row having matched.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
 	@Mutation(() => Boolean, { name: 'deleteFulfillment' })
@@ -469,8 +479,18 @@ export class FulfillmentResolver {
 	 * `@Idempotent` and no `@Versioned`, and `fulfillment_line` carries no version column for an
 	 * expectation to be compared against.
 	 *
+	 * **What the boolean says, and what it does not.** The route answers the ORM's `DeleteResult`; this
+	 * field answers a boolean, because that is what the two delete fields of this document already answer
+	 * and a third shape would be a second vocabulary for one act. `Boolean(result)` is `true` whenever the
+	 * delete statement ran without raising, **including when it matched no row at all** —
+	 * `TenantAwareCrudService.delete` checks no existence, so an identifier that was never there answers
+	 * `true` here where the route's own body would carry `affected: 0`. That divergence is recorded rather
+	 * than settled: answering `result.affected > 0` would close it, and would have to be made on
+	 * `deleteShippingProfile` and `deleteShippingOption` in the same change, or this domain would hold two
+	 * conventions for one answer.
+	 *
 	 * @param id The line to remove.
-	 * @returns True when the line was removed, which is what the route's own `DeleteResult` reports.
+	 * @returns True when the removal statement ran, which is not the same as a row having matched.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
 	@Mutation(() => Boolean, { name: 'deleteFulfillmentLine' })

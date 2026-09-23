@@ -66,19 +66,28 @@
  * retry that create without a key and a GraphQL caller may not. Both are asserted below as measurements, so
  * whoever settles them changes both surfaces together.
  *
- * **A finding recorded here and asserted nowhere, because it belongs to another package.** `16` ADR-26
+ * **A finding recorded here that this package has since acted on, and what it did not close.** `16` ADR-26
  * requires that `paymentStatus` and `fulfillmentStatus` "are recomputed by a single function from the
  * ledgers every time a transaction, fulfillment, return, claim or exchange changes, inside the same
- * transaction as the change". The function exists — `OrderTotalsService.recompute`
+ * transaction as the change". The function existed and was exported — `OrderTotalsService.recompute`
  * (`packages/plugins/order/src/lib/order-totals/order-totals.service.ts`), which derives the status through
  * `deriveFulfillmentStatus` and writes it — and `OrderModule` exports it, and `FulfillmentModule` already
- * imports `OrderModule`. What does not exist is the call: `recompute` is reached only from `OrderService`,
- * `OrderChangeService`, `OrderController`, `OrderResolver` and `SubscriptionOrderService`, all inside the
- * order package; `FulfillmentService` does not inject it; and nothing anywhere subscribes to the
- * `fulfillment.*` events `FulfillmentService` appends — those names appear only in this package's own
- * `fulfillment.types.ts` and its service spec. The reason string ADR-26 names for this write,
- * `FULFILLMENT_COMMITTED`, therefore has no production caller. A suite in this package cannot assert it
- * without reaching into the order package's service, so it is recorded for the owner instead.
+ * imported `OrderModule`; what did not exist was the call, since `recompute` was reached only from
+ * `OrderService`, `OrderChangeService`, `OrderController`, `OrderResolver` and `SubscriptionOrderService`,
+ * all inside the order package. **The call is delivered**: `FulfillmentService` now injects the single
+ * function and calls it after the two transitions that move what the derivation reads — `create` for an
+ * outbound shipment and `cancel` — under `FULFILLMENT_COMMITTED`, the reason `recompute` documents for
+ * this write and which had no production caller before. The wiring and the reasoning are asserted in
+ * `../fulfillment/fulfillment.service.spec.ts` rather than here, because which transitions are worth
+ * re-deriving is a fact about the service and not about a root field.
+ *
+ * Two halves of ADR-26 remain open and are recorded rather than implied. The re-derivation is a **second
+ * write, not part of the first**: no transaction exists on this path to run it inside — neither the
+ * service nor the concurrency kernel opens one, and `commitVersionedUpdate` takes a `CrudService` rather
+ * than a manager — so closing that clause is a change to `packages/core` and to the order package. And
+ * the safety net ADR-26 names beside it is missing too: **no scheduled job anywhere recomputes the
+ * materialised statuses**, the order package registers none, and nothing outside that package calls
+ * `recompute`, so a re-derivation that failed leaves a `fulfillmentStatus` nothing will correct.
  *
  * **Nothing is doubled here but the services.** The two controllers are the real ones, the resolver is the
  * real one with its own decorators and signature, `CrudController` behind them is the kernel's own, and the

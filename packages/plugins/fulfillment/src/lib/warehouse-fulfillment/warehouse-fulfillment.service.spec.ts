@@ -379,7 +379,11 @@ function fixture(
 		// The outbox the service appends its state changes to, stubbed for the same reason the return
 		// shipment suite stubs it: the constructor gained it when the lifecycle started announcing
 		// itself, and a double that stops matching the constructor fails to compile.
-		{ append: jest.fn() } as never
+		{ append: jest.fn() } as never,
+		// The order aggregate's re-derivation, added for the same reason: this suite drives the picking
+		// reads and the short-pick write, neither of which is one of the two transitions that move what
+		// `order.fulfillmentStatus` is derived from.
+		{ recompute: jest.fn().mockResolvedValue({}) } as never
 	);
 	const service = new WarehouseFulfillmentService(
 		fulfillmentService,

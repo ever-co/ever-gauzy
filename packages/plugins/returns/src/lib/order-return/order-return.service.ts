@@ -4,15 +4,18 @@ import {
 	IOrderReturnLineInput,
 	IOrderReturnReceiptOutcome,
 	IOrderReturnReceiptInput,
+	IOrderTotalsPort,
 	IRefundGatewayPort,
 	IRefundResult,
 	IReturnShipmentPort,
 	IReturnShipmentResult,
 	IStockLedgerPort,
 	OrderReturnStatus,
+	RETURNS_ORDER_TOTALS,
 	RETURNS_REFUND_GATEWAY,
 	RETURNS_SHIPMENT_GATEWAY,
 	RETURNS_STOCK_LEDGER,
+	RETURNS_TOTALS_REASON,
 	StockMovementKind
 } from '../returns.types';
 import { fromQuantityUnits, subtractQuantities, sumQuantities, toQuantityUnits } from '../returns.quantity';
@@ -178,7 +181,10 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		private readonly refundGateway?: IRefundGatewayPort,
 		@Optional()
 		@Inject(RETURNS_SHIPMENT_GATEWAY)
-		private readonly shipmentGateway?: IReturnShipmentPort
+		private readonly shipmentGateway?: IReturnShipmentPort,
+		@Optional()
+		@Inject(RETURNS_ORDER_TOTALS)
+		private readonly orderTotals?: IOrderTotalsPort
 	) {
 		super(typeOrmOrderReturnRepository, mikroOrmOrderReturnRepository);
 	}
@@ -555,7 +561,52 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			data: { refundedAmount: result.amount, refundId: result.refundId ?? null }
 		});
 
+		// The refund is on the order's ledger now, and the order's totals, its payment status and its
+		// summary row are all derived from that ledger — so they are refreshed before this returns.
+		await this.refreshOrderTotals(orderReturn.orderId);
+
 		return { refund: result, version };
+	}
+
+	/**
+	 * Refreshes the order columns the refund just moved.
+	 *
+	 * A refund appends an `order_transaction` and moves the payment's refunded total with it, and every
+	 * derived figure on the order — `paidTotal`, `refundedTotal`, `outstandingTotal`, `paymentStatus` and
+	 * the `order_summary` row that describes the version — is computed from that ledger by the one
+	 * function the order package owns. ADR-26 requires the move that changed the ledger to recompute
+	 * them, and this is that call: without it the order keeps answering the totals it held before the
+	 * money went back, which is a customer shown as owing an amount that was already returned to them.
+	 *
+	 * **It is the same transaction only in intention, and the gap is stated rather than hidden.** The
+	 * order package's `recompute` accepts no entity manager and writes through its own injected
+	 * repositories, so it cannot join a transaction opened here — and this package opens none either:
+	 * every write in it is its own auto-committed conditional update, and the gateway call that recorded
+	 * the refund committed before this line runs. What would close it is an optional manager threaded
+	 * through `recompute`, its summary write and its outbox append; that is a change to
+	 * `packages/plugins/order/`, which this wave must not make. Until then the derived columns are
+	 * refreshed immediately after the money rather than with it, and the window between the two is
+	 * exactly the drift the daily `order-status-reconcile` job of doc 10 §5.4 re-derives and reports.
+	 *
+	 * **A failure here is deliberately not reported to the caller.** The refund has already been
+	 * recorded and the provider has already been asked for the money by the time this runs, so an
+	 * exception would answer a refund that happened as a refund that did not — and the refund route
+	 * carries no retry key, so the caller's retry would issue it a second time. Stale derived columns
+	 * that the reconciliation job finds are the smaller error, and they are the one this method chooses.
+	 *
+	 * @param orderId The order whose ledger moved.
+	 */
+	private async refreshOrderTotals(orderId?: ID): Promise<void> {
+		if (!this.orderTotals || !orderId) {
+			return;
+		}
+
+		try {
+			await this.orderTotals.recompute(orderId, RETURNS_TOTALS_REASON);
+		} catch {
+			// Argued above: the money has moved, so a failure to refresh what describes it is not answered
+			// as a failure of the move. The order package's reconciliation job re-derives it.
+		}
 	}
 
 	/**

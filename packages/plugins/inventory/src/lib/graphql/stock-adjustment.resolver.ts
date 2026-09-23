@@ -130,4 +130,27 @@ export class StockAdjustmentResolver {
 
 		return await this.service.apply(id).then((result) => ({ ...result.adjustment, version: result.version }));
 	}
+
+	/**
+	 * Cancels a drafted correction, so that it can never be applied.
+	 *
+	 * The route it mirrors is `POST /stock-adjustments/:id/cancel`, DTO-less on both sides: the handler
+	 * takes the identifier and nothing else, and so does this field, because there is nothing else to
+	 * state about an instruction that is being withdrawn rather than performed.
+	 *
+	 * The permission is the route's own — `STOCK_EDIT` — and not the class-level `STOCK_VIEW`: a cancel
+	 * is the other end of the apply beside it, and a surface that let a reader of corrections close one
+	 * would be a second authorisation rule for one row. The route declares no retry scope and no version
+	 * expectation — a cancel is idempotent by the row's own status, which refuses the second one — so the
+	 * field declares neither, which is what keeps a keyless GraphQL retry answering as a keyless REST
+	 * retry does.
+	 *
+	 * @param id The adjustment to cancel.
+	 * @returns The adjustment, closed without a ledger row.
+	 */
+	@Mutation('cancelStockAdjustment')
+	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	async cancelStockAdjustment(@Args('id') id: string): Promise<any> {
+		return await this.service.cancel(id);
+	}
 }

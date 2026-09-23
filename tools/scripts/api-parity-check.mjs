@@ -84,6 +84,8 @@ const GRAPHQL_ONLY = {
 	resolvePrice: 'The price that applies to a variant in a context, which is a computation over price rows.',
 	resolveTaxRate: 'The tax rate that applies in a context, a computation over rate rows.',
 	resolveTaxRegime: 'The regime that applies in a context, a computation over regime rows.',
+	calculateTax:
+		'What tax applies to a set of lines, a computation over rate rows that stores nothing; REST reaches the same answer through the rate resource’s own calculate sub-route, which is why no controller declares a resource named for it.',
 	resolveVendorProductTerm: 'The terms that apply to a vendor’s product, a computation over term rows.',
 	taxRateParts: 'The parts of a rate, reached over GraphQL through the rate.',
 	taxRegimeRates: 'The rates of a regime, reached over GraphQL through the regime.',

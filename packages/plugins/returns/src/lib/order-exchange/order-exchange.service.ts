@@ -32,6 +32,14 @@ const DECIDABLE_STATUSES: OrderExchangeStatus[] = [OrderExchangeStatus.OPEN, Ord
  *
  * An exchange needs both halves: outbound lines to ship and a return to receive. Approving one
  * without the other is refused, because a one-sided exchange is either a sale or a return.
+ *
+ * **ADR-26 names an exchange among the moves that must recompute the order's derived columns, and this
+ * service is the one writer of the five that does not call for one.** The reason is stated on `approve`
+ * beside the resolution it is about, and it is this: nothing this class writes is an input to any of the
+ * three derivations — it has no refund gateway, no stock ledger and no reservation port, and every
+ * method writes the exchange's own row and its own lines. The recompute is wired where the ledger
+ * actually moves, in `OrderReturnService` and `OrderClaimService`, and an exchange's money reaches the
+ * ledger through its inbound return, which is that first service's flow.
  */
 @Injectable()
 export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> {
@@ -116,6 +124,25 @@ export class OrderExchangeService extends TenantAwareCrudService<OrderExchange> 
 	 * frozen. Re-reserving the replacement and adjusting the payment collection are the durable
 	 * operation's work, which is why `settleDifference` is recorded on the exchange rather than
 	 * recomputed: the exchange is the record of what was quoted.
+	 *
+	 * **This is the exchange's resolution, so it is where a reader asks why no order recompute is owed
+	 * here — and the answer is that nothing this service can write moves one.** `OrderTotalsService`
+	 * derives three things: `computeTotals` from the order's lines, its shipping methods, its credit
+	 * lines, its adjustments, its tax lines and its `order_transaction` ledger; `derivePaymentStatus`
+	 * from the order's status, that snapshot and the same ledger; and `deriveFulfillmentStatus` from the
+	 * order's status and five sums over its lines. Every method below writes the exchange's **own** row
+	 * and its own lines, and nothing else — this service injects no refund gateway, no stock ledger and
+	 * no reservation port, so it has no way to append a ledger row even by accident, and
+	 * `order_exchange.returnId` is a link rather than a counter. Doc 10 §12.5's `settle-difference` step
+	 * — adjust the collection, authorise the delta, refund `abs(differenceDue)` when the customer is owed
+	 * — is not implemented in this package; the difference is priced onto the row and left there. **When
+	 * that step is implemented, it belongs here and it owes a recompute**, because it would be the
+	 * exchange's first write to a ledger the derivation reads.
+	 *
+	 * The money that *can* move for an exchange today moves through its inbound half: the linked return's
+	 * receipt and refund run on `OrderReturnService`, which is where the recompute is wired. So an
+	 * exchange's ledger is covered by the return's writer rather than by a second call site here — one
+	 * refund, one recompute, whichever of the two flows raised it.
 	 *
 	 * @param id The exchange to approve.
 	 * @param note An operator note.

@@ -258,6 +258,25 @@ export interface IUpdatePricePreferenceInput {
 	isTaxInclusive: boolean;
 }
 
+/**
+ * The scope a preference is created for.
+ *
+ * `attribute` and `value` together are the row's identity, and the service refuses a second live row
+ * for the same pair — so this input states the identity and the answer, and nothing else.
+ */
+export interface ICreatePricePreferenceInput {
+	attribute: PricePreferenceAttribute;
+	value: string;
+	isTaxInclusive?: boolean;
+}
+
+/** What deleting a preference did. */
+export interface IDeletePricePreferencePayload {
+	id: ID;
+	deleted: boolean;
+	hard: boolean;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Exchange rates

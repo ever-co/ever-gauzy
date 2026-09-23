@@ -457,6 +457,13 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"The outcome of deleting a subscription outright."
+	type DeleteSubscriptionPayload {
+		"The subscription that was removed; null when the removal was refused."
+		id: ID
+		userErrors: [UserError!]!
+	}
+
 	"The outcome of a mutation on a recurring line."
 	type SubscriptionItemPayload {
 		subscriptionItem: SubscriptionItem
@@ -583,6 +590,16 @@ export const schemaExtensions = gql`
 		): SubscriptionPlanChangePayload!
 		"Removes a recurring line mid-cycle, settling the remainder of the period."
 		removeSubscriptionItem(id: ID!, variantId: ID!): SubscriptionPlanChangePayload!
+		"""
+		Deletes a subscription outright.
+
+		The row leaves the database rather than being retired, which is why every read that has to keep
+		answering for what was sold reaches the recoverable pair below instead. It is mirrored because
+		\`DELETE /subscriptions/:id\` serves it and §3.1 requires one mutation per REST write route including
+		the routes the CRUD base contributes; a caller that reaches it over REST must be able to reach it
+		over GraphQL, and the answer says which of the two removals happened.
+		"""
+		deleteSubscription(id: ID!): DeleteSubscriptionPayload!
 		"""
 		Retires a subscription recoverably.
 

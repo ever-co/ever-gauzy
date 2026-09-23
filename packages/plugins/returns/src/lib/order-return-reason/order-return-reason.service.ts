@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindManyOptions } from 'typeorm';
+import { DeleteResult, FindManyOptions } from 'typeorm';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { OrderReturn } from '../order-return/order-return.entity';
+import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
 import { OrderReturnReason } from './order-return-reason.entity';
 import { MikroOrmOrderReturnReasonRepository } from './repository/mikro-orm-order-return-reason.repository';
 import { TypeOrmOrderReturnReasonRepository } from './repository/type-orm-order-return-reason.repository';
@@ -105,6 +107,76 @@ export class OrderReturnReasonService extends TenantAwareCrudService<OrderReturn
 		await super.update(id, { isActive: false } as any);
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Removes a reason that has never explained anything.
+	 *
+	 * The destructive removal is refused while a return or a return line still names the reason, because
+	 * the statement would otherwise **succeed and destroy the reporting key**: `order_return.reasonId`
+	 * and `order_return_line.reasonId` are both `SET NULL`, so nothing in the database stops the delete —
+	 * it nulls the reason on every return filed under the code and leaves a report that groups returns by
+	 * reason code with a column of blanks. That is the one outcome the governed list exists to prevent,
+	 * and it is why `DELETE /order-return-reasons/:id` deactivates instead of removing.
+	 *
+	 * The refusal is also what makes the route's own summary true rather than aspirational — the handler
+	 * describes itself as removing "a reason that was never used", and until this guard existed nothing
+	 * on either surface checked that it was.
+	 *
+	 * Retired returns count as users. A soft-deleted return can be restored, and the reason it was filed
+	 * under has to still be there when it is: a guard that counted only the live rows would let the
+	 * destructive route succeed and then hand `recoverOrderReturn` a return whose reason had vanished.
+	 *
+	 * @param id The reason to remove.
+	 * @returns The delete result.
+	 * @throws BadRequestException when the reason is in use, naming the counts and the act that retires
+	 * it instead.
+	 */
+	public async delete(id: ID): Promise<DeleteResult> {
+		const reason = await this.findOneScoped(id);
+		const usage = await this.countUsage(reason);
+
+		if (usage.returns || usage.lines) {
+			throw new BadRequestException({
+				message:
+					`RETURN_REASON_IN_USE: "${reason.code}" still explains ${usage.returns} return(s) and ` +
+					`${usage.lines} return line(s), so removing it would leave them unexplainable. Deactivate ` +
+					'it instead, which keeps the row for every report that groups by its code.',
+				code: 'RETURN_REASON_IN_USE',
+				details: { reasonId: id, code: reason.code, returns: usage.returns, lines: usage.lines }
+			});
+		}
+
+		return await super.delete(id);
+	}
+
+	/**
+	 * How many rows still name a reason.
+	 *
+	 * Both columns that carry a reason are counted, because they are independent: a return is filed under
+	 * the header's reason while its individual lines may carry their own, so a reason used only at line
+	 * level would otherwise be removable by a guard that read the header alone.
+	 *
+	 * The count runs through the manager the repository already holds rather than through a second
+	 * injection, and it is scoped to the reason's own tenant and organization: a count that spanned
+	 * tenants would refuse a removal because some other tenant's return happens to carry the same
+	 * identifier, which no identifier can, and would then be a guard firing on nothing.
+	 *
+	 * @param reason The reason.
+	 * @returns The two counts, each including soft-deleted rows.
+	 */
+	private async countUsage(reason: OrderReturnReason): Promise<{ returns: number; lines: number }> {
+		const scope = {
+			reasonId: reason.id,
+			...(reason.tenantId ? { tenantId: reason.tenantId } : {}),
+			...(reason.organizationId ? { organizationId: reason.organizationId } : {})
+		};
+		const manager = this.typeOrmOrderReturnReasonRepository.manager;
+
+		return {
+			returns: await manager.count(OrderReturn, { where: scope, withDeleted: true }),
+			lines: await manager.count(OrderReturnLine, { where: scope, withDeleted: true })
+		};
 	}
 
 	/**

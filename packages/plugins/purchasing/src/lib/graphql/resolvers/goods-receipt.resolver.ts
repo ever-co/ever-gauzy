@@ -4,7 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
-import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload } from '../wire';
+import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { GoodsReceiptStatus, IGoodsReceipt, IGoodsReceiptLine, IGoodsReceiptLineInput } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
@@ -168,6 +168,38 @@ export class GoodsReceiptResolver {
 			return toGoodsReceiptPayload(await this.goodsReceiptService.reverse(id, reason));
 		} catch (error) {
 			return toFailedGoodsReceiptPayload(error);
+		}
+	}
+
+	/**
+	 * Deletes a receipt outright.
+	 *
+	 * The route it mirrors is `DELETE /goods-receipts/:id`, which the controller declares and overrides
+	 * only to state the permission the base leaves unstated, and the field reaches the same service method
+	 * the route reaches: `super.delete(id)`, the CRUD base's own `delete`, which removes the row. The
+	 * grant is the route's own — `GOODS_RECEIPTS_CREATE`, the grant recording a delivery carries — and not
+	 * the class-level read grant a controller that stated nothing would have left in front of it.
+	 *
+	 * **This is a hard delete of a document the ledger explains.** The movements the receipt wrote stay in
+	 * `stock_movement` and the order's received counters stay where the receipt left them, so the removal
+	 * leaves rows nothing points at — which is why `closeGoodsReceipt` above reverses a delivery rather
+	 * than removing it, and why `softDeleteGoodsReceipt` below is the withdrawal a caller reaches for. The
+	 * field is delivered because §3.1 requires one mutation per REST write route and a capability one
+	 * protocol serves is a capability both must; the removal it performs is flagged by this wave, and the
+	 * answer carries the identity because a removed row is not there to answer with.
+	 *
+	 * @param id The receipt to delete.
+	 * @returns The payload, carrying the identity that was removed.
+	 */
+	@Mutation('deleteGoodsReceipt')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async deleteGoodsReceipt(@Args('id') id: ID) {
+		try {
+			await this.goodsReceiptService.delete(id);
+
+			return { id, userErrors: [] };
+		} catch (error) {
+			return { id: null, userErrors: [toUserError(error)] };
 		}
 	}
 

@@ -110,8 +110,12 @@ export const schemaExtensions = gql`
 		recoverProductPrice(id: ID!): ProductPrice!
 		"Write a price matrix, reporting the rows that were refused."
 		bulkUpsertProductPrices(input: BulkUpsertProductPricesInput!): BulkUpsertProductPricesPayload!
+		"Create the preference a scope answers with, for a scope that has none."
+		createPricePreference(input: CreatePricePreferenceInput!): PricePreference!
 		"Change the answer a scope gives about tax-inclusive presentation."
 		updatePricePreference(input: UpdatePricePreferenceInput!): PricePreference!
+		"Delete a preference, softly unless \`force\` is set."
+		deletePricePreference(id: ID!, force: Boolean): DeletePricePreferencePayload!
 		"Retire a preference recoverably, so that its scope falls back to the next answer."
 		softDeletePricePreference(id: ID!): PricePreference!
 		"Restore a soft-deleted preference."
@@ -426,6 +430,14 @@ export const schemaExtensions = gql`
 		hard: Boolean!
 	}
 
+	"What deleting a preference did."
+	type DeletePricePreferencePayload {
+		id: ID!
+		deleted: Boolean!
+		"True when the row was removed outright, false when it was soft-deleted."
+		hard: Boolean!
+	}
+
 	"What a bulk price upsert did, row by row."
 	type BulkUpsertProductPricesPayload {
 		succeeded: [ProductPrice!]!
@@ -683,6 +695,21 @@ export const schemaExtensions = gql`
 	input UpdatePricePreferenceInput {
 		id: ID!
 		isTaxInclusive: Boolean!
+	}
+
+	"""
+	The scope a preference is created for, and the answer it gives.
+
+	The scope is the row's identity rather than a field it can be repointed at: the table carries one
+	live row per \`(organizationId, attribute, value)\`, which is why the members here are exactly the
+	ones the create route accepts and why the update input beside this one can change only the answer.
+	"""
+	input CreatePricePreferenceInput {
+		"Which kind of scope the preference answers for: a currency, a region or a channel."
+		attribute: PricePreferenceAttribute!
+		"An ISO currency code, a region id or code, or a channel code."
+		value: String!
+		isTaxInclusive: Boolean
 	}
 
 	"The fields an exchange rate is created with."

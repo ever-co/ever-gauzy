@@ -543,6 +543,20 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"The outcome of deleting a goods receipt."
+	type DeleteGoodsReceiptPayload {
+		"The receipt that was removed; null when the removal was refused."
+		id: ID
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of deleting a goods receipt line."
+	type DeleteGoodsReceiptLinePayload {
+		"The line that was removed; null when the removal was refused."
+		id: ID
+		userErrors: [UserError!]!
+	}
+
 	extend type Query {
 		"Purchase orders of the caller's organization."
 		purchaseOrders(filter: PurchaseOrderFilter, page: PageInput, withDeleted: Boolean): PurchaseOrderConnection!
@@ -605,6 +619,16 @@ export const schemaExtensions = gql`
 		"Ends a receipt: its quantities are taken back out of stock and off the order's lines."
 		closeGoodsReceipt(id: ID!, reason: String): GoodsReceiptPayload!
 		"""
+		Deletes a goods receipt outright.
+
+		The row leaves the database rather than being withdrawn, so the movements it wrote stay in the
+		ledger with nothing left to explain them — which is why the withdrawal below and the reversal above
+		are the removals a caller reaches for. It is mirrored because \`DELETE /goods-receipts/:id\` serves
+		it and §3.1 requires one mutation per REST write route; the answer carries the identity, because a
+		removed row is not there to answer with.
+		"""
+		deleteGoodsReceipt(id: ID!): DeleteGoodsReceiptPayload!
+		"""
 		Withdraws a goods receipt without removing the row, so the recovery below can read it back. The
 		receipt controller serves \`DELETE /goods-receipts/:id/soft\` and overrides it only to state a
 		permission the inherited declaration leaves unstated — \`GOODS_RECEIPTS_CREATE\`, the grant
@@ -624,6 +648,16 @@ export const schemaExtensions = gql`
 		softDeleteGoodsReceiptLine(id: ID!): GoodsReceiptLine!
 		"Puts a withdrawn goods receipt line back."
 		recoverGoodsReceiptLine(id: ID!): GoodsReceiptLine!
+		"""
+		Deletes a goods receipt line outright.
+
+		The row leaves the database rather than being withdrawn, so the movement the line was written from
+		stays in the ledger with nothing left to explain it — the withdrawal below is the removal a caller
+		reaches for. It is mirrored because \`DELETE /goods-receipt-lines/:id\` serves it and §3.1 requires
+		one mutation per REST write route; the answer carries the identity, because a removed row is not
+		there to answer with.
+		"""
+		deleteGoodsReceiptLine(id: ID!): DeleteGoodsReceiptLinePayload!
 		"Writes a term, which is the standing agreement a purchase line is priced from."
 		createVendorProductTerm(input: VendorProductTermInput!): VendorProductTermPayload!
 		"Amends a term."

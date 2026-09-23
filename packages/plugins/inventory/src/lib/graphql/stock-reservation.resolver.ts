@@ -7,7 +7,7 @@
  * the types and this class binds them to the service.
  */
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { BadRequestException, UseGuards } from '@nestjs/common';
 import { map } from 'rxjs/operators';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
@@ -147,6 +147,45 @@ export class StockReservationResolver {
 	@Idempotent({ scope: 'stock.reservation.consume', required: false, resourceType: 'stock-reservation' })
 	async consumeStockReservation(@Args('id') id: string): Promise<any> {
 		return await this.service.consume(id);
+	}
+
+	/**
+	 * Pushes the expiry of every active hold of a document.
+	 *
+	 * The route it mirrors is `POST /stock-reservations/:id/extend`, and the field mirrors the argument
+	 * order the route actually calls with rather than the order its path suggests: the service takes the
+	 * *kind* before the *document*, and the path member is the document. The kind is a narrowing — a
+	 * caller that states none is answered for every active hold of that document — which is what the
+	 * route's own summary says it does and what it could not do while it was passing the document id as
+	 * the kind as well.
+	 *
+	 * The instant is validated here exactly as the route validates it, with the same refusal code: an
+	 * unparseable value written into `expiresAt` makes a hold the expiry sweep can never select and that
+	 * no comparison can order, so both surfaces refuse it rather than storing it. The route declares no
+	 * retry scope and no version expectation, and the field declares neither; the service's own clamping
+	 * of the instant is the service's, and is reached identically from both sides.
+	 *
+	 * @param id The document whose holds are pushed out.
+	 * @param expiresAt The new expiry, as an ISO-8601 instant.
+	 * @param referenceType The kind of document, when the caller narrows it to one.
+	 * @returns How many holds were extended.
+	 */
+	@Mutation('extendStockReservation')
+	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
+	async extendStockReservation(
+		@Args('id') id: string,
+		@Args('expiresAt') expiresAt: string,
+		@Args('referenceType') referenceType?: StockReservationReferenceType
+	): Promise<number> {
+		const instant = new Date(expiresAt);
+
+		if (!expiresAt || Number.isNaN(instant.getTime())) {
+			throw new BadRequestException(
+				'STOCK_RESERVATION_EXPIRY_INVALID: `expiresAt` states the instant a hold is pushed out to, as an ISO-8601 date and time.'
+			);
+		}
+
+		return await this.service.extend(referenceType as StockReservationReferenceType, id, instant);
 	}
 
 	/**

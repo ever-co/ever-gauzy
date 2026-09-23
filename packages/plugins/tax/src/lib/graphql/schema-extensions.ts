@@ -45,6 +45,17 @@ export const schemaExtensions = gql`
 		taxRateParts(id: ID!): [TaxRatePart!]!
 		"Resolves the rates that apply to a destination, most specific zone first."
 		resolveTaxRate(input: ResolveTaxRateInput!): [ResolvedTaxRate!]!
+		"""
+		Computes the tax of a set of amounts.
+
+		The amounts come from the caller's own totals chain; what comes back is the breakdown, in the
+		shape of the platform's tax ledger rows, which the caller persists through that ledger. This
+		field stores nothing — the handler it mirrors says so in as many words — which is why it is a
+		query and not a mutation: no row is written and the route carries the view grant rather than an
+		edit one, exactly as the resolution beside it does. A mutation here would tell a generated client
+		that calling it changes something, which is the one thing this operation never does.
+		"""
+		calculateTax(input: TaxCalculationInput!): TaxCalculation!
 		taxRegimes(
 			filter: TaxRegimeFilter
 			sort: [TaxRegimeSort!]
@@ -262,6 +273,74 @@ export const schemaExtensions = gql`
 		matchLevel: TaxRateMatchLevel!
 		"True for the rate the ladder stopped at; the compound rates of the chain follow it."
 		isWinner: Boolean!
+	}
+
+	"One rate's contribution to one line, in the shape of a tax-line row."
+	type TaxLineDraft {
+		"The rate row that applied; null when the amount came from the legacy per-variant fallback."
+		taxRateId: ID
+		"The part of the rate that produced this row; null for a rate that declares none."
+		taxRatePartId: ID
+		"The regime the document was taxed under; evidence rather than a foreign key."
+		taxRegimeId: ID
+		"Snapshot of the part's posting code; null when the part declares none."
+		postingKey: String
+		"Jurisdiction or rate code."
+		code: String
+		"The rate's name at calculation time, or the part's label when it has one."
+		name: String!
+		"The rate as a fraction."
+		rate: Decimal!
+		"Whether the amount compounds on the earlier amounts of the same line."
+		isCompound: Boolean!
+		"Whether the amount is already inside the price."
+		isInclusive: Boolean!
+		"The amount the rate was applied to — the part's own base."
+		baseAmount: Decimal!
+		"The resulting tax amount, rounded once at the currency's scale."
+		amount: Decimal!
+		"The owner's quantity at computation time, which a fixed part is applied per unit of."
+		quantity: Decimal
+		"Currency of the amounts."
+		currency: String!
+		"External engine that produced the amount, when one did."
+		providerKey: String
+		"Jurisdiction name, engine request id, exemption reason."
+		metadata: JSON
+	}
+
+	"The tax of one line."
+	type TaxCalculationLine {
+		"The caller's identifier for the line, echoed back so a result can be matched to its line."
+		referenceId: ID
+		"The category the line was taxed in."
+		taxCategoryId: ID!
+		"The regime the line was taxed under, when a regime was selected for the document."
+		taxRegimeId: ID
+		"Currency of the amounts."
+		currency: String!
+		"The line's amount without tax."
+		netAmount: Decimal!
+		"The line's tax."
+		taxAmount: Decimal!
+		"What the customer pays for the line: the net plus the tax, or the gross that was given."
+		grossAmount: Decimal!
+		"One draft per rate that applied, in the order the rates were applied."
+		taxLines: [TaxLineDraft!]!
+	}
+
+	"The tax of a set of lines."
+	type TaxCalculation {
+		"Currency of the amounts."
+		currency: String!
+		"Exact sum of the lines' amounts without tax."
+		netTotal: Decimal!
+		"Exact sum of the lines' tax."
+		taxTotal: Decimal!
+		"Exact sum of what the customer pays."
+		grossTotal: Decimal!
+		"One entry per line, in the order the lines were given."
+		lines: [TaxCalculationLine!]!
 	}
 
 	"What a part of a rate does with its share of the rate."
@@ -503,6 +582,52 @@ export const schemaExtensions = gql`
 		provinceCode: String
 		postalCode: String
 		regionTaxInclusive: Boolean
+		"The moment the rates' validity windows are evaluated at; the current time when omitted."
+		at: DateTime
+	}
+
+	"One line to compute tax for."
+	input TaxCalculationLineInput {
+		"The caller's identifier for the line, echoed back so a result can be matched to its line."
+		referenceId: ID
+		"The category to tax the line in; the organization default applies when omitted."
+		taxCategoryId: ID!
+		"Net or gross amount of the line, as an exact decimal string."
+		amount: Decimal!
+		"The quantity a fixed part is applied per unit of; one when omitted."
+		quantity: Decimal
+		regionId: ID
+		countryCode: String
+		provinceCode: String
+		postalCode: String
+	}
+
+	"""
+	The amounts to compute tax for, and the destination they are taxed at.
+
+	Every member beside \`lines\` and \`currency\` is a default for the lines that state none, which is
+	why each one is nullable: a caller that computed its own context states it once here rather than
+	repeating it on every line.
+	"""
+	input TaxCalculationInput {
+		"Currency the amounts are expressed in."
+		currency: String!
+		"The lines to compute."
+		lines: [TaxCalculationLineInput!]!
+		"The regime manually assigned to the party; the destination is matched when it is omitted."
+		taxRegimeId: ID
+		"Whether the party carries a usable tax registration number, as a regime may require."
+		partyTaxRegistrationPresent: Boolean
+		"The direction of the document being taxed; a sale when it is omitted."
+		documentDirection: TaxDirection
+		regionId: ID
+		countryCode: String
+		provinceCode: String
+		postalCode: String
+		"Whether prices at this destination already include tax."
+		regionTaxInclusive: Boolean
+		"Tax a destination no rate matches at zero instead of refusing the calculation."
+		allowUntaxedCatalog: Boolean
 		"The moment the rates' validity windows are evaluated at; the current time when omitted."
 		at: DateTime
 	}

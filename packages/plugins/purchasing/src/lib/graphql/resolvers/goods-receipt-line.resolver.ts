@@ -6,6 +6,7 @@ import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.cod
 import { FeatureFlag } from '@gauzy/common';
 import { IGoodsReceipt, IGoodsReceiptLine } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
+import { toUserError } from '../wire';
 import { GoodsReceipt } from '../../goods-receipt/goods-receipt.entity';
 import { GoodsReceiptService } from '../../goods-receipt/goods-receipt.service';
 import { GoodsReceiptLine } from '../../goods-receipt-line/goods-receipt-line.entity';
@@ -99,6 +100,37 @@ export class GoodsReceiptLineResolver {
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	async softDeleteGoodsReceiptLine(@Args('id') id: ID): Promise<GoodsReceiptLine> {
 		return await this.goodsReceiptLineService.softRemove(id);
+	}
+
+	/**
+	 * Deletes a receipt line outright.
+	 *
+	 * The route it mirrors is `DELETE /goods-receipt-lines/:id`, declared here in the controller and
+	 * overridden only to state the permission the base leaves unstated, under the same `GOODS_RECEIPTS_CREATE`
+	 * the withdrawal below states. The field reaches the method the route reaches — `super.delete(id)`,
+	 * the CRUD base's own `delete` — and not the `softRemove` of the pair beside it, which is the
+	 * distinction the two fields exist to keep.
+	 *
+	 * **This is a hard delete of a row the ledger explains.** A receipt line is what a `stock_movement`
+	 * row was written from, so removing it leaves the movement with nothing that records what arrived;
+	 * `softDeleteGoodsReceiptLine` below is the removal a caller reaches for. The field is delivered
+	 * because §3.1 requires one mutation per REST write route, and the answer carries the identity rather
+	 * than the line, because a removed row is not there to answer with — the same payload shape
+	 * `deleteGoodsReceipt` and `deletePurchaseOrder` already answer.
+	 *
+	 * @param id The line to delete.
+	 * @returns The payload, carrying the identity that was removed.
+	 */
+	@Mutation('deleteGoodsReceiptLine')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async deleteGoodsReceiptLine(@Args('id') id: ID) {
+		try {
+			await this.goodsReceiptLineService.delete(id);
+
+			return { id, userErrors: [] };
+		} catch (error) {
+			return { id: null, userErrors: [toUserError(error)] };
+		}
 	}
 
 	/**

@@ -9,6 +9,8 @@ import { PRICING_PERMISSION_VALUES, pricingPermission } from '../../pricing.perm
 import { PricePreference } from '../../price-preference/price-preference.entity';
 import { PricePreferenceService } from '../../price-preference/price-preference.service';
 import {
+	ICreatePricePreferenceInput,
+	IDeletePricePreferencePayload,
 	IPageInput,
 	IPricePreferenceFilter,
 	IPricePreferenceSort,
@@ -21,13 +23,23 @@ import { readConnection } from '../pagination';
 /**
  * Tax-inclusivity preferences over GraphQL.
  *
- * There is no create and no hard delete here, and that is deliberate: a preference is created with the
- * scope it answers for, so it is authored once through the resource that owns the configuration,
- * and from then on the only thing that changes is the answer. Exposing a create beside the update
- * would invite two rows for one scope, which is exactly what the table's unique constraint exists to
- * prevent. What the resource does carry is the recoverable pair below — a retire and its restore —
- * because those are the two routes the controller already serves and a preference taken out of the
- * fallback by one protocol has to be put back by the same one.
+ * The create and the delete were absent here and are delivered beside this note. The absence was argued
+ * for on the ground that "a preference is created with the scope it answers for, so it is authored once
+ * through the resource that owns the configuration" — and that resource does not exist: no field of this
+ * document, and no route of this controller other than `POST /price-preferences` itself, reaches
+ * `createOne`, and `updateOne` refuses an id it cannot read, so a preference that was never created over
+ * REST could not be created over GraphQL at all. A capability one protocol has and the other does not is
+ * the break §3.1 exists to close, so both are mirrored, and the uniqueness the old note was protecting is
+ * protected where it actually lives: in `createOne`, which refuses a second live row for a scope with
+ * `PRICE_PREFERENCE_EXISTS` rather than in the absence of a field.
+ *
+ * The hard half of the delete is mirrored for the same reason: `DELETE /price-preferences/:id` reaches
+ * `delete(id)` when `force` is true and `softDelete(id)` otherwise, and the field reaches the same pair
+ * for the same input. **The two are not the pair the sibling `softDeletePricePreference` reaches.** That
+ * field reads `softRemove(id)`, which finds the row through the tenant-scoped read before removing it,
+ * while this route's own soft branch reads `softDelete(id)`, which does not — a divergence this wave
+ * reports rather than copies, because a field that changed method to match a sibling would stop
+ * answering the route it names.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
@@ -90,6 +102,29 @@ export class PricePreferenceResolver {
 	}
 
 	/**
+	 * Creates the preference a scope answers with.
+	 *
+	 * The route it mirrors is `POST /price-preferences`, which is the only door a preference has ever
+	 * been created through, and the field reaches the same method the route reaches — `createOne`, which
+	 * canonicalises the scope value and refuses a second live row for it with `PRICE_PREFERENCE_EXISTS`.
+	 * The refusal is therefore the service's, on both surfaces: a GraphQL caller that re-states a scope
+	 * is answered the same `400` a REST caller is, rather than a duplicate row.
+	 *
+	 * The route declares no retry scope, so neither does the field. `06-api-specification.md` §7.5 marks
+	 * the route idempotent and the route does not carry the decorator; inventing one here would make the
+	 * two protocols dedupe differently, which is the divergence §3.1's authorisation dimension forbids,
+	 * so the gap is reported rather than closed from one side.
+	 *
+	 * @param input The scope and the answer it gives.
+	 * @returns The stored preference.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRODUCT_PRICES_EDIT))
+	@Mutation('createPricePreference')
+	async createPricePreference(@Args('input') input: ICreatePricePreferenceInput): Promise<PricePreference> {
+		return await this.pricePreferenceService.createOne(input);
+	}
+
+	/**
 	 * Changes the answer a scope gives.
 	 *
 	 * @param input The preference to change and the answer to store.
@@ -101,6 +136,39 @@ export class PricePreferenceResolver {
 		await this.pricePreferenceService.updateOne(input.id, { isTaxInclusive: input.isTaxInclusive });
 
 		return await this.pricePreferenceService.findOneByIdString(input.id);
+	}
+
+	/**
+	 * Deletes a preference, outright when `force` is true and recoverably otherwise.
+	 *
+	 * The route it mirrors is `DELETE /price-preferences/:id`, and it is mirrored branch for branch: the
+	 * field reads the row first for the same reason the route does — the read is what scopes the write to
+	 * the caller's tenant and refuses an id the caller cannot see — and then reaches `delete(id)` for
+	 * `force === true` and `softDelete(id)` otherwise, exactly the pair the route reaches.
+	 *
+	 * The two are one statement about a row: `DELETE …?force=true` takes the row out of the database and
+	 * `DELETE …` takes it out of every read while leaving it restorable, which is a distinction the
+	 * payload carries rather than one the caller has to infer from which field answered.
+	 *
+	 * @param id The preference to delete.
+	 * @param force Whether the removal is a hard delete.
+	 * @returns What the deletion did.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRODUCT_PRICES_EDIT))
+	@Mutation('deletePricePreference')
+	async deletePricePreference(
+		@Args('id') id: ID,
+		@Args('force') force?: boolean
+	): Promise<IDeletePricePreferencePayload> {
+		await this.pricePreferenceService.findOneByIdString(id);
+
+		if (force === true) {
+			await this.pricePreferenceService.delete(id);
+		} else {
+			await this.pricePreferenceService.softDelete(id);
+		}
+
+		return { id, deleted: true, hard: force === true };
 	}
 
 	/**

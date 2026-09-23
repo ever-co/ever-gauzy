@@ -161,11 +161,25 @@ jest.mock('@gauzy/core', () => {
 jest.mock('@gauzy/plugin-order', () => ({
 	// The counter writer is a collaborator of this package, not of the thing under test: the suite
 	// hands the service its own line service below, so the class here is only the module's identity.
-	OrderLineService: class OrderLineService {}
+	OrderLineService: class OrderLineService {},
+	// The re-derivation is a collaborator for the same reason — the suite hands the service its own
+	// double below — and its class is stated rather than left out so that the service's emitted
+	// `design:paramtypes` names a class at that slot rather than an empty hole.
+	OrderTotalsService: class OrderTotalsService {},
+	// The derivation itself is **not** doubled. Which transitions are worth re-deriving is decided by
+	// what `OrderStateMachine.deriveFulfillmentStatus` reads, so the assertions at the end of this file
+	// are made against the platform's own function rather than against a description of it — a doubled
+	// state machine would let the suite agree with a claim the order package does not make.
+	OrderStateMachine: jest.requireActual('@gauzy/plugin-order/src/lib/order-state-machine/order-state-machine')
+		.OrderStateMachine
 }));
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { FulfillmentDirection, FulfillmentStatusDetail } from '@gauzy/contracts';
+import { FulfillmentDirection, FulfillmentStatus, FulfillmentStatusDetail, OrderStatus } from '@gauzy/contracts';
+// The state machine the re-derivation is asserted against, read from the module mock above rather than
+// from the package: that mock substitutes the module's collaborators and passes this one through, so this
+// import is the platform's own function and not a double of it.
+import { OrderStateMachine } from '@gauzy/plugin-order';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
 import { FulfillmentService } from './fulfillment.service';
 
@@ -516,12 +530,30 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 
 	// The entity manager the conditional update and the event both go through.
 	(fulfillmentRepository as Row).manager = { name: 'fulfillment-manager' };
+	/**
+	 * Every re-derivation the service asked the order aggregate for, in the order it asked.
+	 *
+	 * The service gained this collaborator when it started re-deriving `order.fulfillmentStatus` on the
+	 * transitions that move what that status is derived from, and this suite has no order behind it — so
+	 * the double records the call rather than performing one. It answers a resolved promise because the
+	 * call is awaited: a stub that returned nothing would make every create and cancel below fail at the
+	 * await, which is a suite testing its own double rather than the service.
+	 */
+	const recomputed: { orderId: string; reason: string }[] = [];
+	const orderTotals = {
+		recompute: jest.fn(async (orderId: string, reason: string) => {
+			recomputed.push({ orderId, reason });
+
+			return {} as never;
+		})
+	};
 	const service = new FulfillmentService(
 		fulfillmentRepository as never,
 		{} as never,
 		lineService,
 		orderLineService(tables) as never,
 		outbox as never,
+		orderTotals as never,
 		options.labelProvider as never
 	);
 
@@ -529,6 +561,8 @@ function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: 
 		service,
 		tables,
 		events,
+		recomputed,
+		orderTotals,
 		manager: (fulfillmentRepository as Row).manager,
 		line: (id: string = LINE_A) => tables.order_line.find((row) => row.id === id),
 		row: (id: string) => tables.fulfillment.find((row) => row.id === id),
@@ -1559,5 +1593,202 @@ describe('FulfillmentService — requesting a carrier label (doc 06 §7.13)', ()
 		// projection of a row that still holds one rather than a row that never did.
 		const one = await fixture.service.findOneByIdString(SHIPMENT);
 		expect(one.labelData).toEqual(LABEL.labelData);
+	});
+});
+
+/**
+ * The order's materialised fulfilment state, re-derived by the writes that move it (ADR-26).
+ *
+ * ADR-26 makes `order.fulfillmentStatus` a cache "recomputed by a single function from the ledgers every
+ * time a transaction, fulfillment, return, claim or exchange changes", and that function is
+ * `OrderTotalsService.recompute`, which this service now calls. **Which writes call it is decided by the
+ * derivation and by nothing else**, so the assertions below are in three layers:
+ *
+ * 1. the derivation reads five figures — `orderedQuantity`, `writtenOffQuantity`, `dismissedQuantity`,
+ *    `fulfilledQuantity`, `receivedReturnQuantity` — and this service writes exactly one of them,
+ *    `fulfilledQuantity`. That is asserted against the platform's own `OrderStateMachine` rather than
+ *    described, because the whole choice of which transitions are wired rests on it;
+ * 2. therefore `create` (outbound) and `cancel` (outbound) ask for the re-derivation, and the writes that
+ *    move only `shippedQuantity` or `deliveredQuantity` — `ship`, `markInTransit`, `deliver` — do not;
+ * 3. and the reason the call is made with, `FULFILLMENT_COMMITTED`, is the one `recompute`'s own
+ *    docstring names for this write.
+ *
+ * The transitions that move no counter at all — a `RETURN`-direction shipment, a repeat cancelation — are
+ * asserted too, and they are the cases where a re-derivation would be worse than useless: it would bump
+ * the order's version for a no-op and invalidate every client holding the order's `ETag`.
+ */
+describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => jest.useRealTimers());
+
+	/** The reason every re-derivation this domain asks for must carry. */
+	const REASON = 'FULFILLMENT_COMMITTED';
+
+	/**
+	 * The status the platform derives for one order line, read through the real state machine.
+	 *
+	 * The five inputs are named explicitly, and that is the point of the helper: a reader can see that
+	 * `shippedQuantity` and `deliveredQuantity` are not among them, which is why the transitions that
+	 * move those two ask for no re-derivation.
+	 */
+	const derivedFor = (line: Row) =>
+		OrderStateMachine.deriveFulfillmentStatus({
+			orderStatus: OrderStatus.CONFIRMED,
+			orderedQuantity: line.quantity,
+			writtenOffQuantity: line.writtenOffQuantity,
+			dismissedQuantity: line.returnDismissedQuantity,
+			fulfilledQuantity: line.fulfilledQuantity,
+			receivedReturnQuantity: 0
+		});
+
+	it('derives the status from the fulfilled quantity, which is the one figure this service writes', async () => {
+		// The control first, and the reason the two `create` and `cancel` call sites exist: a line with
+		// nothing fulfilled and a line fully fulfilled derive different statuses, so a write that moves
+		// `fulfilledQuantity` moves the answer.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 3 })] } });
+
+		expect(derivedFor(fixture.line(LINE_A))).toBe(FulfillmentStatus.NOT_FULFILLED);
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(derivedFor(fixture.line(LINE_A))).toBe(FulfillmentStatus.FULFILLED);
+	});
+
+	it('re-derives the order after an outbound shipment is created', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 4 })] } });
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		// Once, for the order, with the reason the order package documents for this write — not once per
+		// line, because the derivation reads the whole order and the counters of every line have settled
+		// by the time it runs.
+		expect(fixture.recomputed).toEqual([{ orderId: ORDER, reason: REASON }]);
+	});
+
+	it('re-derives the order after an outbound shipment is cancelled, because the quantity goes back', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await fixture.service.cancel('pending');
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(fixture.recomputed).toEqual([{ orderId: ORDER, reason: REASON }]);
+	});
+
+	it('re-derives nothing for a return leg, which moves no counter', async () => {
+		// A return is raised with no lines and moves no counter — the rule `createReturnLeg` states — so
+		// there is nothing for the derivation to see differently. The assertion is on the call, because
+		// the counters being unchanged is already covered by the create tests above.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+		await fixture.service.createReturnLeg({ orderId: ORDER });
+
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('re-derives nothing for a return-direction shipment created through the ordinary path', async () => {
+		// The other door onto the same act: `POST /fulfillments/returns` reaches `create` with the
+		// direction appended, and that path also writes lines without moving a counter.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+
+		await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 2)]
+		} as never);
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('re-derives nothing for a repeat cancelation, which gives nothing back a second time', async () => {
+		// The endpoint is idempotent: a second submission answers the unchanged resource. Re-deriving on
+		// it would move the order's version for a call that changed nothing.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await fixture.service.cancel('pending');
+		expect(fixture.recomputed).toHaveLength(1);
+
+		await fixture.service.cancel('pending');
+
+		// Still one: the second call took the already-cancelled path and moved nothing.
+		expect(fixture.recomputed).toHaveLength(1);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('re-derives nothing when a shipment is handed over, and the counter that moved is why', async () => {
+		// A hand-over takes `shippedQuantity`. The derivation does not read it, so the order's status
+		// cannot have changed and a re-derivation would be a write that buys nothing — it would bump the
+		// order's version and invalidate every client holding the order's `ETag`.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 5)]
+			}
+		});
+
+		await fixture.service.ship('pending', { trackingNumber: 'TRACK-1' });
+
+		// The control: the counter the hand-over owns did move, so the absence below is a measurement
+		// about the derivation rather than about a write that never happened.
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(5);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('re-derives nothing when a shipment is delivered, and nothing when it is in transit', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5, shippedQuantity: 5 })],
+				fulfillment: [shipment('moving', { status: FulfillmentStatusDetail.SHIPPED })],
+				fulfillment_line: [shipmentLine('line-1', 'moving', LINE_A, 5)]
+			}
+		});
+
+		await fixture.service.markInTransit('moving');
+
+		expect(fixture.row('moving').status).toBe(FulfillmentStatusDetail.IN_TRANSIT);
+		expect(fixture.recomputed).toEqual([]);
+
+		await fixture.service.deliver('moving');
+
+		// `deliveredQuantity` moved — the control — and the figure the derivation reads did not.
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(5);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('surfaces a re-derivation that failed rather than swallowing it', async () => {
+		// The call is awaited and its failure is not caught. A `fulfillmentStatus` that could not be
+		// re-derived is wrong until somebody notices, and the nightly reconciliation that would notice it
+		// does not exist — the order package registers no scheduled job and nothing outside it calls
+		// `recompute` — so the caller's refusal is the only signal this platform produces. It is a safe
+		// one on this path: the create route is idempotent by a required key, so the retry replays the
+		// stored refusal rather than shipping the goods twice.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 2 })] } });
+
+		fixture.orderTotals.recompute.mockRejectedValueOnce(new Error('ORDER_WRITER_UNAVAILABLE'));
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never)
+		).rejects.toThrow('ORDER_WRITER_UNAVAILABLE');
+
+		// The write itself had already landed, which is the shortfall ADR-26's same-transaction clause
+		// exists to close and which this wave reports rather than hides.
+		expect(fixture.tables.fulfillment).toHaveLength(1);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(2);
 	});
 });

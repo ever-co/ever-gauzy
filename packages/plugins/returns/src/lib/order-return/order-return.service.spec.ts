@@ -149,7 +149,7 @@ jest.mock('@gauzy/core', () => {
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
-import { OrderReturnStatus, StockMovementKind } from '../returns.types';
+import { OrderReturnStatus, RETURNS_TOTALS_REASON, StockMovementKind } from '../returns.types';
 import { OrderReturnLineService } from '../order-return-line/order-return-line.service';
 import { OrderReturnService } from './order-return.service';
 
@@ -402,6 +402,8 @@ interface IMovement {
  * @param options.withLedger Whether the inventory capability is registered.
  * @param options.withRefund Whether the payment capability is registered.
  * @param options.withShipping Whether the shipping capability is registered.
+ * @param options.withTotals Whether the order capability that recomputes the order's derived columns is
+ * registered.
  * @param options.numberSeries Whether the organization has a `RETURN` series.
  */
 function returnFixture(
@@ -413,6 +415,8 @@ function returnFixture(
 		withLedger?: boolean;
 		withRefund?: boolean;
 		withShipping?: boolean;
+		withTotals?: boolean;
+		totalsFail?: boolean;
 		numberSeries?: boolean;
 	} = {}
 ) {
@@ -498,6 +502,29 @@ function returnFixture(
 	/** Every `return.*` row the service appended, in the order it appended them. */
 	const events: Row[] = [];
 	/**
+	 * Every recompute the service asked the order capability for.
+	 *
+	 * The order's totals, its payment status and its summary row are derived from the `order_transaction`
+	 * ledger, and a refund is the only row this package appends to it — so the recompute is owed exactly
+	 * where a refund was issued and nowhere else. The calls are recorded rather than asserted inline
+	 * because "which transitions ask for it" is the whole question.
+	 */
+	const totalsCalls: Row[] = [];
+	const orderTotals =
+		options.withTotals === false
+			? undefined
+			: {
+					recompute: async (orderId: string, reason: string) => {
+						totalsCalls.push({ orderId, reason });
+
+						if (options.totalsFail === true) {
+							throw new Error('the order capability is unreachable');
+						}
+
+						return { id: orderId };
+					}
+			  };
+	/**
 	 * The platform outbox, reduced to the one call this service makes on it.
 	 *
 	 * The manager it is handed is the return repository's own, which is what the assertions below
@@ -522,7 +549,8 @@ function returnFixture(
 		outbox as never,
 		ledger as never,
 		refundGateway as never,
-		shipmentGateway as never
+		shipmentGateway as never,
+		orderTotals as never
 	);
 
 	return {
@@ -530,6 +558,7 @@ function returnFixture(
 		lineService,
 		tables,
 		events,
+		totalsCalls,
 		manager: (typeOrmOrderReturnRepository as Row).manager,
 		movements,
 		refundCalls,
@@ -1228,6 +1257,184 @@ describe('OrderReturnService — the money that follows the goods (doc 10 §11.6
 		});
 
 		await expect(fixture.service.refund('return-1', '5.00')).resolves.toMatchObject({ amount: '5.000000' });
+	});
+});
+
+/**
+ * The order's derived columns, and the one returns move that changes them (ADR-26).
+ *
+ * ADR-26 requires the order's `fulfillmentStatus`, its totals and its `paymentStatus` to be "recomputed
+ * by a single function from the ledgers every time a transaction, fulfillment, **return**, claim or
+ * exchange changes, inside the same transaction as the change". The function is the order package's
+ * `OrderTotalsService.recompute`, and the whole of this describe is the question of *which* returns
+ * moves owe it a call.
+ *
+ * The answer is read out of the function rather than assumed. `recompute` derives three things:
+ * `computeTotals` from the order's lines, its shipping methods, its credit lines, its adjustments, its
+ * tax lines and its `order_transaction` ledger; `derivePaymentStatus` from the order's status, that
+ * snapshot and the same ledger; and `deriveFulfillmentStatus` from the order's status and five sums over
+ * its lines — `quantity`, `writtenOffQuantity`, `returnDismissedQuantity`, `fulfilledQuantity` and
+ * `returnReceivedQuantity`. A returns move can reach the first two only by appending an
+ * `order_transaction`, which happens in exactly one place in this package: the refund this service
+ * issues through the payment capability. It reaches the third by nothing at all — this package writes
+ * none of those five counters, and the only writer of any of them anywhere in the repository is the
+ * order package's own change service. So the recompute is owed where a refund was issued, and nowhere
+ * else, and the transitions that owe nothing are asserted here beside the ones that do.
+ */
+describe('OrderReturnService — the order columns a refund moves (ADR-26)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('asks for the recompute with the reason the service documents for a money move', async () => {
+		// The reason is recorded on the `order_summary` row the recompute writes, so it is a fact another
+		// domain reads rather than a log line. A refund moves money and nothing else, so the reason is the
+		// money one: `FULFILLMENT_COMMITTED` would claim a fulfilment state moved, and the derivation that
+		// would have to move it reads five order-line counters this package never writes.
+		expect(RETURNS_TOTALS_REASON).toBe('PAYMENT_RECONCILED');
+
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED })]
+		});
+
+		await fixture.service.refund('return-1', '10.00');
+
+		expect(fixture.totalsCalls).toEqual([{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }]);
+	});
+
+	it('asks for it once per refund, on the order the refund was raised against', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED, refundAmount: '0' })]
+		});
+
+		await fixture.service.refund('return-1', '0.1');
+		await fixture.service.refund('return-1', '0.2');
+
+		expect(fixture.totalsCalls).toEqual([
+			{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' },
+			{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }
+		]);
+	});
+
+	it('asks for it when a receipt issues the refund, and not when it does not', async () => {
+		// The receipt is the other path that can refund — `returns.refundTrigger = 'ON_RECEIVE'` is what
+		// doc 10 §11.3 makes the default — and it reaches the same private settlement, so it is owed the
+		// same call. A receipt that refunds nothing appends no ledger row, so it is owed none: a recompute
+		// there would write an `order_summary` row saying nothing had changed.
+		const settling = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		await settling.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }], {
+			refund: '25.00'
+		});
+
+		expect(settling.totalsCalls).toEqual([{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }]);
+
+		const restocking = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		await restocking.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }]);
+
+		expect(restocking.movements).toHaveLength(1);
+		expect(restocking.totalsCalls).toEqual([]);
+	});
+
+	it('asks for nothing on the transitions that append no ledger row', async () => {
+		// The control that keeps the wiring honest, and the point of reading the derivation first:
+		// approving, rejecting, cancelling, closing, opening and editing a return all write this package's
+		// own tables and nothing the order's totals, its payment status or its fulfilment status is
+		// computed from. A recompute on any of them is a version-bumping write on the order, an
+		// `order_summary` row and an outbox append that buy nothing.
+		const fixture = returnFixture({
+			returns: [
+				returnRow('opened', { status: OrderReturnStatus.OPEN }),
+				returnRow('requested', { status: OrderReturnStatus.REQUESTED }),
+				returnRow('approved', { status: OrderReturnStatus.APPROVED }),
+				returnRow('received', { status: OrderReturnStatus.RECEIVED })
+			],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		await fixture.service.create({
+			orderId: ORDER,
+			currency: 'USD',
+			lines: [{ orderLineId: ORDER_LINE, quantity: 2 }]
+		} as never);
+		await fixture.service.update('requested', { note: 'a corrected note' } as never);
+		await fixture.service.approve('requested', 'approved by the desk');
+		await fixture.service.reject('opened', 'outside the window');
+		await fixture.service.cancel('approved', 'customer changed their mind');
+		await fixture.service.close('received');
+
+		expect(fixture.totalsCalls).toEqual([]);
+	});
+
+	it('asks for nothing when the refund itself was refused', async () => {
+		// The call sits after the write, not before it: a return that has received nothing is refused
+		// before any money moves, and a recompute ordered before that check would refresh the order for a
+		// refund the service is about to decline.
+		const fixture = returnFixture({ returns: [returnRow('open', { status: OrderReturnStatus.OPEN })] });
+
+		await expect(fixture.service.refund('open', '10.00')).rejects.toThrow(/nothing has been received/);
+
+		expect(fixture.totalsCalls).toEqual([]);
+	});
+
+	it('does not answer a recorded refund as a failure when the recompute fails', async () => {
+		// The ordering the money makes unavoidable: the provider has been asked for the money and the
+		// refund row exists before the recompute runs, so raising here would tell the caller its refund
+		// failed. The refund route carries no retry key, so the caller's retry would issue it twice — and
+		// stale derived columns, which the order package's daily reconciliation re-derives, are the
+		// smaller error. The attempt is still made, which is what the assertion on the calls records.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED })],
+			totalsFail: true
+		});
+
+		await expect(fixture.service.refund('return-1', '10.00')).resolves.toMatchObject({
+			refundId: 'refund-1',
+			amount: '10.000000'
+		});
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.returnRow('return-1')?.refundAmount).toBe('10.000000');
+		// The attempt is still recorded, so the claim is "the failure was not reported" rather than "the
+		// call was skipped".
+		expect(fixture.totalsCalls).toEqual([{ orderId: ORDER, reason: 'PAYMENT_RECONCILED' }]);
+	});
+
+	it('takes a return and refunds it when no order capability is registered', async () => {
+		// The port is optional, like the four beside it: a tenant that composes the returns plugin without
+		// the order plugin still receives goods and pays money back, and the order's own columns are then
+		// the order package's to bring up to date.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED })],
+			withTotals: false
+		});
+
+		await expect(fixture.service.refund('return-1', '10.00')).resolves.toMatchObject({ amount: '10.000000' });
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.totalsCalls).toEqual([]);
+	});
+
+	it('asks for nothing when the return names no order, which no stored return can do', async () => {
+		// `order_return.orderId` is a non-null foreign key, so this is a shape the database refuses rather
+		// than one a caller can reach. It is asserted because the guard is what keeps a corrupt row from
+		// asking the order capability to recompute a null identifier.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.RECEIVED, orderId: undefined })]
+		});
+
+		await fixture.service.refund('return-1', '10.00');
+
+		expect(fixture.refundCalls).toHaveLength(1);
+		expect(fixture.totalsCalls).toEqual([]);
 	});
 });
 

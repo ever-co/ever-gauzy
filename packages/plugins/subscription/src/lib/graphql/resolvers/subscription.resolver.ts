@@ -503,6 +503,38 @@ export class SubscriptionResolver {
 	}
 
 	/**
+	 * Deletes a subscription outright.
+	 *
+	 * The route it mirrors is `DELETE /subscriptions/:id`, declared by `CrudController` and overridden by
+	 * the controller only to state the permission the base leaves unstated — the base declares the route
+	 * with no permission metadata, so `PermissionGuard` (`shared/guards/permission.guard.ts`) answers
+	 * `true` from its `isEmpty` branch and nothing but the class-level `SUBSCRIPTIONS_VIEW` stands in
+	 * front of it. The field states the route's own `SUBSCRIPTIONS_EDIT`, which is the grant ending a
+	 * customer's subscription carries, and reaches the same service method the route reaches:
+	 * `super.delete(id)`, the CRUD base's own `delete`, which removes the row.
+	 *
+	 * The distinction from `softDeleteSubscription` is the whole reason both fields exist. A soft delete
+	 * sets `deletedAt` and leaves the lines and the billing history answerable; this removes the row. The
+	 * answer says which one happened by carrying the identifier rather than a row, because a hard delete
+	 * has no row left to answer with — the same shape `deleteSubscriptionItem` and `deleteSubscriptionPlan`
+	 * already answer.
+	 *
+	 * @param id The subscription to delete.
+	 * @returns The payload, carrying the identity that was removed.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('deleteSubscription')
+	async deleteSubscription(@Args('id') id: ID) {
+		try {
+			await this.subscriptionService.delete(id);
+
+			return { id, userErrors: [] };
+		} catch (error) {
+			return { id: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Retires a subscription recoverably, keeping its lines and its billing history as the record of
 	 * what was sold.
 	 *
