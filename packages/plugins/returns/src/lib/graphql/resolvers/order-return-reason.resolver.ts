@@ -152,6 +152,39 @@ export class OrderReturnReasonResolver {
 	}
 
 	/**
+	 * Removes a reason physically, which is a different act from deactivating it.
+	 *
+	 * Three withdrawals now sit on this resource and they are not interchangeable.
+	 * `deleteOrderReturnReason` deactivates: the row stays and the returns already filed under it keep
+	 * explaining themselves in a report. `softDeleteOrderReturnReason` retires the row recoverably, so it
+	 * leaves every read that resolves a reason from a return's cause while remaining there to bring back.
+	 * This one removes the row from the database, and it is what `DELETE /order-return-reasons/:id`
+	 * serves: `06-api-specification.md` §7.14 declares that route's answer as `DeleteResult`, a
+	 * deletion's shape rather than a row's, while the controller answers the same path by deactivating and
+	 * keeps the physical removal at `/:id/hard`.
+	 *
+	 * The reason the distinction matters is the one the service does not enforce: `order_return.reasonId`
+	 * is `SET NULL`, so removing a reason that has explained a return nulls the reason on every return
+	 * filed under it, and a report that grouped returns by reason code loses them. The handler's own
+	 * summary says the route is for "a reason that was never used"; nothing on either surface checks that,
+	 * so a caller can reach it for one that was.
+	 *
+	 * @param id The reason to remove.
+	 * @returns The payload, carrying the identifier that was removed.
+	 */
+	@Mutation('hardDeleteOrderReturnReason')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async hardDeleteOrderReturnReason(@Args('id') id: ID) {
+		try {
+			await this.orderReturnReasonService.delete(id);
+
+			return { id, userErrors: [] };
+		} catch (error) {
+			return { id: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Retires a governed return reason recoverably, so the returns filed under it stay explainable.
 	 *
 	 * The route it mirrors is `DELETE /order-return-reasons/:id/soft`, inherited from `CrudController`

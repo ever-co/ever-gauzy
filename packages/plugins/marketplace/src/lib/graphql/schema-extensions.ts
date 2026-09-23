@@ -1118,6 +1118,12 @@ export const schemaExtensions = gql`
 		"""
 		updateSellerOffering(id: ID!, input: UpdateSellerOfferingInput!): SellerOffering!
 		"""
+		Submits an offering for moderation: the door a marketplace that does not let its sellers publish opens.
+
+		\`marketplace.sellerSelfPublish\` decides whether publishing is a seller's act or a moderator's, and where it is the moderator's this is the only way an offering reaches \`PENDING_REVIEW\` — so without this field a seller could author and amend an offering here and never advance it, while a REST caller could. Mirrors \`POST /seller-offerings/:id/submit\`, which takes \`SELLER_OFFERINGS_EDIT\`. It is not \`submitSeller\`: that field serves the seller resource's own submit route, and the two are different capabilities on different rows.
+		"""
+		submitSellerOffering(id: ID!): SellerOffering!
+		"""
 		Publishes an offering to the given channels, materialising its authored price into a price row.
 
 		Mirrors the publish route and declares the same \`seller_offering.publish\` scope, so a retry of one

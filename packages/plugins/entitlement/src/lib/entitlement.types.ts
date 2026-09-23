@@ -274,6 +274,117 @@ export interface IEntitlementKeyReissueResult extends IEntitlementKeyIssueResult
 	readonly replacedKey: EntitlementKey;
 }
 
+/**
+ * The fields an edit to a right may change.
+ *
+ * The route this mirrors validates `UpdateEntitlementDTO`, which is `PartialType(EntitlementDTO)` — so
+ * its live validation metadata carries the provenance, the allocated `number`, the `kind` and the
+ * lifecycle state as well as the members below. The write path applies the patch it is handed
+ * (`applyChanges` → the conditional `update`), so on the REST surface a body naming `status` moves the
+ * row past the transitions and the events that make them auditable — which
+ * `05-database-schema-spec.md` §19.1 makes the service's business and not a caller's.
+ *
+ * This input therefore states the members an edit is *for*, which is what the controller's own
+ * docstring says a body may change, and the suite derives the omitted set from the DTO's
+ * class-validator metadata rather than restating it here: a member added to that DTO fails the suite
+ * instead of arriving on this surface silently.
+ */
+export interface IEntitlementEditInput {
+	/** The ceiling the right should end up with: seats for `SEAT`, uses for `USAGE`, `0` for unlimited. */
+	readonly quantity?: number;
+	/** The instant the right becomes exercisable. */
+	readonly startsAt?: Date;
+	/** The instant it stops; null is the perpetual case. */
+	readonly endsAt?: Date;
+	/** Days after `endsAt` during which the right stays in force while a renewal is chased. */
+	readonly gracePeriodDays?: number;
+	/** Maximum simultaneous activations, when that is tighter than `quantity`. */
+	readonly activationLimit?: number;
+	/** Tenant extras: the licence tier, the feature flags the right carries. */
+	readonly metadata?: JsonData;
+	/** The conditions the right should end up with, replacing the `rule` rows attached to it. */
+	readonly conditions?: IRuleCreateInput[];
+}
+
+/**
+ * An edit to the recorded fields of an activation.
+ *
+ * The field that carries this mirrors `PUT /entitlement-activations/:id`, whose body is
+ * `PartialType(EntitlementActivationDTO)` — and that DTO's own docstrings disagree with what it
+ * declares. Both say only descriptive fields are open ("the device identity is what the seat count is
+ * taken over, and a body that could rewrite it would let a client move a slot to a different machine
+ * without going through the activation path the limit is enforced on"), while the live metadata carries
+ * `deviceId` and `status`, and the inherited CRUD `update` writes every member it is handed.
+ *
+ * The members below are the DTO's, not a subset of them: §3.1 forbids GraphQL being *narrower* than
+ * REST, so the two surfaces accept the same write. The hazard is recorded rather than silently fixed —
+ * see the field's docstring — because narrowing it here would answer a REST caller and a GraphQL caller
+ * differently, which is the drift parity exists to prevent.
+ */
+export interface IEntitlementActivationEditInput {
+	/** The right the slot belongs to. */
+	readonly entitlementId?: ID;
+	/** The key the activation went through, when one was used. */
+	readonly entitlementKeyId?: ID;
+	/** The stable device or instance identifier the limit is counted over. */
+	readonly deviceId?: string;
+	/** Human-readable name shown to support. */
+	readonly deviceName?: string;
+	/** Hash of the hardware or instance fingerprint. */
+	readonly fingerprint?: string;
+	/** The named seat this activation occupies. */
+	readonly seatReference?: string;
+	/** The buyer who performed the activation. */
+	readonly activatedByCustomerId?: ID;
+	/** The activation's state. Written by the release, revoke and expiry paths, not by an edit. */
+	readonly status?: EntitlementActivationStatus;
+	/** When the client was last seen. Written by the validation path under its throttle. */
+	readonly lastSeenAt?: Date;
+	/** Why a slot was released or revoked. */
+	readonly revocationReason?: string;
+	/** Address of the validation call that created the activation. */
+	readonly ipAddress?: string;
+	/** Client identification, retained for support. */
+	readonly userAgent?: string;
+	/** Tenant extras: product version, OS, locale. */
+	readonly metadata?: JsonData;
+}
+
+/**
+ * A request to record who holds an issued licence key.
+ *
+ * One member, because the route's body is `AssignEntitlementKeyDTO` and states one: the holder's
+ * e-mail. The holder is otherwise fixed at issuance, and a key already assigned to a different one is
+ * refused rather than reassigned — `05-database-schema-spec.md` §19.3 makes "who was given key X" a
+ * question with one answer forever, and the documented answer to a genuine reassignment is a new key.
+ */
+export interface IEntitlementKeyAssignInput {
+	/** The recipient. A key that already names a different holder is refused, not reassigned. */
+	readonly assignedToEmail?: string;
+}
+
+/**
+ * A request to replace an issued licence key with a freshly generated one.
+ *
+ * The recovery path for a lost key, and the only one: `issueEntitlementKey` mints another credential
+ * against the same right without revoking the first, while this replaces it — the old row is revoked
+ * in the same transaction, its activations are released, and the pair are linked in each row's
+ * `metadata`.
+ */
+export interface IEntitlementKeyReissueInput {
+	/** Which generator renders the replacement; absent keeps the replaced key's format. */
+	readonly format?: LicenceKeyFormat;
+	/** Why the key is being replaced, kept on the old row and on its replacement. */
+	readonly reason?: string;
+	/**
+	 * Store a recoverable ciphertext for the replacement.
+	 *
+	 * The route's default is `false` and this input keeps it: a key issued write-only is unrecoverable
+	 * by design, and the recovery path remains a further re-issue.
+	 */
+	readonly storeKey?: boolean;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Capabilities this plugin reaches but does not own

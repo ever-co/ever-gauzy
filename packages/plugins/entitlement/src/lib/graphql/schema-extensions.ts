@@ -357,6 +357,78 @@ export const schemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	"""
+	The fields an edit to a right may change.
+
+	The route this mirrors validates \`UpdateEntitlementDTO\`, whose live metadata also carries the
+	provenance, the allocated number, the kind and the lifecycle state. Those are not members of this
+	input: a right's state moves by being suspended, extended, reduced or revoked, each of which is an
+	action with its own permission and its own event, and a body that could set \`status\` would move the
+	row past every one of them. The suite derives the omitted set from that DTO's class-validator
+	metadata rather than restating it here.
+	"""
+	input UpdateEntitlementInput {
+		"Seats, uses or 1; 0 means unlimited."
+		quantity: Int
+		startsAt: DateTime
+		"The instant the right stops being exercisable; null is the perpetual case."
+		endsAt: DateTime
+		"Days after endsAt during which the right stays in force while a renewal is chased."
+		gracePeriodDays: Int
+		"Maximum simultaneous activations, when that is tighter than quantity."
+		activationLimit: Int
+		metadata: JSON
+		"The conditions the right should end up with, replacing the rule rows attached to it."
+		conditions: [EntitlementConditionInput!]
+	}
+
+	"The request that records who holds an issued licence key."
+	input AssignEntitlementKeyInput {
+		"The recipient. A key that already names a different holder is refused, not reassigned."
+		assignedToEmail: String
+	}
+
+	"The request that replaces an issued licence key with a freshly generated one."
+	input ReissueEntitlementKeyInput {
+		"Which generator renders the replacement; absent keeps the replaced key's format."
+		format: LicenceKeyFormat
+		"Why the key is being replaced, kept on the old row and on its replacement."
+		reason: String
+		"Store a recoverable ciphertext for the replacement, so an operator can re-display it."
+		storeKey: Boolean
+	}
+
+	"""
+	The recorded fields of an activation, as an edit may state them.
+
+	This is the route's own body type (\`PartialType(EntitlementActivationDTO)\`) member for member,
+	including the two the DTO's docstrings call closed — \`deviceId\` and \`status\`. §3.1 forbids GraphQL
+	being narrower than REST, so the two surfaces accept the same write; the divergence between that
+	DTO's docstrings and its metadata is recorded on the field that carries this input.
+	"""
+	input UpdateEntitlementActivationInput {
+		"The right the slot belongs to."
+		entitlementId: ID
+		"The key the activation went through, when one was used."
+		entitlementKeyId: ID
+		"The stable device or instance identifier the limit is counted over."
+		deviceId: String
+		deviceName: String
+		fingerprint: String
+		"The named seat this activation occupies."
+		seatReference: String
+		"The buyer who performed the activation, when it came from a logged-in customer."
+		activatedByCustomerId: ID
+		"The activation's state. Written by the release, revoke and expiry paths, not by an edit."
+		status: EntitlementActivationStatus
+		"Refreshed by validation calls, at most once per configured interval."
+		lastSeenAt: DateTime
+		revocationReason: String
+		ipAddress: String
+		userAgent: String
+		metadata: JSON
+	}
+
 	"What a check answered."
 	type EntitlementCheckResult {
 		allowed: Boolean!
@@ -438,6 +510,17 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"The outcome of replacing a credential with a freshly generated one."
+	type ReissueEntitlementKeyPayload {
+		"The replacement."
+		key: EntitlementKey
+		"The plaintext of the replacement. Returned once, in this response, and never again."
+		plaintextKey: String
+		"The credential it replaced, now revoked, with the activations it was used for released."
+		replacedKey: EntitlementKey
+		userErrors: [UserError!]!
+	}
+
 	extend type Query {
 		"Rights of the caller's organization."
 		entitlements(filter: EntitlementFilter, page: PageInput, withDeleted: Boolean): EntitlementConnection!
@@ -471,6 +554,32 @@ export const schemaExtensions = gql`
 			idempotencyKey: String
 		): EntitlementPayload!
 		"""
+		Edits a right: its ceiling, its term, its grace, its activation limit, its extras and its
+		conditions. The caller states the 'version' it read, and a right that has moved on since is
+		refused — an edit is the one act here that overwrites fields another operator may be looking at.
+		"""
+		updateEntitlement(id: ID!, input: UpdateEntitlementInput!, version: Int): EntitlementPayload!
+		"""
+		Suspends a right temporarily: a failed renewal, a dispute, an operator pause. Its activations
+		are retained and refused at use, because a suspended right is expected to come back. The caller
+		states the 'version' it read, and a right that has moved on since is refused.
+		"""
+		suspendEntitlement(id: ID!, reason: String, version: Int, idempotencyKey: String): EntitlementPayload!
+		"""
+		Returns a suspended right to force, clearing the reason the suspension recorded. A right whose
+		term ran out while it was suspended is expired rather than resumed, and the payload carries the
+		right as it ends up. The caller states the 'version' it read.
+		"""
+		resumeEntitlement(id: ID!, version: Int, idempotencyKey: String): EntitlementPayload!
+		"""
+		Lowers the ceiling a right carries, which is what a partial refund does. The surplus
+		activations are revoked newest-first and a right reduced to zero is revoked outright, so this is
+		not an edit of the quantity column: it is the act \`10-orders-payments-and-returns-spec.md\` gives
+		the refund path, and it is deliberately not answered by \`extendEntitlement\`, which moves the term
+		forward and returns a suspended right to force. The caller states the 'version' it read.
+		"""
+		reduceEntitlement(id: ID!, quantity: Int!, reason: String, version: Int): EntitlementPayload!
+		"""
 		Retires a right recoverably: the row is kept, with its keys and its activation history, unlike
 		\`revokeEntitlement\`, which is terminal.
 		"""
@@ -481,14 +590,34 @@ export const schemaExtensions = gql`
 		activateEntitlement(input: ActivateEntitlementInput!): ActivateEntitlementPayload!
 		"Gives a slot back: released by the holder, or revoked by support."
 		deactivateEntitlement(id: ID!, reason: String, revoked: Boolean): DeactivateEntitlementPayload!
+		"""
+		Corrects the recorded fields of a slot, without giving it back and without taking it away. The
+		input is the route's own body type member for member, including \`deviceId\` and \`status\`, which
+		that DTO's docstrings call closed while its metadata declares them and the inherited update writes
+		them: the two surfaces accept the same write, and the divergence is recorded on the field rather
+		than repaired on one side only.
+		"""
+		updateEntitlementActivation(id: ID!, input: UpdateEntitlementActivationInput!): EntitlementActivationPayload!
 		"Retires an activation recoverably, leaving the row and the slot's history in place."
 		softDeleteEntitlementActivation(id: ID!): EntitlementActivationPayload!
 		"Restores an activation that was retired recoverably."
 		recoverEntitlementActivation(id: ID!): EntitlementActivationPayload!
 		"Issues a licence key. Its plaintext is returned once, in this response."
 		issueEntitlementKey(input: IssueEntitlementKeyInput!): IssueEntitlementKeyPayload!
+		"""
+		Records who holds an issued credential. A key that already names a different holder is refused
+		rather than reassigned, and the documented answer to a genuine reassignment is a new key.
+		"""
+		assignEntitlementKey(id: ID!, input: AssignEntitlementKeyInput!): EntitlementKeyPayload!
 		"Withdraws a credential, releasing the activations it was used for."
 		revokeEntitlementKey(id: ID!, reason: String!): EntitlementKeyPayload!
+		"""
+		Replaces a credential with a freshly generated one: the recovery path for a lost key, and the
+		only one. The credential it replaces is revoked in the same transaction, the activations it was
+		used for are released, and the pair are linked so "what happened to the key this customer was
+		sent" has one answer.
+		"""
+		reissueEntitlementKey(id: ID!, input: ReissueEntitlementKeyInput!): ReissueEntitlementKeyPayload!
 		"Retires a licence key recoverably, leaving the row in place."
 		softDeleteEntitlementKey(id: ID!): EntitlementKeyPayload!
 		"Restores a licence key that was retired recoverably."

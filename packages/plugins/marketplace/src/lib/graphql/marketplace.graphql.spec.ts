@@ -117,6 +117,11 @@ jest.mock('@gauzy/core', () => {
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
 			.IDEMPOTENT_METADATA_KEY,
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		// The concurrency declaration is read back the same way and for the same reason: a route that states
+		// no version expectation and a field that invents one is a write the other protocol refuses, so the
+		// key both sides are read under has to be the kernel's own.
+		VERSIONED_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util')
+			.VERSIONED_METADATA_KEY,
 		// The offering controller declares a bulk route and the mutation that mirrors it runs the same
 		// batch from that declaration, so the decorator, its reader and the executor are the kernel's own:
 		// a doubled reader would agree with a resolver while disagreeing with the controller.
@@ -194,7 +199,7 @@ import {
 } from '@gauzy/contracts';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { getPluginExtensions } from '@gauzy/plugin';
-import { BulkExecutor, IDEMPOTENT_METADATA_KEY } from '@gauzy/core';
+import { BulkExecutor, IDEMPOTENT_METADATA_KEY, PermissionGuard, TenantPermissionGuard, VERSIONED_METADATA_KEY } from '@gauzy/core';
 import { MarketplaceModule } from '../marketplace.module';
 import { MarketplacePlugin } from '../marketplace.plugin';
 import { SellerOfferingController } from '../seller-offering/seller-offering.controller';
@@ -565,6 +570,7 @@ function createResolver(): SellerEntityResolver {
 		listOfferings: async () => ({ items: [OFFERING], total: 1 }),
 		createOffering: async () => OFFERING,
 		updateOffering: async () => OFFERING,
+		submit: async () => OFFERING,
 		publish: async () => OFFERING,
 		unpause: async () => OFFERING,
 		withdraw: async () => OFFERING,
@@ -668,6 +674,7 @@ function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>
 		listOfferings: record('listOfferings', { items: [OFFERING], total: 1 }),
 		createOffering: record('createOffering', OFFERING),
 		updateOffering: record('updateOffering', OFFERING, 2),
+		submit: record('submit', OFFERING),
 		publish: record('publish', OFFERING, 2),
 		unpause: record('unpause', OFFERING),
 		withdraw: record('withdraw', OFFERING),
@@ -1036,6 +1043,17 @@ const RESOURCE_WRITES: ReadonlyArray<{
 		calls: (scope) => [{ service: 'updateOffering', args: ['offering-1', UPDATE_OFFERING, scope] }]
 	},
 	{
+		field: 'submitSellerOffering',
+		method: 'submitSellerOffering',
+		route: 'submit',
+		controller: SellerOfferingController,
+		permission: PermissionsEnum.SELLER_OFFERINGS_EDIT,
+		args: (_scope, context) => ['offering-1', context],
+		// The route and the field both hand the service the identifier and the scope the guard resolved,
+		// and nothing else: the transition is the service's, and neither surface states a body for it.
+		calls: (scope) => [{ service: 'submit', args: ['offering-1', scope] }]
+	},
+	{
 		field: 'updateSellerPayout',
 		method: 'updateSellerPayout',
 		route: 'update',
@@ -1317,7 +1335,7 @@ function writeResolver(calls: Array<{ service: string; args: unknown[] }>): any 
 			softRemove: record('softRemove', SELLER),
 			softRecover: record('softRecover', SELLER)
 		} as any,
-		{ ...lifecycle(OFFERING), createOffering: record('createOffering', OFFERING), updateOffering: record('updateOffering', OFFERING) },
+		{ ...lifecycle(OFFERING), createOffering: record('createOffering', OFFERING), updateOffering: record('updateOffering', OFFERING), submit: record('submit', OFFERING) },
 		{ ...lifecycle(TRANSACTION), delete: record('delete', DELETE_RESULT) },
 		{
 			...lifecycle(PAYOUT),
@@ -1418,6 +1436,7 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 	recoverSellerSettlement: { args: ['settlement-1'], row: SETTLEMENT },
 	createSellerOffering: { args: [CREATE_OFFERING], row: OFFERING },
 	updateSellerOffering: { args: ['offering-1', UPDATE_OFFERING], row: OFFERING },
+	submitSellerOffering: { args: ['offering-1'], row: OFFERING },
 	updateSellerPayout: { args: ['payout-1', UPDATE_PAYOUT], row: PAYOUT },
 	runSellerPayout: { args: [RUN_PAYOUT], row: PAYOUT_RUN_RESULT },
 	retrySellerPayout: { args: ['payout-1'], row: PAYOUT },
@@ -1962,6 +1981,157 @@ describe('the marketplace GraphQL contribution', () => {
 	});
 
 	/* --------------------------------------------------------------------------------------------
+	 * The offering submit route: the capability a name-matching reading could not see
+	 * ------------------------------------------------------------------------------------------ */
+
+	/**
+	 * The two surfaces over one stub.
+	 *
+	 * The controller and the resolver are the real ones — `CrudController` behind the controller is the
+	 * kernel's own — and the services are the only thing doubled, because the service is the seam this
+	 * requirement is about. The seller service is optional because the field under test is the offering's;
+	 * the four aggregates neither surface reaches here are stated as empty rather than invented, so a
+	 * field wired to one of them fails on the stub instead of passing on a call nobody compares.
+	 *
+	 * @param offeringService The stub that owns the offering's writes.
+	 * @param sellerService The stub that owns the seller's, when the comparison needs both.
+	 * @returns The two surfaces, as the classes under test build them.
+	 */
+	function offeringSurfaces(
+		offeringService: Record<string, unknown>,
+		sellerService: Record<string, unknown> = {}
+	): { controller: any; resolver: any } {
+		const visibility = { assertCanSee: () => undefined, canSee: () => true };
+
+		return {
+			controller: new SellerOfferingController(
+				offeringService as never,
+				new BulkExecutor(visibility as never)
+			) as unknown as any,
+			resolver: new SellerEntityResolver(
+				sellerService as never,
+				offeringService as never,
+				{} as never,
+				{} as never,
+				{} as never,
+				{} as never,
+				new BulkExecutor(visibility as never)
+			) as unknown as any
+		};
+	}
+
+	/**
+	 * The submit route, which is the one route of this plugin a name-matching audit read as answered.
+	 *
+	 * The audit builds its expectation from a route's verb plus the opening characters of its resource
+	 * name, and `SellerOffering` and `Seller` open with the same five: `POST /seller-offerings/:id/submit`
+	 * was therefore matched against **`submitSeller`** — a field that exists, and that serves
+	 * `SellerController`'s own `POST /sellers/:id/submit`. The offering's own submit was answered by
+	 * nothing, while the surface offered `publish`, `pause` and `withdraw`, so a marketplace whose
+	 * `marketplace.sellerSelfPublish` is `false` — where submitting is the only way an offering reaches
+	 * `PENDING_REVIEW` — had a capability over REST that it did not have over GraphQL.
+	 *
+	 * Four properties are pinned, in the shape the programme's write-route suites now use: the field is
+	 * declared with the arguments its route takes and the row its siblings answer; it states its own
+	 * route's grant, read from the handler's metadata rather than restated here; it reaches the same
+	 * service call with the same arguments, driven against the same stub as the route; and it declares
+	 * neither a retry scope nor a version expectation the route does not declare. The last test pins the
+	 * collision itself — the two `submit` capabilities and the two services they reach — because that
+	 * collision is why the route was reported as answered.
+	 */
+	describe('the offering submit route — the two protocols advance the same row', () => {
+		it('declares the field with the identifier its route takes, answering the row its siblings answer', () => {
+			const declared = DECLARED.find((entry) => entry.field === 'submitSellerOffering');
+			const answered = COMPOSED.getMutationType()?.getFields()['submitSellerOffering'];
+
+			// Both halves of the surface, because they fail silently apart: a field the resolver declares and
+			// the document does not is never served, and one the document carries with no resolver is answered
+			// as if it existed.
+			expect(declared?.operation).toBe('Mutation');
+			expect(answered).toBeDefined();
+
+			const args = answered?.args ?? [];
+
+			expect(args.map((argument) => argument.name)).toEqual(['id']);
+			expect(getNamedType(args[0].type).name).toBe('ID');
+			expect(isNonNullType(args[0].type)).toBe(true);
+
+			// The offering the caller asked to advance, non-null — the shape `publish`, `pause` and `withdraw`
+			// answer beside it — because the row is still there and its new status is the answer.
+			expect(getNamedType(answered!.type).name).toBe('SellerOffering');
+			expect(isNonNullType(answered!.type)).toBe(true);
+		});
+
+		it('states, on the handler itself, the grant its own route states', () => {
+			const route = Reflect.getMetadata(PERMISSIONS_METADATA, SellerOfferingController.prototype.submit);
+			const field = Reflect.getMetadata(PERMISSIONS_METADATA, SellerEntityResolver.prototype.submitSellerOffering);
+
+			// The route is read first and asserted as a control second: a comparison of two absences would pass
+			// while both surfaces stood on the class's `SELLER_OFFERINGS_VIEW` grant, which is exactly the
+			// defect the controller's own `@Permissions` exists to close.
+			expect(route).toEqual([PermissionsEnum.SELLER_OFFERINGS_EDIT]);
+			expect(field).toEqual(route);
+		});
+
+		it('reaches the service method the route reaches, with the same arguments', async () => {
+			const advanced = { ...OFFERING, status: OfferingStatus.PENDING_REVIEW };
+			const offeringService = { submit: jest.fn().mockResolvedValue(advanced) };
+			const { controller, resolver } = offeringSurfaces(offeringService);
+			const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
+
+			const overRest = await controller.submit({ sellerScope: scope }, 'offering-1');
+			const overGraphql = await resolver.submitSellerOffering('offering-1', { req: { sellerScope: scope } });
+
+			// One call each, with the same arguments in the same order: the identifier and the scope the guard
+			// resolved. A field that dropped the scope would run unscoped and look exactly like this one.
+			expect(offeringService.submit).toHaveBeenNthCalledWith(1, 'offering-1', scope);
+			expect(offeringService.submit).toHaveBeenNthCalledWith(2, 'offering-1', scope);
+			expect(offeringService.submit).toHaveBeenCalledTimes(2);
+
+			// One answer, one implementation: the offering either surface advanced is the same row.
+			expect(overGraphql).toBe(overRest);
+		});
+
+		it('is a different capability from submitSeller, which serves the seller controller', async () => {
+			// The collision itself, asserted rather than described. Both fields are declared and both are
+			// named after a submit; each reaches its own service, and neither reaches the other's.
+			const offeringService = { submit: jest.fn().mockResolvedValue(OFFERING) };
+			const sellerService = { submit: jest.fn().mockResolvedValue(SELLER) };
+			const { resolver } = offeringSurfaces(offeringService, sellerService);
+
+			await resolver.submitSeller('seller-1');
+			await resolver.submitSellerOffering('offering-1');
+
+			expect(sellerService.submit).toHaveBeenCalledTimes(1);
+			expect(sellerService.submit).toHaveBeenCalledWith('seller-1', undefined);
+			expect(offeringService.submit).toHaveBeenCalledTimes(1);
+			expect(offeringService.submit).toHaveBeenCalledWith('offering-1', undefined);
+		});
+
+		it('declares no retry scope and no version expectation the route does not declare', () => {
+			// The route carries neither `@Idempotent` nor `@Versioned`, so neither does the field: a keyless
+			// GraphQL retry would then not dedupe where REST does, and a version expectation invented here
+			// would refuse writes the route accepts.
+			for (const key of [IDEMPOTENT_METADATA_KEY, VERSIONED_METADATA_KEY]) {
+				expect(Reflect.getMetadata(key, SellerOfferingController.prototype.submit)).toBeUndefined();
+				expect(Reflect.getMetadata(key, SellerEntityResolver.prototype.submitSellerOffering)).toBeUndefined();
+			}
+		});
+
+		it('runs the field under the guard chain the route runs under', () => {
+			const routeGuards = Reflect.getMetadata(GUARDS_METADATA, SellerOfferingController) ?? [];
+			const fieldGuards = Reflect.getMetadata(GUARDS_METADATA, SellerEntityResolver) ?? [];
+
+			// The handler states no guard of its own, so the route's chain is its controller's — and the two
+			// classes carry the same three, with the feature gate the resolver adds to every field it answers.
+			expect(routeGuards).toEqual(
+				expect.arrayContaining([TenantPermissionGuard, PermissionGuard, SellerAccessGuard])
+			);
+			expect(fieldGuards).toEqual(expect.arrayContaining(routeGuards));
+		});
+	});
+
+	/* --------------------------------------------------------------------------------------------
 	 * The inherited lifecycle pair of the five child resources
 	 * ------------------------------------------------------------------------------------------ */
 
@@ -2184,6 +2354,7 @@ describe('the marketplace GraphQL contribution', () => {
 			await resolver.withdrawSellerOffering('offering-1', context);
 			await resolver.createSellerOffering(CREATE_OFFERING, undefined, context);
 			await resolver.updateSellerOffering('offering-1', UPDATE_OFFERING, context);
+			await resolver.submitSellerOffering('offering-1', context);
 			await resolver.retrySellerPayout('payout-1', undefined, context);
 
 			// Not one of them may run unscoped: a field that dropped the scope is a field a seller-scoped

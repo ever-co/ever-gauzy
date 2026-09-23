@@ -583,6 +583,42 @@ export class SellerEntityResolver {
 	}
 
 	/**
+	 * Submits an offering for moderation: the door a marketplace that does not let its sellers publish
+	 * opens, and the one this surface did not have.
+	 *
+	 * **The capability, stated as a capability.** `marketplace.sellerSelfPublish` is the module's own
+	 * setting — "Whether a seller may publish its own offerings, or only submit them for moderation" —
+	 * and a channel that leaves it `false` is a marketplace where publishing is a moderator's act and
+	 * `POST /api/seller-offerings/:id/submit` is the *only* way an offering reaches `PENDING_REVIEW`.
+	 * Until this field existed, a seller on such a marketplace could author an offering over GraphQL
+	 * (`createSellerOffering`), amend it (`updateSellerOffering`) and then not advance it: the surface
+	 * offered `publishSellerOffering`, `pauseSellerOffering` and `withdrawSellerOffering` — the acts of a
+	 * seller that publishes for itself — while `publish` is that seller's transition and not the request
+	 * for a moderator's. The same act was one route away over REST, so the gap was a capability a REST
+	 * caller had and a GraphQL caller did not.
+	 *
+	 * **Why a name-matching reading missed it, which is why the suite beside this file pins it.** An audit
+	 * that matches a route's verb plus the opening characters of its resource name reads `submit` beside
+	 * `SellerOffering` as `submitSeller` — a field that already exists here and serves a different
+	 * resource's route, `SellerController`'s own `POST /sellers/:id/submit`. Two capabilities on two rows,
+	 * one name between them, which is why this field keeps the naming convention the fields beside it use
+	 * — the act, then the resource — and why the suite asserts that each of the two reaches its own
+	 * service.
+	 *
+	 * The service is what decides whether the transition is legal — it refuses anything that is not
+	 * `DRAFT` or `PAUSED` with a `ConflictException` — so this field makes the call the route makes, with
+	 * the scope the guard resolved, and neither loosens that rule nor restates it.
+	 */
+	@Mutation(() => SellerOfferingType, { name: 'submitSellerOffering' })
+	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	async submitSellerOffering(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context?: any
+	): Promise<SellerOffering> {
+		return this.sellerOfferingService.submit(id, this.scope(context));
+	}
+
+	/**
 	 * Publishes an offering.
 	 *
 	 * The mutation mirrors `POST /api/seller-offerings/:id/publish` and carries that route's scope, so a

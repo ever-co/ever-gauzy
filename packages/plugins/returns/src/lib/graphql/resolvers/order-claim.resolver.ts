@@ -31,6 +31,20 @@ interface IRequestOrderClaimArgs {
 	note?: string;
 }
 
+/** The edit of an open claim, as the schema declares it. */
+interface IUpdateOrderClaimArgs {
+	lines?: Array<{
+		orderLineId?: ID;
+		variantId?: ID;
+		quantity?: string;
+		reason?: string;
+		isAdditionalItem?: boolean;
+		note?: string;
+	}>;
+	reason?: string;
+	note?: string;
+}
+
 /**
  * Claims over GraphQL.
  *
@@ -133,6 +147,41 @@ export class OrderClaimResolver {
 	}
 
 	/**
+	 * Edits an open claim: what explains it, and the line set that replaces the old one.
+	 *
+	 * The route it mirrors is `PUT /order-claims/:id`, and the two calls it makes are reproduced rather
+	 * than collapsed: the header is written only when `reason` or `note` moved, and the line set is
+	 * replaced only when one was supplied — a field that always wrote the header would touch the row's
+	 * `updatedAt` for an edit that changed nothing, and one that always replaced the set would delete and
+	 * rewrite every line of a claim whose body carried none. The service refuses both once the claim is
+	 * decided, which is the rule the update DTO states: changing a claim after a refund was issued would
+	 * leave the refund explaining a claim that no longer says what it said.
+	 *
+	 * @param id The claim to edit.
+	 * @param input What explains the claim, and the line set that replaces the old one.
+	 * @returns The payload, with the claim as the edit left it.
+	 */
+	@Mutation('updateOrderClaim')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async updateOrderClaim(@Args('id') id: ID, @Args('input') input: IUpdateOrderClaimArgs) {
+		try {
+			const changes = { reason: input.reason, note: input.note };
+
+			if (changes.reason !== undefined || changes.note !== undefined) {
+				await this.orderClaimService.update(id, changes as any);
+			}
+
+			if (input.lines?.length) {
+				await this.orderClaimService.replaceLines(id, input.lines as any);
+			}
+
+			return { orderClaim: await this.orderClaimService.findOneDetailed(id), refundId: null, userErrors: [] };
+		} catch (error) {
+			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Approves and settles a claim.
 	 *
 	 * @param id The claim.
@@ -168,6 +217,35 @@ export class OrderClaimResolver {
 	async rejectOrderClaim(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { orderClaim: await this.orderClaimService.reject(id, reason), refundId: null, userErrors: [] };
+		} catch (error) {
+			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Cancels a claim: the caller abandons its own.
+	 *
+	 * Cancelling and rejecting are separate acts on the same row and the plugin grants them separately —
+	 * the rejection states `CLAIMS_RESOLVE`, because deciding a complaint is a resolver's authority,
+	 * while this states `CLAIMS_CREATE`, because a customer withdrawing a claim it raised is exercising
+	 * the grant that let it raise one. Without this field `CANCELED` was reachable over REST and not
+	 * over GraphQL, so a withdrawn claim would have been recorded as a refused one: `REJECTED` says the
+	 * complaint was examined and turned down, which is a different fact about the claim and about the
+	 * customer.
+	 *
+	 * The route it mirrors is `POST /order-claims/:id/cancel`, declared by `06-api-specification.md`
+	 * §7.14, and the handler's `reason` reaches the service under the same name — `cancel(id, reason)`
+	 * stores it in the row's own `reason` column.
+	 *
+	 * @param id The claim to cancel.
+	 * @param reason Why it was cancelled.
+	 * @returns The payload, with the claim as the cancellation left it.
+	 */
+	@Mutation('cancelOrderClaim')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async cancelOrderClaim(@Args('id') id: ID, @Args('reason') reason?: string) {
+		try {
+			return { orderClaim: await this.orderClaimService.cancel(id, reason), refundId: null, userErrors: [] };
 		} catch (error) {
 			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
 		}
@@ -223,6 +301,33 @@ export class OrderClaimResolver {
 			return { orderClaim: await this.orderClaimService.softRecover(id), refundId: null, userErrors: [] };
 		} catch (error) {
 			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Removes a claim destructively.
+	 *
+	 * `softDeleteOrderClaim` is the withdrawal this domain wants — a claim that settled in money is the
+	 * record of that money, and the lines it raised are what a replacement is built from — and this field
+	 * mirrors the destructive route `CrudController` inherits, which `06-api-specification.md` §2
+	 * declares in the inherited route set for every entity resource §7 lists unless a row says otherwise.
+	 * Both facts belong beside each other: the recoverable pair is the domain's preference and the
+	 * destructive route is the framework's inheritance, and a surface that offered only the first would
+	 * refuse an act REST performs. `order_claim_line` cascades from `order_claim`, so what this removes
+	 * includes the lines the claim was decided on.
+	 *
+	 * @param id The claim to remove.
+	 * @returns The payload, carrying the identifier that was removed.
+	 */
+	@Mutation('deleteOrderClaim')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async deleteOrderClaim(@Args('id') id: ID) {
+		try {
+			await this.orderClaimService.delete(id);
+
+			return { id, userErrors: [] };
+		} catch (error) {
+			return { id: null, userErrors: [toUserError(error)] };
 		}
 	}
 

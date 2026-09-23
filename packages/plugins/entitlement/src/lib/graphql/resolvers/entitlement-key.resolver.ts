@@ -16,7 +16,11 @@ import { EntitlementKey } from '../../entitlement-key/entitlement-key.entity';
 import { EntitlementKeyService } from '../../entitlement-key/entitlement-key.service';
 import { EntitlementKeyStatus } from '../../entitlement.enums';
 import { EntitlementPermissions } from '../../entitlement.permissions';
-import { IEntitlementKeyIssueInput } from '../../entitlement.types';
+import {
+	IEntitlementKeyAssignInput,
+	IEntitlementKeyIssueInput,
+	IEntitlementKeyReissueInput
+} from '../../entitlement.types';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -31,9 +35,31 @@ interface IEntitlementKeyFilter {
 /**
  * Licence keys, over GraphQL.
  *
- * The one field that carries key material is `issueEntitlementKey`, and it carries it once: the
- * schema declares no way to read a key back, so a client that loses one re-issues it, and the
- * previous key is revoked in the same transaction.
+ * Two fields carry key material, each exactly once, in the response to the call that created the
+ * credential: `issueEntitlementKey` for an issuance and `reissueEntitlementKey` for a replacement.
+ *
+ * **No field reads a key back, and that refusal is the specifications'.** `11-customers-b2b-and-subscriptions-spec.md`
+ * §9.1 states it where it defines the resource — "a key is shown once, at issue";
+ * `02-commerce-domain-model.md` §4.8 E4 makes it an invariant — "A licence key is issued at most once per
+ * entitlement key slot, is stored hashed, and is never returned again after its single reveal";
+ * `05-database-schema-spec.md` §19.3 says the plaintext "leaves the service exactly once, in the
+ * response to the issuance call, and never appears in a log, an export or an event payload"; and
+ * `13-migration-and-rollout-plan.md`'s risk register names the opposite as the risk to manage — "An
+ * issued licence key is exposed — logged, returned more than once, or stored in clear text — turning an
+ * entitlement into a credential leak." `POST /entitlement-keys/:id/reveal`, which decrypts the stored
+ * ciphertext and answers the plaintext a second time, is therefore deliberately not mirrored. The
+ * counter-argument is recorded rather than hidden: §19.3 also defines `keyCiphertext` as existing "so
+ * support can re-display it", ADR-50 describes a key as stored "so it can be verified rather than read
+ * back where the format allows", and the service implements both the column and the route — so an
+ * owner who reads those as the governing words wants one more field, `revealEntitlementKey(id: ID!)`
+ * answering the decrypted key under `ENTITLEMENTS_GRANT`, with no version and no retry scope, exactly as
+ * the route declares.
+ *
+ * A client that loses a key therefore re-issues it, and the field for that is `reissueEntitlementKey`,
+ * which reaches the one service method that revokes the previous credential in the same transaction and
+ * links the pair. `issueEntitlementKey` is **not** that operation: it mints another credential against
+ * the same right without revoking the first — the service's `issue` carries no live-key guard at all —
+ * which is why the two are separate fields rather than one.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
@@ -109,6 +135,38 @@ export class EntitlementKeyResolver {
 	}
 
 	/**
+	 * Records who holds an issued credential.
+	 *
+	 * The route it mirrors is `PUT /entitlement-keys/:id`, and it is an **assignment**, not an update of
+	 * the key: its body is `AssignEntitlementKeyDTO`, which states one member, and the service method it
+	 * reaches is `assign`. A field named `updateEntitlementKey` would be a different capability — a
+	 * partial write over the key's prefix, format, status, per-key limit, expiry and extras — and
+	 * `05-database-schema-spec.md` §19.3 closes that: "a key is never re-assigned to a second holder —
+	 * reassignment is a new key, so 'who was given key X' has one answer forever". The DTO's own
+	 * docstring says the same from the other side ("the digest, the ciphertext and the state are
+	 * closed"). So this field carries the one member the route carries, and the service enforces the
+	 * rest: a key already naming a different holder is refused with `ENTITLEMENT_KEY_ALREADY_ASSIGNED`
+	 * rather than reassigned, and `assignedAt` is stamped only on the first assignment.
+	 *
+	 * The permission is the route's own, `ENTITLEMENTS_EDIT`, and no version is stated and no retry
+	 * scope declared, because the route declares neither: a key's own revision does not move when its
+	 * holder is recorded.
+	 *
+	 * @param id The key.
+	 * @param input The holder.
+	 * @returns The payload, carrying the key as the assignment left it.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('assignEntitlementKey')
+	async assignEntitlementKey(@Args('id') id: ID, @Args('input') input: IEntitlementKeyAssignInput) {
+		try {
+			return { key: await this.entitlementKeyService.assign(id, input), userErrors: [] };
+		} catch (error) {
+			return { key: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Withdraws a credential, releasing the activations it was used for.
 	 *
 	 * @param id The key.
@@ -122,6 +180,44 @@ export class EntitlementKeyResolver {
 			return { key: await this.entitlementKeyService.revoke(id, reason), userErrors: [] };
 		} catch (error) {
 			return { key: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Replaces a credential with a freshly generated one.
+	 *
+	 * The recovery path for a lost key, and the only one this surface offers. The service issues the
+	 * replacement against the same right, revokes the credential it replaces in the same transaction —
+	 * which releases the activations that key was used for and re-derives the counters — and links the
+	 * pair in each row's `metadata`, so "what happened to the key this customer was sent" has one answer
+	 * forever. That link is why this is a field of its own and not two calls a client could compose from
+	 * `issueEntitlementKey` and `revokeEntitlementKey`: composing them would leave the replacement
+	 * unlinked, and `issueEntitlementKey` alone would leave two live credentials against one right.
+	 *
+	 * The plaintext of the replacement is returned once, here, and never again — the same treatment the
+	 * issuance gives its own.
+	 *
+	 * No version is stated and no retry scope declared, because the route declares neither: the
+	 * replacement is written against the credential and the right's own revision does not move.
+	 *
+	 * @param id The key being replaced.
+	 * @param input The format of the replacement, why, and whether it should be recoverable.
+	 * @returns The payload, carrying the replacement, its plaintext once, and the key it replaced.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('reissueEntitlementKey')
+	async reissueEntitlementKey(@Args('id') id: ID, @Args('input') input: IEntitlementKeyReissueInput) {
+		try {
+			const result = await this.entitlementKeyService.reissue(id, input);
+
+			return {
+				key: result.key,
+				plaintextKey: result.plaintext,
+				replacedKey: result.replacedKey,
+				userErrors: []
+			};
+		} catch (error) {
+			return { key: null, plaintextKey: null, replacedKey: null, userErrors: [toUserError(error)] };
 		}
 	}
 

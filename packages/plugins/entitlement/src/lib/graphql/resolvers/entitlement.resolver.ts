@@ -35,6 +35,7 @@ import {
 	ENTITLEMENT_CATALOG_PORT,
 	IEntitlementCatalogPort,
 	IEntitlementCheckResult,
+	IEntitlementEditInput,
 	IEntitlementGrantInput
 } from '../../entitlement.types';
 import { toAsyncIterable } from '../async-iterable';
@@ -68,6 +69,24 @@ interface IEntitlementFilter {
  * mutations, and neither a header nor the transport could say which of them a version belongs to. The
  * version therefore rides as the `version` argument, and the accepted version reaches the service
  * through the request the operation arrived on.
+ *
+ * **The three resources' inherited `DELETE /:id` routes are deliberately not mirrored.** What the
+ * specifications refuse is a hard delete of these tables through the API, and they say so in four
+ * places: `05-database-schema-spec.md` §1.7 — "Every table in this document is deleted softly and
+ * archived explicitly. A hard `DELETE` is only ever issued by a retention job (§25) against a table it
+ * owns"; §25.2, which names `entitlement` and `entitlement_key` as "archived by the retention job after
+ * the export" and `entitlement_activation` as "deleted by the retention job; a live activation is never
+ * touched"; §19.2, where the dormant release marks a row `EXPIRED` "rather than deleting the row, so
+ * the history of who held a slot survives"; and
+ * `11-customers-b2b-and-subscriptions-spec.md` §9.3 — "Revoking an entitlement never deletes its rows:
+ * the grant, the activations and the keys stay readable, because they are the record of what the
+ * customer was once entitled to." The counter-argument is recorded rather than hidden: §3.1 lists
+ * "delete" among the parity dimensions, and `06-api-specification.md` §3 declares `DELETE /:id` in
+ * every entity controller's inherited route set — so an owner who reads that sentence as declaring a
+ * capability rather than describing the framework wants three fields, `deleteEntitlement`,
+ * `deleteEntitlementActivation` and `deleteEntitlementKey`, each reaching its own service's `delete(id)`
+ * under `ENTITLEMENTS_EDIT` (and `@Versioned` for the right, whose table carries a version), with
+ * nothing else about this resolver changed.
  *
  * The retry key rides the same way and for the same reason: a mutation that mirrors a retry-safe route
  * declares the same `@Idempotent()` scope, and its `idempotencyKey` member is what a client presents
@@ -247,6 +266,183 @@ export class EntitlementResolver {
 				entitlement: await this.entitlementService.extend(
 					id,
 					{ endsAt: new Date(endsAt), quantity },
+					{},
+					versionExpectationOf(context?.req)
+				),
+				userErrors: []
+			};
+		} catch (error) {
+			return { entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Edits a right: its ceiling, its term, its grace, its activation limit, its extras and its
+	 * conditions.
+	 *
+	 * The route it mirrors is `PUT /entitlements/:id`, and this field makes the two calls that route
+	 * makes, in the order it makes them: the changed fields are written under the version the caller
+	 * read, and the conditions — which are `rule` rows the rule engine owns rather than columns — are
+	 * replaced in their own statement. The right is then read back with its activations, its keys and
+	 * the party it belongs to, which is the answer the route returns.
+	 *
+	 * **This input is deliberately narrower than the route's body, and the narrowing is measured rather
+	 * than claimed.** `UpdateEntitlementDTO` is `PartialType(EntitlementDTO)`, so its live
+	 * class-validator metadata also carries the provenance (`orderId`, `orderLineId`, `subscriptionId`,
+	 * `productId`, `variantId`, `customerId`), the allocated `number`, the `kind`, the `status`, the
+	 * revocation fields and the grant-only members — and `applyChanges` hands its patch to the
+	 * conditional `update` without filtering a member, so a REST caller can write `status` directly,
+	 * past the suspend/revoke transitions and the events that make them auditable, which
+	 * `05-database-schema-spec.md` §19.1 makes the service's business. That is a defect on the REST side
+	 * and not a capability to mirror: the controller's own docstring states the contract this field
+	 * keeps ("A body may not write the provenance, the number or the state"), and the suite reads the
+	 * omitted set out of the DTO's own metadata, so a member added there fails a test instead of
+	 * arriving here unnoticed. The service is left as it is: repairing the REST hole is a change to the
+	 * route's contract, which is the owner's call and not a parity wave's.
+	 *
+	 * No retry scope is declared, because the route declares none: an edit is idempotent by content — the
+	 * same fields written twice leave the same row — and the version is what makes a repeated write
+	 * visible rather than silent.
+	 *
+	 * @param id The right.
+	 * @param input The fields to change.
+	 * @param context The operation context, which carries the version the caller read the right at.
+	 * @returns The payload, carrying the right as the edit left it.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Versioned({ resource: EntitlementService })
+	@Mutation('updateEntitlement')
+	async updateEntitlement(
+		@Args('id') id: ID,
+		@Args('input') input: IEntitlementEditInput,
+		@Context() context?: any
+	) {
+		try {
+			// The conditions are not part of the field write: they are `rule` rows the rule engine owns,
+			// and the service replaces them in its own statement — the same split, and the same order, as
+			// the route this field mirrors.
+			const { conditions, ...changes } = input ?? {};
+
+			if (Object.keys(changes).length) {
+				await this.entitlementService.applyChanges(id, changes as any, versionExpectationOf(context?.req));
+			}
+
+			if (conditions) {
+				await this.entitlementService.replaceConditions(id, conditions as any);
+			}
+
+			return { entitlement: await this.entitlementService.findOneDetailed(id), userErrors: [] };
+		} catch (error) {
+			return { entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Suspends a right temporarily.
+	 *
+	 * The retry scope is `entitlement.suspend`, the scope the suspension route declares: a suspension a
+	 * client repeats under one key is answered from the first attempt rather than performed again, which
+	 * matters because the service emits `entitlement.suspended` on the transition and nothing on the
+	 * replay.
+	 *
+	 * The caller states the version it read, because a suspension is predicated on the row it was
+	 * decided against — a right that moved on since, by a renewal or by another operator, is refused
+	 * rather than suspended underneath that change.
+	 *
+	 * @param id The right.
+	 * @param reason Why — `PAYMENT_FAILED` when dunning suspended it, or an operator's own note.
+	 * @param context The operation context, which carries the version the caller read the right at.
+	 * @returns The payload, carrying the suspended right.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Idempotent({ scope: 'entitlement.suspend', required: false, resourceType: 'entitlement' })
+	@Versioned({ resource: EntitlementService })
+	@Mutation('suspendEntitlement')
+	async suspendEntitlement(
+		@Args('id') id: ID,
+		@Args('reason') reason?: string,
+		@Context() context?: any
+	) {
+		try {
+			return {
+				entitlement: await this.entitlementService.suspend(id, reason, {}, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
+		} catch (error) {
+			return { entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Returns a suspended right to force.
+	 *
+	 * The route takes no body, and neither does this field: resuming clears the suspension reason that
+	 * suspending recorded, and a note supplied here would only be a second, unreadable explanation of
+	 * the same fact.
+	 *
+	 * Two outcomes are worth stating rather than leaving to the service. A right whose term ran out
+	 * while it was suspended is **expired** rather than resumed — resuming it would put a customer back
+	 * in force for a period nobody paid for — and a right already in force is returned unchanged. The
+	 * payload therefore carries the right as it ends up, not as the caller assumed it would.
+	 *
+	 * The retry scope is `entitlement.resume`, the scope the route declares.
+	 *
+	 * @param id The right.
+	 * @param context The operation context, which carries the version the caller read the right at.
+	 * @returns The payload, carrying the resumed — or expired — right.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Idempotent({ scope: 'entitlement.resume', required: false, resourceType: 'entitlement' })
+	@Versioned({ resource: EntitlementService })
+	@Mutation('resumeEntitlement')
+	async resumeEntitlement(@Args('id') id: ID, @Context() context?: any) {
+		try {
+			return {
+				entitlement: await this.entitlementService.resume(id, {}, versionExpectationOf(context?.req)),
+				userErrors: []
+			};
+		} catch (error) {
+			return { entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Lowers the ceiling a right carries, which is what a partial refund does.
+	 *
+	 * This is not `extendEntitlement` with a smaller number, and the difference is the whole reason the
+	 * field exists rather than being folded into the extension. `extend` demands an `endsAt` later than
+	 * the current one, forces the right back to `ACTIVE` and clears `suspendedReason` — so a partial
+	 * refund answered with it would put a suspended or expired right back in force — and it never
+	 * touches the activations, so lowering a ceiling through it leaves live slots above the new
+	 * `quantity`, which is the invariant `05-database-schema-spec.md` I-68 and
+	 * `02-commerce-domain-model.md` §4.8 E2 make the service's to keep. This field calls `reduce`, which
+	 * revokes the surplus activations newest-first before the ceiling moves, revokes a right reduced to
+	 * zero outright, leaves the term and the state alone, and emits `entitlement.reduced` with the ids
+	 * it released.
+	 *
+	 * No retry scope is declared, because the route declares none.
+	 *
+	 * @param id The right.
+	 * @param quantity The ceiling that remains.
+	 * @param reason Why — `REFUNDED` and `QUANTITY_REDUCED` are the two the domain writes itself.
+	 * @param context The operation context, which carries the version the caller read the right at.
+	 * @returns The payload, carrying the reduced — or revoked — right.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Versioned({ resource: EntitlementService })
+	@Mutation('reduceEntitlement')
+	async reduceEntitlement(
+		@Args('id') id: ID,
+		@Args('quantity') quantity: number,
+		@Args('reason') reason?: string,
+		@Context() context?: any
+	) {
+		try {
+			return {
+				entitlement: await this.entitlementService.reduce(
+					id,
+					quantity,
+					reason,
 					{},
 					versionExpectationOf(context?.req)
 				),

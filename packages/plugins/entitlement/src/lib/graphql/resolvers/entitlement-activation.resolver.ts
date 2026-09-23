@@ -16,7 +16,7 @@ import { EntitlementActivation } from '../../entitlement-activation/entitlement-
 import { EntitlementActivationService } from '../../entitlement-activation/entitlement-activation.service';
 import { EntitlementActivationStatus } from '../../entitlement.enums';
 import { EntitlementPermissions } from '../../entitlement.permissions';
-import { IEntitlementActivationInput } from '../../entitlement.types';
+import { IEntitlementActivationEditInput, IEntitlementActivationInput } from '../../entitlement.types';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -138,6 +138,52 @@ export class EntitlementActivationResolver {
 			};
 		} catch (error) {
 			return { activation: null, entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Corrects the recorded fields of a slot, without giving it back and without taking it away.
+	 *
+	 * The route it mirrors is `PUT /entitlement-activations/:id`, which this plugin's controller
+	 * declares rather than inherits so that the body is validated at all: the base class names the
+	 * entity's shape as a generic, whose reflected type is `Object`, which the validation pipe cannot
+	 * name a class for and therefore skips.
+	 *
+	 * The write reaches the service's **inherited** `update`, and the field makes that same call with
+	 * the same input — `entitlementActivationService.update(id, input)` — because the seam parity is
+	 * about is the delegation, not a body this package owns. The service's `update` answers an
+	 * `UpdateResult` rather than a row on both ORMs, so the field then reads the slot back and answers
+	 * it in the payload this resource's mutations declare; the route hands the raw result to its caller,
+	 * which is a difference of the answer and not of the write.
+	 *
+	 * **A divergence between that route's docstrings and its own metadata is recorded here rather than
+	 * repaired on one surface only.** `UpdateEntitlementActivationDTO` says only descriptive fields are
+	 * open and that a body able to rewrite the device identity "would let a client move a slot to a
+	 * different machine without going through the activation path the limit is enforced on" — while the
+	 * DTO's live validation metadata carries `deviceId` and `status`, and the inherited `update` writes
+	 * every member it is handed. The input below is therefore the route's body member for member,
+	 * including those two: §3.1 forbids GraphQL being *narrower* than REST, and a field that quietly
+	 * dropped them would answer one caller and refuse another for the same write. The hazard is real
+	 * and belongs to the route — a correction path that can rewrite the identity the seat count is taken
+	 * over, and that can set a status `05-database-schema-spec.md` §19.2 calls immutable once revoked —
+	 * so it is stated here for the owner rather than closed on the GraphQL side alone.
+	 *
+	 * No permission is left to the class and neither write convention is invented: the route declares
+	 * `ENTITLEMENTS_EDIT` and no `@Idempotent` and no `@Versioned`, and so does this field.
+	 *
+	 * @param id The activation.
+	 * @param input The recorded fields to change.
+	 * @returns The payload, carrying the activation as the correction left it.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('updateEntitlementActivation')
+	async updateEntitlementActivation(@Args('id') id: ID, @Args('input') input: IEntitlementActivationEditInput) {
+		try {
+			await this.entitlementActivationService.update(id, input as any);
+
+			return { activation: await this.entitlementActivationService.findOneScoped(id), userErrors: [] };
+		} catch (error) {
+			return { activation: null, userErrors: [toUserError(error)] };
 		}
 	}
 

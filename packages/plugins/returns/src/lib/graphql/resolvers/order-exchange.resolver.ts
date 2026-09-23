@@ -24,6 +24,13 @@ interface IRequestOrderExchangeArgs {
 	note?: string;
 }
 
+/** The edit of an open exchange, as the schema declares it. */
+interface IUpdateOrderExchangeArgs {
+	lines?: Array<{ orderLineId?: ID; variantId: ID; quantity?: string; unitPrice?: string; note?: string }>;
+	allowBackorder?: boolean;
+	note?: string;
+}
+
 /**
  * Exchanges over GraphQL.
  *
@@ -127,6 +134,41 @@ export class OrderExchangeResolver {
 	}
 
 	/**
+	 * Edits an open exchange: its backorder allowance, a note, and the line set that replaces the old one.
+	 *
+	 * The route it mirrors is `PUT /order-exchanges/:id`, and both of its calls are reproduced: the header
+	 * is written only when `allowBackorder` or `note` moved, and the line set is replaced only when one was
+	 * supplied. The capability exists because the set is still the caller's to state before approval — a
+	 * replacement line's `unitPrice` is snapshotted when the set is written, and the difference the
+	 * customer pays is priced from those snapshots at approval, so a set rewritten afterwards would
+	 * re-price lines somebody was already charged for. The service refuses the edit once the exchange is
+	 * resolved for exactly that reason.
+	 *
+	 * @param id The exchange to edit.
+	 * @param input The backorder allowance, a note, and the line set that replaces the old one.
+	 * @returns The payload, with the exchange as the edit left it.
+	 */
+	@Mutation('updateOrderExchange')
+	@Permissions(ReturnsPermissions.EXCHANGES_CREATE)
+	async updateOrderExchange(@Args('id') id: ID, @Args('input') input: IUpdateOrderExchangeArgs) {
+		try {
+			const changes = { allowBackorder: input.allowBackorder, note: input.note };
+
+			if (changes.allowBackorder !== undefined || changes.note !== undefined) {
+				await this.orderExchangeService.update(id, changes as any);
+			}
+
+			if (input.lines?.length) {
+				await this.orderExchangeService.replaceLines(id, input.lines as any);
+			}
+
+			return { orderExchange: await this.orderExchangeService.findOneDetailed(id), userErrors: [] };
+		} catch (error) {
+			return { orderExchange: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Approves an exchange and prices the difference.
 	 *
 	 * @param id The exchange.
@@ -160,6 +202,31 @@ export class OrderExchangeResolver {
 	async rejectOrderExchange(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { orderExchange: await this.orderExchangeService.reject(id, reason), userErrors: [] };
+		} catch (error) {
+			return { orderExchange: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Cancels an exchange: the caller abandons one that was approved and reserved stock.
+	 *
+	 * Cancelling and rejecting differ in what they release. A rejection decides the exchange was not
+	 * warranted; a cancellation abandons one that was approved — doc 10 §12.6: "Rejecting or cancelling an
+	 * approved-but-unresolved exchange releases `CLAIM`/`EXCHANGE` reservations with
+	 * `release('EXCHANGE', exchangeId)`". The route states `EXCHANGES_CREATE` for that reason, and its
+	 * `reason` reaches the service under the same name. Without this field a GraphQL caller could approve
+	 * an exchange, reserve the replacement units, and then have no way to give them back — the stock would
+	 * be held until something else released it, which is the failure this closes.
+	 *
+	 * @param id The exchange to cancel.
+	 * @param reason Why it was cancelled.
+	 * @returns The payload, with the exchange as the cancellation left it.
+	 */
+	@Mutation('cancelOrderExchange')
+	@Permissions(ReturnsPermissions.EXCHANGES_CREATE)
+	async cancelOrderExchange(@Args('id') id: ID, @Args('reason') reason?: string) {
+		try {
+			return { orderExchange: await this.orderExchangeService.cancel(id, reason), userErrors: [] };
 		} catch (error) {
 			return { orderExchange: null, userErrors: [toUserError(error)] };
 		}
@@ -215,6 +282,33 @@ export class OrderExchangeResolver {
 			return { orderExchange: await this.orderExchangeService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { orderExchange: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Removes an exchange destructively.
+	 *
+	 * `softDeleteOrderExchange` is the withdrawal this domain wants — the difference was priced once and
+	 * the customer was charged it, and the row is the explanation of that charge — and this field mirrors
+	 * the destructive route `CrudController` inherits, which `06-api-specification.md` §2 declares in the
+	 * inherited route set for every entity resource §7 lists unless a row says otherwise, and which the
+	 * marketplace row names six `delete*` fields for. Both facts belong beside each other: the recoverable
+	 * pair is the domain's preference and the destructive route is the framework's inheritance. A line
+	 * whose `variantId` is referenced with `RESTRICT` from other rows is refused by the database, so this
+	 * removes what the schema lets it remove and no more.
+	 *
+	 * @param id The exchange to remove.
+	 * @returns The payload, carrying the identifier that was removed.
+	 */
+	@Mutation('deleteOrderExchange')
+	@Permissions(ReturnsPermissions.EXCHANGES_CREATE)
+	async deleteOrderExchange(@Args('id') id: ID) {
+		try {
+			await this.orderExchangeService.delete(id);
+
+			return { id, userErrors: [] };
+		} catch (error) {
+			return { id: null, userErrors: [toUserError(error)] };
 		}
 	}
 
