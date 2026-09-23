@@ -9988,6 +9988,26 @@ type Mutation {
   abandonCheckout(cartId: ID!, version: Int): Cart!
 
   """
+  Recomputes a cart's prices, promotions and totals. The version argument is the one the caller read the cart at.
+  """
+  recalculateCommerceCart(id: ID!, version: Int): Cart!
+
+  """
+  Amends a checkout session's own record, as its update route's body states it.
+  """
+  updateCommerceCheckoutSession(id: ID!, input: UpdateCheckoutSessionInput!): CheckoutSession!
+
+  """
+  Records that a step of a checkout session completed, appending it to the session's path.
+  """
+  completeStepCommerceCheckoutSession(id: ID!, step: String!, data: JSON, idempotencyKey: String): CheckoutSession!
+
+  """
+  Deletes a checkout session outright. `softDeleteCommerceCheckoutSession` retires it recoverably instead.
+  """
+  deleteCommerceCheckoutSession(id: ID!): Boolean!
+
+  """
   Retires a cart recoverably, keeping its lines, delivery choices and promotions.
   """
   softDeleteCommerceCart(id: ID!): Cart!
@@ -47094,6 +47114,23 @@ input CompleteCheckoutInput {
   version: Int
   idempotencyKey: String
   paymentSessionId: ID
+}
+
+"""
+The writable surface of a checkout session, as the session's own update route states it.
+"""
+input UpdateCheckoutSessionInput {
+  cartId: ID
+  status: String
+  step: String
+
+  """
+  The steps already completed, in the order they were completed; `completeStepCommerceCheckoutSession` appends to it.
+  """
+  completedSteps: [String!]
+
+  """The input accumulated across the steps."""
+  data: JSON
 }
 
 """An order: the immutable commercial record."""

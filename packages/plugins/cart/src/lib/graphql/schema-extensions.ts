@@ -265,6 +265,17 @@ export const cartSchemaExtensions = gql`
 		paymentSessionId: ID
 	}
 
+	"The writable surface of a checkout session, as the session's own update route states it."
+	input UpdateCheckoutSessionInput {
+		cartId: ID
+		status: String
+		step: String
+		"The steps already completed, in the order they were completed; \`completeStepCommerceCheckoutSession\` appends to it."
+		completedSteps: [String!]
+		"The input accumulated across the steps."
+		data: JSON
+	}
+
 	extend type Query {
 		"List carts of the caller's organization."
 		carts(status: String, customerId: ID, email: String, page: PageInput, withDeleted: Boolean): CartConnection!
@@ -294,6 +305,25 @@ export const cartSchemaExtensions = gql`
 		startCheckout(input: StartCheckoutInput!): CheckoutSession!
 		completeCheckout(input: CompleteCheckoutInput!): CheckoutResult!
 		abandonCheckout(cartId: ID!, version: Int): Cart!
+		# The four write routes of this domain that no field answered at all. A name-based audit matches a
+		# route's handler name against the root fields, so it flags a route whose capability a field serves
+		# under another name and a child resource's own addressing of a capability the cart already offers;
+		# of the twenty-six routes it flags in this package, these four are the ones that are genuinely
+		# unserved. The cart's recalculation route recomputes the cart and nothing else does; the checkout
+		# session's own update, its step report and its destructive delete are three routes a session
+		# answers and no cart field reaches — the cart's abandonCheckout abandons the CART, and the
+		# session's recoverable withdrawal keeps the row this one removes. Each field below mirrors one
+		# route: the same service method with the same arguments, the same permission the route's own
+		# handler states, and the same retry scope and version expectation the route declares. The other
+		# twenty-two are read out in the plugin's spec, route by route.
+		"Recomputes a cart's prices, promotions and totals. The version argument is the one the caller read the cart at."
+		recalculateCommerceCart(id: ID!, version: Int): Cart!
+		"Amends a checkout session's own record, as its update route's body states it."
+		updateCommerceCheckoutSession(id: ID!, input: UpdateCheckoutSessionInput!): CheckoutSession!
+		"Records that a step of a checkout session completed, appending it to the session's path."
+		completeStepCommerceCheckoutSession(id: ID!, step: String!, data: JSON, idempotencyKey: String): CheckoutSession!
+		"Deletes a checkout session outright. \`softDeleteCommerceCheckoutSession\` retires it recoverably instead."
+		deleteCommerceCheckoutSession(id: ID!): Boolean!
 		# The recoverable lifecycle pair, one field per resource of this domain: every controller here
 		# extends CrudController and overrides both inherited routes only to state a permission, so REST
 		# has served a gated withdraw/restore pair over five resources while no field answered either half

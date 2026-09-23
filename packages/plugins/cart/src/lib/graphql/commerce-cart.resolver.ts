@@ -150,6 +150,40 @@ export class CommerceCartResolver {
 	}
 
 	/**
+	 * Recomputes a cart's prices, promotions and totals.
+	 *
+	 * The route it mirrors is `POST /carts/:id/recalculate`, and it is one of the four write routes of
+	 * this package that no field answered. A name-based audit reads a route's handler name against the
+	 * root fields and flags a route whose capability a field serves under another name —
+	 * `POST /carts` is served by `createCart`, `POST /carts/:id/merge` by `mergeCarts` — but nothing
+	 * in this document recomputed a cart: the totals were only ever recomputed as a side effect of a
+	 * line, a delivery choice or a promotion being written, while the route exists so that a long-lived
+	 * client session can price a cart it has not changed (`10-orders-payments-and-returns-spec.md`
+	 * §2.8 lists it as trigger 20, reason `MANUAL`, and `06-api-specification.md` §7.9 states the route
+	 * as "Force a totals recalculation"). The sibling domain states the same capability as
+	 * `recalculateOrder`, so the omission was this package's own.
+	 *
+	 * The version is the cart's and is required, exactly as the route declares it: `recalculate` writes
+	 * the totals columns and the version they belong to in one statement, so a cart that moved on while
+	 * the totals were being computed from its lines is refused rather than given totals computed from
+	 * rows that no longer describe it. The grant is the route's own — the cart's editing one, not the
+	 * checkout one — because recomputing what a cart costs is preparation rather than placement.
+	 *
+	 * @param id The cart.
+	 * @param context The operation context, which carries the version the caller read the cart at.
+	 * @returns The cart with its recomputed totals.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Versioned({ resource: CommerceCartService })
+	@Mutation(() => Object, { name: 'recalculateCommerceCart' })
+	async recalculateCommerceCart(
+		@Args('id', { type: () => ID }) id: string,
+		@Context() context: any
+	): Promise<CommerceCart> {
+		return this.commerceCartService.recalculate(id, 'MANUAL', versionExpectationOf(context?.req));
+	}
+
+	/**
 	 * Deletes a cart.
 	 *
 	 * A deletion is a write to a versioned record even though it overwrites no column, so the caller
