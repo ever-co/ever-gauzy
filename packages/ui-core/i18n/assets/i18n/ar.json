@@ -1153,7 +1153,11 @@
 		"APPLICATIONS": "تطبيقات",
 		"OPEN_GA_BROWSER": "افتح Gauzy في المتصفح",
 		"START_SERVER": "تشغيل الخادم",
-		"STOP_SERVER": "توقف الخادم"
+		"STOP_SERVER": "توقف الخادم",
+		"DOCUMENTS": "المستندات",
+		"BILLING": "الفوترة",
+		"MONITORING": "المراقبة",
+		"ADD_ITEM": "إضافة {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -5288,7 +5292,8 @@
 				"TERMS_AND_CONDITIONS": "البنود والشروط",
 				"AND": " و ",
 				"PRIVACY_POLICY": "سياسة الخصوصية"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "يجب أن تحتوي كلمة المرور على 4 أحرف على الأقل"
 		}
 	},
 	"LOGIN_PAGE": {
