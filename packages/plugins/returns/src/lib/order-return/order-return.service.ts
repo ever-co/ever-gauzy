@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import {
 	IOrderReturnLineInput,
@@ -168,6 +168,9 @@ interface IPostedMovement extends IPlannedMovement {
  */
 @Injectable()
 export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
+	/** Where a failure that must not be thrown — a compensation that did not land — is reported. */
+	private readonly logger = new Logger(OrderReturnService.name);
+
 	constructor(
 		readonly typeOrmOrderReturnRepository: TypeOrmOrderReturnRepository,
 		readonly mikroOrmOrderReturnRepository: MikroOrmOrderReturnRepository,
@@ -438,7 +441,20 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 				}
 			);
 		} catch (error) {
-			await this.compensateReceipt(orderReturn, plan, posted);
+			// **A compensation that fails must not replace the reason the receipt failed.** This block
+			// threw the compensation's own exception out of the method, so the caller — and the operator
+			// reading the log — was told "ORDER_LINE_RECEIPT_BELOW_ZERO" about a receipt whose real cause
+			// was something else entirely, and the original failure was never reported anywhere. The
+			// compensation is best-effort by nature (it is undoing writes that only partly landed), so its
+			// failure is logged beside the original rather than thrown instead of it.
+			try {
+				await this.compensateReceipt(orderReturn, plan, posted);
+			} catch (compensationError) {
+				this.logger.error(
+					`The receipt of return ${orderReturn.id} failed and its compensation failed too: ` +
+						`${describe(compensationError)}`
+				);
+			}
 
 			throw error;
 		}
@@ -1238,4 +1254,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			);
 		}
 	}
+}
+
+/**
+ * @param error The failure.
+ * @returns The failure as one line, so a log entry stays an entry.
+ */
+function describe(error: unknown): string {
+	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
 }

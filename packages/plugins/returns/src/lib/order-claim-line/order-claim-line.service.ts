@@ -103,7 +103,13 @@ export class OrderClaimLineService extends TenantAwareCrudService<OrderClaimLine
 					quantity: normalizeQuantity(input.quantity),
 					reason: input.reason ?? OrderClaimReason.OTHER,
 					isAdditionalItem: input.isAdditionalItem,
-					note: input.note
+					note: input.note,
+					// The tenancy is the header's: `TenantAwareCrudService.create` states the tenant from the
+					// request and no organization, and every scoped read of these lines filters by the
+					// caller's organization — so a line written without one is invisible to the service that
+					// wrote it, which is the defect this file's sibling in the return flow was fixed for.
+					tenantId: claim.tenantId,
+					organizationId: claim.organizationId
 				} as any)
 			);
 		}

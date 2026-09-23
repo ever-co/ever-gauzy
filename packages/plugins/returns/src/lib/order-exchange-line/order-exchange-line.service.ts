@@ -101,7 +101,13 @@ export class OrderExchangeLineService extends TenantAwareCrudService<OrderExchan
 					variantId: line.variantId,
 					quantity: normalizeQuantity(line.quantity),
 					unitPrice: line.unitPrice,
-					note: line.note
+					note: line.note,
+					// The tenancy is the header's: `TenantAwareCrudService.create` states the tenant from the
+					// request and no organization, and every scoped read of these lines filters by the
+					// caller's organization — so a line written without one is invisible to the service that
+					// wrote it, which is the defect this file's sibling in the return flow was fixed for.
+					tenantId: exchange.tenantId,
+					organizationId: exchange.organizationId
 				} as any)
 			);
 		}

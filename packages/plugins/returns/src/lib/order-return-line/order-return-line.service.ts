@@ -136,7 +136,18 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 					restock: input.restock ?? true,
 					reasonId: input.reasonId,
 					warehouseId: input.warehouseId,
-					note: input.note
+					note: input.note,
+					// **The tenancy is the header's, and it has to be stated.**
+					// `TenantAwareCrudService.create` stamps the tenant from the request and states no
+					// organization at all, so a line written without one carries `organizationId = NULL`
+					// while every scoped read of these lines — `findForReturn` below, `sumClaimedQuantities`
+					// and the ceiling check built on it — filters by the caller's organization. A line the
+					// service cannot read back is a receipt that cannot find its own lines ("Return line …
+					// does not belong to this return", for a line that does) and a ceiling that counts
+					// nothing, so the same fulfilled units can be claimed twice. It is read from the header
+					// rather than from the request because that is the row the line belongs to.
+					tenantId: orderReturn.tenantId,
+					organizationId: orderReturn.organizationId
 				} as any)
 			);
 		}
