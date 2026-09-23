@@ -1,0 +1,110 @@
+name: EXPERIMENT arm64 snap vs snapcraft version
+
+# Throwaway diagnostic, lives ONLY on branch exp/arm64-snap-snapcraft-version.
+#
+# Question: why does electron-builder's snap target fail on linux-arm64 with
+#   "Error installing snap 'gnome-3-28-1804' from channel 'latest/stable'"
+# while the same target succeeds on x64?
+#
+# Already ruled out (see the 2026-09-22 handover): the runner (identical failure on
+# ubicloud and on GitHub-hosted arm64), gnome-3-28-1804 availability (it IS in
+# latest/stable for arm64, rev 199), and SNAPCRAFT_BUILD_ENVIRONMENT=host (it was on
+# when arm64 last succeeded, 2026-05-07). The one variable left is the snapcraft
+# version: May's success used unpinned action-snapcraft, every failure ran 7.5.9.
+#
+# This harness packages a trivial Electron app with the SAME electron-builder
+# (26.0.3), Electron (38.2.2) and snap config (base: core22) as apps/desktop, so it
+# exercises the exact app-builder snap code path in minutes instead of rebuilding the
+# monorepo. It never publishes and uses no secrets. The x64 rows are the CONTROL: if
+# they pass, the harness is proven able to succeed and an arm64 failure is real.
+
+on:
+  push:
+    branches:
+      - exp/arm64-snap-snapcraft-version
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snap:
+    name: ${{ matrix.runner }} / snapcraft ${{ matrix.snapcraft }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04-arm, ubuntu-24.04]
+        snapcraft: ['7.x/stable', '8.x/stable', 'latest/stable', 'action-snapcraft@v2']
+
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install snapcraft from ${{ matrix.snapcraft }}
+        if: matrix.snapcraft != 'action-snapcraft@v2'
+        run: sudo snap install snapcraft --classic --channel=${{ matrix.snapcraft }}
+
+      - name: Install snapcraft via samuelmeuli/action-snapcraft@v2 (what May used)
+        if: matrix.snapcraft == 'action-snapcraft@v2'
+        uses: samuelmeuli/action-snapcraft@v2
+
+      - name: Record environment
+        run: |
+          echo "== arch ==";       uname -m
+          echo "== os ==";         lsb_release -ds || cat /etc/os-release
+          echo "== snapcraft =="; snapcraft --version || true
+          echo "== snapd ==";      snap version || true
+
+      - name: Create minimal Electron app with the desktop app's snap config
+        run: |
+          mkdir -p harness && cd harness
+          cat > package.json <<'JSON'
+          {
+            "name": "snaptest",
+            "version": "1.0.0",
+            "description": "arm64 snap repro",
+            "author": "Ever Co <ever@ever.co>",
+            "main": "main.js",
+            "build": {
+              "appId": "co.ever.snaptest",
+              "productName": "snaptest",
+              "linux": {
+                "target": ["snap"],
+                "category": "Development",
+                "executableName": "snaptest"
+              },
+              "snap": { "base": "core22" }
+            }
+          }
+          JSON
+          echo "require('electron').app.quit()" > main.js
+          npm install --no-audit --no-fund --save-dev electron@38.2.2 electron-builder@26.0.3
+
+      - name: Build snap (same env as the prod arm64 job)
+        id: build
+        working-directory: harness
+        env:
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
+        run: |
+          ARCH=$([ "$(uname -m)" = "aarch64" ] && echo --arm64 || echo --x64)
+          npx electron-builder --linux snap $ARCH --publish never
+
+      - name: Snapcraft's own execution log (the part CI never showed us)
+        if: always()
+        run: |
+          shopt -s nullglob
+          logs=(~/.local/state/snapcraft/log/*.log)
+          if [ ${#logs[@]} -eq 0 ]; then echo "no snapcraft log written"; exit 0; fi
+          for f in "${logs[@]}"; do
+            echo "===== $f ====="
+            tail -n 120 "$f"
+          done
+
+      - name: Result
+        if: always()
+        run: |
+          echo "RESULT runner=${{ matrix.runner }} snapcraft=${{ matrix.snapcraft }} build=${{ steps.build.outcome }}"
+          ls -la harness/dist/*.snap 2>/dev/null || echo "no .snap produced"
