@@ -869,6 +869,10 @@ export const schemaExtensions = gql`
 		setWarehouseZoneBlocked(id: ID!, isBlocked: Boolean!): WarehouseZonePayload!
 		"Deletes a zone that holds no bin."
 		deleteWarehouseZone(id: ID!): WarehouseZonePayload!
+		"Retires a zone recoverably, so the bins inside it keep the area they were addressed in."
+		softDeleteWarehouseZone(id: ID!): WarehouseZonePayload!
+		"Restores a soft-deleted zone."
+		recoverWarehouseZone(id: ID!): WarehouseZonePayload!
 		"Creates a bin."
 		createWarehouseBin(input: WarehouseBinInput!): WarehouseBinPayload!
 		"Creates a consecutive range of bins."
@@ -881,6 +885,10 @@ export const schemaExtensions = gql`
 		setWarehouseBinBlocked(id: ID!, isBlocked: Boolean!): WarehouseBinPayload!
 		"Deletes a bin that is empty and holds no position under it."
 		deleteWarehouseBin(id: ID!): WarehouseBinPayload!
+		"Retires a bin recoverably, so the rows that name it as their address stay readable."
+		softDeleteWarehouseBin(id: ID!): WarehouseBinPayload!
+		"Restores a soft-deleted bin."
+		recoverWarehouseBin(id: ID!): WarehouseBinPayload!
 		"Reconciles the bins of a location against the movement ledger."
 		reconcileWarehouseBins(input: ReconcileBinsInput!): BinReconciliationPayload!
 		"Declares a bin as the home bin of a variant at a location. No movement is written."
@@ -901,6 +909,10 @@ export const schemaExtensions = gql`
 		closePickWaveShort(id: ID!, reason: String): PickWavePayload!
 		"Cancels a wave nothing has been picked from."
 		cancelPickWave(id: ID!, reason: String): PickWavePayload!
+		"Retires a wave recoverably, so its lists and the work they record stay explainable."
+		softDeletePickWave(id: ID!): PickWavePayload!
+		"Restores a soft-deleted wave."
+		recoverPickWave(id: ID!): PickWavePayload!
 		"Creates a pick list from shipments."
 		createPickList(input: PickListInput!): PickListPayload!
 		"Assigns a pick list to a picker."
@@ -911,6 +923,10 @@ export const schemaExtensions = gql`
 		completePickList(id: ID!): PickListPayload!
 		"Cancels a pick list nothing has been picked from."
 		cancelPickList(id: ID!, reason: String): PickListPayload!
+		"Retires a pick list recoverably, so the lines it was walked with keep their list."
+		softDeletePickList(id: ID!): PickListPayload!
+		"Restores a soft-deleted pick list."
+		recoverPickList(id: ID!): PickListPayload!
 		"Records what was taken from the bin."
 		pickPickListLine(
 			pickListId: ID!
@@ -938,12 +954,20 @@ export const schemaExtensions = gql`
 		): PickListLinePayload!
 		"Records a line the picker deliberately did not collect."
 		skipPickListLine(pickListId: ID!, lineId: ID!, note: String): PickListLinePayload!
+		"Retires a line recoverably, so a packing record that names it stays complete."
+		softDeletePickListLine(id: ID!): PickListLinePayload!
+		"Restores a soft-deleted pick line."
+		recoverPickListLine(id: ID!): PickListLinePayload!
 		"Creates a pack slip from a picked list."
 		createPackSlip(warehouseId: ID!, pickListId: ID, fulfillmentId: ID, packageCount: Int): PackSlipPayload!
 		"Records the packing and seals the slip."
 		packPackSlip(id: ID!, input: PackSlipContentInput!): PackSlipPayload!
 		"Voids a slip that was never packed."
 		voidPackSlip(id: ID!, reason: String): PackSlipPayload!
+		"Retires a slip recoverably, so the lines it covers keep the parcel they went into."
+		softDeletePackSlip(id: ID!): PackSlipPayload!
+		"Restores a soft-deleted pack slip."
+		recoverPackSlip(id: ID!): PackSlipPayload!
 		"Builds a draft manifest for a carrier."
 		createCarrierManifest(input: CarrierManifestInput!): CarrierManifestPayload!
 		"Submits a draft manifest, freezing its membership."
@@ -952,5 +976,9 @@ export const schemaExtensions = gql`
 		handOverCarrierManifest(id: ID!, input: HandOverManifestInput): CarrierManifestPayload!
 		"Cancels a manifest before hand-over."
 		cancelCarrierManifest(id: ID!, reason: String): CarrierManifestPayload!
+		"Retires a manifest recoverably, so the shipments it covered keep their hand-over record."
+		softDeleteCarrierManifest(id: ID!): CarrierManifestPayload!
+		"Restores a soft-deleted manifest."
+		recoverCarrierManifest(id: ID!): CarrierManifestPayload!
 	}
 `;

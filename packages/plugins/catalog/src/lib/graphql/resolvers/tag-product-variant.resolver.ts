@@ -89,4 +89,40 @@ export class TagProductVariantResolver {
 			existing.map((row) => row.tagId).filter((id) => !tagIds.includes(id))
 		);
 	}
+
+	/**
+	 * Retires one facet row recoverably, keeping the tag on the variant.
+	 *
+	 * The route it mirrors is `DELETE /tag-product-variants/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated.
+	 * `detachProductVariantFacets` above rewrites the whole facet set of a variant; this is the row's own
+	 * lifecycle, and it is what a caller holding one facet identifier reaches.
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_DELETE` — because retiring a
+	 * facet changes the filters a variant is found under.
+	 *
+	 * @param id The facet row to retire.
+	 * @returns The facet row, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('softDeleteTagProductVariant')
+	async softDeleteTagProductVariant(@Args('id') id: ID): Promise<TagProductVariant> {
+		return this.tagProductVariantService.softRemove(id);
+	}
+
+	/**
+	 * Restores a facet row that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /tag-product-variants/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The tag is on
+	 * the variant again, which is why the route states the deleting grant rather than the reading one.
+	 *
+	 * @param id The facet row to restore.
+	 * @returns The restored facet row.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('recoverTagProductVariant')
+	async recoverTagProductVariant(@Args('id') id: ID): Promise<TagProductVariant> {
+		return this.tagProductVariantService.softRecover(id);
+	}
 }

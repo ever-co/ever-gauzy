@@ -33,6 +33,12 @@ import { IFulfillmentConnection } from './types';
 /**
  * The fulfilment root fields and the shipment's own transitions.
  *
+ * The shipment's inherited lifecycle pair and the line's live here too — `softDeleteFulfillment` and
+ * `recoverFulfillment`, `softDeleteFulfillmentLine` and `recoverFulfillmentLine`. The line is the reason
+ * the second pair is not in a resolver of its own: it has none, because it is read through the shipment
+ * as the `lines` field below resolves it, so these two fields are the only root fields a line can be
+ * withdrawn and restored through.
+ *
  * The same guards and the same permissions as the REST controller, over the same services: a GraphQL
  * caller and a REST caller cannot diverge in what they may do or in what a rule means. The transitions
  * are mutations rather than a writable status field, because a status is the outcome of an event with a
@@ -278,6 +284,83 @@ export class FulfillmentResolver {
 		@Context() context?: any
 	): Promise<Fulfillment> {
 		return this.fulfillmentService.requestLabel(id, input as any, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Retires a shipment recoverably, keeping the lines that say what it carried.
+	 *
+	 * The route it mirrors is `DELETE /fulfillments/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Cancelling is a
+	 * transition of the shipment's own lifecycle and records a cancellation on a shipment that is still
+	 * read; withdrawing the row is a different act, so without this field a shipment a caller retired over
+	 * GraphQL had no field to bring it back, while a REST caller could retire and restore it.
+	 *
+	 * The permission is the controller's own for the route — `FULFILLMENTS_EDIT` — and not the class-level
+	 * view grant, because a retired shipment is what the order's materialised fulfilment status no longer
+	 * counts.
+	 *
+	 * @param id The shipment to retire.
+	 * @returns The shipment, as the soft delete left it.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteFulfillment' })
+	async softDeleteFulfillment(@Args('id', { type: () => ID }) id: string): Promise<Fulfillment> {
+		return this.fulfillmentService.softRemove(id);
+	}
+
+	/**
+	 * Restores a shipment that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /fulfillments/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored shipment
+	 * counts towards what the order has shipped again, which is why the route states the editing grant
+	 * rather than the reading one.
+	 *
+	 * @param id The shipment to restore.
+	 * @returns The restored shipment.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Object, { name: 'recoverFulfillment' })
+	async recoverFulfillment(@Args('id', { type: () => ID }) id: string): Promise<Fulfillment> {
+		return this.fulfillmentService.softRecover(id);
+	}
+
+	/**
+	 * Retires a shipment line recoverably, keeping what the shipment covered.
+	 *
+	 * The route it mirrors is `DELETE /fulfillment-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. The hard delete the
+	 * endpoint does serve drops the row the order line's own counters were derived from, which is exactly
+	 * what the soft route exists to avoid — so a client that held only this resolver could not express the
+	 * recoverable withdrawal at all.
+	 *
+	 * The permission is the controller's own for the route — `FULFILLMENTS_EDIT` — and not the class-level
+	 * view grant, because retiring a line changes how much of an order line is recorded as shipped.
+	 *
+	 * @param id The line to retire.
+	 * @returns The line, as the soft delete left it.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteFulfillmentLine' })
+	async softDeleteFulfillmentLine(@Args('id', { type: () => ID }) id: string): Promise<FulfillmentLine> {
+		return this.lineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a shipment line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /fulfillment-lines/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored line is
+	 * read through its shipment again, which is why the route states the editing grant rather than the
+	 * reading one.
+	 *
+	 * @param id The line to restore.
+	 * @returns The restored line.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Object, { name: 'recoverFulfillmentLine' })
+	async recoverFulfillmentLine(@Args('id', { type: () => ID }) id: string): Promise<FulfillmentLine> {
+		return this.lineService.softRecover(id);
 	}
 
 	/**

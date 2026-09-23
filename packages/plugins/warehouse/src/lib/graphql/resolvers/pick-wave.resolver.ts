@@ -242,6 +242,51 @@ export class PickWaveResolver {
 	}
 
 	/**
+	 * Retires a wave recoverably, keeping the lists it released and the work they record.
+	 *
+	 * The route it mirrors is `DELETE /pick-waves/:id/soft`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. Cancelling is a transition of
+	 * the wave's own lifecycle and refuses a wave work has been picked from, so it is not a substitute for
+	 * this: without this field a wave a caller retired over GraphQL had no field to bring it back, while a
+	 * REST caller could retire and restore it.
+	 *
+	 * The permission is the controller's own for the route — `PICK_LISTS_EDIT` — and not the class-level
+	 * view grant, because retiring a wave takes the work it covers out of the floor's view.
+	 *
+	 * @param id The wave to retire.
+	 * @returns The payload, with the retired wave or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('softDeletePickWave')
+	async softDeletePickWave(@Args('id') id: ID) {
+		try {
+			return { pickWave: await this.pickWaveService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { pickWave: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a wave that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /pick-waves/:id/recover`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. A restored wave holds its
+	 * lists again, which is why the route states the editing grant rather than the reading one.
+	 *
+	 * @param id The wave to restore.
+	 * @returns The payload, with the restored wave or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('recoverPickWave')
+	async recoverPickWave(@Args('id') id: ID) {
+		try {
+			return { pickWave: await this.pickWaveService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { pickWave: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Resolves the lists a wave holds.
 	 *
 	 * @param wave The wave being read.

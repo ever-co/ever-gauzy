@@ -95,4 +95,42 @@ export class CollectionProductResolver {
 			existing.map((row) => row.productId).filter((id) => !productIds.includes(id))
 		);
 	}
+
+	/**
+	 * Retires one membership row recoverably, keeping the product in the collection's manual set.
+	 *
+	 * The route it mirrors is `DELETE /collection-products/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. Removing a
+	 * product through the set mutation above is a curation decision that rewrites the whole set; this is
+	 * the row's own lifecycle, and it is what a caller holding one membership identifier reaches — the
+	 * merchandising position it was curated at is preserved rather than recomputed.
+	 *
+	 * The permission is the controller's own for the route — `COLLECTIONS_EDIT` — because retiring a
+	 * membership changes what the collection contains.
+	 *
+	 * @param id The membership to retire.
+	 * @returns The membership, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('softDeleteCollectionProduct')
+	async softDeleteCollectionProduct(@Args('id') id: ID): Promise<CollectionProduct> {
+		return this.collectionProductService.softRemove(id);
+	}
+
+	/**
+	 * Restores a membership row that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /collection-products/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The product
+	 * is curated into the collection again at the position it held, which is why the route states the
+	 * editing grant rather than the reading one.
+	 *
+	 * @param id The membership to restore.
+	 * @returns The restored membership.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('recoverCollectionProduct')
+	async recoverCollectionProduct(@Args('id') id: ID): Promise<CollectionProduct> {
+		return this.collectionProductService.softRecover(id);
+	}
 }

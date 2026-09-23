@@ -554,6 +554,55 @@ export const orderSchemaExtensions = gql`
 		recomputeOrderLineInvoices(orderLineId: ID!, basisQuantity: Decimal): OrderLine!
 		"Records one refund against a line, in as many parts as it was paid in."
 		recordOrderLineRefund(input: OrderLineRefundInput!): OrderLine!
+		# The recoverable lifecycle pair, one field per resource of this domain: every controller here
+		# extends CrudController and overrides both inherited routes only to state a permission, so REST
+		# has served a gated withdraw/restore pair over eleven resources while no field answered either
+		# half of it. Each field below mirrors one of those routes — the same service method, the same
+		# identifier, the same ORDERS_EDIT grant the route states.
+		"Retires an order recoverably, keeping the row and its satellites."
+		softDeleteOrder(id: ID!): Order!
+		"Restores a soft-deleted order."
+		recoverOrder(id: ID!): Order!
+		"Retires a frozen address of an order recoverably."
+		softDeleteOrderAddress(id: ID!): OrderAddress!
+		"Restores a soft-deleted address of an order."
+		recoverOrderAddress(id: ID!): OrderAddress!
+		"Retires a change recoverably, keeping what it asked for and what it did."
+		softDeleteOrderChange(id: ID!): OrderChange!
+		"Restores a soft-deleted change."
+		recoverOrderChange(id: ID!): OrderChange!
+		"Retires one action of a change recoverably."
+		softDeleteOrderChangeAction(id: ID!): OrderChangeAction!
+		"Restores a soft-deleted action of a change."
+		recoverOrderChangeAction(id: ID!): OrderChangeAction!
+		"Retires a credit line recoverably, keeping what the order was reduced by."
+		softDeleteOrderCreditLine(id: ID!): OrderCreditLine!
+		"Restores a soft-deleted credit line."
+		recoverOrderCreditLine(id: ID!): OrderCreditLine!
+		"Retires one timeline entry recoverably."
+		softDeleteOrderHistory(id: ID!): OrderHistory!
+		"Restores a soft-deleted timeline entry."
+		recoverOrderHistory(id: ID!): OrderHistory!
+		"Retires an order line recoverably, keeping its price snapshot and its counters."
+		softDeleteOrderLine(id: ID!): OrderLine!
+		"Restores a soft-deleted order line."
+		recoverOrderLine(id: ID!): OrderLine!
+		"Retires a line-to-invoice link recoverably, keeping the evidence of what was billed."
+		softDeleteOrderLineInvoice(id: ID!): OrderLineInvoice!
+		"Restores a soft-deleted line-to-invoice link."
+		recoverOrderLineInvoice(id: ID!): OrderLineInvoice!
+		"Retires a delivery choice recoverably, keeping the amount the order was placed with."
+		softDeleteOrderShippingMethod(id: ID!): OrderShippingMethod!
+		"Restores a soft-deleted delivery choice."
+		recoverOrderShippingMethod(id: ID!): OrderShippingMethod!
+		"Retires one totals summary recoverably."
+		softDeleteOrderSummary(id: ID!): OrderSummary!
+		"Restores a soft-deleted totals summary."
+		recoverOrderSummary(id: ID!): OrderSummary!
+		"Retires one ledger transaction recoverably."
+		softDeleteOrderTransaction(id: ID!): OrderTransaction!
+		"Restores a soft-deleted ledger transaction."
+		recoverOrderTransaction(id: ID!): OrderTransaction!
 	}
 
 	"The request that records one refund against an order line."

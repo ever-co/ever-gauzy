@@ -9532,24 +9532,96 @@ type Mutation {
   createCollection(input: CreateCollectionInput!): Collection!
   updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
   deleteCollection(id: ID!): Boolean!
+
+  """
+  Retires a collection recoverably, so the membership and the channels that name it keep their class.
+  """
+  softDeleteCollection(id: ID!): Collection!
+
+  """Restores a soft-deleted collection."""
+  recoverCollection(id: ID!): Collection!
   addCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
   removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+
+  """
+  Retires one collection membership recoverably, so the product stays curated into the collection.
+  """
+  softDeleteCollectionProduct(id: ID!): CollectionProduct!
+
+  """Restores a soft-deleted collection membership."""
+  recoverCollectionProduct(id: ID!): CollectionProduct!
   addCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
   removeCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
+
+  """
+  Retires one collection variant membership recoverably, so the variant keeps its place in the collection.
+  """
+  softDeleteCollectionVariant(id: ID!): CollectionVariant!
+
+  """Restores a soft-deleted collection variant membership."""
+  recoverCollectionVariant(id: ID!): CollectionVariant!
   attachProductVariantFacets(variantId: ID!, tagIds: [ID!]!): [TagProductVariant!]!
   detachProductVariantFacets(variantId: ID!, tagIds: [ID!]!): [TagProductVariant!]!
+
+  """
+  Retires one facet recoverably, so the variant keeps the tag it is filtered under.
+  """
+  softDeleteTagProductVariant(id: ID!): TagProductVariant!
+
+  """Restores a soft-deleted facet."""
+  recoverTagProductVariant(id: ID!): TagProductVariant!
   assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
   unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
+
+  """
+  Retires one collection publication recoverably, so the placement keeps its status and its date.
+  """
+  softDeleteCollectionChannel(id: ID!): CollectionChannel!
+
+  """Restores a soft-deleted collection publication."""
+  recoverCollectionChannel(id: ID!): CollectionChannel!
   publishProduct(productId: ID!, channelIds: [ID!]!, publishedAt: DateTime): [ProductPublication!]!
   unpublishProduct(productId: ID!, channelIds: [ID!]!, unpublishedAt: DateTime): [ProductPublication!]!
+
+  """
+  Retires one product publication recoverably, so the placement keeps its status and its date.
+  """
+  softDeleteProductChannel(id: ID!): ProductPublication!
+
+  """Restores a soft-deleted product publication."""
+  recoverProductChannel(id: ID!): ProductPublication!
   publishProductVariant(variantId: ID!, input: [ProductVariantPublicationInput!]!): [ProductVariantPublication!]!
   unpublishProductVariant(variantId: ID!, channelIds: [ID!]!): [ProductVariantPublication!]!
+
+  """
+  Retires one variant publication recoverably, so the placement keeps its status and its date.
+  """
+  softDeleteProductVariantChannel(id: ID!): ProductVariantPublication!
+
+  """Restores a soft-deleted variant publication."""
+  recoverProductVariantChannel(id: ID!): ProductVariantPublication!
   createProductRelation(input: CreateProductRelationInput!): ProductRelation!
   updateProductRelation(id: ID!, input: UpdateProductRelationInput!): ProductRelation!
   deleteProductRelation(id: ID!): Boolean!
+
+  """
+  Retires a relation recoverably, so the two products keep the recommendation between them.
+  """
+  softDeleteProductRelation(id: ID!): ProductRelation!
+
+  """Restores a soft-deleted relation."""
+  recoverProductRelation(id: ID!): ProductRelation!
   attachProductVariantMedia(variantId: ID!, input: [ProductVariantMediaInput!]!): [ProductVariantMedia!]!
   reorderProductVariantMedia(variantId: ID!, imageAssetIds: [ID!]!): [ProductVariantMedia!]!
   detachProductVariantMedia(variantId: ID!, imageAssetId: ID!): [ProductVariantMedia!]!
+
+  """
+  Retires one gallery row recoverably, so the gallery keeps its order and its thumbnail.
+  """
+  softDeleteProductVariantMedia(id: ID!): ProductVariantMedia!
+
+  """Restores a soft-deleted gallery row."""
+  recoverProductVariantMedia(id: ID!): ProductVariantMedia!
 
   """Create a price list."""
   createPriceList(input: CreatePriceListInput!): PriceList!
@@ -9730,6 +9802,14 @@ type Mutation {
   """Deletes a zone that holds no bin."""
   deleteWarehouseZone(id: ID!): WarehouseZonePayload!
 
+  """
+  Retires a zone recoverably, so the bins inside it keep the area they were addressed in.
+  """
+  softDeleteWarehouseZone(id: ID!): WarehouseZonePayload!
+
+  """Restores a soft-deleted zone."""
+  recoverWarehouseZone(id: ID!): WarehouseZonePayload!
+
   """Creates a bin."""
   createWarehouseBin(input: WarehouseBinInput!): WarehouseBinPayload!
 
@@ -9747,6 +9827,14 @@ type Mutation {
 
   """Deletes a bin that is empty and holds no position under it."""
   deleteWarehouseBin(id: ID!): WarehouseBinPayload!
+
+  """
+  Retires a bin recoverably, so the rows that name it as their address stay readable.
+  """
+  softDeleteWarehouseBin(id: ID!): WarehouseBinPayload!
+
+  """Restores a soft-deleted bin."""
+  recoverWarehouseBin(id: ID!): WarehouseBinPayload!
 
   """Reconciles the bins of a location against the movement ledger."""
   reconcileWarehouseBins(input: ReconcileBinsInput!): BinReconciliationPayload!
@@ -9780,6 +9868,14 @@ type Mutation {
   """Cancels a wave nothing has been picked from."""
   cancelPickWave(id: ID!, reason: String): PickWavePayload!
 
+  """
+  Retires a wave recoverably, so its lists and the work they record stay explainable.
+  """
+  softDeletePickWave(id: ID!): PickWavePayload!
+
+  """Restores a soft-deleted wave."""
+  recoverPickWave(id: ID!): PickWavePayload!
+
   """Creates a pick list from shipments."""
   createPickList(input: PickListInput!): PickListPayload!
 
@@ -9794,6 +9890,14 @@ type Mutation {
 
   """Cancels a pick list nothing has been picked from."""
   cancelPickList(id: ID!, reason: String): PickListPayload!
+
+  """
+  Retires a pick list recoverably, so the lines it was walked with keep their list.
+  """
+  softDeletePickList(id: ID!): PickListPayload!
+
+  """Restores a soft-deleted pick list."""
+  recoverPickList(id: ID!): PickListPayload!
 
   """Records what was taken from the bin."""
   pickPickListLine(
@@ -9818,6 +9922,14 @@ type Mutation {
   """Records a line the picker deliberately did not collect."""
   skipPickListLine(pickListId: ID!, lineId: ID!, note: String): PickListLinePayload!
 
+  """
+  Retires a line recoverably, so a packing record that names it stays complete.
+  """
+  softDeletePickListLine(id: ID!): PickListLinePayload!
+
+  """Restores a soft-deleted pick line."""
+  recoverPickListLine(id: ID!): PickListLinePayload!
+
   """Creates a pack slip from a picked list."""
   createPackSlip(warehouseId: ID!, pickListId: ID, fulfillmentId: ID, packageCount: Int): PackSlipPayload!
 
@@ -9826,6 +9938,14 @@ type Mutation {
 
   """Voids a slip that was never packed."""
   voidPackSlip(id: ID!, reason: String): PackSlipPayload!
+
+  """
+  Retires a slip recoverably, so the lines it covers keep the parcel they went into.
+  """
+  softDeletePackSlip(id: ID!): PackSlipPayload!
+
+  """Restores a soft-deleted pack slip."""
+  recoverPackSlip(id: ID!): PackSlipPayload!
 
   """Builds a draft manifest for a carrier."""
   createCarrierManifest(input: CarrierManifestInput!): CarrierManifestPayload!
@@ -9838,6 +9958,14 @@ type Mutation {
 
   """Cancels a manifest before hand-over."""
   cancelCarrierManifest(id: ID!, reason: String): CarrierManifestPayload!
+
+  """
+  Retires a manifest recoverably, so the shipments it covered keep their hand-over record.
+  """
+  softDeleteCarrierManifest(id: ID!): CarrierManifestPayload!
+
+  """Restores a soft-deleted manifest."""
+  recoverCarrierManifest(id: ID!): CarrierManifestPayload!
   createCart(input: CreateCartInput!): Cart!
   updateCart(id: ID!, input: UpdateCartInput!): Cart!
   deleteCart(id: ID!, version: Int): Boolean!
@@ -9902,6 +10030,82 @@ type Mutation {
 
   """Records one refund against a line, in as many parts as it was paid in."""
   recordOrderLineRefund(input: OrderLineRefundInput!): OrderLine!
+
+  """Retires an order recoverably, keeping the row and its satellites."""
+  softDeleteOrder(id: ID!): Order!
+
+  """Restores a soft-deleted order."""
+  recoverOrder(id: ID!): Order!
+
+  """Retires a frozen address of an order recoverably."""
+  softDeleteOrderAddress(id: ID!): OrderAddress!
+
+  """Restores a soft-deleted address of an order."""
+  recoverOrderAddress(id: ID!): OrderAddress!
+
+  """
+  Retires a change recoverably, keeping what it asked for and what it did.
+  """
+  softDeleteOrderChange(id: ID!): OrderChange!
+
+  """Restores a soft-deleted change."""
+  recoverOrderChange(id: ID!): OrderChange!
+
+  """Retires one action of a change recoverably."""
+  softDeleteOrderChangeAction(id: ID!): OrderChangeAction!
+
+  """Restores a soft-deleted action of a change."""
+  recoverOrderChangeAction(id: ID!): OrderChangeAction!
+
+  """
+  Retires a credit line recoverably, keeping what the order was reduced by.
+  """
+  softDeleteOrderCreditLine(id: ID!): OrderCreditLine!
+
+  """Restores a soft-deleted credit line."""
+  recoverOrderCreditLine(id: ID!): OrderCreditLine!
+
+  """Retires one timeline entry recoverably."""
+  softDeleteOrderHistory(id: ID!): OrderHistory!
+
+  """Restores a soft-deleted timeline entry."""
+  recoverOrderHistory(id: ID!): OrderHistory!
+
+  """
+  Retires an order line recoverably, keeping its price snapshot and its counters.
+  """
+  softDeleteOrderLine(id: ID!): OrderLine!
+
+  """Restores a soft-deleted order line."""
+  recoverOrderLine(id: ID!): OrderLine!
+
+  """
+  Retires a line-to-invoice link recoverably, keeping the evidence of what was billed.
+  """
+  softDeleteOrderLineInvoice(id: ID!): OrderLineInvoice!
+
+  """Restores a soft-deleted line-to-invoice link."""
+  recoverOrderLineInvoice(id: ID!): OrderLineInvoice!
+
+  """
+  Retires a delivery choice recoverably, keeping the amount the order was placed with.
+  """
+  softDeleteOrderShippingMethod(id: ID!): OrderShippingMethod!
+
+  """Restores a soft-deleted delivery choice."""
+  recoverOrderShippingMethod(id: ID!): OrderShippingMethod!
+
+  """Retires one totals summary recoverably."""
+  softDeleteOrderSummary(id: ID!): OrderSummary!
+
+  """Restores a soft-deleted totals summary."""
+  recoverOrderSummary(id: ID!): OrderSummary!
+
+  """Retires one ledger transaction recoverably."""
+  softDeleteOrderTransaction(id: ID!): OrderTransaction!
+
+  """Restores a soft-deleted ledger transaction."""
+  recoverOrderTransaction(id: ID!): OrderTransaction!
   createPaymentProvider(input: CreatePaymentProviderInput!): CreatePaymentProviderPayload!
   updatePaymentProvider(input: UpdatePaymentProviderInput!): UpdatePaymentProviderPayload!
   deletePaymentProvider(id: ID!): DeletePaymentProviderPayload!
@@ -9974,6 +10178,22 @@ type Mutation {
   """Restores a soft-deleted promotion."""
   recoverPromotion(id: ID!): RecoverPromotionPayload!
 
+  """
+  Retires one action of a promotion recoverably, keeping its place in the application order.
+  """
+  softDeletePromotionAction(id: ID!): SoftDeletePromotionActionPayload!
+
+  """Restores a soft-deleted action of a promotion."""
+  recoverPromotionAction(id: ID!): RecoverPromotionActionPayload!
+
+  """
+  Retires one application of a promotion recoverably, keeping the counters it was counted in.
+  """
+  softDeletePromotionUsage(id: ID!): SoftDeletePromotionUsagePayload!
+
+  """Restores a soft-deleted application of a promotion."""
+  recoverPromotionUsage(id: ID!): RecoverPromotionUsagePayload!
+
   """Closes a promotion before its window ends."""
   expirePromotion(id: ID!, input: ExpirePromotionInput): ExpirePromotionPayload!
 
@@ -9986,8 +10206,32 @@ type Mutation {
   """Deletes a campaign."""
   deleteCampaign(id: ID!): DeleteCampaignPayload!
 
+  """
+  Retires a campaign recoverably, so the promotions that name it keep their window.
+  """
+  softDeleteCampaign(id: ID!): SoftDeleteCampaignPayload!
+
+  """Restores a soft-deleted campaign."""
+  recoverCampaign(id: ID!): RecoverCampaignPayload!
+
   """Sets or replaces the single budget of a campaign."""
   updateCampaignBudget(campaignId: ID!, input: UpdateCampaignBudgetInput!): UpdateCampaignBudgetPayload!
+
+  """
+  Retires a campaign's ceiling recoverably, so the spend behind it stays attributable.
+  """
+  softDeleteCampaignBudget(id: ID!): SoftDeleteCampaignBudgetPayload!
+
+  """Restores a soft-deleted campaign ceiling."""
+  recoverCampaignBudget(id: ID!): RecoverCampaignBudgetPayload!
+
+  """
+  Retires one per-value consumption row recoverably, without giving its value back.
+  """
+  softDeleteCampaignBudgetUsage(id: ID!): SoftDeleteCampaignBudgetUsagePayload!
+
+  """Restores a soft-deleted per-value consumption row."""
+  recoverCampaignBudgetUsage(id: ID!): RecoverCampaignBudgetUsagePayload!
 
   """Creates one coupon."""
   createCoupon(input: CreateCouponInput!): CreateCouponPayload!
@@ -9999,6 +10243,14 @@ type Mutation {
   deleteCoupon(id: ID!): DeleteCouponPayload!
 
   """
+  Retires a coupon recoverably, so the redemptions it granted stay explainable.
+  """
+  softDeleteCoupon(id: ID!): SoftDeleteCouponPayload!
+
+  """Restores a soft-deleted coupon."""
+  recoverCoupon(id: ID!): RecoverCouponPayload!
+
+  """
   Issues a gift card, crediting its face value as the ledger's first row.
   """
   issueGiftCard(input: IssueGiftCardInput!): IssueGiftCardPayload!
@@ -10008,13 +10260,51 @@ type Mutation {
 
   """Withdraws a card from circulation, keeping its ledger."""
   voidGiftCard(id: ID!, input: VoidGiftCardInput): VoidGiftCardPayload!
+
+  """Retires a card recoverably; its ledger and its balance are kept."""
+  softDeleteGiftCard(id: ID!): SoftDeleteGiftCardPayload!
+
+  """Restores a soft-deleted gift card."""
+  recoverGiftCard(id: ID!): RecoverGiftCardPayload!
+
+  """
+  Retires one gift-card movement recoverably, so a correction can be undone.
+  """
+  softDeleteGiftCardTransaction(id: ID!): SoftDeleteGiftCardTransactionPayload!
+
+  """Restores a soft-deleted gift-card movement."""
+  recoverGiftCardTransaction(id: ID!): RecoverGiftCardTransactionPayload!
   createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
   updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
   deleteShippingProfile(id: ID!): Boolean!
+
+  """
+  Retire a shipping profile recoverably, so the variants that ship under it keep their group.
+  """
+  softDeleteShippingProfile(id: ID!): ShippingProfile!
+
+  """Restore a soft-deleted shipping profile."""
+  recoverShippingProfile(id: ID!): ShippingProfile!
   assignShippingProfileVariant(input: ShippingOptionAssignmentInput!): [ShippingProfileVariant!]!
+
+  """
+  Retire a variant attachment recoverably, so the variant keeps the group it was placed in.
+  """
+  softDeleteShippingProfileVariant(id: ID!): ShippingProfileVariant!
+
+  """Restore a soft-deleted variant attachment."""
+  recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
   createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
   updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
   deleteShippingOption(id: ID!): Boolean!
+
+  """
+  Retire a shipping option recoverably, so the carts that selected it keep their record.
+  """
+  softDeleteShippingOption(id: ID!): ShippingOption!
+
+  """Restore a soft-deleted shipping option."""
+  recoverShippingOption(id: ID!): ShippingOption!
   createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
   updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
   shipFulfillment(id: ID!, input: ShipFulfillmentInput): Fulfillment!
@@ -10026,6 +10316,22 @@ type Mutation {
   Request a carrier label for a shipment, or re-fetch the one the carrier already issued.
   """
   requestFulfillmentLabel(id: ID!, input: RequestFulfillmentLabelInput!): Fulfillment!
+
+  """
+  Retire a shipment recoverably, so the order it satisfies keeps its shipping record.
+  """
+  softDeleteFulfillment(id: ID!): Fulfillment!
+
+  """Restore a soft-deleted shipment."""
+  recoverFulfillment(id: ID!): Fulfillment!
+
+  """
+  Retire a shipment line recoverably, so what the shipment covered stays readable.
+  """
+  softDeleteFulfillmentLine(id: ID!): FulfillmentLine!
+
+  """Restore a soft-deleted shipment line."""
+  recoverFulfillmentLine(id: ID!): FulfillmentLine!
 
   """Requests a return against an order."""
   requestOrderReturn(input: RequestOrderReturnInput!): RequestOrderReturnPayload!
@@ -10051,6 +10357,22 @@ type Mutation {
   """Closes a fully received return, under the version the caller read."""
   closeOrderReturn(id: ID!, version: Int): RequestOrderReturnPayload!
 
+  """
+  Retires a return recoverably, keeping the receipt, the stock movements and the refund it wrote.
+  """
+  softDeleteOrderReturn(id: ID!): RequestOrderReturnPayload!
+
+  """Restores a soft-deleted return."""
+  recoverOrderReturn(id: ID!): RequestOrderReturnPayload!
+
+  """
+  Retires a return line recoverably, so the quantities the return was received against survive.
+  """
+  softDeleteOrderReturnLine(id: ID!): OrderReturnLine!
+
+  """Restores a soft-deleted return line."""
+  recoverOrderReturnLine(id: ID!): OrderReturnLine!
+
   """Creates a governed return reason."""
   createOrderReturnReason(input: OrderReturnReasonInput!): OrderReturnReasonPayload!
 
@@ -10059,6 +10381,14 @@ type Mutation {
 
   """Deactivates a governed return reason."""
   deleteOrderReturnReason(id: ID!): DeleteOrderReturnReasonPayload!
+
+  """
+  Retires a governed return reason recoverably, so the returns filed under it stay explainable.
+  """
+  softDeleteOrderReturnReason(id: ID!): OrderReturnReasonPayload!
+
+  """Restores a soft-deleted return reason."""
+  recoverOrderReturnReason(id: ID!): OrderReturnReasonPayload!
 
   """Raises a claim against an order."""
   requestOrderClaim(input: RequestOrderClaimInput!): RequestOrderClaimPayload!
@@ -10069,6 +10399,22 @@ type Mutation {
   """Rejects a claim."""
   rejectOrderClaim(id: ID!, reason: String): RequestOrderClaimPayload!
 
+  """
+  Retires a claim recoverably, keeping the refund it settled and the lines it raised.
+  """
+  softDeleteOrderClaim(id: ID!): RequestOrderClaimPayload!
+
+  """Restores a soft-deleted claim."""
+  recoverOrderClaim(id: ID!): RequestOrderClaimPayload!
+
+  """
+  Retires a claim line recoverably, keeping the complaint the claim records.
+  """
+  softDeleteOrderClaimLine(id: ID!): OrderClaimLine!
+
+  """Restores a soft-deleted claim line."""
+  recoverOrderClaimLine(id: ID!): OrderClaimLine!
+
   """Requests an exchange against an order."""
   requestOrderExchange(input: RequestOrderExchangeInput!): RequestOrderExchangePayload!
 
@@ -10077,6 +10423,22 @@ type Mutation {
 
   """Rejects an exchange."""
   rejectOrderExchange(id: ID!, reason: String): RequestOrderExchangePayload!
+
+  """
+  Retires an exchange recoverably, keeping the difference it priced and the customer was charged.
+  """
+  softDeleteOrderExchange(id: ID!): RequestOrderExchangePayload!
+
+  """Restores a soft-deleted exchange."""
+  recoverOrderExchange(id: ID!): RequestOrderExchangePayload!
+
+  """
+  Retires an exchange line recoverably, so the priced difference stays explainable.
+  """
+  softDeleteOrderExchangeLine(id: ID!): OrderExchangeLine!
+
+  """Restores a soft-deleted exchange line."""
+  recoverOrderExchangeLine(id: ID!): OrderExchangeLine!
 
   """Creates a plan."""
   createSubscriptionPlan(input: CreateSubscriptionPlanInput!): SubscriptionPlanPayload!
@@ -10236,6 +10598,16 @@ type Mutation {
 
   """Puts a withdrawn purchase order back."""
   recoverPurchaseOrder(id: ID!): PurchaseOrder!
+
+  """
+  Withdraws one line of a purchase order without removing the row. A line is read through its order
+  rather than by id, so this pair is the only root field the line answers — and it answers them because
+  the line's own controller serves both routes under the order-edit grant.
+  """
+  softDeletePurchaseOrderLine(id: ID!): PurchaseOrderLine!
+
+  """Puts a withdrawn purchase order line back."""
+  recoverPurchaseOrderLine(id: ID!): PurchaseOrderLine!
 
   """
   Receives goods against a purchase order, writing the stock movements they produce.
@@ -49329,6 +49701,118 @@ type SoftDeletePromotionPayload {
 """The outcome of restoring a soft-deleted promotion."""
 type RecoverPromotionPayload {
   promotion: Promotion
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring a campaign recoverably."""
+type SoftDeleteCampaignPayload {
+  campaign: Campaign
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted campaign."""
+type RecoverCampaignPayload {
+  campaign: Campaign
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring a campaign's ceiling recoverably."""
+type SoftDeleteCampaignBudgetPayload {
+  budget: CampaignBudget
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted campaign ceiling."""
+type RecoverCampaignBudgetPayload {
+  budget: CampaignBudget
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring one per-value consumption row recoverably."""
+type SoftDeleteCampaignBudgetUsagePayload {
+  budgetUsage: CampaignBudgetUsage
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted per-value consumption row."""
+type RecoverCampaignBudgetUsagePayload {
+  budgetUsage: CampaignBudgetUsage
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring a coupon recoverably."""
+type SoftDeleteCouponPayload {
+  coupon: Coupon
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted coupon."""
+type RecoverCouponPayload {
+  coupon: Coupon
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring a gift card recoverably."""
+type SoftDeleteGiftCardPayload {
+  giftCard: GiftCard
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted gift card."""
+type RecoverGiftCardPayload {
+  giftCard: GiftCard
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring one gift-card movement recoverably."""
+type SoftDeleteGiftCardTransactionPayload {
+  transaction: GiftCardTransaction
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted gift-card movement."""
+type RecoverGiftCardTransactionPayload {
+  transaction: GiftCardTransaction
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring one promotion action recoverably."""
+type SoftDeletePromotionActionPayload {
+  action: PromotionAction
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted promotion action."""
+type RecoverPromotionActionPayload {
+  action: PromotionAction
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring one application of a promotion recoverably."""
+type SoftDeletePromotionUsagePayload {
+  usage: PromotionUsage
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted application of a promotion."""
+type RecoverPromotionUsagePayload {
+  usage: PromotionUsage
   operation: Operation
   userErrors: [UserError!]!
 }

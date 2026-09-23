@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
@@ -25,13 +25,22 @@ import { OrderClaimLineService } from '../../order-claim-line/order-claim-line.s
  * The list field is qualified by the claim it belongs to, because a line has no meaning on its own —
  * it is an answer to a question the claim asked.
  *
+ * **The resource's own write routes are answered too, and they are the two the statement above does not
+ * cover: this resolver declared no mutation before them.** `softDeleteOrderClaimLine` and
+ * `recoverOrderClaimLine` are the `DELETE /order-claim-lines/:id/soft` and `PUT
+ * /order-claim-lines/:id/recover` pair the controller inherits and overrides to state a permission, and
+ * they are named after the resource rather than qualified by the claim because they act on one line by
+ * its own identifier, exactly as those routes do.
+ *
  * **Authorisation is the controller's.** The class carries the guard chain, the platform's feature gate
- * and the read permission the claim-line controller class carries, and the list field states the
+ * and the read permission the claim-line controller class carries, and its read field states the
  * permission the controller's own list route states — `CLAIMS_VIEW`, the same value the claim itself is
- * read with, because a line is read through its claim. The platform gate is `FEATURE_GRAPHQL`, imported
- * from the catalogue rather than restated: a literal that drifted would name a code no catalogue row
- * carries, which the guard resolves as disabled and which would refuse every field here for every
- * caller with nothing red anywhere.
+ * read with, because a line is read through its claim — while the two fields of the inherited
+ * soft-delete pair state `CLAIMS_CREATE`, which is the grant the controller's own `softRemove` and
+ * `softRecover` overrides state, because withdrawing a line is a write to the claim that raised it. The
+ * platform gate is `FEATURE_GRAPHQL`, imported from the catalogue rather than restated: a literal that
+ * drifted would name a code no catalogue row carries, which the guard resolves as disabled and which
+ * would refuse every field here for every caller with nothing red anywhere.
  */
 @Resolver('OrderClaimLine')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -65,6 +74,48 @@ export class OrderClaimLineResolver {
 		const rows = await this.orderClaimLineService.findForClaim(claimId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
+	}
+
+	/**
+	 * Retires a claim line recoverably, keeping the complaint the claim records.
+	 *
+	 * The route it mirrors is `DELETE /order-claim-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. This resolver
+	 * declared no mutation at all before this field, so a line added over GraphQL could not be taken back
+	 * on that protocol, while the REST surface served both routes — and the withdrawal has to be the
+	 * recoverable one, because the line is what the resolution is decided from.
+	 *
+	 * The permission is the controller's own for the route — `CLAIMS_CREATE`, because the plugin declares
+	 * no `CLAIMS_DELETE` and a line is maintained under the grant that raises its claim.
+	 *
+	 * A row-answering field answers the row rather than a payload, which is what the REST route answers
+	 * and what a line has to answer here: no payload in this document carries a claim line.
+	 *
+	 * @param id The claim line to retire.
+	 * @returns The line, as the soft delete left it.
+	 */
+	@Mutation('softDeleteOrderClaimLine')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async softDeleteOrderClaimLine(@Args('id') id: ID): Promise<OrderClaimLine> {
+		return await this.orderClaimLineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a claim line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-claim-lines/:id/recover`, whose override states the same
+	 * `CLAIMS_CREATE` its soft-delete sibling states — a restored line is part of what the claim asks for
+	 * again, which is the same write read the other way. Without this field a line retired over GraphQL
+	 * could only be brought back over REST, so one lifecycle would be completable on one protocol and not
+	 * the other.
+	 *
+	 * @param id The claim line to restore.
+	 * @returns The restored line.
+	 */
+	@Mutation('recoverOrderClaimLine')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async recoverOrderClaimLine(@Args('id') id: ID): Promise<OrderClaimLine> {
+		return await this.orderClaimLineService.softRecover(id);
 	}
 
 	/**

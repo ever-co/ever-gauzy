@@ -348,6 +348,52 @@ export class WarehouseBinResolver {
 	}
 
 	/**
+	 * Retires a bin recoverably, keeping its place in the hierarchy and the rows addressed to it.
+	 *
+	 * The route it mirrors is `DELETE /warehouse-bins/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this field
+	 * a position a caller retired over GraphQL could not be brought back over GraphQL — and the hard delete
+	 * the endpoint does serve is refused for any bin that holds stock or has a position under it, which is
+	 * precisely when the soft route is the one a caller wants.
+	 *
+	 * The permission is the controller's own for the route — `WAREHOUSE_BINS_DELETE` — and not the
+	 * class-level view grant, because retiring a bin stops everything addressed to it resolving.
+	 *
+	 * @param id The bin to retire.
+	 * @returns The payload, with the retired bin or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_DELETE)
+	@Mutation('softDeleteWarehouseBin')
+	async softDeleteWarehouseBin(@Args('id') id: ID) {
+		try {
+			return { warehouseBin: await this.warehouseBinService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { warehouseBin: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a bin that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /warehouse-bins/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored bin is
+	 * an address again — put-away walks into it and the pick path visits it — which is why the route
+	 * states the deleting grant rather than the reading one.
+	 *
+	 * @param id The bin to restore.
+	 * @returns The payload, with the restored bin or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_BINS_DELETE)
+	@Mutation('recoverWarehouseBin')
+	async recoverWarehouseBin(@Args('id') id: ID) {
+		try {
+			return { warehouseBin: await this.warehouseBinService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { warehouseBin: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Reconciles the bins of a location against the movement ledger.
 	 *
 	 * The corrections land on the levels of the variants the run covers, so the version is optional for

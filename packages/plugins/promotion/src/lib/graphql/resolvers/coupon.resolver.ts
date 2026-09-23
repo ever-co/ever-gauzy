@@ -21,6 +21,8 @@ import {
 	IPageInput,
 	ISortInput,
 	IUpdateCouponInput,
+	RecoverCouponPayload,
+	SoftDeleteCouponPayload,
 	UpdateCouponPayload,
 	cursorOffset,
 	toAsyncIterable,
@@ -196,6 +198,50 @@ export class CouponResolver {
 			await this.couponService.delete(id);
 
 			return { coupon, operation: null, userErrors: [] };
+		} catch (error) {
+			return { coupon: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a code recoverably, keeping the redemptions it granted.
+	 *
+	 * The route it mirrors is `DELETE /coupons/:id/soft`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base leaves unstated. A coupon carries its own
+	 * usage count and is named by every usage row it produced, so the hard delete the endpoint also
+	 * serves leaves those rows pointing at nothing — which is what the soft route exists to avoid.
+	 *
+	 * The permission is the route's own, `COUPONS_DELETE`, and not the class-level view grant.
+	 *
+	 * @param id The coupon to retire.
+	 * @returns The payload, carrying the coupon as the soft delete left it.
+	 */
+	@Permissions(PromotionPermission.COUPONS_DELETE as PermissionsEnum)
+	@Mutation('softDeleteCoupon')
+	async softDeleteCoupon(@Args('id') id: ID): Promise<SoftDeleteCouponPayload> {
+		try {
+			return { coupon: await this.couponService.softRemove(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { coupon: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a coupon that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /coupons/:id/recover`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base leaves unstated. A restored code is
+	 * accepted by the checkout again, which is why the route states the destructive grant rather than
+	 * the edit one.
+	 *
+	 * @param id The coupon to restore.
+	 * @returns The payload, carrying the restored coupon.
+	 */
+	@Permissions(PromotionPermission.COUPONS_DELETE as PermissionsEnum)
+	@Mutation('recoverCoupon')
+	async recoverCoupon(@Args('id') id: ID): Promise<RecoverCouponPayload> {
+		try {
+			return { coupon: await this.couponService.softRecover(id), operation: null, userErrors: [] };
 		} catch (error) {
 			return { coupon: null, operation: null, userErrors: [toUserError(error)] };
 		}

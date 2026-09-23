@@ -50,6 +50,14 @@ GraphQL, the same operations over the one platform schema: `orderReturns`, `orde
 `deleteOrderReturnReason`, `requestOrderClaim`, `approveOrderClaim`, `rejectOrderClaim`,
 `requestOrderExchange`, `approveOrderExchange`, `rejectOrderExchange`.
 
+The `DELETE /:id/soft` and `PUT /:id/recover` pair every controller inherits from `CrudController` is
+answered over GraphQL too — `softDelete<Resource>` and `recover<Resource>`, under the grant each
+controller's own override of those routes states: `softDeleteOrderReturn` and `recoverOrderReturn`,
+`softDeleteOrderReturnLine` and `recoverOrderReturnLine`, `softDeleteOrderReturnReason` and
+`recoverOrderReturnReason`, `softDeleteOrderClaim` and `recoverOrderClaim`, `softDeleteOrderClaimLine`
+and `recoverOrderClaimLine`, `softDeleteOrderExchange` and `recoverOrderExchange`,
+`softDeleteOrderExchangeLine` and `recoverOrderExchangeLine`.
+
 ## Retry safety and the return's version
 
 Two conventions ride on the routes that move goods and money, and both are the platform's own

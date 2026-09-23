@@ -18,6 +18,8 @@ import {
 	ISortInput,
 	IUpdateCampaignBudgetInput,
 	IUpdateCampaignInput,
+	RecoverCampaignPayload,
+	SoftDeleteCampaignPayload,
 	UpdateCampaignBudgetPayload,
 	UpdateCampaignPayload,
 	cursorOffset,
@@ -171,6 +173,52 @@ export class CampaignResolver {
 			await this.campaignService.delete(id);
 
 			return { campaign, operation: null, userErrors: [] };
+		} catch (error) {
+			return { campaign: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a campaign recoverably, keeping the promotions that name it.
+	 *
+	 * The route it mirrors is `DELETE /campaigns/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base leaves unstated. Without this
+	 * field a campaign retired over GraphQL could not be brought back over GraphQL while a REST caller
+	 * could do both — and the hard delete the endpoint does serve leaves every promotion that named the
+	 * campaign without the window it was bounded by.
+	 *
+	 * The permission is the route's own, `PROMOTIONS_DELETE`, and not the class-level view grant,
+	 * because retiring a campaign is what withdraws the window from every promotion under it.
+	 *
+	 * @param id The campaign to retire.
+	 * @returns The payload, carrying the campaign as the soft delete left it.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Mutation('softDeleteCampaign')
+	async softDeleteCampaign(@Args('id') id: ID): Promise<SoftDeleteCampaignPayload> {
+		try {
+			return { campaign: await this.campaignService.softRemove(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { campaign: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a campaign that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /campaigns/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base leaves unstated. A restored
+	 * campaign bounds its promotions again, which is why the route states the destructive grant rather
+	 * than the edit one.
+	 *
+	 * @param id The campaign to restore.
+	 * @returns The payload, carrying the restored campaign.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Mutation('recoverCampaign')
+	async recoverCampaign(@Args('id') id: ID): Promise<RecoverCampaignPayload> {
+		try {
+			return { campaign: await this.campaignService.softRecover(id), operation: null, userErrors: [] };
 		} catch (error) {
 			return { campaign: null, operation: null, userErrors: [toUserError(error)] };
 		}

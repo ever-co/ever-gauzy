@@ -17,9 +17,13 @@ import { PromotionResolver } from './promotion.resolver';
  * controllers one for one: an aggregate the REST surface exposes is reachable over GraphQL, whether
  * through a root field of its own or through the relation that owns it.
  *
- * The three aggregates that have no root field — the promotion action, the per-value budget
- * consumption and the gift-card movement — are reached through their parents, which is where they are
- * read in practice: `Promotion.actions`, `CampaignBudget.usages` and `GiftCard.transactions`.
+ * The three aggregates with no root **read** — the promotion action, the per-value budget consumption
+ * and the gift-card movement — are read through their parents, which is where they are read in
+ * practice: `Promotion.actions`, `CampaignBudget.usages` and `GiftCard.transactions`. They are no longer
+ * absent from the mutation block: each of their controllers inherits `DELETE /:id/soft` and
+ * `PUT /:id/recover` from `CrudController` — and overrides both, to state the permission the base leaves
+ * unstated — so §3.1's capability parity puts `softDelete<Resource>` and `recover<Resource>` on each of
+ * them, beside the pair the promotion itself already answered.
  */
 export const resolvers = [
 	PromotionResolver,

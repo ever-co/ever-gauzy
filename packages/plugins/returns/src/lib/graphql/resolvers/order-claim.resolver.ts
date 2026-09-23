@@ -40,10 +40,12 @@ interface IRequestOrderClaimArgs {
  * **Authorisation is the controller's, restated field by field.** The class carries what the claims
  * controller class carries — both protocol guards, the platform's feature gate and the read permission
  * its reads run under — and every field then states the permission its own route states: the two reads
- * carry `CLAIMS_VIEW`, raising a claim `CLAIMS_CREATE`, and the two decisions `CLAIMS_RESOLVE`, because
- * settling a claim and refusing it are the same authority on the same row. The fields that resolve a
- * claim's lines and its inbound return answer under the permission the claim is read with, which is the
- * route they are selected through.
+ * carry `CLAIMS_VIEW`, raising a claim `CLAIMS_CREATE`, the two decisions `CLAIMS_RESOLVE`, because
+ * settling a claim and refusing it are the same authority on the same row, and both halves of the
+ * inherited soft-delete pair `CLAIMS_CREATE`, which is the grant the claims controller's own
+ * `DELETE /order-claims/:id/soft` and `PUT /order-claims/:id/recover` overrides state. The fields that
+ * resolve a claim's lines and its inbound return answer under the permission the claim is read with,
+ * which is the route they are selected through.
  *
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the two permission guards — after
@@ -166,6 +168,59 @@ export class OrderClaimResolver {
 	async rejectOrderClaim(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { orderClaim: await this.orderClaimService.reject(id, reason), refundId: null, userErrors: [] };
+		} catch (error) {
+			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a claim recoverably, keeping the refund it settled and the lines it raised.
+	 *
+	 * The route it mirrors is `DELETE /order-claims/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. This resolver
+	 * declared no deletion-shaped field at all before this one, so a claim raised over GraphQL could not
+	 * be withdrawn on the protocol that raised it, while the REST controller served both routes — and
+	 * withdrawing has to be recoverable here, because a claim that settled in money is the record of that
+	 * money and the lines it raised are what a replacement is built from.
+	 *
+	 * The permission is the claims controller's own for the route — `CLAIMS_CREATE`, because the plugin
+	 * declares no `CLAIMS_DELETE` and withdrawing a claim is the grant that already lets a caller raise
+	 * one — and not the class-level `CLAIMS_VIEW`, which would let a reader retire a claim.
+	 *
+	 * The answer is the payload the claim's other mutations answer, `RequestOrderClaimPayload`, so a
+	 * refusal is reported in `userErrors` rather than as a GraphQL error, as every other mutation of this
+	 * resource reports it.
+	 *
+	 * @param id The claim to retire.
+	 * @returns The payload, carrying the claim as the soft delete left it.
+	 */
+	@Mutation('softDeleteOrderClaim')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async softDeleteOrderClaim(@Args('id') id: ID) {
+		try {
+			return { orderClaim: await this.orderClaimService.softRemove(id), refundId: null, userErrors: [] };
+		} catch (error) {
+			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a claim that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-claims/:id/recover`, whose override states the same
+	 * `CLAIMS_CREATE` its soft-delete sibling states — a restored claim is decided again, and the refund
+	 * it settled is read again beside it, which is the same write read the other way. Without this field
+	 * a claim retired over GraphQL could only be brought back over REST, so one lifecycle would be
+	 * completable on one protocol and not the other.
+	 *
+	 * @param id The claim to restore.
+	 * @returns The payload, carrying the restored claim.
+	 */
+	@Mutation('recoverOrderClaim')
+	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
+	async recoverOrderClaim(@Args('id') id: ID) {
+		try {
+			return { orderClaim: await this.orderClaimService.softRecover(id), refundId: null, userErrors: [] };
 		} catch (error) {
 			return { orderClaim: null, refundId: null, userErrors: [toUserError(error)] };
 		}

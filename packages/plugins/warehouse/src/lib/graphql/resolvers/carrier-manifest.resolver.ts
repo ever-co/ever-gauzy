@@ -176,6 +176,52 @@ export class CarrierManifestResolver {
 	}
 
 	/**
+	 * Retires a manifest recoverably, keeping the hand-over it records.
+	 *
+	 * The route it mirrors is `DELETE /carrier-manifests/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Cancelling is a
+	 * different act — it is what the dock decided before hand-over — so without this field a manifest a
+	 * caller retired over GraphQL had no field to bring it back, while a REST caller could retire and
+	 * restore it.
+	 *
+	 * The permission is the controller's own for the route — `FULFILLMENTS_EDIT` — and not the class-level
+	 * view grant, because the document a carrier accepted is what this row is.
+	 *
+	 * @param id The manifest to retire.
+	 * @returns The payload, with the retired manifest or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('softDeleteCarrierManifest')
+	async softDeleteCarrierManifest(@Args('id') id: ID) {
+		try {
+			return { carrierManifest: await this.carrierManifestService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { carrierManifest: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a manifest that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /carrier-manifests/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored manifest
+	 * is what the shipments it claimed are read back through, which is why the route states the editing
+	 * grant rather than the reading one.
+	 *
+	 * @param id The manifest to restore.
+	 * @returns The payload, with the restored manifest or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('recoverCarrierManifest')
+	async recoverCarrierManifest(@Args('id') id: ID) {
+		try {
+			return { carrierManifest: await this.carrierManifestService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { carrierManifest: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Resolves the shipments a manifest covers.
 	 *
 	 * @param manifest The manifest being read.

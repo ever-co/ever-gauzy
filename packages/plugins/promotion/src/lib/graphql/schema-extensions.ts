@@ -1256,6 +1256,129 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	# The same pair, on the seven resources behind the promotion.
+	#
+	# Every one of these is the shape the promotion pair above answers with, and it is that shape for the
+	# same reason: the soft-delete and recover routes are inherited from the CRUD base class by every
+	# controller of this plugin, so a capability the promotion itself answers over GraphQL was served
+	# over REST by all eight of them and by no field at all. The member names each resource in the
+	# shortest form that is not ambiguous — a campaign's ceiling answers \`budget\`, and one value of that
+	# ceiling's attribute answers \`budgetUsage\` — and the outcome the caller can act on is carried in
+	# \`userErrors\`, because a row that cannot be retired is a successful operation with a documented
+	# result rather than a transport failure.
+
+	"The outcome of retiring a campaign recoverably."
+	type SoftDeleteCampaignPayload {
+		campaign: Campaign
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted campaign."
+	type RecoverCampaignPayload {
+		campaign: Campaign
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a campaign's ceiling recoverably."
+	type SoftDeleteCampaignBudgetPayload {
+		budget: CampaignBudget
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted campaign ceiling."
+	type RecoverCampaignBudgetPayload {
+		budget: CampaignBudget
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring one per-value consumption row recoverably."
+	type SoftDeleteCampaignBudgetUsagePayload {
+		budgetUsage: CampaignBudgetUsage
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted per-value consumption row."
+	type RecoverCampaignBudgetUsagePayload {
+		budgetUsage: CampaignBudgetUsage
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a coupon recoverably."
+	type SoftDeleteCouponPayload {
+		coupon: Coupon
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted coupon."
+	type RecoverCouponPayload {
+		coupon: Coupon
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a gift card recoverably."
+	type SoftDeleteGiftCardPayload {
+		giftCard: GiftCard
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted gift card."
+	type RecoverGiftCardPayload {
+		giftCard: GiftCard
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring one gift-card movement recoverably."
+	type SoftDeleteGiftCardTransactionPayload {
+		transaction: GiftCardTransaction
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted gift-card movement."
+	type RecoverGiftCardTransactionPayload {
+		transaction: GiftCardTransaction
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring one promotion action recoverably."
+	type SoftDeletePromotionActionPayload {
+		action: PromotionAction
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted promotion action."
+	type RecoverPromotionActionPayload {
+		action: PromotionAction
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring one application of a promotion recoverably."
+	type SoftDeletePromotionUsagePayload {
+		usage: PromotionUsage
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted application of a promotion."
+	type RecoverPromotionUsagePayload {
+		usage: PromotionUsage
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
 	"The outcome of creating a campaign."
 	type CreateCampaignPayload {
 		campaign: Campaign
@@ -1520,6 +1643,14 @@ export const schemaExtensions = gql`
 		softDeletePromotion(id: ID!): SoftDeletePromotionPayload!
 		"Restores a soft-deleted promotion."
 		recoverPromotion(id: ID!): RecoverPromotionPayload!
+		"Retires one action of a promotion recoverably, keeping its place in the application order."
+		softDeletePromotionAction(id: ID!): SoftDeletePromotionActionPayload!
+		"Restores a soft-deleted action of a promotion."
+		recoverPromotionAction(id: ID!): RecoverPromotionActionPayload!
+		"Retires one application of a promotion recoverably, keeping the counters it was counted in."
+		softDeletePromotionUsage(id: ID!): SoftDeletePromotionUsagePayload!
+		"Restores a soft-deleted application of a promotion."
+		recoverPromotionUsage(id: ID!): RecoverPromotionUsagePayload!
 		"Closes a promotion before its window ends."
 		expirePromotion(id: ID!, input: ExpirePromotionInput): ExpirePromotionPayload!
 		"Creates a campaign."
@@ -1528,20 +1659,44 @@ export const schemaExtensions = gql`
 		updateCampaign(id: ID!, input: UpdateCampaignInput!): UpdateCampaignPayload!
 		"Deletes a campaign."
 		deleteCampaign(id: ID!): DeleteCampaignPayload!
+		"Retires a campaign recoverably, so the promotions that name it keep their window."
+		softDeleteCampaign(id: ID!): SoftDeleteCampaignPayload!
+		"Restores a soft-deleted campaign."
+		recoverCampaign(id: ID!): RecoverCampaignPayload!
 		"Sets or replaces the single budget of a campaign."
 		updateCampaignBudget(campaignId: ID!, input: UpdateCampaignBudgetInput!): UpdateCampaignBudgetPayload!
+		"Retires a campaign's ceiling recoverably, so the spend behind it stays attributable."
+		softDeleteCampaignBudget(id: ID!): SoftDeleteCampaignBudgetPayload!
+		"Restores a soft-deleted campaign ceiling."
+		recoverCampaignBudget(id: ID!): RecoverCampaignBudgetPayload!
+		"Retires one per-value consumption row recoverably, without giving its value back."
+		softDeleteCampaignBudgetUsage(id: ID!): SoftDeleteCampaignBudgetUsagePayload!
+		"Restores a soft-deleted per-value consumption row."
+		recoverCampaignBudgetUsage(id: ID!): RecoverCampaignBudgetUsagePayload!
 		"Creates one coupon."
 		createCoupon(input: CreateCouponInput!): CreateCouponPayload!
 		"Changes a coupon's promotion, window or limits."
 		updateCoupon(id: ID!, input: UpdateCouponInput!): UpdateCouponPayload!
 		"Deletes a coupon."
 		deleteCoupon(id: ID!): DeleteCouponPayload!
+		"Retires a coupon recoverably, so the redemptions it granted stay explainable."
+		softDeleteCoupon(id: ID!): SoftDeleteCouponPayload!
+		"Restores a soft-deleted coupon."
+		recoverCoupon(id: ID!): RecoverCouponPayload!
 		"Issues a gift card, crediting its face value as the ledger's first row."
 		issueGiftCard(input: IssueGiftCardInput!): IssueGiftCardPayload!
 		"Spends part of a card's balance against an order."
 		redeemGiftCard(id: ID!, input: RedeemGiftCardInput!): RedeemGiftCardPayload!
 		"Withdraws a card from circulation, keeping its ledger."
 		voidGiftCard(id: ID!, input: VoidGiftCardInput): VoidGiftCardPayload!
+		"Retires a card recoverably; its ledger and its balance are kept."
+		softDeleteGiftCard(id: ID!): SoftDeleteGiftCardPayload!
+		"Restores a soft-deleted gift card."
+		recoverGiftCard(id: ID!): RecoverGiftCardPayload!
+		"Retires one gift-card movement recoverably, so a correction can be undone."
+		softDeleteGiftCardTransaction(id: ID!): SoftDeleteGiftCardTransactionPayload!
+		"Restores a soft-deleted gift-card movement."
+		recoverGiftCardTransaction(id: ID!): RecoverGiftCardTransactionPayload!
 	}
 
 	extend type Subscription {

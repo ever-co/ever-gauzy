@@ -177,6 +177,52 @@ export class PackSlipResolver {
 	}
 
 	/**
+	 * Retires a slip recoverably, keeping the packing record and the lines it covers.
+	 *
+	 * The route it mirrors is `DELETE /pack-slips/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Voiding a slip is
+	 * a different act — it is a statement about the parcel, and it leaves the row in place with a status —
+	 * so without this field a slip a caller retired over GraphQL had no field to bring it back, while a
+	 * REST caller could retire and restore it.
+	 *
+	 * The permission is the controller's own for the route — `FULFILLMENTS_EDIT` — and not the class-level
+	 * view grant, because the weight of record and the tracking number live on this row.
+	 *
+	 * @param id The slip to retire.
+	 * @returns The payload, with the retired slip or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('softDeletePackSlip')
+	async softDeletePackSlip(@Args('id') id: ID) {
+		try {
+			return { packSlip: await this.packSlipService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { packSlip: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a slip that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /pack-slips/:id/recover`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. A restored slip is what a
+	 * manifest reads its packed weight from again, which is why the route states the editing grant rather
+	 * than the reading one.
+	 *
+	 * @param id The slip to restore.
+	 * @returns The payload, with the restored slip or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('recoverPackSlip')
+	async recoverPackSlip(@Args('id') id: ID) {
+		try {
+			return { packSlip: await this.packSlipService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { packSlip: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Resolves the lines a slip covers.
 	 *
 	 * @param slip The slip being read.

@@ -80,8 +80,10 @@ interface IOperationContext {
  * an operator's reads run under — and every field then states the permission its own route states, so a
  * field is never narrower or wider than the route it mirrors: the two reads carry `RETURNS_VIEW`, the
  * request and the cancel `RETURNS_CREATE`, the approval `RETURNS_APPROVE`, the rejection `RETURNS_REJECT`,
- * and the receipt and the close `RETURNS_RECEIVE`, which is the pair `06-api-specification.md` §7 gives
- * this resource. The fields that resolve a return's lines, reason and outstanding quantity answer under
+ * the receipt and the close `RETURNS_RECEIVE`, which is the pair `06-api-specification.md` §7 gives
+ * this resource, and both halves of the inherited soft-delete pair `RETURNS_CREATE`, which is the grant
+ * the controller's own `DELETE /order-returns/:id/soft` and `PUT /order-returns/:id/recover` overrides
+ * state. The fields that resolve a return's lines, reason and outstanding quantity answer under
  * the read permission their own read route carries, because that is the route they are selected through.
  *
  *
@@ -337,6 +339,60 @@ export class OrderReturnResolver {
 				orderReturn: await this.orderReturnService.close(id, versionExpectationOf(context?.req)),
 				userErrors: []
 			};
+		} catch (error) {
+			return { orderReturn: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a return recoverably, keeping the receipt, the stock movements and the refund it wrote.
+	 *
+	 * The route it mirrors is `DELETE /order-returns/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Nothing in this
+	 * plugin's document removed a return at all before this field, so a return raised over GraphQL could
+	 * not be withdrawn on the protocol that raised it, while the REST controller served both routes — and
+	 * the pair is the withdrawal a return needs rather than a destructive one, because the receipt it
+	 * triggered wrote stock movements and the refund it issued wrote money, both of which point back at
+	 * the row.
+	 *
+	 * The permission is the controller's own for the route — `RETURNS_CREATE`, because the plugin
+	 * declares no `RETURNS_DELETE` and withdrawing a return is the grant that already lets a caller
+	 * raise one — and not the class-level `RETURNS_VIEW`, which would let a reader retire a return.
+	 *
+	 * The answer is the payload the return's other mutations answer, `RequestOrderReturnPayload`, so a
+	 * refusal is reported in `userErrors` rather than as a GraphQL error, as every other mutation of this
+	 * resource reports it.
+	 *
+	 * @param id The return to retire.
+	 * @returns The payload, carrying the return as the soft delete left it.
+	 */
+	@Mutation('softDeleteOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async softDeleteOrderReturn(@Args('id') id: ID) {
+		try {
+			return { orderReturn: await this.orderReturnService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { orderReturn: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a return that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-returns/:id/recover`, whose override states the same
+	 * `RETURNS_CREATE` its soft-delete sibling states — putting a return back puts its lines, its
+	 * refund and its receipt back into every read that had stopped answering them, which is the same
+	 * write read the other way. Without this field a return retired over GraphQL could only be brought
+	 * back over REST, so one lifecycle would be completable on one protocol and not the other.
+	 *
+	 * @param id The return to restore.
+	 * @returns The payload, carrying the restored return.
+	 */
+	@Mutation('recoverOrderReturn')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async recoverOrderReturn(@Args('id') id: ID) {
+		try {
+			return { orderReturn: await this.orderReturnService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { orderReturn: null, userErrors: [toUserError(error)] };
 		}

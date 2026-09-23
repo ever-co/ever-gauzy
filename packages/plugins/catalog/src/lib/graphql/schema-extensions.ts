@@ -440,27 +440,63 @@ export const schemaExtensions = gql`
 		createCollection(input: CreateCollectionInput!): Collection!
 		updateCollection(id: ID!, input: UpdateCollectionInput!): Collection!
 		deleteCollection(id: ID!): Boolean!
+		"Retires a collection recoverably, so the membership and the channels that name it keep their class."
+		softDeleteCollection(id: ID!): Collection!
+		"Restores a soft-deleted collection."
+		recoverCollection(id: ID!): Collection!
 		addCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
 		removeCollectionProducts(collectionId: ID!, productIds: [ID!]!): [CollectionProduct!]!
+		"Retires one collection membership recoverably, so the product stays curated into the collection."
+		softDeleteCollectionProduct(id: ID!): CollectionProduct!
+		"Restores a soft-deleted collection membership."
+		recoverCollectionProduct(id: ID!): CollectionProduct!
 		addCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
 		removeCollectionVariants(collectionId: ID!, variantIds: [ID!]!): [CollectionVariant!]!
+		"Retires one collection variant membership recoverably, so the variant keeps its place in the collection."
+		softDeleteCollectionVariant(id: ID!): CollectionVariant!
+		"Restores a soft-deleted collection variant membership."
+		recoverCollectionVariant(id: ID!): CollectionVariant!
 		attachProductVariantFacets(variantId: ID!, tagIds: [ID!]!): [TagProductVariant!]!
 		detachProductVariantFacets(variantId: ID!, tagIds: [ID!]!): [TagProductVariant!]!
+		"Retires one facet recoverably, so the variant keeps the tag it is filtered under."
+		softDeleteTagProductVariant(id: ID!): TagProductVariant!
+		"Restores a soft-deleted facet."
+		recoverTagProductVariant(id: ID!): TagProductVariant!
 		assignCollectionChannel(collectionId: ID!, input: CollectionChannelInput!): [CollectionChannel!]!
 		unassignCollectionChannel(collectionId: ID!, channelId: ID!): [CollectionChannel!]!
+		"Retires one collection publication recoverably, so the placement keeps its status and its date."
+		softDeleteCollectionChannel(id: ID!): CollectionChannel!
+		"Restores a soft-deleted collection publication."
+		recoverCollectionChannel(id: ID!): CollectionChannel!
 		publishProduct(productId: ID!, channelIds: [ID!]!, publishedAt: DateTime): [ProductPublication!]!
 		unpublishProduct(productId: ID!, channelIds: [ID!]!, unpublishedAt: DateTime): [ProductPublication!]!
+		"Retires one product publication recoverably, so the placement keeps its status and its date."
+		softDeleteProductChannel(id: ID!): ProductPublication!
+		"Restores a soft-deleted product publication."
+		recoverProductChannel(id: ID!): ProductPublication!
 		publishProductVariant(
 			variantId: ID!
 			input: [ProductVariantPublicationInput!]!
 		): [ProductVariantPublication!]!
 		unpublishProductVariant(variantId: ID!, channelIds: [ID!]!): [ProductVariantPublication!]!
+		"Retires one variant publication recoverably, so the placement keeps its status and its date."
+		softDeleteProductVariantChannel(id: ID!): ProductVariantPublication!
+		"Restores a soft-deleted variant publication."
+		recoverProductVariantChannel(id: ID!): ProductVariantPublication!
 		createProductRelation(input: CreateProductRelationInput!): ProductRelation!
 		updateProductRelation(id: ID!, input: UpdateProductRelationInput!): ProductRelation!
 		deleteProductRelation(id: ID!): Boolean!
+		"Retires a relation recoverably, so the two products keep the recommendation between them."
+		softDeleteProductRelation(id: ID!): ProductRelation!
+		"Restores a soft-deleted relation."
+		recoverProductRelation(id: ID!): ProductRelation!
 		attachProductVariantMedia(variantId: ID!, input: [ProductVariantMediaInput!]!): [ProductVariantMedia!]!
 		reorderProductVariantMedia(variantId: ID!, imageAssetIds: [ID!]!): [ProductVariantMedia!]!
 		detachProductVariantMedia(variantId: ID!, imageAssetId: ID!): [ProductVariantMedia!]!
+		"Retires one gallery row recoverably, so the gallery keeps its order and its thumbnail."
+		softDeleteProductVariantMedia(id: ID!): ProductVariantMedia!
+		"Restores a soft-deleted gallery row."
+		recoverProductVariantMedia(id: ID!): ProductVariantMedia!
 	}
 
 	extend type Subscription {

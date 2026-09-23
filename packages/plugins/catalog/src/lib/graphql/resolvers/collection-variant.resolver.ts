@@ -1,4 +1,4 @@
-import { Args, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { connectionFromOffsetPage, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
@@ -59,5 +59,43 @@ export class CollectionVariantResolver {
 		});
 
 		return connectionFromOffsetPage<CollectionVariant>(listing, skip);
+	}
+
+	/**
+	 * Retires one variant membership row recoverably, keeping the variant in the collection's set.
+	 *
+	 * The route it mirrors is `DELETE /collection-variants/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The document
+	 * declares the set mutations for this membership, but no resolver implements them, so until now this
+	 * resource had no write field at all — and the row's own lifecycle, the one a caller holding a
+	 * membership identifier reaches, had none on either spelling.
+	 *
+	 * The permission is the controller's own for the route — `COLLECTIONS_DELETE` — because retiring a
+	 * membership changes what the collection contains.
+	 *
+	 * @param id The membership to retire.
+	 * @returns The membership, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
+	@Mutation('softDeleteCollectionVariant')
+	async softDeleteCollectionVariant(@Args('id') id: ID): Promise<CollectionVariant> {
+		return this.collectionVariantService.softRemove(id);
+	}
+
+	/**
+	 * Restores a variant membership row that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /collection-variants/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The variant
+	 * is a member of the collection again at the position it held, which is why the route states the
+	 * deleting grant rather than the reading one.
+	 *
+	 * @param id The membership to restore.
+	 * @returns The restored membership.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
+	@Mutation('recoverCollectionVariant')
+	async recoverCollectionVariant(@Args('id') id: ID): Promise<CollectionVariant> {
+		return this.collectionVariantService.softRecover(id);
 	}
 }

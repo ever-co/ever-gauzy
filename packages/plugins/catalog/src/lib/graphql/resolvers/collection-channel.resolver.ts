@@ -98,4 +98,42 @@ export class CollectionChannelResolver {
 				.map((row) => ({ channelId: row.channelId, status: row.status, publishedAt: row.publishedAt }))
 		);
 	}
+
+	/**
+	 * Retires one collection publication recoverably, keeping the row.
+	 *
+	 * The route it mirrors is `DELETE /collection-channels/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The set
+	 * mutations above replace a collection's whole publication set, which is the wrong instrument for
+	 * withdrawing one row a caller has already been given the identifier of, and no field answered that
+	 * row's own lifecycle at all.
+	 *
+	 * The permission is the controller's own for the route — `COLLECTIONS_DELETE` — because retiring a
+	 * publication is what makes a collection stop resolving on the channel it was placed on.
+	 *
+	 * @param id The collection publication to retire.
+	 * @returns The publication, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
+	@Mutation('softDeleteCollectionChannel')
+	async softDeleteCollectionChannel(@Args('id') id: ID): Promise<CollectionChannel> {
+		return this.collectionChannelService.softRemove(id);
+	}
+
+	/**
+	 * Restores a collection publication that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /collection-channels/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The row comes
+	 * back with the status it was retired under, so a caller that withdrew a placement by mistake puts
+	 * the collection back on that channel rather than republishing it from scratch.
+	 *
+	 * @param id The collection publication to restore.
+	 * @returns The restored publication.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
+	@Mutation('recoverCollectionChannel')
+	async recoverCollectionChannel(@Args('id') id: ID): Promise<CollectionChannel> {
+		return this.collectionChannelService.softRecover(id);
+	}
 }

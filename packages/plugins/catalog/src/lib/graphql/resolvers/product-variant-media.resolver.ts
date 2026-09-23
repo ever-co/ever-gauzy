@@ -107,4 +107,42 @@ export class ProductVariantMediaResolver {
 
 		return this.productVariantMediaService.findByVariant(variantId);
 	}
+
+	/**
+	 * Retires one gallery row recoverably, keeping the image in the variant's gallery.
+	 *
+	 * The route it mirrors is `DELETE /product-variant-media/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated.
+	 * `detachProductVariantMedia` above rewrites the gallery and re-checks which image is primary; this is
+	 * the row's own lifecycle, and it is what a caller holding one gallery identifier reaches — the
+	 * position and the primary flag it carried are preserved rather than recomputed.
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_DELETE` — because retiring a
+	 * gallery row changes what a variant shows.
+	 *
+	 * @param id The gallery row to retire.
+	 * @returns The gallery row, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('softDeleteProductVariantMedia')
+	async softDeleteProductVariantMedia(@Args('id') id: ID): Promise<ProductVariantMedia> {
+		return this.productVariantMediaService.softRemove(id);
+	}
+
+	/**
+	 * Restores a gallery row that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /product-variant-media/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The image is
+	 * in the gallery again at the position it held, which is why the route states the deleting grant
+	 * rather than the reading one.
+	 *
+	 * @param id The gallery row to restore.
+	 * @returns The restored gallery row.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('recoverProductVariantMedia')
+	async recoverProductVariantMedia(@Args('id') id: ID): Promise<ProductVariantMedia> {
+		return this.productVariantMediaService.softRecover(id);
+	}
 }

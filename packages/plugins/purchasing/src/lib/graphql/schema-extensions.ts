@@ -581,6 +581,14 @@ export const schemaExtensions = gql`
 		softDeletePurchaseOrder(id: ID!): PurchaseOrder!
 		"Puts a withdrawn purchase order back."
 		recoverPurchaseOrder(id: ID!): PurchaseOrder!
+		"""
+		Withdraws one line of a purchase order without removing the row. A line is read through its order
+		rather than by id, so this pair is the only root field the line answers — and it answers them because
+		the line's own controller serves both routes under the order-edit grant.
+		"""
+		softDeletePurchaseOrderLine(id: ID!): PurchaseOrderLine!
+		"Puts a withdrawn purchase order line back."
+		recoverPurchaseOrderLine(id: ID!): PurchaseOrderLine!
 		"Receives goods against a purchase order, writing the stock movements they produce."
 		createGoodsReceipt(input: CreateGoodsReceiptInput!): GoodsReceiptPayload!
 		"Records one further line against a receipt that was already posted."

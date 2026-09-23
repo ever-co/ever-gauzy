@@ -35,10 +35,12 @@ interface IRequestOrderExchangeArgs {
  * **Authorisation is the controller's, restated field by field.** The class carries what the exchanges
  * controller class carries — both protocol guards, the platform's feature gate and the read permission
  * its reads run under — and every field then states the permission its own route states: the two reads
- * carry `EXCHANGES_VIEW`, requesting an exchange `EXCHANGES_CREATE`, and approving or rejecting one
- * `EXCHANGES_RESOLVE`, because the decision re-reserves stock and adjusts the payment collection. The
- * fields that resolve an exchange's lines and its inbound return answer under the permission the
- * exchange is read with, which is the route they are selected through.
+ * carry `EXCHANGES_VIEW`, requesting an exchange `EXCHANGES_CREATE`, approving or rejecting one
+ * `EXCHANGES_RESOLVE`, because the decision re-reserves stock and adjusts the payment collection, and
+ * both halves of the inherited soft-delete pair `EXCHANGES_CREATE`, which is the grant the exchanges
+ * controller's own `DELETE /order-exchanges/:id/soft` and `PUT /order-exchanges/:id/recover` overrides
+ * state. The fields that resolve an exchange's lines and its inbound return answer under the permission
+ * the exchange is read with, which is the route they are selected through.
  *
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the two permission guards — after
@@ -158,6 +160,59 @@ export class OrderExchangeResolver {
 	async rejectOrderExchange(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { orderExchange: await this.orderExchangeService.reject(id, reason), userErrors: [] };
+		} catch (error) {
+			return { orderExchange: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires an exchange recoverably, keeping the difference it priced and the customer was charged.
+	 *
+	 * The route it mirrors is `DELETE /order-exchanges/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. This resolver
+	 * declared no deletion-shaped field at all before this one, so an exchange requested over GraphQL
+	 * could not be withdrawn on the protocol that requested it, while the REST controller served both
+	 * routes — and `differenceDue` was priced once and charged, so a row removed outright would take the
+	 * explanation of that charge with it.
+	 *
+	 * The permission is the controller's own for the route — `EXCHANGES_CREATE`, because the plugin
+	 * declares no `EXCHANGES_DELETE` and withdrawing an exchange is the grant that already lets a caller
+	 * request one.
+	 *
+	 * The answer is the payload the exchange's other mutations answer, `RequestOrderExchangePayload`, so
+	 * a refusal is reported in `userErrors` rather than as a GraphQL error, as every other mutation of
+	 * this resource reports it.
+	 *
+	 * @param id The exchange to retire.
+	 * @returns The payload, carrying the exchange as the soft delete left it.
+	 */
+	@Mutation('softDeleteOrderExchange')
+	@Permissions(ReturnsPermissions.EXCHANGES_CREATE)
+	async softDeleteOrderExchange(@Args('id') id: ID) {
+		try {
+			return { orderExchange: await this.orderExchangeService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { orderExchange: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores an exchange that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-exchanges/:id/recover`, whose override states the same
+	 * `EXCHANGES_CREATE` its soft-delete sibling states — a restored exchange is decided again and its
+	 * difference is read again beside it, which is the same write read the other way. Without this field
+	 * an exchange retired over GraphQL could only be brought back over REST, so one lifecycle would be
+	 * completable on one protocol and not the other.
+	 *
+	 * @param id The exchange to restore.
+	 * @returns The payload, carrying the restored exchange.
+	 */
+	@Mutation('recoverOrderExchange')
+	@Permissions(ReturnsPermissions.EXCHANGES_CREATE)
+	async recoverOrderExchange(@Args('id') id: ID) {
+		try {
+			return { orderExchange: await this.orderExchangeService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { orderExchange: null, userErrors: [toUserError(error)] };
 		}

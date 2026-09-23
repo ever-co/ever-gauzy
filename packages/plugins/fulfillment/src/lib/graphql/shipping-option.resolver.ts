@@ -207,6 +207,44 @@ export class ShippingOptionResolver {
 	}
 
 	/**
+	 * Retires a shipping profile recoverably, keeping the group and the variants placed in it.
+	 *
+	 * The route it mirrors is `DELETE /shipping-profiles/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this field
+	 * a profile a caller retired over GraphQL could not be brought back over GraphQL, while a REST caller
+	 * could do both — and every variant attached to it would have lost the group it ships under for good.
+	 *
+	 * The permission is the controller's own for the route — `SHIPPING_OPTIONS_DELETE` — and not the
+	 * class-level view grant, because retiring a profile takes the option a storefront chooses between out
+	 * of service.
+	 *
+	 * @param id The profile to retire.
+	 * @returns The profile, as the soft delete left it.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Mutation(() => Object, { name: 'softDeleteShippingProfile' })
+	async softDeleteShippingProfile(@Args('id', { type: () => ID }) id: string): Promise<ShippingProfile> {
+		return this.profileService.softRemove(id);
+	}
+
+	/**
+	 * Restores a shipping profile that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /shipping-profiles/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored profile
+	 * is offered for its variants again, which is why the route states the deleting grant rather than the
+	 * reading one.
+	 *
+	 * @param id The profile to restore.
+	 * @returns The restored profile.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Mutation(() => Object, { name: 'recoverShippingProfile' })
+	async recoverShippingProfile(@Args('id', { type: () => ID }) id: string): Promise<ShippingProfile> {
+		return this.profileService.softRecover(id);
+	}
+
+	/**
 	 * Attaches and detaches variants.
 	 *
 	 * @param input The profile and the variants to add and remove.
@@ -271,5 +309,42 @@ export class ShippingOptionResolver {
 		const result = await this.optionService.delete(id);
 
 		return Boolean(result);
+	}
+
+	/**
+	 * Retires a shipping option recoverably, keeping the price a cart was quoted.
+	 *
+	 * The route it mirrors is `DELETE /shipping-options/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this field
+	 * an option a caller retired over GraphQL could not be brought back over GraphQL, while a REST caller
+	 * could do both — and a rate a cart already carries would name a row nothing could restore.
+	 *
+	 * The permission is the controller's own for the route — `SHIPPING_OPTIONS_DELETE` — and not the
+	 * class-level view grant, because retiring an option stops it being offered to any cart.
+	 *
+	 * @param id The option to retire.
+	 * @returns The option, as the soft delete left it.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Mutation(() => Object, { name: 'softDeleteShippingOption' })
+	async softDeleteShippingOption(@Args('id', { type: () => ID }) id: string): Promise<ShippingOption> {
+		return this.optionService.softRemove(id);
+	}
+
+	/**
+	 * Restores a shipping option that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /shipping-options/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored option
+	 * is a candidate for the carts it matched again, which is why the route states the deleting grant
+	 * rather than the reading one.
+	 *
+	 * @param id The option to restore.
+	 * @returns The restored option.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
+	@Mutation(() => Object, { name: 'recoverShippingOption' })
+	async recoverShippingOption(@Args('id', { type: () => ID }) id: string): Promise<ShippingOption> {
+		return this.optionService.softRecover(id);
 	}
 }

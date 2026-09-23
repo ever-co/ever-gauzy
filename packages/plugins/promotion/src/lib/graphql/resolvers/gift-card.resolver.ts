@@ -22,6 +22,8 @@ import {
 	IVoidGiftCardInput,
 	IssueGiftCardPayload,
 	RedeemGiftCardPayload,
+	RecoverGiftCardPayload,
+	SoftDeleteGiftCardPayload,
 	VoidGiftCardPayload,
 	cursorOffset,
 	toAsyncIterable,
@@ -220,6 +222,50 @@ export class GiftCardResolver {
 	async voidGiftCard(@Args('id') id: ID, @Args('input') input?: IVoidGiftCardInput): Promise<VoidGiftCardPayload> {
 		try {
 			return { giftCard: await this.giftCardService.cancel(id, input?.reason), operation: null, userErrors: [] };
+		} catch (error) {
+			return { giftCard: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a card recoverably, keeping its balance and its ledger.
+	 *
+	 * The route it mirrors is `DELETE /gift-cards/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base leaves unstated. A card is
+	 * money the business owes and its ledger is what the balance is reconciled against, so the hard
+	 * delete the endpoint also serves destroys both — which is what the soft route exists to avoid.
+	 *
+	 * The permission is the route's own, `GIFT_CARDS_EDIT`.
+	 *
+	 * @param id The card to retire.
+	 * @returns The payload, carrying the card as the soft delete left it.
+	 */
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Mutation('softDeleteGiftCard')
+	async softDeleteGiftCard(@Args('id') id: ID): Promise<SoftDeleteGiftCardPayload> {
+		try {
+			return { giftCard: await this.giftCardService.softRemove(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { giftCard: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a card that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /gift-cards/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base leaves unstated. A restored
+	 * card is redeemable against an order again, which is why the route states the editing grant rather
+	 * than the view one.
+	 *
+	 * @param id The card to restore.
+	 * @returns The payload, carrying the restored card.
+	 */
+	@Permissions(PromotionPermission.GIFT_CARDS_EDIT as PermissionsEnum)
+	@Mutation('recoverGiftCard')
+	async recoverGiftCard(@Args('id') id: ID): Promise<RecoverGiftCardPayload> {
+		try {
+			return { giftCard: await this.giftCardService.softRecover(id), operation: null, userErrors: [] };
 		} catch (error) {
 			return { giftCard: null, operation: null, userErrors: [toUserError(error)] };
 		}

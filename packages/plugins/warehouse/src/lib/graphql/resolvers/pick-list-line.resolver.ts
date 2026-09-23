@@ -32,6 +32,11 @@ import { toUserError } from '../../graphql/wire';
  * guarded by `PICK_LISTS_PICK` rather than by the permission that releases the work — a picker holds
  * one without holding the other, and the two surfaces keep that apart in the same way.
  *
+ * The inherited lifecycle pair lives here as well — `softDeletePickListLine` and `recoverPickListLine` —
+ * and it is **not** guarded by `PICK_LISTS_PICK`: withdrawing a line is a change to the work rather than
+ * an outcome recorded against it, so both fields state `PICK_LISTS_EDIT`, which is what the two routes
+ * they mirror state.
+ *
  * **The gate is the catalogue's, and the domain code stands beside it.** `FeatureFlagGuard` reads one
  * code per target — `getAllAndOverride` over the handler and then the class — so the code stated first
  * on the class is the one that gates every field below, and it is `FEATURE_GRAPHQL`, the commerce
@@ -200,6 +205,53 @@ export class PickListLineResolver {
 			await this.assertLineBelongsTo(pickListId, lineId);
 
 			return { pickListLine: await this.pickListLineService.recordSkip(lineId, note), userErrors: [] };
+		} catch (error) {
+			return { pickListLine: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a line recoverably, keeping what the picker recorded against it.
+	 *
+	 * The route it mirrors is `DELETE /pick-list-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. This is the one
+	 * root field of the pair that is not reached through a list: the route takes the line's own identifier
+	 * and nothing else, so the field takes the same, and the guard against naming a line of another list
+	 * belongs to the fields that name both.
+	 *
+	 * The permission is the controller's own for the route — `PICK_LISTS_EDIT` — and not the class-level
+	 * view grant, and deliberately not `PICK_LISTS_PICK` either: withdrawing a line is a change to the
+	 * work, not an outcome recorded against it.
+	 *
+	 * @param id The line to retire.
+	 * @returns The payload, with the retired line or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('softDeletePickListLine')
+	async softDeletePickListLine(@Args('id') id: ID) {
+		try {
+			return { pickListLine: await this.pickListLineService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { pickListLine: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /pick-list-lines/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored line
+	 * counts again in the list's own counters, which is why the route states the editing grant rather than
+	 * the reading one.
+	 *
+	 * @param id The line to restore.
+	 * @returns The payload, with the restored line or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('recoverPickListLine')
+	async recoverPickListLine(@Args('id') id: ID) {
+		try {
+			return { pickListLine: await this.pickListLineService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { pickListLine: null, userErrors: [toUserError(error)] };
 		}

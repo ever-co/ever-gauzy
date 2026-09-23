@@ -95,4 +95,42 @@ export class ProductRelationResolver {
 
 		return true;
 	}
+
+	/**
+	 * Retires a relation recoverably, keeping both products and the type that relates them.
+	 *
+	 * The route it mirrors is `DELETE /product-relations/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this
+	 * field a relation withdrawn over GraphQL could not be brought back over GraphQL, while the hard
+	 * `deleteProductRelation` the endpoint does serve drops the row — and a relation is a merchandising
+	 * statement about two products that a storefront may still be serving.
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_EDIT` — because retiring a
+	 * relation changes what the catalogue recommends beside a product.
+	 *
+	 * @param id The relation to retire.
+	 * @returns The relation, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Mutation('softDeleteProductRelation')
+	async softDeleteProductRelation(@Args('id') id: ID): Promise<ProductRelation> {
+		return this.productRelationService.softRemove(id);
+	}
+
+	/**
+	 * Restores a relation that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /product-relations/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. The relation comes
+	 * back with its type and its position, which is why the route states the editing grant rather than
+	 * the reading one.
+	 *
+	 * @param id The relation to restore.
+	 * @returns The restored relation.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
+	@Mutation('recoverProductRelation')
+	async recoverProductRelation(@Args('id') id: ID): Promise<ProductRelation> {
+		return this.productRelationService.softRecover(id);
+	}
 }

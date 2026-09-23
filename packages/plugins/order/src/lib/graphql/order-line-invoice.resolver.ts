@@ -191,6 +191,47 @@ export class OrderLineInvoiceResolver {
 			currency: input.currency
 		});
 	}
+
+	/**
+	 * Retires a line-to-invoice link recoverably, keeping the evidence it records.
+	 *
+	 * The route it mirrors is `DELETE /order-line-invoices/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A link is what a
+	 * line's counters were derived from and what says which invoice item billed which part of the line,
+	 * so the row is the explanation of a document that was issued — retired recoverably, and restored by
+	 * the field below, rather than dropped by the destructive delete this endpoint also serves.
+	 *
+	 * Because a retirement here is the register's own write, the counters are re-derived around it exactly
+	 * as they are when a link is removed through `deleteOrderLineInvoice`.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT` — and not the class-level view
+	 * grant, because retiring a link moves what a line is billed against.
+	 *
+	 * @param id The link to retire.
+	 * @returns The link, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation('softDeleteOrderLineInvoice')
+	async softDeleteOrderLineInvoice(@Args('id', { type: () => ID }) id: string): Promise<OrderLineInvoice> {
+		return await this.service.softRemove(id);
+	}
+
+	/**
+	 * Restores a line-to-invoice link that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-line-invoices/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored link is
+	 * counted into the line's invoiced and credited quantities again, which is why the route states the
+	 * editing grant rather than the reading one.
+	 *
+	 * @param id The link to restore.
+	 * @returns The restored link.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation('recoverOrderLineInvoice')
+	async recoverOrderLineInvoice(@Args('id', { type: () => ID }) id: string): Promise<OrderLineInvoice> {
+		return await this.service.softRecover(id);
+	}
 }
 
 /** The refund register's request, as the schema declares it. */

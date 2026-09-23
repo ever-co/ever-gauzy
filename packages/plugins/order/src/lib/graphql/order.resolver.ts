@@ -324,6 +324,156 @@ export class OrderResolver {
 	}
 
 	/**
+	 * Retires an order recoverably, keeping the row and every satellite of it.
+	 *
+	 * The route it mirrors is `DELETE /orders/:id/soft`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. Without this field an order
+	 * retired over GraphQL could not be brought back over GraphQL, while a REST caller could do both — and
+	 * the destructive delete this endpoint also serves drops the aggregate, which is exactly the operation
+	 * the soft route exists to avoid for a record that placed tax lines, invoices and a money ledger point
+	 * at.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT` — and not the class-level view
+	 * grant, because retiring an order takes it out of every listing, total and change a reader sees.
+	 *
+	 * @param id The order to retire.
+	 * @returns The order, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrder' })
+	async softDeleteOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
+		return this.orderService.softRemove(id);
+	}
+
+	/**
+	 * Restores an order that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /orders/:id/recover`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. A restored order is a candidate
+	 * for every read and every change again, which is why the route states the editing grant rather than
+	 * the reading one.
+	 *
+	 * @param id The order to restore.
+	 * @returns The restored order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrder' })
+	async recoverOrder(@Args('id', { type: () => ID }) id: string): Promise<Order> {
+		return this.orderService.softRecover(id);
+	}
+
+	/**
+	 * Retires a frozen address recoverably, keeping the row an order was placed with.
+	 *
+	 * The route it mirrors is `DELETE /order-addresses/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Its fields are the
+	 * address the order was shipped to at the moment it was placed, so the row is evidence rather than a
+	 * preference: retiring it recoverably is how a caller corrects a duplicate, and the recovery below is
+	 * how it undoes that.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT` — which this resolver states on
+	 * the field rather than leaving to its class-level view grant.
+	 *
+	 * @param id The frozen address to retire.
+	 * @returns The address, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderAddress' })
+	async softDeleteOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<OrderAddress> {
+		return this.addressService.softRemove(id);
+	}
+
+	/**
+	 * Restores a frozen address that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-addresses/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without it an
+	 * address retired over GraphQL could only be put back by writing the order again.
+	 *
+	 * @param id The frozen address to restore.
+	 * @returns The restored address.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderAddress' })
+	async recoverOrderAddress(@Args('id', { type: () => ID }) id: string): Promise<OrderAddress> {
+		return this.addressService.softRecover(id);
+	}
+
+	/**
+	 * Retires a credit line recoverably, keeping what the order was reduced by.
+	 *
+	 * The route it mirrors is `DELETE /order-credit-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A credit line is
+	 * part of how an order's outstanding total was arrived at, so the row is retired rather than dropped
+	 * and the recovery below puts it back into that arithmetic.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The credit line to retire.
+	 * @returns The credit line, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderCreditLine' })
+	async softDeleteOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
+		return this.creditLineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a credit line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-credit-lines/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored credit
+	 * line is counted against the order again, which is why the route states the editing grant.
+	 *
+	 * @param id The credit line to restore.
+	 * @returns The restored credit line.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderCreditLine' })
+	async recoverOrderCreditLine(@Args('id', { type: () => ID }) id: string): Promise<OrderCreditLine> {
+		return this.creditLineService.softRecover(id);
+	}
+
+	/**
+	 * Retires a delivery choice recoverably, keeping the amount the order was placed with.
+	 *
+	 * The route it mirrors is `DELETE /order-shipping-methods/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. A delivery
+	 * choice carries the shipping amount the order's totals were computed from, so the row is kept and the
+	 * recovery below is what undoes the retirement.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The delivery choice to retire.
+	 * @returns The delivery choice, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderShippingMethod' })
+	async softDeleteOrderShippingMethod(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<OrderShippingMethod> {
+		return this.shippingMethodService.softRemove(id);
+	}
+
+	/**
+	 * Restores a delivery choice that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-shipping-methods/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. A restored
+	 * choice is counted into the order's shipping totals again.
+	 *
+	 * @param id The delivery choice to restore.
+	 * @returns The restored delivery choice.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderShippingMethod' })
+	async recoverOrderShippingMethod(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<OrderShippingMethod> {
+		return this.shippingMethodService.softRecover(id);
+	}
+
+	/**
 	 * Creates a change.
 	 *
 	 * @param input The change and its actions.

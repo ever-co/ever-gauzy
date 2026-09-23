@@ -1,5 +1,6 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
@@ -14,12 +15,21 @@ import { PurchaseOrderService } from '../../purchase-order/purchase-order.servic
 /**
  * The purchase-order line's own fields.
  *
- * The line has no root field of its own — it is always read through its order — so this resolver
- * exists for the three members that are derived rather than stored: how much of the line is still
- * expected, what is still unbilled under the policy the caller names, and the order it belongs to when
- * a caller reached it without one.
+ * The line is **read** through its order rather than as a root field of its own, so this resolver exists
+ * for the three members that are derived rather than stored: how much of the line is still expected, what
+ * is still unbilled under the policy the caller names, and the order it belongs to when a caller reached it
+ * without one.
  *
- * **Authorisation is the controller's.** A line with no root field is still served through the one
+ * **It does answer two root fields, and they are the write pair rather than a read.** `DELETE
+ * /purchase-order-lines/:id/soft` and `PUT /purchase-order-lines/:id/recover` are routes the line's own
+ * controller serves — it overrides both to state `PURCHASE_ORDERS_EDIT`, because a controller inherits them
+ * from `CrudController<T>` whether or not it declares them — and §3.1 of the GraphQL specification makes a
+ * delivered write route a delivered capability on both protocols. A withdrawal a REST caller can perform and
+ * a GraphQL caller cannot is the asymmetry the two-protocol rule forbids, and a read the line does not need is
+ * not a reason to withhold a write it does. Nothing here reads a line by id: the pair takes one because the
+ * routes take one.
+ *
+ * **Authorisation is the controller's.** A line with no root read is still served through the one
  * GraphQL endpoint, so the class carries the guard chain, the platform's feature gate and the read
  * permission the purchase-order-line controller class carries — `PURCHASE_ORDERS_VIEW`, which is the
  * permission that controller's own list route states, and the permission the order these fields are
@@ -102,5 +112,33 @@ export class PurchaseOrderLineResolver {
 		} catch (error) {
 			return null;
 		}
+	}
+
+	/**
+	 * Withdraws a line, clearing the order's billable quantity of it without removing the row.
+	 *
+	 * The permission is the route's own rather than the class's read grant: the line's controller overrides
+	 * `softRemove` to state `PURCHASE_ORDERS_EDIT`, and stating the view grant here would make GraphQL wider
+	 * than REST — the one direction §3.1 forbids.
+	 *
+	 * @param id The line to withdraw.
+	 * @returns The soft-deleted line.
+	 */
+	@Mutation('softDeletePurchaseOrderLine')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	async softDeletePurchaseOrderLine(@Args('id') id: ID): Promise<PurchaseOrderLine> {
+		return await this.purchaseOrderLineService.softRemove(id);
+	}
+
+	/**
+	 * Puts a withdrawn line back.
+	 *
+	 * @param id The line to restore.
+	 * @returns The restored line.
+	 */
+	@Mutation('recoverPurchaseOrderLine')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	async recoverPurchaseOrderLine(@Args('id') id: ID): Promise<PurchaseOrderLine> {
+		return await this.purchaseOrderLineService.softRecover(id);
 	}
 }

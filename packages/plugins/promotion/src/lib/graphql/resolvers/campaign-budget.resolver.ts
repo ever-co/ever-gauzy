@@ -1,4 +1,4 @@
-import { Args, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { filter } from 'rxjs';
 import { DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
@@ -11,11 +11,13 @@ import { PromotionBudgetExhaustedEvent } from '../../events';
 import { CampaignService } from '../../campaign/campaign.service';
 import { CampaignBudgetService } from '../../campaign-budget/campaign-budget.service';
 import { CampaignBudgetUsageService } from '../../campaign-budget-usage/campaign-budget-usage.service';
-import { toDecimal, toWhere } from '../wire';
+import { toDecimal, toUserError, toWhere } from '../wire';
 import {
 	IPageInput,
 	IPromotionBudgetExhaustedPayload,
 	ISortInput,
+	RecoverCampaignBudgetPayload,
+	SoftDeleteCampaignBudgetPayload,
 	cursorOffset,
 	toAsyncIterable,
 	toConnection,
@@ -97,6 +99,51 @@ export class CampaignBudgetResolver {
 		});
 
 		return toConnection(result, cursorOffset(page, offset));
+	}
+
+	/**
+	 * Retires a campaign's ceiling recoverably, keeping the spend recorded against it.
+	 *
+	 * The route it mirrors is `DELETE /campaign-budgets/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base leaves unstated. A ceiling
+	 * carries the consumption of everything admitted under it, so the hard delete the endpoint also
+	 * serves throws away the figures a campaign is reconciled against — which is what the soft route
+	 * exists to avoid.
+	 *
+	 * The permission is the route's own, `PROMOTIONS_DELETE`, and not the class-level view grant.
+	 *
+	 * @param id The ceiling to retire.
+	 * @returns The payload, carrying the budget as the soft delete left it.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Mutation('softDeleteCampaignBudget')
+	async softDeleteCampaignBudget(@Args('id') id: ID): Promise<SoftDeleteCampaignBudgetPayload> {
+		try {
+			return { budget: await this.campaignBudgetService.softRemove(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { budget: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a ceiling that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /campaign-budgets/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base leaves unstated. A restored
+	 * ceiling bounds the reservations of its campaign again, which is why the route states the
+	 * destructive grant rather than the edit one.
+	 *
+	 * @param id The ceiling to restore.
+	 * @returns The payload, carrying the restored budget.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Mutation('recoverCampaignBudget')
+	async recoverCampaignBudget(@Args('id') id: ID): Promise<RecoverCampaignBudgetPayload> {
+		try {
+			return { budget: await this.campaignBudgetService.softRecover(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { budget: null, operation: null, userErrors: [toUserError(error)] };
+		}
 	}
 
 	/**

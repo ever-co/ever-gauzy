@@ -127,4 +127,15 @@ describe('the purchasing document — the mutations that mirror the purchase-ord
 			expect(argumentNames('Mutation', field)).toEqual(['id']);
 		}
 	});
+
+	it('declares the same pair for the line, which is read through its order and answers no other root field', () => {
+		// A line has no root read: it is selected through `purchaseOrder { lines { … } }`. Its controller still
+		// serves `DELETE /:id/soft` and `PUT /:id/recover` under the order-edit grant, and §3.1 makes a
+		// delivered write route a delivered capability on both protocols — so the pair is the line's only root
+		// field, and its absence is the asymmetry this case exists to catch.
+		for (const field of ['softDeletePurchaseOrderLine', 'recoverPurchaseOrderLine']) {
+			expect(typeOf(fieldNamed('Mutation', field))).toBe('PurchaseOrderLine!');
+			expect(argumentNames('Mutation', field)).toEqual(['id']);
+		}
+	});
 });

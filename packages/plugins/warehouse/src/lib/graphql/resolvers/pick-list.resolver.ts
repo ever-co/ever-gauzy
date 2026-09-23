@@ -188,6 +188,52 @@ export class PickListResolver {
 	}
 
 	/**
+	 * Retires a pick list recoverably, keeping the lines it was walked with.
+	 *
+	 * The route it mirrors is `DELETE /pick-lists/:id/soft`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. Cancelling is a statement
+	 * about the work and refuses a list anything has been picked from, so it is not a substitute for this:
+	 * without this field a list a caller retired over GraphQL had no field to bring it back, while a REST
+	 * caller could retire and restore it.
+	 *
+	 * The permission is the controller's own for the route — `PICK_LISTS_EDIT` — and not the class-level
+	 * view grant, because retiring a list takes the work it covers off the floor.
+	 *
+	 * @param id The list to retire.
+	 * @returns The payload, with the retired list or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('softDeletePickList')
+	async softDeletePickList(@Args('id') id: ID) {
+		try {
+			return { pickList: await this.pickListService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { pickList: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a pick list that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /pick-lists/:id/recover`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. A restored list is walkable
+	 * again and its lines are read through it, which is why the route states the editing grant rather than
+	 * the reading one.
+	 *
+	 * @param id The list to restore.
+	 * @returns The payload, with the restored list or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('recoverPickList')
+	async recoverPickList(@Args('id') id: ID) {
+		try {
+			return { pickList: await this.pickListService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { pickList: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Resolves the lines of a list.
 	 *
 	 * @param list The list being read.

@@ -8,6 +8,15 @@ import { gql } from 'graphql-tag';
  * extends them — a second declaration of `type Query` would be a duplicate definition and would fail
  * the schema build.
  *
+ * **Each of the seven resources carries the `DELETE /:id/soft` and `PUT /:id/recover` pair its
+ * controller inherits, under the names the composed schema uses for that act: `softDelete<Resource>`
+ * and `recover<Resource>`.** Every controller in this plugin serves those two routes over REST and
+ * overrides them only to state the permission the inherited pair leaves unstated, so without these
+ * fields a caller could retire a return, a claim, an exchange, a reason or any of their lines
+ * recoverably on one protocol and not on the other — where the only deletion-shaped field it held was
+ * the destructive one, which is exactly what the soft routes exist to avoid on rows that money, stock
+ * and history point at.
+ *
  * Money and quantities are `Decimal`, never `Float`: an amount read here and the same amount read
  * over REST are the same string, and a binary fraction cannot hold a cent exactly.
  */
@@ -526,23 +535,51 @@ export const schemaExtensions = gql`
 		cancelOrderReturn(id: ID!, reason: String, version: Int): RequestOrderReturnPayload!
 		"Closes a fully received return, under the version the caller read."
 		closeOrderReturn(id: ID!, version: Int): RequestOrderReturnPayload!
+		"Retires a return recoverably, keeping the receipt, the stock movements and the refund it wrote."
+		softDeleteOrderReturn(id: ID!): RequestOrderReturnPayload!
+		"Restores a soft-deleted return."
+		recoverOrderReturn(id: ID!): RequestOrderReturnPayload!
+		"Retires a return line recoverably, so the quantities the return was received against survive."
+		softDeleteOrderReturnLine(id: ID!): OrderReturnLine!
+		"Restores a soft-deleted return line."
+		recoverOrderReturnLine(id: ID!): OrderReturnLine!
 		"Creates a governed return reason."
 		createOrderReturnReason(input: OrderReturnReasonInput!): OrderReturnReasonPayload!
 		"Updates a governed return reason."
 		updateOrderReturnReason(id: ID!, input: OrderReturnReasonInput!): OrderReturnReasonPayload!
 		"Deactivates a governed return reason."
 		deleteOrderReturnReason(id: ID!): DeleteOrderReturnReasonPayload!
+		"Retires a governed return reason recoverably, so the returns filed under it stay explainable."
+		softDeleteOrderReturnReason(id: ID!): OrderReturnReasonPayload!
+		"Restores a soft-deleted return reason."
+		recoverOrderReturnReason(id: ID!): OrderReturnReasonPayload!
 		"Raises a claim against an order."
 		requestOrderClaim(input: RequestOrderClaimInput!): RequestOrderClaimPayload!
 		"Approves and settles a claim."
 		approveOrderClaim(id: ID!, refundAmount: Decimal, note: String): RequestOrderClaimPayload!
 		"Rejects a claim."
 		rejectOrderClaim(id: ID!, reason: String): RequestOrderClaimPayload!
+		"Retires a claim recoverably, keeping the refund it settled and the lines it raised."
+		softDeleteOrderClaim(id: ID!): RequestOrderClaimPayload!
+		"Restores a soft-deleted claim."
+		recoverOrderClaim(id: ID!): RequestOrderClaimPayload!
+		"Retires a claim line recoverably, keeping the complaint the claim records."
+		softDeleteOrderClaimLine(id: ID!): OrderClaimLine!
+		"Restores a soft-deleted claim line."
+		recoverOrderClaimLine(id: ID!): OrderClaimLine!
 		"Requests an exchange against an order."
 		requestOrderExchange(input: RequestOrderExchangeInput!): RequestOrderExchangePayload!
 		"Approves an exchange and prices the difference."
 		approveOrderExchange(id: ID!, settleDifference: Boolean, note: String): RequestOrderExchangePayload!
 		"Rejects an exchange."
 		rejectOrderExchange(id: ID!, reason: String): RequestOrderExchangePayload!
+		"Retires an exchange recoverably, keeping the difference it priced and the customer was charged."
+		softDeleteOrderExchange(id: ID!): RequestOrderExchangePayload!
+		"Restores a soft-deleted exchange."
+		recoverOrderExchange(id: ID!): RequestOrderExchangePayload!
+		"Retires an exchange line recoverably, so the priced difference stays explainable."
+		softDeleteOrderExchangeLine(id: ID!): OrderExchangeLine!
+		"Restores a soft-deleted exchange line."
+		recoverOrderExchangeLine(id: ID!): OrderExchangeLine!
 	}
 `;

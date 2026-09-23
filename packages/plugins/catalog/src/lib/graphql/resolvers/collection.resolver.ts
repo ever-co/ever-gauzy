@@ -117,6 +117,45 @@ export class CollectionResolver {
 	}
 
 	/**
+	 * Retires a collection recoverably, keeping the row and the membership that points at it.
+	 *
+	 * The route it mirrors is `DELETE /collections/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this
+	 * field a collection retired over GraphQL could not be brought back over GraphQL: the recovery below
+	 * reads back what this writes, so serving one without the other would leave a caller able to retire a
+	 * collection from the endpoint it could not restore it on — while the destructive `deleteCollection`
+	 * the endpoint does serve drops the row and every product and variant membership that named it.
+	 *
+	 * The permission is the controller's own for the route — `COLLECTIONS_DELETE` — because retiring a
+	 * collection takes it out of every storefront that resolved it.
+	 *
+	 * @param id The collection to retire.
+	 * @returns The collection, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
+	@Mutation('softDeleteCollection')
+	async softDeleteCollection(@Args('id') id: ID): Promise<Collection> {
+		return this.collectionService.softRemove(id);
+	}
+
+	/**
+	 * Restores a collection that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /collections/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored
+	 * collection is a candidate for the channels and categories that name it again, which is why the
+	 * route states the deleting grant rather than the reading one.
+	 *
+	 * @param id The collection to restore.
+	 * @returns The restored collection.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_DELETE))
+	@Mutation('recoverCollection')
+	async recoverCollection(@Args('id') id: ID): Promise<Collection> {
+		return this.collectionService.softRecover(id);
+	}
+
+	/**
 	 * Streams the collections that change, optionally narrowed to one collection.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_VIEW))

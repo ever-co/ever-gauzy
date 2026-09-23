@@ -53,43 +53,12 @@ const OUTSTANDING = {
 		'CommerceCartShippingMethod',
 		'CommerceCheckoutSession'
 	],
-	'plugins/catalog': [
-		'Collection',
-		'CollectionChannel',
-		'CollectionProduct',
-		'CollectionVariant',
-		'ProductChannel',
-		'ProductRelation',
-		'ProductVariantChannel',
-		'ProductVariantMedia',
-		'TagProductVariant'
-	],
-	'plugins/fulfillment': [
-		'Fulfillment',
-		'FulfillmentLine',
-		'ShippingOption',
-		'ShippingProfile',
-		'ShippingProfileVariant'
-	],
 	'plugins/marketplace': [
 		'SellerOffering',
 		'SellerPayout',
 		'SellerPayoutLine',
 		'SellerSettlement',
 		'SellerTransaction'
-	],
-	'plugins/order': [
-		'Order',
-		'OrderAddress',
-		'OrderChange',
-		'OrderChangeAction',
-		'OrderCreditLine',
-		'OrderHistory',
-		'OrderLine',
-		'OrderLineInvoice',
-		'OrderShippingMethod',
-		'OrderSummary',
-		'OrderTransaction'
 	],
 	'plugins/payment': [
 		'PaymentAccountHolder',
@@ -103,36 +72,8 @@ const OUTSTANDING = {
 		'RefundLine',
 		'RefundReason'
 	],
-	'plugins/promotion': [
-		'Campaign',
-		'CampaignBudget',
-		'CampaignBudgetUsage',
-		'Coupon',
-		'GiftCard',
-		'GiftCardTransaction',
-		'PromotionAction',
-		'PromotionUsage'
-	],
-	'plugins/purchasing': ['GoodsReceipt', 'GoodsReceiptLine', 'PurchaseOrderLine', 'VendorProductTerm'],
-	'plugins/returns': [
-		'OrderClaim',
-		'OrderClaimLine',
-		'OrderExchange',
-		'OrderExchangeLine',
-		'OrderReturn',
-		'OrderReturnLine',
-		'OrderReturnReason'
-	],
-	'plugins/warehouse': [
-		'CarrierManifest',
-		'PackSlip',
-		'PickList',
-		'PickListLine',
-		'PickWave',
-		'WarehouseBin',
-		'WarehouseZone'
-	]
-}
+	'plugins/purchasing': ['GoodsReceipt', 'GoodsReceiptLine', 'VendorProductTerm']
+};
 
 /** Every file under a directory whose name ends with a suffix, skipping build output. */
 function walk(directory, suffix, found = []) {

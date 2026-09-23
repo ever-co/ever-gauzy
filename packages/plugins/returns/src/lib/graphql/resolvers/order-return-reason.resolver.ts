@@ -29,10 +29,12 @@ interface IOrderReturnReasonArgs {
  * **Authorisation is the controller's, restated field by field.** The class carries what the reason
  * controller class carries — both protocol guards, the platform's feature gate and the read permission
  * its reads run under — and every field then states the permission its own route states: the two reads
- * carry `RETURNS_VIEW`, and creating, updating and deactivating a reason all carry `RETURNS_CREATE`,
- * which is the value the plugin's catalogue gives the maintenance of the governed list rather than a
- * separate administration permission. The field that resolves a reason's variants answers under the
- * permission the reason is read with, which is the route it is selected through.
+ * carry `RETURNS_VIEW`, creating, updating and deactivating a reason all carry `RETURNS_CREATE`, which
+ * is the value the plugin's catalogue gives the maintenance of the governed list rather than a separate
+ * administration permission, and both halves of the inherited soft-delete pair carry `RETURNS_CREATE`
+ * as well, which is the grant the controller's own `DELETE /order-return-reasons/:id/soft` and
+ * `PUT /order-return-reasons/:id/recover` overrides state. The field that resolves a reason's variants
+ * answers under the permission the reason is read with, which is the route it is selected through.
  *
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the two permission guards — after
@@ -146,6 +148,58 @@ export class OrderReturnReasonResolver {
 			return { id, userErrors: [] };
 		} catch (error) {
 			return { id: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a governed return reason recoverably, so the returns filed under it stay explainable.
+	 *
+	 * The route it mirrors is `DELETE /order-return-reasons/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. It is a
+	 * withdrawal distinct from `deleteOrderReturnReason`, which deactivates the reason: a deactivated
+	 * reason still explains the returns already filed under it, while a retired row leaves every read that
+	 * resolves a reason from a return's cause with nothing to answer — which is exactly why the controller
+	 * keeps both, and why the pair has to be reachable from the protocol that maintains the list.
+	 *
+	 * The permission is the controller's own for the route — `RETURNS_CREATE`, the grant the plugin gives
+	 * the maintenance of the governed list, because it declares no `RETURNS_DELETE`.
+	 *
+	 * The answer is `OrderReturnReasonPayload`, the payload this resource's own write mutations answer and
+	 * the only one that carries the reason: `DeleteOrderReturnReasonPayload` carries an identifier and the
+	 * refused errors, which cannot answer a restore with the row it restored.
+	 *
+	 * @param id The reason to retire.
+	 * @returns The payload, carrying the reason as the soft delete left it.
+	 */
+	@Mutation('softDeleteOrderReturnReason')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async softDeleteOrderReturnReason(@Args('id') id: ID) {
+		try {
+			return { orderReturnReason: await this.orderReturnReasonService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { orderReturnReason: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a return reason that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-return-reasons/:id/recover`, whose override states the same
+	 * `RETURNS_CREATE` its soft-delete sibling states — a restored reason explains the returns filed under
+	 * it again and is offered to the next one, which is the same write read the other way. Without this
+	 * field a reason retired over GraphQL could only be brought back over REST, so one lifecycle would be
+	 * completable on one protocol and not the other.
+	 *
+	 * @param id The reason to restore.
+	 * @returns The payload, carrying the restored reason.
+	 */
+	@Mutation('recoverOrderReturnReason')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async recoverOrderReturnReason(@Args('id') id: ID) {
+		try {
+			return { orderReturnReason: await this.orderReturnReasonService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { orderReturnReason: null, userErrors: [toUserError(error)] };
 		}
 	}
 

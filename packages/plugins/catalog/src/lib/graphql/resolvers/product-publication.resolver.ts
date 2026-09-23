@@ -139,6 +139,44 @@ export class ProductPublicationResolver {
 	}
 
 	/**
+	 * Retires one product publication recoverably, keeping the row.
+	 *
+	 * The route it mirrors is `DELETE /product-channels/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. `unpublishProduct`
+	 * above archives a whole channel set in one call; this is the row's own lifecycle, and it is what a
+	 * caller holding one publication identifier reaches — without it the only removal this endpoint
+	 * offered for a single row was the hard delete the resolver does not serve at all.
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_DELETE` — because retiring a
+	 * publication is what takes a product off a channel.
+	 *
+	 * @param id The product publication to retire.
+	 * @returns The publication, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('softDeleteProductChannel')
+	async softDeleteProductChannel(@Args('id') id: ID): Promise<ProductChannel> {
+		return this.productChannelService.softRemove(id);
+	}
+
+	/**
+	 * Restores a product publication that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /product-channels/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. The row comes
+	 * back with the status and the date it was retired under, which is why the route states the deleting
+	 * grant rather than the reading one.
+	 *
+	 * @param id The product publication to restore.
+	 * @returns The restored publication.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('recoverProductChannel')
+	async recoverProductChannel(@Args('id') id: ID): Promise<ProductChannel> {
+		return this.productChannelService.softRecover(id);
+	}
+
+	/**
 	 * Replaces the publication set of a variant.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
@@ -168,6 +206,43 @@ export class ProductPublicationResolver {
 				.filter((row) => !channelIds.includes(row.channelId))
 				.map((row) => ({ channelId: row.channelId, status: row.status, publishedAt: row.publishedAt }))
 		);
+	}
+
+	/**
+	 * Retires one variant publication recoverably, keeping the row.
+	 *
+	 * The route it mirrors is `DELETE /product-variant-channels/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated.
+	 * `unpublishProductVariant` above rewrites the variant's whole publication set; this is the row's own
+	 * lifecycle, and it is what a caller holding one publication identifier reaches.
+	 *
+	 * The permission is the controller's own for the route — `PRODUCTS_DELETE` — because retiring a
+	 * publication is what takes a variant off a channel.
+	 *
+	 * @param id The variant publication to retire.
+	 * @returns The publication, as the soft delete left it.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('softDeleteProductVariantChannel')
+	async softDeleteProductVariantChannel(@Args('id') id: ID): Promise<ProductVariantChannel> {
+		return this.productVariantChannelService.softRemove(id);
+	}
+
+	/**
+	 * Restores a variant publication that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /product-variant-channels/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. The row comes
+	 * back with the status and the date it was retired under, which is why the route states the deleting
+	 * grant rather than the reading one.
+	 *
+	 * @param id The variant publication to restore.
+	 * @returns The restored publication.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_DELETE))
+	@Mutation('recoverProductVariantChannel')
+	async recoverProductVariantChannel(@Args('id') id: ID): Promise<ProductVariantChannel> {
+		return this.productVariantChannelService.softRecover(id);
 	}
 
 	/**

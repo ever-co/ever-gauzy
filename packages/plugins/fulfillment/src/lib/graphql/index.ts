@@ -1,5 +1,6 @@
 import { FulfillmentResolver } from './fulfillment.resolver';
 import { ShippingOptionResolver } from './shipping-option.resolver';
+import { ShippingProfileVariantResolver } from './shipping-profile-variant.resolver';
 
 /**
  * Every resolver this plugin contributes to the platform schema.
@@ -8,6 +9,10 @@ import { ShippingOptionResolver } from './shipping-option.resolver';
  * plugin's module — a resolver injects the same services the REST controllers do, so both surfaces
  * run through one implementation of every rule.
  */
-export const fulfillmentResolvers = [FulfillmentResolver, ShippingOptionResolver];
+export const fulfillmentResolvers = [
+	FulfillmentResolver,
+	ShippingOptionResolver,
+	ShippingProfileVariantResolver
+];
 
-export { FulfillmentResolver, ShippingOptionResolver };
+export { FulfillmentResolver, ShippingOptionResolver, ShippingProfileVariantResolver };

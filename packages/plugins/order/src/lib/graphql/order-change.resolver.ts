@@ -233,6 +233,184 @@ export class OrderChangeResolver {
 	}
 
 	/**
+	 * Retires a change recoverably, keeping what was asked for and what was done.
+	 *
+	 * The route it mirrors is `DELETE /order-changes/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A change is the
+	 * record of a post-placement modification, so a change retired by mistake has to be restorable: the
+	 * recovery below is that, and serving the withdrawal without it would leave a caller able to retire a
+	 * change from the endpoint it could not bring it back on.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT` — and not the class-level view
+	 * grant, because retiring a change takes it out of every read of the order it belongs to.
+	 *
+	 * @param id The change to retire.
+	 * @returns The change, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderChange' })
+	async softDeleteOrderChange(@Args('id', { type: () => ID }) id: string): Promise<OrderChange> {
+		return this.changeService.softRemove(id);
+	}
+
+	/**
+	 * Restores a change that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-changes/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored change
+	 * is read with its actions again, which is why the route states the editing grant rather than the
+	 * reading one.
+	 *
+	 * @param id The change to restore.
+	 * @returns The restored change.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderChange' })
+	async recoverOrderChange(@Args('id', { type: () => ID }) id: string): Promise<OrderChange> {
+		return this.changeService.softRecover(id);
+	}
+
+	/**
+	 * Retires one action of a change recoverably.
+	 *
+	 * The route it mirrors is `DELETE /order-change-actions/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. An action is one
+	 * step of the set a change is applied as, in application order, so the row is what explains a
+	 * modification after the fact — kept, and restorable by the field below.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The action to retire.
+	 * @returns The action, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderChangeAction' })
+	async softDeleteOrderChangeAction(@Args('id', { type: () => ID }) id: string): Promise<OrderChangeAction> {
+		return this.actionService.softRemove(id);
+	}
+
+	/**
+	 * Restores an action that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-change-actions/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored action
+	 * is applied with the rest of its set again.
+	 *
+	 * @param id The action to restore.
+	 * @returns The restored action.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderChangeAction' })
+	async recoverOrderChangeAction(@Args('id', { type: () => ID }) id: string): Promise<OrderChangeAction> {
+		return this.actionService.softRecover(id);
+	}
+
+	/**
+	 * Retires one totals summary recoverably.
+	 *
+	 * The route it mirrors is `DELETE /order-summaries/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A summary is what
+	 * an order totalled at one committed version, so the row is the answer to "what did this total at
+	 * version 3, and why?" — retired recoverably rather than dropped, and restorable by the field below.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The summary to retire.
+	 * @returns The summary, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderSummary' })
+	async softDeleteOrderSummary(@Args('id', { type: () => ID }) id: string): Promise<OrderSummary> {
+		return this.summaryService.softRemove(id);
+	}
+
+	/**
+	 * Restores a totals summary that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-summaries/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored summary
+	 * is part of the order's totals history again.
+	 *
+	 * @param id The summary to restore.
+	 * @returns The restored summary.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderSummary' })
+	async recoverOrderSummary(@Args('id', { type: () => ID }) id: string): Promise<OrderSummary> {
+		return this.summaryService.softRecover(id);
+	}
+
+	/**
+	 * Retires one ledger transaction recoverably.
+	 *
+	 * The route it mirrors is `DELETE /order-transactions/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. The ledger is
+	 * append-only and its rows are what the paid, refunded and outstanding totals are read from, so a row
+	 * entered in error is retired rather than dropped — and the field below is how that is undone.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The transaction to retire.
+	 * @returns The transaction, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderTransaction' })
+	async softDeleteOrderTransaction(@Args('id', { type: () => ID }) id: string): Promise<OrderTransaction> {
+		return this.transactionService.softRemove(id);
+	}
+
+	/**
+	 * Restores a ledger transaction that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-transactions/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored
+	 * transaction moves the order's money totals again.
+	 *
+	 * @param id The transaction to restore.
+	 * @returns The restored transaction.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderTransaction' })
+	async recoverOrderTransaction(@Args('id', { type: () => ID }) id: string): Promise<OrderTransaction> {
+		return this.transactionService.softRecover(id);
+	}
+
+	/**
+	 * Retires one timeline entry recoverably.
+	 *
+	 * The route it mirrors is `DELETE /order-history/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. The timeline is
+	 * append-only and is what explains an order after the fact, so an entry recorded in error is retired
+	 * rather than dropped — and the field below is how that is undone.
+	 *
+	 * The permission is the controller's own for the route — `ORDERS_EDIT`.
+	 *
+	 * @param id The timeline entry to retire.
+	 * @returns The entry, as the soft delete left it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteOrderHistory' })
+	async softDeleteOrderHistory(@Args('id', { type: () => ID }) id: string): Promise<OrderHistory> {
+		return this.historyService.softRemove(id);
+	}
+
+	/**
+	 * Restores a timeline entry that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-history/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored entry
+	 * is part of the order's timeline again.
+	 *
+	 * @param id The timeline entry to restore.
+	 * @returns The restored entry.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Mutation(() => Object, { name: 'recoverOrderHistory' })
+	async recoverOrderHistory(@Args('id', { type: () => ID }) id: string): Promise<OrderHistory> {
+		return this.historyService.softRecover(id);
+	}
+
+	/**
 	 * Applies a change.
 	 *
 	 * A key is mandatory here, exactly as it is on the route this mutation mirrors: applying a change

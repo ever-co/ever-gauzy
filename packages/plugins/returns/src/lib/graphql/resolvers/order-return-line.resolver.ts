@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
@@ -28,13 +28,23 @@ import { OrderReturnLineService } from '../../order-return-line/order-return-lin
  * arithmetic — what is still expected back — are resolved here rather than stored, so a line can
  * never disagree with its own quantities.
  *
+ * **The resource's own write routes are answered too, and they are the two the statement above does not
+ * cover: this resolver declared no mutation before them.** `softDeleteOrderReturnLine` and
+ * `recoverOrderReturnLine` are the `DELETE /order-return-lines/:id/soft` and `PUT
+ * /order-return-lines/:id/recover` pair the controller inherits and overrides to state a permission,
+ * and they are named after the resource rather than qualified by the return because they act on one
+ * line by its own identifier, exactly as those routes do. They are declared here rather than beside
+ * `orderReturnLines` because a line's retirement is about the line, not about the page it is read on.
+ *
  * **Authorisation is the controller's.** The class carries the guard chain, the platform's feature gate
- * and the read permission the return-line controller class carries, and both fields state the permission
- * that controller's own list route states — `RETURNS_VIEW`, the same value the return is read with,
- * because a line is read through its return. The platform gate is `FEATURE_GRAPHQL`, imported from the
- * catalogue rather than restated: a literal that drifted would name a code no catalogue row carries,
- * which the guard resolves as disabled and which would refuse every field here for every caller with
- * nothing red anywhere.
+ * and the read permission the return-line controller class carries, and its read field states the
+ * permission that controller's own list route states — `RETURNS_VIEW`, the same value the return is read
+ * with, because a line is read through its return — while the two fields of the inherited soft-delete
+ * pair state `RETURNS_CREATE`, which is the grant the controller's own `softRemove` and `softRecover`
+ * overrides state, because retiring a line changes what the return it belongs to is owed. The platform
+ * gate is `FEATURE_GRAPHQL`, imported from the catalogue rather than restated: a literal that drifted
+ * would name a code no catalogue row carries, which the guard resolves as disabled and which would
+ * refuse every field here for every caller with nothing red anywhere.
  */
 @Resolver('OrderReturnLine')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -69,6 +79,49 @@ export class OrderReturnLineResolver {
 		const rows = await this.orderReturnLineService.findForReturn(returnId, withDeleted);
 
 		return connectionFromOffsetPage(paginateRows(rows, take, skip), skip);
+	}
+
+	/**
+	 * Retires a return line recoverably, so the quantities the return was received against survive.
+	 *
+	 * The route it mirrors is `DELETE /order-return-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. This resolver
+	 * declared no mutation at all before this field, so a line could be corrected over GraphQL but not
+	 * withdrawn — while the REST surface served both routes, and a line removed destructively would take
+	 * the received and damaged quantities the return's own arithmetic is computed from with it.
+	 *
+	 * The permission is the controller's own for the route — `RETURNS_CREATE`, because the plugin
+	 * declares no `RETURNS_DELETE` and a line is maintained under the grant that writes its return.
+	 *
+	 * A row-answering field answers the row rather than a payload, which is what the REST route answers
+	 * and what a line has to answer here: the payloads this document declares carry a return, a claim, an
+	 * exchange or a governed reason, and none of them has a slot for a line.
+	 *
+	 * @param id The return line to retire.
+	 * @returns The line, as the soft delete left it.
+	 */
+	@Mutation('softDeleteOrderReturnLine')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async softDeleteOrderReturnLine(@Args('id') id: ID): Promise<OrderReturnLine> {
+		return await this.orderReturnLineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a return line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /order-return-lines/:id/recover`, whose override states the same
+	 * `RETURNS_CREATE` its soft-delete sibling states — a restored line is counted again by the return it
+	 * belongs to, which is the same write read the other way. Without this field a line retired over
+	 * GraphQL could only be brought back over REST, so one lifecycle would be completable on one protocol
+	 * and not the other.
+	 *
+	 * @param id The return line to restore.
+	 * @returns The restored line.
+	 */
+	@Mutation('recoverOrderReturnLine')
+	@Permissions(ReturnsPermissions.RETURNS_CREATE)
+	async recoverOrderReturnLine(@Args('id') id: ID): Promise<OrderReturnLine> {
+		return await this.orderReturnLineService.softRecover(id);
 	}
 
 	/**

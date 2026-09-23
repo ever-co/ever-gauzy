@@ -4,11 +4,16 @@ import {
 	CampaignBudgetType,
 	CampaignStatus,
 	GiftCardStatus,
+	ICampaign,
+	ICampaignBudget,
+	ICampaignBudgetUsage,
 	ICoupon,
 	IGiftCard,
+	IGiftCardTransaction,
 	IPromotion,
 	IPromotionAction,
 	IPromotionEvaluationResult,
+	IPromotionUsage,
 	PromotionActionAllocation,
 	PromotionActionTargetType,
 	PromotionActionType,
@@ -261,6 +266,47 @@ export type SimulatePromotionPayload = IMutationPayload<'result', IPromotionEval
 export type SoftDeletePromotionPayload = IMutationPayload<'promotion', IPromotion>;
 /** The outcome of restoring a soft-deleted promotion. */
 export type RecoverPromotionPayload = IMutationPayload<'promotion', IPromotion>;
+
+/**
+ * The same pair, on the seven resources behind the promotion.
+ *
+ * `DELETE /:id/soft` and `PUT /:id/recover` are inherited from `CrudController` by every controller of
+ * this plugin, so each of these resources served the pair over REST while no resolver declared either
+ * field. Each answers the row its own route answers — the row as the soft delete left it, or the row
+ * as the recovery restored it — under the member name its siblings in the schema already use.
+ */
+/** The outcome of retiring a campaign recoverably. */
+export type SoftDeleteCampaignPayload = IMutationPayload<'campaign', ICampaign>;
+/** The outcome of restoring a soft-deleted campaign. */
+export type RecoverCampaignPayload = IMutationPayload<'campaign', ICampaign>;
+/** The outcome of retiring a campaign's ceiling recoverably. */
+export type SoftDeleteCampaignBudgetPayload = IMutationPayload<'budget', ICampaignBudget>;
+/** The outcome of restoring a soft-deleted campaign ceiling. */
+export type RecoverCampaignBudgetPayload = IMutationPayload<'budget', ICampaignBudget>;
+/** The outcome of retiring one per-value consumption row recoverably. */
+export type SoftDeleteCampaignBudgetUsagePayload = IMutationPayload<'budgetUsage', ICampaignBudgetUsage>;
+/** The outcome of restoring a soft-deleted per-value consumption row. */
+export type RecoverCampaignBudgetUsagePayload = IMutationPayload<'budgetUsage', ICampaignBudgetUsage>;
+/** The outcome of retiring a coupon recoverably. */
+export type SoftDeleteCouponPayload = IMutationPayload<'coupon', ICoupon>;
+/** The outcome of restoring a soft-deleted coupon. */
+export type RecoverCouponPayload = IMutationPayload<'coupon', ICoupon>;
+/** The outcome of retiring a gift card recoverably. */
+export type SoftDeleteGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
+/** The outcome of restoring a soft-deleted gift card. */
+export type RecoverGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
+/** The outcome of retiring one gift-card movement recoverably. */
+export type SoftDeleteGiftCardTransactionPayload = IMutationPayload<'transaction', IGiftCardTransaction>;
+/** The outcome of restoring a soft-deleted gift-card movement. */
+export type RecoverGiftCardTransactionPayload = IMutationPayload<'transaction', IGiftCardTransaction>;
+/** The outcome of retiring one promotion action recoverably. */
+export type SoftDeletePromotionActionPayload = IMutationPayload<'action', IPromotionAction>;
+/** The outcome of restoring a soft-deleted promotion action. */
+export type RecoverPromotionActionPayload = IMutationPayload<'action', IPromotionAction>;
+/** The outcome of retiring one application of a promotion recoverably. */
+export type SoftDeletePromotionUsagePayload = IMutationPayload<'usage', IPromotionUsage>;
+/** The outcome of restoring a soft-deleted application of a promotion. */
+export type RecoverPromotionUsagePayload = IMutationPayload<'usage', IPromotionUsage>;
 
 /* ------------------------------------------------------------------------------------------------
  * The writable shapes

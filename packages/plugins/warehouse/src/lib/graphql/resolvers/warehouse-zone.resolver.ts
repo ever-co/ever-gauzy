@@ -200,6 +200,52 @@ export class WarehouseZoneResolver {
 	}
 
 	/**
+	 * Retires a zone recoverably, keeping the area and everything addressed inside it.
+	 *
+	 * The route it mirrors is `DELETE /warehouse-zones/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this field
+	 * a zone a caller took out of service over GraphQL could not be put back over GraphQL, while a REST
+	 * caller could do both — and the hard delete the endpoint does serve is refused for any zone that still
+	 * holds a bin, which is exactly the case a caller reaches for the soft route on.
+	 *
+	 * The permission is the controller's own for the route — `WAREHOUSE_ZONES_DELETE` — and not the
+	 * class-level view grant, because retiring a zone takes its positions out of the pick path.
+	 *
+	 * @param id The zone to retire.
+	 * @returns The payload, with the retired zone or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_ZONES_DELETE)
+	@Mutation('softDeleteWarehouseZone')
+	async softDeleteWarehouseZone(@Args('id') id: ID) {
+		try {
+			return { warehouseZone: await this.warehouseZoneService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { warehouseZone: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a zone that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /warehouse-zones/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored zone is
+	 * walked again by pick-path generation, which is why the route states the deleting grant rather than
+	 * the reading one.
+	 *
+	 * @param id The zone to restore.
+	 * @returns The payload, with the restored zone or the reason it was refused.
+	 */
+	@Permissions(WarehousePermissions.WAREHOUSE_ZONES_DELETE)
+	@Mutation('recoverWarehouseZone')
+	async recoverWarehouseZone(@Args('id') id: ID) {
+		try {
+			return { warehouseZone: await this.warehouseZoneService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { warehouseZone: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Resolves the positions inside a zone.
 	 *
 	 * @param zone The zone being read.

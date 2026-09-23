@@ -301,10 +301,22 @@ export const fulfillmentSchemaExtensions = gql`
 		createShippingProfile(input: CreateShippingProfileInput!): ShippingProfile!
 		updateShippingProfile(id: ID!, input: CreateShippingProfileInput!): ShippingProfile!
 		deleteShippingProfile(id: ID!): Boolean!
+		"Retire a shipping profile recoverably, so the variants that ship under it keep their group."
+		softDeleteShippingProfile(id: ID!): ShippingProfile!
+		"Restore a soft-deleted shipping profile."
+		recoverShippingProfile(id: ID!): ShippingProfile!
 		assignShippingProfileVariant(input: ShippingOptionAssignmentInput!): [ShippingProfileVariant!]!
+		"Retire a variant attachment recoverably, so the variant keeps the group it was placed in."
+		softDeleteShippingProfileVariant(id: ID!): ShippingProfileVariant!
+		"Restore a soft-deleted variant attachment."
+		recoverShippingProfileVariant(id: ID!): ShippingProfileVariant!
 		createShippingOption(input: CreateShippingOptionInput!): ShippingOption!
 		updateShippingOption(id: ID!, input: CreateShippingOptionInput!): ShippingOption!
 		deleteShippingOption(id: ID!): Boolean!
+		"Retire a shipping option recoverably, so the carts that selected it keep their record."
+		softDeleteShippingOption(id: ID!): ShippingOption!
+		"Restore a soft-deleted shipping option."
+		recoverShippingOption(id: ID!): ShippingOption!
 		createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
 		updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
 		shipFulfillment(id: ID!, input: ShipFulfillmentInput): Fulfillment!
@@ -313,5 +325,13 @@ export const fulfillmentSchemaExtensions = gql`
 		cancelFulfillment(id: ID!, reason: String): Fulfillment!
 		"Request a carrier label for a shipment, or re-fetch the one the carrier already issued."
 		requestFulfillmentLabel(id: ID!, input: RequestFulfillmentLabelInput!): Fulfillment!
+		"Retire a shipment recoverably, so the order it satisfies keeps its shipping record."
+		softDeleteFulfillment(id: ID!): Fulfillment!
+		"Restore a soft-deleted shipment."
+		recoverFulfillment(id: ID!): Fulfillment!
+		"Retire a shipment line recoverably, so what the shipment covered stays readable."
+		softDeleteFulfillmentLine(id: ID!): FulfillmentLine!
+		"Restore a soft-deleted shipment line."
+		recoverFulfillmentLine(id: ID!): FulfillmentLine!
 	}
 `;
