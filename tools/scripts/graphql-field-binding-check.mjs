@@ -9,7 +9,13 @@
  *     application from starting at all — `OrderLineInvoice.invoiceLinks defined in resolvers, but not in
  *     schema` — which is a boot failure, not a runtime refusal;
  *   - a `@Query('x')` or `@Mutation('x')` that no root type declares is a field every caller is told does
- *     not exist, while the method that was written for it sits unreachable;
+ *     not exist, while the method that was written for it sits unreachable. **Both spellings are read** —
+ *     `@Query('x')` and the code-first `@Query(() => Type, { name: 'x' })` — because `marketplace`, `cart`
+ *     and `promotion` declare their fields the second way and a reader that saw only the first would report
+ *     their whole surface as unbound. This bullet named only the string form until a wave read it, concluded
+ *     from it that the gate was blind to code-first fields, and published that; the reader below had handled
+ *     both since it was written, and the counts move by exactly the number of code-first fields a wave adds.
+ *     A comment that describes half a reader costs more than no comment, which is why the half is named here;
  *   - a root field the schema declares and no resolver implements is answered as if it existed — with
  *     `null`, or with a non-null violation — so a client cannot tell a broken field from an empty one.
  *
