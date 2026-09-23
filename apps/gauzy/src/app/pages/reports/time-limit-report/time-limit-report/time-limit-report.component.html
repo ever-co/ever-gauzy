@@ -38,8 +38,15 @@
 							</nb-card-header>
 							<nb-card-body class="budget-container">
 								@if (day.employees?.length > 0) {
+									<!--
+										`font-weight-bold align-items-center` used to sit on the wrapper.
+										Both were redundant with the stylesheet — `.table-inner-wrapper`
+										already centres its items — and the bootstrap utility carries
+										`!important`, which pinned the column labels at 700 and made the
+										600 they are set in unreachable from SCSS.
+									-->
 									<div class="columns-header">
-										<div class="table-inner-wrapper font-weight-bold align-items-center">
+										<div class="table-inner-wrapper">
 											@if (duration === 'week') {
 												<ng-container [ngTemplateOutlet]="weeklyHeadings"></ng-container>
 											}
@@ -200,8 +207,8 @@
 	<div class="responsive-table-row activity-column">
 		{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 	</div>
+	<!-- A stray literal `8` sat in front of this label and rendered as "8 Spent hours". -->
 	<div class="responsive-table-row spent-column">
-		8
 		{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
 	</div>
 	<div class="responsive-table-row remaining-column">
