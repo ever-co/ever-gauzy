@@ -1154,7 +1154,11 @@
 		"APPLICATIONS": "应用程序",
 		"OPEN_GA_BROWSER": "在浏览器中打开 Gauzy",
 		"START_SERVER": "开始服务器",
-		"STOP_SERVER": "停止服务器"
+		"STOP_SERVER": "停止服务器",
+		"DOCUMENTS": "文件",
+		"BILLING": "计费",
+		"MONITORING": "监控",
+		"ADD_ITEM": "添加{{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -5303,7 +5307,8 @@
 				"TERMS_AND_CONDITIONS": "条款和条件",
 				"AND": " 和 ",
 				"PRIVACY_POLICY": "隐私政策"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "密码应至少包含 4 个字符"
 		}
 	},
 	"LOGIN_PAGE": {

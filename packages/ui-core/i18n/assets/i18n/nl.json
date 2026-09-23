@@ -1154,7 +1154,11 @@
 		"APPLICATIONS": "Toepassingen",
 		"OPEN_GA_BROWSER": "Open Gauzy in de browser",
 		"START_SERVER": "Start de server",
-		"STOP_SERVER": "Stop server"
+		"STOP_SERVER": "Stop server",
+		"DOCUMENTS": "Documenten",
+		"BILLING": "Facturatie",
+		"MONITORING": "Monitoring",
+		"ADD_ITEM": "{{ name }} toevoegen"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -5303,7 +5307,8 @@
 				"TERMS_AND_CONDITIONS": "Algemene voorwaarden",
 				"AND": " en ",
 				"PRIVACY_POLICY": "Privacybeleid"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Wachtwoord moet minstens 4 tekens bevatten"
 		}
 	},
 	"LOGIN_PAGE": {
