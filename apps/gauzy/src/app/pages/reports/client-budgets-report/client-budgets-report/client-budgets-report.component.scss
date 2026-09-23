@@ -1,58 +1,125 @@
-@use 'report' as *;
+@forward 'report';
+@use 'var' as *;
+@use 'report-table' as *;
 
+// ═══ Client budgets report ══════════════════════════════════════════════════
+//
+// The same table as Project budgets with a contact in place of the project, so
+// it is sized the same way. The shared chrome (card, hairlines, row height,
+// 12px type, progress bar) lives in `report-table.scss`.
+
+@include report-table(48px);
+
+// ── Columns ─────────────────────────────────────────────────────────────────
+
+// The name column takes the slack, up to a point. Past its cap the leftover goes
+// back to `.table-inner-wrapper`'s `space-between`, which spreads it evenly
+// between all five columns rather than pooling it in one.
 .contact-column {
-    width: 15%;
-    min-width: 165px;
-    max-width: 200px;
+	@include report-column(auto, $min: 190px, $max: 420px);
 }
-.project-column {
-    width: 20%;
-    min-width: 20%;
-}
+
 .employees-column {
-    width: 15%;
+	@include report-column(16%, $min: 120px);
 }
-.spent-column {
-    width: 10%;
-}
+
+.spent-column,
 .remaining-column {
-    width: 10%;
+	@include report-column(116px);
 }
+
+// Holds two things — the amount, then the bar — so it is the widest column, but
+// no longer the one that takes the remainder: that made the bar grow with the
+// window, and a bar is a proportion, which reads no better for being longer.
 .budget-column {
-    width: 30%;
+	@include report-column(32%, $min: 290px);
 }
 
-.budget-row {
-    @include nb-ltr(padding-right, 5%);
-    @include nb-rtl(padding-left, 5%);
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+// ── Cells ───────────────────────────────────────────────────────────────────
 
-    .progress-wrapper {
-        width: 68%;
-        margin-left: 2%;
-    }
+.spent-column,
+.remaining-column {
+	justify-content: flex-end;
+	text-align: right;
 
-    .currency-span {
-        white-space: nowrap;
-        @include nb-ltr(text-align, right);
-        @include nb-rtl(text-align, left);
-    }
+	.responsive-table-content {
+		justify-content: flex-end;
+		width: 100%;
+		color: nb-theme(text-basic-color);
+	}
 }
 
-@include respond(dsk) {
-    .budget-row  {
-        .progress-wrapper {
-            width: 100%;
-        }
-    }
+// The placeholder the Employees/Teams column renders until that data exists.
+// Muted, so an empty cell reads as empty rather than as a value.
+.employees-column .responsive-table-content {
+	color: nb-theme(text-hint-color);
 }
-@include respond(md) {
-    .employees-header {
-        display: inline;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-    }
+
+// The column heading, over the amount rather than over the bar beside it — the
+// same width as `.currency-span` below, and right-aligned onto the same edge.
+.columns-header .budget-column {
+	display: flex;
+	align-items: center;
+}
+
+.budget-heading {
+	flex: 0 0 $report-budget-amount-width;
+	@include nb-ltr(text-align, right);
+	@include nb-rtl(text-align, left);
+}
+
+// Amount then bar, on one line — see the note on the same block in
+// `project-budgets-report.component.scss`. This copy also carried a `2%` left
+// margin on the wrapper on top of the other three widths.
+:host .budget-row {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 12px;
+	@include nb-ltr(padding-right, 0);
+	@include nb-rtl(padding-left, 0);
+
+	// Right-aligned in a box of its own width, so the bar beside it starts at the
+	// same x on every row. Left-aligned and shrink-wrapped, the amount was a
+	// different width per row -- `BGN 602.71` against `122:00:00 Hours` -- and
+	// walked the start of the bar back and forth down the column. The minimum
+	// also opens up the gap to the Remaining column, which the amount used to sit
+	// hard against.
+	.currency-span {
+		flex: 0 0 $report-budget-amount-width;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: 'tnum' 1;
+		color: nb-theme(text-basic-color);
+		@include nb-ltr(text-align, right);
+		@include nb-rtl(text-align, left);
+	}
+
+	.progress-wrapper {
+		flex: 1 1 auto;
+		min-width: 0;
+		width: auto;
+		margin-left: 0;
+	}
+}
+
+@include respond(lg) {
+	.spent-column,
+	.remaining-column {
+		justify-content: space-around;
+		text-align: left;
+
+		.responsive-table-content {
+			justify-content: flex-start;
+			width: 50%;
+		}
+	}
+
+	.employees-header {
+		display: inline;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		white-space: nowrap;
+	}
 }
