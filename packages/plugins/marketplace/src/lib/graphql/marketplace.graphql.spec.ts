@@ -563,6 +563,8 @@ function createResolver(): SellerEntityResolver {
 
 	const sellerOfferingService = {
 		listOfferings: async () => ({ items: [OFFERING], total: 1 }),
+		createOffering: async () => OFFERING,
+		updateOffering: async () => OFFERING,
 		publish: async () => OFFERING,
 		unpause: async () => OFFERING,
 		withdraw: async () => OFFERING,
@@ -577,6 +579,7 @@ function createResolver(): SellerEntityResolver {
 		reconcile: async () => ({ items: [RECONCILIATION], total: 1 }),
 		settle: async () => TRANSACTION,
 		hold: async () => TRANSACTION,
+		delete: async () => DELETE_RESULT,
 		softRemove: async () => TRANSACTION,
 		softRecover: async () => TRANSACTION
 	};
@@ -585,15 +588,21 @@ function createResolver(): SellerEntityResolver {
 		listPayouts: async () => ({ items: [PAYOUT], total: 1 }),
 		getPayout: async () => PAYOUT,
 		createPayout: async () => PAYOUT,
+		update: async () => PAYOUT,
+		findOneByIdString: async () => PAYOUT,
+		run: async () => [PAYOUT_RUN_RESULT],
 		approve: async () => PAYOUT,
 		recordExecution: async () => PAYOUT,
 		cancel: async () => ({ payout: PAYOUT, releasedTransactionCount: 1 }),
+		retry: async () => PAYOUT,
+		delete: async () => DELETE_RESULT,
 		softRemove: async () => PAYOUT,
 		softRecover: async () => PAYOUT
 	};
 
 	const sellerPayoutLineService = {
 		listLines: async () => ({ items: [PAYOUT_LINE], total: 1 }),
+		delete: async () => DELETE_RESULT,
 		softRemove: async () => PAYOUT_LINE,
 		softRecover: async () => PAYOUT_LINE
 	};
@@ -601,6 +610,12 @@ function createResolver(): SellerEntityResolver {
 	const sellerSettlementService = {
 		listSettlements: async () => ({ items: [SETTLEMENT], total: 1 }),
 		record: async () => SETTLEMENT,
+		update: async () => SETTLEMENT,
+		findOneByIdString: async () => SETTLEMENT,
+		reconcile: async () => SETTLEMENT_RECONCILIATION,
+		close: async () => SETTLEMENT,
+		dispute: async () => SETTLEMENT,
+		delete: async () => DELETE_RESULT,
 		softRemove: async () => SETTLEMENT,
 		softRecover: async () => SETTLEMENT
 	};
@@ -651,6 +666,8 @@ function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>
 
 	const sellerOfferingService = {
 		listOfferings: record('listOfferings', { items: [OFFERING], total: 1 }),
+		createOffering: record('createOffering', OFFERING),
+		updateOffering: record('updateOffering', OFFERING, 2),
 		publish: record('publish', OFFERING, 2),
 		unpause: record('unpause', OFFERING),
 		withdraw: record('withdraw', OFFERING),
@@ -671,7 +688,8 @@ function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>
 		createPayout: record('createPayout', PAYOUT),
 		approve: record('approve', PAYOUT),
 		recordExecution: record('recordExecution', PAYOUT, 2),
-		cancel: record('cancel', { payout: PAYOUT, releasedTransactionCount: 1 }, 2)
+		cancel: record('cancel', { payout: PAYOUT, releasedTransactionCount: 1 }, 2),
+		retry: record('retry', PAYOUT)
 	};
 
 	const sellerPayoutLineService = { listLines: record('listLines', { items: [PAYOUT_LINE], total: 1 }) };
@@ -727,6 +745,41 @@ function listingResolver(calls: Array<{ field: string; options: any }>): any {
  */
 const DELETE_RESULT: Record<string, unknown> = { affected: 1 };
 
+/**
+ * What one payout run decided for one seller, in the shape the document declares it.
+ *
+ * A run answers a decision rather than a row, so the fixture carries both halves of that decision: the
+ * payout the run created and, when it created none, the reason it did not. A row that carried only the
+ * amounts would let a field that dropped the run's verdict pass this file's schema comparison.
+ */
+const PAYOUT_RUN_RESULT: Record<string, unknown> = {
+	sellerId: 'seller-1',
+	currency: 'USD',
+	balance: '18.591500',
+	reserveAmount: '0.929575',
+	payable: '17.661925',
+	payoutId: 'payout-1',
+	skippedReason: undefined
+};
+
+/** One platform line of the period a reconciliation compared, as the comparison answers it. */
+const SETTLEMENT_DIFFERENCE: Record<string, unknown> = {
+	transactionId: 'transaction-1',
+	platformNet: '18.591500'
+};
+
+/**
+ * What a reconciliation found: the settlement it moved and the lines it compared.
+ *
+ * The settlement is the same fixture the resource's own reads answer with, because the two are one row:
+ * a reconciliation fixture of its own would let a field wired to a neighbouring service pass the row
+ * comparison below while the route reached something else.
+ */
+const SETTLEMENT_RECONCILIATION: Record<string, unknown> = {
+	settlement: SETTLEMENT,
+	differences: [SETTLEMENT_DIFFERENCE]
+};
+
 /* ------------------------------------------------------------------------------------------------
  * The seller writes
  * ---------------------------------------------------------------------------------------------- */
@@ -755,6 +808,55 @@ const VERIFY_SELLER: Record<string, unknown> = {
 	reference: 'reference-1',
 	provider: 'provider-1',
 	expiresAt: new Date('2027-01-01T00:00:00.000Z')
+};
+
+/** The body a caller supplies to offer a variant, with the two members its route requires. */
+const CREATE_OFFERING: Record<string, unknown> = {
+	sellerId: 'seller-1',
+	variantId: 'variant-1',
+	title: 'An offering',
+	priceAmount: '19.990000',
+	priceCurrency: 'USD'
+};
+
+/** The body a caller supplies to amend one. No seller and no variant: both are immutable. */
+const UPDATE_OFFERING: Record<string, unknown> = {
+	title: 'An offering, renamed',
+	priceAmount: '21.500000',
+	isFeatured: true
+};
+
+/** The body a caller supplies to amend a payout. No amount: the payout's lines are its amount. */
+const UPDATE_PAYOUT: Record<string, unknown> = {
+	note: 'operator override',
+	providerReference: 'reference-1'
+};
+
+/**
+ * The body a caller supplies to run a payout pass.
+ *
+ * The two period members are `Date`s, because that is the shape the field hands the service: the route
+ * converts an RFC 3339 string at its own boundary, and the document declares the instant rather than the
+ * text so a GraphQL caller states the same thing.
+ */
+const RUN_PAYOUT: Record<string, unknown> = {
+	periodStart: new Date('2026-02-01T00:00:00.000Z'),
+	periodEnd: new Date('2026-03-01T00:00:00.000Z'),
+	sellerIds: ['seller-1'],
+	currency: 'USD',
+	dryRun: true
+};
+
+/** The body a caller supplies to amend a settlement. */
+const UPDATE_SETTLEMENT: Record<string, unknown> = {
+	status: SellerSettlementStatus.OPEN,
+	note: 'awaiting the provider report'
+};
+
+/** The body a caller supplies to reconcile one. */
+const RECONCILE_SETTLEMENT: Record<string, unknown> = {
+	providerReportId: 'report-1',
+	note: 'compared against the ledger'
 };
 
 /**
@@ -885,6 +987,181 @@ const SELLER_WRITES: ReadonlyArray<{
 		permission: PermissionsEnum.SELLERS_DELETE,
 		service: 'softRecover',
 		call: () => ['seller-1']
+	}
+];
+
+/**
+ * The remaining write routes of the marketplace's five child resources, and the calls their fields make.
+ *
+ * The seller table states one call per field because each of those fields makes one. This table states a
+ * *sequence*, because two of these fields make two calls: the route's own `update` answers the ORM's write
+ * envelope rather than the row — while `06-api-specification.md` gives a `PUT` the updated resource, "not a
+ * bare `UpdateResult`" — so those two fields reach the same base read the write performs as its own
+ * precondition and answer the row a client asked to amend. Stating the sequence is what keeps that visible:
+ * a field that read with a *scoped* method instead, or that read without writing, is reported by these
+ * entries rather than passing on the shape of its answer.
+ *
+ * The controller is carried per row for the reason the seller table's rows give: the controller is the
+ * real one, so the grant a field must state is read back from the route it mirrors rather than copied into
+ * this file, and each of these five resources has its own controller.
+ */
+const RESOURCE_WRITES: ReadonlyArray<{
+	field: string;
+	method: string;
+	route: string;
+	controller: any;
+	permission: PermissionsEnum;
+	args: (scope: ISellerScope, context: unknown) => unknown[];
+	calls: (scope: ISellerScope) => Array<{ service: string; args: unknown[] }>;
+}> = [
+	{
+		field: 'createSellerOffering',
+		method: 'createSellerOffering',
+		route: 'create',
+		controller: SellerOfferingController,
+		permission: PermissionsEnum.SELLER_OFFERINGS_EDIT,
+		// The key is stated as absent and the context is stated after it, because that is the order the
+		// field's own parameters are in: a caller that sent a keyless request over GraphQL is a caller the
+		// route serves, so the scope has to reach the service through the parameter that follows it.
+		args: (_scope, context) => [CREATE_OFFERING, undefined, context],
+		calls: (scope) => [{ service: 'createOffering', args: [CREATE_OFFERING, scope] }]
+	},
+	{
+		field: 'updateSellerOffering',
+		method: 'updateSellerOffering',
+		route: 'update',
+		controller: SellerOfferingController,
+		permission: PermissionsEnum.SELLER_OFFERINGS_EDIT,
+		args: (_scope, context) => ['offering-1', UPDATE_OFFERING, context],
+		calls: (scope) => [{ service: 'updateOffering', args: ['offering-1', UPDATE_OFFERING, scope] }]
+	},
+	{
+		field: 'updateSellerPayout',
+		method: 'updateSellerPayout',
+		route: 'update',
+		controller: SellerPayoutController,
+		permission: PermissionsEnum.SELLER_PAYOUTS_CREATE,
+		args: () => ['payout-1', UPDATE_PAYOUT],
+		// No scope on either call, because the route threads none: `SellerPayoutService.update` takes no
+		// scope, and the read-back is the same base read that write performs as its precondition. A field
+		// that narrowed here would refuse a caller the other protocol served.
+		calls: () => [
+			{ service: 'update', args: ['payout-1', UPDATE_PAYOUT] },
+			{ service: 'findOneByIdString', args: ['payout-1'] }
+		]
+	},
+	{
+		field: 'runSellerPayout',
+		method: 'runSellerPayout',
+		route: 'run',
+		controller: SellerPayoutController,
+		permission: PermissionsEnum.SELLER_PAYOUTS_CREATE,
+		args: () => [RUN_PAYOUT],
+		// The arguments are the route's own coercions rather than the members as they arrived: the two
+		// period members are handed on as `Date`s and `dryRun` as a boolean, so a pass asked to be reported
+		// is reported on both surfaces rather than paid on one of them.
+		calls: () => [
+			{
+				service: 'run',
+				args: [
+					{
+						periodStart: new Date('2026-02-01T00:00:00.000Z'),
+						periodEnd: new Date('2026-03-01T00:00:00.000Z'),
+						sellerIds: ['seller-1'],
+						currency: 'USD',
+						dryRun: true
+					}
+				]
+			}
+		]
+	},
+	{
+		field: 'retrySellerPayout',
+		method: 'retrySellerPayout',
+		route: 'retry',
+		controller: SellerPayoutController,
+		permission: PermissionsEnum.SELLER_PAYOUTS_APPROVE,
+		args: (_scope, context) => ['payout-1', undefined, context],
+		calls: (scope) => [{ service: 'retry', args: ['payout-1', scope] }]
+	},
+	{
+		field: 'deleteSellerPayout',
+		method: 'deleteSellerPayout',
+		route: 'delete',
+		controller: SellerPayoutController,
+		permission: PermissionsEnum.SELLERS_DELETE,
+		args: () => ['payout-1'],
+		// The inherited route reaches the deletion with the identifier alone, and the field does the same:
+		// the row is gone, so there is nothing left to read back.
+		calls: () => [{ service: 'delete', args: ['payout-1'] }]
+	},
+	{
+		field: 'deleteSellerPayoutLine',
+		method: 'deleteSellerPayoutLine',
+		route: 'delete',
+		controller: SellerPayoutLineController,
+		permission: PermissionsEnum.SELLERS_DELETE,
+		args: () => ['payout-line-1'],
+		calls: () => [{ service: 'delete', args: ['payout-line-1'] }]
+	},
+	{
+		field: 'updateSellerSettlement',
+		method: 'updateSellerSettlement',
+		route: 'update',
+		controller: SellerSettlementController,
+		permission: PermissionsEnum.SELLER_SETTLEMENTS_EDIT,
+		args: () => ['settlement-1', UPDATE_SETTLEMENT],
+		calls: () => [
+			{ service: 'update', args: ['settlement-1', UPDATE_SETTLEMENT] },
+			{ service: 'findOneByIdString', args: ['settlement-1'] }
+		]
+	},
+	{
+		field: 'reconcileSellerSettlement',
+		method: 'reconcileSellerSettlement',
+		route: 'reconcile',
+		controller: SellerSettlementController,
+		permission: PermissionsEnum.SELLER_SETTLEMENTS_EDIT,
+		args: () => ['settlement-1', RECONCILE_SETTLEMENT],
+		// The route passes its body straight on, and so does the field: the comparison and the note it
+		// records are the service's, and neither surface invents a member the other does not send.
+		calls: () => [{ service: 'reconcile', args: ['settlement-1', RECONCILE_SETTLEMENT] }]
+	},
+	{
+		field: 'closeSellerSettlement',
+		method: 'closeSellerSettlement',
+		route: 'close',
+		controller: SellerSettlementController,
+		permission: PermissionsEnum.SELLER_SETTLEMENTS_EDIT,
+		args: () => ['settlement-1', 'period closed'],
+		calls: () => [{ service: 'close', args: ['settlement-1', 'period closed'] }]
+	},
+	{
+		field: 'disputeSellerSettlement',
+		method: 'disputeSellerSettlement',
+		route: 'dispute',
+		controller: SellerSettlementController,
+		permission: PermissionsEnum.SELLER_SETTLEMENTS_EDIT,
+		args: () => ['settlement-1', 'the provider fee differs'],
+		calls: () => [{ service: 'dispute', args: ['settlement-1', 'the provider fee differs'] }]
+	},
+	{
+		field: 'deleteSellerSettlement',
+		method: 'deleteSellerSettlement',
+		route: 'delete',
+		controller: SellerSettlementController,
+		permission: PermissionsEnum.SELLERS_DELETE,
+		args: () => ['settlement-1'],
+		calls: () => [{ service: 'delete', args: ['settlement-1'] }]
+	},
+	{
+		field: 'deleteSellerTransaction',
+		method: 'deleteSellerTransaction',
+		route: 'delete',
+		controller: SellerTransactionController,
+		permission: PermissionsEnum.SELLERS_DELETE,
+		args: () => ['transaction-1'],
+		calls: () => [{ service: 'delete', args: ['transaction-1'] }]
 	}
 ];
 
@@ -1040,11 +1317,26 @@ function writeResolver(calls: Array<{ service: string; args: unknown[] }>): any 
 			softRemove: record('softRemove', SELLER),
 			softRecover: record('softRecover', SELLER)
 		} as any,
-		lifecycle(OFFERING),
-		lifecycle(TRANSACTION),
-		lifecycle(PAYOUT),
-		lifecycle(PAYOUT_LINE),
-		lifecycle(SETTLEMENT),
+		{ ...lifecycle(OFFERING), createOffering: record('createOffering', OFFERING), updateOffering: record('updateOffering', OFFERING) },
+		{ ...lifecycle(TRANSACTION), delete: record('delete', DELETE_RESULT) },
+		{
+			...lifecycle(PAYOUT),
+			update: record('update', PAYOUT),
+			findOneByIdString: record('findOneByIdString', PAYOUT),
+			run: record('run', [PAYOUT_RUN_RESULT]),
+			retry: record('retry', PAYOUT),
+			delete: record('delete', DELETE_RESULT)
+		},
+		{ ...lifecycle(PAYOUT_LINE), delete: record('delete', DELETE_RESULT) },
+		{
+			...lifecycle(SETTLEMENT),
+			update: record('update', SETTLEMENT),
+			findOneByIdString: record('findOneByIdString', SETTLEMENT),
+			reconcile: record('reconcile', SETTLEMENT_RECONCILIATION),
+			close: record('close', SETTLEMENT),
+			dispute: record('dispute', SETTLEMENT),
+			delete: record('delete', DELETE_RESULT)
+		},
 		new BulkExecutor({ assertCanSee: () => undefined, canSee: () => true } as never)
 	);
 }
@@ -1123,7 +1415,20 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 		row: SETTLEMENT
 	},
 	softDeleteSellerSettlement: { args: ['settlement-1'], row: SETTLEMENT },
-	recoverSellerSettlement: { args: ['settlement-1'], row: SETTLEMENT }
+	recoverSellerSettlement: { args: ['settlement-1'], row: SETTLEMENT },
+	createSellerOffering: { args: [CREATE_OFFERING], row: OFFERING },
+	updateSellerOffering: { args: ['offering-1', UPDATE_OFFERING], row: OFFERING },
+	updateSellerPayout: { args: ['payout-1', UPDATE_PAYOUT], row: PAYOUT },
+	runSellerPayout: { args: [RUN_PAYOUT], row: PAYOUT_RUN_RESULT },
+	retrySellerPayout: { args: ['payout-1'], row: PAYOUT },
+	deleteSellerPayout: { args: ['payout-1'], row: DELETE_RESULT },
+	deleteSellerPayoutLine: { args: ['payout-line-1'], row: DELETE_RESULT },
+	updateSellerSettlement: { args: ['settlement-1', UPDATE_SETTLEMENT], row: SETTLEMENT },
+	reconcileSellerSettlement: { args: ['settlement-1', RECONCILE_SETTLEMENT], row: SETTLEMENT_RECONCILIATION },
+	closeSellerSettlement: { args: ['settlement-1', 'period closed'], row: SETTLEMENT },
+	disputeSellerSettlement: { args: ['settlement-1', 'the provider fee differs'], row: SETTLEMENT },
+	deleteSellerSettlement: { args: ['settlement-1'], row: DELETE_RESULT },
+	deleteSellerTransaction: { args: ['transaction-1'], row: DELETE_RESULT }
 };
 
 /**
@@ -1268,6 +1573,14 @@ const RETRY_MIRRORS: ReadonlyArray<{
 		resourceType: 'seller_offering'
 	},
 	{
+		scope: 'seller_offering.create',
+		mutation: 'createSellerOffering',
+		controller: SellerOfferingController,
+		route: 'create',
+		required: false,
+		resourceType: 'seller_offering'
+	},
+	{
 		scope: 'seller_offering.bulk',
 		mutation: 'bulkSellerOfferings',
 		controller: SellerOfferingController,
@@ -1292,6 +1605,22 @@ const RETRY_MIRRORS: ReadonlyArray<{
 		resourceType: 'seller_payout'
 	},
 	{
+		scope: 'seller.payout.run',
+		mutation: 'runSellerPayout',
+		controller: SellerPayoutController,
+		route: 'run',
+		required: false,
+		resourceType: 'seller_payout'
+	},
+	{
+		scope: 'seller.payout.retry',
+		mutation: 'retrySellerPayout',
+		controller: SellerPayoutController,
+		route: 'retry',
+		required: false,
+		resourceType: 'seller_payout'
+	},
+	{
 		scope: 'seller.payout.pay',
 		mutation: 'markSellerPayoutPaid',
 		controller: SellerPayoutController,
@@ -1304,6 +1633,14 @@ const RETRY_MIRRORS: ReadonlyArray<{
 		mutation: 'createSellerSettlement',
 		controller: SellerSettlementController,
 		route: 'create',
+		required: false,
+		resourceType: 'seller_settlement'
+	},
+	{
+		scope: 'seller.settlement.reconcile',
+		mutation: 'reconcileSellerSettlement',
+		controller: SellerSettlementController,
+		route: 'reconcile',
 		required: false,
 		resourceType: 'seller_settlement'
 	}
@@ -1585,6 +1922,46 @@ describe('the marketplace GraphQL contribution', () => {
 	});
 
 	/* --------------------------------------------------------------------------------------------
+	 * The remaining writes of the five child resources
+	 * ------------------------------------------------------------------------------------------ */
+
+	describe('the resource writes, against the routes they mirror', () => {
+		it.each(RESOURCE_WRITES.map((write) => write.field))(
+			'answers %s with its route’s own permission and the calls its route makes',
+			async (field) => {
+				const write = RESOURCE_WRITES.find((candidate) => candidate.field === field)!;
+				const declared = DECLARED.find((entry) => entry.field === field);
+
+				// The field is declared, and it is a mutation. A name that drifted onto the query root would
+				// be answered here as a read while the route behind it still wrote.
+				expect(declared).toBeDefined();
+				expect(declared?.operation).toBe('Mutation');
+
+				// Both surfaces state one string, and the controller's is read back rather than copied into
+				// the table above: a copy would agree with whichever of the two files was edited last, which
+				// is exactly the drift this assertion exists to catch.
+				expect(Reflect.getMetadata(PERMISSIONS_METADATA, SellerEntityResolver.prototype[write.method])).toEqual(
+					[write.permission]
+				);
+				expect(Reflect.getMetadata(PERMISSIONS_METADATA, write.controller.prototype[write.route])).toEqual([
+					write.permission
+				]);
+
+				const calls: Array<{ service: string; args: unknown[] }> = [];
+				const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
+				const context = { req: { sellerScope: scope } };
+
+				await writeResolver(calls)[write.method](...write.args(scope, context));
+
+				// The calls the route makes, in the order it makes them: the write first, with the arguments
+				// the route reaches it with, and — on the two fields whose route answers a write envelope —
+				// the read that turns that envelope into the row the document declares.
+				expect(calls).toEqual(write.calls(scope));
+			}
+		);
+	});
+
+	/* --------------------------------------------------------------------------------------------
 	 * The inherited lifecycle pair of the five child resources
 	 * ------------------------------------------------------------------------------------------ */
 
@@ -1805,6 +2182,9 @@ describe('the marketplace GraphQL contribution', () => {
 			await resolver.publishSellerOffering('offering-1', ['channel-1'], undefined, context);
 			await resolver.pauseSellerOffering('offering-1', context);
 			await resolver.withdrawSellerOffering('offering-1', context);
+			await resolver.createSellerOffering(CREATE_OFFERING, undefined, context);
+			await resolver.updateSellerOffering('offering-1', UPDATE_OFFERING, context);
+			await resolver.retrySellerPayout('payout-1', undefined, context);
 
 			// Not one of them may run unscoped: a field that dropped the scope is a field a seller-scoped
 			// credential reaches another seller's rows through, and it would look exactly like the others.

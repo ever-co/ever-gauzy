@@ -585,6 +585,80 @@ export class SellerDeleteResultType {
 	affected: number;
 }
 
+/**
+ * What one payout run decided for one seller.
+ *
+ * A run answers a decision per seller rather than a row: a seller the schedule did not find due, one
+ * whose balance was under its threshold and one that was paid are all answers, and `payoutId` and
+ * `skippedReason` are the two members that tell them apart. The amounts are the run's own arithmetic —
+ * the settleable balance it saw, what the reserve withheld and what was payable after it — so a client
+ * reads why a seller was or was not paid without reconstructing the run's policy.
+ */
+@ObjectType('SellerPayoutRunResult')
+export class SellerPayoutRunResultType {
+	@Field(() => ID)
+	sellerId: string;
+
+	@Field(() => String)
+	currency: string;
+
+	/** The settleable balance the run saw. */
+	@Field(() => Float)
+	balance: number;
+
+	/** The amount the reserve policy withheld at this run. */
+	@Field(() => Float)
+	reserveAmount: number;
+
+	/** What was payable after the reserve and the hold window. */
+	@Field(() => Float)
+	payable: number;
+
+	/** The payout the run created, absent when it created none. */
+	@Field(() => ID, { nullable: true })
+	payoutId?: string;
+
+	/** Why no payout was created, when none was. */
+	@Field(() => String, { nullable: true })
+	skippedReason?: string;
+}
+
+/**
+ * One platform line of a settlement's period, with the net the ledger carries for it.
+ *
+ * The reconciliation answers the lines the comparison was made over rather than only its verdict: a
+ * discrepancy a client cannot attribute to a line is one it cannot take to the provider, and the
+ * settlement's own `discrepancyAmount` is the difference of the sums, not of any one row.
+ */
+@ObjectType('SellerSettlementDifference')
+export class SellerSettlementDifferenceType {
+	/** The ledger row the platform holds for the period. */
+	@Field(() => ID)
+	transactionId: string;
+
+	/** The net that row carries: the platform's side of the comparison. */
+	@Field(() => Float)
+	platformNet: number;
+}
+
+/**
+ * What a reconciliation found: the settlement it moved and the platform's lines it compared.
+ *
+ * Both halves are answered because both are what the route answers. The settlement is re-read from the
+ * service's own return, so the status a client reads is the one the comparison decided — `RECONCILED`
+ * when the figures agree and `DISPUTED` when they do not.
+ */
+@ObjectType('SellerSettlementReconciliation')
+export class SellerSettlementReconciliationType {
+	/** The settlement after the comparison. */
+	@Field(() => SellerSettlementType)
+	settlement: SellerSettlementType;
+
+	/** The platform's lines for the settlement's period, each with the net the ledger carries. */
+	@Field(() => [SellerSettlementDifferenceType])
+	differences: SellerSettlementDifferenceType[];
+}
+
 /* ------------------------------------------------------------------------------------------------
  * The write inputs
  * ---------------------------------------------------------------------------------------------- */
@@ -695,5 +769,157 @@ export interface IVerifySellerInput {
 	reference?: string;
 	provider?: string;
 	expiresAt?: Date;
+	note?: string;
+}
+
+/**
+ * What a caller supplies to offer a variant.
+ *
+ * `sellerId` and `variantId` are required on both surfaces: `CreateSellerOfferingDTO` intersects the
+ * offering's own shape with a pick of those two, and the service refuses a body that names neither,
+ * because an offering that does not say what is offered by whom is not an offering. `productId` is
+ * deliberately absent, as it is from the REST body: it is derived from the variant, so a caller cannot
+ * make an unpublished variant visible by asserting one.
+ *
+ * `organizationId` and `tenantId` are absent for the reason the seller inputs give: they are the
+ * request's rather than the body's, and the service copies the organization from the seller it read.
+ */
+export interface ICreateSellerOfferingInput {
+	/** Required: an offering names the seller whose right to sell it records. */
+	sellerId: string;
+	/** Required: an offering names the catalogue variant it offers. */
+	variantId: string;
+	sellerSku?: string;
+	title?: string;
+	condition?: OfferingCondition;
+	priceAmount?: DecimalString;
+	priceCurrency?: string;
+	productPriceId?: string;
+	/** Overrides the seller's default rate for this offering alone. */
+	commissionRate?: DecimalString;
+	commissionBasis?: CommissionBasis;
+	commissionTiers?: ICommissionTier[];
+	status?: OfferingStatus;
+	channelIds?: string[];
+	regionIds?: string[];
+	availableFrom?: Date;
+	availableTo?: Date;
+	maxQuantityPerOrder?: number;
+	fulfilmentMode?: OfferingFulfilmentMode;
+	fulfilmentWarehouseId?: string;
+	handlingDays?: number;
+	isFeatured?: boolean;
+	allowNegativeNet?: boolean;
+	externalId?: string;
+	metadata?: Record<string, any>;
+}
+
+/**
+ * What a caller supplies to amend an offering.
+ *
+ * The subject is absent because it is immutable on the REST body too: `UpdateSellerOfferingDTO` omits
+ * `sellerId` and `variantId`, and the service deletes both from any body that carries them — an
+ * offering that changed variant would silently rewrite what past orders were priced against.
+ */
+export interface IUpdateSellerOfferingInput {
+	sellerSku?: string;
+	title?: string;
+	condition?: OfferingCondition;
+	priceAmount?: DecimalString;
+	priceCurrency?: string;
+	productPriceId?: string;
+	commissionRate?: DecimalString;
+	commissionBasis?: CommissionBasis;
+	commissionTiers?: ICommissionTier[];
+	status?: OfferingStatus;
+	channelIds?: string[];
+	regionIds?: string[];
+	availableFrom?: Date;
+	availableTo?: Date;
+	maxQuantityPerOrder?: number;
+	fulfilmentMode?: OfferingFulfilmentMode;
+	fulfilmentWarehouseId?: string;
+	handlingDays?: number;
+	isFeatured?: boolean;
+	allowNegativeNet?: boolean;
+	externalId?: string;
+	metadata?: Record<string, any>;
+}
+
+/**
+ * What a caller supplies to amend a payout.
+ *
+ * The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it
+ * covers, so a caller chooses which rows are paid and never how much. `sellerId` and `currency` are
+ * absent because `UpdateSellerPayoutDTO` omits them — both are fixed once the payout exists — and the
+ * lifecycle moves through the approve, pay, cancel and retry fields rather than through this input.
+ */
+export interface IUpdateSellerPayoutInput {
+	status?: SellerPayoutStatus;
+	payoutMode?: SellerPayoutMode;
+	transactionIds?: string[];
+	periodStart?: Date;
+	periodEnd?: Date;
+	scheduledAt?: Date;
+	feeAmount?: DecimalString;
+	providerKey?: string;
+	providerReference?: string;
+	note?: string;
+	metadata?: Record<string, any>;
+}
+
+/**
+ * What a caller supplies to run the payout pass.
+ *
+ * Every member is optional, as it is on the route's own body: a run with no period reads the schedule
+ * and the ledger as they stand. `dryRun` is the member that decides whether the pass reports or pays,
+ * and the run reaches the service coerced to a boolean rather than as it arrived, exactly as the route
+ * coerces it.
+ */
+export interface IRunSellerPayoutInput {
+	/** The first day of the period; absent reads from the beginning of the ledger. */
+	periodStart?: Date;
+	/** The last day of the period; absent reads to now. */
+	periodEnd?: Date;
+	/** The sellers to consider; absent considers every seller whose schedule is due. */
+	sellerIds?: string[];
+	currency?: string;
+	/** Report what the run would do without creating a payout. */
+	dryRun?: boolean;
+}
+
+/**
+ * What a caller supplies to amend a settlement.
+ *
+ * The provider, the seller and the currency are absent because `UpdateSellerSettlementDTO` omits them:
+ * a settlement is a transcription of what one provider reported about one seller in one currency, and
+ * none of the three can change after the fact. `discrepancyAmount` is absent for the reason its own DTO
+ * gives — it is what the reconciliation computes, and a caller that could set it could silence the one
+ * number the report exists to surface.
+ */
+export interface IUpdateSellerSettlementInput {
+	payoutAccountHolderId?: string;
+	status?: SellerSettlementStatus;
+	grossAmount?: DecimalString;
+	commissionAmount?: DecimalString;
+	feeAmount?: DecimalString;
+	netAmount?: DecimalString;
+	periodStart?: Date;
+	periodEnd?: Date;
+	providerReportId?: string;
+	externalReference?: string;
+	note?: string;
+	metadata?: Record<string, any>;
+}
+
+/**
+ * What a caller supplies to reconcile a settlement.
+ *
+ * Two members and nothing else, because they are what the route's body carries: the provider's own
+ * report identifier, recorded beside the comparison so a later reader can find the document the figures
+ * came from, and a note, which the comparison records when it finds a discrepancy.
+ */
+export interface IReconcileSellerSettlementInput {
+	providerReportId?: string;
 	note?: string;
 }

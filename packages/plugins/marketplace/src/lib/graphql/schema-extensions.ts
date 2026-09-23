@@ -448,6 +448,145 @@ export const schemaExtensions = gql`
 		note: String
 	}
 
+	"""
+	What a caller supplies to offer a variant.
+
+	\`sellerId\` and \`variantId\` are required on both surfaces: \`CreateSellerOfferingDTO\` intersects the offering's own shape with a pick of those two, and the service refuses a body that names neither — an offering that does not say what is offered by whom is not an offering. \`productId\` is deliberately absent, as it is from the REST body: it is derived from the variant, so a caller cannot make an unpublished variant visible by asserting one.
+	"""
+	input CreateSellerOfferingInput {
+		"Required: the seller whose right to sell this records."
+		sellerId: ID!
+		"Required: the catalogue variant offered."
+		variantId: ID!
+		"The seller's own SKU for this listing, unique per seller when set."
+		sellerSku: String
+		"The seller's own listing title; null uses the catalogue title."
+		title: String
+		condition: OfferingCondition
+		"The seller's authored price, materialised into a price row when the offering is published."
+		priceAmount: Decimal
+		priceCurrency: String
+		productPriceId: ID
+		"Commission override for this offering; null inherits the seller's default, which inherits the platform's."
+		commissionRate: Decimal
+		commissionBasis: CommissionBasis
+		commissionTiers: [CommissionTierInput!]
+		status: OfferingStatus
+		"Channels this offering is published to; null inherits the seller's set."
+		channelIds: [String!]
+		"Regions this offering is published to; null inherits the seller's set."
+		regionIds: [String!]
+		"Availability window start; null is open."
+		availableFrom: DateTime
+		"Availability window end; null is open."
+		availableTo: DateTime
+		maxQuantityPerOrder: Int
+		fulfilmentMode: OfferingFulfilmentMode
+		fulfilmentWarehouseId: ID
+		handlingDays: Int
+		isFeatured: Boolean
+		allowNegativeNet: Boolean
+		externalId: String
+		metadata: JSON
+	}
+
+	"""
+	What a caller supplies to amend an offering.
+
+	The subject is absent because it is immutable on the REST body too: \`UpdateSellerOfferingDTO\` omits \`sellerId\` and \`variantId\`, and the service deletes both from any body that carries them — an offering that changed variant would silently rewrite what past orders were priced against.
+	"""
+	input UpdateSellerOfferingInput {
+		sellerSku: String
+		title: String
+		condition: OfferingCondition
+		priceAmount: Decimal
+		priceCurrency: String
+		productPriceId: ID
+		commissionRate: Decimal
+		commissionBasis: CommissionBasis
+		commissionTiers: [CommissionTierInput!]
+		status: OfferingStatus
+		channelIds: [String!]
+		regionIds: [String!]
+		availableFrom: DateTime
+		availableTo: DateTime
+		maxQuantityPerOrder: Int
+		fulfilmentMode: OfferingFulfilmentMode
+		fulfilmentWarehouseId: ID
+		handlingDays: Int
+		isFeatured: Boolean
+		allowNegativeNet: Boolean
+		externalId: String
+		metadata: JSON
+	}
+
+	"""
+	What a caller supplies to amend a payout.
+
+	The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it covers, so a caller chooses which rows are paid and never how much. \`sellerId\` and \`currency\` are absent because \`UpdateSellerPayoutDTO\` omits them — both are fixed once the payout exists — and the lifecycle moves through the approve, pay, cancel and retry fields rather than through this input.
+	"""
+	input UpdateSellerPayoutInput {
+		status: SellerPayoutStatus
+		payoutMode: SellerPayoutMode
+		"The ledger rows this payout covers; stated only while the payout is still a draft."
+		transactionIds: [String!]
+		periodStart: DateTime
+		periodEnd: DateTime
+		scheduledAt: DateTime
+		feeAmount: Decimal
+		providerKey: String
+		providerReference: String
+		note: String
+		metadata: JSON
+	}
+
+	"""
+	What a caller supplies to run the payout pass.
+
+	Every member is optional, as it is on the route's own body: a run that states no period reads the schedule and the ledger as they stand. \`dryRun\` decides whether the pass reports or pays, and it reaches the service coerced to a boolean rather than as it arrived, exactly as the route coerces it.
+	"""
+	input RunSellerPayoutInput {
+		"The first day of the period; absent reads from the beginning of the ledger."
+		periodStart: DateTime
+		"The last day of the period; absent reads to now."
+		periodEnd: DateTime
+		"The sellers to consider; absent considers every seller whose schedule is due."
+		sellerIds: [String!]
+		currency: String
+		"Report what the run would do without creating a payout."
+		dryRun: Boolean
+	}
+
+	"""
+	What a caller supplies to amend a settlement.
+
+	The provider, the seller and the currency are absent because \`UpdateSellerSettlementDTO\` omits them: a settlement transcribes what one provider reported about one seller in one currency, and none of the three can change after the fact. \`discrepancyAmount\` is absent for the reason that DTO gives — it is what the reconciliation computes, and a caller that could set it could silence the one number the report exists to surface.
+	"""
+	input UpdateSellerSettlementInput {
+		payoutAccountHolderId: ID
+		status: SellerSettlementStatus
+		grossAmount: Decimal
+		commissionAmount: Decimal
+		feeAmount: Decimal
+		netAmount: Decimal
+		periodStart: DateTime
+		periodEnd: DateTime
+		providerReportId: String
+		externalReference: String
+		note: String
+		metadata: JSON
+	}
+
+	"""
+	What a caller supplies to reconcile a settlement.
+
+	Two members and nothing else, because they are what the route's body carries: the provider's own report identifier, recorded beside the comparison so a later reader can find the document the figures came from, and a note, which the comparison records when it finds a discrepancy.
+	"""
+	input ReconcileSellerSettlementInput {
+		providerReportId: String
+		note: String
+	}
+
 	"A seller's right to sell one product variant, at the seller's price and under the seller's own SKU."
 	type SellerOffering {
 		id: ID!
@@ -649,6 +788,26 @@ export const schemaExtensions = gql`
 		lines: [SellerPayoutLine!]
 	}
 
+	"""
+	What one payout run decided for one seller.
+
+	A run answers a decision per seller rather than a row: a seller the schedule did not find due, one whose balance was under its threshold and one that was paid are all answers, and \`payoutId\` and \`skippedReason\` are the two members that tell them apart. The amounts are the run's own arithmetic — the settleable balance it saw, what the reserve withheld and what was payable after it — so a client reads why a seller was or was not paid without reconstructing the run's policy.
+	"""
+	type SellerPayoutRunResult {
+		sellerId: ID!
+		currency: String!
+		"The settleable balance the run saw."
+		balance: Decimal!
+		"The amount the reserve policy withheld at this run."
+		reserveAmount: Decimal!
+		"What was payable after the reserve and the hold window."
+		payable: Decimal!
+		"The payout the run created, absent when it created none."
+		payoutId: ID
+		"Why no payout was created, when none was."
+		skippedReason: String
+	}
+
 	"The join between a payout and one ledger row it pays. Deliberately thin: the money is already on the transaction."
 	type SellerPayoutLine {
 		id: ID!
@@ -680,6 +839,30 @@ export const schemaExtensions = gql`
 		"The platform's lines for the period less the reported net: zero when the two agree. The ledger is never edited to agree with an external report."
 		discrepancyAmount: Decimal!
 		closedAt: DateTime
+	}
+
+	"""
+	One platform line of a settlement's period, with the net the ledger carries for it.
+
+	The reconciliation answers the lines the comparison was made over rather than only its verdict: a discrepancy a client cannot attribute to a line is one it cannot take to the provider, and the settlement's own \`discrepancyAmount\` is the difference of the sums rather than any one row's.
+	"""
+	type SellerSettlementDifference {
+		"The ledger row the platform holds for the period."
+		transactionId: ID!
+		"The net that row carries: the platform's side of the comparison."
+		platformNet: Decimal!
+	}
+
+	"""
+	What a reconciliation found: the settlement it moved and the platform's lines it compared.
+
+	Both halves are answered because both are what the route answers. The settlement is the service's own return, so the status a client reads is the one the comparison decided — \`RECONCILED\` when the figures agree and \`DISPUTED\` when they do not.
+	"""
+	type SellerSettlementReconciliation {
+		"The settlement after the comparison."
+		settlement: SellerSettlement!
+		"The platform's lines for the settlement's period, each with the net the ledger carries."
+		differences: [SellerSettlementDifference!]!
 	}
 
 	"A seller's balance in one currency. The balance is the ledger: summed from the rows every time it is asked for, never cached."
@@ -923,6 +1106,18 @@ export const schemaExtensions = gql`
 		"""
 		restoreSeller(id: ID!): Seller!
 		"""
+		Offers a variant. The offering is born \`DRAFT\`; publishing it is a separate act.
+
+		Mirrors \`POST /seller-offerings\`, which takes \`SELLER_OFFERINGS_EDIT\` — the grant a caller that may merely see the listings does not hold — and declares the same \`seller_offering.create\` scope, so a seller that re-sends an offer it never saw acknowledged is answered with the offering its first attempt created over either protocol rather than with the collision the same variant causes.
+		"""
+		createSellerOffering(input: CreateSellerOfferingInput!, idempotencyKey: String): SellerOffering!
+		"""
+		Amends an offering's price, window, commission and publication set.
+
+		Mirrors \`PUT /seller-offerings/:id\`, which takes \`SELLER_OFFERINGS_EDIT\`, and hands the service the same seller scope the route hands it: a seller-scoped caller reaches its own listings and no others.
+		"""
+		updateSellerOffering(id: ID!, input: UpdateSellerOfferingInput!): SellerOffering!
+		"""
 		Publishes an offering to the given channels, materialising its authored price into a price row.
 
 		Mirrors the publish route and declares the same \`seller_offering.publish\` scope, so a retry of one
@@ -963,6 +1158,12 @@ export const schemaExtensions = gql`
 		"Holds a ledger row out of payouts, with a reason a seller can read."
 		holdSellerTransaction(id: ID!, reason: String!): SellerTransaction!
 		"""
+		Removes a ledger row, answering the count the deletion reports.
+
+		Mirrors \`DELETE /seller-transactions/:id\`, which takes \`SELLERS_DELETE\` rather than the settle grant beside it, and removes where the archive keeps: the ledger is kept because it is the truth about what a seller earned, so a caller that removes one is destroying that record rather than retiring it.
+		"""
+		deleteSellerTransaction(id: ID!): SellerDeleteResult!
+		"""
 		Archives a ledger row, keeping it.
 
 		Mirrors \`DELETE /seller-transactions/:id/soft\`, which takes \`SELLERS_DELETE\`: a ledger row is a child
@@ -990,6 +1191,30 @@ export const schemaExtensions = gql`
 			note: String
 			idempotencyKey: String
 		): SellerPayout!
+		"""
+		Amends what a payout states about itself: its note and its provider references.
+
+		Mirrors \`PUT /seller-payouts/:id\`, which takes \`SELLER_PAYOUTS_CREATE\` and not the approve grant beside it — preparing a payout is creating one, while approving it is what moves money. The route threads no seller scope into this write, so neither does the field: a divergence in either direction would be one protocol serving a caller the other refused.
+		"""
+		updateSellerPayout(id: ID!, input: UpdateSellerPayoutInput!): SellerPayout!
+		"""
+		Runs the payout pass for the sellers whose schedule is due.
+
+		Mirrors \`POST /seller-payouts/run\` and declares the same \`seller.payout.run\` scope, so a scheduler that re-sends a pass it never received an answer for is answered from the first attempt's result over either protocol rather than repeating the pass.
+		"""
+		runSellerPayout(input: RunSellerPayoutInput, idempotencyKey: String): [SellerPayoutRunResult!]!
+		"""
+		Re-drives a failed payout.
+
+		Mirrors \`POST /seller-payouts/:id/retry\`, which takes \`SELLER_PAYOUTS_APPROVE\` — re-driving a failed transfer is the authority approving one is — and declares the same \`seller.payout.retry\` scope, so a retry of one re-drive is a retry whichever protocol it arrives on.
+		"""
+		retrySellerPayout(id: ID!, idempotencyKey: String): SellerPayout!
+		"""
+		Removes a payout, answering the count the deletion reports.
+
+		Mirrors \`DELETE /seller-payouts/:id\`, which takes \`SELLERS_DELETE\` and neither payout grant beside it: a caller that may approve or cancel a payout is not thereby a caller that may remove one from the table.
+		"""
+		deleteSellerPayout(id: ID!): SellerDeleteResult!
 		"Approves a payout. Approving is a separate permission from creating, because approving one moves money."
 		approveSellerPayout(id: ID!): SellerPayout!
 		"""
@@ -1024,6 +1249,12 @@ export const schemaExtensions = gql`
 		"""
 		recoverSellerPayout(id: ID!): SellerPayout!
 		"""
+		Removes a payout line, answering the count the deletion reports.
+
+		Mirrors \`DELETE /seller-payout-lines/:id\`, which takes \`SELLERS_DELETE\`: a line is the join row of one payout and one ledger row, and every row under the seller belongs to the seller.
+		"""
+		deleteSellerPayoutLine(id: ID!): SellerDeleteResult!
+		"""
 		Archives a payout line, keeping the row.
 
 		Mirrors \`DELETE /seller-payout-lines/:id/soft\`, which takes \`SELLERS_DELETE\`: a line is the join row
@@ -1052,6 +1283,36 @@ export const schemaExtensions = gql`
 			feeAmount: String
 			idempotencyKey: String
 		): SellerSettlement!
+		"""
+		Amends the fields a settlement may still move: its status and what reconciliation found.
+
+		Mirrors \`PUT /seller-settlements/:id\`, which takes \`SELLER_SETTLEMENTS_EDIT\`. The route threads no seller scope into this write, so neither does the field.
+		"""
+		updateSellerSettlement(id: ID!, input: UpdateSellerSettlementInput!): SellerSettlement!
+		"""
+		Reconciles a settlement against the platform's lines for its period.
+
+		Mirrors \`POST /seller-settlements/:id/reconcile\` and declares the same \`seller.settlement.reconcile\` scope, so a client that re-sends a reconciliation it never saw the answer to is answered from its first attempt rather than stamping a second reconciled date over the first. A discrepancy is recorded and reported, never repaired: the settlement is answered \`DISPUTED\`, with the lines the comparison was made over.
+		"""
+		reconcileSellerSettlement(id: ID!, input: ReconcileSellerSettlementInput, idempotencyKey: String): SellerSettlementReconciliation!
+		"""
+		Closes a settlement, which accepts no further lines.
+
+		Mirrors \`POST /seller-settlements/:id/close\`, which takes \`SELLER_SETTLEMENTS_EDIT\`.
+		"""
+		closeSellerSettlement(id: ID!, note: String): SellerSettlement!
+		"""
+		Marks a settlement disputed, which requires a reason.
+
+		Mirrors \`POST /seller-settlements/:id/dispute\`, which takes \`SELLER_SETTLEMENTS_EDIT\`. The reason is a required argument because the service refuses a dispute without one, and a document that let it be omitted would let a client reach a \`BAD_REQUEST\` the schema could have made unreachable.
+		"""
+		disputeSellerSettlement(id: ID!, reason: String!): SellerSettlement!
+		"""
+		Removes a settlement, answering the count the deletion reports.
+
+		Mirrors \`DELETE /seller-settlements/:id\`, which takes \`SELLERS_DELETE\` rather than the settlement edit grant the recording, reconciling and closing fields carry: the ledger is never edited to agree with a report, so removing one is the destructive authority rather than another way to correct it.
+		"""
+		deleteSellerSettlement(id: ID!): SellerDeleteResult!
 		"""
 		Archives a settlement, keeping the row.
 

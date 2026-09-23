@@ -1,7 +1,7 @@
 import { Args, Context, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
-import type { ID as Id } from '@gauzy/contracts';
+import type { ID as Id, ISellerPayoutRunResult } from '@gauzy/contracts';
 import {
 	BulkExecutor,
 	FeatureFlagGuard,
@@ -45,13 +45,21 @@ import { ISellerScope } from '../seller-scope/seller-scope';
 import {
 	BulkSellerOfferingsPayloadType,
 	ICreateSellerInput,
+	ICreateSellerOfferingInput,
+	IReconcileSellerSettlementInput,
+	IRunSellerPayoutInput,
 	IUpdateSellerInput,
+	IUpdateSellerOfferingInput,
+	IUpdateSellerPayoutInput,
+	IUpdateSellerSettlementInput,
 	IVerifySellerInput,
 	SellerBalanceType,
 	SellerDeleteResultType,
 	SellerOfferingType,
 	SellerPayoutLineType,
+	SellerPayoutRunResultType,
 	SellerPayoutType,
+	SellerSettlementReconciliationType,
 	SellerSettlementType,
 	SellerSplitReconciliationType,
 	SellerStatementType,
@@ -528,6 +536,53 @@ export class SellerEntityResolver {
 	}
 
 	/**
+	 * Offers a variant, born `DRAFT`.
+	 *
+	 * The mutation mirrors `POST /seller-offerings` and makes the call that route makes: the offering is
+	 * authored through the service that owns the offering's writes, with the seller scope the guard
+	 * resolved, and it is born `DRAFT` — publishing it is a separate act with its own field beside this
+	 * one. `SELLER_OFFERINGS_EDIT` is stated here because the route states it: a caller that may read the
+	 * listings is not thereby a caller that may author one.
+	 *
+	 * `seller_offering.create` is declared with the route's own scope and the route's own
+	 * `required: false`, so a seller that re-sends an offer it never saw acknowledged is answered from
+	 * its first attempt over either protocol rather than with the collision its own write would cause.
+	 */
+	@Idempotent({ scope: 'seller_offering.create', required: false, resourceType: 'seller_offering' })
+	@Mutation(() => SellerOfferingType, { name: 'createSellerOffering' })
+	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	async createSellerOffering(
+		@Args('input') input: ICreateSellerOfferingInput,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<SellerOffering> {
+		return this.sellerOfferingService.createOffering(input as Partial<SellerOffering>, this.scope(context));
+	}
+
+	/**
+	 * Amends an offering's price, window, commission and publication set.
+	 *
+	 * The mutation mirrors `PUT /seller-offerings/:id`, and it is the offering write whose service method
+	 * narrows by the scope it is handed: `updateOffering` reads the row through `getOffering`, which
+	 * refuses a seller-scoped caller naming another seller's listing. A field that dropped the scope
+	 * would therefore run unscoped and look exactly like the lifecycle fields beside it, which is why the
+	 * scope is threaded rather than stated as `undefined`.
+	 *
+	 * The subject of the offering is not an argument: `UpdateSellerOfferingInput` omits the seller and the
+	 * variant because the route's own DTO omits them, so neither surface offers a caller a member the
+	 * service would delete from the body anyway.
+	 */
+	@Mutation(() => SellerOfferingType, { name: 'updateSellerOffering' })
+	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
+	async updateSellerOffering(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input') input: IUpdateSellerOfferingInput,
+		@Context() context?: any
+	): Promise<SellerOffering> {
+		return this.sellerOfferingService.updateOffering(id, input as Partial<SellerOffering>, this.scope(context));
+	}
+
+	/**
 	 * Publishes an offering.
 	 *
 	 * The mutation mirrors `POST /api/seller-offerings/:id/publish` and carries that route's scope, so a
@@ -713,6 +768,23 @@ export class SellerEntityResolver {
 	}
 
 	/**
+	 * Removes a ledger row, answering the count the deletion reports.
+	 *
+	 * The mutation mirrors `DELETE /seller-transactions/:id`, which takes `SELLERS_DELETE` rather than the
+	 * settle grant the two fields beside it state, and it removes where the archive keeps: the ledger is
+	 * the truth about what a seller earned, so a caller that removes a row is destroying that record
+	 * rather than retiring it from the reads that resolve it. The hard delete and `softDeleteSellerTransaction`
+	 * are therefore two acts and not two spellings of one, which is why both are served.
+	 */
+	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerTransaction' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async deleteSellerTransaction(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
+		const result = await this.sellerTransactionService.delete(id);
+
+		return { affected: result?.affected ?? 0 };
+	}
+
+	/**
 	 * Archives a ledger row, keeping it.
 	 *
 	 * The mutation mirrors `DELETE /seller-transactions/:id/soft` and answers the archived row, as that
@@ -764,6 +836,68 @@ export class SellerEntityResolver {
 		@Context() context?: any
 	): Promise<SellerPayout> {
 		return this.sellerPayoutService.createPayout({ sellerId, currency, transactionIds, note }, this.scope(context));
+	}
+
+	/**
+	 * Amends what a payout states about itself: its note and its provider references.
+	 *
+	 * The mutation mirrors `PUT /seller-payouts/:id`, which takes `SELLER_PAYOUTS_CREATE` and not the
+	 * approve grant beside it — preparing a payout is creating one, while approving it is what moves
+	 * money — so a caller that may build a payout is exactly the caller that may annotate one.
+	 *
+	 * **Two calls, because the write answers a count.** The route hands the service `update(id, entity)`
+	 * and passes its return on, which on this platform's ORM path is the driver's `UpdateResult` rather
+	 * than the row; `06-api-specification.md` states the convention the surface owes a caller — a `PUT`
+	 * answers the updated resource, "not a bare `UpdateResult`" — and every sibling mutation on this
+	 * resource answers the row. The row is therefore read back with the same base read the write itself
+	 * performs as its precondition, which is the shape the fulfilment plugin's own update field settled
+	 * on. Nothing else is added: no scope is threaded, exactly as the route threads none, so a
+	 * seller-scoped caller reaches what REST already lets it reach and no more.
+	 */
+	@Mutation(() => SellerPayoutType, { name: 'updateSellerPayout' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	async updateSellerPayout(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input') input: IUpdateSellerPayoutInput
+	): Promise<SellerPayout> {
+		// The cast is the route's own: `UpdateSellerPayoutDTO` is a partial of the entity's shape rather
+		// than a `QueryDeepPartialEntity`, so the controller hands it on as `any` and this does the same.
+		await this.sellerPayoutService.update(id, input as any);
+
+		return this.sellerPayoutService.findOneByIdString(id);
+	}
+
+	/**
+	 * Runs the payout pass for the sellers whose schedule is due.
+	 *
+	 * The mutation mirrors `POST /seller-payouts/run` and makes that route's call, including its
+	 * coercions: the two period members reach the service as `Date`s and `dryRun` reaches it as a
+	 * boolean, so a pass the caller asked to be reported rather than paid is reported on both surfaces
+	 * rather than paid on one of them. It answers one decision per seller — what the run saw, what the
+	 * reserve withheld, what was payable and either the payout it created or why it created none —
+	 * because that is what the route answers.
+	 *
+	 * The run threads no seller scope, as the route threads none: the pass decides for every seller whose
+	 * schedule is due, and narrowing it to one seller is a request the caller makes by naming them.
+	 *
+	 * `seller.payout.run` is declared with the route's own scope and its `required: false`: a scheduler
+	 * that re-sends a pass it never received an answer for is answered from the first attempt's result
+	 * rather than repeating the pass.
+	 */
+	@Idempotent({ scope: 'seller.payout.run', required: false, resourceType: 'seller_payout' })
+	@Mutation(() => [SellerPayoutRunResultType], { name: 'runSellerPayout' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	async runSellerPayout(
+		@Args('input', { nullable: true }) input?: IRunSellerPayoutInput,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	): Promise<ISellerPayoutRunResult[]> {
+		return this.sellerPayoutService.run({
+			periodStart: input?.periodStart ? new Date(input.periodStart) : undefined,
+			periodEnd: input?.periodEnd ? new Date(input.periodEnd) : undefined,
+			sellerIds: input?.sellerIds,
+			currency: input?.currency,
+			dryRun: input?.dryRun === true
+		});
 	}
 
 	/** Approves a payout. */
@@ -820,6 +954,46 @@ export class SellerEntityResolver {
 	}
 
 	/**
+	 * Re-drives a failed payout.
+	 *
+	 * The mutation mirrors `POST /seller-payouts/:id/retry` and carries that route's grant rather than the
+	 * one the create, update and run fields beside it carry: re-driving a transfer that failed is the
+	 * authority approving one is, because the step after it is the execution that moves money. The scope
+	 * is threaded as the route threads it.
+	 *
+	 * `seller.payout.retry` is declared with the route's own scope and its `required: false`: a retry that
+	 * re-drives a payout the client never saw the answer for would clear a failure an operator is still
+	 * reading, so a client that presents a key is answered from its first attempt instead.
+	 */
+	@Idempotent({ scope: 'seller.payout.retry', required: false, resourceType: 'seller_payout' })
+	@Mutation(() => SellerPayoutType, { name: 'retrySellerPayout' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
+	async retrySellerPayout(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<SellerPayout> {
+		return this.sellerPayoutService.retry(id, this.scope(context));
+	}
+
+	/**
+	 * Removes a payout, answering the count the deletion reports.
+	 *
+	 * The mutation mirrors `DELETE /seller-payouts/:id` and answers what that route answers: the count the
+	 * deletion reports, projected from the ORM result rather than withheld, because the row is gone and
+	 * there is no payout left to hand back. It is `SELLERS_DELETE` and neither of the two payout grants
+	 * beside it — a caller that may approve or cancel a payout is not thereby a caller that may remove one
+	 * from the table — and it is a different act from `softDeleteSellerPayout`, which keeps the row.
+	 */
+	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerPayout' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async deleteSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
+		const result = await this.sellerPayoutService.delete(id);
+
+		return { affected: result?.affected ?? 0 };
+	}
+
+	/**
 	 * Archives a payout, keeping the row.
 	 *
 	 * The mutation mirrors `DELETE /seller-payouts/:id/soft` and answers the archived payout, as that route
@@ -850,6 +1024,23 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLERS_DELETE)
 	async recoverSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
 		return this.sellerPayoutService.softRecover(id);
+	}
+
+	/**
+	 * Removes a payout line, answering the count the deletion reports.
+	 *
+	 * The mutation mirrors `DELETE /seller-payout-lines/:id`, which takes `SELLERS_DELETE`: a line is the
+	 * join row of one payout and one ledger row, and the catalogue declares the destructive grant on the
+	 * seller whose rows every row under it belongs to. It answers the count rather than a line, because
+	 * the row is gone — the archive beside it, `softDeleteSellerPayoutLine`, is the one that keeps a row
+	 * to hand back.
+	 */
+	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerPayoutLine' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async deleteSellerPayoutLine(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
+		const result = await this.sellerPayoutLineService.delete(id);
+
+		return { affected: result?.affected ?? 0 };
 	}
 
 	/**
@@ -918,6 +1109,107 @@ export class SellerEntityResolver {
 			} as Partial<SellerSettlement>,
 			this.scope(context)
 		);
+	}
+
+	/**
+	 * Amends the fields a settlement may still move: its status and what reconciliation found.
+	 *
+	 * The mutation mirrors `PUT /seller-settlements/:id`, which takes `SELLER_SETTLEMENTS_EDIT` — the same
+	 * grant the recording, reconciling, closing and disputing routes state, because a settlement is a
+	 * transcription of a provider's report and editing one is how the platform corrects its own reading of
+	 * it. The no-seller-scope note the payout update field carries applies here for the same reason: the
+	 * route hands the write no scope, so neither does the field.
+	 *
+	 * **Two calls, because the write answers a count.** The route passes the service's own return on,
+	 * which is the driver's `UpdateResult` rather than the row; the row is therefore read back with the
+	 * base read the write performs as its precondition, so the field answers the settlement a client asked
+	 * to amend rather than a write envelope.
+	 */
+	@Mutation(() => SellerSettlementType, { name: 'updateSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	async updateSellerSettlement(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input') input: IUpdateSellerSettlementInput
+	): Promise<SellerSettlement> {
+		// The cast is the route's own, for the reason the payout update field states: the DTO is not a
+		// `QueryDeepPartialEntity`, and the controller hands it on as `any`.
+		await this.sellerSettlementService.update(id, input as any);
+
+		return this.sellerSettlementService.findOneByIdString(id);
+	}
+
+	/**
+	 * Reconciles a settlement against the platform's lines for its period.
+	 *
+	 * The mutation mirrors `POST /seller-settlements/:id/reconcile` and answers both halves of what that
+	 * route answers: the settlement the comparison moved — `RECONCILED` when the figures agree and
+	 * `DISPUTED` when they do not, because a discrepancy is recorded and reported rather than repaired —
+	 * and the platform's lines the comparison was made over, each with the net the ledger carries. A
+	 * discrepancy a client could not attribute to a line is one it could not take to the provider.
+	 *
+	 * `seller.settlement.reconcile` is declared with the route's own scope and its `required: false`: a
+	 * client that re-sends a reconciliation it never saw the answer to would stamp a second reconciled
+	 * date over the first, so a client that presents a key is answered from its first attempt instead.
+	 */
+	@Idempotent({ scope: 'seller.settlement.reconcile', required: false, resourceType: 'seller_settlement' })
+	@Mutation(() => SellerSettlementReconciliationType, { name: 'reconcileSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	async reconcileSellerSettlement(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { nullable: true }) input?: IReconcileSellerSettlementInput,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	): Promise<{ settlement: SellerSettlement; differences: Array<{ transactionId: string; platformNet: string }> }> {
+		return this.sellerSettlementService.reconcile(id, input);
+	}
+
+	/**
+	 * Closes a settlement, which accepts no further lines.
+	 *
+	 * The mutation mirrors `POST /seller-settlements/:id/close` and answers the closed settlement. The
+	 * note is nullable because the route's body states it as optional: a close with no note keeps the one
+	 * the settlement already carries, which is what the service does with an absent argument.
+	 */
+	@Mutation(() => SellerSettlementType, { name: 'closeSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	async closeSellerSettlement(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('note', { type: () => String, nullable: true }) note?: string
+	): Promise<SellerSettlement> {
+		return this.sellerSettlementService.close(id, note);
+	}
+
+	/**
+	 * Marks a settlement disputed, which requires a reason.
+	 *
+	 * The mutation mirrors `POST /seller-settlements/:id/dispute`. The reason is a required argument rather
+	 * than a nullable one because the service refuses a dispute without one, and a document that let it be
+	 * omitted would let a client reach a `BAD_REQUEST` the schema could have made unreachable — the same
+	 * choice `rejectSeller` makes for its own reason.
+	 */
+	@Mutation(() => SellerSettlementType, { name: 'disputeSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLER_SETTLEMENTS_EDIT)
+	async disputeSellerSettlement(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('reason', { type: () => String }) reason: string
+	): Promise<SellerSettlement> {
+		return this.sellerSettlementService.dispute(id, reason);
+	}
+
+	/**
+	 * Removes a settlement, answering the count the deletion reports.
+	 *
+	 * The mutation mirrors `DELETE /seller-settlements/:id`, which takes `SELLERS_DELETE` rather than the
+	 * settlement edit grant the recording, reconciling, closing and disputing fields state: the ledger is
+	 * never edited to agree with an external report, so removing one is the destructive authority rather
+	 * than another way to correct it. It answers the count because the row is gone; the archive beside it
+	 * is the field that keeps one.
+	 */
+	@Mutation(() => SellerDeleteResultType, { name: 'deleteSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async deleteSellerSettlement(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
+		const result = await this.sellerSettlementService.delete(id);
+
+		return { affected: result?.affected ?? 0 };
 	}
 
 	/**
