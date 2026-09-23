@@ -192,7 +192,7 @@ jobs:
       - name: Run Postinstall Manually
         run: 'yarn postinstall.manual'
 
-      - name: Bump agent version
+      - name: Bump Agent version
         uses: actions/github-script@v8
         with:
           script: |
