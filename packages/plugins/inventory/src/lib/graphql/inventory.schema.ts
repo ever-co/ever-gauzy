@@ -363,6 +363,8 @@ export const inventorySchemaExtensions = gql`
 		consumeStockReservation(id: ID!): StockReservation!
 		createStockTransfer(input: StockTransferInput!): StockTransfer!
 		updateStockTransfer(id: ID!, note: String): StockTransfer!
+		requestStockTransfer(id: ID!): StockTransfer!
+		approveStockTransfer(id: ID!): StockTransfer!
 		shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!, idempotencyKey: String): StockTransfer!
 		receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!, idempotencyKey: String): StockTransfer!
 		cancelStockTransfer(id: ID!, reason: String): StockTransfer!

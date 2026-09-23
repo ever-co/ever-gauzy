@@ -7,12 +7,15 @@ import {
 	ICoupon,
 	IGiftCard,
 	IPromotion,
+	IPromotionAction,
+	IPromotionEvaluationResult,
 	PromotionActionAllocation,
 	PromotionActionTargetType,
 	PromotionActionType,
 	PromotionStatus,
 	PromotionType
 } from '../../promotion.types';
+import { IPromotionAllocation, IPromotionEvaluationContext } from '../../promotion/promotion.service';
 
 /**
  * The TypeScript side of the promotion domain's GraphQL contribution.
@@ -241,6 +244,23 @@ export type RedeemGiftCardPayload = IMutationPayload<'giftCard', IGiftCard> & {
 };
 /** The outcome of withdrawing a card from circulation. */
 export type VoidGiftCardPayload = IMutationPayload<'giftCard', IGiftCard>;
+/** The outcome of stopping a promotion. */
+export type DeactivatePromotionPayload = IMutationPayload<'promotion', IPromotion>;
+/** The outcome of replacing a promotion's action set. */
+export type ReplacePromotionActionsPayload = IMutationPayload<'actions', IPromotionAction[]>;
+/** The outcome of simulating a promotion against a basket. Nothing was written. */
+export type SimulatePromotionPayload = IMutationPayload<'result', IPromotionEvaluationResult> & {
+	readonly allocations?: IPromotionAllocation[];
+};
+/**
+ * The outcome of retiring a promotion recoverably.
+ *
+ * It answers with the promotion the route answers with — the row as the soft delete left it — so a
+ * caller reads the same thing over either protocol.
+ */
+export type SoftDeletePromotionPayload = IMutationPayload<'promotion', IPromotion>;
+/** The outcome of restoring a soft-deleted promotion. */
+export type RecoverPromotionPayload = IMutationPayload<'promotion', IPromotion>;
 
 /* ------------------------------------------------------------------------------------------------
  * The writable shapes
@@ -361,6 +381,25 @@ export interface IVoidGiftCardInput {
 export interface IExpirePromotionInput {
 	readonly reason?: string;
 }
+
+/** Why a promotion is being stopped. */
+export interface IDeactivatePromotionInput {
+	readonly reason?: string;
+}
+
+/** The action set that replaces a promotion's own, in application order. */
+export interface IReplacePromotionActionsInput {
+	readonly actions: IPromotionActionInput[];
+}
+
+/**
+ * The basket and the customer a promotion is simulated against.
+ *
+ * It is the service's own evaluation context rather than a second shape with the same members: the
+ * route hands its body straight to `simulate`, and a copy declared here would be a second place for a
+ * member to be added and quietly dropped on the way to the algorithm that reads it.
+ */
+export interface IPromotionSimulationInput extends IPromotionEvaluationContext {}
 
 /* ------------------------------------------------------------------------------------------------
  * Query payloads

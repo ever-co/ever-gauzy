@@ -109,6 +109,62 @@ export const schemaExtensions = gql`
 		REVERTED
 	}
 
+	"""
+	Why a promotion was excluded, or was applied only in part.
+
+	Every exclusion is reported, because a promotion that silently does nothing is the defect an
+	operator cannot diagnose. The set is closed: a notice the enum does not carry is an answer the
+	protocol cannot deliver, so a new reason is added here and to the domain enumeration together.
+	"""
+	enum PromotionNoticeCode {
+		"The promotion is not active."
+		PROMOTION_INACTIVE
+		"The promotion window is closed."
+		PROMOTION_EXPIRED
+		"The campaign the promotion belongs to has closed its window."
+		CAMPAIGN_WINDOW_CLOSED
+		"The promotion's rules did not match the context."
+		RULES_NOT_MATCHED
+		"The promotion is scoped to another seller."
+		SELLER_SCOPE_MISMATCH
+		"The promotion is priced in another currency."
+		CURRENCY_MISMATCH
+		"The promotion's global usage limit is reached."
+		USAGE_LIMIT_EXCEEDED
+		"The customer has already used the promotion as often as it allows."
+		PER_CUSTOMER_LIMIT_EXCEEDED
+		"No promotion carries the code presented."
+		COUPON_INACTIVE
+		"The coupon's own window is closed."
+		COUPON_EXPIRED
+		"The coupon's own usage limit is reached."
+		COUPON_LIMIT_EXCEEDED
+		"The coupon's own per-customer limit is reached."
+		COUPON_CUSTOMER_LIMIT_EXCEEDED
+		"The budget behind the promotion is spent."
+		BUDGET_EXCEEDED
+		"The budget admitted only part of the computed discount."
+		PARTIALLY_APPLIED_BUDGET
+		"Another promotion of the same stacking group is exclusive and already applied."
+		STACKING_CONFLICT
+		"The action matched nothing to discount."
+		NO_TARGETS
+		"Nothing was left to discount by the time this promotion ran."
+		NO_DISCOUNTABLE_AMOUNT
+		"The promotion's own discount ceiling capped the benefit."
+		PROMOTION_CAPPED
+		"The evaluation stopped after its candidate limit."
+		PROMOTION_CANDIDATE_LIMIT
+	}
+
+	"Which side of a basket an allocation lands on."
+	enum PromotionAllocationOwner {
+		"A line of the basket."
+		LINE
+		"A shipping method of the basket."
+		SHIPPING
+	}
+
 	"Lifecycle of a stored-value instrument."
 	enum GiftCardStatus {
 		ACTIVE
@@ -233,6 +289,72 @@ export const schemaExtensions = gql`
 		organizationId: ID
 		createdAt: DateTime!
 		updatedAt: DateTime!
+	}
+
+	"""
+	One promotion that was applied, with the amount it gave away.
+	"""
+	type PromotionApplication {
+		promotionId: ID!
+		"The coupon the application came through, when it came through one."
+		couponId: ID
+		"The code presented, when the application came from one."
+		code: String
+		"Whether the promotion applied itself rather than being asked for by a code."
+		isAutomatic: Boolean!
+		"The discount granted. Exact decimal."
+		amount: Decimal!
+		currency: String!
+	}
+
+	"""
+	Why a promotion was excluded, or was applied only in part.
+	"""
+	type PromotionNotice {
+		"The promotion the notice is about; empty when the notice is about a code that names none."
+		promotionId: ID!
+		"The code presented, when the notice is about a code."
+		code: String
+		notice: PromotionNoticeCode!
+		"What a person should read."
+		message: String!
+		"The figures that make the notice actionable, when it carries any."
+		details: JSON
+	}
+
+	"""
+	What one evaluation decided.
+
+	It is deterministic: the same context and the same promotion set always produce the same
+	applications and the same allocations, which is what makes a simulation a promise rather than an
+	estimate.
+	"""
+	type PromotionEvaluationResult {
+		"The promotions that applied, in the order they ran."
+		applications: [PromotionApplication!]!
+		"Every exclusion and every partial application, with its reason."
+		notices: [PromotionNotice!]!
+		"The discount the evaluation grants, as a negative decimal. Exact decimal."
+		discountTotal: Decimal!
+		currency: String!
+	}
+
+	"""
+	One owner an action decided to take money off.
+
+	An allocation is money that was or would be granted to a line or a shipping method, never what an
+	action computed: a discount the budget truncated is re-allocated, so Σ allocations is the amount
+	actually given away, to the last minor unit.
+	"""
+	type PromotionAllocation {
+		ownerType: PromotionAllocationOwner!
+		"The line or shipping method the amount lands on."
+		ownerId: ID!
+		promotionId: ID!
+		actionId: ID!
+		code: String
+		"The amount taken off this owner, negative. Exact decimal."
+		amount: Decimal!
 	}
 
 	"""
@@ -988,6 +1110,65 @@ export const schemaExtensions = gql`
 		reason: String
 	}
 
+	"""
+	Why a promotion is being stopped.
+
+	The reason is optional and is not passed to the service, which keeps none: an operator's
+	explanation belongs with the activity that recorded the act, which is where the REST route leaves
+	it too.
+	"""
+	input DeactivatePromotionInput {
+		reason: String
+	}
+
+	"The action set that replaces a promotion's own, in application order."
+	input ReplacePromotionActionsInput {
+		"""
+		The new set, applied as a whole: an action's position is part of its meaning, so a replacement
+		is the only way to remove one without renumbering the rest. An empty set is refused.
+		"""
+		actions: [PromotionActionInput!]!
+	}
+
+	"One line an evaluation may discount."
+	input PromotionEvaluationLineInput {
+		id: ID!
+		"The line's amount. Exact decimal."
+		amount: Decimal!
+		quantity: Int!
+		variantId: ID
+		sku: String
+	}
+
+	"One shipping method an evaluation may discount."
+	input PromotionEvaluationShippingInput {
+		id: ID!
+		"The method's amount. Exact decimal."
+		amount: Decimal!
+	}
+
+	"""
+	The basket and the customer a promotion is simulated against.
+
+	The context is stated by the caller rather than taken from its session, which is what lets an
+	analyst answer "what would this cost us" for a basket nobody has assembled yet.
+	"""
+	input PromotionSimulationInput {
+		"The currency the basket is priced in. A promotion in another currency is excluded with a notice."
+		currency: String!
+		channelId: ID
+		customerId: ID
+		customerGroupIds: [ID!]
+		"The codes the basket presents. A code that names nothing is a notice, not a failure."
+		codes: [String!]
+		"The lines that may be discounted."
+		lines: [PromotionEvaluationLineInput!]!
+		"The shipping methods that may be discounted."
+		shipping: [PromotionEvaluationShippingInput!]
+		"The instant the evaluation is made at; defaults to now."
+		at: DateTime
+	}
+
 	# ------------------------------------------------------------------------------------------------
 	# Mutation payloads. A payload always carries the resource, the operation and the caller-correctable
 	# outcomes; a business rejection is a successful operation with a \`userError\`.
@@ -1025,6 +1206,51 @@ export const schemaExtensions = gql`
 
 	"The outcome of closing a promotion before its window ends."
 	type ExpirePromotionPayload {
+		promotion: Promotion
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of stopping a promotion."
+	type DeactivatePromotionPayload {
+		promotion: Promotion
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of replacing a promotion's action set."
+	type ReplacePromotionActionsPayload {
+		"The stored actions, in application order."
+		actions: [PromotionAction!]!
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"""
+	The outcome of simulating a promotion against a basket.
+
+	Nothing was written: no reservation, no budget consumption, no usage row. The payload states what
+	the evaluation decided, which is the same answer the checkout path computes.
+	"""
+	type SimulatePromotionPayload {
+		"The applications, the notices and the total the promotion would produce."
+		result: PromotionEvaluationResult
+		"Every owner the discount would land on, to the last minor unit."
+		allocations: [PromotionAllocation!]!
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a promotion recoverably."
+	type SoftDeletePromotionPayload {
+		"The promotion as the soft delete left it: still queryable, its ledger intact."
+		promotion: Promotion
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted promotion."
+	type RecoverPromotionPayload {
 		promotion: Promotion
 		operation: Operation
 		userErrors: [UserError!]!
@@ -1273,6 +1499,27 @@ export const schemaExtensions = gql`
 		deletePromotion(id: ID!): DeletePromotionPayload!
 		"Starts a promotion, so its rules may match."
 		activatePromotion(id: ID!): ActivatePromotionPayload!
+		"""
+		Stops a promotion, so its rules no longer match anything.
+
+		Deactivation and expiry are separate acts, not one field with a status argument: a promotion an
+		operator pulled is \`INACTIVE\` and can be started again, while one whose window closed is
+		\`EXPIRED\`.
+		"""
+		deactivatePromotion(id: ID!, input: DeactivatePromotionInput): DeactivatePromotionPayload!
+		"Replaces the whole action set of a promotion, rather than merging into it."
+		replacePromotionActions(id: ID!, input: ReplacePromotionActionsInput!): ReplacePromotionActionsPayload!
+		"""
+		Dry-runs one promotion against a basket, writing nothing.
+
+		The evaluation the checkout runs, restricted to the promotion named, so "why did this offer not
+		fire" is answerable before it is published.
+		"""
+		simulatePromotion(id: ID!, input: PromotionSimulationInput!): SimulatePromotionPayload!
+		"Retires a promotion recoverably: its counters and its redemption ledger are kept."
+		softDeletePromotion(id: ID!): SoftDeletePromotionPayload!
+		"Restores a soft-deleted promotion."
+		recoverPromotion(id: ID!): RecoverPromotionPayload!
 		"Closes a promotion before its window ends."
 		expirePromotion(id: ID!, input: ExpirePromotionInput): ExpirePromotionPayload!
 		"Creates a campaign."

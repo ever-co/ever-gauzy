@@ -1,6 +1,8 @@
 import { Field, Float, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
 import {
 	CommissionBasis,
+	DecimalString,
+	ICommissionTier,
 	OfferingCondition,
 	OfferingFulfilmentMode,
 	OfferingStatus,
@@ -12,6 +14,7 @@ import {
 	SellerStatus,
 	SellerTransactionKind,
 	SellerTransactionStatus,
+	SellerVerificationKind,
 	SellerVerificationStatus,
 	TaxCollectionMode,
 	TaxRegistrationScheme
@@ -26,6 +29,10 @@ import type { IBulkSellerOfferingItemResult } from '../seller-offering/seller-of
  * API and the database cannot drift into two vocabularies for one concept.
  */
 registerEnumType(SellerStatus, { name: 'SellerStatus', description: 'Where a seller stands.' });
+registerEnumType(SellerVerificationKind, {
+	name: 'SellerVerificationKind',
+	description: 'Which verification a recorded result belongs to.'
+});
 registerEnumType(SellerVerificationStatus, {
 	name: 'SellerVerificationStatus',
 	description: 'The state of one verification kind.'
@@ -560,4 +567,133 @@ export class BulkSellerOfferingsPayloadType {
 	/** How many items the request carried. */
 	@Field(() => Int)
 	total: number;
+}
+
+/**
+ * What a hard deletion reports.
+ *
+ * The REST route answers with the ORM's own `DeleteResult`, and this is that result's one actionable
+ * member rather than the whole of it. `raw` is deliberately not projected: it is the driver's payload
+ * rather than the platform's answer, and §3.1 of the GraphQL specification is explicit that parity is
+ * capability parity and not shape parity — a client that needs the count is served, and a client that
+ * would read a Postgres-specific envelope is not taught to.
+ */
+@ObjectType('SellerDeleteResult')
+export class SellerDeleteResultType {
+	/** How many rows the deletion removed: one, or none when the id matched nothing. */
+	@Field(() => Int)
+	affected: number;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * The write inputs
+ * ---------------------------------------------------------------------------------------------- */
+
+/**
+ * What a caller supplies to open a seller account.
+ *
+ * The members are the writable half of `SellerDTO` and nothing else. `organizationId`, `tenantId` and
+ * the organization object are absent for the reason that body's own documentation gives: they are the
+ * request's rather than the body's, and the service overwrites them from the context. A member a
+ * document advertises and the platform then discards is worse than one it never declared, because a
+ * caller that stated it would believe it had moved the seller between organizations.
+ */
+export interface ICreateSellerInput {
+	/** Required: a seller without a code cannot be referred to by a ledger row or a statement. */
+	code: string;
+	/** Required: a seller without a party cannot be verified, contracted with or taxed. */
+	contactId: string;
+	name?: string;
+	legalName?: string;
+	email?: string;
+	phone?: string;
+	merchantId?: string;
+	userId?: string;
+	channelIds?: string[];
+	regionIds?: string[];
+	payoutAccountReference?: string;
+	payoutAccountHolderId?: string;
+	taxId?: string;
+	vatNumber?: string;
+	taxCountryCode?: string;
+	taxRegistrationScheme?: TaxRegistrationScheme;
+	taxCollectionMode?: TaxCollectionMode;
+	/** A fraction, not a percentage: `0.15` is fifteen per cent. */
+	defaultCommissionRate?: DecimalString;
+	commissionBasis?: CommissionBasis;
+	commissionTiers?: ICommissionTier[];
+	fixedFeePerItem?: DecimalString;
+	fixedFeeCurrency?: string;
+	commissionOnShipping?: boolean;
+	chargeShippingCost?: boolean;
+	allowNegativeNet?: boolean;
+	payoutMode?: SellerPayoutMode;
+	payoutSchedule?: SellerPayoutSchedule;
+	payoutCurrency?: string;
+	payoutThreshold?: DecimalString;
+	reservePercent?: DecimalString;
+	reserveHoldDays?: number;
+	payoutHoldDays?: number;
+	externalId?: string;
+	metadata?: Record<string, any>;
+}
+
+/**
+ * What a caller supplies to amend a seller account.
+ *
+ * The party binding and the code are absent because they are immutable on the REST body too:
+ * `UpdateSellerDTO` omits them, and the service deletes them from any body that carries them anyway.
+ * A caller is therefore refused the same two members by the document as by the write, rather than
+ * being shown a member the platform would silently drop.
+ */
+export interface IUpdateSellerInput {
+	name?: string;
+	legalName?: string;
+	email?: string;
+	phone?: string;
+	merchantId?: string;
+	userId?: string;
+	channelIds?: string[];
+	regionIds?: string[];
+	payoutAccountReference?: string;
+	payoutAccountHolderId?: string;
+	taxId?: string;
+	vatNumber?: string;
+	taxCountryCode?: string;
+	taxRegistrationScheme?: TaxRegistrationScheme;
+	taxCollectionMode?: TaxCollectionMode;
+	defaultCommissionRate?: DecimalString;
+	commissionBasis?: CommissionBasis;
+	commissionTiers?: ICommissionTier[];
+	fixedFeePerItem?: DecimalString;
+	fixedFeeCurrency?: string;
+	commissionOnShipping?: boolean;
+	chargeShippingCost?: boolean;
+	allowNegativeNet?: boolean;
+	payoutMode?: SellerPayoutMode;
+	payoutSchedule?: SellerPayoutSchedule;
+	payoutCurrency?: string;
+	payoutThreshold?: DecimalString;
+	reservePercent?: DecimalString;
+	reserveHoldDays?: number;
+	payoutHoldDays?: number;
+	externalId?: string;
+	metadata?: Record<string, any>;
+}
+
+/**
+ * What a caller supplies to record one verification kind's result.
+ *
+ * `kind` and `status` are required on both surfaces: the REST body states them as required members of an
+ * inline type, and the service refuses a result that carries neither with `BAD_REQUEST`. The relation
+ * `reference` and `provider` are the evidence the verdict rests on, and `expiresAt` is the window the
+ * verdict is good for — a verdict with no window is one a statement cannot age.
+ */
+export interface IVerifySellerInput {
+	kind: SellerVerificationKind;
+	status: SellerVerificationStatus;
+	reference?: string;
+	provider?: string;
+	expiresAt?: Date;
+	note?: string;
 }

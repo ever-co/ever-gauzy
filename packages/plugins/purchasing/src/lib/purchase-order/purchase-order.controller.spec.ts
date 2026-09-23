@@ -25,9 +25,24 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
-	/** The CRUD base, as a class the controller can extend: its own routes are not what this suite pins. */
+	/**
+	 * The CRUD base, as a class the controller can extend.
+	 *
+	 * Its own routes are not what this suite pins, with one exception: the pair the controller overrides
+	 * only to state a permission keeps the base's behaviour here, so the soft routes can be driven the
+	 * way the application drives them and compared with the mutations that mirror them. The base hands
+	 * the option list its own handler parameters collected to the service, which is what the double does.
+	 */
 	class CrudController {
-		constructor(protected readonly crudService: unknown) {}
+		constructor(protected readonly crudService: any) {}
+
+		async softRemove(id: any, ...options: any[]): Promise<any> {
+			return this.crudService.softRemove(id, options);
+		}
+
+		async softRecover(id: any, ...options: any[]): Promise<any> {
+			return this.crudService.softRecover(id, options);
+		}
 	}
 
 	class CrudService {
@@ -119,6 +134,7 @@ jest.mock('@gauzy/core/src/lib/idempotency/idempotency.service', () => ({
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { from, lastValueFrom } from 'rxjs';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempotency.policy';
 import { IdempotencyInterceptor } from '@gauzy/core/src/lib/idempotency/idempotency.interceptor';
 import { PurchaseOrderController } from './purchase-order.controller';
@@ -440,5 +456,205 @@ describe('PurchaseOrderController — a retried create', () => {
 		await send(surface, 'create', second, [second.body]);
 
 		expect(surface.service.create).toHaveBeenCalledTimes(2);
+	});
+});
+
+/**
+ * The mutations a client can reach that mirror routes the resolver did not serve (doc 17 §3.1).
+ *
+ * §3.1 asks for **capability parity**: one mutation per REST write route, stating the permission that
+ * route states and making the call that route makes. Five routes of this resource were served over REST
+ * only — acknowledging a sent order, approving one internally, receiving goods against it, and the two
+ * routes the CRUD base inherits, `DELETE /:id/soft` and `PUT /:id/recover` — so a client on the GraphQL
+ * surface could raise an order, send it and close it, but could not record what the supplier said, could
+ * not release it, could not book what arrived, and could not withdraw or restore it at all.
+ *
+ * Each case below drives both surfaces over one stubbed service and compares what the service was asked
+ * to do, so the field is asserted to be the route's capability in the other protocol rather than a
+ * second implementation of it. The permission is read from the metadata a guard reads, on both surfaces,
+ * so the two cannot disagree about which grant an operation needs.
+ */
+
+/** The date a supplier confirmed, and the note that came with it. */
+const CONFIRMED_AT = new Date('2026-01-05T09:00:00.000Z');
+const ACKNOWLEDGEMENT_NOTE = 'Supplier confirmed the revised date.';
+
+/** The quantities that arrived, as the body of the receiving route states them. */
+const RECEIVED_LINES = [{ purchaseOrderLineId: '00000000-0000-4000-8000-0000000000d5', quantity: '4.000000' }];
+
+/** The receipt the recording answers with. */
+const RECEIPT = '00000000-0000-4000-8000-0000000000d6';
+
+/**
+ * What each operation answers with, as one object per operation.
+ *
+ * The stubs resolve with a fixed row rather than a fresh literal so the two surfaces can be compared by
+ * identity: "the field answers the same thing the route answers" is a stronger statement than a deep
+ * equality of two objects that happen to have the same members, and it is the statement the parity rule
+ * makes.
+ */
+const ACKNOWLEDGED = { id: ORDER, status: 'ACKNOWLEDGED', note: ACKNOWLEDGEMENT_NOTE };
+const APPROVED = { id: ORDER, status: 'DRAFT', approvedAt: CONFIRMED_AT };
+const RECORDED = { id: RECEIPT, receivedAt: CONFIRMED_AT };
+const WITHDRAWN = { id: ORDER, deletedAt: CONFIRMED_AT };
+const RESTORED = { id: ORDER, deletedAt: null };
+
+/**
+ * Each route and the mutation that mirrors it, with the permission both of them state.
+ *
+ * The values are the permission strings themselves rather than the enumeration's members, because a
+ * string is what the guard compares: an enumeration that was renamed without the catalogue moving with
+ * it would leave both surfaces agreeing with each other and disagreeing with the guard.
+ *
+ * The receiving route is the one that states a grant from the other resource of this plugin
+ * (`GOODS_RECEIPTS_CREATE`, not a purchase-order permission) — the operation writes stock movements and
+ * the order's received counters, so it is the receiving authority rather than an edit to a document. The
+ * table states it as the route does, which is the whole point of reading the permission off both
+ * surfaces rather than off one of them.
+ */
+const MIRRORED: Array<{ route: keyof PurchaseOrderController; field: keyof PurchaseOrderResolver; permission: string }> = [
+	{ route: 'acknowledge', field: 'acknowledgePurchaseOrder', permission: 'PURCHASE_ORDERS_EDIT' },
+	{ route: 'approve', field: 'approvePurchaseOrder', permission: 'PURCHASE_ORDERS_APPROVE' },
+	{ route: 'receive', field: 'receivePurchaseOrder', permission: 'GOODS_RECEIPTS_CREATE' },
+	{ route: 'softRemove', field: 'softDeletePurchaseOrder', permission: 'PURCHASE_ORDERS_EDIT' },
+	{ route: 'softRecover', field: 'recoverPurchaseOrder', permission: 'PURCHASE_ORDERS_EDIT' }
+];
+
+/** The controller and the resolver over one stubbed set of services. */
+function mirrored() {
+	const orderService = {
+		acknowledge: jest.fn().mockResolvedValue(ACKNOWLEDGED),
+		approve: jest.fn().mockResolvedValue(APPROVED),
+		softRemove: jest.fn().mockResolvedValue(WITHDRAWN),
+		softRecover: jest.fn().mockResolvedValue(RESTORED)
+	};
+	const receiptService = { receive: jest.fn().mockResolvedValue(RECORDED) };
+
+	return {
+		orderService,
+		receiptService,
+		controller: new PurchaseOrderController(orderService as never, receiptService as never),
+		resolver: new PurchaseOrderResolver(orderService as never, {} as never, receiptService as never)
+	};
+}
+
+describe('the purchase-order mutations — the routes they mirror (doc 17 §3.1)', () => {
+	it('states the permission each of its routes states, on both surfaces', () => {
+		for (const entry of MIRRORED) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, PurchaseOrderController.prototype[entry.route])).toEqual([
+				entry.permission
+			]);
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, PurchaseOrderResolver.prototype[entry.field])).toEqual([
+				entry.permission
+			]);
+		}
+
+		// Both classes carry the read grant, so every one of these has to state its own: a handler that
+		// declared none would be reachable by any caller who may look at an order — which is the shape of
+		// the defect the soft routes were overridden to close, and the reason the fields state it too.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, PurchaseOrderController)).toEqual(['PURCHASE_ORDERS_VIEW']);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, PurchaseOrderResolver)).toEqual(['PURCHASE_ORDERS_VIEW']);
+	});
+
+	it('acknowledges through the same service method the route calls, with the same body', async () => {
+		const { orderService, controller, resolver } = mirrored();
+
+		const overRest = await controller.acknowledge(ORDER, { expectedAt: CONFIRMED_AT, note: ACKNOWLEDGEMENT_NOTE }, undefined);
+		const overGraphql = await resolver.acknowledgePurchaseOrder(ORDER, CONFIRMED_AT, ACKNOWLEDGEMENT_NOTE);
+
+		expect(orderService.acknowledge).toHaveBeenCalledTimes(2);
+
+		for (const call of orderService.acknowledge.mock.calls) {
+			expect(call[0]).toBe(ORDER);
+			expect(call[1]).toMatchObject({ expectedAt: CONFIRMED_AT, note: ACKNOWLEDGEMENT_NOTE });
+		}
+
+		// The version is absent on both: the route read none because the request carried no `If-Match`,
+		// and the field never states one, because a field has no header to read it from.
+		expect(orderService.acknowledge.mock.calls[0][1].expectedVersion).toBeUndefined();
+		expect(orderService.acknowledge.mock.calls[1][1]).not.toHaveProperty('expectedVersion');
+		// One answer, one implementation: the payload carries the order the route itself returns.
+		expect(overGraphql.purchaseOrder).toBe(overRest);
+		expect(overGraphql.userErrors).toEqual([]);
+	});
+
+	it('approves through the same service method the route calls, under the approval grant', async () => {
+		const { orderService, controller, resolver } = mirrored();
+
+		const overRest = await controller.approve(ORDER, { note: ACKNOWLEDGEMENT_NOTE }, undefined);
+		const overGraphql = await resolver.approvePurchaseOrder(ORDER, ACKNOWLEDGEMENT_NOTE);
+
+		expect(orderService.approve).toHaveBeenCalledTimes(2);
+		expect(orderService.approve.mock.calls.map((call) => call[0])).toEqual([ORDER, ORDER]);
+		expect(orderService.approve.mock.calls.map((call) => call[1])).toEqual([
+			ACKNOWLEDGEMENT_NOTE,
+			ACKNOWLEDGEMENT_NOTE
+		]);
+		expect(overGraphql.purchaseOrder).toBe(overRest);
+		expect(overGraphql.userErrors).toEqual([]);
+	});
+
+	it('receives through the same service method the route calls, under the receiving grant', async () => {
+		const { receiptService, controller, resolver } = mirrored();
+		const delivery = {
+			receivedAt: CONFIRMED_AT,
+			overReceiptTolerance: '0.050000',
+			note: ACKNOWLEDGEMENT_NOTE,
+			lines: RECEIVED_LINES
+		};
+
+		const overRest = await controller.receive(ORDER, delivery as never, undefined);
+		const overGraphql = await resolver.receivePurchaseOrder(ORDER, delivery as never);
+
+		expect(receiptService.receive).toHaveBeenCalledTimes(2);
+
+		for (const call of receiptService.receive.mock.calls) {
+			expect(call[0]).toMatchObject({
+				// The order is stated the way each surface can state it: in the route's path, and as the
+				// field's own argument here.
+				purchaseOrderId: ORDER,
+				receivedAt: CONFIRMED_AT,
+				overReceiptTolerance: '0.050000',
+				note: ACKNOWLEDGEMENT_NOTE,
+				lines: RECEIVED_LINES
+			});
+		}
+
+		// The same answer the route gives, carried in the payload this plugin's mutations answer with: the
+		// field is the route's capability, and the shape it reports it in is the protocol's.
+		expect(overGraphql.goodsReceipt).toBe(overRest);
+		expect(overGraphql.userErrors).toEqual([]);
+	});
+
+	it('withdraws and restores through the inherited routes’ own service calls', async () => {
+		const { orderService, controller, resolver } = mirrored();
+
+		const overRest = await controller.softRemove(ORDER);
+		const overGraphql = await resolver.softDeletePurchaseOrder(ORDER);
+
+		expect(orderService.softRemove).toHaveBeenCalledTimes(2);
+		expect(orderService.softRemove.mock.calls.map((call) => call[0])).toEqual([ORDER, ORDER]);
+		// The route forwards the (empty) option list its own handler parameters collected; the field
+		// collects no parameters, so it forwards none — the service reads both as "no options", and this is
+		// how every other inherited soft removal of the platform is bound.
+		expect(orderService.softRemove.mock.calls[1]).toEqual([ORDER]);
+		expect(overGraphql).toBe(overRest);
+
+		const restoredOverRest = await controller.softRecover(ORDER);
+		const restoredOverGraphql = await resolver.recoverPurchaseOrder(ORDER);
+
+		expect(orderService.softRecover).toHaveBeenCalledTimes(2);
+		expect(orderService.softRecover.mock.calls.map((call) => call[0])).toEqual([ORDER, ORDER]);
+		expect(restoredOverGraphql).toBe(restoredOverRest);
+	});
+
+	it('leaves the mirrored mutations alone, because none of the routes declares a retry key', () => {
+		// The delivery-recording mutation on the receipt resource demands a key, because a delivery booked
+		// twice books the stock twice. The order path deliberately does not, and neither do the transitions
+		// — each of them takes its own version precondition instead — so a field that copied that
+		// declaration would refuse callers the route serves.
+		for (const entry of MIRRORED) {
+			expect(declarationOf(PurchaseOrderResolver, entry.field)).toBeUndefined();
+		}
 	});
 });

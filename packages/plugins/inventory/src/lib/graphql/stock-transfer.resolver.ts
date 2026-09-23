@@ -119,6 +119,43 @@ export class StockTransferResolver {
 	}
 
 	/**
+	 * Submits a draft transfer for approval.
+	 *
+	 * The field states `STOCK_TRANSFER_CREATE` because the route states it, and the two grants are
+	 * deliberately not the same one: submitting a transfer is what the operator who drafted it does,
+	 * while releasing it is somebody else's decision. A field that served the submission under the
+	 * approval grant — or the reverse — would hand a caller over GraphQL a transition the REST route
+	 * refuses it, which is the drift this pairing exists to prevent.
+	 *
+	 * No version is stated, for the reason the edit above states none: the REST route reads one from
+	 * `If-Match` and a GraphQL field has no header to carry it. The transition is still conditional —
+	 * `commitTransition` predicates the `UPDATE` on the version it read inside the transaction and
+	 * refuses a transfer another operator moved in between — so a concurrent submission is reported as
+	 * the conflict it is rather than silently landing on top of one.
+	 */
+	@Mutation('requestStockTransfer')
+	@Permissions(InventoryPermission.STOCK_TRANSFER_CREATE as PermissionsEnum)
+	async requestStockTransfer(@Args('id') id: string): Promise<any> {
+		return await this.service.request(id);
+	}
+
+	/**
+	 * Approves a requested transfer.
+	 *
+	 * Bound beside the submission rather than folded into it: the service holds them as two
+	 * transitions with two permissions, and the field carries the approval grant the route carries, so
+	 * a role that may draft a transfer cannot release it by asking GraphQL instead of REST.
+	 *
+	 * The version the route reads from `If-Match` is absent here for the same reason, and the
+	 * transition is conditional in the same place.
+	 */
+	@Mutation('approveStockTransfer')
+	@Permissions(InventoryPermission.STOCK_TRANSFER_APPROVE as PermissionsEnum)
+	async approveStockTransfer(@Args('id') id: string): Promise<any> {
+		return await this.service.approve(id);
+	}
+
+	/**
 	 * Dispatches a transfer and writes the outbound movements.
 	 *
 	 * The movements land on the levels of the source location, one per line, so the level write is

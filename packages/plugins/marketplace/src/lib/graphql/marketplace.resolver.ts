@@ -44,7 +44,11 @@ import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
 import { ISellerScope } from '../seller-scope/seller-scope';
 import {
 	BulkSellerOfferingsPayloadType,
+	ICreateSellerInput,
+	IUpdateSellerInput,
+	IVerifySellerInput,
 	SellerBalanceType,
+	SellerDeleteResultType,
 	SellerOfferingType,
 	SellerPayoutType,
 	SellerSettlementType,
@@ -360,6 +364,160 @@ export class SellerEntityResolver {
 	@Permissions(PermissionsEnum.SELLERS_EDIT)
 	async reinstateSeller(@Args('id', { type: () => ID }) id: string, @Context() context?: any): Promise<Seller> {
 		return this.sellerService.reinstate(id, this.scope(context));
+	}
+
+	/**
+	 * Opens a seller account on the seller's behalf.
+	 *
+	 * The mutation mirrors `POST /sellers` and makes the call that route makes: the applicant is born
+	 * `DRAFT`, bound to the organization the request carries rather than to one the input names, and its
+	 * verification statuses start `UNVERIFIED`. `SELLERS_CREATE` is stated here because the route states
+	 * it, and the class-level read grant would otherwise be the only thing in front of a write.
+	 *
+	 * The seller scope is deliberately not handed on, because the route does not hand it on either: the
+	 * service takes none for a creation, and a field that narrowed here while REST did not would refuse a
+	 * caller the other protocol served — a divergence in the opposite direction from the one this class
+	 * exists to close, and just as invisible.
+	 *
+	 * `seller.create` is declared with the route's own scope and the route's own `required: false`, so an
+	 * applicant that re-sends an application it never saw acknowledged is answered from its first attempt
+	 * over either protocol rather than with the collision its own code would cause.
+	 */
+	@Idempotent({ scope: 'seller.create', required: false, resourceType: 'seller' })
+	@Mutation(() => SellerType, { name: 'createSeller' })
+	@Permissions(PermissionsEnum.SELLERS_CREATE)
+	async createSeller(
+		@Args('input') input: ICreateSellerInput,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	): Promise<Seller> {
+		return this.sellerService.createSeller(input as Partial<Seller>);
+	}
+
+	/**
+	 * Amends a seller's profile, commission defaults, payout terms and tax identifiers.
+	 *
+	 * The mutation mirrors `PUT /sellers/:id`, and it is the one seller write whose service method
+	 * narrows by the scope it is handed — a seller-scoped caller reaching another seller's account is
+	 * refused by `assertSellerScope` inside `updateSeller`, not by the guard. A field that dropped the
+	 * scope would therefore run unscoped and look exactly like its siblings from the outside, which is
+	 * why the scope is threaded here rather than stated as `undefined`.
+	 */
+	@Mutation(() => SellerType, { name: 'updateSeller' })
+	@Permissions(PermissionsEnum.SELLERS_EDIT)
+	async updateSeller(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input') input: IUpdateSellerInput,
+		@Context() context?: any
+	): Promise<Seller> {
+		return this.sellerService.updateSeller(id, input as Partial<Seller>, this.scope(context));
+	}
+
+	/**
+	 * Records one verification kind's result.
+	 *
+	 * The mutation mirrors `POST /sellers/:id/verify` and makes that route's call: the three required
+	 * kinds are the service's own default, so a verdict that completes the set moves an `IN_REVIEW`
+	 * seller to `APPROVED` here exactly as it does over REST. The route threads no seller scope and the
+	 * service takes none, so none is invented here.
+	 *
+	 * `seller.verify` is declared with the route's own scope and its `required: false`: a verifier that
+	 * re-sends a verdict it never saw acknowledged would otherwise stamp a fresh verification date over
+	 * the one already recorded, so the key answers it from the first attempt instead.
+	 */
+	@Idempotent({ scope: 'seller.verify', required: false, resourceType: 'seller' })
+	@Mutation(() => SellerType, { name: 'verifySeller' })
+	@Permissions(PermissionsEnum.SELLERS_EDIT)
+	async verifySeller(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input') input: IVerifySellerInput,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	): Promise<Seller> {
+		return this.sellerService.verify(id, input);
+	}
+
+	/**
+	 * Refuses an application.
+	 *
+	 * The mutation mirrors `POST /sellers/:id/reject`. The reason is a required argument rather than a
+	 * nullable one because the service refuses a rejection without one, and a document that let it be
+	 * omitted would let a client reach a `BAD_REQUEST` the schema could have made unreachable.
+	 */
+	@Mutation(() => SellerType, { name: 'rejectSeller' })
+	@Permissions(PermissionsEnum.SELLERS_EDIT)
+	async rejectSeller(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('reason', { type: () => String }) reason: string
+	): Promise<Seller> {
+		return this.sellerService.reject(id, reason);
+	}
+
+	/**
+	 * Starts winding a seller down.
+	 *
+	 * The mutation mirrors `POST /sellers/:id/offboard`, whose handler calls `startOffboarding` rather
+	 * than a method named after the route. The move is one lifecycle transition and no more: the final
+	 * payout and the erasure behind it are the durable operation's steps, so a failure later cannot leave
+	 * the seller in a state the operation cannot resume from.
+	 *
+	 * `seller.offboard` is declared with the route's own scope and its `required: false`: a second
+	 * attempt is refused by the state machine rather than applied twice, so answering a keyed retry from
+	 * the first attempt's record is the more useful of the two answers.
+	 */
+	@Idempotent({ scope: 'seller.offboard', required: false, resourceType: 'seller' })
+	@Mutation(() => SellerType, { name: 'offboardSeller' })
+	@Permissions(PermissionsEnum.SELLERS_EDIT)
+	async offboardSeller(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string
+	): Promise<Seller> {
+		return this.sellerService.startOffboarding(id);
+	}
+
+	/**
+	 * Removes a seller account.
+	 *
+	 * The mutation mirrors `DELETE /sellers/:id` and answers what that route answers: the count the
+	 * deletion reports, projected from the ORM result rather than withheld. It is `SELLERS_DELETE` and
+	 * not the edit grant beside it because the route states `SELLERS_DELETE`, and a caller that may amend
+	 * a seller is not thereby a caller that may remove one.
+	 *
+	 * The row is not read back before or after the deletion: the route does not read it, so a field that
+	 * did would be answering a seller the route never returned and would turn one capability into two.
+	 */
+	@Mutation(() => SellerDeleteResultType, { name: 'deleteSeller' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async deleteSeller(@Args('id', { type: () => ID }) id: string): Promise<{ affected: number }> {
+		const result = await this.sellerService.delete(id);
+
+		return { affected: result?.affected ?? 0 };
+	}
+
+	/**
+	 * Archives a seller account, keeping the row.
+	 *
+	 * The mutation mirrors `DELETE /sellers/:id/soft` and answers the archived seller, as that route
+	 * does. The inherited route hands `CrudController.softRemove` its rest parameter — an empty array —
+	 * which the service normalises to no find options, so the call stated here is the one that
+	 * normalisation reaches rather than an array the service would only discard.
+	 */
+	@Mutation(() => SellerType, { name: 'softDeleteSeller' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async softDeleteSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
+		return this.sellerService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted seller account.
+	 *
+	 * The mutation mirrors `PUT /sellers/:id/recover` and answers the restored seller. It carries
+	 * `SELLERS_DELETE` rather than the edit grant because restoring is the same destructive authority
+	 * read backwards: the route states `SELLERS_DELETE`, and the service reads the row `withDeleted`,
+	 * which is a visibility no ordinary read has.
+	 */
+	@Mutation(() => SellerType, { name: 'restoreSeller' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async restoreSeller(@Args('id', { type: () => ID }) id: string): Promise<Seller> {
+		return this.sellerService.softRecover(id);
 	}
 
 	/**

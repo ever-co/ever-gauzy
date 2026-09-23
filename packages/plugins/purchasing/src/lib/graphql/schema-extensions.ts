@@ -493,6 +493,25 @@ export const schemaExtensions = gql`
 		note: String
 	}
 
+	"""
+	The delivery a caller records against the order the field already names.
+
+	It is the body of \`POST /purchase-orders/:id/receipts\`, and it deliberately states neither of the two
+	members the standalone delivery input carries: the order is the field's own argument on this path, and
+	the retry key is not demanded here — the order path books a delivery the caller is already looking at
+	rather than one raised on its own, so a key the route never asks for would refuse callers the route
+	serves. The location is absent for the same reason it is absent from the route: a delivery anchored to
+	an order inherits that order's receiving location, and an input that accepted a location the service
+	never receives would tell a caller it had moved the goods somewhere it had not.
+	"""
+	input ReceivePurchaseOrderInput {
+		receivedAt: DateTime
+		"Fraction of the ordered quantity a line may be exceeded by, e.g. 0.050000 for five percent. The line's own standing allowance applies when omitted."
+		overReceiptTolerance: Decimal
+		note: String
+		lines: [GoodsReceiptLineInput!]!
+	}
+
 	"The outcome of a mutation on a purchase order."
 	type PurchaseOrderPayload {
 		purchaseOrder: PurchaseOrder
@@ -541,10 +560,27 @@ export const schemaExtensions = gql`
 		deletePurchaseOrder(id: ID!): DeletePurchaseOrderPayload!
 		"Sends an approved purchase order to the supplier."
 		sendPurchaseOrder(id: ID!, email: String, note: String): PurchaseOrderPayload!
+		"Records the supplier's acknowledgement of a sent order, revising its expected date when one is stated."
+		acknowledgePurchaseOrder(id: ID!, expectedAt: DateTime, note: String): PurchaseOrderPayload!
+		"Approves a purchase order internally, which is what permits it to be sent."
+		approvePurchaseOrder(id: ID!, note: String): PurchaseOrderPayload!
 		"Closes a purchase order short of the ordered quantity."
 		closePurchaseOrder(id: ID!, reason: String): PurchaseOrderPayload!
 		"Cancels a purchase order before anything arrived."
 		cancelPurchaseOrder(id: ID!, reason: String): PurchaseOrderPayload!
+		"""
+		Receives goods against a purchase order, writing the stock movements they produce. The order is
+		the one the caller is already looking at, so the field carries it as its own argument and the
+		delivery is the input.
+		"""
+		receivePurchaseOrder(id: ID!, input: ReceivePurchaseOrderInput!): GoodsReceiptPayload!
+		"""
+		Withdraws a purchase order without removing the row, so the recovery below can read it back. The
+		answer is the withdrawn document, as it is on every other soft removal of the platform.
+		"""
+		softDeletePurchaseOrder(id: ID!): PurchaseOrder!
+		"Puts a withdrawn purchase order back."
+		recoverPurchaseOrder(id: ID!): PurchaseOrder!
 		"Receives goods against a purchase order, writing the stock movements they produce."
 		createGoodsReceipt(input: CreateGoodsReceiptInput!): GoodsReceiptPayload!
 		"Records one further line against a receipt that was already posted."

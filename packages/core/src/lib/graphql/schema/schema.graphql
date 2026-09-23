@@ -9535,11 +9535,28 @@ type Mutation {
   """Delete a price list, softly unless `force` is set."""
   deletePriceList(id: ID!, force: Boolean): DeletePriceListPayload!
 
+  """
+  Retire a price list recoverably, keeping it and the prices it carries queryable.
+  """
+  softDeletePriceList(id: ID!): PriceList!
+
+  """Restore a soft-deleted price list."""
+  recoverPriceList(id: ID!): PriceList!
+
   """Publish a built price list, so that its prices begin to resolve."""
   activatePriceList(id: ID!): PriceList!
 
   """Withdraw a price list without deleting it or the prices it carries."""
   expirePriceList(id: ID!): PriceList!
+
+  """
+  Dry-run one price list against a context without writing anything.
+  
+  The resolution is the storefront's own, restricted to the list named, so a draft list can be
+  previewed before it is published. A variant the list does not price is omitted rather than
+  resolved to zero, exactly as `resolvePrice` omits it.
+  """
+  simulatePriceList(id: ID!, input: ResolvePriceInput!): [ResolvedPrice!]!
 
   """
   Create a price row: a default price, a tiered price, a list price or a scheduled one.
@@ -9609,6 +9626,8 @@ type Mutation {
   consumeStockReservation(id: ID!): StockReservation!
   createStockTransfer(input: StockTransferInput!): StockTransfer!
   updateStockTransfer(id: ID!, note: String): StockTransfer!
+  requestStockTransfer(id: ID!): StockTransfer!
+  approveStockTransfer(id: ID!): StockTransfer!
   shipStockTransfer(id: ID!, lines: [StockTransferShipLineInput!]!, idempotencyKey: String): StockTransfer!
   receiveStockTransfer(id: ID!, lines: [StockTransferReceiveLineInput!]!, idempotencyKey: String): StockTransfer!
   cancelStockTransfer(id: ID!, reason: String): StockTransfer!
@@ -9852,6 +9871,36 @@ type Mutation {
   """Starts a promotion, so its rules may match."""
   activatePromotion(id: ID!): ActivatePromotionPayload!
 
+  """
+  Stops a promotion, so its rules no longer match anything.
+  
+  Deactivation and expiry are separate acts, not one field with a status argument: a promotion an
+  operator pulled is `INACTIVE` and can be started again, while one whose window closed is
+  `EXPIRED`.
+  """
+  deactivatePromotion(id: ID!, input: DeactivatePromotionInput): DeactivatePromotionPayload!
+
+  """
+  Replaces the whole action set of a promotion, rather than merging into it.
+  """
+  replacePromotionActions(id: ID!, input: ReplacePromotionActionsInput!): ReplacePromotionActionsPayload!
+
+  """
+  Dry-runs one promotion against a basket, writing nothing.
+  
+  The evaluation the checkout runs, restricted to the promotion named, so "why did this offer not
+  fire" is answerable before it is published.
+  """
+  simulatePromotion(id: ID!, input: PromotionSimulationInput!): SimulatePromotionPayload!
+
+  """
+  Retires a promotion recoverably: its counters and its redemption ledger are kept.
+  """
+  softDeletePromotion(id: ID!): SoftDeletePromotionPayload!
+
+  """Restores a soft-deleted promotion."""
+  recoverPromotion(id: ID!): RecoverPromotionPayload!
+
   """Closes a promotion before its window ends."""
   expirePromotion(id: ID!, input: ExpirePromotionInput): ExpirePromotionPayload!
 
@@ -10048,11 +10097,37 @@ type Mutation {
   """Sends an approved purchase order to the supplier."""
   sendPurchaseOrder(id: ID!, email: String, note: String): PurchaseOrderPayload!
 
+  """
+  Records the supplier's acknowledgement of a sent order, revising its expected date when one is stated.
+  """
+  acknowledgePurchaseOrder(id: ID!, expectedAt: DateTime, note: String): PurchaseOrderPayload!
+
+  """
+  Approves a purchase order internally, which is what permits it to be sent.
+  """
+  approvePurchaseOrder(id: ID!, note: String): PurchaseOrderPayload!
+
   """Closes a purchase order short of the ordered quantity."""
   closePurchaseOrder(id: ID!, reason: String): PurchaseOrderPayload!
 
   """Cancels a purchase order before anything arrived."""
   cancelPurchaseOrder(id: ID!, reason: String): PurchaseOrderPayload!
+
+  """
+  Receives goods against a purchase order, writing the stock movements they produce. The order is
+  the one the caller is already looking at, so the field carries it as its own argument and the
+  delivery is the input.
+  """
+  receivePurchaseOrder(id: ID!, input: ReceivePurchaseOrderInput!): GoodsReceiptPayload!
+
+  """
+  Withdraws a purchase order without removing the row, so the recovery below can read it back. The
+  answer is the withdrawn document, as it is on every other soft removal of the platform.
+  """
+  softDeletePurchaseOrder(id: ID!): PurchaseOrder!
+
+  """Puts a withdrawn purchase order back."""
+  recoverPurchaseOrder(id: ID!): PurchaseOrder!
 
   """
   Receives goods against a purchase order, writing the stock movements they produce.
@@ -10113,9 +10188,32 @@ type Mutation {
   revokeEntitlementKey(id: ID!, reason: String!): EntitlementKeyPayload!
 
   """
+  Opens a seller account on the seller's behalf. The applicant is born `DRAFT` and `UNVERIFIED`.
+  
+  Mirrors `POST /sellers` and declares the same `seller.create` scope, so an applicant that re-sends
+  an application it never saw acknowledged is answered from its first attempt over either protocol
+  rather than with the collision its own code would cause.
+  """
+  createSeller(input: CreateSellerInput!, idempotencyKey: String): Seller!
+
+  """
+  Amends a seller's profile, commission defaults, payout terms and tax identifiers.
+  """
+  updateSeller(id: ID!, input: UpdateSellerInput!): Seller!
+
+  """
   Submits a seller application for review. The seller becomes `SUBMITTED` and no further.
   """
   submitSeller(id: ID!): Seller!
+
+  """
+  Records one verification kind's result.
+  
+  Mirrors `POST /sellers/:id/verify` and declares the same `seller.verify` scope, so a verifier that
+  re-sends a verdict it never saw acknowledged is answered from its first attempt rather than stamping
+  a fresh verification date over the one already recorded.
+  """
+  verifySeller(id: ID!, input: VerifySellerInput!, idempotencyKey: String): Seller!
 
   """Activates an approved seller. `ACTIVE` is never reached implicitly."""
   activateSeller(id: ID!): Seller!
@@ -10127,6 +10225,40 @@ type Mutation {
 
   """Returns a suspended seller to active."""
   reinstateSeller(id: ID!): Seller!
+
+  """Refuses an application, with a reason the applicant can read."""
+  rejectSeller(id: ID!, reason: String!): Seller!
+
+  """
+  Starts winding a seller down. The seller becomes `OFFBOARDING` and no further.
+  
+  Mirrors `POST /sellers/:id/offboard` and declares the same `seller.offboard` scope, so a retry of
+  one transition is a retry whichever protocol it arrives on.
+  """
+  offboardSeller(id: ID!, idempotencyKey: String): Seller!
+
+  """
+  Removes a seller account, answering the count the deletion reports.
+  
+  Mirrors `DELETE /sellers/:id`, which takes `SELLERS_DELETE` — the grant a caller that may merely
+  amend a seller does not hold.
+  """
+  deleteSeller(id: ID!): SellerDeleteResult!
+
+  """
+  Archives a seller account, keeping the row.
+  
+  Mirrors `DELETE /sellers/:id/soft` and answers the archived seller, as that route does.
+  """
+  softDeleteSeller(id: ID!): Seller!
+
+  """
+  Restores a soft-deleted seller account.
+  
+  Mirrors `PUT /sellers/:id/recover`: restoring is the same destructive authority read backwards,
+  so it takes `SELLERS_DELETE` and not the edit grant.
+  """
+  restoreSeller(id: ID!): Seller!
 
   """
   Publishes an offering to the given channels, materialising its authored price into a price row.
@@ -47787,6 +47919,83 @@ enum PromotionUsageStatus {
   REVERTED
 }
 
+"""
+Why a promotion was excluded, or was applied only in part.
+
+Every exclusion is reported, because a promotion that silently does nothing is the defect an
+operator cannot diagnose. The set is closed: a notice the enum does not carry is an answer the
+protocol cannot deliver, so a new reason is added here and to the domain enumeration together.
+"""
+enum PromotionNoticeCode {
+  """The promotion is not active."""
+  PROMOTION_INACTIVE
+
+  """The promotion window is closed."""
+  PROMOTION_EXPIRED
+
+  """The campaign the promotion belongs to has closed its window."""
+  CAMPAIGN_WINDOW_CLOSED
+
+  """The promotion's rules did not match the context."""
+  RULES_NOT_MATCHED
+
+  """The promotion is scoped to another seller."""
+  SELLER_SCOPE_MISMATCH
+
+  """The promotion is priced in another currency."""
+  CURRENCY_MISMATCH
+
+  """The promotion's global usage limit is reached."""
+  USAGE_LIMIT_EXCEEDED
+
+  """The customer has already used the promotion as often as it allows."""
+  PER_CUSTOMER_LIMIT_EXCEEDED
+
+  """No promotion carries the code presented."""
+  COUPON_INACTIVE
+
+  """The coupon's own window is closed."""
+  COUPON_EXPIRED
+
+  """The coupon's own usage limit is reached."""
+  COUPON_LIMIT_EXCEEDED
+
+  """The coupon's own per-customer limit is reached."""
+  COUPON_CUSTOMER_LIMIT_EXCEEDED
+
+  """The budget behind the promotion is spent."""
+  BUDGET_EXCEEDED
+
+  """The budget admitted only part of the computed discount."""
+  PARTIALLY_APPLIED_BUDGET
+
+  """
+  Another promotion of the same stacking group is exclusive and already applied.
+  """
+  STACKING_CONFLICT
+
+  """The action matched nothing to discount."""
+  NO_TARGETS
+
+  """Nothing was left to discount by the time this promotion ran."""
+  NO_DISCOUNTABLE_AMOUNT
+
+  """The promotion's own discount ceiling capped the benefit."""
+  PROMOTION_CAPPED
+
+  """The evaluation stopped after its candidate limit."""
+  PROMOTION_CANDIDATE_LIMIT
+}
+
+"""Which side of a basket an allocation lands on."""
+enum PromotionAllocationOwner {
+  """A line of the basket."""
+  LINE
+
+  """A shipping method of the basket."""
+  SHIPPING
+}
+
 """Lifecycle of a stored-value instrument."""
 enum GiftCardStatus {
   ACTIVE
@@ -47954,6 +48163,85 @@ type PromotionAction {
   organizationId: ID
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+"""One promotion that was applied, with the amount it gave away."""
+type PromotionApplication {
+  promotionId: ID!
+
+  """The coupon the application came through, when it came through one."""
+  couponId: ID
+
+  """The code presented, when the application came from one."""
+  code: String
+
+  """
+  Whether the promotion applied itself rather than being asked for by a code.
+  """
+  isAutomatic: Boolean!
+
+  """The discount granted. Exact decimal."""
+  amount: Decimal!
+  currency: String!
+}
+
+"""Why a promotion was excluded, or was applied only in part."""
+type PromotionNotice {
+  """
+  The promotion the notice is about; empty when the notice is about a code that names none.
+  """
+  promotionId: ID!
+
+  """The code presented, when the notice is about a code."""
+  code: String
+  notice: PromotionNoticeCode!
+
+  """What a person should read."""
+  message: String!
+
+  """The figures that make the notice actionable, when it carries any."""
+  details: JSON
+}
+
+"""
+What one evaluation decided.
+
+It is deterministic: the same context and the same promotion set always produce the same
+applications and the same allocations, which is what makes a simulation a promise rather than an
+estimate.
+"""
+type PromotionEvaluationResult {
+  """The promotions that applied, in the order they ran."""
+  applications: [PromotionApplication!]!
+
+  """Every exclusion and every partial application, with its reason."""
+  notices: [PromotionNotice!]!
+
+  """
+  The discount the evaluation grants, as a negative decimal. Exact decimal.
+  """
+  discountTotal: Decimal!
+  currency: String!
+}
+
+"""
+One owner an action decided to take money off.
+
+An allocation is money that was or would be granted to a line or a shipping method, never what an
+action computed: a discount the budget truncated is re-allocated, so Σ allocations is the amount
+actually given away, to the last minor unit.
+"""
+type PromotionAllocation {
+  ownerType: PromotionAllocationOwner!
+
+  """The line or shipping method the amount lands on."""
+  ownerId: ID!
+  promotionId: ID!
+  actionId: ID!
+  code: String
+
+  """The amount taken off this owner, negative. Exact decimal."""
+  amount: Decimal!
 }
 
 """
@@ -48755,6 +49043,75 @@ input ExpirePromotionInput {
   reason: String
 }
 
+"""
+Why a promotion is being stopped.
+
+The reason is optional and is not passed to the service, which keeps none: an operator's
+explanation belongs with the activity that recorded the act, which is where the REST route leaves
+it too.
+"""
+input DeactivatePromotionInput {
+  reason: String
+}
+
+"""The action set that replaces a promotion's own, in application order."""
+input ReplacePromotionActionsInput {
+  """
+  The new set, applied as a whole: an action's position is part of its meaning, so a replacement
+  is the only way to remove one without renumbering the rest. An empty set is refused.
+  """
+  actions: [PromotionActionInput!]!
+}
+
+"""One line an evaluation may discount."""
+input PromotionEvaluationLineInput {
+  id: ID!
+
+  """The line's amount. Exact decimal."""
+  amount: Decimal!
+  quantity: Int!
+  variantId: ID
+  sku: String
+}
+
+"""One shipping method an evaluation may discount."""
+input PromotionEvaluationShippingInput {
+  id: ID!
+
+  """The method's amount. Exact decimal."""
+  amount: Decimal!
+}
+
+"""
+The basket and the customer a promotion is simulated against.
+
+The context is stated by the caller rather than taken from its session, which is what lets an
+analyst answer "what would this cost us" for a basket nobody has assembled yet.
+"""
+input PromotionSimulationInput {
+  """
+  The currency the basket is priced in. A promotion in another currency is excluded with a notice.
+  """
+  currency: String!
+  channelId: ID
+  customerId: ID
+  customerGroupIds: [ID!]
+
+  """
+  The codes the basket presents. A code that names nothing is a notice, not a failure.
+  """
+  codes: [String!]
+
+  """The lines that may be discounted."""
+  lines: [PromotionEvaluationLineInput!]!
+
+  """The shipping methods that may be discounted."""
+  shipping: [PromotionEvaluationShippingInput!]
+
+  """The instant the evaluation is made at; defaults to now."""
+  at: DateTime
+}
+
 """The outcome of creating a promotion."""
 type CreatePromotionPayload {
   promotion: Promotion
@@ -48790,6 +49147,56 @@ type ActivatePromotionPayload {
 
 """The outcome of closing a promotion before its window ends."""
 type ExpirePromotionPayload {
+  promotion: Promotion
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of stopping a promotion."""
+type DeactivatePromotionPayload {
+  promotion: Promotion
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of replacing a promotion's action set."""
+type ReplacePromotionActionsPayload {
+  """The stored actions, in application order."""
+  actions: [PromotionAction!]!
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""
+The outcome of simulating a promotion against a basket.
+
+Nothing was written: no reservation, no budget consumption, no usage row. The payload states what
+the evaluation decided, which is the same answer the checkout path computes.
+"""
+type SimulatePromotionPayload {
+  """
+  The applications, the notices and the total the promotion would produce.
+  """
+  result: PromotionEvaluationResult
+
+  """Every owner the discount would land on, to the last minor unit."""
+  allocations: [PromotionAllocation!]!
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of retiring a promotion recoverably."""
+type SoftDeletePromotionPayload {
+  """
+  The promotion as the soft delete left it: still queryable, its ledger intact.
+  """
+  promotion: Promotion
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of restoring a soft-deleted promotion."""
+type RecoverPromotionPayload {
   promotion: Promotion
   operation: Operation
   userErrors: [UserError!]!
@@ -50941,6 +51348,28 @@ input RecordGoodsReceiptLineInput {
   note: String
 }
 
+"""
+The delivery a caller records against the order the field already names.
+
+It is the body of `POST /purchase-orders/:id/receipts`, and it deliberately states neither of the two
+members the standalone delivery input carries: the order is the field's own argument on this path, and
+the retry key is not demanded here — the order path books a delivery the caller is already looking at
+rather than one raised on its own, so a key the route never asks for would refuse callers the route
+serves. The location is absent for the same reason it is absent from the route: a delivery anchored to
+an order inherits that order's receiving location, and an input that accepted a location the service
+never receives would tell a caller it had moved the goods somewhere it had not.
+"""
+input ReceivePurchaseOrderInput {
+  receivedAt: DateTime
+
+  """
+  Fraction of the ordered quantity a line may be exceeded by, e.g. 0.050000 for five percent. The line's own standing allowance applies when omitted.
+  """
+  overReceiptTolerance: Decimal
+  note: String
+  lines: [GoodsReceiptLineInput!]!
+}
+
 """The outcome of a mutation on a purchase order."""
 type PurchaseOrderPayload {
   purchaseOrder: PurchaseOrder
@@ -51488,6 +51917,18 @@ enum SellerStatus {
   OFFBOARDED
 }
 
+"""Which verification a recorded result belongs to."""
+enum SellerVerificationKind {
+  """The seller's legal identity as a business."""
+  BUSINESS_IDENTITY
+
+  """The seller's tax registration."""
+  TAX_IDENTIFIER
+
+  """The account payouts are sent to."""
+  PAYOUT_ACCOUNT
+}
+
 """
 The state of one verification kind. A seller carries three independent verdicts, performed by different parties at different times.
 """
@@ -51857,6 +52298,136 @@ type Seller {
   Present when the status is `SUSPENDED`: a suspension a seller cannot read the reason for is one it cannot remedy.
   """
   suspensionReason: String
+}
+
+"""
+What a hard deletion reports.
+
+The REST route answers with the ORM's own `DeleteResult`; this is that result's one actionable member
+rather than the whole of it. `raw` is deliberately not projected: it is the driver's payload rather
+than the platform's answer, and parity here is capability parity rather than shape parity.
+"""
+type SellerDeleteResult {
+  """
+  How many rows the deletion removed: one, or none when the id matched nothing.
+  """
+  affected: Int!
+}
+
+"""
+What a caller supplies to open a seller account.
+
+The members are the writable half of the REST body and nothing else. `organizationId`, `tenantId` and
+the organization object are absent because they are the request's rather than the body's: the service
+takes them from the caller's context and overwrites whatever a body states, so a member declared here
+would be one the document advertised and the platform discarded.
+"""
+input CreateSellerInput {
+  """
+  Required: a seller without a code cannot be referred to by a ledger row or a statement.
+  """
+  code: String!
+
+  """
+  Required: a seller without a party cannot be verified, contracted with or taxed.
+  """
+  contactId: ID!
+  name: String
+  legalName: String
+  email: String
+  phone: String
+  merchantId: ID
+  userId: ID
+  channelIds: [String!]
+  regionIds: [String!]
+  payoutAccountReference: String
+  payoutAccountHolderId: ID
+  taxId: String
+  vatNumber: String
+  taxCountryCode: String
+  taxRegistrationScheme: TaxRegistrationScheme
+  taxCollectionMode: TaxCollectionMode
+
+  """A fraction, not a percentage: 0.15 is fifteen percent."""
+  defaultCommissionRate: Decimal
+  commissionBasis: CommissionBasis
+  commissionTiers: [CommissionTierInput!]
+  fixedFeePerItem: Decimal
+  fixedFeeCurrency: String
+  commissionOnShipping: Boolean
+  chargeShippingCost: Boolean
+  allowNegativeNet: Boolean
+  payoutMode: SellerPayoutMode
+  payoutSchedule: SellerPayoutSchedule
+  payoutCurrency: String
+  payoutThreshold: Decimal
+  reservePercent: Decimal
+  reserveHoldDays: Int
+  payoutHoldDays: Int
+  externalId: String
+  metadata: JSON
+}
+
+"""
+What a caller supplies to amend a seller account.
+
+The party binding and the code are absent because they are immutable on the REST body too: a seller
+belongs to one organization and one contact forever, and its code is the stable key a ledger row and a
+statement are read by.
+"""
+input UpdateSellerInput {
+  name: String
+  legalName: String
+  email: String
+  phone: String
+  merchantId: ID
+  userId: ID
+  channelIds: [String!]
+  regionIds: [String!]
+  payoutAccountReference: String
+  payoutAccountHolderId: ID
+  taxId: String
+  vatNumber: String
+  taxCountryCode: String
+  taxRegistrationScheme: TaxRegistrationScheme
+  taxCollectionMode: TaxCollectionMode
+  defaultCommissionRate: Decimal
+  commissionBasis: CommissionBasis
+  commissionTiers: [CommissionTierInput!]
+  fixedFeePerItem: Decimal
+  fixedFeeCurrency: String
+  commissionOnShipping: Boolean
+  chargeShippingCost: Boolean
+  allowNegativeNet: Boolean
+  payoutMode: SellerPayoutMode
+  payoutSchedule: SellerPayoutSchedule
+  payoutCurrency: String
+  payoutThreshold: Decimal
+  reservePercent: Decimal
+  reserveHoldDays: Int
+  payoutHoldDays: Int
+  externalId: String
+  metadata: JSON
+}
+
+"""
+What a caller supplies to record one verification kind's result, as the verifier reported it.
+"""
+input VerifySellerInput {
+  kind: SellerVerificationKind!
+  status: SellerVerificationStatus!
+
+  """The evidence the verdict rests on: a provider's reference for it."""
+  reference: String
+
+  """Who performed the verification."""
+  provider: String
+
+  """
+  When the verdict stops being good; a verdict with no window is one a statement cannot age.
+  """
+  expiresAt: DateTime
+  note: String
 }
 
 """

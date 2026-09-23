@@ -20,6 +20,14 @@
  * extension the plugin declares is read back the way the runtime reads it.
  */
 jest.mock('@gauzy/core', () => {
+	// The permission decorator is doubled with the platform's own metadata key, read from the platform's
+	// constants, so the assertions below are made against the metadata a guard actually reads rather than
+	// against the decorator's prose. A no-op double would let a mutation state no permission at all while
+	// this suite stayed green — the class-level read grant would be the only thing in front of a write,
+	// and nothing here would say so.
+	const { SetMetadata } = require('@nestjs/common');
+	const { PERMISSIONS_METADATA } = require('@gauzy/constants');
+
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
@@ -84,7 +92,7 @@ jest.mock('@gauzy/core', () => {
 		MultiORMManyToOne: decorator,
 		MultiORMOneToMany: decorator,
 		IsSecret: decorator,
-		Permissions: () => () => undefined,
+		Permissions: (...permissions: string[]) => SetMetadata(PERMISSIONS_METADATA, permissions),
 		PermissionGuard: class {},
 		TenantPermissionGuard: class {},
 		// Every resolver class carries the platform's feature guard, so the double provides the class
@@ -170,6 +178,7 @@ import {
 	OfferingCondition,
 	OfferingFulfilmentMode,
 	OfferingStatus,
+	PermissionsEnum,
 	SellerHoldReason,
 	SellerPayoutMode,
 	SellerPayoutSchedule,
@@ -178,10 +187,12 @@ import {
 	SellerStatus,
 	SellerTransactionKind,
 	SellerTransactionStatus,
+	SellerVerificationKind,
 	SellerVerificationStatus,
 	TaxCollectionMode,
 	TaxRegistrationScheme
 } from '@gauzy/contracts';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { getPluginExtensions } from '@gauzy/plugin';
 import { BulkExecutor, IDEMPOTENT_METADATA_KEY } from '@gauzy/core';
 import { MarketplaceModule } from '../marketplace.module';
@@ -535,10 +546,18 @@ function createResolver(): SellerEntityResolver {
 		getSeller: async () => SELLER,
 		getStatement: async () => STATEMENT,
 		getBalance: async () => BALANCE,
+		createSeller: async () => SELLER,
+		updateSeller: async () => SELLER,
 		submit: async () => SELLER,
+		verify: async () => SELLER,
 		activate: async () => SELLER,
 		suspend: async () => SELLER,
-		reinstate: async () => SELLER
+		reinstate: async () => SELLER,
+		reject: async () => SELLER,
+		startOffboarding: async () => SELLER,
+		delete: async () => DELETE_RESULT,
+		softRemove: async () => SELLER,
+		softRecover: async () => SELLER
 	};
 
 	const sellerOfferingService = {
@@ -612,6 +631,7 @@ function recordingResolver(calls: Array<{ field: string; scope?: ISellerScope }>
 		getSeller: record('getSeller', SELLER),
 		getStatement: record('getStatement', STATEMENT, 2),
 		getBalance: async () => BALANCE,
+		updateSeller: record('updateSeller', SELLER, 2),
 		submit: record('submit', SELLER),
 		activate: record('activate', SELLER),
 		suspend: record('suspend', SELLER, 2),
@@ -689,6 +709,218 @@ function listingResolver(calls: Array<{ field: string; options: any }>): any {
 }
 
 /**
+ * What a hard deletion answers, in the shape its own type declares.
+ *
+ * One member and not the ORM's whole result: `raw` is the driver's payload rather than the platform's
+ * answer, so a type that carried it would teach a client to read a Postgres-specific envelope.
+ */
+const DELETE_RESULT: Record<string, unknown> = { affected: 1 };
+
+/* ------------------------------------------------------------------------------------------------
+ * The seller writes
+ * ---------------------------------------------------------------------------------------------- */
+
+/** The body a caller supplies to open a seller account, with the two members its route requires. */
+const CREATE_SELLER: Record<string, unknown> = {
+	code: 'SELL-2',
+	contactId: 'contact-2',
+	name: 'Seller Two',
+	payoutCurrency: 'USD',
+	payoutSchedule: 'MONTHLY',
+	commissionTiers: [{ from: '0.000000', to: '100.000000', rate: '0.120000' }]
+};
+
+/** The body a caller supplies to amend one. No code and no party binding: both are immutable. */
+const UPDATE_SELLER: Record<string, unknown> = {
+	name: 'Seller One Renamed',
+	defaultCommissionRate: '0.180000',
+	payoutThreshold: '75.000000'
+};
+
+/** One verification verdict, in the shape the recording route accepts. */
+const VERIFY_SELLER: Record<string, unknown> = {
+	kind: SellerVerificationKind.TAX_IDENTIFIER,
+	status: SellerVerificationStatus.VERIFIED,
+	reference: 'reference-1',
+	provider: 'provider-1',
+	expiresAt: new Date('2027-01-01T00:00:00.000Z')
+};
+
+/**
+ * One seller write field, the route it mirrors, and the call that route makes.
+ *
+ * The four are stated together because the failure this table exists for is a mutation that answers the
+ * right shape while reaching the wrong method: `offboardSeller` is the field whose route calls a method
+ * not named after it, `restoreSeller` is the field whose route reaches `softRecover`, and `deleteSeller`
+ * is the only one of the twelve that answers a result rather than a seller. A field wired to the
+ * neighbouring method would return a seller either way, and nothing else in this file would notice.
+ *
+ * `permission` is carried rather than read from the resolver alone for the reason the assertion below
+ * gives: the point is that the two surfaces state ONE string, so the controller's own metadata is read
+ * back and compared, rather than a copy of the string being trusted here.
+ */
+const SELLER_WRITES: ReadonlyArray<{
+	field: string;
+	method: string;
+	route: string;
+	permission: PermissionsEnum;
+	service: string;
+	call: (scope: ISellerScope) => unknown[];
+}> = [
+	{
+		field: 'createSeller',
+		method: 'createSeller',
+		route: 'create',
+		permission: PermissionsEnum.SELLERS_CREATE,
+		service: 'createSeller',
+		// The route hands over no scope, and neither does this. `createSeller` accepts one and never reads
+		// it, so a field that invented one would be the only difference between the two protocols — and a
+		// difference that refuses a caller the other surface served is as much a divergence as one that
+		// serves a caller the other refused.
+		call: () => [CREATE_SELLER]
+	},
+	{
+		field: 'updateSeller',
+		method: 'updateSeller',
+		route: 'update',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'updateSeller',
+		// The one seller write whose service method narrows by the scope it is handed, so the scope is
+		// threaded rather than dropped: an unscoped update is an update of any seller in the organization.
+		call: (scope) => ['seller-1', UPDATE_SELLER, scope]
+	},
+	{
+		field: 'submitSeller',
+		method: 'submitSeller',
+		route: 'submit',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'submit',
+		call: (scope) => ['seller-1', scope]
+	},
+	{
+		field: 'verifySeller',
+		method: 'verifySeller',
+		route: 'verify',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'verify',
+		call: () => ['seller-1', VERIFY_SELLER]
+	},
+	{
+		field: 'activateSeller',
+		method: 'activateSeller',
+		route: 'activate',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'activate',
+		call: (scope) => ['seller-1', scope]
+	},
+	{
+		field: 'suspendSeller',
+		method: 'suspendSeller',
+		route: 'suspend',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'suspend',
+		call: (scope) => ['seller-1', 'under review', scope]
+	},
+	{
+		field: 'reinstateSeller',
+		method: 'reinstateSeller',
+		route: 'reinstate',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'reinstate',
+		call: (scope) => ['seller-1', scope]
+	},
+	{
+		field: 'rejectSeller',
+		method: 'rejectSeller',
+		route: 'reject',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'reject',
+		// `reject` takes no scope on the service, because a refusal is not narrowed by membership: the
+		// route reaches it with the reason alone and the field does the same.
+		call: () => ['seller-1', 'incomplete documents']
+	},
+	{
+		field: 'offboardSeller',
+		method: 'offboardSeller',
+		route: 'offboard',
+		permission: PermissionsEnum.SELLERS_EDIT,
+		service: 'startOffboarding',
+		// The route is named `offboard` and the method it reaches is `startOffboarding`: the move is the
+		// first step of a durable operation rather than the whole of it, and the name says which.
+		call: () => ['seller-1']
+	},
+	{
+		field: 'deleteSeller',
+		method: 'deleteSeller',
+		route: 'delete',
+		permission: PermissionsEnum.SELLERS_DELETE,
+		service: 'delete',
+		call: () => ['seller-1']
+	},
+	{
+		field: 'softDeleteSeller',
+		method: 'softDeleteSeller',
+		route: 'softRemove',
+		permission: PermissionsEnum.SELLERS_DELETE,
+		service: 'softRemove',
+		// The inherited route hands `softRemove` its rest parameter — an empty array — which the service
+		// normalises to no find options. The call stated here is the one that normalisation reaches.
+		call: () => ['seller-1']
+	},
+	{
+		field: 'restoreSeller',
+		method: 'restoreSeller',
+		route: 'softRecover',
+		permission: PermissionsEnum.SELLERS_DELETE,
+		service: 'softRecover',
+		call: () => ['seller-1']
+	}
+];
+
+/**
+ * The seller writes, recording the service method and the arguments each reached.
+ *
+ * The failure these doubles exist for is a mutation wired to the wrong method, or to the right method
+ * with the wrong arguments: either would answer a row of the right shape and look correct from the
+ * outside while the route it mirrors did something else.
+ *
+ * @param calls Where each call records the service method it reached and the arguments it carried.
+ * @returns A resolver over the recording doubles.
+ */
+function writeResolver(calls: Array<{ service: string; args: unknown[] }>): any {
+	const record =
+		(service: string, answer: unknown) =>
+		(...args: unknown[]) => {
+			calls.push({ service, args });
+
+			return Promise.resolve(answer);
+		};
+
+	return new SellerEntityResolver(
+		{
+			createSeller: record('createSeller', SELLER),
+			updateSeller: record('updateSeller', SELLER),
+			submit: record('submit', SELLER),
+			verify: record('verify', SELLER),
+			activate: record('activate', SELLER),
+			suspend: record('suspend', SELLER),
+			reinstate: record('reinstate', SELLER),
+			reject: record('reject', SELLER),
+			startOffboarding: record('startOffboarding', SELLER),
+			delete: record('delete', DELETE_RESULT),
+			softRemove: record('softRemove', SELLER),
+			softRecover: record('softRecover', SELLER)
+		} as any,
+		{} as any,
+		{} as any,
+		{} as any,
+		{} as any,
+		{} as any,
+		new BulkExecutor({ assertCanSee: () => undefined, canSee: () => true } as never)
+	);
+}
+
+/**
  * How each declared field is called, and the row its own type is read from.
  *
  * A list field now states the page it is read at, because what it answers is the connection the SDL
@@ -707,10 +939,18 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 	sellerPayout: { args: ['payout-1'], row: PAYOUT },
 	sellerPayoutLines: { args: ['payout-1', { first: 20 }], row: PAYOUT_LINE },
 	sellerSettlements: { args: [{ first: 20 }], row: SETTLEMENT },
+	createSeller: { args: [CREATE_SELLER], row: SELLER },
+	updateSeller: { args: ['seller-1', UPDATE_SELLER], row: SELLER },
 	submitSeller: { args: ['seller-1'], row: SELLER },
+	verifySeller: { args: ['seller-1', VERIFY_SELLER], row: SELLER },
 	activateSeller: { args: ['seller-1'], row: SELLER },
 	suspendSeller: { args: ['seller-1', 'under review'], row: SELLER },
 	reinstateSeller: { args: ['seller-1'], row: SELLER },
+	rejectSeller: { args: ['seller-1', 'incomplete documents'], row: SELLER },
+	offboardSeller: { args: ['seller-1'], row: SELLER },
+	deleteSeller: { args: ['seller-1'], row: DELETE_RESULT },
+	softDeleteSeller: { args: ['seller-1'], row: SELLER },
+	restoreSeller: { args: ['seller-1'], row: SELLER },
 	publishSellerOffering: { args: ['offering-1', ['channel-1']], row: OFFERING },
 	pauseSellerOffering: { args: ['offering-1'], row: OFFERING },
 	withdrawSellerOffering: { args: ['offering-1'], row: OFFERING },
@@ -758,6 +998,7 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
  */
 const CONTRACT_ENUMS: Record<string, Record<string, string>> = {
 	SellerStatus,
+	SellerVerificationKind,
 	SellerVerificationStatus,
 	CommissionBasis,
 	OfferingStatus,
@@ -855,6 +1096,30 @@ const RETRY_MIRRORS: ReadonlyArray<{
 	required: boolean;
 	resourceType?: string;
 }> = [
+	{
+		scope: 'seller.create',
+		mutation: 'createSeller',
+		controller: SellerController,
+		route: 'create',
+		required: false,
+		resourceType: 'seller'
+	},
+	{
+		scope: 'seller.verify',
+		mutation: 'verifySeller',
+		controller: SellerController,
+		route: 'verify',
+		required: false,
+		resourceType: 'seller'
+	},
+	{
+		scope: 'seller.offboard',
+		mutation: 'offboardSeller',
+		controller: SellerController,
+		route: 'offboard',
+		required: false,
+		resourceType: 'seller'
+	},
 	{
 		scope: 'seller_offering.publish',
 		mutation: 'publishSellerOffering',
@@ -1141,6 +1406,45 @@ describe('the marketplace GraphQL contribution', () => {
 		});
 	});
 
+	/* --------------------------------------------------------------------------------------------
+	 * The seller writes
+	 * ------------------------------------------------------------------------------------------ */
+
+	describe('the seller writes, against the routes they mirror', () => {
+		it.each(SELLER_WRITES.map((write) => write.field))(
+			'answers %s with its route’s own permission and service call',
+			async (field) => {
+				const write = SELLER_WRITES.find((candidate) => candidate.field === field)!;
+				const declared = DECLARED.find((entry) => entry.field === field);
+
+				// The field is declared, and it is a mutation. A name that drifted onto the query root
+				// would be answered here as a read while the route behind it still wrote.
+				expect(declared).toBeDefined();
+				expect(declared?.operation).toBe('Mutation');
+
+				// Both surfaces state one string, and the controller's is read back rather than copied into
+				// the table above: a copy would agree with whichever of the two files was edited last, which
+				// is exactly the drift this assertion exists to catch.
+				expect(Reflect.getMetadata(PERMISSIONS_METADATA, SellerEntityResolver.prototype[write.method])).toEqual(
+					[write.permission]
+				);
+				expect(Reflect.getMetadata(PERMISSIONS_METADATA, SellerController.prototype[write.route])).toEqual([
+					write.permission
+				]);
+
+				const calls: Array<{ service: string; args: unknown[] }> = [];
+				const scope: ISellerScope = { sellerId: 'seller-1', staff: false } as ISellerScope;
+
+				await writeResolver(calls)[write.method](...CALLS[field].args, { req: { sellerScope: scope } });
+
+				// Exactly one call, to the method the route reaches, with the arguments it reaches it with.
+				// A field that also read the seller back, or that handed the scope on where the route did
+				// not, is reported by the arguments rather than by a count that happens to match.
+				expect(calls).toEqual([{ service: write.service, args: write.call(scope) }]);
+			}
+		);
+	});
+
 	describe('the rows the resolvers hand back', () => {
 		it('carries every field the schema declares, and no field it does not', async () => {
 			// A resolver whose declarations could not be read would make every assertion below vacuous,
@@ -1274,6 +1578,7 @@ describe('the marketplace GraphQL contribution', () => {
 			await resolver.settleSellerTransaction('transaction-1', 'captured', undefined, context);
 			await resolver.holdSellerTransaction('transaction-1', 'DISPUTE', context);
 			await resolver.createSellerSettlement('seller-1', 'provider-1', 'USD', '100.000000', undefined, undefined, undefined, context);
+			await resolver.updateSeller('seller-1', UPDATE_SELLER, context);
 			await resolver.submitSeller('seller-1', context);
 			await resolver.activateSeller('seller-1', context);
 			await resolver.suspendSeller('seller-1', 'under review', context);

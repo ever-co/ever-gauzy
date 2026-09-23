@@ -17,13 +17,21 @@ import { toDecimal, toUserError, toWhere } from '../wire';
 import {
 	ActivatePromotionPayload,
 	CreatePromotionPayload,
+	DeactivatePromotionPayload,
 	DeletePromotionPayload,
 	ExpirePromotionPayload,
 	ICreatePromotionInput,
+	IDeactivatePromotionInput,
 	IPageInput,
 	IPromotionChangedPayload,
+	IPromotionSimulationInput,
+	IReplacePromotionActionsInput,
 	ISortInput,
 	IUpdatePromotionInput,
+	RecoverPromotionPayload,
+	ReplacePromotionActionsPayload,
+	SimulatePromotionPayload,
+	SoftDeletePromotionPayload,
 	UpdatePromotionPayload,
 	cursorOffset,
 	toAsyncIterable,
@@ -215,6 +223,146 @@ export class PromotionResolver {
 	async activatePromotion(@Args('id') id: ID): Promise<ActivatePromotionPayload> {
 		try {
 			return { promotion: await this.promotionService.activate(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { promotion: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Stops a promotion, so its rules no longer match anything.
+	 *
+	 * The route it mirrors is `POST /promotions/:id/deactivate`. The two are deliberately separate
+	 * capabilities and not one field with a status argument: a draft that was never reviewed and an
+	 * offer an operator pulled are different facts, and the service is what records which one happened.
+	 *
+	 * The reason is optional on both surfaces and is not passed to the service, which keeps none — an
+	 * operator's explanation belongs with the activity log entry that recorded the act, which is where
+	 * the route leaves it too. The permission is the route's own, `PROMOTIONS_EDIT`: stopping an offer
+	 * is an edit, and the class-level view grant must not carry it.
+	 *
+	 * @param id The promotion to stop.
+	 * @param input The reason the promotion is being stopped, when the caller states one.
+	 * @returns The payload.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_EDIT as PermissionsEnum)
+	@Mutation('deactivatePromotion')
+	async deactivatePromotion(
+		@Args('id') id: ID,
+		@Args('input') input?: IDeactivatePromotionInput
+	): Promise<DeactivatePromotionPayload> {
+		try {
+			return {
+				promotion: await this.promotionService.deactivate(id, input?.reason),
+				operation: null,
+				userErrors: []
+			};
+		} catch (error) {
+			return { promotion: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Replaces the whole action set of a promotion.
+	 *
+	 * The route it mirrors is `PUT /promotions/:id/actions`, and it replaces rather than merges for the
+	 * reason the domain states: an action's position is part of its meaning, so an operator who removes
+	 * one has to say where the remaining ones now sit. An empty set is refused by the service with
+	 * `PROMOTION_NO_ACTIONS`, which reaches the caller as a `userError` rather than as a transport
+	 * failure — the same answer the route's 400 carries, in this protocol's vocabulary.
+	 *
+	 * The permission is the route's own, `PROMOTIONS_EDIT`.
+	 *
+	 * @param id The promotion whose actions are replaced.
+	 * @param input The new action set.
+	 * @returns The payload, carrying the stored actions in application order.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_EDIT as PermissionsEnum)
+	@Mutation('replacePromotionActions')
+	async replacePromotionActions(
+		@Args('id') id: ID,
+		@Args('input') input: IReplacePromotionActionsInput
+	): Promise<ReplacePromotionActionsPayload> {
+		try {
+			return {
+				actions: await this.promotionService.replaceActions(id, input.actions as Partial<IPromotionAction>[]),
+				operation: null,
+				userErrors: []
+			};
+		} catch (error) {
+			return { actions: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Dry-runs one promotion against a basket, writing nothing.
+	 *
+	 * The route it mirrors is `POST /promotions/:id/simulate`, and it is the evaluation the checkout
+	 * runs, restricted to the promotion named: no reservation, no budget consumption, no usage row.
+	 * That is what makes it safe to hand to an analyst, which is also why it carries its own permission
+	 * — `PROMOTIONS_SIMULATE` and not `PROMOTIONS_EDIT`, exactly as the route states.
+	 *
+	 * The context is handed to the service unchanged, as the route hands its body: the notices an
+	 * exclusion produces are the answer, so re-shaping the context here would be re-shaping the answer.
+	 *
+	 * @param id The promotion to simulate.
+	 * @param input The basket to simulate it against.
+	 * @returns The payload, carrying the applications, notices and allocations it would produce.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_SIMULATE as PermissionsEnum)
+	@Mutation('simulatePromotion')
+	async simulatePromotion(
+		@Args('id') id: ID,
+		@Args('input') input: IPromotionSimulationInput
+	): Promise<SimulatePromotionPayload> {
+		try {
+			const evaluation = await this.promotionService.simulate(id, input);
+
+			return { result: evaluation.result, allocations: evaluation.allocations, operation: null, userErrors: [] };
+		} catch (error) {
+			return { result: null, allocations: [], operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Retires a promotion recoverably, keeping its counters and its redemption ledger.
+	 *
+	 * The route it mirrors is `DELETE /promotions/:id/soft`, inherited from `CrudController`: it states
+	 * the destructive grant itself because the base declares no permission metadata of its own, and a
+	 * caller that could not retire an offer over GraphQL would have to reach for the hard delete
+	 * instead — which is the outcome the soft route exists to avoid.
+	 *
+	 * The permission is the route's own, `PROMOTIONS_DELETE`.
+	 *
+	 * @param id The promotion to soft delete.
+	 * @returns The payload, carrying the promotion as the soft delete left it.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Mutation('softDeletePromotion')
+	async softDeletePromotion(@Args('id') id: ID): Promise<SoftDeletePromotionPayload> {
+		try {
+			return { promotion: await this.promotionService.softRemove(id), operation: null, userErrors: [] };
+		} catch (error) {
+			return { promotion: null, operation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a soft-deleted promotion.
+	 *
+	 * The route it mirrors is `PUT /promotions/:id/recover`, inherited from `CrudController`. A restored
+	 * offer becomes a candidate for every basket its rules match again, which is why the route states
+	 * the destructive grant rather than the edit one — and why this field states `PROMOTIONS_DELETE`
+	 * too, rather than the class-level view grant that would otherwise be all that is left in front of
+	 * it.
+	 *
+	 * @param id The promotion to restore.
+	 * @returns The payload, carrying the restored promotion.
+	 */
+	@Permissions(PromotionPermission.PROMOTIONS_DELETE as PermissionsEnum)
+	@Mutation('recoverPromotion')
+	async recoverPromotion(@Args('id') id: ID): Promise<RecoverPromotionPayload> {
+		try {
+			return { promotion: await this.promotionService.softRecover(id), operation: null, userErrors: [] };
 		} catch (error) {
 			return { promotion: null, operation: null, userErrors: [toUserError(error)] };
 		}

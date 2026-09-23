@@ -14,9 +14,11 @@ import {
 	IPageInput,
 	IPriceListFilter,
 	IPriceListSort,
+	IResolvePriceInput,
 	IUpdatePriceListInput,
 	PriceListConnection,
-	PriceListSortField
+	PriceListSortField,
+	ResolvedPrice
 } from '../graphql.types';
 import { readConnection } from '../pagination';
 
@@ -134,6 +136,46 @@ export class PriceListResolver {
 	}
 
 	/**
+	 * Soft-deletes a price list, keeping it and the prices it carries queryable.
+	 *
+	 * The route it mirrors is `DELETE /price-lists/:id/soft`, inherited from `CrudController`, and the
+	 * field is the same capability stated for this protocol: **a caller must not have to choose a
+	 * protocol to retire a list recoverably.** The alternative was a hard delete, which cascades the
+	 * list's prices and is exactly the operation the soft route exists to avoid.
+	 *
+	 * The permission is the route's own — `PRICE_LISTS_DELETE` — and not the class-level view grant,
+	 * because `CrudController.softRemove` states no permission of its own and PATCHing a list out of
+	 * the storefront's reach is a destructive act the view grant must not carry.
+	 *
+	 * @param id The list to soft delete.
+	 * @returns The soft-deleted list.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRICE_LISTS_DELETE))
+	@Mutation('softDeletePriceList')
+	async softDeletePriceList(@Args('id') id: ID): Promise<PriceList> {
+		return await this.priceListService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted price list.
+	 *
+	 * The route it mirrors is `PUT /price-lists/:id/recover`, inherited from `CrudController`. Without
+	 * this field a list retired over GraphQL could only be brought back over REST, so the two surfaces
+	 * of one lifecycle disagreed about which of them could complete it.
+	 *
+	 * The permission is the route's own — `PRICE_LISTS_DELETE` — because a restored list becomes
+	 * eligible for resolution again, which is the same destructive blast radius read the other way.
+	 *
+	 * @param id The list to restore.
+	 * @returns The restored list.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRICE_LISTS_DELETE))
+	@Mutation('recoverPriceList')
+	async recoverPriceList(@Args('id') id: ID): Promise<PriceList> {
+		return await this.priceListService.softRecover(id);
+	}
+
+	/**
 	 * Publishes a built price list.
 	 *
 	 * @param id The list to activate.
@@ -155,6 +197,42 @@ export class PriceListResolver {
 	@Mutation('expirePriceList')
 	async expirePriceList(@Args('id') id: ID): Promise<PriceList> {
 		return await this.priceListService.expire(id);
+	}
+
+	/**
+	 * Dry-runs one price list against a context, writing nothing.
+	 *
+	 * The route it mirrors is `POST /price-lists/:id/simulate`, and the resolution is the storefront's
+	 * own, restricted to the list named and run against a context the caller states rather than one
+	 * taken from its session — so a draft list can be previewed before it is published, which is the
+	 * whole point of the capability.
+	 *
+	 * Nothing is written: no price, no status, no counter. The permission is therefore `SIMULATE` and
+	 * not `EDIT`, because an analyst allowed to answer "what would this list charge" must not thereby
+	 * be allowed to change what the storefront charges — the same split the route states.
+	 *
+	 * The context is `ResolvePriceInput`, which is the route's body DTO member for member: the two
+	 * surfaces ask one question, so they accept one shape. The members are read out individually, as
+	 * `resolvePrice` reads them, so a member the schema adds without the service accepting it is a
+	 * compile error here rather than an argument silently dropped.
+	 *
+	 * @param id The list to simulate.
+	 * @param input The context to price against.
+	 * @returns One resolution per variant the list prices.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRICE_LISTS_SIMULATE))
+	@Mutation('simulatePriceList')
+	async simulatePriceList(@Args('id') id: ID, @Args('input') input: IResolvePriceInput): Promise<ResolvedPrice[]> {
+		return await this.priceListService.simulate(id, {
+			variantIds: input.variantIds,
+			currency: input.currency,
+			quantity: input.quantity,
+			date: input.date,
+			channelId: input.channelId,
+			regionId: input.regionId,
+			customerId: input.customerId,
+			customerGroupIds: input.customerGroupIds
+		});
 	}
 
 	/**

@@ -82,10 +82,22 @@ export const schemaExtensions = gql`
 		updatePriceList(input: UpdatePriceListInput!): PriceList!
 		"Delete a price list, softly unless \`force\` is set."
 		deletePriceList(id: ID!, force: Boolean): DeletePriceListPayload!
+		"Retire a price list recoverably, keeping it and the prices it carries queryable."
+		softDeletePriceList(id: ID!): PriceList!
+		"Restore a soft-deleted price list."
+		recoverPriceList(id: ID!): PriceList!
 		"Publish a built price list, so that its prices begin to resolve."
 		activatePriceList(id: ID!): PriceList!
 		"Withdraw a price list without deleting it or the prices it carries."
 		expirePriceList(id: ID!): PriceList!
+		"""
+		Dry-run one price list against a context without writing anything.
+
+		The resolution is the storefront's own, restricted to the list named, so a draft list can be
+		previewed before it is published. A variant the list does not price is omitted rather than
+		resolved to zero, exactly as \`resolvePrice\` omits it.
+		"""
+		simulatePriceList(id: ID!, input: ResolvePriceInput!): [ResolvedPrice!]!
 		"Create a price row: a default price, a tiered price, a list price or a scheduled one."
 		createProductPrice(input: CreateProductPriceInput!): ProductPrice!
 		"Update a price row."

@@ -75,6 +75,16 @@ export const schemaExtensions = gql`
 		OFFBOARDED
 	}
 
+	"Which verification a recorded result belongs to."
+	enum SellerVerificationKind {
+		"The seller's legal identity as a business."
+		BUSINESS_IDENTITY
+		"The seller's tax registration."
+		TAX_IDENTIFIER
+		"The account payouts are sent to."
+		PAYOUT_ACCOUNT
+	}
+
 	"The state of one verification kind. A seller carries three independent verdicts, performed by different parties at different times."
 	enum SellerVerificationStatus {
 		"Never checked."
@@ -321,6 +331,121 @@ export const schemaExtensions = gql`
 		suspendedAt: DateTime
 		"Present when the status is \`SUSPENDED\`: a suspension a seller cannot read the reason for is one it cannot remedy."
 		suspensionReason: String
+	}
+
+	"""
+	What a hard deletion reports.
+
+	The REST route answers with the ORM's own \`DeleteResult\`; this is that result's one actionable member
+	rather than the whole of it. \`raw\` is deliberately not projected: it is the driver's payload rather
+	than the platform's answer, and parity here is capability parity rather than shape parity.
+	"""
+	type SellerDeleteResult {
+		"How many rows the deletion removed: one, or none when the id matched nothing."
+		affected: Int!
+	}
+
+	"""
+	What a caller supplies to open a seller account.
+
+	The members are the writable half of the REST body and nothing else. \`organizationId\`, \`tenantId\` and
+	the organization object are absent because they are the request's rather than the body's: the service
+	takes them from the caller's context and overwrites whatever a body states, so a member declared here
+	would be one the document advertised and the platform discarded.
+	"""
+	input CreateSellerInput {
+		"Required: a seller without a code cannot be referred to by a ledger row or a statement."
+		code: String!
+		"Required: a seller without a party cannot be verified, contracted with or taxed."
+		contactId: ID!
+		name: String
+		legalName: String
+		email: String
+		phone: String
+		merchantId: ID
+		userId: ID
+		channelIds: [String!]
+		regionIds: [String!]
+		payoutAccountReference: String
+		payoutAccountHolderId: ID
+		taxId: String
+		vatNumber: String
+		taxCountryCode: String
+		taxRegistrationScheme: TaxRegistrationScheme
+		taxCollectionMode: TaxCollectionMode
+		"A fraction, not a percentage: 0.15 is fifteen percent."
+		defaultCommissionRate: Decimal
+		commissionBasis: CommissionBasis
+		commissionTiers: [CommissionTierInput!]
+		fixedFeePerItem: Decimal
+		fixedFeeCurrency: String
+		commissionOnShipping: Boolean
+		chargeShippingCost: Boolean
+		allowNegativeNet: Boolean
+		payoutMode: SellerPayoutMode
+		payoutSchedule: SellerPayoutSchedule
+		payoutCurrency: String
+		payoutThreshold: Decimal
+		reservePercent: Decimal
+		reserveHoldDays: Int
+		payoutHoldDays: Int
+		externalId: String
+		metadata: JSON
+	}
+
+	"""
+	What a caller supplies to amend a seller account.
+
+	The party binding and the code are absent because they are immutable on the REST body too: a seller
+	belongs to one organization and one contact forever, and its code is the stable key a ledger row and a
+	statement are read by.
+	"""
+	input UpdateSellerInput {
+		name: String
+		legalName: String
+		email: String
+		phone: String
+		merchantId: ID
+		userId: ID
+		channelIds: [String!]
+		regionIds: [String!]
+		payoutAccountReference: String
+		payoutAccountHolderId: ID
+		taxId: String
+		vatNumber: String
+		taxCountryCode: String
+		taxRegistrationScheme: TaxRegistrationScheme
+		taxCollectionMode: TaxCollectionMode
+		defaultCommissionRate: Decimal
+		commissionBasis: CommissionBasis
+		commissionTiers: [CommissionTierInput!]
+		fixedFeePerItem: Decimal
+		fixedFeeCurrency: String
+		commissionOnShipping: Boolean
+		chargeShippingCost: Boolean
+		allowNegativeNet: Boolean
+		payoutMode: SellerPayoutMode
+		payoutSchedule: SellerPayoutSchedule
+		payoutCurrency: String
+		payoutThreshold: Decimal
+		reservePercent: Decimal
+		reserveHoldDays: Int
+		payoutHoldDays: Int
+		externalId: String
+		metadata: JSON
+	}
+
+	"What a caller supplies to record one verification kind's result, as the verifier reported it."
+	input VerifySellerInput {
+		kind: SellerVerificationKind!
+		status: SellerVerificationStatus!
+		"The evidence the verdict rests on: a provider's reference for it."
+		reference: String
+		"Who performed the verification."
+		provider: String
+		"When the verdict stops being good; a verdict with no window is one a statement cannot age."
+		expiresAt: DateTime
+		note: String
 	}
 
 	"A seller's right to sell one product variant, at the seller's price and under the seller's own SKU."
@@ -742,14 +867,61 @@ export const schemaExtensions = gql`
 	}
 
 	extend type Mutation {
+		"""
+		Opens a seller account on the seller's behalf. The applicant is born \`DRAFT\` and \`UNVERIFIED\`.
+
+		Mirrors \`POST /sellers\` and declares the same \`seller.create\` scope, so an applicant that re-sends
+		an application it never saw acknowledged is answered from its first attempt over either protocol
+		rather than with the collision its own code would cause.
+		"""
+		createSeller(input: CreateSellerInput!, idempotencyKey: String): Seller!
+		"Amends a seller's profile, commission defaults, payout terms and tax identifiers."
+		updateSeller(id: ID!, input: UpdateSellerInput!): Seller!
 		"Submits a seller application for review. The seller becomes \`SUBMITTED\` and no further."
 		submitSeller(id: ID!): Seller!
+		"""
+		Records one verification kind's result.
+
+		Mirrors \`POST /sellers/:id/verify\` and declares the same \`seller.verify\` scope, so a verifier that
+		re-sends a verdict it never saw acknowledged is answered from its first attempt rather than stamping
+		a fresh verification date over the one already recorded.
+		"""
+		verifySeller(id: ID!, input: VerifySellerInput!, idempotencyKey: String): Seller!
 		"Activates an approved seller. \`ACTIVE\` is never reached implicitly."
 		activateSeller(id: ID!): Seller!
 		"Suspends a seller, with a reason the seller can read. Balances are held."
 		suspendSeller(id: ID!, reason: String!): Seller!
 		"Returns a suspended seller to active."
 		reinstateSeller(id: ID!): Seller!
+		"Refuses an application, with a reason the applicant can read."
+		rejectSeller(id: ID!, reason: String!): Seller!
+		"""
+		Starts winding a seller down. The seller becomes \`OFFBOARDING\` and no further.
+
+		Mirrors \`POST /sellers/:id/offboard\` and declares the same \`seller.offboard\` scope, so a retry of
+		one transition is a retry whichever protocol it arrives on.
+		"""
+		offboardSeller(id: ID!, idempotencyKey: String): Seller!
+		"""
+		Removes a seller account, answering the count the deletion reports.
+
+		Mirrors \`DELETE /sellers/:id\`, which takes \`SELLERS_DELETE\` — the grant a caller that may merely
+		amend a seller does not hold.
+		"""
+		deleteSeller(id: ID!): SellerDeleteResult!
+		"""
+		Archives a seller account, keeping the row.
+
+		Mirrors \`DELETE /sellers/:id/soft\` and answers the archived seller, as that route does.
+		"""
+		softDeleteSeller(id: ID!): Seller!
+		"""
+		Restores a soft-deleted seller account.
+
+		Mirrors \`PUT /sellers/:id/recover\`: restoring is the same destructive authority read backwards,
+		so it takes \`SELLERS_DELETE\` and not the edit grant.
+		"""
+		restoreSeller(id: ID!): Seller!
 		"""
 		Publishes an offering to the given channels, materialising its authored price into a price row.
 

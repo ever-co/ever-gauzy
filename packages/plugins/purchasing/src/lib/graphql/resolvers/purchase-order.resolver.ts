@@ -4,10 +4,11 @@ import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
-import { toUserError } from '../wire';
+import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import {
 	IGoodsReceipt,
+	IGoodsReceiptLineInput,
 	IPurchaseOrder,
 	IPurchaseOrderLine,
 	PurchaseOrderStatus
@@ -59,6 +60,23 @@ interface IUpdatePurchaseOrderArgs {
 }
 
 /**
+ * The delivery a caller records against the order they are already looking at, as the schema declares
+ * it.
+ *
+ * It is the body of `POST /purchase-orders/:id/receipts` and nothing else: the order rides as the
+ * field's own argument because the route carries it in the path, and the location is deliberately
+ * absent because the route does not read one — a delivery anchored to an order inherits that order's
+ * receiving location, and a field that accepted a location the service never received would tell a
+ * caller it had moved the goods somewhere it had not.
+ */
+interface IReceivePurchaseOrderArgs {
+	receivedAt?: Date;
+	overReceiptTolerance?: string;
+	note?: string;
+	lines: IGoodsReceiptLineInput[];
+}
+
+/**
  * The purchasing domain's purchase-order root fields.
  *
  * The resolvers call the same services the REST controllers call, so an order raised over GraphQL and
@@ -75,11 +93,15 @@ interface IUpdatePurchaseOrderArgs {
  * purchase-order controller class carries — both protocol guards, the platform's feature gate and the
  * read permission its reads run under — and every field then states the permission its own route states:
  * the two reads carry `PURCHASE_ORDERS_VIEW`, raising an order `PURCHASE_ORDERS_CREATE`, amending,
- * deleting, cancelling and closing one `PURCHASE_ORDERS_EDIT`, and sending it to the supplier
+ * deleting, acknowledging, cancelling, closing, withdrawing and recovering one `PURCHASE_ORDERS_EDIT`,
+ * approving one internally `PURCHASE_ORDERS_APPROVE`, and sending it to the supplier
  * `PURCHASE_ORDERS_SEND` — the value that decides whether the supplier is told, as against
- * `PURCHASE_ORDERS_APPROVE`, which is what permits the order to exist. The fields that resolve an
- * order's lines, its receipts and its derived outstanding quantity answer under the permission the order
- * is read with, which is the route they are selected through.
+ * `PURCHASE_ORDERS_APPROVE`, which is what permits the order to exist. Receiving against the order
+ * carries `GOODS_RECEIPTS_CREATE` rather than a purchase-order grant, because it writes stock movements
+ * and the order's received counters: that is the receiving authority, and the route states the same
+ * string, so a caller who may not book a delivery is refused on both surfaces alike. The fields that
+ * resolve an order's lines, its receipts and its derived outstanding quantity answer under the
+ * permission the order is read with, which is the route they are selected through.
  *
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the two permission guards — after
@@ -237,6 +259,61 @@ export class PurchaseOrderResolver {
 	}
 
 	/**
+	 * Records the supplier's acknowledgement of a sent order.
+	 *
+	 * The field states `PURCHASE_ORDERS_EDIT`, which is what the route states: the supplier's
+	 * confirmation is a note on a document the buyer already owns, so it is an edit rather than the
+	 * release of the spend — the grant that decides whether an order may exist at all stays with
+	 * `approvePurchaseOrder` below, and the grant that decides whether the supplier is told stays with
+	 * `sendPurchaseOrder` above. The revised expected date rides as the field's own argument, because the
+	 * route takes it in the body and a field has no body. The version the route reads from `If-Match` is
+	 * not stated, for the reason none of these transitions states one.
+	 *
+	 * @param id The order being acknowledged.
+	 * @param expectedAt The revised expected date, when the supplier stated one.
+	 * @param note An operator note.
+	 * @returns The payload.
+	 */
+	@Mutation('acknowledgePurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	async acknowledgePurchaseOrder(
+		@Args('id') id: ID,
+		@Args('expectedAt', { type: () => Date, nullable: true }) expectedAt?: Date,
+		@Args('note') note?: string
+	) {
+		try {
+			return {
+				purchaseOrder: await this.purchaseOrderService.acknowledge(id, { expectedAt, note }),
+				userErrors: []
+			};
+		} catch (error) {
+			return { purchaseOrder: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Approves a purchase order internally.
+	 *
+	 * The one transition whose grant is not an edit: the field states `PURCHASE_ORDERS_APPROVE`,
+	 * because the approval is what permits an order to be sent to a supplier, and a surface that served
+	 * it under the edit grant would let whoever may amend a draft release the spend as well. The note
+	 * rides as the field's own argument, since the route takes it in the body and a field has no body.
+	 *
+	 * @param id The order to approve.
+	 * @param note An operator note kept on the order.
+	 * @returns The payload.
+	 */
+	@Mutation('approvePurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_APPROVE)
+	async approvePurchaseOrder(@Args('id') id: ID, @Args('note') note?: string) {
+		try {
+			return { purchaseOrder: await this.purchaseOrderService.approve(id, note), userErrors: [] };
+		} catch (error) {
+			return { purchaseOrder: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Closes a purchase order short of the ordered quantity.
 	 *
 	 * @param id The order.
@@ -268,6 +345,84 @@ export class PurchaseOrderResolver {
 		} catch (error) {
 			return { purchaseOrder: null, userErrors: [toUserError(error)] };
 		}
+	}
+
+	/**
+	 * Receives goods against a purchase order.
+	 *
+	 * The field states `GOODS_RECEIPTS_CREATE` rather than a purchase-order grant, because that is what
+	 * the route states and the reason is the operation rather than the resource: receiving writes stock
+	 * movements and the order's received counters, so it is the receiving authority rather than an edit
+	 * to a document. A field that stated an edit grant here would answer a booking the REST route refuses
+	 * to the same caller, which is the disagreement the parity rule exists to prevent.
+	 *
+	 * It carries no retry declaration, because the route carries none: the delivery-recording mutation
+	 * beside it (`createGoodsReceipt`) demands a key, and this path deliberately does not, so a field
+	 * that demanded one would refuse callers the route serves. The delivery is handed to the same service
+	 * method the route calls, with the order stated as the route states it — in the path there, as the
+	 * field's argument here — and the answer is the receipt, which is what the route returns.
+	 *
+	 * @param id The order being received against.
+	 * @param input The quantities that arrived.
+	 * @returns The payload, carrying the receipt, the movements it wrote and the order's new state.
+	 */
+	@Mutation('receivePurchaseOrder')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async receivePurchaseOrder(@Args('id') id: ID, @Args('input') input: IReceivePurchaseOrderArgs) {
+		try {
+			return toGoodsReceiptPayload(
+				await this.goodsReceiptService.receive({
+					purchaseOrderId: id,
+					receivedAt: input.receivedAt,
+					overReceiptTolerance: input.overReceiptTolerance,
+					note: input.note,
+					lines: input.lines
+				} as any)
+			);
+		} catch (error) {
+			return toFailedGoodsReceiptPayload(error);
+		}
+	}
+
+	/**
+	 * Withdraws a purchase order without removing the row.
+	 *
+	 * The field mirrors `DELETE /:id/soft`, and it states `PURCHASE_ORDERS_EDIT` because the route does:
+	 * the route is `CrudController`'s, and this controller overrides it only to state a grant the
+	 * inherited declaration lacked — the base declares it with no permission metadata, so
+	 * `PermissionGuard` fell through to the class-level read grant while the destructive mutation beside
+	 * it demanded `PURCHASE_ORDERS_EDIT`. The answer is the withdrawn row, which is what the route
+	 * returns and what every other inherited soft removal in the composed schema answers with, so a
+	 * client generated from the schema sees one shape for the operation rather than two.
+	 *
+	 * No version is stated: the withdrawn order is the document the caller read, and the field has no
+	 * header to carry one. The service is called exactly as the route calls it — the route declares no
+	 * body of its own and forwards the empty option list that leaves, so the field forwards none.
+	 *
+	 * @param id The order to withdraw.
+	 * @returns The soft-deleted order.
+	 */
+	@Mutation('softDeletePurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	async softDeletePurchaseOrder(@Args('id') id: ID): Promise<PurchaseOrder> {
+		return await this.purchaseOrderService.softRemove(id);
+	}
+
+	/**
+	 * Puts a withdrawn purchase order back.
+	 *
+	 * The other half of the same inherited pair, and permissioned as the withdrawal is, for the same
+	 * reason: recovery is a write on the document and the route states the edit grant rather than the
+	 * read one it would otherwise inherit. Answering the restored row keeps the field a capability of the
+	 * route rather than a second implementation of it.
+	 *
+	 * @param id The order to restore.
+	 * @returns The restored order.
+	 */
+	@Mutation('recoverPurchaseOrder')
+	@Permissions(PurchasingPermissions.PURCHASE_ORDERS_EDIT)
+	async recoverPurchaseOrder(@Args('id') id: ID): Promise<PurchaseOrder> {
+		return await this.purchaseOrderService.softRecover(id);
 	}
 
 	/**
