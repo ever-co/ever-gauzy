@@ -30,13 +30,23 @@
  * `E2E_TIMEOUT_MS`.
  *
  * **Known failure, recorded rather than worked around.** The receipt is reachable on neither surface
- * today: the versioned precondition on `POST /api/order-returns/:id/receive` and on the
- * `receiveOrderReturn` mutation refuses the version every read reports — REST answering
- * `ENTITY_VERSION_CONFLICT { expectedVersion: 2, actualVersion: 1 }` for a row whose own `GET` says 2,
- * and GraphQL answering `{ expectedVersion: 2, actualVersion: 3 }` for the same unchanged row moments
- * later. So the last checks of this run fail until that is fixed, and they are the evidence for it:
- * **the counter cannot be observed moving end to end while no client can drive a receipt at all.**
- * Everything before them — including the line-tenancy defect this file found and had fixed — passes.
+ * today, and the measurements below are what the next reader needs:
+ *
+ * - `GET /api/order-returns/:id` answers **`version = 2`**, `status = APPROVED`;
+ * - `POST …/receive` with `If-Match: 2` — the version just read — answers
+ *   `409 ENTITY_VERSION_CONFLICT { expectedVersion: 2, actualVersion: 1 }`;
+ * - **the row then holds `version = 3`**, with `receivedAt` still null and every line at
+ *   `receivedQuantity = 0`: a *refused* receipt advanced the version and applied nothing;
+ * - the remedy the conflict itself names — read it again and reapply — is sent, with `If-Match: 3`, and
+ *   is answered `409 { actualVersion: 1 }` **again**;
+ * - the `receiveOrderReturn` mutation with the same version answers `409 { actualVersion: 3 }`.
+ *
+ * So `actualVersion` is **1 whatever the row holds**, the version advances on every refusal, and no
+ * client can receive a return. The guard's pre-handler decision is not where the conflict comes from —
+ * `evaluateVersionPrecondition` *proceeds* when the version it read is unknown — so the conflict is the
+ * **versioned write inside the request**, whose read-back reports 1 for a row the `GET` reports as 3.
+ * Everything before these checks passes, including the line-tenancy defect this file found and had
+ * fixed; the two counter assertions after them cannot be observed until the write is fixed.
  */
 
 const BASE = (process.env.BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
@@ -506,26 +516,44 @@ async function main() {
 				`${received.json?.code ?? ''} actualVersion=${received.json?.details?.actualVersion ?? 'none'}`
 		);
 
-		const viaGraphql = await api('POST', '/graphql', {
-			query:
-				'mutation ($id: ID!, $input: ReceiveOrderReturnInput!) { receiveOrderReturn(id: $id, input: $input) { __typename } }',
-			variables: {
-				id: returnId,
-				input: {
-					lines: [{ lineId: returnLineId, receivedQuantity: 2, damagedQuantity: 0, restock: true }],
-					warehouseId: warehouse.id,
-					version: Number(statedVersion),
-					idempotencyKey: `e2e-return-receipt-receive-${Date.now()}`
-				}
-			}
+		// **The remedy the platform itself names.** The conflict says "Read it again and reapply your
+		// change", so that is what a client is entitled to expect to work: the version is read afresh and
+		// the same receipt is sent again. What the row holds after the refusal is recorded too, because a
+		// refused write that still *moved* the version is a different defect from one that only misread
+		// it — and the difference decides whether the fix is in the guard's read or in the write.
+		const afterRefusal = await readVersion('refused REST receipt');
+		const reapplied = await api('POST', `/api/order-returns/${returnId}/receive`, receiptBody, {
+			...retrySafe('receive-reapplied'),
+			'If-Match': afterRefusal
 		});
 
-		acceptedBy = viaGraphql.json?.data?.receiveOrderReturn ? 'GraphQL' : undefined;
+		acceptedBy = reapplied.status < 300 ? 'REST (re-read and reapplied)' : undefined;
 
 		record(
-			'the receipt is reachable over GraphQL, whose version statement is an input member',
+			'the remedy the conflict names — read it again and reapply — reaches the receipt',
 			Boolean(acceptedBy),
-			`HTTP ${viaGraphql.status} ${JSON.stringify(viaGraphql.json?.errors ?? viaGraphql.json?.data ?? {}).slice(0, 200)}`
+			`HTTP ${reapplied.status} with If-Match=${afterRefusal}` +
+				`${
+					reapplied.status < 300
+						? ''
+						: ` ${reapplied.json?.code ?? ''} actualVersion=${reapplied.json?.details?.actualVersion ?? 'none'}`
+				}`
+		);
+
+		// **The discriminator.** A plain versioned update on the same row, with the same freshly-read
+		// version, tells the next reader whether the defect is the receipt's route or the returns service's
+		// write path — and it is one call rather than another wave of guessing.
+		const plainUpdate = await api(
+			'PUT',
+			`/api/order-returns/${returnId}`,
+			{ note: 'e2e version probe' },
+			{ 'If-Match': await readVersion('plain versioned update') }
+		);
+
+		record(
+			'a plain versioned update on the same row is accepted',
+			plainUpdate.status < 300,
+			`HTTP ${plainUpdate.status}${plainUpdate.status < 300 ? '' : ` ${plainUpdate.json?.code ?? ''} actualVersion=${plainUpdate.json?.details?.actualVersion ?? 'none'}`}`
 		);
 	}
 
