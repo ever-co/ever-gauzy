@@ -513,6 +513,12 @@ export class SellerEntityResolver {
 	 * `SELLERS_DELETE` rather than the edit grant because restoring is the same destructive authority
 	 * read backwards: the route states `SELLERS_DELETE`, and the service reads the row `withDeleted`,
 	 * which is a visibility no ordinary read has.
+	 *
+	 * `restoreSeller` is the name the specification's own table gives this act — `PUT /<resource>/:id/recover`
+	 * is `restore<Type>(id: ID!)` in `17-graphql-api-specification.md` §10 — even though the rest of the
+	 * composed schema spells it `recover*` in a hundred and eleven fields. The divergence is recorded rather
+	 * than resolved here: renaming those hundred and eleven is a breaking schema change, and this field is
+	 * the one that already matches what the document says.
 	 */
 	@Mutation(() => SellerType, { name: 'restoreSeller' })
 	@Permissions(PermissionsEnum.SELLERS_DELETE)

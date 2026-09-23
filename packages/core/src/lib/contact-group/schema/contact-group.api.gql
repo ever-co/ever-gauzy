@@ -60,6 +60,15 @@ extend type Mutation {
 	that the other spelling of the removal is the same one.
 	"""
 	softDeleteContactGroup(id: ID!): ContactGroup!
+
+	"""
+	Puts a withdrawn group back, clearing the marker the withdrawal set, under the route the CRUD base
+	maps. It states the class-level view grant because the inherited `PUT /:id/recover` route it mirrors
+	declares no permission of its own, and the guard resolves a route's permission over its handler and
+	then its controller. A recovery is not announced on `contactGroupChanged`, because the route it
+	mirrors announces nothing and this field adds no second behaviour of its own.
+	"""
+	recoverContactGroup(id: ID!): ContactGroup!
 }
 
 extend type Subscription {

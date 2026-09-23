@@ -195,4 +195,52 @@ export class SubscriptionPlanResolver {
 			return { id: null, userErrors: [toUserError(error)] };
 		}
 	}
+
+	/**
+	 * Retires a plan recoverably.
+	 *
+	 * The route it mirrors is `DELETE /subscription-plans/:id/soft`, inherited from `CrudController` and
+	 * overridden by this plugin's controller only to state a permission: the inherited route declares
+	 * none, so `PermissionGuard` (`shared/guards/permission.guard.ts`) answered `true` from its `isEmpty`
+	 * branch and the class-level `SUBSCRIPTIONS_VIEW` was all that stood in front of it. The field states
+	 * the route's own `SUBSCRIPTIONS_EDIT`, because retiring a plan is what `deleteSubscriptionPlan`
+	 * above already is — the same act, without the deactivation that precedes it.
+	 *
+	 * It answers the plan rather than an id, unlike its `deleteSubscriptionPlan` sibling: the service
+	 * returns the retired row here, and a payload assembled from the argument the caller sent would tell
+	 * it nothing about what the write stored.
+	 *
+	 * @param id The plan to retire.
+	 * @returns The payload, with the retired plan or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('softDeleteSubscriptionPlan')
+	async softDeleteSubscriptionPlan(@Args('id') id: ID) {
+		try {
+			return { subscriptionPlan: await this.subscriptionPlanService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { subscriptionPlan: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Puts a retired plan back on offer.
+	 *
+	 * The route it mirrors is `PUT /subscription-plans/:id/recover`, whose override states the same
+	 * `SUBSCRIPTIONS_EDIT` the soft delete states: a plan that is offered again is one a new subscription
+	 * can be sold on, so the grant is the one that decides what may be sold rather than the one that
+	 * reads it.
+	 *
+	 * @param id The plan to restore.
+	 * @returns The payload, with the restored plan or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('recoverSubscriptionPlan')
+	async recoverSubscriptionPlan(@Args('id') id: ID) {
+		try {
+			return { subscriptionPlan: await this.subscriptionPlanService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { subscriptionPlan: null, userErrors: [toUserError(error)] };
+		}
+	}
 }

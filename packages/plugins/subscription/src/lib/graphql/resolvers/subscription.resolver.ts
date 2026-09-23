@@ -503,6 +503,54 @@ export class SubscriptionResolver {
 	}
 
 	/**
+	 * Retires a subscription recoverably, keeping its lines and its billing history as the record of
+	 * what was sold.
+	 *
+	 * The route it mirrors is `DELETE /subscriptions/:id/soft`, inherited from `CrudController`. The
+	 * controller overrides it only to state `SUBSCRIPTIONS_EDIT`, because the inherited route carries no
+	 * permission metadata and `PermissionGuard` (`shared/guards/permission.guard.ts`) answers `true` from
+	 * its `isEmpty` branch to that empty pair — leaving nothing but the class-level `SUBSCRIPTIONS_VIEW`
+	 * in front of it. The field states the route's own grant for the same reason: a caller allowed to
+	 * read a subscription must not thereby be allowed to take it out of every read, and a field that
+	 * left the act to the class would reopen on this surface exactly the gap the override closes on the
+	 * other.
+	 *
+	 * @param id The subscription to retire.
+	 * @returns The payload, with the retired subscription or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('softDeleteSubscription')
+	async softDeleteSubscription(@Args('id') id: ID) {
+		try {
+			return { subscription: await this.subscriptionService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { subscription: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a soft-deleted subscription.
+	 *
+	 * The route it mirrors is `PUT /subscriptions/:id/recover`, whose override states the same
+	 * `SUBSCRIPTIONS_EDIT` its soft-delete sibling states — restoring a subscription puts it back into
+	 * billing, which is the same blast radius read the other way. Without this field a subscription
+	 * retired over GraphQL could only be brought back over REST, so the two surfaces of one lifecycle
+	 * disagreed about which of them could finish it.
+	 *
+	 * @param id The subscription to restore.
+	 * @returns The payload, with the restored subscription or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('recoverSubscription')
+	async recoverSubscription(@Args('id') id: ID) {
+		try {
+			return { subscription: await this.subscriptionService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { subscription: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Bills one cycle of one subscription.
 	 *
 	 * A retry presents the same key and is answered from the record of the first attempt, so a lost

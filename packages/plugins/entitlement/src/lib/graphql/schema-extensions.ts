@@ -413,6 +413,17 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	"""
+	The outcome of a mutation on an activation, for the two acts that are not a release or a
+	revocation. Declared here because the activation resource had no payload of its own: its other
+	mutations answer \`ActivateEntitlementPayload\` or \`DeactivateEntitlementPayload\`, and neither
+	states the act a caller performs when it retires a slot recoverably.
+	"""
+	type EntitlementActivationPayload {
+		activation: EntitlementActivation
+		userErrors: [UserError!]!
+	}
+
 	"The outcome of a mutation on a credential."
 	type EntitlementKeyPayload {
 		key: EntitlementKey
@@ -459,14 +470,29 @@ export const schemaExtensions = gql`
 			version: Int
 			idempotencyKey: String
 		): EntitlementPayload!
+		"""
+		Retires a right recoverably: the row is kept, with its keys and its activation history, unlike
+		\`revokeEntitlement\`, which is terminal.
+		"""
+		softDeleteEntitlement(id: ID!): EntitlementPayload!
+		"Restores a right that was retired recoverably."
+		recoverEntitlement(id: ID!): EntitlementPayload!
 		"Occupies a slot of a right for a device or a named seat."
 		activateEntitlement(input: ActivateEntitlementInput!): ActivateEntitlementPayload!
 		"Gives a slot back: released by the holder, or revoked by support."
 		deactivateEntitlement(id: ID!, reason: String, revoked: Boolean): DeactivateEntitlementPayload!
+		"Retires an activation recoverably, leaving the row and the slot's history in place."
+		softDeleteEntitlementActivation(id: ID!): EntitlementActivationPayload!
+		"Restores an activation that was retired recoverably."
+		recoverEntitlementActivation(id: ID!): EntitlementActivationPayload!
 		"Issues a licence key. Its plaintext is returned once, in this response."
 		issueEntitlementKey(input: IssueEntitlementKeyInput!): IssueEntitlementKeyPayload!
 		"Withdraws a credential, releasing the activations it was used for."
 		revokeEntitlementKey(id: ID!, reason: String!): EntitlementKeyPayload!
+		"Retires a licence key recoverably, leaving the row in place."
+		softDeleteEntitlementKey(id: ID!): EntitlementKeyPayload!
+		"Restores a licence key that was retired recoverably."
+		recoverEntitlementKey(id: ID!): EntitlementKeyPayload!
 	}
 
 	extend type Subscription {

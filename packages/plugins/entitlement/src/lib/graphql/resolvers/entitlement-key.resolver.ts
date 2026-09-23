@@ -124,4 +124,50 @@ export class EntitlementKeyResolver {
 			return { key: null, userErrors: [toUserError(error)] };
 		}
 	}
+
+	/**
+	 * Retires a credential recoverably, leaving the row in place.
+	 *
+	 * The route it mirrors is `DELETE /entitlement-keys/:id/soft`, inherited from `CrudController` and
+	 * overridden by this plugin's controller only to state the permission the base left unstated. The
+	 * field matters more here than elsewhere: `revokeEntitlementKey` is the only other way to end a key
+	 * over GraphQL, it releases the activations the key was used for, and it is irreversible — so
+	 * without this pair a key retired by mistake could not be brought back, while a REST caller could
+	 * retire one without touching a single activation.
+	 *
+	 * The permission is the route's own, `ENTITLEMENTS_EDIT`, the grant the revoke and re-issue routes
+	 * already carry, and not the class-level view grant.
+	 *
+	 * @param id The key.
+	 * @returns The payload, carrying the key as the soft delete left it.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('softDeleteEntitlementKey')
+	async softDeleteEntitlementKey(@Args('id') id: ID) {
+		try {
+			return { key: await this.entitlementKeyService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { key: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a credential that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /entitlement-keys/:id/recover`. A restored key is one a customer can
+	 * present again, which is why the route states the destructive grant rather than the issuing one —
+	 * and why this field states `ENTITLEMENTS_EDIT` too.
+	 *
+	 * @param id The key.
+	 * @returns The payload, carrying the restored key.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('recoverEntitlementKey')
+	async recoverEntitlementKey(@Args('id') id: ID) {
+		try {
+			return { key: await this.entitlementKeyService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { key: null, userErrors: [toUserError(error)] };
+		}
+	}
 }

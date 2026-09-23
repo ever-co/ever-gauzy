@@ -153,6 +153,45 @@ export class TaxCategoryResolver {
 	}
 
 	/**
+	 * Retires a category recoverably, keeping it and the rates that point at it.
+	 *
+	 * The route it mirrors is `DELETE /tax-categories/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this
+	 * field a category retired over GraphQL could not be brought back over GraphQL: the recovery below
+	 * reads back what this writes, so serving one without the other would leave a caller able to retire a
+	 * category from the endpoint it could not restore it on.
+	 *
+	 * The permission is the controller's own for the route — `TAX_CATEGORIES_EDIT` — and not the
+	 * class-level view grant, because retiring a category takes it out of every rate resolution, which is
+	 * the act the edit grant exists for.
+	 *
+	 * @param id The category to retire.
+	 * @returns The category, as the soft delete left it.
+	 */
+	@Mutation('softDeleteTaxCategory')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_CATEGORIES_EDIT))
+	async softDeleteTaxCategory(@Args('id') id: ID): Promise<TaxCategory> {
+		return await this.taxCategoryService.softRemove(id);
+	}
+
+	/**
+	 * Restores a category that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /tax-categories/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored
+	 * category is a candidate for the rates that name it again, which is why the route states the
+	 * editing grant rather than the reading one.
+	 *
+	 * @param id The category to restore.
+	 * @returns The restored category.
+	 */
+	@Mutation('recoverTaxCategory')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_CATEGORIES_EDIT))
+	async recoverTaxCategory(@Args('id') id: ID): Promise<TaxCategory> {
+		return await this.taxCategoryService.softRecover(id);
+	}
+
+	/**
 	 * @param filter How the listing is narrowed.
 	 * @param sort How it is ordered; the newest first when it is omitted.
 	 * @param withDeleted Whether retired rows are included.

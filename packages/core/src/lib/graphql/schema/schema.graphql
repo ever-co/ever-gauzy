@@ -4829,6 +4829,22 @@ type Mutation {
   deleteAddress(id: ID!): Address!
 
   """
+  Removes an address under the spelling the soft-delete route uses. Removal here is soft under either
+  spelling — both routes reach one operation, and both refuse an address the party names as its
+  current default — so this field and `deleteAddress` are the same call. It is stated as its own field
+  because a client that reads the route reaches the capability the route promises, rather than having
+  to know that the other spelling of the removal is the same one.
+  """
+  softDeleteAddress(id: ID!): Address!
+
+  """
+  Puts a withdrawn address back, clearing the marker the withdrawal set. It states the class-level view
+  grant because the inherited `PUT /:id/recover` route it mirrors declares no permission of its own, and
+  the guard resolves a route's permission over its handler and then its controller.
+  """
+  recoverAddress(id: ID!): Address!
+
+  """
   Makes an address the party's default for one role, or clears that default when `isDefault` is
   false. Setting it releases the flag from the sibling the party named before; clearing it is the
   one way to reach "this party has no default for this role" without contradicting the party's own
@@ -5520,6 +5536,15 @@ type Mutation {
   that the other spelling of the removal is the same one.
   """
   softDeleteContactGroup(id: ID!): ContactGroup!
+
+  """
+  Puts a withdrawn group back, clearing the marker the withdrawal set, under the route the CRUD base
+  maps. It states the class-level view grant because the inherited `PUT /:id/recover` route it mirrors
+  declares no permission of its own, and the guard resolves a route's permission over its handler and
+  then its controller. A recovery is not announced on `contactGroupChanged`, because the route it
+  mirrors announces nothing and this field adds no second behaviour of its own.
+  """
+  recoverContactGroup(id: ID!): ContactGroup!
 
   """
   Records a contact.
@@ -9569,11 +9594,27 @@ type Mutation {
   """Delete a price row, softly unless `force` is set."""
   deleteProductPrice(id: ID!, force: Boolean): DeleteProductPricePayload!
 
+  """
+  Retire a price row recoverably, keeping the amount a past resolution used queryable.
+  """
+  softDeleteProductPrice(id: ID!): ProductPrice!
+
+  """Restore a soft-deleted price row."""
+  recoverProductPrice(id: ID!): ProductPrice!
+
   """Write a price matrix, reporting the rows that were refused."""
   bulkUpsertProductPrices(input: BulkUpsertProductPricesInput!): BulkUpsertProductPricesPayload!
 
   """Change the answer a scope gives about tax-inclusive presentation."""
   updatePricePreference(input: UpdatePricePreferenceInput!): PricePreference!
+
+  """
+  Retire a preference recoverably, so that its scope falls back to the next answer.
+  """
+  softDeletePricePreference(id: ID!): PricePreference!
+
+  """Restore a soft-deleted preference."""
+  recoverPricePreference(id: ID!): PricePreference!
 
   """Create an exchange rate."""
   createExchangeRate(input: CreateExchangeRateInput!): ExchangeRate!
@@ -9583,6 +9624,14 @@ type Mutation {
 
   """Delete an exchange rate, softly unless `force` is set."""
   deleteExchangeRate(id: ID!, force: Boolean): DeleteExchangeRatePayload!
+
+  """
+  Retire a rate recoverably, keeping a historical conversion reproducible.
+  """
+  softDeleteExchangeRate(id: ID!): ExchangeRate!
+
+  """Restore a soft-deleted rate."""
+  recoverExchangeRate(id: ID!): ExchangeRate!
   createTaxCategory(input: CreateTaxCategoryInput!): TaxCategory!
   updateTaxCategory(input: UpdateTaxCategoryInput!): TaxCategory!
 
@@ -9590,11 +9639,27 @@ type Mutation {
   Retires a category; the row is kept, because its rates are what placed tax lines point at.
   """
   deleteTaxCategory(id: ID!): TaxCategory!
+
+  """
+  Retires a category recoverably, so the rates that name it keep their class.
+  """
+  softDeleteTaxCategory(id: ID!): TaxCategory!
+
+  """Restores a soft-deleted category."""
+  recoverTaxCategory(id: ID!): TaxCategory!
   createTaxRate(input: CreateTaxRateInput!): TaxRate!
   updateTaxRate(input: UpdateTaxRateInput!): TaxRate!
 
   """Retires a rate; the row is kept, because placed tax lines name it."""
   deleteTaxRate(id: ID!): TaxRate!
+
+  """
+  Retires a rate recoverably, so the tax lines that name it stay explainable.
+  """
+  softDeleteTaxRate(id: ID!): TaxRate!
+
+  """Restores a soft-deleted rate."""
+  recoverTaxRate(id: ID!): TaxRate!
 
   """
   Replaces the ordered parts of a rate; an empty list returns it to its implied part.
@@ -9607,6 +9672,14 @@ type Mutation {
   Retires a regime; the row is kept, because placed tax lines record the set they were taxed under.
   """
   deleteTaxRegime(id: ID!): TaxRegime!
+
+  """
+  Retires a regime recoverably, so the rates it selects can be selected again.
+  """
+  softDeleteTaxRegime(id: ID!): TaxRegime!
+
+  """Restores a soft-deleted regime."""
+  recoverTaxRegime(id: ID!): TaxRegime!
 
   """
   Sets which rates a regime selects. A regime that selects nothing is refused.
@@ -10014,6 +10087,14 @@ type Mutation {
   """Deactivates a plan, refusing while it still has live subscriptions."""
   deleteSubscriptionPlan(id: ID!): DeleteSubscriptionPlanPayload!
 
+  """
+  Retires a plan recoverably: the subscriptions already on it keep billing.
+  """
+  softDeleteSubscriptionPlan(id: ID!): SubscriptionPlanPayload!
+
+  """Puts a retired plan back on offer."""
+  recoverSubscriptionPlan(id: ID!): SubscriptionPlanPayload!
+
   """Puts a customer on a plan."""
   createSubscription(input: CreateSubscriptionInput!): CustomerSubscriptionPayload!
 
@@ -10053,6 +10134,17 @@ type Mutation {
   """
   removeSubscriptionItem(id: ID!, variantId: ID!): SubscriptionPlanChangePayload!
 
+  """
+  Retires a subscription recoverably.
+  
+  The rows stay as the record of what was sold, which is why this is the retirement a caller
+  reaches for rather than a hard delete, and why it is recoverable by the field below.
+  """
+  softDeleteSubscription(id: ID!): CustomerSubscriptionPayload!
+
+  """Restores a soft-deleted subscription."""
+  recoverSubscription(id: ID!): CustomerSubscriptionPayload!
+
   """Adds a recurring line without settling a proration."""
   createSubscriptionItem(input: CreateSubscriptionItemInput!): SubscriptionItemPayload!
 
@@ -10061,6 +10153,14 @@ type Mutation {
 
   """Removes a recurring line without settling a proration."""
   deleteSubscriptionItem(id: ID!): DeleteSubscriptionItemPayload!
+
+  """
+  Retires a recurring line recoverably, so that the next cycle stops billing it.
+  """
+  softDeleteSubscriptionItem(id: ID!): SubscriptionItemPayload!
+
+  """Restores a soft-deleted recurring line."""
+  recoverSubscriptionItem(id: ID!): SubscriptionItemPayload!
 
   """Opens a billing cycle by hand, for a backfill."""
   createSubscriptionBilling(input: CreateSubscriptionBillingInput!): SubscriptionBillingPayload!
@@ -10082,6 +10182,14 @@ type Mutation {
 
   """Records that a paid cycle was refunded."""
   refundSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
+
+  """
+  Retires a billing cycle recoverably, taking it out of the billing history.
+  """
+  softDeleteSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
+
+  """Restores a soft-deleted billing cycle."""
+  recoverSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
 
   """Raises a purchase order against an existing supplier."""
   createPurchaseOrder(input: CreatePurchaseOrderInput!): PurchaseOrderPayload!
@@ -10173,11 +10281,28 @@ type Mutation {
   """
   extendEntitlement(id: ID!, endsAt: DateTime!, quantity: Int, version: Int, idempotencyKey: String): EntitlementPayload!
 
+  """
+  Retires a right recoverably: the row is kept, with its keys and its activation history, unlike
+  `revokeEntitlement`, which is terminal.
+  """
+  softDeleteEntitlement(id: ID!): EntitlementPayload!
+
+  """Restores a right that was retired recoverably."""
+  recoverEntitlement(id: ID!): EntitlementPayload!
+
   """Occupies a slot of a right for a device or a named seat."""
   activateEntitlement(input: ActivateEntitlementInput!): ActivateEntitlementPayload!
 
   """Gives a slot back: released by the holder, or revoked by support."""
   deactivateEntitlement(id: ID!, reason: String, revoked: Boolean): DeactivateEntitlementPayload!
+
+  """
+  Retires an activation recoverably, leaving the row and the slot's history in place.
+  """
+  softDeleteEntitlementActivation(id: ID!): EntitlementActivationPayload!
+
+  """Restores an activation that was retired recoverably."""
+  recoverEntitlementActivation(id: ID!): EntitlementActivationPayload!
 
   """
   Issues a licence key. Its plaintext is returned once, in this response.
@@ -10186,6 +10311,12 @@ type Mutation {
 
   """Withdraws a credential, releasing the activations it was used for."""
   revokeEntitlementKey(id: ID!, reason: String!): EntitlementKeyPayload!
+
+  """Retires a licence key recoverably, leaving the row in place."""
+  softDeleteEntitlementKey(id: ID!): EntitlementKeyPayload!
+
+  """Restores a licence key that was retired recoverably."""
+  recoverEntitlementKey(id: ID!): EntitlementKeyPayload!
 
   """
   Opens a seller account on the seller's behalf. The applicant is born `DRAFT` and `UNVERIFIED`.
@@ -51864,6 +51995,17 @@ type ActivateEntitlementPayload {
 type DeactivateEntitlementPayload {
   activation: EntitlementActivation
   entitlement: Entitlement
+  userErrors: [UserError!]!
+}
+
+"""
+The outcome of a mutation on an activation, for the two acts that are not a release or a
+revocation. Declared here because the activation resource had no payload of its own: its other
+mutations answer `ActivateEntitlementPayload` or `DeactivateEntitlementPayload`, and neither
+states the act a caller performs when it retires a slot recoverably.
+"""
+type EntitlementActivationPayload {
+  activation: EntitlementActivation
   userErrors: [UserError!]!
 }
 

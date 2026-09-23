@@ -104,16 +104,28 @@ export const schemaExtensions = gql`
 		updateProductPrice(input: UpdateProductPriceInput!): ProductPrice!
 		"Delete a price row, softly unless \`force\` is set."
 		deleteProductPrice(id: ID!, force: Boolean): DeleteProductPricePayload!
+		"Retire a price row recoverably, keeping the amount a past resolution used queryable."
+		softDeleteProductPrice(id: ID!): ProductPrice!
+		"Restore a soft-deleted price row."
+		recoverProductPrice(id: ID!): ProductPrice!
 		"Write a price matrix, reporting the rows that were refused."
 		bulkUpsertProductPrices(input: BulkUpsertProductPricesInput!): BulkUpsertProductPricesPayload!
 		"Change the answer a scope gives about tax-inclusive presentation."
 		updatePricePreference(input: UpdatePricePreferenceInput!): PricePreference!
+		"Retire a preference recoverably, so that its scope falls back to the next answer."
+		softDeletePricePreference(id: ID!): PricePreference!
+		"Restore a soft-deleted preference."
+		recoverPricePreference(id: ID!): PricePreference!
 		"Create an exchange rate."
 		createExchangeRate(input: CreateExchangeRateInput!): ExchangeRate!
 		"Update an exchange rate."
 		updateExchangeRate(input: UpdateExchangeRateInput!): ExchangeRate!
 		"Delete an exchange rate, softly unless \`force\` is set."
 		deleteExchangeRate(id: ID!, force: Boolean): DeleteExchangeRatePayload!
+		"Retire a rate recoverably, keeping a historical conversion reproducible."
+		softDeleteExchangeRate(id: ID!): ExchangeRate!
+		"Restore a soft-deleted rate."
+		recoverExchangeRate(id: ID!): ExchangeRate!
 	}
 
 	"A named, scoped, time-boxed set of prices."

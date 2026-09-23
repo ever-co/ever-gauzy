@@ -259,6 +259,29 @@ export class ContactGroupResolver {
 	}
 
 	/**
+	 * Puts a withdrawn group back, clearing the marker the withdrawal set.
+	 *
+	 * **The permission is the class's read grant, and that is the parity rather than a slip.** The
+	 * route this field mirrors — `PUT /:id/recover` — is inherited from `CrudController<T>` and is not
+	 * overridden here, so it states no permission of its own; `PermissionGuard` resolves
+	 * handler-then-class, which is why the route is authorised today by `ContactGroupController`'s
+	 * class-level `CONTACT_GROUPS_VIEW`. Mirroring the route is what parity requires, and stating the
+	 * delete grant the withdrawals beside it carry would make GraphQL narrower than REST. Tightening
+	 * the route instead would change a delivered REST endpoint's authorisation, which is the platform's
+	 * call and not this wave's. It is the shape the plugin controllers closed for themselves — all 88
+	 * of them override the route with a write grant — and which neither core controller has done here.
+	 *
+	 * The recovery is not announced on `contactGroupChanged`, and that is the route's behaviour rather
+	 * than a field's omission: the service announces its removals and the base method behind the route
+	 * announces nothing, so a subscriber that heard the withdrawal hears no counterpart here.
+	 */
+	@Mutation('recoverContactGroup')
+	@Permissions(PermissionsEnum.CONTACT_GROUPS_VIEW)
+	async recoverContactGroup(@Args('id', { type: () => ID }) id: Id): Promise<IContactGroup> {
+		return this.contactGroupService.softRecover(id);
+	}
+
+	/**
 	 * Streams every change to a contact group of the caller's tenant: the group appearing, being edited
 	 * or being removed, and its membership being granted or withdrawn.
 	 *

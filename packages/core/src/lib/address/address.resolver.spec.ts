@@ -15,6 +15,7 @@ import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { AddressRoleEnum } from '../address-role/address-role.enums';
+import { AddressController } from './address.controller';
 import { AddressResolver } from './address.resolver';
 
 /**
@@ -34,6 +35,10 @@ import { AddressResolver } from './address.resolver';
  *   method that owns it, so neither protocol offers a way to write the boolean directly;
  * - every write mutation carries `ORG_CONTACT_EDIT` and never the read permission, so a role that may
  *   look at the address book cannot change it by asking GraphQL instead of REST;
+ * - **`recoverAddress` is the one write that carries the read grant**, because the inherited
+ *   `PUT /:id/recover` route it mirrors states no permission of its own and the guard resolves the
+ *   controller's class-level one for it — so the field is held to the controller's own metadata rather
+ *   than to a second list that could agree with the resolver while disagreeing with the route;
  * - both protocols are tenant- and permission-guarded, asserted against the metadata a guard reads.
  */
 
@@ -87,6 +92,7 @@ function surfaces() {
 		createAddress: jest.fn().mockResolvedValue(ROWS[0]),
 		updateAddress: jest.fn().mockResolvedValue(ROWS[0]),
 		softRemoveAddress: jest.fn().mockResolvedValue(ROWS[0]),
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
 		setDefaultAddress: jest.fn().mockResolvedValue(ROWS[0]),
 		clearDefaultAddress: jest.fn().mockResolvedValue(ROWS[1])
 	};
@@ -129,6 +135,51 @@ function rootFields(operation: 'Query' | 'Mutation' | 'Subscription'): string[] 
 	return Object.keys(root?.getFields() ?? {});
 }
 
+/** The handlers of one controller, as functions, inherited ones included. */
+function handlersOf(controller: typeof AddressController): Record<string, object> {
+	return controller.prototype as unknown as Record<string, object>;
+}
+
+/**
+ * The permission one route runs under: what its handler states, else what its controller states.
+ *
+ * This is the rule the guards themselves apply — the reflector's `getAllAndOverride` over
+ * `[handler, class]` — restated here, so the resolver is held to the controller's own metadata rather
+ * than to a second copy of the same list written out in this file.
+ */
+function permissionOfRoute(controller: typeof AddressController, handler: string): unknown {
+	return (
+		Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(controller)[handler]) ??
+		Reflect.getMetadata(PERMISSIONS_METADATA, controller)
+	);
+}
+
+/** The permission one resolver field runs under, as its own handler states it. */
+function permissionOfField(field: string): unknown {
+	const fields = AddressResolver.prototype as unknown as Record<string, object>;
+
+	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
+}
+
+/**
+ * Every root field and the delivered route it mirrors.
+ *
+ * The two surfaces are one capability stated twice, so the permission of a field is read from the
+ * field and from the route's own metadata and compared, rather than restated here: a table of
+ * permission names would agree with the resolver while disagreeing with the controller, which is the
+ * failure this half of the doctrine exists to catch.
+ */
+const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
+	{ field: 'addresses', route: 'findAll' },
+	{ field: 'address', route: 'findById' },
+	{ field: 'createAddress', route: 'create' },
+	{ field: 'updateAddress', route: 'update' },
+	{ field: 'deleteAddress', route: 'delete' },
+	{ field: 'softDeleteAddress', route: 'softRemove' },
+	{ field: 'recoverAddress', route: 'softRecover' },
+	{ field: 'setDefaultAddress', route: 'setDefault' }
+];
+
 describe('AddressResolver — the SDL declares the root fields the specification names (§3.2 row 4)', () => {
 	it('declares the two address queries', () => {
 		expect(rootFields('Query')).toEqual(expect.arrayContaining(['addresses', 'address']));
@@ -136,7 +187,14 @@ describe('AddressResolver — the SDL declares the root fields the specification
 
 	it('declares every address mutation, and no more than the specification names', () => {
 		expect(rootFields('Mutation')).toEqual(
-			expect.arrayContaining(['createAddress', 'updateAddress', 'deleteAddress', 'setDefaultAddress'])
+			expect.arrayContaining([
+				'createAddress',
+				'updateAddress',
+				'deleteAddress',
+				'softDeleteAddress',
+				'recoverAddress',
+				'setDefaultAddress'
+			])
 		);
 	});
 
@@ -275,6 +333,20 @@ describe('AddressResolver — one concept, two protocols, the same writes', () =
 		expect(addressService.softRemoveAddress).toHaveBeenCalledWith(ADDRESS);
 	});
 
+	it('removes and recovers through the same service methods the two CRUD routes reach', async () => {
+		const { resolver, addressService } = surfaces();
+
+		await resolver.softDeleteAddress(ADDRESS);
+		await expect(resolver.recoverAddress(ADDRESS)).resolves.toBe(ROWS[0]);
+
+		// `DELETE /:id/soft` is restated by this controller and routed to the domain's own removal,
+		// because the inherited one would delete an address the party still names as its default — the
+		// one removal `softRemoveAddress` refuses. `PUT /:id/recover` is left inherited, so the field
+		// calls the base service method that handler calls, and the domain's removal is not reached.
+		expect(addressService.softRemoveAddress).toHaveBeenCalledWith(ADDRESS);
+		expect(addressService.softRecover).toHaveBeenCalledWith(ADDRESS);
+	});
+
 	it('moves a default and clears one through the two methods that own them', async () => {
 		const { resolver, addressService } = surfaces();
 
@@ -315,14 +387,51 @@ describe('AddressResolver — the guard stack and the permission every root fiel
 		expect(guards).toEqual(expect.arrayContaining([TenantPermissionGuard, PermissionGuard]));
 	});
 
+	it('states on every field the permission its own route runs under', () => {
+		// The permissions are the controller's own metadata, applied the way the guards apply it, so a
+		// field that widened or narrowed a route would be caught here rather than by a second list that
+		// agrees with the resolver because it was copied from it.
+		for (const { field, route } of PERMISSION_PARITY) {
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(AddressController, route));
+		}
+	});
+
+	it('states the class’s read grant on the recovery, because the route it mirrors states none', () => {
+		// `PUT /:id/recover` is inherited from the CRUD base and this controller does not override it, so
+		// the handler carries no permission of its own and the guard resolves the controller's class-level
+		// `ORG_CONTACT_VIEW` for it. A write mutation carrying a read grant reads like a slip and is the
+		// parity: the edit grant the writes beside it carry would make GraphQL narrower than the REST
+		// route, and tightening the route instead would change a delivered endpoint's authorisation —
+		// the platform's call rather than this surface's.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(AddressController)['softRecover'])).toBeUndefined();
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, AddressController)).toEqual([
+			PermissionsEnum.ORG_CONTACT_VIEW
+		]);
+		expect(permissionOfField('recoverAddress')).toEqual([PermissionsEnum.ORG_CONTACT_VIEW]);
+		expect(permissionOfRoute(AddressController, 'softRecover')).toEqual([PermissionsEnum.ORG_CONTACT_VIEW]);
+	});
+
+	it('carries the edit grant on the withdrawal the controller restates for that reason', () => {
+		// The counterpart of the case above: `DELETE /:id/soft` *is* declared on this controller, with
+		// `ORG_CONTACT_EDIT` on the handler, so the field mirrors the declared grant rather than the class
+		// one — which is what makes the recovery's read grant a statement about its route instead of a
+		// pattern copied from its neighbour.
+		expect(permissionOfRoute(AddressController, 'softRemove')).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+		expect(permissionOfField('softDeleteAddress')).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+	});
+
 	it('carries the read permission on the resource and the write permission on every write', () => {
 		const proto = AddressResolver.prototype;
+		// The recovery is the one write that is deliberately absent from this list, and its own case above
+		// is where its read grant is asserted: restating the edit grant here would assert the opposite of
+		// what its route resolves to.
 		const expected: Array<[string, PermissionsEnum]> = [
 			['addresses', PermissionsEnum.ORG_CONTACT_VIEW],
 			['address', PermissionsEnum.ORG_CONTACT_VIEW],
 			['createAddress', PermissionsEnum.ORG_CONTACT_EDIT],
 			['updateAddress', PermissionsEnum.ORG_CONTACT_EDIT],
 			['deleteAddress', PermissionsEnum.ORG_CONTACT_EDIT],
+			['softDeleteAddress', PermissionsEnum.ORG_CONTACT_EDIT],
 			['setDefaultAddress', PermissionsEnum.ORG_CONTACT_EDIT]
 		];
 
@@ -339,9 +448,11 @@ describe('AddressResolver — the guard stack and the permission every root fiel
 		// "No credential" at the level a unit test can observe: the class-level chain refuses a request
 		// that presents none, and the metadata below is what the permission guard reads. A write field
 		// that carried the read permission — or none — would be reachable by every caller that may look.
+		// `recoverAddress` is deliberately not in this list: it states the read grant because the inherited
+		// route it mirrors resolves to it, which the case above pins.
 		const proto = AddressResolver.prototype;
 
-		for (const field of ['createAddress', 'updateAddress', 'deleteAddress', 'setDefaultAddress']) {
+		for (const field of ['createAddress', 'updateAddress', 'deleteAddress', 'softDeleteAddress', 'setDefaultAddress']) {
 			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[field]) ?? [];
 
 			expect(stated).not.toContain(PermissionsEnum.ORG_CONTACT_VIEW);

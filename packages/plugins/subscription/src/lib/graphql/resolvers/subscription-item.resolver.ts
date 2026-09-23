@@ -163,4 +163,52 @@ export class SubscriptionItemResolver {
 			return { id: null, userErrors: [toUserError(error)] };
 		}
 	}
+
+	/**
+	 * Retires a recurring line recoverably.
+	 *
+	 * The route it mirrors is `DELETE /subscription-items/:id/soft`, inherited from `CrudController` and
+	 * overridden by this plugin's controller only to state a permission, because the inherited route
+	 * declares none and `PermissionGuard` (`shared/guards/permission.guard.ts`) answers `true` from its
+	 * `isEmpty` branch to that omission. The field states the route's own `SUBSCRIPTIONS_EDIT` — a line
+	 * taken out of what the next cycle bills is a change to what the customer is charged, which the
+	 * class-level view grant must not carry.
+	 *
+	 * It answers the line rather than an id, unlike its `deleteSubscriptionItem` sibling, because the
+	 * inherited route reaches a different service method: `softRemove` returns the retired row, while
+	 * `softDelete` — which the delete field reaches — returns nothing to answer with.
+	 *
+	 * @param id The line to retire.
+	 * @returns The payload, with the retired line or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('softDeleteSubscriptionItem')
+	async softDeleteSubscriptionItem(@Args('id') id: ID) {
+		try {
+			return { subscriptionItem: await this.subscriptionItemService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { subscriptionItem: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a soft-deleted recurring line.
+	 *
+	 * The route it mirrors is `PUT /subscription-items/:id/recover`, whose override states the same
+	 * `SUBSCRIPTIONS_EDIT` the soft delete states. A restored line is one the next cycle bills again, so
+	 * the field is the only way a client working over GraphQL can finish the lifecycle its own delete
+	 * began — over REST it could, which is the disagreement this closes.
+	 *
+	 * @param id The line to restore.
+	 * @returns The payload, with the restored line or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('recoverSubscriptionItem')
+	async recoverSubscriptionItem(@Args('id') id: ID) {
+		try {
+			return { subscriptionItem: await this.subscriptionItemService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { subscriptionItem: null, userErrors: [toUserError(error)] };
+		}
+	}
 }

@@ -69,16 +69,28 @@ export const schemaExtensions = gql`
 		updateTaxCategory(input: UpdateTaxCategoryInput!): TaxCategory!
 		"Retires a category; the row is kept, because its rates are what placed tax lines point at."
 		deleteTaxCategory(id: ID!): TaxCategory!
+		"Retires a category recoverably, so the rates that name it keep their class."
+		softDeleteTaxCategory(id: ID!): TaxCategory!
+		"Restores a soft-deleted category."
+		recoverTaxCategory(id: ID!): TaxCategory!
 		createTaxRate(input: CreateTaxRateInput!): TaxRate!
 		updateTaxRate(input: UpdateTaxRateInput!): TaxRate!
 		"Retires a rate; the row is kept, because placed tax lines name it."
 		deleteTaxRate(id: ID!): TaxRate!
+		"Retires a rate recoverably, so the tax lines that name it stay explainable."
+		softDeleteTaxRate(id: ID!): TaxRate!
+		"Restores a soft-deleted rate."
+		recoverTaxRate(id: ID!): TaxRate!
 		"Replaces the ordered parts of a rate; an empty list returns it to its implied part."
 		setTaxRateParts(input: SetTaxRatePartsInput!): [TaxRatePart!]!
 		createTaxRegime(input: CreateTaxRegimeInput!): TaxRegime!
 		updateTaxRegime(input: UpdateTaxRegimeInput!): TaxRegime!
 		"Retires a regime; the row is kept, because placed tax lines record the set they were taxed under."
 		deleteTaxRegime(id: ID!): TaxRegime!
+		"Retires a regime recoverably, so the rates it selects can be selected again."
+		softDeleteTaxRegime(id: ID!): TaxRegime!
+		"Restores a soft-deleted regime."
+		recoverTaxRegime(id: ID!): TaxRegime!
 		"Sets which rates a regime selects. A regime that selects nothing is refused."
 		setTaxRegimeRates(input: SetTaxRegimeRatesInput!): [TaxRegimeRate!]!
 	}

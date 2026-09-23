@@ -177,6 +177,44 @@ export class TaxRateResolver {
 	}
 
 	/**
+	 * Retires a rate recoverably, keeping it and the tax lines that name it.
+	 *
+	 * The route it mirrors is `DELETE /tax-rates/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this
+	 * field a rate retired over GraphQL could not be brought back over GraphQL, while a REST caller could
+	 * do both — and the hard delete the endpoint does serve drops the row entirely, which is the
+	 * operation the soft route exists to avoid.
+	 *
+	 * The permission is the controller's own for the route — `TAX_RATES_EDIT` — and not the class-level
+	 * view grant, because a retired rate stops resolving for every destination that had matched it.
+	 *
+	 * @param id The rate to retire.
+	 * @returns The rate, as the soft delete left it.
+	 */
+	@Mutation('softDeleteTaxRate')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_EDIT))
+	async softDeleteTaxRate(@Args('id') id: ID): Promise<TaxRate> {
+		return await this.taxRateService.softRemove(id);
+	}
+
+	/**
+	 * Restores a rate that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /tax-rates/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored rate
+	 * becomes a candidate for the destinations it matched again, which is why the route states the
+	 * editing grant rather than the reading one.
+	 *
+	 * @param id The rate to restore.
+	 * @returns The restored rate.
+	 */
+	@Mutation('recoverTaxRate')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_RATES_EDIT))
+	async recoverTaxRate(@Args('id') id: ID): Promise<TaxRate> {
+		return await this.taxRateService.softRecover(id);
+	}
+
+	/**
 	 * Replaces the ordered parts a rate is made of.
 	 */
 	@Mutation('setTaxRateParts')

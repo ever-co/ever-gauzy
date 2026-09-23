@@ -167,6 +167,48 @@ export class ProductPriceResolver {
 	}
 
 	/**
+	 * Soft-deletes a price row, keeping the amount a past resolution used queryable.
+	 *
+	 * The route it mirrors is `DELETE /product-prices/:id/soft` — the one this controller overrides to
+	 * state a permission, which the base declares without any. It is not the same act as the delete
+	 * field above with `force` unset: that one calls `softDelete`, while this one calls the service's
+	 * `softRemove`, which is the method the route itself reaches and the one that answers the row.
+	 * The field exists so that **a caller must not have to choose a protocol to retire a price
+	 * recoverably**, and the hard mode of the field above is what a caller was left with otherwise.
+	 *
+	 * The permission is the route's own — `PRODUCT_PRICES_EDIT` — and not the class-level view grant,
+	 * because a retired row stops being eligible for resolution, which changes what the storefront
+	 * charges.
+	 *
+	 * @param id The price row to soft delete.
+	 * @returns The soft-deleted price row.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRODUCT_PRICES_EDIT))
+	@Mutation('softDeleteProductPrice')
+	async softDeleteProductPrice(@Args('id') id: ID): Promise<ProductPrice> {
+		return await this.productPriceService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted price row.
+	 *
+	 * The route it mirrors is `PUT /product-prices/:id/recover`. Without this field a row retired
+	 * over GraphQL could only be brought back over REST, so the two surfaces of one lifecycle
+	 * disagreed about which of them could complete it.
+	 *
+	 * The permission is the route's own — `PRODUCT_PRICES_EDIT` — because a restored row becomes
+	 * eligible for resolution again, which is the same blast radius read the other way.
+	 *
+	 * @param id The price row to restore.
+	 * @returns The restored price row.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRODUCT_PRICES_EDIT))
+	@Mutation('recoverProductPrice')
+	async recoverProductPrice(@Args('id') id: ID): Promise<ProductPrice> {
+		return await this.productPriceService.softRecover(id);
+	}
+
+	/**
 	 * Writes a price matrix.
 	 *
 	 * @param input The rows, the mode and the atomicity flag.

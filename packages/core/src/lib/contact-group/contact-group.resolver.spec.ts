@@ -107,7 +107,8 @@ function surfaces() {
 		findGroupOrFail: jest.fn().mockResolvedValue(ROWS[0]),
 		createGroup: jest.fn().mockResolvedValue(ROWS[0]),
 		updateGroup: jest.fn().mockResolvedValue(ROWS[0]),
-		removeGroup: jest.fn().mockResolvedValue(ROWS[1])
+		removeGroup: jest.fn().mockResolvedValue(ROWS[1]),
+		softRecover: jest.fn().mockResolvedValue(ROWS[1])
 	};
 	const pubSub = {
 		topicFor: jest.fn((eventName: string, tenantId: string) => `${eventName}:${tenantId}`),
@@ -230,7 +231,8 @@ describe('ContactGroupResolver — the SDL declares the root fields the specific
 				'createContactGroup',
 				'updateContactGroup',
 				'deleteContactGroup',
-				'softDeleteContactGroup'
+				'softDeleteContactGroup',
+				'recoverContactGroup'
 			])
 		);
 	});
@@ -417,6 +419,18 @@ describe('ContactGroupResolver — one concept, two protocols, the same writes',
 		// other removal field calls, because removal here is soft under either spelling.
 		expect(contactGroupService.removeGroup).toHaveBeenCalledWith(OTHER_GROUP);
 	});
+
+	it('recovers through the same service method the recovery route reaches', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		await expect(resolver.recoverContactGroup(OTHER_GROUP)).resolves.toBe(ROWS[1]);
+
+		// The route is the CRUD base's own `PUT /:id/recover`, which the controller leaves inherited, so
+		// the field calls exactly what that handler calls: `crudService.softRecover(id)`. Following the
+		// domain's removal instead would restore through a method the route never reaches.
+		expect(contactGroupService.softRecover).toHaveBeenCalledWith(OTHER_GROUP);
+		expect(contactGroupService.removeGroup).toHaveBeenCalledTimes(0);
+	});
 });
 
 describe('ContactGroupResolver — subscriptions (§10.2, §10.4)', () => {
@@ -595,7 +609,8 @@ describe('ContactGroupResolver — the guard stack and the permission every root
 			['createContactGroup', 'create'],
 			['updateContactGroup', 'update'],
 			['deleteContactGroup', 'delete'],
-			['softDeleteContactGroup', 'softRemove']
+			['softDeleteContactGroup', 'softRemove'],
+			['recoverContactGroup', 'softRecover']
 		];
 
 		const fields = ContactGroupResolver.prototype as unknown as Record<string, object>;
@@ -612,10 +627,35 @@ describe('ContactGroupResolver — the guard stack and the permission every root
 		expect(stated).toEqual(expected);
 	});
 
+	it('states the class’s read grant on the recovery, because the route it mirrors states none', () => {
+		const proto = ContactGroupResolver.prototype;
+
+		// `PUT /:id/recover` is inherited from the CRUD base and this controller does not override it, so
+		// the handler carries no permission of its own and the guard resolves the controller's class-level
+		// `CONTACT_GROUPS_VIEW` for it. A write mutation carrying a read grant reads like a slip and is
+		// the parity: the delete grant the withdrawals beside it carry would make GraphQL narrower than
+		// the REST route, and tightening the route instead would change a delivered endpoint's
+		// authorisation — the platform's call rather than this surface's.
+		expect(
+			Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ContactGroupController)['softRecover'])
+		).toBeUndefined();
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactGroupController)).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_VIEW
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto.recoverContactGroup)).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_VIEW
+		]);
+		expect(permissionOfRoute(ContactGroupController, 'softRecover')).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_VIEW
+		]);
+	});
+
 	it('refuses every write to a caller who holds only the read permission', () => {
 		// "No credential" at the level a unit test can observe: the class-level chain refuses a request
 		// that presents none, and the metadata below is what the permission guard reads. A write field
 		// that carried the read permission — or none — would be reachable by every caller that may look.
+		// `recoverContactGroup` is deliberately not in this list: it states the read grant because the
+		// inherited route it mirrors resolves to it, which the case above pins.
 		const proto = ContactGroupResolver.prototype;
 
 		for (const field of ['createContactGroup', 'updateContactGroup', 'deleteContactGroup', 'softDeleteContactGroup']) {

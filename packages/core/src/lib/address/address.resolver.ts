@@ -136,6 +136,9 @@ const ADDRESS_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * exists in `RequestContext` and no decorator establishes one, so this resolver is guarded on the
  * same staff permission the REST route carries — `ORG_CONTACT_VIEW` to read, `ORG_CONTACT_EDIT` to
  * write — and no authentication path is invented to stand in for the one the specification assumes.
+ * Where the route a field mirrors is inherited and states no permission of its own, the field carries
+ * what the guard resolves for that route — the class-level grant — and says so beside itself, because
+ * a field that invented the grant its route does not carry would be the two surfaces disagreeing.
  *
  * **`withDeleted` is deliberately absent.** A repository option the delivered list methods do not
  * expose, and an argument that cannot be honoured is worse than an absent one.
@@ -214,6 +217,41 @@ export class AddressResolver {
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	async deleteAddress(@Args('id', { type: () => ID }) id: Id): Promise<IAddressBook> {
 		return this.addressService.softRemoveAddress(id);
+	}
+
+	/**
+	 * Removes an address under the spelling the soft-delete route uses.
+	 *
+	 * The route this field mirrors is restated by this domain's controller and routed to the domain's
+	 * own removal — the same method `deleteAddress` calls, because removal here is soft under either
+	 * spelling and one operation is not made two by having two names. Mirroring that routing is the
+	 * point: the inherited soft remove would delete an address the party still names as its default,
+	 * which is the one removal `softRemoveAddress` refuses, and a field that called the base method
+	 * would offer over GraphQL a removal the route refuses over REST.
+	 */
+	@Mutation('softDeleteAddress')
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	async softDeleteAddress(@Args('id', { type: () => ID }) id: Id): Promise<IAddressBook> {
+		return this.addressService.softRemoveAddress(id);
+	}
+
+	/**
+	 * Puts a withdrawn address back, clearing the marker the withdrawal set.
+	 *
+	 * **The permission is the class's read grant, and that is the parity rather than a slip.** The
+	 * route this field mirrors — `PUT /:id/recover` — is inherited from `CrudController<T>` and is not
+	 * overridden here, so it states no permission of its own; `PermissionGuard` resolves
+	 * handler-then-class, which is why the route is authorised today by `AddressController`'s
+	 * class-level `ORG_CONTACT_VIEW`. Mirroring the route is what parity requires, and stating the edit
+	 * grant the writes beside it carry would make GraphQL narrower than REST. Tightening the route
+	 * instead would change a delivered REST endpoint's authorisation, which is the platform's call and
+	 * not this wave's. It is the shape the plugin controllers closed for themselves — all 88 of them
+	 * override the route with a write grant — and which neither core controller has done here.
+	 */
+	@Mutation('recoverAddress')
+	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
+	async recoverAddress(@Args('id', { type: () => ID }) id: Id): Promise<IAddressBook> {
+		return this.addressService.softRecover(id);
 	}
 
 	/**

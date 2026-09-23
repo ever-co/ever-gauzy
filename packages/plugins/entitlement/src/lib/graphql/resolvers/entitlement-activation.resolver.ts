@@ -140,4 +140,54 @@ export class EntitlementActivationResolver {
 			return { activation: null, entitlement: null, userErrors: [toUserError(error)] };
 		}
 	}
+
+	/**
+	 * Retires an activation recoverably, leaving the row and the seat's history in place.
+	 *
+	 * The route it mirrors is `DELETE /entitlement-activations/:id/soft`, inherited from `CrudController`
+	 * and overridden by this plugin's controller only to state the permission the base left unstated.
+	 * Without this field a slot taken over GraphQL could be given back only by releasing or revoking it —
+	 * both of which move the activation's own status — while a REST caller could retire one and bring it
+	 * back unchanged.
+	 *
+	 * The permission is the route's own, `ENTITLEMENTS_EDIT`, because retiring a slot is the same
+	 * operator decision the release and revoke routes already carry, and not the grant permission the
+	 * activation route carries: a device taking its own seat must not be able to retire another's.
+	 *
+	 * The answer is the payload this field's own act declares, `EntitlementActivationPayload`: the
+	 * deactivation payload of the sibling route states an act the caller did not perform, and the key
+	 * resource's payload — one row and the refusal channel — is the shape this resource was missing.
+	 *
+	 * @param id The activation.
+	 * @returns The payload, carrying the activation as the soft delete left it.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('softDeleteEntitlementActivation')
+	async softDeleteEntitlementActivation(@Args('id') id: ID) {
+		try {
+			return { activation: await this.entitlementActivationService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { activation: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores an activation that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /entitlement-activations/:id/recover`. A restored slot counts against
+	 * its right's activation limit again, which is why the route states the destructive grant rather than
+	 * the granting one — and why this field states `ENTITLEMENTS_EDIT` too.
+	 *
+	 * @param id The activation.
+	 * @returns The payload, carrying the restored activation.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('recoverEntitlementActivation')
+	async recoverEntitlementActivation(@Args('id') id: ID) {
+		try {
+			return { activation: await this.entitlementActivationService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { activation: null, userErrors: [toUserError(error)] };
+		}
+	}
 }

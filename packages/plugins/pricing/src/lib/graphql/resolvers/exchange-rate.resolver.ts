@@ -140,6 +140,48 @@ export class ExchangeRateResolver {
 	}
 
 	/**
+	 * Soft-deletes an exchange rate, keeping the conversions it priced reproducible.
+	 *
+	 * The route it mirrors is `DELETE /exchange-rates/:id/soft` — the one this controller overrides to
+	 * state a permission, which the base declares without any. The field is the same capability stated
+	 * for this protocol: **a caller must not have to choose a protocol to retire a rate recoverably.**
+	 * The only removal this resolver served without it was the field above, whose hard mode deletes
+	 * the row a historical order's conversion was computed from — the very operation the soft route
+	 * exists to avoid.
+	 *
+	 * The permission is the route's own — `EXCHANGE_RATES_EDIT` — and not the class-level view grant,
+	 * because a rate is the conversion applied to every foreign-currency amount in the tenant, so
+	 * taking one out of the lookup is administrative.
+	 *
+	 * @param id The rate to soft delete.
+	 * @returns The soft-deleted rate.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.EXCHANGE_RATES_EDIT))
+	@Mutation('softDeleteExchangeRate')
+	async softDeleteExchangeRate(@Args('id') id: ID): Promise<ExchangeRate> {
+		return await this.exchangeRateService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted exchange rate.
+	 *
+	 * The route it mirrors is `PUT /exchange-rates/:id/recover`. Without this field a rate retired
+	 * over GraphQL could only be brought back over REST, so the two surfaces of one lifecycle
+	 * disagreed about which of them could complete it.
+	 *
+	 * The permission is the route's own — `EXCHANGE_RATES_EDIT` — because a restored rate re-enters
+	 * the "greatest `validFrom` wins" lookup, which is the same blast radius read the other way.
+	 *
+	 * @param id The rate to restore.
+	 * @returns The restored rate.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.EXCHANGE_RATES_EDIT))
+	@Mutation('recoverExchangeRate')
+	async recoverExchangeRate(@Args('id') id: ID): Promise<ExchangeRate> {
+		return await this.exchangeRateService.softRecover(id);
+	}
+
+	/**
 	 * @param filter The GraphQL filter.
 	 * @returns The equivalent row predicate.
 	 */

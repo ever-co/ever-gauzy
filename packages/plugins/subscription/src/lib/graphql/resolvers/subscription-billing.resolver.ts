@@ -202,4 +202,51 @@ export class SubscriptionBillingResolver {
 			return { subscriptionBilling: null, userErrors: [toUserError(error)] };
 		}
 	}
+
+	/**
+	 * Retires a billing cycle recoverably.
+	 *
+	 * The route it mirrors is `DELETE /subscription-billings/:id/soft`, inherited from `CrudController`
+	 * and overridden by this plugin's controller only to state a permission: the inherited route carries
+	 * none, so `PermissionGuard` (`shared/guards/permission.guard.ts`) answered `true` from its `isEmpty`
+	 * branch and the class-level `SUBSCRIPTIONS_VIEW` alone stood in front of it.
+	 *
+	 * The field states the route's own `SUBSCRIPTIONS_EDIT` and not the class's `BILL` grant, for the
+	 * reason the controller's override states it: the plugin draws the line at what moves money, and a
+	 * cycle retired out of the history is a record removed rather than a charge made. A cycle's money is
+	 * still paid, waived and refunded under `SUBSCRIPTIONS_BILL`, exactly as before.
+	 *
+	 * @param id The cycle to retire.
+	 * @returns The payload, with the retired cycle or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('softDeleteSubscriptionBilling')
+	async softDeleteSubscriptionBilling(@Args('id') id: ID) {
+		try {
+			return { subscriptionBilling: await this.subscriptionBillingService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { subscriptionBilling: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a soft-deleted billing cycle.
+	 *
+	 * The route it mirrors is `PUT /subscription-billings/:id/recover`, whose override states the same
+	 * `SUBSCRIPTIONS_EDIT` the soft delete states: putting a cycle back is the inverse of taking it out,
+	 * and both decide what the history shows rather than what is charged — which is why neither takes
+	 * the billing grant.
+	 *
+	 * @param id The cycle to restore.
+	 * @returns The payload, with the restored cycle or the reason it was refused.
+	 */
+	@Permissions(SubscriptionPermissions.SUBSCRIPTIONS_EDIT)
+	@Mutation('recoverSubscriptionBilling')
+	async recoverSubscriptionBilling(@Args('id') id: ID) {
+		try {
+			return { subscriptionBilling: await this.subscriptionBillingService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { subscriptionBilling: null, userErrors: [toUserError(error)] };
+		}
+	}
 }

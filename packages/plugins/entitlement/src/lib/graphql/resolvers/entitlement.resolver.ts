@@ -258,6 +258,56 @@ export class EntitlementResolver {
 	}
 
 	/**
+	 * Retires a right recoverably, keeping the row and everything that hangs off it.
+	 *
+	 * The route it mirrors is `DELETE /entitlements/:id/soft`, which this plugin's controller overrides
+	 * only to state the permission the inherited route left unstated. Without this field the only way to
+	 * end a right over GraphQL was `revokeEntitlement` — terminal, and irreversible — so a client that
+	 * retired the wrong right had no way back, while a REST caller had one.
+	 *
+	 * The permission is the route's own, `ENTITLEMENTS_EDIT`, and not the class-level view grant: taking
+	 * a right out of force is the act the edit grant exists for.
+	 *
+	 * The answer is the payload the right's other mutations answer, `EntitlementPayload`, so an outcome
+	 * this field's service refuses is reported in `userErrors` rather than as a GraphQL error — the
+	 * treatment every other mutation of this plugin gives an outcome a caller could have avoided.
+	 *
+	 * @param id The right.
+	 * @returns The payload, carrying the right as the soft delete left it.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('softDeleteEntitlement')
+	async softDeleteEntitlement(@Args('id') id: ID) {
+		try {
+			return { entitlement: await this.entitlementService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Restores a right that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /entitlements/:id/recover`. A restored right is eligible for the
+	 * check, the activations and the renewals it was eligible for before, which is why the route states
+	 * the destructive grant rather than the edit one — and why this field states `ENTITLEMENTS_EDIT`
+	 * too, rather than the class-level view grant that would otherwise be all that is left in front of
+	 * it.
+	 *
+	 * @param id The right.
+	 * @returns The payload, carrying the restored right.
+	 */
+	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
+	@Mutation('recoverEntitlement')
+	async recoverEntitlement(@Args('id') id: ID) {
+		try {
+			return { entitlement: await this.entitlementService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { entitlement: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Streams rights that were granted or changed.
 	 *
 	 * @param entitlementId An optional right to narrow the stream to.

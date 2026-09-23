@@ -21,11 +21,13 @@ import { readConnection } from '../pagination';
 /**
  * Tax-inclusivity preferences over GraphQL.
  *
- * There is no create and no delete here, and that is deliberate: a preference is created with the
+ * There is no create and no hard delete here, and that is deliberate: a preference is created with the
  * scope it answers for, so it is authored once through the resource that owns the configuration,
  * and from then on the only thing that changes is the answer. Exposing a create beside the update
  * would invite two rows for one scope, which is exactly what the table's unique constraint exists to
- * prevent.
+ * prevent. What the resource does carry is the recoverable pair below — a retire and its restore —
+ * because those are the two routes the controller already serves and a preference taken out of the
+ * fallback by one protocol has to be put back by the same one.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
@@ -99,6 +101,47 @@ export class PricePreferenceResolver {
 		await this.pricePreferenceService.updateOne(input.id, { isTaxInclusive: input.isTaxInclusive });
 
 		return await this.pricePreferenceService.findOneByIdString(input.id);
+	}
+
+	/**
+	 * Retires a preference recoverably, so that its scope falls back to the next answer.
+	 *
+	 * The route it mirrors is `DELETE /price-preferences/:id/soft` — the one this controller overrides
+	 * to state a permission, which the base declares without any. The field matters more here than on
+	 * a resource that already has a delete field: this resolver serves no delete at all, so before it
+	 * a preference retired over REST was frozen — GraphQL could neither retire nor restore it, and the
+	 * two surfaces of one lifecycle disagreed about which of them could complete it.
+	 *
+	 * The permission is the route's own — `PRODUCT_PRICES_EDIT` — and not the class-level
+	 * `PRODUCT_PRICES_VIEW`, because retiring a preference changes what a tax-inclusive price resolves
+	 * to for a whole currency, region or channel rather than one row.
+	 *
+	 * @param id The preference to soft delete.
+	 * @returns The soft-deleted preference.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRODUCT_PRICES_EDIT))
+	@Mutation('softDeletePricePreference')
+	async softDeletePricePreference(@Args('id') id: ID): Promise<PricePreference> {
+		return await this.pricePreferenceService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted preference, so that its scope answers from it again.
+	 *
+	 * The route it mirrors is `PUT /price-preferences/:id/recover`. A restore is the only move that
+	 * can put a preference back in front of the fallback the removal exposed, which is why the pair
+	 * travels together: a removal with no way back over the same protocol is a one-way door.
+	 *
+	 * The permission is the route's own — `PRODUCT_PRICES_EDIT` — because a restored preference
+	 * changes the tax-inclusive answer again, which is the same act read the other way.
+	 *
+	 * @param id The preference to restore.
+	 * @returns The restored preference.
+	 */
+	@Permissions(pricingPermission(PRICING_PERMISSION_VALUES.PRODUCT_PRICES_EDIT))
+	@Mutation('recoverPricePreference')
+	async recoverPricePreference(@Args('id') id: ID): Promise<PricePreference> {
+		return await this.pricePreferenceService.softRecover(id);
 	}
 
 	/**

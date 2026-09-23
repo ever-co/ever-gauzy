@@ -50,6 +50,22 @@ extend type Mutation {
 	deleteAddress(id: ID!): Address!
 
 	"""
+	Removes an address under the spelling the soft-delete route uses. Removal here is soft under either
+	spelling — both routes reach one operation, and both refuse an address the party names as its
+	current default — so this field and `deleteAddress` are the same call. It is stated as its own field
+	because a client that reads the route reaches the capability the route promises, rather than having
+	to know that the other spelling of the removal is the same one.
+	"""
+	softDeleteAddress(id: ID!): Address!
+
+	"""
+	Puts a withdrawn address back, clearing the marker the withdrawal set. It states the class-level view
+	grant because the inherited `PUT /:id/recover` route it mirrors declares no permission of its own, and
+	the guard resolves a route's permission over its handler and then its controller.
+	"""
+	recoverAddress(id: ID!): Address!
+
+	"""
 	Makes an address the party's default for one role, or clears that default when `isDefault` is
 	false. Setting it releases the flag from the sibling the party named before; clearing it is the
 	one way to reach "this party has no default for this role" without contradicting the party's own

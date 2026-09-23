@@ -290,3 +290,14 @@ jobs:
       - name: Entity mappings are ones both ORMs can build metadata for
         if: always()
         run: node tools/scripts/dual-orm-metadata-check.mjs
+
+      # §3.1 requires one mutation per REST write route, including the `DELETE /:id/soft` and
+      # `PUT /:id/recover` pair every `CrudController<T>` contributes. A controller inherits both routes
+      # whether or not it declares them, so a resource can serve a gated withdraw/restore pair over REST
+      # while no resolver declares either field — and nothing says so: the suites pass, the build passes,
+      # the API boots. That is how the plugin tree came to serve the pair on ninety-six controllers with
+      # zero resolvers declaring either field, found by an audit rather than by a check. The gate's
+      # baseline is the measured backlog and shrinks as waves land; a new resource has no row and fails.
+      - name: Every CRUD resource serving the soft-delete/recover pair answers it over GraphQL
+        if: always()
+        run: node tools/scripts/graphql-write-parity-check.mjs

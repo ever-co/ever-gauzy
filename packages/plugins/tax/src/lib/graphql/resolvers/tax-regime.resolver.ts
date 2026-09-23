@@ -168,6 +168,44 @@ export class TaxRegimeResolver {
 	}
 
 	/**
+	 * Retires a regime recoverably, keeping it and the membership that selects its rates.
+	 *
+	 * The route it mirrors is `DELETE /tax-regimes/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this
+	 * field a regime retired over GraphQL could not be brought back over GraphQL, while a REST caller
+	 * could do both — and getting a regime wrong zeroes a jurisdiction's tax, which is precisely the
+	 * mistake a caller has to be able to undo.
+	 *
+	 * The permission is the controller's own for the route — `TAX_REGIMES_EDIT` — and not the class-level
+	 * view grant, because a retired regime stops selecting the rates a destination is taxed under.
+	 *
+	 * @param id The regime to retire.
+	 * @returns The regime, as the soft delete left it.
+	 */
+	@Mutation('softDeleteTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async softDeleteTaxRegime(@Args('id') id: ID): Promise<TaxRegime> {
+		return await this.taxRegimeService.softRemove(id);
+	}
+
+	/**
+	 * Restores a regime that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /tax-regimes/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored regime
+	 * selects its rates again, which is why the route states the editing grant rather than the reading
+	 * one.
+	 *
+	 * @param id The regime to restore.
+	 * @returns The restored regime.
+	 */
+	@Mutation('recoverTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async recoverTaxRegime(@Args('id') id: ID): Promise<TaxRegime> {
+		return await this.taxRegimeService.softRecover(id);
+	}
+
+	/**
 	 * Sets which rates a regime selects.
 	 */
 	@Mutation('setTaxRegimeRates')

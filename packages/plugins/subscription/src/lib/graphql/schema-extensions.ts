@@ -13,6 +13,12 @@ import { gql } from 'graphql-tag';
  * never redeclares a root type. The root *fields* keep the domain's own vocabulary —
  * `subscription`, `subscriptions` — so a client reads the concept by the name the domain gives it.
  *
+ * **Each of the four resources carries the `DELETE /:id/soft` and `PUT /:id/recover` pair its
+ * controller inherits, under the names the composed schema uses for that act: `softDelete<Resource>`
+ * and `recover<Resource>`.** Without them a GraphQL caller could retire a plan, a subscription, a line
+ * or a cycle only by hard-deleting it and could not undo that at all, while a REST caller could do
+ * both — one lifecycle, completable on one protocol and not the other.
+ *
  * Money and quantities are `Decimal`, never `Float`: an amount read here and the same amount read
  * over REST are the same string, and a binary fraction cannot hold a cent exactly.
  *
@@ -540,6 +546,10 @@ export const schemaExtensions = gql`
 		updateSubscriptionPlan(id: ID!, input: UpdateSubscriptionPlanInput!): SubscriptionPlanPayload!
 		"Deactivates a plan, refusing while it still has live subscriptions."
 		deleteSubscriptionPlan(id: ID!): DeleteSubscriptionPlanPayload!
+		"Retires a plan recoverably: the subscriptions already on it keep billing."
+		softDeleteSubscriptionPlan(id: ID!): SubscriptionPlanPayload!
+		"Puts a retired plan back on offer."
+		recoverSubscriptionPlan(id: ID!): SubscriptionPlanPayload!
 		"Puts a customer on a plan."
 		createSubscription(input: CreateSubscriptionInput!): CustomerSubscriptionPayload!
 		"Moves a subscription's payer, quantity or metadata."
@@ -573,12 +583,25 @@ export const schemaExtensions = gql`
 		): SubscriptionPlanChangePayload!
 		"Removes a recurring line mid-cycle, settling the remainder of the period."
 		removeSubscriptionItem(id: ID!, variantId: ID!): SubscriptionPlanChangePayload!
+		"""
+		Retires a subscription recoverably.
+
+		The rows stay as the record of what was sold, which is why this is the retirement a caller
+		reaches for rather than a hard delete, and why it is recoverable by the field below.
+		"""
+		softDeleteSubscription(id: ID!): CustomerSubscriptionPayload!
+		"Restores a soft-deleted subscription."
+		recoverSubscription(id: ID!): CustomerSubscriptionPayload!
 		"Adds a recurring line without settling a proration."
 		createSubscriptionItem(input: CreateSubscriptionItemInput!): SubscriptionItemPayload!
 		"Corrects a recurring line's quantity or price."
 		updateSubscriptionItem(id: ID!, input: UpdateSubscriptionItemInput!): SubscriptionItemPayload!
 		"Removes a recurring line without settling a proration."
 		deleteSubscriptionItem(id: ID!): DeleteSubscriptionItemPayload!
+		"Retires a recurring line recoverably, so that the next cycle stops billing it."
+		softDeleteSubscriptionItem(id: ID!): SubscriptionItemPayload!
+		"Restores a soft-deleted recurring line."
+		recoverSubscriptionItem(id: ID!): SubscriptionItemPayload!
 		"Opens a billing cycle by hand, for a backfill."
 		createSubscriptionBilling(input: CreateSubscriptionBillingInput!): SubscriptionBillingPayload!
 		"Corrects a billing cycle that has not been charged."
@@ -593,5 +616,9 @@ export const schemaExtensions = gql`
 		waiveSubscriptionBilling(id: ID!, input: WaiveSubscriptionBillingInput!): SubscriptionBillingPayload!
 		"Records that a paid cycle was refunded."
 		refundSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
+		"Retires a billing cycle recoverably, taking it out of the billing history."
+		softDeleteSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
+		"Restores a soft-deleted billing cycle."
+		recoverSubscriptionBilling(id: ID!): SubscriptionBillingPayload!
 	}
 `;
