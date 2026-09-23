@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { DecimalString, ID as Id, IPagination } from '@gauzy/contracts';
+import { DecimalString, ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -11,7 +11,8 @@ import {
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { Permissions } from '../shared/decorators';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { OrganizationVendorService } from './organization-vendor.service';
 
@@ -113,12 +114,15 @@ const ORGANIZATION_VENDOR_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * expense book and this master are read together, and a write here is what the expense form's own
  * supplier selector offers.
  *
- * **The guard chain is the controller's and the permission is the absence the controller states.** The
- * controller carries `TenantPermissionGuard` on the class and no `@Permissions` anywhere — on the class
- * or on any handler — so the class here carries that guard beside the gate and every field states no
- * permission at all. A field that demanded one would refuse a caller the REST route serves, which is the
- * narrowing this delivery exists to prevent. The `PermissionGuard` is deliberately absent too: the
- * controller does not carry it, so a permission stated here would never be read.
+ * **The guard chain is the controller's and so is the permission, field by field.** The controller
+ * carries `TenantPermissionGuard` on the class and states `PermissionGuard` with `ALL_ORG_EDIT` on the
+ * four write routes — the edit, the removal, the withdrawal and the restoration — so the class here
+ * carries that guard beside the gate and those four fields state the permission guard and the
+ * permission their own route states. `create` is inherited from the CRUD base and carries neither, so
+ * `createOrganizationVendor` states neither, and the two reads state nothing either: a field that
+ * demanded a permission its route does not would refuse a caller the REST route serves, which is the
+ * narrowing this delivery exists to prevent. `PermissionGuard` allows a handler that asks for no
+ * permission, which is why a field without one is unaffected by the guard its sibling carries.
  *
  * **The removal is the master's own rule and not a plain delete.** The route calls the service's own
  * `deleteVendor`, which refuses a supplier an expense already names rather than orphaning the expense
@@ -232,8 +236,13 @@ export class OrganizationVendorResolver {
 	 * The delivered edit reaches the same write the creation does, carrying the identifier in the path and
 	 * the body beside it — which is what the route does before it calls the service — so the field states
 	 * one identifier and leaves neither reading undefined, and a member the caller omits is left as it is.
+	 * The route states `ALL_ORG_EDIT` under `PermissionGuard` and so does the field: editing the supplier
+	 * master is a capability the REST surface asks for, and a field that asked for none would be the wider
+	 * door onto the same row.
 	 */
 	@Mutation('updateOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async updateOrganizationVendor(
 		@Args('input') input: IUpdateOrganizationVendorInput
 	): Promise<OrganizationVendor> {
@@ -254,8 +263,13 @@ export class OrganizationVendorResolver {
 	 * a resolver that reached for the store's own delete would remove a row the REST route protects. The
 	 * field answers the one fact the removal establishes, because the delivered store's delete result is
 	 * not a row.
+	 *
+	 * The route states `ALL_ORG_EDIT` under `PermissionGuard` and so does the field, which is what keeps a
+	 * capability the REST surface reserves out of reach of a caller it refuses.
 	 */
 	@Mutation('deleteOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async deleteOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.organizationVendorService.deleteVendor(id);
 
@@ -265,20 +279,26 @@ export class OrganizationVendorResolver {
 	/**
 	 * Withdraws a supplier without removing the row.
 	 *
-	 * No permission is stated on the field, and none could be: the delivered route states none of its own
-	 * — the withdrawal is inherited from the CRUD base — and the controller states none on the class
-	 * either.
+	 * The withdrawal is one of the routes this controller overrides only to attach the permission gate —
+	 * inherited bare from the CRUD base, it was reachable by every member of the tenant — so the field
+	 * states the same `ALL_ORG_EDIT` under the same `PermissionGuard` the route states. A field left bare
+	 * would withdraw a supplier the route refuses to withdraw.
 	 */
 	@Mutation('softDeleteOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async softDeleteOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationVendor> {
 		return await this.organizationVendorService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn supplier back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route is inherited and carries no permission to mirror.
+	 * Puts a withdrawn supplier back, under the same permission the restoration route states and for the
+	 * same reason the withdrawal above does: the restoration is the withdrawal's other half, so a caller
+	 * refused the one is refused the other.
 	 */
 	@Mutation('recoverOrganizationVendor')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	async recoverOrganizationVendor(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationVendor> {
 		return await this.organizationVendorService.softRecover(id);
 	}

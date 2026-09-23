@@ -465,8 +465,12 @@ describe('OrganizationRecurringExpenseResolver — the SDL declares the capabili
 		);
 	});
 
-	it('offers no argument it cannot honour', () => {
-		expect(fieldArgs('Query', 'organizationRecurringExpenses')).not.toContain('withDeleted');
+	it('offers the soft-delete switch its own route offers, and no filter it could not honour', () => {
+		// `BaseQueryDTO` carries `withDeleted` and the list route hands its query string straight to the
+		// same read, so a REST caller can ask for withdrawn standing costs — and the connection has to be
+		// able to ask for the same rows, or it hides what the route serves. The field declares it; that it
+		// is passed through rather than declared and dropped is asserted with the connection contract below.
+		expect(fieldArgs('Query', 'organizationRecurringExpenses')).toContain('withDeleted');
 		expect(fieldArgs('Query', 'organizationRecurringExpenses')).toEqual([
 			'filter',
 			'sort',
@@ -639,6 +643,22 @@ describe('OrganizationRecurringExpenseResolver — the connection contract, and 
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(CursorCodec.decode(connection.edges[0].cursor).id).toBe(ARRANGEMENT);
+	});
+
+	it('passes the soft-delete switch through to the read rather than declaring it and dropping it', async () => {
+		const { resolver, organizationRecurringExpenseService } = surfaces();
+
+		// A stated switch is the route's own option travelling the same way: a withdrawn standing cost is
+		// answered only when the caller asks, and asking has to reach the read. An argument that was
+		// declared in the schema and never forwarded would pass every SDL assertion in this file while
+		// quietly refusing the caller the rows the delivered route hands them. The visibility is spread
+		// beside the credential's own scoping rather than into it, so both reach the read together.
+		await resolver.organizationRecurringExpenses(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+
+		expect(organizationRecurringExpenseService.findAll).toHaveBeenCalledWith({
+			where: { organizationId: ORGANIZATION },
+			withDeleted: true
+		});
 	});
 
 	it('orders by the beginning of the arrangement, newest first, when the caller states none', async () => {

@@ -367,9 +367,12 @@ describe('EquipmentSharingPolicyResolver — the SDL declares the capabilities t
 		expect(inputBody('UpdateEquipmentSharingPolicyInput')).toMatch(/id: ID!\n/);
 	});
 
-	it('offers no argument it cannot honour', () => {
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(fieldArgs('Query', 'equipmentSharingPolicies')).not.toContain('withDeleted');
+	it('offers the soft-delete switch its own route offers, and no filter it could not honour', () => {
+		// `BaseQueryDTO` carries `withDeleted` and the list route hands its query string straight to the
+		// same read, so a REST caller can ask for withdrawn policies — and the connection has to be able
+		// to ask for the same rows, or it hides what the route serves. The field declares it; that it is
+		// passed through rather than declared and dropped is asserted with the connection contract below.
+		expect(fieldArgs('Query', 'equipmentSharingPolicies')).toContain('withDeleted');
 		expect(fieldArgs('Query', 'equipmentSharingPolicies')).toEqual([
 			'filter',
 			'sort',
@@ -438,6 +441,18 @@ describe('EquipmentSharingPolicyResolver — the connection contract', () => {
 		expect(connection.pageInfo.hasNextPage).toBe(false);
 		// The cursor is the platform's own codec, so the same cursor is valid on the REST surface.
 		expect(CursorCodec.decode(connection.edges[0].cursor).id).toBe(LOAN);
+	});
+
+	it('passes the soft-delete switch through to the read rather than declaring it and dropping it', async () => {
+		const { resolver, equipmentSharingPolicyService } = surfaces();
+
+		// A stated switch is the route's own option travelling the same way: a withdrawn policy is
+		// answered only when the caller asks, and asking has to reach the read. An argument that was
+		// declared in the schema and never forwarded would pass every SDL assertion in this file while
+		// quietly refusing the caller the rows the delivered route hands them.
+		await resolver.equipmentSharingPolicies(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+
+		expect(equipmentSharingPolicyService.findAll).toHaveBeenCalledWith({ withDeleted: true });
 	});
 
 	it('orders by the vocabulary’s own name order when the caller states none', async () => {

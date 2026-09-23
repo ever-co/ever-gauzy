@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MODULE_METADATA } from '@nestjs/common/constants';
-import { buildSchema, printSchema } from 'graphql';
+import { buildSchema, parse, printSchema } from 'graphql';
 import { IUserUiPreferences, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
@@ -177,25 +177,40 @@ function objectFields(name: string): string[] {
 	return Object.keys(type?.getFields() ?? {});
 }
 
+/** This domain's own document, which is where the root fields this resource contributes are declared. */
+const ownSdl = readFileSync(join(__dirname, 'schema', 'user.api.gql'), 'utf8');
+
+/** The root fields this domain's own document extends one root operation with. */
+function declaredRootFields(operation: 'Query' | 'Mutation'): string[] {
+	const fields: string[] = [];
+
+	for (const definition of parse(ownSdl).definitions) {
+		if (definition.kind === 'ObjectTypeExtension' && definition.name.value === operation) {
+			for (const field of definition.fields ?? []) {
+				fields.push(field.name.value);
+			}
+		}
+	}
+
+	return fields;
+}
+
 /**
  * The root fields this domain contributes.
  *
- * Ownership is stated rather than pattern-matched loosely, for two reasons: the sibling membership
- * resource's fields — `userOrganizations`, `userOrganizationOrganizationsCount` and the rest — also
- * spell `user` and belong to that surface rather than this one, and the two preference writes spell the
- * preference rather than the resource. What is left is the account's own vocabulary, the two fields
- * this resource names for a route rather than for a row, and those two writes.
+ * Ownership is read from this domain's own document rather than pattern-matched off the composed
+ * schema, because the account's four letters now appear inside words that belong to other surfaces:
+ * `refuseRequestApproval` spells them across "ref**useR**equest" and `removeUserFromOrganizationTeams`
+ * spells them before "From", so a name-shaped rule claims two fields this resource serves no route for
+ * — which is the one thing the list below must not carry. The sibling membership resource's
+ * `userOrganizations` is excluded by the same reading rather than by a second pattern. The composed
+ * schema is still what is filtered, so a field this document declares and the composition omits is
+ * still missing from the answer.
  */
 function ownedRootFields(operation: 'Query' | 'Mutation'): string[] {
-	return rootFields(operation)
-		.filter(
-			(field) =>
-				field === 'me' ||
-				field === 'factoryReset' ||
-				/^updatePreferred/.test(field) ||
-				(/user/i.test(field) && !/userorganization/i.test(field))
-		)
-		.sort();
+	const declared = new Set(declaredRootFields(operation));
+
+	return rootFields(operation).filter((field) => declared.has(field)).sort();
 }
 
 /** The arguments one root field declares, in the order a client states them. */
@@ -829,32 +844,54 @@ describe('UserResolver — the guard stack and the permission are the route’s,
 			PermissionsEnum.ACCESS_DELETE_ACCOUNT
 		]);
 		expect(permissionOfField('factoryReset')).toEqual([PermissionsEnum.ACCESS_DELETE_ALL_DATA]);
+		// The two lifecycle moves carried nothing until the controller overrode both to gate them; the
+		// fields now state the withdrawal permission their routes state, and no other.
+		expect(permissionOfField('softDeleteUser')).toEqual([PermissionsEnum.ORG_USERS_EDIT]);
+		expect(permissionOfField('recoverUser')).toEqual([PermissionsEnum.ORG_USERS_EDIT]);
 	});
 
 	it('states no permission on the fields whose routes state none', () => {
-		// `GET /me` is authenticated by the bootstrap's global guard and scoped by the credential alone;
-		// the three preference writes carry the tenant guard and nothing else; the two lifecycle moves
-		// are inherited from the CRUD base, where the controller's own chain is the whole of their scope.
-		for (const field of [
-			'me',
-			'updatePreferredLanguage',
-			'updatePreferredComponentLayout',
-			'updateUserUiPreferences',
-			'softDeleteUser',
-			'recoverUser'
-		]) {
+		// `GET /me` is authenticated by the bootstrap's global guard and scoped by the credential alone,
+		// and the three preference writes carry the tenant guard and nothing else. Both surfaces are read,
+		// so the list cannot hold a field whose route does state a permission: each pair here is a route
+		// that genuinely asks for none, and the comparison would fail rather than quietly agree if one of
+		// them came to ask for one.
+		for (const [field, route] of [
+			['me', 'findMe'],
+			['updatePreferredLanguage', 'updatePreferredLanguage'],
+			['updatePreferredComponentLayout', 'updatePreferredComponentLayout'],
+			['updateUserUiPreferences', 'updateUiPreferences']
+		] as ReadonlyArray<[string, string]>) {
+			expect(permissionOfRoute(UserController, route)).toBeUndefined();
 			expect(permissionOfField(field)).toBeUndefined();
 		}
 	});
 
 	it('holds the two lifecycle fields to the inherited routes they mirror', () => {
-		for (const [field, route] of [
+		const lifecycle: ReadonlyArray<[string, string]> = [
 			['softDeleteUser', 'softRemove'],
 			['recoverUser', 'softRecover']
-		] as ReadonlyArray<[string, string]>) {
-			expect(Reflect.getMetadata('__guards__', handlersOf(UserController)[route])).toBeUndefined();
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(UserController)[route])).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', fieldsOf(UserResolver)[field])).toBeUndefined();
+		];
+
+		// The two moves were inherited from the CRUD base and carried nothing of their own; this controller
+		// now overrides both to attach the tenant guard, the permission guard and `ORG_USERS_EDIT`, because
+		// left bare any member of the tenant could withdraw any account of it, the admin's included
+		// (GHSA-v79w-54p2-wmh5). Both surfaces are read rather than restated, and one of the two routes must
+		// state a permission — otherwise the comparison below would pass on two absences, which is the shape
+		// of assertion this half of the doctrine exists to refuse.
+		expect(lifecycle.some(([, route]) => permissionOfRoute(UserController, route))).toBe(true);
+
+		for (const [field, route] of lifecycle) {
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(UserController, route));
+			// The route states both protocol guards on the handler itself, which is where this controller
+			// states its scope, and the field restates exactly those.
+			expect(Reflect.getMetadata('__guards__', handlersOf(UserController)[route])).toEqual([
+				TenantPermissionGuard,
+				PermissionGuard
+			]);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(UserResolver)[field])).toEqual(
+				Reflect.getMetadata('__guards__', handlersOf(UserController)[route])
+			);
 		}
 	});
 

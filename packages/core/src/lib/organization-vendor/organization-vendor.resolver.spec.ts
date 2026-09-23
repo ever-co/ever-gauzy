@@ -33,9 +33,9 @@ import { OrganizationVendorService } from './organization-vendor.service';
  * - **the removal calls the master's own rule rather than the store's delete**, which is what keeps the
  *   expense book's identifiers resolvable: a resolver that reached for `delete` would remove a supplier
  *   the REST route protects;
- * - **the permission is the absence the controller states**, field by field: this controller carries the
- *   tenant guard and no `@Permissions` at all, so no field here may state one, and the class does not
- *   carry the permission guard either;
+ * - **the guard chain and the permission are the route's own, field by field**: the four write routes
+ *   state `ALL_ORG_EDIT` under `PermissionGuard` and the four fields that mirror them state the same
+ *   pair, while the two reads and the inherited creation state nothing on either surface;
  * - every amount the surface carries — the minimum order value — is an exact decimal and never a
  *   floating-point number, on the object type, on the filter and on the way into a write;
  * - **the whole surface is behind the capability the catalogue declares for GraphQL**, so a tenant that
@@ -222,9 +222,11 @@ function handlersOf(controller: typeof OrganizationVendorController): Record<str
 /**
  * The permission one route runs under: what its handler states, else what its controller states.
  *
- * On this resource both sides of that lookup are empty, which is the fact the parity tests below exist to
- * hold: a resolver that quietly required a permission the controller never states would refuse callers the
- * REST routes serve.
+ * This controller states `ALL_ORG_EDIT` on its four write handlers and nothing at class level, and the
+ * parity tests below hold each field to that reading rather than to a second copy of the list written out
+ * in this file: a resolver that quietly required a permission its route does not state would refuse
+ * callers the REST route serves, and one that dropped a permission its route demands would serve callers
+ * that route refuses.
  */
 function permissionOfRoute(controller: typeof OrganizationVendorController, handler: string): unknown {
 	return (
@@ -233,23 +235,41 @@ function permissionOfRoute(controller: typeof OrganizationVendorController, hand
 	);
 }
 
+/** The fields of the resolver, as functions. */
+function fieldsOf(): Record<string, object> {
+	return OrganizationVendorResolver.prototype as unknown as Record<string, object>;
+}
+
 /** The permission one resolver field runs under, as its own handler states it. */
 function permissionOfField(field: string): unknown {
-	const fields = OrganizationVendorResolver.prototype as unknown as Record<string, object>;
-
-	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
+	return Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf()[field]);
 }
 
 /** The guards one resolver field carries of its own. */
 function guardsOfField(field: string): unknown[] {
-	const fields = OrganizationVendorResolver.prototype as unknown as Record<string, object>;
-
-	return Reflect.getMetadata('__guards__', fields[field]) ?? [];
+	return Reflect.getMetadata('__guards__', fieldsOf()[field]) ?? [];
 }
 
 /** The guards one route's handler carries of its own, beside the controller's chain. */
 function guardsOfHandler(controller: typeof OrganizationVendorController, handler: string): unknown[] {
 	return Reflect.getMetadata('__guards__', handlersOf(controller)[handler]) ?? [];
+}
+
+/**
+ * The guards one route actually runs under: the controller's chain followed by the handler's own, which
+ * is the order the guard context creator concatenates them in.
+ */
+function guardsOfRoute(controller: typeof OrganizationVendorController, route: string): unknown[] {
+	const declared = Reflect.getMetadata('__guards__', controller) ?? [];
+
+	return Array.from(new Set([...declared, ...guardsOfHandler(controller, route)]));
+}
+
+/** The guards one resolver field actually runs under: the class chain followed by the field's own. */
+function guardsOfResolverField(field: string): unknown[] {
+	const declared = Reflect.getMetadata('__guards__', OrganizationVendorResolver) ?? [];
+
+	return Array.from(new Set([...declared, ...guardsOfField(field)]));
 }
 
 /** Every root field and the delivered route it mirrors. */
@@ -376,8 +396,12 @@ describe('OrganizationVendorResolver — the SDL declares the capabilities the R
 		);
 	});
 
-	it('offers no argument it cannot honour', () => {
-		expect(fieldArgs('Query', 'organizationVendors')).not.toContain('withDeleted');
+	it('offers the soft-delete switch its own route offers, and no filter it could not honour', () => {
+		// `BaseQueryDTO` carries `withDeleted` and the list route hands its query string straight to the
+		// same read, so a REST caller can ask for withdrawn suppliers — and the connection has to be able
+		// to ask for the same rows, or it hides what the route serves. The field declares it; that it is
+		// passed through rather than declared and dropped is asserted with the connection contract below.
+		expect(fieldArgs('Query', 'organizationVendors')).toContain('withDeleted');
 		expect(fieldArgs('Query', 'organizationVendors')).toEqual([
 			'filter',
 			'sort',
@@ -502,6 +526,18 @@ describe('OrganizationVendorResolver — the connection contract', () => {
 		expect(connection.pageInfo.endCursor).toBe(connection.edges[1].cursor);
 		// The cursor is the platform's own codec, so the same cursor is valid on the REST surface.
 		expect(CursorCodec.decode(connection.edges[0].cursor).id).toBe(VENDOR);
+	});
+
+	it('passes the soft-delete switch through to the read rather than declaring it and dropping it', async () => {
+		const { resolver, organizationVendorService } = surfaces();
+
+		// A stated switch is the route's own option travelling the same way: a withdrawn supplier is
+		// answered only when the caller asks, and asking has to reach the read. An argument that was
+		// declared in the schema and never forwarded would pass every SDL assertion in this file while
+		// quietly refusing the caller the rows the delivered route hands them.
+		await resolver.organizationVendors(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+
+		expect(organizationVendorService.findAll).toHaveBeenCalledWith({ withDeleted: true });
 	});
 
 	it('orders by the master’s own name when the caller states none', async () => {
@@ -719,36 +755,59 @@ describe('OrganizationVendorResolver — one master, two protocols, the same ope
 	});
 });
 
-describe('OrganizationVendorResolver — the guard chain is the controller’s, and the permission is its absence', () => {
+describe('OrganizationVendorResolver — the guard chain and the permission are the route’s, field by field', () => {
 	it('guards the resolver the way the controller is guarded, plus the gate', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', OrganizationVendorResolver) ?? [];
 		const controllerGuards = Reflect.getMetadata('__guards__', OrganizationVendorController) ?? [];
 
 		expect(controllerGuards).toEqual([TenantPermissionGuard]);
 		expect(resolverGuards).toEqual([...controllerGuards, FeatureFlagGuard]);
-		// The controller does not carry the permission guard, so the resolver does not either.
+		// `PermissionGuard` is not on either class. This controller states it on the four write handlers
+		// rather than on the class, so the resolver states it on the four fields that mirror them — the
+		// same split on both surfaces, which is what lets the comparison below read the routes' own
+		// metadata field by field instead of a table written out in this file.
 		expect(resolverGuards).not.toContain(PermissionGuard);
+		expect(guardsOfField('updateOrganizationVendor')).toEqual([PermissionGuard]);
+		expect(guardsOfField('organizationVendors')).toEqual([]);
 	});
 
 	it('runs every route under the guard chain the resolver states', () => {
-		const stated = (Reflect.getMetadata('__guards__', OrganizationVendorResolver) ?? []) as unknown[];
-
-		for (const { route } of PERMISSION_PARITY) {
-			const declared = Reflect.getMetadata('__guards__', OrganizationVendorController) ?? [];
-			const restated = guardsOfHandler(OrganizationVendorController, route);
-
-			expect([...new Set([...declared, ...restated, FeatureFlagGuard])].sort()).toEqual([...stated].sort());
+		for (const { field, route } of PERMISSION_PARITY) {
+			// Read field by field from both surfaces rather than from the class chains alone: with the
+			// permission guard stated on four handlers, a comparison of the classes would let a field carry
+			// a guard its own route does not — or drop one its route does, which is the narrowing this half
+			// of the doctrine exists to catch. The one addition is the gate, which is this endpoint's own
+			// scope rather than the resource's.
+			expect([...new Set([...guardsOfResolverField(field), FeatureFlagGuard])].sort()).toEqual(
+				[...new Set([...guardsOfRoute(OrganizationVendorController, route), FeatureFlagGuard])].sort()
+			);
 		}
 	});
 
-	it('states no permission on the class, because the controller states none', () => {
+	it('states no permission on the class, because no route pushes its own up to the class', () => {
+		// Both surfaces state their permissions on the handler and none on the class. A class-level
+		// permission would gate the reads as well, and the reads are served to any member of the tenant on
+		// both protocols; the control below is what keeps this from passing on two absences — four of these
+		// routes do state one, and they state it where the fields state theirs.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, OrganizationVendorController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, OrganizationVendorResolver)).toBeUndefined();
+		expect(
+			PERMISSION_PARITY.some(({ route }) =>
+				Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(OrganizationVendorController)[route])
+			)
+		).toBe(true);
 	});
 
-	it.each(PERMISSION_PARITY)('$field states no permission, exactly as $route does', ({ field, route }) => {
-		expect(permissionOfRoute(OrganizationVendorController, route)).toBeUndefined();
-		expect(permissionOfField(field)).toBeUndefined();
+	it.each(PERMISSION_PARITY)('$field states exactly what $route states', ({ field, route }) => {
+		// Read from the field's own metadata and from the route's, rather than restated here: a table of
+		// permission names would agree with the resolver while disagreeing with the controller, which is the
+		// failure this half of the doctrine exists to catch. Four of these routes demand `ALL_ORG_EDIT`, so
+		// their fields must too, and the two reads and the inherited creation must state nothing on either
+		// surface.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf()[field])).toEqual(
+			Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(OrganizationVendorController)[route])
+		);
+		expect(permissionOfField(field)).toEqual(permissionOfRoute(OrganizationVendorController, route));
 		expect(guardsOfField(field)).toEqual(guardsOfHandler(OrganizationVendorController, route));
 	});
 });

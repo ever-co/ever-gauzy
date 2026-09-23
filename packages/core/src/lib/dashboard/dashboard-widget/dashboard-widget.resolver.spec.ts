@@ -383,9 +383,12 @@ describe('DashboardWidgetResolver — the SDL declares the capabilities the REST
 		expect(members).toContain('deletedAt');
 	});
 
-	it('offers no argument it cannot honour', () => {
-		// The delivered list read answers live rows only, so the connection does not offer `withDeleted`.
-		expect(fieldArgs('Query', 'dashboardWidgets')).not.toContain('withDeleted');
+	it('offers the soft-delete switch its own route offers, and no filter it could not honour', () => {
+		// `BaseQueryDTO` carries `withDeleted` and the list route hands its query string straight to the
+		// same read, so a REST caller can ask for withdrawn placements — and the connection has to be able
+		// to ask for the same rows, or it hides what the route serves. The field declares it; that it is
+		// passed through rather than declared and dropped is asserted with the connection contract below.
+		expect(fieldArgs('Query', 'dashboardWidgets')).toContain('withDeleted');
 		expect(fieldArgs('Query', 'dashboardWidgets')).toEqual([
 			'filter',
 			'sort',
@@ -418,6 +421,18 @@ describe('DashboardWidgetResolver — the connection contract', () => {
 		expect(connection.pageInfo.endCursor).toBe(connection.edges[1].cursor);
 		// The cursor is the platform's own codec, so the same cursor is valid on the REST surface.
 		expect(CursorCodec.decode(connection.edges[0].cursor).id).toBe(HIDDEN);
+	});
+
+	it('passes the soft-delete switch through to the read rather than declaring it and dropping it', async () => {
+		const { resolver, dashboardWidgetService } = surfaces();
+
+		// A stated switch is the route's own option travelling the same way: a withdrawn placement is
+		// answered only when the caller asks, and asking has to reach the read. An argument that was
+		// declared in the schema and never forwarded would pass every SDL assertion in this file while
+		// quietly refusing the caller the rows the delivered route hands them.
+		await resolver.dashboardWidgets(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true);
+
+		expect(dashboardWidgetService.findAll).toHaveBeenCalledWith({ withDeleted: true });
 	});
 
 	it('orders by the positions the dashboard itself states when the caller states none', async () => {
