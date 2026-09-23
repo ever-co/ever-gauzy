@@ -1,108 +1,242 @@
 @use 'themes' as *;
 
-:host {
-  .category-icon {
-    img {
-      width: 24px;
-    }
-  }
-  .card-grid {
-    display: grid;
-    -webkit-box-align: center;
-    align-items: center;
-    -webkit-box-pack: start;
-    justify-content: start;
-    column-gap: 1rem;
-    grid-gap: 1rem;
-    grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
-  }
-  a {
-    text-decoration: none;
-  }
-  // The report description. `height: 27px` fits exactly one line, but the seeded
-  // descriptions run 60-90 characters and the grid track is `minmax(21rem, 1fr)`
-  // — so on most cards the second line spilled out of the box and landed on top
-  // of the screenshot below it. A MIN height keeps the single-line cards aligned
-  // with each other and lets the rest push the image down instead.
-  .caption {
-    min-height: 27px;
-  }
-  .image-container {
-    position: relative;
-    margin-top: 10px;
-    object-fit: cover;
-    height: 183px;
-    & img {
-      position: absolute;
-      width: 450px;
-    }
-  }
-}
+// ── Where the hairlines on this page come from ──────────────────────────────
+// Both edges below — the card's own ring and the preview tile's inset one —
+// are drawn from the app's BORDER RAMP rather than from the `card-shadow`
+// token every other card inherits. That token is
+// `--gauzy-overlay-border-color` = rgba(126, 126, 143, 0.18) — a grey-LAVENDER
+// line, which is what made these cards read as tinted.
+//
+// The ramp is the app's own answer to "a white edge that also works on a white
+// page" (see the "Border ramp" block in styles/themes.scss): on the dark themes
+// it is pure white at a low alpha, and on the light ones it falls back to
+// Nebular's neutral greys, where a white line could not be seen at all.
+//
+//   border-basic-color-4  dark: rgba(255, 255, 255, 0.12)   light: #c5cee0
+//   border-basic-color-5  dark: rgba(255, 255, 255, 0.16)   light: #8f9bb3
+//
+// A ring, not a border: it costs no layout box, so nothing reflows — the same
+// reason `card-shadow` is a ring app-wide.
 
-.custom-view-report {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  // No edge of its own. This div is a pure wrapper around a flush
-  // `<nb-card class="border-0 m-0 card-nb">` (zero margin, zero border), and the
-  // card already draws the shared 1px `card-shadow` ring — so the two hairlines
-  // landed on top of each other, ~0px apart. `border: nb-theme(border-radius)`
-  // was also a typo for `border-radius` that resolved to `border: 0.5rem` with
-  // style `none`, i.e. a computed width of 0: it never painted anything.
-  border-radius: nb-theme(border-radius);
-  & .custom-button {
-    height: 40px;
-    width: 120px;
-    position: absolute;
-    left: 50%;
-    margin-left: -60px;
-    top: 50%;
-    margin-top: -20px;
-    visibility: hidden;
-  }
+// Two lines of description on every card, always — see `.report-description`.
+$description-line-height: 1.25rem;
 
-  &:hover {
-    border-radius: nb-theme(border-radius);
-    & .image-container,
-    & .caption {
-      opacity: 30%;
-    }
-    & .custom-button {
-      opacity: 100%;
-      transition: ease-out 0.5s;
-      z-index: 10;
-      visibility: visible;
-    }
-  }
-}
+// ── Page body ───────────────────────────────────────────────────────────────
 
 .content {
   background-color: nb-theme(gauzy-card-2);
-	padding: 1rem;
-	flex-direction: column;
-	display: flex;
-	gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  // Was 1rem between categories — the same step as between two cards INSIDE a
+  // category, so the grouping the headings announce was nowhere in the spacing.
+  // Category separation is now the larger step of the two.
+  gap: 2rem;
+  padding: 1.5rem;
 }
+
 nb-card-body {
   border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
 }
 
-// NOTE: `::-webkit-scrollbar { display: none }` used to sit here. Emulated
-// encapsulation scopes it to this component's own elements, so it hid the
-// scrollbar on the card body holding the whole report grid: the page still
-// scrolled — several category rows deep — with nothing on screen saying so, and
-// it was the only page in this area without the normal scrollbar.
+// ── Category ────────────────────────────────────────────────────────────────
+
+.report-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
 
 .report-category-name {
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0;
+  font-size: 0.9375rem;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 1.25rem;
   letter-spacing: 0em;
+  color: nb-theme(text-basic-color);
 }
+
+// The category glyph on a tinted tile rather than loose on the canvas: it reads
+// as a section marker instead of as a character in the heading, and it gives
+// every category heading the same height whatever its icon.
+.category-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  background-color: nb-theme(color-primary-transparent-100);
+  color: nb-theme(color-primary-default);
+  font-size: 0.8125rem;
+}
+
+// ── Grid ────────────────────────────────────────────────────────────────────
+
+.card-grid {
+  display: grid;
+  // `align-items: center` used to sit here. A grid item is stretched to its
+  // row's height only while its own height is `auto`; centring it instead left
+  // every card at its own content height, centred about a common middle — which
+  // is why one card's title in a row did not line up with its neighbour's.
+  // Stretch (the grid default) is restored by saying nothing.
+  //
+  // `min()` in the track keeps the cards from overflowing a container narrower
+  // than one full track, which a plain `minmax(20rem, 1fr)` cannot do.
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: 1rem;
+}
+
+// ── Card ────────────────────────────────────────────────────────────────────
+
+.report-card {
+  margin: 0;
+  // Clips the preview tile to the card's own radius.
+  overflow: hidden;
+  border-radius: nb-theme(border-radius);
+  background-color: nb-theme(card-background-color);
+  // Outranks Nebular's own `nb-card { box-shadow: var(--card-shadow) }`: that
+  // rule is element specificity (0,0,1) and this one is (0,2,0) once Angular
+  // adds the encapsulation attribute, so it wins wherever it lands in the
+  // bundle.
+  box-shadow: 0 0 0 1px nb-theme(border-basic-color-4);
+
+  &:hover,
+  &:focus-within {
+    // One step up the same white ramp. The hover affordance that actually
+    // carries the page is the button appearing over the preview; this is the
+    // quiet half of it, and a state change only — nothing moves or eases.
+    box-shadow: 0 0 0 1px nb-theme(border-basic-color-5);
+  }
+}
+
+.report-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  // Was `card-padding` (1.5rem) plus a bootstrap `.row`'s negative gutters.
+  // These cards are a third of a page wide; the page card's own step is too
+  // coarse for them.
+  padding: 0.875rem 1rem;
+  // No rule between the title and the description — they are one block of text
+  // on one surface, and that divider was the only line drawn inside the card.
+  border-bottom: none;
+
+  nb-toggle {
+    flex: 0 0 auto;
+  }
+}
+
+// Sizing comes from the app-wide `nb-card-header h6` type step in
+// styles/_overrides.scss (0.875rem/600), which this rule used to restate
+// verbatim. What is left is the overflow behaviour: a long report name
+// truncates on one line instead of wrapping under the toggle.
 .report-name {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 17px;
-  letter-spacing: 0em;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.report-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 1rem 1rem;
+  overflow: hidden;
+  // Two inherited rules to undo, both of which would size this body by
+  // something other than what is in it:
+  //   * Nebular's own `nb-card-body { flex: 1 }` is a flex BASIS of 0, so on a
+  //     card whose height is `auto` (the grid stretches these) the body would
+  //     contribute nothing to the card's intrinsic height — the grid row would
+  //     size to the headers alone;
+  //   * `.card-scroll nb-card nb-card-body { height: 100% }` in
+  //     styles/_overrides.scss is meant for the ONE card a page hangs off, and
+  //     reaches these nested cards as a descendant. With `flex-basis: auto` it
+  //     would become the basis, leaving the body to be shrunk back by exactly
+  //     the header's height on every card.
+  // Content-based in both axes instead; `flex-grow` still takes up any slack.
+  flex: 1 1 auto;
+  height: auto;
+}
+
+// Exactly two lines, whatever the copy. The seeded descriptions run 60-90
+// characters against a `minmax(20rem, 1fr)` track, so they wrap to one line or
+// two depending on the wording — and that difference used to travel down the
+// card and put each row's screenshots on a different top edge. `min-height`
+// reserves the second line, the clamp stops a third from ever appearing, and
+// the full text stays reachable through the element's `title`.
+.report-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  min-height: calc(#{$description-line-height} * 2);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: $description-line-height;
+  color: nb-theme(text-hint-color);
+}
+
+// ── Preview ─────────────────────────────────────────────────────────────────
+
+.report-preview {
+  position: relative;
+  // A tile of its own rather than a bare image: it is the same box whether the
+  // screenshot loads or not, so a row of cards keeps one silhouette. A fixed
+  // height rather than an `aspect-ratio`, deliberately — the tile's width comes
+  // from a stretch-fit grid track, which is not a definite size a ratio can be
+  // resolved against, so a ratio would have been read differently at different
+  // column counts and cost the cards the even height this layout is built on.
+  flex: 0 0 11rem;
+  height: 11rem;
+  overflow: hidden;
+  border-radius: calc(#{nb-theme(border-radius)} - 2px);
+  background-color: nb-theme(gauzy-card-2);
+  // Same white ramp as the card edge, so a card draws one hairline colour
+  // rather than two. Inset, because this line has to sit on top of the
+  // screenshot's own edge rather than outside the tile.
+  box-shadow: inset 0 0 0 1px nb-theme(border-basic-color-4);
+}
+
+// The screenshot renders exactly as it did before this page was reworked: laid
+// out at its own 450px width and anchored to the tile's top-left, so what shows
+// is a 1:1 crop of the top-left of the image rather than a scaled-down whole.
+// It is ~130px wider than a grid track, and the overflow is deliberate — the
+// tile's `overflow: hidden` is what crops it (it used to be the card body's).
+.report-preview-image {
+  position: absolute;
+  width: 450px;
+}
+
+// The call to action covers the PREVIEW, not the whole card: the title and the
+// description stay at full contrast instead of dropping to 30% opacity along
+// with the image, so the card is still readable while it is being pointed at.
+.report-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
+}
+
+// The button was `visibility: hidden` until the card was hovered, which took it
+// out of the tab order — a mouse was the only way to open a report from this
+// page. It is always focusable now, and `:focus-within` below reveals it when
+// it is tabbed to, so it is never an invisible target either.
+.report-preview-action {
+  white-space: nowrap;
+}
+
+.report-card:hover .report-preview-overlay,
+.report-card:focus-within .report-preview-overlay {
+  opacity: 1;
 }
