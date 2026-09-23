@@ -132,7 +132,14 @@ export class PaymentSessionController extends CrudController<PaymentSession> {
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdatePaymentSessionDTO) {
-		return this.paymentSessionService.update(id, entity as never);
+		// The domain method rather than the CRUD base's generic `update`, for the reason the docstring
+		// above states: the base writes whatever columns the body names, and this body's DTO carries
+		// `status`, `amount`, `currency`, `providerId` and `collectionId`, so the generic path could
+		// rewrite a closed attempt's amount or move it to another provider. `updateSession` is the method
+		// the GraphQL `updatePaymentSession` field reaches: it refuses a terminal attempt with
+		// `PAYMENT_SESSION_ALREADY_CLOSED` and strips the five members the domain's four verbs own, so
+		// this route no longer runs a verb the docstring says it does not run.
+		return this.paymentSessionService.updateSession(id, entity as never);
 	}
 
 	/**

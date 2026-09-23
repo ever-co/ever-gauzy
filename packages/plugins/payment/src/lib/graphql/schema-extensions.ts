@@ -758,6 +758,21 @@ export const schemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	# The repair of an attempt's own recorded fields, which is what PUT /payment-sessions/:id is for.
+	# The members are the ones the service's own update writes: the status, the amount, the currency, the
+	# provider and the collection are dropped by that method, so no input promises them here, and the
+	# client secret is left off for the reason the session type states — it belongs to the caller's own
+	# client-side flow rather than to a row this schema reads back.
+	input UpdatePaymentSessionInput {
+		id: ID!
+		externalId: String
+		paymentMethodTokenId: ID
+		data: JSON
+		expiresAt: DateTime
+		authorizedAt: DateTime
+		metadata: JSON
+	}
+
 	input CapturePaymentInput {
 		paymentId: ID!
 		amount: Decimal!
@@ -908,6 +923,22 @@ export const schemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	# The repair of an instrument's display facts, which is what PUT /payment-method-tokens/:id is for.
+	# The members are the kernel's own update input: the stored reference, the account, the provider key
+	# and the kind are not descriptive facts, so the reference is stated once at creation, an instrument
+	# never moves between accounts or providers, and the kind decides the default rule and whether a
+	# mandate is required before an off-session charge.
+	input UpdatePaymentMethodTokenInput {
+		id: ID!
+		brand: String
+		last4: String
+		expiryMonth: Int
+		expiryYear: Int
+		holderName: String
+		billingAddressId: ID
+		metadata: JSON
+	}
+
 	type CreatePaymentProviderPayload {
 		paymentProvider: PaymentProvider
 		operation: Operation
@@ -952,6 +983,19 @@ export const schemaExtensions = gql`
 	}
 
 	type VoidPaymentSessionPayload {
+		paymentSession: PaymentSession
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	type UpdatePaymentSessionPayload {
+		paymentSession: PaymentSession
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of re-reading an attempt, closing one that has outlived its lifetime."
+	type RefreshPaymentSessionPayload {
 		paymentSession: PaymentSession
 		operation: Operation
 		userErrors: [UserError!]!
@@ -1058,6 +1102,13 @@ export const schemaExtensions = gql`
 	}
 
 	type CreatePaymentMethodTokenPayload {
+		paymentMethodToken: PaymentMethodToken
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of repairing the display facts of a saved instrument."
+	type UpdatePaymentMethodTokenPayload {
 		paymentMethodToken: PaymentMethodToken
 		operation: Operation
 		userErrors: [UserError!]!
@@ -1330,6 +1381,15 @@ export const schemaExtensions = gql`
 		openPaymentSession(input: OpenPaymentSessionInput!): OpenPaymentSessionPayload!
 		authorizePaymentSession(input: AuthorizePaymentSessionInput!): AuthorizePaymentSessionPayload!
 		voidPaymentSession(input: VoidPaymentSessionInput!): VoidPaymentSessionPayload!
+		"Corrects the recorded fields of an attempt, without running any of its four verbs."
+		updatePaymentSession(input: UpdatePaymentSessionInput!): UpdatePaymentSessionPayload!
+		"""
+		Re-reads the state of an attempt and closes one that has outlived its lifetime. It does not
+		re-poll the provider: what the provider answered is written by the call that reached it, and
+		this operation is the package's own expiry half, which a caller otherwise waits for the sweep to
+		perform.
+		"""
+		refreshPaymentSession(id: ID!): RefreshPaymentSessionPayload!
 		capturePayment(input: CapturePaymentInput!): CapturePaymentPayload!
 		createRefund(input: CreateRefundInput!): CreateRefundPayload!
 		updateRefund(input: UpdateRefundInput!): UpdateRefundPayload!
@@ -1355,6 +1415,8 @@ export const schemaExtensions = gql`
 		): VerifyPaymentAccountHolderPayload!
 		deletePaymentAccountHolder(id: ID!): DeletePaymentAccountHolderPayload!
 		createPaymentMethodToken(input: CreatePaymentMethodTokenInput!): CreatePaymentMethodTokenPayload!
+		"Corrects the display facts of a saved instrument. The stored reference is not among them."
+		updatePaymentMethodToken(input: UpdatePaymentMethodTokenInput!): UpdatePaymentMethodTokenPayload!
 		setDefaultPaymentMethodToken(id: ID!): SetDefaultPaymentMethodTokenPayload!
 		revokePaymentMethodToken(id: ID!): RevokePaymentMethodTokenPayload!
 

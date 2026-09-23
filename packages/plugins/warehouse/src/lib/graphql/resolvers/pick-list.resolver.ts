@@ -14,6 +14,27 @@ import { IPickList, PickListStatus } from '../../warehouse.types';
 import { buildConnection, IPageSelection, resolveWindow } from '../../graphql/pagination';
 import { toUserError } from '../../graphql/wire';
 
+/** The patch `PUT /pick-lists/:id` accepts, as the route's own body declares it. */
+interface IUpdatePickListInput {
+	waveId?: ID;
+	warehouseId?: ID;
+	zoneId?: ID;
+	fulfillmentId?: ID;
+	orderId?: ID;
+	number?: string;
+	status?: PickListStatus;
+	assignedToUserId?: ID;
+	priority?: number;
+	lineCount?: number;
+	pickedCount?: number;
+	shortCount?: number;
+	startedAt?: Date;
+	completedAt?: Date;
+	note?: string;
+	version?: number;
+	metadata?: Record<string, unknown>;
+}
+
 /**
  * The work, per picker: the lists and their lifecycle.
  *
@@ -122,6 +143,33 @@ export class PickListResolver {
 	}
 
 	/**
+	 * Edits a pick list: the assignee, the priority and the picker-facing note.
+	 *
+	 * The route it mirrors is `PUT /pick-lists/:id`, and both of its calls are reproduced rather than
+	 * collapsed: the write, and the read back through `findOneDetailed`. The route answers the list as
+	 * the edit left it, and the detail read is what carries the lines and their bins — a field that
+	 * answered the update's own result would describe the same edit with less.
+	 *
+	 * The route declares no version precondition, so this field declares none either: a version
+	 * expectation invented here would refuse over GraphQL an edit the REST route accepts.
+	 *
+	 * @param id The list.
+	 * @param input The fields to change.
+	 * @returns The payload, with the list as the edit left it.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('updatePickList')
+	async updatePickList(@Args('id') id: ID, @Args('input') input: IUpdatePickListInput) {
+		try {
+			await this.pickListService.update(id, input as any);
+
+			return { pickList: await this.pickListService.findOneDetailed(id), userErrors: [] };
+		} catch (error) {
+			return { pickList: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Assigns a list to a picker.
 	 *
 	 * @param id The list.
@@ -182,6 +230,35 @@ export class PickListResolver {
 	async cancelPickList(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { pickList: await this.pickListService.cancel(id, reason), userErrors: [] };
+		} catch (error) {
+			return { pickList: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Deletes a pick list outright, destroying the lines and the recorded outcomes it holds.
+	 *
+	 * The route it mirrors is `DELETE /pick-lists/:id`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. This is the **destructive**
+	 * removal: the row and the work recorded against it are gone, which is why the answer carries no row
+	 * to read back. `softDeletePickList` beside it is the recoverable pair — it keeps the lines and
+	 * `recoverPickList` brings the list back — and cancelling is a third, different act: it states
+	 * something about the work and is refused for a list anything has been picked from.
+	 *
+	 * It is delivered because the same `CrudController` route is already mirrored for the two layout
+	 * resources of this plugin (`deleteWarehouseBin`, `deleteWarehouseZone`): the aggregate's own
+	 * destructive route cannot be the one left standing open to REST callers alone.
+	 *
+	 * @param id The list to delete.
+	 * @returns The payload, empty of the row that was removed, or the refusal in `userErrors`.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('deletePickList')
+	async deletePickList(@Args('id') id: ID) {
+		try {
+			await this.pickListService.delete(id);
+
+			return { pickList: null, userErrors: [] };
 		} catch (error) {
 			return { pickList: null, userErrors: [toUserError(error)] };
 		}

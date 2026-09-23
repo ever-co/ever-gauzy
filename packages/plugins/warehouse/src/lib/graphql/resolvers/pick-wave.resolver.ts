@@ -14,6 +14,25 @@ import { PickWaveService } from '../../pick-wave/pick-wave.service';
 import { buildConnection, IPageSelection, resolveWindow } from '../../graphql/pagination';
 import { toUserError } from '../../graphql/wire';
 
+/** The patch `PUT /pick-waves/:id` accepts, as the route's own body declares it. */
+interface IUpdatePickWaveInput {
+	warehouseId?: ID;
+	channelId?: ID;
+	number?: string;
+	strategy?: PickWaveStrategy;
+	status?: PickWaveStatus;
+	priority?: number;
+	pickerUserId?: ID;
+	plannedAt?: Date;
+	releasedAt?: Date;
+	startedAt?: Date;
+	completedAt?: Date;
+	orderCount?: number;
+	lineCount?: number;
+	version?: number;
+	metadata?: Record<string, unknown>;
+}
+
 /**
  * The batches of picking work released to the floor.
  *
@@ -128,6 +147,35 @@ export class PickWaveResolver {
 	}
 
 	/**
+	 * Edits a wave that has not been released.
+	 *
+	 * The route it mirrors is `PUT /pick-waves/:id`, and both of its calls are reproduced rather than
+	 * collapsed: the write, and the read back through `findOneDetailed`. The route answers the wave as
+	 * the edit left it, and a field that answered the update's own result would hand a client a row
+	 * without the lists and the re-derived counters the detail read carries — two surfaces describing
+	 * one edit differently.
+	 *
+	 * The route declares no version precondition, so this field declares none either: a version
+	 * expectation invented here would refuse over GraphQL an edit the REST route accepts, which is a
+	 * difference in behaviour rather than in transport.
+	 *
+	 * @param id The wave.
+	 * @param input The fields to change.
+	 * @returns The payload, with the wave as the edit left it.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('updatePickWave')
+	async updatePickWave(@Args('id') id: ID, @Args('input') input: IUpdatePickWaveInput) {
+		try {
+			await this.pickWaveService.update(id, input as any);
+
+			return { pickWave: await this.pickWaveService.findOneDetailed(id), userErrors: [] };
+		} catch (error) {
+			return { pickWave: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Releases a wave to the floor.
 	 *
 	 * @param id The wave.
@@ -236,6 +284,37 @@ export class PickWaveResolver {
 	async cancelPickWave(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { pickWave: await this.pickWaveService.cancel(id, reason), userErrors: [] };
+		} catch (error) {
+			return { pickWave: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Deletes a wave outright, destroying the lists and the picked work it records.
+	 *
+	 * The route it mirrors is `DELETE /pick-waves/:id`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base left unstated. This is the **destructive**
+	 * removal: the row is gone rather than retired, and the whole subtree of picking work that names it
+	 * goes with it, which is why the answer carries no row to read back — the row the route's own answer
+	 * described no longer exists. `softDeletePickWave` beside it is the recoverable pair, and it is the
+	 * one a caller who may want the wave back has to use: a wave retired that way keeps its lists and
+	 * the work they record and `recoverPickWave` brings it back.
+	 *
+	 * It is delivered because the same `CrudController` route is already mirrored for the two layout
+	 * resources of this plugin (`deleteWarehouseBin`, `deleteWarehouseZone`): leaving the aggregate's
+	 * own destructive route unmirrored while a bin's is a door would be one plugin answering one route
+	 * two ways, and a REST caller could remove a wave a GraphQL caller could not.
+	 *
+	 * @param id The wave to delete.
+	 * @returns The payload, empty of the row that was removed, or the refusal in `userErrors`.
+	 */
+	@Permissions(WarehousePermissions.PICK_LISTS_EDIT)
+	@Mutation('deletePickWave')
+	async deletePickWave(@Args('id') id: ID) {
+		try {
+			await this.pickWaveService.delete(id);
+
+			return { pickWave: null, userErrors: [] };
 		} catch (error) {
 			return { pickWave: null, userErrors: [toUserError(error)] };
 		}

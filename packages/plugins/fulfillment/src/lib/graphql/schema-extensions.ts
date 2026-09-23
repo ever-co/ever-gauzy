@@ -235,6 +235,24 @@ export const fulfillmentSchemaExtensions = gql`
 		note: String
 	}
 
+	"""
+	The writable surface of a shipment line, as the line's own edit route validates it.
+
+	Every member is nullable, because an edit states what changed rather than restating the row. The set
+	is that route's own DTO member for member: the shipment the line belongs to, the order line it covers,
+	the quantity, the location the quantity came from, and the free payload the picking flow reads. The
+	tenancy members that DTO inherits are deliberately absent, as they are on every input of this document
+	— tenancy is resolved from the caller rather than stated by it, and a member that let a caller name
+	another organization's row is a member no service of this platform accepts.
+	"""
+	input UpdateFulfillmentLineInput {
+		fulfillmentId: ID
+		orderLineId: ID
+		quantity: Decimal
+		warehouseId: ID
+		metadata: JSON
+	}
+
 	input ShipFulfillmentInput {
 		trackingNumber: String
 		carrier: String
@@ -319,6 +337,8 @@ export const fulfillmentSchemaExtensions = gql`
 		recoverShippingOption(id: ID!): ShippingOption!
 		createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
 		updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+		"Correct one shipment line: the quantity, the location, the order line it covers, or its payload."
+		updateFulfillmentLine(id: ID!, input: UpdateFulfillmentLineInput!): FulfillmentLine!
 		shipFulfillment(id: ID!, input: ShipFulfillmentInput): Fulfillment!
 		markFulfillmentInTransit(id: ID!): Fulfillment!
 		deliverFulfillment(id: ID!): Fulfillment!
@@ -329,9 +349,13 @@ export const fulfillmentSchemaExtensions = gql`
 		softDeleteFulfillment(id: ID!): Fulfillment!
 		"Restore a soft-deleted shipment."
 		recoverFulfillment(id: ID!): Fulfillment!
+		"Remove a shipment outright. The recoverable withdrawal is softDeleteFulfillment."
+		deleteFulfillment(id: ID!): Boolean!
 		"Retire a shipment line recoverably, so what the shipment covered stays readable."
 		softDeleteFulfillmentLine(id: ID!): FulfillmentLine!
 		"Restore a soft-deleted shipment line."
 		recoverFulfillmentLine(id: ID!): FulfillmentLine!
+		"Remove a shipment line outright. The recoverable withdrawal is softDeleteFulfillmentLine."
+		deleteFulfillmentLine(id: ID!): Boolean!
 	}
 `;

@@ -13,6 +13,27 @@ import { IPackSlip, PackSlipStatus } from '../../warehouse.types';
 import { buildConnection, IPageSelection, resolveWindow } from '../../graphql/pagination';
 import { toUserError } from '../../graphql/wire';
 
+/** The patch `PUT /pack-slips/:id` accepts, as the route's own body declares it. */
+interface IUpdatePackSlipInput {
+	warehouseId?: ID;
+	pickListId?: ID;
+	orderId?: ID;
+	fulfillmentId?: ID;
+	number?: string;
+	status?: PackSlipStatus;
+	carrierKey?: string;
+	packageCount?: number;
+	totalWeight?: string;
+	totalVolume?: string;
+	trackingNumber?: string;
+	labelUrl?: string;
+	packedAt?: Date;
+	packedByUserId?: ID;
+	note?: string;
+	version?: number;
+	metadata?: Record<string, unknown>;
+}
+
 /**
  * Packing records.
  *
@@ -130,6 +151,34 @@ export class PackSlipResolver {
 	}
 
 	/**
+	 * Edits an open pack slip: the parcel count, the weight and volume of record, the carrier and the
+	 * label.
+	 *
+	 * The route it mirrors is `PUT /pack-slips/:id`, and both of its calls are reproduced rather than
+	 * collapsed: the write, and the read back through `findOneDetailed`, because the route answers the
+	 * slip with the lines it covers and a field that answered the update's own result would answer less.
+	 *
+	 * A `PACKED` slip is immutable and the service refuses the edit — the same refusal answers the route,
+	 * which is why neither surface states the precondition in its own signature. The route declares no
+	 * version precondition either, so this field declares none.
+	 *
+	 * @param id The slip.
+	 * @param input The fields to change.
+	 * @returns The payload, with the slip as the edit left it.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('updatePackSlip')
+	async updatePackSlip(@Args('id') id: ID, @Args('input') input: IUpdatePackSlipInput) {
+		try {
+			await this.packSlipService.update(id, input as any);
+
+			return { packSlip: await this.packSlipService.findOneDetailed(id), userErrors: [] };
+		} catch (error) {
+			return { packSlip: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Records the packing and seals the slip.
 	 *
 	 * @param id The slip.
@@ -171,6 +220,36 @@ export class PackSlipResolver {
 	async voidPackSlip(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { packSlip: await this.packSlipService.cancel(id, reason), userErrors: [] };
+		} catch (error) {
+			return { packSlip: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Deletes a pack slip outright, destroying the packing record a carrier claim reads.
+	 *
+	 * The route it mirrors is `DELETE /pack-slips/:id`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. This is the **destructive**
+	 * removal: the weight of record, the tracking number and the parcel composition are gone rather than
+	 * retired, which is why the answer carries no row to read back. `softDeletePackSlip` beside it is the
+	 * recoverable pair — it keeps the packing record and the lines it covers and `recoverPackSlip` brings
+	 * it back — and voiding is a third, different act: it is a statement about the parcel that leaves the
+	 * row in place with a status.
+	 *
+	 * It is delivered because the same `CrudController` route is already mirrored for the two layout
+	 * resources of this plugin (`deleteWarehouseBin`, `deleteWarehouseZone`): a REST caller cannot be the
+	 * only one able to remove a slip.
+	 *
+	 * @param id The slip to delete.
+	 * @returns The payload, empty of the row that was removed, or the refusal in `userErrors`.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('deletePackSlip')
+	async deletePackSlip(@Args('id') id: ID) {
+		try {
+			await this.packSlipService.delete(id);
+
+			return { packSlip: null, userErrors: [] };
 		} catch (error) {
 			return { packSlip: null, userErrors: [toUserError(error)] };
 		}

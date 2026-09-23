@@ -139,7 +139,14 @@ export class RefundController extends CrudController<Refund> {
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateRefundDTO) {
-		return this.refundService.update(id, entity as never);
+		// The domain method rather than the CRUD base's generic `update`: the base writes whatever
+		// columns the body names, and this body's DTO carries `status`, `amount`, `currency`, `paymentId`
+		// and `lines`, so the generic path let a REST caller rewrite the amount and the currency of a
+		// refund that had already settled. `updateRefund` is the method the GraphQL `updateRefund` field
+		// reaches, and it refuses a refund that is no longer `PENDING` with `REFUND_ALREADY_SETTLED`
+		// before it strips the five members the status of the money owns. Both surfaces refuse
+		// identically now, which is what §3.1's authorisation parity requires in both directions.
+		return this.refundService.updateRefund(id, entity as never);
 	}
 
 	/**

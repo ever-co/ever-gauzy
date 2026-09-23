@@ -259,7 +259,12 @@ const declarationOf = (surface: { prototype: object }, handler: string) =>
 function resource() {
 	const kernel = {
 		createRefund: jest.fn(async (entity: any) => ({ id: REFUND, status: 'PENDING', ...entity })),
+		// The two updates are separate collaborators on purpose: the route reaches the domain method
+		// `updateRefund`, which refuses a refund that is no longer pending, and the CRUD base's generic
+		// `update` is the path it must never reach — that one writes whatever columns the body names,
+		// including the amount and the currency of a settled refund.
 		update: jest.fn(async () => ({ id: REFUND })),
+		updateRefund: jest.fn(async () => ({ id: REFUND })),
 		findRefunds: jest.fn(async () => ({ items: [{ id: REFUND }], total: 1 })),
 		findRefundOrFail: jest.fn(async () => ({ id: REFUND })),
 		findRefundLines: jest.fn(async () => [])
@@ -397,6 +402,13 @@ describe('RefundController — recording a refund (06 §6.6)', () => {
 
 		expect(declarationOf(RefundController, 'update')).toBeUndefined();
 		expect(surface.store.claim).not.toHaveBeenCalled();
+
+		// The route reaches the domain method the GraphQL `updateRefund` field reaches, and never the
+		// CRUD base's generic `update`: that one writes whatever columns the body names, and this body's
+		// DTO carries `status`, `amount`, `currency` and `paymentId`, so the generic path let a REST
+		// caller rewrite a refund that had already settled.
+		expect(surface.kernel.updateRefund).toHaveBeenCalledTimes(1);
+		expect(surface.kernel.update).not.toHaveBeenCalled();
 	});
 });
 

@@ -30,6 +30,8 @@ import {
 	IRevokePaymentMethodTokenPayload,
 	ISetDefaultPaymentMethodTokenPayload,
 	ISoftDeletePaymentMethodTokenPayload,
+	IUpdatePaymentMethodTokenGraphInput,
+	IUpdatePaymentMethodTokenPayload,
 	PAYMENT_METHOD_TOKEN_SORT_FIELDS,
 	withoutRange
 } from '../types/payment.types';
@@ -147,6 +149,55 @@ export class PaymentMethodTokenResolver {
 
 		try {
 			return { paymentMethodToken: await this.paymentMethodTokenLifecycle.register(input as never), userErrors: [] };
+		} catch (error) {
+			return { paymentMethodToken: null, ...rejection<IPaymentMethodToken>(error) };
+		}
+	}
+
+	/**
+	 * Corrects the display facts of an instrument: its brand, its last four, its expiry, the name on it
+	 * and the address it bills to.
+	 *
+	 * The route it mirrors is `PUT /payment-method-tokens/:id`, which is the repair surface for the
+	 * row's own descriptive fields and deliberately not the default change beside it. The stored
+	 * reference, the account, the provider key and the kind are not among the members: a reference is
+	 * what the provider issued, an instrument never moves between accounts or providers, and the kind
+	 * decides both the default rule and whether a mandate is required before an off-session charge. The
+	 * reference never appears in a request that is not a creation, which is why the update input does
+	 * not carry it either.
+	 *
+	 * A card-shaped body is refused here as it is on the route: the schema declares no card member at
+	 * all, and what the check below catches is card data nested inside a member that is declared and
+	 * free-form (`metadata`). It answers the same code and the same `details.field` the route's card
+	 * refusal answers with, and the kernel service refuses an instrument that was revoked rather than
+	 * editing it — a removed instrument is re-added as a new row.
+	 *
+	 * No retry key is declared, and that mirrors the route rather than the specification: the route
+	 * carries no `@Idempotent` scope, so a field that declared one would demand of a GraphQL caller what
+	 * REST does not demand of a REST caller. `06-api-specification.md` §12.1 makes the key optional but
+	 * honoured on every unsafe route, so the route and that section disagree here; the disagreement is
+	 * recorded rather than resolved on one surface only.
+	 *
+	 * @param input The instrument to change and the display facts to change.
+	 * @returns The payload, carrying the instrument as the write left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_EDIT as PermissionsEnum)
+	@Mutation('updatePaymentMethodToken')
+	async updatePaymentMethodToken(
+		@Args('input') input: IUpdatePaymentMethodTokenGraphInput
+	): Promise<IUpdatePaymentMethodTokenPayload> {
+		this.assertNoCardData(input);
+
+		// The identifier is separated from the facts before the call, because a path carries it on REST and
+		// a GraphQL input has to state it: what the service receives is one shape from both surfaces rather
+		// than the input's own `id` travelling into the payload it writes.
+		const { id, ...facts } = input;
+
+		try {
+			return {
+				paymentMethodToken: await this.paymentMethodTokenLifecycle.update(id, facts as never),
+				userErrors: []
+			};
 		} catch (error) {
 			return { paymentMethodToken: null, ...rejection<IPaymentMethodToken>(error) };
 		}

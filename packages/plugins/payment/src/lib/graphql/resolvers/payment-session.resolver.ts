@@ -20,7 +20,10 @@ import {
 	IPaymentSessionFilter,
 	IPaymentSort,
 	IRecoverPaymentSessionPayload,
+	IRefreshPaymentSessionPayload,
 	ISoftDeletePaymentSessionPayload,
+	IUpdatePaymentSessionGraphInput,
+	IUpdatePaymentSessionPayload,
 	IVoidPaymentSessionGraphInput,
 	IVoidPaymentSessionPayload,
 	PAYMENT_SESSION_SORT_FIELDS,
@@ -145,6 +148,81 @@ export class PaymentSessionResolver {
 				),
 				userErrors: []
 			};
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Corrects the recorded fields of an attempt, without running any of its four verbs.
+	 *
+	 * The route it mirrors is `PUT /payment-sessions/:id`. Opening, authorising, refreshing and voiding
+	 * are the four routes that run the operations the domain owns; this is the repair surface for a
+	 * row's own fields, which is why it carries the authorising grant rather than the reading one, and
+	 * why the service refuses an attempt that is already terminal with `PAYMENT_SESSION_ALREADY_CLOSED`
+	 * — a closed attempt is a historical fact about what a provider answered rather than a row to edit.
+	 *
+	 * **The input is narrower than the route's body, and the difference is the service's own rule.** The
+	 * service destructures `status`, `amount`, `currency`, `providerId` and `collectionId` out of its
+	 * input and drops them, because those move through the operations that mean something; an input that
+	 * promised them would be a write a caller believed it had made. `clientSecret` is the sixth member
+	 * the route's DTO accepts and this input does not carry, for the reason the session type states: it
+	 * is a bearer value for one caller's client-side flow rather than a fact of the row.
+	 *
+	 * **No retry key is declared, and that mirrors the route rather than the specification.** The route
+	 * declares no `@Idempotent` scope, so a field that declared one would demand of a GraphQL caller
+	 * what REST does not demand of a REST caller. `06-api-specification.md` §12.1 says the key is
+	 * "Optional but honoured on every other unsafe route", so the route and that section disagree about
+	 * this route; the disagreement is recorded here rather than resolved on one surface only.
+	 *
+	 * @param input The attempt to change and the fields to change.
+	 * @returns The payload, carrying the attempt as the write left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@Mutation('updatePaymentSession')
+	async updatePaymentSession(
+		@Args('input') input: IUpdatePaymentSessionGraphInput
+	): Promise<IUpdatePaymentSessionPayload> {
+		// The identifier is separated from the changes before the call, because a path carries it on REST
+		// and a GraphQL input has to state it: what the service receives is one shape from both surfaces
+		// rather than the input's own `id` travelling into the payload it writes.
+		const { id, ...changes } = input;
+
+		try {
+			return {
+				paymentSession: await this.paymentSessionService.updateSession(id, changes as never),
+				userErrors: []
+			};
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Re-reads the state of an attempt, closing one that has outlived its lifetime.
+	 *
+	 * **What the route does is narrower than what the endpoint catalogue says it does.** The route it
+	 * mirrors is `POST /payment-sessions/:id/refresh`, which `06-api-specification.md` §7.12 describes
+	 * as "Re-poll the provider for the session state", and the delivered service does not re-poll:
+	 * `refreshSession` reads the row back and, when the attempt is still open and past its `expiresAt`,
+	 * closes it through the same expiry path the sweep uses. What the provider answered is written by
+	 * the call that reached the provider, never by a read of it — which is why this operation is the
+	 * package's own half of the refresh and why the divergence belongs here, beside the field, rather
+	 * than in a claim about a provider call that is not made.
+	 *
+	 * The permission is the route's own — `PAYMENT_SESSIONS_AUTHORIZE` — and it takes the identifier
+	 * alone, because the route's handler takes the path member and no body. No retry key is declared,
+	 * as on the route: a refresh is a read of the row plus at most one lifecycle close, and the route
+	 * honours no key to mirror.
+	 *
+	 * @param id The attempt to re-read.
+	 * @returns The payload, carrying the attempt as the read left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@Mutation('refreshPaymentSession')
+	async refreshPaymentSession(@Args('id') id: ID): Promise<IRefreshPaymentSessionPayload> {
+		try {
+			return { paymentSession: await this.paymentSessionService.refreshSession(id), userErrors: [] };
 		} catch (error) {
 			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
 		}

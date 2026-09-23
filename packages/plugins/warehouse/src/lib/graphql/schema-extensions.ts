@@ -658,6 +658,34 @@ export const schemaExtensions = gql`
 		fulfillmentIds: [ID!]
 	}
 
+	"""
+	An update to a wave that has not been released.
+
+	Every member is optional because the route's body is: \`PUT /pick-waves/:id\` is typed
+	\`UpdatePickWaveDTO & PickWaveDTO\`, so the patch a REST caller may state is the wave's own columns.
+	The counters are re-derived by the service rather than supplied, and the route declares no version
+	precondition — so \`version\` here is the column the body names and not a compare-and-set. Both are
+	stated because the route states them: a GraphQL caller that could set fewer members than a REST
+	caller is the difference this wave exists to remove.
+	"""
+	input UpdatePickWaveInput {
+		warehouseId: ID
+		channelId: ID
+		number: String
+		strategy: PickWaveStrategy
+		status: PickWaveStatus
+		priority: Int
+		pickerUserId: ID
+		plannedAt: DateTime
+		releasedAt: DateTime
+		startedAt: DateTime
+		completedAt: DateTime
+		orderCount: Int
+		lineCount: Int
+		version: Int
+		metadata: JSON
+	}
+
 	"The definition of a pick list."
 	input PickListInput {
 		warehouseId: ID!
@@ -666,6 +694,36 @@ export const schemaExtensions = gql`
 		priority: Int
 		"The shipments the lines are derived from."
 		fulfillmentIds: [ID!]
+	}
+
+	"""
+	An update to a pick list.
+
+	Every member is optional because the route's body is: \`PUT /pick-lists/:id\` is typed
+	\`UpdatePickListDTO & PickListDTO\`, so the patch a REST caller may state is the list's own columns.
+	The dispatcher's own edits — the assignee, the priority and the picker-facing note — are its
+	reason for existing, and the wider column set is mirrored rather than narrowed because the route
+	accepts it: a member a REST caller can write and a GraphQL caller cannot is a capability
+	asymmetry, not a tidy schema.
+	"""
+	input UpdatePickListInput {
+		waveId: ID
+		warehouseId: ID
+		zoneId: ID
+		fulfillmentId: ID
+		orderId: ID
+		number: String
+		status: PickListStatus
+		assignedToUserId: ID
+		priority: Int
+		lineCount: Int
+		pickedCount: Int
+		shortCount: Int
+		startedAt: DateTime
+		completedAt: DateTime
+		note: String
+		version: Int
+		metadata: JSON
 	}
 
 	"What sealing a slip recorded. \`idempotencyKey\` is the key a retry of the seal presents."
@@ -680,6 +738,35 @@ export const schemaExtensions = gql`
 		idempotencyKey: String
 	}
 
+	"""
+	An update to an open pack slip.
+
+	Every member is optional because the route's body is: \`PUT /pack-slips/:id\` is typed
+	\`UpdatePackSlipDTO & PackSlipDTO\`, so the patch a REST caller may state is the slip's own columns.
+	The members are the ones an open slip still owns — the parcel count, the weight and volume of
+	record, the carrier and the label — and a \`PACKED\` slip is immutable, which is the service's
+	refusal rather than this document's: the same refusal answers the route.
+	"""
+	input UpdatePackSlipInput {
+		warehouseId: ID
+		pickListId: ID
+		orderId: ID
+		fulfillmentId: ID
+		number: String
+		status: PackSlipStatus
+		carrierKey: String
+		packageCount: Int
+		totalWeight: Decimal
+		totalVolume: Decimal
+		trackingNumber: String
+		labelUrl: String
+		packedAt: DateTime
+		packedByUserId: ID
+		note: String
+		version: Int
+		metadata: JSON
+	}
+
 	"The definition of a manifest."
 	input CarrierManifestInput {
 		warehouseId: ID!
@@ -689,6 +776,38 @@ export const schemaExtensions = gql`
 		windowFrom: DateTime
 		windowTo: DateTime
 		note: String
+	}
+
+	"""
+	An update to a draft manifest.
+
+	Every member is optional because the route's body is: \`PUT /carrier-manifests/:id\` is typed
+	\`UpdateCarrierManifestDTO & CarrierManifestDTO\`, so the patch a REST caller may state is the
+	manifest's own columns. Membership is not among them at any status — a draft resolves it from the
+	shipments and a close freezes it — which is why the correction the route exists for is the day,
+	the window and the note, and why the counters here are the columns the body names rather than a
+	way to state membership.
+	"""
+	input UpdateCarrierManifestInput {
+		warehouseId: ID
+		carrier: String
+		service: String
+		number: String
+		status: CarrierManifestStatus
+		manifestDate: DateTime
+		windowFrom: DateTime
+		windowTo: DateTime
+		shipmentCount: Int
+		packageCount: Int
+		totalWeight: Decimal
+		closedAt: DateTime
+		handedOverAt: DateTime
+		canceledAt: DateTime
+		documentUrl: String
+		documentData: JSON
+		note: String
+		version: Int
+		metadata: JSON
 	}
 
 	"What the dock recorded at hand-over. \`idempotencyKey\` is the key a retry of the hand-over presents."
@@ -897,6 +1016,8 @@ export const schemaExtensions = gql`
 		putAwayWarehouseBin(id: ID!, input: PutAwayWarehouseBinInput!): PutAwayWarehouseBinPayload!
 		"Creates a wave and the picking work it covers."
 		createPickWave(input: PickWaveInput!): PickWavePayload!
+		"Updates a wave that has not been released, while its contents may still be amended."
+		updatePickWave(id: ID!, input: UpdatePickWaveInput!): PickWavePayload!
 		"Releases a wave to the floor."
 		releasePickWave(id: ID!, pickerUserId: ID, idempotencyKey: String): PickWavePayload!
 		"Marks a released wave as being walked."
@@ -909,12 +1030,16 @@ export const schemaExtensions = gql`
 		closePickWaveShort(id: ID!, reason: String): PickWavePayload!
 		"Cancels a wave nothing has been picked from."
 		cancelPickWave(id: ID!, reason: String): PickWavePayload!
+		"Deletes a wave outright, destroying the work it records. \`softDeletePickWave\` retires it recoverably instead."
+		deletePickWave(id: ID!): PickWavePayload!
 		"Retires a wave recoverably, so its lists and the work they record stay explainable."
 		softDeletePickWave(id: ID!): PickWavePayload!
 		"Restores a soft-deleted wave."
 		recoverPickWave(id: ID!): PickWavePayload!
 		"Creates a pick list from shipments."
 		createPickList(input: PickListInput!): PickListPayload!
+		"Updates a pick list: the assignee, the priority and the picker-facing note a dispatcher still owns."
+		updatePickList(id: ID!, input: UpdatePickListInput!): PickListPayload!
 		"Assigns a pick list to a picker."
 		assignPickList(id: ID!, assignedToUserId: ID!): PickListPayload!
 		"Marks a pick list as being walked."
@@ -923,6 +1048,8 @@ export const schemaExtensions = gql`
 		completePickList(id: ID!): PickListPayload!
 		"Cancels a pick list nothing has been picked from."
 		cancelPickList(id: ID!, reason: String): PickListPayload!
+		"Deletes a pick list outright, destroying the lines and outcomes it holds. \`softDeletePickList\` retires it recoverably instead."
+		deletePickList(id: ID!): PickListPayload!
 		"Retires a pick list recoverably, so the lines it was walked with keep their list."
 		softDeletePickList(id: ID!): PickListPayload!
 		"Restores a soft-deleted pick list."
@@ -960,22 +1087,30 @@ export const schemaExtensions = gql`
 		recoverPickListLine(id: ID!): PickListLinePayload!
 		"Creates a pack slip from a picked list."
 		createPackSlip(warehouseId: ID!, pickListId: ID, fulfillmentId: ID, packageCount: Int): PackSlipPayload!
+		"Updates an open pack slip: its parcel count, its weight and volume of record, its carrier and its label."
+		updatePackSlip(id: ID!, input: UpdatePackSlipInput!): PackSlipPayload!
 		"Records the packing and seals the slip."
 		packPackSlip(id: ID!, input: PackSlipContentInput!): PackSlipPayload!
 		"Voids a slip that was never packed."
 		voidPackSlip(id: ID!, reason: String): PackSlipPayload!
+		"Deletes a pack slip outright, destroying the packing record a carrier claim reads. \`softDeletePackSlip\` retires it recoverably instead."
+		deletePackSlip(id: ID!): PackSlipPayload!
 		"Retires a slip recoverably, so the lines it covers keep the parcel they went into."
 		softDeletePackSlip(id: ID!): PackSlipPayload!
 		"Restores a soft-deleted pack slip."
 		recoverPackSlip(id: ID!): PackSlipPayload!
 		"Builds a draft manifest for a carrier."
 		createCarrierManifest(input: CarrierManifestInput!): CarrierManifestPayload!
+		"Updates a draft manifest: the dispatch day, the collection window and the note. Membership is never stated."
+		updateCarrierManifest(id: ID!, input: UpdateCarrierManifestInput!): CarrierManifestPayload!
 		"Submits a draft manifest, freezing its membership."
 		submitCarrierManifest(id: ID!): CarrierManifestPayload!
 		"Hands the parcels over to the carrier."
 		handOverCarrierManifest(id: ID!, input: HandOverManifestInput): CarrierManifestPayload!
 		"Cancels a manifest before hand-over."
 		cancelCarrierManifest(id: ID!, reason: String): CarrierManifestPayload!
+		"Deletes a manifest outright, destroying the hand-over record the carrier accepted. \`softDeleteCarrierManifest\` retires it recoverably instead."
+		deleteCarrierManifest(id: ID!): CarrierManifestPayload!
 		"Retires a manifest recoverably, so the shipments it covered keep their hand-over record."
 		softDeleteCarrierManifest(id: ID!): CarrierManifestPayload!
 		"Restores a soft-deleted manifest."

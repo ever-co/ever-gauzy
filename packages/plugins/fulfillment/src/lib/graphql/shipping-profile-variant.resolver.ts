@@ -21,6 +21,25 @@ import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
  * package constructs by hand than a new class is. The resource is a pivot, not a document: the pair is
  * all it has to say for itself.
  *
+ * **The claim above is contested, and the contest is recorded here rather than left for a reader to
+ * find.** `PUT /shipping-profile-variants/:id` is a write route of this resource with no field, and
+ * whether it *needs* one is the one row of this domain's parity reading that could not be settled by
+ * reading the code — so it was refused rather than delivered, and both readings are stated. It is
+ * **bucket 1, a genuine gap**, because the set field reaches `pivotService.create` and
+ * `pivotService.delete` and never `pivotService.update`: a move is expressible only as a delete followed
+ * by a create, so the row's identifier changes under the caller and its `metadata` member is unwritable
+ * over this surface by any route. It is **bucket 3, a child-through-parent set field**, because
+ * `05-database-schema-specification.md` §13.2 declares this table's columns as exactly `profileId` and
+ * `variantId` and gives it no `metadata` column at all — so the delivered `metadata` member is
+ * code-beyond-spec and the only thing a pivot row can be asked to say is which pair it joins, which
+ * `assignShippingProfileVariant` already says. An owner ruling the other way gets
+ * `updateShippingProfileVariant(id: ID!, input: UpdateShippingProfileVariantInput!):
+ * ShippingProfileVariant!`, reaching `ShippingProfileVariantService.update` under `SHIPPING_OPTIONS_EDIT`
+ * with the same DTO the route validates, and declaring no retry scope because the route declares none.
+ * The delivered entity concedes the divergence in its own comment: the `metadata` column is "Open-ended
+ * payload, retained because a pivot row is the place where a per-attachment exception lives" — retained,
+ * that is, by the entity and not by the table the specification declares.
+ *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain and the code it reads
  * is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the GraphQL endpoint and its resolvers, under
  * the same guards and permissions as REST" — imported rather than restated, because a literal that drifted

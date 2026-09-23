@@ -12,6 +12,29 @@ import { CarrierManifestStatus, ICarrierManifest, IWarehouseShippedFulfillment }
 import { buildConnection, IPageSelection, resolveWindow } from '../../graphql/pagination';
 import { toUserError } from '../../graphql/wire';
 
+/** The patch `PUT /carrier-manifests/:id` accepts, as the route's own body declares it. */
+interface IUpdateCarrierManifestInput {
+	warehouseId?: ID;
+	carrier?: string;
+	service?: string;
+	number?: string;
+	status?: CarrierManifestStatus;
+	manifestDate?: Date;
+	windowFrom?: Date;
+	windowTo?: Date;
+	shipmentCount?: number;
+	packageCount?: number;
+	totalWeight?: string;
+	closedAt?: Date;
+	handedOverAt?: Date;
+	canceledAt?: Date;
+	documentUrl?: string;
+	documentData?: Record<string, unknown>;
+	note?: string;
+	version?: number;
+	metadata?: Record<string, unknown>;
+}
+
 /**
  * The documents handed to a carrier.
  *
@@ -122,6 +145,36 @@ export class CarrierManifestResolver {
 	}
 
 	/**
+	 * Corrects a draft manifest: the dispatch day, the collection window and the note.
+	 *
+	 * The route it mirrors is `PUT /carrier-manifests/:id`, and both of its calls are reproduced rather
+	 * than collapsed: the write, then the read back through `findOneScoped` — the route answers the
+	 * manifest itself, and the detail read that carries the member shipments belongs to the query field,
+	 * not to this one.
+	 *
+	 * Membership is not editable here at any status, which is the invariant the whole table exists to
+	 * keep: a draft resolves its members from what actually shipped inside the window and a close freezes
+	 * them, so a caller that could name them could put one parcel on two manifests. A `CLOSED` or
+	 * `HANDED_OVER` manifest is refused by the service, and the route declares no version precondition,
+	 * so neither does this field.
+	 *
+	 * @param id The manifest.
+	 * @param input The fields to change.
+	 * @returns The payload, with the manifest as the correction left it.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('updateCarrierManifest')
+	async updateCarrierManifest(@Args('id') id: ID, @Args('input') input: IUpdateCarrierManifestInput) {
+		try {
+			await this.carrierManifestService.update(id, input as any);
+
+			return { carrierManifest: await this.carrierManifestService.findOneScoped(id), userErrors: [] };
+		} catch (error) {
+			return { carrierManifest: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
 	 * Submits a draft: membership is frozen on every member shipment.
 	 *
 	 * @param id The manifest.
@@ -170,6 +223,36 @@ export class CarrierManifestResolver {
 	async cancelCarrierManifest(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return { carrierManifest: await this.carrierManifestService.cancel(id, reason), userErrors: [] };
+		} catch (error) {
+			return { carrierManifest: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Deletes a manifest outright, destroying the hand-over record the carrier accepted.
+	 *
+	 * The route it mirrors is `DELETE /carrier-manifests/:id`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. This is the
+	 * **destructive** removal: the row a carrier's acceptance is recorded on is gone rather than retired,
+	 * which is why the answer carries no row to read back. `softDeleteCarrierManifest` beside it is the
+	 * recoverable pair — it keeps the hand-over it records and `recoverCarrierManifest` brings it back —
+	 * and cancelling is a third, different act: it is what the dock decided before hand-over and it
+	 * returns the members to the pool.
+	 *
+	 * It is delivered because the same `CrudController` route is already mirrored for the two layout
+	 * resources of this plugin (`deleteWarehouseBin`, `deleteWarehouseZone`): the document is not the one
+	 * resource whose destructive route stays REST-only.
+	 *
+	 * @param id The manifest to delete.
+	 * @returns The payload, empty of the row that was removed, or the refusal in `userErrors`.
+	 */
+	@Permissions(WarehousePermissions.FULFILLMENTS_EDIT)
+	@Mutation('deleteCarrierManifest')
+	async deleteCarrierManifest(@Args('id') id: ID) {
+		try {
+			await this.carrierManifestService.delete(id);
+
+			return { carrierManifest: null, userErrors: [] };
 		} catch (error) {
 			return { carrierManifest: null, userErrors: [toUserError(error)] };
 		}

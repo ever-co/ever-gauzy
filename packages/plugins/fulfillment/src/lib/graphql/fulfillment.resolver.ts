@@ -187,6 +187,51 @@ export class FulfillmentResolver {
 	}
 
 	/**
+	 * Corrects one shipment line.
+	 *
+	 * The route it mirrors is `PUT /fulfillment-lines/:id`, which the controller declares rather than
+	 * inherits for the reason its own header states: a body is validated from the type the handler names,
+	 * and the base class names the entity's shape as a generic whose reflected type is `Object`, so an
+	 * inherited route accepts any body at all and writes it. The correction is the repair surface for a
+	 * line recorded on its own — a line is normally written as part of its shipment, through
+	 * `createFulfillment`'s own `lines`, which is why that field and not this one is how a line is created.
+	 *
+	 * **This is the only field that reaches the line service's `update`.** `softDeleteFulfillmentLine` and
+	 * `recoverFulfillmentLine` reach `softRemove` and `softRecover`, which move the row's `deletedAt` and
+	 * leave every column where it was; `createFulfillment` writes new rows. Until this field, a line that
+	 * had been recorded could not be corrected over GraphQL at all, while a REST caller could correct it.
+	 *
+	 * **The `metadata` member, which no other field could write.** `FulfillmentLineInput` carries the order
+	 * line, the quantity and the warehouse and nothing else, so the parent's own create could not state a
+	 * payload either — the column was reachable in neither direction. The edit is the door
+	 * `05-database-schema-specification.md` §13.5 declares the column behind, and the delivery already says
+	 * what lives in it: "the picked bin, the short-pick note, the serial numbers".
+	 *
+	 * **The write is the route's, argument for argument** — `update(id, input)` on the same service, under
+	 * the same `FULFILLMENTS_EDIT` grant. The read that follows is this field's own, because the route
+	 * answers whatever the ORM's update returned and a root field has to answer the row; it is a *read*, so
+	 * it cannot make the two surfaces behave differently, which is the axis §3.1 forbids.
+	 *
+	 * The retry declarations are the route's, which is to say there are none: the route declares no
+	 * `@Idempotent` and no `@Versioned`, and `fulfillment_line` carries no version column for an
+	 * expectation to be compared against.
+	 *
+	 * @param id The line to correct.
+	 * @param input The fields to change.
+	 * @returns The line as the write left it.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Object, { name: 'updateFulfillmentLine' })
+	async updateFulfillmentLine(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('input', { type: () => Object }) input: Record<string, any>
+	): Promise<FulfillmentLine> {
+		await this.lineService.update(id, input as any);
+
+		return this.lineService.findOneByIdString(id);
+	}
+
+	/**
 	 * Marks a fulfilment as handed to the carrier.
 	 *
 	 * @param id The fulfilment.
@@ -326,6 +371,45 @@ export class FulfillmentResolver {
 	}
 
 	/**
+	 * Removes a shipment outright, as `DELETE /fulfillments/:id` does.
+	 *
+	 * **This is the destructive route and not the recoverable one, and the delivery already states the
+	 * difference.** `softDeleteFulfillment` above retires a shipment and `recoverFulfillment` brings it
+	 * back; this field reaches `delete`, which is `CrudController`'s inherited handler delegating to
+	 * `TenantAwareCrudService.delete` and the ORM's own removal, so the row leaves the table and nothing
+	 * can bring it back. The sibling field's docstring draws the line the same way from the other side:
+	 * "Cancelling is a transition of the shipment's own lifecycle and records a cancellation on a shipment
+	 * that is still read; withdrawing the row is a different act, so without this field a shipment a caller
+	 * retired over GraphQL had no field to bring it back, while a REST caller could retire and restore it."
+	 * A caller that wants the withdrawal which can be undone states the other name.
+	 *
+	 * **Why a hard delete is mirrored in this domain at all.** §3.2's fulfillment row already declares
+	 * `deleteShippingProfile` and `deleteShippingOption` — the hard deletes of two of this domain's own
+	 * resources — so the destructive route is part of the set this domain mirrors rather than something
+	 * §3.1's parity clause stops at, and `17-graphql-api-specification.md` §9.7 gives the shape its name:
+	 * "`DELETE /<resource>/:id` | `delete<Type>(id: ID!)`". Leaving this one route unmirrored while its two
+	 * siblings are fields would make the domain inconsistent with itself. The counter-reading is recorded
+	 * rather than hidden, because an owner may want it settled: `16-decision-log-and-open-questions.md`
+	 * ADR-24 says "nothing is hard-deleted by application code except by an explicit administrative purge",
+	 * and a shipment is a row the order line's own counters were derived from, so the recoverable pair is
+	 * the door most callers want and this field is the administrative one beside it.
+	 *
+	 * The retry declarations are the route's, which is to say there are none: the route declares no
+	 * `@Idempotent` and no `@Versioned`, and a scope invented here would replay a GraphQL retry that the
+	 * REST route lets through — a difference in behaviour rather than in transport.
+	 *
+	 * @param id The shipment to remove.
+	 * @returns True when the shipment was removed, which is what the route's own `DeleteResult` reports.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Boolean, { name: 'deleteFulfillment' })
+	async deleteFulfillment(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
+		const result = await this.fulfillmentService.delete(id);
+
+		return Boolean(result);
+	}
+
+	/**
 	 * Retires a shipment line recoverably, keeping what the shipment covered.
 	 *
 	 * The route it mirrors is `DELETE /fulfillment-lines/:id/soft`, inherited from `CrudController` and
@@ -361,6 +445,39 @@ export class FulfillmentResolver {
 	@Mutation(() => Object, { name: 'recoverFulfillmentLine' })
 	async recoverFulfillmentLine(@Args('id', { type: () => ID }) id: string): Promise<FulfillmentLine> {
 		return this.lineService.softRecover(id);
+	}
+
+	/**
+	 * Removes a shipment line outright, as `DELETE /fulfillment-lines/:id` does.
+	 *
+	 * **The recoverable withdrawal is the sibling field, and this is not it.** `softDeleteFulfillmentLine`
+	 * above reaches `softRemove`, which sets `deletedAt` and is undone by `recoverFulfillmentLine`; this
+	 * field reaches `delete`, the inherited handler's own service call, which removes the row. Both routes
+	 * are declared by the same controller and this plugin now serves both on both protocols.
+	 *
+	 * **What the destructive one costs, in the delivery's own words.** The sibling field's docstring states
+	 * it and states it better than a summary could: "The hard delete the endpoint does serve drops the row
+	 * the order line's own counters were derived from, which is exactly what the soft route exists to
+	 * avoid — so a client that held only this resolver could not express the recoverable withdrawal at
+	 * all." That sentence is the reason `softDeleteFulfillmentLine` exists *beside* this field rather than
+	 * instead of it, and it is repeated here because a caller reading only this name should meet it: the
+	 * row being removed is the one `order_line.fulfilledQuantity` and its two siblings are summed from
+	 * (`05-database-schema-specification.md` §11.2), so the recoverable pair is the withdrawal most callers
+	 * want and this field is the administrative one.
+	 *
+	 * The retry declarations are the route's, which is to say there are none: the route declares no
+	 * `@Idempotent` and no `@Versioned`, and `fulfillment_line` carries no version column for an
+	 * expectation to be compared against.
+	 *
+	 * @param id The line to remove.
+	 * @returns True when the line was removed, which is what the route's own `DeleteResult` reports.
+	 */
+	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
+	@Mutation(() => Boolean, { name: 'deleteFulfillmentLine' })
+	async deleteFulfillmentLine(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
+		const result = await this.lineService.delete(id);
+
+		return Boolean(result);
 	}
 
 	/**

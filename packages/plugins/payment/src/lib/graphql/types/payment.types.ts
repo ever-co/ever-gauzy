@@ -292,6 +292,30 @@ export interface IVoidPaymentSessionGraphInput {
 }
 
 /**
+ * The repair of an attempt's own recorded fields, as the SDL declares it.
+ *
+ * The members are the ones `PaymentSessionService.updateSession` actually writes, which is narrower
+ * than the body `PUT /payment-sessions/:id` validates: the service destructures `status`, `amount`,
+ * `currency`, `providerId` and `collectionId` out of its input and drops them, because those four move
+ * through the operations that mean something and a session in a terminal status is never reopened. An
+ * input that carried them would be a write a caller believes it made.
+ *
+ * `clientSecret` is the one member the service would write and this input does not carry: the document
+ * declares the member absent from `PaymentSession` itself, and the delivered `openPaymentSession` input
+ * leaves it off for the same reason — it is a bearer value for the caller's own client-side flow rather
+ * than a fact of the row.
+ */
+export interface IUpdatePaymentSessionGraphInput {
+	readonly id: ID;
+	readonly externalId?: string;
+	readonly paymentMethodTokenId?: ID;
+	readonly data?: Record<string, unknown>;
+	readonly expiresAt?: Date;
+	readonly authorizedAt?: Date;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/**
  * The capture input, as the SDL declares it.
  */
 export interface ICapturePaymentGraphInput {
@@ -496,6 +520,17 @@ export type IAuthorizePaymentSessionPayload = IResourcePayload<IPaymentSession, 
  * The answer of a session cancellation.
  */
 export type IVoidPaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
+
+/**
+ * The answer of a repair to an attempt's own recorded fields.
+ */
+export type IUpdatePaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
+
+/**
+ * The answer of a refresh: the attempt as the read left it, which is the same row when nothing was due
+ * to expire.
+ */
+export type IRefreshPaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
 
 /**
  * The answer of a capture.
@@ -753,6 +788,26 @@ export interface ICreatePaymentMethodTokenGraphInput {
 }
 
 /**
+ * The repair of an instrument's display facts, as the SDL declares it.
+ *
+ * The members are the ones the kernel's `updateToken` writes, and they are the same set
+ * `IPaymentMethodTokenUpdateInput` states: the stored reference, the account, the provider key and the
+ * kind are not among them, because none of the four is a descriptive fact. `type` is the one member the
+ * route's own DTO still carries through `PartialType` and the service drops, so it is not declared here
+ * either — an input that promised a change of kind would be a write this operation never makes.
+ */
+export interface IUpdatePaymentMethodTokenGraphInput {
+	readonly id: ID;
+	readonly brand?: string;
+	readonly last4?: string;
+	readonly expiryMonth?: number;
+	readonly expiryYear?: number;
+	readonly holderName?: string;
+	readonly billingAddressId?: ID;
+	readonly metadata?: Record<string, unknown>;
+}
+
+/**
  * A page of accounts at a provider.
  */
 export type IPaymentAccountHolderConnection = IConnection<IPaymentAccountHolder>;
@@ -790,6 +845,11 @@ export type IDeletePaymentAccountHolderPayload = IResourcePayload<IPaymentAccoun
  * The answer of an instrument creation.
  */
 export type ICreatePaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'>;
+
+/**
+ * The answer of a repair to an instrument's display facts.
+ */
+export type IUpdatePaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'>;
 
 /**
  * The answer of a default change, naming the instrument it displaced.

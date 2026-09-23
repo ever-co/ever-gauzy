@@ -9870,6 +9870,11 @@ type Mutation {
   """Creates a wave and the picking work it covers."""
   createPickWave(input: PickWaveInput!): PickWavePayload!
 
+  """
+  Updates a wave that has not been released, while its contents may still be amended.
+  """
+  updatePickWave(id: ID!, input: UpdatePickWaveInput!): PickWavePayload!
+
   """Releases a wave to the floor."""
   releasePickWave(id: ID!, pickerUserId: ID, idempotencyKey: String): PickWavePayload!
 
@@ -9889,6 +9894,11 @@ type Mutation {
   cancelPickWave(id: ID!, reason: String): PickWavePayload!
 
   """
+  Deletes a wave outright, destroying the work it records. `softDeletePickWave` retires it recoverably instead.
+  """
+  deletePickWave(id: ID!): PickWavePayload!
+
+  """
   Retires a wave recoverably, so its lists and the work they record stay explainable.
   """
   softDeletePickWave(id: ID!): PickWavePayload!
@@ -9898,6 +9908,11 @@ type Mutation {
 
   """Creates a pick list from shipments."""
   createPickList(input: PickListInput!): PickListPayload!
+
+  """
+  Updates a pick list: the assignee, the priority and the picker-facing note a dispatcher still owns.
+  """
+  updatePickList(id: ID!, input: UpdatePickListInput!): PickListPayload!
 
   """Assigns a pick list to a picker."""
   assignPickList(id: ID!, assignedToUserId: ID!): PickListPayload!
@@ -9910,6 +9925,11 @@ type Mutation {
 
   """Cancels a pick list nothing has been picked from."""
   cancelPickList(id: ID!, reason: String): PickListPayload!
+
+  """
+  Deletes a pick list outright, destroying the lines and outcomes it holds. `softDeletePickList` retires it recoverably instead.
+  """
+  deletePickList(id: ID!): PickListPayload!
 
   """
   Retires a pick list recoverably, so the lines it was walked with keep their list.
@@ -9953,11 +9973,21 @@ type Mutation {
   """Creates a pack slip from a picked list."""
   createPackSlip(warehouseId: ID!, pickListId: ID, fulfillmentId: ID, packageCount: Int): PackSlipPayload!
 
+  """
+  Updates an open pack slip: its parcel count, its weight and volume of record, its carrier and its label.
+  """
+  updatePackSlip(id: ID!, input: UpdatePackSlipInput!): PackSlipPayload!
+
   """Records the packing and seals the slip."""
   packPackSlip(id: ID!, input: PackSlipContentInput!): PackSlipPayload!
 
   """Voids a slip that was never packed."""
   voidPackSlip(id: ID!, reason: String): PackSlipPayload!
+
+  """
+  Deletes a pack slip outright, destroying the packing record a carrier claim reads. `softDeletePackSlip` retires it recoverably instead.
+  """
+  deletePackSlip(id: ID!): PackSlipPayload!
 
   """
   Retires a slip recoverably, so the lines it covers keep the parcel they went into.
@@ -9970,6 +10000,11 @@ type Mutation {
   """Builds a draft manifest for a carrier."""
   createCarrierManifest(input: CarrierManifestInput!): CarrierManifestPayload!
 
+  """
+  Updates a draft manifest: the dispatch day, the collection window and the note. Membership is never stated.
+  """
+  updateCarrierManifest(id: ID!, input: UpdateCarrierManifestInput!): CarrierManifestPayload!
+
   """Submits a draft manifest, freezing its membership."""
   submitCarrierManifest(id: ID!): CarrierManifestPayload!
 
@@ -9978,6 +10013,11 @@ type Mutation {
 
   """Cancels a manifest before hand-over."""
   cancelCarrierManifest(id: ID!, reason: String): CarrierManifestPayload!
+
+  """
+  Deletes a manifest outright, destroying the hand-over record the carrier accepted. `softDeleteCarrierManifest` retires it recoverably instead.
+  """
+  deleteCarrierManifest(id: ID!): CarrierManifestPayload!
 
   """
   Retires a manifest recoverably, so the shipments it covered keep their hand-over record.
@@ -10224,6 +10264,19 @@ type Mutation {
   openPaymentSession(input: OpenPaymentSessionInput!): OpenPaymentSessionPayload!
   authorizePaymentSession(input: AuthorizePaymentSessionInput!): AuthorizePaymentSessionPayload!
   voidPaymentSession(input: VoidPaymentSessionInput!): VoidPaymentSessionPayload!
+
+  """
+  Corrects the recorded fields of an attempt, without running any of its four verbs.
+  """
+  updatePaymentSession(input: UpdatePaymentSessionInput!): UpdatePaymentSessionPayload!
+
+  """
+  Re-reads the state of an attempt and closes one that has outlived its lifetime. It does not
+  re-poll the provider: what the provider answered is written by the call that reached it, and
+  this operation is the package's own expiry half, which a caller otherwise waits for the sweep to
+  perform.
+  """
+  refreshPaymentSession(id: ID!): RefreshPaymentSessionPayload!
   capturePayment(input: CapturePaymentInput!): CapturePaymentPayload!
   createRefund(input: CreateRefundInput!): CreateRefundPayload!
   updateRefund(input: UpdateRefundInput!): UpdateRefundPayload!
@@ -10241,6 +10294,11 @@ type Mutation {
   verifyPaymentAccountHolder(input: VerifyPaymentAccountHolderInput!): VerifyPaymentAccountHolderPayload!
   deletePaymentAccountHolder(id: ID!): DeletePaymentAccountHolderPayload!
   createPaymentMethodToken(input: CreatePaymentMethodTokenInput!): CreatePaymentMethodTokenPayload!
+
+  """
+  Corrects the display facts of a saved instrument. The stored reference is not among them.
+  """
+  updatePaymentMethodToken(input: UpdatePaymentMethodTokenInput!): UpdatePaymentMethodTokenPayload!
   setDefaultPaymentMethodToken(id: ID!): SetDefaultPaymentMethodTokenPayload!
   revokePaymentMethodToken(id: ID!): RevokePaymentMethodTokenPayload!
 
@@ -10543,6 +10601,11 @@ type Mutation {
   recoverShippingOption(id: ID!): ShippingOption!
   createFulfillment(input: CreateFulfillmentInput!): Fulfillment!
   updateFulfillment(id: ID!, input: UpdateFulfillmentInput!): Fulfillment!
+
+  """
+  Correct one shipment line: the quantity, the location, the order line it covers, or its payload.
+  """
+  updateFulfillmentLine(id: ID!, input: UpdateFulfillmentLineInput!): FulfillmentLine!
   shipFulfillment(id: ID!, input: ShipFulfillmentInput): Fulfillment!
   markFulfillmentInTransit(id: ID!): Fulfillment!
   deliverFulfillment(id: ID!): Fulfillment!
@@ -10562,12 +10625,22 @@ type Mutation {
   recoverFulfillment(id: ID!): Fulfillment!
 
   """
+  Remove a shipment outright. The recoverable withdrawal is softDeleteFulfillment.
+  """
+  deleteFulfillment(id: ID!): Boolean!
+
+  """
   Retire a shipment line recoverably, so what the shipment covered stays readable.
   """
   softDeleteFulfillmentLine(id: ID!): FulfillmentLine!
 
   """Restore a soft-deleted shipment line."""
   recoverFulfillmentLine(id: ID!): FulfillmentLine!
+
+  """
+  Remove a shipment line outright. The recoverable withdrawal is softDeleteFulfillmentLine.
+  """
+  deleteFulfillmentLine(id: ID!): Boolean!
 
   """Requests a return against an order."""
   requestOrderReturn(input: RequestOrderReturnInput!): RequestOrderReturnPayload!
@@ -46974,6 +47047,34 @@ input PickWaveInput {
   fulfillmentIds: [ID!]
 }
 
+"""
+An update to a wave that has not been released.
+
+Every member is optional because the route's body is: `PUT /pick-waves/:id` is typed
+`UpdatePickWaveDTO & PickWaveDTO`, so the patch a REST caller may state is the wave's own columns.
+The counters are re-derived by the service rather than supplied, and the route declares no version
+precondition — so `version` here is the column the body names and not a compare-and-set. Both are
+stated because the route states them: a GraphQL caller that could set fewer members than a REST
+caller is the difference this wave exists to remove.
+"""
+input UpdatePickWaveInput {
+  warehouseId: ID
+  channelId: ID
+  number: String
+  strategy: PickWaveStrategy
+  status: PickWaveStatus
+  priority: Int
+  pickerUserId: ID
+  plannedAt: DateTime
+  releasedAt: DateTime
+  startedAt: DateTime
+  completedAt: DateTime
+  orderCount: Int
+  lineCount: Int
+  version: Int
+  metadata: JSON
+}
+
 """The definition of a pick list."""
 input PickListInput {
   warehouseId: ID!
@@ -46983,6 +47084,36 @@ input PickListInput {
 
   """The shipments the lines are derived from."""
   fulfillmentIds: [ID!]
+}
+
+"""
+An update to a pick list.
+
+Every member is optional because the route's body is: `PUT /pick-lists/:id` is typed
+`UpdatePickListDTO & PickListDTO`, so the patch a REST caller may state is the list's own columns.
+The dispatcher's own edits — the assignee, the priority and the picker-facing note — are its
+reason for existing, and the wider column set is mirrored rather than narrowed because the route
+accepts it: a member a REST caller can write and a GraphQL caller cannot is a capability
+asymmetry, not a tidy schema.
+"""
+input UpdatePickListInput {
+  waveId: ID
+  warehouseId: ID
+  zoneId: ID
+  fulfillmentId: ID
+  orderId: ID
+  number: String
+  status: PickListStatus
+  assignedToUserId: ID
+  priority: Int
+  lineCount: Int
+  pickedCount: Int
+  shortCount: Int
+  startedAt: DateTime
+  completedAt: DateTime
+  note: String
+  version: Int
+  metadata: JSON
 }
 
 """
@@ -46999,6 +47130,35 @@ input PackSlipContentInput {
   idempotencyKey: String
 }
 
+"""
+An update to an open pack slip.
+
+Every member is optional because the route's body is: `PUT /pack-slips/:id` is typed
+`UpdatePackSlipDTO & PackSlipDTO`, so the patch a REST caller may state is the slip's own columns.
+The members are the ones an open slip still owns — the parcel count, the weight and volume of
+record, the carrier and the label — and a `PACKED` slip is immutable, which is the service's
+refusal rather than this document's: the same refusal answers the route.
+"""
+input UpdatePackSlipInput {
+  warehouseId: ID
+  pickListId: ID
+  orderId: ID
+  fulfillmentId: ID
+  number: String
+  status: PackSlipStatus
+  carrierKey: String
+  packageCount: Int
+  totalWeight: Decimal
+  totalVolume: Decimal
+  trackingNumber: String
+  labelUrl: String
+  packedAt: DateTime
+  packedByUserId: ID
+  note: String
+  version: Int
+  metadata: JSON
+}
+
 """The definition of a manifest."""
 input CarrierManifestInput {
   warehouseId: ID!
@@ -47008,6 +47168,38 @@ input CarrierManifestInput {
   windowFrom: DateTime
   windowTo: DateTime
   note: String
+}
+
+"""
+An update to a draft manifest.
+
+Every member is optional because the route's body is: `PUT /carrier-manifests/:id` is typed
+`UpdateCarrierManifestDTO & CarrierManifestDTO`, so the patch a REST caller may state is the
+manifest's own columns. Membership is not among them at any status — a draft resolves it from the
+shipments and a close freezes it — which is why the correction the route exists for is the day,
+the window and the note, and why the counters here are the columns the body names rather than a
+way to state membership.
+"""
+input UpdateCarrierManifestInput {
+  warehouseId: ID
+  carrier: String
+  service: String
+  number: String
+  status: CarrierManifestStatus
+  manifestDate: DateTime
+  windowFrom: DateTime
+  windowTo: DateTime
+  shipmentCount: Int
+  packageCount: Int
+  totalWeight: Decimal
+  closedAt: DateTime
+  handedOverAt: DateTime
+  canceledAt: DateTime
+  documentUrl: String
+  documentData: JSON
+  note: String
+  version: Int
+  metadata: JSON
 }
 
 """
@@ -48762,6 +48954,16 @@ input VoidPaymentSessionInput {
   idempotencyKey: String
 }
 
+input UpdatePaymentSessionInput {
+  id: ID!
+  externalId: String
+  paymentMethodTokenId: ID
+  data: JSON
+  expiresAt: DateTime
+  authorizedAt: DateTime
+  metadata: JSON
+}
+
 input CapturePaymentInput {
   paymentId: ID!
   amount: Decimal!
@@ -48912,6 +49114,17 @@ input CreatePaymentMethodTokenInput {
   idempotencyKey: String
 }
 
+input UpdatePaymentMethodTokenInput {
+  id: ID!
+  brand: String
+  last4: String
+  expiryMonth: Int
+  expiryYear: Int
+  holderName: String
+  billingAddressId: ID
+  metadata: JSON
+}
+
 type CreatePaymentProviderPayload {
   paymentProvider: PaymentProvider
   operation: Operation
@@ -48956,6 +49169,21 @@ type AuthorizePaymentSessionPayload {
 }
 
 type VoidPaymentSessionPayload {
+  paymentSession: PaymentSession
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+type UpdatePaymentSessionPayload {
+  paymentSession: PaymentSession
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""
+The outcome of re-reading an attempt, closing one that has outlived its lifetime.
+"""
+type RefreshPaymentSessionPayload {
   paymentSession: PaymentSession
   operation: Operation
   userErrors: [UserError!]!
@@ -49062,6 +49290,13 @@ type DeletePaymentAccountHolderPayload {
 }
 
 type CreatePaymentMethodTokenPayload {
+  paymentMethodToken: PaymentMethodToken
+  operation: Operation
+  userErrors: [UserError!]!
+}
+
+"""The outcome of repairing the display facts of a saved instrument."""
+type UpdatePaymentMethodTokenPayload {
   paymentMethodToken: PaymentMethodToken
   operation: Operation
   userErrors: [UserError!]!
@@ -51379,6 +51614,24 @@ input UpdateFulfillmentInput {
   service: String
   noNotification: Boolean
   note: String
+}
+
+"""
+The writable surface of a shipment line, as the line's own edit route validates it.
+
+Every member is nullable, because an edit states what changed rather than restating the row. The set
+is that route's own DTO member for member: the shipment the line belongs to, the order line it covers,
+the quantity, the location the quantity came from, and the free payload the picking flow reads. The
+tenancy members that DTO inherits are deliberately absent, as they are on every input of this document
+— tenancy is resolved from the caller rather than stated by it, and a member that let a caller name
+another organization's row is a member no service of this platform accepts.
+"""
+input UpdateFulfillmentLineInput {
+  fulfillmentId: ID
+  orderLineId: ID
+  quantity: Decimal
+  warehouseId: ID
+  metadata: JSON
 }
 
 input ShipFulfillmentInput {

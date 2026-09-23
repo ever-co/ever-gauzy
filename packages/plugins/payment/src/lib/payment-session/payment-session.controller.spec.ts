@@ -240,7 +240,13 @@ function resource() {
 		authorizeSession: jest.fn(async (id: string, entity: any) => ({ id, status: 'AUTHORIZED', ...entity })),
 		voidSession: jest.fn(async (id: string) => ({ id, status: 'CANCELED' })),
 		refreshSession: jest.fn(async (id: string) => ({ id })),
+		// The two updates are separate collaborators on purpose: the route reaches the domain method
+		// `updateSession`, which refuses a terminal attempt and strips the five members the domain's four
+		// verbs own, and the CRUD base's generic `update` is the path it must never reach — that one
+		// writes whatever columns the body names, including the status, the amount and the provider of a
+		// closed attempt.
 		update: jest.fn(async () => ({ id: SESSION })),
+		updateSession: jest.fn(async () => ({ id: SESSION })),
 		findSessions: jest.fn(async () => ({ items: [{ id: SESSION }], total: 1 })),
 		findSessionOrFail: jest.fn(async () => ({ id: SESSION }))
 	};
@@ -438,6 +444,13 @@ describe('PaymentSessionController — an attempt under a key (06 §6.4)', () =>
 
 		expect(declarationOf(PaymentSessionController, 'update')).toBeUndefined();
 		expect(surface.store.claim).not.toHaveBeenCalled();
+
+		// The route reaches the domain method the GraphQL `updatePaymentSession` field reaches, and never
+		// the CRUD base's generic `update`: that one writes whatever columns the body names, and this
+		// body's DTO carries `status`, `amount`, `currency`, `providerId` and `collectionId`, so the
+		// generic path could rewrite a closed attempt's amount or move it to another provider.
+		expect(surface.kernel.updateSession).toHaveBeenCalledTimes(1);
+		expect(surface.kernel.update).not.toHaveBeenCalled();
 	});
 });
 
