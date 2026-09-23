@@ -200,6 +200,7 @@ import { MarketplacePlugin } from '../marketplace.plugin';
 import { SellerOfferingController } from '../seller-offering/seller-offering.controller';
 import { SellerOfferingBulkOperation } from '../seller-offering/seller-offering.bulk';
 import { SellerPayoutController } from '../seller-payout/seller-payout.controller';
+import { SellerPayoutLineController } from '../seller-payout-line/seller-payout-line.controller';
 import { SellerSettlementController } from '../seller-settlement/seller-settlement.controller';
 import { SellerTransactionController } from '../seller-transaction/seller-transaction.controller';
 import { SellerController } from '../seller/seller.controller';
@@ -566,14 +567,18 @@ function createResolver(): SellerEntityResolver {
 		unpause: async () => OFFERING,
 		withdraw: async () => OFFERING,
 		applyBulkItem: async (item: { id: string }) => ({ ...OFFERING, id: item.id }),
-		transaction: async (work: (manager: unknown) => Promise<unknown>) => await work(undefined)
+		transaction: async (work: (manager: unknown) => Promise<unknown>) => await work(undefined),
+		softRemove: async () => OFFERING,
+		softRecover: async () => OFFERING
 	};
 
 	const sellerTransactionService = {
 		listTransactions: async () => ({ items: [TRANSACTION], total: 1 }),
 		reconcile: async () => ({ items: [RECONCILIATION], total: 1 }),
 		settle: async () => TRANSACTION,
-		hold: async () => TRANSACTION
+		hold: async () => TRANSACTION,
+		softRemove: async () => TRANSACTION,
+		softRecover: async () => TRANSACTION
 	};
 
 	const sellerPayoutService = {
@@ -582,16 +587,22 @@ function createResolver(): SellerEntityResolver {
 		createPayout: async () => PAYOUT,
 		approve: async () => PAYOUT,
 		recordExecution: async () => PAYOUT,
-		cancel: async () => ({ payout: PAYOUT, releasedTransactionCount: 1 })
+		cancel: async () => ({ payout: PAYOUT, releasedTransactionCount: 1 }),
+		softRemove: async () => PAYOUT,
+		softRecover: async () => PAYOUT
 	};
 
 	const sellerPayoutLineService = {
-		listLines: async () => ({ items: [PAYOUT_LINE], total: 1 })
+		listLines: async () => ({ items: [PAYOUT_LINE], total: 1 }),
+		softRemove: async () => PAYOUT_LINE,
+		softRecover: async () => PAYOUT_LINE
 	};
 
 	const sellerSettlementService = {
 		listSettlements: async () => ({ items: [SETTLEMENT], total: 1 }),
-		record: async () => SETTLEMENT
+		record: async () => SETTLEMENT,
+		softRemove: async () => SETTLEMENT,
+		softRecover: async () => SETTLEMENT
 	};
 
 	const visibility = { assertCanSee: () => undefined, canSee: () => true };
@@ -878,11 +889,123 @@ const SELLER_WRITES: ReadonlyArray<{
 ];
 
 /**
+ * The five child resources of this plugin that serve the inherited lifecycle pair, and the type each
+ * answers with.
+ *
+ * Every one of them extends `CrudController<T>` and overrides both routes purely to state a permission, so
+ * each serves a gated withdraw/restore pair over REST — seven of the ten are the only pair their resource
+ * has, because a ledger row, a payout, a payout line and a settlement are never hard-deleted. The
+ * controller is the real one, so the grant the field must state is *read back* from the override the route
+ * belongs to rather than copied into this file: a copy would agree with whichever of the two surfaces was
+ * edited last, which is what the comparison below exists to catch.
+ *
+ * The type is the resource's own row rather than a result object invented for the pair, because that is
+ * what both REST routes answer: the base class hands back whatever the service returned.
+ */
+interface ILifecycleResource {
+	/** The resource as the domain names it, which is what the two root field names are built from. */
+	resource: string;
+	/** The controller whose `softRemove`/`softRecover` overrides are the source of truth for the grants. */
+	controller: any;
+	/** The type both fields answer with, as the document declares it. */
+	answers: string;
+}
+
+const LIFECYCLE_RESOURCES: ReadonlyArray<ILifecycleResource> = [
+	{
+		resource: 'SellerOffering',
+		controller: SellerOfferingController,
+		answers: 'SellerOffering'
+	},
+	{
+		resource: 'SellerPayout',
+		controller: SellerPayoutController,
+		answers: 'SellerPayout'
+	},
+	{
+		resource: 'SellerPayoutLine',
+		controller: SellerPayoutLineController,
+		answers: 'SellerPayoutLine'
+	},
+	{
+		resource: 'SellerSettlement',
+		controller: SellerSettlementController,
+		answers: 'SellerSettlement'
+	},
+	{
+		resource: 'SellerTransaction',
+		controller: SellerTransactionController,
+		answers: 'SellerTransaction'
+	}
+];
+
+/** One root field of the pair, the route it mirrors and the service method both must reach. */
+interface ILifecycleField extends ILifecycleResource {
+	/** The root field's name, which is also the resolver method that answers it. */
+	field: string;
+	/** The resolver method, stated apart from `service` because the two are different vocabularies. */
+	method: string;
+	/** The controller handler the route belongs to, whose metadata is the source of truth for the grant. */
+	route: string;
+	/** The service method both the route and the field must reach, named after the act rather than the row. */
+	service: string;
+}
+
+/**
+ * The ten fields, built from the five resources so a resource cannot be listed with only half a pair.
+ *
+ * The naming is the composed schema's: `softDelete<Resource>` on the way out and `recover<Resource>` on the
+ * way back, which is the vocabulary the schema's other fields of this kind use. `restoreSeller` is the one
+ * exception in the whole schema, and it is not a precedent: this table's five resources are new fields, so
+ * they take the convention rather than the specification's table spelling.
+ *
+ * The field's name and the service method are stated separately on purpose: the inherited route, the
+ * service method and the handler are all named after the act, while the root field is named after the
+ * resource, so a table that carried one string for both would compare the wrong pair of things.
+ */
+const LIFECYCLE: ReadonlyArray<ILifecycleField> = LIFECYCLE_RESOURCES.flatMap((resource) => [
+	{
+		...resource,
+		field: `softDelete${resource.resource}`,
+		method: `softDelete${resource.resource}`,
+		route: 'softRemove',
+		service: 'softRemove'
+	},
+	{
+		...resource,
+		field: `recover${resource.resource}`,
+		method: `recover${resource.resource}`,
+		route: 'softRecover',
+		service: 'softRecover'
+	}
+]);
+
+/**
+ * The row each answer type's own service hands back.
+ *
+ * The journal below proves which *method* a field reached; this proves which *service* it reached, because
+ * the five services state the same two method names and a field wired to a neighbouring resource's service
+ * would otherwise journal an identical entry. Each service answers its own aggregate's row, so the answer
+ * is the witness.
+ */
+const LIFECYCLE_ROWS: Record<string, Record<string, unknown>> = {
+	SellerOffering: OFFERING,
+	SellerPayout: PAYOUT,
+	SellerPayoutLine: PAYOUT_LINE,
+	SellerSettlement: SETTLEMENT,
+	SellerTransaction: TRANSACTION
+};
+
+/**
  * The seller writes, recording the service method and the arguments each reached.
  *
  * The failure these doubles exist for is a mutation wired to the wrong method, or to the right method
  * with the wrong arguments: either would answer a row of the right shape and look correct from the
  * outside while the route it mirrors did something else.
+ *
+ * The five services that own the other resources carry their two inherited lifecycle methods into the same
+ * journal, because the lifecycle pair below reaches one of them per field: a field wired to a neighbouring
+ * resource's service is then reported as a call naming the wrong method rather than passing unnoticed.
  *
  * @param calls Where each call records the service method it reached and the arguments it carried.
  * @returns A resolver over the recording doubles.
@@ -895,6 +1018,12 @@ function writeResolver(calls: Array<{ service: string; args: unknown[] }>): any 
 
 			return Promise.resolve(answer);
 		};
+
+	/** The two inherited lifecycle methods of one service, in the same journal as its siblings' writes. */
+	const lifecycle = (row: unknown): any => ({
+		softRemove: record('softRemove', row),
+		softRecover: record('softRecover', row)
+	});
 
 	return new SellerEntityResolver(
 		{
@@ -911,11 +1040,11 @@ function writeResolver(calls: Array<{ service: string; args: unknown[] }>): any 
 			softRemove: record('softRemove', SELLER),
 			softRecover: record('softRecover', SELLER)
 		} as any,
-		{} as any,
-		{} as any,
-		{} as any,
-		{} as any,
-		{} as any,
+		lifecycle(OFFERING),
+		lifecycle(TRANSACTION),
+		lifecycle(PAYOUT),
+		lifecycle(PAYOUT_LINE),
+		lifecycle(SETTLEMENT),
 		new BulkExecutor({ assertCanSee: () => undefined, canSee: () => true } as never)
 	);
 }
@@ -975,16 +1104,26 @@ const CALLS: Record<string, { args: unknown[]; row: Record<string, unknown> }> =
 			total: 2
 		}
 	},
+	softDeleteSellerOffering: { args: ['offering-1'], row: OFFERING },
+	recoverSellerOffering: { args: ['offering-1'], row: OFFERING },
 	settleSellerTransaction: { args: ['transaction-1', 'captured'], row: TRANSACTION },
 	holdSellerTransaction: { args: ['transaction-1', 'DISPUTE'], row: TRANSACTION },
+	softDeleteSellerTransaction: { args: ['transaction-1'], row: TRANSACTION },
+	recoverSellerTransaction: { args: ['transaction-1'], row: TRANSACTION },
 	createSellerPayout: { args: ['seller-1', 'USD', ['transaction-1'], 'operator override'], row: PAYOUT },
 	approveSellerPayout: { args: ['payout-1'], row: PAYOUT },
 	markSellerPayoutPaid: { args: ['payout-1', 'provider-1', 'transfer-1'], row: PAYOUT },
 	cancelSellerPayout: { args: ['payout-1', 'duplicate run'], row: PAYOUT },
+	softDeleteSellerPayout: { args: ['payout-1'], row: PAYOUT },
+	recoverSellerPayout: { args: ['payout-1'], row: PAYOUT },
+	softDeleteSellerPayoutLine: { args: ['payout-line-1'], row: PAYOUT_LINE },
+	recoverSellerPayoutLine: { args: ['payout-line-1'], row: PAYOUT_LINE },
 	createSellerSettlement: {
 		args: ['seller-1', 'provider-1', 'USD', '100.000000', '15.000000', '1.000000'],
 		row: SETTLEMENT
-	}
+	},
+	softDeleteSellerSettlement: { args: ['settlement-1'], row: SETTLEMENT },
+	recoverSellerSettlement: { args: ['settlement-1'], row: SETTLEMENT }
 };
 
 /**
@@ -1441,6 +1580,86 @@ describe('the marketplace GraphQL contribution', () => {
 				// A field that also read the seller back, or that handed the scope on where the route did
 				// not, is reported by the arguments rather than by a count that happens to match.
 				expect(calls).toEqual([{ service: write.service, args: write.call(scope) }]);
+			}
+		);
+	});
+
+	/* --------------------------------------------------------------------------------------------
+	 * The inherited lifecycle pair of the five child resources
+	 * ------------------------------------------------------------------------------------------ */
+
+	describe('the child resources’ lifecycle pair, against the routes they mirror', () => {
+		it.each(LIFECYCLE.map((entry) => entry.field))(
+			'declares %s on the mutation root with the identifier its route takes',
+			(field) => {
+				const entry = LIFECYCLE.find((candidate) => candidate.field === field)!;
+				const declared = DECLARED.find((candidate) => candidate.field === field);
+				const answered = COMPOSED.getMutationType()?.getFields()[field];
+
+				// Both halves of the surface, because they fail silently apart: a field the resolver declares
+				// and the document does not is never served, and one the document carries with no resolver is
+				// answered as if it existed.
+				expect(declared).toBeDefined();
+				expect(declared?.operation).toBe('Mutation');
+				expect(answered).toBeDefined();
+
+				const args = answered?.args ?? [];
+
+				expect(args.map((argument) => argument.name)).toEqual(['id']);
+				expect(getNamedType(args[0].type).name).toBe('ID');
+				expect(isNonNullType(args[0].type)).toBe(true);
+
+				// The row the resource's own reads and sibling mutations answer with, non-null: the pair
+				// answers the row it retired or restored, as both routes do.
+				expect(getNamedType(answered!.type).name).toBe(entry.answers);
+				expect(isNonNullType(answered!.type)).toBe(true);
+			}
+		);
+
+		it('states, on every one of the ten, the permission its own route states', () => {
+			for (const { field, method, route, controller } of LIFECYCLE) {
+				// The override is asserted to be there before the two readings are compared, because that is
+				// what makes the route's own metadata the thing being mirrored rather than the inherited
+				// handler's silence — the silence these overrides exist to replace.
+				expect(typeof (controller.prototype as any)[route]).toBe('function');
+
+				expect(Reflect.getMetadata(PERMISSIONS_METADATA, SellerEntityResolver.prototype[method])).toEqual(
+					Reflect.getMetadata(PERMISSIONS_METADATA, controller.prototype[route])
+				);
+			}
+		});
+
+		it('states the destructive grant on all ten routes, which is what the pair takes', () => {
+			// Read from the controllers rather than from a grant restated in this file, so the comparison
+			// above cannot pass on two absences: the class-level grant of all five controllers is a `_VIEW`
+			// value, and a route that stated nothing would leave the read grant in front of a write.
+			for (const { field, route, controller } of LIFECYCLE) {
+				expect({
+					field,
+					permission: Reflect.getMetadata(PERMISSIONS_METADATA, controller.prototype[route])
+				}).toEqual({ field, permission: [PermissionsEnum.SELLERS_DELETE] });
+			}
+		});
+
+		it.each(LIFECYCLE.map((entry) => entry.field))(
+			'answers %s with the service method its route reaches, and with no other service’s row',
+			async (field) => {
+				const entry = LIFECYCLE.find((candidate) => candidate.field === field)!;
+				const calls: Array<{ service: string; args: unknown[] }> = [];
+
+				const returned = await writeResolver(calls)[entry.method](...CALLS[field].args);
+
+				// Exactly one call, to the method the route reaches, with the identifier it was given. The
+				// inherited route hands `softRemove` its rest parameter — an empty array — which the service
+				// normalises to no find options; the call stated here is the one that normalisation reaches.
+				// No seller scope is handed on, because the routes thread none: the scope is the access
+				// guard's and the base service takes it nowhere, so a field that invented one would refuse a
+				// caller the other protocol served.
+				expect(calls).toEqual([{ service: entry.service, args: CALLS[field].args }]);
+
+				// The row is the one only this resource's own service hands back, so a field wired to a
+				// neighbouring resource's service — which states the same two method names — is caught here.
+				expect(returned).toBe(LIFECYCLE_ROWS[entry.answers]);
 			}
 		);
 	});

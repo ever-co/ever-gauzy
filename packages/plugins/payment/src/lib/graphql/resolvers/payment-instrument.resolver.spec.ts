@@ -237,7 +237,9 @@ function surfaces(granted: string[] = []) {
 		tokens,
 		accounts,
 		accountResolver: new PaymentAccountHolderResolver(holderKernel as never, accounts, tokens),
-		tokenResolver: new PaymentMethodTokenResolver(tokens, visibility)
+		// The third collaborator is the instrument's own kernel service, which the resolver injects for
+		// the recoverable lifecycle pair §3.1 requires of it; `kernel` is that service's stub here.
+		tokenResolver: new PaymentMethodTokenResolver(tokens, visibility, kernel as never)
 	};
 }
 

@@ -18,6 +18,8 @@ import {
 	IRefundLineConnection,
 	IRefundLineFilter,
 	IPaymentSort,
+	IRecoverRefundLinePayload,
+	ISoftDeleteRefundLinePayload,
 	IUpdateRefundLineGraphInput,
 	IUpdateRefundLinePayload,
 	REFUND_LINE_SORT_FIELDS,
@@ -124,6 +126,53 @@ export class RefundLineResolver {
 			return { refundLine: await this.refundLineService.removeLine(id), deleted: true, userErrors: [] };
 		} catch (error) {
 			return { refundLine: null, deleted: false, ...rejection<IRefundLine>(error) };
+		}
+	}
+
+	/**
+	 * Retires a line of a refund's breakdown recoverably.
+	 *
+	 * The route it mirrors is `DELETE /refund-lines/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. The
+	 * line leaves every resolution of the breakdown while the row survives, which is the difference
+	 * between this and `deleteRefundLine`: that one detaches the line from its refund — freeing the live
+	 * pair it occupied — and this one keeps the accounting and takes it out of the total.
+	 *
+	 * The permission is the route's own, `REFUNDS_CREATE`, and not the class's view grant. This class
+	 * states no `@Permissions` of its own, so a field that stated none would carry no metadata at all,
+	 * and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The line to retire.
+	 * @returns The payload, carrying the line as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Mutation('softDeleteRefundLine')
+	async softDeleteRefundLine(@Args('id') id: ID): Promise<ISoftDeleteRefundLinePayload> {
+		try {
+			return { refundLine: await this.refundLineService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { refundLine: null, ...rejection<IRefundLine>(error) };
+		}
+	}
+
+	/**
+	 * Restores a line of a refund's breakdown that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /refund-lines/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for.
+	 * Restoring puts the line back into what the refund is explained by, which is why it states the same
+	 * `REFUNDS_CREATE` grant the create, update and delete routes here state.
+	 *
+	 * @param id The line to restore.
+	 * @returns The payload, carrying the restored line.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Mutation('recoverRefundLine')
+	async recoverRefundLine(@Args('id') id: ID): Promise<IRecoverRefundLinePayload> {
+		try {
+			return { refundLine: await this.refundLineService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { refundLine: null, ...rejection<IRefundLine>(error) };
 		}
 	}
 }

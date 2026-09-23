@@ -19,6 +19,8 @@ import {
 	IPaymentSessionConnection,
 	IPaymentSessionFilter,
 	IPaymentSort,
+	IRecoverPaymentSessionPayload,
+	ISoftDeletePaymentSessionPayload,
 	IVoidPaymentSessionGraphInput,
 	IVoidPaymentSessionPayload,
 	PAYMENT_SESSION_SORT_FIELDS,
@@ -143,6 +145,53 @@ export class PaymentSessionResolver {
 				),
 				userErrors: []
 			};
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Retires a payment attempt recoverably, keeping the authorisation it recorded.
+	 *
+	 * The route it mirrors is `DELETE /payment-sessions/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. An
+	 * attempt is a historical fact about what a provider answered, so it is withdrawn rather than
+	 * removed, and the captures and refunds that reference it keep resolving.
+	 *
+	 * The permission is the route's own — `PAYMENT_SESSIONS_CANCEL`, the grant the void route carries —
+	 * and not the class's view grant. This class states no `@Permissions` of its own, so a field that
+	 * stated none would carry no metadata at all, and `PermissionGuard` answers `true` to empty
+	 * metadata.
+	 *
+	 * @param id The attempt to retire.
+	 * @returns The payload, carrying the attempt as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	@Mutation('softDeletePaymentSession')
+	async softDeletePaymentSession(@Args('id') id: ID): Promise<ISoftDeletePaymentSessionPayload> {
+		try {
+			return { paymentSession: await this.paymentSessionService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
+		}
+	}
+
+	/**
+	 * Restores a payment attempt that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-sessions/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for.
+	 * Restoring is the cancel grant exercised backwards, so the field states `PAYMENT_SESSIONS_CANCEL`
+	 * too — a caller that may release a reservation is a caller that may undo the withdrawal of one.
+	 *
+	 * @param id The attempt to restore.
+	 * @returns The payload, carrying the restored attempt.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CANCEL as PermissionsEnum)
+	@Mutation('recoverPaymentSession')
+	async recoverPaymentSession(@Args('id') id: ID): Promise<IRecoverPaymentSessionPayload> {
+		try {
+			return { paymentSession: await this.paymentSessionService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { paymentSession: null, ...rejection<IPaymentSession>(error) };
 		}

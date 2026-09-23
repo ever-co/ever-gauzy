@@ -16,6 +16,8 @@ import { rejection, toConnection, toOrder } from '../types/connection';import {
 	IPaymentCollectionConnection,
 	IPaymentCollectionFilter,
 	IPaymentSort,
+	IRecoverPaymentCollectionPayload,
+	ISoftDeletePaymentCollectionPayload,
 	IUpdatePaymentCollectionGraphInput,
 	IUpdatePaymentCollectionPayload,
 	PAYMENT_COLLECTION_SORT_FIELDS,
@@ -114,6 +116,52 @@ export class PaymentCollectionResolver {
 				paymentCollection: await this.paymentCollectionService.updateCollection(input.id, input as never),
 				userErrors: []
 			};
+		} catch (error) {
+			return { paymentCollection: null, ...rejection<IPaymentCollection>(error) };
+		}
+	}
+
+	/**
+	 * Retires a collection recoverably, keeping the four amounts it reconciled.
+	 *
+	 * The route it mirrors is `DELETE /payment-collections/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. The
+	 * collection is the record of what an order was asked to pay, so it is withdrawn rather than
+	 * removed: the sessions that ran against it and the amounts they moved stay on the row.
+	 *
+	 * The permission is the route's own — `PAYMENT_SESSIONS_AUTHORIZE` — and not the class's view
+	 * grant. This class states no `@Permissions` of its own, so a field that stated none would carry no
+	 * metadata at all, and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The collection to retire.
+	 * @returns The payload, carrying the collection as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@Mutation('softDeletePaymentCollection')
+	async softDeletePaymentCollection(@Args('id') id: ID): Promise<ISoftDeletePaymentCollectionPayload> {
+		try {
+			return { paymentCollection: await this.paymentCollectionService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentCollection: null, ...rejection<IPaymentCollection>(error) };
+		}
+	}
+
+	/**
+	 * Restores a collection that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-collections/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for.
+	 * Restoring is the authorise grant exercised backwards, so the field states
+	 * `PAYMENT_SESSIONS_AUTHORIZE` too.
+	 *
+	 * @param id The collection to restore.
+	 * @returns The payload, carrying the restored collection.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_AUTHORIZE as PermissionsEnum)
+	@Mutation('recoverPaymentCollection')
+	async recoverPaymentCollection(@Args('id') id: ID): Promise<IRecoverPaymentCollectionPayload> {
+		try {
+			return { paymentCollection: await this.paymentCollectionService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { paymentCollection: null, ...rejection<IPaymentCollection>(error) };
 		}

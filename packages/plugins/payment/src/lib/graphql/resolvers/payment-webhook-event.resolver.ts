@@ -15,8 +15,10 @@ import {
 	IPaymentSort,
 	IPaymentWebhookEventConnection,
 	IPaymentWebhookEventFilter,
+	IRecoverPaymentWebhookEventPayload,
 	IReprocessPaymentWebhookEventGraphInput,
 	IReprocessPaymentWebhookEventPayload,
+	ISoftDeletePaymentWebhookEventPayload,
 	PAYMENT_WEBHOOK_EVENT_SORT_FIELDS,
 	withDateRange,
 	withoutRange
@@ -109,6 +111,55 @@ export class PaymentWebhookEventResolver {
 				paymentWebhookEvent: await this.paymentWebhookEventService.reprocess(input.id, Boolean(input.force)),
 				userErrors: []
 			};
+		} catch (error) {
+			return { paymentWebhookEvent: null, ...rejection<IPaymentWebhookEvent>(error) };
+		}
+	}
+
+	/**
+	 * Retires an inbound callback recoverably, keeping the record that it arrived.
+	 *
+	 * The route it mirrors is `DELETE /payment-webhook-events/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base declares no metadata for.
+	 * It withdraws the row from the reads without destroying it, which is the only removal this log can
+	 * offer: the ordering rule that makes the log trustworthy is that the payload row is written before
+	 * anything is judged about it, so a callback that turned out to be noise is retired rather than
+	 * deleted, and what was received stays provable.
+	 *
+	 * The permission is the route's own — `PAYMENT_CALLBACKS_REPROCESS`, the grant the reprocess route
+	 * here carries, because the withdrawal is an act on the log rather than a read of it — and not the
+	 * class's view grant. This class states no `@Permissions` of its own, so a field that stated none
+	 * would carry no metadata at all, and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The callback to retire.
+	 * @returns The payload, carrying the callback as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	@Mutation('softDeletePaymentWebhookEvent')
+	async softDeletePaymentWebhookEvent(@Args('id') id: ID): Promise<ISoftDeletePaymentWebhookEventPayload> {
+		try {
+			return { paymentWebhookEvent: await this.paymentWebhookEventService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentWebhookEvent: null, ...rejection<IPaymentWebhookEvent>(error) };
+		}
+	}
+
+	/**
+	 * Restores an inbound callback that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-webhook-events/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base declares no metadata for. A
+	 * restored callback is part of the log again — and readable by the reprocess mutation beside it — so
+	 * the field states `PAYMENT_CALLBACKS_REPROCESS` exactly as the retirement does.
+	 *
+	 * @param id The callback to restore.
+	 * @returns The payload, carrying the restored callback.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_CALLBACKS_REPROCESS as PermissionsEnum)
+	@Mutation('recoverPaymentWebhookEvent')
+	async recoverPaymentWebhookEvent(@Args('id') id: ID): Promise<IRecoverPaymentWebhookEventPayload> {
+		try {
+			return { paymentWebhookEvent: await this.paymentWebhookEventService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { paymentWebhookEvent: null, ...rejection<IPaymentWebhookEvent>(error) };
 		}

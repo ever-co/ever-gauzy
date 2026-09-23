@@ -5,6 +5,7 @@ import {
 	FeatureFlagGuard,
 	FieldVisibility,
 	Idempotent,
+	PaymentMethodTokenService,
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
@@ -25,8 +26,10 @@ import {
 	IPaymentMethodTokenConnection,
 	IPaymentMethodTokenFilter,
 	IPaymentSort,
+	IRecoverPaymentMethodTokenPayload,
 	IRevokePaymentMethodTokenPayload,
 	ISetDefaultPaymentMethodTokenPayload,
+	ISoftDeletePaymentMethodTokenPayload,
 	PAYMENT_METHOD_TOKEN_SORT_FIELDS,
 	withoutRange
 } from '../types/payment.types';
@@ -36,6 +39,13 @@ import {
  *
  * The resolver is a transport adapter: the same permissions, the same service methods and the same
  * rows as the REST controller. Two things are its own, and both are the point of the resource.
+ *
+ * **It is not only a read and a status move.** `DELETE /:id/soft` and `PUT /:id/recover` are inherited
+ * from `CrudController` by this resource's controller, which overrides both to state the permission the
+ * base leaves unstated, so an instrument could be retired and restored recoverably over REST while no
+ * field answered either half of that pair. Both halves are served here by the instrument's own kernel
+ * service — the one the controller hands to the base class — which is why this resolver injects it
+ * beside the lifecycle collaborator that sequences the other acts.
  *
  * **The stored reference is a gated field.** `PaymentMethodToken.token` is declared in the schema —
  * a schema that varied by caller would be two schemas — and resolves to `null` plus a typed denial
@@ -79,7 +89,15 @@ export class PaymentMethodTokenResolver {
 		 * exactly as the REST projection interceptor takes it: it is a pure decision over the caller's
 		 * grants and owns no state.
 		 */
-		@Optional() private readonly visibility: FieldVisibility = new FieldVisibility()
+		@Optional() private readonly visibility: FieldVisibility = new FieldVisibility(),
+		/**
+		 * The instrument's own kernel service, which is the one the controller hands to `CrudController`
+		 * and therefore the one the two inherited lifecycle routes call. The lifecycle collaborator above
+		 * sequences the acts of a saved instrument and does not reach the generic removal at all, so the
+		 * pair of fields this resolver answers for it is served by the service the routes are served by
+		 * rather than by a second path to the same table.
+		 */
+		private readonly paymentMethodTokenService: PaymentMethodTokenService
 	) {}
 
 	/**
@@ -163,6 +181,56 @@ export class PaymentMethodTokenResolver {
 			return { paymentMethodToken: await this.paymentMethodTokenLifecycle.revoke(id), deleted: true, userErrors: [] };
 		} catch (error) {
 			return { paymentMethodToken: null, deleted: false, ...rejection<IPaymentMethodToken>(error) };
+		}
+	}
+
+	/**
+	 * Retires a saved instrument recoverably.
+	 *
+	 * The route it mirrors is `DELETE /payment-method-tokens/:id/soft`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base declares no metadata for.
+	 * It is not the act `revokePaymentMethodToken` performs beside it: revoking moves the instrument's
+	 * status to `REVOKED` and stamps `revokedAt`, because a charge history has to keep resolving against
+	 * a row that may no longer be charged, whereas this takes the row out of the reads recoverably. The
+	 * service is the instrument's own kernel service — the one the controller hands to `CrudController`
+	 * — so the two surfaces retire the same row the same way.
+	 *
+	 * The permission is the route's own, `PAYMENT_METHOD_TOKENS_EDIT`, and not the class's view grant.
+	 * This class states no `@Permissions` of its own, so a field that stated none would carry no
+	 * metadata at all, and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The instrument to retire.
+	 * @returns The payload, carrying the instrument as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_EDIT as PermissionsEnum)
+	@Mutation('softDeletePaymentMethodToken')
+	async softDeletePaymentMethodToken(@Args('id') id: ID): Promise<ISoftDeletePaymentMethodTokenPayload> {
+		try {
+			return { paymentMethodToken: await this.paymentMethodTokenService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentMethodToken: null, ...rejection<IPaymentMethodToken>(error) };
+		}
+	}
+
+	/**
+	 * Restores a saved instrument that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-method-tokens/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base declares no metadata for.
+	 * The restored row is readable and chargeable again under the gates it was written with — the stored
+	 * reference is still withheld from a caller that may not charge it — so restoring never widens what
+	 * the instrument exposes.
+	 *
+	 * @param id The instrument to restore.
+	 * @returns The payload, carrying the restored instrument.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_METHOD_TOKENS_EDIT as PermissionsEnum)
+	@Mutation('recoverPaymentMethodToken')
+	async recoverPaymentMethodToken(@Args('id') id: ID): Promise<IRecoverPaymentMethodTokenPayload> {
+		try {
+			return { paymentMethodToken: await this.paymentMethodTokenService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { paymentMethodToken: null, ...rejection<IPaymentMethodToken>(error) };
 		}
 	}
 

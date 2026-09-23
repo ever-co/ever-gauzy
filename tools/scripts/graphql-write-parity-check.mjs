@@ -46,33 +46,7 @@ const ROOTS = [
  * `PurchaseOrder`). The list is the backlog, and it is expected to shrink to nothing.
  */
 const OUTSTANDING = {
-	'plugins/cart': [
-		'CommerceCart',
-		'CommerceCartLine',
-		'CommerceCartPromotion',
-		'CommerceCartShippingMethod',
-		'CommerceCheckoutSession'
-	],
-	'plugins/marketplace': [
-		'SellerOffering',
-		'SellerPayout',
-		'SellerPayoutLine',
-		'SellerSettlement',
-		'SellerTransaction'
-	],
-	'plugins/payment': [
-		'PaymentAccountHolder',
-		'PaymentCapture',
-		'PaymentCollection',
-		'PaymentMethodToken',
-		'PaymentProvider',
-		'PaymentSession',
-		'PaymentWebhookEvent',
-		'Refund',
-		'RefundLine',
-		'RefundReason'
-	],
-	'plugins/purchasing': ['GoodsReceipt', 'GoodsReceiptLine', 'VendorProductTerm']
+
 };
 
 /** Every file under a directory whose name ends with a suffix, skipping build output. */

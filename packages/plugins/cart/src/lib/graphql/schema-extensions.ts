@@ -294,5 +294,35 @@ export const cartSchemaExtensions = gql`
 		startCheckout(input: StartCheckoutInput!): CheckoutSession!
 		completeCheckout(input: CompleteCheckoutInput!): CheckoutResult!
 		abandonCheckout(cartId: ID!, version: Int): Cart!
+		# The recoverable lifecycle pair, one field per resource of this domain: every controller here
+		# extends CrudController and overrides both inherited routes only to state a permission, so REST
+		# has served a gated withdraw/restore pair over five resources while no field answered either half
+		# of it. Each field below mirrors one of those routes — the same service method, the same
+		# identifier, the same grant the route states — and each answers the row the route answers, which
+		# is what this domain's other mutations answer too (createCart and updateCart answer Cart!,
+		# startCheckout answers CheckoutSession!) rather than a result object invented for the pair. The
+		# field names carry the resource's own name, CommerceCart and CommerceCheckoutSession included,
+		# because that is the name a controller declares and the name the write-parity gate reads; the
+		# types stay the concepts' short names, as every other field of this document does.
+		"Retires a cart recoverably, keeping its lines, delivery choices and promotions."
+		softDeleteCommerceCart(id: ID!): Cart!
+		"Restores a soft-deleted cart."
+		recoverCommerceCart(id: ID!): Cart!
+		"Retires a cart line recoverably, keeping its price snapshot."
+		softDeleteCommerceCartLine(id: ID!): CartLine!
+		"Restores a soft-deleted cart line."
+		recoverCommerceCartLine(id: ID!): CartLine!
+		"Retires an applied promotion recoverably, keeping the discount it recorded."
+		softDeleteCommerceCartPromotion(id: ID!): CartPromotion!
+		"Restores a soft-deleted applied promotion."
+		recoverCommerceCartPromotion(id: ID!): CartPromotion!
+		"Retires a delivery choice recoverably, keeping the amount it was quoted at."
+		softDeleteCommerceCartShippingMethod(id: ID!): CartShippingMethod!
+		"Restores a soft-deleted delivery choice."
+		recoverCommerceCartShippingMethod(id: ID!): CartShippingMethod!
+		"Retires a checkout session recoverably, keeping the progress it recorded."
+		softDeleteCommerceCheckoutSession(id: ID!): CheckoutSession!
+		"Restores a soft-deleted checkout session."
+		recoverCommerceCheckoutSession(id: ID!): CheckoutSession!
 	}
 `;

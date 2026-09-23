@@ -112,4 +112,47 @@ export class CommerceCartShippingMethodResolver {
 
 		return this.commerceCartService.recalculate(cartId, 'SHIPPING_REMOVED', versionExpectationOf(context?.req));
 	}
+
+	/**
+	 * Retires a delivery choice recoverably, keeping the amount it was quoted at.
+	 *
+	 * The route it mirrors is `DELETE /cart-shipping-methods/:id/soft` — the choice addressed by its own
+	 * id, on its own controller — inherited from `CrudController` and overridden there only to state the
+	 * permission the base left unstated. It is deliberately not the cart-level `removeCartShippingMethod`
+	 * above: that mutation reaches the cart service, which re-prices the cart as it clears the choice,
+	 * while this pair mirrors the choice's own inherited routes and so reaches its service, exactly as the
+	 * two routes do. The row carries the shipping amount the cart's totals were computed from, so it is
+	 * retired rather than dropped.
+	 *
+	 * The permission is the controller's own for the route — `CARTS_EDIT` — and not the class-level view
+	 * grant, because retiring a delivery choice changes what the cart costs to send.
+	 *
+	 * @param id The delivery choice to retire.
+	 * @returns The choice, as the soft delete left it.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteCommerceCartShippingMethod' })
+	async softDeleteCommerceCartShippingMethod(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<CommerceCartShippingMethod> {
+		return this.commerceCartShippingMethodService.softRemove(id);
+	}
+
+	/**
+	 * Restores a delivery choice that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /cart-shipping-methods/:id/recover`, inherited from `CrudController`
+	 * and overridden by the controller only to state the permission the base left unstated. A restored
+	 * choice is counted into the cart's shipping totals again the next time the cart is recalculated.
+	 *
+	 * @param id The delivery choice to restore.
+	 * @returns The restored choice.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Mutation(() => Object, { name: 'recoverCommerceCartShippingMethod' })
+	async recoverCommerceCartShippingMethod(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<CommerceCartShippingMethod> {
+		return this.commerceCartShippingMethodService.softRecover(id);
+	}
 }

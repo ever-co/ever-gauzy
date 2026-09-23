@@ -805,3 +805,70 @@ export type ISetDefaultPaymentMethodTokenPayload = IResourcePayload<IPaymentMeth
 export type IRevokePaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'> & {
 	readonly deleted: boolean;
 };
+
+/* ------------------------------------------------------------------------------------------------
+ * The recoverable lifecycle pair: DELETE /:id/soft and PUT /:id/recover, one payload per act
+ *
+ * Every controller of this package extends CrudController and overrides both inherited routes only to
+ * state the permission the base leaves unstated, so all ten resources serve the pair over REST. The two
+ * aliases per resource are the shape every other payload in this file has — the row under the member
+ * the resource's siblings use, plus the operation and the userErrors the convention carries — and they
+ * are deliberately identical to each other, because a soft delete and a recover each answer the row as
+ * they left it and neither has a second fact to report.
+ * ---------------------------------------------------------------------------------------------- */
+
+/** The answer of retiring a provider registration recoverably. */
+export type ISoftDeletePaymentProviderPayload = IResourcePayload<IPaymentProvider, 'paymentProvider'>;
+/** The answer of restoring a soft-deleted provider registration. */
+export type IRecoverPaymentProviderPayload = IResourcePayload<IPaymentProvider, 'paymentProvider'>;
+
+/** The answer of retiring a collection recoverably. */
+export type ISoftDeletePaymentCollectionPayload = IResourcePayload<IPaymentCollection, 'paymentCollection'>;
+/** The answer of restoring a soft-deleted collection. */
+export type IRecoverPaymentCollectionPayload = IResourcePayload<IPaymentCollection, 'paymentCollection'>;
+
+/** The answer of retiring a payment attempt recoverably. */
+export type ISoftDeletePaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
+/** The answer of restoring a soft-deleted payment attempt. */
+export type IRecoverPaymentSessionPayload = IResourcePayload<IPaymentSession, 'paymentSession'>;
+
+/** The answer of retiring a capture recoverably. */
+export type ISoftDeletePaymentCapturePayload = IResourcePayload<IPaymentCapture, 'paymentCapture'>;
+/** The answer of restoring a soft-deleted capture. */
+export type IRecoverPaymentCapturePayload = IResourcePayload<IPaymentCapture, 'paymentCapture'>;
+
+/** The answer of retiring a refund recoverably. */
+export type ISoftDeleteRefundPayload = IResourcePayload<IRefund, 'refund'>;
+/** The answer of restoring a soft-deleted refund. */
+export type IRecoverRefundPayload = IResourcePayload<IRefund, 'refund'>;
+
+/** The answer of retiring a governed refund reason recoverably. */
+export type ISoftDeleteRefundReasonPayload = IResourcePayload<IRefundReason, 'refundReason'>;
+/** The answer of restoring a soft-deleted refund reason. */
+export type IRecoverRefundReasonPayload = IResourcePayload<IRefundReason, 'refundReason'>;
+
+/** The answer of retiring a line of a refund's breakdown recoverably. */
+export type ISoftDeleteRefundLinePayload = IResourcePayload<IRefundLine, 'refundLine'>;
+/** The answer of restoring a soft-deleted line of a refund's breakdown. */
+export type IRecoverRefundLinePayload = IResourcePayload<IRefundLine, 'refundLine'>;
+
+/** The answer of retiring an inbound callback recoverably. */
+export type ISoftDeletePaymentWebhookEventPayload = IResourcePayload<
+	IPaymentWebhookEvent,
+	'paymentWebhookEvent'
+>;
+/** The answer of restoring a soft-deleted inbound callback. */
+export type IRecoverPaymentWebhookEventPayload = IResourcePayload<IPaymentWebhookEvent, 'paymentWebhookEvent'>;
+
+/** The answer of retiring a party's account at a provider recoverably. */
+export type ISoftDeletePaymentAccountHolderPayload = IResourcePayload<
+	IPaymentAccountHolder,
+	'paymentAccountHolder'
+>;
+/** The answer of restoring a soft-deleted account at a provider. */
+export type IRecoverPaymentAccountHolderPayload = IResourcePayload<IPaymentAccountHolder, 'paymentAccountHolder'>;
+
+/** The answer of retiring a saved instrument recoverably. */
+export type ISoftDeletePaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'>;
+/** The answer of restoring a soft-deleted saved instrument. */
+export type IRecoverPaymentMethodTokenPayload = IResourcePayload<IPaymentMethodToken, 'paymentMethodToken'>;

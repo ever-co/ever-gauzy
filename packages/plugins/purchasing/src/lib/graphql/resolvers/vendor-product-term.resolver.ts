@@ -49,7 +49,10 @@ interface IResolveVendorProductTermArgs {
  *
  * Authorisation is carried here as well as on the controller, under the same two permissions and the
  * same two protocol guards: a term is procurement's, and `VENDOR_TERMS_VIEW` deliberately does not come
- * with `PURCHASE_ORDERS_VIEW`. The platform's feature guard is carried here too, which it was not
+ * with `PURCHASE_ORDERS_VIEW`. The read fields answer under the class's view grant, and every write —
+ * including the withdrawal and the recovery the inherited CRUD routes serve — states `VENDOR_TERMS_EDIT`
+ * field by field, which is what the term controller's own overrides state and the direction in which the
+ * two surfaces must not disagree. The platform's feature guard is carried here too, which it was not
  * before, and the reason that kept it off this class does not hold: a guard resolves its dependencies
  * from the module that hosts the handler, and every host of this resolver reaches the feature service —
  * the plugin's own module imports `FeatureModule`, and so does the host the endpoint scans,
@@ -231,6 +234,68 @@ export class VendorProductTermResolver {
 			return { id, userErrors: [] };
 		} catch (error) {
 			return { id: null, userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Withdraws a term without removing the row.
+	 *
+	 * The field mirrors `DELETE /vendor-product-terms/:id/soft`, which the term's controller inherits from
+	 * `CrudController<T>` and overrides only to state a permission the inherited declaration left
+	 * unstated — the base declares the route with no permission metadata, so `PermissionGuard` fell
+	 * through to the class-level read grant while every write route of this resource demands
+	 * `VENDOR_TERMS_EDIT`. The field states the grant the route states, read off that same override,
+	 * because a field that left the act to its class would let whoever may read a supplier's terms
+	 * withdraw one — and unlike `deleteVendorProductTerm` above, which retires a term the org no longer
+	 * wants by moving it to `INACTIVE`, this pair is the recoverable half: the row and everything that
+	 * points at it stay put, and `recoverVendorProductTerm` reads it back.
+	 *
+	 * The answer is the payload the resource's own write mutations answer rather than the term itself, so
+	 * a generated client sees one shape for a write on this resource, and the refusal travels in
+	 * `userErrors` exactly as `createVendorProductTerm` and `updateVendorProductTerm` report it — the
+	 * `DeleteVendorProductTermPayload` of the destructive retire is deliberately not reused, because that
+	 * shape belongs to the act that ends a term rather than to the act that withdraws it recoverably. The
+	 * service is called as the route calls it: the route forwards the (empty) option list its own handler
+	 * parameters collected and the field collects none, which the service reads as one thing.
+	 *
+	 * @param id The term to withdraw.
+	 * @returns The payload, carrying the withdrawn term.
+	 */
+	@Mutation('softDeleteVendorProductTerm')
+	@Permissions(PurchasingPermissions.VENDOR_TERMS_EDIT)
+	async softDeleteVendorProductTerm(@Args('id') id: ID) {
+		try {
+			return {
+				vendorProductTerm: await this.vendorProductTermService.softRemove(id),
+				vendorProductTerms: [],
+				userErrors: []
+			};
+		} catch (error) {
+			return { vendorProductTerm: null, vendorProductTerms: [], userErrors: [toUserError(error)] };
+		}
+	}
+
+	/**
+	 * Puts a withdrawn term back.
+	 *
+	 * The other half of the same inherited pair, answered and permissioned as the withdrawal is: the
+	 * route is `PUT /vendor-product-terms/:id/recover`, and its override states `VENDOR_TERMS_EDIT` for
+	 * the same reason.
+	 *
+	 * @param id The term to restore.
+	 * @returns The payload, carrying the restored term.
+	 */
+	@Mutation('recoverVendorProductTerm')
+	@Permissions(PurchasingPermissions.VENDOR_TERMS_EDIT)
+	async recoverVendorProductTerm(@Args('id') id: ID) {
+		try {
+			return {
+				vendorProductTerm: await this.vendorProductTermService.softRecover(id),
+				vendorProductTerms: [],
+				userErrors: []
+			};
+		} catch (error) {
+			return { vendorProductTerm: null, vendorProductTerms: [], userErrors: [toUserError(error)] };
 		}
 	}
 }

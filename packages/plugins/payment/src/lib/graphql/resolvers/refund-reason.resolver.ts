@@ -18,6 +18,8 @@ import {
 	IRefundReasonConnection,
 	IRefundReasonFilter,
 	IPaymentSort,
+	IRecoverRefundReasonPayload,
+	ISoftDeleteRefundReasonPayload,
 	IUpdateRefundReasonGraphInput,
 	IUpdateRefundReasonPayload,
 	REFUND_REASON_SORT_FIELDS,
@@ -130,6 +132,54 @@ export class RefundReasonResolver {
 			return { refundReason: await this.refundReasonService.deactivateReason(id), deleted: true, userErrors: [] };
 		} catch (error) {
 			return { refundReason: null, deleted: false, ...rejection<IRefundReason>(error) };
+		}
+	}
+
+	/**
+	 * Retires a governed refund reason recoverably.
+	 *
+	 * The route it mirrors is `DELETE /refund-reasons/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. It is
+	 * a different act from `deleteRefundReason`, which deactivates the reason so it stops being offered:
+	 * this one takes the row out of the reads while keeping it, which is what a reason a report no
+	 * longer has to group by needs.
+	 *
+	 * The permission is the route's own — `REFUNDS_CREATE`, the grant the create, update and deactivate
+	 * routes here carry — and not the class's view grant. This class states no `@Permissions` of its
+	 * own, so a field that stated none would carry no metadata at all, and `PermissionGuard` answers
+	 * `true` to empty metadata.
+	 *
+	 * @param id The reason to retire.
+	 * @returns The payload, carrying the reason as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Mutation('softDeleteRefundReason')
+	async softDeleteRefundReason(@Args('id') id: ID): Promise<ISoftDeleteRefundReasonPayload> {
+		try {
+			return { refundReason: await this.refundReasonService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { refundReason: null, ...rejection<IRefundReason>(error) };
+		}
+	}
+
+	/**
+	 * Restores a governed refund reason that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /refund-reasons/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. A
+	 * restored reason is offered and read again, and the refunds that cite it resolve the same way they
+	 * did before it was withdrawn.
+	 *
+	 * @param id The reason to restore.
+	 * @returns The payload, carrying the restored reason.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Mutation('recoverRefundReason')
+	async recoverRefundReason(@Args('id') id: ID): Promise<IRecoverRefundReasonPayload> {
+		try {
+			return { refundReason: await this.refundReasonService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { refundReason: null, ...rejection<IRefundReason>(error) };
 		}
 	}
 }

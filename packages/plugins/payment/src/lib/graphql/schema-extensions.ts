@@ -1077,6 +1077,157 @@ export const schemaExtensions = gql`
 		userErrors: [UserError!]!
 	}
 
+	# The recoverable lifecycle pair, one payload per resource and act: every controller of this plugin
+	# extends CrudController and overrides the two inherited lifecycle routes only to state a permission
+	# the base leaves unstated, so REST has served a gated withdraw/restore pair over ten resources while
+	# no field answered either half of it.
+	#
+	# The shape is this document's own payload convention — the resource under the member its siblings
+	# use, the durable operation when the mutation started one, and userErrors, where a refusal rides
+	# rather than being thrown. The two halves are deliberately the same shape: a soft delete answers
+	# the row as it left it, exactly as a recover answers the row it put back, so neither carries a
+	# deleted flag — the row is the report, and a refusal is the one thing userErrors exists for.
+
+	"The outcome of retiring a provider registration recoverably."
+	type SoftDeletePaymentProviderPayload {
+		paymentProvider: PaymentProvider
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted provider registration."
+	type RecoverPaymentProviderPayload {
+		paymentProvider: PaymentProvider
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a collection recoverably."
+	type SoftDeletePaymentCollectionPayload {
+		paymentCollection: PaymentCollection
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted collection."
+	type RecoverPaymentCollectionPayload {
+		paymentCollection: PaymentCollection
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a session recoverably."
+	type SoftDeletePaymentSessionPayload {
+		paymentSession: PaymentSession
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted session."
+	type RecoverPaymentSessionPayload {
+		paymentSession: PaymentSession
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a capture recoverably."
+	type SoftDeletePaymentCapturePayload {
+		paymentCapture: PaymentCapture
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted capture."
+	type RecoverPaymentCapturePayload {
+		paymentCapture: PaymentCapture
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a refund recoverably."
+	type SoftDeleteRefundPayload {
+		refund: Refund
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted refund."
+	type RecoverRefundPayload {
+		refund: Refund
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a governed refund reason recoverably."
+	type SoftDeleteRefundReasonPayload {
+		refundReason: RefundReason
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted refund reason."
+	type RecoverRefundReasonPayload {
+		refundReason: RefundReason
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a line of a refund's breakdown recoverably."
+	type SoftDeleteRefundLinePayload {
+		refundLine: RefundLine
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted line of a refund's breakdown."
+	type RecoverRefundLinePayload {
+		refundLine: RefundLine
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring an inbound callback recoverably."
+	type SoftDeletePaymentWebhookEventPayload {
+		paymentWebhookEvent: PaymentWebhookEvent
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted inbound callback."
+	type RecoverPaymentWebhookEventPayload {
+		paymentWebhookEvent: PaymentWebhookEvent
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a party's account at a provider recoverably."
+	type SoftDeletePaymentAccountHolderPayload {
+		paymentAccountHolder: PaymentAccountHolder
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted account at a provider."
+	type RecoverPaymentAccountHolderPayload {
+		paymentAccountHolder: PaymentAccountHolder
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of retiring a saved instrument recoverably."
+	type SoftDeletePaymentMethodTokenPayload {
+		paymentMethodToken: PaymentMethodToken
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
+	"The outcome of restoring a soft-deleted saved instrument."
+	type RecoverPaymentMethodTokenPayload {
+		paymentMethodToken: PaymentMethodToken
+		operation: Operation
+		userErrors: [UserError!]!
+	}
+
 	extend type Query {
 		paymentProviders(
 			filter: PaymentProviderFilter
@@ -1206,6 +1357,56 @@ export const schemaExtensions = gql`
 		createPaymentMethodToken(input: CreatePaymentMethodTokenInput!): CreatePaymentMethodTokenPayload!
 		setDefaultPaymentMethodToken(id: ID!): SetDefaultPaymentMethodTokenPayload!
 		revokePaymentMethodToken(id: ID!): RevokePaymentMethodTokenPayload!
+
+		# The recoverable lifecycle pair, one field per resource of this domain: every controller here
+		# extends CrudController and overrides both inherited routes only to state a permission, so REST
+		# has served a gated withdraw/restore pair over ten resources while no field answered either half
+		# of it. Each field below mirrors one of those routes — the same service method, the same
+		# identifier, and the permission that route's own override states, which is not one grant for the
+		# whole plugin: a capture carries the capture grant, a collection the authorise grant, a session
+		# the cancel grant, a callback the reprocess grant, a provider the delete grant, the three refund
+		# resources the create grant, and the account and the saved instrument the two edit grants the
+		# kernel catalogue publishes for them.
+		"Retires a provider registration recoverably, keeping the sessions it served."
+		softDeletePaymentProvider(id: ID!): SoftDeletePaymentProviderPayload!
+		"Restores a soft-deleted provider registration."
+		recoverPaymentProvider(id: ID!): RecoverPaymentProviderPayload!
+		"Retires a collection recoverably, keeping the amounts it reconciled."
+		softDeletePaymentCollection(id: ID!): SoftDeletePaymentCollectionPayload!
+		"Restores a soft-deleted collection."
+		recoverPaymentCollection(id: ID!): RecoverPaymentCollectionPayload!
+		"Retires a payment attempt recoverably, keeping the authorisation it recorded."
+		softDeletePaymentSession(id: ID!): SoftDeletePaymentSessionPayload!
+		"Restores a soft-deleted payment attempt."
+		recoverPaymentSession(id: ID!): RecoverPaymentSessionPayload!
+		"Retires a capture recoverably, keeping the ledger row the money was taken against."
+		softDeletePaymentCapture(id: ID!): SoftDeletePaymentCapturePayload!
+		"Restores a soft-deleted capture."
+		recoverPaymentCapture(id: ID!): RecoverPaymentCapturePayload!
+		"Retires a refund recoverably, keeping what it explains about the money given back."
+		softDeleteRefund(id: ID!): SoftDeleteRefundPayload!
+		"Restores a soft-deleted refund."
+		recoverRefund(id: ID!): RecoverRefundPayload!
+		"Retires a governed refund reason recoverably, so the refunds citing it stay explainable."
+		softDeleteRefundReason(id: ID!): SoftDeleteRefundReasonPayload!
+		"Restores a soft-deleted refund reason."
+		recoverRefundReason(id: ID!): RecoverRefundReasonPayload!
+		"Retires a line of a refund's breakdown recoverably, keeping the refund it accounted for."
+		softDeleteRefundLine(id: ID!): SoftDeleteRefundLinePayload!
+		"Restores a soft-deleted line of a refund's breakdown."
+		recoverRefundLine(id: ID!): RecoverRefundLinePayload!
+		"Retires an inbound callback recoverably, keeping the record that it arrived."
+		softDeletePaymentWebhookEvent(id: ID!): SoftDeletePaymentWebhookEventPayload!
+		"Restores a soft-deleted inbound callback."
+		recoverPaymentWebhookEvent(id: ID!): RecoverPaymentWebhookEventPayload!
+		"Retires a party's account at a provider recoverably, keeping the charges that point at it."
+		softDeletePaymentAccountHolder(id: ID!): SoftDeletePaymentAccountHolderPayload!
+		"Restores a soft-deleted account at a provider."
+		recoverPaymentAccountHolder(id: ID!): RecoverPaymentAccountHolderPayload!
+		"Retires a saved instrument recoverably, keeping the charge history that references it."
+		softDeletePaymentMethodToken(id: ID!): SoftDeletePaymentMethodTokenPayload!
+		"Restores a soft-deleted saved instrument."
+		recoverPaymentMethodToken(id: ID!): RecoverPaymentMethodTokenPayload!
 	}
 
 	extend type Subscription {

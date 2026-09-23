@@ -223,4 +223,43 @@ export class CommerceCartResolver {
 	): Promise<CommerceCart> {
 		return this.commerceCartService.merge(targetCartId, sourceCartId, versionExpectationOf(context?.req));
 	}
+
+	/**
+	 * Retires a cart recoverably, keeping its lines, delivery choices and promotions.
+	 *
+	 * The route it mirrors is `DELETE /carts/:id/soft`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. Without this field a cart
+	 * retired over GraphQL could not be brought back over GraphQL, while a REST caller could do both —
+	 * and a cart is the aggregate a checkout is assembled in and completed from, which is exactly the
+	 * record the destructive delete this resolver also answers takes away for good.
+	 *
+	 * The permission is the controller's own for the route — `CARTS_DELETE` — and not the class-level
+	 * view grant, because retiring a cart takes it out of every listing and out of the checkout that was
+	 * being prepared against it.
+	 *
+	 * @param id The cart to retire.
+	 * @returns The cart, as the soft delete left it.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Mutation(() => Object, { name: 'softDeleteCommerceCart' })
+	async softDeleteCommerceCart(@Args('id', { type: () => ID }) id: string): Promise<CommerceCart> {
+		return this.commerceCartService.softRemove(id);
+	}
+
+	/**
+	 * Restores a cart that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /carts/:id/recover`, inherited from `CrudController` and overridden by
+	 * the controller only to state the permission the base left unstated. A restored cart is a candidate
+	 * for every read and every write again, which is why the route states the deleting grant rather than
+	 * the class's reading one.
+	 *
+	 * @param id The cart to restore.
+	 * @returns The restored cart.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Mutation(() => Object, { name: 'recoverCommerceCart' })
+	async recoverCommerceCart(@Args('id', { type: () => ID }) id: string): Promise<CommerceCart> {
+		return this.commerceCartService.softRecover(id);
+	}
 }

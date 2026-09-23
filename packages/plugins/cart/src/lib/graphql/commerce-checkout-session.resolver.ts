@@ -186,4 +186,43 @@ export class CommerceCheckoutSessionResolver {
 	async abandonCheckout(@Args('cartId', { type: () => ID }) cartId: string, @Context() context: any) {
 		return this.commerceCartService.abandon(cartId, versionExpectationOf(context?.req));
 	}
+
+	/**
+	 * Retires a checkout session recoverably, keeping the progress it recorded.
+	 *
+	 * The route it mirrors is `DELETE /checkout-sessions/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A session is the
+	 * record of how far a multi-step or externally hosted checkout got and of the durable operation it
+	 * started, which is why the row is retired rather than dropped and the recovery below puts it back.
+	 *
+	 * The permission is the controller's own for the route — `CARTS_DELETE` — which is the cart's own
+	 * deletion grant, because a session is a child row of the cart it converts.
+	 *
+	 * @param id The session to retire.
+	 * @returns The session, as the soft delete left it.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Mutation(() => Object, { name: 'softDeleteCommerceCheckoutSession' })
+	async softDeleteCommerceCheckoutSession(@Args('id', { type: () => ID }) id: string): Promise<CommerceCheckoutSession> {
+		return this.commerceCheckoutSessionService.softRemove(id);
+	}
+
+	/**
+	 * Restores a checkout session that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /checkout-sessions/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored session
+	 * is readable again with the steps it had completed, so a checkout that was retired by mistake can be
+	 * resumed rather than restarted.
+	 *
+	 * @param id The session to restore.
+	 * @returns The restored session.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
+	@Mutation(() => Object, { name: 'recoverCommerceCheckoutSession' })
+	async recoverCommerceCheckoutSession(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<CommerceCheckoutSession> {
+		return this.commerceCheckoutSessionService.softRecover(id);
+	}
 }

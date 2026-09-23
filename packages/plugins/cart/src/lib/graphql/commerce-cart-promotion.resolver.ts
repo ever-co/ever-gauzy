@@ -106,4 +106,46 @@ export class CommerceCartPromotionResolver {
 	): Promise<CommerceCart> {
 		return this.commerceCartService.removePromotion(cartId, code, versionExpectationOf(context?.req));
 	}
+
+	/**
+	 * Retires an applied promotion recoverably, keeping the discount it recorded.
+	 *
+	 * The route it mirrors is `DELETE /cart-promotions/:id/soft` — the applied promotion addressed by its
+	 * own id, on its own controller — inherited from `CrudController` and overridden there only to state
+	 * the permission the base left unstated. It is deliberately not the cart-level `removeCartPromotion`
+	 * above: that mutation reaches the cart service, which re-prices the cart, while this pair mirrors the
+	 * applied promotion's own inherited routes and so reaches its service, exactly as the two routes do.
+	 * The row is the snapshot of what the buyer was quoted, so it is retired rather than dropped.
+	 *
+	 * The permission is the controller's own for the route — `CARTS_EDIT` — and not the class-level view
+	 * grant, because retiring an applied promotion changes what the cart costs.
+	 *
+	 * @param id The applied promotion to retire.
+	 * @returns The applied promotion, as the soft delete left it.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteCommerceCartPromotion' })
+	async softDeleteCommerceCartPromotion(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<CommerceCartPromotion> {
+		return this.commerceCartPromotionService.softRemove(id);
+	}
+
+	/**
+	 * Restores an applied promotion that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /cart-promotions/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored
+	 * promotion is explained against the cart again, at the amount it recorded.
+	 *
+	 * @param id The applied promotion to restore.
+	 * @returns The restored applied promotion.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Mutation(() => Object, { name: 'recoverCommerceCartPromotion' })
+	async recoverCommerceCartPromotion(
+		@Args('id', { type: () => ID }) id: string
+	): Promise<CommerceCartPromotion> {
+		return this.commerceCartPromotionService.softRecover(id);
+	}
 }

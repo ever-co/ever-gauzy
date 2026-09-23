@@ -12,6 +12,15 @@ import { gql } from 'graphql-tag';
  * Money and quantities are `Decimal`, never `Float`: an amount read here and the same amount read over
  * REST are the same string, and a binary fraction cannot hold a cent exactly.
  *
+ * **Every resource of this domain carries the `DELETE /:id/soft` and `PUT /:id/recover` pair its
+ * controller inherits, under the names the composed schema uses for that act: `softDelete<Resource>` and
+ * `recover<Resource>`.** Each controller here serves those two routes over REST and overrides them only
+ * to state a permission the inherited declaration leaves unstated, so without these fields a caller could
+ * withdraw a purchase order, one of its lines, a goods receipt, one of its lines or a negotiated term on
+ * one protocol and not on the other. Every one of them takes the identifier its route takes and answers
+ * what the resource's own mutations answer: the resource's write payload where it has one, and the row
+ * for the two line resources, which no payload of this document carries.
+ *
  * References into other domains — the supplier, the receiving location, the sellable unit, the storage
  * bin, the stock movement — travel as ids. Each of those concepts is owned by the capability that
  * models it, and this domain states which row it points at rather than restating another domain's
@@ -595,6 +604,26 @@ export const schemaExtensions = gql`
 		recordGoodsReceiptLine(receiptId: ID!, input: RecordGoodsReceiptLineInput!): GoodsReceiptPayload!
 		"Ends a receipt: its quantities are taken back out of stock and off the order's lines."
 		closeGoodsReceipt(id: ID!, reason: String): GoodsReceiptPayload!
+		"""
+		Withdraws a goods receipt without removing the row, so the recovery below can read it back. The
+		receipt controller serves \`DELETE /goods-receipts/:id/soft\` and overrides it only to state a
+		permission the inherited declaration leaves unstated — \`GOODS_RECEIPTS_CREATE\`, the grant
+		recording a delivery carries — and this field states the same one. It answers the payload the
+		resource's own mutations answer rather than the receipt itself, so a client generated from the
+		composed schema sees one shape per resource.
+		"""
+		softDeleteGoodsReceipt(id: ID!): GoodsReceiptPayload!
+		"Puts a withdrawn goods receipt back, under the grant its route states."
+		recoverGoodsReceipt(id: ID!): GoodsReceiptPayload!
+		"""
+		Withdraws one line of a goods receipt without removing the row. A receipt line is read through its
+		receipt, so this pair is the only root field the line answers — and it answers them because the
+		line's own controller serves both routes under the receiving grant. It answers the line, which is
+		what those routes answer and what no payload of this document carries.
+		"""
+		softDeleteGoodsReceiptLine(id: ID!): GoodsReceiptLine!
+		"Puts a withdrawn goods receipt line back."
+		recoverGoodsReceiptLine(id: ID!): GoodsReceiptLine!
 		"Writes a term, which is the standing agreement a purchase line is priced from."
 		createVendorProductTerm(input: VendorProductTermInput!): VendorProductTermPayload!
 		"Amends a term."
@@ -603,5 +632,15 @@ export const schemaExtensions = gql`
 		bulkVendorProductTerms(input: BulkVendorProductTermInput!): VendorProductTermPayload!
 		"Retires a term. One a placed order used is kept and moved to INACTIVE."
 		deleteVendorProductTerm(id: ID!): DeleteVendorProductTermPayload!
+		"""
+		Withdraws a term without removing the row, so the recovery below can read it back — the recoverable
+		half of the lifecycle, where the field above retires a term the organization no longer wants. The
+		term controller serves \`DELETE /vendor-product-terms/:id/soft\` and overrides it only to state
+		\`VENDOR_TERMS_EDIT\`, the grant every write route of this resource states, and this field states
+		the same one. It answers the payload the resource's write mutations answer.
+		"""
+		softDeleteVendorProductTerm(id: ID!): VendorProductTermPayload!
+		"Puts a withdrawn term back, under the grant its route states."
+		recoverVendorProductTerm(id: ID!): VendorProductTermPayload!
 	}
 `;

@@ -940,6 +940,20 @@ export const schemaExtensions = gql`
 		"""
 		bulkSellerOfferings(input: BulkSellerOfferingsInput!): BulkSellerOfferingsPayload!
 		"""
+		Archives an offering, keeping the row.
+
+		Mirrors \`DELETE /seller-offerings/:id/soft\`, which takes \`SELLERS_DELETE\`: an offering is a child row
+		of the seller, and the catalogue declares the destructive grant on the seller rather than one per child.
+		"""
+		softDeleteSellerOffering(id: ID!): SellerOffering!
+		"""
+		Restores a soft-deleted offering.
+
+		Mirrors \`PUT /seller-offerings/:id/recover\`: restoring is the same destructive authority read
+		backwards, so it takes \`SELLERS_DELETE\` and not the edit grant.
+		"""
+		recoverSellerOffering(id: ID!): SellerOffering!
+		"""
 		Advances a ledger row to settleable. The state is advanced, never the amount.
 
 		Mirrors the settle route and declares the same \`seller.transaction.settle\` scope, so a retry of one
@@ -948,6 +962,20 @@ export const schemaExtensions = gql`
 		settleSellerTransaction(id: ID!, note: String, idempotencyKey: String): SellerTransaction!
 		"Holds a ledger row out of payouts, with a reason a seller can read."
 		holdSellerTransaction(id: ID!, reason: String!): SellerTransaction!
+		"""
+		Archives a ledger row, keeping it.
+
+		Mirrors \`DELETE /seller-transactions/:id/soft\`, which takes \`SELLERS_DELETE\`: a ledger row is a child
+		row of the seller, and the ledger is kept because it is the truth about what a seller earned.
+		"""
+		softDeleteSellerTransaction(id: ID!): SellerTransaction!
+		"""
+		Restores a soft-deleted ledger row.
+
+		Mirrors \`PUT /seller-transactions/:id/recover\`: restoring is the same destructive authority read
+		backwards, so it takes \`SELLERS_DELETE\` and not the settle grant beside it.
+		"""
+		recoverSellerTransaction(id: ID!): SellerTransaction!
 		"""
 		Creates a payout from named ledger rows, or from the settleable rows of a period.
 
@@ -981,6 +1009,35 @@ export const schemaExtensions = gql`
 		"Cancels an unpaid payout, returning its ledger rows to settleable."
 		cancelSellerPayout(id: ID!, reason: String!): SellerPayout!
 		"""
+		Archives a payout, keeping the row.
+
+		Mirrors \`DELETE /seller-payouts/:id/soft\`, which takes \`SELLERS_DELETE\` and neither of the payout
+		grants beside it: a caller that may approve or cancel a payout is not thereby a caller that may retire
+		one from every read that resolves it.
+		"""
+		softDeleteSellerPayout(id: ID!): SellerPayout!
+		"""
+		Restores a soft-deleted payout.
+
+		Mirrors \`PUT /seller-payouts/:id/recover\`: restoring is the same destructive authority read backwards,
+		and it puts the payout back in front of every read that decides what a seller is still owed.
+		"""
+		recoverSellerPayout(id: ID!): SellerPayout!
+		"""
+		Archives a payout line, keeping the row.
+
+		Mirrors \`DELETE /seller-payout-lines/:id/soft\`, which takes \`SELLERS_DELETE\`: a line is the join row
+		of one payout and one ledger row, and every row under the seller belongs to the seller.
+		"""
+		softDeleteSellerPayoutLine(id: ID!): SellerPayoutLine!
+		"""
+		Restores a soft-deleted payout line.
+
+		Mirrors \`PUT /seller-payout-lines/:id/recover\`: restoring the join row is what makes its ledger row
+		payable at most once again, so it takes \`SELLERS_DELETE\` and not the payout grants.
+		"""
+		recoverSellerPayoutLine(id: ID!): SellerPayoutLine!
+		"""
 		Records a settlement reported by a provider, as reported: the ledger is never edited to agree with it.
 
 		Mirrors the recording route and declares the same \`seller.settlement.record\` scope, so a
@@ -995,5 +1052,20 @@ export const schemaExtensions = gql`
 			feeAmount: String
 			idempotencyKey: String
 		): SellerSettlement!
+		"""
+		Archives a settlement, keeping the row.
+
+		Mirrors \`DELETE /seller-settlements/:id/soft\`, which takes \`SELLERS_DELETE\` rather than the settlement
+		edit grant the recording and closing routes state: the ledger is never edited to agree with a report, so
+		retiring one is the destructive authority rather than another way to correct it.
+		"""
+		softDeleteSellerSettlement(id: ID!): SellerSettlement!
+		"""
+		Restores a soft-deleted settlement.
+
+		Mirrors \`PUT /seller-settlements/:id/recover\`: restoring is the same destructive authority read
+		backwards, and a restored report is one the discrepancy of a period is read against again.
+		"""
+		recoverSellerSettlement(id: ID!): SellerSettlement!
 	}
 `;

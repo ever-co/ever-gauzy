@@ -50,6 +50,7 @@ import {
 	SellerBalanceType,
 	SellerDeleteResultType,
 	SellerOfferingType,
+	SellerPayoutLineType,
 	SellerPayoutType,
 	SellerSettlementType,
 	SellerSplitReconciliationType,
@@ -649,6 +650,39 @@ export class SellerEntityResolver {
 	}
 
 	/**
+	 * Archives an offering, keeping the row.
+	 *
+	 * The mutation mirrors `DELETE /seller-offerings/:id/soft` and answers the archived offering, as that
+	 * route does. It states `SELLERS_DELETE` because the route's own override states it: an offering is a
+	 * child row of the seller, and the catalogue declares the destructive grant on the seller rather than a
+	 * separate one per child. The row is kept rather than withdrawn a second way, because it is what
+	 * explains a past line's price and commission.
+	 *
+	 * The inherited route hands `CrudController.softRemove` its rest parameter — an empty array — which the
+	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
+	 * rather than an array the service would only discard.
+	 */
+	@Mutation(() => SellerOfferingType, { name: 'softDeleteSellerOffering' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async softDeleteSellerOffering(@Args('id', { type: () => ID }) id: string): Promise<SellerOffering> {
+		return this.sellerOfferingService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted offering.
+	 *
+	 * The mutation mirrors `PUT /seller-offerings/:id/recover` and answers the restored offering. It carries
+	 * `SELLERS_DELETE` rather than the edit grant because restoring is the same destructive authority read
+	 * backwards: the route states `SELLERS_DELETE`, and the service reads the row `withDeleted`, which is a
+	 * visibility no ordinary read has.
+	 */
+	@Mutation(() => SellerOfferingType, { name: 'recoverSellerOffering' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async recoverSellerOffering(@Args('id', { type: () => ID }) id: string): Promise<SellerOffering> {
+		return this.sellerOfferingService.softRecover(id);
+	}
+
+	/**
 	 * Forces a ledger row to settleable.
 	 *
 	 * The mutation mirrors `POST /api/seller-transactions/:id/settle` and carries that route's scope, so
@@ -676,6 +710,39 @@ export class SellerEntityResolver {
 		@Context() context?: any
 	): Promise<SellerTransaction> {
 		return this.sellerTransactionService.hold(id, reason, undefined, this.scope(context));
+	}
+
+	/**
+	 * Archives a ledger row, keeping it.
+	 *
+	 * The mutation mirrors `DELETE /seller-transactions/:id/soft` and answers the archived row, as that
+	 * route does. It states `SELLERS_DELETE` because the route's own override states it: a ledger row is a
+	 * child row of the seller, and the catalogue declares the destructive grant on the seller whose ledger
+	 * it is. The row is archived rather than removed because the ledger is the truth about what a seller
+	 * earned, and a statement read for a past period resolves through it.
+	 *
+	 * The inherited route hands `CrudController.softRemove` its rest parameter — an empty array — which the
+	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
+	 * rather than an array the service would only discard.
+	 */
+	@Mutation(() => SellerTransactionType, { name: 'softDeleteSellerTransaction' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async softDeleteSellerTransaction(@Args('id', { type: () => ID }) id: string): Promise<SellerTransaction> {
+		return this.sellerTransactionService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted ledger row.
+	 *
+	 * The mutation mirrors `PUT /seller-transactions/:id/recover` and answers the restored row. It carries
+	 * `SELLERS_DELETE` rather than the settle grant beside it because the route states `SELLERS_DELETE`, and
+	 * a caller that may advance a row is not thereby a caller that may put one back into what a balance is
+	 * summed from: the service reads the row `withDeleted`, which is a visibility no ordinary read has.
+	 */
+	@Mutation(() => SellerTransactionType, { name: 'recoverSellerTransaction' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async recoverSellerTransaction(@Args('id', { type: () => ID }) id: string): Promise<SellerTransaction> {
+		return this.sellerTransactionService.softRecover(id);
 	}
 
 	/**
@@ -753,6 +820,73 @@ export class SellerEntityResolver {
 	}
 
 	/**
+	 * Archives a payout, keeping the row.
+	 *
+	 * The mutation mirrors `DELETE /seller-payouts/:id/soft` and answers the archived payout, as that route
+	 * does. It states `SELLERS_DELETE` because the route's own override states it: a payout is a child row of
+	 * the seller, and the catalogue declares the destructive grant on the seller it moves money for. It is
+	 * `SELLERS_DELETE` and neither of the two payout grants beside it — a caller that may approve or cancel a
+	 * payout is not thereby a caller that may retire one from every read that resolves it.
+	 *
+	 * The inherited route hands `CrudController.softRemove` its rest parameter — an empty array — which the
+	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
+	 * rather than an array the service would only discard.
+	 */
+	@Mutation(() => SellerPayoutType, { name: 'softDeleteSellerPayout' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async softDeleteSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
+		return this.sellerPayoutService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted payout.
+	 *
+	 * The mutation mirrors `PUT /seller-payouts/:id/recover` and answers the restored payout. It carries
+	 * `SELLERS_DELETE` rather than the payout grants because restoring is the same destructive authority read
+	 * backwards: the route states `SELLERS_DELETE`, and putting a payout back is putting it back in front of
+	 * every read that decides what a seller is still owed.
+	 */
+	@Mutation(() => SellerPayoutType, { name: 'recoverSellerPayout' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async recoverSellerPayout(@Args('id', { type: () => ID }) id: string): Promise<SellerPayout> {
+		return this.sellerPayoutService.softRecover(id);
+	}
+
+	/**
+	 * Archives a payout line, keeping the row.
+	 *
+	 * The mutation mirrors `DELETE /seller-payout-lines/:id/soft` and answers the archived line, as that
+	 * route does. It states `SELLERS_DELETE` because the route's own override states it: a line is the join
+	 * row of one payout and one ledger row, and the catalogue declares the destructive grant on the seller
+	 * whose rows every row under it belongs to. A line has no sibling mutation here — it is written by the
+	 * payout run and released by a cancellation, never authored by a caller — so the type it answers with is
+	 * the one its own read declares rather than a mutation's.
+	 *
+	 * The inherited route hands `CrudController.softRemove` its rest parameter — an empty array — which the
+	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
+	 * rather than an array the service would only discard.
+	 */
+	@Mutation(() => SellerPayoutLineType, { name: 'softDeleteSellerPayoutLine' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async softDeleteSellerPayoutLine(@Args('id', { type: () => ID }) id: string): Promise<SellerPayoutLine> {
+		return this.sellerPayoutLineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted payout line.
+	 *
+	 * The mutation mirrors `PUT /seller-payout-lines/:id/recover` and answers the restored line. It carries
+	 * `SELLERS_DELETE` rather than the payout grants because the route states `SELLERS_DELETE`, and restoring
+	 * a join row is what makes a ledger row payable at most once again: the service reads the row
+	 * `withDeleted`, which is a visibility no ordinary read has.
+	 */
+	@Mutation(() => SellerPayoutLineType, { name: 'recoverSellerPayoutLine' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async recoverSellerPayoutLine(@Args('id', { type: () => ID }) id: string): Promise<SellerPayoutLine> {
+		return this.sellerPayoutLineService.softRecover(id);
+	}
+
+	/**
 	 * Records a settlement reported by a provider.
 	 *
 	 * The mutation mirrors `POST /api/seller-settlements` and carries that route's scope: a provider
@@ -784,6 +918,37 @@ export class SellerEntityResolver {
 			} as Partial<SellerSettlement>,
 			this.scope(context)
 		);
+	}
+
+	/**
+	 * Archives a settlement, keeping the row.
+	 *
+	 * The mutation mirrors `DELETE /seller-settlements/:id/soft` and answers the archived settlement, as that
+	 * route does. It states `SELLERS_DELETE` because the route's own override states it — not the settlement
+	 * edit grant the recording, reconciliation and closing routes state — and the ledger is never edited to
+	 * agree with a report, so retiring one is the destructive authority rather than another way to correct it.
+	 *
+	 * The inherited route hands `CrudController.softRemove` its rest parameter — an empty array — which the
+	 * service normalises to no find options, so the call stated here is the one that normalisation reaches
+	 * rather than an array the service would only discard.
+	 */
+	@Mutation(() => SellerSettlementType, { name: 'softDeleteSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async softDeleteSellerSettlement(@Args('id', { type: () => ID }) id: string): Promise<SellerSettlement> {
+		return this.sellerSettlementService.softRemove(id);
+	}
+
+	/**
+	 * Restores a soft-deleted settlement.
+	 *
+	 * The mutation mirrors `PUT /seller-settlements/:id/recover` and answers the restored settlement. It
+	 * carries `SELLERS_DELETE` rather than the settlement edit grant because the route states
+	 * `SELLERS_DELETE`, and a restored report is one the discrepancy of a period is read against again.
+	 */
+	@Mutation(() => SellerSettlementType, { name: 'recoverSellerSettlement' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	async recoverSellerSettlement(@Args('id', { type: () => ID }) id: string): Promise<SellerSettlement> {
+		return this.sellerSettlementService.softRecover(id);
 	}
 
 	/**

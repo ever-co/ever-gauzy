@@ -22,6 +22,8 @@ import {
 	IRefundConnection,
 	IRefundFilter,
 	IPaymentSort,
+	IRecoverRefundPayload,
+	ISoftDeleteRefundPayload,
 	IUpdateRefundGraphInput,
 	IUpdateRefundPayload,
 	REFUND_SORT_FIELDS,
@@ -148,6 +150,54 @@ export class RefundResolver {
 	async cancelRefund(@Args('input') input: ICancelRefundGraphInput): Promise<ICancelRefundPayload> {
 		try {
 			return { refund: await this.refundService.cancelRefund(input.id, input.reason), userErrors: [] };
+		} catch (error) {
+			return { refund: null, ...rejection<IRefund>(error) };
+		}
+	}
+
+	/**
+	 * Retires a refund row recoverably.
+	 *
+	 * The route it mirrors is `DELETE /refunds/:id/soft`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base declares no metadata for. It is the
+	 * recoverable form of the withdrawal `cancelRefund` performs on the money: cancelling is a state a
+	 * pending refund moves to, and this is the row itself leaving the reads without losing what it
+	 * records — which matters because a settled refund is the explanation of money that really moved.
+	 *
+	 * The permission is the route's own — `REFUNDS_CREATE`, the grant the create, update and cancel
+	 * routes here carry, because withdrawing a refund row is a refund act and never an approval. This
+	 * class states no `@Permissions` of its own, so a field that stated none would carry no metadata at
+	 * all, and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The refund to retire.
+	 * @returns The payload, carrying the refund as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Mutation('softDeleteRefund')
+	async softDeleteRefund(@Args('id') id: ID): Promise<ISoftDeleteRefundPayload> {
+		try {
+			return { refund: await this.refundService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { refund: null, ...rejection<IRefund>(error) };
+		}
+	}
+
+	/**
+	 * Restores a refund row that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /refunds/:id/recover`, inherited from `CrudController` and overridden
+	 * by the controller only to state the permission the base declares no metadata for. The restored row
+	 * is part of the refunded figure the payment and its collection are reconciled against again, which
+	 * is why it stays `REFUNDS_CREATE` rather than the approve grant — no money moves either way.
+	 *
+	 * @param id The refund to restore.
+	 * @returns The payload, carrying the restored refund.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
+	@Mutation('recoverRefund')
+	async recoverRefund(@Args('id') id: ID): Promise<IRecoverRefundPayload> {
+		try {
+			return { refund: await this.refundService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { refund: null, ...rejection<IRefund>(error) };
 		}

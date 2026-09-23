@@ -18,6 +18,8 @@ import {
 	IPaymentProviderConnection,
 	IPaymentProviderFilter,
 	IPaymentSort,
+	IRecoverPaymentProviderPayload,
+	ISoftDeletePaymentProviderPayload,
 	IUpdatePaymentProviderGraphInput,
 	IUpdatePaymentProviderPayload,
 	PAYMENT_PROVIDER_SORT_FIELDS,
@@ -132,6 +134,53 @@ export class PaymentProviderResolver {
 			return { paymentProvider: provider, deleted: true, userErrors: [] };
 		} catch (error) {
 			return { paymentProvider: null, deleted: false, ...rejection<IPaymentProvider>(error) };
+		}
+	}
+
+	/**
+	 * Retires a provider registration recoverably, keeping the sessions that ran against it.
+	 *
+	 * The route it mirrors is `DELETE /payment-providers/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. The
+	 * registration is withdrawable rather than removable for the same reason the delete above is
+	 * refused while a session references it: the attempts that settled through a provider have to keep
+	 * resolving, so the row leaves every read that does not ask for retired rows and stays behind them.
+	 *
+	 * The permission is the route's own — `PAYMENT_PROVIDERS_DELETE` — and not the class's view grant.
+	 * This class states no `@Permissions` of its own, so a field that stated none would carry no
+	 * metadata at all, and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The registration to retire.
+	 * @returns The payload, carrying the registration as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_PROVIDERS_DELETE as PermissionsEnum)
+	@Mutation('softDeletePaymentProvider')
+	async softDeletePaymentProvider(@Args('id') id: ID): Promise<ISoftDeletePaymentProviderPayload> {
+		try {
+			return { paymentProvider: await this.paymentProviderService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentProvider: null, ...rejection<IPaymentProvider>(error) };
+		}
+	}
+
+	/**
+	 * Restores a provider registration that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-providers/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for.
+	 * Restoring is the delete grant exercised backwards, so the field states `PAYMENT_PROVIDERS_DELETE`
+	 * too and the two halves of the pair are refusable by exactly the callers the routes refuse.
+	 *
+	 * @param id The registration to restore.
+	 * @returns The payload, carrying the restored registration.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_PROVIDERS_DELETE as PermissionsEnum)
+	@Mutation('recoverPaymentProvider')
+	async recoverPaymentProvider(@Args('id') id: ID): Promise<IRecoverPaymentProviderPayload> {
+		try {
+			return { paymentProvider: await this.paymentProviderService.softRecover(id), userErrors: [] };
+		} catch (error) {
+			return { paymentProvider: null, ...rejection<IPaymentProvider>(error) };
 		}
 	}
 }

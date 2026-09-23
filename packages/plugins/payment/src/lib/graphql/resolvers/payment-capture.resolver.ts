@@ -17,6 +17,8 @@ import {
 	IPaymentCaptureConnection,
 	IPaymentCaptureFilter,
 	IPaymentSort,
+	IRecoverPaymentCapturePayload,
+	ISoftDeletePaymentCapturePayload,
 	PAYMENT_CAPTURE_SORT_FIELDS,
 	withDateRange,
 	withoutRange
@@ -101,6 +103,55 @@ export class PaymentCaptureResolver {
 	async capturePayment(@Args('input') input: ICapturePaymentGraphInput): Promise<ICapturePaymentPayload> {
 		try {
 			return { paymentCapture: await this.paymentCaptureService.capture(input as never), userErrors: [] };
+		} catch (error) {
+			return { paymentCapture: null, ...rejection<IPaymentCapture>(error) };
+		}
+	}
+
+	/**
+	 * Retires a capture recoverably.
+	 *
+	 * The route it mirrors is `DELETE /payment-captures/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for. It is
+	 * the only removal this resolver offers, and the reason is the same one that keeps a hard delete off
+	 * the capture route entirely: a capture is a fact about money that was taken, so a row that has to
+	 * stop counting towards a payment is withdrawn recoverably rather than destroyed, and the ledger it
+	 * was written into stays auditable.
+	 *
+	 * The permission is the route's own — `PAYMENT_SESSIONS_CAPTURE`, the grant taking the money
+	 * carries, because withdrawing the row is as much a money act as writing it — and not the class's
+	 * view grant. This class states no `@Permissions` of its own, so a field that stated none would
+	 * carry no metadata at all, and `PermissionGuard` answers `true` to empty metadata.
+	 *
+	 * @param id The capture to retire.
+	 * @returns The payload, carrying the capture as the soft delete left it.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CAPTURE as PermissionsEnum)
+	@Mutation('softDeletePaymentCapture')
+	async softDeletePaymentCapture(@Args('id') id: ID): Promise<ISoftDeletePaymentCapturePayload> {
+		try {
+			return { paymentCapture: await this.paymentCaptureService.softRemove(id), userErrors: [] };
+		} catch (error) {
+			return { paymentCapture: null, ...rejection<IPaymentCapture>(error) };
+		}
+	}
+
+	/**
+	 * Restores a capture that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /payment-captures/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base declares no metadata for.
+	 * Restoring a capture puts it back into the figure the payment's capture limit and its refundable
+	 * amount are computed from, so it states `PAYMENT_SESSIONS_CAPTURE` exactly as the retirement does.
+	 *
+	 * @param id The capture to restore.
+	 * @returns The payload, carrying the restored capture.
+	 */
+	@Permissions(PaymentPermission.PAYMENT_SESSIONS_CAPTURE as PermissionsEnum)
+	@Mutation('recoverPaymentCapture')
+	async recoverPaymentCapture(@Args('id') id: ID): Promise<IRecoverPaymentCapturePayload> {
+		try {
+			return { paymentCapture: await this.paymentCaptureService.softRecover(id), userErrors: [] };
 		} catch (error) {
 			return { paymentCapture: null, ...rejection<IPaymentCapture>(error) };
 		}

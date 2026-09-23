@@ -43,10 +43,12 @@ interface ICreateGoodsReceiptArgs {
  * goods-receipt controller class carries — both protocol guards, the platform's feature gate and the read
  * permission its reads run under — and every field then states the permission its own route states: the
  * two reads carry `GOODS_RECEIPTS_VIEW`, while recording a delivery, recording one further line against a
- * posted receipt and ending (reversing) one all carry `GOODS_RECEIPTS_CREATE`, because each writes stock
- * movements and puts counters back on the order's lines, which is the receiving authority rather than an
- * edit to a document. The fields that resolve a receipt's lines and the movements those lines wrote answer
- * under the permission the receipt is read with, which is the route they are selected through.
+ * posted receipt, ending (reversing) one, and withdrawing or recovering one all carry
+ * `GOODS_RECEIPTS_CREATE` — the last two because a receipt records what happened to stock and to the
+ * order's counters, so the authority to take it out of every resolution is the receiving authority rather
+ * than the read grant the inherited routes left unstated. The fields that resolve a receipt's lines and
+ * the movements those lines wrote answer under the permission the receipt is read with, which is the
+ * route they are selected through.
  *
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the two permission guards — after
@@ -164,6 +166,58 @@ export class GoodsReceiptResolver {
 	async closeGoodsReceipt(@Args('id') id: ID, @Args('reason') reason?: string) {
 		try {
 			return toGoodsReceiptPayload(await this.goodsReceiptService.reverse(id, reason));
+		} catch (error) {
+			return toFailedGoodsReceiptPayload(error);
+		}
+	}
+
+	/**
+	 * Withdraws a delivery without removing the row.
+	 *
+	 * The field mirrors `DELETE /goods-receipts/:id/soft`, which the receipt controller inherits from
+	 * `CrudController<T>` and overrides only to state a permission the inherited declaration left
+	 * unstated — the base declares the route with no permission metadata, so `PermissionGuard` fell
+	 * through to the class-level read grant, while every other write of this resource demands
+	 * `GOODS_RECEIPTS_CREATE`. The field states the grant the route now states, read off that same
+	 * override, because a field that left the act to its class would let whoever may read a receipt
+	 * withdraw one — the asymmetry the two-protocol rule forbids in the direction that matters.
+	 *
+	 * The answer is the payload every other mutation of this resource answers rather than the receipt
+	 * itself: `createGoodsReceipt`, `recordGoodsReceiptLine` and `closeGoodsReceipt` all answer
+	 * `GoodsReceiptPayload`, and a resource whose pair answered a second shape would hand a generated
+	 * client two answers for one kind of act. The refusal travels in `userErrors` for the same reason,
+	 * exactly as the reversal beside it reports it. The service is called as the route calls it: the
+	 * route forwards the (empty) option list its own handler parameters collected and the field collects
+	 * none, which the service reads as one thing.
+	 *
+	 * @param id The receipt to withdraw.
+	 * @returns The payload, carrying the withdrawn receipt.
+	 */
+	@Mutation('softDeleteGoodsReceipt')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async softDeleteGoodsReceipt(@Args('id') id: ID) {
+		try {
+			return toGoodsReceiptPayload(await this.goodsReceiptService.softRemove(id));
+		} catch (error) {
+			return toFailedGoodsReceiptPayload(error);
+		}
+	}
+
+	/**
+	 * Puts a withdrawn delivery back.
+	 *
+	 * The other half of the same inherited pair, answered and permissioned as the withdrawal is: the
+	 * route is `PUT /goods-receipts/:id/recover`, its override states `GOODS_RECEIPTS_CREATE` for the
+	 * same reason, and the answer is the payload the resource's own mutations answer.
+	 *
+	 * @param id The receipt to restore.
+	 * @returns The payload, carrying the restored receipt.
+	 */
+	@Mutation('recoverGoodsReceipt')
+	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	async recoverGoodsReceipt(@Args('id') id: ID) {
+		try {
+			return toGoodsReceiptPayload(await this.goodsReceiptService.softRecover(id));
 		} catch (error) {
 			return toFailedGoodsReceiptPayload(error);
 		}

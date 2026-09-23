@@ -145,6 +145,45 @@ export class CommerceCartLineResolver {
 	): Promise<CommerceCart> {
 		return this.commerceCartService.removeLine(cartId, lineId, versionExpectationOf(context?.req));
 	}
+
+	/**
+	 * Retires a cart line recoverably, keeping its price snapshot.
+	 *
+	 * The route it mirrors is `DELETE /cart-lines/:id/soft` — the line addressed by its own id, on the
+	 * line's own controller — inherited from `CrudController` and overridden there only to state the
+	 * permission the base left unstated. It is deliberately not the cart-level `removeCartLine` above:
+	 * that mutation reaches the cart service, which re-prices the cart as it removes the line, while this
+	 * pair mirrors the line's own inherited routes and so reaches the line's service, exactly as the two
+	 * routes do. A line carries the price the buyer was quoted, so the row is retired rather than dropped
+	 * and the recovery below puts it back.
+	 *
+	 * The permission is the line controller's own for the route — `CARTS_EDIT` — and not the class-level
+	 * view grant, because retiring a line changes what the cart costs.
+	 *
+	 * @param id The cart line to retire.
+	 * @returns The line, as the soft delete left it.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Mutation(() => Object, { name: 'softDeleteCommerceCartLine' })
+	async softDeleteCommerceCartLine(@Args('id', { type: () => ID }) id: string): Promise<CommerceCartLine> {
+		return this.commerceCartLineService.softRemove(id);
+	}
+
+	/**
+	 * Restores a cart line that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /cart-lines/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored line
+	 * is counted into the cart again the next time the cart is read or recalculated.
+	 *
+	 * @param id The cart line to restore.
+	 * @returns The restored line.
+	 */
+	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
+	@Mutation(() => Object, { name: 'recoverCommerceCartLine' })
+	async recoverCommerceCartLine(@Args('id', { type: () => ID }) id: string): Promise<CommerceCartLine> {
+		return this.commerceCartLineService.softRecover(id);
+	}
 }
 
 /**
