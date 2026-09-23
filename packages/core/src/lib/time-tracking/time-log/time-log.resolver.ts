@@ -29,12 +29,16 @@ import {
 import { RequestContext } from '../../core/context';
 import { Permissions } from '../../shared/decorators';
 import {
-	EmployeeTrackedDataGuard,
 	FeatureFlagGuard,
 	OrganizationPermissionGuard,
 	PermissionGuard,
 	TenantBaseGuard
 } from '../../shared/guards';
+// Imported from its own module rather than through the `shared/guards` barrel, and the difference matters:
+// `@UseGuards(...)` is evaluated when this class is defined, the barrel reaches `core/index.ts`, which reaches
+// `core.module` and every domain module — so in some load orders the guard comes back `undefined` and Nest
+// refuses the decorator with `Invalid guard passed to @UseGuards()`, taking the whole suite down with it.
+import { EmployeeTrackedDataGuard } from '../../shared/guards/employee-tracked-data.guard';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';

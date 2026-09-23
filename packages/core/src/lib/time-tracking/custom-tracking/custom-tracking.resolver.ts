@@ -13,11 +13,15 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { ID as Id, ITrackingSessionResponse, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../../shared/decorators';
 import {
-	EmployeeTrackedDataGuard,
 	FeatureFlagGuard,
 	PermissionGuard,
 	TenantPermissionGuard
 } from '../../shared/guards';
+// Imported from its own module rather than through the `shared/guards` barrel, and the difference matters:
+// `@UseGuards(...)` is evaluated when this class is defined, the barrel reaches `core/index.ts`, which reaches
+// `core.module` and every domain module — so in some load orders the guard comes back `undefined` and Nest
+// refuses the decorator with `Invalid guard passed to @UseGuards()`, taking the whole suite down with it.
+import { EmployeeTrackedDataGuard } from '../../shared/guards/employee-tracked-data.guard';
 import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { CustomTrackingController } from './custom-tracking.controller';
 import { CustomTrackingService } from './custom-tracking.service';
