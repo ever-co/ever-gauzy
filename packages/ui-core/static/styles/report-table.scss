@@ -291,6 +291,17 @@ $report-budget-amount-width: 140px;
 		min-height: $row-min-height;
 		padding: $report-row-padding-y $report-row-gutter;
 		gap: $report-column-gap;
+		// `report.scss` sets `space-between`, which hands every column an equal
+		// share of whatever width is left over. On the tables whose columns are
+		// all fixed that pushed the last one hard against the right edge and blew
+		// the gaps between the rest out to ~95px, so a row read as a handful of
+		// scattered values rather than as a set of columns.
+		//
+		// Packed from the start instead: the gap between two columns is always
+		// `$report-column-gap`, and any slack is left at the END of the row. The
+		// header and the body are laid out by the same rule, so they stay on one
+		// grid either way.
+		justify-content: flex-start;
 	}
 
 	// An empty GROUP — a date card on the limit reports with nobody on it.
