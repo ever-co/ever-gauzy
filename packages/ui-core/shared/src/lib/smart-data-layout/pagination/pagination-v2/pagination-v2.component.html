@@ -1,5 +1,6 @@
-@if (isShouldShow) {
+@if (count > 0) {
 <nav class="d-flex justify-between align-items-center w-100">
+	@if (isShouldShow) {
 	<ul class="pagination mb-0">
 		<li (click)="page === 1 ? false : paginate(1)">
 			<a href="#" aria-label="First">
@@ -43,6 +44,7 @@
 			</a>
 		</li>
 	</ul>
+	}
 	@if (perPageSelect && perPageSelect.length > 0) {
 	<div class="d-flex justify-between align-items-center">
 		<nb-select size="small" (selectedChange)="onChangePerPage($event)" [(selected)]="currentPerPage">
