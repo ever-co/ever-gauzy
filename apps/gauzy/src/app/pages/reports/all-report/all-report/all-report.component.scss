@@ -240,3 +240,21 @@ nb-card-body {
 .report-card:focus-within .report-preview-overlay {
   opacity: 1;
 }
+
+// Hover is the whole affordance above, and a touch screen has none. The button
+// stays tappable while the overlay is at `opacity: 0`, so on a phone the action
+// is there but nothing says where — the card looks like a static screenshot.
+// `hover: none` is the pointer query for exactly that case: a device whose
+// primary pointer cannot hover, which no desktop browser matches.
+//
+// Bottom-anchored rather than centred, and with the gradient's dark end kept to
+// the lower half, because this overlay is permanent on those devices — the
+// screenshot the tile exists to show has to stay readable underneath it.
+@media (hover: none) {
+  .report-preview-overlay {
+    opacity: 1;
+    align-items: flex-end;
+    padding: 0.625rem;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.65));
+  }
+}
