@@ -56,16 +56,19 @@
 
 // ── Cells ───────────────────────────────────────────────────────────────────
 
-// The three figure columns are right-aligned, headers included, so the digits
-// stack under each other instead of under the first letter of a label.
+// The three figure columns read from the START of their column, headers
+// included, so every value begins on the same edge as the label above it and
+// the row scans left to right without the eye jumping to a ragged right edge.
+// `tabular-nums` from the shared mixin is what keeps the digits under each
+// other; the alignment does not have to.
 .limit-column,
 .spent-column,
 .remaining-column {
-	justify-content: flex-end;
-	text-align: right;
+	justify-content: flex-start;
+	text-align: start;
 
 	.responsive-table-content {
-		justify-content: flex-end;
+		justify-content: flex-start;
 		width: 100%;
 		color: nb-theme(text-basic-color);
 	}
