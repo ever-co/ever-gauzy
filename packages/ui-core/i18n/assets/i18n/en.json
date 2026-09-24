@@ -5152,7 +5152,7 @@
 			"SELECT_DEFAULT_CDN": "Select default CDN server for update",
 			"TOGGLE_UPDATE_LOCALLY": "Toggle to update locally",
 			"LOCAL_SERVER": "Local Server",
-			"LOCAL_SERVER_NOTE": "Directory selected should contains definitely the <strong>latest.yml</strong> and/or <strong>latest-mac.yml</strong> manifest in order to make update validation",
+			"LOCAL_SERVER_NOTE": "The selected directory must contain the update manifest for your system (Windows: <strong>latest-x64.yml</strong> or <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> or <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) and the update files it lists, in order to validate the update",
 			"OTHER_SETTINGS": "Other Settings",
 			"ALLOW_PRERELEASE_VERSIONS": "Allow prerelease versions",
 			"CHECK_UPDATE_APP_VERSION": "Check & update your app version",

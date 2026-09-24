@@ -109,6 +109,9 @@ jobs:
       - name: Test native rebuild setup
         run: yarn test:postinstall
 
+      - name: Test release update-channel guard
+        run: yarn test:publish-channel
+
       - name: Restore node_modules archive
         id: cache
         uses: actions/cache/restore@v4

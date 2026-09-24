@@ -4558,7 +4558,7 @@
 			"SELECT_DEFAULT_CDN": "Selecteer de standaard CDN-server voor update",
 			"TOGGLE_UPDATE_LOCALLY": "Schakel om lokaal bij te werken",
 			"LOCAL_SERVER": "Lokale server",
-			"LOCAL_SERVER_NOTE": "De geselecteerde map moet zeker het <strong>latest.yml</strong>- en/of <strong>latest-mac.yml</strong>-manifest bevatten om de updatevalidatie mogelijk te maken.",
+			"LOCAL_SERVER_NOTE": "De geselecteerde map moet het updatemanifest voor uw systeem (Windows: <strong>latest-x64.yml</strong> of <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> of <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) en de daarin vermelde updatebestanden bevatten om de updatevalidatie mogelijk te maken.",
 			"OTHER_SETTINGS": "Andere instellingen",
 			"ALLOW_PRERELEASE_VERSIONS": "Sta voorlopige versies toe",
 			"CHECK_UPDATE_APP_VERSION": "Controleer en update uw app-versie",
