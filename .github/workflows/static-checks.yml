@@ -112,7 +112,7 @@ jobs:
           verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
           verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
           force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
-          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_4 != '' }}
 
       - name: Restore node_modules
         shell: bash
