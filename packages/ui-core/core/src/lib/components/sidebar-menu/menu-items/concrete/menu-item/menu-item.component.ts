@@ -254,24 +254,14 @@ export class MenuItemComponent implements OnInit {
 		this.checkUrl(this._router.url);
 		this._router.events
 			.pipe(
-				filter((event) => event instanceof NavigationEnd),
+				filter((event): event is NavigationEnd => event instanceof NavigationEnd),
 				untilDestroyed(this)
 			)
-			.subscribe((event: NavigationEnd) => this.checkUrl(event.urlAfterRedirects));
+			.subscribe((event) => this.checkUrl(event.urlAfterRedirects));
 	}
 
 	public isSelectedChild(child: IMenuItem): boolean {
 		return isSameMenuItem(child, this.selectedChildren);
-	}
-
-	private checkUrl(url: string): void {
-		if (this.item?.children?.length || !this.item?.link) {
-			return;
-		}
-		const pathOnly = url.split(/[?#]/)[0];
-		if (pathOnly === this.item.link) {
-			this.selectedChange.emit(this.item);
-		}
 	}
 
 	/**
@@ -473,5 +463,15 @@ export class MenuItemComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private checkUrl(url: string): void {
+		if (this.selected || this.item?.children?.length || !this.item?.link) {
+			return;
+		}
+		const pathOnly = url.split(/[?#]/)[0];
+		if (pathOnly === this.item.link) {
+			this.selectedChange.emit(this.item);
+		}
 	}
 }
