@@ -100,6 +100,46 @@ $report-budget-amount-width: 140px;
 	max-width: $max;
 }
 
+// Colours for an `ng-select` standing in a report page header.
+//
+// `ng-select-overrides()` in `gauzy/_gauzy-overrides.scss` gives these controls
+// their size, padding and radius but sets no colour at all, so they keep the
+// library's own theme: a WHITE trigger. On the dark themes that put near-white
+// text on a white pill — measured rgb(255, 255, 255) behind rgb(250, 250, 250)
+// on the Payments and Expense headers, i.e. a selected currency that could not
+// be read at all, while the `nb-select`s beside them sat correctly on
+// rgb(18, 18, 20).
+//
+// `!important` on the background is not decoration: the note on that mixin
+// explains that `@ng-select/ng-select/themes/default.theme.css` is listed after
+// `styles.scss` in the app's `styles` array and the library's component styles
+// are injected later still, so they win every specificity tie. This overrides
+// that one declaration.
+//
+// Include it inside a `:host ::ng-deep` block so it stays on the page that asks
+// for it — the dropdown panel is appended to `body` and deliberately out of
+// reach here, rather than restyled app-wide from a single report's stylesheet.
+@mixin report-filter-select() {
+	.ng-select .ng-select-container {
+		background-color: nb-theme(gauzy-card-1) !important;
+		color: nb-theme(text-basic-color);
+	}
+
+	.ng-select .ng-select-container .ng-value-container .ng-placeholder {
+		color: nb-theme(text-hint-color);
+	}
+
+	.ng-select .ng-select-container .ng-value-container .ng-value,
+	.ng-select .ng-select-container .ng-value-container .ng-value-label {
+		color: nb-theme(text-basic-color);
+	}
+
+	.ng-select .ng-arrow-wrapper .ng-arrow,
+	.ng-select .ng-clear-wrapper {
+		color: nb-theme(text-hint-color);
+	}
+}
+
 @mixin report-table($row-min-height: 36px) {
 	// ── Card ────────────────────────────────────────────────────────────────
 
