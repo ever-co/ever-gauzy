@@ -19,6 +19,7 @@ import { JitsuService } from '../../../../../services/analytics/jitsu.service';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum } from '../../../../../services/analytics/event.type';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
+import { isSameMenuItem } from '../../menu-item.utils';
 
 /** Tag of the Nebular sidebar this menu renders into (see one-column.layout.html). */
 const MENU_SIDEBAR_TAG = 'menu-sidebar';
@@ -249,6 +250,10 @@ export class MenuItemComponent implements OnInit {
 			// This emits the 'selectedChange' event with the 'item' as the data
 			this.selectedChange.emit(this.item);
 		}
+	}
+
+	public isSelectedChild(child: IMenuItem): boolean {
+		return isSameMenuItem(child, this.selectedChildren);
 	}
 
 	/**
