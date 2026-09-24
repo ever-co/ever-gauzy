@@ -39,7 +39,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@gauzy/utils": "^0.1.0",
 		"@mikro-orm/nestjs": "^6.1.2",
-		"@nestjs/graphql": "^13.0.0",
+		"@nestjs/graphql": "^13.4.2",
 		"@nestjs/mapped-types": "^2.1.1",
 		"@nestjs/swagger": "^11.4.4",
 		"@nestjs/typeorm": "^11.0.1",

@@ -301,3 +301,11 @@ jobs:
       - name: Every CRUD resource serving the soft-delete/recover pair answers it over GraphQL
         if: always()
         run: node tools/scripts/graphql-write-parity-check.mjs
+
+      # Every range a workspace declares must be a key of yarn.lock. Thirteen commerce plugins asked for
+      # `@nestjs/graphql@^13.0.0` while the lockfile resolved only core's `^13.4.2`: a `--frozen-lockfile`
+      # install refused the branch, and a plain one hoisted a second copy of the package, so the API failed
+      # to boot with "Nest can't resolve dependencies of the ApolloDriver (graphQlFactory)".
+      - name: Every declared dependency range is resolved in yarn.lock
+        if: always()
+        run: node tools/scripts/lockfile-coverage-check.mjs
