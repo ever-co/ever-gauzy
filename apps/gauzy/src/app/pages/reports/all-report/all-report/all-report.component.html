@@ -30,7 +30,13 @@
                 <p class="report-description" [title]="report?.description">{{ report?.description }}</p>
                 <div class="report-preview">
                   @if (report.imageUrl) {
-                    <img class="report-preview-image" [src]="report.imageUrl" />
+                    <!--
+                      Decorative: the card already names the report in its header,
+                      and the tile is a thumbnail of that report. An empty alt is
+                      what keeps a screen reader from reading the image URL out in
+                      its place.
+                    -->
+                    <img class="report-preview-image" [src]="report.imageUrl" alt="" />
                   }
                   <div class="report-preview-overlay">
                     <button
