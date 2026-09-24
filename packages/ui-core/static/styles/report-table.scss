@@ -136,6 +136,15 @@ $report-budget-amount-width: 140px;
 	:host .card nb-card-header.card-title,
 	:host .card nb-accordion-item-header.card-title {
 		padding: 12px $report-row-gutter 10px;
+		// A tinted strip, so the group label reads as a band ACROSS the table
+		// rather than as a first line of content sharing the rows' surface.
+		//
+		// Not `gauzy-card-2`, which the row hover already uses — a header painted
+		// the same as a hovered row would look like one. `background-basic-color-2`
+		// is a step off the card in both themes without being a third colour:
+		// rgba(24, 24, 27, 1) on the dark card's rgba(18, 18, 20, 1), and #f7f9fc
+		// on the light card's white.
+		background-color: nb-theme(background-basic-color-2);
 		font-size: 13px;
 		font-weight: 600;
 		line-height: 18px;
