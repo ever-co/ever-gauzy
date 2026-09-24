@@ -195,7 +195,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'stockMovements',
 		resource: 'StockMovement',
-		build: (service, eventBus) => new StockMovementResolver(service, eventBus),
+		build: (service) => new StockMovementResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockMovements(WAREHOUSE, VARIANT, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, variantId: VARIANT },
 		order: { occurredAt: 'DESC' },
@@ -221,7 +221,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'stockTransferLines',
 		resource: 'StockTransferLine',
-		build: (service, eventBus) => new StockTransferLineResolver(service, eventBus),
+		build: (service) => new StockTransferLineResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockTransferLines(TRANSFER, page, withDeleted),
 		where: { transferId: TRANSFER },
 		withDeleted: true
@@ -229,7 +229,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'stockAlerts',
 		resource: 'StockAlert',
-		build: (service, eventBus) => new StockAlertResolver(service, eventBus),
+		build: (service) => new StockAlertResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockAlerts(VARIANT, true, page, withDeleted),
 		where: { variantId: VARIANT, isActive: true },
 		withDeleted: true
@@ -237,7 +237,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'stockAdjustments',
 		resource: 'StockAdjustment',
-		build: (service, eventBus) => new StockAdjustmentResolver(service, eventBus),
+		build: (service) => new StockAdjustmentResolver(service),
 		call: (resolver, page, withDeleted) =>
 			resolver.stockAdjustments(WAREHOUSE, VARIANT, 'DRAFT' as never, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, variantId: VARIANT, status: 'DRAFT' },
@@ -246,7 +246,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'stockCounts',
 		resource: 'StockCount',
-		build: (service, eventBus) => new StockCountResolver(service, eventBus),
+		build: (service) => new StockCountResolver(service),
 		call: (resolver, page, withDeleted) =>
 			resolver.stockCounts(WAREHOUSE, 'OPEN' as never, 'FULL' as never, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, status: 'OPEN', mode: 'FULL' },
@@ -255,7 +255,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'stockCountLines',
 		resource: 'StockCountLine',
-		build: (service, eventBus) => new StockCountLineResolver(service, eventBus),
+		build: (service) => new StockCountLineResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockCountLines(COUNT, page, withDeleted),
 		where: { stockCountId: COUNT },
 		withDeleted: true
@@ -263,7 +263,7 @@ const CASES: IFieldCase[] = [
 	{
 		field: 'channelWarehouses',
 		resource: 'ChannelWarehouse',
-		build: (service, eventBus) => new ChannelWarehouseResolver(service, eventBus),
+		build: (service) => new ChannelWarehouseResolver(service),
 		call: (resolver, page, withDeleted) => resolver.channelWarehouses(CHANNEL, WAREHOUSE, page, withDeleted),
 		where: { channelId: CHANNEL, warehouseId: WAREHOUSE },
 		withDeleted: true
@@ -459,7 +459,7 @@ describe('every converted list field reads its page in the store', () => {
 		// offset window has no defined meaning, and answering the first page to a caller that asked for a
 		// position is a wrong answer it cannot detect.
 		const service = serviceStub([]);
-		const resolver = new StockMovementResolver(service as never, eventBusStub as never);
+		const resolver = new StockMovementResolver(service as never);
 
 		await expect(resolver.stockMovements(WAREHOUSE, VARIANT, { first: 2, limit: 2 } as never)).rejects.toThrow(
 			/PAGINATION_STYLE_CONFLICT/

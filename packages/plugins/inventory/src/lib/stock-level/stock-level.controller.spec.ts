@@ -724,8 +724,10 @@ describe('StockLevelController — the level resource (doc 02 §3.4)', () => {
 		// The route took a `take` and no offset, so a client could read the first page over REST and no other,
 		// while the GraphQL connection beside it pages by cursor. A skip past the two rows the fixture holds is
 		// the cheapest proof that the offset reaches the read rather than being dropped on the way.
-		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '10', '5')).resolves.toEqual([]);
-		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '1')).resolves.toHaveLength(1);
+		// A query parameter reaches the handler as the string the URL carried, whatever the signature says,
+		// so the strings are passed as they arrive rather than as the numbers the type declares.
+		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '10' as never, '5' as never)).resolves.toEqual([]);
+		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '1' as never)).resolves.toHaveLength(1);
 	});
 
 	it('reads one level by id, with the location the join resolves', async () => {
