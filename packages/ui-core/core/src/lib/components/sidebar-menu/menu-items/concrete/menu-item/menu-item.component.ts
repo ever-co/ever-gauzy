@@ -466,11 +466,13 @@ export class MenuItemComponent implements OnInit {
 	}
 
 	private checkUrl(url: string): void {
-		if (this.selected || this.item?.children?.length || !this.item?.link) {
+		if (this.selected || this.hasChildren || !this.item?.link) {
 			return;
 		}
 		const pathOnly = url.split(/[?#]/)[0];
-		if (pathOnly === this.item.link) {
+		const { link, pathMatch } = this.item;
+		const matches = pathOnly === link || (pathMatch === 'prefix' && pathOnly.startsWith(`${link}/`));
+		if (matches) {
 			this.selectedChange.emit(this.item);
 		}
 	}
