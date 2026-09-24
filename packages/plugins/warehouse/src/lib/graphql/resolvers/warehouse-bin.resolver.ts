@@ -26,7 +26,8 @@ import {
 	IWarehouseBin,
 	IWarehouseBinBalance,
 	IWarehouseBinCapacityCheck,
-	WarehouseBinType
+	WarehouseBinType,
+	WAREHOUSE_LEVEL_VERSION_TARGET
 } from '../../warehouse.types';
 import { buildConnection, IPageSelection, resolveWindow } from '../pagination';
 import { toUserError } from '../wire';
@@ -406,7 +407,7 @@ export class WarehouseBinResolver {
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('reconcileWarehouseBins')
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.count', required: false, resourceType: 'warehouse-bin' })
 	async reconcileWarehouseBins(
 		@Args('input') input: { warehouseId: ID; zoneId?: ID; binIds?: ID[]; repair?: boolean }
@@ -493,7 +494,7 @@ export class WarehouseBinResolver {
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('assignWarehouseBinHome')
-	@Versioned()
+	@Versioned({ target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	async assignWarehouseBinHome(
 		@Args('id') id: ID,
 		@Args('input') input: { variantId: ID; warehouseId: ID; levelId?: ID; reason?: string }
@@ -518,7 +519,7 @@ export class WarehouseBinResolver {
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
 	@Mutation('putAwayWarehouseBin')
-	@Versioned()
+	@Versioned({ target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.put-away', required: false, resourceType: 'warehouse-bin' })
 	async putAwayWarehouseBin(
 		@Args('id') id: ID,

@@ -8,6 +8,21 @@
 import { ID } from '@gauzy/contracts';
 import { StockMovementType, StockMovementReferenceType } from './../inventory.enums';
 
+/**
+ * The `@Versioned({ target })` a route states when its version is the **level's**.
+ *
+ * A route that posts stock against a document — applying an adjustment, placing or releasing a hold,
+ * closing a count, reconciling, a pick or a put-away — protects the level row the document moves, so
+ * the version its caller states is the level's. The engine reads that version from the request, and
+ * it honours it only when the route named this table: a request can reach the engine from a route
+ * whose version belongs to a record of its own, and a return's or an order's version predicated
+ * onto a level row refuses every write the level did not happen to share a number with.
+ *
+ * It is the level row's table name, so a package that reaches the engine through a port — the
+ * warehouse package's bin and pick routes — can state it without importing this one.
+ */
+export const STOCK_LEVEL_VERSION_TARGET = 'warehouse_product_variant';
+
 /** One quantity and reservation change, expressed as a signed delta. */
 export interface IStockMovementInput {
 	/** Location the change happened at. */

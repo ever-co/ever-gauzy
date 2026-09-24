@@ -14,6 +14,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { StockCount } from './stock-count.entity';
 import { StockCountService } from './stock-count.service';
 import { CreateStockCountDTO, RecordStockCountLinesDTO, StockCountDTO, StockCountQueryDTO  } from './dto';
+import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * The physical-count resource: create a session, open it, record readings, close it.
@@ -106,7 +107,7 @@ export class StockCountController {
 	@ApiResponse({ status: 202, description: 'Session closed.' })
 	@ApiResponse({ status: 409, description: 'A level moved past the version the close was based on.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.count', required: false, resourceType: 'stock-count' })
 	@Post(':id/close')
 	async close(@Param('id', UUIDValidationPipe) id: ID) {

@@ -30,6 +30,7 @@ import {
 	PickListLineSubstitutionDTO,
 	UpdatePickListDTO
 } from './dto';
+import { WAREHOUSE_LEVEL_VERSION_TARGET } from '../warehouse.types';
 
 /**
  * The work, per picker.
@@ -273,7 +274,7 @@ export class PickListController extends CrudController<PickList> {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'More was taken than the list asked for.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'A level moved past the version the pick was based on.' })
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.pick', required: false, resourceType: 'pick-list-line' })
 	@Post(':id/lines/:lineId/pick')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -305,7 +306,7 @@ export class PickListController extends CrudController<PickList> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'The substitution was recorded.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'A level moved past the version the swap was based on.' })
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.substitute', required: false, resourceType: 'pick-list-line' })
 	@Post(':id/lines/:lineId/substitute')
 	@UseValidationPipe({ transform: true, whitelist: true })

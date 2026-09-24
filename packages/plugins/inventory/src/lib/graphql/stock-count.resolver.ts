@@ -27,6 +27,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { StockCountMode, StockCountStatus } from './../inventory.enums';
 import { StockCount } from './../stock-count/stock-count.entity';
 import { StockCountService } from './../stock-count/stock-count.service';
+import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
@@ -130,7 +131,7 @@ export class StockCountResolver {
 	 */
 	@Mutation('closeStockCount')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.count', required: false, resourceType: 'stock-count' })
 	async closeStockCount(
 		@Args('id') id: string,

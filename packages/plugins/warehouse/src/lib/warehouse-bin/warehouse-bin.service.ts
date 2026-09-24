@@ -68,7 +68,7 @@ const BIN_BALANCE_UPDATED_AT_KEY = 'balanceUpdatedAt';
  * because that interface is not part of this package's public surface and these writes read nothing
  * else from it — whether the caller accepted any existing version, and which versions it named.
  */
-type TVersionExpectation = { wildcard: boolean; versions: number[] };
+type TVersionExpectation = { wildcard: boolean; versions: number[]; target?: string };
 
 /**
  * Any version the row currently holds.
@@ -90,7 +90,12 @@ const ANY_VERSION: TVersionExpectation = { wildcard: true, versions: [] };
  * states no precondition. `versionExpectationOf` is the kernel's reader and refuses a request that
  * states nothing, which is exactly the case this treats as "the caller accepted no version".
  *
- * @returns The accepted version, or undefined when the caller accepted none.
+ * A version the route stated for another table — the put-away, the home-bin declaration and the
+ * reconcile state the **level's**, see `STOCK_LEVEL_VERSION_TARGET` — is not the bin's, and predicating
+ * the bin row on it would refuse a write for a number the bin never held. Only an untargeted version,
+ * which is the route's own record, is read as the bin's.
+ *
+ * @returns The accepted version, or undefined when the caller accepted none for the bin.
  */
 function acceptedVersionExpectation(): TVersionExpectation | undefined {
 	const request = RequestContext.currentRequest();
@@ -99,11 +104,15 @@ function acceptedVersionExpectation(): TVersionExpectation | undefined {
 		return undefined;
 	}
 
+	let expectation: TVersionExpectation;
+
 	try {
-		return versionExpectationOf(request) as TVersionExpectation;
+		expectation = versionExpectationOf(request) as TVersionExpectation;
 	} catch {
 		return undefined;
 	}
+
+	return expectation?.target ? undefined : expectation;
 }
 
 /**

@@ -17,7 +17,7 @@ import {
 	Versioned
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
-import { IBinReconciliationReport, IWarehouseBinCapacityCheck, IWarehousePutAwayResult } from '../warehouse.types';
+import { IBinReconciliationReport, IWarehouseBinCapacityCheck, IWarehousePutAwayResult, WAREHOUSE_LEVEL_VERSION_TARGET } from '../warehouse.types';
 import { WarehouseFeatures } from '../warehouse.features';
 import { WarehousePermissions } from '../warehouse.permissions';
 import { WarehouseBin } from './warehouse-bin.entity';
@@ -279,7 +279,7 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The level moved past the version the declaration was based on.' })
 	@ApiResponse({ status: HttpStatus.PRECONDITION_REQUIRED, description: 'The version the declaration was based on was not stated.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
-	@Versioned()
+	@Versioned({ target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Post(':id/assign')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async assign(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: AssignWarehouseBinDTO): Promise<boolean> {
@@ -298,7 +298,7 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The level moved past the version the walk was based on.' })
 	@ApiResponse({ status: HttpStatus.PRECONDITION_REQUIRED, description: 'The version the walk was based on was not stated.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
-	@Versioned()
+	@Versioned({ target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.put-away', required: false, resourceType: 'warehouse-bin' })
 	@Post(':id/put-away')
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -319,7 +319,7 @@ export class WarehouseBinController extends CrudController<WarehouseBin> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'The bins were reconciled.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'A level moved past the version the run was based on.' })
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_EDIT)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.count', required: false, resourceType: 'warehouse-bin' })
 	@Post('/reconcile')
 	@UseValidationPipe({ transform: true, whitelist: true })

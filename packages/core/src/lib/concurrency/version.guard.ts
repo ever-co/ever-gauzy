@@ -238,10 +238,14 @@ export class VersionGuard implements CanActivate {
 			default:
 				// The accepted version travels on the request so the write does not have to parse the
 				// header a second time — and cannot parse it differently.
+				// The route's `target` travels with it, so an engine that reads the version from the
+				// request can tell a version stated for its own row from one stated for the record the
+				// route writes.
 				if (request) {
 					request[VERSION_EXPECTATION_PROPERTY] = {
 						wildcard: decision.wildcard,
-						versions: decision.wildcard ? [] : [decision.expected]
+						versions: decision.wildcard ? [] : [decision.expected],
+						...(options.target ? { target: options.target } : {})
 					};
 				}
 

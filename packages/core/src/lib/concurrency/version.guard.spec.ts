@@ -218,6 +218,30 @@ describe('an HTTP write', () => {
 		expect(versionExpectationOf(request)).toEqual({ wildcard: false, versions: [4] });
 	});
 
+	it('carries the table the route says the version belongs to, and states none when it names none', async () => {
+		// A request can reach more than one versioned engine: receiving a return writes the return and
+		// posts stock movements. The stock engine reads the version from the request too, so the route
+		// has to say which row it is the version of — or the level is predicated on the return's
+		// number. The target travels with the version for exactly that reader.
+		const targeted: any = { method: 'POST', params: { id: 'adjustment-1' }, headers: { [IF_MATCH_HEADER]: '"7"' } };
+		const { guard } = guardFor({ target: 'warehouse_product_variant' });
+
+		expect(await guard.canActivate(httpContext(targeted))).toBe(true);
+		expect(versionExpectationOf(targeted)).toEqual({
+			wildcard: false,
+			versions: [7],
+			target: 'warehouse_product_variant'
+		});
+
+		// Control: a route that names no target leaves no member at all, rather than one set to
+		// `undefined`, so an engine that asks "was this stated for my table?" is told no.
+		const own: any = { method: 'POST', params: { id: 'return-1' }, headers: { [IF_MATCH_HEADER]: '"2"' } };
+		const { guard: ownGuard } = guardFor({});
+
+		expect(await ownGuard.canActivate(httpContext(own))).toBe(true);
+		expect(versionExpectationOf(own)).not.toHaveProperty('target');
+	});
+
 	it('checks a version that was stated on a route where it is optional', async () => {
 		const reader = readerAnswering({ id: 'invoice-1', version: 4 });
 		const { guard } = guardFor({ resource: InvoiceService, required: false }, reader);

@@ -37,7 +37,8 @@ import {
 	IStockLevelCorrection,
 	IStockMovementInput,
 	IStockReconciliation,
-	IStockReconciliationFilter
+	IStockReconciliationFilter,
+	STOCK_LEVEL_VERSION_TARGET
 } from './stock-level.types';
 
 /** Retry schedule of the compare-and-set on a contended level row, in milliseconds. */
@@ -59,7 +60,7 @@ const RESERVATION_ONLY_TYPES: StockMovementType[] = [
  * because that interface is not part of the package's public surface and this engine reads nothing
  * else from it — whether the caller accepted any existing version, and which versions it named.
  */
-type TVersionExpectation = { wildcard: boolean; versions: number[] };
+type TVersionExpectation = { wildcard: boolean; versions: number[]; target?: string };
 
 /**
  * The version the current request accepted, when it accepted one.
@@ -71,7 +72,17 @@ type TVersionExpectation = { wildcard: boolean; versions: number[] };
  * is the kernel's reader and refuses a request that states nothing, which is exactly the case this
  * treats as "the caller accepted no version".
  *
- * @returns The accepted version, or undefined when the caller accepted none.
+ * 🛑 **Only a version stated for the level is the level's.** A request reaches this engine from
+ * routes whose version belongs to a record of their own — receiving a return writes the return under
+ * the version its caller read and posts the goods through here — and reading that version as the
+ * level's predicated the level row on a number it never held. The return at version 2 met a level at
+ * version 1 and was refused `409 { expectedVersion: 2, actualVersion: 1 }` on every attempt, the
+ * compensation then moved the return on to 3, and no client on either surface could receive a return.
+ * The same was true of every versioned route in another package that holds, releases or moves stock.
+ * So the version is honoured only when the route declared `STOCK_LEVEL_VERSION_TARGET`; any other is
+ * the route's own, and the engine's compare-and-set on the version it read stays the guarantee.
+ *
+ * @returns The accepted version, or undefined when the caller accepted none for a level.
  */
 function acceptedVersionExpectation(): TVersionExpectation | undefined {
 	const request = RequestContext.currentRequest();
@@ -80,11 +91,15 @@ function acceptedVersionExpectation(): TVersionExpectation | undefined {
 		return undefined;
 	}
 
+	let expectation: TVersionExpectation;
+
 	try {
-		return versionExpectationOf(request) as TVersionExpectation;
+		expectation = versionExpectationOf(request) as TVersionExpectation;
 	} catch {
 		return undefined;
 	}
+
+	return expectation?.target === STOCK_LEVEL_VERSION_TARGET ? expectation : undefined;
 }
 
 /**

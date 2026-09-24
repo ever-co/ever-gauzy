@@ -415,6 +415,18 @@ export interface IWarehouseFulfillmentPort {
  * Optional on purpose: a tenant that has not adopted zones and bins can still plan waves and print
  * pick lists, while a tenant that has gets every physical move written by the ledger.
  */
+/**
+ * The `@Versioned({ target })` a route states when its version is the **level's**.
+ *
+ * A pick, a substitution, a put-away, a home-bin declaration and a bin reconcile move or name stock
+ * on a level row, and the version their caller states is that row's. The inventory engine reads it
+ * from the request and honours it only when the route named the level's table, because a request can
+ * reach the engine from a route whose version belongs to a record of its own. This is the table name
+ * inventory states as `STOCK_LEVEL_VERSION_TARGET`; it is repeated rather than imported because this
+ * package reaches inventory through {@link WAREHOUSE_STOCK_LEDGER} and never imports it.
+ */
+export const WAREHOUSE_LEVEL_VERSION_TARGET = 'warehouse_product_variant';
+
 export const WAREHOUSE_STOCK_LEDGER = Symbol('WAREHOUSE_STOCK_LEDGER');
 
 /** Token the shipment capability is injected under. */

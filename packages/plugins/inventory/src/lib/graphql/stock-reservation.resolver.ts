@@ -30,6 +30,7 @@ import { StockReservationReferenceType, StockReservationStatus } from './../inve
 import { StockReservation } from './../stock-reservation/stock-reservation.entity';
 import { StockReservationService } from './../stock-reservation/stock-reservation.service';
 import { StockReservationChangedEvent } from './../events';
+import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
@@ -102,7 +103,7 @@ export class StockReservationResolver {
 	 */
 	@Mutation('createStockReservation')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned()
+	@Versioned({ target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.create', required: false, resourceType: 'stock-reservation' })
 	async createStockReservation(@Args('input') input: any): Promise<any> {
 		return await this.service.reserve(input);
@@ -117,7 +118,7 @@ export class StockReservationResolver {
 	 */
 	@Mutation('releaseStockReservation')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.release', required: false, resourceType: 'stock-reservation' })
 	async releaseStockReservation(
 		@Args('id') id: string,
@@ -143,7 +144,7 @@ export class StockReservationResolver {
 	 */
 	@Mutation('consumeStockReservation')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.consume', required: false, resourceType: 'stock-reservation' })
 	async consumeStockReservation(@Args('id') id: string): Promise<any> {
 		return await this.service.consume(id);

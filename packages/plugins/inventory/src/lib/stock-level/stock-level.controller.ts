@@ -13,7 +13,7 @@ import {
 import { InventoryPermission } from './../inventory.permissions';
 import { InventoryErrorCode, inventoryError } from './../inventory.errors';
 import { StockLevelService } from './stock-level.service';
-import { IStockAvailability, IStockReconciliation } from './stock-level.types';
+import { IStockAvailability, IStockReconciliation, STOCK_LEVEL_VERSION_TARGET } from './stock-level.types';
 import { ReconcileStockLevelsDTO } from './dto';
 
 /**
@@ -115,7 +115,7 @@ export class StockLevelController {
 	@ApiResponse({ status: 202, description: 'Levels reconciled.' })
 	@ApiResponse({ status: 409, description: 'A level moved past the version the run was based on.' })
 	@Permissions(InventoryPermission.STOCK_RECONCILE as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reconcile', required: false, resourceType: 'stock-level' })
 	@Post('reconcile')
 	@UseValidationPipe({ transform: true, whitelist: true })

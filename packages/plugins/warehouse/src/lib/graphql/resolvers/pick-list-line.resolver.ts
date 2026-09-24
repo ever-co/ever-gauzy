@@ -22,7 +22,7 @@ import { WarehouseBin } from '../../warehouse-bin/warehouse-bin.entity';
 import { WarehouseBinService } from '../../warehouse-bin/warehouse-bin.service';
 import { WarehouseFeatures } from '../../warehouse.features';
 import { WarehousePermissions } from '../../warehouse.permissions';
-import { IPickListLine } from '../../warehouse.types';
+import { IPickListLine, WAREHOUSE_LEVEL_VERSION_TARGET } from '../../warehouse.types';
 import { toUserError } from '../../graphql/wire';
 
 /**
@@ -116,7 +116,7 @@ export class PickListLineResolver {
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
 	@Mutation('pickPickListLine')
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.pick', required: false, resourceType: 'pick-list-line' })
 	async pickPickListLine(
 		@Args('pickListId') pickListId: ID,
@@ -158,7 +158,7 @@ export class PickListLineResolver {
 	 */
 	@Permissions(WarehousePermissions.PICK_LISTS_PICK)
 	@Mutation('substitutePickListLine')
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: WAREHOUSE_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'warehouse.substitute', required: false, resourceType: 'pick-list-line' })
 	async substitutePickListLine(
 		@Args('pickListId') pickListId: ID,

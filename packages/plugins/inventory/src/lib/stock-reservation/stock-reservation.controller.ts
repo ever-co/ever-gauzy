@@ -15,6 +15,7 @@ import { StockReservationReferenceType } from './../inventory.enums';
 import { StockReservation } from './stock-reservation.entity';
 import { StockReservationService } from './stock-reservation.service';
 import { CreateStockReservationDTO, StockReservationDTO, StockReservationQueryDTO, UpdateStockReservationDTO  } from './dto';
+import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * The reservation resource: hold stock, release it, consume it, push its expiry out.
@@ -64,7 +65,7 @@ export class StockReservationController {
 	@ApiResponse({ status: 409, description: 'Availability does not cover the requested hold.' })
 	@ApiResponse({ status: 428, description: 'The version the hold was based on was not stated.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned()
+	@Versioned({ target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.create', required: false, resourceType: 'stock-reservation' })
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
@@ -131,7 +132,7 @@ export class StockReservationController {
 	@ApiResponse({ status: 202, description: 'Reservation released.' })
 	@ApiResponse({ status: 409, description: 'The reservation was already closed.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.release', required: false, resourceType: 'stock-reservation' })
 	@Post(':id/release')
 	async release(@Param('id', UUIDValidationPipe) id: ID, @Query('reason') reason?: string): Promise<StockReservation> {
@@ -156,7 +157,7 @@ export class StockReservationController {
 	@ApiResponse({ status: 202, description: 'Reservation consumed; the units left and the hold closed with them.' })
 	@ApiResponse({ status: 409, description: 'The reservation was already closed.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reservation.consume', required: false, resourceType: 'stock-reservation' })
 	@Post(':id/consume')
 	async consume(@Param('id', UUIDValidationPipe) id: ID, @Query('reason') reason?: string): Promise<StockReservation> {

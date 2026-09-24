@@ -177,8 +177,16 @@ interface IVersionExpectation {
 
 /** What a request carries, as far as this suite is concerned. */
 interface IFakeRequest {
-	versionExpectation?: IVersionExpectation;
+	versionExpectation?: IVersionExpectation & { target?: string };
 }
+
+/**
+ * The table a route names when the version its caller states is the level's.
+ *
+ * Restated rather than imported so a rename of the constant cannot quietly move both sides of this
+ * suite at once: the value is the level row's table, and that is what the guard stamps.
+ */
+const LEVEL_TARGET = 'warehouse_product_variant';
 
 /**
  * The request the doubled `RequestContext` answers with.
@@ -189,14 +197,25 @@ interface IFakeRequest {
  */
 let mockRequest: IFakeRequest | null = null;
 
-/** States the version the request accepted, the way the platform's guard leaves it on a request. */
+/**
+ * States the version the request accepted for the level, the way the platform's guard leaves it on a
+ * request whose route declared `@Versioned({ target: STOCK_LEVEL_VERSION_TARGET })`.
+ */
 function acceptVersion(version: number): void {
-	mockRequest = { versionExpectation: { wildcard: false, versions: [version] } };
+	mockRequest = { versionExpectation: { wildcard: false, versions: [version], target: LEVEL_TARGET } };
 }
 
-/** States that the request accepted any version that exists, which is what `If-Match: *` means. */
+/** States that the request accepted any version of the level, which is what `If-Match: *` means. */
 function acceptAnyVersion(): void {
-	mockRequest = { versionExpectation: { wildcard: true, versions: [] } };
+	mockRequest = { versionExpectation: { wildcard: true, versions: [], target: LEVEL_TARGET } };
+}
+
+/**
+ * States a version the request accepted for **its own record** — a return, an order, a fulfilment —
+ * which is what a route that did not name the level leaves on the request.
+ */
+function acceptVersionOfAnotherRecord(version: number): void {
+	mockRequest = { versionExpectation: { wildcard: false, versions: [version] } };
 }
 
 /** A request that states no version at all: a route that did not opt in, a worker, a seed. */
@@ -759,6 +778,37 @@ describe('StockLevelService — the write under the version the request accepted
 		expect(applied).toMatchObject({ version: 5, quantityAfter: 12 });
 		expect(fixture.store.levelFor()).toMatchObject({ quantity: 12, version: 5 });
 		expect(fixture.store.ledgerOf()).toHaveLength(1);
+	});
+
+	it('does not read the version a route stated for its own record as the level’s', async () => {
+		// The receipt of a return: the route is versioned on the return, which its caller read at 2, and
+		// the goods it receives are posted through this engine against a level at version 1. Reading
+		// the return's version as the level's refused every receipt with `409 { expectedVersion: 2,
+		// actualVersion: 1 }` — no client could receive a return — so a version the route did not
+		// name the level's table for is the route's own, and the level is written under the engine's
+		// compare-and-set on the version it read under the row lock.
+		const fixture = levelFixture({ level: { quantity: 10, version: 1 } });
+		acceptVersionOfAnotherRecord(2);
+
+		const applied = await fixture.service.applyMovement(movement({ quantityDelta: 3 }) as never);
+
+		expect(applied).toMatchObject({ version: 2, quantityBefore: 10, quantityAfter: 13 });
+		expect(fixture.store.levelFor()).toMatchObject({ quantity: 13, version: 2 });
+		expect(fixture.store.ledgerOf()).toHaveLength(1);
+	});
+
+	it('still refuses a stale version when the route named the level as what it versions', async () => {
+		// The other half of the same rule: the target is what makes a stated version the level's, and
+		// a route that states it is held to it exactly as before.
+		const fixture = levelFixture({ level: { quantity: 10, version: 1 } });
+		acceptVersion(2);
+
+		const refusal = await refusalOf(fixture.service.applyMovement(movement({ quantityDelta: 3 }) as never));
+
+		expect(refusal.getStatus()).toBe(HttpStatus.CONFLICT);
+		expect(refusal.code).toBe('ENTITY_VERSION_CONFLICT');
+		expect(fixture.store.levelFor()).toMatchObject({ quantity: 10, version: 1 });
+		expect(fixture.store.ledgerOf()).toEqual([]);
 	});
 
 	it('retries a contended write when the request states no version, and still writes one movement', async () => {

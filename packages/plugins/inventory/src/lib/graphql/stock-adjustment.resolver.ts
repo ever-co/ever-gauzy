@@ -27,6 +27,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustmentStatus } from './../inventory.enums';
 import { StockAdjustment } from './../stock-adjustment/stock-adjustment.entity';
 import { StockAdjustmentService } from './../stock-adjustment/stock-adjustment.service';
+import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
@@ -120,7 +121,7 @@ export class StockAdjustmentResolver {
 	 */
 	@Mutation('applyStockAdjustment')
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned()
+	@Versioned({ target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.adjust', required: false, resourceType: 'stock-adjustment' })
 	async applyStockAdjustment(
 		@Args('id') id: string,

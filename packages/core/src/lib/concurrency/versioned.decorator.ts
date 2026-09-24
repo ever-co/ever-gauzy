@@ -34,6 +34,26 @@ export interface IVersionedOptions {
 	 * body, or the resolver's `id`/`input.id` argument.
 	 */
 	identify?: (request: any, context?: any) => string | undefined;
+
+	/**
+	 * The table whose row the stated version is a version of, when it is not the record the route
+	 * itself writes.
+	 *
+	 * A stock correction, a hold or a put-away is posted against a document — an adjustment, a
+	 * reservation, a bin — but the state a caller read and has to be protected against losing is the
+	 * **level** row the document moves, so those routes state the level's version. The accepted
+	 * version travels on the request, and an engine further down reads it from there rather than
+	 * having it passed by hand through every caller in between.
+	 *
+	 * That is exactly why it has to say which row it is about. One request can reach more than one
+	 * versioned engine: receiving a return writes the return under the version its caller read *and*
+	 * posts stock movements, and before this the stock engine predicated the level row on the
+	 * **return's** version — `409 { expectedVersion: 2, actualVersion: 1 }` for a return at 2 and a
+	 * level at 1, on every attempt, so no client could receive a return. An engine that reads the
+	 * version from the request therefore honours it only when the route named that engine's table
+	 * here, and a route that states nothing keeps its version for its own record.
+	 */
+	target?: string;
 }
 
 /**

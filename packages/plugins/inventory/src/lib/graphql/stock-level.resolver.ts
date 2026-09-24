@@ -29,7 +29,7 @@ import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockLevelService } from './../stock-level/stock-level.service';
 import { InventoryLevelChangedEvent, InventoryLevelLowEvent, InventoryLevelOutOfStockEvent } from './../events';
-import { IStockAvailability } from './../stock-level/stock-level.types';
+import { IStockAvailability, STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
@@ -120,7 +120,7 @@ export class StockLevelResolver {
 	 */
 	@Mutation('reconcileStockLevels')
 	@Permissions(InventoryPermission.STOCK_RECONCILE as PermissionsEnum)
-	@Versioned({ required: false })
+	@Versioned({ required: false, target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.reconcile', required: false, resourceType: 'stock-level' })
 	async reconcileStockLevels(@Args('input') input: any): Promise<any> {
 		return await this.service.reconcile({

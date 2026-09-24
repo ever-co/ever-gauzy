@@ -14,6 +14,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { StockAdjustment } from './stock-adjustment.entity';
 import { StockAdjustmentService } from './stock-adjustment.service';
 import { CreateStockAdjustmentDTO, StockAdjustmentQueryDTO } from './dto';
+import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**
  * The manual-correction resource: draft an instruction, apply it, cancel it.
@@ -77,7 +78,7 @@ export class StockAdjustmentController {
 	@ApiResponse({ status: 409, description: 'The instruction was already applied, or the correction would break a hold.' })
 	@ApiResponse({ status: 428, description: 'The version the correction was based on was not stated.' })
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
-	@Versioned()
+	@Versioned({ target: STOCK_LEVEL_VERSION_TARGET })
 	@Idempotent({ scope: 'stock.adjust', required: false, resourceType: 'stock-adjustment' })
 	@Post(':id/apply')
 	async apply(@Param('id', UUIDValidationPipe) id: ID) {

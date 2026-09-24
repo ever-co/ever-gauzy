@@ -54,6 +54,13 @@ export interface IVersionExpectation {
 	wildcard: boolean;
 	/** The versions the caller accepted, in the order it stated them. Empty for a wildcard. */
 	versions: number[];
+	/**
+	 * The table whose row the stated version is a version of, when the route declared one.
+	 *
+	 * Absent, the version belongs to the record the route itself writes. See
+	 * `IVersionedOptions.target` for why a route would name another one.
+	 */
+	target?: string;
 }
 
 /**
