@@ -1,21 +1,23 @@
-<div class="group-by-wrapper">
-	<div class="label">
-		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+@if (showGroupBy) {
+	<div class="group-by-wrapper">
+		<div class="label">
+			{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+		</div>
+		<div>
+			<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
+				<nb-option value="date">
+					{{ 'REPORT_PAGE.DATE' | translate }}
+				</nb-option>
+				<nb-option value="employee">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</nb-option>
+				<nb-option value="project">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</nb-option>
+			</nb-select>
+		</div>
 	</div>
-	<div>
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
-			<nb-option value="date">
-				{{ 'REPORT_PAGE.DATE' | translate }}
-			</nb-option>
-			<nb-option value="employee">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</nb-option>
-			<nb-option value="project">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</nb-option>
-		</nb-select>
-	</div>
-</div>
+}
 <div class="weekly-logs row-table" [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 	<ng-template #columnsHeader>
 		<!--
