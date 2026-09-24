@@ -1,1 +1,148 @@
 @forward 'report';
+@use 'var' as *;
+
+// ═══ Filter strip ═══════════════════════════════════════════════════════════
+//
+// Group By is projected into `ngx-gauzy-filters` so it sits FIRST on the filter
+// line instead of on a row of its own beneath it.
+//
+// Making room for it meant undoing a width cap. The strip sits at the bottom of
+// four nested bootstrap boxes, and every one of them is shrink-to-fit:
+//
+//   .row > .col-auto.ml-auto            (this template)
+//     ngx-gauzy-filters
+//       .row.col-auto.main-wrapper      (that component)
+//         .col-auto.ml-auto
+//           .filter-item-list
+//
+// A `.col-auto` is `flex: 0 0 auto` — it takes its content's width, not its
+// parent's — and each level also charges 15px of gutter either side. The result
+// was a strip pinned at 972px whatever the window did: measured identical at a
+// 1600px viewport and a 2400px one. The five controls need 993px, so the last
+// one wrapped on a card 1570px wide with hundreds of pixels going spare.
+//
+// Below, each box in that chain is given the full width of its parent instead,
+// and the strip keeps the controls right-aligned within it. Nothing is made
+// wider than the card — the cap is simply no longer narrower than the card.
+
+.filters-row > .filters-col {
+	flex: 1 1 100%;
+	max-width: 100%;
+}
+
+:host ::ng-deep .filters-col {
+	ngx-gauzy-filters {
+		display: block;
+		width: 100%;
+	}
+
+	.main-wrapper {
+		width: 100%;
+		max-width: 100%;
+		margin-left: 0;
+		margin-right: 0;
+
+		> .col-auto {
+			width: 100%;
+			max-width: 100%;
+			padding-left: 0;
+			padding-right: 0;
+		}
+	}
+
+	// Right-aligned, so the strip still reads as anchored to the card's edge now
+	// that its box spans the header rather than hugging its own contents.
+	//
+	// `wrap` is a safety net, not the intent: with the cap gone there is room for
+	// all five on one line at any normal width, and this only engages if
+	// something genuinely takes the space away - the AI assistant sidebar is
+	// 384px, for instance. Wrapping beats `report.scss`'s `nowrap !important`,
+	// which would run the controls off the right edge instead.
+	.filter-item-list {
+		flex-wrap: wrap !important;
+		justify-content: flex-end;
+		row-gap: 0.5rem;
+		// The row is `align-items-end` in the filters template, a bootstrap utility
+		// carrying `!important`. Every control is the same 32px tall, so bottom
+		// alignment only ever mattered because of the stray bottom margins zeroed
+		// below — and with those gone, centring is what actually keeps them on one
+		// optical line whatever height a control turns out to be.
+		align-items: center !important;
+	}
+
+	// Each existing filter carries a 5px bottom margin; the projected Group
+	// control does not, which is what left it sitting 5px lower than its
+	// neighbours (measured: bottom edge 197 against 192). Zeroing all of them is
+	// deterministic — every item is then the same box — where matching the margin
+	// on one control would only hold until another gained or lost one.
+	.filter-item-list > * {
+		margin-bottom: 0 !important;
+	}
+
+	// "A little bit" narrower: 205px down to 170px each.
+	//
+	// The floor is the longest label they have to hold — "Activity Level" is ~95px
+	// at this size, and the select button spends another ~53px on its own padding
+	// and chevron, so ~150px is the point where text would start to truncate.
+	// 170px keeps a margin over that for longer translations.
+	//
+	// The selector is longer than it looks like it needs to be because the filters
+	// component sets `.filter-item-list nb-select { width: 100% }`, which with its
+	// encapsulation attributes lands at (0,4,1) — a shorter selector here matched
+	// but lost, and the selects stayed at their full width.
+	.filter-item-list .filter-item.single-filter-wrapper nb-select {
+		min-width: 0;
+		width: 170px;
+	}
+
+	// Narrowing the select alone changed nothing visible: its wrapper carries
+	// `.filter-item { min-width: 220px }` from the same component, so the box kept
+	// its old width around a smaller control. 185px is the select plus the 15px
+	// gutter that separates one filter from the next.
+	//
+	// `.col-auto` is in the selector purely for specificity — that `min-width`
+	// rule lands at (0,5,0) with its encapsulation attributes, so an equal-length
+	// selector here would come down to stylesheet order.
+	.filter-item-list .col-auto.filter-item.single-filter-wrapper {
+		min-width: 185px;
+	}
+}
+
+// ── Group By ────────────────────────────────────────────────────────────────
+
+// It keeps a visible label where the filters beside it use placeholders: those
+// read "Source" / "Activity Level" until something is chosen, but this one
+// always holds a value, so without a label the row would just show "Date" with
+// nothing saying what that is.
+//
+// `padding: 0` drops the 15px gutter `.col-auto` brings, which is 30px this
+// control has no use for. Plain `padding` rather than `nb-ltr`/`nb-rtl` — those
+// emit a `[dir=ltr]`-prefixed selector that did not match here, and a symmetric
+// zero has no side to it anyway.
+.group-by-filter {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0;
+}
+
+.group-by-label {
+	white-space: nowrap;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 15px;
+	letter-spacing: 0em;
+	color: nb-theme(gauzy-text-color-2);
+}
+
+// `ngx-gauzy-filters` sets `nb-select { min-width: 150px }` for its own filters,
+// which are multi-selects that can hold several values at once. This one holds a
+// single short word, so it is sized to its content rather than reserving the
+// width of a filter that can read "Source, Activity Level".
+:host ::ng-deep .group-by-filter nb-select {
+	min-width: auto;
+
+	.select-button {
+		min-width: auto;
+	}
+}
