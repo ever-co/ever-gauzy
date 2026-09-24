@@ -197,7 +197,7 @@ describe('GitHub update feed', () => {
 			expect(await cdn.tagName()).toBe('v111.44.48');
 		});
 
-		it('picks the newest prerelease when prereleases are enabled', async () => {
+		it('picks the newest prerelease when the prerelease channel is enabled', async () => {
 			appSetting.prerelease = true;
 			releases = [release('v111.44.48'), release('v111.44.47', true), release('v111.44.15', true)];
 
