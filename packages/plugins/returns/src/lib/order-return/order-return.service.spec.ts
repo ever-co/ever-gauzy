@@ -1206,11 +1206,31 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 			fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }])
 		).rejects.toThrow(/RETURN_STOCK_LEDGER_UNAVAILABLE/);
 
-		expect(fixture.returnRow('return-1')).toMatchObject({
-			status: OrderReturnStatus.APPROVED,
-			receivedAt: undefined
-		});
+		// Asserted on the value rather than on the key: a receipt refused before its header write no
+		// longer rewrites the header at all, so the row never gains a `receivedAt` member to hold one.
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.APPROVED });
+		expect(fixture.returnRow('return-1')?.receivedAt).toBeUndefined();
 		expect(fixture.line('line-1')).toMatchObject({ receivedQuantity: '0', damagedQuantity: '0' });
+	});
+
+	// The defect: the compensation restored the header unconditionally, and the header is the receipt's
+	// *last* write — so for every receipt refused before it (a ledger that refused a movement, a line
+	// the plan could not place, a version conflict on the header write itself) the restore wrote the
+	// values the row already held and still moved the version on. The caller that read version 2 and
+	// was refused found the return at 3, so its retry was refused again as a conflict it could not have
+	// caused. The end-to-end receipt run measured exactly that: a refused receipt left
+	// `version = 3` with nothing received.
+	it('leaves the version where the caller read it when a receipt is refused before its header write', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 2 })],
+			withLedger: false
+		});
+
+		await expect(
+			fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }])
+		).rejects.toThrow(/RETURN_STOCK_LEDGER_UNAVAILABLE/);
+
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.APPROVED, version: 2 });
 	});
 
 	// The defect: `recordReceipt` *overwrites* a line's `receivedQuantity` rather than accumulating it,

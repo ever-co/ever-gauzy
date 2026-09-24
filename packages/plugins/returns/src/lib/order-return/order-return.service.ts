@@ -1099,15 +1099,52 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		// receipt that is undone must leave neither the return nor the order claiming the goods arrived.
 		await this.lineService.restoreOrderLineReceipt(orderReturn.orderId, plan);
 
-		// The header is restored under whatever version it holds at this moment rather than under the
-		// one the caller stated: this write undoes a receipt that failed, so it must land whether or not
-		// the failed receipt managed to move the version on before it threw.
+		// **The header is restored only when the receipt's own header write landed.** It is the last
+		// write of the receipt, so most failures happen before it — a movement the ledger refused, a
+		// line the plan could not place, a version conflict on this very write — and restoring an
+		// unchanged header anyway was a write that changed nothing and still moved the version on.
+		// That turned every refused receipt into a conflict for the caller's retry: the client that
+		// read version 2 and was refused found the return at 3, having been told nothing it could act
+		// on. A header that did move — the write landed and the event after it threw — is restored
+		// under whatever version it holds at this moment rather than the one the caller stated,
+		// because this write must land whether or not the failed receipt moved the version on.
+		if (!(await this.headerMovedSince(orderReturn))) {
+			return;
+		}
+
 		await this.commitHeader(orderReturn, {
 			status: orderReturn.status,
 			receivedAt: orderReturn.receivedAt,
 			warehouseId: orderReturn.warehouseId,
 			note: orderReturn.note
 		});
+	}
+
+	/**
+	 * Whether a return's header still reads as it did before a receipt began.
+	 *
+	 * A receipt's header write always moves the status or the receipt instant — a second partial
+	 * delivery leaves the status at `PARTIALLY_RECEIVED` and moves `receivedAt` — so comparing the two
+	 * tells a receipt whose header write landed from one that failed before it. A row that cannot be
+	 * read is treated as moved: the restore is then attempted exactly as it always was, which is the
+	 * safe answer for a compensation that cannot see what it is compensating.
+	 *
+	 * @param before The return as the receipt read it.
+	 * @returns True when the header differs from what the receipt started from, or cannot be read.
+	 */
+	private async headerMovedSince(before: OrderReturn): Promise<boolean> {
+		let current: OrderReturn;
+
+		try {
+			current = await this.findOneScoped(before.id);
+		} catch {
+			return true;
+		}
+
+		const instant = (value?: Date | string | null): number | null =>
+			value === undefined || value === null ? null : new Date(value).getTime();
+
+		return current.status !== before.status || instant(current.receivedAt) !== instant(before.receivedAt);
 	}
 
 	/**
