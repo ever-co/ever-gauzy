@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import {
 	NbAccordionModule,
 	NbPopoverDirective,
@@ -250,10 +250,28 @@ export class MenuItemComponent implements OnInit {
 			// This emits the 'selectedChange' event with the 'item' as the data
 			this.selectedChange.emit(this.item);
 		}
+
+		this.checkUrl(this._router.url);
+		this._router.events
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				untilDestroyed(this)
+			)
+			.subscribe((event: NavigationEnd) => this.checkUrl(event.urlAfterRedirects));
 	}
 
 	public isSelectedChild(child: IMenuItem): boolean {
 		return isSameMenuItem(child, this.selectedChildren);
+	}
+
+	private checkUrl(url: string): void {
+		if (this.item?.children?.length || !this.item?.link) {
+			return;
+		}
+		const pathOnly = url.split(/[?#]/)[0];
+		if (pathOnly === this.item.link) {
+			this.selectedChange.emit(this.item);
+		}
 	}
 
 	/**
