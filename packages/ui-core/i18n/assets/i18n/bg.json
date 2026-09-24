@@ -4606,7 +4606,7 @@
 			"SELECT_DEFAULT_CDN": "Изберете сървър за актуализация по подразбиране",
 			"TOGGLE_UPDATE_LOCALLY": "Превключване за локално актуализиране",
 			"LOCAL_SERVER": "Локален сървър",
-			"LOCAL_SERVER_NOTE": "Избраната директория трябва задължително да съдържа манифестите <strong>latest.yml</strong> и/или <strong>latest-mac.yml</strong> за успешна валидация на актуализацията",
+			"LOCAL_SERVER_NOTE": "Избраната директория трябва да съдържа манифеста за актуализация за вашата система (Windows: <strong>latest-x64.yml</strong> или <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> или <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) и изброените в него файлове за актуализация за успешна валидация на актуализацията",
 			"OTHER_SETTINGS": "Други настройки",
 			"ALLOW_PRERELEASE_VERSIONS": "Разрешаване на предварителни версии",
 			"CHECK_UPDATE_APP_VERSION": "Проверете и актуализирайте версията на приложението",

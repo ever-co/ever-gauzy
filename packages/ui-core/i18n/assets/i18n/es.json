@@ -4560,7 +4560,7 @@
 			"SELECT_DEFAULT_CDN": "Seleccionar servidor CDN predeterminado para la actualización",
 			"TOGGLE_UPDATE_LOCALLY": "Cambiar a actualizar localmente",
 			"LOCAL_SERVER": "Servidor local",
-			"LOCAL_SERVER_NOTE": "El directorio seleccionado debe contener definitivamente el manifiesto <strong>latest.yml</strong> y/o <strong>latest-mac.yml</strong> para poder realizar la validación de la actualización.",
+			"LOCAL_SERVER_NOTE": "El directorio seleccionado debe contener el manifiesto de actualización de su sistema (Windows: <strong>latest-x64.yml</strong> o <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> o <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) y los archivos de actualización que figuran en él, para poder realizar la validación de la actualización.",
 			"OTHER_SETTINGS": "Otros ajustes",
 			"ALLOW_PRERELEASE_VERSIONS": "Permitir versiones preliminares.",
 			"CHECK_UPDATE_APP_VERSION": "Verifique y actualice la versión de su aplicación.",

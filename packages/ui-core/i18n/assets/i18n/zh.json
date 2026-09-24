@@ -4558,7 +4558,7 @@
 			"SELECT_DEFAULT_CDN": "选择更新的默认 CDN 服务器",
 			"TOGGLE_UPDATE_LOCALLY": "切换以本地方式更新",
 			"LOCAL_SERVER": "本地服务器",
-			"LOCAL_SERVER_NOTE": "所选择的目录应该明确包含 <strong>latest.yml</strong> 和/或 <strong>latest-mac.yml</strong> 清单，以进行更新验证。",
+			"LOCAL_SERVER_NOTE": "所选目录必须包含适用于您系统的更新清单（Windows：<strong>latest-x64.yml</strong> 或 <strong>latest-arm64.yml</strong>；Linux：<strong>latest-x64-linux.yml</strong> 或 <strong>latest-arm64-linux-arm64.yml</strong>；macOS：<strong>latest-mac.yml</strong>）以及其中列出的更新文件，以进行更新验证。",
 			"OTHER_SETTINGS": "其他设置",
 			"ALLOW_PRERELEASE_VERSIONS": "允许预发布版本",
 			"CHECK_UPDATE_APP_VERSION": "检查并更新您的应用版本",

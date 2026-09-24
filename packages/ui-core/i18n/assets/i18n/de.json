@@ -4554,7 +4554,7 @@
 			"SELECT_DEFAULT_CDN": "Wählen Sie den Standard-CDN-Server für das Update aus.",
 			"TOGGLE_UPDATE_LOCALLY": "Zum Aktualisieren lokal umschalten",
 			"LOCAL_SERVER": "Lokaler Server",
-			"LOCAL_SERVER_NOTE": "Das ausgewählte Verzeichnis sollte definitiv das <strong>latest.yml</strong> und/oder <strong>latest-mac.yml</strong> Manifest enthalten, um die Update-Validierung durchzuführen.",
+			"LOCAL_SERVER_NOTE": "Das ausgewählte Verzeichnis muss das Update-Manifest für Ihr System (Windows: <strong>latest-x64.yml</strong> oder <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> oder <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) sowie die darin aufgeführten Update-Dateien enthalten, um die Update-Validierung durchzuführen.",
 			"OTHER_SETTINGS": "Andere Einstellungen",
 			"ALLOW_PRERELEASE_VERSIONS": "Erlaube Vorabversionen.",
 			"CHECK_UPDATE_APP_VERSION": "Überprüfen und aktualisieren Sie Ihre App-Version.",
