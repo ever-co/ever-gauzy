@@ -876,15 +876,22 @@ async function main() {
 
 			return Array.isArray(items) ? items.find((item) => item?.providerKey === FIXTURE.providerKey) : undefined;
 		},
+		// The route is `@Idempotent({ required: true })`: opening a payer is a provider-side act a blind
+		// retry would repeat, so it is refused without a key rather than run twice.
 		create: () =>
-			scoped('POST', '/api/payment-account-holders', {
-				providerKey: FIXTURE.providerKey,
-				type: 'CUSTOMER',
-				country: 'US',
-				defaultCurrency: FIXTURE.currency,
-				organizationId: session.organizationId,
-				contactId: representative.row?.id
-			})
+			scoped(
+				'POST',
+				'/api/payment-account-holders',
+				{
+					providerKey: FIXTURE.providerKey,
+					type: 'CUSTOMER',
+					country: 'US',
+					defaultCurrency: FIXTURE.currency,
+					organizationId: session.organizationId,
+					contactId: representative.row?.id
+				},
+				{ 'Idempotency-Key': `flow-account-${FIXTURE.providerKey}-${Date.now()}` }
+			)
 	});
 
 	const holderId = holder.row?.id;
@@ -934,20 +941,27 @@ async function main() {
 	let instrumentCreated = false;
 
 	if (!instrument) {
-		const saved = await scoped('POST', '/api/payment-method-tokens', {
-			accountHolderId: holderId,
-			providerKey: FIXTURE.providerKey,
-			token: FIXTURE.instrumentReference,
-			providerConfirmation: { token: FIXTURE.instrumentReference, confirmedAt: new Date().toISOString() },
-			type: 'CARD',
-			brand: 'Platform Flow',
-			last4: '4242',
-			expiryMonth: 12,
-			expiryYear: 2099,
-			holderName: 'Flow Representative',
-			metadata: { flowKey: FIXTURE.instrumentKey },
-			organizationId: session.organizationId
-		});
+		const saved = await scoped(
+			'POST',
+			'/api/payment-method-tokens',
+			{
+				accountHolderId: holderId,
+				providerKey: FIXTURE.providerKey,
+				token: FIXTURE.instrumentReference,
+				providerConfirmation: { token: FIXTURE.instrumentReference, confirmedAt: new Date().toISOString() },
+				type: 'CARD',
+				brand: 'Platform Flow',
+				last4: '4242',
+				expiryMonth: 12,
+				expiryYear: 2099,
+				holderName: 'Flow Representative',
+				metadata: { flowKey: FIXTURE.instrumentKey },
+				organizationId: session.organizationId
+			},
+			// Saving an instrument is `@Idempotent({ required: true })` for the same reason opening the
+			// account is, so the request carries a key like every other retry-safe write in this suite.
+			{ 'Idempotency-Key': `flow-instrument-${holderId}-${Date.now()}` }
+		);
 
 		instrumentStatus = saved.status;
 		instrument = saved.json;
@@ -1209,15 +1223,22 @@ async function main() {
 
 			return Array.isArray(items) ? items.find((item) => item?.providerKey === FIXTURE.disposableProviderKey) : undefined;
 		},
+		// The route is `@Idempotent({ required: true })`: opening a payer is a provider-side act a blind
+		// retry would repeat, so it is refused without a key rather than run twice.
 		create: () =>
-			scoped('POST', '/api/payment-account-holders', {
-				providerKey: FIXTURE.disposableProviderKey,
-				type: 'CUSTOMER',
-				country: 'US',
-				defaultCurrency: FIXTURE.currency,
-				organizationId: session.organizationId,
-				contactId: representative.row?.id
-			})
+			scoped(
+				'POST',
+				'/api/payment-account-holders',
+				{
+					providerKey: FIXTURE.disposableProviderKey,
+					type: 'CUSTOMER',
+					country: 'US',
+					defaultCurrency: FIXTURE.currency,
+					organizationId: session.organizationId,
+					contactId: representative.row?.id
+				},
+				{ 'Idempotency-Key': `flow-account-${FIXTURE.disposableProviderKey}-${Date.now()}` }
+			)
 	});
 
 	const disposalId = disposal.row?.id;
@@ -1239,11 +1260,16 @@ async function main() {
 	// Only an active account takes a new instrument, so a pending one is verified first; a closed one
 	// (a later run of this suite) is already in the state the close left it in.
 	if (disposal.row?.status === 'PENDING') {
-		const disposalVerified = await scoped('POST', `/api/payment-account-holders/${disposalId}/verify`, {
-			verificationStatus: 'VERIFIED',
-			reference: FIXTURE.disposableAccountReference,
-			note: 'Verified by the commerce flow suite before the close.'
-		});
+		const disposalVerified = await scoped(
+			'POST',
+			`/api/payment-account-holders/${disposalId}/verify`,
+			{
+				verificationStatus: 'VERIFIED',
+				reference: FIXTURE.disposableAccountReference,
+				note: 'Verified by the commerce flow suite before the close.'
+			},
+			{ 'Idempotency-Key': `flow-verify-${disposalId}-${Date.now()}` }
+		);
 
 		record(
 			'the disposal account is verified before anything is saved under it',
@@ -1263,20 +1289,27 @@ async function main() {
 	const storedDisposal = disposalItems.find((item) => item?.metadata?.flowKey === FIXTURE.disposableInstrumentKey);
 
 	if (!storedDisposal && disposal.row?.status !== 'DISABLED') {
-		const saved = await scoped('POST', '/api/payment-method-tokens', {
-			accountHolderId: disposalId,
-			providerKey: FIXTURE.disposableProviderKey,
-			token: FIXTURE.disposableInstrumentReference,
-			providerConfirmation: { token: FIXTURE.disposableInstrumentReference, confirmedAt: new Date().toISOString() },
-			type: 'CARD',
-			brand: 'Platform Flow Disposal',
-			last4: '4243',
-			expiryMonth: 11,
-			expiryYear: 2099,
-			holderName: 'Flow Representative',
-			metadata: { flowKey: FIXTURE.disposableInstrumentKey },
-			organizationId: session.organizationId
-		});
+		const saved = await scoped(
+			'POST',
+			'/api/payment-method-tokens',
+			{
+				accountHolderId: disposalId,
+				providerKey: FIXTURE.disposableProviderKey,
+				token: FIXTURE.disposableInstrumentReference,
+				providerConfirmation: { token: FIXTURE.disposableInstrumentReference, confirmedAt: new Date().toISOString() },
+				type: 'CARD',
+				brand: 'Platform Flow Disposal',
+				last4: '4243',
+				expiryMonth: 11,
+				expiryYear: 2099,
+				holderName: 'Flow Representative',
+				metadata: { flowKey: FIXTURE.disposableInstrumentKey },
+				organizationId: session.organizationId
+			},
+			// Saving an instrument is `@Idempotent({ required: true })` for the same reason opening the
+			// account is, so the request carries a key like every other retry-safe write in this suite.
+			{ 'Idempotency-Key': `flow-instrument-${disposalId}-${Date.now()}` }
+		);
 
 		record(
 			'the disposal account holds a live instrument to revoke',
