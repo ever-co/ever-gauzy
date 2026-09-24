@@ -37,13 +37,16 @@
 
 // ── Cells ───────────────────────────────────────────────────────────────────
 
+// Figures read from the START of their column, headers included, so a value
+// begins on the same edge as the label above it. `tabular-nums` from the shared
+// mixin keeps the digits stacked; the alignment does not have to.
 .spent-column,
 .remaining-column {
-	justify-content: flex-end;
-	text-align: right;
+	justify-content: flex-start;
+	text-align: start;
 
 	.responsive-table-content {
-		justify-content: flex-end;
+		justify-content: flex-start;
 		width: 100%;
 		color: nb-theme(text-basic-color);
 	}
@@ -64,8 +67,10 @@
 
 .budget-heading {
 	flex: 0 0 $report-budget-amount-width;
-	@include nb-ltr(text-align, right);
-	@include nb-rtl(text-align, left);
+	// `start`, and a logical value rather than `nb-ltr(text-align, ...)`: that
+	// mixin emits a `[dir=ltr]` prefixed selector which did not match here, so the
+	// heading once sat 42px off the amount under it with nothing explaining why.
+	text-align: start;
 }
 
 // Amount then bar, on one line — see the note on the same block in
@@ -92,8 +97,7 @@
 		font-variant-numeric: tabular-nums;
 		font-feature-settings: 'tnum' 1;
 		color: nb-theme(text-basic-color);
-		@include nb-ltr(text-align, right);
-		@include nb-rtl(text-align, left);
+		text-align: start;
 	}
 
 	.progress-wrapper {
