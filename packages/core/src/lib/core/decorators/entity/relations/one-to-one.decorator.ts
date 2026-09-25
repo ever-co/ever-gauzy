@@ -141,6 +141,12 @@ export function mapOneToOneArgsForMikroORM<T, O>({
 		...(typeOrmOptions?.onUpdate ? { updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase() } : {})
 	};
 
+	// The owning side is nullable unless stated otherwise, as TypeORM's one-to-one is; MikroORM's default is the
+	// opposite (see the same default in `mapManyToOneArgsForMikroORM`).
+	if (mikroOrmOptions.owner === true && mikroOrmOptions.nullable === undefined) {
+		mikroOrmOptions.nullable = true;
+	}
+
 	// Set default joinColumn if not overwritten in options
 	if (mikroOrmOptions.owner === true && !mikroOrmOptions.joinColumn && propertyKey) {
 		mikroOrmOptions.joinColumn = `${propertyKey}Id`;

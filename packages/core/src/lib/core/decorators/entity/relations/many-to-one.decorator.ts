@@ -141,6 +141,14 @@ export function mapManyToOneArgsForMikroORM<T, O>({
 		...(typeOrmOptions?.onUpdate ? { updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase() } : {})
 	};
 
+	// Nullable unless stated otherwise, as TypeORM's many-to-one is. MikroORM's default is the opposite, so a
+	// relation declared without `nullable` was optional on TypeORM (and in the migrations, which TypeORM's mapping
+	// wrote) and required on MikroORM: a standalone product variant, which TypeORM saves, was refused with
+	// "Value for ProductVariant.product is required".
+	if (mikroOrmOptions.nullable === undefined) {
+		mikroOrmOptions.nullable = true;
+	}
+
 	// Set default joinColumn and referenceColumnName if not provided
 	if (!mikroOrmOptions.joinColumn && propertyKey) {
 		// Set default joinColumn if not overwrite in options
