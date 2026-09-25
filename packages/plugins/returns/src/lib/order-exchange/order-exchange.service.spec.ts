@@ -92,6 +92,9 @@ jest.mock('@gauzy/core', () => {
 		},
 		BaseEvent: class {},
 		EventBus: class {},
+		// Added when the return line service began reading through the configured ORM: the double has to carry
+		// the enum it compares its `ormType` against, or the code under test fails on the double.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		SequenceService: class SequenceService {},
 		Warehouse: class Warehouse {},

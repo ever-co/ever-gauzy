@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
-import { In, Not } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, In, Not, SaveOptions } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { LegacyFindOneOptions, MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import {
 	IOrderFulfillmentPort,
 	IOrderLineFulfillment,
@@ -37,8 +37,15 @@ export interface IOrderReturnReceiptPlan {
 	previous: { receivedQuantity: DecimalString; damagedQuantity: DecimalString; restock: boolean };
 }
 
-/** The return statuses that still count against the order's fulfilled quantity. */
-const LIVE_STATUSES: OrderReturnStatus[] = [
+/**
+ * The return statuses that still count against the order's fulfilled quantity.
+ *
+ * They are also the statuses whose outstanding units the order's requested-return counter holds: a return
+ * leaves the set by being rejected or cancelled, and those two moves are what give its units back. So a
+ * return, or a line of one, that is retired or removed while its return is in this set gives back what it
+ * still asked for, and one that is restored into it asks for it again.
+ */
+export const LIVE_RETURN_STATUSES: OrderReturnStatus[] = [
 	OrderReturnStatus.OPEN,
 	OrderReturnStatus.REQUESTED,
 	OrderReturnStatus.APPROVED,
@@ -79,6 +86,13 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	/**
 	 * Reads the lines of a return, scoped to the caller's tenant and organization.
 	 *
+	 * The read goes through the configured ORM. Under `DB_ORM=mikro-orm` the TypeORM entity carries its
+	 * base columns and nothing else — `@MultiORMColumn` registers the active ORM's decorator alone — so the
+	 * TypeORM repository cannot filter on the return or answer a quantity there; the platform's own read,
+	 * which lifts MikroORM's soft-delete filter for `withDeleted`, is used on that ORM instead. The order is
+	 * total — the instant, then the identity — because `orderReturnLines` pages these rows with offset
+	 * cursors, and two lines written in one clock tick would otherwise come back in either order.
+	 *
 	 * @param returnId The return to read.
 	 * @param withDeleted Whether lines retired by a later replacement write are included. Stated through
 	 * the find options rather than as a filter on the returned rows, because the store is what knows a
@@ -86,13 +100,23 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	 * @returns The lines, oldest first.
 	 */
 	public async findForReturn(returnId: ID, withDeleted?: boolean): Promise<OrderReturnLine[]> {
+		const where = {
+			returnId,
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+
+		if (this.usesMikroOrm) {
+			return await this.find({
+				where,
+				order: { createdAt: 'ASC', id: 'ASC' },
+				...(withDeleted ? { withDeleted: true } : {})
+			});
+		}
+
 		return await this.typeOrmOrderReturnLineRepository.find({
-			where: {
-				returnId,
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId()
-			},
-			order: { createdAt: 'ASC' },
+			where,
+			order: { createdAt: 'ASC', id: 'ASC' },
 			...(withDeleted ? { withDeleted: true } : {})
 		});
 	}
@@ -289,6 +313,10 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	/**
 	 * Sums what every live return of the order already claims for each order line.
 	 *
+	 * Both reads go through the configured ORM, for the reason {@link findForReturn} states: the ceiling is
+	 * checked on every request, edit and restoration of a return, and a read through the TypeORM repository
+	 * under MikroORM would count nothing.
+	 *
 	 * @param orderId The order the returns are against.
 	 * @param orderLineIds The order lines to total.
 	 * @param excludeReturnId A return to leave out of the total, when it is the one being edited.
@@ -309,15 +337,23 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 			return claimed;
 		}
 
-		const liveReturns = await this.typeOrmOrderReturnRepository.find({
-			where: {
-				orderId,
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId(),
-				status: In(LIVE_STATUSES)
-			},
-			select: { id: true }
-		});
+		const scope = {
+			orderId,
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+		const liveReturns: Array<Pick<OrderReturn, 'id'>> = this.usesMikroOrm
+			? await this.mikroOrmOrderReturnLineRepository.getEntityManager().find(
+					OrderReturn,
+					{ ...scope, status: { $in: LIVE_RETURN_STATUSES } } as never,
+					{
+						fields: ['id']
+					} as never
+				)
+			: await this.typeOrmOrderReturnRepository.find({
+					where: { ...scope, status: In(LIVE_RETURN_STATUSES) },
+					select: { id: true }
+				});
 
 		const returnIds = liveReturns.map((row) => row.id).filter((id) => !!id && id !== excludeReturnId);
 
@@ -325,9 +361,10 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 			return claimed;
 		}
 
-		const lines = await this.typeOrmOrderReturnLineRepository.find({
-			where: { returnId: In(returnIds), orderLineId: In(orderLineIds) }
-		});
+		const lineCriteria = { returnId: In(returnIds), orderLineId: In(orderLineIds) };
+		const lines = this.usesMikroOrm
+			? await this.find({ where: lineCriteria })
+			: await this.typeOrmOrderReturnLineRepository.find({ where: lineCriteria });
 
 		for (const line of lines) {
 			if (!line.orderLineId) {
@@ -593,32 +630,24 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	 * withdrawal itself does not land.
 	 */
 	public async releaseOrderLineRequest(returnId: ID, orderId: ID): Promise<IOrderLineReturnRequestMove[]> {
-		const units = new Map<ID, bigint>();
+		return await this.moveOrderLineRequest(orderId, outstandingMoves(await this.findForReturn(returnId), -1n));
+	}
 
-		for (const line of await this.findForReturn(returnId)) {
-			const outstanding =
-				toQuantityUnits(line.quantity) -
-				toQuantityUnits(line.receivedQuantity) -
-				toQuantityUnits(line.damagedQuantity);
-
-			if (outstanding <= 0n) {
-				continue;
-			}
-
-			if (!line.orderLineId) {
-				throw new BadRequestException(
-					`RETURN_ORDER_LINE_UNLINKED: return line ${line.id} still asks for ${fromQuantityUnits(outstanding)} ` +
-						'unit(s) and names no order line, so the request cannot be taken back from the order.'
-				);
-			}
-
-			units.set(line.orderLineId, (units.get(line.orderLineId) ?? 0n) - outstanding);
-		}
-
-		return await this.moveOrderLineRequest(
-			orderId,
-			Array.from(units).map(([orderLineId, delta]) => ({ orderLineId, quantityDelta: fromQuantityUnits(delta) }))
-		);
+	/**
+	 * Asks the order again for what a return that is live once more still asks for.
+	 *
+	 * The mirror of {@link releaseOrderLineRequest}, for a return that is restored after it was retired: the
+	 * retirement gave its outstanding units back, so its restoration takes them again, line by line, by what
+	 * each line still had outstanding. The caller measures the return against the fulfilled ceiling first —
+	 * another return may have asked for the same units while this one was retired.
+	 *
+	 * @param returnId The return being restored.
+	 * @param orderId The order it is against.
+	 * @returns The moves the order accepted, which {@link restoreOrderLineRequest} undoes when the
+	 * restoration itself does not land.
+	 */
+	public async reclaimOrderLineRequest(returnId: ID, orderId: ID): Promise<IOrderLineReturnRequestMove[]> {
+		return await this.moveOrderLineRequest(orderId, outstandingMoves(await this.findForReturn(returnId), 1n));
 	}
 
 	/**
@@ -636,6 +665,205 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 			orderId,
 			negateMoves(applied)
 		);
+	}
+
+	/**
+	 * Retires one line recoverably, and gives back to the order what it still asked for.
+	 *
+	 * The route is the inherited `DELETE /order-return-lines/:id/soft` and the GraphQL
+	 * `softDeleteOrderReturnLine` field, and both reach this method. A retired line leaves every read of its
+	 * return and the fulfilled ceiling a new request is measured against, so while its return is live the
+	 * order's requested counter would otherwise go on counting units nothing asks for (doc 10 I-12): its
+	 * outstanding units are released first, exactly as a withdrawal releases them, and put back if the
+	 * retirement does not land. A line of a return that no longer counts — rejected or cancelled, or itself
+	 * retired — gave its units back already, and is retired as it always was.
+	 *
+	 * @param id The line to retire.
+	 * @param options Find options the platform narrows its own read with, forwarded unchanged.
+	 * @param saveOptions The platform's save options, forwarded unchanged.
+	 * @returns The retired line.
+	 * @throws NotFoundException when the line is not the caller's.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: LegacyFindOneOptions<OrderReturnLine>,
+		saveOptions?: SaveOptions
+	): Promise<OrderReturnLine> {
+		const { line, orderReturn } = await this.readLive(id);
+
+		if (!orderReturn) {
+			return await super.softRemove(id, options, saveOptions);
+		}
+
+		return await this.whileMoved(orderReturn.orderId, outstandingMoves([line], -1n), () =>
+			super.softRemove(id, options, saveOptions)
+		);
+	}
+
+	/**
+	 * Removes one line for good, and gives back to the order what it still asked for.
+	 *
+	 * The inherited `DELETE /order-return-lines/:id` reaches this method, for the reason and in the way
+	 * {@link softRemove} states. A statement that removed nothing — the line was removed by another request
+	 * in the meantime, which gave its units back itself — puts this call's release back. A line already
+	 * retired gave its units back when it was, and is removed as it always was.
+	 *
+	 * @param criteria The line to remove, by its identifier. Conditions are handed to the platform as they
+	 * always were.
+	 * @param options Find options the platform merges into the statement, forwarded unchanged.
+	 * @returns The delete result.
+	 * @throws NotFoundException when the line is not the caller's.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<OrderReturnLine>,
+		options?: LegacyFindOneOptions<OrderReturnLine>
+	): Promise<DeleteResult> {
+		if (typeof criteria !== 'string') {
+			return await super.delete(criteria, options);
+		}
+
+		// A retired line is read too: its retirement gave its units back already, and it is removed as it
+		// always was.
+		const { line, orderReturn } = await this.readLive(criteria, true);
+
+		if (!orderReturn || line.deletedAt) {
+			return await super.delete(criteria, options);
+		}
+
+		return await this.whileMoved(
+			orderReturn.orderId,
+			outstandingMoves([line], -1n),
+			() => super.delete(criteria, options),
+			(result) => Boolean(result?.affected)
+		);
+	}
+
+	/**
+	 * Restores a retired line, and asks the order again for what it still asks for.
+	 *
+	 * The route is the inherited `PUT /order-return-lines/:id/recover` and the GraphQL
+	 * `recoverOrderReturnLine` field. When the line's return is live, the restored line counts against the
+	 * order again, so it is measured against the fulfilled ceiling with the rest of its return first —
+	 * another return may have asked for the same units while this line was retired — and its outstanding
+	 * units are asked for before it is restored, and given back if the restoration does not land.
+	 *
+	 * @param id The line to restore.
+	 * @param options Find options the platform narrows its own read with, forwarded unchanged.
+	 * @param saveOptions The platform's save options, forwarded unchanged.
+	 * @returns The restored line.
+	 * @throws NotFoundException when the line is not the caller's.
+	 * @throws BadRequestException when its return would then ask back more than was fulfilled.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: LegacyFindOneOptions<OrderReturnLine>,
+		saveOptions?: SaveOptions
+	): Promise<OrderReturnLine> {
+		const line = await this.findLine(id, true);
+
+		if (!line) {
+			throw new NotFoundException('The return line was not found.');
+		}
+
+		const orderReturn = line.deletedAt && line.returnId ? await this.findReturn(line.returnId) : null;
+
+		if (!orderReturn || !LIVE_RETURN_STATUSES.includes(orderReturn.status)) {
+			return await super.softRecover(id, options, saveOptions);
+		}
+
+		await this.assertReturnable(
+			orderReturn.orderId,
+			[...(await this.findForReturn(orderReturn.id)), line].map((each) => ({
+				orderLineId: each.orderLineId as ID,
+				quantity: each.quantity
+			})),
+			orderReturn.id
+		);
+
+		return await this.whileMoved(orderReturn.orderId, outstandingMoves([line], 1n), () =>
+			super.softRecover(id, options, saveOptions)
+		);
+	}
+
+	/**
+	 * Reads a line and the return it belongs to, when that return still counts against the order.
+	 *
+	 * @param id The line.
+	 * @param withDeleted Whether a retired line is read too.
+	 * @returns The line, and its return when the return is live; no return when it is withdrawn or retired.
+	 * @throws NotFoundException when the line is not the caller's — which is also what a line of another
+	 * organization of the tenant is, although the platform's own read would have found it.
+	 */
+	private async readLive(
+		id: ID,
+		withDeleted = false
+	): Promise<{ line: OrderReturnLine; orderReturn: OrderReturn | null }> {
+		const line = await this.findLine(id, withDeleted);
+
+		if (!line) {
+			throw new NotFoundException('The return line was not found.');
+		}
+
+		const orderReturn = line.returnId ? await this.findReturn(line.returnId) : null;
+
+		return {
+			line,
+			orderReturn: orderReturn && LIVE_RETURN_STATUSES.includes(orderReturn.status) ? orderReturn : null
+		};
+	}
+
+	/**
+	 * Runs a write with the order's requested counter moved first, and moves it back when the write fails.
+	 *
+	 * The counter moves first for the reason a withdrawal moves it first: a move the order refuses — a
+	 * counter the request was never added to would go below zero — refuses the write while the line is still
+	 * exactly as it was. A write that did not land moves it back by exactly the moves that landed.
+	 *
+	 * @param orderId The order whose line counters move.
+	 * @param moves The moves; an empty list moves nothing.
+	 * @param write The write the moves belong to.
+	 * @param landed Whether the write's answer says it changed something; by default every answer does.
+	 * @returns What the write answered.
+	 */
+	private async whileMoved<R>(
+		orderId: ID,
+		moves: IOrderLineReturnRequestMove[],
+		write: () => Promise<R>,
+		landed: (result: R) => boolean = () => true
+	): Promise<R> {
+		const applied = await this.moveOrderLineRequest(orderId, moves);
+		let result: R;
+
+		try {
+			result = await write();
+		} catch (error) {
+			await this.moveBack(orderId, applied);
+
+			throw error;
+		}
+
+		if (!landed(result)) {
+			await this.moveBack(orderId, applied);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Moves the order's requested counter back after a write it was moved for did not land.
+	 *
+	 * @param orderId The order.
+	 * @param applied The moves that landed.
+	 */
+	private async moveBack(orderId: ID, applied: readonly IOrderLineReturnRequestMove[]): Promise<void> {
+		try {
+			await this.restoreOrderLineRequest(orderId, applied);
+		} catch (compensationError) {
+			this.logger.error(
+				`A return line write of order ${orderId} did not land and the order's requested counter could not ` +
+					`be moved back: ${describe(compensationError)}`
+			);
+		}
 	}
 
 	/**
@@ -720,19 +948,79 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	 * @throws NotFoundException when it does not exist in this tenant and organization.
 	 */
 	private async readReturn(returnId: ID): Promise<OrderReturn> {
-		const orderReturn = await this.typeOrmOrderReturnRepository.findOne({
-			where: {
-				id: returnId,
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId()
-			}
-		});
+		const orderReturn = await this.findReturn(returnId);
 
 		if (!orderReturn) {
 			throw new NotFoundException('The return was not found.');
 		}
 
 		return orderReturn;
+	}
+
+	/**
+	 * Reads a return that has not been retired, scoped to the caller's tenant and organization, through the
+	 * configured ORM.
+	 *
+	 * This service owns no repository of the return under MikroORM, so on that ORM the return is read through
+	 * the entity manager its own repository is bound to — the persistence context of the request — which
+	 * applies the soft-delete filter as any read of the ORM does.
+	 *
+	 * @param returnId The return to read.
+	 * @returns The return, or null when it is not the caller's or it was retired.
+	 */
+	private async findReturn(returnId: ID): Promise<OrderReturn | null> {
+		const where = {
+			id: returnId,
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+
+		if (this.usesMikroOrm) {
+			return await this.mikroOrmOrderReturnLineRepository.getEntityManager().findOne(OrderReturn, where as never);
+		}
+
+		return await this.typeOrmOrderReturnRepository.findOne({ where });
+	}
+
+	/**
+	 * Reads one line, scoped to the caller's tenant and organization, through the configured ORM.
+	 *
+	 * @param id The line to read.
+	 * @param withDeleted Whether a line that was retired is read too, which is what a restoration reads.
+	 * @returns The line, or null when it is not the caller's.
+	 */
+	private async findLine(id: ID, withDeleted = false): Promise<OrderReturnLine | null> {
+		const scope = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+
+		if (this.usesMikroOrm) {
+			try {
+				return await this.findOneByIdString(id, {
+					where: scope,
+					...(withDeleted ? { withDeleted: true } : {})
+				});
+			} catch (error) {
+				if (error instanceof NotFoundException) {
+					return null;
+				}
+
+				throw error;
+			}
+		}
+
+		return await this.typeOrmOrderReturnLineRepository.findOne({
+			where: { id, ...scope },
+			...(withDeleted ? { withDeleted: true } : {})
+		});
+	}
+
+	/**
+	 * @returns Whether MikroORM is the configured ORM, which decides the repository a read goes through.
+	 */
+	private get usesMikroOrm(): boolean {
+		return this.ormType === MultiORMEnum.MikroORM;
 	}
 
 	/**
@@ -751,7 +1039,7 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 				orderId: In(orderIds),
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId(),
-				status: In(LIVE_STATUSES)
+				status: In(LIVE_RETURN_STATUSES)
 			},
 			select: { orderId: true }
 		});
@@ -771,10 +1059,52 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 				orderId,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId(),
-				status: Not(In(LIVE_STATUSES))
+				status: Not(In(LIVE_RETURN_STATUSES))
 			}
 		});
 	}
+}
+
+/**
+ * What a set of return lines still asks back, as moves of the order's requested-return counter.
+ *
+ * Each line's outstanding units are what it was requested for, less what already arrived sound or damaged:
+ * a unit that arrived stays asked for, because it is on the received counter and I-12 bounds that counter by
+ * this one. Lines of one order line are summed into one move, and a line with nothing outstanding moves
+ * nothing.
+ *
+ * @param lines The lines.
+ * @param sign `-1n` to give the units back to the order, `1n` to ask for them again.
+ * @returns One move per order line that still has units outstanding, never a zero.
+ * @throws BadRequestException when a line with units outstanding names no order line, so the order cannot
+ * be told about them.
+ */
+function outstandingMoves(lines: readonly OrderReturnLine[], sign: bigint): IOrderLineReturnRequestMove[] {
+	const units = new Map<ID, bigint>();
+
+	for (const line of lines) {
+		const outstanding =
+			toQuantityUnits(line.quantity) -
+			toQuantityUnits(line.receivedQuantity) -
+			toQuantityUnits(line.damagedQuantity);
+
+		if (outstanding <= 0n) {
+			continue;
+		}
+
+		if (!line.orderLineId) {
+			throw new BadRequestException(
+				`RETURN_ORDER_LINE_UNLINKED: return line ${line.id} still asks for ${fromQuantityUnits(outstanding)} ` +
+					`unit(s) and names no order line, so the request cannot be ${
+						sign < 0n ? 'taken back from' : 'put back on'
+					} the order.`
+			);
+		}
+
+		units.set(line.orderLineId, (units.get(line.orderLineId) ?? 0n) + sign * outstanding);
+	}
+
+	return Array.from(units).map(([orderLineId, delta]) => ({ orderLineId, quantityDelta: fromQuantityUnits(delta) }));
 }
 
 /**

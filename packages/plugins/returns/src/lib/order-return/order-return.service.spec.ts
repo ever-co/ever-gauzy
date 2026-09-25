@@ -1,4 +1,13 @@
 /**
+ * Which ORM the platform's CRUD base reads and writes through, configured per case.
+ *
+ * The base-class double below answers from the repository of that ORM, as the platform's own does, so a case
+ * that runs on MikroORM can tell a read the platform made from one the service made through the TypeORM
+ * repository behind its back.
+ */
+const mockOrm = { type: 'typeorm' };
+
+/**
  * `@gauzy/core` boots the whole application graph from its barrel — the configuration, the ORM, the
  * job registry, the module scanner — none of which a return service needs and none of which is
  * available outside a running application. The seam is therefore doubled at the module boundary,
@@ -30,21 +39,26 @@ jest.mock('@gauzy/core', () => {
 		) {}
 
 		get ormType(): string {
-			return 'typeorm';
+			return mockOrm.type;
+		}
+
+		/** The repository of the configured ORM, which is the one the platform's CRUD base reads through. */
+		protected get store(): any {
+			return mockOrm.type === 'mikro-orm' ? this.mikroOrmRepository : this.typeOrmRepository;
 		}
 
 		async findAll(options: any = {}): Promise<any> {
-			const [items, total] = await this.typeOrmRepository.findAndCount(options);
+			const [items, total] = await this.store.findAndCount(options);
 
 			return { items, total };
 		}
 
 		async find(options: any = {}): Promise<any> {
-			return this.typeOrmRepository.find(options);
+			return this.store.find(options);
 		}
 
 		async paginate(options: any = {}): Promise<any> {
-			const [items, total] = await this.typeOrmRepository.findAndCount(options);
+			const [items, total] = await this.store.findAndCount(options);
 
 			return { items, total };
 		}
@@ -54,7 +68,7 @@ jest.mock('@gauzy/core', () => {
 				throw new NotFoundException('The requested record was not found');
 			}
 
-			const record = await this.typeOrmRepository.findOne({
+			const record = await this.store.findOne({
 				...options,
 				where: { ...(options.where ?? {}), id }
 			});
@@ -67,7 +81,7 @@ jest.mock('@gauzy/core', () => {
 		}
 
 		async findOneByWhereOptions(where: any): Promise<any> {
-			const record = await this.typeOrmRepository.findOneBy(where);
+			const record = await this.store.findOneBy(where);
 
 			if (!record) {
 				throw new NotFoundException('The requested record was not found');
@@ -77,19 +91,37 @@ jest.mock('@gauzy/core', () => {
 		}
 
 		async create(entity: any): Promise<any> {
-			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
+			return this.store.save(this.store.create(entity));
 		}
 
 		async update(id: any, partial: any): Promise<any> {
-			return this.typeOrmRepository.update(id, partial);
+			return this.store.update(id, partial);
 		}
 
 		async delete(criteria: any): Promise<any> {
-			return this.typeOrmRepository.delete(criteria);
+			return this.store.delete(criteria);
 		}
 
 		async softDelete(criteria: any): Promise<any> {
-			return this.typeOrmRepository.softDelete(criteria);
+			return this.store.softDelete(criteria);
+		}
+
+		// The platform's soft-delete pair: the row is resolved through the tenant-aware read, then retired or
+		// restored. Neither knows anything about a return, which is the point of the cases that drive them.
+		async softRemove(id: any): Promise<any> {
+			const entity = await this.findOneByIdString(id);
+
+			await this.store.softDelete({ id: entity.id });
+
+			return { ...entity, deletedAt: new Date() };
+		}
+
+		async softRecover(id: any): Promise<any> {
+			const entity = await this.findOneByIdString(id, { withDeleted: true });
+
+			await this.store.restore({ id: entity.id });
+
+			return { ...entity, deletedAt: null };
 		}
 	}
 
@@ -121,6 +153,11 @@ jest.mock('@gauzy/core', () => {
 		// suite's.
 		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
 		versionExpectationOf: versionedWrite.versionExpectationOf,
+		// Added when the retirement of a live return grew its own refusal: a removal whose predicated statement
+		// matched no row is the platform's conflict, raised with the platform's class and code.
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
 		// Added when the receipt grew its order-line counter move: the line service now subtracts two
 		// exact decimals to state the delta, and a double that omits the helper makes the code under
@@ -217,8 +254,12 @@ interface ITables {
 function repository(tables: ITables, tableName: keyof ITables) {
 	let sequence = 0;
 	const rows = () => tables[tableName].filter((row) => !row.deletedAt);
+	/** The rows a read answers: the live ones, and the retired ones too when it states `withDeleted`. */
+	const readable = (options: any = {}) => (options?.withDeleted ? tables[tableName] : rows());
 	/** What every `update` was asked to write, and the criteria it was asked to write it under. */
 	const updates: Array<{ criteria: Row; partial: Row }> = [];
+	/** Every read this repository answered, so a case can tell which ORM's repository a service read through. */
+	const reads: any[] = [];
 	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
 	/** Every operator the services actually build, and nothing else: an unknown one throws. */
 	const matchesOperator = (value: unknown, operator: FindOperator<any>): boolean => {
@@ -240,6 +281,11 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			return matchesOperator(value, expected);
 		}
 
+		// MikroORM's own spelling of a membership test, which a read through its entity manager states.
+		if (expected && typeof expected === 'object' && '$in' in (expected as Row)) {
+			return ((expected as Row)['$in'] as unknown[]).some((candidate) => same(value, candidate));
+		}
+
 		// A missing column and a null column are the same thing to the database, and TypeORM drops an
 		// `undefined` member from the condition rather than matching nothing.
 		if (expected === undefined) {
@@ -250,13 +296,38 @@ function repository(tables: ITables, tableName: keyof ITables) {
 	};
 	const matches = (row: Row, where: Row = {}): boolean =>
 		Object.entries(where ?? {}).every(([field, expected]) => matchesValue(row[field], expected));
+	/** The table an entity class names, for a read through MikroORM's entity manager. */
+	const tableOf = (entity: { name?: string }): keyof ITables =>
+		entity?.name === 'OrderReturnLine' ? 'order_return_line' : 'order_return';
 
 	return {
 		rows,
 		updates,
+		reads,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => rows().filter((row) => matches(row, options.where)),
-		findOne: async (options: any = {}) => rows().find((row) => matches(row, options.where)) ?? null,
+		find: async (options: any = {}) => {
+			reads.push(options);
+
+			return readable(options).filter((row) => matches(row, options.where));
+		},
+		findOne: async (options: any = {}) => {
+			reads.push(options);
+
+			return readable(options).find((row) => matches(row, options.where)) ?? null;
+		},
+		// MikroORM's entity manager, which reads the table an entity class names, with the soft-delete filter on.
+		getEntityManager: () => ({
+			find: async (entity: { name?: string }, where: Row = {}) => {
+				reads.push({ entity: entity?.name, where });
+
+				return tables[tableOf(entity)].filter((row) => !row.deletedAt && matches(row, where));
+			},
+			findOne: async (entity: { name?: string }, where: Row = {}) => {
+				reads.push({ entity: entity?.name, where });
+
+				return tables[tableOf(entity)].find((row) => !row.deletedAt && matches(row, where)) ?? null;
+			}
+		}),
 		findOneBy: async (where: any) => rows().find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
 			const items = rows().filter((row) => matches(row, options.where));
@@ -312,7 +383,7 @@ function repository(tables: ITables, tableName: keyof ITables) {
 		// branches are mirrored here: a double that pre-read every criteria would answer a stale version
 		// with a not-found, and the cases below would assert the double instead of the platform.
 		update: async (criteria: any, partial: any) => {
-			const where = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
 			// The platform reads first only for a criteria that does not name a version.
 			const readsFirst = typeof criteria === 'string' || !('version' in where);
 
@@ -339,15 +410,26 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 			return { affected: matching.length };
 		},
-		delete: async (criteria: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = tables[tableName].findIndex((row) => same(row.id, id));
+		restore: async (criteria: any) => {
+			const matching = tables[tableName].filter((row) => matches(row, criteria));
 
-			if (index >= 0) {
-				tables[tableName].splice(index, 1);
+			for (const row of matching) {
+				row.deletedAt = null;
 			}
 
-			return { affected: index >= 0 ? 1 : 0 };
+			return { affected: matching.length };
+		},
+		// A `DELETE` is predicated on every member of its criteria, as the statement is; a missing row, or one
+		// that no longer matches, is an answer of nothing affected rather than an error.
+		delete: async (criteria: any) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const matching = tables[tableName].filter((row) => matches(row, where));
+
+			for (const row of matching) {
+				tables[tableName].splice(tables[tableName].indexOf(row), 1);
+			}
+
+			return { affected: matching.length };
 		}
 	};
 }
@@ -414,9 +496,12 @@ interface IMovement {
  * @param options.beforeRequestMove A hook run inside the order's requested-counter move, before it lands,
  * which is where a case puts a concurrent writer.
  * @param options.beforeReceiptMove The same hook inside the order's received-counter move.
+ * @param options.orm The ORM the platform's CRUD base is configured with. Under MikroORM the services are
+ * handed a second set of repositories over the same tables, as the module hands them one of each ORM.
  */
 function returnFixture(
 	options: {
+		orm?: 'typeorm' | 'mikro-orm';
 		returns?: Row[];
 		lines?: Row[];
 		fulfilled?: Array<{ orderLineId: string; fulfilledQuantity: string; variantId?: string; unitPrice?: string }>;
@@ -439,6 +524,11 @@ function returnFixture(
 	};
 	const typeOrmOrderReturnRepository = repository(tables, 'order_return');
 	const typeOrmOrderReturnLineRepository = repository(tables, 'order_return_line');
+	const mikroOrmOrderReturnRepository = repository(tables, 'order_return');
+	const mikroOrmOrderReturnLineRepository = repository(tables, 'order_return_line');
+
+	mockOrm.type = options.orm ?? 'typeorm';
+
 	const fulfilled = options.fulfilled ?? [
 		{
 			orderLineId: ORDER_LINE,
@@ -484,7 +574,7 @@ function returnFixture(
 			  };
 	const lineService = new OrderReturnLineService(
 		typeOrmOrderReturnLineRepository as never,
-		{} as never,
+		mikroOrmOrderReturnLineRepository as never,
 		typeOrmOrderReturnRepository as never,
 		fulfillment as never
 	);
@@ -585,7 +675,7 @@ function returnFixture(
 	(typeOrmOrderReturnRepository as Row).manager = { name: 'return-manager' };
 	const service = new OrderReturnService(
 		typeOrmOrderReturnRepository as never,
-		{} as never,
+		mikroOrmOrderReturnRepository as never,
 		lineService,
 		sequenceService as never,
 		outbox as never,
@@ -609,6 +699,10 @@ function returnFixture(
 		shipmentCalls,
 		sequenceCalls,
 		updates: typeOrmOrderReturnRepository.updates,
+		/** Every read the service made through a TypeORM repository behind the platform's back. */
+		typeOrmReads: () => [...typeOrmOrderReturnRepository.reads, ...typeOrmOrderReturnLineRepository.reads],
+		/** Every read made through the MikroORM repositories, the platform's included. */
+		mikroOrmReads: () => [...mikroOrmOrderReturnRepository.reads, ...mikroOrmOrderReturnLineRepository.reads],
 		returnRow: (id: string) => tables.order_return.find((row) => row.id === id),
 		line: (id: string) => tables.order_return_line.find((row) => row.id === id)
 	};
@@ -2165,3 +2259,212 @@ describe('OrderReturnService — the versioned write (the aggregate’s optimist
 	});
 });
 
+/**
+ * Retiring a return, removing it and restoring it keep the order's requested counter true (doc 10 I-12).
+ *
+ * `order_line.returnRequestedQuantity` is the order's cache of what its live returns ask for, and a rejection
+ * or a cancellation moves it back by what the return still had outstanding. A soft delete or a removal of a
+ * live return — through the inherited REST routes or the GraphQL `softDeleteOrderReturn` and
+ * `deleteOrderReturn` fields, which all reach the service's own `softRemove` and `delete` — took the return out
+ * of every read, and out of the ceiling this package checks a new request against, while the order kept
+ * counting its units: the next return of the same units then pushed the counter past what any live return
+ * asks for. The resolver documents the soft delete as "the withdrawal a return needs", so it is one: the
+ * outstanding units are released exactly as a withdrawal releases them, and a recovery that makes the return
+ * live again asks for them again, after the ceiling says it still may.
+ */
+describe('OrderReturnService — retiring, removing and restoring a live return (doc 10 I-12)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+		mockOrm.type = 'typeorm';
+	});
+
+	/** An approved return of five whose goods came back as one sound and one broken unit: three are outstanding. */
+	const partlyReceived = () => ({
+		returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 1 })],
+		lines: [lineRow('line-1', { quantity: '5.000000', receivedQuantity: '1.000000', damagedQuantity: '1.000000' })]
+	});
+
+	it('gives back what a retired return still asked for, and asks for it again when it is restored', async () => {
+		const fixture = returnFixture(partlyReceived());
+
+		const retired = await fixture.service.softRemove('return-1');
+
+		// The two units that came back stay asked for: they are on the received counter, which I-12 bounds by
+		// this one.
+		expect(fixture.recordedRequests).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '-3.000000' }] }
+		]);
+		expect(retired.deletedAt).toBeInstanceOf(Date);
+		// The retirement is a write of the aggregate, predicated on the version and the status it was decided
+		// from, and it moves the version on as every other write of the header does.
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.APPROVED, version: 2 });
+		expect(fixture.updates[fixture.updates.length - 1].criteria).toMatchObject({
+			id: 'return-1',
+			status: OrderReturnStatus.APPROVED,
+			version: 1
+		});
+
+		const restored = await fixture.service.softRecover('return-1');
+
+		expect(fixture.recordedRequests.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-3.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '3.000000' }]
+		]);
+		expect(restored.deletedAt ?? null).toBeNull();
+		expect(fixture.returnRow('return-1')?.deletedAt ?? null).toBeNull();
+	});
+
+	it('gives back what a removed return still asked for', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.REQUESTED })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		await fixture.service.delete('return-1');
+
+		expect(fixture.recordedRequests).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }] }
+		]);
+		expect(fixture.returnRow('return-1')).toBeUndefined();
+	});
+
+	it('moves nothing for a return that no longer counts, whichever way it is retired or restored', async () => {
+		// A rejected or cancelled return gave its units back when it was withdrawn; giving them back again would
+		// subtract units another return of the same line asks for.
+		const fixture = returnFixture({
+			returns: [
+				returnRow('rejected', { status: OrderReturnStatus.REJECTED }),
+				returnRow('canceled', { status: OrderReturnStatus.CANCELED })
+			],
+			lines: [
+				lineRow('line-1', { returnId: 'rejected', quantity: '5.000000' }),
+				lineRow('line-2', { returnId: 'canceled', quantity: '3.000000' })
+			]
+		});
+
+		await fixture.service.softRemove('rejected');
+		await fixture.service.softRecover('rejected');
+		await fixture.service.delete('canceled');
+
+		expect(fixture.recordedRequests).toEqual([]);
+		expect(fixture.returnRow('rejected')?.deletedAt ?? null).toBeNull();
+		expect(fixture.returnRow('canceled')).toBeUndefined();
+	});
+
+	it('removes a retired return without giving its units back a second time', async () => {
+		// Its retirement gave the units back; the removal of the retired row has nothing left to release.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, deletedAt: new Date() })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		await fixture.service.delete('return-1');
+
+		expect(fixture.recordedRequests).toEqual([]);
+		expect(fixture.returnRow('return-1')).toBeUndefined();
+	});
+
+	it('refuses to restore a return whose units another return has asked for since, and asks for nothing', async () => {
+		const fixture = returnFixture({
+			returns: [
+				returnRow('return-1', { status: OrderReturnStatus.APPROVED, deletedAt: new Date() }),
+				returnRow('return-2', { status: OrderReturnStatus.OPEN })
+			],
+			lines: [
+				lineRow('line-1', { returnId: 'return-1', quantity: '4.000000' }),
+				lineRow('line-2', { returnId: 'return-2', quantity: '3.000000' })
+			]
+		});
+
+		// Five shipped, three are asked back by the live return: restoring four more would ask back seven.
+		await expect(fixture.service.softRecover('return-1')).rejects.toThrow(/would exceed the 5\.000000/);
+
+		expect(fixture.recordedRequests).toEqual([]);
+		expect(fixture.returnRow('return-1')?.deletedAt).toBeInstanceOf(Date);
+	});
+
+	it('puts the units back when the retirement is refused, so a withdrawal in flight is not counted twice', async () => {
+		// Another operator cancels the return between this retirement's read and its write. The cancellation
+		// gave the units back; the retirement's write is predicated on the version and the status it read, so
+		// it changes no row, and its own release is undone.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 1 })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })],
+			beforeRequestMove: (moves, tables) => {
+				const row = tables.order_return[0];
+
+				if (row.status === OrderReturnStatus.APPROVED && moves[0]?.quantityDelta.startsWith('-')) {
+					Object.assign(row, { status: OrderReturnStatus.CANCELED, version: 2 });
+				}
+			}
+		});
+
+		await expect(fixture.service.softRemove('return-1')).rejects.toMatchObject({
+			status: 409,
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		expect(fixture.recordedRequests.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '5.000000' }]
+		]);
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.CANCELED, version: 2 });
+		expect(fixture.returnRow('return-1')?.deletedAt).toBeUndefined();
+	});
+
+	it('refuses a removal whose return moved on after it was read, and puts the units back', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 1 })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })],
+			beforeRequestMove: (moves, tables) => {
+				if (moves[0]?.quantityDelta.startsWith('-')) {
+					tables.order_return[0].version = 2;
+				}
+			}
+		});
+
+		await expect(fixture.service.delete('return-1')).rejects.toMatchObject({
+			status: 409,
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		expect(fixture.recordedRequests.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '5.000000' }]
+		]);
+		expect(fixture.returnRow('return-1')).toBeDefined();
+	});
+
+	it('does not find a return of another organization, and moves nothing of it', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
+		const fixture = returnFixture(partlyReceived());
+
+		await expect(fixture.service.softRemove('return-1')).rejects.toBeInstanceOf(NotFoundException);
+		await expect(fixture.service.delete('return-1')).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(fixture.recordedRequests).toEqual([]);
+		expect(fixture.returnRow('return-1')).toMatchObject({ version: 1 });
+		expect(fixture.returnRow('return-1')?.deletedAt).toBeUndefined();
+	});
+
+	it('reads the return and its lines through the configured ORM on MikroORM', async () => {
+		const fixture = returnFixture({ ...partlyReceived(), orm: 'mikro-orm' });
+
+		await fixture.service.softRemove('return-1');
+		await fixture.service.softRecover('return-1');
+
+		expect(fixture.recordedRequests.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-3.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '3.000000' }]
+		]);
+		// Under MikroORM the TypeORM entities carry their base columns alone, so a read through a TypeORM
+		// repository would answer rows with no status, no quantities and no tenant.
+		expect(fixture.typeOrmReads()).toEqual([]);
+		expect(fixture.mikroOrmReads().length).toBeGreaterThan(0);
+	});
+});

@@ -1,4 +1,13 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import {
+	BadRequestException,
+	HttpStatus,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, SaveOptions } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import {
 	IOrderLineReceiptMove,
@@ -22,16 +31,24 @@ import {
 } from '../returns.types';
 import { fromQuantityUnits, subtractQuantities, sumQuantities, toQuantityUnits } from '../returns.quantity';
 import {
+	ApiErrorCode,
+	ApiException,
 	EventOutboxService,
 	IVersionExpectation,
+	LegacyFindOneOptions,
 	Money,
+	MultiORMEnum,
 	RequestContext,
 	SequenceService,
 	TenantAwareCrudService,
 	commitVersionedUpdate
 } from '@gauzy/core';
 import { OrderReturnLine } from '../order-return-line/order-return-line.entity';
-import { IOrderReturnReceiptPlan, OrderReturnLineService } from '../order-return-line/order-return-line.service';
+import {
+	IOrderReturnReceiptPlan,
+	LIVE_RETURN_STATUSES,
+	OrderReturnLineService
+} from '../order-return-line/order-return-line.service';
 import { OrderReturn } from './order-return.entity';
 import { MikroOrmOrderReturnRepository } from './repository/mikro-orm-order-return.repository';
 import { TypeOrmOrderReturnRepository } from './repository/type-orm-order-return.repository';
@@ -97,6 +114,22 @@ const ANY_VERSION: IVersionExpectation = { wildcard: true, versions: [] };
  */
 function exactly(version: number): IVersionExpectation {
 	return { wildcard: false, versions: [version] };
+}
+
+/**
+ * The expectation that pins the version a write read the return at, when the row carries one.
+ *
+ * Used by a write the platform decides on its own reading of the row — the retirement of a live return — so
+ * that any write of the aggregate between that reading and the statement, a receipt that left the status
+ * where it was included, refuses it rather than being overwritten by it.
+ *
+ * @param orderReturn The return as it was read.
+ * @returns The expectation to predicate the write on.
+ */
+function asRead(orderReturn: OrderReturn): IVersionExpectation {
+	const version = Number(orderReturn.version);
+
+	return Number.isInteger(version) && version > 0 ? exactly(version) : ANY_VERSION;
 }
 
 /** Statuses a return may still be approved, rejected or cancelled from. */
@@ -366,7 +399,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	}
 
 	/**
-	 * Withdraws a return — rejects or cancels it — and takes back from the order what it asked for.
+	 * Withdraws a return — rejects, cancels or retires it — and takes back from the order what it asked for.
 	 *
 	 * A withdrawn return no longer counts against the order (doc 10 §11.7: "returnRequestedQuantity
 	 * reverted"), so each order line's requested-return counter moves down by the units the return still
@@ -388,29 +421,48 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * then would leave them released for a withdrawal that never happened.
 	 *
 	 * @param orderReturn The return as it was read.
-	 * @param patch The terminal status and what goes with it.
+	 * @param patch The terminal status and what goes with it, or the retirement stamp.
 	 * @param expectation The version the caller read, when the route stated one.
-	 * @param event The fact the withdrawal announces.
+	 * @param event The fact the withdrawal announces, when it announces one; a retirement announces none.
 	 */
 	private async withdraw(
 		orderReturn: OrderReturn,
 		patch: Record<string, unknown>,
 		expectation: IVersionExpectation,
-		event: { name: string; data?: Record<string, unknown> }
+		event?: { name: string; data?: Record<string, unknown> }
 	): Promise<void> {
 		// The status the withdrawal was decided from, taken before anything else runs: the entity in hand
 		// may be the instance a store hands every reader of the row, and the precondition must be the state
 		// this caller read rather than whatever that instance says by the time the header is written.
 		const decidedFrom = orderReturn.status;
+
+		await this.whileReleased(orderReturn, (landed) =>
+			this.commitHeader(orderReturn, patch, expectation, event, {
+				precondition: { status: decidedFrom },
+				onCommitted: landed
+			})
+		);
+	}
+
+	/**
+	 * Runs the write that takes a live return out of what the order counts, with its outstanding units
+	 * released first, and puts them back when the write did not land.
+	 *
+	 * The write reports that it landed through the callback it is handed, the moment it did — before anything
+	 * after it that can still throw — which is what tells a failure of the write apart from a failure after
+	 * it: the first moves the counter back, the second keeps the release, because the return is out.
+	 *
+	 * @param orderReturn The return as it was read.
+	 * @param write The write, handed the callback it calls once it landed.
+	 * @returns What the write answered.
+	 */
+	private async whileReleased<R>(orderReturn: OrderReturn, write: (landed: () => void) => Promise<R>): Promise<R> {
 		const released = await this.lineService.releaseOrderLineRequest(orderReturn.id, orderReturn.orderId);
 		let withdrawn = false;
 
 		try {
-			await this.commitHeader(orderReturn, patch, expectation, event, {
-				precondition: { status: decidedFrom },
-				onCommitted: () => {
-					withdrawn = true;
-				}
+			return await write(() => {
+				withdrawn = true;
 			});
 		} catch (error) {
 			if (!withdrawn) {
@@ -422,6 +474,169 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 							`be put back: ${describe(compensationError)}`
 					);
 				}
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Retires a return recoverably — and, while it still counts against the order, withdraws it.
+	 *
+	 * The inherited `DELETE /order-returns/:id/soft` and the GraphQL `softDeleteOrderReturn` field both reach
+	 * this method, and the resolver documents what they are for: "the withdrawal a return needs rather than a
+	 * destructive one". A retired return leaves every read of the returns and the fulfilled ceiling a new
+	 * request is measured against, so while it is live the order's requested counter would otherwise go on
+	 * counting units nothing asks for any more — the next return of the same units then pushes it past what
+	 * any live return asks, and doc 10 I-12 is measured against a number that has drifted. It is therefore
+	 * retired the way a rejection or a cancellation withdraws it (see {@link withdraw}): what it still had
+	 * outstanding is released first, and the retirement is one version-predicated write of the header,
+	 * predicated on the status it was decided from and on the version it was read at — so a withdrawal or a
+	 * receipt that lands in between refuses it, and its release is moved back.
+	 *
+	 * A return that no longer counts — rejected or cancelled, which gave its units back already — is retired
+	 * as it always was. A return that is not the caller's is not found, which is what the lifecycle moves
+	 * answer too; the platform's own read would have found one of another organization of the tenant.
+	 *
+	 * @param id The return to retire.
+	 * @param options Find options the platform narrows its own read with, forwarded unchanged.
+	 * @param saveOptions The platform's save options, forwarded unchanged.
+	 * @returns The retired return.
+	 * @throws NotFoundException when the return is not the caller's.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the return moved on after it was read.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: LegacyFindOneOptions<OrderReturn>,
+		saveOptions?: SaveOptions
+	): Promise<OrderReturn> {
+		const orderReturn = await this.findOneScoped(id);
+
+		if (!LIVE_RETURN_STATUSES.includes(orderReturn.status)) {
+			return await super.softRemove(id, options, saveOptions);
+		}
+
+		await this.withdraw(orderReturn, { deletedAt: new Date() }, asRead(orderReturn));
+
+		return (await this.readScoped(id, true)) as OrderReturn;
+	}
+
+	/**
+	 * Removes a return for good — and, while it still counts against the order, withdraws it first.
+	 *
+	 * The inherited `DELETE /order-returns/:id` and the GraphQL `deleteOrderReturn` field reach this method.
+	 * The lines go with the row (`ON DELETE CASCADE`), so a live return's outstanding units are released
+	 * exactly as {@link softRemove} releases them, and the statement is predicated on the status and the
+	 * version the return was read at: a statement that matched no row is a return that moved on in between,
+	 * which is refused as the conflict it is and its release moved back. A return that no longer counts, or
+	 * one already retired, is removed as it always was.
+	 *
+	 * @param criteria The return to remove, by its identifier. Conditions are handed to the platform as they
+	 * always were.
+	 * @param options Find options the platform merges into the statement, forwarded unchanged.
+	 * @returns The delete result.
+	 * @throws NotFoundException when the return is not the caller's.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the return moved on after it was read.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<OrderReturn>,
+		options?: LegacyFindOneOptions<OrderReturn>
+	): Promise<DeleteResult> {
+		if (typeof criteria !== 'string') {
+			return await super.delete(criteria, options);
+		}
+
+		// A retired return is read too: its retirement gave its units back already, and it is removed as it
+		// always was.
+		const orderReturn = await this.readScoped(criteria, true);
+
+		if (!orderReturn) {
+			throw new NotFoundException('The return was not found.');
+		}
+
+		if (orderReturn.deletedAt || !LIVE_RETURN_STATUSES.includes(orderReturn.status)) {
+			return await super.delete(criteria, options);
+		}
+
+		const decidedFrom = orderReturn.status;
+		const expectation = asRead(orderReturn);
+
+		return await this.whileReleased(orderReturn, async (landed) => {
+			const removed = await super.delete(
+				{
+					id: orderReturn.id,
+					status: decidedFrom,
+					...(expectation.wildcard ? {} : { version: expectation.versions[0] })
+				} as FindOptionsWhere<OrderReturn>,
+				options
+			);
+
+			if (!removed?.affected) {
+				throw new ApiException(
+					HttpStatus.CONFLICT,
+					ApiErrorCode.ENTITY_VERSION_CONFLICT,
+					'The return changed since it was read. Read it again and retry the removal.'
+				);
+			}
+
+			landed();
+
+			return removed;
+		});
+	}
+
+	/**
+	 * Restores a retired return — and, when that makes it count against the order again, asks for its units.
+	 *
+	 * The inherited `PUT /order-returns/:id/recover` and the GraphQL `recoverOrderReturn` field reach this
+	 * method. A live return's retirement gave its outstanding units back, so its restoration takes them
+	 * again: the return is measured against the fulfilled ceiling first — another return may have asked for
+	 * the same units while this one was retired, and restoring it then would ask back more than shipped —
+	 * its outstanding units are asked for, and they are given back if the restoration does not land. A
+	 * return that does not count once restored, or one that was never retired, is restored as it always was.
+	 *
+	 * @param id The return to restore.
+	 * @param options Find options the platform narrows its own read with, forwarded unchanged.
+	 * @param saveOptions The platform's save options, forwarded unchanged.
+	 * @returns The restored return.
+	 * @throws NotFoundException when the return is not the caller's.
+	 * @throws BadRequestException when the restored return would ask back more than was fulfilled.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: LegacyFindOneOptions<OrderReturn>,
+		saveOptions?: SaveOptions
+	): Promise<OrderReturn> {
+		const orderReturn = await this.readScoped(id, true);
+
+		if (!orderReturn) {
+			throw new NotFoundException('The return was not found.');
+		}
+
+		if (!orderReturn.deletedAt || !LIVE_RETURN_STATUSES.includes(orderReturn.status)) {
+			return await super.softRecover(id, options, saveOptions);
+		}
+
+		const lines = await this.lineService.findForReturn(orderReturn.id);
+
+		await this.lineService.assertReturnable(
+			orderReturn.orderId,
+			lines.map((line) => ({ orderLineId: line.orderLineId as ID, quantity: line.quantity })),
+			orderReturn.id
+		);
+
+		const reclaimed = await this.lineService.reclaimOrderLineRequest(orderReturn.id, orderReturn.orderId);
+
+		try {
+			return await super.softRecover(id, options, saveOptions);
+		} catch (error) {
+			try {
+				await this.lineService.restoreOrderLineRequest(orderReturn.orderId, reclaimed);
+			} catch (compensationError) {
+				this.logger.error(
+					`The restoration of return ${orderReturn.id} failed and the order's requested counter could not ` +
+						`be put back: ${describe(compensationError)}`
+				);
 			}
 
 			throw error;
@@ -1399,19 +1614,52 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * @throws NotFoundException when it does not.
 	 */
 	private async findOneScoped(id: ID): Promise<OrderReturn> {
-		const orderReturn = await this.typeOrmOrderReturnRepository.findOne({
-			where: {
-				id,
-				tenantId: RequestContext.currentTenantId(),
-				organizationId: RequestContext.currentOrganizationId()
-			}
-		});
+		const orderReturn = await this.readScoped(id);
 
 		if (!orderReturn) {
 			throw new NotFoundException('The return was not found.');
 		}
 
 		return orderReturn;
+	}
+
+	/**
+	 * Reads a return in the caller's tenant and organization, through the configured ORM.
+	 *
+	 * Under `DB_ORM=mikro-orm` the TypeORM entity carries its base columns and nothing else —
+	 * `@MultiORMColumn` registers the active ORM's decorator alone — so a read through the TypeORM
+	 * repository answers a return with no status, no order and no tenant. On that ORM the platform's own read
+	 * is used, which also lifts MikroORM's soft-delete filter when a retired return is asked for.
+	 *
+	 * @param id The return to read.
+	 * @param withDeleted Whether a retired return is read too, which is what a restoration reads.
+	 * @returns The return, or null when it is not the caller's.
+	 */
+	private async readScoped(id: ID, withDeleted = false): Promise<OrderReturn | null> {
+		const scope = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			try {
+				return await this.findOneByIdString(id, {
+					where: scope,
+					...(withDeleted ? { withDeleted: true } : {})
+				});
+			} catch (error) {
+				if (error instanceof NotFoundException) {
+					return null;
+				}
+
+				throw error;
+			}
+		}
+
+		return await this.typeOrmOrderReturnRepository.findOne({
+			where: { id, ...scope },
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 	}
 
 	/**
