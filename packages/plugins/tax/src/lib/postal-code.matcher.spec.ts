@@ -1,5 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
-import { assertPostalCodePattern, matchesPostalCode } from './postal-code.matcher';
+import { BadRequestException, Logger } from '@nestjs/common';
+import { MAX_POSTAL_CODE_LENGTH, assertPostalCodePattern, matchesPostalCode } from './postal-code.matcher';
 
 /**
  * What a stored postal pattern means, and what may be stored.
@@ -11,6 +11,9 @@ import { assertPostalCodePattern, matchesPostalCode } from './postal-code.matche
  *   tax on a real order;
  * - a pattern whose cost depends on the code it is matched against is refused on write, because the
  *   code is request input and the match runs on the process's only thread.
+ *
+ * A third is the same property on the other path: a stored pattern that never passed the write check
+ * is screened again before it runs, and a code longer than any postal code is not matched at all.
  *
  * There is no database and no service here: the matcher is a pure function of two strings, which is
  * the level the disagreement lived at.
@@ -42,9 +45,103 @@ describe('matchesPostalCode — a pattern is the whole code', () => {
 	it('answers false for a missing code and for a pattern that does not compile', () => {
 		// A stored pattern that does not compile makes its row not match rather than failing a tax
 		// calculation halfway through; the write path is where it is refused.
-		expect(matchesPostalCode('90210', undefined)).toBe(false);
-		expect(matchesPostalCode('90210', '')).toBe(false);
-		expect(matchesPostalCode('[unterminated', '[unterminated')).toBe(false);
+		// The pattern is now refused by the analysis before it is compiled, and the refusal is logged, so
+		// the logger is silenced here and the log itself is asserted by the suite below.
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+		try {
+			expect(matchesPostalCode('90210', undefined)).toBe(false);
+			expect(matchesPostalCode('90210', '')).toBe(false);
+			expect(matchesPostalCode('[unterminated', '[unterminated')).toBe(false);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('matchesPostalCode — a stored pattern the write path would have refused', () => {
+	// Rows reach the matcher from seeds, imports, migrations, restores and any writer that does not go
+	// through the two services, none of which runs `assertPostalCodePattern`. The matcher applies the
+	// same analysis itself, so a hostile pattern that got into the table is never run — the gap the
+	// rule evaluator had, closed the same way.
+	let warn: jest.SpyInstance;
+	let runs: jest.SpyInstance;
+
+	beforeEach(() => {
+		warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		runs = jest.spyOn(RegExp.prototype, 'test');
+	});
+
+	afterEach(() => {
+		warn.mockRestore();
+		runs.mockRestore();
+	});
+
+	/** @returns The compiled patterns the matcher ran, by their source. */
+	const patternsRun = (): string[] => runs.mock.contexts.map((context) => (context as RegExp).source);
+
+	it('does not match, and never runs the pattern', () => {
+		// `(a|a)+` matches `aaaa`, so before the matcher screened it a rate carrying it claimed that code —
+		// and on `aaaa…a!` it backtracked through 2^n attempts on the event loop.
+		expect(new RegExp('^(?:(a|a)+)$', 'i').test('aaaa')).toBe(true);
+		runs.mockClear();
+
+		expect(matchesPostalCode('(a|a)+', 'aaaa')).toBe(false);
+		expect(patternsRun()).not.toContain('^(?:(a|a)+)$');
+	});
+
+	it('tells an operator once per pattern, naming the reason', () => {
+		matchesPostalCode('((b+))+', 'bbb');
+		matchesPostalCode('((b+))+', 'bbbb');
+		matchesPostalCode('((b+))+', 'b');
+
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn.mock.calls[0][0]).toContain('STAR_HEIGHT');
+		expect(warn.mock.calls[0][0]).toContain('"((b+))+"');
+	});
+
+	it('reads the pattern as the matcher compiles it, with the `i` flag', () => {
+		// `(?:c|C)+` is ambiguous only under `i` — both branches then match the same character — and the
+		// matcher compiles with `i`, so the analysis is told so.
+		expect(new RegExp('^(?:(?:c|C)+)$', 'i').test('cCc')).toBe(true);
+		runs.mockClear();
+
+		expect(matchesPostalCode('(?:c|C)+', 'cCc')).toBe(false);
+		expect(patternsRun()).not.toContain('^(?:(?:c|C)+)$');
+		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
+	it('still runs a pattern the analysis accepts', () => {
+		// Control: a screen that refused everything would pass every case above.
+		expect(matchesPostalCode('\\d{5}(?:-\\d{4})?', '90210-1234')).toBe(true);
+		expect(matchesPostalCode('\\d{5}(?:-\\d{4})?', '90210-12')).toBe(false);
+		expect(patternsRun()).toContain('^(?:\\d{5}(?:-\\d{4})?)$');
+		expect(warn).not.toHaveBeenCalled();
+	});
+});
+
+describe('matchesPostalCode — the code is bounded', () => {
+	// The code is request input, and the GraphQL inputs carry no length bound of their own. A pattern the
+	// analysis accepts can still cost a polynomial in the length of what it is matched against; capping
+	// that length is the bound that does not depend on the analysis being complete.
+	let runs: jest.SpyInstance;
+
+	beforeEach(() => {
+		runs = jest.spyOn(RegExp.prototype, 'test');
+	});
+
+	afterEach(() => runs.mockRestore());
+
+	it('matches a code as long as the cap, and runs nothing over one longer than any postal code', () => {
+		// The cap is the REST inputs' own `@MaxLength(32)`, so the two surfaces refuse the same codes.
+		expect(MAX_POSTAL_CODE_LENGTH).toBe(32);
+		const longest = '1'.repeat(MAX_POSTAL_CODE_LENGTH);
+
+		expect(matchesPostalCode('[0-9]+', longest)).toBe(true);
+		runs.mockClear();
+
+		expect(matchesPostalCode('[0-9]+', `${longest}1`)).toBe(false);
+		expect(runs.mock.contexts.map((context) => (context as RegExp).source)).not.toContain('^(?:[0-9]+)$');
 	});
 });
 
