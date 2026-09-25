@@ -277,9 +277,9 @@
 				(ngSubmit)="budgetForm.markAsDirty()"
 			>
 				<form class="custom-card" [formGroup]="budgetForm">
-					<div class="fields">
-						<div class="row">
-							<div class="form-group col-3">
+					<div class="fields step-panel">
+						<div class="field-grid">
+							<div class="form-group">
 								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.BUDGET_TYPE' | translate"></label>
 								<nb-select
 									fullWidth
@@ -294,7 +294,7 @@
 								</nb-select>
 							</div>
 							@if (budgetType === organizationContactBudgetTypeEnum.HOURS) {
-							<div class="form-group col-3">
+							<div class="form-group">
 								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.HOURS' | translate"></label>
 								<input
 									nbInput
@@ -306,7 +306,7 @@
 								/>
 							</div>
 							} @else if (budgetType === organizationContactBudgetTypeEnum.COST) {
-							<div class="form-group col-3">
+							<div class="form-group">
 								<label class="label" [innerHtml]="'FORM.PLACEHOLDERS.COST' | translate"></label>
 								<input
 									nbInput
