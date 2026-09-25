@@ -1,9 +1,13 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { RequestContext, RuleService } from '@gauzy/core';
+import { RequestContext, RuleService, getORMType } from '@gauzy/core';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementKey } from '../entitlement-key/entitlement-key.entity';
+import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
 import { digestLicenceKey } from '../entitlement-key/licence-key';
+import { entitlementRowsOf } from '../entitlement-persistence';
+import { MikroOrmEntitlementRepository } from '../entitlement/repository/mikro-orm-entitlement.repository';
 import { TypeOrmEntitlementRepository } from '../entitlement/repository/type-orm-entitlement.repository';
 import { TypeOrmEntitlementKeyRepository } from '../entitlement-key/repository/type-orm-entitlement-key.repository';
 import { TypeOrmEntitlementActivationRepository } from '../entitlement-activation/repository/type-orm-entitlement-activation.repository';
@@ -31,8 +35,23 @@ export class EntitlementCheckService {
 		readonly typeOrmEntitlementRepository: TypeOrmEntitlementRepository,
 		readonly typeOrmEntitlementKeyRepository: TypeOrmEntitlementKeyRepository,
 		readonly typeOrmEntitlementActivationRepository: TypeOrmEntitlementActivationRepository,
-		private readonly ruleService: RuleService
+		private readonly ruleService: RuleService,
+		/**
+		 * The MikroORM side of the same three tables. Under `DB_ORM=mikro-orm` the TypeORM entities above
+		 * carry the base entity's columns alone, so the check reads through this repository's entity
+		 * manager there; it is never reached under TypeORM.
+		 */
+		readonly mikroOrmEntitlementRepository?: MikroOrmEntitlementRepository
 	) {}
+
+	/**
+	 * The ORM the installation runs, read as the platform's CRUD services read it.
+	 *
+	 * @returns `typeorm` or `mikro-orm`.
+	 */
+	get ormType(): string {
+		return getORMType();
+	}
 
 	/**
 	 * Answers whether a right may be exercised.
@@ -115,7 +134,7 @@ export class EntitlementCheckService {
 		input: IEntitlementCheckInput = {}
 	): Promise<IEntitlementCheckResult> {
 		const now = new Date();
-		const live = await this.typeOrmEntitlementActivationRepository.count({
+		const live = await this.rows(EntitlementActivation, () => this.typeOrmEntitlementActivationRepository).count({
 			where: {
 				entitlementId: entitlement.id,
 				status: EntitlementActivationStatus.ACTIVE
@@ -222,7 +241,7 @@ export class EntitlementCheckService {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		return await this.typeOrmEntitlementRepository.findOne({
+		return await this.rows(Entitlement, () => this.typeOrmEntitlementRepository).findOne({
 			where: {
 				id,
 				...(tenantId ? { tenantId } : {}),
@@ -259,13 +278,29 @@ export class EntitlementCheckService {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		return await this.typeOrmEntitlementKeyRepository.findOne({
+		return await this.rows(EntitlementKey, () => this.typeOrmEntitlementKeyRepository).findOne({
 			where: {
 				keyHash: digestLicenceKey(plaintext),
 				...(tenantId ? { tenantId } : {}),
 				...(organizationId ? { organizationId } : {})
 			} as any
 		});
+	}
+
+	/**
+	 * The repository one of the three tables is read through, on the ORM the installation runs: the
+	 * TypeORM repository itself under TypeORM, so the check issues the reads it always issued, and the same
+	 * reads answered through MikroORM under MikroORM.
+	 *
+	 * @param entity The table's entity.
+	 * @param typeOrm Its TypeORM repository, reached only under TypeORM.
+	 * @returns The repository.
+	 */
+	private rows<T extends ObjectLiteral>(
+		entity: new () => T,
+		typeOrm: () => Repository<T>
+	): Pick<Repository<T>, 'find' | 'findOne' | 'count' | 'update'> {
+		return entitlementRowsOf(this.ormType, entity, typeOrm, () => this.mikroOrmEntitlementRepository);
 	}
 
 	/**

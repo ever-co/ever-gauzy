@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EntityManager, Not, UpdateResult } from 'typeorm';
+import { EntityManager, IsNull, Not, Repository, UpdateResult } from 'typeorm';
 import { ID, IRuleCreateInput } from '@gauzy/contracts';
 import {
 	ApiErrorCode,
@@ -7,6 +7,7 @@ import {
 	EventBus,
 	EventOutboxService,
 	IVersionExpectation,
+	MultiORMEnum,
 	RequestContext,
 	RuleService,
 	SequenceService,
@@ -36,6 +37,12 @@ import { ENTITLEMENT_RULE_OWNER, toRuleInputs } from '../entitlement-conditions'
 import { isDueForExpiry, toWholeQuantity } from '../entitlement-check/entitlement-rules';
 import { recountEntitlementOccupancy } from '../entitlement-counts';
 import { lockEntitlement } from '../entitlement-lock';
+import {
+	appendEntitlementEvent,
+	entitlementRowsOf,
+	mikroOrmEntitlementReader,
+	runEntitlementTransaction
+} from '../entitlement-persistence';
 import { EntitlementActivationService } from '../entitlement-activation/entitlement-activation.service';
 import { EntitlementKeyService } from '../entitlement-key/entitlement-key.service';
 import { EntitlementConditionDTO } from './dto/entitlement.dto';
@@ -169,7 +176,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
-		const entitlement = await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		const entitlement = await this.transaction(async (manager) => {
 			const row = manager.create(Entitlement, {
 				customerId: input.customerId ?? null,
 				orderId: input.orderId ?? null,
@@ -203,7 +210,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 			const saved = await manager.save(Entitlement, row);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.CREATED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: saved.id as ID,
@@ -299,7 +306,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 		const now = new Date();
 
-		const activated = await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		const activated = await this.transaction(async (manager) => {
 			const pending = await manager.find(Entitlement, {
 				where: {
 					status: EntitlementStatus.PENDING,
@@ -327,7 +334,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				// conditioned this write, so the version the row holds is what it is predicated on.
 				await this.updateVersionedRow(manager, entitlement, { status: EntitlementStatus.ACTIVE });
 
-				await this.outbox.append(manager, {
+				await appendEntitlementEvent(this.outbox, manager, {
 					name: EntitlementEventName.ACTIVATED,
 					aggregateType: 'ENTITLEMENT',
 					aggregateId: entitlement.id as ID,
@@ -381,7 +388,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		scope: IEntitlementScope = {},
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Entitlement> {
-		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		return await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
 
 			if (entitlement.status === EntitlementStatus.SUSPENDED) {
@@ -403,7 +410,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				expectation
 			);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.SUSPENDED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: entitlement.id as ID,
@@ -455,7 +462,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			return await this.expire(id, 'TERM_ENDED', scope, expectation);
 		}
 
-		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		return await this.transaction(async (manager) => {
 			// The row was read before the transaction opened, so the statement's own predicate is what
 			// makes this write safe: a right that moved on since that read matches no row, and the write
 			// is refused rather than applied underneath the change that moved it.
@@ -500,7 +507,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			throw new BadRequestException('An extension must state the instant the term now ends at.');
 		}
 
-		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		return await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
 
 			if (!EXTENDABLE_STATUSES.includes(entitlement.status)) {
@@ -530,7 +537,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 				expectation
 			);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.RENEWED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: entitlement.id as ID,
@@ -584,7 +591,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			return await this.revoke(id, reason ?? EntitlementRevocationReason.REFUNDED, scope, expectation);
 		}
 
-		return await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		return await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
 
 			if (next >= Number(entitlement.quantity)) {
@@ -618,7 +625,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 			const liveAfter = await recountEntitlementOccupancy(manager, id);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.REDUCED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: entitlement.id as ID,
@@ -669,7 +676,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		const now = new Date();
 		const userId = RequestContext.currentUserId();
 
-		const outcome = await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		const outcome = await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
 
 			if (entitlement.status === EntitlementStatus.REVOKED) {
@@ -700,7 +707,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 			await recountEntitlementOccupancy(manager, entitlement.id);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.REVOKED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: entitlement.id as ID,
@@ -751,7 +758,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	): Promise<Entitlement> {
 		const now = new Date();
 
-		const outcome = await this.typeOrmEntitlementRepository.manager.transaction(async (manager) => {
+		const outcome = await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
 
 			if (entitlement.status === EntitlementStatus.EXPIRED || entitlement.status === EntitlementStatus.REVOKED) {
@@ -815,7 +822,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 
 		await recountEntitlementOccupancy(manager, entitlement.id);
 
-		await this.outbox.append(manager, {
+		await appendEntitlementEvent(this.outbox, manager, {
 			name: EntitlementEventName.EXPIRED,
 			aggregateType: 'ENTITLEMENT',
 			aggregateId: entitlement.id as ID,
@@ -841,6 +848,34 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * @returns The ids of the rights that were expired.
 	 */
 	public async expireDue(limit = 100, scope: IEntitlementScope = {}): Promise<ID[]> {
+		const candidates =
+			this.ormType === MultiORMEnum.MikroORM
+				? await this.findExpiryCandidatesThroughMikroOrm(limit, scope)
+				: await this.findExpiryCandidates(limit, scope);
+
+		const expired: ID[] = [];
+
+		for (const candidate of candidates) {
+			if (!isDueForExpiry(candidate, new Date())) {
+				continue;
+			}
+
+			await this.expire(candidate.id, 'TERM_ENDED', scope);
+			expired.push(candidate.id);
+		}
+
+		return expired;
+	}
+
+	/**
+	 * Selects the rights the expiry pass examines: every right with a term that is not revoked, in the
+	 * caller's tenant and organization, a page at a time.
+	 *
+	 * @param limit How many rights one pass handles.
+	 * @param scope The tenant and organization the pass is scoped to.
+	 * @returns The candidates; whether each is due is decided by the caller.
+	 */
+	private async findExpiryCandidates(limit: number, scope: IEntitlementScope): Promise<Entitlement[]> {
 		// A perpetual right has no `endsAt` and is therefore never due; the predicate is stated in SQL
 		// rather than as `Not(null)`, which would compare against NULL and match nothing at all.
 		const query = this.typeOrmEntitlementRepository
@@ -860,20 +895,31 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			query.andWhere('entitlement.organizationId = :organizationId', { organizationId });
 		}
 
-		const candidates = await query.getMany();
+		return await query.getMany();
+	}
 
-		const expired: ID[] = [];
+	/**
+	 * The expiry pass's selection under MikroORM: the same three predicates and the same page, stated in
+	 * find options. `endsAt` is asked for as not-null — `$ne: null`, which MikroORM writes as `IS NOT
+	 * NULL` — so a perpetual right is never a candidate here either.
+	 *
+	 * @param limit How many rights one pass handles.
+	 * @param scope The tenant and organization the pass is scoped to.
+	 * @returns The candidates.
+	 */
+	private async findExpiryCandidatesThroughMikroOrm(limit: number, scope: IEntitlementScope): Promise<Entitlement[]> {
+		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
+		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
-		for (const candidate of candidates) {
-			if (!isDueForExpiry(candidate, new Date())) {
-				continue;
-			}
-
-			await this.expire(candidate.id, 'TERM_ENDED', scope);
-			expired.push(candidate.id);
-		}
-
-		return expired;
+		return await mikroOrmEntitlementReader(this.mikroOrmEntitlementRepository).find(Entitlement, {
+			where: {
+				status: Not(EntitlementStatus.REVOKED),
+				endsAt: Not(IsNull()),
+				...(tenantId ? { tenantId } : {}),
+				...(organizationId ? { organizationId } : {})
+			},
+			take: limit
+		});
 	}
 
 	/**
@@ -890,7 +936,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	public async recount(id: ID): Promise<{ entitlementId: ID; activationCount: number }> {
 		const entitlement = await this.findOneScoped(id);
 
-		const activationCount = await this.typeOrmEntitlementRepository.manager.transaction(async (manager) =>
+		const activationCount = await this.transaction(async (manager) =>
 			await recountEntitlementOccupancy(manager, entitlement.id)
 		);
 
@@ -951,7 +997,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	public async findOneDetailed(id: ID): Promise<Entitlement> {
-		const entitlement = await this.typeOrmEntitlementRepository.findOne({
+		const entitlement = await this.entitlementRows().findOne({
 			where: {
 				id,
 				...(RequestContext.currentTenantId() ? { tenantId: RequestContext.currentTenantId() } : {}),
@@ -980,7 +1026,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
-		const entitlement = await this.typeOrmEntitlementRepository.findOne({
+		const entitlement = await this.entitlementRows().findOne({
 			where: {
 				id,
 				...(tenantId ? { tenantId } : {}),
@@ -993,6 +1039,42 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		}
 
 		return entitlement;
+	}
+
+	/**
+	 * Opens one lifecycle transaction on the ORM the installation runs.
+	 *
+	 * Under TypeORM this is `typeOrmEntitlementRepository.manager.transaction(work)`, the transaction every
+	 * transition here always opened; under MikroORM it is the repository's entity manager's own, and the
+	 * body is handed a manager that answers the same calls through it (`entitlement-persistence.ts`). The
+	 * body is one implementation either way — the lock, the decision, the version-predicated write and the
+	 * outbox row are the same statements' worth of work on both.
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	private async transaction<R>(work: (manager: EntityManager) => Promise<R>): Promise<R> {
+		return await runEntitlementTransaction(
+			this.ormType,
+			() => this.typeOrmEntitlementRepository.manager,
+			() => this.mikroOrmEntitlementRepository,
+			work
+		);
+	}
+
+	/**
+	 * The repository a right is read through outside a transaction: the TypeORM one under TypeORM, and
+	 * the same reads answered through MikroORM under MikroORM.
+	 *
+	 * @returns The repository.
+	 */
+	private entitlementRows(): Pick<Repository<Entitlement>, 'find' | 'findOne' | 'count' | 'update'> {
+		return entitlementRowsOf(
+			this.ormType,
+			Entitlement,
+			() => this.typeOrmEntitlementRepository,
+			() => this.mikroOrmEntitlementRepository
+		);
 	}
 
 	/**
@@ -1162,7 +1244,7 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 			where.organizationId = organizationId;
 		}
 
-		const existing = await this.typeOrmEntitlementRepository.findOne({
+		const existing = await this.entitlementRows().findOne({
 			where: where as any,
 			order: { createdAt: 'DESC' } as any
 		});

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EntityManager, Not } from 'typeorm';
+import { EntityManager, Not, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { EventOutboxService, MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementKey } from './entitlement-key.entity';
 import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
@@ -27,6 +27,12 @@ import {
 } from './licence-key';
 import { recountEntitlementOccupancy } from '../entitlement-counts';
 import { asMetadata } from '../entitlement-metadata';
+import {
+	appendEntitlementEvent,
+	entitlementRowsOf,
+	mikroOrmEntitlementReader,
+	runEntitlementTransaction
+} from '../entitlement-persistence';
 import { TypeOrmEntitlementRepository } from '../entitlement/repository/type-orm-entitlement.repository';
 import { MikroOrmEntitlementKeyRepository } from './repository/mikro-orm-entitlement-key.repository';
 import { TypeOrmEntitlementKeyRepository } from './repository/type-orm-entitlement-key.repository';
@@ -89,7 +95,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
-		const row = this.typeOrmEntitlementKeyRepository.create({
+		const values = {
 			entitlementId: entitlement.id,
 			keyHash: digestLicenceKey(plaintext),
 			keyPrefix: licenceKeyPrefix(plaintext),
@@ -107,12 +113,17 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 			metadata: (input.metadata as any) ?? null,
 			...(tenantId ? { tenantId } : {}),
 			...(organizationId ? { organizationId } : {})
-		} as Partial<EntitlementKey>);
+		} as Partial<EntitlementKey>;
+		// TypeORM's `create` copies only the columns its metadata knows, and under MikroORM that metadata
+		// holds the base entity's columns alone — the digest, the prefix and the right would be dropped
+		// before the insert. There the row is the values themselves, and the transaction's manager writes it.
+		const row =
+			this.ormType === MultiORMEnum.MikroORM ? values : this.typeOrmEntitlementKeyRepository.create(values);
 
-		const key = await this.typeOrmEntitlementKeyRepository.manager.transaction(async (manager) => {
+		const key = await this.transaction(async (manager) => {
 			const saved = await manager.save(EntitlementKey, row as EntitlementKey);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.KEY_ISSUED,
 				aggregateType: 'ENTITLEMENT_KEY',
 				aggregateId: saved.id as ID,
@@ -161,7 +172,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 		const revokedByUserId = RequestContext.currentUserId();
 		const now = new Date();
 
-		return await this.typeOrmEntitlementKeyRepository.manager.transaction(async (manager) => {
+		return await this.transaction(async (manager) => {
 			const activations = await manager.find(EntitlementActivation, {
 				where: {
 					entitlementKeyId: key.id,
@@ -249,8 +260,12 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 		const replacedKey = await this.revoke(previous.id, reason);
 
 		// The link is written after both rows exist, in one statement each, so a reader never sees a
-		// key that points at a replacement which does not point back.
-		const manager = this.typeOrmEntitlementKeyRepository.manager;
+		// key that points at a replacement which does not point back. Under MikroORM the two statements go
+		// through a manager that answers the same `update` through MikroORM (`entitlement-persistence.ts`).
+		const manager =
+			this.ormType === MultiORMEnum.MikroORM
+				? (mikroOrmEntitlementReader(this.mikroOrmEntitlementKeyRepository) as unknown as EntityManager)
+				: this.typeOrmEntitlementKeyRepository.manager;
 		const previousMetadata = {
 			...asMetadata(replacedKey.metadata),
 			replacedByKeyId: result.key.id,
@@ -318,7 +333,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 			);
 		}
 
-		await this.typeOrmEntitlementKeyRepository.update({ id } as any, {
+		await this.keyRows().update({ id } as any, {
 			assignedToEmail: input.assignedToEmail ?? key.assignedToEmail,
 			assignedToCustomerId: input.assignedToCustomerId ?? key.assignedToCustomerId,
 			assignedAt: key.assignedAt ?? new Date()
@@ -408,7 +423,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 	 * @returns Its keys, newest first.
 	 */
 	public async findForEntitlement(entitlementId: ID): Promise<EntitlementKey[]> {
-		return await this.typeOrmEntitlementKeyRepository.find({
+		return await this.keyRows().find({
 			where: {
 				entitlementId,
 				...(RequestContext.currentTenantId() ? { tenantId: RequestContext.currentTenantId() } : {}),
@@ -427,7 +442,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 	 * @returns The key row, or null.
 	 */
 	public async findByPlaintext(plaintext: string): Promise<EntitlementKey | null> {
-		return await this.typeOrmEntitlementKeyRepository.findOne({
+		return await this.keyRows().findOne({
 			where: { keyHash: digestLicenceKey(plaintext) } as any
 		});
 	}
@@ -440,7 +455,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 	 * @throws NotFoundException when it does not exist, or belongs to another tenant.
 	 */
 	public async findOneScoped(id: ID): Promise<EntitlementKey> {
-		const key = await this.typeOrmEntitlementKeyRepository.findOne({
+		const key = await this.keyRows().findOne({
 			where: {
 				id,
 				...(RequestContext.currentTenantId() ? { tenantId: RequestContext.currentTenantId() } : {}),
@@ -467,7 +482,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
-		const entitlement = await this.typeOrmEntitlementRepository.findOne({
+		const entitlement = await this.entitlementRows().findOne({
 			where: {
 				id: entitlementId,
 				...(tenantId ? { tenantId } : {}),
@@ -480,6 +495,54 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 		}
 
 		return entitlement;
+	}
+
+	/**
+	 * Opens one credential transaction on the ORM the installation runs: the TypeORM repository's own
+	 * under TypeORM, as every key write always opened, and the MikroORM repository's entity manager's
+	 * under MikroORM, with a manager that answers the same calls (`entitlement-persistence.ts`).
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	private async transaction<R>(work: (manager: EntityManager) => Promise<R>): Promise<R> {
+		return await runEntitlementTransaction(
+			this.ormType,
+			() => this.typeOrmEntitlementKeyRepository.manager,
+			() => this.mikroOrmEntitlementKeyRepository,
+			work
+		);
+	}
+
+	/**
+	 * The repository a key is read and edited through outside a transaction, on the ORM the
+	 * installation runs.
+	 *
+	 * @returns The repository.
+	 */
+	private keyRows(): Pick<Repository<EntitlementKey>, 'find' | 'findOne' | 'count' | 'update'> {
+		return entitlementRowsOf(
+			this.ormType,
+			EntitlementKey,
+			() => this.typeOrmEntitlementKeyRepository,
+			() => this.mikroOrmEntitlementKeyRepository
+		);
+	}
+
+	/**
+	 * The repository the right a key is issued against is read through, on the ORM the installation
+	 * runs. Under MikroORM the read goes through this service's own MikroORM repository's entity manager,
+	 * which reaches every table of the package.
+	 *
+	 * @returns The repository.
+	 */
+	private entitlementRows(): Pick<Repository<Entitlement>, 'find' | 'findOne' | 'count' | 'update'> {
+		return entitlementRowsOf(
+			this.ormType,
+			Entitlement,
+			() => this.typeOrmEntitlementRepository,
+			() => this.mikroOrmEntitlementKeyRepository
+		);
 	}
 
 	/**
@@ -497,7 +560,7 @@ export class EntitlementKeyService extends TenantAwareCrudService<EntitlementKey
 		data: Record<string, unknown>
 	): Promise<void> {
 		try {
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name,
 				aggregateType: 'ENTITLEMENT_KEY',
 				aggregateId: key.id as ID,

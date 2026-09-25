@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EntityManager, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { EntityManager, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { EventBus, EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
@@ -19,6 +19,7 @@ import { EntitlementKeyService } from '../entitlement-key/entitlement-key.servic
 import { EntitlementCheckService } from '../entitlement-check/entitlement-check.service';
 import { countLiveActivations, recountEntitlementOccupancy } from '../entitlement-counts';
 import { lockEntitlement } from '../entitlement-lock';
+import { appendEntitlementEvent, entitlementRowsOf, runEntitlementTransaction } from '../entitlement-persistence';
 import { evaluateEntitlementState, remainingQuantity } from '../entitlement-check/entitlement-rules';
 import { MikroOrmEntitlementActivationRepository } from './repository/mikro-orm-entitlement-activation.repository';
 import { TypeOrmEntitlementActivationRepository } from './repository/type-orm-entitlement-activation.repository';
@@ -112,7 +113,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 		const userId = RequestContext.currentUserId();
 		const now = new Date();
 
-		const outcome = await this.typeOrmEntitlementActivationRepository.manager.transaction(async (manager) => {
+		const outcome = await this.transaction(async (manager) => {
 			const entitlement = await lockEntitlement(manager, input.entitlementId);
 
 			if (!entitlement) {
@@ -204,7 +205,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 
 			const liveAfter = await recountEntitlementOccupancy(manager, entitlement.id);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.ACTIVATED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: entitlement.id as ID,
@@ -336,7 +337,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 	public async touch(id: ID, intervalSeconds?: number): Promise<EntitlementActivation> {
 		const activation = await this.findOneScoped(id);
 
-		await this.typeOrmEntitlementActivationRepository.manager.transaction(async (manager) => {
+		await this.transaction(async (manager) => {
 			await this.refreshLastSeen(manager, activation, intervalSeconds, new Date());
 		});
 
@@ -348,7 +349,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 	 * @returns Its activations, newest first, live ones included.
 	 */
 	public async findForEntitlement(entitlementId: ID): Promise<EntitlementActivation[]> {
-		return await this.typeOrmEntitlementActivationRepository.find({
+		return await this.activationRows().find({
 			where: {
 				entitlementId,
 				...(RequestContext.currentTenantId() ? { tenantId: RequestContext.currentTenantId() } : {}),
@@ -368,7 +369,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 	 * @throws NotFoundException when it does not exist, or belongs to another tenant.
 	 */
 	public async findOneScoped(id: ID): Promise<EntitlementActivation> {
-		const activation = await this.typeOrmEntitlementActivationRepository.findOne({
+		const activation = await this.activationRows().findOne({
 			where: {
 				id,
 				...(RequestContext.currentTenantId() ? { tenantId: RequestContext.currentTenantId() } : {}),
@@ -507,7 +508,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 		const userId = RequestContext.currentUserId();
 		const now = new Date();
 
-		await this.typeOrmEntitlementActivationRepository.manager.transaction(async (manager) => {
+		await this.transaction(async (manager) => {
 			await manager.update(
 				EntitlementActivation,
 				{ id: activation.id } as any,
@@ -522,7 +523,7 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 
 			const liveAfter = await recountEntitlementOccupancy(manager, activation.entitlementId);
 
-			await this.outbox.append(manager, {
+			await appendEntitlementEvent(this.outbox, manager, {
 				name: EntitlementEventName.DEACTIVATED,
 				aggregateType: 'ENTITLEMENT',
 				aggregateId: activation.entitlementId as ID,
@@ -545,6 +546,37 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 		await this.eventBus.publish(new EntitlementChangedEvent(closed.entitlementId, closed.organizationId));
 
 		return closed;
+	}
+
+	/**
+	 * Opens one slot transaction on the ORM the installation runs: the TypeORM repository's own under
+	 * TypeORM, as every slot write always opened, and the MikroORM repository's entity manager's under
+	 * MikroORM, with a manager that answers the same calls (`entitlement-persistence.ts`).
+	 *
+	 * @param work The transaction body.
+	 * @returns What the body answers.
+	 */
+	private async transaction<R>(work: (manager: EntityManager) => Promise<R>): Promise<R> {
+		return await runEntitlementTransaction(
+			this.ormType,
+			() => this.typeOrmEntitlementActivationRepository.manager,
+			() => this.mikroOrmEntitlementActivationRepository,
+			work
+		);
+	}
+
+	/**
+	 * The repository an activation is read through outside a transaction, on the ORM the installation runs.
+	 *
+	 * @returns The repository.
+	 */
+	private activationRows(): Pick<Repository<EntitlementActivation>, 'find' | 'findOne' | 'count' | 'update'> {
+		return entitlementRowsOf(
+			this.ormType,
+			EntitlementActivation,
+			() => this.typeOrmEntitlementActivationRepository,
+			() => this.mikroOrmEntitlementActivationRepository
+		);
 	}
 
 	/**

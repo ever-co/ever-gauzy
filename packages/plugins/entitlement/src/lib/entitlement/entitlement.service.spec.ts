@@ -69,6 +69,9 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		// The ORM the services branch on. These suites drive the TypeORM path, which is what the doubles model;
+		// both ORMs are driven against real SQLite in `entitlement-lifecycle.dual-orm.spec.ts`.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 		TenantAwareCrudService,
 		CrudService,
 		BaseEntity,
