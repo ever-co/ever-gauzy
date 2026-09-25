@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, SaveOptions } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ID,
@@ -13,6 +13,7 @@ import {
 	PaymentAccountVerificationStatus
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { PaymentMethodTokenService } from '../payment-method-token/payment-method-token.service';
@@ -529,6 +530,56 @@ export class PaymentAccountHolderService extends TenantAwareCrudService<PaymentA
 	}
 
 	/**
+	 * The inherited recoverable removal, held to the caller's tenant **and organization**.
+	 *
+	 * The tenant-aware base resolves the row through its own read, which adds the caller's tenant and nothing
+	 * else — and adds not even that under `DB_ORM=mikro-orm`, where it learns the tenant column from TypeORM
+	 * metadata that ORM does not carry. Every other read this service makes is scoped to the organization, so
+	 * the inherited pair was the one way to retire or restore — and be handed back — an account of another
+	 * organization of the same tenant, on both ORMs, and of another tenant on MikroORM. The scope is merged
+	 * into the find options rather than checked beside them, because the kernel reads the row twice on the
+	 * MikroORM branch — a guard read, then the repository read whose entity it removes — and both build their
+	 * criterion from the same options, so one merge scopes both reads on both ORMs.
+	 *
+	 * The plugin's removal routes go through {@link softRemoveHolder}, which refuses a live account; this
+	 * override does not add that refusal, it only keeps the inherited member from reaching past the caller.
+	 *
+	 * @param id The account to retire.
+	 * @param options Find options to narrow the lookup with. The inherited route hands over its rest
+	 * parameter, an array, which is read as "no options" exactly as the kernel reads it.
+	 * @param saveOptions The kernel's save options, forwarded unchanged.
+	 * @returns The retired account.
+	 * @throws NotFoundException when the account does not exist inside the caller's scope.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<PaymentAccountHolder>,
+		saveOptions?: SaveOptions
+	): Promise<PaymentAccountHolder> {
+		return super.softRemove(id, this.withinScope(options), saveOptions);
+	}
+
+	/**
+	 * The inherited restore — `PUT /payment-account-holders/:id/recover` and `recoverPaymentAccountHolder` —
+	 * held to the caller's tenant and organization, for the reasons {@link softRemove} gives. The kernel adds
+	 * `withDeleted` to the options it is handed, after this merge, so the retired account stays visible to the
+	 * read that restores it.
+	 *
+	 * @param id The account to restore.
+	 * @param options Find options to narrow the lookup with, read as {@link softRemove} reads them.
+	 * @param saveOptions The kernel's save options, forwarded unchanged.
+	 * @returns The restored account.
+	 * @throws NotFoundException when no retired account with that identifier exists inside the caller's scope.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<PaymentAccountHolder>,
+		saveOptions?: SaveOptions
+	): Promise<PaymentAccountHolder> {
+		return super.softRecover(id, this.withinScope(options), saveOptions);
+	}
+
+	/**
 	 * Reads one account of the caller's organization, answering null when there is none.
 	 *
 	 * The answering form exists because a caller deciding what to do about a missing account — a
@@ -542,6 +593,27 @@ export class PaymentAccountHolderService extends TenantAwareCrudService<PaymentA
 		const holders: PaymentAccountHolder[] = await this.find({ where: { id, ...this.scope } } as never);
 
 		return holders.length ? holders[0] : null;
+	}
+
+	/**
+	 * The find options of an inherited soft-delete call, with the caller's scope merged into their criterion.
+	 *
+	 * The scope is spread last, so a caller's criterion can narrow it and never widen it: a `where` naming
+	 * another organization is overwritten rather than honoured, and the read then finds nothing. It fails
+	 * closed, as every read of this service does: with no caller both members are `null`, which is `IS NULL`
+	 * on both ORMs, and every account carries both columns.
+	 *
+	 * @param options The options as received: an options object, nothing, or the inherited route's
+	 * rest-parameter array.
+	 * @returns Options whose `where` carries the caller's tenant and organization, stated last.
+	 */
+	private withinScope(options?: unknown): IFindOneOptions<PaymentAccountHolder> {
+		// `CrudController` forwards its `...options` rest parameter, which Nest fills with an empty array:
+		// that is no options at all, and spreading it would add index keys rather than find options.
+		const stated = !options || typeof options !== 'object' || Array.isArray(options) ? {} : options;
+		const where = (stated as { where?: object }).where ?? {};
+
+		return { ...stated, where: { ...where, ...this.scope } } as unknown as IFindOneOptions<PaymentAccountHolder>;
 	}
 
 	/**
