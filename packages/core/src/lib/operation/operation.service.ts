@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
+import { FindManyOptions, FindOptionsWhere, In, IsNull } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IOperationError, OperationStatus, OperationStepStatus } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
@@ -139,6 +139,19 @@ export class OperationService extends CrudService<Operation> {
 	/** Operation-level attempt budget of an operation whose definition declares none. */
 	static readonly DEFAULT_MAX_ATTEMPTS = 3;
 
+	/**
+	 * How long a step's cancellation answer may be reused before the row is read again.
+	 *
+	 * A step polls `context.cancelRequested()` in its own loop, and the answer has to come from the
+	 * store — a closure over the object the attempt started with can never change. One second is the
+	 * compromise: a cancellation is observed within it, and a tight loop costs one query per second
+	 * instead of one per iteration.
+	 */
+	static readonly CANCEL_CHECK_INTERVAL_MS = 1_000;
+
+	/** The service's own logger, for the degradations it reports rather than raises. */
+	private readonly logger = new Logger(OperationService.name);
+
 	constructor(
 		readonly typeOrmOperationRepository: TypeOrmOperationRepository,
 		readonly mikroOrmOperationRepository: MikroOrmOperationRepository,
@@ -165,15 +178,20 @@ export class OperationService extends CrudService<Operation> {
 	async start(input: IOperationStartInput): Promise<IOperationStartResult> {
 		const definition = this.registry.require(input.type);
 
-		const existing = await this.findBySubmission(input);
+		// The scope is resolved before the lookup rather than after it, because the lookup and the
+		// insert have to agree: a submission that stated its own organization was looked up in the
+		// request context's and written into the stated one, so a retry never found the operation
+		// its first attempt created and was refused by that operation's own row.
+		const now = new Date();
+		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
+		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId();
+		const scope = { tenantId, organizationId };
+
+		const existing = await this.findBySubmission(input, scope);
 
 		if (existing) {
 			return { operation: existing, created: false };
 		}
-
-		const now = new Date();
-		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
-		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId();
 
 		const operation = this.typeOrmOperationRepository.create({
 			type: input.type,
@@ -226,13 +244,21 @@ export class OperationService extends CrudService<Operation> {
 
 			// A concurrent submission won the race: either it took the aggregate or it holds the same
 			// idempotency key, and its operation is the answer to this request.
-			const raced = await this.findBySubmission(input);
+			const raced = await this.findBySubmission(input, scope);
 
 			if (raced) {
 				return { operation: raced, created: false };
 			}
 
-			throw error;
+			// The tuple is taken and the caller's own scope holds nothing for it. Either the winner was
+			// deleted between the insert and this read, or the row that holds the tuple belongs to
+			// another tenant — `UQ_operation_idem` carries no tenant, and `UQ_operation_aggregate_live`
+			// carries neither tenant nor organization, so a foreign row can refuse this insert. Both are
+			// conflicts and neither is a server fault, so the raw driver error is not the answer: it
+			// would surface as a `500` on an ordinary submission. Nothing about the other row is named.
+			throw new ConflictException(
+				`This submission of "${input.type}" could not be started because its idempotency key or its aggregate is already held. Submit it under a different key, or once the aggregate's live operation has finished.`
+			);
 		}
 	}
 
@@ -451,16 +477,20 @@ export class OperationService extends CrudService<Operation> {
 	 * where to continue, so resuming is executing under a fresh lease. A worker that died mid-step
 	 * leaves a step that is retried, and its idempotency key is what makes that retry safe.
 	 *
+	 * The recovery sweep calls this, and so does the `resumeOperation` mutation, which carries a
+	 * credential and takes the id from its arguments — so the operation is read inside the caller's
+	 * scope (see {@link requireInScope}).
+	 *
 	 * @param operationId The operation id.
 	 * @param options Lease, worker identity and step budget for this pass.
 	 * @returns What this pass did.
-	 * @throws NotFoundException when the operation does not exist.
+	 * @throws NotFoundException when the operation does not exist inside the caller's scope.
 	 */
 	async resume(
 		operationId: ID,
 		options: IOperationExecutionOptions = {}
 	): Promise<IOperationExecutionResult> {
-		const operation = await this.require(operationId);
+		const operation = await this.requireInScope(operationId);
 
 		if (isTerminalStatus(operation.status)) {
 			return { operation, executedSteps: [], finished: true };
@@ -497,10 +527,10 @@ export class OperationService extends CrudService<Operation> {
 	 * @returns What the retry's pass did.
 	 * @throws ConflictException when the operation completed, was cancelled by a caller, or is still
 	 * being driven.
-	 * @throws NotFoundException when the operation does not exist.
+	 * @throws NotFoundException when the operation does not exist inside the caller's scope.
 	 */
 	async retry(operationId: ID, options: IOperationExecutionOptions = {}): Promise<IOperationExecutionResult> {
-		const operation = await this.require(operationId);
+		const operation = await this.requireInScope(operationId);
 
 		if (operation.status === OperationStatus.COMPLETED) {
 			throw new ConflictException(`The operation "${operationId}" is completed and has nothing to retry.`);
@@ -570,13 +600,13 @@ export class OperationService extends CrudService<Operation> {
 	 * @param options Worker identity and the reason an operator recorded.
 	 * @returns The settled operation.
 	 * @throws ConflictException when the operation already reached a terminal status.
-	 * @throws NotFoundException when the operation does not exist.
+	 * @throws NotFoundException when the operation does not exist inside the caller's scope.
 	 */
 	async cancel(
 		operationId: ID,
 		options: { ownerId?: string; reason?: string } = {}
 	): Promise<Operation> {
-		const operation = await this.require(operationId);
+		const operation = await this.requireInScope(operationId);
 
 		if (isTerminalStatus(operation.status)) {
 			throw new ConflictException(`The operation is ${operation.status.toLowerCase()} and cannot be cancelled.`);
@@ -596,7 +626,13 @@ export class OperationService extends CrudService<Operation> {
 			});
 		}
 
-		Object.assign(requested, {
+		// 🛑 **Written, not assigned.** `compensate` below re-reads the row through `claim()`, so a
+		// reason left on this in-memory object was discarded before anything could read it: the walk
+		// then found no error on a running operation and fell back to its own generic
+		// `OPERATION_COMPENSATION_REQUESTED`, and both the REST read and the `operationFailed`
+		// subscription reported "compensated on request" for a deliberate cancellation with an
+		// operator's reason attached.
+		await this.saveOperation(requested, {
 			lastError: JSON.stringify({
 				code: 'OPERATION_CANCELED',
 				message: options.reason ?? 'The operation was cancelled.',
@@ -701,7 +737,18 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
-	 * Reads an operation.
+	 * Reads an operation by identifier alone, with no scope at all.
+	 *
+	 * **The unscoped reader, and it is unscoped deliberately.** The runtime reads an operation from a
+	 * worker, a dispatcher and a resumption sweep, none of which has a credential: a scoped read there
+	 * would answer nothing and the operation would never be executed. Every caller of this is a system
+	 * path that already holds the identifier because the runtime gave it to it.
+	 *
+	 * 🛑 **It is therefore not the reader a request-facing move may use.** `cancel()`, `retry()` and
+	 * `resume()` are reached from `POST /operations/:id/cancel` and `/retry` and from the three GraphQL
+	 * mutations, which carry a credential and take the id from the caller; reading through this one let
+	 * a user of one tenant compensate, re-drive or drive another tenant's saga. Those go through
+	 * {@link requireInScope}.
 	 *
 	 * @param id The operation id.
 	 * @returns The operation, or null.
@@ -844,17 +891,48 @@ export class OperationService extends CrudService<Operation> {
 	/**
 	 * Finds the operation a retried submission refers to.
 	 *
+	 * 🛑 **Scoped by tenant, and it narrows rather than widens when there is none.** This read feeds
+	 * the write path — `start()` returns whatever it answers as `{ created: false }` — and it carried no
+	 * tenant at all, only `organizationId: RequestContext.currentOrganizationId()`. That is `null` for a
+	 * worker, a job, or any credential with no organization selected, which the connection's
+	 * `null: 'sql-null'` setting reads as `"organizationId" IS NULL`: every tenant's
+	 * organization-less rows. `idempotencyKey` is caller-supplied, so another tenant's operation — its
+	 * `input` JSON, its aggregate, its error — was returned to a caller that named its key, and that
+	 * caller's own work silently never started.
+	 *
+	 * A lookup with no tenant asks for the tenant-less rows (`"tenantId" IS NULL`), which are the rows
+	 * an insert with no tenant writes: the read that decides whether an operation already exists and
+	 * the insert that creates one stay in the same scope, and neither can reach a tenant's row. The
+	 * organization is stated as `IsNull()` rather than as a possibly-`null` value for the same reason:
+	 * "the column is null" is the question, and it is spelled as one.
+	 *
+	 * **The tenant is a predicate here and not in the index**, which is the one thing this read cannot
+	 * repair on its own. `UQ_operation_idem` is
+	 * `(COALESCE("organizationId", <zero uuid>), "type", "idempotencyKey")`, so two tenants whose
+	 * callers have no organization share a tuple: this read misses the foreign row and the insert is
+	 * then refused by it. {@link start} answers that as a conflict rather than as a driver error, and
+	 * the index has to grow a coalesced `tenantId` for the two to agree.
+	 *
 	 * @param type The operation type.
 	 * @param idempotencyKey The caller-supplied key.
-	 * @returns The operation, or null when the key has never been used for this type.
+	 * @param scope The tenant and organization to look within; defaults to the request context's.
+	 * @returns The operation, or null when the key has never been used for this type in that scope.
 	 */
-	async findByIdempotencyKey(type: string, idempotencyKey: string): Promise<Operation | null> {
+	async findByIdempotencyKey(
+		type: string,
+		idempotencyKey: string,
+		scope: { tenantId?: ID | null; organizationId?: ID | null } = {}
+	): Promise<Operation | null> {
+		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
+		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
+
 		return this.typeOrmOperationRepository.findOne({
 			where: {
 				type,
 				idempotencyKey,
-				organizationId: RequestContext.currentOrganizationId()
-			} as any
+				tenantId: tenantId ? tenantId : IsNull(),
+				organizationId: organizationId ? organizationId : IsNull()
+			} as FindOptionsWhere<Operation>
 		});
 	}
 
@@ -865,17 +943,35 @@ export class OperationService extends CrudService<Operation> {
 	 * `COMPENSATING` per aggregate, so two concurrent checkouts of one cart — or two captures of one
 	 * order — cannot both proceed.
 	 *
+	 * 🛑 **Scoped by tenant for the same reason {@link findByIdempotencyKey} is.** The read had no
+	 * tenant predicate, so any caller that knew — or guessed — an aggregate id read the other tenant's
+	 * live operation, and `start()` handed that row back as the answer to its own submission. The
+	 * aggregate id is a uuid and therefore globally unique in practice, which is why the index needs
+	 * no tenant; a *read* that feeds an answer to a caller is a different question from an index, and
+	 * it needs one. With no tenant it asks for the tenant-less rows, as the idempotency lookup does.
+	 *
 	 * @param aggregateType The aggregate kind.
 	 * @param aggregateId Id of the aggregate.
+	 * @param scope The tenant to look within; defaults to the request context's.
 	 * @returns The live operation, or null.
 	 */
-	async findLiveForAggregate(aggregateType: string, aggregateId: ID): Promise<Operation | null> {
-		return this.typeOrmOperationRepository
+	async findLiveForAggregate(
+		aggregateType: string,
+		aggregateId: ID,
+		scope: { tenantId?: ID | null } = {}
+	): Promise<Operation | null> {
+		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
+		const query = this.typeOrmOperationRepository
 			.createQueryBuilder('operation')
 			.where('operation.aggregateType = :aggregateType', { aggregateType })
 			.andWhere('operation.aggregateId = :aggregateId', { aggregateId })
-			.andWhere('operation.status IN (:...statuses)', { statuses: LIVE_STATUSES })
-			.getOne();
+			.andWhere('operation.status IN (:...statuses)', { statuses: LIVE_STATUSES });
+
+		return (
+			tenantId
+				? query.andWhere('operation.tenantId = :tenantId', { tenantId })
+				: query.andWhere('operation.tenantId IS NULL')
+		).getOne();
 	}
 
 	/**
@@ -892,7 +988,14 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
-	 * Reads an operation or fails.
+	 * Reads an operation or fails, with no scope.
+	 *
+	 * The runtime's reader: `execute`, `compensate` and `renewLease` run on a worker or a sweep, which
+	 * holds no credential and therefore resolves no tenant, and a scoped read there would answer nothing
+	 * and the operation would never be driven. Every caller of this already holds the identifier
+	 * because the runtime handed it over.
+	 *
+	 * A move a *request* reaches uses {@link requireInScope} instead.
 	 *
 	 * @param id The operation id.
 	 * @returns The operation.
@@ -900,6 +1003,53 @@ export class OperationService extends CrudService<Operation> {
 	 */
 	private async require(id: ID): Promise<Operation> {
 		const operation = await this.findById(id);
+
+		if (!operation) {
+			throw new NotFoundException(`The operation "${id}" does not exist.`);
+		}
+
+		return operation;
+	}
+
+	/**
+	 * Reads an operation the caller is allowed to move, or fails.
+	 *
+	 * 🛑 **The reader every request-facing move uses.** `cancel()`, `retry()` and `resume()` are reached
+	 * from `POST /operations/:id/cancel`, `POST /operations/:id/retry` and the `cancelOperation`,
+	 * `retryOperation` and `resumeOperation` mutations, and none of those re-checks the scope of the id
+	 * it was handed. Reading through the unscoped {@link require} let a user of tenant A, holding
+	 * nothing but `OPERATIONS_CANCEL` in their own tenant, cancel tenant B's running order saga — its
+	 * completed steps compensated and its aggregate rolled back by a stranger — drive B's interrupted
+	 * one onwards, or re-drive B's failed one under a fresh attempt budget. The read routes were
+	 * already scoped through {@link findOperation}; this is the same scope, applied to the moves.
+	 *
+	 * The row is read through the runtime's own repository rather than through the ORM-dispatching
+	 * {@link findOperation}, because the move that follows writes it back through that repository: the
+	 * object it acts on is the same kind of object whichever ORM serves the management reads.
+	 *
+	 * **Only the runtime itself reads unscoped.** A caller with no user at all is a worker or a sweep —
+	 * a parent operation cancelling the child it started, a recovery pass resuming what it found
+	 * stalled — and it keeps the unscoped read those paths need. A caller that *is* signed in but
+	 * resolved no tenant is refused rather than widened: the guards in front of these moves refuse such
+	 * a request, so reaching here with one means the guards did not run.
+	 *
+	 * The refusal is a `404` and not a `403`, because a caller is never told that another tenant holds
+	 * the identifier it asked about.
+	 *
+	 * @param id The operation id.
+	 * @returns The operation.
+	 * @throws NotFoundException when no operation of that id is in the caller's scope.
+	 */
+	private async requireInScope(id: ID): Promise<Operation> {
+		const scope = this.scopeOfTheCaller();
+
+		if (!scope && !RequestContext.currentUser()) {
+			return this.require(id);
+		}
+
+		const operation = scope
+			? await this.typeOrmOperationRepository.findOne({ where: { id, ...scope } as FindOptionsWhere<Operation> })
+			: null;
 
 		if (!operation) {
 			throw new NotFoundException(`The operation "${id}" does not exist.`);
@@ -1332,6 +1482,10 @@ export class OperationService extends CrudService<Operation> {
 		variables: Record<string, unknown>
 	): IOperationStepContext {
 		const operationId = operation.id as ID;
+		// The answer the check starts from, and the moment it was read. The operation this attempt was
+		// handed was read from the row when the attempt renewed its lease, so it is a fresh start.
+		let cancelSnapshot = operation.state?.cancelRequested === true;
+		let snapshotTakenAt = Date.now();
 
 		return {
 			operationId,
@@ -1344,7 +1498,39 @@ export class OperationService extends CrudService<Operation> {
 			logger: this.stepLogger(operationId, step.name, attempt),
 			variables,
 			deadlineAt: operation.deadlineAt ? new Date(operation.deadlineAt) : undefined,
-			cancelRequested: () => operation.state?.cancelRequested === true
+			// 🛑 **Read from the store, not from the object the step started with.** `cancel()` writes
+			// `state.cancelRequested` onto a row it loaded itself, so a closure over the operation this
+			// attempt was handed answered `false` for the whole run: a step declaring a ten-minute
+			// timeout and polling this every second never saw a cancellation an operator requested two
+			// minutes in, ran to completion and applied its full effect. The contract calls this "steps
+			// check it at safe points", and a safe point is worth nothing if the answer is a constant.
+			//
+			// The read is cached for {@link CANCEL_CHECK_INTERVAL_MS} so that a polling loop costs one
+			// query per interval rather than one per iteration, and a failed read keeps the last answer:
+			// a store that cannot be reached is not a cancellation, and inventing one would abandon work
+			// nobody asked to stop. The read is the runtime's unscoped one, because a step runs on a
+			// worker that holds no credential.
+			cancelRequested: async (): Promise<boolean> => {
+				if (Date.now() - snapshotTakenAt < OperationService.CANCEL_CHECK_INTERVAL_MS) {
+					return cancelSnapshot;
+				}
+
+				snapshotTakenAt = Date.now();
+
+				try {
+					const row = await this.findById(operationId);
+
+					cancelSnapshot = row?.state?.cancelRequested === true || row?.status === OperationStatus.CANCELED;
+				} catch (error) {
+					this.logger.warn(
+						`operation=${operationId} step=${step.name} the cancellation flag could not be read (${
+							error instanceof Error ? error.message : String(error)
+						}); the last known answer stands.`
+					);
+				}
+
+				return cancelSnapshot;
+			}
 		};
 	}
 
@@ -1491,12 +1677,21 @@ export class OperationService extends CrudService<Operation> {
 	/**
 	 * The operation a submission already refers to, if any.
 	 *
+	 * The scope is resolved once by {@link start} and passed in, so the lookup that decides whether an
+	 * operation already exists and the insert that creates one are scoped identically. Reading with the
+	 * request context's scope while inserting with the submission's — which is what happened when
+	 * `input.organizationId` was stated — would look in one scope and write in another.
+	 *
 	 * @param input The submission.
+	 * @param scope The tenant and organization the submission is being made in.
 	 * @returns The existing operation, or null.
 	 */
-	private async findBySubmission(input: IOperationStartInput): Promise<Operation | null> {
+	private async findBySubmission(
+		input: IOperationStartInput,
+		scope: { tenantId?: ID | null; organizationId?: ID | null }
+	): Promise<Operation | null> {
 		if (input.idempotencyKey) {
-			const byKey = await this.findByIdempotencyKey(input.type, input.idempotencyKey);
+			const byKey = await this.findByIdempotencyKey(input.type, input.idempotencyKey, scope);
 
 			if (byKey) {
 				return byKey;
@@ -1504,7 +1699,7 @@ export class OperationService extends CrudService<Operation> {
 		}
 
 		if (input.aggregateType && input.aggregateId) {
-			return this.findLiveForAggregate(input.aggregateType, input.aggregateId);
+			return this.findLiveForAggregate(input.aggregateType, input.aggregateId, scope);
 		}
 
 		return null;

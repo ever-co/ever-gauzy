@@ -1,5 +1,6 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '../core/context/request-context';
+import { MultiORMEnum } from '../core/utils';
 import { IOperationDefinition, IOperationStepDefinition, IStepRetryPolicy } from './operation.contract';
 import { Operation } from './operation.entity';
 import { OperationStep } from './operation-step.entity';
@@ -30,7 +31,7 @@ function uniqueViolation(): Error {
 	return Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
 }
 
-/** One column's criteria, including the `IN (:...values)` form the aggregate query builds. */
+/** One column's criteria, including the `IN (:...values)` form the aggregate query builds and `IsNull()`. */
 function matches(row: Row, criteria: Row = {}): boolean {
 	return Object.entries(criteria).every(([column, condition]) => {
 		const operator = condition as { _type?: string; _value?: unknown[] };
@@ -39,16 +40,51 @@ function matches(row: Row, criteria: Row = {}): boolean {
 			return operator._value.includes(row[column]);
 		}
 
+		if (operator && typeof operator === 'object' && operator._type === 'isNull') {
+			return row[column] === null || row[column] === undefined;
+		}
+
 		return (row[column] ?? null) === (condition ?? null);
 	});
 }
 
-/** An in-memory stand-in for one table: the criteria, the ordering and the unique tuple it applies. */
+/**
+ * A copy of a row that shares nothing with it, the way a row read back from a real table shares
+ * nothing with the object that was written.
+ */
+function detach<V>(value: V): V {
+	if (value instanceof Date) {
+		return new Date(value.getTime()) as V;
+	}
+
+	if (Array.isArray(value)) {
+		return value.map((member) => detach(member)) as V;
+	}
+
+	if (value && typeof value === 'object') {
+		return Object.fromEntries(Object.entries(value).map(([key, member]) => [key, detach(member)])) as V;
+	}
+
+	return value;
+}
+
+/**
+ * An in-memory stand-in for one table: the criteria, the ordering and the unique tuples it applies.
+ *
+ * By default a saved object *is* the stored row, which keeps the cases short. A table built
+ * `detached` stores and answers copies instead, as a database does: a caller that assigns to an
+ * object it read without saving it has changed nothing, and a later read cannot see the assignment.
+ * The cases that assert what reached the row use it, because the shared object would hide exactly
+ * the write they are about.
+ */
 class Table {
 	readonly rows: Row[] = [];
 	private sequence = 0;
 
-	constructor(private readonly uniqueKey?: (row: Row) => string | undefined) {}
+	constructor(
+		private readonly uniqueKeys?: (row: Row) => string[],
+		private readonly detached = false
+	) {}
 
 	create(input: Row): Row {
 		this.sequence += 1;
@@ -58,20 +94,24 @@ class Table {
 
 	async save(rows: Row | Row[]): Promise<any> {
 		for (const row of Array.isArray(rows) ? rows : [rows]) {
-			const key = this.uniqueKey?.(row);
-			const clash =
-				key === undefined ? undefined : this.rows.find((entry) => entry.id !== row.id && this.uniqueKey?.(entry) === key);
+			const keys = this.uniqueKeys?.(row) ?? [];
+			const clash = keys.length
+				? this.rows.find(
+						(entry) => entry.id !== row.id && (this.uniqueKeys?.(entry) ?? []).some((key) => keys.includes(key))
+				  )
+				: undefined;
 
 			if (clash) {
 				throw uniqueViolation();
 			}
 
+			const stored = this.detached ? detach(row) : row;
 			const existing = this.rows.findIndex((entry) => entry.id === row.id);
 
 			if (existing === -1) {
-				this.rows.push(row);
+				this.rows.push(stored);
 			} else {
-				this.rows[existing] = row;
+				this.rows[existing] = stored;
 			}
 		}
 
@@ -79,11 +119,19 @@ class Table {
 	}
 
 	async findOne(options: { where?: Row } = {}): Promise<Row | null> {
-		return this.rows.find((row) => matches(row, options.where ?? {})) ?? null;
+		return this.read(this.rows.find((row) => matches(row, options.where ?? {})) ?? null);
 	}
 
 	async find(options: { where?: Row; order?: Row } = {}): Promise<Row[]> {
-		return this.rows.filter((row) => matches(row, options.where ?? {})).sort(byOrder(options.order));
+		return this.rows
+			.filter((row) => matches(row, options.where ?? {}))
+			.sort(byOrder(options.order))
+			.map((row) => this.read(row));
+	}
+
+	/** A stored row as a reader receives it. */
+	private read<R extends Row | null>(row: R): R {
+		return this.detached && row ? detach(row) : row;
 	}
 
 	createQueryBuilder(alias: string) {
@@ -119,8 +167,8 @@ class Table {
 			addOrderBy: (_column: string, _direction: string) => builder,
 			take: (_count: number) => builder,
 			setLock: (_mode: string) => builder,
-			getOne: async () => filtered()[0] ?? null,
-			getMany: async () => filtered()
+			getOne: async () => this.read(filtered()[0] ?? null),
+			getMany: async () => filtered().map((row) => this.read(row))
 		};
 
 		return builder;
@@ -204,13 +252,16 @@ class Database {
 	readonly tables = new Map<unknown, Table>();
 	readonly transactions: number[] = [];
 
-	constructor(private readonly uniqueKeys: Map<unknown, (row: Row) => string | undefined> = new Map()) {}
+	constructor(
+		private readonly uniqueKeys: Map<unknown, (row: Row) => string[]> = new Map(),
+		private readonly detached = false
+	) {}
 
 	tableOf(entity: unknown): Table {
 		let table = this.tables.get(entity);
 
 		if (!table) {
-			table = new Table(this.uniqueKeys.get(entity));
+			table = new Table(this.uniqueKeys.get(entity), this.detached);
 			this.tables.set(entity, table);
 		}
 
@@ -277,14 +328,26 @@ interface Announcements {
 }
 
 /** The harness: the service, the tables it writes to, and the trace its handlers leave. */
-function runtime() {
+function runtime(options: { detached?: boolean } = {}) {
 	const db = new Database(
-		new Map<unknown, (row: Row) => string | undefined>([
-			// `idempotencyKey` is unique per organization and type *when it is set*, and the live
-			// aggregate rule is a partial index too: an operation that names neither is unconstrained.
-			[Operation, (row) => (row.idempotencyKey ? `${row.organizationId}:${row.type}:${row.idempotencyKey}` : undefined)],
-			[OperationStep, (row) => `${row.operationId}:${row.name}`]
-		])
+		new Map<unknown, (row: Row) => string[]>([
+			// The two partial unique indexes of the table, and neither carries the tenant — which is what
+			// lets another tenant's row refuse an insert. `UQ_operation_idem` is
+			// `(COALESCE(organizationId), type, idempotencyKey)` *when a key is set*, and
+			// `UQ_operation_aggregate_live` is `(aggregateType, aggregateId)` while the operation is live:
+			// an operation that names neither is unconstrained.
+			[
+				Operation,
+				(row) => [
+					...(row.idempotencyKey ? [`idem:${row.organizationId ?? null}:${row.type}:${row.idempotencyKey}`] : []),
+					...(row.aggregateType && ['PENDING', 'RUNNING', 'COMPENSATING'].includes(row.status)
+						? [`aggregate:${row.aggregateType}:${row.aggregateId}`]
+						: [])
+				]
+			],
+			[OperationStep, (row) => [`${row.operationId}:${row.name}`]]
+		]),
+		options.detached
 	);
 
 	const trace: Trace = { invoked: [], compensated: [], keys: [], inputs: [] };
@@ -474,6 +537,90 @@ describe('starting an operation', () => {
 
 		expect(operation.deadlineAt).toEqual(new Date(T0.getTime() + 5_000));
 		expect(operation.maxAttempts).toBe(7);
+	});
+
+	it('answers a retried submission that states its own scope with the operation it started', async () => {
+		const { service, registry, operations, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+
+		// A worker: no credential, so the tenant and the organization are the submission's own. The
+		// lookup has to ask in the scope the insert writes into, or the retry misses the first
+		// attempt's row and is refused by it.
+		const submission = {
+			type: TYPE,
+			input: {},
+			idempotencyKey: 'key-1',
+			tenantId: 'tenant-a',
+			organizationId: 'organization-a'
+		};
+
+		const first = await service.start(submission);
+		const second = await service.start(submission);
+
+		expect(second.created).toBe(false);
+		expect(second.operation.id).toBe(first.operation.id);
+		expect(operations.rows).toHaveLength(1);
+	});
+
+	it('never answers a submission with another tenant’s operation that holds the same key', async () => {
+		const { service, registry, operations, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+
+		// Tenant B's operation, started with no organization.
+		const foreign = await service.start({
+			type: TYPE,
+			input: { cartId: CART },
+			idempotencyKey: 'key-1',
+			tenantId: 'tenant-b'
+		});
+
+		// A caller of tenant A with no organization selected names the same key.
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-a' as never);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as never);
+
+		// Control: the lookup used to ask for `{ type, idempotencyKey, organizationId IS NULL }`, which
+		// is every tenant's organization-less row, and answered tenant B's operation — its input, its
+		// aggregate — as this caller's own. The unique index carries no tenant, so B's row still
+		// refuses the insert, and that is a conflict rather than a driver error.
+		const attempt = service.start({ type: TYPE, input: {}, idempotencyKey: 'key-1' });
+
+		await expect(attempt).rejects.toBeInstanceOf(ConflictException);
+		await expect(attempt).rejects.not.toThrow(String(foreign.operation.id));
+		expect(operations.rows).toHaveLength(1);
+
+		// The caller's own key is still idempotent inside its own tenant.
+		const own = await service.start({ type: TYPE, input: {}, idempotencyKey: 'key-2' });
+		const replay = await service.start({ type: TYPE, input: {}, idempotencyKey: 'key-2' });
+
+		expect(own.created).toBe(true);
+		expect(own.operation.tenantId).toBe('tenant-a');
+		expect(replay).toMatchObject({ created: false, operation: { id: own.operation.id } });
+	});
+
+	it('never answers a submission with another tenant’s live operation of the same aggregate', async () => {
+		const { service, registry, operations, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+
+		await service.start({
+			type: TYPE,
+			input: {},
+			aggregateType: 'commerce_cart',
+			aggregateId: CART,
+			tenantId: 'tenant-b'
+		});
+
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-a' as never);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as never);
+
+		// Control: the unscoped read answered tenant B's live operation to a caller that named its
+		// aggregate. The live-aggregate index still refuses the second operation, as a conflict.
+		await expect(
+			service.start({ type: TYPE, input: {}, aggregateType: 'commerce_cart', aggregateId: CART })
+		).rejects.toBeInstanceOf(ConflictException);
+		expect(operations.rows).toHaveLength(1);
 	});
 });
 
@@ -680,6 +827,78 @@ describe('driving an operation forwards', () => {
 
 		expect(await service.claim(operation.id as string, 'worker-a')).toBeNull();
 	});
+
+	it('answers a step’s cancellation check from the row, not from the object the step started with', async () => {
+		const { service, registry, operations } = runtime();
+		const observed: boolean[] = [];
+
+		registry.register(TYPE, {
+			steps: [
+				{
+					name: 'charge',
+					order: 1,
+					async invoke(_input, context) {
+						observed.push(await context.cancelRequested());
+
+						// Another process requests the cancellation: it writes a row it loaded itself, so
+						// the object this attempt was handed never changes.
+						const index = operations.rows.findIndex((row) => row.id === context.operationId);
+						const row = operations.rows[index];
+
+						operations.rows[index] = { ...row, state: { ...(row.state as Row), cancelRequested: true } };
+
+						// Inside the interval the answer already read stands, so a polling loop is not a
+						// query per iteration.
+						observed.push(await context.cancelRequested());
+
+						jest.setSystemTime(new Date(T0.getTime() + OperationService.CANCEL_CHECK_INTERVAL_MS));
+
+						// Control: an answer computed from the attempt's own object said `false` here too,
+						// for the whole run of the step.
+						observed.push(await context.cancelRequested());
+
+						return {};
+					}
+				}
+			]
+		});
+
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string);
+
+		expect(observed).toEqual([false, false, true]);
+	});
+
+	it('keeps the last known cancellation answer when the row cannot be read', async () => {
+		const { service, registry } = runtime();
+		const observed: boolean[] = [];
+
+		registry.register(TYPE, {
+			steps: [
+				{
+					name: 'charge',
+					order: 1,
+					async invoke(_input, context) {
+						jest.spyOn(service, 'findById').mockRejectedValueOnce(new Error('the store is unreachable'));
+						jest.setSystemTime(new Date(T0.getTime() + OperationService.CANCEL_CHECK_INTERVAL_MS));
+
+						// A store that cannot be reached is not a cancellation: inventing one would abandon
+						// work nobody asked to stop.
+						observed.push(await context.cancelRequested());
+
+						return {};
+					}
+				}
+			]
+		});
+
+		const { operation } = await service.start({ type: TYPE, input: {} });
+		const result = await service.execute(operation.id as string);
+
+		expect(observed).toEqual([false]);
+		expect(result.operation.status).toBe('COMPLETED');
+	});
 });
 
 describe('failing, compensating and deadlines', () => {
@@ -823,6 +1042,29 @@ describe('cancelling an operation', () => {
 		expect(canceled.status).toBe('COMPENSATED');
 		expect(errorOf(canceled as Row).code).toBe('OPERATION_CANCELED');
 		expect(canceled.result).toMatchObject({ compensatedSteps: ['reserve'] });
+	});
+
+	it('records the reason a caller cancelled with where the compensation walk reads it', async () => {
+		// Detached rows, as a real table has: `compensate` re-reads the operation through `claim()`, so
+		// a reason that was only assigned to the object `cancel` held never reached the walk. With the
+		// rows shared, the assignment reached the stored row by accident and the case above could not
+		// tell the two apart.
+		const { service, registry, trace, operations, define } = runtime({ detached: true });
+
+		registry.register(TYPE, define(['reserve', 'charge']));
+		const { operation } = await service.start({ type: TYPE, input: {} });
+
+		await service.execute(operation.id as string, { maxSteps: 1 });
+
+		const canceled = await service.cancel(operation.id as string, { reason: 'the customer withdrew' });
+
+		expect(trace.compensated).toEqual(['reserve']);
+		expect(canceled.status).toBe('COMPENSATED');
+		// Control: the walk found no error on the row and settled with its own generic
+		// `OPERATION_COMPENSATION_REQUESTED`, so a deliberate cancellation read as a spontaneous one.
+		expect(errorOf(canceled as Row)).toMatchObject({ code: 'OPERATION_CANCELED', message: 'the customer withdrew' });
+		expect(errorOf(operations.rows[0])).toMatchObject({ code: 'OPERATION_CANCELED', message: 'the customer withdrew' });
+		expect((canceled.result as Row).error).toMatchObject({ code: 'OPERATION_CANCELED' });
 	});
 
 	it('refuses to cancel an operation that already finished', async () => {
@@ -1155,3 +1397,105 @@ describe('reading the queue inside the caller’s own scope', () => {
 		expect(await service.findStepsForOperations([])).toEqual([]);
 	});
 });
+
+describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
+	'moving an operation only inside the caller’s own scope (%s)',
+	(orm) => {
+		/**
+		 * Acts as a signed-in caller of `tenantId`, or as a credential that resolved no tenant.
+		 *
+		 * The user is stated as well as the tenant because the two are different questions to the
+		 * service: no user at all is the runtime itself — a worker, a sweep — while a user with no
+		 * tenant is a request whose guards did not run.
+		 */
+		const actAs = (tenantId: string | null): void => {
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: `user-of-${tenantId}`, tenantId } as never);
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId as never);
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null as never);
+		};
+
+		/**
+		 * Tenant B's operations, written by the runtime with no credential in play: an order saga in
+		 * flight with its first step applied, a second one interrupted the same way, and a capture that
+		 * failed and was compensated.
+		 */
+		const tenantB = async () => {
+			const harness = runtime();
+
+			// The ORM the management reads dispatch on. The moves read through the runtime's own
+			// repository whichever ORM serves the rest of the API, and the refusal is asserted under both.
+			jest.spyOn(harness.service, 'ormType', 'get').mockReturnValue(orm as never);
+
+			harness.registry.register(TYPE, harness.define(['reserve', 'charge']));
+			harness.registry.register('ORDER_CAPTURE', harness.define(['capture'], { failsAt: 'capture' }));
+
+			const inFlight = (await harness.service.start({ type: TYPE, input: {}, tenantId: 'tenant-b' })).operation;
+			const interrupted = (await harness.service.start({ type: TYPE, input: {}, tenantId: 'tenant-b' })).operation;
+			const failed = (await harness.service.start({ type: 'ORDER_CAPTURE', input: {}, tenantId: 'tenant-b' }))
+				.operation;
+
+			await harness.service.execute(inFlight.id as string, { maxSteps: 1 });
+			await harness.service.execute(interrupted.id as string, { maxSteps: 1 });
+			await harness.service.execute(failed.id as string);
+
+			harness.trace.invoked.length = 0;
+			harness.trace.compensated.length = 0;
+
+			const snapshot = () =>
+				harness.operations.rows.map((row) => ({ id: row.id, status: row.status, state: { ...(row.state as Row) } }));
+
+			return { ...harness, inFlight, interrupted, failed, snapshot };
+		};
+
+		it('refuses to cancel, resume or retry another tenant’s operation, and leaves it as it was', async () => {
+			const { service, trace, inFlight, interrupted, failed, snapshot } = await tenantB();
+			const before = snapshot();
+
+			actAs('tenant-a');
+
+			// Control: each of the three read the operation by id alone, so a caller holding nothing but
+			// `OPERATIONS_CANCEL` in tenant A compensated B's order saga, drove B's interrupted one to
+			// completion, and re-drove B's failed capture under a fresh budget. The refusal is the same
+			// `404` an id that exists nowhere gets, so the caller learns nothing about tenant B.
+			await expect(service.cancel(inFlight.id as string, { reason: 'not yours' })).rejects.toBeInstanceOf(
+				NotFoundException
+			);
+			await expect(service.resume(interrupted.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.retry(failed.id as string)).rejects.toBeInstanceOf(NotFoundException);
+
+			expect(trace.invoked).toEqual([]);
+			expect(trace.compensated).toEqual([]);
+			expect(snapshot()).toEqual(before);
+		});
+
+		it('refuses a credential that resolved no tenant rather than moving an operation unscoped', async () => {
+			const { service, trace, inFlight, interrupted, failed, snapshot } = await tenantB();
+			const before = snapshot();
+
+			actAs(null);
+
+			await expect(service.cancel(inFlight.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.resume(interrupted.id as string)).rejects.toBeInstanceOf(NotFoundException);
+			await expect(service.retry(failed.id as string)).rejects.toBeInstanceOf(NotFoundException);
+
+			expect(trace.invoked).toEqual([]);
+			expect(snapshot()).toEqual(before);
+		});
+
+		it('still moves the caller’s own operations', async () => {
+			const { service, trace, inFlight, interrupted, failed } = await tenantB();
+
+			actAs('tenant-b');
+
+			const canceled = await service.cancel(inFlight.id as string, { reason: 'the buyer withdrew' });
+			const resumed = await service.resume(interrupted.id as string);
+			const retried = await service.retry(failed.id as string);
+
+			expect(canceled.status).toBe('COMPENSATED');
+			expect(resumed.operation.status).toBe('COMPLETED');
+			expect(retried.operation.status).toBe('COMPENSATED');
+			expect(trace.compensated).toEqual(['reserve']);
+			expect(trace.invoked).toEqual(['charge', 'capture']);
+		});
+	}
+);

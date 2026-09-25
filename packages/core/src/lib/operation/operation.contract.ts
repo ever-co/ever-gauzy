@@ -45,15 +45,34 @@ export interface IOperationStepContext {
 	 * as the provider's own idempotency key and a step that writes locally can use it as a guard.
 	 */
 	readonly idempotencyKey: string;
-	/** The transactional manager for the step's local writes. */
+	/**
+	 * The manager for the step's local writes.
+	 *
+	 * **It is the data source's own manager, not a transaction around the attempt**: each statement a
+	 * step writes through it commits on its own, and the row that records the step as `COMPLETED` is a
+	 * further commit after the step returns. A process that dies between the two leaves an effect with
+	 * the step still `RUNNING`; a resume invokes the step again, which is why a local write guards on
+	 * {@link idempotencyKey} exactly as a provider call does. A step that needs several local writes to
+	 * land together opens its own transaction on this manager.
+	 */
 	readonly manager: EntityManager;
 	readonly logger: IOperationLogger;
 	/** The operation's shared variables; mutated values are persisted with the step's outcome. */
 	readonly variables: Record<string, unknown>;
 	/** The operation deadline, so a step can fail fast instead of starting work that cannot finish. */
 	readonly deadlineAt?: Date;
-	/** True when a cancellation has been requested; steps check it at safe points. */
-	cancelRequested(): boolean;
+	/**
+	 * True when a cancellation has been requested; steps check it at safe points.
+	 *
+	 * **Awaited, because the answer is read from the operation's row rather than from a snapshot.** A
+	 * cancellation is requested by another process, against a row this attempt does not hold, so an
+	 * answer computed once when the step started is a constant that can only ever say "no" — a step
+	 * with a ten-minute timeout polling it would never observe a cancellation made two minutes in. The
+	 * runtime caches the read for a second, so a tight polling loop costs a query per second rather
+	 * than one per iteration, and a step may simply `await` it at every safe point. The answer is always
+	 * a promise: a step that tests it without `await` is testing an object, which is always truthy.
+	 */
+	cancelRequested(): Promise<boolean>;
 }
 
 /**
