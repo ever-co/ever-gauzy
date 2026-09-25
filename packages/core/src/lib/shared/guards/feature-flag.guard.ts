@@ -1,8 +1,8 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException, Type } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { FEATURE_METADATA } from '@gauzy/constants';
+import { requiredFeatureFlags } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { FeatureService } from './../../feature/feature.service';
 import { RequestContext } from './../../core/context';
@@ -157,45 +157,34 @@ export class FeatureFlagGuard implements CanActivate {
 
 	/**
 	 * Determines if the current request can be activated based on feature flag metadata.
+	 *
+	 * **Every declared code must be enabled.** `@FeatureFlag` accumulates, so a target can require more
+	 * than one code — a plugin resolver requires both `FEATURE_GRAPHQL` (the endpoint) and its own
+	 * capability, which is exactly what the capability's REST routes require of it. The codes are the
+	 * handler's when it declares any and its class's otherwise (see `requiredFeatureFlags`), and each is
+	 * resolved and cached on its own, so a code shared by many routes is resolved once per scope no matter
+	 * which set it appears in. They are resolved in declaration order and the first disabled one refuses
+	 * the request without resolving the rest. Reading one code with `getAllAndOverride`, as this guard did,
+	 * enforced whichever single code was written last and let every other one pass unexamined.
+	 *
+	 * A handler that declares no code is refused: nothing was named that could be enabled. That was
+	 * already the intended outcome of resolving an absent code, only reached through a catalogue lookup
+	 * for `code: undefined` — a lookup whose answer depended on how each ORM treats an undefined
+	 * criterion, which is not a thing an authorization decision should depend on.
+	 *
 	 * @param context The execution context of the request.
 	 * @returns A boolean indicating whether access is allowed.
 	 */
 	async canActivate(context: ExecutionContext) {
-		// Retrieve permissions from metadata
-		const targets: Array<Function | Type<any>> = [
-			context.getHandler(), // Returns a reference to the handler (method) that will be invoked next in the request pipeline.
-			context.getClass() // Returns the *type* of the controller class which the current handler belongs to.
-		];
+		const flags = requiredFeatureFlags(this._reflector, context);
 
-		// Retrieve metadata for a specified key for a specified set of features
-		const flag = this._reflector.getAllAndOverride<FeatureEnum>(FEATURE_METADATA, targets);
+		let isEnabled = flags.length > 0;
 
-		/**
-		 * 🛑 The key MUST carry the tenant and the organization.
-		 *
-		 * `FeatureService.isFeatureEnabled()` resolves through the request-scoped repository, so the
-		 * ANSWER is tenant-scoped while a key built from the flag alone is not. The first tenant to
-		 * resolve a flag stored its own answer under a key every other tenant then read, so one
-		 * tenant's modules decided what every other tenant was served for as long as the entry lived:
-		 * a tenant that had switched a module off was served the module of whichever tenant resolved
-		 * the flag first, and a tenant that had enabled one could be denied it. With a single tenant
-		 * this is invisible, which is why it survived until the flags that make it reachable arrived.
-		 *
-		 * The organization is part of the key as well because a toggle can be organization-scoped: a
-		 * resolution made with no organization selected must not share an entry with one made inside
-		 * an organization.
-		 */
-		const cacheKey = featureFlagCacheKey(flag);
-
-		const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
-
-		let isEnabled: boolean;
-
-		if (fromCache == null) {
-			isEnabled = await this.featureFlagService.isFeatureEnabled(flag);
-			await this.cacheManager.set(cacheKey, isEnabled, FEATURE_FLAG_CACHE_TTL_MS);
-		} else {
-			isEnabled = fromCache;
+		for (const flag of flags) {
+			if (!(await this.isFlagEnabled(flag))) {
+				isEnabled = false;
+				break;
+			}
 		}
 
 		// Check if the feature is enabled
@@ -228,5 +217,43 @@ export class FeatureFlagGuard implements CanActivate {
 		const { method, url } = request ?? {};
 
 		throw new NotFoundException(`Cannot ${method} ${url}`);
+	}
+
+	/**
+	 * Whether one feature code is enabled for the scope of the current request, through the cache.
+	 *
+	 * @param flag The feature code.
+	 * @returns True when the code is enabled.
+	 */
+	private async isFlagEnabled(flag: FeatureEnum): Promise<boolean> {
+		/**
+		 * 🛑 The key MUST carry the tenant and the organization.
+		 *
+		 * `FeatureService.isFeatureEnabled()` resolves through the request-scoped repository, so the
+		 * ANSWER is tenant-scoped while a key built from the flag alone is not. The first tenant to
+		 * resolve a flag stored its own answer under a key every other tenant then read, so one
+		 * tenant's modules decided what every other tenant was served for as long as the entry lived:
+		 * a tenant that had switched a module off was served the module of whichever tenant resolved
+		 * the flag first, and a tenant that had enabled one could be denied it. With a single tenant
+		 * this is invisible, which is why it survived until the flags that make it reachable arrived.
+		 *
+		 * The organization is part of the key as well because a toggle can be organization-scoped: a
+		 * resolution made with no organization selected must not share an entry with one made inside
+		 * an organization.
+		 */
+		const cacheKey = featureFlagCacheKey(flag);
+
+		const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
+
+		let isEnabled: boolean;
+
+		if (fromCache == null) {
+			isEnabled = await this.featureFlagService.isFeatureEnabled(flag);
+			await this.cacheManager.set(cacheKey, isEnabled, FEATURE_FLAG_CACHE_TTL_MS);
+		} else {
+			isEnabled = fromCache;
+		}
+
+		return isEnabled;
 	}
 }

@@ -13,10 +13,10 @@
  *
  * The rule is therefore mechanical, and it is checked mechanically rather than reviewed by eye: every
  * class under the trees this script scans that carries a class-level `@Resolver(` must also carry
- * `@FeatureFlag(` — the code `FeatureFlagGuard` reads from `FEATURE_METADATA` with `getAllAndOverride`
- * over the handler and then the class. A resolver that hosts fields rather than a resource (a plain
- * container class) is held to the same rule as its neighbours, because its fields are served through
- * the same endpoint.
+ * `@FeatureFlag(` — the codes `FeatureFlagGuard` reads from `FEATURE_METADATA`: every code the handler
+ * states, or every code its class states when the handler states none. A resolver that hosts fields
+ * rather than a resource (a plain container class) is held to the same rule as its neighbours, because
+ * its fields are served through the same endpoint.
  *
  * **Two trees are scanned, and the second one is the reason this file has a history.** The endpoint is
  * one schema, assembled from the kernel and from every configured plugin, so a plugin resolver left
@@ -30,22 +30,24 @@
  * Two things are stated rather than inferred:
  *
  * - **The code is declared once.** Every gate states the shared `FEATURE_GRAPHQL` exported by
- *   `feature/graphql-feature.code.ts`; a resolver whose gate resolves a different code — a literal that
- *   drifted from the catalogue, or a domain code such as `WarehouseFeatures.WAREHOUSE` — is reported
+ *   `feature/graphql-feature.code.ts`; a resolver whose gate does not state it — only a literal that
+ *   drifted from the catalogue, or only a domain code such as `WarehouseFeatures.WAREHOUSE` — is reported
  *   below, because a code no catalogue row carries is resolved by the guard as disabled, which closes
- *   that whole surface for every caller, quietly. That report is information rather than a failure: the
- *   value is the same for a literal, and what an operator's switch depends on is that the gate is there
- *   at all.
+ *   that whole surface for every caller, quietly, and a class without the shared code is one the
+ *   endpoint's switch does not reach. That report is information rather than a failure: the value is the
+ *   same for a literal, and what an operator's switch depends on is that the gate is there at all.
  * - **The exceptions are written down.** {@link ALLOWED} is the frozen list of resolvers that predate
  *   this convention and are deliberately not gated by the change that introduced it. An entry is a
  *   record, not a bypass: it needs a reason, and it is reported when the resolver it excuses has since
  *   been gated, so the list cannot quietly outlive the exception it describes.
  *
- * A class may state more than one code, and the decorator writes a single metadata value: the code
- * written first is the one `getAllAndOverride` resolves for every field, and each code written after it
- * is a statement that never runs. That is reported rather than forbidden, because choosing between the
- * platform gate and a domain gate is a real decision on a class that carries both, and because a
- * decision nothing prints is a decision nobody can review.
+ * A class may state more than one code, and every one of them is enforced: `@FeatureFlag` accumulates
+ * the codes stacked on one target and `FeatureFlagGuard` requires them all, so a plugin resolver that
+ * states `FEATURE_GRAPHQL` beside its own capability's code is closed when either is switched off —
+ * which is what the capability's REST routes do. (It was not always so: the decorator used to write one
+ * value, the upper code replaced the lower, and the lower one was a statement that never ran. This
+ * report said so, and printed which code was actually read.) The classes that state several codes are
+ * listed with every code they require, as information: it is the set an operator's switches act on.
  *
  * Usage:
  *   node tools/scripts/graphql-feature-gate-check.mjs [repoRoot]
@@ -148,11 +150,40 @@ function sources(dir, out = []) {
 }
 
 /**
+ * Where the decorator block that holds a class's `@Resolver(` line begins.
+ *
+ * Decorators may be stacked above `@Resolver(` as well as below it, and a `@FeatureFlag(` written there
+ * is as much a part of the class's gate as one written below — every stacked code is enforced, so a code
+ * the scan did not see is a code it would misreport. The block is extended upward over the single-line
+ * decorators written at the start of a line directly above `@Resolver(`.
+ *
+ * @param source The file's text.
+ * @param from The offset of the `@Resolver(` line.
+ * @returns The offset the class's decorator block starts at.
+ */
+function decoratorBlockStart(source, from) {
+	let start = from;
+
+	while (start > 0) {
+		const previousLineEnd = start - 1;
+		const previousLineStart = source.lastIndexOf('\n', previousLineEnd - 1) + 1;
+		const previousLine = source.slice(previousLineStart, previousLineEnd).replace(/\r$/, '');
+
+		if (!/^@\w/.test(previousLine)) {
+			break;
+		}
+		start = previousLineStart;
+	}
+
+	return start;
+}
+
+/**
  * The resolver classes one file declares, with the decorator block each one carries.
  *
- * A class is read as the text between its own `@Resolver(` line and the `export class` declaration that
- * follows it, so a file that ever declared two resolver classes is checked class for class rather than
- * once for the file.
+ * A class is read as the text between the first decorator stacked directly above its own `@Resolver(`
+ * line (see {@link decoratorBlockStart}) and the `export class` declaration that follows it, so a file
+ * that ever declared two resolver classes is checked class for class rather than once for the file.
  *
  * @param source The file's text.
  * @returns {Array<{line: number, name: string, block: string}>} One entry per resolver class.
@@ -163,7 +194,8 @@ function resolverClasses(source) {
 	for (const match of source.matchAll(RESOLVER)) {
 		const from = match.index;
 		const declaration = source.indexOf('export class', from);
-		const block = declaration === -1 ? source.slice(from) : source.slice(from, declaration);
+		const blockStart = decoratorBlockStart(source, from);
+		const block = declaration === -1 ? source.slice(blockStart) : source.slice(blockStart, declaration);
 		const name = declaration === -1 ? undefined : /export class (\w+)/.exec(source.slice(declaration))?.[1];
 
 		classes.push({
@@ -202,17 +234,16 @@ for (const tree of TREES) {
 				gated.push({ file: where, line });
 				found.gated++;
 
-				// The decorator writes one metadata value and the guard resolves the first one it finds,
-				// so the code stated first is the code that gates every field of this class. The codes
-				// after it are read only to be reported: each of them is a statement that never runs.
-				const stated = [...block.matchAll(FEATURE_FLAG_ARGUMENT)].map((match) => match[1]);
+				// The decorator accumulates the codes stacked on the class and the guard requires every
+				// one of them, so the class's gate is the whole set, in the order the source states it.
+				const stated = [...new Set([...block.matchAll(FEATURE_FLAG_ARGUMENT)].map((match) => match[1]))];
 
-				if (stated[0] !== SHARED_CODE) {
-					gatedWithOtherCode.push({ file: where, line, argument: stated[0] });
+				if (!stated.includes(SHARED_CODE)) {
+					gatedWithOtherCode.push({ file: where, line, argument: stated.join(', ') });
 				}
 
 				if (stated.length > 1) {
-					multipleCodes.push({ file: where, line, resolved: stated[0], others: stated.slice(1) });
+					multipleCodes.push({ file: where, line, required: stated });
 				}
 
 				if (ALLOWED.has(where)) staleAllowList.push(where);
@@ -241,7 +272,7 @@ for (const [label, found] of perTree) {
 	);
 }
 console.log(
-	`  ${gated.length} carry the gate, ${gated.length - gatedWithOtherCode.length} of them through the shared ${SHARED_CODE} constant`
+	`  ${gated.length} carry the gate, ${gated.length - gatedWithOtherCode.length} of them including the shared ${SHARED_CODE} constant`
 );
 console.log(`  ${allowed.length} predate the convention and are on the frozen allow-list`);
 console.log(`  ${ungated.length} carry no gate and no reason, which is the defect this check exists for`);
@@ -266,7 +297,7 @@ if (allowed.length) {
 
 if (gatedWithOtherCode.length) {
 	console.log(
-		`  ${gatedWithOtherCode.length} gate(s) resolve a code other than the shared ${SHARED_CODE} constant (information, not a failure):`
+		`  ${gatedWithOtherCode.length} gate(s) do not state the shared ${SHARED_CODE} constant (information, not a failure):`
 	);
 	for (const entry of gatedWithOtherCode) {
 		console.log(`    ${entry.file}:${entry.line}  → @FeatureFlag(${entry.argument})`);
@@ -276,11 +307,10 @@ if (gatedWithOtherCode.length) {
 
 if (multipleCodes.length) {
 	console.log(
-		`  ${multipleCodes.length} resolver class(es) state more than one code, and only the first is resolved (information, not a failure):`
+		`  ${multipleCodes.length} resolver class(es) state more than one code, and every one is required (information, not a failure):`
 	);
 	for (const entry of multipleCodes) {
-		console.log(`    ${entry.file}:${entry.line}  → @FeatureFlag(${entry.resolved}) is read`);
-		console.log(`        the code(s) beside it, which never run: ${entry.others.join(', ')}`);
+		console.log(`    ${entry.file}:${entry.line}  → requires ${entry.required.join(' and ')}`);
 	}
 	console.log('');
 }
