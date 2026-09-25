@@ -1,9 +1,12 @@
 import { IRule, RuleOperator, RuleOwnerType, RuleScope, RuleValueType } from '@gauzy/contracts';
+import { PatternRejection } from './rule.pattern-safety';
 import {
+	RULE_MATCHES_PATTERN_OPTIONS,
 	RULE_MAX_GROUPS,
 	RULE_MAX_PATTERN_LENGTH,
 	RULE_MAX_RULES_PER_GROUP,
 	RuleValidationCode,
+	describePattern,
 	isOperatorAllowedForType,
 	isSafePattern,
 	isScopeAllowedForOwnerType,
@@ -65,6 +68,44 @@ describe('the operator and scope tables', () => {
 		expect(isSafePattern('a'.repeat(RULE_MAX_PATTERN_LENGTH + 1))).toBe(false);
 		expect(isSafePattern('')).toBe(false);
 		expect(isSafePattern('(')).toBe(false);
+	});
+
+	it('refuses the patterns the two-expression screen let through', () => {
+		// Each compiles, contains no `+` or `*` directly inside a flat group followed by another, and
+		// backtracks exponentially or with a high-degree polynomial on a short subject that does not
+		// match. The pattern-safety suite counts the steps.
+		expect(isSafePattern('(a|a)+')).toBe(false);
+		expect(isSafePattern('(?:a|a?)+')).toBe(false);
+		expect(isSafePattern('((a+))+')).toBe(false);
+		expect(isSafePattern('(a+){2,}')).toBe(false);
+		expect(isSafePattern('.*.*.*.*x')).toBe(false);
+		// And one that escapes the anchors it is wrapped in: `^(?:a)|(b)$` compiles.
+		expect(isSafePattern('a)|(b')).toBe(false);
+		// And three that a star-height analysis alone reads past: a modifier group, an exact repetition
+		// behind a sliding pair, and a lookaround a loop runs again on every repetition.
+		expect(isSafePattern('(?-i:a|a)+')).toBe(false);
+		expect(isSafePattern('.*.*a{250}x')).toBe(false);
+		expect(isSafePattern('(?:(?=[^!]{200})[^!])*x')).toBe(false);
+		// Controls: the ordinary shapes are still accepted.
+		expect(isSafePattern('\\d+(?:\\.\\d+)?')).toBe(true);
+		expect(isSafePattern('[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}')).toBe(true);
+	});
+
+	it('answers for either case sensitivity unless the caller says how it compiles', () => {
+		// A caller outside the rule engine may compile with `i`, under which `(?:a|A)+` is two branches
+		// matching the same text inside a loop. Not saying gets the verdict that holds either way.
+		expect(isSafePattern('(?:a|A)+')).toBe(false);
+		expect(isSafePattern('(?:a|A)+', { caseInsensitive: true })).toBe(false);
+		expect(isSafePattern('(?:a|A)+', { caseInsensitive: false })).toBe(true);
+		expect(RULE_MATCHES_PATTERN_OPTIONS).toEqual({ caseInsensitive: false });
+	});
+
+	it('says why a pattern is refused', () => {
+		expect(describePattern('(a|a)+')).toEqual(
+			expect.objectContaining({ safe: false, reason: PatternRejection.AMBIGUOUS_ALTERNATION, detail: expect.any(String) })
+		);
+		expect(describePattern('a'.repeat(RULE_MAX_PATTERN_LENGTH + 1)).reason).toBe(PatternRejection.TOO_LONG);
+		expect(describePattern('[A-Z]{2}[0-9]{4}')).toEqual({ safe: true });
 	});
 
 	it('states the caps the platform publishes', () => {
@@ -157,6 +198,23 @@ describe('validateRuleDefinition', () => {
 			RuleValidationCode.RULE_REGEX_UNSAFE
 		]);
 		expect(codesOf(rule({ operator: RuleOperator.MATCHES, value: '[A-Z]{2}[0-9]{4}' }))).toEqual([]);
+	});
+
+	it('refuses a MATCHES pattern the old screen accepted, and tells the author which part backtracks', () => {
+		const [problem] = validateRuleDefinition(rule({ operator: RuleOperator.MATCHES, value: '(a|a)+' }));
+
+		expect(problem?.code).toBe(RuleValidationCode.RULE_REGEX_UNSAFE);
+		expect(problem?.message).toBe(describePattern('(a|a)+', RULE_MATCHES_PATTERN_OPTIONS).detail);
+		expect(codesOf(rule({ operator: RuleOperator.MATCHES, value: '((a+))+' }))).toEqual([RuleValidationCode.RULE_REGEX_UNSAFE]);
+		expect(codesOf(rule({ operator: RuleOperator.MATCHES, value: 42 as unknown as string }))).toEqual([
+			RuleValidationCode.RULE_REGEX_UNSAFE
+		]);
+	});
+
+	it('judges a MATCHES pattern as the evaluator compiles it, without the `i` flag', () => {
+		// The write path and the evaluator must reach the same verdict: a rule accepted here that the
+		// evaluator refused would silently never match.
+		expect(codesOf(rule({ operator: RuleOperator.MATCHES, value: '(?:a|A)+' }))).toEqual([]);
 	});
 
 	it('refuses a decimal operand that is not an exact decimal', () => {

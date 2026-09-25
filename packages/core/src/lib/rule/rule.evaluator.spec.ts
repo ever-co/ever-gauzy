@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
 	IRule,
 	RuleEvaluationContext,
@@ -8,6 +9,7 @@ import {
 	RuleValueType
 } from '@gauzy/contracts';
 import { evaluateRuleSet, matchesRule, resolveAttributePath, ruleSetMatches } from './rule.evaluator';
+import { RULE_MAX_MATCH_INPUT } from './rule.pattern-safety';
 
 /**
  * The rule language, asserted as a language.
@@ -160,9 +162,112 @@ describe('matchesRule', () => {
 
 	it('makes an unusable pattern a reported failure rather than a thrown exception', () => {
 		const trace = { unresolvedAttributes: [] as string[], coercionFailures: [] as string[] };
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
-		expect(matchesRule(rule({ attribute: 'code', operator: RuleOperator.MATCHES, value: '(' }), { code: 'A' }, trace)).toBe(false);
-		expect(trace.coercionFailures).toEqual(['code']);
+		try {
+			expect(matchesRule(rule({ attribute: 'code', operator: RuleOperator.MATCHES, value: '(' }), { code: 'A' }, trace)).toBe(false);
+			expect(trace.coercionFailures).toEqual(['code']);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	describe('a stored pattern the write path would have refused', () => {
+		// Rows reach the evaluator from seeds, imports, migrations, restores and the inherited CRUD
+		// writes, none of which runs `validateRuleDefinition`. The evaluator applies the same analysis
+		// itself, so a hostile pattern that got into the table is never run.
+		let warn: jest.SpyInstance;
+		let runs: jest.SpyInstance;
+
+		beforeEach(() => {
+			warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+			runs = jest.spyOn(RegExp.prototype, 'test');
+		});
+
+		afterEach(() => {
+			warn.mockRestore();
+			runs.mockRestore();
+		});
+
+		/** @returns The compiled patterns the evaluator ran, by their source. */
+		const patternsRun = (): string[] => runs.mock.contexts.map((context) => (context as RegExp).source);
+
+		it('does not match, records why, and never runs the pattern', () => {
+			// `(a|a)+` matches `aaaa` — so before the evaluator screened it, this rule matched, and on
+			// `aaaa…a!` it backtracked through 2^n attempts on the event loop.
+			const hostile = rule({ attribute: 'sku', operator: RuleOperator.MATCHES, value: '(a|a)+' });
+			const trace = { unresolvedAttributes: [] as string[], coercionFailures: [] as string[] };
+
+			expect(new RegExp('^(?:(a|a)+)$').test('aaaa')).toBe(true);
+			runs.mockClear();
+
+			expect(matchesRule(hostile, { sku: 'aaaa' }, trace)).toBe(false);
+			expect(trace.coercionFailures).toEqual(['sku']);
+			expect(patternsRun()).not.toContain('^(?:(a|a)+)$');
+			// Negation cannot turn a refused pattern into a match: the verdict is reached first.
+			expect(matchesRule({ ...hostile, isNegated: true }, { sku: 'aaaa' })).toBe(false);
+		});
+
+		it('tells an operator once per pattern, naming the reason', () => {
+			const hostile = rule({ attribute: 'sku', operator: RuleOperator.MATCHES, value: '((b+))+' });
+
+			matchesRule(hostile, { sku: 'bbb' });
+			matchesRule(hostile, { sku: 'bbbb' });
+			ruleSetMatches([hostile], { sku: 'b' });
+
+			expect(warn).toHaveBeenCalledTimes(1);
+			expect(warn.mock.calls[0][0]).toContain('STAR_HEIGHT');
+			expect(warn.mock.calls[0][0]).toContain('"((b+))+"');
+		});
+
+		it('still runs a pattern the analysis accepts', () => {
+			// Control: a screen that refused everything would pass both cases above.
+			const postal = rule({ attribute: 'postal_code', operator: RuleOperator.MATCHES, value: '\\d{5}(?:-\\d{4})?' });
+
+			expect(matchesRule(postal, { postal_code: '90210-1234' })).toBe(true);
+			expect(matchesRule(postal, { postal_code: '90210-12' })).toBe(false);
+			expect(patternsRun()).toContain('^(?:\\d{5}(?:-\\d{4})?)$');
+			expect(warn).not.toHaveBeenCalled();
+		});
+
+		it.each([
+			['a modifier group', '(?-i:c|c)+', 'cccc', 'MODIFIER'],
+			['an exact repetition behind a sliding pair', '.*.*c{3}x', 'cccx', 'SLIDING_REPETITION'],
+			['a lookaround a loop runs again on every repetition', '(?:(?=[^!]{3})[^!])*!', '!', 'SCANNING_LOOKAROUND']
+		])('refuses %s, as the write path does: %s', (_shape, pattern, subject, reason) => {
+			// Each of these matches its subject when it is run, so a rule carrying it used to match; each is
+			// refused by the analysis, so it no longer runs at all.
+			const hostile = rule({ attribute: 'sku', operator: RuleOperator.MATCHES, value: pattern });
+
+			expect(new RegExp(`^(?:${pattern})$`).test(subject)).toBe(true);
+			runs.mockClear();
+
+			expect(matchesRule(hostile, { sku: subject })).toBe(false);
+			expect(patternsRun()).not.toContain(`^(?:${pattern})$`);
+			expect(warn).toHaveBeenCalledTimes(1);
+			expect(warn.mock.calls[0][0]).toContain(reason);
+		});
+
+		it('reads the pattern as the rule engine compiles it, without the `i` flag', () => {
+			// `(?:a|A)+` is only ambiguous under `i`; the evaluator compiles without flags, so the rule
+			// runs — which is also what the write path decides for it.
+			const cased = rule({ attribute: 'code', operator: RuleOperator.MATCHES, value: '(?:a|A)+' });
+
+			expect(matchesRule(cased, { code: 'aAa' })).toBe(true);
+			expect(warn).not.toHaveBeenCalled();
+		});
+	});
+
+	it('does not run MATCHES over a subject longer than the cap, and says it could not', () => {
+		// The subject is buyer-controlled text. The analysis leaves at most a quadratic in its length,
+		// and the cap is what turns that into a constant.
+		const word = rule({ attribute: 'note', operator: RuleOperator.MATCHES, value: '[a-z]+' });
+		const trace = { unresolvedAttributes: [] as string[], coercionFailures: [] as string[] };
+
+		expect(matchesRule(word, { note: 'a'.repeat(RULE_MAX_MATCH_INPUT) })).toBe(true);
+		expect(matchesRule(word, { note: 'a'.repeat(RULE_MAX_MATCH_INPUT + 1) }, trace)).toBe(false);
+		expect(trace.coercionFailures).toEqual(['note']);
+		expect(matchesRule({ ...word, isNegated: true }, { note: 'a'.repeat(RULE_MAX_MATCH_INPUT + 1) })).toBe(false);
 	});
 
 	it('reads CONTAINS over a string, a collection and a JSON attribute', () => {

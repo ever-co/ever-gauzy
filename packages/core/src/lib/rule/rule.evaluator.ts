@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
 	IRule,
 	IRuleEvaluationResult,
@@ -6,6 +7,8 @@ import {
 	RuleValueType
 } from '@gauzy/contracts';
 import { compareDecimalStrings, normalizeDecimalString } from '../money/decimal';
+import { RULE_MAX_MATCH_INPUT } from './rule.pattern-safety';
+import { RULE_MATCHES_PATTERN_OPTIONS, describePattern } from './rule.validator';
 
 /**
  * The platform's rule evaluator.
@@ -72,6 +75,12 @@ type RuleEvaluationTrace = Pick<IRuleEvaluationResult, 'unresolvedAttributes' | 
  */
 const compiledPatterns = new Map<string, RegExp | null>();
 const MAX_COMPILED_PATTERNS = 500;
+
+/**
+ * Where a refused `MATCHES` pattern is reported. Nest's logger works outside Nest too, which is what
+ * a seed script and a migration need of it.
+ */
+const logger = new Logger('RuleEvaluator');
 
 /**
  * Resolves a dotted attribute path against an evaluation context.
@@ -284,6 +293,19 @@ function equalsComparable(left: IComparable, right: IComparable): boolean {
  * @returns The compiled pattern, or null when it is not a usable regular expression. A pattern that
  * does not compile is a configuration mistake, and it makes its rule not match rather than throwing
  * in the middle of a pricing run.
+ *
+ * 🛑 **The safety analysis is applied here and not only on the write path.** `validateRuleDefinition`
+ * is reached from `RuleService.createForOwner`, `replaceOwnerRules` and `assertWritable` and from
+ * nowhere else, so a row that arrived by a seed, an import, a migration, a restore from a backup
+ * taken before the analysis existed, the inherited `CrudService` create and update, or a future
+ * writer that does not route through the service was compiled and executed unscreened — and the cache
+ * guaranteed the hostile pattern was reused rather than recompiled, so every evaluation paid the full
+ * cost. The verdict is cached alongside the compiled form, so the analysis runs once per distinct
+ * pattern rather than once per evaluation, and a refusal is logged once for the same reason.
+ *
+ * A refused pattern answers `null`, which this function already documents as "the rule does not
+ * match": the evaluator's second rule — a value that cannot be compared does not widen a rule set —
+ * is what makes that the safe direction to fail in.
  */
 function compilePattern(pattern: string): RegExp | null {
 	const cached = compiledPatterns.get(pattern);
@@ -293,13 +315,24 @@ function compilePattern(pattern: string): RegExp | null {
 	}
 
 	let compiled: RegExp | null = null;
+	const verdict = describePattern(pattern, RULE_MATCHES_PATTERN_OPTIONS);
 
-	try {
-		// Anchored: a rule states that the attribute *matches* the pattern, not that the pattern occurs
-		// somewhere inside it.
-		compiled = new RegExp(`^(?:${pattern})$`);
-	} catch {
-		compiled = null;
+	if (verdict.safe) {
+		try {
+			// Anchored, and without flags — which is what `RULE_MATCHES_PATTERN_OPTIONS` tells the analysis:
+			// a rule states that the attribute *matches* the pattern, not that the pattern occurs
+			// somewhere inside it.
+			compiled = new RegExp(`^(?:${pattern})$`);
+		} catch {
+			compiled = null;
+		}
+	} else {
+		// The pattern text is quoted, and cut short, because it is author-controlled and may be long.
+		logger.warn(
+			`A MATCHES rule does not match anything until its pattern is rewritten: the pattern ${JSON.stringify(
+				pattern.slice(0, 64)
+			)}${pattern.length > 64 ? '…' : ''} was refused (${verdict.reason}). ${verdict.detail ?? ''}`.trim()
+		);
 	}
 
 	if (compiledPatterns.size >= MAX_COMPILED_PATTERNS) {
@@ -604,6 +637,20 @@ function applyOperator(
 			return evaluateAffix(rule.operator, attributeValue, rule.value);
 		case RuleOperator.MATCHES: {
 			if (typeof attributeValue !== 'string' || typeof rule.value !== 'string') {
+				return coercionFailure();
+			}
+
+			// The subject is bounded, and this is the bound that does not depend on the pattern
+			// analysis being complete. A pattern that survives the analysis has no nested loop and at
+			// most one pair of repetitions that can slide against each other, so its worst remaining
+			// case is polynomial in the length of what it is matched against — and what it is matched
+			// against is buyer-controlled text: a SKU, an email, a customer attribute. Capping it turns
+			// "polynomial in whatever the buyer sent" into "polynomial in 512", which is a constant.
+			//
+			// Over the cap the comparison is reported as one that could not be made, which the
+			// evaluator already treats as not matching and records in the trace, rather than silently
+			// answering false: a rule that stopped applying is a fact an operator needs to see.
+			if (attributeValue.length > RULE_MAX_MATCH_INPUT) {
 				return coercionFailure();
 			}
 
