@@ -283,6 +283,33 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		console.warn(`Could not mount the request context middleware on ${graphqlPath}: ${error}`);
 	}
 
+	// MikroORM's request context on the same endpoint, for the same reason. `@mikro-orm/nestjs` registers its
+	// own middleware for every route, and Nest scopes that pattern to the prefix too, so an operation on
+	// `/graphql` ran on MikroORM's global EntityManager, which refuses context-specific work: under
+	// `DB_ORM=mikro-orm` the JWT strategy's user lookup failed with "Using global EntityManager instance
+	// methods for context specific actions is disallowed", and every authenticated GraphQL operation was
+	// answered AUTH_REQUIRED while the same token worked over REST. Each operation now gets its own fork, as
+	// each REST request does. Under TypeORM nothing is mounted.
+	if (getORMType() === MultiORMEnum.MikroORM) {
+		try {
+			let orm: MikroORM | undefined;
+			app.getHttpAdapter()
+				.getInstance()
+				.use(graphqlPath, (request, response, next) => {
+					try {
+						// Resolved on the first request, like the middleware above: the container is not ready here.
+						orm ??= app.get(MikroORM, { strict: false });
+					} catch {
+						return next();
+					}
+					return RequestContext.create(orm.em, next);
+				});
+			console.log(`MikroORM request context mounted on ${graphqlPath}`);
+		} catch (error) {
+			console.warn(`Could not mount the MikroORM request context on ${graphqlPath}: ${error}`);
+		}
+	}
+
 	// Never let database internals reach a client. Many services re-throw a caught ORM error as
 	// `new BadRequestException(error)`, and Nest serializes that object's enumerable properties —
 	// which on a TypeORM QueryFailedError are exactly `query`, `parameters` and `driverError`. This
