@@ -1,4 +1,5 @@
 import { Injectable, ConflictException } from '@nestjs/common';
+import type { Collection } from '@mikro-orm/core';
 import { Brackets, FindManyOptions, In } from 'typeorm';
 import {
 	IRequestApproval,
@@ -18,7 +19,7 @@ import { RequestContext } from '../core/context';
 import { RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { assertSensitiveRelationsAllowed } from './../core/util/sensitive-relations.helper';
-import { MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
+import { MultiORMEnum, flatten, parseFindOptionsRelations } from './../core/utils';
 import { RequestApproval } from './request-approval.entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
@@ -61,58 +62,63 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
+				/*
+				 * The ids in scope, read by the statement TypeORM's branch below builds: the policy, the time-off
+				 * request and the equipment sharing joined, each without its withdrawn rows (TypeORM adds
+				 * `deletedAt IS NULL` to the join of every entity it knows, by relation or by table name), the
+				 * four scopes OR-ed, and the request's own withdrawn rows left out.
+				 *
+				 * The policy used to be joined as `leftJoin(table, alias, column, column)`. knex has no alias
+				 * argument: its four-argument join is `(table, column, operator, column)`, so the statement could
+				 * not be compiled — `The operator "approval_policy.id" is not permitted` — and the register's list
+				 * answered HTTP 500 on REST and INTERNAL_ERROR on GraphQL `requestApprovals`, whatever was stored.
+				 *
+				 * The polymorphic pair is compared through identifier bindings, which knex quotes for the dialect
+				 * it runs on; the double-quoted SQL it replaces was a pair of string literals on MySQL. The id is
+				 * compared as text where it is not text, as TypeORM's branch compares it.
+				 *
+				 * A scope value the caller does not have is compared as `= NULL`, which matches nothing, as the
+				 * TypeORM branch's bound parameter does. knex's object form would have turned it into `IS NULL`
+				 * — the rows that name no organization, a wider read — or refused an `undefined` outright.
+				 */
 				const knex = this.mikroOrmRequestApprovalRepository.getKnex();
+				const namesTheRequestedRow = (table: string) => {
+					const columns = [`${table}.id`, 'request_approval.requestId'];
+					return isPostgres()
+						? knex.raw('??::text = ??', columns)
+						: isMySQL()
+						? knex.raw('CAST(?? AS CHAR) COLLATE utf8mb4_unicode_ci = ?? COLLATE utf8mb4_unicode_ci', columns)
+						: knex.raw('?? = ??', columns);
+				};
+				const inCallerScope = (table: string) => (scope: any) =>
+					scope
+						.where(`${table}.organizationId`, '=', organizationId ?? null)
+						.andWhere(`${table}.tenantId`, '=', tenantId ?? null);
+
 				const query = knex('request_approval')
 					.withSchema(knex.userParams.schema)
-					.as('request_approval')
-					.select('request_approval.id');
-
-				// Polymorphic join logic mirroring TypeORM implementation
-				const timeOffRequestCheckIdQuery = `${
-					isSqlite() || isBetterSqlite3()
-						? '"time_off_request"."id" = "request_approval"."requestId"'
-						: isPostgres()
-						? '"time_off_request"."id"::text = "request_approval"."requestId"'
-						: isMySQL()
-						? 'CAST("time_off_request"."id" AS CHAR) = "request_approval"."requestId"'
-						: '"time_off_request"."id" = "request_approval"."requestId"'
-				}`;
-				const equipmentSharingCheckIdQuery = `${
-					isSqlite() || isBetterSqlite3()
-						? '"equipment_sharing"."id" = "request_approval"."requestId"'
-						: isPostgres()
-						? '"equipment_sharing"."id"::text = "request_approval"."requestId"'
-						: isMySQL()
-						? 'CAST("equipment_sharing"."id" AS CHAR) = "request_approval"."requestId"'
-						: '"equipment_sharing"."id" = "request_approval"."requestId"'
-				}`;
-
-				query.leftJoin(
-					'approval_policy',
-					'approval_policy',
-					'approval_policy.id',
-					'request_approval.approvalPolicyId'
-				);
-				query.leftJoin('time_off_request', (join) => join.on(knex.raw(timeOffRequestCheckIdQuery)));
-				query.leftJoin('equipment_sharing', (join) => join.on(knex.raw(equipmentSharingCheckIdQuery)));
-
-				query.where((qb) => {
-					qb.where({ 'approval_policy.organizationId': organizationId, 'approval_policy.tenantId': tenantId })
-						.orWhere({
-							'time_off_request.organizationId': organizationId,
-							'time_off_request.tenantId': tenantId
-						})
-						.orWhere({
-							'equipment_sharing.organizationId': organizationId,
-							'equipment_sharing.tenantId': tenantId
-						})
-						// A request raised in this organization belongs to it even when it names no
-						// policy and no time-off / equipment-sharing record (e.g. a purchasing request).
-						.orWhere({
-							'request_approval.organizationId': organizationId,
-							'request_approval.tenantId': tenantId
-						});
-				});
+					.select('request_approval.id')
+					.leftJoin('approval_policy', (join) =>
+						join
+							.on('approval_policy.id', '=', 'request_approval.approvalPolicyId')
+							.andOnNull('approval_policy.deletedAt')
+					)
+					.leftJoin('time_off_request', (join) =>
+						join.on(namesTheRequestedRow('time_off_request')).andOnNull('time_off_request.deletedAt')
+					)
+					.leftJoin('equipment_sharing', (join) =>
+						join.on(namesTheRequestedRow('equipment_sharing')).andOnNull('equipment_sharing.deletedAt')
+					)
+					.where((scopes) => {
+						scopes
+							.where(inCallerScope('approval_policy'))
+							.orWhere(inCallerScope('time_off_request'))
+							.orWhere(inCallerScope('equipment_sharing'))
+							// A request raised in this organization belongs to it even when it names no
+							// policy and no time-off / equipment-sharing record (e.g. a purchasing request).
+							.orWhere(inCallerScope('request_approval'));
+					})
+					.whereNull('request_approval.deletedAt');
 
 				const results = await query;
 				const ids = results.map((r) => r.id);
@@ -121,12 +127,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					return { items: [], total: 0 };
 				}
 
-				const relations = filter.relations as string[];
+				// TypeORM's branch selects the joined policy into every row whatever relations were asked
+				// for, so this one populates it too: unpopulated, MikroORM serializes it as its bare id.
+				const relations: string[] = flatten(filter.relations);
 				const [items, total] = await this.mikroOrmRepository.findAndCount(
 					{ id: { $in: ids } },
-					{
-						...(relations && relations.length > 0 ? { populate: relations as any[] } : {})
-					}
+					{ populate: [...new Set(['approvalPolicy', ...relations])] as any[] }
 				);
 				return { items: items.map((e) => this.serialize(e)) as IRequestApproval[], total };
 			}
@@ -236,25 +242,39 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				tenantId
 			}
 		});
-		let requestApproval = [];
-		let employee;
+		let requestApproval: Pick<IRequestApprovalEmployee, 'requestApprovalId'>[] = [];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				employee = await this.mikroOrmEmployeeRepository.findOne(id, {
+			case MultiORMEnum.MikroORM: {
+				const employee = await this.mikroOrmEmployeeRepository.findOne(id, {
 					populate: relations as any
 				});
+				/*
+				 * The employee's approvals count only when the caller asked for them, as on TypeORM, which leaves
+				 * a relation it did not load `undefined`. A MikroORM collection that was not populated is never
+				 * `undefined`, and it refuses to be read at all: asking it for its length threw `Collection
+				 * <RequestApprovalEmployee> of entity Employee[…] not initialized`, so GraphQL
+				 * `requestApprovalsByEmployee` — which names no relation — failed on every call. The request
+				 * each approval points at is read from the relation, whose key MikroORM always hydrates.
+				 */
+				const approvals = employee?.requestApprovals as unknown as Collection<RequestApprovalEmployee>;
+				if (approvals?.isInitialized()) {
+					requestApproval = approvals.getItems().map((approval) => ({
+						requestApprovalId: approval.requestApproval?.id ?? approval.requestApprovalId
+					}));
+				}
 				break;
+			}
 			case MultiORMEnum.TypeORM:
-			default:
-                employee = await this.typeOrmEmployeeRepository.findOne({
+			default: {
+				const employee = await this.typeOrmEmployeeRepository.findOne({
 					where: { id },
 					relations: parseFindOptionsRelations(relations)
 				});
+				if (employee && employee.requestApprovals && employee.requestApprovals.length > 0) {
+					requestApproval = [...requestApproval, ...employee.requestApprovals];
+				}
 				break;
-		}
-
-		if (employee && employee.requestApprovals && employee.requestApprovals.length > 0) {
-			requestApproval = [...requestApproval, ...employee.requestApprovals];
+			}
 		}
 
 		for (const request of requestApproval) {
