@@ -32,7 +32,7 @@
 										width="68"
 										height="68"
 										viewBox="0 0 68 68"
-										[style.opacity]="hoverState ? '1' : '0.3'"
+										[style.opacity]="hoverState ? '1' : '0'"
 									>
 										<defs>
 											<path
@@ -47,7 +47,7 @@
 										</g>
 									</svg>
 									}
-									<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
+									<div class="image-overlay" [style.opacity]="hoverState ? '0.25' : '0'"></div>
 
 									@if (contMainForm && contMainForm.get('imageUrl').value) {
 									<img
@@ -58,7 +58,7 @@
 									/>
 									} @else {
 									<div class="image">
-										<span><i class="fas fa-image"></i>Add or Drop Image</span>
+										<span><i class="fas fa-image"></i>{{ 'CONTACTS_PAGE.PHOTO_HINT' | translate }}</span>
 									</div>
 									}
 								</div>
