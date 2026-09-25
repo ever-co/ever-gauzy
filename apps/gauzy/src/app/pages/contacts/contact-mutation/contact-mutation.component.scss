@@ -1,5 +1,20 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
+/*
+ * Step 1 layout: a fixed photo column beside the field column.
+ *
+ * The fields used to sit in Bootstrap `col-7`/`col-5` pairs, so every row had
+ * a different left and right edge depending on what shared it (Name and Fiscal
+ * Information ran alone at 7/12 with a hole beside them). They now sit in one
+ * two-track grid, two fields per row, all on the same edges.
+ */
+.contact-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem 2.5rem;
+}
+
 .contact-container {
   transition: transform 150ms ease-in-out;
   display: flex;
@@ -86,33 +101,59 @@
   flex-direction: column;
 }
 
-// Bootstrap's `.container` caps the field column and centres it; inside the
-// step's flex row it also has to be allowed to shrink, or the photo column
-// squeezes it into an overflow at narrow widths.
-//
-// The basis is a real minimum rather than `auto`: `.container` is `width: 100%`,
-// which as an auto basis would claim the whole row and drop the fields under
-// the photo the moment the row is allowed to wrap. From 20rem the two columns
-// stay side by side until the canvas (the AI chat column can take up to 860px
-// of it) is genuinely too narrow, and only then does the form wrap below.
 .fields {
-  flex: 1 1 20rem;
+  flex: 1 1 24rem;
   min-width: 0;
 
-  // Bootstrap's 1rem field gap was set against a 16px label; the density pass put
-  // labels at 0.75rem, which left the rows floating. 0.75rem keeps a clear break
-  // between fields without the form reading as a stack of unrelated boxes.
   .form-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
+    min-width: 0;
   }
 
-  .label {
+  .label,
+  // The tags input renders its own label; give it the same gap so it lines up
+  // with the Projects label beside it.
+  ::ng-deep ga-tags-color-input .label {
     display: inline-block;
     margin-bottom: 0.375rem;
   }
 }
 
-.team-card {
+// Exactly two equal tracks, so every row holds a pair of fields sharing the
+// same edges. (`auto-fit` used to open a third track on wide screens.) It falls
+// to one track only when the field column itself is too narrow for two readable
+// fields — measured on the column, not the viewport, because the AI chat can
+// take up to 860px of the canvas.
+.fields {
+  container-type: inline-size;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  align-items: start;
+}
+
+@container (max-width: 30rem) {
+  .field-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * Step 2 — Address.
+ *
+ * The shared location form lays its fields out in Bootstrap rows of uneven
+ * widths (`col-11`, `col-8`, `col-6`, `col-sm-5`), so no two inputs ended on
+ * the same edge. Here its rows are flattened (`display: contents`) so every
+ * column becomes an item of one two-track grid, the same grid step 1 uses.
+ * Scoped to this wizard: the other pages that embed the form are untouched.
+ *
+ * Resulting rows: Find address (full) · Country | City · Address | Address 2 ·
+ * Postcode · coordinates toggle (full) · Latitude | Longitude.
+ */
+.address-layout {
   display: flex;
   flex-direction: column;
   justify-content: space-between;

@@ -16,8 +16,9 @@
 			<nb-step [stepControl]="contMainForm" [label]="'CONTACTS_PAGE.MAIN' | translate">
 				<div class="custom-card">
 					<form [formGroup]="contMainForm" (ngSubmit)="contMainForm.markAsDirty()" class="contact-form">
-						<div class="contact-columns d-flex flex-wrap justify-content-between">
-							<div class="contact-container">
+						<div class="contact-layout step-panel">
+							<!-- Photo -->
+							<aside class="contact-container">
 								<div class="contact-photo">
 									<ngx-image-uploader
 										(changeHoverState)="hoverState = $event"
@@ -61,11 +62,15 @@
 									</div>
 									}
 								</div>
-							</div>
-							<div class="fields container">
-								<div class="row">
-									<div class="form-group col-7">
-										<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}</label>
+								@if (contMainForm && contMainForm.get('imageUrl').value) {
+								<p class="photo-hint">{{ 'CONTACTS_PAGE.PHOTO_HINT' | translate }}</p>
+								}
+							</aside>
+
+							<div class="fields">
+								<div class="field-grid">
+									<div class="form-group">
+										<label class="label" for="name">{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}</label>
 										<input
 											id="name"
 											type="text"
@@ -74,9 +79,7 @@
 											fullWidth
 											formControlName="name"
 											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.NAME' | translate"
-											[status]="
-												FormHelpers.isInvalidControl(contMainForm, 'name') ? 'danger' : 'basic'
-											"
+											[status]="FormHelpers.isInvalidControl(contMainForm, 'name') ? 'danger' : 'basic'"
 										/>
 										@if (FormHelpers.isInvalidControl(contMainForm, 'name')) {
 										<p class="caption status-danger mt-1">
@@ -84,12 +87,22 @@
 										</p>
 										}
 									</div>
-								</div>
-								<div class="row">
-									<div class="form-group col-7">
-										<label class="label">{{
-											'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
-										}}</label>
+									<div class="form-group">
+										<label class="label">{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}</label>
+										<ng-select
+											formControlName="contactType"
+											[clearable]="false"
+											[searchable]="false"
+											[placeholder]="'CONTACTS_PAGE.CONTACT_TYPE' | translate"
+											appendTo="body"
+										>
+											@for (type of contactTypes; track type) {
+											<ng-option [value]="type">{{ type | titlecase }}</ng-option>
+											}
+										</ng-select>
+									</div>
+									<div class="form-group">
+										<label class="label" for="email">{{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}</label>
 										<input
 											id="email"
 											autofocus
@@ -100,11 +113,7 @@
 											fullWidth
 											formControlName="primaryEmail"
 											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate"
-											[status]="
-												FormHelpers.isInvalidControl(contMainForm, 'primaryEmail')
-													? 'danger'
-													: 'basic'
-											"
+											[status]="FormHelpers.isInvalidControl(contMainForm, 'primaryEmail') ? 'danger' : 'basic'"
 										/>
 										@if (FormHelpers.isInvalidControl(contMainForm, 'primaryEmail')) { @if
 										(contMainForm.controls.primaryEmail.errors?.pattern) {
@@ -113,10 +122,11 @@
 										</p>
 										} }
 									</div>
-									<div class="form-group col-5">
-										<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}</label>
+									<div class="form-group">
+										<label class="label" for="phone">{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}</label>
 										<input
-											type="text"
+											id="phone"
+											type="tel"
 											#phone
 											nbInput
 											fullWidth
@@ -124,11 +134,10 @@
 											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate"
 										/>
 									</div>
-								</div>
-								<div class="row">
-									<div class="form-group col-7">
-										<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}</label>
+									<div class="form-group">
+										<label class="label" for="website">{{ 'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate }}</label>
 										<input
+											id="website"
 											type="text"
 											#website
 											nbInput
@@ -137,9 +146,10 @@
 											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.WEBSITE' | translate"
 										/>
 									</div>
-									<div class="form-group col-5">
-										<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}</label>
+									<div class="form-group">
+										<label class="label" for="fax">{{ 'ORGANIZATIONS_PAGE.EDIT.FAX' | translate }}</label>
 										<input
+											id="fax"
 											type="text"
 											#fax
 											nbInput
@@ -148,13 +158,12 @@
 											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.FAX' | translate"
 										/>
 									</div>
-								</div>
-								<div class="row">
-									<div class="form-group col-7">
-										<label class="label">{{
+									<div class="form-group">
+										<label class="label" for="fiscalInformation">{{
 											'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate
 										}}</label>
 										<input
+											id="fiscalInformation"
 											type="text"
 											#fiscalInformation
 											nbInput
@@ -163,9 +172,7 @@
 											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.FISCAL_INFORMATION' | translate"
 										/>
 									</div>
-								</div>
-								<div class="row">
-									<div class="form-group col-7">
+									<div class="form-group">
 										<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}</label>
 										<ng-select
 											[addTag]="addNewProject"
@@ -179,23 +186,7 @@
 										>
 										</ng-select>
 									</div>
-									<div class="form-group col-5">
-										<label class="label">{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}</label>
-										<ng-select
-											formControlName="contactType"
-											[clearable]="false"
-											[searchable]="false"
-											[placeholder]="'CONTACTS_PAGE.CONTACT_TYPE' | translate"
-											appendTo="body"
-										>
-											@for (type of contactTypes; track type) {
-											<ng-option [value]="type">{{ type }}</ng-option>
-											}
-										</ng-select>
-									</div>
-								</div>
-								<div class="row">
-									<div class="form-group col-12">
+									<div class="form-group">
 										<ga-tags-color-input
 											[selectedTags]="tags"
 											(selectedTagsEvent)="selectedTagsEvent($event)"
