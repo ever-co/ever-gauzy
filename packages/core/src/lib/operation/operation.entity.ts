@@ -24,8 +24,9 @@ import { MikroOrmOperationRepository } from './repository/mikro-orm-operation.re
  * persisted here: any of these operations is then resumable, observable, cancellable and reversible.
  *
  * Two uniqueness rules carry the runtime's guarantees. `UQ_operation_aggregate_live` makes two
- * concurrent operations on one aggregate impossible, and `UQ_operation_idem` makes a retried request
- * return the original operation instead of starting a second one.
+ * concurrent operations on one aggregate impossible, and `UQ_operation_tenant_idem` makes a retried
+ * request return the original operation instead of starting a second one — per tenant and organization,
+ * which is the scope the runtime looks a submission up in.
  */
 @MultiORMEntity('operation', { mikroOrmRepository: () => MikroOrmOperationRepository })
 export class Operation extends TenantOrganizationBaseEntity implements IOperation {
@@ -61,10 +62,13 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	 * The mutable execution state: cursor, cancellation flag, awaiting-decision marker and the shared
 	 * variables a later step reads.
 	 *
-	 * Read whole and written whole, which is why it is JSON rather than a column per field: the runtime is
-	 * the only writer and it always replaces the object it read. **The lease is deliberately not here** —
-	 * it lives in the three columns below, because the sweep that looks for a stuck operation has to filter
-	 * on it and a value inside a JSON document carries no index on any of the three dialects.
+	 * JSON rather than a column per field, and **merged key by key under the row's lock, never replaced**:
+	 * the worker driving a step and a caller's `cancel()` both write it, and a worker that wrote back the
+	 * copy it read before its step lost the cancellation that landed during it.
+	 *
+	 * **The lease is deliberately not here** — it lives in the three columns below, because the sweep that
+	 * looks for a stuck operation has to filter on it and a value inside a JSON document carries no index on
+	 * any of the three dialects.
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
@@ -149,8 +153,10 @@ export class Operation extends TenantOrganizationBaseEntity implements IOperatio
 	/**
 	 * Links the operation to the key that started it.
 	 *
-	 * Unique per organization and type when set, which is what makes a retried submission return the
-	 * original operation rather than starting a second one.
+	 * Unique per tenant, organization and type when set (`UQ_operation_tenant_idem`, with a missing tenant
+	 * or organization folded to one value), which is what makes a retried submission return the original
+	 * operation rather than starting a second one. The tenant is part of the tuple since `1791000000557`:
+	 * the key is the caller's, so another tenant using the same one is neither found nor refused by it.
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

@@ -1,11 +1,14 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { FindManyOptions, FindOptionsWhere, In, IsNull } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { EntityData, FilterQuery, LockMode, ReferenceKind } from '@mikro-orm/core';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IOperationError, OperationStatus, OperationStepStatus } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { MultiORMEnum } from '../core/utils';
 import { Operation } from './operation.entity';
 import { OperationStep } from './operation-step.entity';
 import { OperationRegistry } from './operation.registry';
@@ -251,11 +254,14 @@ export class OperationService extends CrudService<Operation> {
 			}
 
 			// The tuple is taken and the caller's own scope holds nothing for it. Either the winner was
-			// deleted between the insert and this read, or the row that holds the tuple belongs to
-			// another tenant — `UQ_operation_idem` carries no tenant, and `UQ_operation_aggregate_live`
-			// carries neither tenant nor organization, so a foreign row can refuse this insert. Both are
-			// conflicts and neither is a server fault, so the raw driver error is not the answer: it
-			// would surface as a `500` on an ordinary submission. Nothing about the other row is named.
+			// deleted between the insert and this read, or the tuple that refused the insert is the
+			// aggregate's: `UQ_operation_aggregate_live` carries neither tenant nor organization, so a
+			// live operation of another tenant on the aggregate this submission names refuses it. The
+			// key cannot be the cause any more — `UQ_operation_tenant_idem` folds the tenant and the
+			// organization exactly as {@link findBySubmission} reads them, so a key another scope used
+			// is neither found above nor in the way of the insert. Both remaining cases are conflicts and
+			// neither is a server fault, so the raw driver error is not the answer: it would surface as a
+			// `500` on an ordinary submission. Nothing about the other row is named.
 			throw new ConflictException(
 				`This submission of "${input.type}" could not be started because its idempotency key or its aggregate is already held. Submit it under a different key, or once the aggregate's live operation has finished.`
 			);
@@ -596,9 +602,19 @@ export class OperationService extends CrudService<Operation> {
 	 * applied nothing is cancelled outright, and one that already changed something is compensated,
 	 * because leaving the aggregate half-changed is exactly what a cancellation must not do.
 	 *
+	 * **An operation another worker is driving is left to that worker.** Its step may be applying an
+	 * effect right now, and nothing the step table says yet counts it: a step in flight is `RUNNING`, not
+	 * `COMPLETED`. Settling such an operation `CANCELED` underneath the worker told the caller nothing
+	 * was left behind while the step went on to apply its effect — and the worker, still holding a
+	 * `RUNNING` object, then wrote that status back over the cancellation and ran the rest of the plan.
+	 * So when a live lease belongs to somebody else, the request and its reason are recorded and the
+	 * operation is answered as it stands; the worker reads both at its next check between steps and
+	 * walks the undo itself, under the operator's reason (see {@link recordedCancellation}).
+	 *
 	 * @param operationId The operation id.
 	 * @param options Worker identity and the reason an operator recorded.
-	 * @returns The settled operation.
+	 * @returns The settled operation, or — while another worker holds it — the operation with the
+	 * request recorded.
 	 * @throws ConflictException when the operation already reached a terminal status.
 	 * @throws NotFoundException when the operation does not exist inside the caller's scope.
 	 */
@@ -612,14 +628,24 @@ export class OperationService extends CrudService<Operation> {
 			throw new ConflictException(`The operation is ${operation.status.toLowerCase()} and cannot be cancelled.`);
 		}
 
-		const requested = await this.saveOperation(operation, {
-			state: { ...(operation.state ?? {}), cancelRequested: true }
+		// The flag is merged into the row's `state` as it stands under the lock, not into the copy read
+		// above: a worker's step writes the same JSON column, and replacing it with this copy would drop
+		// the progress that worker recorded in between. The terminal check is repeated there because the
+		// row may have settled since it was read.
+		const requested = await this.mergeOperation(operation, (row) => {
+			if (isTerminalStatus(row.status)) {
+				throw new ConflictException(`The operation is ${row.status.toLowerCase()} and cannot be cancelled.`);
+			}
+
+			return { state: { ...(row.state ?? {}), cancelRequested: true } };
 		});
 
 		const steps = await this.findSteps(operationId);
 		const applied = steps.filter((step) => step.status === OperationStepStatus.COMPLETED);
 
-		if (applied.length === 0) {
+		// The lease is judged on the row the flag was written to, so a worker that claims after it reads
+		// the flag before its first step, and one that claimed before it is seen holding the lease here.
+		if (applied.length === 0 && !this.isLeasedByAnother(requested, options.ownerId ?? '')) {
 			return this.settle(requested, OperationStatus.CANCELED, {
 				finishedAt: new Date(),
 				result: { canceled: true, reason: options.reason ?? null, compensatedSteps: [], notCompensable: [] }
@@ -631,15 +657,16 @@ export class OperationService extends CrudService<Operation> {
 		// then found no error on a running operation and fell back to its own generic
 		// `OPERATION_COMPENSATION_REQUESTED`, and both the REST read and the `operationFailed`
 		// subscription reported "compensated on request" for a deliberate cancellation with an
-		// operator's reason attached.
-		await this.saveOperation(requested, {
+		// operator's reason attached. A worker holding the lease reads it from the row as well.
+		await this.mergeOperation(requested, () => ({
 			lastError: JSON.stringify({
 				code: 'OPERATION_CANCELED',
 				message: options.reason ?? 'The operation was cancelled.',
 				retryable: false
 			})
-		});
+		}));
 
+		// While another worker holds the lease the claim inside refuses, and the walk is that worker's.
 		return this.compensate(operationId, { ownerId: options.ownerId });
 	}
 
@@ -686,6 +713,11 @@ export class OperationService extends CrudService<Operation> {
 		const skipped: string[] = [];
 		const failures: string[] = [];
 
+		// The walk settles with the cause it began with. Each compensator's lease renewal brings the
+		// object up to the row, and a caller that asks for a cancellation while the undo is already
+		// underway records its own reason there — which is not why this operation is being undone.
+		const cause = parseOperationError(operation.lastError);
+
 		const steps = (await this.findSteps(operationId))
 			.filter(
 				(step) =>
@@ -714,7 +746,7 @@ export class OperationService extends CrudService<Operation> {
 			}
 		}
 
-		const error: IOperationError = parseOperationError(operation.lastError) ?? {
+		const error: IOperationError = cause ?? {
 			code: 'OPERATION_COMPENSATED',
 			message: 'The operation was compensated.',
 			retryable: false
@@ -906,12 +938,13 @@ export class OperationService extends CrudService<Operation> {
 	 * organization is stated as `IsNull()` rather than as a possibly-`null` value for the same reason:
 	 * "the column is null" is the question, and it is spelled as one.
 	 *
-	 * **The tenant is a predicate here and not in the index**, which is the one thing this read cannot
-	 * repair on its own. `UQ_operation_idem` is
-	 * `(COALESCE("organizationId", <zero uuid>), "type", "idempotencyKey")`, so two tenants whose
-	 * callers have no organization share a tuple: this read misses the foreign row and the insert is
-	 * then refused by it. {@link start} answers that as a conflict rather than as a driver error, and
-	 * the index has to grow a coalesced `tenantId` for the two to agree.
+	 * **The index selects by the same tuple.** `UQ_operation_tenant_idem` is
+	 * `(COALESCE("tenantId", <zero uuid>), COALESCE("organizationId", <zero uuid>), "type",
+	 * "idempotencyKey")` while a key is set, so the rows this read can find are exactly the rows that
+	 * can refuse the insert after it. The index it replaced in `1791000000557`, `UQ_operation_idem`,
+	 * folded the organization alone: two tenants whose callers had no organization shared a tuple, this
+	 * read missed the foreign row, and the insert was then refused by it — a `409` for a key the caller
+	 * had never used.
 	 *
 	 * @param type The operation type.
 	 * @param idempotencyKey The caller-supplied key.
@@ -1151,12 +1184,18 @@ export class OperationService extends CrudService<Operation> {
 			current
 		);
 
-		Object.assign(current, {
-			lastError: JSON.stringify(failure),
-			attemptCount: (current.attemptCount ?? 0) + 1
-		});
+		// 🛑 **Merged, not saved back.** `current` is the row as it was when this attempt renewed its
+		// lease, and a caller may have cancelled since: saving the object whole put its flag-less `state`
+		// over `state.cancelRequested` and the step's error over the operator's reason, so the undo that
+		// follows was recorded as a plain failure and `retry()` re-drove work a caller had abandoned. Only
+		// the two columns this failure owns are written, from the row as it stands; the step's own error
+		// is on the step's row, written just above, whichever reason the operation keeps.
+		const failed = await this.mergeOperation(current, (row) => ({
+			lastError: recordedCancellation(row) ? row.lastError : JSON.stringify(failure),
+			attemptCount: (row.attemptCount ?? 0) + 1
+		}));
 
-		return { operation: await this.typeOrmOperationRepository.save(current), failure };
+		return { operation: failed, failure };
 	}
 
 	/**
@@ -1264,14 +1303,21 @@ export class OperationService extends CrudService<Operation> {
 	/**
 	 * Moves a failed operation into compensation.
 	 *
+	 * **The operator's reason outranks the runtime's.** When a caller asked for the cancellation and
+	 * recorded why, that `OPERATION_CANCELED` is what the operation is undone under, whatever the runtime
+	 * found — its own "cancelled before the next step", a step that failed after the request landed, a
+	 * deadline. Writing `failure` regardless replaced the words an operator typed with a generic message
+	 * whenever a worker, rather than `cancel()` itself, was the one that noticed. The choice is made on
+	 * the row under its lock, so a reason recorded after this worker last read the row still wins.
+	 *
 	 * @param operation The operation.
-	 * @param failure What went wrong.
+	 * @param failure What the runtime found.
 	 * @returns The operation, now compensating.
 	 */
 	private async beginCompensation(operation: Operation, failure: IOperationError): Promise<Operation> {
-		Object.assign(operation, { lastError: JSON.stringify(failure) });
-
-		return this.settle(operation, OperationStatus.COMPENSATING, {});
+		return this.settle(operation, OperationStatus.COMPENSATING, (row) => ({
+			lastError: JSON.stringify(recordedCancellation(row) ?? failure)
+		}));
 	}
 
 	/**
@@ -1282,26 +1328,36 @@ export class OperationService extends CrudService<Operation> {
 	 * once, whichever walk brought it there, and the announcement is made after the write rather than
 	 * before it — a subscriber is told what happened, never what is about to.
 	 *
+	 * **The edge is judged on the row, under its lock**, not on the status of the object the caller
+	 * holds. A worker's object says `RUNNING` for as long as its step runs, so an edge judged on it after
+	 * somebody else settled the row — a cancellation, a takeover — passed as `RUNNING → COMPENSATING` and
+	 * wrote `COMPENSATING` over a `CANCELED` operation, an edge the machine does not have. Now that write
+	 * is refused as the illegal transition it is, and nothing is written.
+	 *
 	 * @param operation The operation.
 	 * @param status The status to move to.
-	 * @param patch Columns to write with the status.
+	 * @param patch Columns to write with the status, or a function of the row that computes them.
 	 * @returns The saved operation.
 	 * @throws OperationIllegalTransitionError when the edge is not in the state machine.
 	 */
 	private async settle(
 		operation: Operation,
 		status: OperationStatus,
-		patch: Record<string, unknown>
+		patch: Record<string, unknown> | ((row: Operation) => Record<string, unknown>)
 	): Promise<Operation> {
-		const from = operation.status;
+		let from = operation.status;
 
-		if (from !== status && !(LEGAL_TRANSITIONS[from] ?? []).includes(status)) {
-			throw new OperationIllegalTransitionError(from, status);
-		}
+		const saved = await this.mergeOperation(operation, (row) => {
+			from = row.status;
 
-		// A settled operation holds no lease: leaving one behind would make a finished operation look
-		// busy to the recovery scan, and the table's own `CHK_operation_status_terminal` refuses it.
-		const saved = await this.saveOperation(operation, { ...patch, status, ...OperationService.NO_LEASE });
+			if (from !== status && !(LEGAL_TRANSITIONS[from] ?? []).includes(status)) {
+				throw new OperationIllegalTransitionError(from, status);
+			}
+
+			// A settled operation holds no lease: leaving one behind would make a finished operation look
+			// busy to the recovery scan, and the table's own `CHK_operation_status_terminal` refuses it.
+			return { ...(typeof patch === 'function' ? patch(row) : patch), status, ...OperationService.NO_LEASE };
+		});
 
 		if (saved.status !== from) {
 			await this.announceSettlement(saved);
@@ -1356,13 +1412,17 @@ export class OperationService extends CrudService<Operation> {
 	 * @returns The saved operation.
 	 */
 	private async releaseLease(operation: Operation): Promise<Operation> {
-		return this.saveOperation(operation, { ...OperationService.NO_LEASE });
+		return this.mergeOperation(operation, () => ({ ...OperationService.NO_LEASE }));
 	}
 
 	/**
 	 * Extends the lease, and refuses to continue when it is no longer ours.
 	 *
-	 * @param operation The operation.
+	 * The check and the renewal are one decision under the row's lock, and only the three lease columns
+	 * are written: the rest of the row is whoever wrote it last, and a cancellation among it has to reach
+	 * the step this renewal is about to start rather than be saved over by it.
+	 *
+	 * @param operation The operation, brought up to the stored row in place.
 	 * @param ownerId The worker identity.
 	 * @param leaseMs The lease window.
 	 * @returns The reloaded operation.
@@ -1370,13 +1430,13 @@ export class OperationService extends CrudService<Operation> {
 	 * @throws NotFoundException when the operation no longer exists.
 	 */
 	private async renewLease(operation: Operation, ownerId: string, leaseMs: number): Promise<Operation> {
-		const current = await this.require(operation.id as ID);
+		return this.mergeOperation(operation, (row) => {
+			if (row.lockedBy && row.lockedBy !== ownerId) {
+				throw new OperationLeaseLostError(row.id as ID, ownerId, row.lockedBy);
+			}
 
-		if (current.lockedBy && current.lockedBy !== ownerId) {
-			throw new OperationLeaseLostError(current.id as ID, ownerId, current.lockedBy);
-		}
-
-		return this.saveOperation(current, this.leaseOf(ownerId, leaseMs));
+			return this.leaseOf(ownerId, leaseMs);
+		});
 	}
 
 	/**
@@ -1414,6 +1474,14 @@ export class OperationService extends CrudService<Operation> {
 	/**
 	 * Records a step's output and the variables it mutated on the operation.
 	 *
+	 * 🛑 **Merged into the row as it stands, not saved from the object the step started with.** That
+	 * object was read when the attempt renewed its lease, and a caller's `cancel()` writes the same row
+	 * while the step runs. Saving it whole — TypeORM's `save` writes every column that differs from the
+	 * row — replaced `state` with a copy that had no `cancelRequested` and cleared the operator's
+	 * `OPERATION_CANCELED` reason, so the cancellation was lost: the next check between steps passed, the
+	 * rest of the plan ran, and `retry()`, whose refusal reads the flag, would re-drive the operation.
+	 * Now the keys this step owns are merged into the stored `state`, beside whatever else is there.
+	 *
 	 * @param operation The operation.
 	 * @param step The step that completed.
 	 * @param variables The shared variables, as the step left them.
@@ -1424,18 +1492,20 @@ export class OperationService extends CrudService<Operation> {
 		step: OperationStep,
 		variables: Record<string, unknown>
 	): Promise<Operation> {
-		return this.saveOperation(operation, {
-			lastError: null,
-			startedAt: operation.startedAt ?? new Date(),
+		return this.mergeOperation(operation, (row) => ({
+			// A success clears the error an earlier attempt left behind — never the reason a caller gave
+			// for cancelling, which is what the next check between steps answers with.
+			lastError: recordedCancellation(row) ? row.lastError : null,
+			startedAt: row.startedAt ?? new Date(),
 			state: {
-				...(operation.state ?? {}),
+				...(row.state ?? {}),
 				cursor: step.order,
 				// The output is merged into the operation's state so a later step receives it, and the
 				// variables travel with it: one write, so a crash cannot persist one without the other.
-				stepOutputs: { ...asRecord(operation.state?.stepOutputs), [step.name]: step.output ?? {} },
+				stepOutputs: { ...asRecord(row.state?.stepOutputs), [step.name]: step.output ?? {} },
 				variables
 			}
-		});
+		}));
 	}
 
 	/**
@@ -1563,11 +1633,15 @@ export class OperationService extends CrudService<Operation> {
 	 */
 	private checkBeforeStep(operation: Operation): IOperationError | undefined {
 		if (operation.state?.cancelRequested) {
-			return {
-				code: 'OPERATION_CANCELED',
-				message: 'The operation was cancelled before the next step.',
-				retryable: false
-			};
+			// The operator's own reason when `cancel()` recorded one; the generic message only when it
+			// did not get that far.
+			return (
+				recordedCancellation(operation) ?? {
+					code: 'OPERATION_CANCELED',
+					message: 'The operation was cancelled before the next step.',
+					retryable: false
+				}
+			);
 		}
 
 		if (operation.deadlineAt && new Date(operation.deadlineAt).getTime() <= Date.now()) {
@@ -1649,16 +1723,100 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
-	 * Writes an operation row.
+	 * Writes the columns a move owns onto an operation row, and no other column.
 	 *
-	 * @param operation The operation, mutated in place so callers see what was stored.
-	 * @param values The columns to write.
-	 * @returns The saved operation.
+	 * 🛑 **Every write of the row after `start` comes through here, because saving an object back loses
+	 * updates.** A worker holds the object it read when it renewed its lease for as long as its step runs,
+	 * and `cancel()` writes the same row from another request in between. The step's writes used to save
+	 * that object whole, and TypeORM's `save` writes every column that differs from the row: the worker's
+	 * stale `state` went over `state.cancelRequested`, its stale `lastError` over the operator's
+	 * `OPERATION_CANCELED` reason, and its `RUNNING` over a `CANCELED` status.
+	 *
+	 * So a move names only its own columns, computed from the row **as it stands now**: the row is read
+	 * under its write lock — `FOR UPDATE` on Postgres and MySQL; the embedded dialect serializes writers,
+	 * so there the transaction is the lock, as in {@link claim} — `merge` computes the patch from that
+	 * read, and one `UPDATE` sets exactly the patch's columns. A column another writer owns is never
+	 * written back, and `state`, the one column two writers share, is merged key by key instead of
+	 * replaced. `merge` may refuse by throwing, and then nothing is written.
+	 *
+	 * **Each ORM writes through its own arm.** `@MultiORMColumn` registers only the active ORM's column,
+	 * so under `DB_ORM=mikro-orm` TypeORM carries no metadata for the columns this table declares with it,
+	 * and a TypeORM `update` could not name them. Neither arm goes through `CrudService.update`, which
+	 * answers a failed write as a client's `400`: a runtime write that fails is a server fault and
+	 * surfaces as one.
+	 *
+	 * @param operation The operation, brought up to the stored row in place so the caller sees what was
+	 * stored.
+	 * @param merge The columns to write, computed from the row as it stands under the lock.
+	 * @returns The operation, as stored.
+	 * @throws NotFoundException when the row no longer exists.
 	 */
-	private async saveOperation(operation: Operation, values: Record<string, unknown>): Promise<Operation> {
-		Object.assign(operation, values);
+	private async mergeOperation(
+		operation: Operation,
+		merge: (row: Operation) => Record<string, unknown>
+	): Promise<Operation> {
+		const id = operation.id as ID;
+		const locking = isPostgres() || isMySQL();
 
-		return this.typeOrmOperationRepository.save(operation);
+		const { row, patch } =
+			this.ormType === MultiORMEnum.MikroORM
+				? await this.mikroOrmOperationRepository.getEntityManager().transactional(async (em) => {
+						// Read from the table, not from an identity map. The transaction's fork starts from
+						// the caller's context, where an earlier read of this row may still sit, and without a
+						// lock mode — the embedded dialect — MikroORM answers a primary-key read from it
+						// without a query: the patch would be computed from the stale row this method exists
+						// to stop writing from. Nor is the row left managed, so nothing is merged back into
+						// the caller's context when the transaction ends.
+						const row = await em.findOne(Operation, { id } as FilterQuery<Operation>, {
+							disableIdentityMap: true,
+							...(locking ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
+						});
+
+						if (!row) {
+							throw new NotFoundException(`The operation "${id}" does not exist.`);
+						}
+
+						const patch = merge(row);
+
+						if (Object.keys(patch).length) {
+							// `nativeUpdate` sets exactly these columns. It runs no `onUpdate` hook, so the
+							// audit column TypeORM's `update` maintains is stated here.
+							await em.nativeUpdate(
+								Operation,
+								{ id } as FilterQuery<Operation>,
+								{ ...patch, updatedAt: new Date() } as EntityData<Operation>
+							);
+						}
+
+						// The caller's object takes the row's columns, as the TypeORM arm's read answers
+						// them: a relation MikroORM hydrates as a reference or an uninitialised collection is
+						// not part of the row this decision was made on.
+						const columns = em
+							.getMetadata()
+							.get<Operation>(Operation.name)
+							.props.filter((prop) => prop.kind === ReferenceKind.SCALAR && row[prop.name] !== undefined)
+							.map((prop) => [prop.name, row[prop.name]]);
+
+						return { row: Object.fromEntries(columns) as Partial<Operation>, patch };
+				  })
+				: await this.typeOrmOperationRepository.manager.transaction(async (manager) => {
+						const query = manager.createQueryBuilder(Operation, 'operation').where({ id });
+						const row = locking ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+
+						if (!row) {
+							throw new NotFoundException(`The operation "${id}" does not exist.`);
+						}
+
+						const patch = merge(row);
+
+						if (Object.keys(patch).length) {
+							await manager.update(Operation, { id }, patch as QueryDeepPartialEntity<Operation>);
+						}
+
+						return { row, patch };
+				  });
+
+		return Object.assign(operation, row, patch);
 	}
 
 	/**
@@ -1757,6 +1915,27 @@ function parseOperationError(value?: string): IOperationError | undefined {
 	} catch {
 		return undefined;
 	}
+}
+
+/**
+ * The reason a caller gave when it asked for the cancellation, when the row carries one.
+ *
+ * `cancel()` records an `OPERATION_CANCELED` error beside `state.cancelRequested`, and that pair is the
+ * operator's: a worker's write keeps it rather than clearing it or putting its own error over it, and the
+ * compensation walk the cancellation starts is recorded under it. An error of any other code on a row that
+ * carries the flag is the runtime's, from before the request, and is not a reason anybody gave.
+ *
+ * @param operation The row, as read.
+ * @returns The recorded cancellation, or undefined.
+ */
+function recordedCancellation(operation: Pick<Operation, 'state' | 'lastError'>): IOperationError | undefined {
+	if (!operation.state?.cancelRequested) {
+		return undefined;
+	}
+
+	const error = parseOperationError(operation.lastError);
+
+	return error?.code === 'OPERATION_CANCELED' ? error : undefined;
 }
 
 /**

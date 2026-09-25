@@ -1,4 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { LockMode } from '@mikro-orm/core';
+import * as gauzyConfig from '@gauzy/config';
 import { RequestContext } from '../core/context/request-context';
 import { MultiORMEnum } from '../core/utils';
 import { IOperationDefinition, IOperationStepDefinition, IStepRetryPolicy } from './operation.contract';
@@ -23,6 +25,21 @@ import { TypeOrmOperationStepRepository } from './repository/type-orm-operation-
  * The clock is pinned and injected, so a lease expiring and a deadline passing are asserted rather
  * than waited for.
  */
+
+// The dialect the row lock depends on is stated per case; every other case keeps the configured one.
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+
+	return {
+		...actual,
+		isPostgres: jest.fn(actual.isPostgres),
+		isMySQL: jest.fn(actual.isMySQL)
+	};
+});
+
+const actualConfig = jest.requireActual('@gauzy/config') as typeof gauzyConfig;
+const isPostgresMock = gauzyConfig.isPostgres as unknown as jest.Mock;
+const isMySQLMock = gauzyConfig.isMySQL as unknown as jest.Mock;
 
 type Row = Record<string, any>;
 
@@ -79,6 +96,8 @@ function detach<V>(value: V): V {
  */
 class Table {
 	readonly rows: Row[] = [];
+	/** The lock mode of every locking read the query builder was asked for, in order. */
+	readonly locks: string[] = [];
 	private sequence = 0;
 
 	constructor(
@@ -94,16 +113,7 @@ class Table {
 
 	async save(rows: Row | Row[]): Promise<any> {
 		for (const row of Array.isArray(rows) ? rows : [rows]) {
-			const keys = this.uniqueKeys?.(row) ?? [];
-			const clash = keys.length
-				? this.rows.find(
-						(entry) => entry.id !== row.id && (this.uniqueKeys?.(entry) ?? []).some((key) => keys.includes(key))
-				  )
-				: undefined;
-
-			if (clash) {
-				throw uniqueViolation();
-			}
+			this.refuseClash(row);
 
 			const stored = this.detached ? detach(row) : row;
 			const existing = this.rows.findIndex((entry) => entry.id === row.id);
@@ -116,6 +126,42 @@ class Table {
 		}
 
 		return rows;
+	}
+
+	/**
+	 * A targeted `UPDATE`: the named columns of the matching rows change, and no other column does.
+	 *
+	 * The unique tuples are checked against the row as it would stand, as the database checks them, so a
+	 * status written back onto a live aggregate is refused here as it is there.
+	 */
+	async update(where: Row, values: Row): Promise<{ affected: number }> {
+		const matched = this.rows.filter((row) => matches(row, where));
+
+		for (const row of matched) {
+			this.refuseClash({ ...row, ...values });
+
+			if (this.detached) {
+				this.rows[this.rows.indexOf(row)] = detach({ ...row, ...values });
+			} else {
+				Object.assign(row, values);
+			}
+		}
+
+		return { affected: matched.length };
+	}
+
+	/** Raises the driver's violation when a row would share a unique tuple with another row. */
+	private refuseClash(row: Row): void {
+		const keys = this.uniqueKeys?.(row) ?? [];
+		const clash = keys.length
+			? this.rows.find(
+					(entry) => entry.id !== row.id && (this.uniqueKeys?.(entry) ?? []).some((key) => keys.includes(key))
+			  )
+			: undefined;
+
+		if (clash) {
+			throw uniqueViolation();
+		}
 	}
 
 	async findOne(options: { where?: Row } = {}): Promise<Row | null> {
@@ -166,7 +212,11 @@ class Table {
 			orderBy: (_column: string, _direction: string) => builder,
 			addOrderBy: (_column: string, _direction: string) => builder,
 			take: (_count: number) => builder,
-			setLock: (_mode: string) => builder,
+			setLock: (mode: string) => {
+				this.locks.push(mode);
+
+				return builder;
+			},
 			getOne: async () => this.read(filtered()[0] ?? null),
 			getMany: async () => filtered().map((row) => this.read(row))
 		};
@@ -247,6 +297,35 @@ function byOrder(order: Row = {}): (left: Row, right: Row) => number {
 	};
 }
 
+/** The columns of `operation`, as MikroORM's metadata lists the entity's scalar properties. */
+const OPERATION_COLUMNS = [
+	'id',
+	'createdAt',
+	'updatedAt',
+	'deletedAt',
+	'tenantId',
+	'organizationId',
+	'type',
+	'status',
+	'input',
+	'state',
+	'result',
+	'attemptCount',
+	'maxAttempts',
+	'lockedAt',
+	'lockedBy',
+	'leaseExpiresAt',
+	'lastError',
+	'idempotencyKey',
+	'parentOperationId',
+	'startedAt',
+	'finishedAt',
+	'deadlineAt',
+	'aggregateType',
+	'aggregateId',
+	'correlationId'
+];
+
 /** The tables one service writes to, plus the manager that rolls them back together. */
 class Database {
 	readonly tables = new Map<unknown, Table>();
@@ -292,7 +371,36 @@ class Database {
 		transaction: <R>(work: (manager: any) => Promise<R>): Promise<R> => this.transaction(work),
 		create: (entity: unknown, input: Row) => this.tableOf(entity).create(input),
 		save: (entity: unknown, rows: Row | Row[]) => this.tableOf(entity).save(rows),
+		update: (entity: unknown, where: Row, values: Row) => this.tableOf(entity).update(where, values),
 		createQueryBuilder: (entity: unknown, alias: string) => this.tableOf(entity).createQueryBuilder(alias)
+	};
+
+	/** The options of every read the MikroORM entity manager was asked for, in order. */
+	readonly mikroOrmReads: Row[] = [];
+
+	/**
+	 * The same tables as MikroORM's entity manager reaches them, for the runtime's MikroORM arm: the
+	 * locking read and the targeted update it writes the operation row with, and the metadata that says
+	 * which of a read row's properties are its columns.
+	 */
+	readonly entityManager: Row = {
+		getMetadata: () => ({
+			get: () => ({
+				props: [
+					...OPERATION_COLUMNS.map((name) => ({ name, kind: 'scalar' })),
+					{ name: 'tenant', kind: 'm:1' },
+					{ name: 'steps', kind: '1:m' }
+				]
+			})
+		}),
+		transactional: <R>(work: (em: Row) => Promise<R>): Promise<R> => this.transaction(() => work(this.entityManager)),
+		findOne: (entity: unknown, where: Row, options: Row = {}) => {
+			this.mikroOrmReads.push(options);
+
+			return this.tableOf(entity).findOne({ where });
+		},
+		nativeUpdate: async (entity: unknown, where: Row, values: Row) =>
+			(await this.tableOf(entity).update(where, values)).affected
 	};
 }
 
@@ -306,6 +414,11 @@ function repositoryFor(table: Table, db: Database) {
 		createQueryBuilder: (alias: string) => table.createQueryBuilder(alias),
 		manager: db.manager
 	};
+}
+
+/** The MikroORM repository stand-in: what the runtime's MikroORM arm reaches through it. */
+function mikroOrmRepositoryFor(db: Database) {
+	return { getEntityManager: () => db.entityManager };
 }
 
 const T0 = new Date('2026-03-01T10:00:00Z');
@@ -331,19 +444,26 @@ interface Announcements {
 function runtime(options: { detached?: boolean } = {}) {
 	const db = new Database(
 		new Map<unknown, (row: Row) => string[]>([
-			// The two partial unique indexes of the table, and neither carries the tenant — which is what
-			// lets another tenant's row refuse an insert. `UQ_operation_idem` is
-			// `(COALESCE(organizationId), type, idempotencyKey)` *when a key is set*, and
-			// `UQ_operation_aggregate_live` is `(aggregateType, aggregateId)` while the operation is live:
-			// an operation that names neither is unconstrained.
+			// The two partial unique indexes of the table, over the rows that are not soft-deleted.
+			// `UQ_operation_tenant_idem` (1791000000557) is `(COALESCE(tenantId), COALESCE(organizationId),
+			// type, idempotencyKey)` *when a key is set*, which is exactly the scope the submission lookup
+			// reads: a key is refused only by a row that lookup can find. `UQ_operation_aggregate_live` is
+			// `(aggregateType, aggregateId)` while the operation is live and carries neither tenant nor
+			// organization, so another tenant's live row on the same aggregate still refuses an insert. An
+			// operation that names neither is unconstrained.
 			[
 				Operation,
-				(row) => [
-					...(row.idempotencyKey ? [`idem:${row.organizationId ?? null}:${row.type}:${row.idempotencyKey}`] : []),
-					...(row.aggregateType && ['PENDING', 'RUNNING', 'COMPENSATING'].includes(row.status)
-						? [`aggregate:${row.aggregateType}:${row.aggregateId}`]
-						: [])
-				]
+				(row) =>
+					row.deletedAt
+						? []
+						: [
+								...(row.idempotencyKey
+									? [`idem:${row.tenantId ?? null}:${row.organizationId ?? null}:${row.type}:${row.idempotencyKey}`]
+									: []),
+								...(row.aggregateType && ['PENDING', 'RUNNING', 'COMPENSATING'].includes(row.status)
+									? [`aggregate:${row.aggregateType}:${row.aggregateId}`]
+									: [])
+						  ]
 			],
 			[OperationStep, (row) => [`${row.operationId}:${row.name}`]]
 		]),
@@ -368,9 +488,11 @@ function runtime(options: { detached?: boolean } = {}) {
 		operationFailed: announcements.failed
 	};
 
+	// Both ORMs reach the same tables: the runtime writes the operation row through the configured ORM's
+	// arm, and a case that states MikroORM drives that arm over the rows the TypeORM reads see.
 	const service = new OperationService(
 		repositoryFor(db.tableOf(Operation), db) as unknown as TypeOrmOperationRepository,
-		{} as never,
+		mikroOrmRepositoryFor(db) as never,
 		repositoryFor(db.tableOf(OperationStep), db) as unknown as TypeOrmOperationStepRepository,
 		{} as never,
 		registry,
@@ -582,13 +704,22 @@ describe('starting an operation', () => {
 
 		// Control: the lookup used to ask for `{ type, idempotencyKey, organizationId IS NULL }`, which
 		// is every tenant's organization-less row, and answered tenant B's operation — its input, its
-		// aggregate — as this caller's own. The unique index carries no tenant, so B's row still
-		// refuses the insert, and that is a conflict rather than a driver error.
-		const attempt = service.start({ type: TYPE, input: {}, idempotencyKey: 'key-1' });
+		// aggregate — as this caller's own.
+		const attempt = await service.start({ type: TYPE, input: {}, idempotencyKey: 'key-1' });
 
-		await expect(attempt).rejects.toBeInstanceOf(ConflictException);
-		await expect(attempt).rejects.not.toThrow(String(foreign.operation.id));
-		expect(operations.rows).toHaveLength(1);
+		// Corrected for 1791000000557: this case expected a `409` here, because `UQ_operation_idem` carried
+		// no tenant and B's row refused the insert. `UQ_operation_tenant_idem` folds the tenant as the
+		// lookup reads it, so the key is tenant A's to use and A's submission starts A's own operation.
+		expect(attempt.created).toBe(true);
+		expect(attempt.operation.id).not.toBe(foreign.operation.id);
+		expect(attempt.operation.tenantId).toBe('tenant-a');
+		expect(operations.rows).toHaveLength(2);
+
+		// And a retry of it answers A's operation, never B's.
+		expect(await service.start({ type: TYPE, input: {}, idempotencyKey: 'key-1' })).toMatchObject({
+			created: false,
+			operation: { id: attempt.operation.id }
+		});
 
 		// The caller's own key is still idempotent inside its own tenant.
 		const own = await service.start({ type: TYPE, input: {}, idempotencyKey: 'key-2' });
@@ -620,6 +751,24 @@ describe('starting an operation', () => {
 		await expect(
 			service.start({ type: TYPE, input: {}, aggregateType: 'commerce_cart', aggregateId: CART })
 		).rejects.toBeInstanceOf(ConflictException);
+		expect(operations.rows).toHaveLength(1);
+	});
+
+	it('answers a conflict when the row that won the key cannot be read back after the refused insert', async () => {
+		const { service, registry, operations, define } = runtime();
+
+		registry.register(TYPE, define(['reserve']));
+
+		const submission = { type: TYPE, input: {}, idempotencyKey: 'key-1', tenantId: 'tenant-a' };
+
+		await service.start(submission);
+
+		// The winner is committed when the insert runs but gone by the re-read — the one way left for a key
+		// of the caller's own scope to refuse an insert whose lookups find nothing. The runtime answers a
+		// conflict rather than the driver's violation, which would surface as a `500`.
+		jest.spyOn(service, 'findByIdempotencyKey').mockResolvedValue(null);
+
+		await expect(service.start(submission)).rejects.toBeInstanceOf(ConflictException);
 		expect(operations.rows).toHaveLength(1);
 	});
 });
@@ -1499,3 +1648,68 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])(
 		});
 	}
 );
+
+describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('writing the operation row under its lock (%s)', (orm) => {
+	afterEach(() => {
+		isPostgresMock.mockImplementation(actualConfig.isPostgres);
+		isMySQLMock.mockImplementation(actualConfig.isMySQL);
+	});
+
+	/** A one-step plan driven to completion, with the dialect stated. */
+	const drive = async (dialect: 'postgres' | 'mysql' | 'sqlite') => {
+		isPostgresMock.mockReturnValue(dialect === 'postgres');
+		isMySQLMock.mockReturnValue(dialect === 'mysql');
+
+		const harness = runtime();
+
+		jest.spyOn(harness.service, 'ormType', 'get').mockReturnValue(orm as never);
+		harness.registry.register(TYPE, harness.define(['reserve']));
+
+		const { operation } = await harness.service.start({ type: TYPE, input: {} });
+		const result = await harness.service.execute(operation.id as string);
+
+		expect(result.operation.status).toBe('COMPLETED');
+
+		return harness;
+	};
+
+	it.each(['postgres', 'mysql'] as const)('reads the row FOR UPDATE on %s before each of its writes', async (dialect) => {
+		const { db, operations } = await drive(dialect);
+
+		// Three writes of the row after the claim — the lease renewal, the step's success and the settlement
+		// — and each decides from a read that holds the row's write lock until it has written.
+		if (orm === MultiORMEnum.MikroORM) {
+			expect(db.mikroOrmReads).toHaveLength(3);
+			expect(db.mikroOrmReads.every((read) => read.lockMode === LockMode.PESSIMISTIC_WRITE)).toBe(true);
+			// The claim is the only locking read TypeORM still makes on this ORM.
+			expect(operations.locks).toEqual(['pessimistic_write']);
+		} else {
+			expect(db.mikroOrmReads).toHaveLength(0);
+			expect(operations.locks).toEqual(Array(4).fill('pessimistic_write'));
+		}
+	});
+
+	it('reads without a lock mode on SQLite, where the transaction is the lock', async () => {
+		const { db, operations } = await drive('sqlite');
+
+		expect(operations.locks).toEqual([]);
+
+		if (orm === MultiORMEnum.MikroORM) {
+			expect(db.mikroOrmReads).toHaveLength(3);
+			expect(db.mikroOrmReads.every((read) => read.lockMode === undefined)).toBe(true);
+		}
+	});
+
+	it('reads the row from the table rather than from an identity map', async () => {
+		const { db } = await drive('sqlite');
+
+		// Without a lock mode MikroORM answers a primary-key read from the context the transaction was
+		// forked from, which is the stale row the merge exists to stop writing from.
+		if (orm === MultiORMEnum.MikroORM) {
+			expect(db.mikroOrmReads).toHaveLength(3);
+			expect(db.mikroOrmReads.every((read) => read.disableIdentityMap === true)).toBe(true);
+		} else {
+			expect(db.mikroOrmReads).toHaveLength(0);
+		}
+	});
+});
