@@ -24,6 +24,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 
@@ -924,8 +925,9 @@ export function parseTypeORMFindToMikroOrm<T>(options: LegacyFindManyOptions<any
 		mikroOptions.limit = options.take;
 	}
 
-	// If options contain 'withDeleted', add the SOFT_DELETABLE_FILTER to existing filters
-	if (options && options.withDeleted) {
+	// If options state 'withDeleted', lift the SOFT_DELETABLE_FILTER. Read as the boolean it states: a raw
+	// query delivers `?withDeleted=false` as the string 'false', which a truthiness test read as true.
+	if (options && parseToBoolean(options.withDeleted)) {
 		mikroOptions.filters = { [SOFT_DELETABLE_FILTER]: false };
 	}
 

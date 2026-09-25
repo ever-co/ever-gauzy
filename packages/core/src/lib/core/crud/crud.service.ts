@@ -3,6 +3,7 @@
 // Original copyright: Copyright (c) 2018 Sumanth Chinthagunta
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { parseToBoolean } from '@gauzy/utils';
 import {
 	DeepPartial,
 	DeleteResult,
@@ -57,6 +58,31 @@ import { ITryRequest } from './try-request';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+
+/**
+ * The find options with `withDeleted` read as the boolean it states.
+ *
+ * A list route that hands its raw `@Query()` to the CRUD base — every inherited list does, and a route
+ * mounted with `UseValidationPipe()` does not transform — delivers `?withDeleted=false` as the *string*
+ * `'false'`. Both ORMs test the member by truthiness (TypeORM's find options and the MikroORM converter
+ * alike), so the string lifted the soft-delete filter and a caller that asked for live rows was handed the
+ * retired ones. The member is therefore read with `parseToBoolean` once, here, at every read entry point:
+ * a stated `true` or `'true'` stays, anything else is removed, and an options object without the member is
+ * returned untouched.
+ *
+ * @param options The options a caller passed, possibly undefined.
+ * @returns The same options, with `withDeleted` either `true` or absent.
+ */
+function withDeletedAsStated<O>(options: O): O {
+	if (!options || typeof options !== 'object' || !('withDeleted' in (options as object))) {
+		return options;
+	}
+
+	const { withDeleted, ...rest } = options as unknown as { withDeleted?: unknown } & Record<string, unknown>;
+
+	return (parseToBoolean(withDeleted) ? { ...rest, withDeleted: true } : rest) as unknown as O;
+}
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
 	constructor(
@@ -157,6 +183,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns A Promise that resolves to the count of entities.
 	 */
 	public async count(options?: ICountOptions<T>): Promise<number> {
+		options = withDeletedAsStated(options);
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
@@ -210,6 +237,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		const emptyWindow = statesEmptyWindow(options);
@@ -247,6 +275,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		if (statesEmptyWindow(options)) {
@@ -275,6 +304,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async paginate(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		try {
@@ -333,6 +363,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		options = withDeletedAsStated(options);
 		// Asserted outside the try: the catch below turns any throw into `{ success: false }`, which
 		// would swallow the ForbiddenException instead of refusing the read.
 		this.assertRelationsPermitted(options);
@@ -390,6 +421,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneOrFailByOptions(options: IFindOneOptions<T>): Promise<ITryRequest<T>> {
+		options = withDeletedAsStated(options);
 		// See findOneOrFailByIdString: the catch below would swallow the ForbiddenException.
 		this.assertRelationsPermitted(options);
 
@@ -477,6 +509,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
@@ -538,6 +571,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @throws NotFoundException when no record matches.
 	 */
 	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T> {
+		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
 
 		let record: T;
