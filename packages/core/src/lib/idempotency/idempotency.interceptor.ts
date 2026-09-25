@@ -299,9 +299,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
 /**
  * The status the caller will receive for this handler.
  *
- * Read from the route's own metadata rather than from the response object: Nest applies `@HttpCode`
- * after the interceptor chain returns, so at this point the response still carries the transport
- * default and a stored `201` would be replayed as a `200`.
+ * Read from the route's own metadata rather than from the response object, which is shared by every
+ * interceptor on the route and, on GraphQL, by every operation in the document. Nest sets the route's
+ * status before the interceptor chain runs and does not set it again on the way out, so a status the
+ * replay sets on the response is the one the client receives — which is also why the replay above
+ * needs nothing more than `response.status()` to answer a stored `422` on a route registered `201`.
  *
  * @param reflector The reflector.
  * @param context The execution context.

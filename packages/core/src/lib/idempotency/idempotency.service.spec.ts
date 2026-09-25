@@ -14,8 +14,8 @@ import { TypeOrmIdempotencyKeyRepository } from './repository/type-orm-idempoten
 /**
  * The idempotency key store, against a table that behaves like the table it stands in for.
  *
- * The row is the lock: the unique tuple `(organizationId, scope, key)` is what makes two concurrent
- * identical requests resolve to exactly one owner, so the cases here are the four answers a caller
+ * The row is the lock: the unique tuple `(tenantId, organizationId, scope, key)` is what makes two
+ * concurrent identical requests resolve to exactly one owner, so the cases here are the four answers a caller
  * can receive — claimed, replayed, in flight, refused — and what each of them does to the work. The
  * double below enforces the unique tuple and raises the driver's unique violation, which is how the
  * service learns it lost a race without a lock table or any cooperation from the caller.
@@ -97,7 +97,7 @@ function uniqueViolation(): Error {
 /**
  * An in-memory stand-in for the `idempotency_key` table.
  *
- * It enforces `(organizationId, scope, key)` on insert, applies the criteria the service asks for
+ * It enforces `(tenantId, organizationId, scope, key)` on insert, applies the criteria the service asks for
  * (including the `In` and `LessThan` operators the cleanup sweep builds), and answers a query builder
  * the way the row-locking takeover needs — recording, for every such read, the criteria and the lock
  * the service asked it for.
@@ -207,10 +207,18 @@ class KeyTable {
 	}
 }
 
-/** The columns the unique index is declared over. */
+/**
+ * The columns the unique index is declared over.
+ *
+ * The tenant is one of them, and a null in either scope column is folded to one value the way the
+ * index folds it — `ScopeIdempotencyKeyByTenant1791000000557`, whose own spec runs the index itself.
+ */
 function sameIdentity(left: Row, right: Row): boolean {
 	return (
-		(left.organizationId ?? null) === (right.organizationId ?? null) && left.scope === right.scope && left.key === right.key
+		(left.tenantId ?? null) === (right.tenantId ?? null) &&
+		(left.organizationId ?? null) === (right.organizationId ?? null) &&
+		left.scope === right.scope &&
+		left.key === right.key
 	);
 }
 
@@ -419,6 +427,27 @@ describe('claiming a key', () => {
 		expect(table.rows).toHaveLength(3);
 	});
 
+	it('lets two tenants with no organization selected use one key, because the read and the lock agree', async () => {
+		// A service account, an integration, a token issued without `lastOrganizationId`: the organization
+		// is null for each. The read that finds a key is scoped by tenant, so the lock has to be too — an
+		// index that folded the organization but carried no tenant let the first tenant's row refuse the
+		// second tenant's insert, and the second tenant's scoped read then found nothing to answer with.
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+		const { service, table } = store();
+
+		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.CLAIMED);
+
+		tenant.mockReturnValue('tenant-2');
+		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.CLAIMED);
+
+		// Control: inside one tenant the key is still one lock.
+		expect((await service.claim(request())).outcome).toBe(IdempotencyOutcome.IN_FLIGHT);
+		expect(table.rows.map((row) => row.tenantId)).toEqual(['tenant-1', 'tenant-2']);
+	});
+
 	it('reads the key back through the platform\'s dual-ORM read, scoped by the credential', async () => {
 		const { service } = store();
 		const read = watchingDualOrmMethod('find');
@@ -463,6 +492,27 @@ describe('settling a key', () => {
 		expect(second.outcome).toBe(IdempotencyOutcome.REPLAYED);
 		expect(second.response?.status).toBe(422);
 		expect(table.rows[0].status).toBe(IdempotencyStatus.FAILED);
+	});
+
+	it('replays a failure that recorded no status as a failure, not as a success', async () => {
+		const { service } = store();
+
+		// `fail()` takes its status as optional, so a key can be settled as failed without one.
+		const refused = await service.claim(request());
+		await service.fail(refused.record.id as string);
+
+		const retry = await service.claim(request());
+
+		// Control: answering `200` here — what every status-less row used to replay as — would tell a client
+		// whose request the server refused that it had been accepted.
+		expect(retry.outcome).toBe(IdempotencyOutcome.REPLAYED);
+		expect(retry.response?.status).toBe(500);
+
+		// A completed row that recorded no status is still the success it was.
+		const accepted = await service.claim(request({ key: 'key-87654321' }));
+		await service.complete(accepted.record.id as string);
+
+		expect((await service.claim(request({ key: 'key-87654321' }))).response?.status).toBe(200);
 	});
 
 	it('never replaces the response a replay would hand back', async () => {
