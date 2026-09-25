@@ -1,17 +1,18 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { In, Not } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, TenantAwareCrudService, subtractDecimalStrings } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import {
 	IOrderFulfillmentPort,
 	IOrderLineFulfillment,
 	IOrderLineReceiptMove,
+	IOrderLineReturnRequestMove,
 	IOrderReturnLineInput,
 	IOrderReturnReceiptInput,
 	OrderReturnStatus,
 	RETURNS_ORDER_FULFILLMENT
 } from '../returns.types';
-import { normalizeQuantity, sumQuantities, toQuantityUnits } from '../returns.quantity';
+import { fromQuantityUnits, normalizeQuantity, sumQuantities, toQuantityUnits } from '../returns.quantity';
 import { OrderReturn } from '../order-return/order-return.entity';
 import { TypeOrmOrderReturnRepository } from '../order-return/repository/type-orm-order-return.repository';
 import { OrderReturnLine } from './order-return-line.entity';
@@ -61,6 +62,9 @@ const LIVE_STATUSES: OrderReturnStatus[] = [
  */
 @Injectable()
 export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLine> {
+	/** Where a compensation that did not land — a failure that must not replace the original — is reported. */
+	private readonly logger = new Logger(OrderReturnLineService.name);
+
 	constructor(
 		readonly typeOrmOrderReturnLineRepository: TypeOrmOrderReturnLineRepository,
 		readonly mikroOrmOrderReturnLineRepository: MikroOrmOrderReturnLineRepository,
@@ -101,6 +105,15 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	 * original request was, and merging would make the two paths diverge. Lines that were never
 	 * received are soft-deleted, so the partial unique index on the pair keeps working.
 	 *
+	 * **The order is told what is now asked back, before the lines are written.** Each order line's
+	 * `returnRequestedQuantity` is moved by the difference between what the new set asks for and what the
+	 * set it replaces asked for — the whole request on a return's first write, the edit on a later one —
+	 * which is what keeps doc 10 invariant I-12 (`returnReceivedQuantity + returnDismissedQuantity <=
+	 * returnRequestedQuantity`) true of the order: nothing in the returns flow wrote the counter, so the
+	 * invariant compared the goods that came back against a zero. The move comes first so a move the
+	 * order refuses leaves the line set untouched, and a line write that fails after it moves the counter
+	 * back by exactly the moves that landed.
+	 *
 	 * @param returnId The return to write the lines of.
 	 * @param inputs The requested lines.
 	 * @returns The written lines.
@@ -120,6 +133,37 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 		}
 
 		await this.assertReturnable(orderReturn.orderId, inputs, returnId);
+
+		const requested = await this.moveOrderLineRequest(
+			orderReturn.orderId,
+			this.requestMoves(await this.findForReturn(returnId), inputs)
+		);
+
+		try {
+			return await this.writeLines(orderReturn, inputs);
+		} catch (error) {
+			try {
+				await this.restoreOrderLineRequest(orderReturn.orderId, requested);
+			} catch (compensationError) {
+				this.logger.error(
+					`The lines of return ${returnId} could not be written and the order's requested counter could ` +
+						`not be moved back: ${describe(compensationError)}`
+				);
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Writes a validated line set in place of the one a return holds.
+	 *
+	 * @param orderReturn The return, which supplies the id and the tenancy the lines are written with.
+	 * @param inputs The requested lines, already measured against the ceiling.
+	 * @returns The written lines.
+	 */
+	private async writeLines(orderReturn: OrderReturn, inputs: IOrderReturnLineInput[]): Promise<OrderReturnLine[]> {
+		const returnId = orderReturn.id;
 
 		await this.typeOrmOrderReturnLineRepository.softDelete({ returnId });
 
@@ -404,79 +448,232 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 	 * delivery added. The call travels through the fulfillment port, the seam that exists so that no
 	 * other package reads or writes `order_line`.
 	 *
+	 * **A damaged unit is a unit that came back, and it moves the same counter.** The receipt counts it
+	 * against the request ("an item that arrived broken arrived") and the return reaches `RECEIVED` on it,
+	 * so the order is told about it too: moving only the sound units left a return of one sound and one
+	 * broken unit `RECEIVED` while its order answered `PARTIALLY_RETURNED`, and a delivery that was all
+	 * broken moved nothing at all. It is `returnReceivedQuantity` rather than `returnDismissedQuantity`
+	 * because of what each is read as. `deriveFulfillmentStatus` reads the received counter as "came back"
+	 * and subtracts the dismissed one from what the order still owes — which answers `FULFILLED` for an
+	 * order whose every unit came back broken — and the fulfilment package subtracts the dismissed one from
+	 * what a line may still ship, so a broken return of a partly shipped line would cancel units the
+	 * customer is still owed.
+	 *
 	 * It is called beside `applyReceipt` inside the receipt's own attempt, because doc 10 §11.6 puts
 	 * it in step 2 (`receive-lines`: "order line `returnReceivedQuantity` updated") and because a
 	 * failure after it must be undone by the same compensation the lines get.
 	 *
 	 * @param orderId The order whose line counters move.
 	 * @param plan The validated receipt.
+	 * @returns The moves the order accepted, which are exactly what {@link restoreOrderLineReceipt} undoes.
+	 * The port is all or nothing, so a call that throws moved nothing.
 	 */
-	public async applyOrderLineReceipt(orderId: ID, plan: readonly IOrderReturnReceiptPlan[]): Promise<void> {
-		await this.moveOrderLineReceipt(orderId, plan, 1);
+	public async applyOrderLineReceipt(
+		orderId: ID,
+		plan: readonly IOrderReturnReceiptPlan[]
+	): Promise<IOrderLineReceiptMove[]> {
+		const moves = this.receiptMoves(plan);
+
+		if (moves.length === 0) {
+			return [];
+		}
+
+		await this.requireFulfillment('the quantities that arrived cannot be recorded against the order').recordReturnReceipt(
+			orderId,
+			moves
+		);
+
+		return moves;
 	}
 
 	/**
-	 * Puts the order's received-return counter back to what it held before a receipt.
+	 * Moves the order's received-return counter back by the moves a receipt applied.
 	 *
 	 * The mirror of {@link applyOrderLineReceipt}, and the same call with the sign reversed: the
-	 * counter is a move rather than a value, so undoing one is moving it back.
+	 * counter is a move rather than a value, so undoing one is moving it back. **It is given the moves
+	 * that landed rather than the plan**, because the plan says what the receipt meant to do: a receipt
+	 * refused before its counter move — a line with no receiving location, a movement the ledger refused
+	 * before the order was told — moved nothing, and reversing its plan subtracted units another return
+	 * had put there.
 	 *
 	 * @param orderId The order whose line counters move.
-	 * @param plan The receipt being undone.
+	 * @param applied The moves {@link applyOrderLineReceipt} answered; an empty list moves nothing.
 	 */
-	public async restoreOrderLineReceipt(orderId: ID, plan: readonly IOrderReturnReceiptPlan[]): Promise<void> {
-		await this.moveOrderLineReceipt(orderId, plan, -1);
+	public async restoreOrderLineReceipt(orderId: ID, applied: readonly IOrderLineReceiptMove[]): Promise<void> {
+		if (!applied.length) {
+			return;
+		}
+
+		await this.requireFulfillment('the receipt cannot be taken back from the order').recordReturnReceipt(
+			orderId,
+			negateMoves(applied)
+		);
 	}
 
 	/**
-	 * States one receipt's effect on the order's line counters.
+	 * States one receipt's effect on the order's received-return counter.
 	 *
 	 * A line the receipt did not move is left out rather than sent as a zero: the order package reads
 	 * every entry as a write, and a delta of nothing would be a write that changes nothing on a row a
 	 * concurrent delivery may be holding.
 	 *
-	 * @param orderId The order whose line counters move.
 	 * @param plan The receipt.
-	 * @param direction `1` to apply it, `-1` to undo it.
-	 * @throws BadRequestException when no order capability is registered, or when a line whose
-	 * quantity moved names no order line — a receipt the order cannot be told about would leave the
-	 * order answering a fulfilment status the goods in its own warehouse deny.
+	 * @returns One move per order line this delivery brought units of, sound and damaged together.
+	 * @throws BadRequestException when a line whose quantity moved names no order line — a receipt the
+	 * order cannot be told about would leave the order answering a fulfilment status the goods in its own
+	 * warehouse deny.
 	 */
-	private async moveOrderLineReceipt(
-		orderId: ID,
-		plan: readonly IOrderReturnReceiptPlan[],
-		direction: 1 | -1
-	): Promise<void> {
+	private receiptMoves(plan: readonly IOrderReturnReceiptPlan[]): IOrderLineReceiptMove[] {
 		const moves: IOrderLineReceiptMove[] = [];
 
 		for (const entry of plan) {
-			const delta = subtractDecimalStrings(entry.receipt.receivedQuantity, entry.previous.receivedQuantity);
+			const units =
+				toQuantityUnits(entry.receipt.receivedQuantity) +
+				toQuantityUnits(entry.receipt.damagedQuantity) -
+				toQuantityUnits(entry.previous.receivedQuantity) -
+				toQuantityUnits(entry.previous.damagedQuantity);
 
-			if (delta === '0') {
+			if (units === 0n) {
 				continue;
 			}
 
 			if (!entry.line.orderLineId) {
 				throw new BadRequestException(
-					`RETURN_ORDER_LINE_UNLINKED: return line ${entry.line.id} received ${delta} unit(s) and names no order ` +
-						'line, so what arrived cannot be recorded against the order.'
+					`RETURN_ORDER_LINE_UNLINKED: return line ${entry.line.id} received ${fromQuantityUnits(units)} unit(s) ` +
+						'and names no order line, so what arrived cannot be recorded against the order.'
 				);
 			}
 
-			moves.push({ orderLineId: entry.line.orderLineId, quantityDelta: direction === 1 ? delta : negate(delta) });
+			moves.push({ orderLineId: entry.line.orderLineId, quantityDelta: fromQuantityUnits(units) });
 		}
 
-		if (moves.length === 0) {
+		return moves;
+	}
+
+	/**
+	 * States what a rewrite of a return's line set changes in what is asked back, per order line.
+	 *
+	 * @param current The lines the return holds before the rewrite; a return's first write holds none.
+	 * @param inputs The lines it will hold.
+	 * @returns One move per order line whose requested quantity changed, never a zero.
+	 */
+	private requestMoves(
+		current: readonly OrderReturnLine[],
+		inputs: readonly IOrderReturnLineInput[]
+	): IOrderLineReturnRequestMove[] {
+		const units = new Map<ID, bigint>();
+
+		for (const line of current) {
+			if (line.orderLineId) {
+				units.set(line.orderLineId, (units.get(line.orderLineId) ?? 0n) - toQuantityUnits(line.quantity));
+			}
+		}
+
+		for (const input of inputs) {
+			units.set(input.orderLineId, (units.get(input.orderLineId) ?? 0n) + toQuantityUnits(input.quantity));
+		}
+
+		return Array.from(units)
+			.filter(([, delta]) => delta !== 0n)
+			.map(([orderLineId, delta]) => ({ orderLineId, quantityDelta: fromQuantityUnits(delta) }));
+	}
+
+	/**
+	 * Takes back from the order what a withdrawn return no longer asks for.
+	 *
+	 * A rejected or cancelled return no longer counts against the order (doc 10 §11.7:
+	 * "returnRequestedQuantity reverted"), so each order line's requested counter is moved down by what
+	 * the return's lines still had outstanding — requested, less what already arrived sound or damaged.
+	 * A unit that arrived stays asked for: it is on the received counter, and I-12 bounds that counter by
+	 * this one.
+	 *
+	 * @param returnId The return being withdrawn.
+	 * @param orderId The order it is against.
+	 * @returns The moves the order accepted, which are what {@link restoreOrderLineRequest} undoes when the
+	 * withdrawal itself does not land.
+	 */
+	public async releaseOrderLineRequest(returnId: ID, orderId: ID): Promise<IOrderLineReturnRequestMove[]> {
+		const units = new Map<ID, bigint>();
+
+		for (const line of await this.findForReturn(returnId)) {
+			const outstanding =
+				toQuantityUnits(line.quantity) -
+				toQuantityUnits(line.receivedQuantity) -
+				toQuantityUnits(line.damagedQuantity);
+
+			if (outstanding <= 0n) {
+				continue;
+			}
+
+			if (!line.orderLineId) {
+				throw new BadRequestException(
+					`RETURN_ORDER_LINE_UNLINKED: return line ${line.id} still asks for ${fromQuantityUnits(outstanding)} ` +
+						'unit(s) and names no order line, so the request cannot be taken back from the order.'
+				);
+			}
+
+			units.set(line.orderLineId, (units.get(line.orderLineId) ?? 0n) - outstanding);
+		}
+
+		return await this.moveOrderLineRequest(
+			orderId,
+			Array.from(units).map(([orderLineId, delta]) => ({ orderLineId, quantityDelta: fromQuantityUnits(delta) }))
+		);
+	}
+
+	/**
+	 * Moves the order's requested-return counter back by the moves a write applied.
+	 *
+	 * @param orderId The order whose line counters move.
+	 * @param applied The moves that landed; an empty list moves nothing.
+	 */
+	public async restoreOrderLineRequest(orderId: ID, applied: readonly IOrderLineReturnRequestMove[]): Promise<void> {
+		if (!applied.length) {
 			return;
 		}
 
+		await this.requireFulfillment('the request cannot be put back on the order').recordReturnRequest(
+			orderId,
+			negateMoves(applied)
+		);
+	}
+
+	/**
+	 * Moves the order's requested-return counter.
+	 *
+	 * @param orderId The order whose line counters move.
+	 * @param moves The moves, never zeros.
+	 * @returns The moves, once the order accepted them all; the port is all or nothing.
+	 */
+	private async moveOrderLineRequest(
+		orderId: ID,
+		moves: IOrderLineReturnRequestMove[]
+	): Promise<IOrderLineReturnRequestMove[]> {
+		if (moves.length === 0) {
+			return [];
+		}
+
+		await this.requireFulfillment('what the return asks back cannot be recorded against the order').recordReturnRequest(
+			orderId,
+			moves
+		);
+
+		return moves;
+	}
+
+	/**
+	 * @param consequence What cannot happen without the order capability, named in the refusal.
+	 * @returns The order capability.
+	 * @throws BadRequestException when it is not registered.
+	 */
+	private requireFulfillment(consequence: string): IOrderFulfillmentPort {
 		if (!this.fulfillment) {
 			throw new BadRequestException(
-				'RETURN_FULFILLMENT_UNAVAILABLE: the order capability is not registered, so the quantities that arrived cannot be recorded against the order.'
+				`RETURN_FULFILLMENT_UNAVAILABLE: the order capability is not registered, so ${consequence}.`
 			);
 		}
 
-		await this.fulfillment.recordReturnReceipt(orderId, moves);
+		return this.fulfillment;
 	}
 
 	/**
@@ -581,16 +778,27 @@ export class OrderReturnLineService extends TenantAwareCrudService<OrderReturnLi
 }
 
 /**
- * The same quantity, moving the other way.
+ * The same moves, the other way.
  *
- * The order line's counter is moved by a signed delta, and undoing a receipt is moving it back — so
- * the compensation sends the value it sent before, with the sign flipped, rather than a second
- * quantity the two could disagree about. A zero never reaches here: a delta of nothing is left out of
- * the moves, which is why the result is never `-0`.
+ * The order line's counters are moved by a signed delta, and undoing a move is moving it back — so a
+ * compensation sends the deltas it sent before, with the sign flipped, rather than a second quantity
+ * the two could disagree about. A zero never reaches here: a delta of nothing is left out of the
+ * moves, which is why the result is never `-0`.
  *
- * @param value An exact decimal quantity.
- * @returns The quantity with its sign reversed.
+ * @param moves The moves that landed.
+ * @returns The moves that undo them.
  */
-function negate(value: DecimalString): DecimalString {
-	return value.startsWith('-') ? value.slice(1) : `-${value}`;
+function negateMoves<T extends { orderLineId: ID; quantityDelta: DecimalString }>(moves: readonly T[]): T[] {
+	return moves.map((move) => ({
+		...move,
+		quantityDelta: move.quantityDelta.startsWith('-') ? move.quantityDelta.slice(1) : `-${move.quantityDelta}`
+	}));
+}
+
+/**
+ * @param error The failure.
+ * @returns The failure as one line, so a log entry stays an entry.
+ */
+function describe(error: unknown): string {
+	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
 }

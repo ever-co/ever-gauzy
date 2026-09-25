@@ -252,6 +252,14 @@ export interface IOrderLineFulfillment {
  * `PARTIALLY_RETURNED` and `RETURNED` — so it is moved by a delta rather than set to a value. A
  * delta is what the receipt has: the return line already holds what earlier deliveries recorded, and
  * this call is about the units this delivery brought.
+ *
+ * **The units are every unit that arrived, sound or damaged.** A damaged unit came back exactly as a
+ * sound one did — the receipt counts it against the request and the return reaches `RECEIVED` on it —
+ * and `returnReceivedQuantity` is the one counter the derivation reads as "came back". The sibling
+ * `returnDismissedQuantity` is not that: the derivation subtracts it from the quantity the order still
+ * owes, and the fulfilment package subtracts it from what may still be shipped, so a broken unit moved
+ * there would make a line with units still to ship owe fewer of them, and a return whose every unit
+ * arrived broken would leave its order answering `FULFILLED`.
  */
 export interface IOrderLineReceiptMove {
 	/** The order line the goods belong to. */
@@ -264,6 +272,22 @@ export interface IOrderLineReceiptMove {
 	 * with the sign reversed rather than by a second method that could disagree with this one about
 	 * the floor or the units.
 	 */
+	readonly quantityDelta: DecimalString;
+}
+
+/**
+ * One movement of an order line's requested-return counter.
+ *
+ * The counter is `order_line.returnRequestedQuantity`, the order's cache of what its live returns ask
+ * for, and doc 10 invariant I-12 bounds what came back by it: `returnReceivedQuantity +
+ * returnDismissedQuantity <= returnRequestedQuantity`. It moves up when a return's lines are written,
+ * by the difference when they are rewritten, and back down by the units still outstanding when the
+ * return is rejected or cancelled (doc 10 §11.7: "returnRequestedQuantity reverted").
+ */
+export interface IOrderLineReturnRequestMove {
+	/** The order line the request is against. */
+	readonly orderLineId: ID;
+	/** How much this write moves the counter: positive when more is asked back, negative when less is. */
 	readonly quantityDelta: DecimalString;
 }
 
@@ -293,11 +317,26 @@ export interface IOrderFulfillmentPort {
 	/**
 	 * Moves the received-return counter of the named order lines.
 	 *
+	 * **All or nothing.** A call that fails has moved nothing — a move refused part-way reverses the moves
+	 * of the same call that landed before it — so the caller's compensation undoes a call only when the
+	 * call resolved.
+	 *
 	 * @param orderId The order whose lines are moved, which is also the scope the write is checked in.
 	 * @param moves One entry per order line this delivery touched.
 	 * @returns Nothing: the caller's own rows say what arrived, and this counter is the order's cache of it.
 	 */
 	recordReturnReceipt(orderId: ID, moves: readonly IOrderLineReceiptMove[]): Promise<void>;
+
+	/**
+	 * Moves the requested-return counter of the named order lines, all or nothing, by the same atomic
+	 * statement as the receipt and with the same floor at zero.
+	 *
+	 * @param orderId The order whose lines are moved, which is also the scope the write is checked in.
+	 * @param moves One entry per order line whose requested quantity changed.
+	 * @returns Nothing: the return's own lines say what is asked back, and this counter is the order's
+	 * cache of it.
+	 */
+	recordReturnRequest(orderId: ID, moves: readonly IOrderLineReturnRequestMove[]): Promise<void>;
 }
 
 /**

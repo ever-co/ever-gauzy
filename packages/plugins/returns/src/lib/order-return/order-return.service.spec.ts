@@ -409,6 +409,11 @@ interface IMovement {
  * @param options.withTotals Whether the order capability that recomputes the order's derived columns is
  * registered.
  * @param options.numberSeries Whether the organization has a `RETURN` series.
+ * @param options.receiptRefused Whether the order refuses every move of its received-return counter.
+ * @param options.ledgerFailsOn Which ledger requests the ledger refuses, when some are to be refused.
+ * @param options.beforeRequestMove A hook run inside the order's requested-counter move, before it lands,
+ * which is where a case puts a concurrent writer.
+ * @param options.beforeReceiptMove The same hook inside the order's received-counter move.
  */
 function returnFixture(
 	options: {
@@ -422,6 +427,10 @@ function returnFixture(
 		withTotals?: boolean;
 		totalsFail?: boolean;
 		numberSeries?: boolean;
+		receiptRefused?: boolean;
+		ledgerFailsOn?: (request: IMovement) => boolean;
+		beforeRequestMove?: (moves: Array<{ orderLineId: string; quantityDelta: string }>, tables: ITables) => void;
+		beforeReceiptMove?: (moves: Array<{ orderLineId: string; quantityDelta: string }>, tables: ITables) => void;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -447,13 +456,30 @@ function returnFixture(
 	/** Every move of the order's received-return counter this package asked the order capability for. */
 	const recordedReceipts: Array<{ orderId: string; moves: Array<{ orderLineId: string; quantityDelta: string }> }> =
 		[];
+	/**
+	 * Every move of the order's requested-return counter the order accepted.
+	 *
+	 * Recorded only once accepted, like the receipts above: the port is all or nothing, so a refused call
+	 * moved nothing and is not something a compensation may undo.
+	 */
+	const recordedRequests: Array<{ orderId: string; moves: Array<{ orderLineId: string; quantityDelta: string }> }> =
+		[];
 	const fulfillment =
 		options.withFulfillment === false
 			? undefined
 			: {
 					getFulfilledLines: async () => fulfilled,
 					recordReturnReceipt: async (orderId: string, moves: Array<{ orderLineId: string; quantityDelta: string }>) => {
+						if (options.receiptRefused === true) {
+							throw new BadRequestException('ORDER_LINE_RECEIPT_BELOW_ZERO: the order refused the move.');
+						}
+
+						options.beforeReceiptMove?.(moves, tables);
 						recordedReceipts.push({ orderId, moves });
+					},
+					recordReturnRequest: async (orderId: string, moves: Array<{ orderLineId: string; quantityDelta: string }>) => {
+						options.beforeRequestMove?.(moves, tables);
+						recordedRequests.push({ orderId, moves });
 					}
 			  };
 	const lineService = new OrderReturnLineService(
@@ -480,6 +506,10 @@ function returnFixture(
 			? undefined
 			: {
 					recordMovement: async (request: IMovement) => {
+						if (options.ledgerFailsOn?.(request)) {
+							throw new Error(`the ledger refused ${request.kind} ${request.quantity}`);
+						}
+
 						movements.push(request);
 
 						return { movementId: `movement-${movements.length}`, quantityAfter: request.quantity };
@@ -574,6 +604,7 @@ function returnFixture(
 		manager: (typeOrmOrderReturnRepository as Row).manager,
 		movements,
 		recordedReceipts,
+		recordedRequests,
 		refundCalls,
 		shipmentCalls,
 		sequenceCalls,
@@ -1254,6 +1285,336 @@ describe('OrderReturnService — receiving goods (doc 10 §11.6, §11.3)', () =>
 		expect(fixture.line('line-1')?.receivedQuantity).toBe('5.000000');
 		// And the ledger holds one movement per unit received, never two for one unit.
 		expect(fixture.movements.reduce((total, movement) => total + Number(movement.quantity), 0)).toBe(5);
+	});
+});
+
+/**
+ * The order-line counters a return moves, and the compensation that moves them back.
+ *
+ * Three defects are pinned here, each at the counter it corrupted:
+ *
+ * - **a compensation undid steps that never ran.** A receipt refused before it reached the order — in
+ *   `planMovements`, for a line with no receiving location — was compensated by moving the order's
+ *   received-return counter back by its whole plan, which subtracted units another return of the same
+ *   line had put there, once per retry. The compensation now undoes what the receipt recorded as done;
+ * - **damaged units moved no counter.** A return of one sound and one broken unit reached `RECEIVED`
+ *   while its order was told one unit came back, and a delivery that was all broken told it nothing.
+ *   Every unit that arrived now moves `returnReceivedQuantity`, which is the counter
+ *   `deriveFulfillmentStatus` reads as "came back";
+ * - **nothing wrote the requested counter**, so doc 10 invariant I-12 (`returnReceivedQuantity +
+ *   returnDismissedQuantity <= returnRequestedQuantity`) compared what came back against a zero. A
+ *   return's lines now move it by what they ask for, an edit by the difference, and a withdrawal gives
+ *   back what was still outstanding.
+ */
+describe('OrderReturnService — the order-line counters a return moves (doc 10 §11.6 step 2, §11.7, I-12)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('does not move the order’s counter back for a receipt refused before it reached the order', async () => {
+		// The failure scenario of C2: another return of the same order line has already put units on the
+		// counter, and this receipt is refused in `planMovements` because neither the line nor the header
+		// nor the request names a receiving location. The compensation used to send `-5` for a receipt that
+		// never sent `+5` — on every retry.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, warehouseId: undefined })],
+			lines: [lineRow('line-1', { quantity: '5.000000', warehouseId: undefined })]
+		});
+
+		for (let retry = 0; retry < 2; retry++) {
+			await expect(
+				fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }])
+			).rejects.toThrow(/has no receiving location/);
+		}
+
+		expect(fixture.recordedReceipts).toEqual([]);
+		expect(fixture.line('line-1')).toMatchObject({ receivedQuantity: '0', damagedQuantity: '0' });
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.APPROVED, version: 1 });
+	});
+
+	it('does not move the order’s counter back when the order refused the move itself', async () => {
+		// The port is all or nothing, so a call that threw moved nothing and there is nothing to take back —
+		// while the return's own lines, whose write did run, are still put back.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })],
+			receiptRefused: true
+		});
+
+		await expect(
+			fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		expect(fixture.recordedReceipts).toEqual([]);
+		expect(fixture.movements).toEqual([]);
+		expect(fixture.line('line-1')).toMatchObject({ receivedQuantity: '0', damagedQuantity: '0' });
+	});
+
+	it('undoes every step that ran, even when the undo of one of them fails', async () => {
+		// The second movement is refused, and so is the reversal of the first: the ledger's refusal is no
+		// reason to leave the lines and the order claiming the goods arrived, so both are still put back and
+		// the original failure is the one the caller sees.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [
+				lineRow('line-1', { quantity: '2.000000', orderLineId: ORDER_LINE }),
+				lineRow('line-2', { quantity: '2.000000', orderLineId: SECOND_ORDER_LINE })
+			],
+			ledgerFailsOn: (request) => request.variantId === SECOND_VARIANT || request.quantity.startsWith('-')
+		});
+
+		await expect(
+			fixture.service.receive('return-1', [
+				{ lineId: 'line-1', receivedQuantity: '2' },
+				{ lineId: 'line-2', receivedQuantity: '2' }
+			])
+		).rejects.toThrow(/the ledger refused RETURN 2\.000000/);
+
+		expect(fixture.line('line-1')).toMatchObject({ receivedQuantity: '0' });
+		expect(fixture.line('line-2')).toMatchObject({ receivedQuantity: '0' });
+		expect(fixture.recordedReceipts).toEqual([
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' },
+					{ orderLineId: SECOND_ORDER_LINE, quantityDelta: '2.000000' }
+				]
+			},
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '-2.000000' },
+					{ orderLineId: SECOND_ORDER_LINE, quantityDelta: '-2.000000' }
+				]
+			}
+		]);
+	});
+
+	it('tells the order about damaged units, as units that came back', async () => {
+		// The failure scenario of C6: a line of two comes back as one sound and one broken unit. The return
+		// reaches `RECEIVED` on both, so the order is told two units came back — which is what makes its
+		// derivation answer `RETURNED` rather than `PARTIALLY_RETURNED`.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '2.000000' })]
+		});
+
+		const outcome = await fixture.service.receive('return-1', [
+			{ lineId: 'line-1', receivedQuantity: '1', damagedQuantity: '1' }
+		]);
+
+		expect(outcome.status).toBe(OrderReturnStatus.RECEIVED);
+		expect(fixture.recordedReceipts).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' }] }
+		]);
+	});
+
+	it('tells the order about a delivery that arrived entirely broken, which used to move nothing', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '2.000000' })]
+		});
+
+		await fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '0', damagedQuantity: '2' }]);
+
+		expect(fixture.recordedReceipts).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' }] }
+		]);
+		// The broken units are still recorded as the event they were, never as stock.
+		expect(fixture.movements.map((movement) => [movement.kind, movement.quantity, movement.eventOnly])).toEqual([
+			[StockMovementKind.DAMAGE, '2.000000', true]
+		]);
+	});
+
+	it('takes damaged units back from the order when their receipt is compensated', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED })],
+			lines: [lineRow('line-1', { quantity: '3.000000' })],
+			withLedger: false
+		});
+
+		await expect(
+			fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '1', damagedQuantity: '2' }])
+		).rejects.toThrow(/RETURN_STOCK_LEDGER_UNAVAILABLE/);
+
+		expect(fixture.recordedReceipts.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '3.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-3.000000' }]
+		]);
+	});
+
+	it('asks the order for exactly what a new return requests', async () => {
+		const fixture = returnFixture({ returns: [], lines: [] });
+
+		await fixture.service.create({
+			orderId: ORDER,
+			currency: 'USD',
+			lines: [
+				{ orderLineId: ORDER_LINE, quantity: 2 },
+				{ orderLineId: SECOND_ORDER_LINE, quantity: '1.5' }
+			]
+		} as never);
+
+		expect(fixture.recordedRequests).toEqual([
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' },
+					{ orderLineId: SECOND_ORDER_LINE, quantityDelta: '1.500000' }
+				]
+			}
+		]);
+	});
+
+	it('moves the request by what an edit changes, and not at all for an edit that changes nothing', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.OPEN })],
+			lines: [lineRow('line-1', { quantity: '5.000000', orderLineId: ORDER_LINE })]
+		});
+
+		await fixture.service.replaceLines('return-1', [
+			{ orderLineId: ORDER_LINE, quantity: '3' },
+			{ orderLineId: SECOND_ORDER_LINE, quantity: '1' }
+		]);
+		await fixture.service.replaceLines('return-1', [
+			{ orderLineId: ORDER_LINE, quantity: '3' },
+			{ orderLineId: SECOND_ORDER_LINE, quantity: '1' }
+		]);
+
+		// Five were asked for and three are now: the order gives two back on the first line and takes one on
+		// the second. The second edit asks for what the first left, so the order is not written at all.
+		expect(fixture.recordedRequests).toEqual([
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '-2.000000' },
+					{ orderLineId: SECOND_ORDER_LINE, quantityDelta: '1.000000' }
+				]
+			}
+		]);
+	});
+
+	it('gives back what a rejected return still asked for, and what a cancelled one did', async () => {
+		const fixture = returnFixture({
+			returns: [
+				returnRow('rejected', { status: OrderReturnStatus.APPROVED }),
+				returnRow('canceled', { status: OrderReturnStatus.REQUESTED })
+			],
+			lines: [
+				lineRow('line-1', { returnId: 'rejected', quantity: '5.000000', orderLineId: ORDER_LINE }),
+				lineRow('line-2', { returnId: 'canceled', quantity: '3.000000', orderLineId: SECOND_ORDER_LINE })
+			]
+		});
+
+		await fixture.service.reject('rejected', 'outside the window');
+		await fixture.service.cancel('canceled', 'customer changed their mind');
+
+		expect(fixture.recordedRequests).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }] },
+			{ orderId: ORDER, moves: [{ orderLineId: SECOND_ORDER_LINE, quantityDelta: '-3.000000' }] }
+		]);
+	});
+
+	it('keeps the request of a return closed short, because a closed return still counts', async () => {
+		// Doc 10 §11.7 has `CLOSED` change nothing on the order, and a closed return is one of the live
+		// statuses the ceiling check still counts in full: the unreceived remainder is recorded on the
+		// return, not released on the order.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.PARTIALLY_RECEIVED })],
+			lines: [lineRow('line-1', { quantity: '5.000000', receivedQuantity: '3.000000' })]
+		});
+
+		await fixture.service.close('return-1');
+
+		expect(fixture.recordedRequests).toEqual([]);
+	});
+
+	it('puts the request back when the withdrawal itself is refused', async () => {
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 4 })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })]
+		});
+
+		await expect(
+			fixture.service.reject('return-1', 'stale', { wildcard: false, versions: [3] })
+		).rejects.toMatchObject({ status: 409, code: 'ENTITY_VERSION_CONFLICT' });
+
+		expect(fixture.recordedRequests.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '5.000000' }]
+		]);
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.APPROVED, version: 4 });
+	});
+
+	it('does not let a second withdrawal of one return give its units back again', async () => {
+		// Another operator cancels the return between this rejection's read and its write. The rejection
+		// states no version, so it is predicated on the one the row holds when it writes — the version the
+		// cancellation just produced — and without the status in the predicate it landed, and the order was
+		// given the same five units back twice. With it, the write changes no row and the release is undone.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 1 })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })],
+			beforeRequestMove: (moves, tables) => {
+				const row = tables.order_return[0];
+
+				if (row.status === OrderReturnStatus.APPROVED && moves[0]?.quantityDelta.startsWith('-')) {
+					Object.assign(row, { status: OrderReturnStatus.CANCELED, version: 2 });
+				}
+			}
+		});
+
+		await expect(fixture.service.reject('return-1', 'too late')).rejects.toMatchObject({
+			status: 409,
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+
+		expect(fixture.updates[fixture.updates.length - 1].criteria).toMatchObject({
+			id: 'return-1',
+			status: OrderReturnStatus.APPROVED
+		});
+		expect(fixture.recordedRequests.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '5.000000' }]
+		]);
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.CANCELED, version: 2 });
+	});
+
+	it('refuses a receipt whose return was withdrawn while it was in flight, and takes its units back', async () => {
+		// The mirror of the case above, from the receipt's side. A cancellation that read the lines before
+		// the receipt moved them released every unit the return asked for; a receipt that then wrote
+		// `RECEIVED` over `CANCELED` left the order holding five units received against none requested —
+		// I-12 broken by two writes that each succeeded. The receipt's header write is predicated on the
+		// status the receipt was decided from, so it changes no row, and the compensation takes the receipt
+		// back off the lines and off the order.
+		const fixture = returnFixture({
+			returns: [returnRow('return-1', { status: OrderReturnStatus.APPROVED, version: 1 })],
+			lines: [lineRow('line-1', { quantity: '5.000000' })],
+			beforeReceiptMove: (moves, tables) => {
+				const row = tables.order_return[0];
+
+				if (row.status === OrderReturnStatus.APPROVED && !moves[0]?.quantityDelta.startsWith('-')) {
+					Object.assign(row, { status: OrderReturnStatus.CANCELED, version: 2 });
+				}
+			}
+		});
+
+		await expect(
+			fixture.service.receive('return-1', [{ lineId: 'line-1', receivedQuantity: '5' }])
+		).rejects.toMatchObject({ status: 409, code: 'ENTITY_VERSION_CONFLICT' });
+
+		expect(fixture.updates[fixture.updates.length - 1].criteria).toMatchObject({
+			id: 'return-1',
+			status: OrderReturnStatus.APPROVED
+		});
+		expect(fixture.recordedReceipts.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '5.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-5.000000' }]
+		]);
+		expect(fixture.line('line-1')).toMatchObject({ receivedQuantity: '0', damagedQuantity: '0' });
+		expect(fixture.returnRow('return-1')).toMatchObject({ status: OrderReturnStatus.CANCELED, version: 2 });
 	});
 });
 

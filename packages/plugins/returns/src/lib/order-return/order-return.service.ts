@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import {
+	IOrderLineReceiptMove,
 	IOrderReturnLineInput,
 	IOrderReturnReceiptOutcome,
 	IOrderReturnReceiptInput,
@@ -135,6 +136,23 @@ interface IPlannedMovement {
 interface IPostedMovement extends IPlannedMovement {
 	/** The ledger's own row, when it reported one. */
 	movementId?: ID;
+}
+
+/**
+ * What a receipt has done so far, recorded as each step completes.
+ *
+ * The compensation reads this rather than the plan: the plan is what the receipt meant to do, and a
+ * relative move undone for a step that never ran moves a counter by units nobody added.
+ */
+interface IReceiptSteps {
+	/** Whether the write of the return's own lines started; their restore is absolute, so it is safe then. */
+	linesTouched: boolean;
+	/** The moves of the order's received-return counter the order accepted, which are what is moved back. */
+	orderLineMoves: IOrderLineReceiptMove[];
+	/** The stock movements the ledger accepted, in the order it accepted them. */
+	posted: IPostedMovement[];
+	/** Whether the receipt's own header write landed, which is the only case its restore is owed. */
+	headerWritten: boolean;
 }
 
 /**
@@ -293,7 +311,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 	/**
 	 * Rejects a return. Terminal: a rejected return no longer counts against the order's fulfilled
-	 * quantity, which is what lets the customer ask again with a corrected request.
+	 * quantity, which is what lets the customer ask again with a corrected request — and the order's
+	 * requested-return counter is moved back by what it no longer asks for (see {@link withdraw}).
 	 *
 	 * @param id The return to reject.
 	 * @param reason Why it was rejected.
@@ -305,7 +324,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, DECIDABLE_STATUSES, 'reject');
 
-		await this.commitHeader(
+		await this.withdraw(
 			orderReturn,
 			{
 				status: OrderReturnStatus.REJECTED,
@@ -319,7 +338,8 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	}
 
 	/**
-	 * Cancels a return before its goods were received.
+	 * Cancels a return before its goods were received, which moves the order's requested-return counter
+	 * back exactly as a rejection does (see {@link withdraw}).
 	 *
 	 * @param id The return to cancel.
 	 * @param reason Why it was cancelled.
@@ -331,7 +351,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, DECIDABLE_STATUSES, 'cancel');
 
-		await this.commitHeader(
+		await this.withdraw(
 			orderReturn,
 			{
 				status: OrderReturnStatus.CANCELED,
@@ -343,6 +363,69 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		);
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Withdraws a return — rejects or cancels it — and takes back from the order what it asked for.
+	 *
+	 * A withdrawn return no longer counts against the order (doc 10 §11.7: "returnRequestedQuantity
+	 * reverted"), so each order line's requested-return counter moves down by the units the return still
+	 * had outstanding. Two things are ordered deliberately:
+	 *
+	 * - **the counter moves first**, so a move the order refuses — a counter the request was never added to
+	 *   would go below zero — refuses the withdrawal while the return is still exactly as it was;
+	 * - **the header write is predicated on the status the return was read in** as well as on its version.
+	 *   Two withdrawals of one return read in the same state would otherwise both release its units — a
+	 *   caller that states no version is predicated on the version the row holds when its write runs, and
+	 *   that is the one the first withdrawal just produced — and the second release would subtract units
+	 *   another return of the same line asked for. With the status in the predicate the second write
+	 *   changes no row, and its release is moved back.
+	 *
+	 * A header write that did not land moves the counter back by exactly the moves that landed. A header
+	 * write that did land — the event after it threw — keeps the release, because the return is
+	 * withdrawn. Which of the two happened is recorded by the write itself rather than read back from the
+	 * row: a row another writer moved on in the meantime reads as "moved" too, and giving the units back
+	 * then would leave them released for a withdrawal that never happened.
+	 *
+	 * @param orderReturn The return as it was read.
+	 * @param patch The terminal status and what goes with it.
+	 * @param expectation The version the caller read, when the route stated one.
+	 * @param event The fact the withdrawal announces.
+	 */
+	private async withdraw(
+		orderReturn: OrderReturn,
+		patch: Record<string, unknown>,
+		expectation: IVersionExpectation,
+		event: { name: string; data?: Record<string, unknown> }
+	): Promise<void> {
+		// The status the withdrawal was decided from, taken before anything else runs: the entity in hand
+		// may be the instance a store hands every reader of the row, and the precondition must be the state
+		// this caller read rather than whatever that instance says by the time the header is written.
+		const decidedFrom = orderReturn.status;
+		const released = await this.lineService.releaseOrderLineRequest(orderReturn.id, orderReturn.orderId);
+		let withdrawn = false;
+
+		try {
+			await this.commitHeader(orderReturn, patch, expectation, event, {
+				precondition: { status: decidedFrom },
+				onCommitted: () => {
+					withdrawn = true;
+				}
+			});
+		} catch (error) {
+			if (!withdrawn) {
+				try {
+					await this.lineService.restoreOrderLineRequest(orderReturn.orderId, released);
+				} catch (compensationError) {
+					this.logger.error(
+						`The withdrawal of return ${orderReturn.id} failed and the order's requested counter could not ` +
+							`be put back: ${describe(compensationError)}`
+					);
+				}
+			}
+
+			throw error;
+		}
 	}
 
 	/**
@@ -390,7 +473,20 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 
 		this.assertStatus(orderReturn, RECEIVABLE_STATUSES, 'receive');
 
-		const posted: IPostedMovement[] = [];
+		// The status the receipt was decided from, taken before anything else runs, for the reason
+		// `withdraw` takes it: the header write below is predicated on it (see there).
+		const decidedFrom = orderReturn.status;
+
+		// **What the receipt actually did, step by step, so its compensation undoes only that.** The
+		// compensation used to be handed the plan and undo all of it, whatever had run: a receipt refused
+		// in `planMovements` — a line with no receiving location — never reached the order, and moving the
+		// order's counter back by its plan subtracted units another return of the same line had put there,
+		// once per retry. Each step is recorded as it completes: the lines as soon as their write *starts*
+		// (the restore writes absolute values, so a write that failed half-way is still put back), the
+		// order's counter only once the port answered (the port is all or nothing, so a call that threw
+		// moved nothing), every stock movement as the ledger accepts it, and the header the moment its
+		// conditional write returned — before the event after it, which can still throw.
+		const steps: IReceiptSteps = { linesTouched: false, orderLineMoves: [], posted: [], headerWritten: false };
 		let plan: IOrderReturnReceiptPlan[] = [];
 		let settlement = { received: '0', outstanding: '0' };
 		let version: number;
@@ -408,20 +504,29 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 					? OrderReturnStatus.RECEIVED
 					: OrderReturnStatus.PARTIALLY_RECEIVED;
 
+			steps.linesTouched = true;
 			await this.lineService.applyReceipt(plan);
 			// Step 2 of doc 10 §11.6 is one step, not two: the return's own lines and the order's
 			// received-return counter move together, because the counter is what the order's
 			// `fulfillmentStatus` is derived from and a receipt the order was never told about leaves it
 			// answering a status the goods in its own warehouse deny. The compensation below is owed
-			// both halves for the same reason.
-			await this.lineService.applyOrderLineReceipt(orderReturn.orderId, plan);
+			// both halves for the same reason — and only the half of it that landed.
+			steps.orderLineMoves = await this.lineService.applyOrderLineReceipt(orderReturn.orderId, plan);
 
 			for (const movement of movements) {
-				posted.push(await this.postMovement(orderReturn, movement));
+				steps.posted.push(await this.postMovement(orderReturn, movement));
 			}
 
 			// The status is written last, and the refund below reads it: the refund guard refuses a
 			// return that has not received anything, which is the check that keeps money behind goods.
+			//
+			// **It is predicated on the status the receipt was decided from**, as a withdrawal's is. A
+			// cancellation that read the lines before this receipt moved them released every unit the return
+			// asked for; a receipt that then wrote `RECEIVED` over `CANCELED` — which a caller that states no
+			// version was free to do, being predicated on whatever version the row holds by then — left the
+			// order with units received against none requested, doc 10 I-12 broken by two writes that each
+			// landed. With the status in the predicate that write changes no row, and the compensation below
+			// takes the receipt back off the lines, the ledger and the order.
 			version = await this.commitHeader(
 				orderReturn,
 				{
@@ -438,6 +543,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 						outstandingQuantity: settlement.outstanding,
 						warehouseId: options.warehouseId ?? orderReturn.warehouseId ?? null
 					}
+				},
+				{
+					precondition: { status: decidedFrom },
+					onCommitted: () => {
+						steps.headerWritten = true;
+					}
 				}
 			);
 		} catch (error) {
@@ -448,7 +559,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			// compensation is best-effort by nature (it is undoing writes that only partly landed), so its
 			// failure is logged beside the original rather than thrown instead of it.
 			try {
-				await this.compensateReceipt(orderReturn, plan, posted);
+				await this.compensateReceipt(orderReturn, plan, steps);
 			} catch (compensationError) {
 				this.logger.error(
 					`The receipt of return ${orderReturn.id} failed and its compensation failed too: ` +
@@ -486,7 +597,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 			returnId: updated.id,
 			status: updated.status,
 			version,
-			movementIds: posted
+			movementIds: steps.posted
 				.map((movement) => movement.movementId)
 				.filter((movementId): movementId is ID => !!movementId),
 			refund,
@@ -661,6 +772,14 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *   with goods outstanding says so, and no remainder is abandoned silently. Nothing moves in
 	 *   stock: only the received units were ever posted (doc 10 §11.7, `CLOSED` is "unchanged since
 	 *   receipt").
+	 *
+	 * **Neither closure moves the order's requested-return counter, a short one included.** The
+	 * remainder a short close leaves unreceived is recorded, not released: doc 10 §11.7 has `CLOSED`
+	 * change nothing on the order, a `CLOSED` return is one of the live statuses this package's own
+	 * ceiling check still counts in full (so the same units cannot be asked back by a second return),
+	 * and the counter is the cache of "the non-rejected return lines". Releasing the remainder would
+	 * leave the order saying those units are free to return while this package refuses a return of
+	 * them. Only a rejection or a cancellation — the two withdrawals — gives them back.
 	 *
 	 * A header that claims `RECEIVED` while one of its lines still owes units contradicts itself, and
 	 * that is refused rather than closed short: `RECEIVED` is the claim that everything arrived, so a
@@ -860,6 +979,11 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * @param expectation The version the caller accepted, or `ANY_VERSION` for a write the platform
 	 * made on its own behalf.
 	 * @param event The fact this write announces, when it announces one.
+	 * @param guard What else the write is told. `precondition` names columns the row must still hold for
+	 * the write to land, beside its version — a withdrawal and a receipt each state the status they were
+	 * decided from, so two withdrawals cannot both land and a receipt cannot land over a withdrawal. `onCommitted` is called the moment the conditional write returned,
+	 * before the event is appended, so a caller that has to compensate knows whether this write is one of
+	 * the steps to undo.
 	 * @returns The version the return now holds.
 	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the return moved on, or with
 	 * `RESOURCE_NOT_FOUND` when it is gone.
@@ -868,17 +992,21 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		orderReturn: OrderReturn,
 		patch: Record<string, unknown>,
 		expectation: IVersionExpectation = ANY_VERSION,
-		event?: { name: string; data?: Record<string, unknown> }
+		event?: { name: string; data?: Record<string, unknown> },
+		guard: { precondition?: Record<string, unknown>; onCommitted?: (version: number) => void } = {}
 	): Promise<number> {
 		const { version } = await commitVersionedUpdate(this, {
 			id: orderReturn.id,
 			expectation,
 			patch,
 			where: {
+				...(guard.precondition ?? {}),
 				...(orderReturn.tenantId ? { tenantId: orderReturn.tenantId } : {}),
 				...(orderReturn.organizationId ? { organizationId: orderReturn.organizationId } : {})
 			}
 		});
+
+		guard.onCommitted?.(version);
 
 		if (event) {
 			await this.announce(event.name, { ...orderReturn, ...patch } as OrderReturn, version, event.data);
@@ -1078,26 +1206,52 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 *    not there;
 	 * 2. the lines are put back to the quantities they held before the delivery, so the remainder a
 	 *    later delivery would settle is still outstanding;
-	 * 3. the header is stated in the state it was read in, so a reader finds the return it had.
+	 * 3. the order's received-return counter is moved back by the moves the order accepted;
+	 * 4. the header is stated in the state it was read in, so a reader finds the return it had.
 	 *
-	 * This is a compensating action rather than a rollback: the rows live in two places — this plugin's
-	 * tables and the ledger — and no transaction spans them, so the receipt is undone in the reverse of
-	 * the order it was done in.
+	 * This is a compensating action rather than a rollback: the rows live in three places — this plugin's
+	 * tables, the order's lines and the ledger — and no transaction spans them, so the receipt is undone
+	 * in the reverse of the order it was done in.
+	 *
+	 * **Only the steps that ran are undone.** Each step is read from what the receipt recorded as it went
+	 * rather than from its plan: the order's counter is a relative move, and moving it back for a receipt
+	 * that was refused before it reached the order subtracted units another return of the same line had
+	 * put there — once for every retry of the refused request, until the floor refused the compensation
+	 * and the failure was only logged. **Each step is attempted whatever the one before it did**, because a
+	 * ledger that refuses a reversal is no reason to leave the lines and the order claiming the goods
+	 * arrived; the failures are collected and raised together once every step was tried.
 	 *
 	 * @param orderReturn The return as it was read, which is the state the receipt is undone to.
 	 * @param plan The receipt that was being written.
-	 * @param posted The movements the ledger accepted before the failure.
+	 * @param steps What the receipt did before it failed.
+	 * @throws Error naming every step whose undo failed, after all of them were attempted.
 	 */
 	private async compensateReceipt(
 		orderReturn: OrderReturn,
 		plan: IOrderReturnReceiptPlan[],
-		posted: IPostedMovement[]
+		steps: IReceiptSteps
 	): Promise<void> {
-		await this.reverseMovements(orderReturn, posted);
-		await this.lineService.restoreReceipt(plan);
+		const failures: string[] = [];
+		const attempt = async (step: string, undo: () => Promise<unknown>): Promise<void> => {
+			try {
+				await undo();
+			} catch (error) {
+				failures.push(`${step}: ${describe(error)}`);
+			}
+		};
+
+		await attempt('stock movements', () => this.reverseMovements(orderReturn, steps.posted));
+
+		if (steps.linesTouched) {
+			await attempt('return lines', () => this.lineService.restoreReceipt(plan));
+		}
+
 		// The order's counter goes back with the lines it was moved for: it is the same step, so a
-		// receipt that is undone must leave neither the return nor the order claiming the goods arrived.
-		await this.lineService.restoreOrderLineReceipt(orderReturn.orderId, plan);
+		// receipt that is undone must leave neither the return nor the order claiming the goods arrived —
+		// and it goes back by what the order accepted, which is nothing when the receipt never reached it.
+		await attempt('order counter', () =>
+			this.lineService.restoreOrderLineReceipt(orderReturn.orderId, steps.orderLineMoves)
+		);
 
 		// **The header is restored only when the receipt's own header write landed.** It is the last
 		// write of the receipt, so most failures happen before it — a movement the ledger refused, a
@@ -1105,46 +1259,28 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		// unchanged header anyway was a write that changed nothing and still moved the version on.
 		// That turned every refused receipt into a conflict for the caller's retry: the client that
 		// read version 2 and was refused found the return at 3, having been told nothing it could act
-		// on. A header that did move — the write landed and the event after it threw — is restored
-		// under whatever version it holds at this moment rather than the one the caller stated,
-		// because this write must land whether or not the failed receipt moved the version on.
-		if (!(await this.headerMovedSince(orderReturn))) {
-			return;
-		}
+		// on. Whether the write landed is what the write itself recorded, not a comparison of the row
+		// with the one the receipt read: a row another writer moved on reads as "moved" as well, and
+		// restoring it would write this receipt's starting state over that writer's change. A header
+		// that did land — the event after it threw — is restored under whatever version it holds at
+		// this moment rather than the one the caller stated, because this write must land whether or
+		// not the failed receipt moved the version on.
+		await attempt('header', async () => {
+			if (!steps.headerWritten) {
+				return;
+			}
 
-		await this.commitHeader(orderReturn, {
-			status: orderReturn.status,
-			receivedAt: orderReturn.receivedAt,
-			warehouseId: orderReturn.warehouseId,
-			note: orderReturn.note
+			await this.commitHeader(orderReturn, {
+				status: orderReturn.status,
+				receivedAt: orderReturn.receivedAt,
+				warehouseId: orderReturn.warehouseId,
+				note: orderReturn.note
+			});
 		});
-	}
 
-	/**
-	 * Whether a return's header still reads as it did before a receipt began.
-	 *
-	 * A receipt's header write always moves the status or the receipt instant — a second partial
-	 * delivery leaves the status at `PARTIALLY_RECEIVED` and moves `receivedAt` — so comparing the two
-	 * tells a receipt whose header write landed from one that failed before it. A row that cannot be
-	 * read is treated as moved: the restore is then attempted exactly as it always was, which is the
-	 * safe answer for a compensation that cannot see what it is compensating.
-	 *
-	 * @param before The return as the receipt read it.
-	 * @returns True when the header differs from what the receipt started from, or cannot be read.
-	 */
-	private async headerMovedSince(before: OrderReturn): Promise<boolean> {
-		let current: OrderReturn;
-
-		try {
-			current = await this.findOneScoped(before.id);
-		} catch {
-			return true;
+		if (failures.length) {
+			throw new Error(failures.join('; '));
 		}
-
-		const instant = (value?: Date | string | null): number | null =>
-			value === undefined || value === null ? null : new Date(value).getTime();
-
-		return current.status !== before.status || instant(current.receivedAt) !== instant(before.receivedAt);
 	}
 
 	/**

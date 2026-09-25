@@ -1,16 +1,43 @@
 /**
+ * Which ORM the service reads and writes through, and which dialect its statements are written for.
+ *
+ * Both are configured per case, and both are doubled **faithfully**, because they are what the counter
+ * cases are about: `getORMType` answers whatever the case configured, and the dialect helpers are the
+ * kernel's own (`packages/core/src/lib/database/database.helper.ts`) reading the dialect the case
+ * configured — identifiers in backticks on MySQL, a named parameter as `$n` on Postgres and `?`
+ * everywhere else.
+ */
+const mockOrm = { type: 'typeorm' };
+const mockDialect = { type: 'better-sqlite3' };
+
+/** The dialect probes the kernel's statement helpers read, answering for the dialect the case chose. */
+jest.mock(
+	'@gauzy/config',
+	() => ({
+		isMySQL: () => mockDialect.type === 'mysql',
+		isPostgres: () => mockDialect.type === 'postgres'
+	}),
+	{ virtual: true }
+);
+
+/**
  * One module boundary is doubled here, for the same reason and in the same way as the package's
  * other suites: `@gauzy/core` boots the whole application graph from its barrel — configuration,
  * the ORM, the job registry, the module scanner — none of which a read of two columns needs and
  * none of which is available outside a running application. The service under test is the real one,
- * and so are the two entities it reads through, which is why the double below answers with the
- * numeric transformer's own output rather than with a text value the database would never produce.
+ * and so are the two entities it reads through, which is why the store below answers with the
+ * numbers a `numeric(20,6)` column reads back as rather than with a text value the transformer would
+ * never produce.
  */
 jest.mock('@gauzy/core', () => {
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 
 	class BaseEntity {}
+
+	// The kernel's own statement helpers, reading the dialect through the `@gauzy/config` double above.
+	const statements = jest.requireActual('@gauzy/core/src/lib/database/database.helper');
+	const decimal = jest.requireActual('@gauzy/core/src/lib/money/decimal');
 
 	return {
 		BaseEntity,
@@ -36,12 +63,22 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
-		// Added with the received-return counter's writer: the counter is moved by adding two exact
-		// decimals, and a double that omits the helper makes the code under test call nothing — which
-		// fails the suite for a reason that is not its own.
-		addDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').addDecimalStrings,
-		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
-		normalizeDecimalString: jest.requireActual('@gauzy/core/src/lib/money/decimal').normalizeDecimalString,
+		// The decimal kernel, whole: the counter's delta is read at the column's scale before it is sent,
+		// and a double that omitted a helper would make the code under test call nothing — which fails the
+		// suite for a reason that is not its own.
+		addDecimalStrings: decimal.addDecimalStrings,
+		// The order's own derivation reads the counters these cases move, and subtracts on its digits.
+		subtractDecimalStrings: decimal.subtractDecimalStrings,
+		compareDecimalStrings: decimal.compareDecimalStrings,
+		normalizeDecimalString: decimal.normalizeDecimalString,
+		formatDecimalUnits: decimal.formatDecimalUnits,
+		toUnitsAtScale: decimal.toUnitsAtScale,
+		STORAGE_SCALE: decimal.STORAGE_SCALE,
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
+		getORMType: () => mockOrm.type,
+		quoteIdentifier: statements.quoteIdentifier,
+		toPositionalStatement: statements.toPositionalStatement,
+		readAffectedRows: statements.readAffectedRows,
 		// The double answers with the fixture's scope, which is what a request-scoped read resolves to.
 		// A case that is about tenancy re-points it with a spy, so the scope is never a constant of this
 		// specification.
@@ -57,8 +94,28 @@ jest.mock('@gauzy/core', () => {
 });
 
 import { NotFoundException } from '@nestjs/common';
+import { FulfillmentStatus, OrderStatus } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
+import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { OrderLineFulfillmentService } from './order-line-fulfillment.service';
+
+/**
+ * The SQLite binding, required rather than imported.
+ *
+ * It is a native module, and this repository reaches it the same way everywhere: nothing loads a
+ * native binding at module-parse time. The two members used here are typed locally.
+ */
+interface ISqliteStatement {
+	run(...parameters: unknown[]): { changes: number; lastInsertRowid: number | bigint };
+	all(...parameters: unknown[]): Array<Record<string, unknown>>;
+}
+interface ISqliteDatabase {
+	exec(sql: string): void;
+	prepare(sql: string): ISqliteStatement;
+	close(): void;
+}
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Sqlite = require('better-sqlite3') as new (path: string) => ISqliteDatabase;
 
 /**
  * The fulfilled quantities of an order, as a package that does not own the order reads them.
@@ -79,6 +136,13 @@ import { OrderLineFulfillmentService } from './order-line-fulfillment.service';
  * Tenancy is asserted as well, because a read that answered across organizations would be a data
  * leak rather than a bug in a feature: the order is read inside the caller's scope, and a foreign
  * order is not found at all — its lines are never even read.
+ *
+ * **The store is a real SQLite database.** The counter moves are statements, and what they are
+ * about — the addition, the floor and the write happening in one statement the database serialises —
+ * is a property of the statement rather than of the service's JavaScript. The two repositories of
+ * each ORM are doubles that read the same in-memory tables, and the write goes through the connection
+ * double of the configured ORM onto those tables, so every counter assertion below reads what the
+ * statement actually left in the row.
  */
 
 const TENANT = 'tenant-1';
@@ -88,16 +152,11 @@ const OTHER_ORG = 'organization-2';
 const ORDER = 'order-1';
 const OTHER_ORDER = 'order-2';
 
-/**
- * The tenancy cases below re-point `RequestContext` with a spy, and a spy on a module-level object
- * outlives the case that set it: without this, everything after the first tenancy case runs scoped to
- * whichever organization that case named, and a later case fails for a reason that is not its own.
- */
-afterEach(() => jest.restoreAllMocks());
-
 /** The price the fixture's lines were sold at, as the numeric transformer reads a `numeric(20,6)`. */
 const SOLD_AT = 12.5;
 const SECOND_SOLD_AT = 19.99;
+
+type Row = Record<string, unknown>;
 
 /** One `order_line` row, as this service reads it. */
 interface ILineRow {
@@ -108,81 +167,269 @@ interface ILineRow {
 	variantId?: string;
 	position?: number;
 	fulfilledQuantity?: number;
+	returnRequestedQuantity?: number;
 	returnReceivedQuantity?: number;
+	returnDismissedQuantity?: number;
 	unitPrice?: number;
+	deletedAt?: string;
 }
 
-/**
- * @param row A stored row.
- * @param where The condition the service stated.
- * @returns Whether the database would have returned the row.
- */
-function matches(row: object, where: Record<string, unknown> | undefined): boolean {
-	const fields = row as Record<string, unknown>;
+/** The columns of the two tables, as the migration names them and in the order the fixture writes. */
+const ORDER_COLUMNS = ['id', 'tenantId', 'organizationId', 'currency', 'channelId', 'deletedAt'];
+const LINE_COLUMNS = [
+	'id',
+	'orderId',
+	'tenantId',
+	'organizationId',
+	'variantId',
+	'position',
+	'fulfilledQuantity',
+	'returnRequestedQuantity',
+	'returnReceivedQuantity',
+	'returnDismissedQuantity',
+	'unitPrice',
+	'deletedAt'
+];
 
-	return Object.entries(where ?? {}).every(
-		([field, expected]) => expected === undefined || String(expected ?? '') === String(fields[field] ?? '')
+/**
+ * @returns An empty store with the two tables the service reads and writes, typed as the migration
+ * types them — the counters `numeric(20,6) NOT NULL DEFAULT 0`, which is what SQLite rounds and floors.
+ */
+function createStore(): ISqliteDatabase {
+	const db = new Sqlite(':memory:');
+
+	db.exec(
+		`CREATE TABLE "order" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar, "organizationId" varchar, ` +
+			`"currency" varchar, "channelId" varchar, "deletedAt" datetime)`
 	);
+	db.exec(
+		`CREATE TABLE "order_line" ("id" varchar PRIMARY KEY NOT NULL, "orderId" varchar NOT NULL, "tenantId" varchar, ` +
+			`"organizationId" varchar, "variantId" varchar, "position" integer NOT NULL DEFAULT (0), ` +
+			`"fulfilledQuantity" numeric(20,6) NOT NULL DEFAULT (0), "returnRequestedQuantity" numeric(20,6) NOT NULL DEFAULT (0), ` +
+			`"returnReceivedQuantity" numeric(20,6) NOT NULL DEFAULT (0), "returnDismissedQuantity" numeric(20,6) NOT NULL DEFAULT (0), ` +
+			`"unitPrice" numeric(20,6) NOT NULL DEFAULT (0), "deletedAt" datetime)`
+	);
+
+	return db;
 }
 
 /**
- * @param rows The rows of one table.
- * @returns A repository double that narrows by the stated `where`, and the options it was asked with.
+ * @param db The store.
+ * @param table The table.
+ * @param columns Its columns.
+ * @param row The row to insert; a member it does not carry takes the column's default.
  */
-function repository(rows: object[]) {
+function insert(db: ISqliteDatabase, table: string, columns: string[], row: Row): void {
+	const present = columns.filter((column) => row[column] !== undefined);
+
+	db.prepare(
+		`INSERT INTO "${table}" (${present.map((column) => `"${column}"`).join(', ')}) ` +
+			`VALUES (${present.map(() => '?').join(', ')})`
+	).run(...present.map((column) => row[column]));
+}
+
+/**
+ * Reads rows by equality, the way both ORMs read a criteria object.
+ *
+ * A member whose value is `undefined` is dropped from the condition, which is what TypeORM does with it,
+ * and a soft-deleted row is never answered, which is what both ORMs' soft-delete filters do.
+ *
+ * @param db The store.
+ * @param table The table.
+ * @param where The criteria.
+ * @param orderBy The column to order by, when there is one.
+ * @returns The matching rows.
+ */
+function select(db: ISqliteDatabase, table: string, where: Row = {}, orderBy?: string): Row[] {
+	const criteria = Object.entries(where ?? {}).filter(([, value]) => value !== undefined);
+	const clause = criteria.map(([column]) => `"${column}" = ?`).concat(['"deletedAt" IS NULL']).join(' AND ');
+
+	return db
+		.prepare(`SELECT * FROM "${table}" WHERE ${clause}${orderBy ? ` ORDER BY "${orderBy}" ASC` : ''}`)
+		.all(...criteria.map(([, value]) => value));
+}
+
+/** Gives the event loop a turn, so two calls in flight interleave at their reads as they would on a pool. */
+const yieldTurn = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+/** One statement a connection double was handed. */
+interface IStatement {
+	orm: string;
+	sql: string;
+	parameters: unknown[];
+	structured?: boolean;
+	method?: string;
+}
+
+/**
+ * @param db The store.
+ * @param table The table this repository reads.
+ * @param statements Where the statements its connection runs are recorded.
+ * @returns A TypeORM repository double over the store, and the options it was asked with.
+ */
+function typeOrmRepository(db: ISqliteDatabase, table: string, statements: IStatement[]) {
 	const options: Array<Record<string, unknown>> = [];
-	const updates: Array<{ id: unknown; partial: Record<string, unknown> }> = [];
+
+	/**
+	 * A query runner over the store, answering exactly as TypeORM's better-sqlite3 runner answers.
+	 *
+	 * That includes the trap: **unstructured**, the runner answers the connection's `lastInsertRowid`
+	 * for an `UPDATE`, a number that has nothing to do with the statement. A service that read an
+	 * affected-row count out of it would read a refusal as a move that landed, and the floor cases below
+	 * would say so.
+	 */
+	const runner = {
+		released: 0,
+		query: async (sql: string, parameters: unknown[] = [], structured?: boolean) => {
+			statements.push({ orm: 'typeorm', sql, parameters, structured });
+
+			const statement = db.prepare(sql);
+			// Postgres placeholders are `$1…$n`; SQLite reads `$1` as a parameter named `1`.
+			const result =
+				mockDialect.type === 'postgres'
+					? statement.run(Object.fromEntries(parameters.map((value, index) => [String(index + 1), value])))
+					: statement.run(...parameters);
+
+			return structured ? { affected: result.changes, raw: result.lastInsertRowid } : result.lastInsertRowid;
+		},
+		release: async () => {
+			runner.released += 1;
+		}
+	};
 
 	return {
 		options,
-		updates,
+		runner,
+		manager: { queryRunner: undefined, dataSource: { createQueryRunner: () => runner } },
 		find: async (stated: Record<string, unknown> = {}) => {
 			options.push(stated);
+			await yieldTurn();
 
-			return rows.filter((row) => matches(row, stated.where as Record<string, unknown>));
+			const order = stated.order as Record<string, string> | undefined;
+
+			return select(db, table, stated.where as Row, order ? Object.keys(order)[0] : undefined);
 		},
 		findOne: async (stated: Record<string, unknown> = {}) => {
 			options.push(stated);
+			await yieldTurn();
 
-			return rows.filter((row) => matches(row, stated.where as Record<string, unknown>))[0] ?? null;
-		},
-		// The one write this service performs. It narrows by the same criteria a read does, so a case
-		// that points the scope at another organization sees the row it named go unwritten — which is
-		// the difference between a refused write and a write that quietly missed.
-		update: async (criteria: unknown, partial: Record<string, unknown>) => {
-			const id = typeof criteria === 'string' ? criteria : (criteria as Record<string, unknown>)?.id;
-			const row = rows.find((candidate) => String((candidate as Record<string, unknown>).id) === String(id));
-
-			updates.push({ id, partial });
-
-			if (!row) {
-				return { affected: 0 };
-			}
-
-			Object.assign(row, partial);
-
-			return { affected: 1 };
+			return select(db, table, stated.where as Row)[0] ?? null;
 		}
 	};
 }
 
 /**
- * @param lines The order's lines.
- * @param order The order header the read is scoped to.
- * @returns The service, wired to the two doubles, and the doubles themselves.
+ * @param db The store.
+ * @param table The table this repository reads.
+ * @param statements Where the statements its connection runs are recorded.
+ * @returns A MikroORM repository double over the store, and the criteria it was asked with.
  */
-function fixture(lines: ILineRow[], order: Record<string, unknown> = {}) {
-	const orders = repository([
-		{ id: ORDER, tenantId: TENANT, organizationId: ORG, currency: 'USD', channelId: 'channel-1', ...order }
-	]);
-	const orderLines = repository(lines);
+function mikroOrmRepository(db: ISqliteDatabase, table: string, statements: IStatement[]) {
+	const criteria: Array<Record<string, unknown>> = [];
 
 	return {
-		orders,
-		orderLines,
-		service: new OrderLineFulfillmentService(orders as never, orderLines as never)
+		criteria,
+		find: async (where: Row, options: { orderBy?: Record<string, string> } = {}) => {
+			criteria.push(where);
+			await yieldTurn();
+
+			return select(db, table, where, options.orderBy ? Object.keys(options.orderBy)[0] : undefined);
+		},
+		findOne: async (where: Row) => {
+			criteria.push(where);
+			await yieldTurn();
+
+			return select(db, table, where)[0] ?? null;
+		},
+		// MikroORM's `execute` inlines the values into its `?` placeholders before the driver sees the
+		// statement, and in `run` mode answers `{ affectedRows }` on every driver; binding them here is
+		// the same statement.
+		getEntityManager: () => ({
+			getConnection: () => ({
+				execute: async (sql: string, parameters: unknown[] = [], method?: string) => {
+					statements.push({ orm: 'mikro-orm', sql, parameters, method });
+
+					const result = db.prepare(sql).run(...parameters);
+
+					return { affectedRows: result.changes, insertId: result.lastInsertRowid };
+				}
+			})
+		})
 	};
 }
+
+/** Every store a case opened, closed once the case is over. */
+const stores: ISqliteDatabase[] = [];
+
+/**
+ * @param lines The order's lines.
+ * @param order The order header the read is scoped to.
+ * @returns The service, wired to the doubles of both ORMs over one store, and the doubles themselves.
+ */
+function fixture(lines: ILineRow[], order: Row = {}) {
+	const db = createStore();
+	const statements: IStatement[] = [];
+
+	insert(db, 'order', ORDER_COLUMNS, {
+		id: ORDER,
+		tenantId: TENANT,
+		organizationId: ORG,
+		currency: 'USD',
+		channelId: 'channel-1',
+		...order
+	});
+	insert(db, 'order', ORDER_COLUMNS, {
+		id: OTHER_ORDER,
+		tenantId: TENANT,
+		organizationId: ORG,
+		currency: 'USD',
+		channelId: 'channel-1'
+	});
+
+	for (const row of lines) {
+		insert(db, 'order_line', LINE_COLUMNS, row as unknown as Row);
+	}
+
+	const orders = typeOrmRepository(db, 'order', statements);
+	const orderLines = typeOrmRepository(db, 'order_line', statements);
+	const mikroOrders = mikroOrmRepository(db, 'order', statements);
+	const mikroOrderLines = mikroOrmRepository(db, 'order_line', statements);
+
+	stores.push(db);
+
+	return {
+		db,
+		orders,
+		orderLines,
+		mikroOrders,
+		mikroOrderLines,
+		statements,
+		/** The counters of one line, as the store holds them now. */
+		counters: (id: string) => db.prepare(`SELECT * FROM "order_line" WHERE "id" = ?`).all(id)[0],
+		service: new OrderLineFulfillmentService(
+			orders as never,
+			orderLines as never,
+			mikroOrders as never,
+			mikroOrderLines as never
+		)
+	};
+}
+
+/**
+ * The tenancy cases below re-point `RequestContext` with a spy, and a spy on a module-level object
+ * outlives the case that set it: without this, everything after the first tenancy case runs scoped to
+ * whichever organization that case named, and a later case fails for a reason that is not its own. The
+ * ORM and the dialect are put back for the same reason.
+ */
+afterEach(() => {
+	jest.restoreAllMocks();
+	mockOrm.type = 'typeorm';
+	mockDialect.type = 'better-sqlite3';
+
+	for (const db of stores.splice(0)) {
+		db.close();
+	}
+});
 
 /** A line that shipped in full. */
 const line = (overrides: Partial<ILineRow> & { id: string }): ILineRow => ({
@@ -196,12 +443,10 @@ const line = (overrides: Partial<ILineRow> & { id: string }): ILineRow => ({
 });
 
 describe('OrderLineFulfillmentService — the ceiling a post-purchase flow is measured against', () => {
-	afterEach(() => jest.restoreAllMocks());
-
 	it('reports what each line fulfilled, at the price it was sold at', async () => {
 		const { service } = fixture([
 			line({ id: 'line-1', variantId: 'variant-1', fulfilledQuantity: 5 }),
-			line({ id: 'line-2', fulfilledQuantity: 2.675, unitPrice: SECOND_SOLD_AT })
+			line({ id: 'line-2', fulfilledQuantity: 2.675, unitPrice: SECOND_SOLD_AT, position: 1 })
 		]);
 
 		const fulfilled = await service.getFulfilledLines(ORDER);
@@ -230,9 +475,7 @@ describe('OrderLineFulfillmentService — the ceiling a post-purchase flow is me
 		// `2.675` and `1234.567891` are the shapes a binary float cannot hold exactly; both are
 		// reported as the decimal text the column holds, which is what the caller compares and
 		// multiplies with.
-		const { service } = fixture([
-			line({ id: 'line-1', fulfilledQuantity: 2.675, unitPrice: 1234.567891 })
-		]);
+		const { service } = fixture([line({ id: 'line-1', fulfilledQuantity: 2.675, unitPrice: 1234.567891 })]);
 
 		const [reported] = await service.getFulfilledLines(ORDER);
 
@@ -246,7 +489,7 @@ describe('OrderLineFulfillmentService — the ceiling a post-purchase flow is me
 		// line exists, so a caller asking about the missing line is told it was never fulfilled.
 		const { service } = fixture([
 			line({ id: 'line-shipped', fulfilledQuantity: 1 }),
-			line({ id: 'line-never-shipped', fulfilledQuantity: 0 })
+			line({ id: 'line-never-shipped', fulfilledQuantity: 0, position: 1 })
 		]);
 
 		const fulfilled = await service.getFulfilledLines(ORDER);
@@ -306,45 +549,97 @@ describe('OrderLineFulfillmentService — the ceiling a post-purchase flow is me
 		await expect(service.getFulfilledLines(undefined as never)).rejects.toThrow(/ORDER_FULFILLMENT_ORDER_REQUIRED/);
 		expect(orders.options).toEqual([]);
 	});
+
+	it('reads through the MikroORM repositories when MikroORM is the configured ORM', async () => {
+		// Under `DB_ORM=mikro-orm` the TypeORM entity carries no columns — `@MultiORMColumn` emits the
+		// decorator of the configured ORM alone — so a read through the TypeORM repository would filter on
+		// columns its metadata does not have. The report is the same; only the repository answering it moves.
+		mockOrm.type = 'mikro-orm';
+		const { service, orders, orderLines, mikroOrders, mikroOrderLines } = fixture([
+			line({ id: 'line-1', variantId: 'variant-1', fulfilledQuantity: 5 })
+		]);
+
+		expect(await service.getFulfilledLines(ORDER)).toEqual([
+			{ orderLineId: 'line-1', variantId: 'variant-1', fulfilledQuantity: '5', unitPrice: '12.500000' }
+		]);
+		expect(orders.options).toEqual([]);
+		expect(orderLines.options).toEqual([]);
+		expect(mikroOrders.criteria).toEqual([{ id: ORDER, tenantId: TENANT, organizationId: ORG }]);
+		expect(mikroOrderLines.criteria).toEqual([{ orderId: ORDER, tenantId: TENANT, organizationId: ORG }]);
+	});
 });
 
 /**
- * The received-return counter's writer, which the column never had.
+ * The two return counters' writer: what came back, and what is asked back.
  *
  * `order_line.returnReceivedQuantity` is one of the five sums `deriveFulfillmentStatus` reads to decide
- * `PARTIALLY_RETURNED` against `RETURNED`, and until this method existed nothing in the repository ever
- * assigned it — so those two states were unreachable in production and the order answered
- * `NOT_FULFILLED` for goods its own warehouse was holding. What the cases below pin is the arithmetic
- * and the four refusals, because both are what keeps the order's cache equal to the goods it describes:
+ * `PARTIALLY_RETURNED` against `RETURNED`, and `order_line.returnRequestedQuantity` is what doc 10
+ * invariant I-12 bounds it by. What the cases below pin is the arithmetic and the refusals, because both
+ * are what keeps the order's cache equal to the goods it describes:
  *
- * - **the counter is moved, not set.** A delivery adds its delta to what earlier deliveries recorded, so
- *   a line received in two parts ends at the sum and not at the last part;
+ * - **the counter is moved, not set, and in one statement.** A delivery adds its delta to what earlier
+ *   deliveries recorded *inside the database*, so two deliveries in flight at once both land — the lost
+ *   update a read-then-write-back produced is the case this block was rewritten around;
  * - **a negative delta moves it back**, which is what the receipt's compensation sends;
- * - **it never goes below zero**, because a negative "received" is not a state the column can be in and a
- *   compensation that overshot would otherwise write one;
- * - **the scope is checked before the write**, so a foreign order or a line of another order is refused
- *   rather than quietly missed — the same scoped read the reader above performs.
+ * - **it never goes below zero**, because a negative counter is not a state the column can be in and a
+ *   compensation that overshot would otherwise write one — and the floor is part of the statement, so
+ *   it holds on SQLite too, where a `numeric` with a fraction is a binary float;
+ * - **a call is all or nothing**, so a caller that sees it fail has nothing of it to undo;
+ * - **the scope is checked by the write itself**, so a foreign order or a line of another order is
+ *   refused rather than quietly missed;
+ * - **the statement is the dialect's and the connection is the ORM's**, which is asserted by running
+ *   the statement each combination produces against the store.
  */
-describe('OrderLineFulfillmentService — moving the received-return counter', () => {
-	it('adds the delivery to what earlier deliveries recorded, exactly', async () => {
-		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+describe('OrderLineFulfillmentService — moving the return counters', () => {
+	it('adds the delivery to what earlier deliveries recorded, exactly, in one statement', async () => {
+		const { service, orderLines, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
 
 		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '3' }]);
 
-		// The counter is the sum, not the delivery: `2 + 3`, written as the exact decimal the column holds.
-		expect(orderLines.updates).toEqual([{ id: 'line-1', partial: { returnReceivedQuantity: '5' } }]);
+		// Corrected with C7: this case asserted `update('line-1', { returnReceivedQuantity: '5' })` — an
+		// absolute value computed in JavaScript from a read of the row, which is exactly the lost update
+		// two concurrent receipts produced. The sum is now what the one relative statement left in the row.
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 5 });
+		expect(statements).toHaveLength(1);
+		expect(statements[0].sql).toBe(
+			'UPDATE "order_line" SET "returnReceivedQuantity" = ROUND("returnReceivedQuantity" + CAST(? AS DECIMAL(20,6)), 6) ' +
+				'WHERE "id" = ? AND "orderId" = ? AND "tenantId" = ? AND "organizationId" = ? ' +
+				'AND "deletedAt" IS NULL AND ROUND("returnReceivedQuantity" + CAST(? AS DECIMAL(20,6)), 6) >= 0'
+		);
+		expect(statements[0].parameters).toEqual(['3.000000', 'line-1', ORDER, TENANT, ORG, '3.000000']);
+		// The count is read from the runner's structured result, which is the only shape that carries it on
+		// every driver; the runner the service borrowed is given back.
+		expect(statements[0].structured).toBe(true);
+		expect(orderLines.runner.released).toBe(1);
+		// And the line is never read before it is written: there is no value to write back.
+		expect(orderLines.options).toEqual([]);
+	});
+
+	it('lands both of two receipts of one line that are in flight at the same moment', async () => {
+		// The failure scenario of C7: returns R1 (one unit) and R2 (two units) of the same line are received
+		// at once. Both calls read before either writes — the doubles yield a turn at every read — so a
+		// read-then-write-back ended at 1 or 2. One relative statement per move ends at 3.
+		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 0 })]);
+
+		await Promise.all([
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]),
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '2' }])
+		]);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3 });
 	});
 
 	it('moves the counter back when a receipt is undone', async () => {
-		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 5 })]);
+		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 5 })]);
 
 		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }]);
 
-		expect(orderLines.updates).toEqual([{ id: 'line-1', partial: { returnReceivedQuantity: '3' } }]);
+		// Corrected with C7: asserted on the row the statement moved rather than on an absolute write.
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3 });
 	});
 
 	it('moves several lines in one call, and only the lines it was given', async () => {
-		const { service, orderLines } = fixture([
+		const { service, counters } = fixture([
 			line({ id: 'line-1', returnReceivedQuantity: 0.5, position: 1 }),
 			line({ id: 'line-2', returnReceivedQuantity: 1, position: 2 }),
 			line({ id: 'line-3', returnReceivedQuantity: 0, position: 3 })
@@ -355,34 +650,75 @@ describe('OrderLineFulfillmentService — moving the received-return counter', (
 			{ orderLineId: 'line-2', quantityDelta: '1' }
 		]);
 
-		expect(orderLines.updates).toEqual([
-			{ id: 'line-1', partial: { returnReceivedQuantity: '0.75' } },
-			{ id: 'line-2', partial: { returnReceivedQuantity: '2' } }
-		]);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 0.75 });
+		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 2 });
+		expect(counters('line-3')).toMatchObject({ returnReceivedQuantity: 0 });
+	});
+
+	it('empties a counter exactly, on the dialect that holds a fraction as a binary float', async () => {
+		// SQLite keeps `0.3` as a double, and `0.3 − 0.1 − 0.2` is `-2.8e-17` there: an unrounded floor
+		// would refuse the move that empties a counter holding exactly what is being taken back.
+		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 0.3 })]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-0.1' }]);
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-0.2' }]);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 0 });
 	});
 
 	it('refuses a move that would leave a line having received less than nothing', async () => {
-		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
 
 		await expect(
 			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }])
 		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
-		// The refusal is the point: nothing is written, so the counter never reaches the invalid state.
-		expect(orderLines.updates).toEqual([]);
+		// The refusal is the point: the statement changed no row, so the counter never reaches the invalid
+		// state.
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1 });
 	});
 
-	it('refuses an order of another organization, and reads no line of it', async () => {
+	it('undoes the moves of a call that landed before one of its moves was refused', async () => {
+		// A call is all or nothing: the first move landed and the second was refused, so the first is
+		// reversed before the refusal is raised. The caller that sees the call fail has nothing of it to
+		// undo — which is what lets the receipt's compensation undo only the steps it knows landed.
+		const { service, counters } = fixture([
+			line({ id: 'line-1', returnReceivedQuantity: 1, position: 1 }),
+			line({ id: 'line-2', returnReceivedQuantity: 1, position: 2 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '2' },
+				{ orderLineId: 'line-2', quantityDelta: '-5' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1 });
+		expect(counters('line-2')).toMatchObject({ returnReceivedQuantity: 1 });
+	});
+
+	it('refuses a delta the column cannot hold exactly, before anything is written', async () => {
+		const { service, statements } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '0.0000001' }])
+		).rejects.toThrow(/ORDER_LINE_QUANTITY_NOT_EXACT/);
+		expect(statements).toEqual([]);
+	});
+
+	it('refuses an order of another organization, and writes no line of it', async () => {
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
-		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+		const { service, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
 
 		await expect(
 			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }])
 		).rejects.toThrow(/ORDER_NOT_FOUND/);
-		expect(orderLines.updates).toEqual([]);
+		expect(statements).toEqual([]);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 1 });
 	});
 
 	it('refuses a line that belongs to another order', async () => {
-		const { service, orderLines } = fixture([
+		const { service, counters } = fixture([
 			line({ id: 'line-1', returnReceivedQuantity: 1 }),
 			line({ id: 'line-of-another-order', orderId: OTHER_ORDER, returnReceivedQuantity: 1 })
 		]);
@@ -390,27 +726,225 @@ describe('OrderLineFulfillmentService — moving the received-return counter', (
 		await expect(
 			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-of-another-order', quantityDelta: '1' }])
 		).rejects.toThrow(/ORDER_LINE_NOT_FOUND/);
-		expect(orderLines.updates).toEqual([]);
+		expect(counters('line-of-another-order')).toMatchObject({ returnReceivedQuantity: 1 });
+	});
+
+	it('refuses a line of the order that carries another organization, because the write is scoped too', async () => {
+		// The statement is predicated on the order's tenant and organization, not only on its id: a row
+		// that names the order but another organization is not moved, whatever reached it.
+		const { service, counters } = fixture([
+			line({ id: 'line-foreign', organizationId: OTHER_ORG, returnReceivedQuantity: 1 })
+		]);
+
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-foreign', quantityDelta: '1' }])
+		).rejects.toThrow(/ORDER_LINE_NOT_FOUND/);
+		expect(counters('line-foreign')).toMatchObject({ returnReceivedQuantity: 1 });
 	});
 
 	it('refuses to move anything when no order was named', async () => {
-		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+		const { service, statements } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
 
 		await expect(
 			service.recordReturnReceipt(undefined as never, [{ orderLineId: 'line-1', quantityDelta: '1' }])
 		).rejects.toThrow(/ORDER_FULFILLMENT_ORDER_REQUIRED/);
-		expect(orderLines.updates).toEqual([]);
+		expect(statements).toEqual([]);
 	});
 
 	it('writes nothing for a delivery that moved nothing', async () => {
 		// A receipt whose lines all state the quantity they already held is not an error; it is a
 		// statement that nothing arrived, and the counter is left alone rather than written with its
 		// own value — which would be a write on a row a concurrent delivery may be holding.
-		const { service, orderLines } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+		const { service, orderLines, statements } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
 
 		await service.recordReturnReceipt(ORDER, []);
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '0' }]);
 
-		expect(orderLines.updates).toEqual([]);
+		expect(statements).toEqual([]);
 		expect(orderLines.options).toEqual([]);
+	});
+
+	it('moves the requested counter by the same statement, and leaves the received one alone', async () => {
+		// I-12 bounds what came back by what was asked back, so the returns flow moves this counter when a
+		// return's lines are written and moves it back when the return is withdrawn.
+		const { service, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 1 })]);
+
+		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '2' }]);
+
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 2, returnReceivedQuantity: 1 });
+
+		await service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }]);
+
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 0, returnReceivedQuantity: 1 });
+	});
+
+	it('refuses a request move below zero with a code of its own', async () => {
+		const { service, counters } = fixture([line({ id: 'line-1', returnRequestedQuantity: 1 })]);
+
+		await expect(
+			service.recordReturnRequest(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-1.5' }])
+		).rejects.toThrow(/ORDER_LINE_RETURN_REQUEST_BELOW_ZERO/);
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 1 });
+	});
+
+	it('writes the statement MySQL reads: identifiers in backticks, values bound', async () => {
+		// Written with double quotes, MySQL reads `"returnReceivedQuantity"` as the *string*
+		// `returnReceivedQuantity`, coerces it to 0 and assigns the delta over the counter. SQLite accepts
+		// backticks too, so the store below runs the MySQL spelling as written.
+		mockDialect.type = 'mysql';
+		const { service, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		expect(statements[0].sql).toContain(
+			'UPDATE `order_line` SET `returnReceivedQuantity` = ROUND(`returnReceivedQuantity` + CAST(? AS DECIMAL(20,6)), 6)'
+		);
+		expect(statements[0].sql).not.toContain('"');
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3 });
+	});
+
+	it('binds the Postgres placeholders TypeORM hands to the driver untouched', async () => {
+		mockDialect.type = 'postgres';
+		const { service, statements, counters } = fixture([line({ id: 'line-1', returnReceivedQuantity: 2 })]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		// Six occurrences, six placeholders: the delta is bound twice, once to move and once to floor.
+		expect(statements[0].sql).toContain('CAST($1 AS DECIMAL(20,6))');
+		expect(statements[0].sql).toContain('CAST($6 AS DECIMAL(20,6)), 6) >= 0');
+		expect(statements[0].parameters).toHaveLength(6);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3 });
+	});
+
+	it('moves the counter through the MikroORM connection, with the placeholders it binds, on every dialect', async () => {
+		// MikroORM inlines the values into `?` itself before the driver sees the statement, on Postgres as
+		// everywhere else — a `$1` handed to it would reach the database unbound. The reads go through the
+		// MikroORM repositories, and the TypeORM connection is never touched.
+		mockOrm.type = 'mikro-orm';
+		mockDialect.type = 'postgres';
+		const { service, statements, counters, orders, orderLines, mikroOrders } = fixture([
+			line({ id: 'line-1', returnReceivedQuantity: 2, returnRequestedQuantity: 3 })
+		]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+		await expect(
+			service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-9' }])
+		).rejects.toThrow(/ORDER_LINE_RECEIPT_BELOW_ZERO/);
+
+		expect(statements.map((statement) => [statement.orm, statement.method])).toEqual([
+			['mikro-orm', 'run'],
+			['mikro-orm', 'run']
+		]);
+		expect(statements[0].sql).not.toMatch(/\$\d/);
+		expect(statements[0].parameters).toEqual(['1.000000', 'line-1', ORDER, TENANT, ORG, '1.000000']);
+		expect(counters('line-1')).toMatchObject({ returnReceivedQuantity: 3, returnRequestedQuantity: 3 });
+		expect(orders.options).toEqual([]);
+		expect(orderLines.options).toEqual([]);
+		expect(orderLines.runner.released).toBe(0);
+		expect(mikroOrders.criteria[0]).toEqual({ id: ORDER, tenantId: TENANT, organizationId: ORG });
+	});
+
+	it('moves the requested counter through the MikroORM connection, all or nothing, in the MySQL spelling', async () => {
+		// The requested counter is the same statement on the other column, so it is pinned on the other ORM
+		// and the other quoting too: two lines raised in one call, then a call whose second move would take
+		// a line below zero, which must leave the first line where it was. SQLite reads backticks, so the
+		// MySQL spelling runs against the store as written.
+		mockOrm.type = 'mikro-orm';
+		mockDialect.type = 'mysql';
+		const { service, statements, counters, orderLines } = fixture([
+			line({ id: 'line-1', position: 1 }),
+			line({ id: 'line-2', position: 2 })
+		]);
+
+		await service.recordReturnRequest(ORDER, [
+			{ orderLineId: 'line-1', quantityDelta: '2' },
+			{ orderLineId: 'line-2', quantityDelta: '0.5' }
+		]);
+
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 2, returnReceivedQuantity: 0 });
+		expect(counters('line-2')).toMatchObject({ returnRequestedQuantity: 0.5 });
+		expect(statements[0].sql).toBe(
+			'UPDATE `order_line` SET `returnRequestedQuantity` = ROUND(`returnRequestedQuantity` + CAST(? AS DECIMAL(20,6)), 6) ' +
+				'WHERE `id` = ? AND `orderId` = ? AND `tenantId` = ? AND `organizationId` = ? ' +
+				'AND `deletedAt` IS NULL AND ROUND(`returnRequestedQuantity` + CAST(? AS DECIMAL(20,6)), 6) >= 0'
+		);
+
+		await expect(
+			service.recordReturnRequest(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '-1' },
+				{ orderLineId: 'line-2', quantityDelta: '-1' }
+			])
+		).rejects.toThrow(/ORDER_LINE_RETURN_REQUEST_BELOW_ZERO/);
+
+		// The first move landed and was reversed when the second was refused.
+		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 2 });
+		expect(counters('line-2')).toMatchObject({ returnRequestedQuantity: 0.5 });
+		expect(statements.every((statement) => statement.orm === 'mikro-orm' && statement.method === 'run')).toBe(true);
+		expect(orderLines.options).toEqual([]);
+	});
+});
+
+/**
+ * Which counter a damaged unit belongs on, decided by the derivation that reads the counters.
+ *
+ * The returns flow moves `returnReceivedQuantity` by every unit a delivery brought, sound and damaged
+ * alike. These cases pin that choice against `OrderStateMachine.deriveFulfillmentStatus` itself rather
+ * than against a restatement of it: the counters are moved through the service onto the store, read back
+ * as the store holds them, and handed to the order's own derivation. Two alternatives are measured beside
+ * the one taken, because each is what a reader would reach for:
+ *
+ * - **moving the sound units only** — the defect — leaves a line of two that came back as one sound and
+ *   one broken unit `PARTIALLY_RETURNED`, while the return itself says everything arrived;
+ * - **moving the broken units onto `returnDismissedQuantity`** — the counter `DISMISS_ITEM_RETURN`
+ *   moves — takes them off what the order owes instead of recording that they came back, so a delivery
+ *   that was all broken leaves the order `FULFILLED`, as though nothing had been returned at all.
+ */
+describe('OrderLineFulfillmentService — the counter the derivation reads for a damaged unit', () => {
+	/**
+	 * @param row One line as the store holds it now.
+	 * @param ordered What the line was ordered for; the store's fixture does not carry the column.
+	 * @returns The status the order's own derivation answers for an order of that one line.
+	 */
+	const derive = (row: Record<string, unknown>, ordered: string): FulfillmentStatus =>
+		OrderStateMachine.deriveFulfillmentStatus({
+			orderStatus: OrderStatus.PROCESSING,
+			orderedQuantity: ordered,
+			writtenOffQuantity: '0',
+			dismissedQuantity: String(row['returnDismissedQuantity'] ?? 0),
+			fulfilledQuantity: String(row['fulfilledQuantity'] ?? 0),
+			receivedReturnQuantity: String(row['returnReceivedQuantity'] ?? 0)
+		});
+
+	it('answers RETURNED for a line of two that came back as one sound and one broken unit', async () => {
+		// The failure scenario of C6, on the order's side: the returns flow now states the delivery as two
+		// units that came back, and the derivation answers what the return itself says.
+		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 2 })]);
+
+		expect(derive(counters('line-1'), '2')).toBe(FulfillmentStatus.FULFILLED);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '2.000000' }]);
+
+		expect(derive(counters('line-1'), '2')).toBe(FulfillmentStatus.RETURNED);
+	});
+
+	it('answered PARTIALLY_RETURNED when only the sound unit moved the counter, which was the defect', async () => {
+		const { service, counters } = fixture([line({ id: 'line-1', fulfilledQuantity: 2 })]);
+
+		await service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		expect(derive(counters('line-1'), '2')).toBe(FulfillmentStatus.PARTIALLY_RETURNED);
+	});
+
+	it('would answer FULFILLED for a delivery that was all broken, had the broken units been dismissed', async () => {
+		// Why the dismissed counter is not where a broken unit goes: the derivation subtracts it from what
+		// the order owes, so two broken units that physically came back would leave nothing owed and nothing
+		// returned. The same delivery on the received counter answers RETURNED.
+		const dismissed = fixture([line({ id: 'line-1', fulfilledQuantity: 2, returnDismissedQuantity: 2 })]);
+		const received = fixture([line({ id: 'line-2', fulfilledQuantity: 2 })]);
+
+		await received.service.recordReturnReceipt(ORDER, [{ orderLineId: 'line-2', quantityDelta: '2' }]);
+
+		expect(derive(dismissed.counters('line-1'), '2')).toBe(FulfillmentStatus.FULFILLED);
+		expect(derive(received.counters('line-2'), '2')).toBe(FulfillmentStatus.RETURNED);
 	});
 });

@@ -346,6 +346,7 @@ interface IFulfilledLine {
  * @param options.returns The returns the fixture starts with.
  * @param options.fulfilled What the order domain reports as fulfilled, by order line.
  * @param options.withFulfillment Whether an order capability is registered at all.
+ * @param options.requestRefused Whether the order refuses every move of its requested-return counter.
  */
 function lineFixture(
 	options: {
@@ -353,6 +354,7 @@ function lineFixture(
 		returns?: Row[];
 		fulfilled?: IFulfilledLine[];
 		withFulfillment?: boolean;
+		requestRefused?: boolean;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -366,12 +368,25 @@ function lineFixture(
 		{ orderLineId: ORDER_LINE, fulfilledQuantity: '5.000000', variantId: VARIANT, unitPrice: '12.00' }
 	];
 	const withFulfillment = options.withFulfillment ?? true;
+	/** Every move of the order's two return counters the order accepted, in the order they landed. */
+	const requestMoves: Array<{ orderId: string; moves: Array<{ orderLineId: string; quantityDelta: string }> }> = [];
+	const receiptMoves: Array<{ orderId: string; moves: Array<{ orderLineId: string; quantityDelta: string }> }> = [];
 	const fulfillment = withFulfillment
 		? {
 				getFulfilledLines: async (orderId: string) => {
 					readOrderIds.push(orderId);
 
 					return fulfilled;
+				},
+				recordReturnReceipt: async (orderId: string, moves: Array<{ orderLineId: string; quantityDelta: string }>) => {
+					receiptMoves.push({ orderId, moves });
+				},
+				recordReturnRequest: async (orderId: string, moves: Array<{ orderLineId: string; quantityDelta: string }>) => {
+					if (options.requestRefused === true) {
+						throw new BadRequestException('ORDER_LINE_RETURN_REQUEST_BELOW_ZERO: the order refused the move.');
+					}
+
+					requestMoves.push({ orderId, moves });
 				}
 		  }
 		: undefined;
@@ -386,6 +401,9 @@ function lineFixture(
 		service,
 		tables,
 		readOrderIds,
+		requestMoves,
+		receiptMoves,
+		lineRepository: typeOrmOrderReturnLineRepository,
 		line: (id: string) => tables.order_return_line.find((row) => row.id === id),
 		liveLines: (returnId: string) => tables.order_return_line.filter((row) => row.returnId === returnId)
 	};
@@ -644,6 +662,166 @@ describe('OrderReturnLineService — writing the line set (doc 10 §11.2)', () =
 			fixture.service.replaceLines('return-1', [{ orderLineId: ORDER_LINE, quantity: '1' }])
 		).rejects.toBeInstanceOf(NotFoundException);
 		expect(fixture.tables.order_return_line).toEqual([]);
+	});
+});
+
+/**
+ * What a return asks back, as the order is told it (doc 10 invariant I-12).
+ *
+ * `order_line.returnRequestedQuantity` bounds what came back: `returnReceivedQuantity +
+ * returnDismissedQuantity <= returnRequestedQuantity`. Nothing in the returns flow wrote it, so the
+ * invariant compared the goods that came back against a zero. The cases below pin the three writes the
+ * line set owes it — the request, the edit and the withdrawal — and the order they happen in.
+ */
+describe('OrderReturnLineService — what the order is told is asked back (doc 10 §11.5, §11.7, I-12)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('moves the requested counter by the whole request on a return’s first write', async () => {
+		const fixture = lineFixture({
+			fulfilled: [
+				{ orderLineId: ORDER_LINE, fulfilledQuantity: '5.000000', variantId: VARIANT },
+				{ orderLineId: OTHER_ORDER_LINE, fulfilledQuantity: '5.000000', variantId: VARIANT }
+			]
+		});
+
+		await fixture.service.replaceLines('return-1', [
+			{ orderLineId: ORDER_LINE, quantity: '2' },
+			{ orderLineId: OTHER_ORDER_LINE, quantity: '0.5' }
+		]);
+
+		expect(fixture.requestMoves).toEqual([
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' },
+					{ orderLineId: OTHER_ORDER_LINE, quantityDelta: '0.500000' }
+				]
+			}
+		]);
+	});
+
+	it('moves it by the difference on an edit, and gives back a line the edit drops', async () => {
+		const fixture = lineFixture({
+			lines: [
+				lineRow('line-1', { orderLineId: ORDER_LINE, quantity: '4.000000' }),
+				lineRow('line-2', { orderLineId: OTHER_ORDER_LINE, quantity: '1.000000' })
+			],
+			fulfilled: [
+				{ orderLineId: ORDER_LINE, fulfilledQuantity: '5.000000', variantId: VARIANT },
+				{ orderLineId: OTHER_ORDER_LINE, fulfilledQuantity: '5.000000', variantId: VARIANT }
+			]
+		});
+
+		await fixture.service.replaceLines('return-1', [{ orderLineId: ORDER_LINE, quantity: '5' }]);
+
+		expect(fixture.requestMoves).toEqual([
+			{
+				orderId: ORDER,
+				moves: [
+					{ orderLineId: ORDER_LINE, quantityDelta: '1.000000' },
+					{ orderLineId: OTHER_ORDER_LINE, quantityDelta: '-1.000000' }
+				]
+			}
+		]);
+	});
+
+	it('leaves the line set untouched when the order refuses the move', async () => {
+		// The counter moves first, so a move the order refuses — a counter the request was never added to
+		// would go below zero — refuses the edit while the return still holds the lines it had.
+		const fixture = lineFixture({
+			lines: [lineRow('line-1', { orderLineId: ORDER_LINE, quantity: '4.000000' })],
+			requestRefused: true
+		});
+
+		await expect(
+			fixture.service.replaceLines('return-1', [{ orderLineId: ORDER_LINE, quantity: '1' }])
+		).rejects.toThrow(/ORDER_LINE_RETURN_REQUEST_BELOW_ZERO/);
+
+		expect(fixture.line('line-1')?.deletedAt).toBeUndefined();
+		expect(fixture.tables.order_return_line).toHaveLength(1);
+	});
+
+	it('moves the counter back when the lines cannot be written after it moved', async () => {
+		const fixture = lineFixture();
+
+		jest.spyOn(fixture.lineRepository, 'save').mockRejectedValueOnce(new Error('the line could not be written'));
+
+		await expect(
+			fixture.service.replaceLines('return-1', [{ orderLineId: ORDER_LINE, quantity: '2' }])
+		).rejects.toThrow(/the line could not be written/);
+
+		expect(fixture.requestMoves.map((call) => call.moves)).toEqual([
+			[{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' }],
+			[{ orderLineId: ORDER_LINE, quantityDelta: '-2.000000' }]
+		]);
+	});
+
+	it('gives back only what a withdrawn return still had outstanding', async () => {
+		// Requested four, three arrived sound and one broken on the first line: nothing is outstanding there,
+		// and what arrived stays asked for because it is on the received counter I-12 bounds by this one. The
+		// second line had arrived in part, so only its remainder goes back.
+		const fixture = lineFixture({
+			lines: [
+				lineRow('line-1', {
+					orderLineId: ORDER_LINE,
+					quantity: '4.000000',
+					receivedQuantity: '3.000000',
+					damagedQuantity: '1.000000'
+				}),
+				lineRow('line-2', { orderLineId: OTHER_ORDER_LINE, quantity: '5.000000', receivedQuantity: '2.000000' })
+			]
+		});
+
+		const released = await fixture.service.releaseOrderLineRequest('return-1', ORDER);
+
+		expect(released).toEqual([{ orderLineId: OTHER_ORDER_LINE, quantityDelta: '-3.000000' }]);
+		expect(fixture.requestMoves).toEqual([{ orderId: ORDER, moves: released }]);
+
+		await fixture.service.restoreOrderLineRequest(ORDER, released);
+
+		expect(fixture.requestMoves[1]).toEqual({
+			orderId: ORDER,
+			moves: [{ orderLineId: OTHER_ORDER_LINE, quantityDelta: '3.000000' }]
+		});
+	});
+});
+
+describe('OrderReturnLineService — what the order is told came back (doc 10 §11.6 step 2)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('counts the damaged units of a delivery with its sound ones, and answers the moves it made', async () => {
+		const fixture = lineFixture({ lines: [lineRow('line-1', { quantity: '5.000000', receivedQuantity: '1.000000' })] });
+		const plan = await fixture.service.planReceipt('return-1', [
+			{ lineId: 'line-1', receivedQuantity: '1', damagedQuantity: '2' }
+		]);
+
+		const applied = await fixture.service.applyOrderLineReceipt(ORDER, plan);
+
+		// What the line held before (one sound unit) is not this delivery's: three units came back now.
+		expect(applied).toEqual([{ orderLineId: ORDER_LINE, quantityDelta: '3.000000' }]);
+		expect(fixture.receiptMoves).toEqual([{ orderId: ORDER, moves: applied }]);
+	});
+
+	it('moves back only the moves it is handed, and nothing for a receipt that moved nothing', async () => {
+		const fixture = lineFixture({ lines: [lineRow('line-1', { quantity: '5.000000' })] });
+
+		await fixture.service.restoreOrderLineReceipt(ORDER, []);
+		expect(fixture.receiptMoves).toEqual([]);
+
+		await fixture.service.restoreOrderLineReceipt(ORDER, [{ orderLineId: ORDER_LINE, quantityDelta: '2.000000' }]);
+		expect(fixture.receiptMoves).toEqual([
+			{ orderId: ORDER, moves: [{ orderLineId: ORDER_LINE, quantityDelta: '-2.000000' }] }
+		]);
 	});
 });
 
