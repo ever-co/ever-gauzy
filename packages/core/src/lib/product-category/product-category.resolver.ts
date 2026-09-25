@@ -221,11 +221,12 @@ export class ProductCategoryResolver {
 	}
 
 	/**
-	 * Replaces a category.
+	 * Edits a category in place.
 	 *
 	 * The service is the one the REST route calls, and it reads the row before it writes: a caller
-	 * naming a category of another tenant, or one that is not there, is answered with the miss rather
-	 * than with a write that recreates the row under an identifier it does not own.
+	 * naming a category of another tenant, or one that is not there, is answered with the miss before
+	 * anything is written. The row is then updated where it stands — never removed and re-inserted — so
+	 * the categories below it stay below it, and a change of `parentId` moves the whole subtree.
 	 */
 	@Mutation('updateProductCategory')
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)
@@ -234,7 +235,8 @@ export class ProductCategoryResolver {
 	}
 
 	/**
-	 * Removes a category outright, with the translation rows that belong to it.
+	 * Removes a category outright, with the translation rows that belong to it. Its children become
+	 * roots rather than being removed with it — the service detaches them first, on every dialect.
 	 */
 	@Mutation('deleteProductCategory')
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_EDIT)

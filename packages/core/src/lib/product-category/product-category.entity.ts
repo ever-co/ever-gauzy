@@ -31,9 +31,10 @@ import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-produc
  * read a catalogue navigation does on every request, and the three ways to answer it are a recursive
  * query, a materialised path or a closure table. The first is what SQLite and MySQL 5.7 cannot express
  * efficiently — the embedded database is the one a demo runs on — and the second has to be rewritten on
- * every re-parent. The closure table the ORM maintains is one row per (ancestor, descendant) pair,
- * including the self-pair, so the read is one indexed join and a re-parent is a write the ORM makes. It
- * is derived: `product_category_closure` is not an entity and no service queries it directly.
+ * every re-parent. The closure table is one row per (ancestor, descendant) pair, including the
+ * self-pair, so the read is one indexed join. It is derived: `product_category_closure` is not an
+ * entity, TypeORM's tree repository is its only reader, and `ProductCategoryService` keeps it in step
+ * with `parentId` on every create, move and delete, on both ORMs — see `ProductCategoryClosure`.
  */
 @Tree('closure-table')
 @ColumnIndex('UQ_product_category_org_slug', ['organizationId', 'slug'], {
@@ -57,22 +58,32 @@ export class ProductCategory extends TranslatableBase
 	/**
 	 * Parent category. Null on a root, which is what every existing category becomes: the taxonomy was
 	 * flat, so no existing row acquires a parent it never had.
+	 *
+	 * **A persisted column on both ORMs, not a relation id.** The `parent` relation below is TypeORM's
+	 * `@TreeParent`, which MikroORM does not see, so this column is the only mapping MikroORM has for
+	 * `parentId`. `relationId: true` would turn it into `persist: false` there (see `column.helper.ts`)
+	 * — a mirror of a relation that does not exist on that ORM — and a category written under
+	 * `DB_ORM=mikro-orm` would then be stored as a root and read back without its parent. TypeORM shares
+	 * the one database column between this property and the relation's join column, exactly as it does
+	 * for any column declared beside a relation.
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: ProductCategory) => it.parent)
 	@ColumnIndex()
-	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	@MultiORMColumn({ type: 'uuid', nullable: true })
 	parentId?: ID;
 
 	/**
-	 * The parent itself, as the tree repository reads and writes it.
+	 * The parent itself, as TypeORM's tree repository reads it.
 	 *
 	 * `SET NULL` is the rule the schema promises: deleting a parent makes its children roots rather than
 	 * deleting them, because a category that holds products is not something a delete should cascade
-	 * into. The column above keeps the relation id, so a caller that only needs the parent's identity
-	 * never loads the parent row.
+	 * into. The column above keeps the parent's identity, so a caller that only needs it never loads the
+	 * parent row. Callers write `parentId`; the service removes this relation from any payload it is
+	 * handed and sets it itself in one place only — a TypeORM insert, where it is what TypeORM's closure
+	 * executor reads the new row's ancestors from (see `ProductCategoryService.create`).
 	 */
 	@ApiPropertyOptional({ type: () => ProductCategory })
 	@IsOptional()

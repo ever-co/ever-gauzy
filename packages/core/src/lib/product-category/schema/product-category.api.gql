@@ -69,15 +69,15 @@ extend type Mutation {
 	createProductCategory(input: CreateProductCategoryInput!): ProductCategory!
 
 	"""
-	Replaces a category. A member the caller leaves out is written as the column's default rather than
-	left as it is, because the delivered update removes the row and persists the stated body under the
-	verified path identifier — see `UpdateProductCategoryInput`.
+	Edits a category in place. A member the caller leaves out is left as it is, and the categories
+	below it stay below it — see `UpdateProductCategoryInput`.
 	"""
 	updateProductCategory(input: UpdateProductCategoryInput!): ProductCategory!
 
 	"""
-	Removes a category outright, together with the translation rows that belong to it. A category a
-	product still points at is the store's own constraint to refuse; this field does not pre-empt it.
+	Removes a category outright, together with the translation rows that belong to it. Its children
+	become roots rather than being removed with it, on every database; a category a product still
+	points at is the store's own constraint to answer, and this field does not pre-empt it.
 	"""
 	deleteProductCategory(id: ID!): Boolean!
 

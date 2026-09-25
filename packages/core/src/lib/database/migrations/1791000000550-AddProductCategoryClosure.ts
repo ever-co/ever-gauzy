@@ -14,11 +14,14 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * the schema chapter chose: one row per (ancestor, descendant) pair, including the self-pair, so the
  * read is one indexed join and a re-parent is a write the ORM makes.
  *
- * **The backfill is the part that is easy to forget and impossible to notice.** Every category that
- * exists is already a root, but the ORM's tree reads assume a self-pair row for every row — a category
- * whose self-pair is missing is invisible to `findTrees` and to every descendant query, and nothing
- * about the schema would say so. The self-pairs are therefore written here, in the same migration that
- * creates the table, and the insert is written so that running it again changes nothing.
+ * **The backfill is the part that is easy to forget and impossible to notice.** The ORM's tree reads
+ * assume a self-pair row for every row — a category whose self-pair is missing is invisible to
+ * `findTrees` and to every descendant query, and nothing about the schema would say so. The self-pairs
+ * are therefore written here, in the same migration that creates the table, and the insert is written
+ * so that running it again changes nothing. They are not the whole closure: `parentId` existed before
+ * this migration, so a category may already have had a parent, and the (ancestor, descendant) pairs of
+ * such a tree are written by `1791000000555-RebuildProductCategoryClosure`, which recomputes the whole
+ * table from `parentId` and so also covers every database that ran this migration before it existed.
  *
  * **The self-referencing constraint on `parentId` is added on Postgres and MySQL and deferred on
  * SQLite**, which is a real difference rather than a convenience. SQLite cannot add a constraint to an
@@ -28,9 +31,15 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * verify, not in the migration that introduces the tree; a wrong column list here would silently drop
  * data rather than fail. Until then, a category deleted on SQLite leaves its children named by a
  * `parentId` that no longer resolves, which the service's own re-parent handles — see
- * `ProductCategoryService.deleteCategory`, which detaches the children of the category it removes on
- * every dialect, so the behaviour the schema promises holds everywhere even where the constraint does
- * not.
+ * `ProductCategoryService.delete`, which detaches the children of the category it removes on every
+ * dialect, so the behaviour the schema promises holds everywhere even where the constraint does not.
+ *
+ * **A `parentId` that names no category is cleared before the constraint is added.** The column had
+ * no constraint until now, so a database may hold a child whose parent was removed; adding the
+ * foreign key over such a row fails and stops the migration chain. Clearing it first is the outcome
+ * the constraint's own `SET NULL` would have produced had it been there, and on a database without
+ * such a row — every database that has already run this migration, since the constraint could not
+ * have been added otherwise — the statement changes nothing.
  */
 export class AddProductCategoryClosure1791000000550 implements MigrationInterface {
 	name = 'AddProductCategoryClosure1791000000550';
@@ -106,6 +115,7 @@ export class AddProductCategoryClosure1791000000550 implements MigrationInterfac
 		);
 
 		await this.backfill(queryRunner, '"', '"');
+		await this.clearDanglingParents(queryRunner, '"', '"');
 
 		// The self-referencing rule: a deleted parent makes its children roots rather than deleting them.
 		await queryRunner.query(
@@ -176,6 +186,7 @@ export class AddProductCategoryClosure1791000000550 implements MigrationInterfac
 		);
 
 		await this.backfill(queryRunner, '`', '`');
+		await this.clearDanglingParents(queryRunner, '`', '`');
 
 		await queryRunner.query(
 			`ALTER TABLE \`product_category\` ADD CONSTRAINT \`FK_product_category_parent\` FOREIGN KEY (\`parentId\`) REFERENCES \`product_category\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
@@ -220,6 +231,30 @@ export class AddProductCategoryClosure1791000000550 implements MigrationInterfac
 				`WHERE NOT EXISTS (SELECT 1 FROM ${closure} AS existing ` +
 				`WHERE existing.${open}id_ancestor${close} = category.${open}id${close} ` +
 				`AND existing.${open}id_descendant${close} = category.${open}id${close})`
+		);
+	}
+
+	/**
+	 * Clears every `parentId` that names no category, so the self-referencing constraint can be added.
+	 *
+	 * The ids that exist are read through a derived table rather than straight from `product_category`:
+	 * MySQL refuses an `UPDATE` whose subquery reads the table being updated unless that subquery is
+	 * materialized first, and the derived table is what materializes it. Postgres accepts the same form
+	 * unchanged, so one statement serves both dialects that add the constraint.
+	 *
+	 * @param queryRunner The runner.
+	 * @param open The dialect's identifier quote.
+	 * @param close The dialect's identifier quote.
+	 */
+	private async clearDanglingParents(queryRunner: QueryRunner, open: string, close: string): Promise<void> {
+		const category = `${open}product_category${close}`;
+		const parentId = `${open}parentId${close}`;
+		const existingId = `${open}existing_id${close}`;
+
+		await queryRunner.query(
+			`UPDATE ${category} SET ${parentId} = NULL ` +
+				`WHERE ${parentId} IS NOT NULL AND ${parentId} NOT IN (` +
+				`SELECT ${existingId} FROM (SELECT ${open}id${close} AS ${existingId} FROM ${category}) ${open}existing${close})`
 		);
 	}
 }

@@ -181,12 +181,13 @@ input CreateProductCategoryInput {
 """
 What a caller states when it edits a category that exists.
 
-**A member that is absent is written as the column's default, not left as it is.** The delivered
-update replaces the row: the service reads the category to prove it is the caller's, removes it, and
-persists the stated body under the verified path identifier. `translations` is the sharpest case of
-that — the translation rows are removed with their category and the delivered service does not carry
-them over, so a body that omits them withdraws every language the category had. Stating this here is
-what keeps a client from reading "absent" as "unchanged".
+**A member that is absent is left as it is.** The service reads the category to prove it is the
+caller's and then updates that row where it stands — it is never removed and re-inserted, which is
+what keeps the categories below it attached to it. A member stated as `null` clears it: `parentId:
+null` makes the category a root. `translations`, when stated, replaces the category's languages as a
+set, so an empty list removes them all; when omitted, they are kept. `organizationId` identifies the
+caller's organization and does not move the category — a category stays in the organization whose
+tree it belongs to.
 """
 input UpdateProductCategoryInput {
 	id: ID!
