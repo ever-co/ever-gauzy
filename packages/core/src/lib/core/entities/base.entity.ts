@@ -2,6 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
+import { randomUUID } from 'node:crypto';
 import { PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, DeleteDateColumn, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
@@ -178,7 +179,16 @@ export abstract class BaseEntityActionByUser extends AccessTimestamps {
 export abstract class BaseEntity extends BaseEntityActionByUser implements IBaseEntityModel {
 	// Primary key of UUID type
 	@ApiPropertyOptional({ type: () => String })
-	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' }) // For Mikro-ORM compatibility
+	// For Mikro-ORM compatibility. `defaultRaw` is PostgreSQL's default, which only PostgreSQL has; on SQLite and MySQL
+	// TypeORM generates the uuid itself. MikroORM left the key of every row it created out of the INSERT, so a row it
+	// cascaded from another's create (a product type's translations) failed `NOT NULL constraint failed: <table>.id`
+	// there. `onCreate` states the key as a new row is flushed, keeping one the row already has; `CrudService` states
+	// the root row's key itself (see `createNewMikroOrmEntity`).
+	@PrimaryKey({
+		type: 'uuid',
+		defaultRaw: 'gen_random_uuid()',
+		onCreate: (entity: BaseEntity) => entity.id ?? randomUUID()
+	})
 	@PrimaryGeneratedColumn('uuid')
 	id?: ID;
 

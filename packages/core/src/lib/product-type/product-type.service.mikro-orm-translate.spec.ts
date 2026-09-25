@@ -19,8 +19,8 @@ import { join } from 'node:path';
  * `autoJoinRefsForFilters` (`@gauzy/config`); and the real `ProductTypeService` and create handler, run over each
  * ORM's repository in turn against the same rows. The entities are imported in a registry kept open while both ORMs
  * build their metadata and every read runs (see `product.service.mikro-orm-translate.spec.ts`), so the reads are
- * collected there and asserted below. The one thing stood in for is the translations table's key default, which
- * the table has on PostgreSQL and not on SQLite (see {@link withDatabaseSuppliedKey}).
+ * collected there and asserted below. Nothing is stood in for: the translations a MikroORM create cascades get their key from `BaseEntity.id`'s
+ * `onCreate` on SQLite, as they get it from the table's default on PostgreSQL.
  */
 
 const TIMEOUT = 15 * 60 * 1000;
@@ -94,45 +94,6 @@ function membersTypeOrmStates(typeormRow: any, mikroormRow: any): { typeorm: any
 	};
 }
 
-/** A version-4 uuid, as an SQLite expression. */
-const SQLITE_UUID =
-	"lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || " +
-	"substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))";
-
-/**
- * Gives a table's primary key the database default it has on PostgreSQL.
- *
- * MikroORM maps `BaseEntity.id` with `defaultRaw: 'gen_random_uuid()'` and leaves the key of a new row out of its
- * INSERT; `CrudService.create` states it for the row it creates, but not for the rows that row's collections
- * cascade (a type's translations), so on SQLite — which has no such default — creating a type with translations
- * fails with `NOT NULL constraint failed: product_type_translation.id` before the command merges anything. That is
- * the kernel's to fix and not what this suite is about: the translations table is given the default PostgreSQL
- * gives it, so the create command runs on MikroORM as it does there, and its merge is what is compared.
- *
- * @param dataSource The TypeORM data source that created the table.
- * @param table The table.
- */
-async function withDatabaseSuppliedKey(dataSource: any, table: string): Promise<void> {
-	const [{ sql }] = await dataSource.query(
-		`SELECT "sql" FROM "sqlite_master" WHERE "type" = 'table' AND "name" = ?`,
-		[table]
-	);
-	const indexes: { sql: string }[] = await dataSource.query(
-		`SELECT "sql" FROM "sqlite_master" WHERE "type" = 'index' AND "tbl_name" = ? AND "sql" IS NOT NULL`,
-		[table]
-	);
-	const key = '"id" varchar PRIMARY KEY NOT NULL';
-	if (!String(sql).includes(key)) {
-		throw new Error(`The key of "${table}" is not the one this suite expects: ${sql}`);
-	}
-
-	await dataSource.query(`DROP TABLE "${table}"`);
-	await dataSource.query(String(sql).replace(key, `${key} DEFAULT (${SQLITE_UUID})`));
-	for (const index of indexes) {
-		await dataSource.query(index.sql);
-	}
-}
-
 async function readThroughBothOrms(): Promise<{ typeorm: IReads; mikroorm: IReads }> {
 	const previous = process.env.DB_ORM;
 	process.env.DB_ORM = 'mikro-orm';
@@ -188,7 +149,6 @@ async function readThroughBothOrms(): Promise<{ typeorm: IReads; mikroorm: IRead
 				// asked to enforce it. The tenant is stored, because TypeORM's tenant scope is a join to it.
 				await dataSource.query('PRAGMA foreign_keys = OFF');
 				await orm.em.getConnection().execute('PRAGMA foreign_keys = OFF');
-				await withDatabaseSuppliedKey(dataSource, 'product_type_translation');
 				const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 				const insert = (entity: unknown, rows: object[]) => dataSource.getRepository(entity).insert(rows);
 
