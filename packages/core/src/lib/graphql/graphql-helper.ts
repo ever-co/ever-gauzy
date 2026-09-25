@@ -13,7 +13,7 @@ import { assertComposition, assertExtendable } from './graphql-composition';
 import { createGraphqlRequestContext } from './graphql-context';
 import { createBatchLimitPlugin, createGraphqlLimitRules } from './graphql-limits';
 import { mergeLimitSettings, resolveGraphqlPolicy } from './graphql-policy';
-import { subscriptionTransportOptions } from './subscriptions/subscription-transport';
+import { graphqlContextArguments, subscriptionTransportOptions } from './subscriptions/subscription-transport';
 import { GraphqlExceptionFilter } from './errors/graphql-exception.filter';
 
 /**
@@ -42,8 +42,21 @@ export async function createGraphqlModuleOptions(
 		playground: options.playground,
 		debug: options.debug,
 		introspection: options.introspection,
+		// 🛑 Read from the shipped configuration, where the option is declared, and previously read from
+		// nowhere. `IApplicationPluginConfig.persistedQueries` ("Whether automatic persisted queries are
+		// accepted"), `IGraphqlPolicySettings.persistedQueries` and `resolveGraphqlPolicy` all exist, and
+		// `persistedQueries: policy.persistedQueries ? {} : false` below applies the answer — but the
+		// settings handed to the resolver never carried it, so a deployment that configured
+		// `graphqlConfigOptions: { …, persistedQueries: true }` resolved `false` and every automatic
+		// persisted query was answered `PersistedQueryNotSupported`. The ceilings on the same interface
+		// are read from the same object on the next line; the environment variable still wins.
+		persistedQueries: configService.graphqlConfigOptions?.persistedQueries,
 		limits: mergeLimitSettings(configService.graphqlConfigOptions, options.limits)
 	});
+
+	// Depth, cost, aliases and introspection, as validation rules. One list serves both transports, so
+	// an operation sent over the subscription socket is held to exactly what an HTTP request is.
+	const validationRules = createGraphqlLimitRules(policy);
 
 	// Reported once, at boot, next to the values that were actually applied: a deployment that set a
 	// ceiling to something unusable needs to see that in the log, and it must not fail the boot.
@@ -91,7 +104,7 @@ export async function createGraphqlModuleOptions(
 		],
 		// Depth, cost, aliases and introspection ride validation rules rather than the plugin array,
 		// so they hold even when `apolloServerPlugins` is empty.
-		validationRules: createGraphqlLimitRules(policy),
+		validationRules,
 		// Introspection is a policy, not a leftover. Apollo Server 5 has no `introspection` flag of
 		// its own any more, which is why the refusal is a rule above: it is what carries the
 		// catalogued code instead of a generic validation error.
@@ -153,7 +166,13 @@ export async function createGraphqlModuleOptions(
 		// The context is the request scope: every resolver in one operation shares it, and the loader
 		// registry inside it is what makes a nested relation one query per relation rather than one
 		// per parent row.
-		context: ({ req }) => createGraphqlRequestContext({ req }),
+		//
+		// The factory is called with `{ req, res }` for an HTTP operation and with the graphql-ws
+		// connection context — `connectionParams` and `extra`, no `req` — for an operation on the
+		// subscription socket. Destructuring `{ req }` built a socket operation's context with no request
+		// at all; `graphqlContextArguments` reads both shapes, so the guards find the socket's credential
+		// where they find an HTTP request's.
+		context: (source: unknown) => createGraphqlRequestContext(graphqlContextArguments(source)),
 		// The error contract. The platform's global filters render HTTP replies, so they step aside
 		// for a context that has no HTTP response and let the exception reach graphql-js; this is
 		// where it is given the shape the contract declares — the same stable `code`, the status the
@@ -171,9 +190,11 @@ export async function createGraphqlModuleOptions(
 		// that REST reports as `RESOURCE_NOT_FOUND`/`404` — and a mistake in the document itself was
 		// reported as a server fault instead of a bad request.
 		formatError: (error, originalError) => formatGraphqlError(error, originalError),
-		// Subscriptions ride the same path and the same authorisation. The key is added only when the
-		// transport package is installed, so an installation without it boots as it does today.
-		...subscriptionTransportOptions()
+		// Subscriptions ride the same path, the same authorisation and the same validation rules. The key
+		// is added only when the transport package is installed, so an installation without it boots as
+		// it does today. The socket listens on this endpoint's path without being told: the driver hands
+		// `path` above to the subscription server, which uses it when the `graphql-ws` options name none.
+		...subscriptionTransportOptions({ validationRules })
 	} as GqlModuleOptions;
 }
 

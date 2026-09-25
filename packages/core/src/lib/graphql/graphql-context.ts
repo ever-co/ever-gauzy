@@ -19,9 +19,12 @@ export interface GraphqlRequestContext {
 	readonly loaders: RelationLoaderRegistry;
 	/** The correlation id an operator can quote in a support ticket. */
 	readonly traceId?: string;
-	/** The tenant the caller is acting in, taken from the credential. */
+	/**
+	 * The tenant the caller is acting in, taken from the credential — never from a `Tenant-Id` header.
+	 * See {@link createGraphqlRequestContext} for why, and for when it is read.
+	 */
 	readonly tenantId?: string;
-	/** The organization the caller is acting in, when it is scoped to one. */
+	/** The organization the caller is acting in, when it is scoped to one, taken from the credential. */
 	readonly organizationId?: string;
 	/** The channel the operation acts on, when it is channel scoped. */
 	readonly channelId?: string;
@@ -35,7 +38,10 @@ export interface CreateGraphqlRequestContextOptions {
 	readonly req?: unknown;
 	/** A registry to use instead of a fresh one, for a test or a caller that shares one deliberately. */
 	readonly loaders?: RelationLoaderRegistry;
-	/** Headers to read the scope from, when the request does not carry them. */
+	/**
+	 * Headers to read the channel from, when the request does not carry them — a subscription's
+	 * connection parameters. The tenant and the organization are never read from here.
+	 */
 	readonly headers?: Record<string, string | string[] | undefined>;
 	/** The trace id, when the caller already resolved one. */
 	readonly traceId?: string;
@@ -54,6 +60,23 @@ export interface CreateGraphqlRequestContextOptions {
  * invisible to the next request. Sharing a registry across requests is the one mistake this factory
  * exists to make impossible in the ordinary path: the driver calls it per operation.
  *
+ * 🛑 **The credential decides the scope; a header never does.** This used to resolve
+ * `tenantId: options.tenantId ?? readHeader(headers, 'tenant-id') ?? resolveRequestTenantId()`, with the
+ * credential last — and in practice not at all, because this factory runs *before* the operation
+ * executes, while `req.user` is only attached by the `AuthGuard` that runs inside each resolver. So on
+ * the HTTP path `tenantId` and `organizationId` were whatever the caller wrote in `Tenant-Id` and
+ * `Organization-Id` (both are in the endpoint's CORS `allowedHeaders`), and on a request without them
+ * they were undefined. Nothing reads the two members yet, which is the only reason this was latent
+ * rather than a cross-tenant read: the `RelationLoaderRegistry` contract asks a batch function to be
+ * scoped to the caller's tenant, and a loader taking that scope from the context would have taken it
+ * from the header.
+ *
+ * Both are now read from the credential, and read *when they are asked for* rather than when the
+ * context is built, so a resolver sees the tenant its guards authenticated. A header that contradicts
+ * the credential is not this factory's to refuse: `TenantBaseGuard`, which `TenantPermissionGuard`
+ * extends, already compares `Tenant-Id` with the authenticated tenant on every field it guards and
+ * refuses a mismatch, and a context that threw here would have no credential to compare against yet.
+ *
  * @param options The request and any scope the caller resolved itself.
  * @returns The context.
  */
@@ -62,14 +85,59 @@ export function createGraphqlRequestContext(
 ): GraphqlRequestContext {
 	const headers = options.headers ?? readHeaders(options.req);
 
-	return {
+	return new OperationContext({
 		req: options.req,
 		loaders: options.loaders ?? new RelationLoaderRegistry(),
 		traceId: options.traceId ?? resolveRequestTraceId(),
-		tenantId: options.tenantId ?? readHeader(headers, 'tenant-id') ?? resolveRequestTenantId(),
-		organizationId: options.organizationId ?? readHeader(headers, 'organization-id') ?? resolveRequestOrganizationId(),
-		channelId: options.channelId ?? readHeader(headers, 'x-channel-id')
-	};
+		channelId: options.channelId ?? readHeader(headers, 'x-channel-id'),
+		statedTenantId: options.tenantId,
+		statedOrganizationId: options.organizationId
+	});
+}
+
+/**
+ * The context object itself.
+ *
+ * A class rather than a literal because the scope has to be read late, and the getters that read it
+ * must live on the **prototype**. Apollo does not hand a resolver the object the factory returned: it
+ * hands every operation `Object.assign(Object.create(Object.getPrototypeOf(context)), context)`
+ * (`cloneObject` in `@apollo/server`), and `Object.assign` evaluates an own getter once, at clone
+ * time — before any guard ran — and stores the answer as a plain value. A getter on the prototype is
+ * not copied, so the clone keeps reading the credential when it is asked.
+ */
+class OperationContext implements GraphqlRequestContext {
+	readonly req?: unknown;
+	readonly loaders: RelationLoaderRegistry;
+	readonly traceId?: string;
+	readonly channelId?: string;
+	/** A tenant the caller of the factory resolved itself, which wins over the credential lookup. */
+	readonly statedTenantId?: string;
+	/** An organization the caller of the factory resolved itself. */
+	readonly statedOrganizationId?: string;
+
+	constructor(members: {
+		req?: unknown;
+		loaders: RelationLoaderRegistry;
+		traceId?: string;
+		channelId?: string;
+		statedTenantId?: string;
+		statedOrganizationId?: string;
+	}) {
+		this.req = members.req;
+		this.loaders = members.loaders;
+		this.traceId = members.traceId;
+		this.channelId = members.channelId;
+		this.statedTenantId = members.statedTenantId;
+		this.statedOrganizationId = members.statedOrganizationId;
+	}
+
+	get tenantId(): string | undefined {
+		return this.statedTenantId ?? resolveRequestTenantId();
+	}
+
+	get organizationId(): string | undefined {
+		return this.statedOrganizationId ?? resolveRequestOrganizationId();
+	}
 }
 
 /**

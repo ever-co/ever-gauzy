@@ -214,7 +214,8 @@ export function limitsFromEnvironment(
  *
  * Introspection follows the playground unless it is stated separately, because they are one policy:
  * a deployment that stopped serving the playground has no reason to keep publishing the schema it
- * is edited against.
+ * is edited against. Stated separately means either way: no shipped configuration states it, so an
+ * explicit `true` is a deployment's decision and is honoured like an explicit `false`.
  *
  * @param env The environment to read, normally `process.env`.
  * @param settings What the deployment configured.
@@ -240,11 +241,21 @@ export function resolveGraphqlPolicy(
 	const debug = readBoolean(env, GRAPHQL_POLICY_ENV.DEBUG, settings.debug === false ? false : playground, warnings, 'the playground policy is used');
 
 	// Introspection is a pair with the playground: both describe the surface, and a deployment that
-	// turned the editor off has no reason to keep publishing the map.
+	// turned the editor off has no reason to keep publishing the map — unless it says so.
+	//
+	// 🛑 This used to read `settings.introspection === false ? false : playground`, which honoured an
+	// explicit `false` and discarded an explicit `true`. The option's own contract
+	// (`IApplicationPluginConfig.introspection`, `GraphQLApiConfigurationOptions.introspection`) is that
+	// it *defaults* to the playground policy, so a stated value wins: the deployment the option exists
+	// for — `{ playground: false, introspection: true }`, a hardened endpoint that still publishes its
+	// schema to a codegen pipeline — resolved `false`, and the environment variable was the only channel
+	// that worked. `??` is safe here and would not be for `debug` above: every shipped configuration
+	// states `playground: true` and `debug: true` for every environment, so a `true` there is the
+	// default nobody chose, while none of them states `introspection` at all.
 	const introspection = readBoolean(
 		env,
 		GRAPHQL_POLICY_ENV.INTROSPECTION,
-		settings.introspection === false ? false : playground,
+		settings.introspection ?? playground,
 		warnings,
 		'the playground policy is used'
 	);
