@@ -187,7 +187,11 @@ function world(seed: { holders?: Row[]; tokens?: Row[] } = {}) {
 	const repository = (table: string) => ({
 		manager,
 		metadata: { tableName: table, hasColumnWithPropertyPath: () => false },
-		find: async (options: any = {}) => tables[table].filter((row) => matches(row, options.where)),
+		// A retired row is invisible to a read unless the read asks for it, exactly as TypeORM's
+		// `@DeleteDateColumn` and MikroORM's soft-delete filter make it. A double that returned it anyway
+		// hid the one defect a soft delete can have: a read-back after the delete that cannot see the row.
+		find: async (options: any = {}) =>
+			tables[table].filter((row) => (options.withDeleted || !row.deletedAt) && matches(row, options.where)),
 		findOne: async (options: any = {}) => tables[table].find((row) => matches(row, options.where)) ?? null,
 		findOneBy: async (where: Row) => tables[table].find((row) => matches(row, where)) ?? null,
 		create: (partial: Row) => ({ ...partial }),

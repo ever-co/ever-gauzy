@@ -515,7 +515,17 @@ export class PaymentAccountHolderService extends TenantAwareCrudService<PaymentA
 
 		await this.softDelete(id);
 
-		return this.findHolderOrFail(id);
+		// **Read back with the retired rows included.** The account was just soft-deleted, so the live
+		// read `findHolderOrFail` performs cannot see it: TypeORM's `@DeleteDateColumn` and MikroORM's
+		// soft-delete filter both hide it, and every successful removal used to end in
+		// `PAYMENT_ACCOUNT_HOLDER_NOT_FOUND` after the delete had already committed — the caller was told
+		// the removal failed when it had happened. The read keeps the caller's scope.
+		const [removed] = (await this.find({
+			where: { id, ...this.scope },
+			withDeleted: true
+		} as never)) as PaymentAccountHolder[];
+
+		return removed ?? holder;
 	}
 
 	/**
