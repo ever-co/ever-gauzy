@@ -65,6 +65,10 @@ export class StockCountLineResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { stockCountId },
+			// In the order the rows were written, closed by the row's identity: the page is cut with
+			// LIMIT/OFFSET and its cursors are offsets, so an order with ties lets the store arrange them
+			// differently on the next page.
+			order: { createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

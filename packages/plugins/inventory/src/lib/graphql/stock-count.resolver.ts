@@ -6,9 +6,9 @@
  * resolver is schema-first, matching the platform’s existing resolvers: the schema literal declares
  * the types and this class binds them to the service.
  */
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { DecimalString, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
 	GraphqlConnection,
@@ -23,6 +23,7 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { toDecimalWire } from './../inventory.decimal';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockCountMode, StockCountStatus } from './../inventory.enums';
 import { StockCount } from './../stock-count/stock-count.entity';
@@ -71,6 +72,9 @@ export class StockCountResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { warehouseId, status, mode },
+			// Newest first, closed by the row's identity: the page is cut with LIMIT/OFFSET and its cursors are
+			// offsets, so an order with ties lets the store arrange them differently on the next page.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
@@ -163,5 +167,22 @@ export class StockCountResolver {
 	@Permissions(InventoryPermission.STOCK_EDIT as PermissionsEnum)
 	async cancelStockCount(@Args('id') id: string): Promise<any> {
 		return await this.service.cancel(id);
+	}
+
+	/**
+	 * The session's valuation, as the exact decimal the schema declares.
+	 *
+	 * `varianceValue` is a `numeric(20,6)` column typed `Decimal`, and the platform's `Decimal` scalar has
+	 * no serializer: the column went out as the driver hydrated it — the text `'7.500000'` on Postgres and
+	 * MySQL, the float `7.5` on SQLite — so one field had two wire types, and the float form rounds a figure
+	 * past sixteen significant digits on the server. Every session this type answers passes through here,
+	 * whichever field or mutation produced it.
+	 *
+	 * @param count The session being answered.
+	 * @returns Its valuation as exact decimal text at six decimals.
+	 */
+	@ResolveField('varianceValue')
+	varianceValue(@Parent() count: StockCount): DecimalString | null {
+		return toDecimalWire(count.varianceValue);
 	}
 }

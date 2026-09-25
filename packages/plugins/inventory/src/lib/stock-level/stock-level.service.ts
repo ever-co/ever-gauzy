@@ -278,6 +278,14 @@ export class StockLevelService {
 		skip?: number;
 		withDeleted?: boolean;
 	}): Promise<IStockAvailability[]> {
+		const take = filter.take ?? 100;
+
+		// A window of no rows is answered without a read, for the reasons `listLevels` gives: `?take=0` is a
+		// request for nothing, and `?take=-1` is a limit SQLite reads as no limit at all.
+		if (take <= 0) {
+			return [];
+		}
+
 		const query = this.levelReadOf(filter);
 
 		// No count here: this read answers a list, and counting the set it was cut from is a query the caller
@@ -285,7 +293,7 @@ export class StockLevelService {
 		const rows = await query
 			.orderBy('level.id', 'ASC')
 			.offset(Math.max(filter.skip ?? 0, 0))
-			.limit(filter.take ?? 100)
+			.limit(take)
 			.getMany();
 
 		return this.toAvailabilities(rows as any[]);
@@ -299,6 +307,15 @@ export class StockLevelService {
 	 * client walking the cursor sees some levels twice and others never. The order is therefore stated rather
 	 * than left to the planner, and the count is taken on the same predicate the page was, so `totalCount`
 	 * describes the set the filters select rather than the rows that happened to fit.
+	 *
+	 * **A window of no rows is answered with the count alone, and never reaches the builder's `limit`.**
+	 * `resolveConnectionWindow` asks for one — a backward walk from the first row, `last: n, before: <offset
+	 * 0>`, has nothing before its anchor — and a zero limit is only as safe as the builder that writes it: one
+	 * that tests its limit for truthiness writes no `LIMIT` at all, which turns "no rows" into every level the
+	 * filters select (still the caller's own tenant, but an unbounded read under a window that asked for
+	 * nothing), and a negative limit is "no limit" on SQLite and an error on Postgres and MySQL. The kernel's
+	 * `findAll` answers `take: 0` the same way — an empty page and the total, which the connection still
+	 * reports — so this field and the connections built on `findAll` agree on what the window means.
 	 */
 	public async listLevels(filter: {
 		warehouseId?: ID;
@@ -308,11 +325,16 @@ export class StockLevelService {
 		withDeleted?: boolean;
 	}): Promise<IPagination<IStockAvailability>> {
 		const query = this.levelReadOf(filter);
+		const take = filter.take ?? 100;
+
+		if (take <= 0) {
+			return { items: [], total: await query.getCount() };
+		}
 
 		// The count is taken from the same builder before the window is applied to it: a count of the page
 		// would be the page size, which is the one number the caller already knows.
 		const counted = query.clone();
-		query.orderBy('level.id', 'ASC').offset(Math.max(filter.skip ?? 0, 0)).limit(filter.take ?? 100);
+		query.orderBy('level.id', 'ASC').offset(Math.max(filter.skip ?? 0, 0)).limit(take);
 
 		const [rows, total] = await Promise.all([query.getMany(), counted.getCount()]);
 

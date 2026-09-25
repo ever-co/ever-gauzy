@@ -1462,3 +1462,112 @@ describe('StockLevelService — the concurrency rule the package states (doc 09 
 
 
 
+
+/**
+ * The level reads' window, as the builder is handed it.
+ *
+ * `stockLevels` is a connection, and a connection can ask for a window of no rows: a backward walk from the
+ * first row — `last: 5, before: <offset 0>` — has nothing before its anchor, and `resolveConnectionWindow`
+ * answers it with `take: 0`. `listLevels` handed that zero to the query builder's `limit`, and a zero limit is
+ * only as safe as the builder that writes it — one that tests it for truthiness writes no `LIMIT` at all, and
+ * the read then answers every level the filters select. The REST route's own read took the same zero from
+ * `?take=0`, and `?take=-1` is a limit SQLite reads as no limit at all.
+ *
+ * The builder double here records every call it is handed, so the assertions are about the statement the
+ * service composed rather than about rows a double chose to answer.
+ */
+describe('StockLevelService — a window of no rows reads no rows', () => {
+	/** A level read's builder that records its calls and answers the rows and the count it was given. */
+	const recordingBuilder = (rows: Row[], count: number) => {
+		const calls: Array<[string, unknown[]]> = [];
+		const builder: any = {};
+
+		for (const method of ['innerJoin', 'select', 'addSelect', 'andWhere', 'where', 'withDeleted', 'orderBy', 'offset', 'limit']) {
+			builder[method] = (...args: unknown[]) => {
+				calls.push([method, args]);
+
+				return builder;
+			};
+		}
+
+		builder.clone = () => {
+			calls.push(['clone', []]);
+
+			return builder;
+		};
+		builder.getMany = async () => {
+			calls.push(['getMany', []]);
+
+			return rows;
+		};
+		builder.getCount = async () => {
+			calls.push(['getCount', []]);
+
+			return count;
+		};
+
+		return { builder, calls, service: new StockLevelService({ manager: { createQueryBuilder: () => builder } } as never) };
+	};
+
+	/** @returns The arguments every call of one builder method was handed. */
+	const argumentsOf = (calls: Array<[string, unknown[]]>, method: string) =>
+		calls.filter(([name]) => name === method).map(([, args]) => args);
+
+	let tenant: jest.SpyInstance;
+
+	beforeEach(() => {
+		const { RequestContext } = jest.requireMock('@gauzy/core');
+
+		tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+	});
+
+	afterEach(() => tenant.mockRestore());
+
+	it('answers `take: 0` with an empty page and the count of the tenant’s levels, and reads no rows', async () => {
+		const { calls, service } = recordingBuilder([{ id: 'level-1' }], 7);
+
+		const page = await service.listLevels({ warehouseId: WAREHOUSE, variantId: VARIANT, skip: 0, take: 0 });
+
+		// The count the connection reports as `totalCount`, over the same filters and the caller's tenant.
+		expect(page).toEqual({ items: [], total: 7 });
+		expect(argumentsOf(calls, 'getCount')).toHaveLength(1);
+		expect(argumentsOf(calls, 'andWhere')).toEqual(
+			expect.arrayContaining([
+				['aggregate.warehouseId = :warehouseId', { warehouseId: WAREHOUSE }],
+				['level.variantId = :variantId', { variantId: VARIANT }],
+				['level.tenantId = :tenantId', { tenantId: TENANT }]
+			])
+		);
+		// Nothing was selected, so no builder was ever asked to write a zero limit it might drop.
+		expect(argumentsOf(calls, 'getMany')).toHaveLength(0);
+		expect(argumentsOf(calls, 'limit')).toHaveLength(0);
+	});
+
+	it('still reads a non-empty window through the builder, limited to the size it asked for', async () => {
+		const { calls, service } = recordingBuilder([{ id: 'level-1', variantId: VARIANT, warehouseId: WAREHOUSE }], 7);
+
+		const page = await service.listLevels({ skip: 3, take: 2 });
+
+		expect(page.total).toBe(7);
+		expect(page.items).toHaveLength(1);
+		expect(argumentsOf(calls, 'offset')).toEqual([[3]]);
+		expect(argumentsOf(calls, 'limit')).toEqual([[2]]);
+		expect(argumentsOf(calls, 'orderBy')).toEqual([['level.id', 'ASC']]);
+	});
+
+	it.each([0, -1])('answers the route’s read with no levels for `take: %p`, without reading', async (take) => {
+		const { calls, service } = recordingBuilder([{ id: 'level-1' }], 7);
+
+		expect(await service.findLevels({ warehouseId: WAREHOUSE, take })).toEqual([]);
+		expect(argumentsOf(calls, 'getMany')).toHaveLength(0);
+		expect(argumentsOf(calls, 'limit')).toHaveLength(0);
+	});
+
+	it('keeps the route’s own ceiling when no size is stated', async () => {
+		const { calls, service } = recordingBuilder([], 0);
+
+		await service.findLevels({ warehouseId: WAREHOUSE });
+
+		expect(argumentsOf(calls, 'limit')).toEqual([[100]]);
+	});
+});

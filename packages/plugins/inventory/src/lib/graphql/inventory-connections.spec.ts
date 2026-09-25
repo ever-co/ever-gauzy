@@ -46,6 +46,9 @@ jest.mock('@gauzy/core', () => {
 		// The real decimal arithmetic, for the same reason the connection helpers are real: a service in
 		// this package's import graph sums quantities exactly, and a double that rounded would hide it.
 		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
+		// The rounding boundary a `Decimal` field is presented through, real for the same reason: the digits
+		// a client receives are what the assertions about those fields are about.
+		roundingStrategies: jest.requireActual('@gauzy/core/src/lib/money/rounding').roundingStrategies,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -138,6 +141,7 @@ import { StockAdjustmentResolver } from './stock-adjustment.resolver';
 import { StockCountResolver } from './stock-count.resolver';
 import { StockCountLineResolver } from './stock-count-line.resolver';
 import { ChannelWarehouseResolver } from './channel-warehouse.resolver';
+import { toDecimalWire } from './../inventory.decimal';
 
 /** The identifiers the filtered fields are asked about. Nothing reads them; they only have to be stated. */
 const WAREHOUSE = '00000000-0000-4000-8000-000000000010';
@@ -172,8 +176,11 @@ interface IFieldCase {
 	readonly call: (resolver: any, page?: any, withDeleted?: boolean) => Promise<IConnection>;
 	/** The filter the resolver must state to the service. */
 	readonly where: Record<string, unknown>;
-	/** The order the resource's own read means, when it states one. */
-	readonly order?: Record<string, unknown>;
+	/**
+	 * The order the resource's own read means, closed by the row's identity. Required: a store-paged read
+	 * with no order is one whose offset cursors name nothing the next page is cut from.
+	 */
+	readonly order: Record<string, unknown>;
 	/** Whether the field offers `withDeleted`, which the read it delegates to carries into the store. */
 	readonly withDeleted?: boolean;
 }
@@ -198,7 +205,7 @@ const CASES: IFieldCase[] = [
 		build: (service) => new StockMovementResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockMovements(WAREHOUSE, VARIANT, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, variantId: VARIANT },
-		order: { occurredAt: 'DESC' },
+		order: { occurredAt: 'DESC', id: 'DESC' },
 		withDeleted: true
 	},
 	{
@@ -208,6 +215,7 @@ const CASES: IFieldCase[] = [
 		call: (resolver, page, withDeleted) =>
 			resolver.stockReservations('ORDER' as never, REFERENCE, 'ACTIVE' as never, page, withDeleted),
 		where: { referenceType: 'ORDER', referenceId: REFERENCE, status: 'ACTIVE' },
+		order: { createdAt: 'DESC', id: 'DESC' },
 		withDeleted: true
 	},
 	{
@@ -216,6 +224,7 @@ const CASES: IFieldCase[] = [
 		build: (service, eventBus) => new StockTransferResolver(service, eventBus),
 		call: (resolver, page, withDeleted) => resolver.stockTransfers('DRAFT' as never, page, withDeleted),
 		where: { status: 'DRAFT' },
+		order: { createdAt: 'DESC', id: 'DESC' },
 		withDeleted: true
 	},
 	{
@@ -224,6 +233,7 @@ const CASES: IFieldCase[] = [
 		build: (service) => new StockTransferLineResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockTransferLines(TRANSFER, page, withDeleted),
 		where: { transferId: TRANSFER },
+		order: { createdAt: 'ASC', id: 'ASC' },
 		withDeleted: true
 	},
 	{
@@ -232,6 +242,7 @@ const CASES: IFieldCase[] = [
 		build: (service) => new StockAlertResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockAlerts(VARIANT, true, page, withDeleted),
 		where: { variantId: VARIANT, isActive: true },
+		order: { createdAt: 'ASC', id: 'ASC' },
 		withDeleted: true
 	},
 	{
@@ -241,6 +252,7 @@ const CASES: IFieldCase[] = [
 		call: (resolver, page, withDeleted) =>
 			resolver.stockAdjustments(WAREHOUSE, VARIANT, 'DRAFT' as never, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, variantId: VARIANT, status: 'DRAFT' },
+		order: { createdAt: 'DESC', id: 'DESC' },
 		withDeleted: true
 	},
 	{
@@ -250,6 +262,7 @@ const CASES: IFieldCase[] = [
 		call: (resolver, page, withDeleted) =>
 			resolver.stockCounts(WAREHOUSE, 'OPEN' as never, 'FULL' as never, page, withDeleted),
 		where: { warehouseId: WAREHOUSE, status: 'OPEN', mode: 'FULL' },
+		order: { createdAt: 'DESC', id: 'DESC' },
 		withDeleted: true
 	},
 	{
@@ -258,6 +271,7 @@ const CASES: IFieldCase[] = [
 		build: (service) => new StockCountLineResolver(service),
 		call: (resolver, page, withDeleted) => resolver.stockCountLines(COUNT, page, withDeleted),
 		where: { stockCountId: COUNT },
+		order: { createdAt: 'ASC', id: 'ASC' },
 		withDeleted: true
 	},
 	{
@@ -266,6 +280,7 @@ const CASES: IFieldCase[] = [
 		build: (service) => new ChannelWarehouseResolver(service),
 		call: (resolver, page, withDeleted) => resolver.channelWarehouses(CHANNEL, WAREHOUSE, page, withDeleted),
 		where: { channelId: CHANNEL, warehouseId: WAREHOUSE },
+		order: { priority: 'DESC', id: 'ASC' },
 		withDeleted: true
 	}
 ];
@@ -411,10 +426,16 @@ describe('every converted list field reads its page in the store', () => {
 		expect(service.findAll).toHaveBeenCalledTimes(1);
 		expect(service.findAll).toHaveBeenCalledWith({
 			where: testCase.where,
-			...(testCase.order ? { order: testCase.order } : {}),
+			order: testCase.order,
 			skip: 0,
 			take: 2
 		});
+
+		// The order is total: its last key is the primary key, the one column that leaves no tie. Every read
+		// here used to state no order at all, and a page cut with LIMIT/OFFSET from an unordered set is one the
+		// store may arrange differently next time — on Postgres an `UPDATE` moves a row to the end of the heap —
+		// so a walk repeated one row and never showed another, which no offset cursor can detect.
+		expect(Object.keys(testCase.order).pop()).toBe('id');
 
 		expect(connection.nodes).toEqual(rows);
 		expect(connection.edges.map((edge) => edge.node)).toEqual(rows);
@@ -444,7 +465,7 @@ describe('every converted list field reads its page in the store', () => {
 			// is what a read that rounded the offset down to a page boundary would answer.
 			expect(second.findAll).toHaveBeenCalledWith({
 				where: testCase.where,
-				...(testCase.order ? { order: testCase.order } : {}),
+				order: testCase.order,
 				skip: 2,
 				take: 2
 			});
@@ -465,5 +486,80 @@ describe('every converted list field reads its page in the store', () => {
 			/PAGINATION_STYLE_CONFLICT/
 		);
 		expect(service.findAll).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * The three `Decimal` fields of the package, as a client receives them.
+ *
+ * The schema documents `Decimal` as an exact decimal serialised as a string with six fractional digits,
+ * and the platform registers no serializer for the scalar, so the resolver's own answer is the wire value.
+ * Declaring the fields `Decimal` (the assertion above) changed what a generated client expects; these
+ * assertions pin that the server sends it. Each case is a value as a real read hands it over: the text
+ * Postgres and MySQL hydrate a `numeric(20,6)` column as, the float SQLite hydrates it as, and the exact sum
+ * the variance report accumulates.
+ */
+describe('the Decimal fields are served as the exact decimal text they declare', () => {
+	it.each([
+		// SQLite: the column arrives as a float. It leaves as the digits it spells, at six decimals.
+		[7.5, '7.500000'],
+		[0.1, '0.100000'],
+		// Its shortest round-trip form is read, not its binary expansion: `toFixed(6)` of this double is
+		// `12345678901234.123047`, digits nobody stored.
+		[12345678901234.123, '12345678901234.123000'],
+		// A magnitude a float prints in exponential form is written out before it is rounded.
+		[5e-7, '0.000001'],
+		[4e-7, '0.000000'],
+		[-2.25, '-2.250000'],
+		// Postgres and MySQL: the column arrives as its own text and leaves unchanged.
+		['7.500000', '7.500000'],
+		['12345678901234.123456', '12345678901234.123456'],
+		// An exact sum at the working scale is rounded once, half up.
+		['0.000002999997', '0.000003'],
+		['0', '0.000000']
+	])('presents %p as %p', (stored, wire) => {
+		expect(toDecimalWire(stored as never)).toBe(wire);
+	});
+
+	it('answers no value as no value, and refuses a value that is not a decimal rather than inventing one', () => {
+		expect(toDecimalWire(null)).toBeNull();
+		expect(toDecimalWire(undefined)).toBeNull();
+		expect(() => toDecimalWire('not a number' as never)).toThrow(/MONEY_NOT_DECIMAL_STRING/);
+		expect(() => toDecimalWire(Number.NaN)).toThrow(/MONEY_NOT_DECIMAL_STRING/);
+	});
+
+	it('serves StockCount.varianceValue as text on every dialect, where it used to be the driver’s own type', () => {
+		const resolver = new StockCountResolver({} as never);
+
+		// The same valuation, hydrated by SQLite and by Postgres: one wire value, where there used to be a
+		// JSON float for the first and a JSON string for the second.
+		expect(resolver.varianceValue({ varianceValue: 7.5 } as never)).toBe('7.500000');
+		expect(resolver.varianceValue({ varianceValue: '7.500000' } as never)).toBe('7.500000');
+		expect(resolver.varianceValue({ varianceValue: '12345678901234.123456' } as never)).toBe(
+			'12345678901234.123456'
+		);
+	});
+
+	it('serves StockTransferLine.unitCost as text, and a line with no recorded cost as null rather than zero', () => {
+		const resolver = new StockTransferLineResolver({} as never);
+
+		expect(resolver.unitCost({ unitCost: 0.1 } as never)).toBe('0.100000');
+		expect(resolver.unitCost({ unitCost: '19.990000' } as never)).toBe('19.990000');
+		expect(resolver.unitCost({ unitCost: null } as never)).toBeNull();
+		expect(resolver.unitCost({} as never)).toBeNull();
+	});
+
+	it('answers stockCountVariance with the exact text the service valued, not a double of it', async () => {
+		// The field hands on the report as the service built it, so the valuation is the service's exact text
+		// — past sixteen significant digits, where `Number()` of it is `12345678901234.123`.
+		const report = { units: 1, value: '12345678901234.123456', unpricedLines: 0 };
+		const service = { varianceOf: jest.fn().mockResolvedValue(report) };
+		const resolver = new StockCountLineResolver(service as never);
+
+		const answered = await resolver.stockCountVariance('count-1');
+
+		expect(service.varianceOf).toHaveBeenCalledWith('count-1');
+		expect(answered.value).toBe('12345678901234.123456');
+		expect(typeof answered.value).toBe('string');
 	});
 });

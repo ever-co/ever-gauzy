@@ -71,7 +71,9 @@ export class StockMovementResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { warehouseId, variantId },
-			order: { occurredAt: 'DESC' },
+			// Closed by the row's identity: movements posted in one instant — a transfer's two legs, a count's
+			// corrections — are otherwise a tie the store may arrange differently on the next page.
+			order: { occurredAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

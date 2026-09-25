@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
+import { isQueryFlagSet } from './../inventory.query';
 import { StockCountLine } from './stock-count-line.entity';
 import { StockCountLineService } from './stock-count-line.service';
 import { StockCountLineDTO, StockCountLineQueryDTO  } from './dto';
@@ -28,7 +29,9 @@ export class StockCountLineController {
 			where: where as any,
 			...(take ? { take: Number(take) } : {}),
 			...(skip ? { skip: Number(skip) } : {}),
-			...(withDeleted ? { withDeleted: true } : {})
+			// The raw query value: no validation pipe runs here, so the DTO's transform never turned
+			// `'false'` into `false`, and a truthiness test lifted the soft-delete filter for it.
+			...(isQueryFlagSet(withDeleted) ? { withDeleted: true } : {})
 		});
 	}
 

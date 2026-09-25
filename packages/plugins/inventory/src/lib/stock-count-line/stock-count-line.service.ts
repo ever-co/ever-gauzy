@@ -11,6 +11,7 @@ import {
 	multiplyDecimalUnits,
 	parseDecimalString
 } from '@gauzy/core';
+import { toDecimalWire } from './../inventory.decimal';
 import { StockCountLine } from './stock-count-line.entity';
 import { TypeOrmStockCountLineRepository } from './repository/type-orm-stock-count-line.repository';
 import { MikroOrmStockCountLineRepository } from './repository/mikro-orm-stock-count-line.repository';
@@ -48,14 +49,26 @@ export class StockCountLineService extends TenantAwareCrudService<StockCountLine
 	 * JavaScript doubles is the arithmetic that turns `0.1 × 0.1` into `0.010000000000000002` and three
 	 * of them into `0.030000000000000006`. This report is the figure a location signs a stock write-off
 	 * off against, so it is summed over the exact digits of the two columns — the product is taken at
-	 * the combined scale, the running totals are exact decimal text, and the conversion to the `number`
-	 * this seam states happens once, at the end, on a value that is already right.
+	 * the combined scale and the running totals are exact decimal text.
+	 *
+	 * **The valuation leaves this seam as the decimal text it was summed as.** `StockCountVariance.value`
+	 * is declared `Decimal`, which the schema documents as an exact decimal serialised as a string with
+	 * six fractional digits — the wire form of a `numeric(20,6)` column — and the platform registers no
+	 * serializer for that scalar, so whatever this method answers is what the client receives. It used to
+	 * answer `Number(value)`: a JSON float under a field that promises a string, and one that rounded a
+	 * valuation past sixteen significant digits (`12345678901234.123456` became `12345678901234.123`) on
+	 * the server, after all the exact arithmetic above. The sum is therefore rounded once, to the storage
+	 * scale, through the platform's active rounding strategy — the one boundary where a figure is
+	 * presented, which {@link toDecimalWire} is for every `Decimal` field of this package — and served as
+	 * text. `units` stays a `number` because the schema declares it `Float`.
 	 *
 	 * @param stockCountId The session to value.
-	 * @returns The total absolute variance in units, its valuation, and how many lines could not be
-	 * valued because no cost is recorded for their variant.
+	 * @returns The total absolute variance in units, its valuation as exact decimal text at six decimals,
+	 * and how many lines could not be valued because no cost is recorded for their variant.
 	 */
-	public async varianceOf(stockCountId: string): Promise<{ units: number; value: number; unpricedLines: number }> {
+	public async varianceOf(
+		stockCountId: string
+	): Promise<{ units: number; value: DecimalString; unpricedLines: number }> {
 		const tenantId = RequestContext.currentTenantId();
 		const lines = await this.typeOrmStockCountLineRepository.find({
 			where: { stockCountId, ...(tenantId ? { tenantId } : {}) } as any
@@ -82,7 +95,11 @@ export class StockCountLineService extends TenantAwareCrudService<StockCountLine
 			value = addDecimalStrings(value, this.product(variance, cost));
 		}
 
-		return { units: Number(units), value: Number(value), unpricedLines };
+		return {
+			units: Number(units),
+			value: toDecimalWire(value),
+			unpricedLines
+		};
 	}
 
 	/*

@@ -73,6 +73,9 @@ export class StockAdjustmentResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { warehouseId, variantId, status },
+			// Newest first, closed by the row's identity: the page is cut with LIMIT/OFFSET and its cursors are
+			// offsets, so an order with ties lets the store arrange them differently on the next page.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

@@ -68,6 +68,10 @@ export class ChannelWarehouseResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { channelId, warehouseId },
+			// The order the service resolves eligible locations in, highest priority first, closed by the row's
+			// identity: an offset cursor is a position, and two assignments at one priority are otherwise a tie
+			// the store may arrange differently on the next page.
+			order: { priority: 'DESC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

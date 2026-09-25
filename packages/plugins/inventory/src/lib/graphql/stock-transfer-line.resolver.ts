@@ -6,9 +6,9 @@
  * resolver is schema-first, matching the platform’s existing resolvers: the schema literal declares
  * the types and this class binds them to the service.
  */
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { DecimalString, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	FeatureFlagGuard,
 	GraphqlConnection,
@@ -21,6 +21,7 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { toDecimalWire } from './../inventory.decimal';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockTransferLine } from './../stock-transfer-line/stock-transfer-line.entity';
 import { StockTransferLineService } from './../stock-transfer-line/stock-transfer-line.service';
@@ -65,6 +66,10 @@ export class StockTransferLineResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.service.findAll({
 			where: { transferId },
+			// In the order the rows were written, closed by the row's identity: the page is cut with
+			// LIMIT/OFFSET and its cursors are offsets, so an order with ties lets the store arrange them
+			// differently on the next page.
+			order: { createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
@@ -85,5 +90,22 @@ export class StockTransferLineResolver {
 	@Permissions(InventoryPermission.STOCK_TRANSFER_CREATE as PermissionsEnum)
 	async addStockTransferLine(@Args('input') input: any): Promise<any> {
 		return await this.service.addLine(input);
+	}
+
+	/**
+	 * The unit cost the line carries, as the exact decimal the schema declares.
+	 *
+	 * `unitCost` is a nullable `numeric(20,6)` column typed `Decimal`, and the platform's `Decimal` scalar
+	 * has no serializer: the column went out as the driver hydrated it — text on Postgres and MySQL, a float
+	 * on SQLite — so one field had two wire types. A line with no recorded cost still answers `null`: the
+	 * absence of a cost is information, and it is not a cost of zero. Every line this type answers passes
+	 * through here, including the lines a transfer carries.
+	 *
+	 * @param line The line being answered.
+	 * @returns Its unit cost as exact decimal text at six decimals, or `null` when none is recorded.
+	 */
+	@ResolveField('unitCost')
+	unitCost(@Parent() line: StockTransferLine): DecimalString | null {
+		return toDecimalWire(line.unitCost);
 	}
 }

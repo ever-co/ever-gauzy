@@ -81,6 +81,11 @@ jest.mock('@gauzy/core', () => {
 		formatDecimalUnits: decimal.formatDecimalUnits,
 		multiplyDecimalUnits: decimal.multiplyDecimalUnits,
 		pow10: decimal.pow10,
+		// The valuation is presented through the platform's own rounding boundary, so the storage scale and
+		// the strategy registry are the real ones too: a double of either would decide the digits under test.
+		STORAGE_SCALE: decimal.STORAGE_SCALE,
+		WORKING_SCALE: decimal.WORKING_SCALE,
+		roundingStrategies: jest.requireActual('@gauzy/core/src/lib/money/rounding').roundingStrategies,
 		RequestContext: {
 			currentUser: () => null,
 			currentUserId: () => null,
@@ -234,7 +239,9 @@ describe('StockCountLineService — the variance report of a session (doc 09 §1
 
 		const report = await service.varianceOf(SESSION);
 
-		expect(report).toEqual({ units: 0.3, value: 0.03, unpricedLines: 0 });
+		// The valuation is served as the exact decimal text the schema's `Decimal` promises — six fractional
+		// digits, a string — rather than the `0.03` double it used to be converted to at the end.
+		expect(report).toEqual({ units: 0.3, value: '0.030000', unpricedLines: 0 });
 	});
 
 	it('counts the magnitude of a variance, whichever direction it went', async () => {
@@ -244,7 +251,7 @@ describe('StockCountLineService — the variance report of a session (doc 09 §1
 
 		const report = await service.varianceOf(SESSION);
 
-		expect(report).toEqual({ units: 5, value: 7.5, unpricedLines: 0 });
+		expect(report).toEqual({ units: 5, value: '7.500000', unpricedLines: 0 });
 	});
 
 	it('reports a line it cannot value rather than inventing a cost for it', async () => {
@@ -257,7 +264,7 @@ describe('StockCountLineService — the variance report of a session (doc 09 §1
 
 		const report = await service.varianceOf(SESSION);
 
-		expect(report).toEqual({ units: 3.25, value: 5, unpricedLines: 1 });
+		expect(report).toEqual({ units: 3.25, value: '5.000000', unpricedLines: 1 });
 	});
 
 	it('leaves a line with no variance out of both totals', async () => {
@@ -268,7 +275,7 @@ describe('StockCountLineService — the variance report of a session (doc 09 §1
 
 		const report = await service.varianceOf(SESSION);
 
-		expect(report).toEqual({ units: 0, value: 0, unpricedLines: 0 });
+		expect(report).toEqual({ units: 0, value: '0.000000', unpricedLines: 0 });
 	});
 
 	it('reads the lines and the prices of the caller’s own tenant, in one query for the session', async () => {
@@ -281,7 +288,7 @@ describe('StockCountLineService — the variance report of a session (doc 09 §1
 
 		const report = await service.varianceOf(SESSION);
 
-		expect(report).toEqual({ units: 1, value: 0, unpricedLines: 1 });
+		expect(report).toEqual({ units: 1, value: '0.000000', unpricedLines: 1 });
 		expect(reads).toHaveLength(2);
 		expect(reads[0]).toMatchObject({ stockCountId: SESSION, tenantId: TENANT });
 		expect(reads[1]).toMatchObject({ tenantId: TENANT });
@@ -292,7 +299,34 @@ describe('StockCountLineService — the variance report of a session (doc 09 §1
 
 		const report = await service.varianceOf(SESSION);
 
-		expect(report).toEqual({ units: 0, value: 0, unpricedLines: 0 });
+		expect(report).toEqual({ units: 0, value: '0.000000', unpricedLines: 0 });
 		expect(reads).toHaveLength(1);
+	});
+
+	it('serves a valuation past sixteen significant digits with every digit it was summed with', async () => {
+		// `numeric(20,6)` holds fourteen integer digits and six decimals, and a double holds about sixteen
+		// significant digits: `Number('12345678901234.123456')` is `12345678901234.123`. The exact sum was
+		// right and the conversion at the end threw the last three decimals away, on the server, under a field
+		// the schema declares an exact decimal.
+		const { service } = fixture([line(VARIANT, '1.000000')], [price(VARIANT, '12345678901234.123456')]);
+
+		const report = await service.varianceOf(SESSION);
+
+		expect(report.value).toBe('12345678901234.123456');
+		expect(typeof report.value).toBe('string');
+	});
+
+	it('rounds a valuation whose product runs past six decimals once, half up, to the six the wire carries', async () => {
+		// Two six-decimal factors multiply to twelve decimals, and the lines are summed there so no line is
+		// rounded on its own; the total is rounded once, at the boundary where it is presented.
+		// 0.333333 × 0.000003 = 0.000000999999, three lines of it 0.000002999997 → 0.000003.
+		const { service } = fixture(
+			[line(VARIANT, '0.333333'), line(VARIANT, '-0.333333'), line(VARIANT, '0.333333', { id: 'third' })],
+			[price(VARIANT, '0.000003')]
+		);
+
+		const report = await service.varianceOf(SESSION);
+
+		expect(report.value).toBe('0.000003');
 	});
 });

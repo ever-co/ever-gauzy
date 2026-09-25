@@ -265,6 +265,22 @@ describe('StockLevelResolver — one concept, two protocols, the same names (doc
 		expect(schemaText).toMatch(/type StockLevelConnection \{\s*nodes: \[StockLevel!\]!\s*edges: \[StockLevelEdge!\]!\s*totalCount: Int!\s*pageInfo: PageInfo!\s*\}/);
 	});
 
+	it('asks the paged read for no rows when a backward walk reaches the first level', async () => {
+		const { service, resolver } = surfaces();
+		const { encodeOffsetCursor } = jest.requireActual('@gauzy/core/src/lib/api/graphql-connection');
+
+		service.listLevels.mockResolvedValueOnce({ items: [], total: 7 });
+
+		// Nothing lies before the first row, so the window the kernel resolves is empty — `take: 0`, which
+		// `listLevels` answers with the count alone rather than handing a zero limit to its query builder.
+		const connection = await resolver.stockLevels(WAREHOUSE, VARIANT, { last: 5, before: encodeOffsetCursor(0) });
+
+		expect(service.listLevels).toHaveBeenCalledWith({ warehouseId: WAREHOUSE, variantId: VARIANT, skip: 0, take: 0 });
+		expect(connection.nodes).toEqual([]);
+		expect(connection.totalCount).toBe(7);
+		expect(connection.pageInfo.hasPreviousPage).toBe(false);
+	});
+
 	it('spells the concept `stock*` on both halves of the schema', () => {
 		// The names the two protocols are joined by. A root field named for the package rather than for
 		// the concept is how the same resource ends up reachable under two names, and how half of it goes

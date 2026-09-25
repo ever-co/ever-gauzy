@@ -9,6 +9,7 @@ import {
 	UseValidationPipe
 } from '@gauzy/core';
 import { InventoryPermission } from './../inventory.permissions';
+import { isQueryFlagSet } from './../inventory.query';
 import { ChannelWarehouse } from './channel-warehouse.entity';
 import { ChannelWarehouseService } from './channel-warehouse.service';
 import { AssignChannelWarehouseDTO, ChannelWarehouseDTO, ChannelWarehouseQueryDTO  } from './dto';
@@ -34,7 +35,9 @@ export class ChannelWarehouseController {
 			where: where as any,
 			...(take ? { take: Number(take) } : {}),
 			...(skip ? { skip: Number(skip) } : {}),
-			...(withDeleted ? { withDeleted: true } : {})
+			// The raw query value: no validation pipe runs here, so the DTO's transform never turned
+			// `'false'` into `false`, and a truthiness test lifted the soft-delete filter for it.
+			...(isQueryFlagSet(withDeleted) ? { withDeleted: true } : {})
 		});
 	}
 

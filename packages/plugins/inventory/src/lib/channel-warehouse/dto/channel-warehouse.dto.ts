@@ -78,6 +78,11 @@ export class ChannelWarehouseQueryDTO extends ChannelWarehouseDTO {
 	@Min(1)
 	skip?: number;
 
+	/**
+	 * Whether retired rows are included. The transform below runs only where a validation pipe does, and
+	 * the list route this DTO describes mounts none, so its handler receives the raw query string and
+	 * parses it itself with `isQueryFlagSet` — `'false'` is a truthy string, not a false flag.
+	 */
 	@ApiPropertyOptional({ type: () => Boolean, description: 'Whether retired rows are included.' })
 	@IsOptional()
 	@Transform(({ value }) => value === true || value === 'true')
