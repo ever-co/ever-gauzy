@@ -38,7 +38,14 @@ export {
 	generateMigration,
 	prepareSQLQuery,
 	revertLastDatabaseMigration,
-	runDatabaseMigrations
+	runDatabaseMigrations,
+	// An app that builds its own TypeORM data source on SQLite needs the same transaction queue the
+	// platform's data source gets — see embedded-transaction-queue.ts.
+	createPlatformDataSource,
+	serializeEmbeddedTransactions,
+	hasEmbeddedTransactionQueue,
+	EmbeddedTransactionWaitTimeoutError,
+	EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS
 } from './lib/database';
 // The four things a service needs to write one raw statement that runs on all four dialects: the
 // identifier quoting MySQL disagrees about, the timestamp and boolean spellings it also disagrees

@@ -7,6 +7,7 @@ import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { serializeEmbeddedTransactions } from './../../database/embedded-transaction-queue';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
@@ -1697,9 +1698,13 @@ export class SeedDataService {
 					...dbConnectionOptions,
 					...this.overrideDbConfig
 				};
-				const dataSource = new DataSource({
-					...options
-				} as DataSourceOptions);
+				// The same transaction queue the application's data source gets on SQLite, where every
+				// transaction would otherwise share the data source's one query runner.
+				const dataSource = serializeEmbeddedTransactions(
+					new DataSource({
+						...options
+					} as DataSourceOptions)
+				);
 
 				if (!dataSource.isInitialized) {
 					this.dataSource = await dataSource.initialize();
