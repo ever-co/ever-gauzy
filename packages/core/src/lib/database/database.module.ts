@@ -8,6 +8,7 @@ import { KnexModule } from 'nest-knexjs';
 import { ConfigModule, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
 import { createPlatformDataSource } from './embedded-transaction-queue';
+import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
@@ -61,7 +62,15 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || BetterSqliteDri
 			// On SQLite every transaction shares the data source's one query runner, so this factory
 			// queues them one at a time; any other dialect gets the data source TypeORM builds, untouched.
 			// See embedded-transaction-queue.ts.
-			dataSourceFactory: (options) => createPlatformDataSource(options),
+			//
+			// Under DB_ORM=mikro-orm TypeORM is still initialised, over skeleton entities, and the raw
+			// TypeORM `@RelationId`, `@Index` and `@Unique` entries naming properties only MikroORM maps
+			// would fail its metadata build — so they are removed first. Under TypeORM (production) the
+			// call returns before reading anything. See typeorm-skeleton-metadata.ts.
+			dataSourceFactory: (options) => {
+				pruneTypeOrmSkeletonMetadata();
+				return createPlatformDataSource(options);
+			},
 			imports: [ConfigModule],
 			inject: [ConfigService]
 		}),

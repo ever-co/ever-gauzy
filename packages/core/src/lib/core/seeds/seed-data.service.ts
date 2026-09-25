@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { serializeEmbeddedTransactions } from './../../database/embedded-transaction-queue';
+import { pruneTypeOrmSkeletonMetadata } from './../../database/typeorm-skeleton-metadata';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
@@ -1700,6 +1701,9 @@ export class SeedDataService {
 				};
 				// The same transaction queue the application's data source gets on SQLite, where every
 				// transaction would otherwise share the data source's one query runner.
+				// Under DB_ORM=mikro-orm TypeORM sees skeleton entities; drop the metadata entries that name a
+				// property it was never given, or the data source cannot build (a strict no-op under TypeORM).
+				pruneTypeOrmSkeletonMetadata();
 				const dataSource = serializeEmbeddedTransactions(
 					new DataSource({
 						...options

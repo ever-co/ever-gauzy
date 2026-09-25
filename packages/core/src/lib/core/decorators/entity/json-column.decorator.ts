@@ -6,10 +6,21 @@
  * so callers get full autocomplete and type-safety — no `Record<string, unknown>` escape hatch.
  *
  * Environment variables:
- *   ORM_TYPE = 'typeorm' | 'mikro-orm'                           (default: 'typeorm')
+ *   DB_ORM   = 'typeorm' | 'mikro-orm'                           (default: 'typeorm', read by `getORMType()`)
  *   DB_TYPE  = 'postgres' | 'mysql' | 'mariadb' | 'sqlite' | …  (default: 'sqlite')
+ *
+ * The ORM is the one every other entity decorator follows — `getORMType()`, which reads `DB_ORM`. This file
+ * used to read `ORM_TYPE`, which nothing sets, so under `DB_ORM=mikro-orm` every JSON column still got a
+ * TypeORM `@Column` and no MikroORM property: `Operation.state`, `input` and `result`, and every other JSON
+ * column on the platform, were unmapped on the ORM that was actually running. Under `DB_ORM=typeorm` (or
+ * unset) the TypeORM path is chosen exactly as before.
+ *
+ * One difference between the two paths is MikroORM's, not this file's: its hydrator assigns a SQL `NULL`
+ * straight to the property without consulting the type, so `defaultValue` (and `@JsonArrayColumn`'s `[]`)
+ * replaces a stored `NULL` on TypeORM reads only. A non-null stored value reads the same on both.
  */
 
+import { MultiORMEnum, getORMType } from '../../utils';
 import { ColumnOptions } from './column-options.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,8 +29,6 @@ import { ColumnOptions } from './column-options.types';
 
 type DbDriver = 'postgres' | 'mysql' | 'mariadb' | 'sqlite' | 'better-sqlite3' | 'mssql' | 'default';
 
-type OrmKind = 'typeorm' | 'mikro-orm';
-
 export type JsonStorageType = 'jsonb' | 'json' | 'simple-json' | 'text';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27,7 +36,7 @@ export type JsonStorageType = 'jsonb' | 'json' | 'simple-json' | 'text';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Options accepted when ORM_TYPE=typeorm.
+ * Options accepted when DB_ORM=typeorm.
  * Extends TypeORM's `ColumnOptions` minus the fields we control internally
  * (`type` and `transformer` are managed by the decorator itself).
  */
@@ -37,7 +46,7 @@ export type TypeOrmJsonColumnOptions<T> = ColumnOptions<T> & {
 };
 
 /**
- * Options accepted when ORM_TYPE=mikro-orm.
+ * Options accepted when DB_ORM=mikro-orm.
  * Extends MikroORM's `PropertyOptions` minus the fields we control internally
  * (`type` / `customType` are managed by the decorator itself).
  */
@@ -58,10 +67,6 @@ export type JsonColumnOptions<T> = TypeOrmJsonColumnOptions<T> | MikroOrmJsonCol
 
 function getDbDriver(): DbDriver {
 	return (process.env.DB_TYPE as DbDriver) ?? 'default';
-}
-
-function getOrmKind(): OrmKind {
-	return (process.env.ORM_TYPE as OrmKind) ?? 'typeorm';
 }
 
 function resolveStorageType(db: DbDriver): JsonStorageType {
@@ -201,7 +206,9 @@ function buildMikroOrmDecorator<T>(opts: MikroOrmJsonColumnOptions<T>): Property
  * ```
  */
 export function JsonColumn<T = unknown>(options: JsonColumnOptions<T> = {}): PropertyDecorator {
-	return getOrmKind() === 'mikro-orm'
+	// The active ORM alone, like `@MultiORMColumn`: `getORMType()` reads `DB_ORM` and answers TypeORM when it is
+	// unset or unrecognised.
+	return getORMType() === MultiORMEnum.MikroORM
 		? buildMikroOrmDecorator<T>(options as MikroOrmJsonColumnOptions<T>)
 		: buildTypeOrmDecorator<T>(options as TypeOrmJsonColumnOptions<T>);
 }
