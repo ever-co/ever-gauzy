@@ -2,8 +2,38 @@ import {
 	IInvoice,
 	IOrganization,
 	IOrganizationContact,
+	IProductTranslatable,
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
+import { Product } from '../product/product.entity';
+
+/**
+ * An invoice line's product, with the invoice's language merged onto it.
+ *
+ * **The merge is the entity's, whichever ORM read the invoice.** On TypeORM the line's product is a `Product`
+ * and carries `translate`, and that call is made exactly as it always was. On MikroORM the invoice comes from
+ * the CRUD base as `wrap(entity).toJSON()` — its data, and its loaded relations', as plain objects without the
+ * entities' prototypes — so the call failed with `product.translate is not a function`, and no invoice billed by
+ * product could be rendered: the PDF download (REST and GraphQL) answered an error, and the invoice e-mail, which
+ * attaches the same PDF, was logged as failed and never sent. The same merge is therefore run on the serialized
+ * product, as `Product`'s own method.
+ *
+ * The product is handed to it as it stands. The merge reads nothing of it but `translations` — which the invoice
+ * read loads (the entity loads them eagerly besides), and both ORMs answer as the array of the product's
+ * translations — so no relation the read did not load is ever dereferenced; and it mutates the object it is called
+ * on, as it mutates the TypeORM entity.
+ *
+ * @param product The line's product, as the invoice read answered it.
+ * @param language The language to merge.
+ * @returns What `translate` answers for the product.
+ */
+function translatedProduct(product: IProductTranslatable, language: string): any {
+	if (typeof product.translate === 'function') {
+		return product.translate(language);
+	}
+
+	return Product.prototype.translate.call(product, language);
+}
 
 export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
@@ -35,7 +65,7 @@ export async function generateInvoicePdfDefinition(
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				let product: any = item.product;
-				product = product.translate(language);
+				product = translatedProduct(product, language);
 				currentItem.unshift(`${product.name}`);
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:

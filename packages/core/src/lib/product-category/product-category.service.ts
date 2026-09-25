@@ -581,7 +581,7 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 		if (languageCode) {
 			return Promise.all(
 				items.map((category: IProductCategoryTranslatable) =>
-					Object.assign({}, category, category.translate(languageCode))
+					Object.assign({}, category, this.translateRow(category, languageCode))
 				)
 			);
 		} else {
@@ -599,13 +599,42 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	async mapTranslatedProductType(type: IProductCategoryTranslatable, languageCode: LanguagesEnum) {
 		try {
 			if (languageCode) {
-				return Object.assign({}, type, type.translate(languageCode));
+				return Object.assign({}, type, this.translateRow(type, languageCode));
 			} else {
 				return type;
 			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * One row the CRUD base answered, with the requested language merged onto it.
+	 *
+	 * **The merge is the entity's, whichever ORM answered the row.** On TypeORM the row is a `ProductCategory` and
+	 * carries `translate`, and that call is made exactly as it always was. On MikroORM the CRUD base answers
+	 * `wrap(entity).toJSON()` — the row's data as a plain object, without the entity's prototype — so calling the
+	 * method on the row failed with `category.translate is not a function` whenever a language was merged: a 500
+	 * from `GET /product-categories`, `GET /product-categories/pagination` and the GraphQL `productCategories`
+	 * field, and a 400 from `POST /product-categories` and `createProductCategory`, whose command merges the row
+	 * {@link create} answered — serialized too — and wraps what it catches. The same merge is therefore run on the
+	 * serialized row, as `ProductCategory`'s own method.
+	 *
+	 * The row is handed to it as it stands. The merge reads nothing of the row but `translations` — loaded eagerly, and
+	 * answered by both ORMs as the array of the row's translations — so no relation the read did not load is ever
+	 * dereferenced; and it mutates the row it is called on, as it mutates the TypeORM entity, which is what the
+	 * callers' `Object.assign` relies on to leave the merged `translations` out of the answer.
+	 *
+	 * @param row The row, as the CRUD base answered it.
+	 * @param languageCode The language to merge.
+	 * @returns What `translate` answers for the row.
+	 */
+	private translateRow(row: IProductCategoryTranslatable, languageCode: string): any {
+		if (typeof row.translate === 'function') {
+			return row.translate(languageCode);
+		}
+
+		return ProductCategory.prototype.translate.call(row, languageCode);
 	}
 
 	/**
