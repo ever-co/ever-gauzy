@@ -5,6 +5,7 @@ import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { SubscriptionFeatures } from '../../subscription.features';
 import { SubscriptionPermissions } from '../../subscription.permissions';
 import { SubscriptionItem } from '../../subscription-item/subscription-item.entity';
 import { SubscriptionItemService } from '../../subscription-item/subscription-item.service';
@@ -34,10 +35,18 @@ interface ISubscriptionItemFilter {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **The plugin's own gate stands beside it.** The class also declares `SubscriptionFeatures.SUBSCRIPTION`
+ * (`FEATURE_SUBSCRIPTION`), the code every subscription REST controller declares with `@FeatureFlag`, so a
+ * tenant that switched subscription off is refused here exactly as its routes refuse it — rather than
+ * finding every write the routes withhold still served over GraphQL. The two codes are two questions, both
+ * of which must be answered yes: the endpoint is on, and the capability is on. The platform's decorator
+ * accumulates the codes stated on one target and `FeatureFlagGuard` requires every one of them.
  */
 @Resolver('SubscriptionItem')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(SubscriptionFeatures.SUBSCRIPTION)
 @Permissions(SubscriptionPermissions.SUBSCRIPTIONS_VIEW)
 export class SubscriptionItemResolver {
 	constructor(

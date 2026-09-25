@@ -11,6 +11,7 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { EntitlementFeatures } from '../../entitlement.features';
 import { EntitlementService } from '../../entitlement/entitlement.service';
 import { EntitlementKey } from '../../entitlement-key/entitlement-key.entity';
 import { EntitlementKeyService } from '../../entitlement-key/entitlement-key.service';
@@ -70,10 +71,18 @@ interface IEntitlementKeyFilter {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **The plugin's own gate stands beside it.** The class also declares `EntitlementFeatures.ENTITLEMENT`
+ * (`FEATURE_ENTITLEMENT`), the code every entitlement REST controller declares with `@FeatureFlag`, so a
+ * tenant that switched entitlement off is refused here exactly as its routes refuse it — rather than finding
+ * every write the routes withhold still served over GraphQL. The two codes are two questions, both of which
+ * must be answered yes: the endpoint is on, and the capability is on. The platform's decorator accumulates
+ * the codes stated on one target and `FeatureFlagGuard` requires every one of them.
  */
 @Resolver('EntitlementKey')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(EntitlementFeatures.ENTITLEMENT)
 @Permissions(EntitlementPermissions.ENTITLEMENTS_VIEW)
 export class EntitlementKeyResolver {
 	constructor(private readonly entitlementKeyService: EntitlementKeyService) {}

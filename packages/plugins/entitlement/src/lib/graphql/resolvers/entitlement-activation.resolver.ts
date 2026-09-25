@@ -11,6 +11,7 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { EntitlementFeatures } from '../../entitlement.features';
 import { EntitlementService } from '../../entitlement/entitlement.service';
 import { EntitlementActivation } from '../../entitlement-activation/entitlement-activation.entity';
 import { EntitlementActivationService } from '../../entitlement-activation/entitlement-activation.service';
@@ -45,10 +46,18 @@ interface IEntitlementActivationFilter {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **The plugin's own gate stands beside it.** The class also declares `EntitlementFeatures.ENTITLEMENT`
+ * (`FEATURE_ENTITLEMENT`), the code every entitlement REST controller declares with `@FeatureFlag`, so a
+ * tenant that switched entitlement off is refused here exactly as its routes refuse it — rather than finding
+ * every write the routes withhold still served over GraphQL. The two codes are two questions, both of which
+ * must be answered yes: the endpoint is on, and the capability is on. The platform's decorator accumulates
+ * the codes stated on one target and `FeatureFlagGuard` requires every one of them.
  */
 @Resolver('EntitlementActivation')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(EntitlementFeatures.ENTITLEMENT)
 @Permissions(EntitlementPermissions.ENTITLEMENTS_VIEW)
 export class EntitlementActivationResolver {
 	constructor(
@@ -156,17 +165,17 @@ export class EntitlementActivationResolver {
 	 * it in the payload this resource's mutations declare; the route hands the raw result to its caller,
 	 * which is a difference of the answer and not of the write.
 	 *
-	 * **A divergence between that route's docstrings and its own metadata is recorded here rather than
-	 * repaired on one surface only.** `UpdateEntitlementActivationDTO` says only descriptive fields are
-	 * open and that a body able to rewrite the device identity "would let a client move a slot to a
-	 * different machine without going through the activation path the limit is enforced on" — while the
-	 * DTO's live validation metadata carries `deviceId` and `status`, and the inherited `update` writes
-	 * every member it is handed. The input below is therefore the route's body member for member,
-	 * including those two: §3.1 forbids GraphQL being *narrower* than REST, and a field that quietly
-	 * dropped them would answer one caller and refuse another for the same write. The hazard is real
-	 * and belongs to the route — a correction path that can rewrite the identity the seat count is taken
-	 * over, and that can set a status `05-database-schema-spec.md` §19.2 calls immutable once revoked —
-	 * so it is stated here for the owner rather than closed on the GraphQL side alone.
+	 * **The correction path moves nothing the slot's lifecycle owns, on either surface.** The route's body
+	 * and this input used to carry `status`, `entitlementId`, `entitlementKeyId`, `deviceId` and
+	 * `revocationReason`, and the inherited `update` wrote every member it was handed: a caller holding
+	 * `ENTITLEMENTS_EDIT` set a `REVOKED` slot back to `ACTIVE` beside the one that replaced it — two live
+	 * activations against a limit of one, because the limit is only counted when a slot is taken — or
+	 * repointed a slot at another right without that right's limit being counted, or rewrote the reason
+	 * that bars a device withdrawn for abuse from coming back. Those five members are gone from
+	 * `UpdateEntitlementActivationInput` and from `UpdateEntitlementActivationDTO` alike, so the two
+	 * surfaces still accept the same write, and `EntitlementActivationService.update` refuses them
+	 * whichever way they arrive. A slot's state moves through release and revoke (`deactivateEntitlement`),
+	 * and a slot is taken through activate.
 	 *
 	 * No permission is left to the class and neither write convention is invented: the route declares
 	 * `ENTITLEMENTS_EDIT` and no `@Idempotent` and no `@Versioned`, and so does this field.

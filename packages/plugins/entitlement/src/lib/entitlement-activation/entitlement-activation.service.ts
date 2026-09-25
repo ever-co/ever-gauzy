@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID } from '@gauzy/contracts';
 import { EventBus, EventOutboxService, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { Entitlement } from '../entitlement/entitlement.entity';
@@ -32,6 +33,33 @@ import { TypeOrmEntitlementActivationRepository } from './repository/type-orm-en
  * formality the customer could undo by trying again.
  */
 export const RE_ACTIVATION_BLOCKING_REASONS: string[] = ['KEY_SHARING', 'FRAUD', 'ABUSE'];
+
+/**
+ * The members of an activation only its own operations write, which an edit therefore refuses.
+ *
+ * Each is written by the path that takes, releases or revokes a slot, and each is what a rule of that path
+ * is decided over:
+ *
+ * - `status`, with `activatedAt`, `deactivatedAt`, `revokedAt` and `revokedByUserId` — the slot's state and
+ *   the record of its moves. A `REVOKED` slot set back to `ACTIVE` by an edit sits beside the one that
+ *   replaced it, past `activationLimit`, because the limit is counted only when a slot is taken;
+ * - `entitlementId` — the right the slot is counted against; repointing it skips that right's ceiling;
+ * - `entitlementKeyId` — the key whose revocation releases the slot; detaching it lets the slot outlive
+ *   the key;
+ * - `deviceId` — the identity the seat count and the device bar are taken over (§19.2);
+ * - `revocationReason` — which decides whether a revoked device may activate again.
+ */
+export const ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS: readonly string[] = [
+	'status',
+	'activatedAt',
+	'deactivatedAt',
+	'revokedAt',
+	'revokedByUserId',
+	'entitlementId',
+	'entitlementKeyId',
+	'deviceId',
+	'revocationReason'
+];
 
 /**
  * Taking, giving back and being deprived of a slot.
@@ -228,6 +256,42 @@ export class EntitlementActivationService extends TenantAwareCrudService<Entitle
 				liveActivations: Number(outcome.entitlement.activationCount ?? 0)
 			})
 		};
+	}
+
+	/**
+	 * Corrects the descriptive fields of a slot — its device name, fingerprint, seat reference, buyer,
+	 * last-seen instant, client details and metadata — and nothing its lifecycle owns.
+	 *
+	 * This is the write behind `PUT /entitlement-activations/:id` and `updateEntitlementActivation`, both
+	 * under `ENTITLEMENTS_EDIT`. The inherited update writes every member it is handed, and both surfaces
+	 * used to hand it the slot's state and identity; the members in
+	 * {@link ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS} are refused here, before anything is written,
+	 * whichever surface or caller names them. A member counts as named when it carries a value: `undefined`
+	 * is how a DTO instance and an input both spell "not stated", and `null` is a value. The rest of the
+	 * write — its tenant scoping included — is the base's.
+	 *
+	 * @param id The activation, or the conditions it must satisfy.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, or the updated row, whichever the ORM answers.
+	 * @throws BadRequestException naming every refused member the partial carries.
+	 */
+	public async update(
+		id: string | FindOptionsWhere<EntitlementActivation>,
+		partialEntity: QueryDeepPartialEntity<EntitlementActivation>
+	): Promise<EntitlementActivation | UpdateResult> {
+		const named = ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS.filter(
+			(member) => (partialEntity as Record<string, unknown>)?.[member] !== undefined
+		);
+
+		if (named.length > 0) {
+			throw new BadRequestException(
+				`ENTITLEMENT_ACTIVATION_FIELD_NOT_EDITABLE: ${named.join(', ')} ${
+					named.length === 1 ? 'is' : 'are'
+				} not written by an edit; a slot is taken through activate and given back through release or revoke.`
+			);
+		}
+
+		return await super.update(id, partialEntity);
 	}
 
 	/**

@@ -401,29 +401,23 @@ export const schemaExtensions = gql`
 	"""
 	The recorded fields of an activation, as an edit may state them.
 
-	This is the route's own body type (\`PartialType(EntitlementActivationDTO)\`) member for member,
-	including the two the DTO's docstrings call closed — \`deviceId\` and \`status\`. §3.1 forbids GraphQL
-	being narrower than REST, so the two surfaces accept the same write; the divergence between that
-	DTO's docstrings and its metadata is recorded on the field that carries this input.
+	This is the route's own body type (\`UpdateEntitlementActivationDTO\`) member for member: the descriptive
+	fields of a slot, and nothing its lifecycle owns. \`status\`, \`entitlementId\`, \`entitlementKeyId\`,
+	\`deviceId\` and \`revocationReason\` are absent from both, because each is written by the operation that
+	takes, releases or revokes a slot, and each is what a rule of that operation is decided over — the
+	activation limit, the right's ceiling, the key's release on revocation, the device the seat is counted
+	over and the bar on a device withdrawn for abuse. A slot is taken through \`activateEntitlement\` and
+	given back through \`deactivateEntitlement\`.
 	"""
 	input UpdateEntitlementActivationInput {
-		"The right the slot belongs to."
-		entitlementId: ID
-		"The key the activation went through, when one was used."
-		entitlementKeyId: ID
-		"The stable device or instance identifier the limit is counted over."
-		deviceId: String
 		deviceName: String
 		fingerprint: String
 		"The named seat this activation occupies."
 		seatReference: String
 		"The buyer who performed the activation, when it came from a logged-in customer."
 		activatedByCustomerId: ID
-		"The activation's state. Written by the release, revoke and expiry paths, not by an edit."
-		status: EntitlementActivationStatus
 		"Refreshed by validation calls, at most once per configured interval."
 		lastSeenAt: DateTime
-		revocationReason: String
 		ipAddress: String
 		userAgent: String
 		metadata: JSON
@@ -592,10 +586,10 @@ export const schemaExtensions = gql`
 		deactivateEntitlement(id: ID!, reason: String, revoked: Boolean): DeactivateEntitlementPayload!
 		"""
 		Corrects the recorded fields of a slot, without giving it back and without taking it away. The
-		input is the route's own body type member for member, including \`deviceId\` and \`status\`, which
-		that DTO's docstrings call closed while its metadata declares them and the inherited update writes
-		them: the two surfaces accept the same write, and the divergence is recorded on the field rather
-		than repaired on one side only.
+		input is the route's own body type member for member. A slot's state, its right, its key, its device
+		and its revocation reason are not in it and are refused by the service: a revoked slot set back to
+		\`ACTIVE\` by an edit would sit past the activation limit, because the limit is only counted when a slot
+		is taken.
 		"""
 		updateEntitlementActivation(id: ID!, input: UpdateEntitlementActivationInput!): EntitlementActivationPayload!
 		"Retires an activation recoverably, leaving the row and the slot's history in place."

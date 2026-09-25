@@ -310,24 +310,14 @@ export interface IEntitlementEditInput {
  * An edit to the recorded fields of an activation.
  *
  * The field that carries this mirrors `PUT /entitlement-activations/:id`, whose body is
- * `PartialType(EntitlementActivationDTO)` — and that DTO's own docstrings disagree with what it
- * declares. Both say only descriptive fields are open ("the device identity is what the seat count is
- * taken over, and a body that could rewrite it would let a client move a slot to a different machine
- * without going through the activation path the limit is enforced on"), while the live metadata carries
- * `deviceId` and `status`, and the inherited CRUD `update` writes every member it is handed.
- *
- * The members below are the DTO's, not a subset of them: §3.1 forbids GraphQL being *narrower* than
- * REST, so the two surfaces accept the same write. The hazard is recorded rather than silently fixed —
- * see the field's docstring — because narrowing it here would answer a REST caller and a GraphQL caller
- * differently, which is the drift parity exists to prevent.
+ * `UpdateEntitlementActivationDTO`, and the two declare the same members: the descriptive fields of a
+ * slot and nothing its lifecycle owns. `status`, `entitlementId`, `entitlementKeyId`, `deviceId` and
+ * `revocationReason` are absent from both, because each is written by the operation that takes, releases
+ * or revokes a slot and each is what a rule of that operation is decided over — the activation limit,
+ * the right's own ceiling, the key's release on revocation, the device the seat is counted over and the
+ * bar on a device withdrawn for abuse. `EntitlementActivationService.update` refuses them too.
  */
 export interface IEntitlementActivationEditInput {
-	/** The right the slot belongs to. */
-	readonly entitlementId?: ID;
-	/** The key the activation went through, when one was used. */
-	readonly entitlementKeyId?: ID;
-	/** The stable device or instance identifier the limit is counted over. */
-	readonly deviceId?: string;
 	/** Human-readable name shown to support. */
 	readonly deviceName?: string;
 	/** Hash of the hardware or instance fingerprint. */
@@ -336,12 +326,8 @@ export interface IEntitlementActivationEditInput {
 	readonly seatReference?: string;
 	/** The buyer who performed the activation. */
 	readonly activatedByCustomerId?: ID;
-	/** The activation's state. Written by the release, revoke and expiry paths, not by an edit. */
-	readonly status?: EntitlementActivationStatus;
 	/** When the client was last seen. Written by the validation path under its throttle. */
 	readonly lastSeenAt?: Date;
-	/** Why a slot was released or revoked. */
-	readonly revocationReason?: string;
 	/** Address of the validation call that created the activation. */
 	readonly ipAddress?: string;
 	/** Client identification, retained for support. */

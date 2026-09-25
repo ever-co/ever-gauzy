@@ -68,14 +68,14 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementActivation } from './entitlement-activation.entity';
 import { EntitlementKey } from '../entitlement-key/entitlement-key.entity';
 import { EntitlementActivationStatus, EntitlementKeyStatus, EntitlementStatus } from '../entitlement.enums';
 import { EntitlementCheckReason } from '../entitlement.types';
 import { digestLicenceKey } from '../entitlement-key/licence-key';
-import { EntitlementActivationService } from './entitlement-activation.service';
+import { ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS, EntitlementActivationService } from './entitlement-activation.service';
 
 /**
  * Taking, giving back and being deprived of a slot (doc 05 §19.2).
@@ -884,5 +884,130 @@ describe('EntitlementActivationService — the row lock the seat arithmetic depe
 			EntitlementCheckReason.QUANTITY_EXHAUSTED
 		);
 		expect(fixture.live()).toHaveLength(2);
+	});
+});
+
+/**
+ * The correction path (`PUT /entitlement-activations/:id`, `updateEntitlementActivation`).
+ *
+ * Both surfaces reached the inherited update with the slot's state and identity in the body, and the
+ * inherited update writes what it is handed. With a right whose `activationLimit` is one, activation A
+ * `REVOKED` and activation B `ACTIVE`, an edit of `{ status: ACTIVE }` on A left two live slots against a
+ * limit of one — the limit is counted only when a slot is taken — and an edit of `entitlementId` moved a
+ * slot onto another right without that right's ceiling being asked. The service now refuses every member
+ * the slot's own operations write, before the base write runs.
+ *
+ * The base class is doubled at the module boundary, so the base write this override delegates to is
+ * installed on the double for these cases only: it writes the partial onto the stored row, which is what
+ * the platform's own `update` does, so a refusal that failed to fire would show in the table.
+ */
+describe('EntitlementActivationService — what a correction may not move (doc 05 §19.2)', () => {
+	let written: Array<{ id: unknown; partial: Row }>;
+
+	/** Installs the base write over the fixture's table. */
+	function withBaseWrite(fixture: ReturnType<typeof activationFixture>) {
+		(TenantAwareCrudService.prototype as any).update = async function (id: string, partial: Row) {
+			written.push({ id, partial });
+			// An `undefined` member is left out of the statement, as the ORM leaves it out of the `SET`.
+			Object.assign(
+				fixture.store(id) as Row,
+				Object.fromEntries(Object.entries(partial).filter(([, value]) => value !== undefined))
+			);
+
+			return { affected: 1, raw: [] };
+		};
+
+		return fixture;
+	}
+
+	beforeEach(() => {
+		written = [];
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => {
+		delete (TenantAwareCrudService.prototype as any).update;
+		jest.restoreAllMocks();
+	});
+
+	it('refuses to reinstate a revoked slot past the activation limit, and writes nothing', async () => {
+		const fixture = withBaseWrite(
+			activationFixture({
+				rights: [rightRow({ quantity: 5, activationLimit: 1, activationCount: 1 })],
+				activations: [
+					activationRow('a1', { status: EntitlementActivationStatus.REVOKED, revocationReason: 'replaced' }),
+					activationRow('a2', { status: EntitlementActivationStatus.ACTIVE })
+				]
+			})
+		);
+
+		await expect(
+			fixture.service.update('a1', { status: EntitlementActivationStatus.ACTIVE } as any)
+		).rejects.toThrow(/ENTITLEMENT_ACTIVATION_FIELD_NOT_EDITABLE: status is not written by an edit/);
+
+		expect(fixture.store('a1').status).toBe(EntitlementActivationStatus.REVOKED);
+		expect(fixture.live()).toHaveLength(1);
+		expect(written).toEqual([]);
+	});
+
+	it('refuses to repoint a slot at another right, whose ceiling was never asked', async () => {
+		const fixture = withBaseWrite(activationFixture({ activations: [activationRow('a1')] }));
+
+		await expect(fixture.service.update('a1', { entitlementId: 'entitlement-2' } as any)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+
+		expect(fixture.store('a1').entitlementId).toBe(RIGHT);
+		expect(written).toEqual([]);
+	});
+
+	it.each([
+		['the device the seat is counted over', { deviceId: 'another-device' }],
+		['the key whose revocation releases the slot', { entitlementKeyId: 'key-2' }],
+		['the reason that bars a withdrawn device', { revocationReason: null }],
+		['the instant the slot was revoked', { revokedAt: null }]
+	])('refuses %s', async (_label, partial) => {
+		const fixture = withBaseWrite(
+			activationFixture({
+				activations: [activationRow('a1', { status: EntitlementActivationStatus.REVOKED, revocationReason: 'FRAUD' })]
+			})
+		);
+
+		await expect(fixture.service.update('a1', partial as any)).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(fixture.store('a1')).toMatchObject({ deviceId: 'device-a1', revocationReason: 'FRAUD' });
+		expect(written).toEqual([]);
+	});
+
+	it('refuses every member its own operations write, and names each one the body carried', async () => {
+		const fixture = withBaseWrite(activationFixture({ activations: [activationRow('a1')] }));
+		const everything = Object.fromEntries(ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS.map((member) => [member, 'x']));
+
+		await expect(fixture.service.update('a1', everything as any)).rejects.toThrow(
+			new RegExp(`${ENTITLEMENT_ACTIVATION_LIFECYCLE_MEMBERS.join(', ')} are not written by an edit`)
+		);
+		expect(written).toEqual([]);
+	});
+
+	it('hands the descriptive fields to the base write unchanged', async () => {
+		const fixture = withBaseWrite(activationFixture({ activations: [activationRow('a1')] }));
+		const correction = {
+			deviceName: "Ana's laptop",
+			seatReference: 'seat-7',
+			metadata: { os: 'linux' },
+			// A DTO instance spells an absent member as an own property holding `undefined`; that is "not
+			// stated", and it must not be read as naming the member.
+			status: undefined
+		};
+
+		await expect(fixture.service.update('a1', correction as any)).resolves.toEqual({ affected: 1, raw: [] });
+
+		expect(written).toEqual([{ id: 'a1', partial: correction }]);
+		expect(fixture.store('a1')).toMatchObject({
+			deviceName: "Ana's laptop",
+			seatReference: 'seat-7',
+			status: EntitlementActivationStatus.ACTIVE
+		});
 	});
 });

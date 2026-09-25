@@ -32,10 +32,25 @@
  * — the rest parameter is handed over as the array it is, which is why the route and the field below
  * are one call with two spellings of "no find options" rather than two different calls.
  */
-jest.mock('@gauzy/common', () => ({
-	/** A no-op decorator factory: the feature gate is not what these cases are about. */
-	FeatureFlag: () => () => undefined
-}));
+jest.mock('@gauzy/common', () => {
+	/**
+	 * Every feature code a class-level `@FeatureFlag` stated, by the class it was stated on.
+	 *
+	 * The decorator is otherwise a no-op here — the guard that reads it is the kernel's, and this suite does
+	 * not run it — so what is recorded is the plugin's half of the gate: which codes each class *declares*.
+	 * It is exposed on the mocked module because a factory runs before this file's own declarations do.
+	 */
+	const declaredFeatureCodes = new Map<unknown, string[]>();
+
+	return {
+		declaredFeatureCodes,
+		FeatureFlag: (code: string) => (target: unknown, key?: unknown) => {
+			if (key === undefined) {
+				declaredFeatureCodes.set(target, [...(declaredFeatureCodes.get(target) ?? []), code]);
+			}
+		}
+	};
+});
 
 jest.mock('@gauzy/core', () => {
 	/** A no-op decorator factory: no controller here is mapped onto a Nest application. */
@@ -166,6 +181,8 @@ import { SubscriptionItemController } from '../../subscription-item/subscription
 import { SubscriptionPlanController } from '../../subscription-plan/subscription-plan.controller';
 import { SubscriptionController } from '../../subscription/subscription.controller';
 import { schemaExtensions } from '../schema-extensions';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { SubscriptionFeatures } from '../../subscription.features';
 import { SubscriptionBillingResolver } from './subscription-billing.resolver';
 import { SubscriptionItemResolver } from './subscription-item.resolver';
 import { SubscriptionPlanResolver } from './subscription-plan.resolver';
@@ -546,5 +563,56 @@ describe('the soft-delete pair — the permission, the guards and the convention
 			expect(guardsOf(controller, route)).toEqual(expect.arrayContaining(routeGuards));
 			expect(guardsOf(resolver, field)).toEqual(expect.arrayContaining(guardsOf(controller, route)));
 		}
+	});
+});
+
+/**
+ * The plugin's own feature gate, on both surfaces.
+ *
+ * Every subscription REST controller declares `@FeatureFlag(SubscriptionFeatures.SUBSCRIPTION)`, so a
+ * tenant that switched `FEATURE_SUBSCRIPTION` off is refused by `FeatureFlagGuard` on every route. The
+ * resolver classes declared only the platform's `FEATURE_GRAPHQL`, so with the capability off
+ * `softDeleteSubscription` and every other mutation of the four resolvers were still served over GraphQL.
+ * Each resolver now declares both codes; the kernel's decorator accumulates them and its guard requires
+ * every one, which is the kernel's half and is pinned in the kernel's own specs. What is pinned here is the
+ * plugin's half: the codes each class states, read off the decorator as it was applied.
+ */
+describe('the plugin feature gate — every resolver states the code its REST controller states', () => {
+	const { declaredFeatureCodes } = jest.requireMock('@gauzy/common') as {
+		declaredFeatureCodes: Map<unknown, string[]>;
+	};
+
+	/** Each controller and the resolver that mirrors it. */
+	const MIRRORS: Array<[unknown, unknown]> = [
+		[SubscriptionController, SubscriptionResolver],
+		[SubscriptionPlanController, SubscriptionPlanResolver],
+		[SubscriptionItemController, SubscriptionItemResolver],
+		[SubscriptionBillingController, SubscriptionBillingResolver]
+	];
+
+	it('declares the plugin code on every controller, as the routes are gated today', () => {
+		for (const [controller] of MIRRORS) {
+			expect(declaredFeatureCodes.get(controller)).toEqual([SubscriptionFeatures.SUBSCRIPTION]);
+		}
+	});
+
+	it('declares the platform gate and the plugin code on every resolver, and nothing else', () => {
+		for (const [, resolver] of MIRRORS) {
+			expect([...(declaredFeatureCodes.get(resolver) ?? [])].sort()).toEqual(
+				[FEATURE_GRAPHQL, SubscriptionFeatures.SUBSCRIPTION].sort()
+			);
+		}
+	});
+
+	it('gates each resolver on every code its controller is gated on, beyond the GraphQL endpoint itself', () => {
+		for (const [controller, resolver] of MIRRORS) {
+			const beyondEndpoint = (declaredFeatureCodes.get(resolver) ?? []).filter((code) => code !== FEATURE_GRAPHQL);
+
+			expect(beyondEndpoint.sort()).toEqual([...(declaredFeatureCodes.get(controller) ?? [])].sort());
+		}
+	});
+
+	it('is the code the plugin contributes to the catalogue', () => {
+		expect(String(SubscriptionFeatures.SUBSCRIPTION)).toBe('FEATURE_SUBSCRIPTION');
 	});
 });

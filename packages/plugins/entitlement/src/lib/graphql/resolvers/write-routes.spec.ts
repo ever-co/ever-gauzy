@@ -1236,10 +1236,30 @@ describe('the entitlement document — the seven routes no field answered are de
 	});
 
 	it('declares the members the other three routes’ own bodies carry, and only those', () => {
-		// The activation's correction is the route's body member for member, including the two members
-		// that DTO's docstrings call closed while its metadata declares them — the divergence is recorded
-		// on the field, and the mirror is asserted rather than the divergence repaired on one side only.
+		// The activation's correction is the route's body member for member. That used to include the
+		// slot's state and identity, which the DTO's docstrings called closed while its metadata declared
+		// them; both surfaces now omit the same five members, so the mirror still holds and the hole is
+		// closed on both rather than on one.
 		expect(inputMembers('UpdateEntitlementActivationInput').sort()).toEqual(dtoMembers(UpdateEntitlementActivationDTO));
+
+		for (const lifecycle of ['status', 'entitlementId', 'entitlementKeyId', 'deviceId', 'revocationReason']) {
+			expect(inputMembers('UpdateEntitlementActivationInput')).not.toContain(lifecycle);
+			expect(dtoMembers(UpdateEntitlementActivationDTO)).not.toContain(lifecycle);
+		}
+
+		// The control, so the comparison above cannot pass on two empty reads.
+		expect(dtoMembers(UpdateEntitlementActivationDTO)).toEqual(
+			[
+				'activatedByCustomerId',
+				'deviceName',
+				'fingerprint',
+				'ipAddress',
+				'lastSeenAt',
+				'metadata',
+				'seatReference',
+				'userAgent'
+			].sort()
+		);
 
 		// The key's assignment states one member, because the route's body does: a general update of a
 		// credential is the capability 05 §19.3 refuses.
