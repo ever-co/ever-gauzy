@@ -12,6 +12,7 @@ import {
 	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
+import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
@@ -19,7 +20,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, FormHelpers, LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -157,7 +164,8 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly filterArrayPipe: FilterArrayPipe
+		private readonly filterArrayPipe: FilterArrayPipe,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -172,6 +180,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._patchForm()),
 				tap(() => this._getProjects()),
+				tap(() => this._getEmployees()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -194,6 +203,36 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		this.employees = employees;
 		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.selectedEmployeeIds);
 	}
+
+	/**
+	 * Loads the organization's employees for the members step.
+	 *
+	 * The step used to take them from `ga-employee-multi-select`, which fetched
+	 * them itself and handed them back through `onLoadEmployees`. The step now
+	 * uses a searchable `ng-select`, so it loads the list on its own.
+	 */
+	private async _getEmployees() {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			const { tenantId } = this.store.user;
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], { organizationId: this.organization.id, tenantId })
+			);
+			this.onLoadEmployees(items ?? []);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Matches an employee in the members picker by name or email.
+	 */
+	searchEmployee = (term: string, employee: IEmployee): boolean => {
+		const needle = term.trim().toLowerCase();
+		return [employee.user?.name, employee.user?.email].some((value) => value?.toLowerCase().includes(needle));
+	};
 
 	/**
 	 * Fetches all projects associated with the current organization and user tenant, and updates the 'projects' property.
@@ -316,6 +355,9 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 
 	onMembersSelected(members: string[]) {
 		this.members = members;
+		// The picker binds to `selectedEmployeeIds`; keep it in step so clearing
+		// the last member does not fall back to the contact's original members.
+		this.selectedEmployeeIds = members;
 		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.members);
 	}
 
@@ -326,9 +368,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	 * @param member
 	 */
 	removeMember(member: IEmployee) {
-		const current = this.members?.length ? this.members : this.selectedEmployeeIds ?? [];
-		const ids = current.filter((id: string) => id !== member.id);
-		this.selectedEmployeeIds = ids;
+		const ids = (this.selectedEmployeeIds ?? []).filter((id: string) => id !== member.id);
 		this.onMembersSelected(ids);
 	}
 

@@ -348,22 +348,78 @@
 			<nb-step [label]="'CONTACTS_PAGE.MEMBERS' | translate">
 				<div class="custom-card">
 					<div class="fields step-panel">
+						<!--
+							A searchable ng-select rather than `ga-employee-multi-select`: that one is
+							an nb-select with a 48px avatar per option and no search, so with a real
+							team it opened a full-height list over the page header. Options here are
+							compact rows (check, photo, name over email) filtered by name or email, and
+							the trigger stays a search box: the selection itself is the list below.
+						-->
 						<div class="field-grid">
 							<div class="form-group">
-								<ga-employee-multi-select
-									[selectedEmployeeIds]="selectedEmployeeIds"
-									(onLoadEmployees)="onLoadEmployees($event)"
-									(selectedChange)="onMembersSelected($event)"
+								<label class="label" for="membersSelect">{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate }}</label>
+								<ng-select
+									labelForId="membersSelect"
+									class="members-select"
+									[items]="employees"
+									bindValue="id"
+									[multiple]="true"
+									[searchable]="true"
+									[closeOnSelect]="false"
+									[clearable]="false"
+									[searchFn]="searchEmployee"
+									[ngModel]="selectedEmployeeIds"
+									(ngModelChange)="onMembersSelected($event)"
+									[ngModelOptions]="{ standalone: true }"
+									[placeholder]="'CONTACTS_PAGE.SEARCH_EMPLOYEES' | translate"
+									[notFoundText]="'SM_TABLE.NO_DATA_MESSAGE' | translate"
+									dropdownPosition="bottom"
+									appendTo="body"
 								>
-								</ga-employee-multi-select>
+									<ng-template ng-multi-label-tmp>
+										<span class="members-select-placeholder">
+											<nb-icon icon="search-outline"></nb-icon>
+											{{ 'CONTACTS_PAGE.SEARCH_EMPLOYEES' | translate }}
+										</span>
+									</ng-template>
+									<ng-template ng-option-tmp let-item="item" let-item$="item$">
+										<div class="member-option">
+											<span class="member-option-check" [class.checked]="item$.selected" aria-hidden="true">
+												@if (item$.selected) {
+												<nb-icon icon="checkmark-outline"></nb-icon>
+												}
+											</span>
+											@if (item.user?.imageUrl) {
+											<!-- A dead photo URL keeps its tinted circle instead of the broken-image glyph. -->
+											<img
+												class="member-option-avatar"
+												[src]="item.user.imageUrl"
+												alt=""
+												(error)="$any($event.target).removeAttribute('src')"
+											/>
+											} @else {
+											<span class="member-option-avatar member-option-initial" aria-hidden="true">
+												{{ item.user?.name | slice: 0 : 1 }}
+											</span>
+											}
+											<span class="member-option-text">
+												<span class="member-option-name">{{ item.user?.name }}</span>
+												@if (item.user?.email) {
+												<span class="member-option-email">{{ item.user.email }}</span>
+												}
+											</span>
+										</div>
+									</ng-template>
+								</ng-select>
 							</div>
 						</div>
-						@if (selectedMembers?.length) {
+
 						<div class="members">
 							<span class="label">
 								{{ 'CONTACTS_PAGE.MEMBERS' | translate }}
-								<span class="members-count">{{ selectedMembers.length }}</span>
+								<span class="members-count">{{ selectedMembers?.length || 0 }}</span>
 							</span>
+							@if (selectedMembers?.length) {
 							<ul class="members-list">
 								@for (member of selectedMembers; track member.id) {
 								<li class="member-row">
@@ -391,8 +447,13 @@
 								</li>
 								}
 							</ul>
+							} @else {
+							<div class="members-empty">
+								<nb-icon icon="people-outline"></nb-icon>
+								<span>{{ 'CONTACTS_PAGE.NO_MEMBERS' | translate }}</span>
+							</div>
+							}
 						</div>
-						}
 					</div>
 					<div class="wizard-actions">
 						<button nbButton outline size="small" status="basic" class="wizard-quit" (click)="cancel()">
