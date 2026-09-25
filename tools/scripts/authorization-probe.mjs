@@ -139,20 +139,35 @@ let probeUserId;
 let probeRoleId;
 let probeRolePermissionId;
 
-/** Removes every row this probe created, in dependency order. */
+/**
+ * Removes every row this probe created, in dependency order.
+ *
+ * A removal that is refused fails the run. It used to be printed and passed over, so a run under
+ * `DB_ORM=mikro-orm` whose role delete answered 403 still reported 14/14 — and the next run failed at its
+ * first step, because the role's name is unique per tenant (`The role name ... is already in use`).
+ *
+ * @returns {Promise<boolean>} Whether every row was removed.
+ */
 async function cleanUp(token, tenantId) {
+	let removedAll = true;
+	const remove = async (what, url) => {
+		const removed = await call('DELETE', url, { token, tenantId });
+		const ok = removed.status < 400;
+		removedAll = removedAll && ok;
+		console.log(
+			`  ${ok ? 'cleanup' : 'FAIL  cleanup'}: ${what} deleted (HTTP ${removed.status}${ok ? '' : ` ${brief(removed)}`})`
+		);
+	};
 	if (probeUserId) {
-		const removed = await call('DELETE', `/api/user/${probeUserId}`, { token, tenantId });
-		console.log(`  cleanup: probe account deleted (HTTP ${removed.status})`);
+		await remove('probe account', `/api/user/${probeUserId}`);
 	}
 	if (probeRolePermissionId) {
-		const removed = await call('DELETE', `/api/role-permissions/${probeRolePermissionId}`, { token, tenantId });
-		console.log(`  cleanup: probe role permission deleted (HTTP ${removed.status})`);
+		await remove('probe role permission', `/api/role-permissions/${probeRolePermissionId}`);
 	}
 	if (probeRoleId) {
-		const removed = await call('DELETE', `/api/roles/${probeRoleId}`, { token, tenantId });
-		console.log(`  cleanup: probe role deleted (HTTP ${removed.status})`);
+		await remove('probe role', `/api/roles/${probeRoleId}`);
 	}
+	return removedAll;
 }
 
 async function main() {
@@ -315,15 +330,25 @@ try {
 	console.error(`  FAIL  the probe threw: ${error?.message ?? error}`);
 	exitCode = 1;
 } finally {
-	// The probe's own rows are removed even when a check failed, so a re-run starts clean.
+	// The probe's own rows are removed even when a check failed, so a re-run starts clean — and a run that
+	// could not remove them fails, since the next one would not start clean.
 	if (probeUserId || probeRolePermissionId || probeRoleId) {
+		let removedAll = false;
 		try {
 			const login = await call('POST', '/api/auth/login', {
 				body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD }
 			});
-			if (login.json?.token) await cleanUp(login.json.token, login.json.user?.tenantId);
+			if (login.json?.token) {
+				removedAll = await cleanUp(login.json.token, login.json.user?.tenantId);
+			} else {
+				console.error(`  cleanup failed: the super administrator could not sign in (HTTP ${login.status})`);
+			}
 		} catch (error) {
 			console.error(`  cleanup failed: ${error?.message ?? error}`);
+		}
+		if (!removedAll) {
+			console.log('  FAIL  the probe removed what it created, so a re-run starts clean');
+			exitCode = 1;
 		}
 	}
 	console.log('');

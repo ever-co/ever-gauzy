@@ -994,6 +994,8 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 				// `Not(IsNull())` is `$ne: null`, and so is `Not(<scalar>)`. A child that translated to a
 				// condition *object* — `Not(In([...]))`, `Not(Like('%x%'))` — is negated with `$not`:
 				// `{ $ne: { $in: [...] } }` compares the column against an object and matches nothing.
+				// MikroORM negates a condition only at the entity level, so `convertTypeORMConditionToMikroORM`
+				// lifts this `$not` off the property before the statement is built.
 				return child !== null && typeof child === 'object' ? { $not: child } : { $ne: child };
 			}
 
@@ -1079,11 +1081,35 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>) {
 	const mikroORMCondition = {};
 
+	// The negated conditions of this level, each lifted off its property (see below).
+	const negations: Record<string, unknown>[] = [];
+
 	for (const [key, value] of Object.entries(where)) {
 		if (typeof value === 'object' && value !== null && !(value instanceof Array)) {
 			if (value instanceof FindOperator) {
 				// Convert nested FindOperators
-				mikroORMCondition[key] = processFindOperator(value);
+				const condition = processFindOperator(value);
+
+				// `Not(In([...]))`, `Not(Like('%x%'))`, `Not(MoreThan(n))` translate to `{ $not: <condition> }` on
+				// the property, and MikroORM's SQL drivers have no `$not` on a property: knex refuses the whole
+				// statement with `The operator "not" is not permitted` — a find, a count, an update and a delete
+				// alike. So under `DB_ORM=mikro-orm` every statement predicated on such a negation failed; a role
+				// was never deleted (`RoleService.delete` guards the system roles with `Not(In([...]))`), and its
+				// name stayed taken. MikroORM negates at the entity level — `{ $not: { name: { $in: [...] } } }`
+				// is `not (name in (...))`, the SQL TypeORM writes for `Not(In([...]))` — so the negation is
+				// lifted there. Each one is its own `$not` under `$and`: a single `$not` over two properties
+				// would negate their conjunction, which is a different question.
+				if (condition !== null && typeof condition === 'object' && '$not' in condition) {
+					const { $not: negated, ...rest } = condition as Record<string, unknown>;
+					negations.push({ $not: { [key]: negated } });
+
+					// What `And(...)` folded in beside the negation stays on the property.
+					if (Object.keys(rest).length > 0) {
+						mikroORMCondition[key] = rest;
+					}
+				} else {
+					mikroORMCondition[key] = condition;
+				}
 			} else {
 				// Recursively convert nested objects
 				mikroORMCondition[key] = convertTypeORMConditionToMikroORM(value);
@@ -1092,6 +1118,14 @@ export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>)
 			// Assign simple key-value pairs directly
 			mikroORMCondition[key] = value;
 		}
+	}
+
+	if (negations.length > 0) {
+		const conjunction = mikroORMCondition['$and'];
+		mikroORMCondition['$and'] = [
+			...(conjunction === undefined ? [] : Array.isArray(conjunction) ? conjunction : [conjunction]),
+			...negations
+		];
 	}
 
 	return mikroORMCondition;
