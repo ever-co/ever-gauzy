@@ -45,10 +45,12 @@ jest.mock('./sequence.entity', () => {
 });
 
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { FindOperator, PessimisticLockTransactionRequiredError } from 'typeorm';
 import { SequenceResetPolicy } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import type { TypeOrmIdempotencyKeyRepository } from '../idempotency/repository/type-orm-idempotency-key.repository';
+import { Sequence } from './sequence.entity';
 import { SequenceService } from './sequence.service';
 import { TypeOrmSequenceRepository } from './repository/type-orm-sequence.repository';
 
@@ -57,10 +59,14 @@ import { TypeOrmSequenceRepository } from './repository/type-orm-sequence.reposi
  *
  * A number a person quotes has to be unique, and two concurrent writers must never be handed the
  * same value. The mechanism the service actually uses is the one asserted here: the read, the
- * increment and the write happen inside a single transaction, and on a dialect that supports row
- * locks the read takes one. The store below behaves like the database on exactly that point —
- * transactions are serialised, reads outside one are not — so a service that stopped allocating
- * inside its transaction would hand out a duplicate and this suite would say so.
+ * increment and the write happen inside a single transaction, on a dialect that supports row locks
+ * the read takes one, and the write is predicated on what was read. The store below behaves like the
+ * database on exactly those points — by default transactions are serialised, as a row lock serialises
+ * them, and reads outside one are not; constructed with `interleaved` transactions it behaves like
+ * TypeORM's better-sqlite3 driver, which nests a second transaction inside the first on one
+ * connection, so two allocations both read before either writes. A service that stopped allocating
+ * inside its transaction, or stopped predicating its write, would hand out a duplicate and this suite
+ * would say so.
  *
  * The remaining cases pin what an operator depends on: a stable prefix and padding, a step that
  * reserves a range, a counter per scope that does not leak into another scope, the period a series
@@ -83,12 +89,24 @@ interface SeriesRow extends Row {
 }
 
 /**
+ * How the store runs two transactions that are open at the same time.
+ *
+ * `serialised` is what a row lock does: the second body starts once the first has finished.
+ * `interleaved` is what TypeORM's better-sqlite3 driver does — the one driver behind both the `sqlite`
+ * and the `better-sqlite3` configuration — because it holds one query runner per data source and
+ * opens a transaction started inside another as a savepoint on it: both bodies run at once, and their
+ * statements alternate on one connection.
+ */
+type TransactionMode = 'serialised' | 'interleaved';
+
+/**
  * An in-memory stand-in for the series table and the manager that guards it.
  *
- * `transaction` runs one body at a time, which is what a database's writer lock — or a serialising
- * embedded dialect — does. `read`/`write` are the unguarded pair a caller could use instead; they
- * are exposed, and every read and write is recorded with the transaction depth it happened at, so
- * the suite can show where the allocation's read really takes place.
+ * `transaction` runs one body at a time by default, which is what a database's writer lock does, and
+ * runs them side by side when the store is built `interleaved`. `read`/`write` are the unguarded pair a
+ * caller could use instead; they are exposed, and every read and write is recorded with the
+ * transaction depth it happened at, so the suite can show where the allocation's read really takes
+ * place.
  */
 class SeriesStore {
 	readonly rows: SeriesRow[] = [];
@@ -99,7 +117,7 @@ class SeriesStore {
 	private tail: Promise<unknown> = Promise.resolve();
 	private depth = 0;
 
-	constructor(rows: Partial<SeriesRow>[] = [{}]) {
+	constructor(rows: Partial<SeriesRow>[] = [{}], private readonly mode: TransactionMode = 'serialised') {
 		for (const row of rows) {
 			this.rows.push({
 				id: `seq-${this.rows.length + 1}`,
@@ -115,11 +133,11 @@ class SeriesStore {
 		}
 	}
 
-	private readonly manager = {
-		transaction: (work: (manager: unknown) => Promise<unknown>) => this.transaction(work),
-		createQueryBuilder: (_entity: unknown, alias: string) => this.queryBuilder(alias),
-		save: async (_entity: unknown, row: SeriesRow) => this.persist(row)
-	};
+	/** The repository's own manager: no query runner, and therefore no transaction. */
+	private readonly manager = this.managerOf(false);
+
+	/** The manager a transaction's body is handed, whose query runner is in an active transaction. */
+	readonly transactional = this.managerOf(true);
 
 	/** The repository the service is constructed with. */
 	get repository(): unknown {
@@ -129,6 +147,31 @@ class SeriesStore {
 			findOne: async (options: { where: Row }) => this.find(options.where),
 			create: (input: Row) => ({ id: `seq-${this.rows.length + 1}`, ...input }),
 			save: async (row: SeriesRow) => this.persist(row)
+		};
+	}
+
+	/**
+	 * A TypeORM-shaped entity manager over the table.
+	 *
+	 * `queryRunner.isTransactionActive` is the member TypeORM reads before it issues a pessimistic lock,
+	 * and it is present only on the manager a transaction hands its body — as on the real one, whose
+	 * plain repository manager has no query runner of its own.
+	 *
+	 * `update` is the conditional write the allocator and the restart both go through. The criteria are
+	 * not "which row" but "which row, still holding what I read", so the double matches on every
+	 * criterion rather than on the identifier alone: a double that ignored the extra criteria would
+	 * report one row affected for a write the database would have refused, and the suite would pass
+	 * while the counter handed out duplicates on every dialect without a row lock. The answer is
+	 * TypeORM's `UpdateResult` shape, `{ affected }`.
+	 */
+	private managerOf(inTransaction: boolean) {
+		return {
+			...(inTransaction ? { queryRunner: { isTransactionActive: true } } : {}),
+			transaction: (work: (manager: unknown) => Promise<unknown>) => this.transaction(work),
+			createQueryBuilder: (_entity: unknown, alias: string) => this.queryBuilder(alias, inTransaction),
+			findOne: async (_entity: unknown, options: { where: Row }) => this.find(options.where),
+			save: async (_entity: unknown, row: SeriesRow) => this.persist(row),
+			update: async (_entity: unknown, criteria: Row, values: Row) => this.conditionalUpdate(criteria, values)
 		};
 	}
 
@@ -147,17 +190,23 @@ class SeriesStore {
 		this.persist(row);
 	}
 
-	/** One transaction at a time, as the database serialises writers. */
+	/** One transaction at a time, as a row lock serialises writers — or all at once, when interleaved. */
 	private async transaction<T>(work: (manager: unknown) => Promise<T>): Promise<T> {
-		const run = this.tail.then(async () => {
+		const body = async (): Promise<T> => {
 			this.depth += 1;
 
 			try {
-				return await work(this.manager);
+				return await work(this.transactional);
 			} finally {
 				this.depth -= 1;
 			}
-		});
+		};
+
+		if (this.mode === 'interleaved') {
+			return body();
+		}
+
+		const run = this.tail.then(body);
 
 		this.tail = run.then(
 			() => undefined,
@@ -167,7 +216,8 @@ class SeriesStore {
 		return run;
 	}
 
-	private queryBuilder(alias: string) {
+	private queryBuilder(alias: string, inTransaction: boolean) {
+		let locked = false;
 		const conditions: Row = {};
 		const builder = {
 			where: (where: Row) => {
@@ -197,10 +247,18 @@ class SeriesStore {
 			},
 			setLock: (mode: string) => {
 				this.locks.push(`${alias}:${mode}`);
+				locked = true;
 
 				return builder;
 			},
-			getOne: async () => this.find(conditions)
+			getOne: async () => {
+				// What TypeORM's `SelectQueryBuilder` does before the statement reaches the driver.
+				if (locked && !inTransaction) {
+					throw new PessimisticLockTransactionRequiredError();
+				}
+
+				return this.find(conditions);
+			}
 		};
 
 		return builder;
@@ -217,11 +275,38 @@ class SeriesStore {
 		this.reads.push(this.depth);
 		await Promise.resolve();
 
-		return this.rows.filter((row) => Object.entries(where).every(([column, value]) => matches(row[column], value)));
+		// 🛑 Snapshots, not the stored rows. A database read hands back values rather than a handle on
+		// the stored row, and this double used to hand back the stored object itself — so every mutation
+		// the service made to what it had read landed in the table before the write that was supposed to
+		// decide it, and a second allocator that read the same row saw the first one's increment without
+		// either of them having written anything. That hid exactly the race this suite exists to catch.
+		return this.rows
+			.filter((row) => Object.entries(where).every(([column, value]) => matches(row[column], value)))
+			.map((row) => ({ ...row }));
 	}
 
 	private async find(where: Row): Promise<SeriesRow | null> {
 		return (await this.findAll(where))[0] ?? null;
+	}
+
+	/**
+	 * A conditional `UPDATE`: every criterion has to still hold when the statement runs, and only a row
+	 * that satisfies all of them is written. The count is the whole answer the caller acts on.
+	 */
+	private async conditionalUpdate(criteria: Row, values: Row): Promise<{ affected: number }> {
+		this.writes.push(this.depth);
+		await Promise.resolve();
+
+		let affected = 0;
+
+		for (const row of this.rows) {
+			if (Object.entries(criteria).every(([column, value]) => matches(row[column], value))) {
+				Object.assign(row, values);
+				affected += 1;
+			}
+		}
+
+		return { affected };
 	}
 
 	private persist(row: SeriesRow): SeriesRow {
@@ -239,9 +324,28 @@ class SeriesStore {
 	}
 }
 
-/** A missing column and a null column are the same thing to the database. */
+/**
+ * Whether a stored value satisfies one criterion.
+ *
+ * A missing column and a null column are the same thing to the database. An operator is modelled only
+ * where the service states one — `LessThan`, under which a null column matches nothing, as `NULL < x`
+ * is unknown in SQL — and any other is refused rather than quietly matched.
+ */
 function matches(value: unknown, condition: unknown): boolean {
+	if (condition instanceof FindOperator) {
+		if (condition.type !== 'lessThan') {
+			throw new Error(`the sequence double was handed an operator it does not model: ${condition.type}`);
+		}
+
+		return value !== null && value !== undefined && comparable(value) < comparable(condition.value);
+	}
+
 	return (value ?? null) === (condition ?? null);
+}
+
+/** A value an ordering comparison can be made on: a moment as its epoch milliseconds. */
+function comparable(value: unknown): number {
+	return value instanceof Date ? value.getTime() : Number(value);
 }
 
 const ORGANIZATION = '6b1e0f2a-0000-4000-8000-00000000000a';
@@ -251,8 +355,8 @@ const CHANNEL = '6b1e0f2a-0000-4000-8000-00000000000b';
 const dialect = (): { current: 'postgres' | 'sqlite' } => (jest.requireMock('@gauzy/config') as any).dialect;
 
 /** The service under test and the store it allocates from. */
-function seriesStore(rows: Partial<SeriesRow>[] = [{}]) {
-	const store = new SeriesStore(rows);
+function seriesStore(rows: Partial<SeriesRow>[] = [{}], mode: TransactionMode = 'serialised') {
+	const store = new SeriesStore(rows, mode);
 	// The idempotency ledger an allocation claims its caller's key through. It is the kernel's own
 	// service over a table of its own — the keys are a second table, not a second mechanism — so the
 	// replay a retry receives is the one the platform really stores.
@@ -338,7 +442,7 @@ describe('allocating a number', () => {
 		expect(store.reads).toEqual([1, 0, 0]);
 	});
 
-	it('takes a row lock on a dialect that supports one, and relies on the transaction where it does not', async () => {
+	it('takes a row lock on a dialect that supports one, and relies on the conditional write where it does not', async () => {
 		dialect().current = 'postgres';
 		const locked = seriesStore();
 
@@ -353,8 +457,9 @@ describe('allocating a number', () => {
 			embedded.service.allocate('ORDER')
 		]);
 
-		// No row lock exists on the embedded dialect; the surrounding transaction is the lock, and two
-		// concurrent allocations are still handed two different values.
+		// No row lock exists on the embedded dialect, and two concurrent allocations are still handed two
+		// different values. The store serialises these two; the suite below interleaves them, which is
+		// what the embedded driver really does.
 		expect(embedded.store.locks).toEqual([]);
 		expect([first.value, second.value].sort((left, right) => left - right)).toEqual([1, 2]);
 		expect(embedded.store.rows[0].nextValue).toBe(3);
@@ -380,6 +485,105 @@ describe('allocating a number', () => {
 
 		await expect(service.allocate('ORDER')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(service.findSeries('ORDER')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+describe('allocating on a dialect whose transactions interleave', () => {
+	beforeEach(() => {
+		dialect().current = 'sqlite';
+		// Every jittered pause before a retry is then zero-length, so no case waits on a real delay.
+		jest.spyOn(Math, 'random').mockReturnValue(0);
+	});
+
+	it('hands two interleaved allocations two distinct values, where an unconditional write hands both the same one', async () => {
+		// Control: the store really interleaves. Two transactions that read the counter and write its
+		// successor back unconditionally — what the allocator did before its write was predicated — both
+		// read `1`, both hand it out, and the series advances once for two documents.
+		const control = new SeriesStore([{}], 'interleaved');
+		const manager = (control.repository as { manager: any }).manager;
+		const unconditional = (): Promise<number> =>
+			manager.transaction(async (transactional: any) => {
+				const row = await transactional.createQueryBuilder(Sequence, 'sequence').where({ key: 'ORDER' }).getOne();
+
+				await transactional.save(Sequence, { ...row, nextValue: row.nextValue + 1 });
+
+				return row.nextValue;
+			});
+
+		expect(await Promise.all([unconditional(), unconditional()])).toEqual([1, 1]);
+		expect(control.rows[0].nextValue).toBe(2);
+
+		const { store, service } = seriesStore([{}], 'interleaved');
+
+		const [first, second] = await Promise.all([service.allocate('ORDER'), service.allocate('ORDER')]);
+
+		// The allocator whose swap lost read the series again and took the next number.
+		expect([first.value, second.value].sort((left, right) => left - right)).toEqual([1, 2]);
+		expect(store.rows[0].nextValue).toBe(3);
+		expect(store.locks).toEqual([]);
+	});
+
+	it('absorbs more contenders than a pair within its retry budget, handing each the next number', async () => {
+		const { store, service } = seriesStore([{}], 'interleaved');
+
+		const allocated = await Promise.all(Array.from({ length: 5 }, () => service.allocate('ORDER')));
+
+		expect(allocated.map((number) => number.value).sort((left, right) => left - right)).toEqual([1, 2, 3, 4, 5]);
+		expect(store.rows[0].nextValue).toBe(6);
+	});
+
+	it('restarts once when two allocations race into a new period, even though the restart leaves the counter where it was', async () => {
+		// The series issued exactly one number in January, so it holds `2` — which is also what a restart
+		// leaves behind, `1 + step`. A swap predicated on the counter alone matches for both allocators,
+		// and both would hand out `1`; the period is what tells the second one it was overtaken.
+		const { store, service } = seriesStore(
+			[{ nextValue: 2, resetPolicy: SequenceResetPolicy.MONTHLY, lastResetAt: new Date('2026-01-15T10:00:00Z') }],
+			'interleaved'
+		);
+
+		const [first, second] = await Promise.all([
+			service.allocate('ORDER', { at: AT }),
+			service.allocate('ORDER', { at: AT })
+		]);
+
+		expect([first.value, second.value].sort((left, right) => left - right)).toEqual([1, 2]);
+		expect(store.rows[0]).toMatchObject({ nextValue: 3, lastResetAt: AT });
+	});
+
+	it('refuses an operator restart that an allocation overtook, rather than rewinding over the number it handed out', async () => {
+		const { service } = seriesStore(
+			[{ nextValue: 2, resetPolicy: SequenceResetPolicy.MONTHLY, lastResetAt: new Date('2026-01-15T10:00:00Z') }],
+			'interleaved'
+		);
+
+		const [allocation, restart] = await Promise.allSettled([
+			service.allocate('ORDER', { at: AT }),
+			service.resetSeries('seq-1', { at: AT })
+		]);
+
+		// The allocation restarted the series and committed first, so the premise the operator's restart
+		// was decided on — no restart recorded in this period yet — no longer holds, and it is refused.
+		expect(allocation).toMatchObject({ status: 'fulfilled', value: { value: 1 } });
+		expect(restart.status).toBe('rejected');
+		expect((restart as PromiseRejectedResult).reason).toBeInstanceOf(ConflictException);
+		expect(String((restart as PromiseRejectedResult).reason.message)).toContain('CONCURRENT_MODIFICATION');
+
+		// Control: a restart that had rewound the counter would hand `1` out a second time in February.
+		expect((await service.allocate('ORDER', { at: AT })).value).toBe(2);
+	});
+
+	it('reports a conflict and hands out nothing when every attempt loses its swap', async () => {
+		const { store, service } = seriesStore([{ nextValue: 41 }], 'interleaved');
+
+		// Every write is refused, as though another allocator had always just moved the counter.
+		jest.spyOn(store.transactional, 'update').mockResolvedValue({ affected: 0 });
+
+		const error = await service.allocate('ORDER').catch((thrown) => thrown);
+
+		expect(error).toBeInstanceOf(ConflictException);
+		expect((error as Error).message).toContain('CONCURRENT_MODIFICATION');
+		expect(store.reads).toHaveLength(SequenceService.ALLOCATION_ATTEMPTS);
+		expect(store.rows[0].nextValue).toBe(41);
 	});
 });
 

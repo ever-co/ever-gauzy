@@ -147,9 +147,10 @@ export class SequenceController {
 	 *
 	 * The restart is the series' own: `SequenceService.resetSeries` performs the move the allocator
 	 * performs when a period has elapsed — rewind the counter to the value a period starts at and
-	 * record the moment — under the same row lock and inside the same kind of transaction, and it
-	 * declines with the kernel's own reason when the series' policy says no restart is due. This route
-	 * adds nothing to that decision.
+	 * record the moment — under the same row lock where the dialect has one, inside the same kind of
+	 * transaction and with the same conditional write, and it declines with the kernel's own reason when
+	 * the series' policy says no restart is due, or with a conflict when an allocation moved the series
+	 * first. This route adds nothing to that decision.
 	 *
 	 * It is a `POST` and not a `PUT`: the operation does not state the series' next value, it performs a
 	 * move on the series and answers the row the move produced. The endpoint table's `nextValue` request
@@ -164,6 +165,10 @@ export class SequenceController {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Numbering series restarted' })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'PRECONDITION_REQUIRED' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'RESOURCE_NOT_FOUND' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'CONCURRENT_MODIFICATION: an allocation or another restart moved the series first; nothing was rewound'
+	})
 	@Permissions(PermissionsEnum.SEQUENCES_EDIT)
 	@HttpCode(HttpStatus.OK)
 	@Post('/:id/reset')

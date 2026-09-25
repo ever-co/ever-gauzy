@@ -8,9 +8,10 @@ import { MikroOrmSequenceRepository } from './repository/mikro-orm-sequence.repo
 /**
  * A numbering series for human-facing document numbers.
  *
- * Allocation takes a row lock on the series so that two concurrent writers cannot be handed the same
- * value. A series is scoped to an organization and, optionally, to a channel, which is what lets one
- * organization number its documents per sales surface without the series colliding.
+ * Allocation reads the series under a row lock where the dialect has one, and on every dialect moves
+ * its counter with a write predicated on the value it read, so that two concurrent writers cannot be
+ * handed the same value. A series is scoped to an organization and, optionally, to a channel, which is
+ * what lets one organization number its documents per sales surface without the series colliding.
  */
 @MultiORMEntity('sequence', { mikroOrmRepository: () => MikroOrmSequenceRepository })
 export class Sequence extends TenantOrganizationBaseEntity implements ISequence {

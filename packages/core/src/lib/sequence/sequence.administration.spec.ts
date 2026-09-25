@@ -49,6 +49,7 @@ jest.mock('../core/context/request-context', () => ({
 }));
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { FindOperator, PessimisticLockTransactionRequiredError } from 'typeorm';
 import { SequenceResetPolicy } from '@gauzy/contracts';
 import { SequenceService } from './sequence.service';
 import { TypeOrmSequenceRepository } from './repository/type-orm-sequence.repository';
@@ -131,11 +132,38 @@ class SeriesTable {
 		}
 	}
 
-	private readonly manager = {
-		transaction: (work: (manager: unknown) => Promise<unknown>) => this.transaction(work),
-		createQueryBuilder: (_entity: unknown, alias: string) => this.queryBuilder(alias),
-		save: async (_entity: unknown, row: SeriesRow) => this.persist(row)
-	};
+	/** The repository's own manager: no query runner, and therefore no transaction. */
+	private readonly manager = this.managerOf(false);
+
+	/** The manager a transaction's body is handed, whose query runner is in an active transaction. */
+	private readonly transactional = this.managerOf(true);
+
+	/**
+	 * A TypeORM-shaped entity manager over the table.
+	 *
+	 * `queryRunner.isTransactionActive` is the member TypeORM reads before it issues a pessimistic lock,
+	 * and it is present only on the manager a transaction hands its body — as on the real one, whose
+	 * plain repository manager has no query runner of its own.
+	 *
+	 * `update` is the conditional write the restart commits through. Its criteria are "this row, still
+	 * holding what I read", so the double matches on every criterion rather than on the identifier
+	 * alone — an `update` keyed only by id would report one row affected for a write the database would
+	 * have declined, and this suite would certify a race it does not survive.
+	 */
+	private managerOf(inTransaction: boolean) {
+		return {
+			...(inTransaction ? { queryRunner: { isTransactionActive: true } } : {}),
+			transaction: (work: (manager: unknown) => Promise<unknown>) => this.transaction(work),
+			createQueryBuilder: (_entity: unknown, alias: string) => this.queryBuilder(alias, inTransaction),
+			findOne: async (_entity: unknown, options: { where: Row }) => {
+				const row = this.rows.find((candidate) => matchesRow(candidate, options.where));
+
+				return row ? { ...row } : null;
+			},
+			save: async (_entity: unknown, row: SeriesRow) => this.persist(row),
+			update: async (_entity: unknown, criteria: Row, values: Row) => this.conditionalUpdate(criteria, values)
+		};
+	}
 
 	/** The repository the service is constructed with. */
 	get repository(): unknown {
@@ -168,13 +196,15 @@ class SeriesTable {
 		this.depth += 1;
 
 		// What the table held when the transaction opened. A body that throws rolls back to it, which is
-		// the property that makes a declined move a declined move rather than a write nobody saved: the
-		// kernel's restart path mutates the row it read, so without the rollback an operation that
-		// refused would still look as though it had stamped the period.
+		// what makes a declined move a declined move rather than a write nobody saved. It is the second
+		// of the two properties that keep a refusal off the table — the first is that a read hands back
+		// a snapshot, so the kernel's restart path mutates a copy and never the stored row — and both
+		// are true of a database. The rollback is the one that still holds once a body has written
+		// something before deciding to refuse.
 		const opened = this.rows.map((row) => ({ ...row }));
 
 		try {
-			return await work(this.manager);
+			return await work(this.transactional);
 		} catch (error) {
 			this.rows.length = 0;
 			this.rows.push(...opened);
@@ -185,8 +215,9 @@ class SeriesTable {
 		}
 	}
 
-	private queryBuilder(alias: string) {
+	private queryBuilder(alias: string, inTransaction: boolean) {
 		const conditions: Row = {};
+		let locked = false;
 		const builder = {
 			where: (where: Row) => {
 				Object.assign(conditions, where);
@@ -213,13 +244,52 @@ class SeriesTable {
 			},
 			setLock: (mode: string) => {
 				this.locks.push(`${alias}:${mode}`);
+				locked = true;
 
 				return builder;
 			},
-			getOne: async () => this.rows.find((row) => matchesRow(row, conditions)) ?? null
+			/**
+			 * 🛑 A snapshot, not the stored row, and no lock outside a transaction.
+			 *
+			 * A database read hands back values; this used to hand back the object the table holds, so
+			 * every mutation the service made to what it had read was already in the table before the
+			 * write that decides it ran — and the restart, which rewinds the counter on the row it read and
+			 * then predicates its `UPDATE` on the value it observed before the rewind, could never have
+			 * matched. The refusal is TypeORM's own: `SelectQueryBuilder` raises it for a pessimistic lock
+			 * requested through a manager whose query runner is not in a transaction.
+			 */
+			getOne: async () => {
+				if (locked && !inTransaction) {
+					throw new PessimisticLockTransactionRequiredError();
+				}
+
+				const row = this.rows.find((candidate) => matchesRow(candidate, conditions));
+
+				return row ? { ...row } : null;
+			}
 		};
 
 		return builder;
+	}
+
+	/**
+	 * A conditional `UPDATE`: every criterion has to still hold, and only a row satisfying all of them
+	 * is written. The affected-row count is the whole answer the caller acts on.
+	 */
+	private async conditionalUpdate(criteria: Row, values: Row): Promise<{ affected: number }> {
+		this.depths.push(this.depth);
+		await Promise.resolve();
+
+		let affected = 0;
+
+		for (const row of this.rows) {
+			if (matchesRow(row, criteria)) {
+				Object.assign(row, values);
+				affected += 1;
+			}
+		}
+
+		return { affected };
 	}
 
 	private findRow(id: string): SeriesRow | undefined {
@@ -249,9 +319,28 @@ class SeriesTable {
 	}
 }
 
-/** A missing column and a null column are the same thing to the database. */
+/**
+ * Whether a stored value satisfies one criterion.
+ *
+ * A missing column and a null column are the same thing to the database. An operator is modelled only
+ * where the service states one — `LessThan`, under which a null column matches nothing, as `NULL < x`
+ * is unknown in SQL — and any other is refused rather than quietly matched.
+ */
 function matches(value: unknown, condition: unknown): boolean {
+	if (condition instanceof FindOperator) {
+		if (condition.type !== 'lessThan') {
+			throw new Error(`the sequence double was handed an operator it does not model: ${condition.type}`);
+		}
+
+		return value !== null && value !== undefined && comparable(value) < comparable(condition.value);
+	}
+
 	return (value ?? null) === (condition ?? null);
+}
+
+/** A value an ordering comparison can be made on: a moment as its epoch milliseconds. */
+function comparable(value: unknown): number {
+	return value instanceof Date ? value.getTime() : Number(value);
 }
 
 /** Whether one row satisfies every member of a condition, the way a `where` does. */
@@ -324,6 +413,24 @@ describe('creating a series', () => {
 		});
 		expect(created.id).toBe('seq-1');
 		expect(table.rows).toHaveLength(1);
+	});
+
+	it('creates a series on a dialect with row locks, reading without the lock TypeORM refuses outside a transaction', async () => {
+		// The dialect this suite runs as is Postgres, where the allocator's reader asks for `FOR UPDATE`.
+		// `createSeries` reads through that reader from the plain repository manager, and a pessimistic
+		// lock requested there is refused by TypeORM before it reaches the driver — so the create failed
+		// outright on Postgres and MySQL, and only a dialect that never requests the lock could create one.
+		const { table, service } = seriesTable([]);
+
+		const created = await service.createSeries({ key: 'ORDER', prefix: 'SO-' });
+
+		expect(created).toMatchObject({ key: 'ORDER', prefix: 'SO-' });
+		expect(table.rows).toHaveLength(1);
+		expect(table.locks).toEqual([]);
+
+		// The same reader, inside the restart's transaction, still takes the lock.
+		await service.resetSeries(created.id, { at: AT }).catch(() => undefined);
+		expect(table.locks).toEqual(['sequence:pessimistic_write']);
 	});
 
 	it('refuses a series stated without a key', async () => {

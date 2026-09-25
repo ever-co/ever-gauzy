@@ -201,7 +201,7 @@ export class BulkExecutor {
 			await this.runAtomic(options, failed, pending, apply);
 		} else {
 			for (const entry of pending) {
-				await this.runOne(options, entry.item, entry.index, apply);
+				await this.runOne(options, failed, entry.item, entry.index, apply);
 			}
 		}
 
@@ -237,6 +237,22 @@ export class BulkExecutor {
 	 * caller has to be told which item refused it rather than being handed a rolled-back transaction
 	 * with one error in it.
 	 *
+	 * 🛑 **Each item runs inside its own savepoint, and that is what makes the promise above true on
+	 * the platform's production dialect.** Catching an item's error is not enough on PostgreSQL: the
+	 * first statement that raises puts the whole transaction into the aborted state (SQLSTATE `25P02`)
+	 * and every later statement on that connection is refused with *current transaction is aborted,
+	 * commands ignored until end of transaction block* until it is rolled back. Without the savepoint
+	 * the loop kept going on the same manager, so the items after a database-level failure never
+	 * reached their own validation — they failed on `25P02`, and `toBulkFailure` reported that as
+	 * `INTERNAL_ERROR: Item N could not be applied.` A client that fixed the one item it was told about
+	 * was then refused for the items it had not been told about. SQLite and MySQL do not abort the
+	 * transaction on a failed statement, which is why the defect survived a suite that runs on SQLite.
+	 *
+	 * Rolling back to the savepoint returns the transaction to a usable state without committing
+	 * anything, so the next item is applied against the rows the failing one saw and reports its own
+	 * reason. The all-or-nothing guarantee is untouched: `BulkRollbackSignal` still rolls the whole
+	 * batch back when any item failed.
+	 *
 	 * @param options What the route declares.
 	 * @param failed The failures collected so far, appended to by the items.
 	 * @param pending The items to apply.
@@ -251,7 +267,7 @@ export class BulkExecutor {
 		try {
 			await options.transaction!(async (manager) => {
 				for (const entry of pending) {
-					await apply(entry.item, entry.index, manager);
+					await applyWithinSavepoint(manager, failed, entry, apply);
 				}
 
 				if (failed.length > 0) {
@@ -268,13 +284,23 @@ export class BulkExecutor {
 	/**
 	 * Applies one item in its own transaction, so a failing item never rolls back a succeeding one.
 	 *
+	 * **An item that failed has its transaction rolled back, not committed.** `apply` catches the
+	 * item's error into `failed` so the report is complete, which means the work handed to the runner
+	 * returns normally either way — and a runner whose work returned commits. Whatever the item wrote
+	 * before it threw would then be committed while the item is reported as not applied, and a caller
+	 * that retries it writes it a second time. PostgreSQL happened to hide this for a failed statement,
+	 * because it answers `COMMIT` on an aborted transaction with a rollback; SQLite and MySQL do not,
+	 * and no dialect does for an error thrown after a successful write.
+	 *
 	 * @param options What the route declares.
+	 * @param failed The failures collected so far; its length is what says whether this item failed.
 	 * @param item The item.
 	 * @param index The item's position.
 	 * @param apply Applies the item.
 	 */
 	private async runOne<T>(
 		options: IBulkExecutionOptions,
+		failed: readonly BulkFailure[],
 		item: BulkItemRequest<T>,
 		index: number,
 		apply: (item: BulkItemRequest<T>, index: number, manager?: EntityManager) => Promise<void>
@@ -285,19 +311,142 @@ export class BulkExecutor {
 			return;
 		}
 
-		await options.transaction(async (manager) => {
-			await apply(item, index, manager);
-		});
+		const before = failed.length;
+
+		try {
+			await options.transaction(async (manager) => {
+				await apply(item, index, manager);
+
+				if (failed.length > before) {
+					throw new BulkRollbackSignal();
+				}
+			});
+		} catch (error) {
+			if (!(error instanceof BulkRollbackSignal)) {
+				throw error;
+			}
+		}
 	}
 }
 
 /**
- * Rolls an atomic batch back once every item has been attempted.
+ * Rolls an atomic batch back once every item has been attempted, and a failed item's own transaction
+ * back when items are applied one at a time.
  *
- * It never escapes the executor: it is the signal that turns "some items failed" into "the
- * transaction must not commit", while the failures themselves travel in the result.
+ * It never escapes the executor: it is the signal that turns "an item failed" into "the transaction
+ * must not commit", while the failures themselves travel in the result.
  */
 class BulkRollbackSignal extends Error {}
+
+/**
+ * The savepoint one item of an atomic batch is applied inside.
+ *
+ * The name is built from the item's index and nothing else — an identifier interpolated into SQL must
+ * never be able to carry anything a caller supplied, and an index is a number the executor produced.
+ *
+ * @param index The item's position in the request.
+ * @returns The savepoint identifier.
+ */
+function savepointName(index: number): string {
+	return `gauzy_bulk_item_${Math.trunc(index)}`;
+}
+
+/**
+ * How a statement is run on the connection of the transaction a route's runner opened, or nothing when
+ * the manager it handed over cannot say that it is in one.
+ *
+ * The platform runs two ORMs and the executor is given whatever the route's own path produces, so the
+ * shape is read rather than assumed:
+ *
+ * - a TypeORM `EntityManager` from `transaction()` answers `query`, which runs on its own query
+ *   runner — the transaction's connection — and reports the transaction through
+ *   `queryRunner.isTransactionActive`;
+ * - a MikroORM `EntityManager` from `transactional()` answers `execute`, which passes the fork's
+ *   transaction context to the driver, and reports it through `isInTransaction()`. Its
+ *   `getConnection().execute` is deliberately not used: it takes no transaction context, so on a pool
+ *   it would take the savepoint on another connection, and on the single connection of an embedded
+ *   database it would wait for the one the transaction already holds.
+ *
+ * Anything else — no manager, a test double, a manager outside a transaction — gets no savepoint and
+ * is applied against directly, which is the behaviour this executor had before and is correct
+ * everywhere except on an aborted PostgreSQL transaction.
+ *
+ * @param manager The manager the route's transactional runner handed over.
+ * @returns A statement runner bound to the transaction, or undefined.
+ */
+function transactionStatementRunner(manager: unknown): ((sql: string) => Promise<unknown>) | undefined {
+	const candidate = manager as {
+		query?: (sql: string) => Promise<unknown>;
+		queryRunner?: { isTransactionActive?: boolean };
+		execute?: (sql: string, params?: unknown[], method?: 'all' | 'get' | 'run') => Promise<unknown>;
+		isInTransaction?: () => boolean;
+	} | null;
+
+	if (!candidate) {
+		return undefined;
+	}
+
+	if (typeof candidate.query === 'function' && candidate.queryRunner?.isTransactionActive === true) {
+		return (sql) => candidate.query!(sql);
+	}
+
+	if (
+		typeof candidate.execute === 'function' &&
+		typeof candidate.isInTransaction === 'function' &&
+		candidate.isInTransaction()
+	) {
+		return (sql) => candidate.execute!(sql, [], 'run');
+	}
+
+	return undefined;
+}
+
+/**
+ * Applies one item of an atomic batch inside its own savepoint.
+ *
+ * `SAVEPOINT`, `ROLLBACK TO SAVEPOINT` and `RELEASE SAVEPOINT` are spelled the same way on every
+ * dialect the platform supports — PostgreSQL, MySQL and SQLite, which serves both the `sqlite` and the
+ * `better-sqlite3` configuration — so no dialect switch is needed and none is written. They nest with
+ * the savepoints an ORM takes for a nested transaction inside the item, because a handler's own
+ * savepoint is taken after this one and settled before it.
+ *
+ * An item that failed has its savepoint rolled back, which is what returns an aborted PostgreSQL
+ * transaction to a usable state so the next item reaches its own validation. An item that applied has
+ * its savepoint released, because a transaction that accumulates one savepoint per item is holding
+ * rollback points it will never use.
+ *
+ * **A savepoint statement that fails is not swallowed.** It means the transaction is no longer the one
+ * the batch opened — MySQL, for one, rolls a whole transaction back on a deadlock, and every savepoint
+ * with it — and applying the items after it would write them outside any transaction, where the
+ * rollback that makes the batch atomic can no longer reach them. The error ends the batch instead, and
+ * the runner rolls back whatever is left.
+ *
+ * @param manager The transactional manager.
+ * @param failed The failures collected so far; its length is what says whether this item failed.
+ * @param entry The item and its position.
+ * @param apply Applies one item, catching its error into `failed`.
+ */
+async function applyWithinSavepoint<T>(
+	manager: EntityManager | undefined,
+	failed: readonly BulkFailure[],
+	entry: { item: BulkItemRequest<T>; index: number },
+	apply: (item: BulkItemRequest<T>, index: number, manager?: EntityManager) => Promise<void>
+): Promise<void> {
+	const run = transactionStatementRunner(manager);
+
+	if (!run) {
+		await apply(entry.item, entry.index, manager);
+
+		return;
+	}
+
+	const savepoint = savepointName(entry.index);
+	const before = failed.length;
+
+	await run(`SAVEPOINT ${savepoint}`);
+	await apply(entry.item, entry.index, manager);
+	await run(failed.length > before ? `ROLLBACK TO SAVEPOINT ${savepoint}` : `RELEASE SAVEPOINT ${savepoint}`);
+}
 
 /**
  * What an item's failure is read from: the catalogue code, the message the throw site chose, and the
