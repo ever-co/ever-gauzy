@@ -98,3 +98,52 @@ export function readMikroOrmScopeColumn(entity: unknown, column: IMikroOrmScopeC
 
 	return row[column.property] ?? reference?.id;
 }
+
+/**
+ * The payload MikroORM's `em.create()` needs for a row the caller described by relation-id mirrors.
+ *
+ * **Why.** The platform writes a foreign key the TypeORM way, by its mirror — `{ userId }`, `{ organizationContactId }`
+ * — and under MikroORM the mirror is `persist: false`: the owning relation beside it writes the column. `nativeUpdate`,
+ * `upsert` and `assign()` on a loaded entity write a mirror-only payload correctly, but `em.create()` does not: the
+ * relation stays unset, so a required foreign key fails the flush (`Value for Token.user is required, 'undefined'
+ * found` — every MikroORM login, whose refresh token is created with `{ userId }`), and a nullable one is silently
+ * written as `NULL`. Measured against MikroORM 6.6 on SQLite in `crud.service.mikro-orm-insert.spec.ts`.
+ *
+ * **What it does.** For each mirror the payload states (`null` included) whose owning relation it does not state,
+ * the relation is given the same value — the primary key, which `em.create()` turns into a reference to the
+ * existing row, exactly as it does for the `{ id }` the tenant-aware base stamps. The mirror is kept, so the new
+ * entity carries it as TypeORM's does. A payload that states the relation, or no mirror, is returned as it is.
+ *
+ * Only for `em.create()`: handed both keys, `nativeUpdate` and `upsert` name the relation as a column of its own
+ * and the statement is refused.
+ *
+ * @param meta The entity's MikroORM metadata.
+ * @param data The payload.
+ * @returns The payload with the relations its mirrors describe, or the payload itself when there are none.
+ */
+export function stateRelationsFromMirrors<D extends object>(meta: EntityMetadata | undefined, data: D): D {
+	if (!meta?.properties || !data || typeof data !== 'object') {
+		return data;
+	}
+
+	const payload = data as Record<string, unknown>;
+	let stated: Record<string, unknown> | undefined;
+
+	for (const mirror of Object.values(meta.properties)) {
+		if (mirror.kind !== ReferenceKind.SCALAR || mirror.persist !== false || payload[mirror.name] === undefined) {
+			continue;
+		}
+
+		const owner = Object.values(meta.properties).find(
+			(candidate) => OWNS_A_COLUMN(candidate) && sameColumns(candidate.fieldNames, mirror.fieldNames)
+		);
+		if (!owner || payload[owner.name] !== undefined) {
+			continue;
+		}
+
+		stated ??= { ...payload };
+		stated[owner.name] = payload[mirror.name];
+	}
+
+	return (stated ?? data) as D;
+}

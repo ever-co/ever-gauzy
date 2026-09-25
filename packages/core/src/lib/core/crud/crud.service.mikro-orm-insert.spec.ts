@@ -230,6 +230,50 @@ describe('CrudService inserts the rows it creates under MikroORM', () => {
 		expect(await rows()).toEqual([{ id: STORED, name: 'renamed', tenantId: TENANT }]);
 	});
 
+	it('writes a foreign key the payload states only by its relation-id mirror, as TypeORM does', async () => {
+		// `tenantId` is `persist: false` under MikroORM; `em.create()` used to leave the relation unset, so the
+		// key was written as NULL here (and a required one failed the flush: every MikroORM login's refresh token).
+		const created = await service().create({ name: 'mirror', tenantId: TENANT } as any);
+
+		expect(created.tenantId).toBe(TENANT);
+		expect(await rows()).toContainEqual({ id: created.id, name: 'mirror', tenantId: TENANT });
+		await expect(tenants()).resolves.toBe(1);
+	});
+
+	it('writes NULL for a mirror stated as null, and keeps a stated relation over its mirror', async () => {
+		const cleared = await service().create({ name: 'mirror-null', tenantId: null } as any);
+		const both = await service().create({ name: 'mirror-both', tenant: { id: TENANT }, tenantId: TENANT } as any);
+
+		expect(await rows()).toEqual(
+			expect.arrayContaining([
+				{ id: cleared.id, name: 'mirror-null', tenantId: null },
+				{ id: both.id, name: 'mirror-both', tenantId: TENANT }
+			])
+		);
+	});
+
+	it('writes the mirrors of every row of a batch', async () => {
+		const created = await service().createMany([
+			{ name: 'batch-mirror', tenantId: TENANT },
+			{ id: STATED, name: 'batch-mirror-stated', tenantId: TENANT }
+		] as any);
+
+		expect(await rows()).toEqual(
+			expect.arrayContaining([
+				{ id: created[0].id, name: 'batch-mirror', tenantId: TENANT },
+				{ id: STATED, name: 'batch-mirror-stated', tenantId: TENANT }
+			])
+		);
+	});
+
+	it('is refused on the foreign key a mirror names when that row does not exist, so the key really is written', async () => {
+		await expect(service().create({ name: 'mirror-refused', tenantId: MISSING_TENANT } as any)).rejects.toThrow(
+			BadRequestException
+		);
+
+		expect((await rows()).map((row) => row.name)).toEqual(['stored']);
+	});
+
 	it('reports a refused insert as a failure, and never answers it through the TypeORM branch', async () => {
 		// The tenant does not exist, so the store refuses the row on its foreign key.
 		await expect(service().create({ name: 'refused', tenant: { id: MISSING_TENANT } } as any)).rejects.toThrow(

@@ -8,6 +8,7 @@ import {
 	UuidType
 } from '@mikro-orm/core';
 import { PostgreSqlPlatform } from '@mikro-orm/postgresql';
+import { stateRelationsFromMirrors } from './mikro-orm-scope-column.helper';
 
 /**
  * Whether the database fills in a new row's primary key when the INSERT leaves it out.
@@ -86,6 +87,10 @@ export function createNewMikroOrmEntity<T extends object>(
 	const em = repository.getEntityManager();
 	const meta = em.getMetadata(repository.getEntityName());
 	const primaryKeys = meta.getPrimaryProps();
+
+	// A foreign key stated only by its relation-id mirror (`{ userId }`) is written by the relation beside it,
+	// which `em.create()` would otherwise leave unset (see `stateRelationsFromMirrors`).
+	data = stateRelationsFromMirrors(meta, data);
 
 	if (primaryKeys.length !== 1) {
 		return repository.create(data as RequiredEntityData<T>, options);
