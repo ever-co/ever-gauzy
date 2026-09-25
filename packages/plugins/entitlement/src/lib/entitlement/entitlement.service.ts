@@ -12,7 +12,8 @@ import {
 	SequenceService,
 	TenantAwareCrudService,
 	bumpVersion,
-	commitVersionedUpdate
+	commitVersionedUpdate,
+	parseEntityVersion
 } from '@gauzy/core';
 import { Entitlement } from './entitlement.entity';
 import { EntitlementActivation } from '../entitlement-activation/entitlement-activation.entity';
@@ -1028,16 +1029,32 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 	 * with rather than applied on top of a change its caller never saw.
 	 *
 	 * The version to predicate on is the one the row was read at — under its lock wherever the caller
-	 * took one, which is what makes that value authoritative inside this transaction. A caller that
-	 * accepted a version states the predicate itself, so a write based on a right that has moved on is
-	 * refused even when the read that preceded this statement was not locked.
+	 * took one, which is what makes that value authoritative inside this transaction — and it is the
+	 * version the transition was decided from. What the caller accepted is a condition on that version,
+	 * answered here before any statement runs:
+	 *
+	 * - **a wildcard** accepts any version the right holds, so the write is predicated on the one read;
+	 * - **a list**, of one version or several, accepts only the versions it names. A right read at a
+	 *   version the list does not name has moved past everything the caller accepted, and the write is
+	 *   refused with the conflict the guard would have answered had it read the row itself.
+	 *
+	 * 🛑 The list case is the one that used to be wrong. Only a single version was checked; a list of
+	 * several was treated as "a condition rather than a number" and the statement was predicated on
+	 * whatever the locked row held — so `If-Match: "3", "4"` against a right at version 7 was written.
+	 * The guard hands on the caller's **whole** list whenever its own read of the row failed, so that was
+	 * a reachable lost update rather than a theoretical one. A list that names nothing accepts nothing,
+	 * and is refused as the missing version it is, as `commitVersionedUpdate` refuses it.
+	 *
+	 * Predicating on the version read, rather than on the one the caller named, also refuses a write
+	 * whose read was not locked and whose right moved on after it: the statement then matches no row.
 	 *
 	 * @param manager The caller's transaction manager.
 	 * @param entitlement The right, as the caller read it.
 	 * @param patch The columns to write. `version` is set here and must not be part of the patch.
 	 * @param expectation The version the caller accepted, when the write has a caller.
 	 * @returns Nothing.
-	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the right no longer holds that version.
+	 * @throws ApiException with `VERSION_REQUIRED` when the caller accepted no version at all, and with
+	 * `ENTITY_VERSION_CONFLICT` when the right does not hold, or no longer holds, a version it accepted.
 	 */
 	private async updateVersionedRow(
 		manager: EntityManager,
@@ -1045,13 +1062,34 @@ export class EntitlementService extends TenantAwareCrudService<Entitlement> {
 		patch: Record<string, unknown>,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<void> {
-		// What the caller accepted is the predicate when it named exactly one version. A caller that
-		// accepted several versions, or any version that exists, has stated a condition rather than a
-		// number, so the number comes from the row the lock protects — which is what keeps the check and
-		// the increment in one statement for every form of acceptance.
-		const accepted =
-			!expectation.wildcard && expectation.versions.length === 1 ? expectation.versions[0] : undefined;
-		const expected = accepted ?? entitlement.version;
+		if (!expectation.wildcard) {
+			const accepted = expectation.versions ?? [];
+
+			// The guard never leaves an empty list — `parseIfMatch` refuses one — so only a caller that
+			// built the expectation by hand can, and predicating on the row would make it unconditional.
+			if (accepted.length === 0) {
+				throw new ApiException(
+					428,
+					ApiErrorCode.VERSION_REQUIRED,
+					'This write must state the version it was based on, and no version was accepted for it.'
+				);
+			}
+
+			// The version read is compared as the kernel reads one, so a driver that answers the integer
+			// column as text is not mistaken for a right that moved on.
+			const current = parseEntityVersion(entitlement.version);
+
+			if (current === null || !accepted.includes(current)) {
+				throw new ApiException(
+					409,
+					ApiErrorCode.ENTITY_VERSION_CONFLICT,
+					'The record changed since you read it. Read it again and reapply your change.',
+					{ expectedVersion: accepted[0], actualVersion: entitlement.version }
+				);
+			}
+		}
+
+		const expected = entitlement.version;
 
 		// The patch is typed loosely on purpose: `version` is a convention the entity opts into with
 		// `@VersionedColumn()` rather than a member of the base entity, so it cannot be expressed in

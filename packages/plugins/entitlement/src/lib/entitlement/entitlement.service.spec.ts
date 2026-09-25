@@ -99,6 +99,7 @@ jest.mock('@gauzy/core', () => {
 		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write').commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write').versionExpectationOf,
 		bumpVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').bumpVersion,
+		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		RequestContext: {
@@ -1468,5 +1469,94 @@ describe('EntitlementService — a transition under the version the caller read 
 		expect(suspended).toMatchObject({ status: EntitlementStatus.SUSPENDED, suspendedReason: 'PAYMENT_FAILED' });
 		expect(fixture.store('a').version).toBe(3);
 		expect(fixture.events()).toEqual([EntitlementEventName.SUSPENDED]);
+	});
+
+	/**
+	 * `If-Match: "3", "4"` reaches the transition as a list whenever the guard could not read the row
+	 * itself: the guard then hands on every version the caller accepted rather than the first, so a row
+	 * at the second is not refused. A list is a condition on the row's version, and the statement used
+	 * to be predicated on whatever the locked row held once the list had more than one member — so a
+	 * right at version 7 was suspended for a caller who had accepted only 3 and 4.
+	 */
+	it('refuses a suspension whose caller accepted a list of versions the right has moved past', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 7 })] });
+
+		const refusal = await fixture.service
+			.suspend('a', 'PAYMENT_FAILED', {}, { wildcard: false, versions: [3, 4] })
+			.catch((error) => error);
+
+		// The first accepted version is the one named, as the guard names it when it reads the row itself.
+		expect(refusal).toMatchObject({
+			status: 409,
+			code: ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			details: { expectedVersion: 3, actualVersion: 7 }
+		});
+		expect(fixture.store('a').status).toBe(EntitlementStatus.ACTIVE);
+		expect(fixture.store('a').version).toBe(7);
+		expect(fixture.appended).toEqual([]);
+	});
+
+	it('refuses a resumption whose caller accepted a list the right has moved past, although the read was not locked', async () => {
+		// A resumption reads the right before its transaction opens, so it is the path where only the
+		// statement's own predicate stands between a stale caller and the row.
+		const fixture = entitlementFixture({
+			rights: [
+				rightRow('a', { status: EntitlementStatus.SUSPENDED, suspendedReason: 'PAYMENT_FAILED', version: 7 })
+			]
+		});
+
+		const refusal = await fixture.service
+			.resume('a', {}, { wildcard: false, versions: [3, 4] })
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({
+			status: 409,
+			code: ApiErrorCode.ENTITY_VERSION_CONFLICT,
+			details: { expectedVersion: 3, actualVersion: 7 }
+		});
+		expect(fixture.store('a').status).toBe(EntitlementStatus.SUSPENDED);
+		expect(fixture.store('a').version).toBe(7);
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('applies a suspension whose caller accepted a list that holds the right’s version, one revision on', async () => {
+		// Control: the list is honoured, not collapsed to its first member — the right is at 2, the first
+		// accepted version is 1, and the write lands.
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		const suspended = await fixture.service.suspend(
+			'a',
+			'PAYMENT_FAILED',
+			{},
+			{ wildcard: false, versions: [1, 2] }
+		);
+
+		expect(suspended).toMatchObject({ status: EntitlementStatus.SUSPENDED });
+		expect(fixture.store('a').version).toBe(3);
+		expect(fixture.events()).toEqual([EntitlementEventName.SUSPENDED]);
+	});
+
+	it('keeps a wildcard a wildcard: any version the right holds, one revision on', async () => {
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 5 })] });
+
+		const suspended = await fixture.service.suspend('a', 'PAYMENT_FAILED', {}, { wildcard: true, versions: [] });
+
+		expect(suspended).toMatchObject({ status: EntitlementStatus.SUSPENDED });
+		expect(fixture.store('a').version).toBe(6);
+	});
+
+	it('refuses a transition whose caller accepted no version at all, rather than writing it unconditionally', async () => {
+		// The guard never leaves an empty list — `parseIfMatch` refuses one — so only a caller that built
+		// the expectation by hand can, and it is answered as the kernel's own conditional write answers it.
+		const fixture = entitlementFixture({ rights: [rightRow('a', { version: 2 })] });
+
+		const refusal = await fixture.service
+			.suspend('a', 'PAYMENT_FAILED', {}, { wildcard: false, versions: [] })
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 428, code: ApiErrorCode.VERSION_REQUIRED });
+		expect(fixture.store('a').status).toBe(EntitlementStatus.ACTIVE);
+		expect(fixture.store('a').version).toBe(2);
+		expect(fixture.appended).toEqual([]);
 	});
 });
