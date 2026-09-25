@@ -137,7 +137,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 			relations: relations
 		}).then((result) => {
 			if (result) {
-				return result.translateNested(langCode, this.propsTranslate);
+				return this.translateRow(result, langCode);
 			}
 			return result;
 		});
@@ -329,11 +329,73 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		if (languageCode) {
 			return Promise.all(
 				items.map((product: IProductTranslatable) =>
-					Object.assign({}, product, product.translateNested(languageCode, this.propsTranslate))
+					Object.assign({}, product, this.translateRow(product, languageCode))
 				)
 			);
 		} else {
 			return items;
 		}
+	}
+
+	/**
+	 * One row read through the CRUD base, with the requested language merged onto it.
+	 *
+	 * **The merge is the entity's, whichever ORM read the row.** On TypeORM the row is a `Product` and carries
+	 * `translateNested`, and that call is made exactly as it always was. On MikroORM the CRUD base answers
+	 * `wrap(entity).toJSON()` — the row's data as a plain object, without the entity's prototype — so calling the
+	 * method on the row failed with `product.translateNested is not a function` (`result.…` on the per-language
+	 * read of one row): the GraphQL `products` and `product(id, language)` fields and every translating route
+	 * (`GET /products`, `/products/pagination`, `/products/local/:langCode`, `/products/local/:langCode/:id`)
+	 * answered a 500. The same merge is therefore applied to the serialized row, as `Product`'s own method.
+	 *
+	 * The serialized row is handed to it as {@link withMergeableRelations} leaves it, because one member differs
+	 * from TypeORM's row in a way the merge reads: see there.
+	 *
+	 * @param row The row, as the CRUD base answered it.
+	 * @param languageCode The language to merge.
+	 * @returns What `translateNested` answers for the row.
+	 */
+	private translateRow(row: IProductTranslatable, languageCode: string): any {
+		if (typeof row.translateNested === 'function') {
+			return row.translateNested(languageCode, this.propsTranslate);
+		}
+
+		return Product.prototype.translateNested.call(
+			this.withMergeableRelations(row),
+			languageCode,
+			this.propsTranslate
+		);
+	}
+
+	/**
+	 * A serialized row without the translated relations the read did not load.
+	 *
+	 * The merge reads a relation it translates (`productType`, `productCategory`) as a loaded row and looks for
+	 * its `translations`. TypeORM leaves a relation the read did not load off the row, so the merge never sees
+	 * it. MikroORM's serializer states it anyway, as the referenced row's key — `productType: '<uuid>'` — and the
+	 * merge, handed the serialized row as it stands, reads `'<uuid>'.translations` and fails with `Cannot read
+	 * properties of undefined (reading 'find')` on every product that has a type or a category. A relation that
+	 * is not a row carrying its translations has nothing to merge, so it is left off the object the merge reads,
+	 * which is the row TypeORM hands it; the answer keeps the member as the read stated it.
+	 *
+	 * @param row The serialized row.
+	 * @returns A shallow copy of the row the merge can read.
+	 */
+	private withMergeableRelations(row: IProductTranslatable): IProductTranslatable {
+		const mergeable: Record<string, unknown> = { ...(row as unknown as Record<string, unknown>) };
+
+		for (const { prop } of this.propsTranslate) {
+			const [member, ...path] = prop.split('.');
+			if (member === 'root' || !(member in mergeable)) {
+				continue;
+			}
+
+			const translated = path.reduce<any>((value, segment) => value?.[segment], mergeable[member]);
+			if (!Array.isArray(translated?.translations)) {
+				delete mergeable[member];
+			}
+		}
+
+		return mergeable as unknown as IProductTranslatable;
 	}
 }
