@@ -4,6 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { PurchasingFeatures } from '../../purchasing.features';
 import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import {
@@ -63,17 +64,22 @@ interface IUpdatePurchaseOrderArgs {
  * The delivery a caller records against the order they are already looking at, as the schema declares
  * it.
  *
- * It is the body of `POST /purchase-orders/:id/receipts` and nothing else: the order rides as the
- * field's own argument because the route carries it in the path, and the location is deliberately
- * absent because the route does not read one — a delivery anchored to an order inherits that order's
- * receiving location, and a field that accepted a location the service never received would tell a
- * caller it had moved the goods somewhere it had not.
+ * It is the body of `POST /purchase-orders/:id/receipts` plus the two things that route reads from its
+ * headers: the order rides as the field's own argument because the route carries it in the path, the
+ * order's version is the route's `If-Match`, and the retry key is the route's `Idempotency-Key`. The
+ * location is deliberately absent because the route does not read one — a delivery anchored to an order
+ * inherits that order's receiving location, and a field that accepted a location the service never
+ * received would tell a caller it had moved the goods somewhere it had not.
  */
 interface IReceivePurchaseOrderArgs {
 	receivedAt?: Date;
 	overReceiptTolerance?: string;
 	note?: string;
 	lines: IGoodsReceiptLineInput[];
+	/** The order version the caller read, stated as the route's `If-Match` states it. */
+	version?: number;
+	/** The client's retry key, which the operation requires; read by the idempotency interceptor. */
+	idempotencyKey?: string;
 }
 
 /**
@@ -111,10 +117,18 @@ interface IReceivePurchaseOrderArgs {
  * imported rather than restated because nothing checks one string against another: a literal that
  * drifted names a code no catalogue row carries, which the guard resolves as disabled, and every field
  * here would then answer `Cannot query field <name>` for every caller with nothing red anywhere.
+ *
+ * **The plugin's own gate stands beside it.** The class also declares `PurchasingFeatures.PURCHASING`
+ * (`FEATURE_PURCHASING`), the code every purchasing REST controller declares with `@FeatureFlag`, so a
+ * tenant that switched purchasing off is refused here exactly as its routes refuse it — rather than finding
+ * every write the routes withhold still served over GraphQL. The two codes are two questions, both of which
+ * must be answered yes: the endpoint is on, and the capability is on. The platform's decorator accumulates
+ * the codes stated on one target and `FeatureFlagGuard` requires every one of them.
  */
 @Resolver('PurchaseOrder')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(PurchasingFeatures.PURCHASING)
 @Permissions(PurchasingPermissions.PURCHASE_ORDERS_VIEW)
 export class PurchaseOrderResolver {
 	constructor(
@@ -356,16 +370,31 @@ export class PurchaseOrderResolver {
 	 * to a document. A field that stated an edit grant here would answer a booking the REST route refuses
 	 * to the same caller, which is the disagreement the parity rule exists to prevent.
 	 *
-	 * It carries no retry declaration, because the route carries none: the delivery-recording mutation
-	 * beside it (`createGoodsReceipt`) demands a key, and this path deliberately does not, so a field
-	 * that demanded one would refuse callers the route serves. The delivery is handed to the same service
-	 * method the route calls, with the order stated as the route states it — in the path there, as the
-	 * field's argument here — and the answer is the receipt, which is what the route returns.
+	 * **It demands a retry key, under the scope every booking of a delivery carries.** This is the act
+	 * `createGoodsReceipt` performs — both reach `GoodsReceiptService.receive` — and that method has no
+	 * natural dedupe: every call allocates a number, posts a receipt, writes inbound movements and advances
+	 * the received counters, so a partial delivery (five of ten) that a client re-sends after a timeout is
+	 * booked twice and the stock is counted twice, with nothing refusing the second because it is still
+	 * inside the ordered quantity. The field therefore declares `purchase_order.receive` with
+	 * `required: true`, exactly as `createGoodsReceipt` and `POST /goods-receipts` do, and so does
+	 * `POST /purchase-orders/:id/receipts` — a keyless booking is refused on every path to the method
+	 * rather than on two of the three.
+	 *
+	 * **It states the version precondition the route states.** The route reads the order's version from
+	 * `If-Match` and hands it to the service as `expectedVersion`; a field has no header, so the version
+	 * rides in the input as `version` and reaches the service under the route's name for it, so a caller
+	 * who read version 3 is refused when another buyer has since amended the order to version 4 — on both
+	 * surfaces.
+	 *
+	 * The delivery is handed to the same service method the route calls, with the order stated as the
+	 * route states it — in the path there, as the field's argument here — and the answer is the receipt,
+	 * which is what the route returns.
 	 *
 	 * @param id The order being received against.
-	 * @param input The quantities that arrived.
+	 * @param input The quantities that arrived, the order version the caller read and the retry key.
 	 * @returns The payload, carrying the receipt, the movements it wrote and the order's new state.
 	 */
+	@Idempotent({ scope: 'purchase_order.receive', required: true, resourceType: 'goods_receipt' })
 	@Mutation('receivePurchaseOrder')
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
 	async receivePurchaseOrder(@Args('id') id: ID, @Args('input') input: IReceivePurchaseOrderArgs) {
@@ -375,6 +404,8 @@ export class PurchaseOrderResolver {
 					purchaseOrderId: id,
 					receivedAt: input.receivedAt,
 					overReceiptTolerance: input.overReceiptTolerance,
+					// A GraphQL `null` is "not stated", which is what an absent `If-Match` is on the route.
+					expectedVersion: input.version ?? undefined,
 					note: input.note,
 					lines: input.lines
 				} as any)

@@ -133,9 +133,12 @@ Every route takes the caller's `If-Match` version where the document carries one
 on one purchase order cannot both win.
 
 Recording a delivery demands the platform's retry key (`packages/core/src/lib/idempotency/`):
-`POST /goods-receipts` and the mutation `createGoodsReceipt` are refused with
-`IDEMPOTENCY_KEY_REQUIRED` without an `Idempotency-Key` header — the `idempotencyKey` input member over
-GraphQL — because booking the same delivery twice books the stock twice. Raising an order offers the
+`POST /goods-receipts`, `POST /purchase-orders/:id/receipts` and the mutations `createGoodsReceipt` and
+`receivePurchaseOrder` are all refused with `IDEMPOTENCY_KEY_REQUIRED` without an `Idempotency-Key`
+header — the `idempotencyKey` input member over GraphQL — because all four book a delivery through the
+same `GoodsReceiptService.receive`, and booking the same delivery twice books the stock twice. They share
+the scope `purchase_order.receive`, so a retry is answered with the receipt its first attempt booked.
+`receivePurchaseOrder` also takes the order's `version`, which the route reads from `If-Match`. Raising an order offers the
 key rather than demanding it, so `POST /purchase-orders` and `createPurchaseOrder` answer a retry under
 the same key and the same bytes with the order the first attempt raised, while a caller that never
 sends a key is unaffected.

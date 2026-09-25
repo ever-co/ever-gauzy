@@ -257,6 +257,14 @@ export class PurchaseOrderController extends CrudController<PurchaseOrder> {
 	/**
 	 * Receives goods against this purchase order.
 	 *
+	 * **The retry key is required**, under `purchase_order.receive` — the scope `POST /goods-receipts`
+	 * books the same delivery under. Both routes reach `GoodsReceiptService.receive`, which posts a new
+	 * receipt, writes inbound movements and advances the received counters on every call: a partial
+	 * delivery re-sent after a timeout is booked twice and nothing refuses the second, because it is still
+	 * inside the ordered quantity. A route that booked it without a key while its sibling demanded one
+	 * would be the keyless way round the rule, so a request without `Idempotency-Key` is refused here too,
+	 * and a retried one is answered with the receipt its first attempt booked.
+	 *
 	 * @param id The order being received against.
 	 * @param entity The quantities that arrived.
 	 * @param ifMatch The order version the caller read, when it stated one.
@@ -264,8 +272,10 @@ export class PurchaseOrderController extends CrudController<PurchaseOrder> {
 	 */
 	@ApiOperation({ summary: 'Receive goods against a purchase order' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'The goods were received.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The request carried no Idempotency-Key.' })
 	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The order cannot be received, or a line exceeds the ordered quantity.' })
 	@Permissions(PurchasingPermissions.GOODS_RECEIPTS_CREATE)
+	@Idempotent({ scope: 'purchase_order.receive', required: true, resourceType: 'goods_receipt' })
 	@HttpCode(HttpStatus.CREATED)
 	@Post(':id/receipts')
 	@UseValidationPipe({ transform: true, whitelist: true })

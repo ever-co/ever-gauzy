@@ -338,7 +338,173 @@ describe('the purchase-order route — the retry declaration', () => {
 	it('leaves the transitions alone, because each of them takes its own version precondition', () => {
 		expect(declarationOf(PurchaseOrderController, 'send')).toBeUndefined();
 		expect(declarationOf(PurchaseOrderController, 'approve')).toBeUndefined();
-		expect(declarationOf(PurchaseOrderController, 'receive')).toBeUndefined();
+		// `receive` used to be listed here. It is not a transition of the order: it books a delivery
+		// through `GoodsReceiptService.receive`, which posts a new receipt on every call and has no
+		// natural dedupe, so a retried partial delivery was booked twice. It now demands the key its
+		// sibling `POST /goods-receipts` demands — pinned in the block below.
+	});
+});
+
+/**
+ * Receiving against an order — the retry key and the version precondition, on both surfaces.
+ *
+ * `POST /purchase-orders/:id/receipts`, `receivePurchaseOrder`, `POST /goods-receipts` and
+ * `createGoodsReceipt` all reach `GoodsReceiptService.receive`. The last two demanded a key under
+ * `purchase_order.receive`; the first two demanded none, so a client that re-sent a partial delivery
+ * (five of ten) after a timeout booked it twice — two receipts, two sets of inbound movements, ten on
+ * hand — and nothing refused the second, because it was still inside the ordered quantity. The field also
+ * had no way to state the order version the route reads from `If-Match`.
+ *
+ * The interceptor, the plan it decides from and the refusal it throws are the platform's own; the key
+ * store and the receipt service are doubles, and the receipt service counts the bookings it was asked
+ * for, which is the thing a retry must not double.
+ */
+describe('receiving against an order — one booking per retry, and the version the caller read', () => {
+	const RECEIVE_KEY = 'receipt-0001';
+	const DELIVERY = {
+		note: 'first lorry',
+		lines: [{ purchaseOrderLineId: '00000000-0000-4000-8000-0000000000d5', quantity: '5.000000' }]
+	};
+
+	/** The two surfaces over one counting receipt service and one key store. */
+	function receiving() {
+		let bookings = 0;
+		const receiptService = {
+			receive: jest.fn(async () => ({ id: `receipt-${++bookings}`, number: `GR-00000${bookings}` }))
+		};
+		const store = keyStore();
+		const reflector = new Reflector();
+
+		return {
+			receiptService,
+			store,
+			controller: new PurchaseOrderController({} as never, receiptService as never),
+			resolver: new PurchaseOrderResolver({} as never, {} as never, receiptService as never),
+			interceptor: new IdempotencyInterceptor(store as never, reflector)
+		};
+	}
+
+	type Receiving = ReturnType<typeof receiving>;
+
+	/** One `POST /purchase-orders/:id/receipts`, through the interceptor, with the key when one is given. */
+	async function overRest(surface: Receiving, key?: string, ifMatch?: string) {
+		const input: RequestDouble = {
+			method: 'POST',
+			originalUrl: `/api/purchase-orders/${ORDER}/receipts`,
+			params: { id: ORDER },
+			query: {},
+			body: DELIVERY,
+			headers: key === undefined ? {} : { 'idempotency-key': key }
+		};
+		const response = responseDouble();
+		const context = {
+			getType: () => 'http',
+			getClass: () => PurchaseOrderController,
+			getHandler: () => PurchaseOrderController.prototype.receive,
+			switchToHttp: () => ({ getRequest: () => input, getResponse: () => response }),
+			getArgByIndex: (index: number) => [null, input][index]
+		} as unknown as ExecutionContext;
+
+		return await lastValueFrom(
+			surface.interceptor.intercept(context, {
+				handle: () => from(surface.controller.receive(ORDER, DELIVERY as never, ifMatch))
+			})
+		);
+	}
+
+	/** One `receivePurchaseOrder`, through the interceptor, with the arguments a root field is run with. */
+	async function overGraphql(surface: Receiving, input: Record<string, unknown>) {
+		const values = [
+			null,
+			{ id: ORDER, input },
+			{ req: {}, res: responseDouble() },
+			{ operation: { operation: 'mutation' }, fieldName: 'receivePurchaseOrder' }
+		];
+		const context = {
+			getType: () => 'graphql',
+			getClass: () => PurchaseOrderResolver,
+			getHandler: () => PurchaseOrderResolver.prototype.receivePurchaseOrder,
+			getArgs: () => values,
+			getArgByIndex: (index: number) => values[index],
+			switchToHttp: () => {
+				throw new Error('a GraphQL operation has no HTTP request of its own');
+			}
+		} as unknown as ExecutionContext;
+
+		return await lastValueFrom(
+			surface.interceptor.intercept(context, {
+				handle: () => from(surface.resolver.receivePurchaseOrder(ORDER, input as never))
+			})
+		);
+	}
+
+	it('declares the scope and the demand the standalone booking declares, on the route and on the field', () => {
+		const declared = { scope: 'purchase_order.receive', required: true, resourceType: 'goods_receipt' };
+
+		expect(declarationOf(PurchaseOrderController, 'receive')).toEqual(declared);
+		expect(declarationOf(PurchaseOrderResolver, 'receivePurchaseOrder')).toEqual(declared);
+	});
+
+	it('refuses a keyless booking over REST, and books nothing', async () => {
+		const surface = receiving();
+
+		await expect(overRest(surface)).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REQUIRED' });
+		expect(surface.receiptService.receive).not.toHaveBeenCalled();
+	});
+
+	it('refuses a keyless booking over GraphQL, and books nothing', async () => {
+		const surface = receiving();
+
+		await expect(overGraphql(surface, { ...DELIVERY })).rejects.toMatchObject({
+			code: 'IDEMPOTENCY_KEY_REQUIRED'
+		});
+		expect(surface.receiptService.receive).not.toHaveBeenCalled();
+	});
+
+	it('answers a REST retry of the same delivery with the first receipt instead of booking it twice', async () => {
+		const surface = receiving();
+
+		const first = await overRest(surface, RECEIVE_KEY);
+		const retried = await overRest(surface, RECEIVE_KEY);
+
+		expect(surface.receiptService.receive).toHaveBeenCalledTimes(1);
+		expect(retried).toEqual(first);
+	});
+
+	it('answers a GraphQL retry of the same delivery with the first receipt instead of booking it twice', async () => {
+		const surface = receiving();
+		const input = { ...DELIVERY, idempotencyKey: RECEIVE_KEY };
+
+		const first = await overGraphql(surface, input);
+		const retried = await overGraphql(surface, input);
+
+		expect(surface.receiptService.receive).toHaveBeenCalledTimes(1);
+		expect(retried).toEqual(first);
+		expect(first.userErrors).toEqual([]);
+	});
+
+	it('hands the service the order version the caller read, as the route does from If-Match', async () => {
+		const surface = receiving();
+
+		await overRest(surface, 'receipt-rest', '"4"');
+		await overGraphql(surface, { ...DELIVERY, version: 4, idempotencyKey: 'receipt-graphql' });
+
+		expect(surface.receiptService.receive).toHaveBeenCalledTimes(2);
+
+		for (const [call] of surface.receiptService.receive.mock.calls as unknown as Array<[Record<string, unknown>]>) {
+			expect(call).toMatchObject({ purchaseOrderId: ORDER, expectedVersion: 4, lines: DELIVERY.lines });
+		}
+	});
+
+	it('states no version when the caller stated none, on either surface', async () => {
+		const surface = receiving();
+
+		await overRest(surface, 'receipt-rest');
+		await overGraphql(surface, { ...DELIVERY, version: null, idempotencyKey: 'receipt-graphql' });
+
+		for (const [call] of surface.receiptService.receive.mock.calls as unknown as Array<[Record<string, unknown>]>) {
+			expect(call.expectedVersion).toBeUndefined();
+		}
 	});
 });
 
@@ -648,12 +814,26 @@ describe('the purchase-order mutations — the routes they mirror (doc 17 §3.1)
 		expect(restoredOverGraphql).toBe(restoredOverRest);
 	});
 
-	it('leaves the mirrored mutations alone, because none of the routes declares a retry key', () => {
-		// The delivery-recording mutation on the receipt resource demands a key, because a delivery booked
-		// twice books the stock twice. The order path deliberately does not, and neither do the transitions
-		// — each of them takes its own version precondition instead — so a field that copied that
-		// declaration would refuse callers the route serves.
+	it('declares on each mirrored mutation the retry key its route declares, and no other', () => {
+		// This used to assert that none of the mirrored mutations declares a key, on the ground that the
+		// order path booked a delivery without one. That was the defect: `receive` reaches the same
+		// `GoodsReceiptService.receive` the key-demanding `POST /goods-receipts` does, and a retried partial
+		// delivery was booked twice. The route and the field now both demand the key; the transitions still
+		// declare none — each takes its own version precondition instead — so the parity rule is what is
+		// pinned here, with the one declaration spelled out so an empty read on both sides cannot pass.
 		for (const entry of MIRRORED) {
+			expect(declarationOf(PurchaseOrderResolver, entry.field)).toEqual(
+				declarationOf(PurchaseOrderController, entry.route)
+			);
+		}
+
+		expect(declarationOf(PurchaseOrderResolver, 'receivePurchaseOrder')).toEqual({
+			scope: 'purchase_order.receive',
+			required: true,
+			resourceType: 'goods_receipt'
+		});
+
+		for (const entry of MIRRORED.filter(({ field }) => field !== 'receivePurchaseOrder')) {
 			expect(declarationOf(PurchaseOrderResolver, entry.field)).toBeUndefined();
 		}
 	});

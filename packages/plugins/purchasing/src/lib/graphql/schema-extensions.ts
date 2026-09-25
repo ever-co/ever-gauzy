@@ -505,13 +505,11 @@ export const schemaExtensions = gql`
 	"""
 	The delivery a caller records against the order the field already names.
 
-	It is the body of \`POST /purchase-orders/:id/receipts\`, and it deliberately states neither of the two
-	members the standalone delivery input carries: the order is the field's own argument on this path, and
-	the retry key is not demanded here — the order path books a delivery the caller is already looking at
-	rather than one raised on its own, so a key the route never asks for would refuse callers the route
-	serves. The location is absent for the same reason it is absent from the route: a delivery anchored to
-	an order inherits that order's receiving location, and an input that accepted a location the service
-	never receives would tell a caller it had moved the goods somewhere it had not.
+	It is the body of \`POST /purchase-orders/:id/receipts\` plus the two things that route reads from its
+	headers. The order is the field's own argument on this path, as it is the route's path parameter. The
+	location is absent for the same reason it is absent from the route: a delivery anchored to an order
+	inherits that order's receiving location, and an input that accepted a location the service never
+	receives would tell a caller it had moved the goods somewhere it had not.
 	"""
 	input ReceivePurchaseOrderInput {
 		receivedAt: DateTime
@@ -519,6 +517,18 @@ export const schemaExtensions = gql`
 		overReceiptTolerance: Decimal
 		note: String
 		lines: [GoodsReceiptLineInput!]!
+		"""
+		The version of the purchase order the caller read, which the route states as \`If-Match\`. When it is
+		stated and the order has moved on since, the delivery is refused rather than booked against an order
+		another buyer has amended.
+		"""
+		version: Int
+		"""
+		The client's own key for this request, which this operation requires, as \`createGoodsReceipt\` does
+		and under the same scope. A delivery that is booked twice books the stock twice, so the mutation is
+		refused without one.
+		"""
+		idempotencyKey: String
 	}
 
 	"The outcome of a mutation on a purchase order."
@@ -594,7 +604,8 @@ export const schemaExtensions = gql`
 		"""
 		Receives goods against a purchase order, writing the stock movements they produce. The order is
 		the one the caller is already looking at, so the field carries it as its own argument and the
-		delivery is the input.
+		delivery is the input. The input's \`idempotencyKey\` is required, as it is on
+		\`createGoodsReceipt\`: both book a delivery, and one booked twice counts the stock twice.
 		"""
 		receivePurchaseOrder(id: ID!, input: ReceivePurchaseOrderInput!): GoodsReceiptPayload!
 		"""

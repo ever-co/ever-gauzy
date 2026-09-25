@@ -77,6 +77,12 @@ describe('the purchasing document — the retry key on the inputs of the decorat
 	it('declares it on the input that raises an order, which honours one when it is presented', () => {
 		expect(typeOf(fieldNamed('CreatePurchaseOrderInput', 'idempotencyKey'))).toBe('String');
 	});
+
+	it('declares it on the input that records a delivery from its order, which requires one too', () => {
+		// Nullable, as `CreateGoodsReceiptInput`'s is: the refusal of a keyless booking is the kernel's
+		// `IDEMPOTENCY_KEY_REQUIRED`, the answer the route gives, rather than a schema rejection.
+		expect(typeOf(fieldNamed('ReceivePurchaseOrderInput', 'idempotencyKey'))).toBe('String');
+	});
 });
 
 /**
@@ -101,20 +107,23 @@ describe('the purchasing document — the mutations that mirror the purchase-ord
 
 	it('declares the delivery recorded from an order, with the body that route reads', () => {
 		// `POST /:id/receipts` is the same operation as `POST /goods-receipts`: the path carries the order
-		// so a caller already looking at one does not repeat it in the body, and the route demands no retry
-		// key because the delivery is anchored to a document the caller has in hand.
+		// so a caller already looking at one does not repeat it in the body.
 		expect(typeOf(fieldNamed('Mutation', 'receivePurchaseOrder'))).toBe('GoodsReceiptPayload!');
 		expect(argumentNames('Mutation', 'receivePurchaseOrder')).toEqual(['id', 'input']);
 
-		// And the input is that body and nothing else: the order is the field's own argument, the retry key
-		// is absent because the route demands none, and the location is absent because the route reads none
-		// — an anchored delivery inherits the order's receiving location, so an input that accepted one
-		// would tell a caller it had moved the goods somewhere it had not.
+		// And the input is that body plus what the route reads from its headers. The retry key is declared
+		// because the booking demands one on every path to `GoodsReceiptService.receive` — this member used
+		// to be asserted absent, when the order path was the keyless way to book a delivery twice — and the
+		// version is the route's `If-Match`, which a field has no header to carry. The location is absent
+		// because the route reads none — an anchored delivery inherits the order's receiving location, so an
+		// input that accepted one would tell a caller it had moved the goods somewhere it had not.
 		expect(fieldsOf('ReceivePurchaseOrderInput')).toEqual([
 			'receivedAt: DateTime',
 			'overReceiptTolerance: Decimal',
 			'note: String',
-			'lines: [GoodsReceiptLineInput!]!'
+			'lines: [GoodsReceiptLineInput!]!',
+			'version: Int',
+			'idempotencyKey: String'
 		]);
 	});
 

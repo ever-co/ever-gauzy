@@ -4,6 +4,7 @@ import { ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { PurchasingFeatures } from '../../purchasing.features';
 import { IGoodsReceipt, IGoodsReceiptLine } from '../../purchasing.types';
 import { PurchasingPermissions } from '../../purchasing.permissions';
 import { toUserError } from '../wire';
@@ -38,10 +39,18 @@ import { GoodsReceiptLineService } from '../../goods-receipt-line/goods-receipt-
  * platform gate is `FEATURE_GRAPHQL`, imported from the catalogue rather than restated: a literal that
  * drifted would name a code no catalogue row carries, which the guard resolves as disabled and which
  * would refuse this field for every caller with nothing red anywhere.
+ *
+ * **The plugin's own gate stands beside it.** The class also declares `PurchasingFeatures.PURCHASING`
+ * (`FEATURE_PURCHASING`), the code every purchasing REST controller declares with `@FeatureFlag`, so a
+ * tenant that switched purchasing off is refused here exactly as its routes refuse it — rather than finding
+ * every write the routes withhold still served over GraphQL. The two codes are two questions, both of which
+ * must be answered yes: the endpoint is on, and the capability is on. The platform's decorator accumulates
+ * the codes stated on one target and `FeatureFlagGuard` requires every one of them.
  */
 @Resolver('GoodsReceiptLine')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(PurchasingFeatures.PURCHASING)
 @Permissions(PurchasingPermissions.GOODS_RECEIPTS_VIEW)
 export class GoodsReceiptLineResolver {
 	constructor(

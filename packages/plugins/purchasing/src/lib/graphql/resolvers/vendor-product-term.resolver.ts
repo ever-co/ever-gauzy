@@ -4,6 +4,7 @@ import { CurrencyCode, ID } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { PurchasingFeatures } from '../../purchasing.features';
 import { PurchasingPermissions } from '../../purchasing.permissions';
 import { VendorTermStatus } from '../../purchasing.types';
 import { VendorProductTermService } from '../../vendor-product-term/vendor-product-term.service';
@@ -56,9 +57,9 @@ interface IResolveVendorProductTermArgs {
  * before, and the reason that kept it off this class does not hold: a guard resolves its dependencies
  * from the module that hosts the handler, and every host of this resolver reaches the feature service —
  * the plugin's own module imports `FeatureModule`, and so does the host the endpoint scans,
- * `GraphqlApiModule`. The plugin's own `PURCHASING` code is deliberately not stated beside the platform
- * gate: the platform's feature metadata carries one value per target and `FeatureFlagGuard` resolves the
- * first, so a second code would be a statement that never runs rather than a capability that is checked.
+ * `GraphqlApiModule`. The plugin's own `PURCHASING` code used to be left off this class because the
+ * platform's feature metadata carried one value per target, so a second code would have been a statement
+ * that never ran; the decorator now accumulates, and the code is stated below.
  *
  * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
  * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
@@ -69,10 +70,18 @@ interface IResolveVendorProductTermArgs {
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * **The plugin's own gate stands beside it.** The class also declares `PurchasingFeatures.PURCHASING`
+ * (`FEATURE_PURCHASING`), the code every purchasing REST controller declares with `@FeatureFlag`, so a
+ * tenant that switched purchasing off is refused here exactly as its routes refuse it — rather than finding
+ * every write the routes withhold still served over GraphQL. The two codes are two questions, both of which
+ * must be answered yes: the endpoint is on, and the capability is on. The platform's decorator accumulates
+ * the codes stated on one target and `FeatureFlagGuard` requires every one of them.
  */
 @Resolver('VendorProductTerm')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(PurchasingFeatures.PURCHASING)
 @Permissions(PurchasingPermissions.VENDOR_TERMS_VIEW)
 export class VendorProductTermResolver {
 	constructor(private readonly vendorProductTermService: VendorProductTermService) {}
