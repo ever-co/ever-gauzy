@@ -29,24 +29,19 @@
  * Environment: `BASE_URL` (default `http://127.0.0.1:3000`), `E2E_EMAIL`, `E2E_PASSWORD`,
  * `E2E_TIMEOUT_MS`.
  *
- * **Known failure, recorded rather than worked around.** The receipt is reachable on neither surface
- * today, and the measurements below are what the next reader needs:
+ * **The wall this file first recorded is gone, and what it measured is kept because it found the cause.**
+ * Every receipt used to be refused: `POST …/receive` with `If-Match: 2` for a return at version 2 answered
+ * `409 ENTITY_VERSION_CONFLICT { expectedVersion: 2, actualVersion: 1 }`, the refused receipt still moved
+ * the return to version 3, and `actualVersion` was 1 whatever the return held. The 1 was the **stock
+ * level's** version: the inventory engine read the accepted version off the request and applied the
+ * return's number to the level row the receipt posts goods against. Two commits closed it — e0c50c97ab
+ * (a stated version is the level's only when the route declares `STOCK_LEVEL_VERSION_TARGET`) and
+ * 6efecfb554 (a receipt refused before its header write no longer moves the version on) — and this run
+ * passed 17 of 17 against a booted API (better-sqlite3, TypeORM) afterwards.
  *
- * - `GET /api/order-returns/:id` answers **`version = 2`**, `status = APPROVED`;
- * - `POST …/receive` with `If-Match: 2` — the version just read — answers
- *   `409 ENTITY_VERSION_CONFLICT { expectedVersion: 2, actualVersion: 1 }`;
- * - **the row then holds `version = 3`**, with `receivedAt` still null and every line at
- *   `receivedQuantity = 0`: a *refused* receipt advanced the version and applied nothing;
- * - the remedy the conflict itself names — read it again and reapply — is sent, with `If-Match: 3`, and
- *   is answered `409 { actualVersion: 1 }` **again**;
- * - the `receiveOrderReturn` mutation with the same version answers `409 { actualVersion: 3 }`.
- *
- * So `actualVersion` is **1 whatever the row holds**, the version advances on every refusal, and no
- * client can receive a return. The guard's pre-handler decision is not where the conflict comes from —
- * `evaluateVersionPrecondition` *proceeds* when the version it read is unknown — so the conflict is the
- * **versioned write inside the request**, whose read-back reports 1 for a row the `GET` reports as 3.
- * Everything before these checks passes, including the line-tenancy defect this file found and had
- * fixed; the two counter assertions after them cannot be observed until the write is fixed.
+ * The assertions are deliberately able to fail on a receipt that did nothing: the order is read after the
+ * return is raised and before the receipt, the request counter (`returnRequestedQuantity`, doc 10 I-12)
+ * must show the units asked for, and the fulfilment status must move from what it was to `RETURNED`.
  */
 
 const BASE = (process.env.BASE_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
@@ -235,7 +230,9 @@ async function ensureRow(api, step) {
  * @returns {Promise<any | undefined>} The order as the schema answers it.
  */
 async function readOrder(api, orderId) {
-	const query = `query ($id: ID!) { order(id: $id) { id fulfillmentStatus lines { id returnReceivedQuantity } } }`;
+	const query =
+		`query ($id: ID!) { order(id: $id) { id fulfillmentStatus ` +
+		`lines { id returnRequestedQuantity returnReceivedQuantity returnDismissedQuantity } } }`;
 	const answered = await api('POST', '/graphql', { query, variables: { id: orderId } });
 
 	return answered.json?.data?.order;
@@ -457,6 +454,27 @@ async function main() {
 
 	if (!returnId || !returnLineId) return finish();
 
+	// **What the order says once the return is asked for, before anything comes back.** Two readings are
+	// taken here. The requested-return counter is the bound doc 10 invariant I-12 holds the received one
+	// to, and nothing in the returns flow wrote it: a return of two units left it at 0. And the status is
+	// recorded so the receipt's effect can be told apart from the shipment's — the fulfilment above
+	// already recomputed the order, so it is `FULFILLED` before any receipt, and a check that only asked
+	// for "not `NOT_FULFILLED`" afterwards passed whether or not the receipt moved anything.
+	const requestedRead = await readOrder(api, orderId);
+	const requestedLine = (requestedRead?.lines ?? []).find((entry) => entry.id === orderLineId);
+	const statusBeforeReceipt = requestedRead?.fulfillmentStatus;
+
+	record(
+		"the order line's requested-return counter moved by what the return asks for",
+		Number(requestedLine?.returnRequestedQuantity ?? 0) === 2,
+		`returnRequestedQuantity=${requestedLine?.returnRequestedQuantity ?? 'not answered'}`
+	);
+	record(
+		'diagnostic: the fulfilment status before the receipt',
+		true,
+		`fulfillmentStatus=${statusBeforeReceipt ?? 'not answered'}`
+	);
+
 	/**
 	 * The version a write must be predicated on.
 	 *
@@ -576,13 +594,28 @@ async function main() {
 		`returnReceivedQuantity=${readLine?.returnReceivedQuantity ?? 'not answered'}`
 	);
 
-	// And the consequence the counter exists for: the derivation reads it, so the order must no longer
-	// answer that nothing was fulfilled. Both statuses are accepted because which one is correct depends
-	// on the rest of the order's lines, and this run's claim is reachability rather than a policy.
+	// And the consequence the counter exists for: the derivation reads it, so the order must now say the
+	// goods came back. The order has one line of two, both units shipped and both received, so the one
+	// correct answer is `RETURNED` — and it has to differ from what the order said before the receipt,
+	// which was the shipment's `FULFILLED`. The check this replaces accepted anything but `NOT_FULFILLED`,
+	// which the shipment had already produced: it passed with the receipt's recompute removed.
 	record(
-		'the order’s fulfilment status is no longer that nothing was fulfilled',
-		Boolean(read?.fulfillmentStatus) && read.fulfillmentStatus !== 'NOT_FULFILLED',
-		`fulfillmentStatus=${read?.fulfillmentStatus ?? 'not answered'}`
+		'the order’s fulfilment status says the goods came back, which the shipment alone did not',
+		read?.fulfillmentStatus === 'RETURNED' && read.fulfillmentStatus !== statusBeforeReceipt,
+		`before=${statusBeforeReceipt ?? 'not answered'} after=${read?.fulfillmentStatus ?? 'not answered'}`
+	);
+
+	// Doc 10 invariant I-12, read off the order the way a client reads it: what came back — sound, broken
+	// or dismissed — never exceeds what was asked back.
+	const requestedAfter = Number(readLine?.returnRequestedQuantity ?? 0);
+	const dismissed = Number(readLine?.returnDismissedQuantity ?? 0);
+
+	record(
+		'what came back is bounded by what was asked back (I-12)',
+		readLine !== undefined && counter + dismissed <= requestedAfter,
+		`received=${readLine?.returnReceivedQuantity ?? 'not answered'} dismissed=${
+			readLine?.returnDismissedQuantity ?? 'not answered'
+		} requested=${readLine?.returnRequestedQuantity ?? 'not answered'}`
 	);
 
 	const settled = await api('GET', `/api/order-returns/${returnId}`);
