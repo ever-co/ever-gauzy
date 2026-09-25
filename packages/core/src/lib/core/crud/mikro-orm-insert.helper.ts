@@ -5,6 +5,7 @@ import {
 	EntityRepository,
 	Platform,
 	RequiredEntityData,
+	Utils,
 	UuidType
 } from '@mikro-orm/core';
 import { PostgreSqlPlatform } from '@mikro-orm/postgresql';
@@ -44,8 +45,19 @@ function isUuidKey(primaryKey: EntityProperty): boolean {
  *
  * @param value The value the payload carried.
  */
-function isStated(value: unknown): boolean {
+export function isStated(value: unknown): boolean {
 	return value !== undefined && value !== null && value !== '';
+}
+
+/**
+ * Whether a repository is a MikroORM repository whose mapping can be read, rather than a stand-in (the scripted
+ * doubles unit tests hand the services), which is used as it is.
+ *
+ * @param repository The repository the service was given.
+ */
+export function isMikroOrmRepository(repository: unknown): boolean {
+	const candidate = repository as { getEntityManager?: unknown; getEntityName?: unknown } | undefined;
+	return typeof candidate?.getEntityManager === 'function' && typeof candidate.getEntityName === 'function';
 }
 
 /**
@@ -80,7 +92,7 @@ export function createNewMikroOrmEntity<T extends object>(
 	data: object,
 	options: CreateOptions<boolean>
 ): T {
-	if (typeof (repository as { getEntityManager?: unknown })?.getEntityManager !== 'function') {
+	if (!isMikroOrmRepository(repository)) {
 		return repository.create(data as RequiredEntityData<T>, options);
 	}
 
@@ -108,4 +120,70 @@ export function createNewMikroOrmEntity<T extends object>(
 	}
 
 	return entity;
+}
+
+/**
+ * The payload MikroORM's `upsert` is handed by `save()`, with the primary key a new row needs.
+ *
+ * TypeORM's `save()` of an object without a primary key inserts it with a generated uuid. MikroORM's `upsert`
+ * sends the row without one — `insert into feature_organization (featureId, …) … on conflict (id) do update` —
+ * which PostgreSQL fills from the `gen_random_uuid()` default and SQLite and MySQL refuse
+ * (`NOT NULL constraint failed: feature_organization.id`): every organization feature toggle under MikroORM, among
+ * others. Without a key there is nothing for the upsert to conflict on, so the row is new: the key is generated
+ * here exactly where {@link createNewMikroOrmEntity} generates one. A payload that states its key, an entity
+ * instance, a composite or non-uuid key, and a stand-in that is not a MikroORM repository are passed on as they are.
+ *
+ * @param repository The MikroORM repository of the entity.
+ * @param data The payload.
+ * @returns The payload, with a generated primary key when it is a new row on a dialect without a default.
+ */
+export function withPrimaryKeyForUpsert<T extends object, D>(repository: EntityRepository<T>, data: D): D {
+	if (!data || typeof data !== 'object' || Utils.isEntity(data) || !isMikroOrmRepository(repository)) {
+		return data;
+	}
+
+	const em = repository.getEntityManager();
+	const primaryKeys = em.getMetadata(repository.getEntityName()).getPrimaryProps();
+	if (primaryKeys.length !== 1) {
+		return data;
+	}
+
+	const [primaryKey] = primaryKeys;
+	if (
+		isStated((data as Record<string, unknown>)[primaryKey.name]) ||
+		!isUuidKey(primaryKey) ||
+		databaseSuppliesPrimaryKey(em.getPlatform(), primaryKey)
+	) {
+		return data;
+	}
+
+	return { ...(data as object), [primaryKey.name]: randomUUID() } as D;
+}
+
+/**
+ * A payload spread from an entity (`{ ...entity }`, which the tenant-aware `save()` does to every payload) carries
+ * its to-many relations as MikroORM `Collection` objects, which `assign()` and `em.create()` do not take as
+ * values. An initialised collection becomes the array of its items, which both take; one never loaded is left
+ * out, since it states nothing about the rows it would hold.
+ *
+ * @param data The payload.
+ * @returns The payload with collections as arrays, or the payload itself when it holds none.
+ */
+export function withCollectionsAsItems<D extends Record<string, unknown>>(data: D): D {
+	let converted: Record<string, unknown> | undefined;
+
+	for (const [key, value] of Object.entries(data)) {
+		if (!Utils.isCollection(value)) {
+			continue;
+		}
+
+		converted ??= { ...data };
+		if (value.isInitialized()) {
+			converted[key] = value.getItems(false);
+		} else {
+			delete converted[key];
+		}
+	}
+
+	return (converted ?? data) as D;
 }

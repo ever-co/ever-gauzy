@@ -22,6 +22,7 @@ import {
 	EntityMetadata,
 	FilterQuery as MikroFilterQuery,
 	RequiredEntityData,
+	Utils,
 	raw,
 	wrap
 } from '@mikro-orm/core';
@@ -50,7 +51,12 @@ import {
 import { parseTypeORMFindCountOptions } from './utils';
 import { applyRowOffset, statesEmptyWindow } from './find-window.helper';
 import { assertCriteriaHasPredicate } from './criteria.helper';
-import { createNewMikroOrmEntity } from './mikro-orm-insert.helper';
+import {
+	createNewMikroOrmEntity,
+	isStated,
+	withCollectionsAsItems,
+	withPrimaryKeyForUpsert
+} from './mikro-orm-insert.helper';
 import { collapseRelationMirrors } from './mikro-orm-scope-column.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
@@ -749,8 +755,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					// One key per column: a relation beside its mirror (what `serialize()` answers) is refused.
-					return await this.mikroOrmRepository.upsert(this.withOneKeyPerColumn(entity) as T);
+					return (await this.saveWithMikroOrm([entity]))[0];
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entity as DeepPartial<T>);
 				default:
@@ -774,9 +779,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.upsertMany(
-						entities.map((entity) => this.withOneKeyPerColumn(entity)) as T[]
-					);
+					return await this.saveWithMikroOrm(entities);
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entities as DeepPartial<T>[]);
 				default:
@@ -1136,6 +1139,78 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	protected withOneKeyPerColumn<D>(data: D): D {
 		return collapseRelationMirrors(this.mikroOrmMetadata(), data as object) as D;
+	}
+
+	/**
+	 * TypeORM's `save()`, on MikroORM.
+	 *
+	 * `save()` used to hand each payload to MikroORM's `upsert`, which is not what TypeORM's `save()` does, and
+	 * failed where TypeORM's succeeds:
+	 *
+	 * - a key the payload carries that is no column (`category`, `type` on a product, which the route's DTO
+	 *   carries) was written as a column (`table product has no column named category`); TypeORM ignores it;
+	 * - a new row went without a primary key, which SQLite and MySQL have no default for
+	 *   (`NOT NULL constraint failed: feature_organization.id`: every organization feature toggle);
+	 * - a relation beside its relation-id mirror, which is what `serialize()` answers, was refused;
+	 * - collections (a product's tags, a many-to-many's ids) are not written by an upsert at all.
+	 *
+	 * Each payload is therefore saved as TypeORM saves it. The row its primary key names is loaded — a
+	 * soft-deleted one included, as TypeORM's loader includes it — and the payload assigned onto it, keys that
+	 * are no property ignored; a payload without a key, or naming no row, is built as `create()` builds one. One
+	 * flush writes them all, in a transaction, as TypeORM's `save()` of an array does. An entity instance is
+	 * upserted as before, since MikroORM writes its change set correctly, and so is every payload handed to a
+	 * stand-in that is not a MikroORM repository, or to an entity whose key is composite.
+	 *
+	 * @param payloads The payloads to save.
+	 * @returns The saved entities, in order.
+	 */
+	protected async saveWithMikroOrm(payloads: IPartialEntity<T>[]): Promise<T[]> {
+		const repository = this.mikroOrmRepository;
+		const meta = this.mikroOrmMetadata();
+		const primaryKeys = meta?.getPrimaryProps() ?? [];
+
+		if (!meta || primaryKeys.length !== 1) {
+			const saved: T[] = [];
+			for (const payload of payloads) {
+				saved.push(
+					await repository.upsert(withPrimaryKeyForUpsert(repository, this.withOneKeyPerColumn(payload)) as T)
+				);
+			}
+			return saved;
+		}
+
+		const [primaryKey] = primaryKeys;
+		const em = repository.getEntityManager();
+		const saved: T[] = [];
+
+		for (const payload of payloads) {
+			if (Utils.isEntity(payload)) {
+				saved.push(await repository.upsert(payload as T));
+				continue;
+			}
+
+			const data = withCollectionsAsItems(this.withOneKeyPerColumn(payload as object) as Record<string, unknown>);
+			const key = data[primaryKey.name];
+			const existing = isStated(key)
+				? await repository.findOne({ [primaryKey.name]: key } as MikroFilterQuery<T>, { filters: false })
+				: null;
+
+			if (existing) {
+				repository.assign(existing, data as any, {
+					updateNestedEntities: false,
+					onlyOwnProperties: true,
+					onlyProperties: true
+				});
+				saved.push(existing);
+			} else {
+				const created = createNewMikroOrmEntity<T>(repository, data, { partial: true, managed: true });
+				em.persist(created);
+				saved.push(created);
+			}
+		}
+
+		await em.flush();
+		return saved;
 	}
 
 	/**

@@ -286,6 +286,42 @@ describe('CrudService inserts the rows it creates under MikroORM', () => {
 		expect(await rows()).toContainEqual({ id: created.id, name: 'round-tripped-again', tenantId: TENANT });
 	});
 
+	it('saves a new row without an id as TypeORM does: a generated uuid, where upsert sent none', async () => {
+		const saved = await service().save({ name: 'saved-new', tenantId: TENANT } as any);
+
+		expect(saved.id).toMatch(UUID);
+		expect(await rows()).toContainEqual({ id: saved.id, name: 'saved-new', tenantId: TENANT });
+	});
+
+	it('ignores payload keys that are no property, as TypeORM does, where upsert wrote them as columns', async () => {
+		// A route's DTO can carry fields the entity does not map (`category`, `type` on a product).
+		await service().save({ id: STORED, name: 'renamed-by-save', category: 'shoes', type: 'boots' } as any);
+
+		expect(await rows()).toEqual([{ id: STORED, name: 'renamed-by-save', tenantId: TENANT }]);
+	});
+
+	it('updates a soft-deleted row its id names rather than inserting a second one, as TypeORM does', async () => {
+		await orm.em.getConnection().execute('UPDATE insert_row SET deletedAt = ? WHERE id = ?', [Date.now(), STORED]);
+
+		await service().save({ id: STORED, name: 'retired-renamed' } as any);
+
+		expect(await rows()).toEqual([{ id: STORED, name: 'retired-renamed', tenantId: TENANT }]);
+	});
+
+	it('saves a batch of new and stored rows together', async () => {
+		const saved = await service().saveMany([
+			{ id: STORED, name: 'batch-renamed' },
+			{ name: 'batch-new', tenantId: TENANT }
+		] as any);
+
+		expect(saved.map((row) => row.name)).toEqual(['batch-renamed', 'batch-new']);
+		// `rows()` answers by name.
+		expect(await rows()).toEqual([
+			{ id: saved[1].id, name: 'batch-new', tenantId: TENANT },
+			{ id: STORED, name: 'batch-renamed', tenantId: TENANT }
+		]);
+	});
+
 	it('updates by a payload naming a relation and its mirror, the relation winning a disagreement', async () => {
 		const other = '67000000-0000-4000-8000-00000000000b';
 		await orm.em.getConnection().execute('INSERT OR IGNORE INTO insert_tenant (id) VALUES (?)', [other]);
