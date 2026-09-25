@@ -220,8 +220,11 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	 * one manager its transaction opened, and an item written through any other handle would not be
 	 * part of that transaction — it would survive the rollback the executor performs when a later item
 	 * fails, and the guarantee the caller asked for would be a promise the platform does not keep. A
-	 * batch that applies its items one by one states no manager, and each item's write then stands on
-	 * its own.
+	 * batch that applies its items one by one hands each item the manager of that item's own
+	 * transaction instead: the executor's `runOne` opens one per item whenever the route supplies a
+	 * runner, and both product routes supply `transaction`, so an item that fails is rolled back alone
+	 * rather than leaving part of its write behind. Only a batch the executor opens no transaction for
+	 * states no manager — a dry run, or a route that supplies no runner.
 	 *
 	 * A row the item addresses is read through the tenant-scoped read before it is written, so a row
 	 * another tenant owns is a miss rather than a write — the answer the single-item route gives — and
@@ -234,7 +237,8 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	 * wants the row gone has the delivered route for exactly that.
 	 *
 	 * @param item The item: the operation and the product it applies to.
-	 * @param manager The batch's transactional manager, when the batch has one.
+	 * @param manager The manager of the transaction the item is written in — the batch's on an atomic
+	 * batch, the item's own otherwise — when the executor opened one.
 	 * @returns The row the item wrote or archived.
 	 */
 	public async applyBulkItem(item: IBulkProductItem, manager?: EntityManager): Promise<Product> {

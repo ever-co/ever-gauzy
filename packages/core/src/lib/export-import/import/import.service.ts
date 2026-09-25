@@ -9,8 +9,10 @@ import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as path from 'node:path';
 import * as chalk from 'chalk';
+import { EntityManager as MikroOrmEntityManager } from '@mikro-orm/knex';
+import { ID } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { convertToDatetime } from '../../core/utils';
+import { convertToDatetime, getORMType, MultiORMEnum } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core';
@@ -18,6 +20,12 @@ import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
+import {
+	mikroOrmClosureRebuildRunner,
+	PRODUCT_CATEGORY_TABLE,
+	ProductCategoryClosureRebuild,
+	typeOrmClosureRebuildRunner
+} from './product-category-closure-rebuild';
 import {
 	IColumnRelationMetadata,
 	IForeignKey,
@@ -174,6 +182,12 @@ export class ImportService {
 				}
 			});
 
+			// The category tree's closure is derived from `parentId`, and the rows above were written
+			// without it — see `rebuildProductCategoryClosure`.
+			if (masterTable === PRODUCT_CATEGORY_TABLE) {
+				await this.rebuildProductCategoryClosure(tenantId);
+			}
+
 			// export pivot relational tables
 			if (isNotEmpty(relations)) {
 				await this.parseRelationalTables(extractPath, item, cleanup, decodeCells);
@@ -248,6 +262,42 @@ export class ImportService {
 				}
 			});
 		}
+	}
+
+	/**
+	 * Rebuilds the importing tenant's category-tree closure, once `product_category` is imported.
+	 *
+	 * The rows reach the table through the generic path above — one repository write per CSV row — and
+	 * never through `ProductCategoryService`, which is what keeps `product_category_closure` in step with
+	 * `parentId` on every other write. So an imported category had no pair naming its parent or any
+	 * ancestor: at most its self-pair, where TypeORM's closure executor wrote the row (it reads the `parent`
+	 * relation, never `parentId`), and not even that where no ORM closure strategy did. Every descendant
+	 * read, and the cycle guard that reads the same pairs, saw each imported category as a tree of one,
+	 * and a re-import that moved a category left the pairs of its old ancestors behind.
+	 *
+	 * The tenant's pairs are therefore derived again from `parentId` — the level-by-level rebuild of
+	 * `1791000000555`, narrowed to this tenant (see {@link ProductCategoryClosureRebuild}) — in one
+	 * transaction on the active ORM's own manager, so no tree read sees the pairs half-written and a
+	 * failure leaves the previous pairs in place.
+	 *
+	 * @param tenantId The importing tenant.
+	 */
+	public async rebuildProductCategoryClosure(tenantId: ID | null): Promise<void> {
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			const em = this.repositoriesService.mikroOrmProductCategoryRepository.getEntityManager() as MikroOrmEntityManager;
+
+			await em.transactional((transactional) =>
+				new ProductCategoryClosureRebuild(
+					mikroOrmClosureRebuildRunner(transactional as MikroOrmEntityManager)
+				).rebuild(tenantId)
+			);
+
+			return;
+		}
+
+		await this.repositoriesService.typeOrmProductCategoryRepository.manager.transaction((manager) =>
+			new ProductCategoryClosureRebuild(typeOrmClosureRebuildRunner(manager)).rebuild(tenantId)
+		);
 	}
 
 	/*
