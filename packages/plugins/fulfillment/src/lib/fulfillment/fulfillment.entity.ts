@@ -32,7 +32,10 @@ export class Fulfillment extends TenantOrganizationBaseEntity implements IFulfil
 	@IsNotEmpty()
 	@IsUUID()
 	@ColumnIndex()
-	@MultiORMColumn({ relationId: true })
+	// A persisted column on both ORMs, not a relation id: the order lives in another package and no relation
+	// to it is declared here, so `relationId: true` mapped this `persist: false` on MikroORM and the NOT NULL
+	// column was never written — no fulfillment could be inserted under DB_ORM=mikro-orm.
+	@MultiORMColumn()
 	orderId: ID;
 
 	/** Outbound to the customer, or a return back to a warehouse. */

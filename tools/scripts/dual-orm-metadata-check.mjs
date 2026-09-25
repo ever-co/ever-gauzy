@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Gate: every entity must be one MikroORM can build metadata for.
+ * Gate: every entity must be one MikroORM can build metadata for, and that maps every column it declares.
  *
  * This workspace is dual-ORM — `DB_ORM=typeorm` (the default) and `DB_ORM=mikro-orm` — and entity metadata is
  * written once for both. TypeORM is the permissive one, so a mapping it accepts can be one MikroORM refuses
@@ -22,6 +22,19 @@
  *   3. **A one-to-one whose owning side is stated only for TypeORM.** TypeORM reads ownership from
  *      `@JoinColumn()`; MikroORM needs `owner: true` (the kernel turns it into the join column and gives the
  *      other side `mappedBy`). Without it both sides look like owners and the metadata is refused.
+ *   4. **A relation id no relation owns.** `relationId: true` says a scalar is the mirror of a relation's
+ *      foreign key, and the kernel maps it `persist: false` on MikroORM (`column.helper.ts`) — right when a
+ *      kernel many-to-one, or the owning side of a kernel one-to-one, owns that column there, and a silent
+ *      data defect when nothing does: the column is left out of every INSERT and every SELECT, so the value
+ *      is dropped on write and read back empty. MikroORM builds that metadata without complaint, so unlike
+ *      the three above this one does not stop a boot; it was found in review instead —
+ *      `ProductCategory.parentId` sat beside TypeORM's `@TreeParent`, which MikroORM never sees, and every
+ *      category written under `DB_ORM=mikro-orm` was stored as a root (fixed in af3ca1588b). Two shapes
+ *      produce it besides a column with no relation at all: a relation declared only with TypeORM's own
+ *      decorators, and a kernel relation whose column is named only by TypeORM's `@JoinColumn({ name })`,
+ *      which the MikroORM side never reads — it joins on `<property>Id` unless `joinColumn` names another.
+ *      This check runs against a positive and a negative control on every run (see {@link RULE_4_CONTROLS}),
+ *      so a parser change that stops it seeing either shape fails the gate instead of passing it.
  *
  * Run from the repository root: `node tools/scripts/dual-orm-metadata-check.mjs`
  */
@@ -54,6 +67,11 @@ function entityFiles(directory, found = []) {
 	}
 
 	return found;
+}
+
+/** A source without its comments — see {@link members} for why they go first. */
+function withoutComments(source) {
+	return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
 }
 
 /** The index of the `)` closing the call opened at `open`, skipping string literals. */
@@ -95,7 +113,7 @@ function closingParen(text, open) {
  * parentheses and would otherwise be counted as one.
  */
 function members(source) {
-	const stripped = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+	const stripped = withoutComments(source);
 	const found = [];
 	let decorators = '';
 	let depth = 0;
@@ -107,7 +125,9 @@ function members(source) {
 			continue;
 		}
 
-		const property = /^[ \t]+(?:readonly[ \t]+)?(\w+)[?]?\s*[:;]/.exec(line);
+		// `!` as well as `?`: a definite-assignment member (`organizationTeam!: IOrganizationTeam;`) is a
+		// member too, and reading past it dropped the relation it declares from every check below.
+		const property = /^[ \t]+(?:readonly[ \t]+)?(\w+)[?!]?\s*[:;]/.exec(line);
 
 		if (property) found.push({ decorators, name: property[1] });
 
@@ -131,7 +151,29 @@ function decoratorArguments(text, name) {
 	return close === -1 ? '' : text.slice(open + 1, close);
 }
 
-/** What a file declares, as the three checks need it. */
+/** An exported class declaration: its name, and the class it extends when it extends one. */
+const CLASS_DECLARATION = /export\s+(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+([\w<>, ]+?))?\s*(?:implements|\{)/g;
+
+/**
+ * Every exported class a source declares, each with the members written inside its own body.
+ *
+ * A file can hold several: `base.entity.ts` holds the whole `Model` → `SoftDeletableBaseEntity` →
+ * `AccessTimestamps` → `BaseEntityActionByUser` → `BaseEntity` chain. Read as one class, every member of that
+ * file was filed under `Model` and `BaseEntity` was not known at all, so no entity inherited `createdByUser`,
+ * `updatedByUser` or `deletedByUser` — which check 4 needs, because an entity may restate their ids.
+ */
+function classesIn(source) {
+	const text = withoutComments(source);
+	const declarations = [...text.matchAll(CLASS_DECLARATION)];
+
+	return declarations.map((declaration, index) => ({
+		name: declaration[1],
+		parent: declaration[2] ? declaration[2].split('<')[0].trim() : null,
+		members: members(text.slice(declaration.index, declarations[index + 1]?.index ?? text.length))
+	}));
+}
+
+/** What a file declares, as the checks need it. */
 function read(file) {
 	const source = readFileSync(file, 'utf8');
 	const entity = /export\s+(?:abstract\s+)?class\s+(\w+)/.exec(source)?.[1] ?? null;
@@ -139,6 +181,58 @@ function read(file) {
 	const parent = declaration?.[1] ? declaration[1].split('<')[0].trim() : null;
 
 	return { source, entity, parent, members: members(source) };
+}
+
+/**
+ * The relation a member declares through a kernel decorator, or null when it declares none.
+ *
+ * `column` is the foreign-key column the relation owns **on MikroORM**, the ORM a relation id depends on,
+ * because that is where `relationId: true` becomes `persist: false`. The kernel names it `<property>Id` unless
+ * the options name another with `joinColumn` (`mapManyToOneArgsForMikroORM`, and the one-to-one mapper for an
+ * owning side). TypeORM's `@JoinColumn({ name })` is never read there, so it is kept apart as `typeOrmColumn`,
+ * only to say in a finding what to change. Only a many-to-one, or a one-to-one on its owning side, owns a
+ * column at all; a one-to-one with `@JoinColumn()` and no `owner` counts as owning one here, because check 3
+ * already reports it and one finding per defect is enough.
+ */
+function relationOf(member) {
+	const kind = /@MultiORM(ManyToOne|OneToOne|OneToMany|ManyToMany)\s*\(/.exec(member.decorators)?.[1];
+
+	if (!kind) return null;
+
+	const args = decoratorArguments(member.decorators, `MultiORM${kind}`);
+	const owns = /@JoinColumn\s*\(/.test(member.decorators);
+
+	return {
+		kind,
+		property: member.name,
+		target: /\(\s*\)\s*=>\s*(\w+)/.exec(args)?.[1] ?? null,
+		inverse: /\(\s*\w+\s*\)\s*=>\s*\w+\.(\w+)/.exec(args)?.[1] ?? null,
+		owns,
+		statesOwner: /owner\s*:\s*(?:true|false)/.test(member.decorators),
+		column: /joinColumn\s*:\s*['"`](\w+)['"`]/.exec(args)?.[1] ?? `${member.name}Id`,
+		ownsColumn: kind === 'ManyToOne' || (kind === 'OneToOne' && (owns || /owner\s*:\s*true/.test(member.decorators))),
+		typeOrmColumn: /@JoinColumn\s*\(\s*\{[^}]*\bname\s*:\s*['"`](\w+)['"`]/.exec(member.decorators)?.[1] ?? null
+	};
+}
+
+/** The kernel relations and the columns a list of members declares, each keyed by property name. */
+function mappingOf(list) {
+	const relationsHere = new Map();
+	const columns = new Map();
+
+	for (const member of list) {
+		const relation = relationOf(member);
+
+		if (relation) relationsHere.set(member.name, relation);
+
+		if (/@MultiORMColumn\s*\(/.test(member.decorators)) {
+			const options = decoratorArguments(member.decorators, 'MultiORMColumn');
+
+			columns.set(member.name, { relationId: /relationId\s*:\s*true/.test(options) });
+		}
+	}
+
+	return { relationsHere, columns };
 }
 
 const files = SEARCH.flatMap((directory) => entityFiles(directory));
@@ -154,93 +248,204 @@ const baseClasses = new Map();
 for (const entry of readdirSync(BASE_ENTITIES)) {
 	if (!entry.endsWith('.ts') || entry.endsWith('.spec.ts')) continue;
 
-	const { entity, parent, members: list } = read(join(BASE_ENTITIES, entry));
-
-	if (!entity) continue;
-
-	const relations = new Set();
-
-	for (const member of list) {
-		if (/@MultiORM(?:ManyToOne|OneToOne|ManyToMany|OneToMany)\s*\(/.test(member.decorators)) {
-			relations.add(member.name);
-		}
+	for (const declared of classesIn(readFileSync(join(BASE_ENTITIES, entry), 'utf8'))) {
+		baseClasses.set(declared.name, { parent: declared.parent, relations: mappingOf(declared.members).relationsHere });
 	}
-
-	baseClasses.set(entity, { parent, relations });
 }
 
-/** Every relation name an entity inherits, walking its `extends` chain to the root. */
+/** Every relation an entity inherits, keyed by property name, walking its `extends` chain to the root. */
 function inheritedRelations(name, seen = new Set()) {
-	if (!name || seen.has(name)) return new Set();
+	if (!name || seen.has(name)) return new Map();
 	seen.add(name);
 
 	const base = baseClasses.get(name);
-	if (!base) return new Set();
+	if (!base) return new Map();
 
-	return new Set([...base.relations, ...inheritedRelations(base.parent, seen)]);
+	return new Map([...inheritedRelations(base.parent, seen), ...base.relations]);
 }
 
+/**
+ * 4. The relation ids of one entity that no relation owns on MikroORM.
+ *
+ * @param relationsHere The kernel relations the entity declares itself.
+ * @param inherited The kernel relations it inherits.
+ * @param columns Its columns.
+ * @returns One entry per unowned relation id, with the relation that names the column for TypeORM alone when
+ * there is one — the case whose fix is a `joinColumn` rather than a new relation.
+ */
+function unownedRelationIds(relationsHere, inherited, columns) {
+	const all = [...inherited.values(), ...relationsHere.values()].filter((relation) => relation.ownsColumn);
+	const owned = new Set(all.map((relation) => relation.column));
+	const found = [];
+
+	for (const [name, options] of columns) {
+		if (!options.relationId || owned.has(name)) continue;
+
+		found.push({ name, namedForTypeOrm: all.find((relation) => relation.typeOrmColumn === name) ?? null });
+	}
+
+	return found;
+}
+
+/**
+ * The fixtures check 4 is run against on every run, before it is trusted with the tree.
+ *
+ * The negative control's relation ids are all owned: by a kernel many-to-one under its default column, by one
+ * whose column is named with `joinColumn`, by the owning side of a kernel one-to-one (written with a `!`, as
+ * `OrganizationTeamEmployee` writes its relations), and by relations inherited from
+ * `TenantOrganizationBaseEntity` and — three classes further up, in `base.entity.ts` — from
+ * `BaseEntityActionByUser`. The positive control holds one of each shape the check exists for, the first being
+ * `ProductCategory.parentId` exactly as it stood before af3ca1588b. A control that reports anything other than
+ * what it expects fails the gate: a check that has gone blind would otherwise pass every entity it reads.
+ */
+const RULE_4_CONTROLS = [
+	{
+		name: 'negative control',
+		expected: [],
+		source: `
+export class OwnedRelationIds extends TenantOrganizationBaseEntity {
+	@MultiORMManyToOne(() => Warehouse, { nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn()
+	warehouse?: Warehouse;
+
+	@RelationId((it: OwnedRelationIds) => it.warehouse)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	warehouseId?: ID;
+
+	@MultiORMManyToOne(() => User, { nullable: true, onDelete: 'SET NULL', joinColumn: 'approvedByUserId' })
+	@JoinColumn({ name: 'approvedByUserId' })
+	approvedBy?: User;
+
+	@RelationId((it: OwnedRelationIds) => it.approvedBy)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	approvedByUserId?: ID;
+
+	@MultiORMOneToOne(() => Profile, { owner: true, nullable: true })
+	@JoinColumn()
+	profile!: Profile;
+
+	@RelationId((it: OwnedRelationIds) => it.profile)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	profileId?: ID;
+
+	@RelationId((it: OwnedRelationIds) => it.organization)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	organizationId?: ID;
+
+	@RelationId((it: OwnedRelationIds) => it.createdByUser)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	createdByUserId?: ID;
+
+	@MultiORMColumn({ type: 'uuid', nullable: true })
+	parentId?: ID;
+}
+`
+	},
+	{
+		name: 'positive control',
+		expected: ['approvedByUserId', 'orderId', 'parentId', 'profileId'],
+		source: `
+export class UnownedRelationIds extends TenantOrganizationBaseEntity {
+	@RelationId((it: UnownedRelationIds) => it.parent)
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	parentId?: ID;
+
+	@TreeParent({ onDelete: 'SET NULL' })
+	@JoinColumn()
+	parent?: UnownedRelationIds;
+
+	@MultiORMManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn({ name: 'approvedByUserId' })
+	approvedBy?: User;
+
+	@RelationId((it: UnownedRelationIds) => it.approvedBy)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	approvedByUserId?: ID;
+
+	@MultiORMColumn({ relationId: true })
+	orderId: ID;
+
+	@MultiORMOneToOne(() => Profile, (it) => it.account)
+	profile?: Profile;
+
+	@MultiORMColumn({ nullable: true, relationId: true })
+	profileId?: ID;
+}
+`
+	}
+];
+
 const failures = [];
-const checked = { files: 0, relations: 0, columns: 0 };
+const checked = { files: 0, relations: 0, columns: 0, relationIds: 0 };
 const relations = new Map();
+
+for (const control of RULE_4_CONTROLS) {
+	const [declared] = classesIn(control.source);
+	const { relationsHere, columns } = mappingOf(declared.members);
+	const found = unownedRelationIds(relationsHere, inheritedRelations(declared.parent), columns)
+		.map((unowned) => unowned.name)
+		.sort();
+
+	if (found.join(', ') !== [...control.expected].sort().join(', ')) {
+		failures.push(
+			`tools/scripts/dual-orm-metadata-check.mjs -> check 4's ${control.name} reported ` +
+				`[${found.join(', ')}] where it expects [${control.expected.join(', ')}]; the check itself is ` +
+				`broken, so what it says about the tree cannot be trusted`
+		);
+	}
+}
 
 for (const file of files) {
 	const path = relative(ROOT, file).split('\\').join('/');
-	const { source, entity, parent, members: list } = read(file);
+	const { entity, parent, members: list } = read(file);
 
 	if (!entity) continue;
 
 	checked.files++;
 
-	const declaresRelation = new Set();
-	const declaresColumn = new Map();
+	const { relationsHere, columns } = mappingOf(list);
 
-	for (const member of list) {
-		const relation = /@MultiORM(ManyToOne|OneToOne|OneToMany|ManyToMany)\s*\(/.exec(member.decorators);
-
-		if (relation) {
-			declaresRelation.add(member.name);
-			checked.relations++;
-
-			const args = decoratorArguments(member.decorators, `MultiORM${relation[1]}`);
-
-			relations.set(`${entity}.${member.name}`, {
-				entity,
-				property: member.name,
-				kind: relation[1],
-				target: /\(\s*\)\s*=>\s*(\w+)/.exec(args)?.[1] ?? null,
-				inverse: /\(\s*\w+\s*\)\s*=>\s*\w+\.(\w+)/.exec(args)?.[1] ?? null,
-				path,
-				owns: /@JoinColumn\s*\(/.test(member.decorators),
-				statesOwner: /owner\s*:\s*(?:true|false)/.test(member.decorators)
-			});
-		}
-
-		if (/@MultiORMColumn\s*\(/.test(member.decorators)) {
-			checked.columns++;
-
-			const options = decoratorArguments(member.decorators, 'MultiORMColumn');
-
-			declaresColumn.set(member.name, {
-				relationId: /relationId\s*:\s*true/.test(options),
-				line: source.slice(0, source.indexOf(member.decorators)).split('\n').length
-			});
-		}
+	for (const relation of relationsHere.values()) {
+		checked.relations++;
+		relations.set(`${entity}.${relation.property}`, { ...relation, entity, path });
 	}
+
+	checked.columns += columns.size;
 
 	// 1. A column that duplicates a relation's field name.
 	const inherited = inheritedRelations(parent);
 
-	for (const [name, options] of declaresColumn) {
+	for (const [name, options] of columns) {
 		if (options.relationId) continue;
 
 		const owner = name.endsWith('Id') ? name.slice(0, -2) : null;
 
-		if (!owner || !(declaresRelation.has(owner) || inherited.has(owner))) continue;
+		if (!owner || !(relationsHere.has(owner) || inherited.has(owner))) continue;
 
 		failures.push(
 			`${path} -> \`${name}\` duplicates the field name of the relation \`${owner}\`; ` +
 				`add \`relationId: true\` (and \`@RelationId\`) so MikroORM does not create a second column for it`
+		);
+	}
+
+	// 4. A relation id no relation owns.
+	for (const [, options] of columns) {
+		if (options.relationId) checked.relationIds++;
+	}
+
+	for (const { name, namedForTypeOrm } of unownedRelationIds(relationsHere, inherited, columns)) {
+		const fix = namedForTypeOrm
+			? `\`${namedForTypeOrm.property}\` names it only in TypeORM's \`@JoinColumn({ name })\`, which MikroORM ` +
+				`never reads — there it joins on \`${namedForTypeOrm.column}\`; add \`joinColumn: '${name}'\` to the ` +
+				`relation's options`
+			: `declare the relation with \`@MultiORMManyToOne\` (or an owning \`@MultiORMOneToOne\`), or drop ` +
+				`\`relationId: true\` so the column is persisted`;
+
+		failures.push(
+			`${path} -> ${entity}.${name} is \`relationId: true\` and no relation owns it on MikroORM, which maps ` +
+				`it \`persist: false\` with nothing behind it: the value is dropped on every write and reads back ` +
+				`empty. ${fix}`
 		);
 	}
 }
@@ -287,16 +492,18 @@ for (const [, relation] of relations) {
 }
 
 if (failures.length > 0) {
-	console.error('FAILED — entity mappings MikroORM cannot build metadata for:');
+	console.error('FAILED — entity mappings MikroORM cannot build metadata for, or builds without the column:');
 	for (const failure of failures) console.error(`  ${failure}`);
 	console.error('');
-	console.error('Each of these stops the application from booting under `DB_ORM=mikro-orm`. TypeORM accepts');
-	console.error('them, which is why nothing else in this repository reports them.');
+	console.error('Checks 1-3 stop the application from booting under `DB_ORM=mikro-orm`; check 4 lets it boot and');
+	console.error('loses the column on every write. TypeORM accepts all of them, which is why nothing else in this');
+	console.error('repository reports them.');
 	process.exit(1);
 }
 
 console.log(
 	`PASSED — ${checked.files} entity file(s): ${checked.columns} column(s) and ${checked.relations} relation(s) ` +
 		`are mapped in the shapes both ORMs accept (no duplicated field names across ${compared.size} compared ` +
-		`relation pair(s), no cardinality disagreements, and every one-to-one states its owner).`
+		`relation pair(s), no cardinality disagreements, every one-to-one states its owner, and each of the ` +
+		`${checked.relationIds} relation id(s) is owned by a relation MikroORM maps; check 4's controls held).`
 );
