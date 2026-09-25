@@ -274,14 +274,16 @@ describe('CrudService inserts the rows it creates under MikroORM', () => {
 		expect((await rows()).map((row) => row.name)).toEqual(['stored']);
 	});
 
-	it('saves back the row create() answered — its relation beside its mirror — where upsert refused it', async () => {
-		// `serialize()` answers `wrap(entity).toJSON()`: the unpopulated relation as its key, beside the mirror.
-		// Handed both, MikroORM's upsert wrote the relation as a column of its own ("no column named tenant").
+	it('saves back a row naming its relation beside its mirror, where upsert refused it', async () => {
+		// `wrap(entity).toJSON()` answers an unloaded relation as its key, beside the mirror (`serialize()` now leaves
+		// it out, as TypeORM does, but such a payload still reaches save() from elsewhere). Handed both, MikroORM's
+		// upsert wrote the relation as a column of its own ("no column named tenant").
 		const created = await service().create({ name: 'round-trip', tenantId: TENANT } as any);
-		expect(created).toMatchObject({ tenant: TENANT, tenantId: TENANT });
+		expect(created).toMatchObject({ tenantId: TENANT });
+		expect(created).not.toHaveProperty('tenant');
 
-		await service().save({ ...created, name: 'round-tripped' });
-		await service().saveMany([{ ...created, name: 'round-tripped-again' }]);
+		await service().save({ ...created, tenant: TENANT, name: 'round-tripped' });
+		await service().saveMany([{ ...created, tenant: TENANT, name: 'round-tripped-again' }]);
 
 		expect(await rows()).toContainEqual({ id: created.id, name: 'round-tripped-again', tenantId: TENANT });
 	});

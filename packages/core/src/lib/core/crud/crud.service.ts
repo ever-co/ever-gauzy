@@ -58,6 +58,7 @@ import {
 	withPrimaryKeyForUpsert
 } from './mikro-orm-insert.helper';
 import { collapseRelationMirrors, stateRelationsFromMirrors } from './mikro-orm-scope-column.helper';
+import { withoutUnloadedReferences } from './mikro-orm-serialize.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
@@ -1130,8 +1131,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	protected serialize(entity: T): T {
 		if (this.ormType === MultiORMEnum.MikroORM) {
-			// If using MikroORM, use wrap(entity).toJSON() for serialization
-			return wrap(entity).toJSON() as T;
+			// If using MikroORM, use wrap(entity).toJSON() for serialization, without the to-one relations the read did
+			// not load, which MikroORM writes as their key and TypeORM leaves out (see `withoutUnloadedReferences`).
+			return withoutUnloadedReferences(entity, wrap(entity).toJSON()) as T;
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
