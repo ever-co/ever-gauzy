@@ -28,9 +28,10 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
     }
 
     /**
-     * Resolves the tag of the newest release on the user's channel (stable or prerelease). A failed
-     * lookup keeps the last resolved tag, or falls back to the running version's tag (releases are
-     * tagged v<version>), so the feed URL is never built from a malformed tag.
+     * Resolves the tag of the newest release on the user's channel: stable releases only, or, with the
+     * prerelease channel enabled, the newest release of either kind. A failed lookup keeps the last
+     * resolved tag, or falls back to the running version's tag (releases are tagged v<version>), so the
+     * feed URL is never built from a malformed tag.
      */
     public async tagName(): Promise<string> {
 		let prerelease: boolean;
@@ -55,7 +56,9 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
 			if (!Array.isArray(releases)) {
 				throw new Error(`GitHub API ${response.status}: ${releases?.message}`);
 			}
-			const matching = releases.filter((release) => release.prerelease === prerelease);
+			// The prerelease channel adds prerelease builds to the stable releases instead of replacing
+			// them, so a stable release published after the last prerelease still reaches those users.
+			const matching = releases.filter((release) => prerelease || release.prerelease === false);
 			// A release is published before its per-platform update files are uploaded (up to an hour
 			// later), so prefer the newest one that already carries this platform's file.
 			const updateInfoFile = this._updateInfoFile;
@@ -63,7 +66,7 @@ export class CdnUpdate extends UpdateStrategy implements IDesktopCdnUpdate {
 				matching.find((release) => release.assets?.some((asset) => asset.name === updateInfoFile)) ??
 				matching[0];
 			if (!release?.tag_name) {
-				throw new Error(`No ${prerelease ? 'prerelease' : 'release'} found`);
+				throw new Error(`No ${prerelease ? '' : 'stable '}release found`);
 			}
 			this._lastTag = { name: release.tag_name, prerelease, resolvedAt: Date.now() };
 			return release.tag_name;

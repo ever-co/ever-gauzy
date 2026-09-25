@@ -8,6 +8,9 @@ import { CdnUpdate } from './strategies/concretes/cdn-update';
  * limit) used to produce the tag `111.44.45` instead of `v111.44.45`, a 404 feed, and the tag was only
  * looked up at startup, so a long-running app never saw a newer release.
  *
+ * Since each check can now find a newer release, the "new version available" dialog and the automatic
+ * update setting from the settings page are covered here too.
+ *
  * Electron cannot run here, so electron, electron-updater and node-fetch are mocked.
  */
 jest.mock(
@@ -22,24 +25,45 @@ jest.mock(
 jest.mock(
 	'electron-updater',
 	() => {
-		const autoUpdater: any = {
+		const { EventEmitter } = jest.requireActual('events');
+		const autoUpdater: any = Object.assign(new EventEmitter(), {
 			checked: [],
 			downloaded: [],
-			setFeedURL: jest.fn(),
-			on: jest.fn(),
-			once: jest.fn()
-		};
+			setFeedURL: jest.fn()
+		});
 		const feedUrl = () => autoUpdater.setFeedURL.mock.calls.at(-1)[0].url;
-		autoUpdater.checkForUpdates = jest.fn(async () => autoUpdater.checked.push(feedUrl()));
-		autoUpdater.checkForUpdatesAndNotify = jest.fn(async () => autoUpdater.downloaded.push(feedUrl()));
+		// Like electron-updater, a check whose feed holds a version other than the running one announces it.
+		const announce = () => {
+			const version = /\/download\/v(.+)$/.exec(feedUrl())?.[1];
+			if (version && version !== '111.44.45') autoUpdater.emit('update-available', { version });
+		};
+		autoUpdater.checkForUpdates = jest.fn(async () => {
+			autoUpdater.checked.push(feedUrl());
+			announce();
+		});
+		autoUpdater.checkForUpdatesAndNotify = jest.fn(async () => {
+			autoUpdater.downloaded.push(feedUrl());
+			announce();
+		});
 		return { autoUpdater, CancellationToken: class {} };
 	},
 	{ virtual: true }
 );
 jest.mock('node-fetch', () => ({ __esModule: true, default: jest.fn() }), { virtual: true });
 jest.mock('./desktop-store', () => ({ LocalStore: { getStore: jest.fn() } }));
-jest.mock('./desktop-notifier', () => ({ __esModule: true, default: class {} }));
-jest.mock('./translation', () => ({ TranslateService: { instant: (key: string) => key } }));
+jest.mock('./desktop-notifier', () => {
+	const customNotification = jest.fn();
+	return {
+		__esModule: true,
+		default: class {
+			customNotification = customNotification;
+		},
+		customNotification
+	};
+});
+jest.mock('./translation', () => ({
+	TranslateService: { instant: (key: string, params?: object) => (params ? `${key} ${JSON.stringify(params)}` : key) }
+}));
 jest.mock('./config', () => ({ LOCAL_SERVER_UPDATE_CONFIG: { PORT: 11999 } }));
 jest.mock('./desktop-dialog', () => ({ DesktopDialog: class {} }));
 jest.mock('./update-server/desktop-local-update-server', () => ({
@@ -59,7 +83,7 @@ jest.mock('./strategies', () => ({
 }));
 jest.mock('./decorators', () => {
 	class Dialog {
-		options = {};
+		options: any = {};
 		async show() {
 			return { response: 1 };
 		}
@@ -67,11 +91,27 @@ jest.mock('./decorators', () => {
 			return ['C:/updates'];
 		}
 	}
+	// The "new version available, download it?" dialog; each test decides how the user answers it.
+	const showUpgradeDialog = jest.fn();
+	class UpgradeDialog extends Dialog {
+		show() {
+			return showUpgradeDialog(this.options);
+		}
+	}
+	// The "ready to install, restart now?" dialog shown when a download has finished.
+	const showInstallDialog = jest.fn();
+	class InstallDialog extends Dialog {
+		show() {
+			return showInstallDialog(this.options);
+		}
+	}
 	return {
 		...jest.requireActual('./decorators/concretes/github-cdn'),
-		DialogConfirmInstallDownload: Dialog,
-		DialogConfirmUpgradeDownload: Dialog,
-		DialogLocalUpdate: Dialog
+		DialogConfirmInstallDownload: InstallDialog,
+		DialogConfirmUpgradeDownload: UpgradeDialog,
+		DialogLocalUpdate: Dialog,
+		showUpgradeDialog,
+		showInstallDialog
 	};
 });
 
@@ -90,6 +130,9 @@ const fetchMock: jest.Mock = jest.requireMock('node-fetch').default;
 const getStore: jest.Mock = jest.requireMock('./desktop-store').LocalStore.getStore;
 const autoUpdater = jest.requireMock('electron-updater').autoUpdater;
 const ipcOn: jest.Mock = jest.requireMock('electron').ipcMain.on;
+const showUpgradeDialog: jest.Mock = jest.requireMock('./decorators').showUpgradeDialog;
+const showInstallDialog: jest.Mock = jest.requireMock('./decorators').showInstallDialog;
+const customNotification: jest.Mock = jest.requireMock('./desktop-notifier').customNotification;
 
 const release = (tag: string, prerelease = false, files = ALL_FILES) => ({
 	tag_name: tag,
@@ -100,6 +143,8 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 /** The handler the most recently constructed DesktopUpdater registered for an ipc channel. */
 const ipc = (channel: string) => ipcOn.mock.calls.filter(([name]) => name === channel).at(-1)[1];
 const lastChecked = () => autoUpdater.checked.at(-1);
+/** The versions the "new version available" dialog was shown for, in order. */
+const offered = () => showUpgradeDialog.mock.calls.map(([options]) => /"next":"([^"]+)"/.exec(options.detail)[1]);
 
 describe('GitHub update feed', () => {
 	let releases: any[];
@@ -129,8 +174,11 @@ describe('GitHub update feed', () => {
 		jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'], now: new Date('2026-09-24T12:00:00Z') });
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
 		setPlatform('win32', 'x64');
+		autoUpdater.removeAllListeners();
 		autoUpdater.checked = [];
 		autoUpdater.downloaded = [];
+		showUpgradeDialog.mockResolvedValue({ response: 1 });
+		showInstallDialog.mockResolvedValue({ response: 1 });
 		releases = [release('v111.44.45')];
 		appSetting = {
 			automaticUpdate: true,
@@ -199,9 +247,34 @@ describe('GitHub update feed', () => {
 
 		it('picks the newest prerelease when the prerelease channel is enabled', async () => {
 			appSetting.prerelease = true;
+			releases = [release('v111.44.49', true), release('v111.44.48'), release('v111.44.15', true)];
+
+			expect(await new CdnUpdate(CONFIG).tagName()).toBe('v111.44.49');
+		});
+
+		it('still offers a newer stable release when the prerelease channel is enabled', async () => {
+			appSetting.prerelease = true;
 			releases = [release('v111.44.48'), release('v111.44.47', true), release('v111.44.15', true)];
 
-			expect(await new CdnUpdate(CONFIG).tagName()).toBe('v111.44.47');
+			expect(await new CdnUpdate(CONFIG).tagName()).toBe('v111.44.48');
+		});
+
+		it('never offers a prerelease when the prerelease channel is disabled', async () => {
+			releases = [release('v111.44.49', true), release('v111.44.48'), release('v111.44.47', true)];
+
+			expect(await new CdnUpdate(CONFIG).tagName()).toBe('v111.44.48');
+		});
+
+		it('on the prerelease channel, prefers the newest release of either kind that has the update file', async () => {
+			appSetting.prerelease = true;
+			const withoutWindowsFile = ALL_FILES.filter((name) => name !== 'latest-x64.yml');
+			releases = [
+				release('v111.44.49', true, withoutWindowsFile),
+				release('v111.44.48'),
+				release('v111.44.47', true)
+			];
+
+			expect(await new CdnUpdate(CONFIG).tagName()).toBe('v111.44.48');
 		});
 
 		it.each([
@@ -273,6 +346,185 @@ describe('GitHub update feed', () => {
 
 			expect(autoUpdater.checked).toEqual(['http://localhost:11999/download', 'http://localhost:11999/download']);
 			expect(fetchMock).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('new version dialog', () => {
+		it('offers each newer release the hourly check finds, once per version', async () => {
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			releases.unshift(release('v111.44.46'));
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+			// The same version again, already turned down with "skip now".
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+			releases.unshift(release('v111.44.47'));
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+
+			expect(offered()).toEqual(['111.44.46', '111.44.47']);
+			// The system notification still comes with every check that finds a version.
+			expect(customNotification).toHaveBeenCalledTimes(3);
+		});
+
+		it('does not open a second dialog while one is still open', async () => {
+			let answer: (button: { response: number }) => void;
+			showUpgradeDialog.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			autoUpdater.emit('update-available', { version: '111.44.46' });
+			autoUpdater.emit('update-available', { version: '111.44.47' });
+			expect(offered()).toEqual(['111.44.46']);
+
+			answer({ response: 1 });
+			await flush();
+			autoUpdater.emit('update-available', { version: '111.44.47' });
+
+			expect(offered()).toEqual(['111.44.46', '111.44.47']);
+		});
+
+		it('does not open on top of the install prompt, and asks once it is closed', async () => {
+			let close: (button: { response: number }) => void;
+			showUpgradeDialog.mockResolvedValue({ response: 0 });
+			showInstallDialog.mockImplementationOnce(() => new Promise((resolve) => (close = resolve)));
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			releases.unshift(release('v111.44.46'));
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+			// The download chosen with Upgrade finishes, and its install prompt is left open.
+			autoUpdater.emit('update-downloaded', { version: '111.44.46' });
+			expect(showInstallDialog).toHaveBeenCalledTimes(1);
+			releases.unshift(release('v111.44.47'));
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+			expect(offered()).toEqual(['111.44.46']);
+
+			close({ response: 1 });
+			await flush();
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+
+			expect(offered()).toEqual(['111.44.46', '111.44.47']);
+		});
+
+		it('shows the install prompt only after the new version dialog is answered', async () => {
+			let answer: (button: { response: number }) => void;
+			showUpgradeDialog.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			autoUpdater.emit('update-available', { version: '111.44.47' });
+			// A download started earlier, e.g. from the settings page, finishes meanwhile.
+			autoUpdater.emit('update-downloaded', { version: '111.44.46' });
+			await flush();
+			expect(showInstallDialog).not.toHaveBeenCalled();
+
+			answer({ response: 1 });
+			await flush();
+
+			expect(showInstallDialog).toHaveBeenCalledTimes(1);
+			expect(showInstallDialog.mock.calls[0][0].detail).toContain('"version":"111.44.46"');
+		});
+
+		it('does not ask again about a version the user chose to download', async () => {
+			showUpgradeDialog.mockResolvedValue({ response: 0 });
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			releases.unshift(release('v111.44.46'));
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+
+			expect(autoUpdater.downloaded).toEqual([FEED + 'v111.44.46']);
+			expect(offered()).toEqual(['111.44.46']);
+		});
+
+		it('asks once automatic updates are turned on, not only for the first version found', async () => {
+			appSetting.automaticUpdate = false;
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			autoUpdater.emit('update-available', { version: '111.44.46' });
+			expect(offered()).toEqual([]);
+
+			appSetting.automaticUpdate = true;
+			autoUpdater.emit('update-available', { version: '111.44.46' });
+
+			expect(offered()).toEqual(['111.44.46']);
+		});
+	});
+
+	describe('automatic update setting', () => {
+		const changeSetting = (args: object) => ipc('automatic_update_setting')({}, args);
+		const checks = () => autoUpdater.checked.length;
+
+		it('applies a new delay chosen in the settings page to the automatic check', async () => {
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			appSetting.automaticUpdateDelay = 24;
+			changeSetting({ isEnabled: true, delay: 24 });
+			await jest.advanceTimersByTimeAsync(23 * HOUR);
+			expect(checks()).toBe(0);
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+
+			expect(checks()).toBe(1);
+		});
+
+		it.each([
+			['delay', { isEnabled: true, delay: 3 }],
+			['automaticUpdateDelay', { isEnabled: true, automaticUpdateDelay: 3 }]
+		])('uses the delay sent as %s, not only the stored one', async (_, args) => {
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			changeSetting(args);
+			await jest.advanceTimersByTimeAsync(2 * HOUR);
+			expect(checks()).toBe(0);
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+
+			expect(checks()).toBe(1);
+		});
+
+		it.each([undefined, 0, 1000])('falls back to the stored delay when the delay sent is %p', async (delay) => {
+			appSetting.automaticUpdateDelay = 3;
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			changeSetting({ isEnabled: true, delay });
+			// 1000 hours does not fit in setInterval, which would then fire every millisecond.
+			await jest.advanceTimersByTimeAsync(1000);
+			expect(checks()).toBe(0);
+			await jest.advanceTimersByTimeAsync(3 * HOUR - 1000);
+			await flush();
+
+			expect(checks()).toBe(1);
+		});
+
+		it('stops the automatic check when turned off and starts it again when turned on', async () => {
+			new DesktopUpdater(CONFIG);
+			await flush();
+
+			appSetting.automaticUpdate = false;
+			changeSetting({ isEnabled: false, delay: 1 });
+			await jest.advanceTimersByTimeAsync(2 * HOUR);
+			expect(checks()).toBe(0);
+
+			appSetting.automaticUpdate = true;
+			changeSetting({ isEnabled: true, delay: 1 });
+			await jest.advanceTimersByTimeAsync(HOUR);
+			await flush();
+
+			expect(checks()).toBe(1);
 		});
 	});
 });
