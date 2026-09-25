@@ -459,20 +459,21 @@ export const flatten = (input: any): any => {
 	}
 
 	if (typeof input === 'object' && input !== null) {
-		return (
-			Object.keys(input).reduce((acc, key) => {
-				const value = input[key];
-				if (value) {
-					const nestedKeys = flatten(value);
-					const newKey = Array.isArray(value)
-						? key
-						: nestedKeys.length > 0
-							? `${key}.${nestedKeys.join('.')}`
-							: key;
-					return acc.concat(newKey);
-				}
-			}, []) || []
-		);
+		// A key whose value is falsy (`{ tags: false }`) names nothing and is skipped. It used to end the reduction's
+		// accumulator (the callback answered `undefined`), so the next key threw on `undefined.concat` — and a nested
+		// object naming several keys (`{ kind: { owner: true, labels: true } }`) became the one path
+		// `kind.owner.labels` rather than `kind.owner` and `kind.labels`, a path neither ORM can resolve.
+		return Object.keys(input).reduce((acc: string[], key) => {
+			const value = input[key];
+			if (!value) {
+				return acc;
+			}
+			if (Array.isArray(value)) {
+				return acc.concat(key);
+			}
+			const nestedKeys: string[] = flatten(value);
+			return acc.concat(nestedKeys.length > 0 ? nestedKeys.map((nested) => `${key}.${nested}`) : [key]);
+		}, []);
 	}
 
 	// If input is neither an array nor an object, return an empty array
