@@ -120,7 +120,8 @@ import {
 	TaxLineOwnerType
 } from '@gauzy/contracts';
 import { CronExpression } from '@nestjs/schedule';
-import { OrderTotalsService } from './order-totals.service';
+import { FindOperator } from 'typeorm';
+import { ORDER_TOTALS_AUDIT_BATCH_SIZE, OrderTotalsService } from './order-totals.service';
 import {
 	ORDER_TOTALS_RECONCILIATION_SCHEDULE,
 	OrderTotalsReconciliationScheduler
@@ -168,13 +169,107 @@ const line = (id: string, overrides: Record<string, unknown> = {}) => ({
 });
 
 /**
- * Builds the totals service over one in-memory order and the four ledgers it reads.
+ * Whether a stored value satisfies one criterion of a `where`, operators included.
  *
- * Each collaborator implements the single call the service makes on it — `findAll({ where })` for the
- * collections, `findByOwner(ownerType, ownerId)` for the core money ledgers, `create` for the summary
- * and `findOne`/`update` for the order row.
+ * The reconciliation states its window, its keyset and its slices as TypeORM operators
+ * (`MoreThanOrEqual`, `MoreThan`, `In`), so a double that compared them as plain values would match
+ * nothing — or, worse, everything — and the bounds the cases below assert would be the double's.
+ *
+ * @param value The column as the row holds it.
+ * @param expected The criterion, a value or an operator.
  */
-function orderFixture(order: Record<string, unknown> = {}) {
+function satisfies(value: any, expected: any): boolean {
+	if (expected instanceof FindOperator) {
+		const operand: any = expected.value;
+
+		switch (expected.type) {
+			case 'in':
+				return (operand as unknown[]).some((member) => String(member) === String(value));
+			case 'moreThan':
+				return value !== undefined && value !== null && value > operand;
+			case 'moreThanOrEqual':
+				return value !== undefined && value !== null && value >= operand;
+			case 'lessThanOrEqual':
+				return value !== undefined && value !== null && value <= operand;
+			case 'isNull':
+				return value === undefined || value === null;
+			default:
+				throw new Error(`The double does not evaluate the ${expected.type} operator.`);
+		}
+	}
+
+	return expected === undefined || String(value ?? '') === String(expected);
+}
+
+/**
+ * Answers a find-options read over in-memory rows: the `where` (an array is its arms, OR-ed), the
+ * `order`, the `take` and the `select`.
+ *
+ * **The projection is the ORM's, because that is where one of the defects lived.** Under MikroORM the
+ * `orderId` of a line or a transaction is the relation's id (`relationId: true`), which the kernel maps
+ * `persist: false` — and MikroORM drops such a property from a projection, answering the row with the
+ * primary key alone; the `order` relation, projected instead, comes back as the id it references. A
+ * double that answered `orderId` under both ORMs would let a MikroORM window read that names no order
+ * pass here, which is the failure the reconciliation shipped with.
+ *
+ * @param rows The table.
+ * @param options The read.
+ * @param orm The ORM whose projection the read answers with.
+ */
+function query(rows: any[], options: any = {}, orm: 'typeorm' | 'mikro-orm' = 'typeorm'): any[] {
+	const arms: any[] = Array.isArray(options.where) ? options.where : [options.where ?? {}];
+	let found = rows.filter((row) =>
+		arms.some((arm) => Object.entries(arm).every(([column, expected]) => satisfies(row[column], expected)))
+	);
+
+	for (const [column, direction] of Object.entries(options.order ?? {}).reverse()) {
+		const sign = String(direction).toUpperCase() === 'DESC' ? -1 : 1;
+
+		found = [...found].sort((left, right) =>
+			left[column] > right[column] ? sign : left[column] < right[column] ? -sign : 0
+		);
+	}
+
+	if (options.take) {
+		found = found.slice(0, options.take);
+	}
+
+	if (!options.select) {
+		return found.map((row) => ({ ...row }));
+	}
+
+	return found.map((row) => {
+		const projected: any = {};
+
+		for (const [column, wanted] of Object.entries(options.select)) {
+			if (!wanted || (orm === 'mikro-orm' && column === 'orderId')) {
+				continue;
+			}
+
+			projected[column] = orm === 'mikro-orm' && column === 'order' ? row.orderId : row[column];
+		}
+
+		return projected;
+	});
+}
+
+/**
+ * Builds the totals service over in-memory orders and the four ledgers it reads.
+ *
+ * Each collaborator implements the calls the service makes on it — `findAll({ where })` for an order's
+ * collections, `find(options)` for the reconciliation's window over them, `findByOwner(ownerType,
+ * ownerId)` for the core money ledgers, `append` for the summary and `findOne`/`find`/`update` for the
+ * order rows.
+ *
+ * @param order Columns the first order starts with.
+ * @param options `orm` is the ORM the reads are answered as; `unitOfWork` is the persistence context
+ * the module would inject, left out to construct the service the way a caller outside the module does.
+ */
+function orderFixture(
+	order: Record<string, unknown> = {},
+	options: { orm?: 'typeorm' | 'mikro-orm'; unitOfWork?: unknown } = {}
+) {
+	const orm = options.orm ?? 'typeorm';
 	const row: any = {
 		id: 'order-1',
 		channelId: 'channel-1',
@@ -188,6 +283,8 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		updatedAt: new Date(),
 		...order
 	};
+	/** Every order of the fixture; the first is the one most cases are about. */
+	const orders: any[] = [row];
 	const lines: any[] = [];
 	const shippingMethods: any[] = [];
 	const creditLines: any[] = [];
@@ -197,15 +294,13 @@ function orderFixture(order: Record<string, unknown> = {}) {
 	const summaries: any[] = [];
 
 	const collection = (rows: any[]) => ({
-		findAll: async ({ where }: any = {}) => ({
-			// A read that names no order is the reconciliation's own window over this ledger, so it
-			// sees every row. Every other call in this service states the order it is about.
-			items:
-				where?.orderId === undefined
-					? rows
-					: rows.filter((candidate) => String(candidate.orderId) === String(where.orderId)),
-			total: rows.length
-		})
+		findAll: async ({ where }: any = {}) => {
+			const items = query(rows, { where }, orm);
+
+			return { items, total: items.length };
+		},
+		// The reconciliation's window over this ledger, a page at a time.
+		find: jest.fn(async (read: any = {}) => query(rows, read, orm))
 	});
 	const ownedLedger = (rows: any[]) => ({
 		findByOwner: async (ownerType: string, ownerId: string) =>
@@ -227,25 +322,30 @@ function orderFixture(order: Record<string, unknown> = {}) {
 			return input;
 		}
 	};
+	const update = async (criteria: any, partial: any) => {
+		const expected = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+		const target = orders.find((candidate) =>
+			Object.entries(expected).every(
+				([field, value]) => value === undefined || String(candidate[field] ?? '') === String(value)
+			)
+		);
+
+		if (target) {
+			Object.assign(target, partial);
+		}
+
+		return { affected: target ? 1 : 0 };
+	};
+	const lineService = collection(lines);
+	const transactionService = collection(transactions);
 	const typeOrmOrderRepository = {
 		// The entity manager the conditional update, the summary row and the event all go through.
 		manager: { name: 'order-manager' },
-		findOne: async ({ where }: any = {}) => (String(where?.id) === String(row.id) ? { ...row } : null),
-		// The window read the reconciliation performs. A test that drives the sweep replaces this with
-		// the rows it wants examined, which is why the fixture hands the repository back below.
-		find: async () => [{ ...row }],
-		update: async (criteria: any, partial: any) => {
-			const expected = typeof criteria === 'string' ? { id: criteria } : criteria ?? {};
-			const matches = Object.entries(expected).every(
-				([field, value]) => value === undefined || String(row[field] ?? '') === String(value)
-			);
-
-			if (matches) {
-				Object.assign(row, partial);
-			}
-
-			return { affected: matches ? 1 : 0 };
-		},
+		findOne: async ({ where }: any = {}) => query(orders, { where })[0] ?? null,
+		// The window read and the slices the reconciliation performs. A test that drives the sweep can
+		// replace this with the rows it wants examined, which is why the fixture hands it back below.
+		find: jest.fn(async (read: any = {}) => query(orders, read)),
+		update,
 		/** Persists a partial update only when the whole write succeeds, the way a transaction would. */
 		create: async (partial: any) => {
 			Object.assign(row, partial);
@@ -254,28 +354,38 @@ function orderFixture(order: Record<string, unknown> = {}) {
 		}
 	};
 	// The version-predicated write resolves the order's writer by token, so the fixture offers it the
-	// same two calls the real order service offers the totals service.
+	// calls the real order service offers the totals service — `find` being the read under MikroORM,
+	// where the TypeORM entity for `order` carries its base columns and nothing else.
 	const orderWriter = {
-		update: async (criteria: any, partial: any) => typeOrmOrderRepository.update(criteria, partial),
-		findOneByIdString: async (id: any) => (String(id) === String(row.id) ? { ...row } : null)
+		update,
+		findOneByIdString: async (id: any) => query(orders, { where: { id } })[0] ?? null,
+		find: jest.fn(async (read: any = {}) => query(orders, read))
 	};
 	const service = new OrderTotalsService(
 		typeOrmOrderRepository as never,
-		collection(lines) as never,
+		lineService as never,
 		collection(shippingMethods) as never,
 		collection(creditLines) as never,
-		collection(transactions) as never,
-		{ create: async (summary: any) => (summaries.push(summary), summary) } as never,
+		transactionService as never,
+		{
+			// The summary of a version, recorded with the tenancy it was appended under.
+			append: async (entry: any, scope: any = {}) => (summaries.push({ ...entry, ...scope }), entry)
+		} as never,
 		ownedLedger(adjustments) as never,
 		ownedLedger(taxLines) as never,
 		outbox as never,
-		{ get: () => orderWriter } as never
+		{ get: () => orderWriter } as never,
+		options.unitOfWork as never
 	);
 
 	return {
 		service,
 		order: row,
+		orders,
 		repository: typeOrmOrderRepository,
+		orderWriter,
+		lineService,
+		transactionService,
 		lines,
 		shippingMethods,
 		creditLines,
@@ -891,7 +1001,9 @@ describe('OrderTotalsService — the reconciliation (ADR-26)', () => {
 
 		// The window read answers nothing, so the ledger is the only thing that can put this order in
 		// front of the sweep. Without it the report below would be `examined: 0`.
-		fixture.repository.find = async ({ where }: any = {}) => (where?.updatedAt ? [] : [{ ...fixture.order }]);
+		fixture.repository.find.mockImplementation(async ({ where }: any = {}) =>
+			where?.updatedAt ? [] : [{ ...fixture.order }]
+		);
 
 		const report = await fixture.service.auditRecent();
 
@@ -913,7 +1025,7 @@ describe('OrderTotalsService — the reconciliation (ADR-26)', () => {
 		// service, so the money column is the one that cannot coincide.
 		second.grandTotal = '0.01';
 
-		fixture.repository.find = async () => [fixture.order, second];
+		fixture.repository.find.mockImplementation(async () => [fixture.order, second]);
 
 		const compute = jest.spyOn(fixture.service, 'computeTotals');
 
@@ -927,6 +1039,207 @@ describe('OrderTotalsService — the reconciliation (ADR-26)', () => {
 		);
 		// The sweep went on: the second order was examined and its disagreement reported.
 		expect(report.drifted.map((drift) => drift.orderId)).toContain('order-2');
+	});
+});
+
+/**
+ * What the reconciliation may cost, whose rows it writes, and what it can see under each ORM.
+ *
+ * The pass runs in `apps/worker`, fired by the scheduler with no request behind it, over every tenant's
+ * orders. Three things follow, and each was a defect before these cases existed:
+ *
+ * - **no statement grows with the week**: the window is read a page of ids at a time and the orders it
+ *   names are read in slices, because an `IN (...)` naming every touched order is one bound parameter
+ *   per order, and Postgres refuses a statement past 65,535 of them — at which point not one order was
+ *   examined, every night;
+ * - **a repair is written in the order's tenant**: the tenant-aware create takes the tenant from the
+ *   request, and with no request it wrote the summary of a repair with no tenant at all;
+ * - **under MikroORM the pass sees what a ledger moved, and runs at all**: the order reference of a line
+ *   is projected as the relation there, since the `orderId` column is dropped from a MikroORM projection;
+ *   and every unit of the pass runs inside a persistence context of its own, since MikroORM refuses
+ *   context-specific work on its global entity manager outside a request.
+ */
+describe('OrderTotalsService — the reconciliation’s bounds, tenancy and persistence context', () => {
+	/**
+	 * A persistence context that records each unit it was handed, and whether a unit is running.
+	 *
+	 * @param usesMikroOrm Which ORM the context answers for.
+	 */
+	const unitOfWorkDouble = (usesMikroOrm: boolean) => {
+		const state = { units: 0, active: 0 };
+
+		return {
+			state,
+			usesMikroOrm,
+			run: jest.fn(async (work: () => Promise<unknown>) => {
+				state.units++;
+				state.active++;
+
+				try {
+					return await work();
+				} finally {
+					state.active--;
+				}
+			})
+		};
+	};
+
+	it('reads the window a page at a time and the orders it names in slices, so no statement grows with the week', async () => {
+		const fixture = orderFixture();
+
+		for (const id of ['order-2', 'order-3', 'order-4', 'order-5']) {
+			fixture.orders.push({ ...fixture.order, id });
+		}
+
+		// A line moved on one of them, so the ledger window is read in pages as well as the order window.
+		fixture.lines.push(line('L1', { orderId: 'order-3', quantity: 1, unitPrice: 10, updatedAt: new Date() }));
+		fixture.lines.push(line('L2', { orderId: 'order-4', quantity: 1, unitPrice: 10, updatedAt: new Date() }));
+		fixture.lines.push(line('L3', { orderId: 'order-5', quantity: 1, unitPrice: 10, updatedAt: new Date() }));
+
+		const report = await fixture.service.auditRecent(7, 2);
+
+		expect(report.examined).toBe(5);
+		expect(report.failed).toEqual([]);
+
+		const reads = fixture.repository.find.mock.calls.map(([read]: any[]) => read);
+		const slices = reads.filter(
+			(read: any) => read.where?.id instanceof FindOperator && read.where.id.type === 'in'
+		);
+		const windowPages = reads.filter((read: any) => read.where?.updatedAt);
+
+		// Every order was read, and no `IN (...)` named more of them than one slice holds. The control is
+		// the arithmetic: the five ids read as one list would be a statement of five parameters here, and
+		// of every touched order in production.
+		expect(slices.map((read: any) => read.where.id.value.length)).toEqual([2, 2, 1]);
+		expect(slices.flatMap((read: any) => read.where.id.value)).toEqual([
+			'order-1',
+			'order-2',
+			'order-3',
+			'order-4',
+			'order-5'
+		]);
+
+		// The window itself is keyset-paged on the id: each page after the first starts past the last id
+		// the previous page answered, and none is larger than the batch.
+		expect(windowPages.map((read: any) => read.take)).toEqual([2, 2, 2]);
+		expect(windowPages.map((read: any) => read.order)).toEqual([{ id: 'ASC' }, { id: 'ASC' }, { id: 'ASC' }]);
+		expect(windowPages.map((read: any) => read.where.id?.value)).toEqual([undefined, 'order-2', 'order-4']);
+		// Only the id is read from the window: the orders are read whole once, in their slices.
+		expect(
+			windowPages.every((read: any) => read.select?.id === true && Object.keys(read.select).length === 1)
+		).toBe(true);
+
+		const linePages = fixture.lineService.find.mock.calls.map(([read]: any[]) => read);
+
+		expect(linePages.map((read: any) => read.take)).toEqual([2, 2]);
+		expect(linePages[1].where.id.value).toBe('L2');
+	});
+
+	it('pages with the batch the package states when the caller states none', async () => {
+		const fixture = orderFixture();
+
+		await fixture.service.auditRecent();
+
+		expect(fixture.repository.find.mock.calls[0][0].take).toBe(ORDER_TOTALS_AUDIT_BATCH_SIZE);
+		// The bound is well inside the 65,535 bind parameters Postgres allows one statement.
+		expect(ORDER_TOTALS_AUDIT_BATCH_SIZE).toBeLessThan(65_535);
+	});
+
+	it('writes the summary of a repair in the order’s own tenant and organization, with no request behind it', async () => {
+		const fixture = orderFixture({ tenantId: 'tenant-1', organizationId: 'org-1' });
+
+		fixture.lines.push(line('L1', { quantity: 2, unitPrice: 19.99 }));
+		await fixture.service.recompute('order-1', 'PLACED');
+		fixture.order.grandTotal = '0.01';
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.repaired).toEqual(['order-1']);
+
+		const repair = fixture.summaries.find((summary) => summary.reason === 'DRIFT_REPAIRED');
+
+		// The request context of this suite has no user, exactly as the worker's scheduler has none — so
+		// the tenant on the row can only have come from the order row itself.
+		expect(repair).toMatchObject({ orderId: 'order-1', tenantId: 'tenant-1', organizationId: 'org-1' });
+	});
+
+	it('names the orders a ledger moved under MikroORM too, where the order reference is the relation', async () => {
+		const unitOfWork = unitOfWorkDouble(true);
+		const fixture = orderFixture({}, { orm: 'mikro-orm', unitOfWork });
+
+		// The order row was last written a month ago; a line moved today. Only the line can put this order
+		// in front of the sweep.
+		fixture.order.updatedAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 10, updatedAt: new Date() }));
+
+		// The control: the projection the pass used to ask for answers no order on this ORM — MikroORM
+		// drops the relation-id column from the statement and returns the primary key alone.
+		expect(await fixture.lineService.find({ where: {}, select: { id: true, orderId: true } } as never)).toEqual([
+			{ id: 'L1' }
+		]);
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.examined).toBe(1);
+		expect(report.drifted.map((drift) => drift.orderId)).toEqual(['order-1']);
+		expect(report.repaired).toEqual(['order-1']);
+		expect(fixture.lineService.find).toHaveBeenLastCalledWith(
+			expect.objectContaining({ select: { id: true, order: true } })
+		);
+		expect(fixture.transactionService.find).toHaveBeenCalledWith(
+			expect.objectContaining({ select: { id: true, order: true } })
+		);
+		// Under MikroORM the order rows are read through the order's own service, never through the
+		// TypeORM repository, whose entity has no status, no currency and no tenant on that ORM.
+		expect(fixture.orderWriter.find).toHaveBeenCalled();
+		expect(fixture.repository.find).not.toHaveBeenCalled();
+	});
+
+	it('projects the order-id column under TypeORM, where it is a mapped column', async () => {
+		const fixture = orderFixture();
+
+		fixture.order.updatedAt = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 10, updatedAt: new Date() }));
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.examined).toBe(1);
+		expect(fixture.lineService.find).toHaveBeenLastCalledWith(
+			expect.objectContaining({ select: { id: true, orderId: true } })
+		);
+		expect(fixture.orderWriter.find).not.toHaveBeenCalled();
+	});
+
+	it('runs each order in a persistence context of its own, so one that fails stays that order’s', async () => {
+		const unitOfWork = unitOfWorkDouble(true);
+		const fixture = orderFixture({}, { orm: 'mikro-orm', unitOfWork });
+		const second = { ...fixture.order, id: 'order-2', grandTotal: '0.01' };
+
+		fixture.orders.push(second);
+
+		const writesOutsideAUnit: string[] = [];
+		const update = fixture.orderWriter.update;
+
+		fixture.orderWriter.update = async (criteria: any, partial: any) => {
+			if (unitOfWork.state.active === 0) {
+				writesOutsideAUnit.push(String(criteria?.id ?? criteria));
+			}
+
+			return update(criteria, partial);
+		};
+
+		const compute = jest.spyOn(fixture.service, 'computeTotals');
+
+		compute.mockRejectedValueOnce(new Error('the ledger could not be read'));
+
+		const report = await fixture.service.auditRecent();
+
+		expect(report.failed.map((failure) => failure.orderId)).toEqual(['order-1']);
+		expect(report.repaired).toEqual(['order-2']);
+		// One unit for the window, one for the slice of orders, and one per order — the failing order's
+		// unit ended with its failure, and the next order was examined and repaired in a unit of its own.
+		expect(unitOfWork.run).toHaveBeenCalledTimes(4);
+		expect(writesOutsideAUnit).toEqual([]);
 	});
 });
 

@@ -67,6 +67,7 @@ import { MikroOrmOrderHistoryRepository } from './order-history/repository/mikro
 import { OrderCheckoutHandler } from './checkout/order-checkout.handler';
 import { OrderTotalsService } from './order-totals/order-totals.service';
 import { OrderTotalsReconciliationScheduler } from './order-totals/order-totals-reconciliation.scheduler';
+import { OrderUnitOfWork } from './order-totals/order-unit-of-work';
 import { OrderChangeStalenessScheduler } from './order-change/order-change-staleness.scheduler';
 import { SubscriptionOrderService } from './subscription-order/subscription-order.service';
 
@@ -141,6 +142,10 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		TypeOrmOrderRepository,
 		MikroOrmOrderRepository,
 		OrderTotalsService,
+		// The persistence context each unit of a request-less pass runs in — a MikroORM fork per order
+		// under that ORM, the work itself under TypeORM — and the one answer to which ORM an order row is
+		// read through. The two scheduled passes below cannot run on MikroORM without it.
+		OrderUnitOfWork,
 		OrderCheckoutHandler,
 		SubscriptionOrderService,
 		OrderLineService,

@@ -23,13 +23,14 @@ export const ORDER_CHANGE_STALENESS_SCHEDULE = 'order-change-staleness-schedule'
  *
  * **It runs hourly because that is what the slot is worth.** The window is a day, so a change becomes
  * stale once and this pass is what notices; hourly bounds how long an order stays locked afterwards
- * to less than the hour, and the pass costs one read of the change table plus a write per change that
- * is actually stale. A daily pass would leave an order locked for up to a day after its request went
+ * to less than the hour, and the pass costs a bounded read of the changes that are actually stale — a
+ * page at a time, at most `ORDER_CHANGE_SWEEP_LIMIT` of them per run — plus a write per change it
+ * cancels. A daily pass would leave an order locked for up to a day after its request went
  * stale, which is a day in which the shop can sell nothing else on it.
  *
  * **Inline rather than queued, and hosted by the worker like every other schedule.** The sweep is one
- * read of the change table plus a write per change that is actually stale, so there is nothing to
- * hand off to a queue; and the process that fires it is `apps/worker`, because the API registers the
+ * bounded read of the stale changes plus a write per change it cancels, so there is nothing to hand off
+ * to a queue; and the process that fires it is `apps/worker`, because the API registers the
  * scheduler root disabled on purpose so that no schedule runs twice. `OrderPlugin` is listed in
  * `apps/worker/src/plugins.ts` for exactly this entry and the totals reconciliation beside it —
  * **without that listing this sweep would never run, and the order it fails to release would look

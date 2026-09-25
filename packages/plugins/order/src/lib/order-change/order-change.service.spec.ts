@@ -168,13 +168,17 @@ jest.mock('@gauzy/core', () => {
 		AdjustmentService: class {},
 		TaxLineService: class {},
 		SequenceService: class {},
+		// The ORM a row about an order is written through when no request is behind the write. The value
+		// the doubled CRUD service answers (`typeorm`) is the one the real enum names.
+		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 	// Added when core grew this export: the double has to carry it, or the code under
 	// test calls nothing and the suite fails for a reason that is not its own.
 	};
 });
 
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
+import { FindOperator, In, IsNull, LessThanOrEqual, MoreThan } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AddressType,
@@ -266,6 +270,33 @@ const RELATIONS: Record<string, Record<string, { table: TableName; foreignKey: s
 };
 
 /**
+ * Whether a stored value satisfies one criterion of a `where`, operators included.
+ *
+ * @param value The column as the row holds it.
+ * @param expected The criterion, a value or a TypeORM operator.
+ */
+function satisfies(value: any, expected: any): boolean {
+	if (expected instanceof FindOperator) {
+		const operand: any = expected.value;
+
+		switch (expected.type) {
+			case 'in':
+				return (operand as unknown[]).some((member) => String(member) === String(value));
+			case 'moreThan':
+				return value !== undefined && value !== null && value > operand;
+			case 'lessThanOrEqual':
+				return value !== undefined && value !== null && value <= operand;
+			case 'isNull':
+				return value === undefined || value === null;
+			default:
+				throw new Error(`The double does not evaluate the ${expected.type} operator.`);
+		}
+	}
+
+	return expected === undefined || String(value ?? '') === String(expected);
+}
+
+/**
  * An in-memory stand-in for one table's TypeORM repository.
  *
  * @param tables The whole datastore, so a relation can be joined.
@@ -274,10 +305,30 @@ const RELATIONS: Record<string, Record<string, { table: TableName; foreignKey: s
 function repository(tables: Record<string, any[]>, tableName: TableName) {
 	let sequence = 0;
 	const rows = () => tables[tableName];
+	/**
+	 * Whether a row satisfies a `where`: an array is its arms, OR-ed, and a criterion may be a TypeORM
+	 * operator. The staleness sweep states its predicate as operators (`In`, `LessThanOrEqual`,
+	 * `IsNull`, `MoreThan`) in two arms, so a double that compared them as plain values would match no
+	 * row, and the sweep's own predicate would be untested.
+	 */
 	const matches = (row: any, where: any): boolean =>
-		Object.entries(where ?? {}).every(
-			([field, expected]) => expected === undefined || String(row[field] ?? '') === String(expected)
+		(Array.isArray(where) ? where : [where ?? {}]).some((arm: any) =>
+			Object.entries(arm ?? {}).every(([field, expected]) => satisfies(row[field], expected))
 		);
+	/** A read's `order` and `take`, applied as the database applies them. */
+	const window = (found: any[], options: any) => {
+		let ordered = found;
+
+		for (const [column, direction] of Object.entries(options.order ?? {}).reverse()) {
+			const sign = String(direction).toUpperCase() === 'DESC' ? -1 : 1;
+
+			ordered = [...ordered].sort((left, right) =>
+				left[column] > right[column] ? sign : left[column] < right[column] ? -sign : 0
+			);
+		}
+
+		return options.take ? ordered.slice(0, options.take) : ordered;
+	};
 	const attach = (row: any, relations?: string[]) => {
 		const resolved: any = { ...row };
 
@@ -296,9 +347,10 @@ function repository(tables: Record<string, any[]>, tableName: TableName) {
 		rows,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
 		find: async (options: any = {}) =>
-			rows()
-				.filter((row) => matches(row, options.where))
-				.map((row) => attach(row, options.relations)),
+			window(
+				rows().filter((row) => matches(row, options.where)),
+				options
+			).map((row) => attach(row, options.relations)),
 		findOne: async (options: any = {}) => {
 			const row = rows().find((candidate) => matches(candidate, options.where));
 
@@ -384,9 +436,18 @@ const line = (id: string, overrides: Record<string, unknown> = {}) => ({
  * The core `adjustment` and `tax_line` ledgers belong to the promotion and tax packages, so they are
  * the only doubles: `findByOwner(ownerType, ownerId)` and nothing else.
  *
- * @param seeds The rows the order starts with.
+ * @param seeds The rows the order starts with; `orders` seeds further orders beside `order-1`, and
+ * `unitOfWork` is the persistence context the module would inject into the change service.
  */
-function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: Record<string, unknown> } = {}) {
+function orderFixture(
+	seeds: {
+		lines?: any[];
+		shippingMethods?: any[];
+		order?: Record<string, unknown>;
+		orders?: Array<Record<string, unknown>>;
+		unitOfWork?: unknown;
+	} = {}
+) {
 	const tables: Record<string, any[]> = {};
 	for (const table of TABLES) {
 		tables[table] = [];
@@ -403,6 +464,9 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 		version: 1,
 		...seeds.order
 	});
+	for (const order of seeds.orders ?? []) {
+		tables.order.push({ ...tables.order[0], ...order });
+	}
 	tables.order_line.push(...(seeds.lines ?? []));
 	tables.order_shipping_method.push(...(seeds.shippingMethods ?? []));
 
@@ -447,7 +511,8 @@ function orderFixture(seeds: { lines?: any[]; shippingMethods?: any[]; order?: R
 		new OrderCreditLineService(repo('order_credit_line') as never, {} as never),
 		new OrderTransactionService(repo('order_transaction') as never, {} as never),
 		new OrderHistoryService(repo('order_history') as never, {} as never),
-		totalsService
+		totalsService,
+		seeds.unitOfWork as never
 	);
 
 	return { service, totalsService, tables, adjustments, taxLines, order: tables.order[0] };
@@ -1362,6 +1427,202 @@ describe('OrderChangeService — exclusivity and validation (doc 10 §6.2, §6.4
 		expect(fixture.tables.order_change[0].status).toBe(OrderChangeStatus.PENDING);
 		expect(await fixture.service.findOpenForOrder('order-1')).toHaveLength(1);
 		expect(undated.id).toBeDefined();
+	});
+});
+
+/**
+ * What one run of the staleness sweep reads, what it does with a change it cannot cancel, and whose
+ * rows it writes.
+ *
+ * The sweep runs in `apps/worker`, hourly, with no request behind it, over every tenant's changes:
+ *
+ * - **it reads only what it has to cancel**: the statement names the two statuses that hold a slot and
+ *   the window, a page at a time in id order, and a run stops at its limit — where it used to read the
+ *   whole `order_change` table, every tenant's, every hour, and filter it in memory;
+ * - **one change it cannot cancel does not hold up the rest**: a change whose order was soft-deleted is
+ *   refused by the recomputation, and when that refusal escaped the loop it ended the sweep, every run,
+ *   so every stale change after it kept its order locked;
+ * - **the rows it writes belong to the order's tenant**: the timeline entry and the summary row of a
+ *   swept change carry the order's tenancy, since there is no request to take one from.
+ */
+describe('OrderChangeService — the staleness sweep’s bounds, isolation and tenancy', () => {
+	const note = [{ action: OrderChangeActionType.NOTE_ADD, details: { title: 'note' } }];
+	const twoDaysAgo = () => new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+	/**
+	 * Opens one change on each of the fixture's orders and makes every one of them stale.
+	 *
+	 * @param fixture The fixture.
+	 * @param orderIds The orders, one change each — exclusivity allows no more.
+	 * @returns The changes, in the order they were opened, which is also their id order.
+	 */
+	const openStaleChanges = async (fixture: ReturnType<typeof orderFixture>, orderIds: string[]) => {
+		const changes = [];
+
+		for (const orderId of orderIds) {
+			changes.push(
+				await fixture.service.create({ orderId, changeType: OrderChangeType.EDIT, actions: note } as never)
+			);
+		}
+
+		for (const row of fixture.tables.order_change) {
+			row.requestedAt = twoDaysAgo();
+		}
+
+		return changes;
+	};
+
+	it('leaves a change it cannot cancel for the next run, and cancels the ones after it', async () => {
+		const fixture = orderFixture({ orders: [{ id: 'order-2' }] });
+		const [orphaned, next] = await openStaleChanges(fixture, ['order-1', 'order-2']);
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+		// The first change's order is gone from every read — soft-deleted, which the order reads exclude —
+		// so cancelling it is refused by the recomputation. That refusal is what used to end the sweep.
+		fixture.tables.order.splice(0, 1);
+		await expect(fixture.service.cancel(orphaned.id)).rejects.toThrow(/ORDER_NOT_FOUND/);
+
+		try {
+			expect(await fixture.service.cancelStaleChanges(24)).toEqual([next.id]);
+			// The run said which change it left behind, and why.
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining(orphaned.id));
+		} finally {
+			warn.mockRestore();
+		}
+
+		// The change after it was cancelled and its order released; the one that could not be is left as
+		// it was, for the next run.
+		expect(fixture.tables.order_change[1].status).toBe(OrderChangeStatus.CANCELED);
+		expect(fixture.tables.order_change[0].status).toBe(OrderChangeStatus.PENDING);
+	});
+
+	it('reads only the open changes older than the window, a page at a time, and stops at the run’s limit', async () => {
+		const fixture = orderFixture({ orders: [{ id: 'order-2' }, { id: 'order-3' }, { id: 'order-4' }] });
+		const [first, second, third] = await openStaleChanges(fixture, ['order-1', 'order-2', 'order-3']);
+		// A fresh change on the fourth order, which the window has to leave alone.
+		const fresh = await fixture.service.create({
+			orderId: 'order-4',
+			changeType: OrderChangeType.EDIT,
+			actions: note
+		} as never);
+		const read = jest.spyOn((fixture.service as any).typeOrmRepository, 'find');
+
+		// One change per read, at most two per run.
+		expect(await fixture.service.cancelStaleChanges(24, 2, 1)).toEqual([first.id, second.id]);
+
+		const pages = read.mock.calls.map(([options]: any[]) => options);
+
+		expect(pages).toHaveLength(2);
+		// The statement states the slot-holding statuses and the window, in two arms — asked before the
+		// cutoff, or never asked and created before it — rather than reading the table and filtering it.
+		for (const page of pages) {
+			expect(page.take).toBe(1);
+			expect(page.order).toEqual({ id: 'ASC' });
+			expect(page.where).toHaveLength(2);
+			expect(page.where[0].status).toEqual(In([OrderChangeStatus.PENDING, OrderChangeStatus.REQUESTED]));
+			expect(page.where[0].requestedAt).toBeInstanceOf(FindOperator);
+			expect(page.where[0].requestedAt.type).toBe(LessThanOrEqual(new Date()).type);
+			expect(page.where[1].requestedAt).toEqual(IsNull());
+			expect(page.where[1].createdAt.type).toBe(LessThanOrEqual(new Date()).type);
+		}
+
+		// The second page is keyed past the first page's last id, in both arms.
+		expect(pages[0].where[0].id).toBeUndefined();
+		expect(pages[1].where[0].id).toEqual(MoreThan(first.id));
+		expect(pages[1].where[1].id).toEqual(MoreThan(first.id));
+
+		// The run stopped at its limit; the next run takes the change it left, and never the fresh one.
+		expect(fixture.tables.order_change.find((row: any) => row.id === third.id).status).toBe(
+			OrderChangeStatus.PENDING
+		);
+		expect(await fixture.service.cancelStaleChanges(24)).toEqual([third.id]);
+		expect(fixture.tables.order_change.find((row: any) => row.id === fresh.id).status).toBe(
+			OrderChangeStatus.PENDING
+		);
+	});
+
+	it('resumes the next run where a run stopped at its limit, so changes that always fail cannot fill every run', async () => {
+		const fixture = orderFixture({ orders: [{ id: 'order-2' }, { id: 'order-3' }] });
+		const [first, second, third] = await openStaleChanges(fixture, ['order-1', 'order-2', 'order-3']);
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+		// The first two changes' orders are gone from every read, so neither can ever be cancelled — and a
+		// run may examine two changes. Were every run to start at the lowest id, these two would be all any
+		// run reached, and the third change would hold its order for ever.
+		fixture.tables.order.splice(0, 2);
+
+		try {
+			expect(await fixture.service.cancelStaleChanges(24, 2, 2)).toEqual([]);
+			// The next run reads on from where the last one stopped, and reaches the change behind them.
+			expect(await fixture.service.cancelStaleChanges(24, 2, 2)).toEqual([third.id]);
+			// That run read to the end of the set, so the one after starts over — the two it cannot cancel
+			// are examined again rather than forgotten.
+			warn.mockClear();
+			expect(await fixture.service.cancelStaleChanges(24, 2, 2)).toEqual([]);
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining(first.id));
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining(second.id));
+		} finally {
+			warn.mockRestore();
+		}
+
+		expect(fixture.tables.order_change.find((row: any) => row.id === third.id).status).toBe(
+			OrderChangeStatus.CANCELED
+		);
+	});
+
+	it('writes the timeline entry and the summary row of a swept change in the order’s tenant', async () => {
+		const tenancy = { tenantId: 'tenant-1', organizationId: 'org-1' };
+		const fixture = orderFixture({ order: tenancy, lines: [line('L1', { quantity: 1, unitPrice: 20 })] });
+		const [stale] = await openStaleChanges(fixture, ['order-1']);
+
+		// The change is the order's, in the order's tenant — which is what a change opened on a request has.
+		Object.assign(fixture.tables.order_change[0], tenancy);
+
+		// The request context of this suite has no user, as the worker's scheduler has none, so the only
+		// place the tenancy on the rows below can have come from is the order's own rows.
+		expect(await fixture.service.cancelStaleChanges(24)).toEqual([stale.id]);
+
+		const entry = fixture.tables.order_history.find((row: any) => row.action === 'CHANGE_CANCELED');
+		const summary = fixture.tables.order_summary.find((row: any) => row.reason === 'CHANGE_CANCELED');
+
+		expect(entry).toMatchObject({ orderId: 'order-1', ...tenancy });
+		expect(summary).toMatchObject({ orderId: 'order-1', ...tenancy });
+	});
+
+	it('cancels each stale change in a persistence context of its own', async () => {
+		const state = { units: 0, active: 0, writesOutsideAUnit: 0 };
+		const unitOfWork = {
+			usesMikroOrm: false,
+			run: jest.fn(async (work: () => Promise<unknown>) => {
+				state.units++;
+				state.active++;
+
+				try {
+					return await work();
+				} finally {
+					state.active--;
+				}
+			})
+		};
+		const fixture = orderFixture({ orders: [{ id: 'order-2' }], unitOfWork });
+		const [first, second] = await openStaleChanges(fixture, ['order-1', 'order-2']);
+		const history = fixture.tables.order_history;
+		const push = history.push.bind(history);
+
+		// Every timeline entry the sweep writes is written while a unit is open.
+		history.push = (...rows: any[]) => {
+			if (state.active === 0) {
+				state.writesOutsideAUnit += rows.length;
+			}
+
+			return push(...rows);
+		};
+
+		expect(await fixture.service.cancelStaleChanges(24)).toEqual([first.id, second.id]);
+		// One unit for the page and one per change: under MikroORM each is a fork of its own, so a change
+		// whose cancellation failed leaves its unflushed state in its own unit and not in the next one's.
+		expect(unitOfWork.run).toHaveBeenCalledTimes(3);
+		expect(state.writesOutsideAUnit).toBe(0);
 	});
 });
 

@@ -1,5 +1,5 @@
-import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { DeepPartial, In, IsNull, LessThanOrEqual, MoreThan } from 'typeorm';
 import {
 	AddressType,
 	ID,
@@ -29,6 +29,7 @@ import { OrderCreditLineService } from '../order-credit-line/order-credit-line.s
 import { OrderAddress } from '../order-address/order-address.entity';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderHistoryService } from '../order-history/order-history.service';
+import { scopeOfOrderRow } from '../order-history/order-row-scope';
 import { OrderLine } from '../order-line/order-line.entity';
 import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethod } from '../order-shipping-method/order-shipping-method.entity';
@@ -36,7 +37,23 @@ import { OrderShippingMethodService } from '../order-shipping-method/order-shipp
 import { OrderTransaction } from '../order-transaction/order-transaction.entity';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
+import { OrderUnitOfWork, inOwnUnitOfWork } from '../order-totals/order-unit-of-work';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
+
+/**
+ * How many stale changes one read of the staleness sweep returns, and how many one run examines.
+ *
+ * **The sweep read every change the installation had ever recorded, every hour.** It asked for the whole
+ * `order_change` table — every tenant's, with no status and no age in the statement — and filtered for
+ * the stale ones in memory, so its cost grew with the history of the table rather than with the work it
+ * had to do. The statement now names what it wants: the two statuses that still hold a slot, older than
+ * the window, a page at a time in id order; and a run stops after `ORDER_CHANGE_SWEEP_LIMIT` of them, so
+ * an unusual backlog is worked through over a few hourly runs rather than in one run of unbounded length.
+ */
+export const ORDER_CHANGE_SWEEP_BATCH_SIZE = 100;
+
+/** The most stale changes one run of the sweep examines. See {@link ORDER_CHANGE_SWEEP_BATCH_SIZE}. */
+export const ORDER_CHANGE_SWEEP_LIMIT = 1000;
 
 /** The statuses that occupy an order's exclusivity slot. */
 const NON_TERMINAL_STATUSES = [
@@ -83,6 +100,22 @@ const DELEGATED_ACTIONS: Partial<Record<OrderChangeActionType, string>> = {
  */
 @Injectable()
 export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
+	private readonly logger = new Logger(OrderChangeService.name);
+
+	/**
+	 * Where the next run of the staleness sweep picks up, when the last one stopped at its limit.
+	 *
+	 * A run is bounded, and a change it cannot cancel stays in the set it reads. Were every run to start
+	 * at the lowest id, a backlog of `limit` changes that fail every time — the changes of soft-deleted
+	 * orders, say — would be all any run ever reached, and every stale change behind them would keep its
+	 * order locked: the starvation the per-change isolation exists to end, moved one level up. So a run
+	 * that stops at its limit leaves the last id it examined here, the next run reads on from it, and a
+	 * run that reaches the end of the set clears it, so the one after starts over and sees again what
+	 * became stale behind it in the meantime. Kept in memory on purpose: it is a position, not a fact,
+	 * and a process that restarts losing it only costs one run starting from the beginning.
+	 */
+	private staleSweepResumeAfter: ID | undefined;
+
 	constructor(
 		readonly typeOrmOrderChangeRepository: TypeOrmOrderChangeRepository,
 		readonly mikroOrmOrderChangeRepository: MikroOrmOrderChangeRepository,
@@ -94,7 +127,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		private readonly creditLineService: OrderCreditLineService,
 		private readonly transactionService: OrderTransactionService,
 		private readonly historyService: OrderHistoryService,
-		private readonly totalsService: OrderTotalsService
+		private readonly totalsService: OrderTotalsService,
+		/**
+		 * The persistence context each change the staleness sweep cancels runs in. Optional so a service
+		 * constructed by hand behaves as it always did, which is the TypeORM behaviour; the module always
+		 * supplies it.
+		 */
+		@Optional() private readonly unitOfWork?: OrderUnitOfWork
 	) {
 		super(typeOrmOrderChangeRepository, mikroOrmOrderChangeRepository);
 	}
@@ -131,6 +170,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 * before anything about the change is written, and it is the only version-predicated statement of
 	 * the pair — a change is part of what the order's version describes, so a lock on this row would be a
 	 * second answer to the question the order's version already answers.
+	 *
+	 * The change's own write is addressed by its id, which the tenant-aware update scopes by the caller's
+	 * tenant on a request. It is **not** addressed by an object naming the change's tenancy, although that
+	 * reads as the stricter form: the object form pre-reads through `findOneByWhereOptions`, which builds
+	 * its tenant criteria from the current user without checking there is one — so on the staleness sweep,
+	 * where there is none, it would throw before the write and no stale change could be cancelled. With no
+	 * request the id is the one this call just read the row by, so it names that row and nothing else.
 	 *
 	 * @param change The change, already loaded.
 	 * @param changes The fields to write.
@@ -253,10 +299,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			} as DeepPartial<OrderChangeAction>);
 		}
 
-		await this.historyService.record(orderId, 'CHANGE_REQUESTED', 'A change was requested', {
-			changeId: change.id,
-			changeType: change.changeType
-		});
+		await this.historyService.record(
+			orderId,
+			'CHANGE_REQUESTED',
+			'A change was requested',
+			{ changeId: change.id, changeType: change.changeType },
+			scopeOfOrderRow(change)
+		);
 
 		return this.findOneByIdString(change.id, { relations: ['actions'] });
 	}
@@ -315,10 +364,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			priceChange: await this.priceChangeOf(change)
 		} as any);
 
-		await this.historyService.record(change.orderId, 'CHANGE_CONFIRMED', 'A change was applied', {
-			changeId: change.id,
-			changeType: change.changeType
-		});
+		await this.historyService.record(
+			change.orderId,
+			'CHANGE_CONFIRMED',
+			'A change was applied',
+			{ changeId: change.id, changeType: change.changeType },
+			scopeOfOrderRow(change)
+		);
 
 		// The one version-predicated write of this operation, and the one statement that increments the
 		// order's version. The columns the change states about the order itself ride it: a property
@@ -362,10 +414,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			'CHANGE_DECLINED',
 			expectation
 		);
-		await this.historyService.record(change.orderId, 'CHANGE_DECLINED', 'A change was declined', {
-			changeId: change.id,
-			reason
-		});
+		await this.historyService.record(
+			change.orderId,
+			'CHANGE_DECLINED',
+			'A change was declined',
+			{ changeId: change.id, reason },
+			scopeOfOrderRow(change)
+		);
 
 		return this.findOneByIdString(change.id);
 	}
@@ -401,10 +456,16 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 			'CHANGE_CANCELED',
 			expectation
 		);
-		await this.historyService.record(change.orderId, 'CHANGE_CANCELED', 'A change was cancelled', {
-			changeId: change.id,
-			reason
-		});
+		// The entry carries the change's tenancy — which is its order's — because the staleness sweep
+		// reaches this line with no request behind it, and the timeline of an order is read in the
+		// order's tenant.
+		await this.historyService.record(
+			change.orderId,
+			'CHANGE_CANCELED',
+			'A change was cancelled',
+			{ changeId: change.id, reason },
+			scopeOfOrderRow(change)
+		);
 
 		return this.findOneByIdString(change.id);
 	}
@@ -423,31 +484,101 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 * `requestedAt`, so the fallback is not a live path — but the column is nullable, and a row that
 	 * reached the table by a path the write path does not guard, an import or a data fix applied by
 	 * hand, would otherwise be skipped by the sweep for ever and hold its order exactly as an
-	 * abandoned request does. The fallback costs one comparison and closes that.
+	 * abandoned request does. The fallback is the second arm of the statement's own predicate.
+	 *
+	 * **The statement names what it wants, and a run is bounded.** Only the changes that still hold a
+	 * slot and are older than the window are read, a page at a time in id order, and a run examines at
+	 * most `limit` of them — see {@link ORDER_CHANGE_SWEEP_BATCH_SIZE} for what the sweep read before.
+	 *
+	 * **One change that cannot be cancelled does not hold up the rest.** Each cancellation runs on its
+	 * own, in a persistence context of its own, and a failure is logged and passed over: a change whose
+	 * order was soft-deleted is refused `ORDER_NOT_FOUND` by the recomputation, and when that refusal
+	 * escaped the loop it ended the sweep — every run, every hour — so every stale change after it in the
+	 * table kept its order locked for as long as that one row existed. The page is keyed on the id, so a
+	 * change that failed is behind the next read rather than in front of it, and a run that stops at its
+	 * limit hands the next run the id it stopped at, so a backlog of changes that fail every time cannot
+	 * fill every run either (see {@link staleSweepResumeAfter}).
 	 *
 	 * @param staleChangeHours How long a change may sit before it is stale.
+	 * @param limit The most stale changes one run examines.
+	 * @param batchSize How many stale changes one read returns.
 	 * @returns The ids of the changes that were cancelled.
 	 */
-	public async cancelStaleChanges(staleChangeHours = ORDER_CHANGE_STALE_HOURS): Promise<ID[]> {
-		const changes = (await this.findAll({})) as IPagination<OrderChange>;
-		const cutoff = Date.now() - staleChangeHours * 60 * 60 * 1000;
+	public async cancelStaleChanges(
+		staleChangeHours = ORDER_CHANGE_STALE_HOURS,
+		limit = ORDER_CHANGE_SWEEP_LIMIT,
+		batchSize = ORDER_CHANGE_SWEEP_BATCH_SIZE
+	): Promise<ID[]> {
+		const cutoff = new Date(Date.now() - staleChangeHours * 60 * 60 * 1000);
 		const cancelled: ID[] = [];
+		let examined = 0;
+		let after: ID | undefined = this.staleSweepResumeAfter;
+		let reachedEnd = false;
 
-		for (const change of changes.items) {
-			if (![OrderChangeStatus.PENDING, OrderChangeStatus.REQUESTED].includes(change.status)) {
-				continue;
+		while (examined < limit) {
+			const take = Math.max(1, Math.min(Math.floor(batchSize), limit - examined));
+			const page = await inOwnUnitOfWork(this.unitOfWork, () => this.staleChangesAfter(cutoff, after, take));
+
+			for (const change of page) {
+				examined++;
+
+				try {
+					await inOwnUnitOfWork(this.unitOfWork, () => this.cancel(change.id, 'STALE_CHANGE_CLEANUP'));
+					cancelled.push(change.id);
+				} catch (error) {
+					this.logger.warn(
+						`The stale change ${change.id} on order ${change.orderId} could not be cancelled and is left ` +
+							`for the next run: ${describe(error)}`
+					);
+				}
 			}
 
-			const askedAt = change.requestedAt ?? change.createdAt;
-			const age = askedAt ? new Date(askedAt).getTime() : 0;
+			const last = page[page.length - 1]?.id;
 
-			if (age > 0 && age <= cutoff) {
-				await this.cancel(change.id, 'STALE_CHANGE_CLEANUP');
-				cancelled.push(change.id);
+			// A short page is the last one; a page that did not move past where it started would be read
+			// again for ever, so it ends the run too.
+			if (page.length < take || !last || last === after) {
+				reachedEnd = true;
+				break;
 			}
+
+			after = last;
 		}
 
+		// A run that stopped at its limit is resumed where it stopped; one that read to the end of the set
+		// lets the next run start over.
+		this.staleSweepResumeAfter = reachedEnd ? undefined : after;
+
 		return cancelled;
+	}
+
+	/**
+	 * One page of the changes the staleness sweep has to cancel.
+	 *
+	 * Two arms, one statement: a change asked for before the cutoff, and a change with no request stamp
+	 * that was created before it. A row with neither stamp matches neither and is never swept — there is
+	 * no age to judge it by, and cancelling a change on no evidence would release a slot a caller may
+	 * still be using.
+	 *
+	 * @param cutoff The instant a change has to be older than.
+	 * @param after The last id the previous page answered, when there was one.
+	 * @param take The page size.
+	 * @returns The page, in id order.
+	 */
+	private async staleChangesAfter(cutoff: Date, after: ID | undefined, take: number): Promise<OrderChange[]> {
+		const open = {
+			status: In([OrderChangeStatus.PENDING, OrderChangeStatus.REQUESTED]),
+			...(after ? { id: MoreThan(after) } : {})
+		};
+
+		return this.find({
+			where: [
+				{ ...open, requestedAt: LessThanOrEqual(cutoff) },
+				{ ...open, requestedAt: IsNull(), createdAt: LessThanOrEqual(cutoff) }
+			],
+			order: { id: 'ASC' },
+			take
+		} as any);
 	}
 
 	/**
@@ -651,10 +782,13 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				break;
 
 			case OrderChangeActionType.NOTE_ADD:
-				await this.historyService.record(change.orderId, 'NOTE_ADDED', details['title'] ?? 'Note added', {
-					description: details['description'],
-					visibleToCustomer: details['isVisibleToCustomer']
-				});
+				await this.historyService.record(
+					change.orderId,
+					'NOTE_ADDED',
+					details['title'] ?? 'Note added',
+					{ description: details['description'], visibleToCustomer: details['isVisibleToCustomer'] },
+					scopeOfOrderRow(change)
+				);
 				break;
 
 			case OrderChangeActionType.ITEM_RETURN: {
@@ -849,4 +983,12 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 
 		return line;
 	}
+}
+
+/**
+ * @param error The failure.
+ * @returns The failure as one line, so a log line stays a line.
+ */
+function describe(error: unknown): string {
+	return error instanceof Error ? (error.message.split('\n')[0] ?? error.message) : String(error);
 }

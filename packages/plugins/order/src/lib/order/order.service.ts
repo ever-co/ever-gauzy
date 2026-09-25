@@ -22,6 +22,7 @@ import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChange } from '../order-change/order-change.entity';
 import { OrderChangeService } from '../order-change/order-change.service';
 import { OrderHistoryService } from '../order-history/order-history.service';
+import { scopeOfOrderRow } from '../order-history/order-row-scope';
 import { OrderLine } from '../order-line/order-line.entity';
 import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethod } from '../order-shipping-method/order-shipping-method.entity';
@@ -272,10 +273,16 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			event: { name: ORDER_EVENTS.PLACED, data: { ...placedWith } }
 		});
 
-		await this.historyService.record(order.id, 'ORDER_PLACED', 'Order placed', {
-			number: order.number,
-			...placedWith
-		});
+		// The entry carries the order's own tenancy, because a placement is also made with no request
+		// behind it — the checkout handler, a recurrence — and the tenant-aware create would otherwise
+		// write it with no tenant, off the timeline of the order it describes.
+		await this.historyService.record(
+			order.id,
+			'ORDER_PLACED',
+			'Order placed',
+			{ number: order.number, ...placedWith },
+			scopeOfOrderRow(order)
+		);
 
 		return placed;
 	}
@@ -323,7 +330,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			event: { name: ORDER_EVENTS.CONFIRMED, data: { actor } }
 		});
 
-		await this.historyService.record(order.id, 'ORDER_CONFIRMED', 'Order confirmed', {});
+		await this.historyService.record(order.id, 'ORDER_CONFIRMED', 'Order confirmed', {}, scopeOfOrderRow(order));
 
 		return confirmed;
 	}
@@ -366,7 +373,13 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			event: { name: ORDER_EVENTS.CANCELED, data: { reason: reason ?? order.cancelReason ?? null } }
 		});
 
-		await this.historyService.record(order.id, 'ORDER_CANCELED', 'Order canceled', { reason });
+		await this.historyService.record(
+			order.id,
+			'ORDER_CANCELED',
+			'Order canceled',
+			{ reason },
+			scopeOfOrderRow(order)
+		);
 
 		return cancelled;
 	}
@@ -405,7 +418,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			event: { name: ORDER_EVENTS.ARCHIVED }
 		});
 
-		await this.historyService.record(order.id, 'ORDER_ARCHIVED', 'Order archived', {});
+		await this.historyService.record(order.id, 'ORDER_ARCHIVED', 'Order archived', {}, scopeOfOrderRow(order));
 
 		return archived;
 	}
@@ -499,7 +512,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			event: { name: ORDER_EVENTS.COMPLETED }
 		});
 
-		await this.historyService.record(order.id, 'ORDER_COMPLETED', 'Order completed', {});
+		await this.historyService.record(order.id, 'ORDER_COMPLETED', 'Order completed', {}, scopeOfOrderRow(order));
 
 		return completed;
 	}

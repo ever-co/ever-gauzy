@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { IOrderRowScope, createUnderOrderScope } from './order-row-scope';
 import { OrderHistory } from './order-history.entity';
 import { TypeOrmOrderHistoryRepository } from './repository/type-orm-order-history.repository';
 import { MikroOrmOrderHistoryRepository } from './repository/mikro-orm-order-history.repository';
@@ -25,30 +26,47 @@ export class OrderHistoryService extends TenantAwareCrudService<OrderHistory> {
 	/**
 	 * Appends one entry to an order's timeline.
 	 *
+	 * **The entry belongs to the order's tenant and organization, whoever caused it.** A caller that has
+	 * the order row states its tenancy in `scope`, and it is written as stated when no request is behind
+	 * the call — which is the whole point of writing the timeline here rather than in a controller: a
+	 * change the worker's staleness sweep cancelled has to appear on the order's timeline exactly as one
+	 * an operator cancelled does, and the tenant-aware create alone would have written it with no tenant,
+	 * where the order's own tenant can never read it. See {@link createUnderOrderScope}.
+	 *
 	 * @param orderId The order.
 	 * @param action The machine action key, from the vocabulary the order specification fixes:
 	 * `ORDER_PLACED`, `ORDER_CONFIRMED`, `ORDER_COMPLETED`, `ORDER_CANCELED`, `ORDER_ARCHIVED`,
 	 * `CHANGE_REQUESTED`, `CHANGE_CONFIRMED`, `CHANGE_DECLINED`, `CHANGE_CANCELED`, `NOTE_ADDED`.
 	 * @param title A human title for the timeline.
 	 * @param metadata The action's payload fragment.
+	 * @param scope The order's tenancy, read from the order or a row of its aggregate. A caller that
+	 * states none keeps the tenant-aware create's behaviour.
 	 * @returns The appended row.
 	 */
 	public async record(
 		orderId: ID,
 		action: string,
 		title?: string,
-		metadata?: Record<string, unknown>
+		metadata?: Record<string, unknown>,
+		scope?: IOrderRowScope
 	): Promise<OrderHistory> {
 		const currentUserId = RequestContext.currentUserId();
 
-		return this.create({
-			orderId,
-			action,
-			title,
-			description: (metadata?.['description'] as string) ?? undefined,
-			userId: currentUserId ?? undefined,
-			metadata
-		} as any);
+		return createUnderOrderScope<OrderHistory>(
+			this,
+			{ typeOrm: this.typeOrmOrderHistoryRepository, mikroOrm: this.mikroOrmOrderHistoryRepository },
+			{
+				// The relation beside its id, because under MikroORM the id alone is not what is written.
+				order: { id: orderId },
+				orderId,
+				action,
+				title,
+				description: (metadata?.['description'] as string) ?? undefined,
+				userId: currentUserId ?? undefined,
+				metadata
+			},
+			scope
+		);
 	}
 
 	/**

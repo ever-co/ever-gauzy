@@ -1,6 +1,6 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { In, MoreThanOrEqual } from 'typeorm';
+import { FindManyOptions, In, MoreThan, MoreThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
@@ -38,10 +38,12 @@ import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethod } from '../order-shipping-method/order-shipping-method.entity';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderSummaryService } from '../order-summary/order-summary.service';
+import { scopeOfOrderRow } from '../order-history/order-row-scope';
 import { OrderTransaction } from '../order-transaction/order-transaction.entity';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
+import { OrderUnitOfWork, chunk, inOwnUnitOfWork } from './order-unit-of-work';
 
 /**
  * One `order.*` fact, as the move that caused it states it.
@@ -121,6 +123,21 @@ const ORDER_TOTALS_MONEY_COLUMNS = [
 
 /** The two materialised statuses, compared as values rather than as amounts. */
 const ORDER_TOTALS_STATUS_COLUMNS = ['paymentStatus', 'fulfillmentStatus'];
+
+/**
+ * How many orders the reconciliation reads at once, and how many candidate rows one page of the window
+ * read returns.
+ *
+ * **Both are bounds the pass did not have.** It read every order row the window touched in full, then
+ * every line and every transaction the window touched, all into memory, and then read the orders it had
+ * collected with one `IN (...)` naming all of them — and every member of an `IN` list is a bound
+ * parameter, which Postgres caps at 65,535 per statement. An installation that touched more orders than
+ * that in a week had the read refused, the pass throw, and not one order examined or repaired, every
+ * night. The window is now read a page of ids at a time, keyed on the row id, and the orders it names
+ * are read and examined in slices of this size — so the statement is the same size on a quiet week and
+ * a busy one.
+ */
+export const ORDER_TOTALS_AUDIT_BATCH_SIZE = 500;
 
 /**
  * One order whose stored derived columns disagree with the ledgers they are derived from.
@@ -207,7 +224,13 @@ export class OrderTotalsService {
 		private readonly adjustmentService: AdjustmentService,
 		private readonly taxLineService: TaxLineService,
 		private readonly outbox: EventOutboxService,
-		private readonly moduleRef: ModuleRef
+		private readonly moduleRef: ModuleRef,
+		/**
+		 * The persistence context each unit of a request-less pass runs in, and the answer to which ORM an
+		 * order row is read through. Optional so a service constructed by hand behaves as it always did,
+		 * which is the TypeORM behaviour; the module always supplies it.
+		 */
+		@Optional() private readonly unitOfWork?: OrderUnitOfWork
 	) {}
 
 	/**
@@ -221,7 +244,7 @@ export class OrderTotalsService {
 	 * @returns The order, as written.
 	 */
 	public async recompute(orderId: ID, reason: string, options: IOrderRecalculation = {}): Promise<Order> {
-		const order = await this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+		const order = await this.readOrder(orderId);
 
 		if (!order) {
 			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
@@ -281,19 +304,21 @@ export class OrderTotalsService {
 		// unless a write bypassed this method, and that class is what the reconciliation catches: it
 		// compares the columns against the ledgers they are derived from, which is the check a
 		// summary-row comparison would only approximate.
-		await this.summaryService.create({
-			orderId,
-			version,
-			totals: { ...snapshot },
-			currency: order.currency,
-			reason
-		} as any);
+		//
+		// The row carries the order's own tenancy, read from the row this call just read, for the same
+		// reason the conditional update above does: on the paths with no request behind them — the
+		// reconciliation, the staleness sweep — the tenant-aware create had no caller to take a tenant
+		// from, and wrote the summary of a repair with no tenant at all.
+		await this.summaryService.append(
+			{ orderId, version, totals: { ...snapshot }, currency: order.currency, reason },
+			scopeOfOrderRow(order)
+		);
 
 		if (options.event) {
 			await this.announce(moved, version, snapshot, options.event);
 		}
 
-		return this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+		return this.readOrder(orderId);
 	}
 
 	/**
@@ -334,43 +359,54 @@ export class OrderTotalsService {
 	 * a filter untouched when there is no current user, so an unscoped read here is the platform's own
 	 * behaviour on a request-less path rather than a criterion this service had to defeat.
 	 *
+	 * **It is bounded, and each order runs in a persistence context of its own.** The window is read a
+	 * page of ids at a time and the orders it names are read in slices of `batchSize`, so no statement's
+	 * size depends on how busy the week was (see {@link ORDER_TOTALS_AUDIT_BATCH_SIZE}); and each read and
+	 * each order's examination and repair runs through {@link OrderUnitOfWork}, which under MikroORM is
+	 * what lets the pass run at all outside a request — and what keeps a repair that failed from being
+	 * flushed again with the next order.
+	 *
 	 * @param windowDays How far back to look. Defaults to the ADR's window.
+	 * @param batchSize How many orders are read at once, and how many candidate rows one page returns.
 	 * @returns What the pass examined, what it found, what it repaired and what it could not examine.
 	 */
-	public async auditRecent(windowDays: number = ORDER_TOTALS_AUDIT_WINDOW_DAYS): Promise<IOrderTotalsAuditReport> {
+	public async auditRecent(
+		windowDays: number = ORDER_TOTALS_AUDIT_WINDOW_DAYS,
+		batchSize: number = ORDER_TOTALS_AUDIT_BATCH_SIZE
+	): Promise<IOrderTotalsAuditReport> {
 		const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
-		const candidates = await this.candidateOrderIds(since);
+		const candidates = await inOwnUnitOfWork(this.unitOfWork, () => this.candidateOrderIds(since, batchSize));
 		const drifted: IOrderTotalsDrift[] = [];
 		const repaired: ID[] = [];
 		const failed: IOrderTotalsAuditFailure[] = [];
+		let examined = 0;
 
-		if (candidates.length === 0) {
-			return { windowDays, since: since.toISOString(), examined: 0, drifted, repaired, failed };
-		}
+		for (const slice of chunk(candidates, batchSize)) {
+			const orders = await inOwnUnitOfWork(this.unitOfWork, () => this.readOrders(slice));
 
-		const orders = await this.typeOrmOrderRepository.find({
-			where: { id: In(candidates) },
-			order: { updatedAt: 'ASC' }
-		});
+			for (const order of orders) {
+				examined++;
 
-		for (const order of orders) {
-			try {
-				const drift = await this.detectDrift(order);
+				try {
+					await inOwnUnitOfWork(this.unitOfWork, async () => {
+						const drift = await this.detectDrift(order);
 
-				if (!drift) {
-					continue;
+						if (!drift) {
+							return;
+						}
+
+						drifted.push(drift);
+
+						await this.recompute(order.id, ORDER_TOTALS_RECONCILED_REASON);
+						repaired.push(order.id);
+					});
+				} catch (error) {
+					failed.push({ orderId: order.id, message: describe(error) });
 				}
-
-				drifted.push(drift);
-
-				await this.recompute(order.id, ORDER_TOTALS_RECONCILED_REASON);
-				repaired.push(order.id);
-			} catch (error) {
-				failed.push({ orderId: order.id, message: describe(error) });
 			}
 		}
 
-		return { windowDays, since: since.toISOString(), examined: orders.length, drifted, repaired, failed };
+		return { windowDays, since: since.toISOString(), examined, drifted, repaired, failed };
 	}
 
 	/**
@@ -391,44 +427,123 @@ export class OrderTotalsService {
 	 * and an exchange all move an `order_line` counter — the line is where "how much of this actually
 	 * left the building, came back or was written off" is recorded — and a payment moves an
 	 * `order_transaction`; the order row's own window is kept as well, because a write that changed only
-	 * the totals still has to be checked against the ledgers it was derived from. The line table is read
-	 * for its order reference alone, since the sweep derives each order in full and a row's other
-	 * columns would be read to be discarded.
+	 * the totals still has to be checked against the ledgers it was derived from.
+	 *
+	 * **Each source is read for the order reference alone, a page at a time.** The sweep derives each
+	 * order in full later, so a row's other columns would be read to be discarded — and the reference
+	 * is projected the way the configured ORM can answer it. Under TypeORM that is the `orderId` column.
+	 * Under MikroORM it is **not**: `orderId` is the relation's id (`relationId: true`), which the kernel
+	 * maps `persist: false`, and MikroORM drops a non-persistent property from a projection — so a read
+	 * that asked for `orderId` came back with the primary key alone, every line and transaction
+	 * contributed nothing, and the pass examined only the orders whose own row moved, which is exactly
+	 * the case it exists to go beyond. On that ORM the `order` relation is projected instead, which
+	 * selects the foreign key and answers the order's id.
 	 *
 	 * @param since The instant the window opens at.
+	 * @param pageSize How many rows one page of a source returns.
 	 * @returns The distinct orders to examine.
 	 */
-	private async candidateOrderIds(since: Date): Promise<ID[]> {
+	private async candidateOrderIds(since: Date, pageSize: number): Promise<ID[]> {
 		const ids = new Set<ID>();
-		const rows = await this.typeOrmOrderRepository.find({ where: { updatedAt: MoreThanOrEqual(since) } });
+		const window = (column: string, after: ID | undefined) => ({
+			[column]: MoreThanOrEqual(since),
+			...(after ? { id: MoreThan(after) } : {})
+		});
+		const orderReference = this.unitOfWork?.usesMikroOrm ? { id: true, order: true } : { id: true, orderId: true };
 
-		for (const order of rows) {
-			ids.add(order.id);
-		}
-
-		const lines = (await this.lineService.findAll({
-			where: { updatedAt: MoreThanOrEqual(since) },
-			select: { orderId: true }
-		})) as IPagination<OrderLine>;
-
-		for (const line of lines?.items ?? []) {
-			if (line.orderId) {
-				ids.add(line.orderId);
-			}
-		}
-
-		const transactions = (await this.transactionService.findAll({
-			where: { occurredAt: MoreThanOrEqual(since) },
-			select: { orderId: true }
-		})) as IPagination<OrderTransaction>;
-
-		for (const transaction of transactions?.items ?? []) {
-			if (transaction.orderId) {
-				ids.add(transaction.orderId);
-			}
-		}
+		await collectPaged<Order>(
+			(after, take) =>
+				this.readOrderRows({
+					where: window('updatedAt', after),
+					select: { id: true },
+					order: { id: 'ASC' },
+					take
+				}),
+			(row) => row.id,
+			ids,
+			pageSize
+		);
+		await collectPaged<OrderLine>(
+			(after, take) =>
+				this.lineService.find({
+					where: window('updatedAt', after),
+					select: orderReference,
+					order: { id: 'ASC' },
+					take
+				} as FindManyOptions<OrderLine>),
+			orderIdOf,
+			ids,
+			pageSize
+		);
+		await collectPaged<OrderTransaction>(
+			(after, take) =>
+				this.transactionService.find({
+					where: window('occurredAt', after),
+					select: orderReference,
+					order: { id: 'ASC' },
+					take
+				} as FindManyOptions<OrderTransaction>),
+			orderIdOf,
+			ids,
+			pageSize
+		);
 
 		return [...ids];
+	}
+
+	/**
+	 * Reads one order row whole, through the ORM the installation runs on.
+	 *
+	 * Under TypeORM that is the order repository, as it always was. Under MikroORM it is **not**: both
+	 * connections are opened, but the kernel's column decorators apply one ORM's decorator, so the
+	 * TypeORM entity for `order` carries its base columns and nothing else — a row read through it has
+	 * no status, no currency and no tenant, and a derivation from it would compute every status from an
+	 * order that is in none. The order's own service reads through the configured ORM.
+	 *
+	 * @param orderId The order.
+	 * @returns The row, or `null` when there is none.
+	 */
+	private async readOrder(orderId: ID): Promise<Order | null> {
+		const [order] = await this.readOrderRows({ where: { id: orderId }, take: 1 });
+
+		return order ?? null;
+	}
+
+	/**
+	 * Reads a slice of orders whole, oldest write first.
+	 *
+	 * @param orderIds The orders, at most one slice of them.
+	 * @returns The rows that exist.
+	 */
+	private async readOrders(orderIds: ID[]): Promise<Order[]> {
+		if (orderIds.length === 0) {
+			return [];
+		}
+
+		return this.readOrderRows({ where: { id: In(orderIds) }, order: { updatedAt: 'ASC' } });
+	}
+
+	/**
+	 * Runs one read of the order table through the ORM the installation runs on.
+	 *
+	 * A single-row read goes through `findOne` on the TypeORM path, which is the call this service has
+	 * always made there.
+	 *
+	 * @param options The read, in the platform's find-options vocabulary.
+	 * @returns The rows.
+	 */
+	private async readOrderRows(options: FindManyOptions<Order>): Promise<Order[]> {
+		if (this.unitOfWork?.usesMikroOrm) {
+			return this.orderWriter().find(options as never);
+		}
+
+		if (options.take === 1 && !options.order && !options.select) {
+			const order = await this.typeOrmOrderRepository.findOne({ where: options.where });
+
+			return order ? [order] : [];
+		}
+
+		return this.typeOrmOrderRepository.find(options);
 	}
 
 	/**
@@ -937,6 +1052,71 @@ function amountOf(value: unknown): string {
 	}
 
 	return String(value);
+}
+
+/**
+ * Reads one source of candidate orders a page at a time, keyed on the row id.
+ *
+ * Keyset rather than offset paging, because the rows a page skips are the ones already read: a page
+ * that asks for the ids after the last one it saw cannot repeat a row or skip one when the table moves
+ * underneath it, and it costs the same on the thousandth page as on the first.
+ *
+ * @param read Answers the page of rows after `after`, at most `take` of them, ordered by id.
+ * @param orderOf Reads the order a row names.
+ * @param into The set the orders are collected into.
+ * @param pageSize How many rows one page returns.
+ */
+async function collectPaged<R extends { id?: ID }>(
+	read: (after: ID | undefined, take: number) => Promise<R[]>,
+	orderOf: (row: R) => ID | undefined,
+	into: Set<ID>,
+	pageSize: number
+): Promise<void> {
+	const take = Math.max(1, Math.floor(pageSize));
+	let after: ID | undefined;
+
+	for (;;) {
+		const page = (await read(after, take)) ?? [];
+
+		for (const row of page) {
+			const orderId = orderOf(row);
+
+			if (orderId) {
+				into.add(orderId);
+			}
+		}
+
+		const last = page[page.length - 1]?.id;
+
+		// A short page is the last one. A page whose last id is the one it started after would be read
+		// again for ever, so it ends the source too rather than trusting the reader to have moved.
+		if (page.length < take || !last || last === after) {
+			return;
+		}
+
+		after = last;
+	}
+}
+
+/**
+ * The order a ledger row names, whichever way the configured ORM projected it.
+ *
+ * TypeORM answers the `orderId` column. MikroORM answers the `order` relation, which its serializer
+ * renders as the referenced id when the relation was not loaded, and as an object when it was.
+ *
+ * @param row A line or a transaction, as the window read returned it.
+ * @returns The order's id, or `undefined` when the row names none.
+ */
+function orderIdOf(row: { orderId?: ID; order?: unknown }): ID | undefined {
+	if (row.orderId) {
+		return row.orderId;
+	}
+
+	if (typeof row.order === 'string') {
+		return row.order;
+	}
+
+	return (row.order as { id?: ID } | null | undefined)?.id ?? undefined;
 }
 
 /**
