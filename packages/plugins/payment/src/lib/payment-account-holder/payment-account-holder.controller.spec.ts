@@ -131,7 +131,14 @@ jest.mock('@gauzy/core/src/lib/idempotency/idempotency.service', () => ({
 	IdempotencyService: class IdempotencyService {}
 }));
 
-import { ArgumentMetadata, PipeTransform, RequestMethod, ValidationPipe } from '@nestjs/common';
+import {
+	ArgumentMetadata,
+	BadRequestException,
+	NotFoundException,
+	PipeTransform,
+	RequestMethod,
+	ValidationPipe
+} from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA, PIPES_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { from, lastValueFrom } from 'rxjs';
@@ -142,6 +149,7 @@ import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempot
 import { PaymentPermission } from '../payment.permissions';
 import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED, RejectCardDataPipe } from '../payment.card-data.pipe';
 import { PaymentAccountHolderController } from './payment-account-holder.controller';
+import { PaymentAccountHolderResolver } from '../graphql/resolvers/payment-account-holder.resolver';
 import {
 	IPaymentAccountHolderDisableResult,
 	PaymentAccountHolderLifecycleService
@@ -282,6 +290,111 @@ describe('PaymentAccountHolderController — the routes (06 §7.12)', () => {
 		expect(instruments.countLive).toHaveBeenCalledWith(HOLDER);
 		expect(kernel.disableHolder).toHaveBeenCalledWith(HOLDER);
 		expect(disabled).toMatchObject({ id: HOLDER, status: 'DISABLED', revokedTokenCount: 2 });
+	});
+});
+
+/**
+ * Retiring an account: `DELETE /payment-account-holders/:id/soft` and `softDeletePaymentAccountHolder`.
+ *
+ * Both surfaces used to reach the CRUD base's generic `softRemove`, which retired an `ACTIVE` account
+ * while its saved instruments — and the subscriptions charging them — still pointed at it. They now
+ * reach the lifecycle service's `softRemove`, which runs the kernel's `softRemoveHolder`: the removal
+ * the kernel calls its only one, refused with `PAYMENT_ACCOUNT_HOLDER_IN_USE` until the account is
+ * `DISABLED`. The kernel's rule itself is the kernel's to test (`payment-account-holder.service.spec.ts`
+ * in core); what is pinned here is that both surfaces reach it, that the generic path is never taken,
+ * and how the answer is read when the kernel's own trailing read cannot see the row it has just retired.
+ */
+describe('PaymentAccountHolderController — retiring an account goes through the kernel’s guarded removal', () => {
+	/** The generic removal the surfaces must never reach again, and the kernel's guarded one. */
+	function retirable() {
+		const built = resource();
+		const kernel = built.kernel as typeof built.kernel & Record<string, jest.Mock>;
+
+		kernel.softRemove = jest.fn(async () => ({ ...(account as object), deletedAt: new Date() }));
+		kernel.softRemoveHolder = jest.fn();
+		kernel.find = jest.fn(async () => []);
+
+		return {
+			...built,
+			kernel,
+			resolver: new PaymentAccountHolderResolver(kernel as never, built.lifecycle, built.instruments as never)
+		};
+	}
+
+	it('refuses a live account on both surfaces, and never reaches the generic soft delete', async () => {
+		const { controller, resolver, kernel } = retirable();
+		const inUse = new BadRequestException(
+			'PAYMENT_ACCOUNT_HOLDER_IN_USE: a ACTIVE account is still in use; disable it first.'
+		);
+		kernel.softRemoveHolder.mockRejectedValue(inUse);
+
+		// The failure scenario: an ACTIVE account with live instruments beneath it.
+		await expect(controller.softRemove(HOLDER)).rejects.toBe(inUse);
+		await expect(resolver.softDeletePaymentAccountHolder(HOLDER)).resolves.toMatchObject({
+			paymentAccountHolder: null,
+			userErrors: [{ code: 'PAYMENT_ACCOUNT_HOLDER_IN_USE' }]
+		});
+
+		expect(kernel.softRemoveHolder).toHaveBeenCalledTimes(2);
+		expect(kernel.softRemoveHolder).toHaveBeenCalledWith(HOLDER);
+		expect(kernel.softRemove).not.toHaveBeenCalled();
+	});
+
+	it('answers a disabled account with the row the kernel retired, when the kernel returns it', async () => {
+		const { controller, resolver, kernel } = retirable();
+		const retired = { ...(account as object), status: 'DISABLED', deletedAt: new Date('2026-09-01T00:00:00.000Z') };
+		kernel.softRemoveHolder.mockResolvedValue(retired);
+
+		await expect(controller.softRemove(HOLDER)).resolves.toBe(retired);
+		await expect(resolver.softDeletePaymentAccountHolder(HOLDER)).resolves.toEqual({
+			paymentAccountHolder: retired,
+			userErrors: []
+		});
+
+		// No read of retired rows is needed when the kernel answered.
+		expect(kernel.find).not.toHaveBeenCalled();
+		expect(kernel.softRemove).not.toHaveBeenCalled();
+	});
+
+	it('answers the retired row when the kernel’s trailing live read cannot see it', async () => {
+		const { controller, kernel } = retirable();
+		const retired = { ...(account as object), status: 'DISABLED', deletedAt: new Date('2026-09-01T00:00:00.000Z') };
+		// What a real database does: the kernel soft-deletes, then re-reads through a live-rows read.
+		kernel.softRemoveHolder.mockRejectedValue(
+			new NotFoundException('PAYMENT_ACCOUNT_HOLDER_NOT_FOUND: no such account at a provider.')
+		);
+		kernel.find.mockResolvedValue([retired]);
+
+		await expect(controller.softRemove(HOLDER)).resolves.toBe(retired);
+
+		// The row is read with retired rows included and inside the caller's tenant and organization, both
+		// stated rather than left to the kernel's `find`, which adds the tenant only for a signed-in user.
+		expect(kernel.find).toHaveBeenCalledWith({
+			where: { id: HOLDER, tenantId: null, organizationId: null },
+			withDeleted: true
+		});
+	});
+
+	it('keeps the kernel’s not-found when there is no retired row to answer with', async () => {
+		const { controller, kernel } = retirable();
+		const missing = new NotFoundException('PAYMENT_ACCOUNT_HOLDER_NOT_FOUND: no such account at a provider.');
+		kernel.softRemoveHolder.mockRejectedValue(missing);
+		// A row that is live again, or that is not in the caller's scope, is not a retirement to report.
+		kernel.find.mockResolvedValue([{ ...(account as object), deletedAt: null }]);
+
+		await expect(controller.softRemove(HOLDER)).rejects.toBe(missing);
+	});
+
+	it('refuses an account outside the caller’s scope before anything is written', async () => {
+		const { controller, kernel } = retirable();
+		const foreign = new NotFoundException('PAYMENT_ACCOUNT_HOLDER_NOT_FOUND: no such account at a provider.');
+		kernel.findHolderOrFail.mockRejectedValue(foreign);
+
+		await expect(controller.softRemove(HOLDER)).rejects.toBe(foreign);
+
+		expect(kernel.softRemoveHolder).not.toHaveBeenCalled();
+		expect(kernel.find).not.toHaveBeenCalled();
+		expect(kernel.softRemove).not.toHaveBeenCalled();
 	});
 });
 

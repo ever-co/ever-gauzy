@@ -2,10 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { EntityManager } from 'typeorm';
 import { isMySQL } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, Money, RequestContext } from '@gauzy/core';
+import { Money } from '@gauzy/core';
 import { RefundLine } from './refund-line.entity';
 import { TypeOrmRefundLineRepository } from './repository/type-orm-refund-line.repository';
 import { MikroOrmRefundLineRepository } from './repository/mikro-orm-refund-line.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import { Refund } from '../refund/refund.entity';
 import { IRefund, IRefundLine, IRefundLineCreateInput, IRefundLineUpdateInput, RefundStatus } from '../payment.types';
 
@@ -40,7 +41,7 @@ interface IPreparedRefundLine {
  * both exist on one refund.
  */
 @Injectable()
-export class RefundLineService extends CrudService<RefundLine> {
+export class RefundLineService extends PaymentScopedCrudService<RefundLine> {
 	/**
 	 * A decimal a `numeric(20,6)` quantity column carries: at most fourteen integer digits and six
 	 * fractional ones, and never an exponent.
@@ -52,16 +53,6 @@ export class RefundLineService extends CrudService<RefundLine> {
 		readonly mikroOrmRefundLineRepository: MikroOrmRefundLineRepository
 	) {
 		super(typeOrmRefundLineRepository, mikroOrmRefundLineRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

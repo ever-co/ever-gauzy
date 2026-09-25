@@ -215,26 +215,32 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 	/**
 	 * Soft deletes a provider account, leaving the row the charge history points at.
 	 *
-	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override exists only to state
-	 * the permission it demands. The base declares the route with no permission metadata at all, so
-	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
-	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
-	 * class's read grant alone. It now states `PAYMENT_ACCOUNT_HOLDERS_EDIT`, the grant the create,
-	 * verify and disable routes here carry and the one the GraphQL `deletePaymentAccountHolder`
-	 * mutation states for the same account.
+	 * The `DELETE ':id/soft'` route belongs to `CrudController`, and this override states the permission
+	 * it demands. The base declares the route with no permission metadata at all, so `PermissionGuard`
+	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to empty metadata with its
+	 * `isEmpty(permissions)` return, and the inherited handler stood on this class's read grant alone. It
+	 * now states `PAYMENT_ACCOUNT_HOLDERS_EDIT`, the grant the create, verify and disable routes here
+	 * carry and the one the GraphQL `deletePaymentAccountHolder` mutation states for the same account.
+	 *
+	 * **It runs the kernel's guarded removal, not the base's generic one.** The inherited handler called
+	 * the CRUD base's `softRemove`, which retired an `ACTIVE` account while its saved instruments still
+	 * pointed at it — the exact state the kernel's `softRemoveHolder` exists to refuse, with
+	 * `PAYMENT_ACCOUNT_HOLDER_IN_USE`, until the account has been disabled and its instruments revoked
+	 * with it. The route and the GraphQL `softDeletePaymentAccountHolder` field both reach the lifecycle
+	 * service's `softRemove`, so the refusal holds on both surfaces.
 	 *
 	 * @param id The account to soft delete.
-	 * @param options The inherited options, forwarded to the service.
 	 * @returns The soft-deleted account.
 	 */
 	@ApiOperation({ summary: 'Soft delete a record by ID' })
 	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The account is not disabled' })
 	@Permissions(PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_EDIT as PermissionsEnum)
 	@Delete(':id/soft')
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return await super.softRemove(id, ...options);
+	async softRemove(@Param('id', UUIDValidationPipe) id: string): Promise<IPaymentAccountHolder> {
+		return await this.accountHolders.softRemove(id);
 	}
 
 	/**

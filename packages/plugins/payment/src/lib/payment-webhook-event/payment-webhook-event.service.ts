@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
 import { PaymentWebhookEvent } from './payment-webhook-event.entity';
 import { TypeOrmPaymentWebhookEventRepository } from './repository/type-orm-payment-webhook-event.repository';
 import { MikroOrmPaymentWebhookEventRepository } from './repository/mikro-orm-payment-webhook-event.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import {
 	IPaymentProvider,
 	IPaymentWebhookEvent,
@@ -38,23 +38,13 @@ import { PaymentProviderService } from '../payment-provider/payment-provider.ser
  * must not hold.
  */
 @Injectable()
-export class PaymentWebhookEventService extends CrudService<PaymentWebhookEvent> {
+export class PaymentWebhookEventService extends PaymentScopedCrudService<PaymentWebhookEvent> {
 	constructor(
 		readonly typeOrmPaymentWebhookEventRepository: TypeOrmPaymentWebhookEventRepository,
 		readonly mikroOrmPaymentWebhookEventRepository: MikroOrmPaymentWebhookEventRepository,
 		private readonly paymentProviderService: PaymentProviderService
 	) {
 		super(typeOrmPaymentWebhookEventRepository, mikroOrmPaymentWebhookEventRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

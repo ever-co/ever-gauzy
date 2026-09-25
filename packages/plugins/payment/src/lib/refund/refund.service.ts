@@ -10,10 +10,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { BaseEvent, CrudService, EventBus, Money, Payment, RequestContext, readAffectedRows } from '@gauzy/core';
+import { BaseEvent, EventBus, Money, Payment, readAffectedRows } from '@gauzy/core';
 import { Refund } from './refund.entity';
 import { TypeOrmRefundRepository } from './repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './repository/mikro-orm-refund.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import {
 	IPaymentOrderLineRefundPort,
 	IRefund,
@@ -61,7 +62,7 @@ import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
  * `PAYMENT_ORDER_LINE_REFUND_UNAVAILABLE` rather than left silently unmirrored.
  */
 @Injectable()
-export class RefundService extends CrudService<Refund> {
+export class RefundService extends PaymentScopedCrudService<Refund> {
 	constructor(
 		readonly typeOrmRefundRepository: TypeOrmRefundRepository,
 		readonly mikroOrmRefundRepository: MikroOrmRefundRepository,
@@ -80,16 +81,6 @@ export class RefundService extends CrudService<Refund> {
 		private readonly orderLineRefunds?: IPaymentOrderLineRefundPort
 	) {
 		super(typeOrmRefundRepository, mikroOrmRefundRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

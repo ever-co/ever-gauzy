@@ -184,8 +184,14 @@ export class PaymentAccountHolderResolver {
 	 * It is a different act from `deletePaymentAccountHolder` beside it: that one closes the account —
 	 * disabling it and revoking every instrument beneath it in one transaction — whereas this one takes
 	 * the row out of the reads recoverably, which is what a charge history that still has to resolve
-	 * needs. The service is the account's own, and it is the same one the route's inherited handler
-	 * calls, so the two surfaces retire the same row the same way.
+	 * needs.
+	 *
+	 * **Only a closed account can be retired.** The field reaches the lifecycle service's `softRemove`,
+	 * the same method the route reaches, and that runs the kernel's guarded `softRemoveHolder`: an account
+	 * that is not `DISABLED` is refused with `PAYMENT_ACCOUNT_HOLDER_IN_USE`, reported in `userErrors`,
+	 * because disabling is what revokes the instruments beneath it. The field used to call the CRUD base's
+	 * generic `softRemove`, which hid a live account from every read while its saved instruments — and
+	 * the subscriptions charging them — still pointed at it.
 	 *
 	 * The permission is the route's own, `PAYMENT_ACCOUNT_HOLDERS_EDIT`, and not the class's view grant.
 	 * This class states no `@Permissions` of its own, so a field that stated none would carry no
@@ -198,7 +204,7 @@ export class PaymentAccountHolderResolver {
 	@Mutation('softDeletePaymentAccountHolder')
 	async softDeletePaymentAccountHolder(@Args('id') id: ID): Promise<ISoftDeletePaymentAccountHolderPayload> {
 		try {
-			return { paymentAccountHolder: await this.paymentAccountHolderService.softRemove(id), userErrors: [] };
+			return { paymentAccountHolder: await this.accountHolders.softRemove(id), userErrors: [] };
 		} catch (error) {
 			return { paymentAccountHolder: null, ...rejection<IPaymentAccountHolder>(error) };
 		}

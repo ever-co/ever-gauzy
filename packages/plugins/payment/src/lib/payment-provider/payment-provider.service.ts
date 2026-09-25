@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
 import { PaymentProvider } from './payment-provider.entity';
 import { TypeOrmPaymentProviderRepository } from './repository/type-orm-payment-provider.repository';
 import { MikroOrmPaymentProviderRepository } from './repository/mikro-orm-payment-provider.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import { IPaymentProvider, IPaymentProviderCreateInput, IPaymentProviderUpdateInput } from '../payment.types';
 import { findSecretConfigurationKey } from '../payment.validators';
 
@@ -25,22 +25,12 @@ import { findSecretConfigurationKey } from '../payment.validators';
  *    an operator learns that the provider was withdrawn rather than watching a payment vanish.
  */
 @Injectable()
-export class PaymentProviderService extends CrudService<PaymentProvider> {
+export class PaymentProviderService extends PaymentScopedCrudService<PaymentProvider> {
 	constructor(
 		readonly typeOrmPaymentProviderRepository: TypeOrmPaymentProviderRepository,
 		readonly mikroOrmPaymentProviderRepository: MikroOrmPaymentProviderRepository
 	) {
 		super(typeOrmPaymentProviderRepository, mikroOrmPaymentProviderRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

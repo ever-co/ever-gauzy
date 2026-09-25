@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, Money, RequestContext } from '@gauzy/core';
+import { Money } from '@gauzy/core';
 import { PaymentCollection } from './payment-collection.entity';
 import { TypeOrmPaymentCollectionRepository } from './repository/type-orm-payment-collection.repository';
 import { MikroOrmPaymentCollectionRepository } from './repository/mikro-orm-payment-collection.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import {
 	IPaymentCollection,
 	IPaymentCollectionCreateInput,
@@ -34,22 +35,12 @@ import {
  * makes "how much is outstanding for this order?" a question with one answer.
  */
 @Injectable()
-export class PaymentCollectionService extends CrudService<PaymentCollection> {
+export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCollection> {
 	constructor(
 		readonly typeOrmPaymentCollectionRepository: TypeOrmPaymentCollectionRepository,
 		readonly mikroOrmPaymentCollectionRepository: MikroOrmPaymentCollectionRepository
 	) {
 		super(typeOrmPaymentCollectionRepository, mikroOrmPaymentCollectionRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

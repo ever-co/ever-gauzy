@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ID, IPagination } from '@gauzy/contracts';
-import { CrudService, RequestContext } from '@gauzy/core';
 import { RefundReason } from './refund-reason.entity';
 import { TypeOrmRefundReasonRepository } from './repository/type-orm-refund-reason.repository';
 import { MikroOrmRefundReasonRepository } from './repository/mikro-orm-refund-reason.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import { IRefundReason, IRefundReasonCreateInput, IRefundReasonUpdateInput } from '../payment.types';
 
 /**
@@ -20,22 +20,12 @@ import { IRefundReason, IRefundReasonCreateInput, IRefundReasonUpdateInput } fro
  * resolving; deleting one that is still referenced is refused for the same reason.
  */
 @Injectable()
-export class RefundReasonService extends CrudService<RefundReason> {
+export class RefundReasonService extends PaymentScopedCrudService<RefundReason> {
 	constructor(
 		readonly typeOrmRefundReasonRepository: TypeOrmRefundReasonRepository,
 		readonly mikroOrmRefundReasonRepository: MikroOrmRefundReasonRepository
 	) {
 		super(typeOrmRefundReasonRepository, mikroOrmRefundReasonRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

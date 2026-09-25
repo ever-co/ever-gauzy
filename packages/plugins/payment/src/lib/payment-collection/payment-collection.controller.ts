@@ -31,6 +31,7 @@ import { PaymentCollectionService } from './payment-collection.service';
 import { CreatePaymentCollectionDTO, UpdatePaymentCollectionDTO } from './dto';
 import { IPaymentCollection } from '../payment.types';
 import { PaymentPermission } from '../payment.permissions';
+import { toPaymentListOptions } from '../payment.list-query';
 
 /**
  * The money side of one order or cart.
@@ -56,7 +57,8 @@ export class PaymentCollectionController extends CrudController<PaymentCollectio
 	/**
 	 * Lists the collections of the caller's organization.
 	 *
-	 * @param filter The query filter, merged with the tenancy scope.
+	 * @param filter The query filter: its flat and `where[...]` members are the criterion, merged with
+	 * the tenancy scope; `take`, `skip` (a row offset) and `withDeleted` are the page and the visibility.
 	 * @returns One page of collections.
 	 */
 	@ApiOperation({ summary: 'List payment collections' })
@@ -64,12 +66,12 @@ export class PaymentCollectionController extends CrudController<PaymentCollectio
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
 	@Get()
 	async findAll(@Query() filter?: BaseQueryDTO<PaymentCollection>): Promise<IPagination<IPaymentCollection>> {
-		// The DTO is the find-options object, not a criterion, so it is spread whole. Nesting it under
-		// `where` — which is what this route used to do — turns the DTO’s own members (`take`, `skip`,
-		// `withDeleted`) into predicates on columns that do not exist, so every paged or soft-delete-aware
-		// request answered `500 Property "take" was not found in "PaymentCollection"` while a bare read looked fine:
-		// the query string this route advertises was unusable.
-		return this.paymentCollectionService.findCollections({ ...(filter ?? {}) });
+		// The query string arrives raw — no validation pipe runs on this route — so it is split into find
+		// options and criterion rather than spread whole: `withDeleted` is read as a boolean (the string
+		// 'false' is truthy, and both ORMs lifted the soft-delete filter for it), a flat filter such as
+		// `?status=` stays a criterion instead of becoming a find option neither ORM reads, and `take` and
+		// `skip` are read as numbers, `skip` being a row offset exactly as on the GraphQL connection.
+		return this.paymentCollectionService.findCollections(toPaymentListOptions(filter));
 	}
 
 	/**

@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { CrudService, EventBus, Money, Payment, RequestContext, readAffectedRows } from '@gauzy/core';
+import { EventBus, Money, Payment, readAffectedRows } from '@gauzy/core';
 import { PaymentCapture } from './payment-capture.entity';
 import { TypeOrmPaymentCaptureRepository } from './repository/type-orm-payment-capture.repository';
 import { MikroOrmPaymentCaptureRepository } from './repository/mikro-orm-payment-capture.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import { IPaymentCapture, IPaymentCaptureCreateInput } from '../payment.types';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { PaymentCapturedEvent } from '../events';
@@ -37,7 +38,7 @@ import { PaymentCapturedEvent } from '../events';
  * captures say another is exactly the disagreement the extension exists to prevent.
  */
 @Injectable()
-export class PaymentCaptureService extends CrudService<PaymentCapture> {
+export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCapture> {
 	constructor(
 		readonly typeOrmPaymentCaptureRepository: TypeOrmPaymentCaptureRepository,
 		readonly mikroOrmPaymentCaptureRepository: MikroOrmPaymentCaptureRepository,
@@ -46,16 +47,6 @@ export class PaymentCaptureService extends CrudService<PaymentCapture> {
 		private readonly eventBus: EventBus
 	) {
 		super(typeOrmPaymentCaptureRepository, mikroOrmPaymentCaptureRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**

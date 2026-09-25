@@ -340,3 +340,40 @@ describe('PaymentWebhookEventController — re-processing under a key (06 §6.9)
 		expect(surface.store.claim).not.toHaveBeenCalled();
 	});
 });
+
+/**
+ * Correcting a callback: `PUT /payment-webhook-events/:id`.
+ *
+ * The write is the kernel's `CrudService.update`, which the service inherits unscoped and which updates
+ * by the identifier alone, so the route used to rewrite another tenant's callback for anyone who knew
+ * its identifier. It now reads the event through `findEventOrFail` — by the identifier and the caller's
+ * tenant and organization — before it writes, so a row outside the caller's scope is refused and never
+ * reaches the write.
+ */
+describe('PaymentWebhookEventController — correcting a callback stays inside the caller’s scope', () => {
+	it('refuses an event outside the caller’s scope before anything is written', async () => {
+		const { controller, kernel } = resource();
+		const foreign = Object.assign(new Error('PAYMENT_WEBHOOK_EVENT_NOT_FOUND'), { status: 404 });
+		kernel.findEventOrFail.mockRejectedValueOnce(foreign);
+
+		// The failure scenario: the identifier of another tenant's callback.
+		await expect(controller.update(EVENT, { lastError: 'rewritten' } as never)).rejects.toBe(foreign);
+
+		expect(kernel.findEventOrFail).toHaveBeenCalledWith(EVENT);
+		expect(kernel.update).not.toHaveBeenCalled();
+	});
+
+	it('writes the caller’s own event once the scoped read has found it', async () => {
+		const { controller, kernel } = resource();
+		const changes = { lastError: 'recorded by hand' };
+
+		await expect(controller.update(EVENT, changes as never)).resolves.toEqual({ id: EVENT });
+
+		expect(kernel.findEventOrFail).toHaveBeenCalledWith(EVENT);
+		expect(kernel.update).toHaveBeenCalledWith(EVENT, changes);
+		// The read comes first: a write that ran before the scope was confirmed would be the defect again.
+		expect(kernel.findEventOrFail.mock.invocationCallOrder[0]).toBeLessThan(
+			kernel.update.mock.invocationCallOrder[0]
+		);
+	});
+});

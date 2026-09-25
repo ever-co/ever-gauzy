@@ -31,6 +31,7 @@ import { PaymentCaptureService } from './payment-capture.service';
 import { CreatePaymentCaptureDTO, UpdatePaymentCaptureDTO } from './dto';
 import { IPaymentCapture } from '../payment.types';
 import { PaymentPermission } from '../payment.permissions';
+import { toPaymentListOptions } from '../payment.list-query';
 
 /**
  * The capture ledger over REST.
@@ -59,7 +60,8 @@ export class PaymentCaptureController extends CrudController<PaymentCapture> {
 	/**
 	 * Lists the captures of the caller's organization.
 	 *
-	 * @param filter The query filter, merged with the tenancy scope.
+	 * @param filter The query filter: its flat and `where[...]` members are the criterion, merged with
+	 * the tenancy scope; `take`, `skip` (a row offset) and `withDeleted` are the page and the visibility.
 	 * @returns One page of captures.
 	 */
 	@ApiOperation({ summary: 'List payment captures' })
@@ -67,12 +69,12 @@ export class PaymentCaptureController extends CrudController<PaymentCapture> {
 	@Permissions(PaymentPermission.PAYMENT_SESSIONS_VIEW as PermissionsEnum)
 	@Get()
 	async findAll(@Query() filter?: BaseQueryDTO<PaymentCapture>): Promise<IPagination<IPaymentCapture>> {
-		// The DTO is the find-options object, not a criterion, so it is spread whole. Nesting it under
-		// `where` — which is what this route used to do — turns the DTO’s own members (`take`, `skip`,
-		// `withDeleted`) into predicates on columns that do not exist, so every paged or soft-delete-aware
-		// request answered `500 Property "take" was not found in "PaymentCapture"` while a bare read looked fine:
-		// the query string this route advertises was unusable.
-		return this.paymentCaptureService.findCaptures({ ...(filter ?? {}) });
+		// The query string arrives raw — no validation pipe runs on this route — so it is split into find
+		// options and criterion rather than spread whole: `withDeleted` is read as a boolean (the string
+		// 'false' is truthy, and both ORMs lifted the soft-delete filter for it), a flat filter such as
+		// `?status=` stays a criterion instead of becoming a find option neither ORM reads, and `take` and
+		// `skip` are read as numbers, `skip` being a row offset exactly as on the GraphQL connection.
+		return this.paymentCaptureService.findCaptures(toPaymentListOptions(filter));
 	}
 
 	/**

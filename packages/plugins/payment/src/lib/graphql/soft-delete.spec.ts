@@ -33,9 +33,10 @@
  * that copied its neighbour's would fail here rather than pass on a family-wide guess.
  *
  * **Nothing is doubled here but the services.** The ten controllers are the real ones — the `softRemove`
- * and `softRecover` overrides included, which exist only to state the permission the inherited routes
- * leave unstated — the ten resolvers are the real ones with their own decorators and signatures, the
- * `CrudController` behind them is restated in the shape the kernel declares it (the two lifecycle
+ * and `softRecover` overrides included, which exist to state the permission the inherited routes leave
+ * unstated (and, for the account at a provider, to retire it through the kernel's guarded removal
+ * rather than the generic one) — the ten resolvers are the real ones with their own decorators and
+ * signatures, the `CrudController` behind them is restated in the shape the kernel declares it (the two lifecycle
  * handlers hand the service their rest parameter as an ARRAY, which is what makes the REST call and the
  * GraphQL call comparable at all), and the document the fields are read out of is the real one. Every
  * other collaborator is a stub of its own rather than a copy of the one under test, so a field that
@@ -171,7 +172,8 @@ jest.mock('@gauzy/core', () => {
 
 import { FieldDefinitionNode, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, TypeNode } from 'graphql';
 import { BadRequestException } from '@nestjs/common';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { PaymentPermission } from '../payment.permissions';
 import { PaymentProviderController } from '../payment-provider/payment-provider.controller';
@@ -246,6 +248,16 @@ interface IResource {
 	deps: readonly string[];
 	/** Which of those collaborators owns the resource — and is the one the controller hands to the base. */
 	service: string;
+	/**
+	 * The collaborators its controller takes, in constructor order, when that is more than its own
+	 * service. Absent means the controller takes the resource's service alone.
+	 */
+	controllerDeps?: readonly string[];
+	/**
+	 * The collaborator both surfaces retire the row through, when that is not the resource's own CRUD
+	 * service. Absent means the generic soft delete the base class maps.
+	 */
+	softDeleteOwner?: string;
 	controller: new (...args: any[]) => any;
 	resolver: new (...args: any[]) => any;
 }
@@ -356,6 +368,12 @@ const RESOURCES: IResource[] = [
 		view: PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_VIEW,
 		deps: RESOLVER_DEPS.PaymentAccountHolderResolver,
 		service: 'accountHolder',
+		controllerDeps: ['accountHolder', 'accountHolders'],
+		// An account is retired through the kernel's guarded removal, which refuses one that is not
+		// `DISABLED` with `PAYMENT_ACCOUNT_HOLDER_IN_USE`, and never through the base class's generic soft
+		// delete, which hid a live account from under the instruments still pointing at it. The lifecycle
+		// service is where both surfaces reach it, with the identifier alone.
+		softDeleteOwner: 'accountHolders',
 		controller: PaymentAccountHolderController,
 		resolver: PaymentAccountHolderResolver
 	},
@@ -380,6 +398,10 @@ interface IParity extends IResource {
 	route: string;
 	method: string;
 	payload: string;
+	/** The collaborator both surfaces call for this act. */
+	owner: string;
+	/** What the route hands that collaborator after the identifier. */
+	routeArgs: unknown[];
 }
 
 /**
@@ -396,14 +418,20 @@ const PARITY: IParity[] = RESOURCES.flatMap((resource) => [
 		field: `softDelete${resource.name}`,
 		route: 'softRemove',
 		method: 'softRemove',
-		payload: `SoftDelete${resource.name}Payload`
+		payload: `SoftDelete${resource.name}Payload`,
+		owner: resource.softDeleteOwner ?? resource.service,
+		// The inherited route hands the base's service its rest parameter, an empty ARRAY; a route that
+		// reaches a domain method of its own hands it the identifier alone.
+		routeArgs: resource.softDeleteOwner ? [] : [[]]
 	},
 	{
 		...resource,
 		field: `recover${resource.name}`,
 		route: 'softRecover',
 		method: 'softRecover',
-		payload: `Recover${resource.name}Payload`
+		payload: `Recover${resource.name}Payload`,
+		owner: resource.service,
+		routeArgs: [[]]
 	}
 ]);
 
@@ -428,7 +456,7 @@ function surfaces(entry: IParity): { service: Row; others: Row[]; controller: Ro
 	for (const name of entry.deps) {
 		stubs.set(
 			name,
-			name === entry.service
+			name === entry.owner
 				? service
 				: {
 						softRemove: jest.fn().mockResolvedValue(FOREIGN),
@@ -439,11 +467,13 @@ function surfaces(entry: IParity): { service: Row; others: Row[]; controller: Ro
 
 	return {
 		service,
-		others: [...stubs.entries()].filter(([name]) => name !== entry.service).map(([, stub]) => stub),
+		others: [...stubs.entries()].filter(([name]) => name !== entry.owner).map(([, stub]) => stub),
 		// Every controller of this domain takes the resource's own service first and hands it to the base
-		// class, which is what the two inherited routes call; the second collaborator the two
-		// stored-instrument controllers take belongs to routes this pair does not touch.
-		controller: new entry.controller(service) as Row,
+		// class, which is what the two inherited routes call. The account's controller also takes the
+		// lifecycle service its soft delete reaches, so it is built with both, in its constructor order.
+		controller: new entry.controller(
+			...(entry.controllerDeps ?? [entry.service]).map((name) => stubs.get(name))
+		) as Row,
 		resolver: new entry.resolver(...entry.deps.map((name) => stubs.get(name))) as Row
 	};
 }
@@ -490,6 +520,22 @@ function guardsOf(surface: new (...args: any[]) => any, handler?: string): unkno
 	const restated = handler ? Reflect.getMetadata('__guards__', handlersOf(surface)[handler]) ?? [] : [];
 
 	return Array.from(new Set([...declared, ...restated]));
+}
+
+/**
+ * The feature codes one handler is gated on, as the feature guards read them: the codes stated on the
+ * handler when it states any, and otherwise the codes stated on its class.
+ *
+ * A target holds one code as the bare code and several as a list, so both shapes are read here rather
+ * than through the decorator's own reader: the assertion that uses this must not depend on the code it
+ * is checking.
+ */
+function featureFlagsOn(surface: new (...args: any[]) => any, handler: string): unknown[] {
+	const read = (value: unknown): unknown[] =>
+		value === undefined || value === null ? [] : Array.isArray(value) ? value : [value];
+	const own = read(Reflect.getMetadata(FEATURE_METADATA, handlersOf(surface)[handler]));
+
+	return own.length ? own : read(Reflect.getMetadata(FEATURE_METADATA, surface));
 }
 
 /** The root mutation type's own field declarations, as the document spells them. */
@@ -667,8 +713,9 @@ describe('the soft-delete pair — the two protocols retire and restore the same
 		const overGraphql = await resolver[entry.field](ID);
 
 		// The inherited route hands over its rest parameter, which is an empty ARRAY, and the service
-		// normalises both that and an absent argument to "no find options" — so the two are one call.
-		expect(service[entry.method]).toHaveBeenNthCalledWith(1, ID, []);
+		// normalises both that and an absent argument to "no find options" — so the two are one call. The
+		// account's soft delete reaches a domain method, which both surfaces hand the identifier alone.
+		expect(service[entry.method]).toHaveBeenNthCalledWith(1, ID, ...entry.routeArgs);
 		expect(service[entry.method]).toHaveBeenNthCalledWith(2, ID);
 		expect(service[entry.method]).toHaveBeenCalledTimes(2);
 
@@ -784,6 +831,37 @@ describe('the soft-delete pair — the permission and the guards are the route�
 			// have to carry an identical list — the resolver must not carry a weaker one.
 			expect(guardsOf(resolver, field)).toEqual(expect.arrayContaining(guardsOf(controller, route)));
 			expect(guardsOf(resolver, field)).toContain(FeatureFlagGuard);
+		}
+	});
+
+	it('gates every field on the feature codes its route is gated on, and on the GraphQL endpoint', () => {
+		// A field whose route is refused while a capability is switched off must be refused with it: a
+		// resolver that stated only the endpoint's code kept a plugin's writes reachable over GraphQL while
+		// its REST routes answered 404. This plugin's routes state no code of their own — `FEATURE_PAYMENT`
+		// is deliberately not a gate on them, for the reasons `payment.features.ts` records — so the fields
+		// state the endpoint's code and nothing else. A code added to a controller later fails here until
+		// its resolver states it too.
+		for (const { field, route, controller, resolver } of PARITY) {
+			expect(new Set(featureFlagsOn(resolver, field))).toEqual(
+				new Set([...featureFlagsOn(controller, route), FEATURE_GRAPHQL])
+			);
+		}
+
+		// The same holds for every other field of the ten resolvers, measured against the codes their
+		// controller states for the whole resource.
+		for (const { controller, resolver } of RESOURCES) {
+			const required = [...featureFlagsOn(controller, 'findAll'), FEATURE_GRAPHQL];
+
+			for (const field of Object.getOwnPropertyNames(resolver.prototype)) {
+				// Methods only: the constructor is not a field, and an accessor is not read through its getter.
+				const member = Object.getOwnPropertyDescriptor(resolver.prototype, field);
+
+				if (field === 'constructor' || typeof member?.value !== 'function') {
+					continue;
+				}
+
+				expect(featureFlagsOn(resolver, field)).toEqual(expect.arrayContaining(required));
+			}
 		}
 	});
 });

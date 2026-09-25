@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
 	ID,
 	IPaymentAccountHolder,
@@ -6,7 +6,7 @@ import {
 	PaymentAccountHolderStatus,
 	PaymentAccountVerificationStatus
 } from '@gauzy/contracts';
-import { PaymentAccountHolderService } from '@gauzy/core';
+import { PaymentAccountHolderService, RequestContext } from '@gauzy/core';
 import { PaymentMethodTokenLifecycleService } from '../payment-method-token/payment-method-token-lifecycle.service';
 
 /**
@@ -70,7 +70,10 @@ export interface IPaymentAccountHolderDisableResult extends IPaymentAccountHolde
  *   completed with it, and then moves the status — in that order, because a move to `ACTIVE` requires
  *   the reference to have been recorded first and the kernel refuses it otherwise rather than
  *   guessing;
- * - **the disabling**, which reports how many instruments the close revoked.
+ * - **the disabling**, which reports how many instruments the close revoked;
+ * - **the retirement**, which is the kernel's guarded removal — refused while the account is live — and
+ *   never the CRUD base's generic soft delete, which would hide a live account from under its
+ *   instruments.
  *
  * Both surfaces call these methods, so a REST caller and a GraphQL caller cannot reach different
  * behaviour for the same act.
@@ -195,6 +198,76 @@ export class PaymentAccountHolderLifecycleService {
 		const account = await this.paymentAccountHolderService.disableHolder(id);
 
 		return { ...account, revokedTokenCount };
+	}
+
+	/**
+	 * Retires an account recoverably, which the kernel allows only once the account is closed.
+	 *
+	 * Both surfaces reach this — `DELETE /payment-account-holders/:id/soft` and the GraphQL
+	 * `softDeletePaymentAccountHolder` field — and it runs the kernel's `softRemoveHolder`, which its own
+	 * documentation calls the only removal path there is. It refuses an account that is not `DISABLED`
+	 * with `PAYMENT_ACCOUNT_HOLDER_IN_USE`, because disabling is what revokes the instruments beneath the
+	 * account: both surfaces used to call the CRUD base's generic `softRemove` instead, which hid an
+	 * `ACTIVE` account from every read while its saved instruments, and the subscriptions charging them,
+	 * still pointed at it.
+	 *
+	 * **The answer is read back here when the kernel cannot read it.** `softRemoveHolder` ends by
+	 * re-reading the account through `findHolderOrFail`, a read of live rows only, so on a real database
+	 * the account it has just retired is no longer there to be read and the call raises
+	 * `PAYMENT_ACCOUNT_HOLDER_NOT_FOUND` after the write has committed — on both ORMs, since TypeORM's
+	 * delete-date column and MikroORM's soft-delete filter both hide the row. Reporting that as a failure
+	 * would tell the caller an account it has just retired is missing, so a not-found raised once the
+	 * account was confirmed to exist is answered with the retired row, read with retired rows included
+	 * and inside the caller's tenant and organization. Any other refusal — the account not being in the
+	 * caller's scope, or still being in use — is the kernel's, and travels unchanged.
+	 *
+	 * @param id The account to retire.
+	 * @returns The retired account.
+	 * @throws BadRequestException `PAYMENT_ACCOUNT_HOLDER_IN_USE` when the account is not `DISABLED`.
+	 * @throws NotFoundException `PAYMENT_ACCOUNT_HOLDER_NOT_FOUND` when no live account with that id is in
+	 * the caller's scope.
+	 */
+	async softRemove(id: ID): Promise<IPaymentAccountHolder> {
+		// The account as it stands, in the caller's scope: a missing, foreign or already retired account is
+		// refused here, with the kernel's own not-found, before anything is written.
+		await this.paymentAccountHolderService.findHolderOrFail(id);
+
+		try {
+			return await this.paymentAccountHolderService.softRemoveHolder(id);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				const retired = await this.findRetired(id);
+
+				if (retired) {
+					return retired;
+				}
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Reads an account that has been retired, inside the caller's tenant and organization.
+	 *
+	 * @param id The account.
+	 * @returns The retired account, or null when there is no retired account with that id in scope.
+	 */
+	private async findRetired(id: ID): Promise<IPaymentAccountHolder | null> {
+		// Both scope members are stated here, as the kernel's own reads of this table state them.
+		// `TenantAwareCrudService.find` adds the signed-in user's tenant on top, but only when there is a
+		// signed-in user, so the tenant is not left to it: without one this read still matches nothing
+		// outside the context's tenant rather than every tenant's retired row with this identifier.
+		const [holder] = await this.paymentAccountHolderService.find({
+			where: {
+				id,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			},
+			withDeleted: true
+		} as never);
+
+		return holder?.deletedAt ? holder : null;
 	}
 
 	/**

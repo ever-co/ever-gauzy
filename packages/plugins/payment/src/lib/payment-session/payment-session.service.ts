@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { BaseEvent, CrudService, EventBus, Money, RequestContext } from '@gauzy/core';
+import { BaseEvent, EventBus, Money } from '@gauzy/core';
 import { PaymentSession } from './payment-session.entity';
 import { TypeOrmPaymentSessionRepository } from './repository/type-orm-payment-session.repository';
 import { MikroOrmPaymentSessionRepository } from './repository/mikro-orm-payment-session.repository';
+import { PaymentScopedCrudService } from '../payment-scoped-crud.service';
 import {
 	IPaymentSession,
 	IPaymentSessionCreateInput,
@@ -38,7 +39,7 @@ import { PaymentAuthorizedEvent, PaymentCanceledEvent, PaymentFailedEvent } from
  *    and voiding releases it, through the collection service, so the two can never disagree.
  */
 @Injectable()
-export class PaymentSessionService extends CrudService<PaymentSession> {
+export class PaymentSessionService extends PaymentScopedCrudService<PaymentSession> {
 	/** Statuses a session can no longer leave. */
 	private static readonly TERMINAL: PaymentSessionStatus[] = [
 		PaymentSessionStatus.CAPTURED,
@@ -70,16 +71,6 @@ export class PaymentSessionService extends CrudService<PaymentSession> {
 		private readonly eventBus: EventBus
 	) {
 		super(typeOrmPaymentSessionRepository, mikroOrmPaymentSessionRepository);
-	}
-
-	/**
-	 * The tenant and organization of the caller, which every query in this service is scoped to.
-	 */
-	protected get scope(): { tenantId: ID; organizationId: ID } {
-		return {
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		};
 	}
 
 	/**
