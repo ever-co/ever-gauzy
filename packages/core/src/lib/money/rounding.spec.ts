@@ -107,6 +107,19 @@ describe('the rounding rule', () => {
 		expect(refusalOf(() => Money.of('10', 'USD').divide('0.00'))).toMatch(/^MONEY_DIVISION_BY_ZERO/);
 	});
 
+	it('rounds a default division half-up at the working scale rather than truncating it', () => {
+		// 5 / 7 = 0.714285714285|714…, so the twelfth digit rounds up. The guard digits used to be capped
+		// at the working scale — which *is* the default scale — so a default division carried none, the
+		// integer division truncated, and HALF_UP had nothing left to round: every default quotient
+		// landed low, and a margin floor computed by division sat below the true minimum.
+		expect(Money.of('5', 'USD').divide('7').amount).toBe('0.714285714286');
+		expect(Money.of('2', 'USD').divide('3').amount).toBe('0.666666666667');
+		expect(Money.of('-2', 'USD').divide('3').amount).toBe('-0.666666666667');
+
+		// Control: an explicit scale below the working scale always had its guard digits.
+		expect(Money.of('2', 'USD').divide('3', { scale: 2 }).amount).toBe('0.67');
+	});
+
 	it('refuses a scale the money layer cannot carry', () => {
 		expect(refusalOf(() => Money.of('1', 'USD').round(RoundingMode.HALF_UP, 13))).toMatch(/^MONEY_INVALID_SCALE/);
 		expect(refusalOf(() => Money.of('1', 'USD').multiply('1', { scale: 13 }))).toMatch(/^MONEY_INVALID_SCALE/);

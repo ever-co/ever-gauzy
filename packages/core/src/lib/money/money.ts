@@ -293,10 +293,24 @@ export class Money implements IMoney {
 	divide(divisor: DecimalString | number, options: { scale?: number; mode?: RoundingMode } = {}): Money {
 		const scale = resolveScale(options.scale ?? WORKING_SCALE);
 		const parsedDivisor = parseDecimalString(divisor);
-		// The quotient is carried with guard digits and then handed to the strategy, so the strategy still
-		// owns the boundary. The guard is capped by the working scale: a value never carries more digits
-		// than that while it is in flight.
-		const guardScale = Math.min(WORKING_SCALE, scale + DIVISION_GUARD_DIGITS);
+		// The quotient is carried with guard digits and then handed to the strategy, so the strategy
+		// still owns the boundary.
+		//
+		// 🛑 **The guard is not capped by the working scale, and capping it silently removed the
+		// rounding this method documents.** `Math.min(WORKING_SCALE, scale + DIVISION_GUARD_DIGITS)`
+		// is exactly `scale` whenever the caller omits `scale` — which is every default division,
+		// because the default *is* the working scale — so there were no guard digits at all, the
+		// quotient arrived at the target scale already truncated toward zero by
+		// `divideDecimalUnits`, and the `HALF_UP` the strategy was then asked for had nothing left to
+		// round. `Money.of('5','USD').divide('7')` answered `0.714285714285` where the documented
+		// result is `0.714285714286`, and the bias is one-sided: every default division landed low,
+		// and a margin floor computed as `cost.divide(divisor)` therefore sat below the true minimum,
+		// so a price that should have been refused passed the floor check.
+		//
+		// The intermediate is a local `bigint` and is never stored or returned, so the working scale —
+		// which bounds what a value may carry *in flight between operations* — does not bound it. The
+		// value that leaves this method is at `scale`, exactly as before.
+		const guardScale = scale + DIVISION_GUARD_DIGITS;
 		const quotientUnits = divideDecimalUnits(parseDecimalString(this.amount), parsedDivisor, guardScale);
 		const quotient = formatDecimalUnits(quotientUnits, guardScale);
 
