@@ -46,7 +46,7 @@ const SCOPE = 'checkout.complete';
 const TENANT = '5a1d7c3e-0000-4000-8000-000000000001';
 const ORGANIZATION = '5a1d7c3e-0000-4000-8000-000000000002';
 
-/** What an order route answers under MikroORM: the entity serialised, its relations as their keys. */
+/** What an order route answers: an entity serialised, the rows it names stated by their keys. */
 const ORDER = {
 	id: '5a1d7c3e-0000-4000-8000-0000000000a1',
 	deletedAt: null,
@@ -112,7 +112,7 @@ describe('an idempotency key on the real stores, under DB_ORM=mikro-orm as under
 		const { BetterSqliteDriver } = require('@mikro-orm/better-sqlite');
 		const { SoftDeleteHandler } = require('mikro-orm-soft-delete');
 		const { DataSource: TypeOrmDataSource } = require('typeorm');
-		const { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } = require('@gauzy/config');
+		const { MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } = require('@gauzy/config');
 		const { CreateIdempotencyKeyTable1791000000010 } = require('../database/migrations/1791000000010-CreateIdempotencyKeyTable');
 		const { ScopeIdempotencyKeyByTenant1791000000557 } = require('../database/migrations/1791000000557-ScopeIdempotencyKeyByTenant');
 
@@ -149,23 +149,17 @@ describe('an idempotency key on the real stores, under DB_ORM=mikro-orm as under
 			await runner.release();
 		}
 
-		// The tables a key's relations reach, with the columns a read of a key touches, and the caller's tenant and
-		// organization in them. MikroORM joins a to-one relation whose target carries a filter — the soft-delete
-		// one — to apply the filter to it, so every read of a key joins `tenant`, `organization` and `user`; a
-		// relation whose row the join does not find is read as null, as a soft-deleted one is.
-		for (const table of ['tenant', 'organization', 'user']) {
-			await dataSource.query(`CREATE TABLE "${table}" ("id" varchar PRIMARY KEY NOT NULL, "deletedAt" datetime)`);
-		}
-		await dataSource.query('INSERT INTO "tenant" ("id") VALUES (?)', [TENANT]);
-		await dataSource.query('INSERT INTO "organization" ("id") VALUES (?)', [ORGANIZATION]);
-
-		// MikroORM on the same file, configured as `@gauzy/config` configures it for SQLite.
+		// MikroORM on the same file, configured as `@gauzy/config` configures it for SQLite — which includes joining
+		// only what a read populates (`MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS`), as TypeORM does. A key's relations (its
+		// tenant, its organization, the users who wrote it) are never loaded, so neither ORM reads past
+		// `idempotency_key`, and the store holds no other table.
 		orm = await MikroOrm.init({
 			driver: BetterSqliteDriver,
 			dbName: databaseFile,
 			entities: coreEntities,
 			persistOnCreate: true,
 			extensions: [SoftDeleteHandler],
+			autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 			namingStrategy: EntityCaseNamingStrategy,
 			allowGlobalContext: true,
 			discovery: { warnWhenNoEntities: false }

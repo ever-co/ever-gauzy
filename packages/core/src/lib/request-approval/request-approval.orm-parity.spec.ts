@@ -135,7 +135,10 @@ describe('RequestApprovalService reads the same register on TypeORM and on Mikro
 				const { MikroORM, EntityCaseNamingStrategy } = require('@mikro-orm/core');
 				const { BetterSqliteDriver } = require('@mikro-orm/better-sqlite');
 				const { SoftDeleteHandler } = require('mikro-orm-soft-delete');
-				const { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } = require('@gauzy/config');
+				const {
+					MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
+					TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
+				} = require('@gauzy/config');
 
 				loaded = {
 					RequestApproval: entities.RequestApproval,
@@ -170,13 +173,15 @@ describe('RequestApprovalService reads the same register on TypeORM and on Mikro
 				await dataSource.initialize();
 
 				// Discovery calls the relation callbacks, and the base entity reaches `User` through a `require` in
-				// them, so MikroORM is initialised inside this registry too.
+				// them, so MikroORM is initialised inside this registry too. It joins only what a read populates, as
+				// the platform's MikroORM does (`@gauzy/config`, see `database-helpers.ts`) and as TypeORM does.
 				orm = await MikroORM.init({
 					driver: BetterSqliteDriver,
 					dbName: file,
 					entities: coreEntities,
 					namingStrategy: EntityCaseNamingStrategy,
 					extensions: [SoftDeleteHandler],
+					autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 					allowGlobalContext: true,
 					discovery: { warnWhenNoEntities: false }
 				});

@@ -110,9 +110,10 @@ export class IdempotencyService extends CrudService<IdempotencyKey> {
 		// write failure and rethrow it as a `BadRequestException` built from `toClientSafeError`, which
 		// is a client-facing message and a `400` rather than a driver error — so `isUniqueViolation`
 		// below would stop recognizing the duplicate tuple and a lost race would be reported as a failed
-		// write instead of resolving into the stored row. The MikroORM arm of `CrudService.save` is an
-		// upsert besides, which merges into the row the race was lost to instead of raising the
-		// violation the outcome is decided by.
+		// write instead of resolving into the stored row. The MikroORM arm of `CrudService.save` is no way
+		// round that either: it loads the row a payload's primary key names and `assign()`s the payload
+		// onto it, and builds a payload that names none — a claim — as `create()` builds a new row, so a
+		// lost race surfaces from its flush and reaches the caller as the same `400`.
 		//
 		// It does **not** follow that the call may stay on the TypeORM repository, which is where it was
 		// and what made every `@Idempotent` route fail under `DB_ORM=mikro-orm`: `key`, `scope`,
