@@ -465,31 +465,53 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 	border-radius: 0;
 }
 
+/* ── Members ─────────────────────────────────────────────────────────────── */
+
 .members-select {
 	display: block;
 	flex: 0 0 auto;
-	max-width: 28rem;
+	max-width: 32rem;
+}
+
+.members {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.members-heading {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1rem;
 }
 
 .member-grid {
 	list-style: none;
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-	gap: 0.5rem;
+	grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+	gap: 0.625rem;
 	margin: 0;
 	padding: 0;
 }
 
+// One member per row-card: round photo, name over email, remove at the end.
 .member-card {
 	display: flex;
 	align-items: center;
+	gap: 0.5rem;
 	min-width: 0;
-	padding: 0.375rem 0.5rem;
-	border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+	padding: 0.625rem 0.5rem 0.625rem 0.75rem;
+	border: $panel-border;
 	border-radius: var(--gauzy-radius-sm, 0.375rem);
+	background-color: var(--gauzy-card-1, transparent);
+	transition: border-color 150ms ease-in-out;
 
 	&:hover {
-		background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+		border-color: var(--color-primary-default);
 	}
 
 	// Without this the avatar's own `min-width: auto` keeps the card as wide as
@@ -497,6 +519,101 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 	ngx-avatar {
 		flex: 1 1 auto;
 		min-width: 0;
+	}
+
+	// The avatar only lays itself out as a row under a host-context class
+	// (`.avatar-dashboard`, `.report-table`); bare, it stacks a 48px square above
+	// the name, which is what every card here used to be.
+	::ng-deep ngx-avatar {
+		.inner-wrapper {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			min-width: 0;
+		}
+
+		.image-container {
+			flex: 0 0 auto;
+			width: 2.25rem;
+			border-radius: 50%;
+			overflow: hidden;
+			// Backdrop for the default silhouette, a transparent image that
+			// otherwise floats with no edge.
+			background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+
+			// `!important`: the avatar's own `:host .image-container img` (48px)
+			// outranks anything reachable from here.
+			img {
+				width: 2.25rem !important;
+				height: 2.25rem !important;
+				object-fit: cover;
+				border-radius: 50% !important;
+			}
+		}
+
+		.names-wrapper {
+			display: flex;
+			flex-direction: column;
+			gap: 0.125rem;
+			min-width: 0;
+			overflow: hidden;
+		}
+
+		.link-text {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			color: var(--gauzy-text-color-1, var(--text-basic-color));
+			font-size: 0.8125rem;
+			font-weight: 600;
+			line-height: 1.125rem;
+		}
+
+		.caption {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			color: var(--gauzy-text-color-2, var(--text-hint-color));
+			font-size: 0.75rem;
+			line-height: 1rem;
+		}
+	}
+}
+
+// Always visible (never hover-only), so it works by keyboard and touch too.
+.member-remove {
+	flex: 0 0 auto;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	color: var(--gauzy-text-color-2, var(--text-hint-color));
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-danger-default);
+		background-color: var(--color-danger-transparent-default);
+	}
+}
+
+/* ── Documents ───────────────────────────────────────────────────────────── */
+
+// The Documents panel ships as a card of its own; inside this pane that drew a
+// second box inside the first. Flattened, so its header (title, count, actions)
+// reads as the pane's toolbar.
+:host gz-document-links-panel ::ng-deep nb-card.docs-links-panel {
+	margin: 0;
+	border: none;
+	box-shadow: none;
+	background: transparent;
+
+	> nb-card-header {
+		padding: 0 0 0.75rem;
+		border-bottom: $panel-border;
+	}
+
+	> nb-card-body {
+		padding: 0.75rem 0 0;
 	}
 }
 

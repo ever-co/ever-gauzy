@@ -164,6 +164,20 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 		this.updateOrganizationContactMembers();
 	}
 
+	/**
+	 * Removes one member from the list, saving through the same path as the
+	 * picker and feeding the new selection back into it so the two agree.
+	 *
+	 * @param member
+	 */
+	removeMember(member: IEmployee) {
+		const ids = (this.selectedMembers ?? [])
+			.map((selected: IEmployee) => selected.id)
+			.filter((id: string) => id !== member.id);
+		this.selectedEmployeeIds = ids;
+		this.onMembersSelected(ids);
+	}
+
 	public async updateOrganizationContactMembers() {
 		const organizationContactData: IOrganizationContactCreateInput = {
 			name: this.selectedContact.name,

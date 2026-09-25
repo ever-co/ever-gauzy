@@ -298,18 +298,38 @@
 							</ga-employee-multi-select>
 
 							@if (selectedMembers?.length) {
-								<ul class="member-grid">
-									@for (member of selectedMembers; track member.id) {
-										<li class="member-card">
-											<ngx-avatar
-												[name]="member?.user?.name"
-												[src]="member?.user?.imageUrl"
-												[id]="member?.id"
-												[employee]="member"
-											></ngx-avatar>
-										</li>
-									}
-								</ul>
+								<div class="members">
+									<span class="members-heading">
+										{{ 'CONTACTS_PAGE.MEMBERS' | translate }}
+										<span class="panel-count">{{ selectedMembers.length }}</span>
+									</span>
+									<ul class="member-grid">
+										@for (member of selectedMembers; track member.id) {
+											<li class="member-card">
+												<ngx-avatar
+													[name]="member?.user?.name"
+													[caption]="member?.user?.email"
+													[src]="member?.user?.imageUrl"
+													[id]="member?.id"
+													[employee]="member"
+												></ngx-avatar>
+												<button
+													type="button"
+													nbButton
+													ghost
+													size="small"
+													status="basic"
+													class="member-remove"
+													[attr.aria-label]="('BUTTONS.REMOVE' | translate) + ' ' + member?.user?.name"
+													[nbTooltip]="'BUTTONS.REMOVE' | translate"
+													(click)="removeMember(member)"
+												>
+													<nb-icon icon="close-outline"></nb-icon>
+												</button>
+											</li>
+										}
+									</ul>
+								</div>
 							} @else {
 								<p class="panel-empty">{{ 'SM_TABLE.NO_DATA_MESSAGE' | translate }}</p>
 							}
