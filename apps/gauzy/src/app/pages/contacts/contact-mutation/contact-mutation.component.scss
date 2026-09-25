@@ -270,43 +270,36 @@
   }
 
   /*
-   * Step bodies shrink with the canvas.
+   * Multi-selects (Projects, Tags).
    *
-   * The wizard is an inline page card, so it is as wide as the layout column —
-   * which loses up to 860px to the expanded AI chat. Step 1's photo/fields row
-   * may wrap (`flex-wrap` in the template; the fields' minimum is set on
-   * `.fields` above), and the fixed Bootstrap splits of steps 2 and 4
-   * (`col-5`/`col-7` around the map, `col-6`/`col-6` around the member list) are
-   * turned into "at least this wide, else wrap": the grow factors keep the 5:7
-   * proportion whenever both fit on one line. Scoped to the bare grid columns
-   * of `.fields > .row` — step 1's `form-group col-*` field pairs keep their
-   * percentages, which shrink with the row on their own.
+   * The trigger was held at a single control height, so once the chips wrapped
+   * to a second line they spilled out over the top edge of the field. Let it grow
+   * with its chips, give the chips the same vertical rhythm as the text in a
+   * single-line field, and paint them from theme tokens instead of the library's
+   * light-blue-on-white, which glared on the dark themes. The chip paint is
+   * scoped to Projects: the tags input draws its own coloured badges.
    */
-  .contact-columns {
-    row-gap: 1rem;
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container {
+    height: auto !important;
+    align-items: center;
   }
 
-  .contact-container {
-    flex: 0 0 auto;
-  }
-
-  .fields > .row > .col-5:not(.form-group) {
-    flex: 5 1 18rem;
-    max-width: 100%;
-  }
-
-  .fields > .row > .col-7:not(.form-group) {
-    flex: 7 1 22rem;
-    max-width: 100%;
-  }
+  ::ng-deep .ng-select.projects-select .ng-select-container {
+    .ng-value-container {
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding-top: 0.375rem;
+      padding-bottom: 0.375rem;
 
   .fields > .row > .col-6:not(.form-group) {
     flex: 1 1 16rem;
     max-width: 100%;
   }
 
-  ::ng-deep ngx-image-uploader input {
-    height: 100% !important;
+      .ng-input {
+        padding: 0;
+      }
+    }
   }
 
   /*
@@ -445,3 +438,10 @@
     box-shadow: none;
   }
 }
+  ::ng-deep ngx-image-uploader input {
+    top: 0;
+    left: 0;
+    height: 100% !important;
+    cursor: pointer;
+  }
+
