@@ -4576,7 +4576,7 @@
 			"SELECT_DEFAULT_CDN": "Выбрать сервер CDN по умолчанию для обновления",
 			"TOGGLE_UPDATE_LOCALLY": "Переключить обновление локально",
 			"LOCAL_SERVER": "Локальный сервер",
-			"LOCAL_SERVER_NOTE": "Выбранная директория должна содержать последние манифесты <strong>latest.yml</strong> и/или <strong>latest-mac.yml</strong>, чтобы выполнить проверку обновления",
+			"LOCAL_SERVER_NOTE": "Выбранная директория должна содержать манифест обновления для вашей системы (Windows: <strong>latest-x64.yml</strong> или <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> или <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) и перечисленные в нём файлы обновления, чтобы выполнить проверку обновления",
 			"OTHER_SETTINGS": "Другие настройки",
 			"ALLOW_PRERELEASE_VERSIONS": "Разрешить предварительные версии",
 			"CHECK_UPDATE_APP_VERSION": "Проверить и обновить версию приложения",

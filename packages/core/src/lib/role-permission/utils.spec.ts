@@ -81,8 +81,11 @@ interface Recorded {
 /**
  * Build an in-memory database seeded with tenants and roles, and record every statement the
  * migration issues so the test can assert on round-trip COUNT, not only on the final rows.
+ *
+ * `uniqueIndex` adds the (tenantId, roleId, permission) unique index that
+ * `AddRolePermissionUniqueIndex1790000017000` creates on real databases.
  */
-async function createSeededDataSource(): Promise<{
+async function createSeededDataSource({ uniqueIndex = false } = {}): Promise<{
 	dataSource: DataSource;
 	queryRunner: QueryRunner;
 	recorded: Recorded[];
@@ -96,6 +99,12 @@ async function createSeededDataSource(): Promise<{
 	});
 
 	await dataSource.initialize();
+
+	if (uniqueIndex) {
+		await dataSource.manager.query(
+			`CREATE UNIQUE INDEX "IDX_role_permission_unique" ON "role_permission" ("tenantId", "roleId", "permission")`
+		);
+	}
 
 	for (let t = 0; t < TENANT_COUNT; t++) {
 		const tenantId = `tenant-${t}`;
@@ -265,6 +274,58 @@ describe('RolePermissionUtils.migrateRolePermissions', () => {
 				`SELECT "enabled" FROM "role_permission" WHERE "roleId" = ? AND "permission" = ?`,
 				[roleId, enabledByDefault]
 			);
+			expect(Number(rows[0].enabled)).toBe(0);
+
+			jest.restoreAllMocks();
+			await dataSource.destroy();
+		});
+	});
+
+	describe('two processes reloading at the same time', () => {
+		/**
+		 * The race that filled production with duplicates: another process inserts a role's missing
+		 * permissions after this one has read them as missing. With the unique index in place the
+		 * second insert must skip those rows. Failing instead is worse than it looks: the reload
+		 * migrations catch the error and move on, so every tenant after this one would silently miss
+		 * its new permissions.
+		 */
+		it('skips rows the other process inserted first, and leaves them as they were', async () => {
+			const { dataSource, queryRunner } = await createSeededDataSource({ uniqueIndex: true });
+
+			// The other process gets there first.
+			await RolePermissionUtils.migrateRolePermissions(queryRunner);
+
+			const roleId = `tenant-0-${RolesEnum.EMPLOYEE}`;
+			const defaults = DEFAULT_ROLE_PERMISSIONS.find((entry) => entry.role === RolesEnum.EMPLOYEE);
+			const enabledByDefault = (defaults?.defaultEnabledPermissions ?? [])[0] as string;
+			await dataSource.manager.query(
+				`UPDATE "role_permission" SET "enabled" = 0 WHERE "roleId" = ? AND "permission" = ?`,
+				[roleId, enabledByDefault]
+			);
+
+			// CONTROL: the fixture enforces the index, so a plain duplicate insert is refused. Without
+			// this, the pass below could come from a table that accepts duplicates.
+			await expect(
+				dataSource.manager.query(
+					`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled") VALUES (?, ?, ?, ?, ?)`,
+					['duplicate-probe', 'tenant-0', roleId, enabledByDefault, 1]
+				)
+			).rejects.toThrow(/UNIQUE constraint failed/);
+
+			// This process read before the other one inserted, so it still sees every permission missing.
+			jest.spyOn(RolePermissionUtils as any, 'getExistingPermissions').mockResolvedValue(new Set<string>());
+
+			await expect(RolePermissionUtils.migrateRolePermissions(queryRunner)).resolves.toBeUndefined();
+
+			const [{ total }] = await dataSource.manager.query(`SELECT COUNT(*) AS total FROM "role_permission"`);
+			expect(Number(total)).toBe(EXPECTED_ROLE_COUNT * ALL_PERMISSIONS.length);
+
+			// The existing row was skipped, not overwritten: the operator's change survives.
+			const rows = await dataSource.manager.query(
+				`SELECT "enabled" FROM "role_permission" WHERE "roleId" = ? AND "permission" = ?`,
+				[roleId, enabledByDefault]
+			);
+			expect(rows).toHaveLength(1);
 			expect(Number(rows[0].enabled)).toBe(0);
 
 			jest.restoreAllMocks();

@@ -4549,7 +4549,7 @@
 			"SELECT_DEFAULT_CDN": "Sélectionnez le serveur CDN par défaut pour la mise à jour.",
 			"TOGGLE_UPDATE_LOCALLY": "Basculer pour mettre à jour localement",
 			"LOCAL_SERVER": "Serveur Local",
-			"LOCAL_SERVER_NOTE": "Le répertoire sélectionné doit certainement contenir les manifestes <strong>latest.yml</strong> et/ou <strong>latest-mac.yml</strong> afin de valider la mise à jour.",
+			"LOCAL_SERVER_NOTE": "Le répertoire sélectionné doit contenir le manifeste de mise à jour de votre système (Windows : <strong>latest-x64.yml</strong> ou <strong>latest-arm64.yml</strong> ; Linux : <strong>latest-x64-linux.yml</strong> ou <strong>latest-arm64-linux-arm64.yml</strong> ; macOS : <strong>latest-mac.yml</strong>) ainsi que les fichiers de mise à jour qu'il référence, afin de valider la mise à jour.",
 			"OTHER_SETTINGS": "Autres paramètres",
 			"ALLOW_PRERELEASE_VERSIONS": "Autoriser les versions de prépublication.",
 			"CHECK_UPDATE_APP_VERSION": "Vérifiez et mettez à jour la version de votre application.",

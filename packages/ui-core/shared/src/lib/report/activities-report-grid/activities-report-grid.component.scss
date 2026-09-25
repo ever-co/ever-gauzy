@@ -1,85 +1,127 @@
 @forward 'report';
 @use 'var' as *;
+@use 'report-table' as *;
 
-.project-row {
-    margin-bottom: 10px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    background-color: nb-theme(gauzy-card-1);
-    border-radius: nb-theme(border-radius);
+// ═══ Apps & URLs report grid ════════════════════════════════════════════════
+//
+// The shared chrome — card, hairlines, row height, 12px type, progress bar —
+// lives in `report-table.scss` and is shared with the limit and budget reports.
+// What is here is what only this table has: three levels of grouping per card,
+// and a title column holding URLs of no fixed length.
 
-    .table-row-custom {
-        background-color: nb-theme(gauzy-card-1);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    .activity-row, .table-inner-wrapper {
-        min-height: 37px;
-    }
-}
-
-.weekly-logs {
-	height: calc(100% - 2.7rem);
-}
-
-// column proportions
-.employee-column {
-    width: 20%;
-    min-width: 155px;
-    max-width: 200px;
-}
-.project-column, .title-column {
-    width: 20%;
-    min-width: 20%;
-    max-width: 20%;
-}
-.duration-column {
-    width: 10%;
-}
-.progress-bar-column {
-    width: 35%;
-}
+// Rows here are a single line of text, so they sit a step tighter than the
+// budget tables, where every row carries a two-line project chip.
+@include report-table(40px);
 
 :host {
 	height: 100%;
-    ::ng-deep {
-        .progress-percentage {
-            @include nb-rtl(padding-left, 0);
-            @include nb-ltr(padding-right, 0);
-            width: auto;
-        }
-
-        .group-by-wrapper{
-            display: flex;
-            gap: 1rem;
-        }
-    }
 }
 
+// Was `height`. A definite height on a box whose children are no longer allowed
+// to shrink (see the `flex: 0 0 auto` note in `report-table.scss`) would make
+// every card past the first overflow it silently; as a MINIMUM it still fills
+// the card body when there are only one or two groups, and grows past it when
+// there are more, which is what `.report-container`'s `overflow: auto` is for.
+:host .weekly-logs {
+	min-height: calc(100% - 2.7rem);
+	height: auto;
+	// Was 1rem. These are sibling groups in one report, not unrelated panels.
+	gap: 0.75rem;
+}
+
+// ── Grouping ────────────────────────────────────────────────────────────────
+//
+// `.project-row` is one employee, `.table-row-custom` one project inside it,
+// `.activity-row` one app or URL inside that. The rule between two employees
+// comes from the shared mixin. Between two PROJECTS there is no rule at all,
+// only this padding: the project chip already marks where one starts, and a
+// second weight of hairline inside a card that already has three would be the
+// fourth line in six rows.
+
+.project-row .table-row-custom {
+	padding: 4px 0;
+}
+
+.activity-row {
+	min-height: auto;
+}
+
+// Emptied by the template for every row after the first in a group — that is
+// how the employee and project cells come to look merged. It keeps its width
+// and gives up its height.
 .no-height {
-    height: 0;
-    padding: 0;
+	height: 0;
+	padding: 0;
 }
 
-@include respond(lg){
-    .project-row {
-        margin-bottom: 20px;
-    }
-    .main-column-responsive {
-        background-color: nb-theme(background-basic-color-3);
-    }
-    .progress-bar-column  {
-        justify-content: flex-end;
-    }
-    .progress-bar-column, .no-height {
-        border-left: none;
-    }
+// ── Columns ─────────────────────────────────────────────────────────────────
+
+.employee-column {
+	@include report-column(18%, $min: 140px, $max: 210px);
 }
 
-.activities-container {
-	padding-bottom: 6px !important;
+.project-column {
+	@include report-column(22%);
+}
+
+// The one column that takes the remainder: a URL is the only value here with no
+// bound on its length, so it gets whatever the fixed columns leave.
+.title-column {
+	@include report-column(auto);
+	overflow: hidden;
+}
+
+// Wide enough for `00:00:00` at 12px and no wider. The duration is the shortest
+// cell on the row and used to be handed 10% of the whole table.
+.duration-column {
+	@include report-column(76px);
+}
+
+// Was 35% for a bar and a percentage. What it gives up goes to the title — the
+// URLs were the only column being truncated, and a bar is a proportion, which
+// does not read any better for being 300px long than 200px.
+.progress-bar-column {
+	@include report-column(22%, $min: 160px);
+}
+
+// ── Cells ───────────────────────────────────────────────────────────────────
+
+// A URL truncates on one line rather than wrapping, which would otherwise be
+// the only thing on the page able to change a row's height.
+.title-column .responsive-table-content {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: nb-theme(text-basic-color);
+}
+
+.duration-column .responsive-table-content {
+	color: nb-theme(text-basic-color);
+}
+
+// ── Group By ────────────────────────────────────────────────────────────────
+
+:host ::ng-deep {
+	.progress-percentage {
+		@include nb-rtl(padding-left, 0);
+		@include nb-ltr(padding-right, 0);
+		width: auto;
+	}
+
+	.group-by-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+}
+
+@include respond(lg) {
+	.progress-bar-column {
+		justify-content: flex-end;
+	}
+
+	.progress-bar-column,
+	.no-height {
+		border-left: none;
+	}
 }
