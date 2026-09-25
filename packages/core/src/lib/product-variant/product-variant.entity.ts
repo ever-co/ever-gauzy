@@ -393,7 +393,15 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => ProductOption })
-	@MultiORMManyToMany(() => ProductOption, { eager: true })
+	@MultiORMManyToMany(() => ProductOption, {
+		eager: true,
+		// The table TypeORM's `@JoinTable()` names by default and the migrations created. MikroORM's own default
+		// is `product_variant_options`, which does not exist: every variant read failed under MikroORM.
+		owner: true,
+		pivotTable: 'product_variant_options_product_option',
+		joinColumn: 'productVariantId',
+		inverseJoinColumn: 'productOptionId'
+	})
 	@JoinTable()
 	options: IProductOptionTranslatable[];
 }

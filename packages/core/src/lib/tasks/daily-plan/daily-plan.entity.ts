@@ -99,8 +99,10 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 		onDelete: 'CASCADE',
 		pivotTable: 'daily_plan_task',
 		owner: true,
-		joinColumn: 'taskId',
-		inverseJoinColumn: 'dailyPlanId'
+		// `joinColumn` names this (the owning) side's column, `inverseJoinColumn` the task's. They were the other way
+		// round, so MikroORM wrote each plan's id into `taskId` and each task's into `dailyPlanId`.
+		joinColumn: 'dailyPlanId',
+		inverseJoinColumn: 'taskId'
 	})
 	@JoinTable({ name: 'daily_plan_task' })
 	tasks?: ITask[];
