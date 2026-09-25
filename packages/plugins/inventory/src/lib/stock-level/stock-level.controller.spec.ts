@@ -722,12 +722,66 @@ describe('StockLevelController — the level resource (doc 02 §3.4)', () => {
 		const fixture = levelResourceFixture();
 
 		// The route took a `take` and no offset, so a client could read the first page over REST and no other,
-		// while the GraphQL connection beside it pages by cursor. A skip past the two rows the fixture holds is
-		// the cheapest proof that the offset reaches the read rather than being dropped on the way.
+		// while the GraphQL connection beside it pages by cursor. Page five of ten — rows forty onwards — is
+		// past the two rows the fixture holds, the cheapest proof that the page reaches the read rather than
+		// being dropped on the way.
 		// A query parameter reaches the handler as the string the URL carried, whatever the signature says,
 		// so the strings are passed as they arrive rather than as the numbers the type declares.
 		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '10' as never, '5' as never)).resolves.toEqual([]);
 		await expect(fixture.controller.findAll(WAREHOUSE, undefined, '1' as never)).resolves.toHaveLength(1);
+	});
+
+	// SD-10. The eight inventory list routes beside this one read `skip` as a one-based page number — their
+	// reads go through the kernel's `paginate`, which multiplies it out to `take * (skip - 1)` — and this one
+	// read it as a row offset. A client paging every inventory list the same way was answered page one and
+	// then a window that started one row in, so it saw every row but the first of each page twice.
+	it('reads `skip` as a one-based page number, as the inventory list routes beside it do', async () => {
+		const fixture = levelResourceFixture();
+		const page = async (take: string, skip?: string) =>
+			(await fixture.controller.findAll(WAREHOUSE, undefined, take as never, skip as never)).map(
+				(level) => level.levelId
+			);
+
+		expect(await page('1', '1')).toEqual(['level-1']);
+		expect(await page('1', '2')).toEqual(['level-2']);
+		expect(await page('1', '3')).toEqual([]);
+		// No page, or a page the convention cannot read, is the first page: a `skip` of zero was "no offset"
+		// before, and it is still where a list starts.
+		expect(await page('1')).toEqual(['level-1']);
+		expect(await page('1', '0')).toEqual(['level-1']);
+		expect(await page('1', '-2')).toEqual(['level-1']);
+		expect(await page('1', 'second')).toEqual(['level-1']);
+	});
+
+	it('pages by the size it reads, bounded as the platform bounds a list query', async () => {
+		const fixture = levelResourceFixture();
+		const findLevels = jest.spyOn(fixture.service, 'findLevels');
+		const windowOf = async (take?: string, skip?: string) => {
+			findLevels.mockClear();
+			await fixture.controller.findAll(WAREHOUSE, undefined, take as never, skip as never);
+
+			const [filter] = findLevels.mock.calls[0];
+
+			return { take: filter.take, skip: filter.skip };
+		};
+
+		// The service keeps its row offset — the GraphQL connection hands it one — so the conversion is the
+		// route's, and it is stated in rows by the time it arrives.
+		expect(await windowOf('25', '3')).toEqual({ take: 25, skip: 50 });
+		// A page with no size is a page of the size the read uses when none is stated, so page two starts
+		// where the default first page ended rather than one row in.
+		expect(await windowOf(undefined, '2')).toEqual({ take: 100, skip: 100 });
+		// `BaseQueryDTO` bounds a list's `take` to 0–100. A size past the ceiling is read as the ceiling, and
+		// the page is counted in that size too: page two of a thousand is rows 100–199, the rows the caller is
+		// actually handed next, not rows 1000–1099 with a gap of nine hundred before them.
+		expect(await windowOf('1000', '2')).toEqual({ take: 100, skip: 100 });
+		// A size below the floor asks for nothing, which the read answers without a query; an unreadable one
+		// states no size at all.
+		expect(await windowOf('-5', '2')).toEqual({ take: 0, skip: 0 });
+		expect(await windowOf('many', '2')).toEqual({ take: 100, skip: 100 });
+		// An absurd page is an empty page, not an offset a number cannot state exactly: `1e+32` is what the
+		// builder would write into the statement, and no dialect parses it as an offset.
+		expect(await windowOf('100', '9'.repeat(30))).toEqual({ take: 100, skip: Number.MAX_SAFE_INTEGER });
 	});
 
 	it('reads one level by id, with the location the join resolves', async () => {
