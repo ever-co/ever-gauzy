@@ -122,6 +122,18 @@ export async function commitVersionedUpdate<T extends BaseEntity>(
 	service: CrudService<T>,
 	options: IVersionedWriteOptions<T>
 ): Promise<{ version: number }> {
+	// An expectation that is neither a wildcard nor a list of versions accepted nothing. The guard never
+	// leaves one — `parseIfMatch` refuses an empty list — so it is a caller that built it by hand, and it is
+	// answered as the missing version it is. Left to `resolveExpectedVersion`, it would read as a record
+	// that is not there, and a client told `404` stops retrying a row that exists.
+	if (!options.expectation?.wildcard && !options.expectation?.versions?.length) {
+		throw new ApiException(
+			HttpStatus.PRECONDITION_REQUIRED,
+			ApiErrorCode.VERSION_REQUIRED,
+			'This write must state the version it was based on, and no version was accepted for it.'
+		);
+	}
+
 	const readCurrent = options.readVersion ?? (() => readStoredVersion(service, options.id));
 	const expected = await resolveExpectedVersion(options.expectation, readCurrent);
 

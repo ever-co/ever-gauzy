@@ -427,6 +427,55 @@ describe('the record the request names', () => {
 		expect(versionExpectationOf(request)).toEqual({ wildcard: false, versions: [3] });
 	});
 
+	it('carries a wildcard it could not compare, instead of leaving the write to demand a version', async () => {
+		// The route names no record, so the row's version is unknown here. `If-Match: *` still states a
+		// condition — the row must exist — and the write resolves it against the row. Before this the guard
+		// answered SKIP, left nothing on the request, and the handler's `versionExpectationOf` then refused
+		// the caller with `428 VERSION_REQUIRED`: "state a version", to a caller that had just stated one.
+		const request: any = { method: 'POST', params: { id: 'change-1' }, headers: { [IF_MATCH_HEADER]: '*' } };
+		const { guard } = guardFor({ target: 'warehouse_product_variant' });
+
+		expect(await guard.canActivate(httpContext(request))).toBe(true);
+		expect(versionExpectationOf(request)).toEqual({
+			wildcard: true,
+			versions: [],
+			target: 'warehouse_product_variant'
+		});
+
+		// The same holds when the route names a reader that could not be reached.
+		jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		const unread: any = { method: 'PUT', params: { id: 'invoice-1' }, headers: { [IF_MATCH_HEADER]: '*' } };
+		const { guard: unreadable } = guardFor(
+			{ resource: InvoiceService },
+			readerAnswering(new Error('connection terminated unexpectedly'))
+		);
+
+		expect(await unreadable.canActivate(httpContext(unread))).toBe(true);
+		expect(versionExpectationOf(unread)).toEqual({ wildcard: true, versions: [] });
+	});
+
+	it('carries every version the caller accepted when it could not read the row', async () => {
+		// `If-Match: "3", "4"` accepts either revision. Keeping only the first predicated the write on 3,
+		// and a row sitting at 4 — a version the caller had explicitly accepted — was refused with `409`.
+		// The list travels whole, and the write picks from it against the row.
+		const request: any = { method: 'POST', params: { id: 'change-1' }, headers: { [IF_MATCH_HEADER]: '"3", "4"' } };
+		const { guard } = guardFor({});
+
+		expect(await guard.canActivate(httpContext(request))).toBe(true);
+		expect(versionExpectationOf(request)).toEqual({ wildcard: false, versions: [3, 4] });
+	});
+
+	it('leaves the one version it read, not the caller\'s list, when it could read the row', async () => {
+		const reader = readerAnswering({ id: 'invoice-1', version: 4 });
+		const { guard } = guardFor({ resource: InvoiceService }, reader);
+		const request: any = { method: 'PUT', params: { id: 'invoice-1' }, headers: { [IF_MATCH_HEADER]: '"3", "4"' } };
+
+		expect(await guard.canActivate(httpContext(request))).toBe(true);
+		// The list has been answered by this read — the row is at 4 — so the write is handed 4 alone: a
+		// number rather than a condition, which it would otherwise have to read the row again to resolve.
+		expect(versionExpectationOf(request)).toEqual({ wildcard: false, versions: [4] });
+	});
+
 	it('proceeds when the service it names has no reader of its own, and says so', async () => {
 		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 		const { guard, get } = guardFor({ resource: InvoiceService });

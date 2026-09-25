@@ -241,10 +241,16 @@ export class VersionGuard implements CanActivate {
 				// The route's `target` travels with it, so an engine that reads the version from the
 				// request can tell a version stated for its own row from one stated for the record the
 				// route writes.
+				//
+				// **The versions are the decision's, not just its first number.** A row this guard read
+				// leaves the one version it holds; a row it could not read leaves every version the caller
+				// accepted, because `If-Match: "3", "4"` says either will do and keeping only `3` refused a
+				// row sitting at `4` with `409`. `resolveExpectedVersion` picks from that list against the
+				// row at write time. A wildcard leaves an empty list whether or not the row was read.
 				if (request) {
 					request[VERSION_EXPECTATION_PROPERTY] = {
 						wildcard: decision.wildcard,
-						versions: decision.wildcard ? [] : [decision.expected],
+						versions: decision.wildcard ? [] : [...decision.versions],
 						...(options.target ? { target: options.target } : {})
 					};
 				}

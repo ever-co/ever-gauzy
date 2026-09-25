@@ -80,7 +80,24 @@ export type VersionPrecondition =
 	| { action: 'REQUIRE' }
 	| { action: 'INVALID'; reason: VersionParseFailure }
 	| { action: 'NOT_FOUND' }
-	| { action: 'PROCEED'; expected: number; wildcard: boolean }
+	| {
+			action: 'PROCEED';
+			expected: number;
+			wildcard: boolean;
+			/**
+			 * The versions the write may be predicated on, in the order the caller stated them.
+			 *
+			 * When the row was read, this is the one version it holds, already checked against what the
+			 * caller accepted: the list has been answered, so the write is handed a number rather than a
+			 * condition and needs no second read to resolve it. When the row's version is unknown, it is
+			 * **every** version the caller accepted: `If-Match: "3", "4"` states that either is
+			 * acceptable, and collapsing it to its first member refused a write whose row sat at the
+			 * second — `409` for a version the caller had explicitly accepted. `resolveExpectedVersion`
+			 * then picks from the list against the row at write time. Empty for a wildcard, which accepts
+			 * any version that exists and so names none.
+			 */
+			versions: number[];
+	  }
 	| { action: 'CONFLICT'; expectedVersion: number; actualVersion: number };
 
 /** What an update that ran under a version precondition produced. */
@@ -312,14 +329,28 @@ export function evaluateVersionPrecondition(input: {
 	const actual = parseEntityVersion(input.currentVersion);
 
 	if (actual === null) {
-		// The row's version is unknown: the write still pins the version the caller stated, and the
-		// conditional update is what decides the outcome. This is the pre-handler half of the check,
-		// not the only half.
-		const stated = parsed.expectation.wildcard ? null : parsed.expectation.versions[0];
+		// The row's version is unknown — the route named no `resource` for the guard to read, or the
+		// read failed — so the write still pins what the caller stated and the conditional update is
+		// what decides the outcome. This is the pre-handler half of the check, not the only half.
+		//
+		// 🛑 **A wildcard is a statement and not the absence of one.** `SKIP` here meant the guard left
+		// no expectation on the request at all, and the handler's own `versionExpectationOf` then threw
+		// `428 VERSION_REQUIRED` — telling a caller that had just written `If-Match: *` to state a
+		// version. `*` says "any version, as long as the row exists", which is exactly the condition
+		// `resolveExpectedVersion` resolves against the row at write time, so it proceeds and the
+		// wildcard travels with it. `expected` is never read for a wildcard (the guard writes an empty
+		// list for one, and the write reads the row) and is stated as zero rather than left out, because
+		// the variant declares it.
+		if (parsed.expectation.wildcard) {
+			return { action: 'PROCEED', expected: 0, wildcard: true, versions: [] };
+		}
 
-		return stated === null
-			? { action: 'SKIP' }
-			: { action: 'PROCEED', expected: stated, wildcard: false };
+		return {
+			action: 'PROCEED',
+			expected: parsed.expectation.versions[0],
+			wildcard: false,
+			versions: [...parsed.expectation.versions]
+		};
 	}
 
 	if (!matchesExpectation(parsed.expectation, actual)) {
@@ -330,7 +361,16 @@ export function evaluateVersionPrecondition(input: {
 		};
 	}
 
-	return { action: 'PROCEED', expected: actual, wildcard: parsed.expectation.wildcard };
+	// The row was read and matched, so the write is predicated on the version it actually holds — for a
+	// list as much as for a single version. The list has been answered by this read, and handing the write
+	// the number rather than the condition spares it a second read and keeps every engine that reads the
+	// version off the request on the single-number path it was written for.
+	return {
+		action: 'PROCEED',
+		expected: actual,
+		wildcard: parsed.expectation.wildcard,
+		versions: parsed.expectation.wildcard ? [] : [actual]
+	};
 }
 
 /**
@@ -379,9 +419,16 @@ export function evaluateVersionedWrite(input: {
  * to come from the row — and the update is still predicated on it, which is what keeps the
  * comparison and the write in one statement.
  *
+ * **A list is a condition on the row's version, not a licence to take whatever the row holds.** A
+ * row read at a version the caller did not list is one that moved on past everything it accepted, so
+ * the answer is the first version it stated: the update predicated on it matches nothing, and the
+ * caller is told `409` with both numbers — exactly as the guard would have told it had it read the
+ * row. Answering the row's own version there would write over a change the caller never saw. A
+ * list that names nothing accepts nothing, and has no number to predicate on.
+ *
  * @param expectation What the caller stated.
  * @param readCurrent A reader for the row's version, called only when it is needed.
- * @returns The version to predicate on, or null when the row cannot be read.
+ * @returns The version to predicate on, or null when the row cannot be read or nothing was accepted.
  */
 export async function resolveExpectedVersion(
 	expectation: IVersionExpectation,
@@ -391,5 +438,15 @@ export async function resolveExpectedVersion(
 		return expectation.versions[0];
 	}
 
-	return parseEntityVersion(await readCurrent());
+	if (!expectation.wildcard && expectation.versions.length === 0) {
+		return null;
+	}
+
+	const current = parseEntityVersion(await readCurrent());
+
+	if (expectation.wildcard || current === null) {
+		return current;
+	}
+
+	return expectation.versions.includes(current) ? current : expectation.versions[0];
 }

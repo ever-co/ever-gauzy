@@ -419,6 +419,48 @@ describe('an expectation that states a condition rather than a number', () => {
 		expect(table.reads).toEqual(['invoice-1']);
 	});
 
+	it('refuses a list the record has moved past, instead of writing at whatever version it holds', async () => {
+		// The row is at 7 and the caller accepted 2 or 3. Resolving the list to the row's own number
+		// predicated the update on 7, and it landed — on top of every change between 3 and 7, none of which
+		// the caller saw. The statement is predicated on the first version the caller stated instead, so it
+		// matches nothing and the caller is told both numbers, as the guard tells it when it reads the row.
+		const { service, table } = serviceWith({ row: { id: 'invoice-1', version: 7 } });
+
+		// The double answers the way the statement would: one row only when the predicate names the version
+		// the row actually holds.
+		jest.spyOn(table, 'update').mockImplementation(async (criteria, patch) => {
+			table.criteria.push(criteria);
+			table.patches.push(patch);
+
+			return { affected: criteria['version'] === table.row?.['version'] ? 1 : 0 };
+		});
+
+		const refusal = await refusalFrom(() =>
+			commitVersionedUpdate(service, { id: 'invoice-1', expectation: { wildcard: false, versions: [2, 3] }, patch: {} })
+		);
+
+		expect(refusal.getStatus()).toBe(409);
+		expect(refusal.code).toBe(ApiErrorCode.ENTITY_VERSION_CONFLICT);
+		expect(refusal.details).toEqual({ expectedVersion: 2, actualVersion: 7 });
+		expect(table.criteria).toEqual([{ id: 'invoice-1', version: 2 }]);
+	});
+
+	it('refuses a list that accepted nothing as a missing version, without reading or writing the record', async () => {
+		const { service, table } = serviceWith({ row: { id: 'invoice-1', version: 5 } });
+
+		const refusal = await refusalFrom(() =>
+			commitVersionedUpdate(service, { id: 'invoice-1', expectation: { wildcard: false, versions: [] }, patch: {} })
+		);
+
+		// An empty list is not a wildcard: it accepts no version at all. Control: resolving it against the row
+		// predicated the update on whatever the row held, which is an unconditional write — and answering it
+		// as a missing record would tell the client a row that exists had been deleted.
+		expect(refusal.getStatus()).toBe(428);
+		expect(refusal.code).toBe(ApiErrorCode.VERSION_REQUIRED);
+		expect(table.reads).toEqual([]);
+		expect(table.criteria).toEqual([]);
+	});
+
 	it('reads the version through the reader the caller supplied', async () => {
 		const { service, table } = serviceWith({ row: { id: 'invoice-1', version: 5 } });
 		const readVersion = jest.fn(async () => 7);
