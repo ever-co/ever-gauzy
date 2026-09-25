@@ -13,13 +13,14 @@ import { StartDateUpdateTypeEnum } from '@gauzy/contracts';
  * does not exist. The employee-side behavior — where the assignment is actually resolved — lives in
  * `employee-recurring-expense/commands/handlers/employee-recurring-expense.edit.handler.spec.ts`.
  *
- * `../../core` is mocked out entirely: the handler only uses it for the `CrudService` *type*
- * (erased at compile time; we pass a fake object) and the tiny `getLastDayOfMonth` helper
- * (reimplemented below), but that barrel also re-exports the full entity/module graph for the whole
- * app — pulling in the real thing here would turn a focused handler test into something that needs
- * half the monorepo's dependencies just to import.
+ * `../../core/utils` is mocked out entirely: the handler only uses the core for the `CrudService` *type*
+ * (from `../../core/crud`, erased at compile time; we pass a fake object) and the tiny `getLastDayOfMonth`
+ * helper (reimplemented below), but the utils module loads the whole configuration — pulling in the real
+ * thing here would turn a focused handler test into something that needs half the monorepo's
+ * dependencies just to import. (The handler used to import both from the `../../core` barrel, which
+ * re-exports the full entity/module graph; no kernel file may import that barrel any more.)
  */
-jest.mock('../../core', () => ({
+jest.mock('../../core/utils', () => ({
 	getLastDayOfMonth: (year: number, month: number) => new Date(year, month + 1, 0).getDate()
 }));
 

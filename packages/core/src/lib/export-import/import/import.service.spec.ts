@@ -3,7 +3,7 @@ import 'reflect-metadata';
 jest.mock('../repositories/repositories.service', () => ({
 	RepositoriesService: class RepositoriesService {}
 }));
-jest.mock('../../core', () => ({
+jest.mock('../../core/context', () => ({
 	RequestContext: {
 		currentTenantId: () => 'a0000000-0000-4000-8000-00000000000a',
 		currentUserId: () => 'u0000000-0000-4000-8000-00000000000u'

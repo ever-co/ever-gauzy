@@ -6,7 +6,7 @@ const OTHER_TENANT = 'tenant-2';
 jest.mock('../repositories/repositories.service', () => ({
 	RepositoriesService: class RepositoriesService {}
 }));
-jest.mock('../../core', () => ({
+jest.mock('../../core/context', () => ({
 	RequestContext: {
 		currentTenantId: () => 'tenant-1',
 		currentUserId: () => 'u0000000-0000-4000-8000-00000000000u'
