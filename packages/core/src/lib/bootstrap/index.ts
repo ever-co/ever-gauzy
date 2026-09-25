@@ -81,6 +81,17 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Pre-bootstrap the application configuration
 	const config = await preBootstrapApplicationConfig(pluginConfig);
 
+	// Under DB_ORM=mikro-orm the custom entity fields have to reach MikroORM before it discovers the entities,
+	// which it does while the Nest application below is created. Registered after that, they sat in metadata
+	// MikroORM never read again, so every read or write of a plugin's custom field failed on MikroORM — the
+	// GitHub plugin's `OrganizationProject.customFields.repository` included ("property 'repository' does not
+	// exist in embeddable 'MikroOrmOrganizationProjectEntityCustomFields'"). Under TypeORM (production) the
+	// registration stays exactly where it was, after the application is created.
+	const registerMikroOrmCustomFieldsFirst = getORMType() === MultiORMEnum.MikroORM;
+	if (registerMikroOrmCustomFieldsFirst) {
+		await registerMikroOrmCustomFields(config);
+	}
+
 	// Import the BootstrapModule dynamically
 	console.time(chalk.yellow('✔ Import BootstrapModule Time'));
 	const { BootstrapModule } = await import('./bootstrap.module');
@@ -97,8 +108,11 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
 	app.set('query parser', 'extended');
 
-	// Register custom entity fields for Mikro ORM
-	await registerMikroOrmCustomFields(config);
+	// Register custom entity fields for Mikro ORM (under DB_ORM=mikro-orm they were registered above,
+	// before MikroORM discovered the entities)
+	if (!registerMikroOrmCustomFieldsFirst) {
+		await registerMikroOrmCustomFields(config);
+	}
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html).
 	//
