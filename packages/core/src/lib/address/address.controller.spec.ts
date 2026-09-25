@@ -74,9 +74,11 @@ jest.mock('@gauzy/config', () => ({
  */
 import '../core/entities/internal';
 
-import { BadRequestException, HttpException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { AddressOwnerType, PermissionsEnum } from '@gauzy/contracts';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { CrudController } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { AddressRoleEnum } from '../address-role/address-role.enums';
 import { AddressController } from './address.controller';
@@ -120,6 +122,7 @@ function surfaces(overrides: Record<string, unknown> = {}) {
 		createAddress: jest.fn().mockResolvedValue(STORED),
 		updateAddress: jest.fn().mockResolvedValue(STORED),
 		softRemoveAddress: jest.fn().mockResolvedValue({ ...STORED, deletedAt: new Date('2026-03-01T10:00:00.000Z') }),
+		softRecover: jest.fn().mockResolvedValue({ ...STORED, deletedAt: null }),
 		listRoles: jest.fn().mockResolvedValue([AddressRoleEnum.SHIPPING]),
 		setRoles: jest.fn().mockResolvedValue([{ role: AddressRoleEnum.SHIPPING, isDefault: true }]),
 		setDefaultAddress: jest.fn().mockResolvedValue({ ...STORED, isDefaultShipping: true }),
@@ -217,6 +220,22 @@ describe('AddressController — the routes (API specification §7.3, §7.5a)', (
 		// The base class's soft remove would delete the row directly; the domain's refuses the one the
 		// party names as its current default, which is why the override exists at all.
 		expect(addressService.softRemoveAddress).toHaveBeenCalledWith(ADDRESS);
+	});
+
+	it('restores a withdrawn address through the same service method the inherited route called', async () => {
+		const { controller, addressService } = surfaces();
+
+		const restored = await controller.softRecover(ADDRESS);
+
+		// The override exists only to state the route's permission, so it reaches exactly what the base
+		// handler reached — and never the domain's removal.
+		expect(addressService.softRecover).toHaveBeenCalledWith(ADDRESS);
+		expect(addressService.softRemoveAddress).not.toHaveBeenCalled();
+		expect(restored.deletedAt).toBeNull();
+		// An override replaces the inherited method's metadata, so the status code is restated: a client
+		// of the delivered route still reads the 202 the CRUD base answers.
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, AddressController.prototype.softRecover)).toBe(HttpStatus.ACCEPTED);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, CrudController.prototype.softRecover)).toBe(HttpStatus.ACCEPTED);
 	});
 
 	it('reads the roles an address plays, with the default of each', async () => {
@@ -349,6 +368,9 @@ describe('AddressController — the guard stack and the permission every route d
 			['update', PermissionsEnum.ORG_CONTACT_EDIT],
 			['delete', PermissionsEnum.ORG_CONTACT_EDIT],
 			['softRemove', PermissionsEnum.ORG_CONTACT_EDIT],
+			// Restoring undoes a removal, so it states the removal's grant. Left inherited, the route stated
+			// none and stood on the class's `ORG_CONTACT_VIEW` (AWR-5).
+			['softRecover', PermissionsEnum.ORG_CONTACT_EDIT],
 			['replaceRoles', PermissionsEnum.ORG_CONTACT_EDIT],
 			['setDefault', PermissionsEnum.ORG_CONTACT_EDIT],
 			['clearDefault', PermissionsEnum.ORG_CONTACT_EDIT]
@@ -364,7 +386,16 @@ describe('AddressController — the guard stack and the permission every route d
 		// that presents none, and the metadata below is what the permission guard reads. A write route
 		// that carried the read permission — or none — would be reachable by every caller that may look.
 		const proto = AddressController.prototype;
-		const writes = ['create', 'update', 'delete', 'softRemove', 'replaceRoles', 'setDefault', 'clearDefault'];
+		const writes = [
+			'create',
+			'update',
+			'delete',
+			'softRemove',
+			'softRecover',
+			'replaceRoles',
+			'setDefault',
+			'clearDefault'
+		];
 
 		for (const route of writes) {
 			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[route]) ?? [];
@@ -394,6 +425,7 @@ describe('AddressController — the rules this class must not re-implement', () 
 		expect(source).toMatch(/@Put\(':id'\)/);
 		expect(source).toMatch(/@Delete\(':id'\)/);
 		expect(source).toMatch(/@Delete\(':id\/soft'\)/);
+		expect(source).toMatch(/@Put\(':id\/recover'\)\n\tasync softRecover\(/);
 	});
 
 	it('never writes a default flag itself', () => {

@@ -37,9 +37,12 @@ let mockOrganizationId: string | null = '00000000-0000-4000-8000-000000000002';
 
 jest.mock('../core/context/request-context', () => ({
 	RequestContext: {
-		currentUser: () => (mockTenantId ? { id: 'user-1', tenantId: mockTenantId } : null),
+		currentUser: () => (mockTenantId ? { id: 'user-1', tenantId: mockTenantId, roleId: 'role-1' } : null),
 		currentUserId: () => (mockTenantId ? 'user-1' : null),
 		currentTenantId: () => mockTenantId,
+		// The two the real permission guard reads to identify the caller's role.
+		currentRoleId: () => (mockTenantId ? 'role-1' : null),
+		currentRoleName: () => null,
 		currentOrganizationId: () => mockOrganizationId,
 		currentEmployeeId: () => null,
 		hasPermission: () => false
@@ -425,8 +428,8 @@ describe('ContactGroupResolver — one concept, two protocols, the same writes',
 
 		await expect(resolver.recoverContactGroup(OTHER_GROUP)).resolves.toBe(ROWS[1]);
 
-		// The route is the CRUD base's own `PUT /:id/recover`, which the controller leaves inherited, so
-		// the field calls exactly what that handler calls: `crudService.softRecover(id)`. Following the
+		// The route is the CRUD base's `PUT /:id/recover`, which the controller restates only to state its
+		// permission, so the field calls exactly what that handler calls: `softRecover(id)`. Following the
 		// domain's removal instead would restore through a method the route never reaches.
 		expect(contactGroupService.softRecover).toHaveBeenCalledWith(OTHER_GROUP);
 		expect(contactGroupService.removeGroup).toHaveBeenCalledTimes(0);
@@ -575,6 +578,46 @@ describe('ContactGroupResolver — subscriptions (§10.2, §10.4)', () => {
 	});
 });
 
+/**
+ * The real permission guard, over a role that holds exactly `grants`.
+ *
+ * The role store answers the way `RolePermissionService.checkRolePermission` does — an `IN` over the
+ * permissions the route states, so a role holding any one of them passes — and the cache always misses,
+ * so every decision is the store's. The metadata the guard reads is the resolver's and the
+ * controller's own, which is the point: a spec that read the decorator alone would keep passing if the
+ * guard resolved a handler's permission some other way.
+ *
+ * @param grants The permissions the caller's role holds.
+ * @returns The guard and the role store it asks.
+ */
+function permissionGate(grants: PermissionsEnum[]) {
+	const checkRolePermission = jest.fn(async (_tenantId: string, _roleId: string, permissions: string[]) =>
+		permissions.some((permission) => grants.includes(permission as PermissionsEnum))
+	);
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn() };
+
+	return {
+		guard: new PermissionGuard(cache as never, new Reflector(), { checkRolePermission } as never),
+		checkRolePermission
+	};
+}
+
+/** The execution context of one resolver field, as the permission guard reads it. */
+function fieldContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (ContactGroupResolver.prototype as never)[field],
+		getClass: () => ContactGroupResolver
+	} as unknown as ExecutionContext;
+}
+
+/** The execution context of one REST route, inherited handlers included, as the permission guard reads it. */
+function routeContext(handler: string): ExecutionContext {
+	return {
+		getHandler: () => handlersOf(ContactGroupController)[handler],
+		getClass: () => ContactGroupController
+	} as unknown as ExecutionContext;
+}
+
 describe('ContactGroupResolver — the guard stack and the permission every root field declares', () => {
 	it('guards the resolver with both protocol guards', () => {
 		const guards = Reflect.getMetadata('__guards__', ContactGroupResolver) ?? [];
@@ -590,7 +633,10 @@ describe('ContactGroupResolver — the guard stack and the permission every root
 			['createContactGroup', PermissionsEnum.CONTACT_GROUPS_CREATE],
 			['updateContactGroup', PermissionsEnum.CONTACT_GROUPS_EDIT],
 			['deleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE],
-			['softDeleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE]
+			['softDeleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE],
+			// Corrected (AWR-5): the recovery undoes a removal, so it carries the removal's grant rather
+			// than the read grant it used to mirror from the un-overridden route.
+			['recoverContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE]
 		];
 
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactGroupResolver)).toEqual([
@@ -627,38 +673,82 @@ describe('ContactGroupResolver — the guard stack and the permission every root
 		expect(stated).toEqual(expected);
 	});
 
-	it('states the class’s read grant on the recovery, because the route it mirrors states none', () => {
+	it('states the delete grant on the recovery, on the field and on the route it mirrors', () => {
 		const proto = ContactGroupResolver.prototype;
 
-		// `PUT /:id/recover` is inherited from the CRUD base and this controller does not override it, so
-		// the handler carries no permission of its own and the guard resolves the controller's class-level
-		// `CONTACT_GROUPS_VIEW` for it. A write mutation carrying a read grant reads like a slip and is
-		// the parity: the delete grant the withdrawals beside it carry would make GraphQL narrower than
-		// the REST route, and tightening the route instead would change a delivered endpoint's
-		// authorisation — the platform's call rather than this surface's.
-		expect(
-			Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ContactGroupController)['softRecover'])
-		).toBeUndefined();
+		// Corrected (AWR-5): this case used to pin the read grant here — `PUT /:id/recover` was inherited
+		// with no permission of its own, so the guard resolved the class-level `CONTACT_GROUPS_VIEW` for it
+		// and the field mirrored that, which let a view-only role undo a `CONTACT_GROUPS_DELETE` removal
+		// over either surface. Restoring undoes a removal, so the controller now restates the route with
+		// the grant the removals carry, the handler states it itself rather than inheriting the class's,
+		// and the field states the same grant.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ContactGroupController)['softRecover'])).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_DELETE
+		]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactGroupController)).toEqual([
 			PermissionsEnum.CONTACT_GROUPS_VIEW
 		]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto.recoverContactGroup)).toEqual([
-			PermissionsEnum.CONTACT_GROUPS_VIEW
+			PermissionsEnum.CONTACT_GROUPS_DELETE
 		]);
 		expect(permissionOfRoute(ContactGroupController, 'softRecover')).toEqual([
-			PermissionsEnum.CONTACT_GROUPS_VIEW
+			PermissionsEnum.CONTACT_GROUPS_DELETE
 		]);
+	});
+
+	it('refuses the recovery to a caller who holds only the read grant, on both surfaces', async () => {
+		// The failure scenario itself (AWR-5): a role holding `CONTACT_GROUPS_VIEW` alone called
+		// `recoverContactGroup` — or `PUT /:id/recover` — and the real guard let it through, because the
+		// handler stated nothing and the class stated the read grant that role holds.
+		const readOnly = permissionGate([PermissionsEnum.CONTACT_GROUPS_VIEW]);
+
+		await expect(readOnly.guard.canActivate(fieldContext('recoverContactGroup'))).resolves.toBe(false);
+		await expect(readOnly.guard.canActivate(routeContext('softRecover'))).resolves.toBe(false);
+		// Refused on the removal's grant, which is the question the guard asked the role store.
+		expect(readOnly.checkRolePermission).toHaveBeenCalledWith(
+			TENANT,
+			'role-1',
+			[PermissionsEnum.CONTACT_GROUPS_DELETE],
+			true
+		);
+		// The control: the same role still reads, so the refusal is about the write and not the role.
+		await expect(readOnly.guard.canActivate(fieldContext('contactGroups'))).resolves.toBe(true);
+	});
+
+	it('refuses the recovery to a role that may create and edit groups but not remove them', async () => {
+		// Restoring undoes a removal, so a role that could not have removed the group cannot bring it back.
+		const writer = permissionGate([
+			PermissionsEnum.CONTACT_GROUPS_VIEW,
+			PermissionsEnum.CONTACT_GROUPS_CREATE,
+			PermissionsEnum.CONTACT_GROUPS_EDIT
+		]);
+
+		await expect(writer.guard.canActivate(fieldContext('recoverContactGroup'))).resolves.toBe(false);
+		await expect(writer.guard.canActivate(routeContext('softRecover'))).resolves.toBe(false);
+	});
+
+	it('lets a caller who holds the delete grant restore, on both surfaces', async () => {
+		const remover = permissionGate([PermissionsEnum.CONTACT_GROUPS_VIEW, PermissionsEnum.CONTACT_GROUPS_DELETE]);
+
+		await expect(remover.guard.canActivate(fieldContext('recoverContactGroup'))).resolves.toBe(true);
+		await expect(remover.guard.canActivate(routeContext('softRecover'))).resolves.toBe(true);
 	});
 
 	it('refuses every write to a caller who holds only the read permission', () => {
 		// "No credential" at the level a unit test can observe: the class-level chain refuses a request
 		// that presents none, and the metadata below is what the permission guard reads. A write field
 		// that carried the read permission — or none — would be reachable by every caller that may look.
-		// `recoverContactGroup` is deliberately not in this list: it states the read grant because the
-		// inherited route it mirrors resolves to it, which the case above pins.
+		// Corrected (AWR-5): `recoverContactGroup` used to be excluded here because it stated the read
+		// grant; it is a write, and a view-only role must not reach it either.
 		const proto = ContactGroupResolver.prototype;
 
-		for (const field of ['createContactGroup', 'updateContactGroup', 'deleteContactGroup', 'softDeleteContactGroup']) {
+		for (const field of [
+			'createContactGroup',
+			'updateContactGroup',
+			'deleteContactGroup',
+			'softDeleteContactGroup',
+			'recoverContactGroup'
+		]) {
 			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[field]) ?? [];
 
 			expect(stated).not.toContain(PermissionsEnum.CONTACT_GROUPS_VIEW);

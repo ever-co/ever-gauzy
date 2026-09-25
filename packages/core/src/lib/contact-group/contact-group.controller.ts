@@ -195,6 +195,29 @@ export class ContactGroupController extends CrudController<ContactGroup> {
 	}
 
 	/**
+	 * Puts a withdrawn group back, through the recovery route the CRUD base maps.
+	 *
+	 * The route is restated only to state its own permission. Left inherited, it carried none, and
+	 * `PermissionGuard` — which resolves handler-then-class — authorised it on this class's read grant
+	 * (`CONTACT_GROUPS_VIEW`), so a role that may only look at the groups could undo a removal made under
+	 * `CONTACT_GROUPS_DELETE`. Restoring undoes a removal, so it states the grant the two removals above
+	 * state, which is what the plugin controllers state on theirs. The status code and the service
+	 * method are the inherited route's own, so the change is who may call it and nothing else.
+	 *
+	 * @param id The group to restore.
+	 * @returns The stored group, no longer deleted.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted contact group' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Contact group restored' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@Permissions(PermissionsEnum.CONTACT_GROUPS_DELETE)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<ContactGroup> {
+		return this.contactGroupService.softRecover(id);
+	}
+
+	/**
 	 * Refuses an expansion this resource does not offer.
 	 *
 	 * The refusal is the query protocol's own code for an expansion outside the resource's allow-list,

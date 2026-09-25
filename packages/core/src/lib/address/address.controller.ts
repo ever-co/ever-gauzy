@@ -222,6 +222,29 @@ export class AddressController extends CrudController<Address> {
 	}
 
 	/**
+	 * Puts a withdrawn address back, through the recovery route the CRUD base maps.
+	 *
+	 * The route is restated only to state its own permission. Left inherited, it carried none, and
+	 * `PermissionGuard` — which resolves handler-then-class — authorised it on this class's read grant
+	 * (`ORG_CONTACT_VIEW`), so a role that may only look at the address book could undo a withdrawal an
+	 * editor made. Restoring undoes a removal, so it states the grant the two removals above state, which
+	 * is what the plugin controllers state on theirs. The status code and the service method are the
+	 * inherited route's own, so the change is who may call it and nothing else.
+	 *
+	 * @param id The address to restore.
+	 * @returns The stored address, no longer deleted.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted address' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Address restored' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id/recover')
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID): Promise<Address> {
+		return this.addressService.softRecover(id);
+	}
+
+	/**
 	 * Reads the roles an address plays and which of them it is the default for.
 	 *
 	 * @param id The address to read.

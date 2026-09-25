@@ -59,9 +59,9 @@ extend type Mutation {
 	softDeleteAddress(id: ID!): Address!
 
 	"""
-	Puts a withdrawn address back, clearing the marker the withdrawal set. It states the class-level view
-	grant because the inherited `PUT /:id/recover` route it mirrors declares no permission of its own, and
-	the guard resolves a route's permission over its handler and then its controller.
+	Puts a withdrawn address back, clearing the marker the withdrawal set. Restoring undoes a removal, so
+	it requires the edit grant the two removals require, as the `PUT /:id/recover` route it mirrors does:
+	a role that may only read the address book cannot bring back an address an editor withdrew.
 	"""
 	recoverAddress(id: ID!): Address!
 

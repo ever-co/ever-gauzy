@@ -63,10 +63,10 @@ extend type Mutation {
 
 	"""
 	Puts a withdrawn group back, clearing the marker the withdrawal set, under the route the CRUD base
-	maps. It states the class-level view grant because the inherited `PUT /:id/recover` route it mirrors
-	declares no permission of its own, and the guard resolves a route's permission over its handler and
-	then its controller. A recovery is not announced on `contactGroupChanged`, because the route it
-	mirrors announces nothing and this field adds no second behaviour of its own.
+	maps. Restoring undoes a removal, so it requires the delete grant the two removals require, as the
+	`PUT /:id/recover` route it mirrors does: a role that may only read the groups cannot bring back one
+	that was removed. A recovery is not announced on `contactGroupChanged`, because the route it mirrors
+	announces nothing and this field adds no second behaviour of its own.
 	"""
 	recoverContactGroup(id: ID!): ContactGroup!
 }

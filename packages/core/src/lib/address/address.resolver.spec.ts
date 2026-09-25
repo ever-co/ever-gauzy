@@ -13,6 +13,7 @@ import { buildSchema, printSchema } from 'graphql';
 import { AddressOwnerType, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { AddressRoleEnum } from '../address-role/address-role.enums';
 import { AddressController } from './address.controller';
@@ -35,10 +36,11 @@ import { AddressResolver } from './address.resolver';
  *   method that owns it, so neither protocol offers a way to write the boolean directly;
  * - every write mutation carries `ORG_CONTACT_EDIT` and never the read permission, so a role that may
  *   look at the address book cannot change it by asking GraphQL instead of REST;
- * - **`recoverAddress` is the one write that carries the read grant**, because the inherited
- *   `PUT /:id/recover` route it mirrors states no permission of its own and the guard resolves the
- *   controller's class-level one for it — so the field is held to the controller's own metadata rather
- *   than to a second list that could agree with the resolver while disagreeing with the route;
+ * - **`recoverAddress` is one of those writes.** It used to carry the read grant, mirroring an inherited
+ *   `PUT /:id/recover` that stated no permission and so stood on the controller's class-level
+ *   `ORG_CONTACT_VIEW` — a view-only role could undo an editor's withdrawal over either surface. The
+ *   controller now restates that route with `ORG_CONTACT_EDIT`, and the field is held to the route's own
+ *   metadata rather than to a second list that could agree with the resolver while disagreeing with it;
  * - both protocols are tenant- and permission-guarded, asserted against the metadata a guard reads.
  */
 
@@ -341,8 +343,9 @@ describe('AddressResolver — one concept, two protocols, the same writes', () =
 
 		// `DELETE /:id/soft` is restated by this controller and routed to the domain's own removal,
 		// because the inherited one would delete an address the party still names as its default — the
-		// one removal `softRemoveAddress` refuses. `PUT /:id/recover` is left inherited, so the field
-		// calls the base service method that handler calls, and the domain's removal is not reached.
+		// one removal `softRemoveAddress` refuses. `PUT /:id/recover` is restated only for its permission
+		// and still calls the base service method, so the field calls that same method, and the domain's
+		// removal is not reached.
 		expect(addressService.softRemoveAddress).toHaveBeenCalledWith(ADDRESS);
 		expect(addressService.softRecover).toHaveBeenCalledWith(ADDRESS);
 	});
@@ -380,7 +383,57 @@ describe('AddressResolver — one concept, two protocols, the same writes', () =
 	});
 });
 
+/** The role the caller of the real permission guard holds. */
+const ROLE = '00000000-0000-4000-8000-000000000070';
+
+/**
+ * The real permission guard, over a role that holds exactly `grants`.
+ *
+ * The role store answers the way `RolePermissionService.checkRolePermission` does — an `IN` over the
+ * permissions the route states, so a role holding any one of them passes — and the cache always misses,
+ * so every decision is the store's. The metadata the guard reads is the resolver's and the
+ * controller's own, which is the point: a spec that read the decorator alone would keep passing if the
+ * guard resolved a handler's permission some other way.
+ *
+ * @param grants The permissions the caller's role holds.
+ * @returns The guard and the role store it asks.
+ */
+function permissionGate(grants: PermissionsEnum[]) {
+	const checkRolePermission = jest.fn(async (_tenantId: string, _roleId: string, permissions: string[]) =>
+		permissions.some((permission) => grants.includes(permission as PermissionsEnum))
+	);
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn() };
+
+	return {
+		guard: new PermissionGuard(cache as never, new Reflector(), { checkRolePermission } as never),
+		checkRolePermission
+	};
+}
+
+/** The execution context of one resolver field, as the permission guard reads it. */
+function fieldContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (AddressResolver.prototype as never)[field],
+		getClass: () => AddressResolver
+	} as unknown as ExecutionContext;
+}
+
+/** The execution context of one REST route, inherited handlers included, as the permission guard reads it. */
+function routeContext(handler: string): ExecutionContext {
+	return {
+		getHandler: () => handlersOf(AddressController)[handler],
+		getClass: () => AddressController
+	} as unknown as ExecutionContext;
+}
+
 describe('AddressResolver — the guard stack and the permission every root field declares', () => {
+	beforeEach(() => {
+		// The caller the real permission guard identifies: a member of the tenant holding `ROLE`.
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', tenantId: TENANT, roleId: ROLE } as any);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
 	it('guards the resolver with both protocol guards', () => {
 		const guards = Reflect.getMetadata('__guards__', AddressResolver) ?? [];
 
@@ -396,35 +449,61 @@ describe('AddressResolver — the guard stack and the permission every root fiel
 		}
 	});
 
-	it('states the class’s read grant on the recovery, because the route it mirrors states none', () => {
-		// `PUT /:id/recover` is inherited from the CRUD base and this controller does not override it, so
-		// the handler carries no permission of its own and the guard resolves the controller's class-level
-		// `ORG_CONTACT_VIEW` for it. A write mutation carrying a read grant reads like a slip and is the
-		// parity: the edit grant the writes beside it carry would make GraphQL narrower than the REST
-		// route, and tightening the route instead would change a delivered endpoint's authorisation —
-		// the platform's call rather than this surface's.
-		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(AddressController)['softRecover'])).toBeUndefined();
+	it('states the edit grant on the recovery, on the field and on the route it mirrors', () => {
+		// Corrected (AWR-5): this case used to pin the read grant here — `PUT /:id/recover` was inherited
+		// with no permission of its own, so the guard resolved the class-level `ORG_CONTACT_VIEW` for it
+		// and the field mirrored that, which let a view-only role undo an editor's withdrawal over either
+		// surface. Restoring undoes a removal, so the controller now restates the route with the grant the
+		// removals carry, the handler states it itself rather than inheriting the class's, and the field
+		// states the same grant.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(AddressController)['softRecover'])).toEqual([
+			PermissionsEnum.ORG_CONTACT_EDIT
+		]);
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, AddressController)).toEqual([
 			PermissionsEnum.ORG_CONTACT_VIEW
 		]);
-		expect(permissionOfField('recoverAddress')).toEqual([PermissionsEnum.ORG_CONTACT_VIEW]);
-		expect(permissionOfRoute(AddressController, 'softRecover')).toEqual([PermissionsEnum.ORG_CONTACT_VIEW]);
+		expect(permissionOfField('recoverAddress')).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+		expect(permissionOfRoute(AddressController, 'softRecover')).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+	});
+
+	it('refuses the recovery to a caller who holds only the read grant, on both surfaces', async () => {
+		// The failure scenario itself (AWR-5): a role holding `ORG_CONTACT_VIEW` alone called
+		// `recoverAddress` — or `PUT /:id/recover` — and the real guard let it through, because the
+		// handler stated nothing and the class stated the read grant that role holds.
+		const readOnly = permissionGate([PermissionsEnum.ORG_CONTACT_VIEW]);
+
+		await expect(readOnly.guard.canActivate(fieldContext('recoverAddress'))).resolves.toBe(false);
+		await expect(readOnly.guard.canActivate(routeContext('softRecover'))).resolves.toBe(false);
+		// Refused on the write grant, which is the question the guard asked the role store.
+		expect(readOnly.checkRolePermission).toHaveBeenCalledWith(
+			TENANT,
+			ROLE,
+			[PermissionsEnum.ORG_CONTACT_EDIT],
+			true
+		);
+		// The control: the same role still reads, so the refusal is about the write and not the role.
+		await expect(readOnly.guard.canActivate(fieldContext('addresses'))).resolves.toBe(true);
+	});
+
+	it('lets a caller who holds the edit grant restore, on both surfaces', async () => {
+		const editor = permissionGate([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+
+		await expect(editor.guard.canActivate(fieldContext('recoverAddress'))).resolves.toBe(true);
+		await expect(editor.guard.canActivate(routeContext('softRecover'))).resolves.toBe(true);
 	});
 
 	it('carries the edit grant on the withdrawal the controller restates for that reason', () => {
-		// The counterpart of the case above: `DELETE /:id/soft` *is* declared on this controller, with
+		// The counterpart of the case above: `DELETE /:id/soft` is declared on this controller, with
 		// `ORG_CONTACT_EDIT` on the handler, so the field mirrors the declared grant rather than the class
-		// one — which is what makes the recovery's read grant a statement about its route instead of a
-		// pattern copied from its neighbour.
+		// one — the withdrawal and the recovery that undoes it stand on the same grant.
 		expect(permissionOfRoute(AddressController, 'softRemove')).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
 		expect(permissionOfField('softDeleteAddress')).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
 	});
 
 	it('carries the read permission on the resource and the write permission on every write', () => {
 		const proto = AddressResolver.prototype;
-		// The recovery is the one write that is deliberately absent from this list, and its own case above
-		// is where its read grant is asserted: restating the edit grant here would assert the opposite of
-		// what its route resolves to.
+		// Corrected (AWR-5): the recovery used to be left out of this list because it carried the read
+		// grant. It is a write like the others and now carries the same edit grant.
 		const expected: Array<[string, PermissionsEnum]> = [
 			['addresses', PermissionsEnum.ORG_CONTACT_VIEW],
 			['address', PermissionsEnum.ORG_CONTACT_VIEW],
@@ -432,6 +511,7 @@ describe('AddressResolver — the guard stack and the permission every root fiel
 			['updateAddress', PermissionsEnum.ORG_CONTACT_EDIT],
 			['deleteAddress', PermissionsEnum.ORG_CONTACT_EDIT],
 			['softDeleteAddress', PermissionsEnum.ORG_CONTACT_EDIT],
+			['recoverAddress', PermissionsEnum.ORG_CONTACT_EDIT],
 			['setDefaultAddress', PermissionsEnum.ORG_CONTACT_EDIT]
 		];
 
@@ -448,11 +528,18 @@ describe('AddressResolver — the guard stack and the permission every root fiel
 		// "No credential" at the level a unit test can observe: the class-level chain refuses a request
 		// that presents none, and the metadata below is what the permission guard reads. A write field
 		// that carried the read permission — or none — would be reachable by every caller that may look.
-		// `recoverAddress` is deliberately not in this list: it states the read grant because the inherited
-		// route it mirrors resolves to it, which the case above pins.
+		// Corrected (AWR-5): `recoverAddress` used to be excluded here because it stated the read grant; it
+		// is a write, and a view-only role must not reach it either.
 		const proto = AddressResolver.prototype;
 
-		for (const field of ['createAddress', 'updateAddress', 'deleteAddress', 'softDeleteAddress', 'setDefaultAddress']) {
+		for (const field of [
+			'createAddress',
+			'updateAddress',
+			'deleteAddress',
+			'softDeleteAddress',
+			'recoverAddress',
+			'setDefaultAddress'
+		]) {
 			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[field]) ?? [];
 
 			expect(stated).not.toContain(PermissionsEnum.ORG_CONTACT_VIEW);

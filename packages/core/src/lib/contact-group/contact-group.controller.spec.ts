@@ -71,9 +71,11 @@ jest.mock('@gauzy/config', () => ({
  */
 import '../core/entities/internal';
 
-import { BadRequestException, HttpException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { ContactGroupType, PermissionsEnum } from '@gauzy/contracts';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { CrudController } from '../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ContactGroupController } from './contact-group.controller';
 
@@ -111,6 +113,7 @@ function surfaces(overrides: Record<string, unknown> = {}) {
 		createGroup: jest.fn().mockResolvedValue(STORED),
 		updateGroup: jest.fn().mockResolvedValue(STORED),
 		removeGroup: jest.fn().mockResolvedValue({ ...STORED, deletedAt: new Date('2026-03-01T10:00:00.000Z') }),
+		softRecover: jest.fn().mockResolvedValue({ ...STORED, deletedAt: null }),
 		assertMembershipWritable: jest.fn(),
 		...overrides
 	};
@@ -191,6 +194,24 @@ describe('ContactGroupController — the routes (API specification §7.7)', () =
 		// The base class's soft remove would delete the row directly; the domain's refuses a group the
 		// platform maintains, which is why the override exists at all.
 		expect(contactGroupService.removeGroup).toHaveBeenCalledWith(GROUP);
+	});
+
+	it('restores a withdrawn group through the same service method the inherited route called', async () => {
+		const { controller, contactGroupService } = surfaces();
+
+		const restored = await controller.softRecover(GROUP);
+
+		// The override exists only to state the route's permission, so it reaches exactly what the base
+		// handler reached — and never the domain's removal.
+		expect(contactGroupService.softRecover).toHaveBeenCalledWith(GROUP);
+		expect(contactGroupService.removeGroup).not.toHaveBeenCalled();
+		expect(restored.deletedAt).toBeNull();
+		// An override replaces the inherited method's metadata, so the status code is restated: a client
+		// of the delivered route still reads the 202 the CRUD base answers.
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, ContactGroupController.prototype.softRecover)).toBe(
+			HttpStatus.ACCEPTED
+		);
+		expect(Reflect.getMetadata(HTTP_CODE_METADATA, CrudController.prototype.softRecover)).toBe(HttpStatus.ACCEPTED);
 	});
 
 	it('refuses an expansion this resource does not offer, with the query protocol’s own code', async () => {
@@ -297,7 +318,10 @@ describe('ContactGroupController — the guard stack and the permission every ro
 			['create', PermissionsEnum.CONTACT_GROUPS_CREATE],
 			['update', PermissionsEnum.CONTACT_GROUPS_EDIT],
 			['delete', PermissionsEnum.CONTACT_GROUPS_DELETE],
-			['softRemove', PermissionsEnum.CONTACT_GROUPS_DELETE]
+			['softRemove', PermissionsEnum.CONTACT_GROUPS_DELETE],
+			// Restoring undoes a removal, so it states the removal's grant. Left inherited, the route stated
+			// none and stood on the class's `CONTACT_GROUPS_VIEW` (AWR-5).
+			['softRecover', PermissionsEnum.CONTACT_GROUPS_DELETE]
 		];
 
 		for (const [route, permission] of expected) {
@@ -311,7 +335,7 @@ describe('ContactGroupController — the guard stack and the permission every ro
 		// that carried the read permission — or none — would be reachable by every caller that may look.
 		const proto = ContactGroupController.prototype;
 
-		for (const route of ['create', 'update', 'delete', 'softRemove']) {
+		for (const route of ['create', 'update', 'delete', 'softRemove', 'softRecover']) {
 			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[route]) ?? [];
 
 			expect(stated).not.toContain(PermissionsEnum.CONTACT_GROUPS_VIEW);
@@ -342,6 +366,7 @@ describe('ContactGroupController — the routes the CRUD base supplies', () => {
 		expect(source).toMatch(/@Put\(':id'\)/);
 		expect(source).toMatch(/@Delete\(':id'\)/);
 		expect(source).toMatch(/@Delete\(':id\/soft'\)/);
+		expect(source).toMatch(/@Put\(':id\/recover'\)\n\tasync softRecover\(/);
 	});
 
 	it('declares no route for the membership pivot, which its own module cannot reach', () => {

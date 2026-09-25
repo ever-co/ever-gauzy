@@ -238,18 +238,16 @@ export class AddressResolver {
 	/**
 	 * Puts a withdrawn address back, clearing the marker the withdrawal set.
 	 *
-	 * **The permission is the class's read grant, and that is the parity rather than a slip.** The
-	 * route this field mirrors — `PUT /:id/recover` — is inherited from `CrudController<T>` and is not
-	 * overridden here, so it states no permission of its own; `PermissionGuard` resolves
-	 * handler-then-class, which is why the route is authorised today by `AddressController`'s
-	 * class-level `ORG_CONTACT_VIEW`. Mirroring the route is what parity requires, and stating the edit
-	 * grant the writes beside it carry would make GraphQL narrower than REST. Tightening the route
-	 * instead would change a delivered REST endpoint's authorisation, which is the platform's call and
-	 * not this wave's. It is the shape the plugin controllers closed for themselves — all 88 of them
-	 * override the route with a write grant — and which neither core controller has done here.
+	 * **The permission is the edit grant the two removals carry.** Restoring undoes a removal, so a role
+	 * that may not withdraw an address may not bring one back either. The route this field mirrors —
+	 * `PUT /:id/recover` — used to be inherited from `CrudController<T>` and so stood on the controller's
+	 * class-level `ORG_CONTACT_VIEW`, and this field mirrored that read grant: a view-only role could undo
+	 * an editor's withdrawal over either surface. `AddressController` now restates the route with
+	 * `ORG_CONTACT_EDIT`, the shape the plugin controllers state on theirs, and this field states the
+	 * same grant, so the two surfaces stay level at the write grant rather than at the read one.
 	 */
 	@Mutation('recoverAddress')
-	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	async recoverAddress(@Args('id', { type: () => ID }) id: Id): Promise<IAddressBook> {
 		return this.addressService.softRecover(id);
 	}
