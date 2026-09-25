@@ -605,19 +605,20 @@ describe('CandidateProfileResolver — one concept, two protocols, the same oper
 });
 
 describe('CandidateProfileResolver — the guard stack and the permissions are the five controllers’', () => {
-	it('states on the class only the guard all five controllers state, and the permission all five state', () => {
+	it('states on the class the tenant guard, the gate and the permission all five controllers state', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', CandidateProfileResolver) ?? [];
 
-		// Four of the five carry the permission guard on the class and one does not, so the class states
-		// only what all five share: the tenant guard, the gate — and the edit permission, which all five
-		// state on the class.
+		// All five controllers carry the tenant guard and the permission guard on the class. The class
+		// here states the tenant guard and the gate, and leaves the permission guard to the fields: Nest
+		// concatenates a class's guards with a field's, so stating it in both places would run it twice.
+		// The edit permission, which all five state on the class, is stated on the class here too.
 		expect(resolverGuards).toEqual([TenantPermissionGuard, FeatureFlagGuard]);
 
 		for (const resource of RESOURCES) {
 			const controller = CONTROLLERS.find((entry) => entry.resource === resource)?.controller;
 
 			expect(Reflect.getMetadata('__guards__', controller)).toEqual(
-				expect.arrayContaining([TenantPermissionGuard])
+				expect.arrayContaining([TenantPermissionGuard, PermissionGuard])
 			);
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, controller)).toEqual([
 				PermissionsEnum.ORG_CANDIDATES_EDIT
@@ -629,20 +630,24 @@ describe('CandidateProfileResolver — the guard stack and the permissions are t
 		]);
 	});
 
-	it('restates the permission guard on the four resources whose controllers carry it, and not on the fifth', () => {
-		for (const resource of ['Document', 'Education', 'Skill', 'Source']) {
-			expect(guardsOfField(`candidate${resource}s`)).toContain(PermissionGuard);
-			expect(guardsOfField(`createCandidate${resource}`)).toContain(PermissionGuard);
+	it('states the permission guard on every field of all five resources, once, beside the permission it reads', () => {
+		for (const field of OWNED_QUERY_FIELDS.concat(OWNED_MUTATION_FIELDS)) {
+			expect(Reflect.getMetadata('__guards__', fieldsOf(CandidateProfileResolver)[field])).toEqual([
+				PermissionGuard
+			]);
+			expect(guardsOfField(field)).toContain(PermissionGuard);
 		}
 
-		// The experience controller states the tenant guard twice instead of the permission guard, so its
-		// fields carry the tenant guard alone — exactly as its routes do.
+		// 🛑 This case used to assert the opposite for the experience fields. The experience controller
+		// stated `@UseGuards(TenantPermissionGuard, TenantPermissionGuard)` — the tenant guard twice and the
+		// permission guard nowhere — and this case pinned the resolver to that, so the eight experience
+		// fields stated `@Permissions` with nothing to read it and served any authenticated member of the
+		// tenant, five writes among them. The controller now carries the chain its four siblings carry, and
+		// the fields carry it with it; the premise is asserted here so a regression of either surface fails.
 		expect(Reflect.getMetadata('__guards__', CandidateExperienceController)).toEqual([
 			TenantPermissionGuard,
-			TenantPermissionGuard
+			PermissionGuard
 		]);
-		expect(guardsOfField('candidateExperiences')).not.toContain(PermissionGuard);
-		expect(guardsOfField('createCandidateExperience')).not.toContain(PermissionGuard);
 	});
 
 	it.each(ROUTE_PARITY)('$field mirrors $resource.$route exactly', ({ field, controller, route }) => {

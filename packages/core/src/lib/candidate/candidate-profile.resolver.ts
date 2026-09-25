@@ -196,27 +196,37 @@ const SOURCE_SORTABLE = [...PROFILE_BASE_SORTABLE, 'name'] as const;
  * controllers extends the same CRUD base, every one of the five services extends the same
  * `TenantAwareCrudService`, and every one of the five answers the same set of routes — the list, the
  * paginated spelling of it, the count, the row, the filing, the edit and the three lifecycle routes.
- * Four of the five carry one guard chain (`TenantPermissionGuard` and `PermissionGuard`, with the edit
- * permission on the class) and one read permission on the list (`ORG_CANDIDATES_VIEW`); the fifth, the
- * document, differs in exactly one statement — its list runs under `ORG_CANDIDATES_DOCUMENTS_VIEW` —
- * and agrees with the other four on the guard chain, on the class permission and on the shape of the
- * row. Splitting them across five resolver classes would state the shared order, the shared base
- * vocabulary and the shared guard chain five times, and would let four of the five drift; keeping them
- * in one class is what makes those one statement rather than five copies of it.
+ * All five carry one guard chain (`TenantPermissionGuard` and `PermissionGuard`, with the edit
+ * permission on the class); four state one read permission on the list (`ORG_CANDIDATES_VIEW`), and the
+ * fifth, the document, differs in exactly one statement — its list runs under
+ * `ORG_CANDIDATES_DOCUMENTS_VIEW` — and agrees with the other four on the guard chain, on the class
+ * permission and on the shape of the row. Splitting them across five resolver classes would state the
+ * shared order, the shared base vocabulary and the shared guard chain five times, and would let four of
+ * the five drift; keeping them in one class is what makes those one statement rather than five copies
+ * of it.
  *
  * The five are also one concept to the platform: they are the file a recruiter reads before an
  * interview, they are all keyed by `candidateId` (except the source, which the candidacy points at),
  * and the routes the platform serves them under are five spellings of `/api/candidate*`.
  *
- * **The guard chain is the five controllers' own, and one of them differs — which is why the permission
- * guard is stated per field rather than on the class.** Four of the five controllers carry
- * `TenantPermissionGuard` and `PermissionGuard` on the class; the experience controller carries
- * `TenantPermissionGuard` twice and no permission guard at all. A class-level `PermissionGuard` here
- * would therefore put a guard on the experience fields that their own route does not carry, so the class
- * states only what all five share — the tenant guard — and each field of the other four restates the
- * permission guard exactly as its own controller states it. That restatement is not decoration: the
- * guard is read per handler, and a resolver that approximated this would be a second answer to the
- * question of what guards a route runs under.
+ * **The guard chain is the five controllers' own, and all five state the same one.** Each carries
+ * `TenantPermissionGuard` and `PermissionGuard` on the class. The class here states the tenant guard
+ * beside the gate, and every field states the permission guard beside the permission it reads, so each
+ * field runs under exactly its own route's chain. The permission guard is not stated on the class as
+ * well: Nest concatenates a class's guards with a field's rather than merging them, so a guard stated
+ * in both places runs twice on every call. That per-field statement is not decoration: the guard is
+ * read per handler, and a resolver that approximated this would be a second answer to the question of
+ * what guards a route runs under.
+ *
+ * 🛑 This paragraph used to say one of the five differed, and the reason it gave was a defect rather
+ * than a design. The experience controller carried `@UseGuards(TenantPermissionGuard,
+ * TenantPermissionGuard)` — the tenant guard twice, `PermissionGuard` nowhere — so the eight experience
+ * fields below stated `@Permissions` with no guard to read it. `@Permissions` is metadata:
+ * `PermissionGuard` is the only provider that reads it, so those eight fields, five of them writes, ran
+ * for any authenticated member of the tenant while the fields of the four sibling resources did not.
+ * Mirroring a broken controller faithfully reproduced the hole rather than the contract. The controller
+ * now carries the chain its four siblings carry, and the eight fields state the permission guard like
+ * every field around them.
  *
  * All five carry the edit permission on the class. Every field below therefore states the permission its
  * own route runs under: four lists state the candidate view permission, the document list states the
@@ -453,6 +463,7 @@ export class CandidateProfileResolver {
 	 */
 	@Query('candidateExperiences')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
+	@UseGuards(PermissionGuard)
 	async candidateExperiences(
 		@Args('filter') filter?: ConnectionFilter,
 		@Args('sort') sort?: ConnectionSortKey[],
@@ -476,6 +487,7 @@ export class CandidateProfileResolver {
 	/** One prior engagement, or null when there is none. */
 	@Query('candidateExperience')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async candidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<CandidateExperience | null> {
 		return await this.oneOrNone(this.candidateExperienceService, id);
 	}
@@ -483,6 +495,7 @@ export class CandidateProfileResolver {
 	/** How many prior engagements the caller's tenant holds. */
 	@Query('candidateExperienceCount')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async candidateExperienceCount(): Promise<number> {
 		return await this.candidateExperienceService.countBy();
 	}
@@ -490,6 +503,7 @@ export class CandidateProfileResolver {
 	/** Files a prior engagement under a candidacy. */
 	@Mutation('createCandidateExperience')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async createCandidateExperience(
 		@Args('input') input: ICreateCandidateExperienceInput
 	): Promise<CandidateExperience> {
@@ -499,6 +513,7 @@ export class CandidateProfileResolver {
 	/** Edits a prior engagement, answering the row the write produced. */
 	@Mutation('updateCandidateExperience')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async updateCandidateExperience(
 		@Args('input') input: IUpdateCandidateExperienceInput
 	): Promise<CandidateExperience> {
@@ -510,6 +525,7 @@ export class CandidateProfileResolver {
 	/** Removes a prior engagement outright. */
 	@Mutation('deleteCandidateExperience')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async deleteCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		await this.candidateExperienceService.delete(id);
 
@@ -519,6 +535,7 @@ export class CandidateProfileResolver {
 	/** Withdraws a prior engagement without removing it. */
 	@Mutation('softDeleteCandidateExperience')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async softDeleteCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<CandidateExperience> {
 		return await this.candidateExperienceService.softRemove(id);
 	}
@@ -526,6 +543,7 @@ export class CandidateProfileResolver {
 	/** Puts a withdrawn prior engagement back. */
 	@Mutation('recoverCandidateExperience')
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@UseGuards(PermissionGuard)
 	async recoverCandidateExperience(@Args('id', { type: () => ID }) id: Id): Promise<CandidateExperience> {
 		return await this.candidateExperienceService.softRecover(id);
 	}
