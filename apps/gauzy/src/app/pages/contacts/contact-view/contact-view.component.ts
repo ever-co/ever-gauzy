@@ -85,6 +85,24 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			.join('');
 	}
 
+	/**
+	 * The contact's country as a name ("France") rather than the ISO code the
+	 * record stores ("FR"), in the app's current language. Falls back to the code
+	 * for anything `Intl` cannot name.
+	 */
+	get countryName(): string {
+		const code = this.selectedContact?.contact?.country;
+		if (!code) {
+			return '';
+		}
+		try {
+			const locale = this.translateService?.currentLang || 'en';
+			return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
+		} catch {
+			return code;
+		}
+	}
+
 	private _init(id: string) {
 		if (id) {
 			const { tenantId } = this.store.user;
