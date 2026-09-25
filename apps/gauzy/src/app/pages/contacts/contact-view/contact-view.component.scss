@@ -23,11 +23,12 @@
  * value stays right on a white card and on a near-black one.
  */
 
-// The tab body is sized from the viewport so the page fits without the window
-// scrolling (panels scroll internally instead). The aside is offset by ~3rem
-// less because it starts at the tabset's TAB BAR rather than at its body.
-$pane-height: calc(100vh - 17.25rem);
-$aside-height: calc(100vh - 14.25rem);
+// Both columns are panels of the same kind: one surface, one hairline, one
+// radius. They used to differ (a shadowed accordion beside a tabset whose active
+// tab was a filled block floating over its own shadowed body), which is most of
+// why the two halves of the screen did not read as one page.
+$panel-surface: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
+$panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
 
 :host nb-card {
 	background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
@@ -120,15 +121,10 @@ $aside-height: calc(100vh - 14.25rem);
 	align-items: start;
 }
 
-.contact-aside {
-	min-width: 0;
-	max-height: $aside-height;
-	// Three open accordions can out-run the tabset beside them; the rail scrolls
-	// rather than growing the page past the viewport.
-	overflow-y: auto;
-	overflow-x: hidden;
-}
-
+// Both columns grow with their content and the page scrolls. They used to be
+// pinned to `calc(100vh - …)` guesses and scroll inside themselves, which left
+// Members and Documents as a short list at the top of a tall empty box.
+.contact-aside,
 .contact-main {
 	min-width: 0;
 }
@@ -141,7 +137,14 @@ $aside-height: calc(100vh - 14.25rem);
 	// Header and body paint to the edges, so the container has to clip them for
 	// the rounded corner to survive.
 	overflow: hidden;
-	box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
+	border: $panel-border;
+	box-shadow: none;
+	background-color: $panel-surface;
+
+	nb-accordion-item {
+		background-color: transparent;
+		box-shadow: none;
+	}
 
 	nb-accordion-item-header {
 		font-size: 0.8125rem;
@@ -157,7 +160,7 @@ $aside-height: calc(100vh - 14.25rem);
 	}
 
 	nb-accordion-item-body {
-		background-color: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
+		background-color: transparent;
 	}
 }
 
@@ -315,57 +318,120 @@ $aside-height: calc(100vh - 14.25rem);
 	line-height: 0.9375rem;
 }
 
-/* ── Tabs: address + map, members ─────────────────────────────────────────── */
+/* ── Tabs: address + map, members, documents ─────────────────────────────── */
 
+/*
+ * The tabset is one panel, the same surface and edge as the accordion beside it:
+ * a text tab bar along its top on a hairline, the active tab marked by a 2px
+ * primary underline, and the pane underneath. Nebular's default gave the active
+ * tab a filled background of its own, so it read as a separate block sitting on
+ * top of the pane rather than as a label for it.
+ *
+ * `!important` answers Nebular's own tabset theme, which paints the tab link's
+ * colour and background at a specificity nothing reachable from here can beat.
+ */
 :host nb-tabset {
 	display: block;
+	overflow: hidden;
+	border: $panel-border;
+	border-radius: var(--border-radius);
+	background-color: $panel-surface;
+
+	::ng-deep ul.tabset {
+		display: flex;
+		gap: 1.5rem;
+		margin: 0;
+		padding: 0 1.25rem;
+		border-bottom: $panel-border;
+		background: transparent !important;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	::ng-deep ul.tabset li.tab {
+		position: relative;
+		margin: 0;
+		background: transparent !important;
+		border: none !important;
+		box-shadow: none !important;
+
+		&::after {
+			content: '';
+			position: absolute;
+			left: 0;
+			right: 0;
+			// 0, not -1px: the bar scrolls horizontally on narrow widths, and a
+			// scroll container clips anything past its edge, underline included.
+			bottom: 0;
+			height: 2px;
+			border-radius: 2px 2px 0 0;
+			background-color: transparent;
+			transition: background-color 150ms ease-in-out;
+		}
+
+		&.active::after {
+			background-color: var(--color-primary-default);
+		}
+	}
+
+	::ng-deep ul.tabset li.tab a.tab-link {
+		padding: 0.6875rem 0 !important;
+		background: transparent !important;
+		color: var(--gauzy-text-color-2, var(--text-hint-color)) !important;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		line-height: 1.125rem;
+		text-transform: none;
+		transition: color 150ms ease-in-out;
+
+		// Nebular's own active-tab underline; the one above replaces it.
+		&::before {
+			display: none !important;
+		}
+
+		&:hover {
+			color: var(--gauzy-text-color-1, var(--text-basic-color)) !important;
+		}
+	}
+
+	::ng-deep ul.tabset li.tab.active a.tab-link {
+		color: var(--gauzy-text-color-1, var(--text-basic-color)) !important;
+		font-weight: 600;
+	}
 }
 
 :host nb-tab.content-active {
-	// A flex column so the map can claim whatever the address block leaves,
-	// instead of a second viewport-height guess that has to be kept in step with
-	// the one on the tab itself.
 	display: flex;
 	flex-direction: column;
-	height: $pane-height;
 	min-height: 0;
-	padding: 1rem 1.25rem;
-	// Same surface as the accordion bodies opposite, so the two columns read as
-	// one screen. The tab BAR is deliberately left on the card behind it — that
-	// is the shape Nebular draws and fighting it only adds a second seam.
-	background-color: var(--gauzy-card-3, rgba(126, 126, 143, 0.05));
-	border-radius: var(--border-radius);
-	box-shadow: var(--gauzy-shadow, 0 1px 1px 0 rgba(0, 0, 0, 0.15));
+	padding: 1.25rem;
+	background-color: transparent;
+	border-radius: 0;
+	box-shadow: none;
 }
 
 .pane {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;
-	gap: 1rem;
+	gap: 1.25rem;
 	min-height: 0;
 
-	// Everything except the map keeps its natural height; the map is the only
-	// thing in a pane that is allowed to absorb (or give up) the leftover space.
-	> .fields,
-	> .member-grid {
+	> .fields {
 		flex: 0 0 auto;
 	}
 }
 
-.pane-scroll {
-	overflow-y: auto;
-}
-
+// The only thing on the screen with a height of its own.
 .map-frame {
 	// Owns the rounded edge and the hairline; the map itself is left square and
 	// simply fills this box.
 	display: flex;
-	flex: 1 1 auto;
-	min-height: 14rem;
+	flex: 0 0 auto;
+	height: 26rem;
 	overflow: hidden;
 	border-radius: var(--gauzy-radius-sm, 0.375rem);
-	border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+	border: $panel-border;
 }
 
 :host ga-leaflet-map {
@@ -441,22 +507,10 @@ $aside-height: calc(100vh - 14.25rem);
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	// Stacked, neither pane may pin itself to the viewport — that is what turns a
-	// one-column layout into two nested scroll containers.
-	.contact-aside {
-		max-height: none;
-		overflow: visible;
-
-		// Full width, a single column of pairs is mostly empty space and makes the
-		// panel three times taller than it needs to be.
-		.fields {
-			grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-			column-gap: 1.5rem;
-		}
-	}
-
-	:host nb-tab.content-active {
-		height: auto;
-		min-height: 28rem;
+	// Full width, a single column of pairs is mostly empty space and makes the
+	// panel three times taller than it needs to be.
+	.contact-aside .fields {
+		grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+		column-gap: 1.5rem;
 	}
 }

@@ -287,7 +287,7 @@
 					</nb-tab>
 
 					<nb-tab [tabTitle]="'CONTACTS_PAGE.MEMBERS' | translate">
-						<div class="pane pane-scroll">
+						<div class="pane">
 							<ga-employee-multi-select
 								class="members-select"
 								[selectedEmployeeIds]="selectedEmployeeIds"
@@ -323,7 +323,7 @@
 						to duplicate that check.
 					-->
 					<nb-tab [tabTitle]="'DOCS.LINKS.PANEL_TITLE' | translate">
-						<div class="pane pane-scroll">
+						<div class="pane">
 							@if (selectedContact) {
 								<gz-document-links-panel
 									[entity]="documentEntity"
