@@ -1,6 +1,7 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
+import { Utils, wrap } from '@mikro-orm/core';
 import { ID, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { IAuthenticatedUser } from '../core/context/types';
 import { getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
@@ -113,6 +114,9 @@ export class RoleAuthorizationService {
 	 * When the role cannot be resolved the user is left WITHOUT a role and WITHOUT permissions, so
 	 * every subsequent check denies rather than falling back to whatever the token claimed.
 	 *
+	 * Under MikroORM a user the request's unit of work manages is given the managed role entity instead
+	 * of the lean state (see {@link managedRoleOf}); under TypeORM the lean state is pinned as it always was.
+	 *
 	 * @param user The authenticated user.
 	 * @returns The same user instance, with `role` and `permissions` set.
 	 */
@@ -122,19 +126,80 @@ export class RoleAuthorizationService {
 		}
 
 		const state = await this.getAuthorizationState(user.roleId);
+		const role =
+			state && this.ormType === MultiORMEnum.MikroORM ? await this.managedRoleOf(user, state.role) : state?.role;
 
-		if (state) {
-			user.role = state.role;
+		if (state && role) {
+			user.role = role;
 			user.permissions = state.permissions;
 		} else {
 			// Do not leave behind a role the caller brought with them (an eagerly loaded relation, or a
 			// value set earlier in the request): `RequestContext.hasRoles()` reads `user.role`, so a role
 			// kept here would still authorize a user whose role no longer resolves.
-			delete user.role;
+			//
+			// Under MikroORM an unloaded reference is the exception: it is what a managed user's relation holds
+			// as loaded, and it names no role (its `name` was never read), so it grants nothing. Removing it is a
+			// change of the relation the unit of work tracks: once the request reads the user's row again, as
+			// `employeeMembers` reads the caller's, a flush stored the user with no role at all
+			// (role-authorization.service.mikro-orm.spec.ts, a role soft-deleted while its state was cached).
+			if (this.ormType !== MultiORMEnum.MikroORM || !this.isUnloadedReference(user.role)) {
+				delete user.role;
+			}
 			user.permissions = [];
 		}
 
 		return user;
+	}
+
+	/**
+	 * Whether a value is a MikroORM reference whose row was never loaded, i.e. one that carries its primary key
+	 * and nothing else.
+	 *
+	 * @param value The value of a user's `role`.
+	 */
+	private isUnloadedReference(value: unknown): boolean {
+		return Utils.isEntity(value) && !wrap(value).isInitialized();
+	}
+
+	/**
+	 * The role to pin onto a user under MikroORM.
+	 *
+	 * **What failed.** `JwtStrategy` loads the caller through `UserService.getIfExists`, which under
+	 * `DB_ORM=mikro-orm` is a `findOne` on the request's own fork: the user on the request is the entity that
+	 * fork's unit of work manages, and `role` is one of its many-to-one relations. Pinning the lean, cached
+	 * `{ id, name, tenantId }` onto it left a plain object where MikroORM keeps an entity. The next read in the
+	 * same request that returned the caller's row again — `employeeMembers` populates the user of every member,
+	 * and the caller is one — merged into the managed user, which snapshots it first, and the snapshot of a
+	 * to-one relation reads `role.__helper.__identifier`: a plain object has no `__helper`, and the read failed
+	 * with "Cannot read properties of undefined (reading '__identifier')".
+	 *
+	 * **Why this is right.** A managed entity's relation holds the managed entity of the row it references, and
+	 * the role the state names is the row the user's own foreign key references, so the unit of work already
+	 * holds it as the user's `role`. It is read through that unit of work: when `findRoleWithPermissions` just
+	 * loaded it, from the identity map without a query; when the state came from the cache and the role is still
+	 * a bare reference, by one primary-key read, so that its `name` — what `RequestContext.currentRoleName()`
+	 * reads — is there. The relation ends up holding the value it was loaded with, so a later flush has nothing
+	 * to write for it. A user no unit of work manages (a plain object) has no snapshot to break and takes the lean
+	 * state, as it does under TypeORM.
+	 *
+	 * @param user The authenticated user.
+	 * @param role The lean role of the resolved authorization state.
+	 * @returns The role to pin, or `null` when the unit of work no longer finds the role (it was soft-deleted
+	 * while its state was cached), which leaves the user without one, as an unresolved role does.
+	 */
+	private async managedRoleOf(user: IAuthenticatedUser, role: IRole): Promise<IRole | null> {
+		if (!Utils.isEntity(user)) {
+			return role;
+		}
+
+		const wrapped = wrap(user, true);
+		const relation = wrapped.__meta?.properties?.['role'];
+
+		if (!wrapped.__managed || !wrapped.__em || !relation?.targetMeta) {
+			return role;
+		}
+
+		return (await wrapped.__em.findOne(relation.targetMeta.class, { id: role.id })) as IRole | null;
 	}
 
 	/**
