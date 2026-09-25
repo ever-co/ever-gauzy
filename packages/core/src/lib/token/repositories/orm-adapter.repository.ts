@@ -1,7 +1,8 @@
 import { LockMode, raw } from '@mikro-orm/core';
 import { Between, In, LessThan, MoreThan, Repository } from 'typeorm';
 import { Token } from '../entities/token.entity';
-import { collapseRelationMirrors, stateRelationsFromMirrors } from '../../core/crud/mikro-orm-scope-column.helper';
+import { collapseRelationMirrors } from '../../core/crud/mikro-orm-scope-column.helper';
+import { createNewMikroOrmEntity } from '../../core/crud/mikro-orm-insert.helper';
 import { ITokenFilters, ITokenRepository, TokenStatus } from '../interfaces';
 
 // ---------------------------------------------------------------------------
@@ -118,6 +119,17 @@ export function buildTypeOrmAdapter(repo: Repository<Token>): ITokenRepository {
 }
 
 export function buildMikroOrmAdapter(repo: any): ITokenRepository {
+	/**
+	 * What TypeORM's update writes without being asked: the update date, and the `@VersionColumn` incremented in
+	 * the statement. `nativeUpdate` writes neither, so under MikroORM a status transition compare-and-set on
+	 * `{ id, version }` left the version where it was and a second writer holding it still matched.
+	 */
+	const asTypeOrmUpdates = <D extends object>(data: D): D => {
+		const versionColumn =
+			repo.getEntityManager().getMetadata(Token).properties.version?.fieldNames?.[0] ?? 'version';
+		return { updatedAt: new Date(), version: raw('?? + 1', [versionColumn]), ...data };
+	};
+
 	const adapter: ITokenRepository = {
 		findByHashWithLock: async (tokenHash) => {
 			const token = await repo.findOne({ tokenHash });
@@ -138,13 +150,16 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 
 		findActiveByUserAndType: (userId, tokenType) => repo.find({ userId, tokenType, status: TokenStatus.ACTIVE }),
 
-		// `userId` (and the rotation ids) are relation-id mirrors under MikroORM: `create()` needs the relation
-		// stated to write the key — `Value for Token.user is required` failed every MikroORM login — and
-		// `upsert` refuses a plain payload naming both (see `mikro-orm-scope-column.helper.ts`).
+		// Built as `CrudService.create` builds a row. `userId` (and the rotation ids) are relation-id mirrors under
+		// MikroORM, so the relation has to be stated for the key to be written — `Value for Token.user is
+		// required` failed every MikroORM login — and the primary key has to be stated where the dialect has no
+		// default for it (`NOT NULL constraint failed: tokens.id` on SQLite and MySQL). `save` names each key
+		// once, since `upsert` refuses a plain payload naming a relation beside its mirror (see
+		// `mikro-orm-scope-column.helper.ts`).
 		create: async (tokenData) => {
-			const meta = repo.getEntityManager().getMetadata().find(Token);
-			const token = repo.create(stateRelationsFromMirrors(meta, tokenData));
-			await repo.insert(token);
+			const token = createNewMikroOrmEntity<Token>(repo, tokenData, { partial: true });
+			// A flush rather than `insert()`, which runs no `onCreate`: the timestamps and the version start there.
+			await repo.getEntityManager().persist(token).flush();
 			return token;
 		},
 
@@ -153,7 +168,7 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 		updateStatus: async (tokenId, status, version, additionalData) => {
 			const updateData = { status, ...additionalData };
 			if (status === TokenStatus.REVOKED) updateData.revokedAt = new Date();
-			const affected = await repo.nativeUpdate({ id: tokenId, version }, updateData);
+			const affected = await repo.nativeUpdate({ id: tokenId, version }, asTypeOrmUpdates(updateData));
 			return !!affected;
 		},
 
@@ -164,17 +179,22 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 
 			await repo.nativeUpdate(
 				{ id: tokenId },
-				{
+				asTypeOrmUpdates({
 					lastUsedAt: new Date(),
 					usageCount: raw('?? + 1', [usageCountColumn])
-				}
+				})
 			);
 		},
 
 		revokeAllByUserAndType: async (userId, tokenType, revokedById?, reason?) => {
 			const affected = await repo.nativeUpdate(
 				{ userId, tokenType, status: TokenStatus.ACTIVE },
-				{ status: TokenStatus.REVOKED, revokedAt: new Date(), revokedById, revokedReason: reason }
+				asTypeOrmUpdates({
+					status: TokenStatus.REVOKED,
+					revokedAt: new Date(),
+					revokedById,
+					revokedReason: reason
+				})
 			);
 			return affected || 0;
 		},
@@ -183,7 +203,11 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 			const thresholdDate = new Date(Date.now() - inactivityThresholdMs);
 			const affected = await repo.nativeUpdate(
 				{ tokenType, status: TokenStatus.ACTIVE, lastUsedAt: { $lt: thresholdDate } },
-				{ status: TokenStatus.REVOKED, revokedAt: new Date(), revokedReason: 'Inactivity timeout' }
+				asTypeOrmUpdates({
+					status: TokenStatus.REVOKED,
+					revokedAt: new Date(),
+					revokedReason: 'Inactivity timeout'
+				})
 			);
 			return affected || 0;
 		},
@@ -191,7 +215,7 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 		markExpiredTokens: async () => {
 			const affected = await repo.nativeUpdate(
 				{ status: TokenStatus.ACTIVE, expiresAt: { $lt: new Date() } },
-				{ status: TokenStatus.EXPIRED }
+				asTypeOrmUpdates({ status: TokenStatus.EXPIRED })
 			);
 			return affected || 0;
 		},

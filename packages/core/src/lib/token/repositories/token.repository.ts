@@ -95,10 +95,14 @@ export class TokenRepository extends CrudService<Token> implements ITokenReposit
 			const tokenMeta = em.getMetadata(Token);
 			const usageCountColumn = tokenMeta.properties.usageCount?.fieldNames?.[0] ?? 'usageCount';
 
-			await this.mikroOrmTokenRepository.nativeUpdate({ id: tokenId }, {
-				lastUsedAt: new Date(),
-				usageCount: raw('?? + 1', [usageCountColumn])
-			} as Partial<Token>);
+			// With the update date and version TypeORM's update query writes (see `CrudService.mikroOrmUpdateRow`).
+			await this.mikroOrmTokenRepository.nativeUpdate(
+				{ id: tokenId },
+				this.mikroOrmUpdateRow({
+					lastUsedAt: new Date(),
+					usageCount: raw('?? + 1', [usageCountColumn])
+				}) as Partial<Token>
+			);
 			return;
 		}
 

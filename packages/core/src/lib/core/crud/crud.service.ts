@@ -16,7 +16,15 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { Collection, CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
+import {
+	Collection,
+	CreateOptions,
+	EntityMetadata,
+	FilterQuery as MikroFilterQuery,
+	RequiredEntityData,
+	raw,
+	wrap
+} from '@mikro-orm/core';
 import { AssignOptions } from '@mikro-orm/knex';
 import { ID, IPagination } from '@gauzy/contracts';
 // The base classes' own module rather than the entity-registry barrel. That barrel re-exports every
@@ -802,7 +810,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					} else {
 						where = id as MikroFilterQuery<T>;
 					}
-					const row = this.withOneKeyPerColumn(partialEntity as object) as RequiredEntityData<T>;
+					const row = this.mikroOrmUpdateRow(partialEntity as object) as RequiredEntityData<T>;
 					const updatedRow = await this.mikroOrmRepository.nativeUpdate(where, row as T);
 					return { affected: updatedRow } as UpdateResult;
 				case MultiORMEnum.TypeORM:
@@ -1127,13 +1135,63 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns The payload with a relation and its relation-id mirror collapsed into one key.
 	 */
 	protected withOneKeyPerColumn<D>(data: D): D {
-		const repository = this.mikroOrmRepository as Partial<MikroOrmBaseEntityRepository<T>> | undefined;
-		if (typeof repository?.getEntityManager !== 'function' || typeof repository.getEntityName !== 'function') {
+		return collapseRelationMirrors(this.mikroOrmMetadata(), data as object) as D;
+	}
+
+	/**
+	 * The row `update()` hands MikroORM's `nativeUpdate`: one key per column ({@link withOneKeyPerColumn}), and
+	 * what TypeORM's `update()` writes without being asked. TypeORM's update query sets every
+	 * `@UpdateDateColumn` to the current time and increments the `@VersionColumn` unless the payload states
+	 * them; `nativeUpdate` runs no `onUpdate` hook and never touches a version, so under MikroORM `updatedAt`
+	 * stayed at its creation time through every `update()`, and a compare-and-set on `{ id, version }` (the
+	 * token status transitions) left the version where it was, so a second writer holding the same version
+	 * still matched. Each property with an `onUpdate` is given its value, and the version property is
+	 * incremented in the statement, unless the payload states it.
+	 *
+	 * @param data The payload.
+	 * @returns The row to write.
+	 */
+	protected mikroOrmUpdateRow<D extends object>(data: D): D {
+		const meta = this.mikroOrmMetadata();
+		if (!meta) {
 			return data;
 		}
 
-		const meta = repository.getEntityManager()?.getMetadata().find(repository.getEntityName());
-		return collapseRelationMirrors(meta, data as object) as D;
+		const row: Record<string, unknown> = { ...(collapseRelationMirrors(meta, data) as Record<string, unknown>) };
+
+		for (const property of meta.props) {
+			if (
+				typeof property.onUpdate === 'function' &&
+				property.persist !== false &&
+				row[property.name] === undefined
+			) {
+				row[property.name] = property.onUpdate(row as never, this.mikroOrmRepository.getEntityManager());
+			}
+		}
+
+		// The version column is the one TypeORM's `@VersionColumn` names (its metadata is complete under either ORM),
+		// or MikroORM's own version property. MikroORM's `version: true` cannot map it: it leaves the column out of
+		// the INSERT and expects a database default the migrations do not give it.
+		const versionName = this.typeOrmRepository?.metadata?.versionColumn?.propertyName ?? meta.versionProperty;
+		const version = versionName ? meta.properties[versionName] : undefined;
+		if (version?.fieldNames?.length && row[version.name] === undefined) {
+			row[version.name] = raw('?? + 1', [version.fieldNames[0]]);
+		}
+
+		return row as D;
+	}
+
+	/**
+	 * This entity's MikroORM metadata, or `undefined` for a stand-in that is not a MikroORM repository (a unit
+	 * test's), which has no mapping to read.
+	 */
+	private mikroOrmMetadata(): EntityMetadata<T> | undefined {
+		const repository = this.mikroOrmRepository as Partial<MikroOrmBaseEntityRepository<T>> | undefined;
+		if (typeof repository?.getEntityManager !== 'function' || typeof repository.getEntityName !== 'function') {
+			return undefined;
+		}
+
+		return repository.getEntityManager()?.getMetadata().find<T>(repository.getEntityName());
 	}
 }
 
