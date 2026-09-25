@@ -88,13 +88,19 @@ class DatabaseFile {
 	 * @returns The ids, in order.
 	 */
 	committed(): string[] {
+		return this.committedRows().map((row) => row.id);
+	}
+
+	/**
+	 * The rows committed to the file with what they say, read through a connection of their own.
+	 *
+	 * @returns The rows, in id order.
+	 */
+	committedRows(): QueueRow[] {
 		const reader = new Sqlite(this.path, { readonly: true, fileMustExist: true });
 
 		try {
-			return reader
-				.prepare('SELECT id FROM queue_row ORDER BY id')
-				.all()
-				.map((row: { id: string }) => row.id);
+			return reader.prepare('SELECT id, tag FROM queue_row ORDER BY id').all() as QueueRow[];
 		} finally {
 			reader.close();
 		}
@@ -108,11 +114,16 @@ class DatabaseFile {
 /**
  * The statements that decide what a transaction is — its brackets, and the rows it writes — in the
  * order the connection received them. A parameterised insert is recorded by the id it writes.
+ *
+ * `everything` keeps every statement with its parameters, for comparing what two data sources sent.
  */
 class StatementLog implements Logger {
 	readonly statements: string[] = [];
+	readonly everything: string[] = [];
 
 	logQuery(query: string, parameters?: unknown[]): void {
+		this.everything.push(`${query} -- ${JSON.stringify(parameters ?? [])}`);
+
 		if (/^(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/.test(query)) {
 			this.statements.push(query);
 		} else if (/^INSERT INTO "queue_row"/.test(query) && parameters?.length) {
@@ -143,6 +154,7 @@ class StatementLog implements Logger {
 	/** Forgets what the schema setup logged. */
 	clear(): void {
 		this.statements.length = 0;
+		this.everything.length = 0;
 	}
 }
 
@@ -169,12 +181,14 @@ function typeOrmOptions(file: DatabaseFile, log: StatementLog): DataSourceOption
  * Opens a data source the way the platform does: the queue installed before it is initialized.
  *
  * @param options How long a transaction waits for the connection.
+ * @param queued False for a data source exactly as TypeORM builds it, without the queue.
  * @returns The store.
  */
-async function openTypeOrm(options?: IEmbeddedTransactionQueueOptions): Promise<ITypeOrmStore> {
+async function openTypeOrm(options?: IEmbeddedTransactionQueueOptions, queued = true): Promise<ITypeOrmStore> {
 	const file = new DatabaseFile();
 	const log = new StatementLog();
-	const dataSource = serializeEmbeddedTransactions(new DataSource(typeOrmOptions(file, log)), options);
+	const built = new DataSource(typeOrmOptions(file, log));
+	const dataSource = queued ? serializeEmbeddedTransactions(built, options) : built;
 
 	await dataSource.initialize();
 	log.clear();
@@ -213,6 +227,66 @@ function writeTwo(manager: EntityManager | DataSource, tag: string, fail = false
 
 /** The statements of one transaction that writes `<tag>1` and `<tag>2` and commits. */
 const committedBlock = (tag: string): string[] => ['BEGIN TRANSACTION', `INSERT ${tag}1`, `INSERT ${tag}2`, 'COMMIT'];
+
+/** A transaction left open part-way through, the way a request's is while it awaits other work. */
+interface IHeldTransaction {
+	/** Settled once the transaction has written its first row, `<tag>1`. */
+	readonly written: Promise<void>;
+	/** Lets the transaction go on: to commit, or to fail and roll back. */
+	letGo(outcome: 'commit' | 'fail'): void;
+	/** How the transaction ended. */
+	readonly ended: Promise<{ value?: string; error?: Error }>;
+}
+
+/**
+ * Opens a transaction that writes `<tag>1` and then stays open until it is let go.
+ *
+ * @param manager The manager it is opened on.
+ * @param tag Who writes.
+ * @returns The transaction's handles.
+ */
+function holdOpen(manager: EntityManager, tag: string): IHeldTransaction {
+	let written!: () => void;
+	let letGo!: (outcome: 'commit' | 'fail') => void;
+	const hasWritten = new Promise<void>((resolve) => (written = resolve));
+	const outcome = new Promise<'commit' | 'fail'>((resolve) => (letGo = resolve));
+
+	const ended = settle(
+		manager.transaction(async (transactional) => {
+			await transactional.insert(QueueRow, { id: `${tag}1`, tag });
+			written();
+
+			if ((await outcome) === 'fail') {
+				throw new Error(`${tag} fails`);
+			}
+
+			return tag;
+		})
+	);
+
+	return { written: hasWritten, letGo, ended };
+}
+
+/**
+ * Whether a promise is still unsettled after every other piece of pending work has had several turns —
+ * long enough for any statement that was not waiting to have run.
+ */
+async function stillPending(promise: Promise<unknown>): Promise<boolean> {
+	let settled = false;
+	promise.then(
+		() => (settled = true),
+		() => (settled = true)
+	);
+
+	for (let turn = 0; turn < 5; turn++) {
+		await tick();
+	}
+
+	return !settled;
+}
+
+/** The ids of the rows a read answered — a raw `SELECT "id"` or a repository's `find()`. */
+const idsOf = (rows: Array<{ id: string }>): string[] => rows.map((row) => row.id);
 
 describe('serializeEmbeddedTransactions — TypeORM on better-sqlite3', () => {
 	let store: ITypeOrmStore | undefined;
@@ -509,6 +583,274 @@ describe('serializeEmbeddedTransactions — TypeORM on better-sqlite3', () => {
 	});
 });
 
+/**
+ * A single statement outside any transaction — a read, a repository's `insert()`, `update()` or
+ * `delete()`, a query builder's `execute()`, `DataSource.query` — on the same shared runner. Without the
+ * gate it ran on the connection the moment it came, and so inside whichever request's transaction was
+ * open there.
+ */
+describe('serializeEmbeddedTransactions — statements outside a transaction, TypeORM on better-sqlite3', () => {
+	let store: ITypeOrmStore | undefined;
+
+	afterEach(async () => {
+		await closeTypeOrm(store);
+		store = undefined;
+	});
+
+	it("runs a read made while another request's transaction is open after that transaction, so it never sees its uncommitted rows", async () => {
+		// Without the gate every one of these reads ran inside the open transaction and answered with a1,
+		// a row that transaction then rolled back, so it was never stored.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+		const held = holdOpen(dataSource.manager, 'a');
+		await held.written;
+
+		const reads = Promise.all([
+			dataSource.getRepository(QueueRow).find({ order: { id: 'ASC' } }),
+			dataSource.manager.count(QueueRow),
+			dataSource.createQueryBuilder(QueueRow, 'row').getMany(),
+			dataSource.query(`SELECT "id" FROM "queue_row"`)
+		]);
+
+		const waited = await stillPending(reads);
+		held.letGo('fail');
+
+		expect((await held.ended).error?.message).toBe('a fails');
+		await expect(reads).resolves.toEqual([[], 0, [], []]);
+		expect(waited).toBe(true);
+		expect(store.log.statements).toEqual(['BEGIN TRANSACTION', 'INSERT a1', 'ROLLBACK']);
+	});
+
+	it("does not roll a write made while another request's transaction is open back with that transaction", async () => {
+		// Without the gate every one of these writes ran inside the open transaction, reported success to
+		// its caller, and was undone by that transaction's ROLLBACK.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+		const repository = dataSource.getRepository(QueueRow);
+		await repository.insert([
+			{ id: 'u', tag: 'u' },
+			{ id: 'd', tag: 'd' }
+		]);
+		store.log.clear();
+
+		const held = holdOpen(dataSource.manager, 'a');
+		await held.written;
+
+		const writes = Promise.all([
+			repository.insert({ id: 'c1', tag: 'c' }).then((result) => result.identifiers),
+			repository.update({ id: 'u' }, { tag: 'updated' }).then((result) => result.affected),
+			repository.delete({ id: 'd' }).then((result) => result.affected),
+			dataSource
+				.createQueryBuilder()
+				.insert()
+				.into(QueueRow)
+				.values({ id: 'c2', tag: 'c' })
+				.execute()
+				.then(() => 'c2'),
+			dataSource.query(`INSERT INTO "queue_row" ("id", "tag") VALUES (?, ?)`, ['c3', 'c']).then(() => 'c3')
+		]);
+
+		const waited = await stillPending(writes);
+		held.letGo('fail');
+
+		expect((await held.ended).error?.message).toBe('a fails');
+		await expect(writes).resolves.toEqual([[{ id: 'c1' }], 1, 1, 'c2', 'c3']);
+		expect(store.file.committedRows()).toEqual([
+			{ id: 'c1', tag: 'c' },
+			{ id: 'c2', tag: 'c' },
+			{ id: 'c3', tag: 'c' },
+			{ id: 'u', tag: 'updated' }
+		]);
+		expect(waited).toBe(true);
+		// Every write reached the connection after the ROLLBACK, in whatever order its own path got there.
+		expect(store.log.statements.slice(0, 3)).toEqual(['BEGIN TRANSACTION', 'INSERT a1', 'ROLLBACK']);
+		expect([...store.log.statements.slice(3)].sort()).toEqual(['INSERT c1', 'INSERT c2', 'INSERT c3']);
+	});
+
+	it("runs a statement made while another request's transaction is open after that transaction commits, and sees what it stored", async () => {
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+		const held = holdOpen(dataSource.manager, 'a');
+		await held.written;
+
+		// The answer is the same either way; what differs is that it is the committed row, read once the
+		// transaction is over, rather than the transaction's own uncommitted one.
+		const read = dataSource.query(`SELECT "id" FROM "queue_row" ORDER BY "id"`);
+		const waited = await stillPending(read);
+		held.letGo('commit');
+
+		expect((await held.ended).value).toBe('a');
+		expect(idsOf(await read)).toEqual(['a1']);
+		expect(waited).toBe(true);
+		expect(store.log.statements).toEqual(['BEGIN TRANSACTION', 'INSERT a1', 'COMMIT']);
+	});
+
+	it('runs the statements of the transaction holding the connection inside it, however they reach the runner, while one from outside waits', async () => {
+		// The holder's own statements go through the data source rather than the manager it was handed —
+		// the same shared runner. They must not queue behind the statement waiting for the holder, which
+		// would never end, and must stay inside the transaction: they read its uncommitted rows, a
+		// transaction they open is still a savepoint of it, and they are rolled back with it.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+		const repository = dataSource.getRepository(QueueRow);
+
+		let written!: () => void;
+		let proceed!: () => void;
+		const hasWritten = new Promise<void>((resolve) => (written = resolve));
+		const mayProceed = new Promise<void>((resolve) => (proceed = resolve));
+		let seen: unknown[] = [];
+
+		const holder = settle(
+			dataSource.manager.transaction(async (manager) => {
+				await manager.insert(QueueRow, { id: 'a1', tag: 'a' });
+				written();
+				await mayProceed;
+
+				seen = await Promise.all([
+					repository.find({ order: { id: 'ASC' } }).then(idsOf),
+					dataSource.manager.count(QueueRow),
+					dataSource.query(`SELECT "id" FROM "queue_row"`).then(idsOf)
+				]);
+				await dataSource.transaction((inner) => inner.insert(QueueRow, { id: 'a2', tag: 'a' }));
+				await repository.insert({ id: 'a3', tag: 'a' });
+				await dataSource.query(`INSERT INTO "queue_row" ("id", "tag") VALUES (?, ?)`, ['a4', 'a']);
+
+				throw new Error('a fails');
+			})
+		);
+		await hasWritten;
+
+		const outside = repository.insert({ id: 'b1', tag: 'b' });
+		await tick();
+		proceed();
+
+		expect((await holder).error?.message).toBe('a fails');
+		await outside;
+		expect(seen).toEqual([['a1'], 1, ['a1']]);
+		expect(store.file.committed()).toEqual(['b1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT a1',
+			'SAVEPOINT typeorm_1',
+			'INSERT a2',
+			'RELEASE SAVEPOINT typeorm_1',
+			'INSERT a3',
+			'INSERT a4',
+			'ROLLBACK',
+			'INSERT b1'
+		]);
+	});
+
+	it('does the same for a transaction opened by hand on a query runner', async () => {
+		// The claim of a transaction started by hand follows the code that started it, so the statements it
+		// then runs through the data source — the same runner on SQLite — are its own.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+
+		let written!: () => void;
+		let proceed!: () => void;
+		const hasWritten = new Promise<void>((resolve) => (written = resolve));
+		const mayProceed = new Promise<void>((resolve) => (proceed = resolve));
+		let seen: string[] = [];
+
+		const byHand = async (): Promise<void> => {
+			const runner = dataSource.createQueryRunner();
+			await runner.connect();
+			await runner.startTransaction();
+
+			try {
+				await runner.manager.insert(QueueRow, { id: 'h1', tag: 'h' });
+				written();
+				await mayProceed;
+
+				seen = idsOf(await dataSource.query(`SELECT "id" FROM "queue_row" ORDER BY "id"`));
+				await dataSource.manager.insert(QueueRow, { id: 'h2', tag: 'h' });
+				await runner.commitTransaction();
+			} catch (error) {
+				await runner.rollbackTransaction();
+				throw error;
+			} finally {
+				await runner.release();
+			}
+		};
+
+		const holder = byHand();
+		await hasWritten;
+
+		const outside = dataSource.query(`SELECT "id" FROM "queue_row" ORDER BY "id"`);
+		await tick();
+		proceed();
+
+		await holder;
+		expect(seen).toEqual(['h1']);
+		expect(idsOf(await outside)).toEqual(['h1', 'h2']);
+		expect(store.log.statements).toEqual(['BEGIN TRANSACTION', 'INSERT h1', 'INSERT h2', 'COMMIT']);
+	});
+
+	it('gives up a statement that waited longer than it is allowed, without disturbing the transaction it waited for', async () => {
+		store = await openTypeOrm({ waitTimeoutMs: 50 });
+		const dataSource = store.dataSource;
+		const held = holdOpen(dataSource.manager, 'a');
+		await held.written;
+
+		const read = await settle(dataSource.getRepository(QueueRow).find());
+
+		expect(read.error).toBeInstanceOf(EmbeddedTransactionWaitTimeoutError);
+		expect(read.error?.message).toMatch(/a statement waited 50 ms/);
+
+		held.letGo('commit');
+		expect((await held.ended).value).toBe('a');
+		// The statement that gave up left the line: the next one runs at once, on a free connection.
+		await expect(dataSource.manager.count(QueueRow)).resolves.toBe(1);
+		expect(store.file.committed()).toEqual(['a1']);
+		expect(store.log.statements).toEqual(['BEGIN TRANSACTION', 'INSERT a1', 'COMMIT']);
+	});
+
+	it('sends exactly what a data source without the queue sends, statement for statement, when nothing overlaps a transaction', async () => {
+		// The gate decides when a statement runs, never what it is: the same work on a data source with the
+		// queue and on one exactly as TypeORM builds it sends the same statements, with the same parameters,
+		// in the same order, and answers the same.
+		const workload = async (dataSource: DataSource): Promise<unknown[]> => {
+			const repository = dataSource.getRepository(QueueRow);
+
+			return [
+				await repository.insert({ id: 'w1', tag: 'w' }).then((result) => result.identifiers),
+				await repository.save({ id: 'w2', tag: 'w' }),
+				await repository.find({ order: { id: 'ASC' } }),
+				await repository.findOne({ where: { id: 'w1' } }),
+				await repository.update({ id: 'w1' }, { tag: 'x' }).then((result) => result.affected),
+				await Promise.all([
+					repository.count(),
+					dataSource.createQueryBuilder(QueueRow, 'row').where('row.tag = :tag', { tag: 'x' }).getMany(),
+					dataSource.query(`SELECT count(*) AS "rows" FROM "queue_row"`)
+				]),
+				await dataSource.transaction(async (manager) => {
+					await manager.insert(QueueRow, { id: 'w3', tag: 'w' });
+					return manager.transaction((inner) => inner.delete(QueueRow, { id: 'w2' }).then((r) => r.affected));
+				}),
+				await repository.delete({ id: 'w1' }).then((result) => result.affected),
+				await repository.find({ order: { id: 'ASC' } })
+			];
+		};
+
+		store = await openTypeOrm();
+		const bare = await openTypeOrm(undefined, false);
+
+		try {
+			expect(hasEmbeddedTransactionQueue(bare.dataSource)).toBe(false);
+
+			const queued = await workload(store.dataSource);
+			const unqueued = await workload(bare.dataSource);
+
+			expect(queued).toEqual(unqueued);
+			expect(store.log.everything.length).toBeGreaterThan(10);
+			expect(store.log.everything).toEqual(bare.log.everything);
+		} finally {
+			await closeTypeOrm(bare);
+		}
+	});
+});
+
 describe('serializeEmbeddedTransactions — the dialects it leaves alone', () => {
 	it.each([
 		['postgres', { type: 'postgres', host: 'localhost' }],
@@ -526,6 +868,13 @@ describe('serializeEmbeddedTransactions — the dialects it leaves alone', () =>
 			expect(own(dataSource.manager, 'transaction')).toBe(false);
 			expect(own(dataSource, 'createEntityManager')).toBe(false);
 			expect(own(dataSource.driver, 'createQueryRunner')).toBe(false);
+
+			// Nor any runner it hands out: every statement, transaction and bookkeeping read is TypeORM's own.
+			const runner = dataSource.createQueryRunner();
+			for (const member of ['query', 'startTransaction', 'commitTransaction', 'rollbackTransaction']) {
+				expect(own(runner, member)).toBe(false);
+			}
+			expect(Object.getOwnPropertyDescriptor(runner, 'isTransactionActive')?.get).toBeUndefined();
 		}
 	);
 });
@@ -682,5 +1031,42 @@ describe('MikroORM on better-sqlite — transactions are already one at a time',
 		expect(outer).toBe('inner fails');
 		expect(opened(file).committed()).toEqual(['i2', 'o1']);
 		expect(statements.filter((statement) => statement.startsWith('savepoint'))).toHaveLength(2);
+	});
+
+	it('runs a statement made while a transaction is open after it, so it neither sees nor is rolled back with it', async () => {
+		// The contract the TypeORM gate gives its statements: a fork outside the transaction waits for the
+		// pool's one connection, and so for the transaction holding it.
+		let written!: () => void;
+		let letFail!: () => void;
+		const hasWritten = new Promise<void>((resolve) => (written = resolve));
+		const mayFail = new Promise<void>((resolve) => (letFail = resolve));
+
+		const holder = settle(
+			opened(orm)
+				.em.fork()
+				.transactional(async (em) => {
+					await em.insert(MikroQueueRow, { id: 'a1', tag: 'a' });
+					written();
+					await mayFail;
+					throw new Error('a fails');
+				})
+		);
+		await hasWritten;
+
+		const outside = Promise.all([
+			opened(orm)
+				.em.fork()
+				.find(MikroQueueRow, {}, { orderBy: { id: 'asc' } })
+				.then((rows) => rows.map((row) => row.id)),
+			opened(orm).em.fork().insert(MikroQueueRow, { id: 'c1', tag: 'c' })
+		]);
+
+		expect(await stillPending(outside)).toBe(true);
+		letFail();
+
+		expect((await holder).error?.message).toBe('a fails');
+		// Whichever of the two the pool serves first, the read never sees the rolled-back row.
+		expect((await outside)[0]).not.toContain('a1');
+		expect(opened(file).committed()).toEqual(['c1']);
 	});
 });

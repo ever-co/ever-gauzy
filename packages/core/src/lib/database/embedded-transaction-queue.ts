@@ -3,7 +3,7 @@ import { DataSource, DataSourceOptions, EntityManager, QueryRunner } from 'typeo
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
- * Transactions on the embedded dialects, one at a time.
+ * Transactions on the embedded dialects, one at a time, and no statement inside another request's.
  *
  * 🛑 **On SQLite, TypeORM has one query runner per data source, so two requests' transactions are not
  * two transactions.** The better-sqlite3 driver — which serves both the `sqlite` and the
@@ -23,6 +23,9 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  * - **a `save()` from another request**, made while a transaction is open, reads the shared
  *   `isTransactionActive`, skips the transaction it would have opened, and is rolled back with the other
  *   request's;
+ * - **a single statement from another request** — a read, an `insert()`, `update()` or `delete()`, a
+ *   `query()` — made while a transaction is open runs inside it: a read sees that transaction's
+ *   uncommitted rows, and a write is rolled back with it although its own caller was told it succeeded;
  * - **once SQLite has rolled a transaction back on its own** (`INSERT OR ROLLBACK`, a trigger's
  *   `RAISE(ROLLBACK)`, a full disk), TypeORM's `ROLLBACK` fails and the runner is left believing a
  *   transaction is open. Every later transaction on the data source is a savepoint of nothing, and the
@@ -30,9 +33,9 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *
  * MikroORM does not have the defect on the same dialect: knex gives SQLite a pool of exactly one
  * connection, so a second transaction — or any statement — waits for the connection until the first
- * one ends, for at most knex's 60-second acquire timeout. This gives TypeORM the same contract for its
- * transactions. PostgreSQL and MySQL are not touched: their drivers hand each runner its own pooled
- * connection, and the database isolates the transactions.
+ * one ends, for at most knex's 60-second acquire timeout. This gives TypeORM the same contract, for its
+ * transactions and for the statements run outside them. PostgreSQL and MySQL are not touched: their
+ * drivers hand each runner its own pooled connection, and the database isolates the transactions.
  *
  * **The design.** Each data source gets a first-in-first-out queue for its connection. A top-level
  * transaction claims the connection before its `BEGIN` and gives it back once the connection is
@@ -55,30 +58,41 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *   from another request therefore opens — and waits for — a transaction of its own instead of joining
  *   one it does not own, and a `commitTransaction()` or `rollbackTransaction()` from such a context is
  *   refused by TypeORM itself instead of ending the holder's transaction. That is also what keeps a
- *   transaction that gave up waiting from rolling back the one it waited for.
+ *   transaction that gave up waiting from rolling back the one it waited for;
+ * - `QueryRunner.query` — which every read and write of the runner goes through, from a repository's
+ *   `find()` or `update()` to a query builder's `execute()` and `DataSource.query` — runs a statement
+ *   from the context holding the connection at once: it is part of that transaction, or of one of its
+ *   savepoints, and a transaction never waits for its own statements. A statement from any other
+ *   context takes its turn in the same line as the transactions and holds the connection only while
+ *   it runs. It therefore never runs inside another request's transaction — it neither sees that
+ *   transaction's uncommitted rows nor is rolled back with it — and no transaction begins half-way
+ *   through it. What it costs is the wait, which is the wait a statement has on MikroORM; the
+ *   bookkeeping itself measured under a microsecond for a statement on a free connection, which
+ *   reaches TypeORM in its caller's turn as it always did, and a few microseconds for one that queued.
  *
  * The connection is given back when the outermost commit or rollback returns — whether or not it
  * succeeded — and the connection itself (better-sqlite3's `inTransaction`) says no transaction is
  * open; a commit that failed leaves the claim with its owner, whose rollback releases it. When TypeORM's
- * bookkeeping disagrees with the connection, it is corrected before the next claim reads it.
- *
- * **What this does not cover.** A single statement run outside any transaction — a read, an `update()`,
- * a `query()` — still runs on the connection when it comes, and so inside whichever transaction holds
- * it: it sees that transaction's uncommitted rows and is rolled back with it. Gating those as well
- * would make every statement wait for every transaction, which is the next step if it is wanted.
+ * bookkeeping disagrees with the connection, it is corrected before the next claim reads it. A
+ * statement gives the connection back as soon as it has run, whether or not it succeeded.
  *
  * **Limits of the ownership rule.** A claim taken through `QueryRunner.startTransaction` marks the
  * caller's continuation; when that call is made before the caller's first `await`, the mark also
  * reaches a sibling started in the same synchronous tick by the same parent, which then joins the
- * transaction as a savepoint — the behaviour every sibling had before. The `EntityManager` path has no
- * such limit. A transaction that waits for work it cannot see — another context's transaction it
- * awaits — waits out {@link EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS} and fails, as it would on MikroORM.
+ * transaction as a savepoint and runs its statements inside it — the behaviour every sibling had
+ * before. The `EntityManager` path has no such limit. Ownership follows the code, not the manager: a
+ * transaction that waits for work it cannot see — another context's transaction it awaits, or a
+ * statement it awaits that a loader or cache shared between requests started from another request's
+ * context — holds the connection that work is waiting for. The work waits out
+ * {@link EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS} and fails, as it would on MikroORM when it runs through a
+ * manager other than the transaction's.
  */
 
 /**
- * How long a transaction waits for the connection before it gives up.
+ * How long a transaction, or a statement outside one, waits for the connection before it gives up.
  *
- * It is knex's default acquire timeout, which is what a MikroORM transaction waits on the same dialect.
+ * It is knex's default acquire timeout, which is what a MikroORM transaction or statement waits on the
+ * same dialect.
  */
 export const EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS = 60_000;
 
@@ -88,12 +102,22 @@ const EMBEDDED_DATA_SOURCE_TYPES: ReadonlySet<string> = new Set<string>([
 	DatabaseTypeEnum.betterSqlite3
 ]);
 
-/** Raised to a transaction that waited longer than the queue allows for the embedded connection. */
+/** What waits in the queue: a top-level transaction, or a single statement run outside one. */
+export type EmbeddedConnectionWaiter = 'transaction' | 'statement';
+
+/**
+ * Raised to a transaction — or a statement outside one — that waited longer than the queue allows for
+ * the embedded connection.
+ */
 export class EmbeddedTransactionWaitTimeoutError extends Error {
-	constructor(waitedMs: number) {
+	/**
+	 * @param waitedMs How long it waited, in milliseconds.
+	 * @param waiter What waited. A transaction is the default, and its message is the one it always was.
+	 */
+	constructor(waitedMs: number, waiter: EmbeddedConnectionWaiter = 'transaction') {
 		super(
-			`EMBEDDED_TRANSACTION_WAIT_TIMEOUT: a transaction waited ${waitedMs} ms for the embedded database's ` +
-				`connection, which another transaction still holds.`
+			`EMBEDDED_TRANSACTION_WAIT_TIMEOUT: a ${waiter} waited ${waitedMs} ms for the embedded database's ` +
+				`connection, which ${waiter === 'transaction' ? 'another' : 'a'} transaction still holds.`
 		);
 		this.name = 'EmbeddedTransactionWaitTimeoutError';
 	}
@@ -101,15 +125,16 @@ export class EmbeddedTransactionWaitTimeoutError extends Error {
 
 /** How the queue is set up. */
 export interface IEmbeddedTransactionQueueOptions {
-	/** How long a transaction waits for the connection, in milliseconds. */
+	/** How long a transaction, or a statement outside one, waits for the connection, in milliseconds. */
 	waitTimeoutMs?: number;
 }
 
 /**
- * One top-level transaction's claim on the connection.
+ * One top-level transaction's claim on the connection, or one statement's outside any transaction.
  *
  * A claim serves one transaction and is never queued again, so a context that still carries a claim
- * whose transaction has ended is not mistaken for the owner of the next one.
+ * whose transaction has ended is not mistaken for the owner of the next one. A statement's claim is
+ * never carried by any context: nothing but the statement itself runs while it holds the connection.
  */
 class ConnectionClaim {
 	queued = false;
@@ -138,15 +163,30 @@ class ConnectionQueue {
 	}
 
 	/**
+	 * Gives the claim the connection at once if it is free. A free connection has no claim waiting for it.
+	 *
+	 * @param claim The claim.
+	 * @returns True when the claim now holds the connection.
+	 */
+	tryAcquire(claim: ConnectionClaim): boolean {
+		if (this.holder !== null) {
+			return false;
+		}
+
+		this.holder = claim;
+		return true;
+	}
+
+	/**
 	 * Waits until the claim holds the connection.
 	 *
 	 * @param claim The claim.
+	 * @param waiter What the claim is for, which a claim that waited too long is rejected with.
 	 * @returns A promise settled when the claim is granted, or rejected when it waited too long. A claim
 	 * that gave up is taken out of the line, so it is never granted afterwards.
 	 */
-	acquire(claim: ConnectionClaim): Promise<void> {
-		if (this.holder === null) {
-			this.holder = claim;
+	acquire(claim: ConnectionClaim, waiter: EmbeddedConnectionWaiter): Promise<void> {
+		if (this.tryAcquire(claim)) {
 			return Promise.resolve();
 		}
 
@@ -163,7 +203,7 @@ class ConnectionQueue {
 
 				if (index >= 0) {
 					this.waiting.splice(index, 1);
-					reject(new EmbeddedTransactionWaitTimeoutError(this.waitTimeoutMs));
+					reject(new EmbeddedTransactionWaitTimeoutError(this.waitTimeoutMs, waiter));
 				}
 			}, this.waitTimeoutMs);
 
@@ -339,6 +379,7 @@ function guardRunner(runner: QueryRunner, state: IEmbeddedTransactionState): Que
 	const startTransaction = runner.startTransaction.bind(runner);
 	const commitTransaction = runner.commitTransaction.bind(runner);
 	const rollbackTransaction = runner.rollbackTransaction.bind(runner);
+	const query: (...args: unknown[]) => Promise<unknown> = runner.query.bind(runner);
 
 	// TypeORM writes the flag; everyone reads it through the owner rule. Only the context holding the
 	// connection — or anyone, while nothing holds it — sees the transaction that is open.
@@ -387,7 +428,7 @@ function guardRunner(runner: QueryRunner, state: IEmbeddedTransactionState): Que
 		}
 		claim.queued = true;
 
-		return queue.acquire(claim).then(async () => {
+		return queue.acquire(claim, 'transaction').then(async () => {
 			try {
 				await startTransaction(isolationLevel);
 			} catch (error) {
@@ -412,6 +453,30 @@ function guardRunner(runner: QueryRunner, state: IEmbeddedTransactionState): Que
 
 	target.commitTransaction = ending(commitTransaction);
 	target.rollbackTransaction = ending(rollbackTransaction);
+
+	// Every statement of the runner, TypeORM's own `BEGIN`, `SAVEPOINT` and `COMMIT` included. Not `async`:
+	// whenever it need not wait, a statement reaches TypeORM in its caller's own turn, as it always did.
+	target.query = ((...args: unknown[]): Promise<unknown> => {
+		if (queue.holds(context.getStore())) {
+			// Part of the transaction holding the connection, or of one of its savepoints.
+			return query(...args);
+		}
+
+		// Outside every transaction: it holds the connection for exactly as long as it runs, so no
+		// transaction can begin half-way through it. While a transaction is open, it waits for that one
+		// and for every claim queued before it.
+		const claim = new ConnectionClaim();
+		const run = (): Promise<unknown> => {
+			try {
+				return query(...args).finally(() => queue.release());
+			} catch (error) {
+				queue.release();
+				throw error;
+			}
+		};
+
+		return queue.tryAcquire(claim) ? run() : queue.acquire(claim, 'statement').then(run);
+	}) as QueryRunner['query'];
 
 	return runner;
 }
