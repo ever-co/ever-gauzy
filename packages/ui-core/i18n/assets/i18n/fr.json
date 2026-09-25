@@ -2709,7 +2709,9 @@
 		"ADDRESS_2": "Adresse 2",
 		"MEMBERS": "Membres",
 		"BUDGET": "Budget",
-		"PHOTO_HINT": "Cliquez ou déposez une image pour la téléverser"
+		"PHOTO_HINT": "Cliquez ou déposez une image pour la téléverser",
+		"SEARCH_EMPLOYEES": "Rechercher des employés par nom ou e-mail",
+		"NO_MEMBERS": "Aucun membre ajouté pour le moment"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Langues",

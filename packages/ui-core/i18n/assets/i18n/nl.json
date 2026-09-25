@@ -2714,7 +2714,9 @@
 		"ADDRESS_2": "Adres 2",
 		"MEMBERS": "Leden",
 		"BUDGET": "Budget",
-		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden"
+		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden",
+		"SEARCH_EMPLOYEES": "Zoek medewerkers op naam of e-mail",
+		"NO_MEMBERS": "Nog geen leden toegevoegd"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",

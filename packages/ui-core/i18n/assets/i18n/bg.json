@@ -2773,7 +2773,9 @@
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
 		"BUDGET": "Budget",
-		"PHOTO_HINT": "Щракнете или пуснете изображение за качване"
+		"PHOTO_HINT": "Щракнете или пуснете изображение за качване",
+		"SEARCH_EMPLOYEES": "Търсете служители по име или имейл",
+		"NO_MEMBERS": "Все още няма добавени членове"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

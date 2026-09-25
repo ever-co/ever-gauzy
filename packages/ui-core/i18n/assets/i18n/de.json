@@ -2710,7 +2710,9 @@
 		"ADDRESS_2": "Adresse 2",
 		"MEMBERS": "Mitglieder",
 		"BUDGET": "Haushalt",
-		"PHOTO_HINT": "Klicken oder Bild hierher ziehen, um es hochzuladen"
+		"PHOTO_HINT": "Klicken oder Bild hierher ziehen, um es hochzuladen",
+		"SEARCH_EMPLOYEES": "Mitarbeiter nach Name oder E-Mail suchen",
+		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Sprachen",

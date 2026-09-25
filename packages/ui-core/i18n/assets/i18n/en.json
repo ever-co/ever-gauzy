@@ -3246,7 +3246,9 @@
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
 		"BUDGET": "Budget",
-		"PHOTO_HINT": "Click or drop an image to upload"
+		"PHOTO_HINT": "Click or drop an image to upload",
+		"SEARCH_EMPLOYEES": "Search employees by name or email",
+		"NO_MEMBERS": "No members added yet"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

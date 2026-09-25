@@ -2739,7 +2739,9 @@
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
 		"BUDGET": "Budget",
-		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה"
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

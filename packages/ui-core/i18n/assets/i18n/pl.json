@@ -2713,7 +2713,9 @@
 		"ADDRESS_2": "Adres drugiego miejsca pobytu",
 		"MEMBERS": "Członkowie",
 		"BUDGET": "Budżet",
-		"PHOTO_HINT": "Kliknij lub upuść obraz, aby go przesłać"
+		"PHOTO_HINT": "Kliknij lub upuść obraz, aby go przesłać",
+		"SEARCH_EMPLOYEES": "Szukaj pracowników po imieniu lub e-mailu",
+		"NO_MEMBERS": "Nie dodano jeszcze członków"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Języki",
