@@ -110,11 +110,11 @@ import {
  * **The window is translated rather than handed over.** The kernel's list methods state a page as a
  * 1-based page number and a size, while the connection protocol states a row offset and a size; the two
  * are not the same number, and a resolver that passed one for the other would answer the rows `skip` pages
- * in and look like it had paged correctly. Each field therefore asks its service for the one page that
- * ends where the caller's window ends — bounded by that window, not by the table — and slices the window
- * out of it. Asking for the first page and slicing that instead would answer ten rows whatever the caller
- * asked for, because ten is the store's default page size, and would report ten as the size of the whole
- * collection: a client would read a paged surface as a complete one.
+ * in and look like it had paged correctly. Each field therefore asks its service for the pages the caller's
+ * window spans — one, or two when the window starts part-way into a page, each at the window's own size —
+ * and slices the window out of them. Asking for the first page and slicing that instead would answer ten
+ * rows whatever the caller asked for, because ten is the store's default page size, and would report ten
+ * as the size of the whole collection: a client would read a paged surface as a complete one.
  *
  * **Every list field offers the soft-delete visibility its route offers.** Each REST list route reads
  * through `BaseQueryDTO`, so its caller can ask for the rows a tenant retired; the six fields here state
@@ -148,12 +148,29 @@ export class SellerEntityResolver {
 	 * request naming a deep offset would turn into a scan of the table, and the count it reports would still
 	 * be right, so nothing would look wrong.
 	 *
+	 * **A window that does not start on a page boundary spans two pages, and both are read at the page size
+	 * the page number was computed in.** The page number means "rows `take × (n − 1)` onwards" only for the
+	 * `take` it was computed with. Asking for page `n` at *twice* that size — the shortcut this used to take
+	 * — moves the page to rows `2·take × (n − 1)` onwards: for `skip = 30, take = 20` it read rows 40–79 and
+	 * answered rows 50–69 as rows 30–49, silently skipping twenty rows. Only a window inside the first page
+	 * happened to come out right, which is the only one the earlier specs walked. The two pages are therefore
+	 * read separately with the same `take` and joined, and the second read is skipped when the first page
+	 * already reaches the end of the set, because there is nothing after it to read.
+	 *
+	 * **An empty window is answered without a page read.** A backward walk from the first row
+	 * (`before: <offset 0>`) resolves to `take: 0`, because nothing lies before the cursor. There is no page
+	 * number for it — `skip / 0` is `NaN` at offset zero — and a zero size is not one the list read can be
+	 * handed either: `paginate` reads a zero `take` as "not stated", which is ten rows on the TypeORM branch
+	 * and every row of the filtered set on the MikroORM one, so the old path issued an unbounded read only to
+	 * slice it down to nothing. The connection still owes the caller the count, so the set is asked for the
+	 * smallest page there is — one row, which is dropped — and the answer is the empty page with that total.
+	 *
 	 * The soft-delete flag rides in the same options object as the window, because that object is what the
 	 * read forwards into `paginate`: a field that declared the argument and dropped it here would answer the
 	 * live rows however the caller asked, while the document said otherwise.
 	 *
 	 * @param skip The offset the page starts at.
-	 * @param take The page size.
+	 * @param take The page size; zero for the empty window before the first row.
 	 * @param read The page-numbered listing read.
 	 * @param withDeleted Whether retired rows are included, as the REST list route's own `withDeleted` is.
 	 * @returns The connection, with the count the listing itself reported rather than the size of the page.
@@ -164,17 +181,33 @@ export class SellerEntityResolver {
 		read: (window: { skip: number; take: number; withDeleted?: boolean }) => Promise<IPagination<T>>,
 		withDeleted?: boolean
 	): Promise<GraphqlConnection<T>> {
+		const visibility = withDeleted ? { withDeleted: true } : {};
+
+		if (take <= 0) {
+			const counted = await read({ skip: 1, take: 1, ...visibility });
+
+			return connectionFromOffsetPage({ items: [], total: counted.total }, skip, take);
+		}
+
 		const firstPage = Math.floor(skip / take) + 1;
 		// How far into that page the window starts, which is how many rows of it are not the caller's.
 		const leading = skip - (firstPage - 1) * take;
-		const listing = await read({
-			skip: firstPage,
-			take: leading > 0 ? take * 2 : take,
-			...(withDeleted ? { withDeleted: true } : {})
-		});
-		const window = paginateRows(listing.items, take, leading);
+		const listing = await read({ skip: firstPage, take, ...visibility });
+		let rows: T[] = listing.items ?? [];
 
-		return connectionFromOffsetPage({ items: window.items, total: listing.total }, skip);
+		// The window's tail lies on the next page when it starts part-way into this one, unless this page is
+		// already the last one the set has.
+		if (leading > 0 && firstPage * take < Number(listing.total ?? 0)) {
+			const next = await read({ skip: firstPage + 1, take, ...visibility });
+
+			rows = rows.concat(next.items ?? []);
+		}
+
+		const window = paginateRows(rows, take, leading);
+
+		// The page size is passed on so `hasNextPage` is decided against the depth ceiling the window was
+		// accepted under, rather than against however many rows this page happened to carry.
+		return connectionFromOffsetPage({ items: window.items, total: listing.total }, skip, take);
 	}
 
 	/** Lists seller accounts, one page at a time. */
@@ -875,11 +908,16 @@ export class SellerEntityResolver {
 	}
 
 	/**
-	 * Amends what a payout states about itself: its note and its provider references.
+	 * Amends what a payout states about itself: its note, its provider references, its period and schedule
+	 * and its metadata.
 	 *
 	 * The mutation mirrors `PUT /seller-payouts/:id`, which takes `SELLER_PAYOUTS_CREATE` and not the
 	 * approve grant beside it — preparing a payout is creating one, while approving it is what moves
-	 * money — so a caller that may build a payout is exactly the caller that may annotate one.
+	 * money — so a caller that may build a payout is exactly the caller that may annotate one, **and no
+	 * more**. The input used to carry `status`, `feeAmount` and `transactionIds`, so that caller could mark
+	 * a draft payout `PAID` without the approver or the required-idempotent `seller.payout.pay`, or move a
+	 * paid one back to `APPROVED`. Those members are gone from `UpdateSellerPayoutInput` as they are from
+	 * the route's DTO, and `SellerPayoutService.update` refuses them whichever surface names them.
 	 *
 	 * **Two calls, because the write answers a count.** The route hands the service `update(id, entity)`
 	 * and passes its return on, which on this platform's ORM path is the driver's `UpdateResult` rather
@@ -1148,13 +1186,18 @@ export class SellerEntityResolver {
 	}
 
 	/**
-	 * Amends the fields a settlement may still move: its status and what reconciliation found.
+	 * Amends what a settlement states about itself: its period, its report and external references, the
+	 * holder it pays, its note and its metadata.
 	 *
 	 * The mutation mirrors `PUT /seller-settlements/:id`, which takes `SELLER_SETTLEMENTS_EDIT` — the same
-	 * grant the recording, reconciling, closing and disputing routes state, because a settlement is a
-	 * transcription of a provider's report and editing one is how the platform corrects its own reading of
-	 * it. The no-seller-scope note the payout update field carries applies here for the same reason: the
-	 * route hands the write no scope, so neither does the field.
+	 * grant the recording, reconciling, closing and disputing routes state. The grant is the same, the
+	 * checks are not: reconciling compares against the ledger, closing is final and disputing needs a
+	 * reason, and an edit that could write `status` or the figures skipped all three — closing a settlement
+	 * without the close, or stating a net its own gross, commission and fee do not produce. Those members
+	 * are gone from `UpdateSellerSettlementInput` as they are from the route's DTO, and
+	 * `SellerSettlementService.update` refuses them whichever surface names them. The no-seller-scope note
+	 * the payout update field carries applies here for the same reason: the route hands the write no scope,
+	 * so neither does the field.
 	 *
 	 * **Two calls, because the write answers a count.** The route passes the service's own return on,
 	 * which is the driver's `UpdateResult` rather than the row; the row is therefore read back with the

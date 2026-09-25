@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, In, IsNull, Not } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Not, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	CurrencyCode,
 	DecimalString,
@@ -24,9 +25,52 @@ import { TypeOrmSellerTransactionRepository } from '../seller-transaction/reposi
 import { Seller } from '../seller/seller.entity';
 import { TypeOrmSellerRepository } from '../seller/repository/type-orm-seller.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { assertNoLifecycleMembers } from '../lifecycle-members';
 
 /** The sequence key payout numbers are drawn from. */
 const SELLER_PAYOUT_SEQUENCE = 'SELLER_PAYOUT';
+
+/**
+ * The members of a payout only its own operations write, which an edit therefore refuses.
+ *
+ * - `status` and the instants and outcomes that record its moves (`approvedAt`, `approvedByUserId`,
+ *   `paidAt`, `failedAt`, `canceledAt`, `providerTransferId`, `payoutAccountReference`, `failureCode`,
+ *   `failureReason`) — moved by approve, pay, cancel and retry, each under its own grant; approving and
+ *   executing take `SELLER_PAYOUTS_APPROVE`, which the edit's `SELLER_PAYOUTS_CREATE` is deliberately not;
+ * - the figures (`netAmount`, `feeAmount`, `reserveAmount`, `paidAmount`, `settlementAmount`,
+ *   `settlementCurrency`, `fxRate`, `fxCapturedAt`) — the sum of the lines, the reserve the run computed and
+ *   what the provider reported, never an assertion;
+ * - what the payout was built from (`sellerId`, `currency`, `currencyDecimals`, `number`, `payoutMode`,
+ *   `isFinal`, `transactionIds`) — fixed at creation, because a payout is derived from one seller's ledger
+ *   in one currency and nothing else.
+ */
+export const SELLER_PAYOUT_LIFECYCLE_MEMBERS: readonly string[] = [
+	'status',
+	'approvedAt',
+	'approvedByUserId',
+	'paidAt',
+	'failedAt',
+	'canceledAt',
+	'providerTransferId',
+	'payoutAccountReference',
+	'failureCode',
+	'failureReason',
+	'netAmount',
+	'feeAmount',
+	'reserveAmount',
+	'paidAmount',
+	'settlementAmount',
+	'settlementCurrency',
+	'fxRate',
+	'fxCapturedAt',
+	'sellerId',
+	'currency',
+	'currencyDecimals',
+	'number',
+	'payoutMode',
+	'isFinal',
+	'transactionIds'
+];
 
 /**
  * Builds, approves and executes payouts.
@@ -271,6 +315,37 @@ export class SellerPayoutService extends TenantAwareCrudService<SellerPayout> {
 		}
 
 		return results;
+	}
+
+	/**
+	 * Writes what a payout states about itself: its note, its provider references, its period and schedule
+	 * and its metadata — and nothing its lifecycle owns.
+	 *
+	 * This is the write behind `PUT /seller-payouts/:id` and `updateSellerPayout`, both gated by
+	 * `SELLER_PAYOUTS_CREATE`. The inherited update writes whatever partial it is handed, and both surfaces
+	 * used to hand it `status`, `feeAmount` and `transactionIds`: a caller who may only prepare a payout set
+	 * a `DRAFT` one to `PAID` without the approver or the required-idempotent `seller.payout.pay`, or moved a
+	 * `PAID` one back to `APPROVED` so it could be paid again. The members in
+	 * {@link SELLER_PAYOUT_LIFECYCLE_MEMBERS} are refused here, whichever surface or caller names them; the
+	 * rest of the write — its tenant scoping included — is the base's.
+	 *
+	 * @param id The payout id, or the conditions it must satisfy.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, or the updated row, whichever the ORM answers.
+	 * @throws BadRequestException when the partial names a member only the payout's operations write.
+	 */
+	public async update(
+		id: string | FindOptionsWhere<SellerPayout>,
+		partialEntity: QueryDeepPartialEntity<SellerPayout>
+	): Promise<SellerPayout | UpdateResult> {
+		assertNoLifecycleMembers(
+			partialEntity,
+			SELLER_PAYOUT_LIFECYCLE_MEMBERS,
+			'SELLER_PAYOUT_FIELD_NOT_EDITABLE',
+			'a payout is approved, paid, cancelled and retried through its own operations, and its figures are derived from its lines'
+		);
+
+		return super.update(id, partialEntity);
 	}
 
 	/**

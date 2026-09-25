@@ -847,21 +847,20 @@ export interface IUpdateSellerOfferingInput {
 }
 
 /**
- * What a caller supplies to amend a payout.
+ * What a caller supplies to amend a payout: what the payout states about itself, and nothing its
+ * lifecycle owns.
  *
  * The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it
- * covers, so a caller chooses which rows are paid and never how much. `sellerId` and `currency` are
- * absent because `UpdateSellerPayoutDTO` omits them — both are fixed once the payout exists — and the
- * lifecycle moves through the approve, pay, cancel and retry fields rather than through this input.
+ * covers, so a caller chooses which rows are paid and never how much. `status` is absent because the
+ * lifecycle moves through the approve, pay, cancel and retry fields, each under its own grant; `feeAmount`
+ * because it is what the provider reported at payment; `transactionIds` because the lines are what the
+ * payout was built from; and `payoutMode`, `sellerId` and `currency` because each is fixed once the payout
+ * exists. `UpdateSellerPayoutDTO` omits the same members, and `SellerPayoutService.update` refuses them.
  */
 export interface IUpdateSellerPayoutInput {
-	status?: SellerPayoutStatus;
-	payoutMode?: SellerPayoutMode;
-	transactionIds?: string[];
 	periodStart?: Date;
 	periodEnd?: Date;
 	scheduledAt?: Date;
-	feeAmount?: DecimalString;
 	providerKey?: string;
 	providerReference?: string;
 	note?: string;
@@ -893,17 +892,14 @@ export interface IRunSellerPayoutInput {
  *
  * The provider, the seller and the currency are absent because `UpdateSellerSettlementDTO` omits them:
  * a settlement is a transcription of what one provider reported about one seller in one currency, and
- * none of the three can change after the fact. `discrepancyAmount` is absent for the reason its own DTO
- * gives — it is what the reconciliation computes, and a caller that could set it could silence the one
- * number the report exists to surface.
+ * none of the three can change after the fact. `status` is absent because a settlement is reconciled,
+ * closed and disputed through its own fields, and the figures because they are the provider's report as
+ * recorded, with the net derived from them. `discrepancyAmount` is absent for the reason its own DTO gives
+ * — it is what the reconciliation computes, and a caller that could set it could silence the one number
+ * the report exists to surface. `SellerSettlementService.update` refuses the same members.
  */
 export interface IUpdateSellerSettlementInput {
 	payoutAccountHolderId?: string;
-	status?: SellerSettlementStatus;
-	grossAmount?: DecimalString;
-	commissionAmount?: DecimalString;
-	feeAmount?: DecimalString;
-	netAmount?: DecimalString;
 	periodStart?: Date;
 	periodEnd?: Date;
 	providerReportId?: string;

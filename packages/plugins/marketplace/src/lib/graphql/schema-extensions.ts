@@ -521,19 +521,14 @@ export const schemaExtensions = gql`
 	}
 
 	"""
-	What a caller supplies to amend a payout.
+	What a caller supplies to amend a payout: what the payout states about itself, and nothing its lifecycle owns.
 
-	The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it covers, so a caller chooses which rows are paid and never how much. \`sellerId\` and \`currency\` are absent because \`UpdateSellerPayoutDTO\` omits them — both are fixed once the payout exists — and the lifecycle moves through the approve, pay, cancel and retry fields rather than through this input.
+	The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it covers, so a caller chooses which rows are paid and never how much. \`status\` is absent because the lifecycle moves through the approve, pay, cancel and retry fields — each under its own grant — rather than through this input; \`feeAmount\` because it is what the provider reported when the payout was paid; \`transactionIds\` because the lines are what the payout was built from; and \`payoutMode\`, \`sellerId\` and \`currency\` because each is fixed once the payout exists. \`UpdateSellerPayoutDTO\` omits the same members, and the service refuses them whichever way they arrive.
 	"""
 	input UpdateSellerPayoutInput {
-		status: SellerPayoutStatus
-		payoutMode: SellerPayoutMode
-		"The ledger rows this payout covers; stated only while the payout is still a draft."
-		transactionIds: [String!]
 		periodStart: DateTime
 		periodEnd: DateTime
 		scheduledAt: DateTime
-		feeAmount: Decimal
 		providerKey: String
 		providerReference: String
 		note: String
@@ -560,15 +555,10 @@ export const schemaExtensions = gql`
 	"""
 	What a caller supplies to amend a settlement.
 
-	The provider, the seller and the currency are absent because \`UpdateSellerSettlementDTO\` omits them: a settlement transcribes what one provider reported about one seller in one currency, and none of the three can change after the fact. \`discrepancyAmount\` is absent for the reason that DTO gives — it is what the reconciliation computes, and a caller that could set it could silence the one number the report exists to surface.
+	The provider, the seller and the currency are absent because \`UpdateSellerSettlementDTO\` omits them: a settlement transcribes what one provider reported about one seller in one currency, and none of the three can change after the fact. \`status\` is absent because a settlement is reconciled, closed and disputed through its own fields, each with its own checks. The figures are absent because they are the provider's report as recorded, with the net derived from them rather than stated beside them, and \`discrepancyAmount\` is what the reconciliation computes — a caller that could set it could silence the one number the report exists to surface. The service refuses the same members whichever way they arrive.
 	"""
 	input UpdateSellerSettlementInput {
 		payoutAccountHolderId: ID
-		status: SellerSettlementStatus
-		grossAmount: Decimal
-		commissionAmount: Decimal
-		feeAmount: Decimal
-		netAmount: Decimal
 		periodStart: DateTime
 		periodEnd: DateTime
 		providerReportId: String
@@ -1198,7 +1188,7 @@ export const schemaExtensions = gql`
 			idempotencyKey: String
 		): SellerPayout!
 		"""
-		Amends what a payout states about itself: its note and its provider references.
+		Amends what a payout states about itself: its note, its provider references, its period and schedule and its metadata. Its status and its figures are not in the input and are refused by the service: they move through the approve, pay, cancel and retry fields.
 
 		Mirrors \`PUT /seller-payouts/:id\`, which takes \`SELLER_PAYOUTS_CREATE\` and not the approve grant beside it — preparing a payout is creating one, while approving it is what moves money. The route threads no seller scope into this write, so neither does the field: a divergence in either direction would be one protocol serving a caller the other refused.
 		"""
@@ -1290,7 +1280,7 @@ export const schemaExtensions = gql`
 			idempotencyKey: String
 		): SellerSettlement!
 		"""
-		Amends the fields a settlement may still move: its status and what reconciliation found.
+		Amends what a settlement states about itself: its period, its report and external references, the holder it pays, its note and its metadata. Its status and its figures are not in the input and are refused by the service: they move through the reconcile, close and dispute fields.
 
 		Mirrors \`PUT /seller-settlements/:id\`, which takes \`SELLER_SETTLEMENTS_EDIT\`. The route threads no seller scope into this write, so neither does the field.
 		"""

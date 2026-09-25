@@ -28,6 +28,24 @@ jest.mock('@gauzy/core', () => {
 
 			return { items, total };
 		}
+
+		/**
+		 * The base's generic write, as the edit routes reach it: find the row, write the partial onto it as
+		 * given, answer the driver's envelope. It filters nothing, which is the behaviour the service's own
+		 * `update` override exists to put a refusal in front of.
+		 */
+		async update(id: any, partial: any): Promise<any> {
+			const row = await this.typeOrmRepository.findOne({ where: typeof id === 'object' ? id : { id } });
+
+			if (!row) {
+				throw new Error('The requested record was not found');
+			}
+
+			// An `undefined` member is left out of the statement, as the ORM leaves it out of the `SET`.
+			Object.assign(row, Object.fromEntries(Object.entries(partial).filter(([, value]) => value !== undefined)));
+
+			return { affected: 1 };
+		}
 	}
 
 	return {
@@ -519,5 +537,67 @@ describe('SellerSettlementService — what a scoped caller may read (MK-22)', ()
 		const fixture = settlementFixture({ settlements: [settlementRow('s1', { organizationId: 'another-org' })] });
 
 		await expect(fixture.service.getSettlement('s1')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+/**
+ * The edit (`PUT /seller-settlements/:id`, `updateSellerSettlement`).
+ *
+ * Both surfaces reached the inherited update with a body that carried `status` and the four figures, and
+ * the inherited update writes what it is handed: a settlement could be set `CLOSED` without the close,
+ * `RECONCILED` without the comparison, or given a net its own gross, commission and fee do not produce.
+ * The service now refuses every member only the settlement's own operations write, before anything is
+ * written.
+ */
+describe('SellerSettlementService — what an edit may not move (MK-25)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to close a settlement through an edit, and writes nothing', async () => {
+		const fixture = settlementFixture({ settlements: [settlementRow('s1')] });
+
+		await expect(
+			fixture.service.update('s1', { status: SellerSettlementStatus.CLOSED, netAmount: '1.000000' } as any)
+		).rejects.toThrow(/SELLER_SETTLEMENT_FIELD_NOT_EDITABLE: status, netAmount are not written by an edit/);
+
+		expect(fixture.store('s1')).toMatchObject({ status: SellerSettlementStatus.OPEN, netAmount: '98.000000' });
+		expect((fixture.store('s1') as Row)?.closedAt).toBeUndefined();
+	});
+
+	it.each([
+		['the reported gross', { grossAmount: '1.000000' }],
+		['the commission', { commissionAmount: '0.000000' }],
+		['the provider fee', { feeAmount: '0.000000' }],
+		['the discrepancy the reconciliation computed', { discrepancyAmount: '0.000000' }],
+		['the reconciliation stamp', { reconciledAt: new Date('2026-02-01T00:00:00.000Z') }],
+		['the provider it was reported by', { providerKey: 'another-provider' }],
+		['the payout it settles', { payoutId: 'p9' }]
+	])('refuses %s', async (_label, partial) => {
+		const fixture = settlementFixture({ settlements: [settlementRow('s1')] });
+		const before = { ...fixture.store('s1') };
+
+		await expect(fixture.service.update('s1', partial as any)).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(fixture.store('s1')).toEqual(before);
+	});
+
+	it('writes what the settlement states about itself', async () => {
+		const fixture = settlementFixture({ settlements: [settlementRow('s1')] });
+
+		await fixture.service.update('s1', {
+			providerReportId: 'report-7',
+			note: 'awaiting the provider report',
+			status: undefined
+		} as any);
+
+		expect(fixture.store('s1')).toMatchObject({
+			status: SellerSettlementStatus.OPEN,
+			providerReportId: 'report-7',
+			note: 'awaiting the provider report'
+		});
 	});
 });

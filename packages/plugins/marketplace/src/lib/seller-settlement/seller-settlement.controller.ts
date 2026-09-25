@@ -93,7 +93,13 @@ export class SellerSettlementController extends CrudController<SellerSettlement>
 	}
 
 	/**
-	 * Updates the fields a settlement may still move: its status and what reconciliation found.
+	 * Updates what a settlement states about itself: its period, its report and external references, the
+	 * holder it pays, its note and its metadata.
+	 *
+	 * Its status and its figures are not in the body: the status moves through the reconcile, close and
+	 * dispute routes below, each with its own checks, and the figures are the provider's report as recorded.
+	 * `UpdateSellerSettlementDTO` omits them and the service refuses them, so an edit cannot close a
+	 * settlement without the close or state a net its own figures do not produce.
 	 *
 	 * The return is the platform's own: the service's `update` answers either the row or the result of a
 	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.

@@ -28,6 +28,24 @@ jest.mock('@gauzy/core', () => {
 
 			return { items, total };
 		}
+
+		/**
+		 * The base's generic write, as the edit routes reach it: find the row, write the partial onto it as
+		 * given, answer the driver's envelope. It filters nothing, which is the behaviour the service's own
+		 * `update` override exists to put a refusal in front of.
+		 */
+		async update(id: any, partial: any): Promise<any> {
+			const row = await this.typeOrmRepository.findOne({ where: typeof id === 'object' ? id : { id } });
+
+			if (!row) {
+				throw new Error('The requested record was not found');
+			}
+
+			// An `undefined` member is left out of the statement, as the ORM leaves it out of the `SET`.
+			Object.assign(row, Object.fromEntries(Object.entries(partial).filter(([, value]) => value !== undefined)));
+
+			return { affected: 1 };
+		}
 	}
 
 	return {
@@ -1023,5 +1041,97 @@ describe('SellerPayoutService — reading payouts in a seller’s scope (MK-22)'
 		const fixture = payoutFixture({ payouts: [payoutRow('p1', { organizationId: 'another-org' })] });
 
 		await expect(fixture.service.getPayout('p1')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+/**
+ * The edit (`PUT /seller-payouts/:id`, `updateSellerPayout`), gated by `SELLER_PAYOUTS_CREATE`.
+ *
+ * Both surfaces reached the inherited update with a body that carried `status`, `feeAmount` and
+ * `transactionIds`, and the inherited update writes what it is handed: a caller who may only prepare a
+ * payout — not approve one — could set a draft payout `PAID` without the approver or the
+ * required-idempotent `seller.payout.pay`, or move a paid one back to `APPROVED` so it could be paid again.
+ * The service now refuses every member only the payout's own operations write, before anything is written.
+ */
+describe('SellerPayoutService — what an edit may not move (MK-13)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to mark a draft payout PAID through an edit, and writes nothing', async () => {
+		const fixture = payoutFixture({ payouts: [payoutRow('p1', { status: SellerPayoutStatus.DRAFT })] });
+
+		await expect(fixture.service.update('p1', { status: SellerPayoutStatus.PAID } as any)).rejects.toThrow(
+			/SELLER_PAYOUT_FIELD_NOT_EDITABLE: status is not written by an edit/
+		);
+
+		expect(fixture.store('p1')).toMatchObject({ status: SellerPayoutStatus.DRAFT });
+	});
+
+	it('refuses to move a paid payout back to APPROVED, so it cannot be paid a second time', async () => {
+		const fixture = payoutFixture({
+			payouts: [payoutRow('p1', { status: SellerPayoutStatus.PAID, paidAt: new Date('2026-02-01T00:00:00.000Z') })]
+		});
+
+		await expect(
+			fixture.service.update('p1', { status: SellerPayoutStatus.APPROVED, paidAt: null } as any)
+		).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(fixture.store('p1')).toMatchObject({ status: SellerPayoutStatus.PAID });
+		expect(fixture.store('p1')?.paidAt).toBeInstanceOf(Date);
+	});
+
+	it.each([
+		['the fee the provider reported', { feeAmount: '0.000000' }],
+		['the ledger rows the payout was built from', { transactionIds: ['t9'] }],
+		['the amount instructed to the provider', { paidAmount: '1000.000000' }],
+		['the payout mode snapshotted at creation', { payoutMode: 'MANUAL' }],
+		['the seller it pays', { sellerId: 'seller-2' }]
+	])('refuses %s', async (_label, partial) => {
+		const fixture = payoutFixture({ payouts: [payoutRow('p1', { status: SellerPayoutStatus.DRAFT })] });
+		const before = { ...fixture.store('p1') };
+
+		await expect(fixture.service.update('p1', partial as any)).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(fixture.store('p1')).toEqual(before);
+	});
+
+	it('refuses a lifecycle member stated as null, because nulling a derived figure is an edit of it', async () => {
+		const fixture = payoutFixture({ payouts: [payoutRow('p1')] });
+
+		await expect(fixture.service.update('p1', { feeAmount: null } as any)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+	});
+
+	it('names every refused member the body carried, so a client can correct the whole request at once', async () => {
+		const fixture = payoutFixture({ payouts: [payoutRow('p1')] });
+
+		await expect(
+			fixture.service.update('p1', { status: SellerPayoutStatus.PAID, feeAmount: '1.00', note: 'x' } as any)
+		).rejects.toThrow(/status, feeAmount are not written by an edit/);
+	});
+
+	it('writes what the payout states about itself', async () => {
+		const fixture = payoutFixture({ payouts: [payoutRow('p1', { status: SellerPayoutStatus.DRAFT })] });
+
+		await fixture.service.update('p1', {
+			note: 'operator override',
+			providerKey: 'acquirer',
+			providerReference: 'reference-1',
+			// A DTO instance spells an absent member as an own property holding `undefined`; that is "not
+			// stated", and it must not be read as naming the member.
+			status: undefined
+		} as any);
+
+		expect(fixture.store('p1')).toMatchObject({
+			status: SellerPayoutStatus.DRAFT,
+			note: 'operator override',
+			providerKey: 'acquirer',
+			providerReference: 'reference-1'
+		});
 	});
 });

@@ -200,6 +200,14 @@ import {
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { getPluginExtensions } from '@gauzy/plugin';
 import { BulkExecutor, IDEMPOTENT_METADATA_KEY, PermissionGuard, TenantPermissionGuard, VERSIONED_METADATA_KEY } from '@gauzy/core';
+// The cursor a client hands back, encoded by the kernel's own codec so a window is stated exactly as a client
+// that walked the connection would state it.
+import { encodeOffsetCursor } from '@gauzy/core/src/lib/api/graphql-connection';
+import { getMetadataStorage } from 'class-validator';
+import { UpdateSellerPayoutDTO } from '../seller-payout/dto/update-seller-payout.dto';
+import { UpdateSellerSettlementDTO } from '../seller-settlement/dto/update-seller-settlement.dto';
+import { SELLER_PAYOUT_LIFECYCLE_MEMBERS } from '../seller-payout/seller-payout.service';
+import { SELLER_SETTLEMENT_LIFECYCLE_MEMBERS } from '../seller-settlement/seller-settlement.service';
 import { MarketplaceModule } from '../marketplace.module';
 import { MarketplacePlugin } from '../marketplace.plugin';
 import { SellerOfferingController } from '../seller-offering/seller-offering.controller';
@@ -744,6 +752,67 @@ function listingResolver(calls: Array<{ field: string; options: any }>): any {
 	);
 }
 
+/** One read the paging double received: the method, the page number, the page size and the visibility. */
+interface IPagedRead {
+	field: string;
+	skip: number;
+	take: number;
+	withDeleted?: boolean;
+}
+
+/**
+ * The six list reads over a table of `total` numbered rows, paged the way the kernel pages them.
+ *
+ * Every list method of this package ends in `TenantAwareCrudService.paginate`, which reads `skip` as a
+ * one-based **page number** and computes the row offset as `take × (skip − 1)` from the `take` it was
+ * handed — on the TypeORM branch explicitly, and on the MikroORM branch through the parser's identical
+ * formula. The double applies exactly that formula, so a resolver that asks for a page number at one size
+ * while meaning another is answered the rows the database would answer it, not the rows it meant.
+ *
+ * @param total How many rows the table holds; row `n` is `{ id: 'row-n' }`.
+ * @param reads Where each read records the method it reached and the window it asked for.
+ * @returns A resolver over the paging doubles.
+ */
+function pagedResolver(total: number, reads: IPagedRead[]): any {
+	const rows = Array.from({ length: total }, (_, index) => ({ id: `row-${index}` }));
+	const page = (field: string) => async (options: { skip?: number; take?: number; withDeleted?: boolean }) => {
+		const take = options.take ?? 10;
+		const offset = options.skip ? take * (options.skip - 1) : 0;
+
+		reads.push({ field, skip: options.skip ?? 0, take, withDeleted: options.withDeleted });
+
+		return { items: rows.slice(offset, offset + take), total };
+	};
+
+	return new SellerEntityResolver(
+		{ listSellers: page('listSellers') } as any,
+		{ listOfferings: page('listOfferings') } as any,
+		{ listTransactions: page('listTransactions') } as any,
+		{ listPayouts: page('listPayouts') } as any,
+		{ listLines: page('listLines') } as any,
+		{ listSettlements: page('listSettlements') } as any,
+		new BulkExecutor({ assertCanSee: () => undefined, canSee: () => true } as never)
+	);
+}
+
+/**
+ * The six list fields, each called with one page selection the way GraphQL calls it.
+ *
+ * `sellerPayoutLines` takes the payout before the page, which is the only difference between them.
+ */
+const LIST_FIELDS: ReadonlyArray<{ field: string; call: (resolver: any, page: unknown) => Promise<any> }> = [
+	{ field: 'sellers', call: (resolver, page) => resolver.sellers(page) },
+	{ field: 'sellerOfferings', call: (resolver, page) => resolver.sellerOfferings(page) },
+	{ field: 'sellerTransactions', call: (resolver, page) => resolver.sellerTransactions(page) },
+	{ field: 'sellerPayouts', call: (resolver, page) => resolver.sellerPayouts(page) },
+	{ field: 'sellerPayoutLines', call: (resolver, page) => resolver.sellerPayoutLines('payout-1', page) },
+	{ field: 'sellerSettlements', call: (resolver, page) => resolver.sellerSettlements(page) }
+];
+
+/** The ids of rows `from` to `to`, inclusive, as the paging double numbers them. */
+const rowIds = (from: number, to: number): string[] =>
+	Array.from({ length: to - from + 1 }, (_, index) => `row-${from + index}`);
+
 /**
  * What a hard deletion answers, in the shape its own type declares.
  *
@@ -856,7 +925,9 @@ const RUN_PAYOUT: Record<string, unknown> = {
 
 /** The body a caller supplies to amend a settlement. */
 const UPDATE_SETTLEMENT: Record<string, unknown> = {
-	status: SellerSettlementStatus.OPEN,
+	// Not `status`, which this fixture used to carry: a settlement's status moves through reconcile, close
+	// and dispute, and neither the input nor the route's DTO declares it any more.
+	providerReportId: 'report-7',
 	note: 'awaiting the provider report'
 };
 
@@ -1901,6 +1972,161 @@ describe('the marketplace GraphQL contribution', () => {
 		});
 	});
 
+	/**
+	 * A window that does not start on a page boundary.
+	 *
+	 * The field used to ask for page `floor(skip / take) + 1` at *twice* the page size when the window
+	 * started part-way into it. The page number is measured in the size it is read at, so the read landed
+	 * `2·take × page` rows in: `first: 20, after: <offset 29>` read rows 40–79 and answered rows 50–69 as
+	 * rows 30–49. Only a window inside the first page came out right, and that was the only one walked.
+	 */
+	describe('the connection window, when it does not start on a page boundary', () => {
+		it.each(LIST_FIELDS.map(({ field }) => field))(
+			'answers %s with rows 30–49 for first: 20 after the row at offset 29',
+			async (field) => {
+				const reads: IPagedRead[] = [];
+				const { call } = LIST_FIELDS.find((entry) => entry.field === field)!;
+
+				const connection = await call(pagedResolver(100, reads), { first: 20, after: encodeOffsetCursor(29) });
+
+				expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(30, 49));
+				expect(connection.totalCount).toBe(100);
+				// The cursors are the rows' own offsets, so a client that walks on from here resumes at row 50.
+				expect(connection.pageInfo.startCursor).toBe(encodeOffsetCursor(30));
+				expect(connection.pageInfo.endCursor).toBe(encodeOffsetCursor(49));
+				// Two pages at the window's own size — never one page at a size the number was not computed in.
+				expect(reads.map(({ skip, take }) => ({ skip, take }))).toEqual([
+					{ skip: 2, take: 20 },
+					{ skip: 3, take: 20 }
+				]);
+			}
+		);
+
+		it.each(LIST_FIELDS.map(({ field }) => field))(
+			'answers %s with rows 22–24 for last: 3 before the row at offset 25',
+			async (field) => {
+				const reads: IPagedRead[] = [];
+				const { call } = LIST_FIELDS.find((entry) => entry.field === field)!;
+
+				const connection = await call(pagedResolver(100, reads), { last: 3, before: encodeOffsetCursor(25) });
+
+				expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(22, 24));
+				expect(connection.pageInfo.hasPreviousPage).toBe(true);
+				expect(reads.map(({ skip, take }) => ({ skip, take }))).toEqual([
+					{ skip: 8, take: 3 },
+					{ skip: 9, take: 3 }
+				]);
+			}
+		);
+
+		it('reads one page when the window starts on a boundary', async () => {
+			const reads: IPagedRead[] = [];
+
+			const connection = await pagedResolver(100, reads).sellerPayouts({ first: 20, after: encodeOffsetCursor(19) });
+
+			expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(20, 39));
+			expect(reads).toEqual([{ field: 'listPayouts', skip: 2, take: 20 }]);
+		});
+
+		it('answers a window that starts inside the first page from the first two pages', async () => {
+			// The one misaligned window the old shortcut happened to answer correctly, kept as a control.
+			const reads: IPagedRead[] = [];
+
+			const connection = await pagedResolver(100, reads).sellerSettlements({ first: 20, after: encodeOffsetCursor(9) });
+
+			expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(10, 29));
+			expect(reads.map(({ skip, take }) => ({ skip, take }))).toEqual([
+				{ skip: 1, take: 20 },
+				{ skip: 2, take: 20 }
+			]);
+		});
+
+		it('does not read past the last page when the window’s tail runs off the end of the set', async () => {
+			const reads: IPagedRead[] = [];
+
+			const connection = await pagedResolver(35, reads).sellerTransactions({
+				first: 20,
+				after: encodeOffsetCursor(24)
+			});
+
+			expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(25, 34));
+			expect(connection.pageInfo.hasNextPage).toBe(false);
+			expect(reads).toEqual([{ field: 'listTransactions', skip: 2, take: 20 }]);
+		});
+
+		it('states the soft-delete visibility on both reads of a two-page window', async () => {
+			// A second read that dropped the flag would answer the live rows for the window's tail and the
+			// retired ones for its head — a page stitched from two different sets.
+			const reads: IPagedRead[] = [];
+
+			await pagedResolver(100, reads).sellerOfferings({ first: 20, after: encodeOffsetCursor(29) }, true);
+
+			expect(reads).toEqual([
+				{ field: 'listOfferings', skip: 2, take: 20, withDeleted: true },
+				{ field: 'listOfferings', skip: 3, take: 20, withDeleted: true }
+			]);
+		});
+	});
+
+	/**
+	 * The empty window: a backward walk from the first row.
+	 *
+	 * `last: n, before: <offset 0>` resolves to `take: 0`, because nothing lies before the cursor. The field
+	 * used to divide by that size — `floor(0 / 0) + 1` is `NaN` — and hand the list read `{ skip: NaN,
+	 * take: 0 }`; `paginate` reads a zero `take` as "not stated", which on the MikroORM branch is a read of
+	 * every row of the filtered set, sliced to nothing afterwards. The answer is now the empty page with the
+	 * count, and the count is taken with the smallest page there is.
+	 */
+	describe('the connection window, when it is empty', () => {
+		it.each(LIST_FIELDS.map(({ field }) => field))(
+			'answers %s with no rows and the whole count for last: 3 before the first row',
+			async (field) => {
+				const reads: IPagedRead[] = [];
+				const { call } = LIST_FIELDS.find((entry) => entry.field === field)!;
+
+				const connection = await call(pagedResolver(100, reads), { last: 3, before: encodeOffsetCursor(0) });
+
+				expect(connection.nodes).toEqual([]);
+				expect(connection.edges).toEqual([]);
+				expect(connection.totalCount).toBe(100);
+				expect(connection.pageInfo).toMatchObject({ hasPreviousPage: false, startCursor: null, endCursor: null });
+				// One bounded read for the count — never a page number computed by dividing by zero, and never a
+				// zero size the list read would take as "every row".
+				expect(reads.map(({ skip, take }) => ({ skip, take }))).toEqual([{ skip: 1, take: 1 }]);
+			}
+		);
+
+		it('states the soft-delete visibility on the read that counts the empty window', async () => {
+			// The count must be of the set the caller asked about: with retired rows included when it asked
+			// for them, and not otherwise.
+			const reads: IPagedRead[] = [];
+
+			const connection = await pagedResolver(7, reads).sellerOfferings({ last: 5, before: encodeOffsetCursor(0) }, true);
+
+			expect(connection.totalCount).toBe(7);
+			expect(reads).toEqual([{ field: 'listOfferings', skip: 1, take: 1, withDeleted: true }]);
+		});
+
+		it('answers an empty set with a zero count', async () => {
+			const reads: IPagedRead[] = [];
+
+			const connection = await pagedResolver(0, reads).sellerPayouts({ last: 3, before: encodeOffsetCursor(0) });
+
+			expect(connection).toMatchObject({ nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } });
+		});
+
+		it('still answers a backward window that the start of the list only shortens from one page', async () => {
+			// `last: 5, before: <offset 3>` is rows 0–2: the size shrinks to what lies before the cursor, and
+			// that is an ordinary window, not an empty one.
+			const reads: IPagedRead[] = [];
+
+			const connection = await pagedResolver(100, reads).sellerSettlements({ last: 5, before: encodeOffsetCursor(3) });
+
+			expect(connection.nodes.map((node: { id: string }) => node.id)).toEqual(rowIds(0, 2));
+			expect(reads).toEqual([{ field: 'listSettlements', skip: 1, take: 3 }]);
+		});
+	});
+
 	/* --------------------------------------------------------------------------------------------
 	 * The seller writes
 	 * ------------------------------------------------------------------------------------------ */
@@ -2209,6 +2435,74 @@ describe('the marketplace GraphQL contribution', () => {
 				expect(returned).toBe(LIFECYCLE_ROWS[entry.answers]);
 			}
 		);
+	});
+
+	/**
+	 * What an edit grant may not move.
+	 *
+	 * `updateSellerPayout` (under `SELLER_PAYOUTS_CREATE`) and `updateSellerSettlement` used to declare
+	 * `status` and the figures in their inputs and hand them to the generic update, so a caller who may only
+	 * prepare a payout could mark it `PAID` without the approver or the required-idempotent pay, and an edit
+	 * could close a settlement without the close. The inputs and the route DTOs now declare the same members
+	 * as each other and none of the ones the lifecycle owns; the service refusal behind them is pinned in
+	 * the two services' own specs.
+	 */
+	describe('the payout and settlement edits — what an edit grant may not move', () => {
+		/** The members an input declares, read off the composed schema. */
+		const inputMembers = (name: string): string[] =>
+			Object.keys((COMPOSED.getType(name) as GraphQLInputObjectType).getFields()).sort();
+
+		/** The members a DTO validates, its own and the ones it inherits, less the caller's own scope. */
+		const dtoMembers = (dto: new (...args: any[]) => any): string[] =>
+			Array.from(
+				new Set(
+					getMetadataStorage()
+						.getTargetValidationMetadatas(dto, '', false, false)
+						.map((entry) => entry.propertyName)
+				)
+			)
+				.filter((member) => !['tenantId', 'organizationId', 'tenant', 'organization'].includes(member))
+				.sort();
+
+		it.each([
+			['UpdateSellerPayoutInput', UpdateSellerPayoutDTO, SELLER_PAYOUT_LIFECYCLE_MEMBERS],
+			['UpdateSellerSettlementInput', UpdateSellerSettlementDTO, SELLER_SETTLEMENT_LIFECYCLE_MEMBERS]
+		] as const)('declares none of the lifecycle members on %s, and the route body declares the same', (input, dto, refused) => {
+			const members = inputMembers(input);
+
+			// The control, so the comparisons below cannot pass on an empty read.
+			expect(members.length).toBeGreaterThan(0);
+			expect(members.filter((member) => refused.includes(member))).toEqual([]);
+			expect(dtoMembers(dto)).toEqual(members);
+		});
+
+		it('leaves the payout edit what it states about itself, and nothing else', () => {
+			expect(inputMembers('UpdateSellerPayoutInput')).toEqual(
+				['metadata', 'note', 'periodEnd', 'periodStart', 'providerKey', 'providerReference', 'scheduledAt'].sort()
+			);
+			// The three members the finding named, by name, since they are the ones a reader will look for.
+			for (const member of ['status', 'feeAmount', 'transactionIds']) {
+				expect(inputMembers('UpdateSellerPayoutInput')).not.toContain(member);
+			}
+		});
+
+		it('leaves the settlement edit what it states about itself, and nothing else', () => {
+			expect(inputMembers('UpdateSellerSettlementInput')).toEqual(
+				[
+					'externalReference',
+					'metadata',
+					'note',
+					'payoutAccountHolderId',
+					'periodEnd',
+					'periodStart',
+					'providerReportId'
+				].sort()
+			);
+
+			for (const member of ['status', 'grossAmount', 'commissionAmount', 'feeAmount', 'netAmount']) {
+				expect(inputMembers('UpdateSellerSettlementInput')).not.toContain(member);
+			}
+		});
 	});
 
 	describe('the rows the resolvers hand back', () => {

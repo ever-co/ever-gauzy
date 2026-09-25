@@ -120,6 +120,9 @@ export class SellerPayoutController extends CrudController<SellerPayout> {
 	 *
 	 * The amounts are not writable — they are the sum of the transactions the payout covers — and the
 	 * lifecycle moves through the approve, pay, cancel and retry routes rather than through a body.
+	 * `UpdateSellerPayoutDTO` omits the status, the fee, the transactions and the payout mode, and the
+	 * service refuses every member the payout's own operations write, so a caller holding only
+	 * `SELLER_PAYOUTS_CREATE` cannot mark a payout approved or paid by editing it.
 	 *
 	 * The return is the platform's own: the service's `update` answers either the row or the result of a
 	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.

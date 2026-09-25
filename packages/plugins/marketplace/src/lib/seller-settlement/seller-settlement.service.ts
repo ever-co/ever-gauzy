@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	CurrencyCode,
 	ID,
@@ -13,6 +14,42 @@ import { TypeOrmSellerSettlementRepository } from './repository/type-orm-seller-
 import { SellerTransaction } from '../seller-transaction/seller-transaction.entity';
 import { TypeOrmSellerTransactionRepository } from '../seller-transaction/repository/type-orm-seller-transaction.repository';
 import { ISellerScope, assertSellerScope } from '../seller-scope/seller-scope';
+import { assertNoLifecycleMembers } from '../lifecycle-members';
+
+/**
+ * The members of a settlement only its own operations write, which an edit therefore refuses.
+ *
+ * - `status` and what records its moves (`reconciledAt`, `reconciledByUserId`, `closedAt`) — moved by
+ *   reconcile, close and dispute, each with its own checks: a closed settlement is final, a dispute needs
+ *   a reason;
+ * - the figures (`grossAmount`, `commissionAmount`, `feeAmount`, `netAmount`, `discrepancyAmount`,
+ *   `settlementAmount`, `settlementCurrency`, `fxRate`, `fxCapturedAt`) — the provider's report as recorded,
+ *   the net derived from it and the discrepancy the reconciliation computed; a caller that could set the
+ *   net could state one its own gross, commission and fee do not produce, and one that could set the
+ *   discrepancy could silence the one number the report exists to surface;
+ * - what the settlement is of (`sellerId`, `providerKey`, `currency`, `currencyDecimals`, `payoutId`) —
+ *   which never change once it is recorded.
+ */
+export const SELLER_SETTLEMENT_LIFECYCLE_MEMBERS: readonly string[] = [
+	'status',
+	'reconciledAt',
+	'reconciledByUserId',
+	'closedAt',
+	'grossAmount',
+	'commissionAmount',
+	'feeAmount',
+	'netAmount',
+	'discrepancyAmount',
+	'settlementAmount',
+	'settlementCurrency',
+	'fxRate',
+	'fxCapturedAt',
+	'sellerId',
+	'providerKey',
+	'currency',
+	'currencyDecimals',
+	'payoutId'
+];
 
 /**
  * Records what a provider reported, and reconciles it against the platform's own ledger.
@@ -129,6 +166,36 @@ export class SellerSettlementService extends TenantAwareCrudService<SellerSettle
 		});
 
 		return saved;
+	}
+
+	/**
+	 * Writes what a settlement states about itself: its period, its report and external references, the
+	 * holder it pays and its note and metadata — and nothing its lifecycle owns.
+	 *
+	 * This is the write behind `PUT /seller-settlements/:id` and `updateSellerSettlement`. The inherited
+	 * update writes whatever partial it is handed, and both surfaces used to hand it `status` and the four
+	 * figures: a settlement could be set `CLOSED` without the close, `RECONCILED` without the comparison, or
+	 * given a net its own figures do not produce. The members in {@link SELLER_SETTLEMENT_LIFECYCLE_MEMBERS}
+	 * are refused here, whichever surface or caller names them; the rest of the write — its tenant scoping
+	 * included — is the base's.
+	 *
+	 * @param id The settlement id, or the conditions it must satisfy.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, or the updated row, whichever the ORM answers.
+	 * @throws BadRequestException when the partial names a member only the settlement's operations write.
+	 */
+	public async update(
+		id: string | FindOptionsWhere<SellerSettlement>,
+		partialEntity: QueryDeepPartialEntity<SellerSettlement>
+	): Promise<SellerSettlement | UpdateResult> {
+		assertNoLifecycleMembers(
+			partialEntity,
+			SELLER_SETTLEMENT_LIFECYCLE_MEMBERS,
+			'SELLER_SETTLEMENT_FIELD_NOT_EDITABLE',
+			'a settlement is reconciled, closed and disputed through its own operations, and its figures are the provider report as recorded'
+		);
+
+		return super.update(id, partialEntity);
 	}
 
 	/**
