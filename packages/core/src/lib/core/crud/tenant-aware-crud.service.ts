@@ -949,9 +949,26 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				throw new NotFoundException(`The requested record was not found`);
 			}
 
-			// Proceed with the soft-delete operation from the superclass.
+			if (this.ormType === MultiORMEnum.MikroORM) {
+				return await super.softDelete(typeof criteria === 'object' ? record.id : criteria);
+			}
+
+			// **The statement carries the caller's scope, not only the read before it.** The pre-read above
+			// is tenant-scoped, but `criteria` used to reach TypeORM's `softDelete` raw, so an object
+			// criteria retired every matching row of every tenant (`UPDATE … SET deletedAt … WHERE name = ?`)
+			// once one row of the caller's own had been found. The same scalar scope `update` merges is
+			// merged here: a criteria still retires every row it names, but only the caller's, and a
+			// by-id call is predicated on the tenant as well. A call with no caller in context — a seeder, a
+			// job — has no tenant to add, as in `update`.
+			const user = RequestContext.currentUser();
+			const scoped = user ? this.scalarConditions(this.findConditionsWithTenantByUser(user)) : {};
+
+			if (typeof criteria === 'object' && criteria !== null) {
+				return await super.softDelete({ ...(criteria as FindOptionsWhere<T>), ...scoped });
+			}
+
 			return await super.softDelete(
-				this.ormType === MultiORMEnum.MikroORM && typeof criteria === 'object' ? record.id : criteria
+				Object.keys(scoped).length ? ({ ...scoped, id: criteria } as FindOptionsWhere<T>) : criteria
 			);
 		} catch (err) {
 			// If any error occurs, rethrow it as a NotFoundException with additional context.

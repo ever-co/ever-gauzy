@@ -647,11 +647,10 @@ describe.each([
 		expect((await harness.stored(SIBLING)).deletedAt ?? null).toBeNull();
 	});
 
-	// On TypeORM the base class hands the criteria to `Repository.softDelete`, which retires EVERY row that
-	// matches them, the other tenant's included: the read before it only proves the caller has one. That is a
-	// defect of the TypeORM branch, whose behaviour this change is not permitted to alter, so it is recorded
-	// here as a known failure rather than hidden; it turns red the day that branch is scoped.
-	(ormType === MultiORMEnum.TypeORM ? it.failing : it)(
+	// On TypeORM the base class used to hand the criteria to `Repository.softDelete` raw, which retired EVERY
+	// row that matched them, the other tenant's included: the read before it only proved the caller had one.
+	// The statement now carries the caller's scope on both ORMs, so this holds everywhere.
+	it(
 		'retires only the caller’s row when the criteria match another tenant’s too',
 		async () => {
 			await service.softDelete({ name: 'shared' } as any);
