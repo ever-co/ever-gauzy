@@ -285,7 +285,10 @@ export class WarehouseBin extends TenantOrganizationBaseEntity implements IWareh
 	@IsUUID()
 	@RelationId((it: WarehouseBin) => it.parent)
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
+	// A persisted column on both ORMs, not a relation id: the parent is TypeORM's tree relation only, and
+	// `relationId: true` would map this `persist: false` on MikroORM with no relation behind it, so the
+	// parent was dropped on every MikroORM write and read back empty.
+	@MultiORMColumn({ nullable: true })
 	parentId?: ID;
 
 	/** The positions directly under this one. */

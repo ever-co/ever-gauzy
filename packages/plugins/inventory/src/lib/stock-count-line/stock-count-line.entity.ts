@@ -106,7 +106,10 @@ export class StockCountLine extends TenantOrganizationBaseEntity {
 	 */
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+
+		/** Column the relation is stored in, named for MikroORM as `@JoinColumn` names it for TypeORM. */
+		joinColumn: 'countedByUserId'
 	})
 	@JoinColumn({ name: 'countedByUserId' })
 	countedBy?: User;

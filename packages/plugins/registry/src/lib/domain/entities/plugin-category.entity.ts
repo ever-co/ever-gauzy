@@ -79,7 +79,10 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@IsOptional()
 	@IsUUID()
 	@RelationId((category: PluginCategory) => category.parent)
-	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	// A persisted column on both ORMs, not a relation id: the parent is TypeORM's tree relation only, and
+	// `relationId: true` would map this `persist: false` on MikroORM with no relation behind it, so the
+	// parent was dropped on every MikroORM write and read back empty.
+	@MultiORMColumn({ type: 'uuid', nullable: true })
 	parentId?: ID;
 
 	@ApiPropertyOptional({ type: () => PluginCategory, description: 'Parent category' })

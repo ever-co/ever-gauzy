@@ -144,7 +144,10 @@ export class PayrollRun extends TenantOrganizationBaseEntity implements IPayroll
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+
+		/** Column the relation is stored in, named for MikroORM as `@JoinColumn` names it for TypeORM. */
+		joinColumn: 'approvedByUserId'
 	})
 	@JoinColumn({ name: 'approvedByUserId' })
 	approvedBy?: IUser;

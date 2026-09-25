@@ -287,7 +287,10 @@ export class SellerTransaction extends TenantOrganizationBaseEntity implements I
 	 */
 	@MultiORMManyToOne(() => SellerTransaction, {
 		nullable: true,
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+
+		/** Column the relation is stored in, named for MikroORM as `@JoinColumn` names it for TypeORM. */
+		joinColumn: 'reversesTransactionId'
 	})
 	@JoinColumn({ name: 'reversesTransactionId' })
 	reverses?: SellerTransaction;

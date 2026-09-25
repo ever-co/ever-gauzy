@@ -179,7 +179,10 @@ export class StockCount extends TenantOrganizationBaseEntity {
 	 */
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+
+		/** Column the relation is stored in, named for MikroORM as `@JoinColumn` names it for TypeORM. */
+		joinColumn: 'startedByUserId'
 	})
 	@JoinColumn({ name: 'startedByUserId' })
 	startedBy?: User;
@@ -197,7 +200,10 @@ export class StockCount extends TenantOrganizationBaseEntity {
 	 */
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+
+		/** Column the relation is stored in, named for MikroORM as `@JoinColumn` names it for TypeORM. */
+		joinColumn: 'closedByUserId'
 	})
 	@JoinColumn({ name: 'closedByUserId' })
 	closedBy?: User;

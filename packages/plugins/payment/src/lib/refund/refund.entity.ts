@@ -107,7 +107,7 @@ export class Refund extends TenantOrganizationBaseEntity implements IRefund {
 	/**
 	 * The governed reason the refund cites, so refund reporting is groupable.
 	 */
-	@MultiORMManyToOne(() => RefundReason, { nullable: true, onDelete: 'SET NULL' })
+	@MultiORMManyToOne(() => RefundReason, { nullable: true, onDelete: 'SET NULL', joinColumn: 'reasonId' })
 	@JoinColumn({ name: 'reasonId' })
 	refundReason?: IRefundReason;
 
