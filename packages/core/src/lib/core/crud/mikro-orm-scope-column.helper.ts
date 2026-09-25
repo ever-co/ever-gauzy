@@ -1,4 +1,4 @@
-import { EntityMetadata, EntityProperty, ReferenceKind } from '@mikro-orm/core';
+import { EntityMetadata, EntityProperty, ReferenceKind, Utils, wrap } from '@mikro-orm/core';
 
 /**
  * How a MikroORM mapping carries one of the columns a tenant-aware statement is scoped by (`tenantId`,
@@ -146,4 +146,74 @@ export function stateRelationsFromMirrors<D extends object>(meta: EntityMetadata
 	}
 
 	return (stated ?? data) as D;
+}
+
+/**
+ * The primary key a relation's value names: the value itself when it is a key, the `id` of a `{ id }` or of an
+ * entity, `null` for `null`, and `undefined` when it names none (a new nested object).
+ */
+function relationKeyOf(value: unknown): unknown {
+	if (value === null) return null;
+	if (typeof value !== 'object') return value;
+	if (Utils.isEntity(value)) {
+		const key = wrap(value, true).getPrimaryKey();
+		return key !== null && typeof key === 'object' ? undefined : key;
+	}
+	return (value as { id?: unknown }).id;
+}
+
+/**
+ * The payload MikroORM's `upsert` and `nativeUpdate` accept for a row whose relation and relation-id mirror are
+ * both stated.
+ *
+ * **Why.** Handed a plain object that names both the owning relation and its `persist: false` mirror, both
+ * statements are refused, because the relation's key is written out as a column of its own
+ * (`insert into token (…, user, userId) …` — `table token has no column named user`). That is exactly the shape
+ * `wrap(entity).toJSON()` produces — an unpopulated relation serialises to its key, beside the mirror — so every
+ * `create()` → `serialize()` → `save()` round trip failed under MikroORM (a refresh token's, among others).
+ * Either key alone is written correctly. Measured against MikroORM 6.6 on SQLite in
+ * `crud.service.mikro-orm-insert.spec.ts`.
+ *
+ * **What it does.** For each such pair the relation is dropped and the mirror kept, holding the relation's key
+ * when the relation names one — the owning relation is what MikroORM writes the column from, so it wins a
+ * disagreement — and the mirror's own value otherwise. A relation that names no key (a new nested object) is
+ * kept and its mirror dropped instead. An entity instance is returned as it is: MikroORM reads its change set,
+ * not its keys, and writes it correctly.
+ *
+ * @param meta The entity's MikroORM metadata.
+ * @param data The payload.
+ * @returns The payload with one key per column, or the payload itself when nothing was doubled.
+ */
+export function collapseRelationMirrors<D extends object>(meta: EntityMetadata | undefined, data: D): D {
+	if (!meta?.properties || !data || typeof data !== 'object' || Utils.isEntity(data)) {
+		return data;
+	}
+
+	const payload = data as Record<string, unknown>;
+	let collapsed: Record<string, unknown> | undefined;
+
+	for (const mirror of Object.values(meta.properties)) {
+		if (mirror.kind !== ReferenceKind.SCALAR || mirror.persist !== false || payload[mirror.name] === undefined) {
+			continue;
+		}
+
+		const owner = Object.values(meta.properties).find(
+			(candidate) => OWNS_A_COLUMN(candidate) && sameColumns(candidate.fieldNames, mirror.fieldNames)
+		);
+		if (!owner || payload[owner.name] === undefined) {
+			continue;
+		}
+
+		collapsed ??= { ...payload };
+		const key = relationKeyOf(payload[owner.name]);
+
+		if (key === undefined) {
+			delete collapsed[mirror.name];
+		} else {
+			collapsed[mirror.name] = key;
+			delete collapsed[owner.name];
+		}
+	}
+
+	return (collapsed ?? data) as D;
 }

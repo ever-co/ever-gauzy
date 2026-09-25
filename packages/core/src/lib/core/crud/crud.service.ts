@@ -43,6 +43,7 @@ import { parseTypeORMFindCountOptions } from './utils';
 import { applyRowOffset, statesEmptyWindow } from './find-window.helper';
 import { assertCriteriaHasPredicate } from './criteria.helper';
 import { createNewMikroOrmEntity } from './mikro-orm-insert.helper';
+import { collapseRelationMirrors } from './mikro-orm-scope-column.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
@@ -59,7 +60,6 @@ import { ITryRequest } from './try-request';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
-
 
 /**
  * The find options with `withDeleted` read as the boolean it states.
@@ -165,7 +165,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 		if (loadRelationIds) {
 			const named =
-				typeof loadRelationIds === 'object' ? (loadRelationIds as { relations?: unknown }).relations : undefined;
+				typeof loadRelationIds === 'object'
+					? (loadRelationIds as { relations?: unknown }).relations
+					: undefined;
 			// Only a real array names its relations exactly: TypeORM filters with `relations.indexOf(propertyPath)`,
 			// so a STRING (`?loadRelationIds[relations]=all-payments-list`) matches every relation whose name is a
 			// substring of it, and a missing or null list loads them all. Anything but an array is therefore
@@ -323,14 +325,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					const typeOrmOptions = parseTypeORMFindOptions(options as FindManyOptions<T>);
 					[items, total] = await this.typeOrmRepository.findAndCount({
 						skip:
-							typeOrmOptions && typeOrmOptions.skip
-								? typeOrmOptions.take * (typeOrmOptions.skip - 1)
-								: 0,
+							typeOrmOptions && typeOrmOptions.skip ? typeOrmOptions.take * (typeOrmOptions.skip - 1) : 0,
 						take: typeOrmOptions && typeOrmOptions.take ? typeOrmOptions.take : 10,
 						...(typeOrmOptions && typeOrmOptions.select ? { select: typeOrmOptions.select } : {}),
-						...(typeOrmOptions && typeOrmOptions.relations
-							? { relations: typeOrmOptions.relations }
-							: {}),
+						...(typeOrmOptions && typeOrmOptions.relations ? { relations: typeOrmOptions.relations } : {}),
 						...(typeOrmOptions && typeOrmOptions.where ? { where: typeOrmOptions.where } : {}),
 						...(typeOrmOptions && typeOrmOptions.order ? { order: typeOrmOptions.order } : {}),
 						...(typeOrmOptions && typeOrmOptions.withDeleted
@@ -743,7 +741,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.upsert(entity as T);
+					// One key per column: a relation beside its mirror (what `serialize()` answers) is refused.
+					return await this.mikroOrmRepository.upsert(this.withOneKeyPerColumn(entity) as T);
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entity as DeepPartial<T>);
 				default:
@@ -767,7 +766,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					return await this.mikroOrmRepository.upsertMany(entities as T[]);
+					return await this.mikroOrmRepository.upsertMany(
+						entities.map((entity) => this.withOneKeyPerColumn(entity)) as T[]
+					);
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.save(entities as DeepPartial<T>[]);
 				default:
@@ -801,7 +802,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					} else {
 						where = id as MikroFilterQuery<T>;
 					}
-					const row = partialEntity as RequiredEntityData<T>;
+					const row = this.withOneKeyPerColumn(partialEntity as object) as RequiredEntityData<T>;
 					const updatedRow = await this.mikroOrmRepository.nativeUpdate(where, row as T);
 					return { affected: updatedRow } as UpdateResult;
 				case MultiORMEnum.TypeORM:
@@ -924,7 +925,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Soft delete not implemented for ORM type: ${this.ormType}`);
 			}
 		} catch (error) {
-			throw new NotFoundException(`The record was not found or could not be soft-deleted`, safeErrorMessage(error));
+			throw new NotFoundException(
+				`The record was not found or could not be soft-deleted`,
+				safeErrorMessage(error)
+			);
 		}
 	}
 
@@ -1112,6 +1116,24 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		}
 		// If using other ORM types, return the entity as is
 		return entity;
+	}
+
+	/**
+	 * A payload for MikroORM's `upsert` / `nativeUpdate` that names each foreign-key column once: see
+	 * `collapseRelationMirrors`. A stand-in that is not a MikroORM repository (a unit test's) has no mapping to
+	 * read, and its payload is passed on as it is.
+	 *
+	 * @param data The payload.
+	 * @returns The payload with a relation and its relation-id mirror collapsed into one key.
+	 */
+	protected withOneKeyPerColumn<D>(data: D): D {
+		const repository = this.mikroOrmRepository as Partial<MikroOrmBaseEntityRepository<T>> | undefined;
+		if (typeof repository?.getEntityManager !== 'function' || typeof repository.getEntityName !== 'function') {
+			return data;
+		}
+
+		const meta = repository.getEntityManager()?.getMetadata().find(repository.getEntityName());
+		return collapseRelationMirrors(meta, data as object) as D;
 	}
 }
 

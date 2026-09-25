@@ -1,6 +1,7 @@
 import { LockMode, raw } from '@mikro-orm/core';
 import { Between, In, LessThan, MoreThan, Repository } from 'typeorm';
 import { Token } from '../entities/token.entity';
+import { collapseRelationMirrors, stateRelationsFromMirrors } from '../../core/crud/mikro-orm-scope-column.helper';
 import { ITokenFilters, ITokenRepository, TokenStatus } from '../interfaces';
 
 // ---------------------------------------------------------------------------
@@ -137,13 +138,17 @@ export function buildMikroOrmAdapter(repo: any): ITokenRepository {
 
 		findActiveByUserAndType: (userId, tokenType) => repo.find({ userId, tokenType, status: TokenStatus.ACTIVE }),
 
+		// `userId` (and the rotation ids) are relation-id mirrors under MikroORM: `create()` needs the relation
+		// stated to write the key — `Value for Token.user is required` failed every MikroORM login — and
+		// `upsert` refuses a plain payload naming both (see `mikro-orm-scope-column.helper.ts`).
 		create: async (tokenData) => {
-			const token = repo.create(tokenData);
+			const meta = repo.getEntityManager().getMetadata().find(Token);
+			const token = repo.create(stateRelationsFromMirrors(meta, tokenData));
 			await repo.insert(token);
 			return token;
 		},
 
-		save: (token) => repo.upsert(token),
+		save: (token) => repo.upsert(collapseRelationMirrors(repo.getEntityManager().getMetadata().find(Token), token)),
 
 		updateStatus: async (tokenId, status, version, additionalData) => {
 			const updateData = { status, ...additionalData };

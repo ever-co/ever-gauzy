@@ -274,6 +274,29 @@ describe('CrudService inserts the rows it creates under MikroORM', () => {
 		expect((await rows()).map((row) => row.name)).toEqual(['stored']);
 	});
 
+	it('saves back the row create() answered — its relation beside its mirror — where upsert refused it', async () => {
+		// `serialize()` answers `wrap(entity).toJSON()`: the unpopulated relation as its key, beside the mirror.
+		// Handed both, MikroORM's upsert wrote the relation as a column of its own ("no column named tenant").
+		const created = await service().create({ name: 'round-trip', tenantId: TENANT } as any);
+		expect(created).toMatchObject({ tenant: TENANT, tenantId: TENANT });
+
+		await service().save({ ...created, name: 'round-tripped' });
+		await service().saveMany([{ ...created, name: 'round-tripped-again' }]);
+
+		expect(await rows()).toContainEqual({ id: created.id, name: 'round-tripped-again', tenantId: TENANT });
+	});
+
+	it('updates by a payload naming a relation and its mirror, the relation winning a disagreement', async () => {
+		const other = '67000000-0000-4000-8000-00000000000b';
+		await orm.em.getConnection().execute('INSERT OR IGNORE INTO insert_tenant (id) VALUES (?)', [other]);
+
+		await service().update(STORED, { tenant: { id: other }, tenantId: TENANT } as any);
+		expect(await rows()).toEqual([{ id: STORED, name: 'stored', tenantId: other }]);
+
+		await service().update(STORED, { tenant: TENANT, tenantId: TENANT } as any);
+		expect(await rows()).toEqual([{ id: STORED, name: 'stored', tenantId: TENANT }]);
+	});
+
 	it('reports a refused insert as a failure, and never answers it through the TypeORM branch', async () => {
 		// The tenant does not exist, so the store refuses the row on its foreign key.
 		await expect(service().create({ name: 'refused', tenant: { id: MISSING_TENANT } } as any)).rejects.toThrow(
