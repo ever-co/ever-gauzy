@@ -50,6 +50,19 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 	::ng-deep ngx-back-navigation .main button {
 		margin: 0 !important;
 	}
+
+	// `status="basic"` paints Nebular's filled basic button, which on the dark
+	// themes is a near-white square: the loudest thing on the page, for the least
+	// important action on it. A quiet outlined icon button instead.
+	::ng-deep ngx-favorite-toggle [nbButton] {
+		background-color: transparent !important;
+		border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-4)) !important;
+		box-shadow: none !important;
+
+		&:hover {
+			background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
+		}
+	}
 }
 
 .identity {
@@ -246,6 +259,23 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 		&:hover,
 		&:focus-visible {
 			text-decoration: underline;
+		}
+	}
+
+	// The tag chips rode up INTO their label: `nb-badge` positions itself for
+	// its overlay use (`top: 50%` plus a transform), which lifted each chip 8px
+	// out of its row. In a list it is just an inline chip.
+	::ng-deep ga-only-tags {
+		display: block;
+		margin-top: 0.25rem;
+
+		.tags {
+			margin-top: 0 !important;
+		}
+
+		nb-badge {
+			position: static !important;
+			transform: none !important;
 		}
 	}
 }
