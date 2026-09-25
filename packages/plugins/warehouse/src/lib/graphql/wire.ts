@@ -90,6 +90,39 @@ export function toUserError(error: unknown): IUserError {
 }
 
 /**
+ * What a destructive delete answers, from the result its removal reported.
+ *
+ * `TenantAwareCrudService.delete` checks no existence: a scoped `DELETE` that matched nothing — an
+ * identifier of another tenant, a stale one, one already removed — reports `affected: 0` and raises
+ * nothing, so a payload built only from "no exception" told the caller a row was removed when none was.
+ * The count is read as both ORMs report it (`affected` on TypeORM's `DeleteResult`, the same member on the
+ * result the MikroORM branch builds), and a removal that reached nothing is reported as the outcome the
+ * REST surface gives the same identifier on a read: `NOT_FOUND`, the code `codeForStatus` derives for a
+ * 404, on the `id` argument it concerns. It is the order plugin's rule for its own deletes —
+ * `deleted: Number(result?.affected ?? 0) > 0` — carried in this plugin's payload vocabulary.
+ *
+ * @param result What the service's removal returned.
+ * @param id The identifier the caller named.
+ * @returns No outcome when a row was removed, and the `NOT_FOUND` outcome when none was.
+ */
+export function deleteOutcome(result: unknown, id: string): IUserError[] {
+	const affected = Number((result as { affected?: unknown } | null | undefined)?.affected ?? 0);
+
+	if (affected > 0) {
+		return [];
+	}
+
+	return [
+		{
+			code: 'NOT_FOUND',
+			message: `NOT_FOUND: no record with id ${id} was found to delete.`,
+			path: ['id'],
+			details: { id }
+		}
+	];
+}
+
+/**
  * @param value A quantity or a weight.
  * @returns It as an exact decimal string, which is what the `Decimal` scalar carries.
  */

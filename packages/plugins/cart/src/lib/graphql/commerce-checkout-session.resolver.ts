@@ -45,6 +45,11 @@ import { ICheckoutResult, ICheckoutSessionConnection } from './types';
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * No code of this plugin's own stands beside it, and that is deliberate: `FEATURE_CART` is
+ * declared by the cart catalogue but stated by none of the controllers serving the same resources,
+ * and a code stated here and not there would refuse over GraphQL what REST serves. `FeatureFlagGuard`
+ * now requires every code a class states, so the day the routes state it, this class states it with them.
  */
 @Resolver('CheckoutSession')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -270,6 +275,11 @@ export class CommerceCheckoutSessionResolver {
 	 * The permission is the route's own — `CARTS_DELETE`, the grant the plugin's catalogue declares for
 	 * deleting a cart and the one its own controller names.
 	 *
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with. It used to be `Boolean(result)`, which is `true` for any `DeleteResult` at all: an identifier of
+	 * another tenant, a stale one or one already removed matched nothing, the route's own body said
+	 * `affected: 0`, and this field said the session was gone.
+	 *
 	 * @param id The session to delete.
 	 * @returns Whether a row was there to remove, which is what this domain's other destructive delete
 	 * answers with: a deleted row has no row left to answer with.
@@ -279,7 +289,7 @@ export class CommerceCheckoutSessionResolver {
 	async deleteCommerceCheckoutSession(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
 		const result = await this.commerceCheckoutSessionService.delete(id);
 
-		return Boolean(result);
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**

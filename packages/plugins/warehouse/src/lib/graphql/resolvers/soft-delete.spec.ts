@@ -32,8 +32,10 @@
  */
 
 import { FieldDefinitionNode, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, TypeNode } from 'graphql';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { WarehouseFeatures } from '../../warehouse.features';
 import { WarehousePermissions } from '../../warehouse.permissions';
 import { CarrierManifestController } from '../../carrier-manifest/carrier-manifest.controller';
 import { PackSlipController } from '../../pack-slip/pack-slip.controller';
@@ -481,5 +483,83 @@ describe('the soft-delete pair — the permission and the guards are the route�
 			expect(guardsOf(controller, route)).toEqual(expect.arrayContaining(routeGuards));
 			expect(guardsOf(resolver, field)).toEqual(expect.arrayContaining(guardsOf(controller, route)));
 		}
+	});
+});
+
+/**
+ * The feature gates of every resolver, read from the metadata the real `@FeatureFlag` writes (AWR-4).
+ *
+ * Each resolver class states `@FeatureFlag(FEATURE_GRAPHQL)` over `@FeatureFlag(WarehouseFeatures.WAREHOUSE)`.
+ * The decorator used to be `SetMetadata`, one value per target, so the upper statement replaced the lower
+ * and the fields were gated on the GraphQL endpoint alone: with the warehouse capability switched off its
+ * REST routes answered 404 while `updatePickList`, `deletePickWave` or `softDeleteWarehouseBin` still ran.
+ * The codes now accumulate and the guard requires every one a class states, so what is asserted here is the
+ * set the guard reads: both codes on every class, the controller's own code among them, and no field that
+ * states a gate of its own in place of the class's.
+ */
+describe('the feature gates — every field is behind the GraphQL surface and the warehouse capability', () => {
+	/** Every code one target states, whichever of the two shapes the metadata holds. */
+	const flagsOf = (target: object): unknown[] => [Reflect.getMetadata(FEATURE_METADATA, target) ?? []].flat();
+
+	it.each(RESOURCES)('$name states both codes on its resolver class', ({ resolver }) => {
+		expect(flagsOf(resolver)).toEqual(expect.arrayContaining([FEATURE_GRAPHQL, WarehouseFeatures.WAREHOUSE]));
+		expect(flagsOf(resolver)).toHaveLength(2);
+	});
+
+	it.each(RESOURCES)('$name gates its fields on the code its REST controller states', ({ resolver, controller }) => {
+		// The control first: the controller states the warehouse code, so the comparison is not two absences.
+		expect(flagsOf(controller)).toEqual([WarehouseFeatures.WAREHOUSE]);
+		expect(flagsOf(resolver)).toEqual(expect.arrayContaining(flagsOf(controller)));
+	});
+
+	it.each(RESOURCES)('$name lets no field replace the class’s gate with a narrower one', ({ resolver }) => {
+		// A handler's own codes replace its class's, so a field that stated one would be gated on it alone.
+		const prototype = resolver.prototype as Row;
+		const fields = Object.getOwnPropertyNames(prototype).filter(
+			(name) => name !== 'constructor' && typeof prototype[name] === 'function'
+		);
+
+		expect(fields.length).toBeGreaterThan(0);
+
+		for (const field of fields) {
+			expect({ field, flags: Reflect.getMetadata(FEATURE_METADATA, prototype[field]) }).toEqual({
+				field,
+				flags: undefined
+			});
+		}
+	});
+});
+
+/**
+ * What the two layout removals answer when nothing was removed (the delete-answer finding).
+ *
+ * Both services read the row before removing it, so an identifier the caller cannot see is refused there
+ * with a 404 — and a row removed between that read and the statement still reports `affected: 0` without
+ * raising. The payload answers both the same way, as the four aggregate removals of this plugin do: a
+ * `NOT_FOUND` outcome on `id`, never the empty `userErrors` of a success.
+ */
+describe('the layout removals — a removal that matched nothing is not a success', () => {
+	const LAYOUT = RESOURCES.filter(({ name }) => name === 'WarehouseZone' || name === 'WarehouseBin');
+
+	it.each(LAYOUT)('delete$name answers NOT_FOUND when its statement matched no row', async (entry) => {
+		const service = { delete: jest.fn().mockResolvedValue({ affected: 0, raw: [] }) };
+		const others = Array.from({ length: entry.extra }, () => ({}));
+		const resolver = new entry.resolver(service, ...others) as Row;
+
+		const answer = await resolver[`delete${entry.name}`](ID);
+
+		expect(service.delete).toHaveBeenCalledWith(ID);
+		expect(answer).toEqual({
+			[entry.member]: null,
+			userErrors: [{ code: 'NOT_FOUND', message: expect.stringContaining(ID), path: ['id'], details: { id: ID } }]
+		});
+	});
+
+	it.each(LAYOUT)('delete$name answers an empty userErrors when a row was removed', async (entry) => {
+		const service = { delete: jest.fn().mockResolvedValue({ affected: 1, raw: [] }) };
+		const others = Array.from({ length: entry.extra }, () => ({}));
+		const resolver = new entry.resolver(service, ...others) as Row;
+
+		expect(await resolver[`delete${entry.name}`](ID)).toEqual({ [entry.member]: null, userErrors: [] });
 	});
 });

@@ -41,6 +41,11 @@ import { IShippingOptionConnection, IShippingOptionEligibility, IShippingProfile
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * No code of this plugin's own stands beside it, and that is deliberate: `FEATURE_FULFILLMENT` is
+ * declared by the fulfilment catalogue but stated by none of the controllers serving the same resources,
+ * and a code stated here and not there would refuse over GraphQL what REST serves. `FeatureFlagGuard`
+ * now requires every code a class states, so the day the routes state it, this class states it with them.
  */
 @Resolver(() => ShippingOption)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -195,15 +200,20 @@ export class ShippingOptionResolver {
 	/**
 	 * Deletes a shipping profile.
 	 *
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with — and not whether the statement ran: `TenantAwareCrudService.delete` checks no existence, so an
+	 * identifier that names no profile of the caller's reports `affected: 0` without raising, and used to be
+	 * answered `true`. The fulfilment removals of this domain answer by the same rule.
+	 *
 	 * @param id The profile.
-	 * @returns True when the profile was removed.
+	 * @returns True when the profile was removed, false when the identifier matched none.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
 	@Mutation(() => Boolean, { name: 'deleteShippingProfile' })
 	async deleteShippingProfile(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
 		const result = await this.profileService.delete(id);
 
-		return Boolean(result);
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**
@@ -300,15 +310,20 @@ export class ShippingOptionResolver {
 	/**
 	 * Deletes a shipping option.
 	 *
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with — and not whether the statement ran: `TenantAwareCrudService.delete` checks no existence, so an
+	 * identifier that names no option of the caller's reports `affected: 0` without raising, and used to be
+	 * answered `true`. The fulfilment removals of this domain answer by the same rule.
+	 *
 	 * @param id The option.
-	 * @returns True when the option was removed.
+	 * @returns True when the option was removed, false when the identifier matched none.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.SHIPPING_OPTIONS_DELETE)
 	@Mutation(() => Boolean, { name: 'deleteShippingOption' })
 	async deleteShippingOption(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
 		const result = await this.optionService.delete(id);
 
-		return Boolean(result);
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**

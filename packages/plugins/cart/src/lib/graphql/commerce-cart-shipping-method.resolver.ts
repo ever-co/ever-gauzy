@@ -38,6 +38,11 @@ import { Cart } from './types';
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * No code of this plugin's own stands beside it, and that is deliberate: `FEATURE_CART` is
+ * declared by the cart catalogue but stated by none of the controllers serving the same resources,
+ * and a code stated here and not there would refuse over GraphQL what REST serves. `FeatureFlagGuard`
+ * now requires every code a class states, so the day the routes state it, this class states it with them.
  */
 @Resolver('Cart')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)

@@ -1524,6 +1524,44 @@ describe('the eight fields — the two protocols write the same rows the same wa
 			expect(answer.userErrors[0].message).toBe(`${field} refused`);
 		}
 	});
+
+	it('answers NOT_FOUND in userErrors when the removal matched no row, rather than an empty success', async () => {
+		// The four destructive fields used to answer `userErrors: []` whenever the service did not raise —
+		// and `TenantAwareCrudService.delete` does not raise for a scoped statement that matched nothing: an
+		// identifier of another tenant, a stale one or one already removed reports `affected: 0`. The route
+		// passes that result on, so a REST caller could read it; the payload now says the same thing in its
+		// own vocabulary, which is the outcome the REST surface gives the identifier on a read.
+		const destructive = PARITY.filter((entry) => entry.destructive);
+
+		// The control: the four removals are all here, so the loop below is not a loop over nothing.
+		expect(destructive.map(({ field }) => field).sort()).toEqual([
+			'deleteCarrierManifest',
+			'deletePackSlip',
+			'deletePickList',
+			'deletePickWave'
+		]);
+
+		for (const entry of destructive) {
+			const { stubs, controller, resolver } = surfaces(entry);
+			const nothing = { affected: 0, raw: [] };
+
+			stubs[entry.service][entry.method].mockResolvedValue(nothing);
+
+			const overRest = await controller[entry.route](...entry.routeArgs);
+			const answer = await resolver[entry.field](...entry.fieldArgs);
+
+			expect(overRest).toBe(nothing);
+			expect(answer[entry.member]).toBeNull();
+			expect(answer.userErrors).toEqual([
+				{
+					code: 'NOT_FOUND',
+					message: expect.stringContaining(ID),
+					path: ['id'],
+					details: { id: ID }
+				}
+			]);
+		}
+	});
 });
 
 /**

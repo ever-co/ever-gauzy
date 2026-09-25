@@ -130,7 +130,9 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+// The request context of the module mock above, so a case can state which organization it runs in.
+import { RequestContext } from '@gauzy/core';
 import { FulfillmentLineService } from './fulfillment-line.service';
 
 /**
@@ -172,6 +174,8 @@ type Row = Record<string, any>;
 /** The tables this suite drives, as plain arrays. */
 interface ITables {
 	order_line: Row[];
+	/** The shipments the lines belong to, which the removal reads through the line's `fulfillment`. */
+	fulfillment: Row[];
 	fulfillment_line: Row[];
 }
 
@@ -195,11 +199,34 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			return same(row[field], expected);
 		});
 
+	/**
+	 * Resolves the one relation the service asks for — a line's shipment, which is many-to-one through
+	 * `fulfillmentId` — because the removal decides on the shipment's status and direction, and a double
+	 * that ignored the relation would make every such case answer "shipment unknown".
+	 */
+	const withRelations = (record: Row, requested?: string[]): Row => {
+		if (!requested?.includes('fulfillment')) {
+			return record;
+		}
+
+		return {
+			...record,
+			fulfillment: tables.fulfillment.find((shipment) => same(shipment.id, record.fulfillmentId)) ?? null
+		};
+	};
+
 	return {
 		rows,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
-		find: async (options: Row = {}) => rows().filter((row) => matches(row, options.where)),
-		findOne: async (options: Row = {}) => rows().find((row) => matches(row, options.where)) ?? null,
+		find: async (options: Row = {}) =>
+			rows()
+				.filter((row) => matches(row, options.where))
+				.map((row) => withRelations(row, options.relations)),
+		findOne: async (options: Row = {}) => {
+			const found = rows().find((row) => matches(row, options.where));
+
+			return found ? withRelations(found, options.relations) : null;
+		},
 		findOneBy: async (where: Row) => rows().find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: Row = {}) => {
 			const items = rows().filter((row) => matches(row, options.where));
@@ -236,9 +263,11 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 			return { affected: index >= 0 ? 1 : 0 };
 		},
+		// TypeORM's `delete` applies the whole criteria it is handed. The removal states the caller's
+		// organization beside the id, so a double that matched on the id alone would make that case vacuous.
 		delete: async (criteria: any) => {
-			const id = typeof criteria === 'string' ? criteria : criteria?.id;
-			const index = rows().findIndex((row) => same(row.id, id));
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows().findIndex((row) => matches(row, where));
 
 			if (index >= 0) {
 				rows().splice(index, 1);
@@ -264,6 +293,16 @@ const orderLine = (id: string, overrides: Row = {}) => ({
 	...overrides
 });
 
+/** One `fulfillment` row, which is what decides whether its lines may be removed. */
+const shipmentOf = (id: string, status: string = 'PENDING', direction: string = 'OUTBOUND') => ({
+	id,
+	tenantId: TENANT,
+	organizationId: ORG,
+	orderId: ORDER,
+	status,
+	direction
+});
+
 /** One `fulfillment_line` row, as a settled part of the fixture. */
 const settled = (id: string, fulfillmentId: string, orderLineId: string, quantity: number) => ({
 	id,
@@ -279,10 +318,12 @@ const settled = (id: string, fulfillmentId: string, orderLineId: string, quantit
  *
  * @param seed.fulfillment_line The rows the fixture starts with.
  * @param seed.order_line The order lines, so the cases that assert this service leaves them alone can.
+ * @param seed.fulfillment The shipments the lines belong to.
  */
-function lineFixture(seed: { fulfillment_line?: Row[]; order_line?: Row[] } = {}) {
+function lineFixture(seed: { fulfillment_line?: Row[]; order_line?: Row[]; fulfillment?: Row[] } = {}) {
 	const tables: ITables = {
 		order_line: [...(seed.order_line ?? [orderLine(LINE_A), orderLine(LINE_B)])],
+		fulfillment: [...(seed.fulfillment ?? [])],
 		fulfillment_line: [...(seed.fulfillment_line ?? [])]
 	};
 	const service = new FulfillmentLineService(repository(tables, 'fulfillment_line') as never, {} as never);
@@ -481,12 +522,18 @@ describe('FulfillmentLineService — the CRUD surface its callers rely on', () =
 	it('writes an update and answers with the update result, not with the row', async () => {
 		// The platform's `update` reaches TypeORM's own for the TypeORM branch, so what a caller gets
 		// back is `{ affected }` — which is why every caller that wants the row reads it afterwards.
+		//
+		// This case used to write `{ quantity: 1.5 }` over a line of 2 and assert the new quantity. That
+		// was the defect rather than the contract: the order line's counters were moved by the 2 and nothing
+		// moved them again, so the line and its counter disagreed for good. The quantity is now refused (see
+		// the suite below), and the update result is asserted on the payload a correction is for.
 		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 2)] });
 
-		const answered = await fixture.service.update('one-a', { quantity: 1.5 } as never);
+		const answered = await fixture.service.update('one-a', { metadata: { bin: 'A-12-3' } } as never);
 
 		expect(answered).toMatchObject({ affected: 1 });
-		expect(Number(fixture.row('one-a').quantity)).toBe(1.5);
+		expect(fixture.row('one-a').metadata).toEqual({ bin: 'A-12-3' });
+		expect(Number(fixture.row('one-a').quantity)).toBe(2);
 	});
 
 	it('refuses an update on a line that does not exist', async () => {
@@ -499,7 +546,10 @@ describe('FulfillmentLineService — the CRUD surface its callers rely on', () =
 
 	it('deletes the line it is asked for and leaves the other lines of the shipment alone', async () => {
 		// How a shipment loses a line: the row goes, and what the shipment still carries is what is left.
+		// The shipment is a cancelled one: a line of a shipment the order line still counts is refused (see
+		// the suite below), and this case is about which row goes, not about that rule.
 		const fixture = lineFixture({
+			fulfillment: [shipmentOf(SHIPMENT_ONE, 'CANCELED')],
 			fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 2), settled('one-b', SHIPMENT_ONE, LINE_B, 1)]
 		});
 
@@ -516,5 +566,128 @@ describe('FulfillmentLineService — the CRUD surface its callers rely on', () =
 		const fixture = lineFixture();
 
 		await expect(fixture.service.delete(UNKNOWN)).resolves.toMatchObject({ affected: 0 });
+	});
+});
+
+/**
+ * What a line's own correction and removal may not do (C10).
+ *
+ * `PUT` and `DELETE /fulfillment-lines/:id` and the `updateFulfillmentLine` and `deleteFulfillmentLine`
+ * fields all reach this service, and none of them can give the order line's counters back — the shipment
+ * service moved those by the line's shipment, order line and quantity when the shipment was created, and
+ * only its `cancel` returns them. So a correction that re-sized or re-pointed a line, or a removal that took
+ * a line of a shipment the counters still count, left `fulfilledQuantity` describing a shipment that no
+ * longer existed: the order stayed `FULFILLED` and the line's remainder was never shippable again. Both are
+ * refused here, below both surfaces.
+ */
+describe('FulfillmentLineService — a correction or a removal never strands the order line’s counters', () => {
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses a correction that re-sizes a line, and leaves the row as it was', async () => {
+		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)] });
+
+		await expect(fixture.service.update('one-a', { quantity: 1 } as never)).rejects.toMatchObject({
+			response: {
+				code: 'FULFILLMENT_LINE_IMMUTABLE',
+				details: { fulfillmentLineId: 'one-a', columns: ['quantity'] }
+			}
+		});
+		await expect(fixture.service.update('one-a', { quantity: 1 } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(Number(fixture.row('one-a').quantity)).toBe(5);
+	});
+
+	it('refuses a correction that re-points a line at another order line or another shipment', async () => {
+		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)] });
+
+		await expect(
+			fixture.service.update('one-a', { orderLineId: LINE_B, fulfillmentId: SHIPMENT_TWO } as never)
+		).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_LINE_IMMUTABLE', details: { columns: ['fulfillmentId', 'orderLineId'] } }
+		});
+		expect(fixture.row('one-a')).toMatchObject({ fulfillmentId: SHIPMENT_ONE, orderLineId: LINE_A });
+	});
+
+	it('accepts a correction that restates what the row holds, and writes the members it does change', async () => {
+		// A client that echoes the row back with its payload edited is not refused for the members it did not
+		// touch: the quantity is compared as the exact decimal it is, so `'5.000000'` restates `5`.
+		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)] });
+
+		const answered = await fixture.service.update('one-a', {
+			fulfillmentId: SHIPMENT_ONE,
+			orderLineId: LINE_A,
+			quantity: '5.000000',
+			warehouseId: UNKNOWN,
+			metadata: { bin: 'B-01-1' }
+		} as never);
+
+		expect(answered).toMatchObject({ affected: 1 });
+		expect(fixture.row('one-a')).toMatchObject({ warehouseId: UNKNOWN, metadata: { bin: 'B-01-1' } });
+	});
+
+	it('refuses a quantity that is not a decimal at all rather than comparing it as one', async () => {
+		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)] });
+
+		await expect(fixture.service.update('one-a', { quantity: 'five' } as never)).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_LINE_IMMUTABLE' }
+		});
+		expect(Number(fixture.row('one-a').quantity)).toBe(5);
+	});
+
+	it('refuses to remove a line of a shipment the order line still counts, and keeps the row', async () => {
+		for (const status of ['PENDING', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED']) {
+			const fixture = lineFixture({
+				fulfillment: [shipmentOf(SHIPMENT_ONE, status)],
+				fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)]
+			});
+
+			await expect(fixture.service.delete('one-a')).rejects.toMatchObject({
+				response: {
+					code: 'FULFILLMENT_LINE_NOT_DELETABLE',
+					details: { fulfillmentLineId: 'one-a', fulfillmentId: SHIPMENT_ONE, status, direction: 'OUTBOUND' }
+				}
+			});
+			await expect(fixture.service.delete('one-a')).rejects.toBeInstanceOf(ConflictException);
+			expect(fixture.row('one-a')).toBeDefined();
+		}
+	});
+
+	it('removes a line of a cancelled shipment or of a return leg, which count nothing', async () => {
+		const fixture = lineFixture({
+			fulfillment: [shipmentOf(SHIPMENT_ONE, 'CANCELED'), shipmentOf(SHIPMENT_TWO, 'PENDING', 'RETURN')],
+			fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5), settled('two-a', SHIPMENT_TWO, LINE_A, 2)]
+		});
+
+		await expect(fixture.service.delete('one-a')).resolves.toMatchObject({ affected: 1 });
+		await expect(fixture.service.delete('two-a')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.tables.fulfillment_line).toEqual([]);
+	});
+
+	it('refuses a line whose shipment cannot be read, rather than guessing it counts nothing', async () => {
+		const fixture = lineFixture({ fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)] });
+
+		await expect(fixture.service.delete('one-a')).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_LINE_NOT_DELETABLE', details: { status: null, direction: null } }
+		});
+		expect(fixture.row('one-a')).toBeDefined();
+	});
+
+	it('selects only the organization the request states, for the check and for the removal alike', async () => {
+		const fixture = lineFixture({
+			fulfillment: [shipmentOf(SHIPMENT_ONE, 'CANCELED')],
+			fulfillment_line: [settled('one-a', SHIPMENT_ONE, LINE_A, 5)]
+		});
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(UNKNOWN as never);
+
+		await expect(fixture.service.delete('one-a')).resolves.toMatchObject({ affected: 0 });
+		expect(fixture.row('one-a')).toBeDefined();
+
+		// The control: under the line's own organization the same removal goes through.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG as never);
+
+		await expect(fixture.service.delete('one-a')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.row('one-a')).toBeUndefined();
 	});
 });

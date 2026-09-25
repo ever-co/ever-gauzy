@@ -63,6 +63,11 @@ import { IFulfillmentConnection } from './types';
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * No code of this plugin's own stands beside it, and that is deliberate: `FEATURE_FULFILLMENT` is
+ * declared by the fulfilment catalogue but stated by none of the controllers serving the same resources,
+ * and a code stated here and not there would refuse over GraphQL what REST serves. `FeatureFlagGuard`
+ * now requires every code a class states, so the day the routes state it, this class states it with them.
  */
 @Resolver(() => Fulfillment)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -211,6 +216,14 @@ export class FulfillmentResolver {
 	 * the same `FULFILLMENTS_EDIT` grant. The read that follows is this field's own, because the route
 	 * answers whatever the ORM's update returned and a root field has to answer the row; it is a *read*, so
 	 * it cannot make the two surfaces behave differently, which is the axis §3.1 forbids.
+	 *
+	 * **What a correction may not change is decided by the service, for both surfaces.** The input still
+	 * declares `fulfillmentId`, `orderLineId` and `quantity`, because the route's body does, but
+	 * `FulfillmentLineService.update` refuses a value that differs from the row's with
+	 * `FULFILLMENT_LINE_IMMUTABLE`: the order line's counters were moved by those three when the shipment
+	 * was created, nothing on this path moves them again, and a line re-sized or re-pointed here would leave
+	 * `fulfilledQuantity` describing a shipment that no longer exists. Restating the stored value is
+	 * accepted, so an input that echoes the row back with its payload edited is not refused.
 	 *
 	 * The retry declarations are the route's, which is to say there are none: the route declares no
 	 * `@Idempotent` and no `@Versioned`, and `fulfillment_line` carries no version column for an
@@ -398,25 +411,29 @@ export class FulfillmentResolver {
 	 * `@Idempotent` and no `@Versioned`, and a scope invented here would replay a GraphQL retry that the
 	 * REST route lets through — a difference in behaviour rather than in transport.
 	 *
-	 * **What the boolean says, and what it does not.** The route answers the ORM's `DeleteResult`; this
-	 * field answers a boolean, because that is what the two delete fields of this document already answer
-	 * and a third shape would be a second vocabulary for one act. `Boolean(result)` is `true` whenever the
-	 * delete statement ran without raising, **including when it matched no row at all** —
-	 * `TenantAwareCrudService.delete` checks no existence, so an identifier that was never there answers
-	 * `true` here where the route's own body would carry `affected: 0`. That divergence is recorded rather
-	 * than settled: answering `result.affected > 0` would close it, and would have to be made on
-	 * `deleteShippingProfile` and `deleteShippingOption` in the same change, or this domain would hold two
-	 * conventions for one answer.
+	 * **A shipment the order line still counts is refused, by the service the route reaches too.** The
+	 * removal used to take a pending shipment and its lines while `order_line.fulfilledQuantity` kept
+	 * counting their units — the order stayed `FULFILLED` and every later shipment of the line was refused as
+	 * exceeding what was left. `FulfillmentService.delete` now answers `FULFILLMENT_NOT_DELETABLE` for any
+	 * outbound shipment that is not cancelled, on both surfaces; cancelling gives the units back, after
+	 * which the row may go.
+	 *
+	 * **What the boolean says.** The route answers the ORM's `DeleteResult`; this field answers whether that
+	 * result removed a row — `affected > 0`, the rule the order plugin's deletes answer with. An identifier
+	 * that names no shipment of the caller's, or one already gone, answers `false` rather than a success
+	 * nothing happened for: `TenantAwareCrudService.delete` checks no existence, and a scoped statement that
+	 * matched nothing reports `affected: 0` without raising. `deleteFulfillmentLine`, `deleteShippingProfile`
+	 * and `deleteShippingOption` answer by the same rule, so this domain holds one convention for the answer.
 	 *
 	 * @param id The shipment to remove.
-	 * @returns True when the removal statement ran, which is not the same as a row having matched.
+	 * @returns True when a row was removed, false when the identifier matched none.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
 	@Mutation(() => Boolean, { name: 'deleteFulfillment' })
 	async deleteFulfillment(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
 		const result = await this.fulfillmentService.delete(id);
 
-		return Boolean(result);
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**
@@ -479,25 +496,25 @@ export class FulfillmentResolver {
 	 * `@Idempotent` and no `@Versioned`, and `fulfillment_line` carries no version column for an
 	 * expectation to be compared against.
 	 *
-	 * **What the boolean says, and what it does not.** The route answers the ORM's `DeleteResult`; this
-	 * field answers a boolean, because that is what the two delete fields of this document already answer
-	 * and a third shape would be a second vocabulary for one act. `Boolean(result)` is `true` whenever the
-	 * delete statement ran without raising, **including when it matched no row at all** —
-	 * `TenantAwareCrudService.delete` checks no existence, so an identifier that was never there answers
-	 * `true` here where the route's own body would carry `affected: 0`. That divergence is recorded rather
-	 * than settled: answering `result.affected > 0` would close it, and would have to be made on
-	 * `deleteShippingProfile` and `deleteShippingOption` in the same change, or this domain would hold two
-	 * conventions for one answer.
+	 * **A line of a shipment the order line still counts is refused, by the service the route reaches too.**
+	 * `FulfillmentLineService.delete` answers `FULFILLMENT_LINE_NOT_DELETABLE` for a line of an outbound
+	 * shipment that is not cancelled, because removing it would give nothing back to the counters it was
+	 * summed into. A line of a cancelled shipment or of a return leg may go.
+	 *
+	 * **What the boolean says.** The route answers the ORM's `DeleteResult`; this field answers whether that
+	 * result removed a row — `affected > 0`, the rule the order plugin's deletes answer with — so an
+	 * identifier that names no line of the caller's answers `false` rather than a success nothing happened
+	 * for. `deleteFulfillment`, `deleteShippingProfile` and `deleteShippingOption` answer by the same rule.
 	 *
 	 * @param id The line to remove.
-	 * @returns True when the removal statement ran, which is not the same as a row having matched.
+	 * @returns True when a row was removed, false when the identifier matched none.
 	 */
 	@Permissions(FULFILLMENT_PERMISSIONS.FULFILLMENTS_EDIT)
 	@Mutation(() => Boolean, { name: 'deleteFulfillmentLine' })
 	async deleteFulfillmentLine(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
 		const result = await this.lineService.delete(id);
 
-		return Boolean(result);
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**

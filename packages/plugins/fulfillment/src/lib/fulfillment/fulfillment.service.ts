@@ -4,10 +4,12 @@ import {
 	ConflictException,
 	Inject,
 	Injectable,
+	Logger,
 	NotFoundException,
 	Optional
 } from '@nestjs/common';
-import { DeepPartial, FindManyOptions } from 'typeorm';
+import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	FulfillmentDirection,
 	FulfillmentStatusDetail,
@@ -32,6 +34,7 @@ import { TypeOrmFulfillmentRepository } from './repository/type-orm-fulfillment.
 import { MikroOrmFulfillmentRepository } from './repository/mikro-orm-fulfillment.repository';
 import { FulfillmentLine } from '../fulfillment-line/fulfillment-line.entity';
 import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { isCountedShipment, removalCriteria } from '../fulfillment.removal';
 import {
 	Quantity,
 	addQuantities,
@@ -82,6 +85,47 @@ const ALLOWED_TRANSITIONS: Record<FulfillmentStatusDetail, FulfillmentStatusDeta
 const FULFILLMENT_COMMITTED = 'FULFILLMENT_COMMITTED';
 
 /**
+ * How many times one write asks for the order's re-derivation before leaving the order to the nightly
+ * reconciliation.
+ *
+ * The re-derivation is a conditional write on the order, and a caller inside the platform states the
+ * wildcard: `recompute` reads the version the row holds and updates `WHERE version = <what it read>`. Two
+ * writes that re-derive the same order at the same instant — two shipments of one order, or a shipment
+ * beside a return, a refund or a payment — therefore race on that one row, and the loser is answered
+ * `ENTITY_VERSION_CONFLICT` although it held no stale state to protect: the wildcard stated none. Each
+ * attempt reads the order afresh and derives it again from the ledgers as they now stand, so a retry is a
+ * new derivation rather than a replay of the one that lost, and the winner's write is already part of what
+ * it reads. Three attempts outlast any race short of a sustained stampede on one order, and that one is
+ * what the reconciliation repairs.
+ */
+const RECOMPUTE_ATTEMPTS = 3;
+
+/**
+ * Whether an error is the concurrency kernel's refusal of a write predicated on a version that moved on.
+ *
+ * @param error What a conditional write threw.
+ * @returns True for `ENTITY_VERSION_CONFLICT`, false for anything else.
+ */
+function isVersionConflict(error: unknown): boolean {
+	return error instanceof ApiException && error.code === ApiErrorCode.ENTITY_VERSION_CONFLICT;
+}
+
+/**
+ * The columns of a shipment that decide what its lines did to the order line's counters.
+ *
+ * Which order the shipment is of, and which way its goods travel: an outbound shipment moved
+ * `fulfilledQuantity` when it was created and a return leg moved nothing, `cancel` gives the units back
+ * by the same rule, `delete` refuses by it (`isCountedShipment`), and the re-derivation is asked for the
+ * order this column names. A correction that changed either would leave every one of those decisions made
+ * about a shipment that no longer exists — a pending outbound shipment re-labelled a return is one whose
+ * cancelation gives nothing back and whose removal is no longer refused.
+ */
+const COUNTED_SHIPMENT_COLUMNS = ['orderId', 'direction'] as const;
+
+/** One of the columns above. */
+type CountedShipmentColumn = (typeof COUNTED_SHIPMENT_COLUMNS)[number];
+
+/**
  * Shipments against orders.
  *
  * The lifecycle is owned here, in one place, because it is the reason the table exists: **a delivered
@@ -115,18 +159,30 @@ const FULFILLMENT_COMMITTED = 'FULFILLMENT_COMMITTED';
  * version — a write that buys nothing and invalidates every client holding the order's `ETag`. They are
  * therefore left alone deliberately, not by omission.
  *
- * **The recompute is awaited and its failure is left to surface**, which is what every caller of
- * `recompute` inside the order package already does. That is safe here for a reason worth stating: a
- * `create` that throws after its own write is answered on a retry by the idempotency kernel replaying the
- * stored refusal rather than running the body again — the key stays claimed under `FAILED`
- * (`IdempotencyService.fail`: "a client that retries under a key whose request was refused gets the
- * refusal replayed") — so a failed re-derivation cannot ship the same goods twice. A `cancel` that
- * throws after its own write finds the shipment already `CANCELED` on the retry and takes this service's
- * own no-op path, so the counters are not given back twice either. What is *not* delivered is ADR-26's
- * "inside the same transaction as the change": there is no transaction on this path to be inside, and
- * creating one means threading a manager through `commitVersionedUpdate`, which takes a `CrudService` and
- * lives in the concurrency kernel. That is a change to `packages/core` and to the order package rather
- * than to this file, and it is reported rather than faked.
+ * **The recompute is awaited, retried when it lost a race, and never answered as the shipment's failure.**
+ * By the time it runs the shipment has committed — its row, its lines and the order line's counters — so
+ * an exception out of it would tell the caller a shipment that exists had failed. On `create` that is
+ * worse than a wrong answer: the idempotency kernel stores the refusal under the key and replays it to
+ * every retry (`IdempotencyService.fail`), so the client is never told the shipment exists, and the
+ * `fulfillment.pending` event that a picking list is built from was never appended. The commonest cause
+ * is not a fault at all: the re-derivation states the wildcard version, so a concurrent re-derivation of
+ * the same order — a second shipment, a return, a refund, a payment — wins the row's version and this one
+ * is answered `ENTITY_VERSION_CONFLICT` for state it never held. That case is re-derived again from a
+ * fresh read (`RECOMPUTE_ATTEMPTS`); anything that still fails is logged and left to the nightly
+ * `OrderTotalsReconciliationScheduler`, which selects every order whose lines moved in its window and
+ * re-derives the ones whose columns disagree with their ledgers — precisely the order a failed
+ * re-derivation leaves behind. What is *not* delivered is ADR-26's "inside the same transaction as the
+ * change": there is no transaction on this path to be inside, and creating one means threading a manager
+ * through `commitVersionedUpdate`, which takes a `CrudService` and lives in the concurrency kernel. That
+ * is a change to `packages/core` and to the order package rather than to this file, and it is reported
+ * rather than faked.
+ *
+ * **A shipment the order line still counts is never removed outright.** The counters are given back by
+ * `cancel` and by nothing else, so `delete` refuses an outbound shipment until it is cancelled — the rule
+ * `fulfillment.removal.ts` states for this service and for the line service alike, so that neither
+ * protocol can reach a removal the other refuses. For the same reason `update` refuses to change the order
+ * a shipment is of or the way it travels: those two columns are what that rule, and `cancel`'s, are
+ * decided on.
  *
  * One capability is reached through a port rather than implemented here, because it belongs to the
  * carrier: the label a shipment travels with is issued by a provider this domain does not own. The
@@ -137,6 +193,9 @@ const FULFILLMENT_COMMITTED = 'FULFILLMENT_COMMITTED';
  */
 @Injectable()
 export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
+	/** Where a re-derivation that could not run is reported, since the caller is not told of it. */
+	private readonly logger = new Logger(FulfillmentService.name);
+
 	constructor(
 		readonly typeOrmFulfillmentRepository: TypeOrmFulfillmentRepository,
 		readonly mikroOrmFulfillmentRepository: MikroOrmFulfillmentRepository,
@@ -230,20 +289,23 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			}
 		}
 
+		// Announced after the lines exist, because a picking list is what a consumer of this event
+		// builds and a shipment with no lines yet is not one it could build anything from — and before
+		// the order is re-derived, because the event describes this shipment, which has committed by now,
+		// and not the order's derived state: a re-derivation that could not run must not cost a shipment
+		// that exists the picking list it is built from.
+		await this.announce(
+			FULFILLMENT_EVENTS[FulfillmentStatusDetail.PENDING],
+			fulfillment,
+			Number(fulfillment.version ?? 1)
+		);
+
 		// The counters above are the only input of the order's derived fulfilment state that this write
 		// moved, so this is where the state is re-derived. A return direction moved none of them — the
 		// rule stated on `createReturnLeg` below — so it has nothing to re-derive and no call is made.
 		if (direction !== FulfillmentDirection.RETURN) {
 			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
 		}
-
-		// Announced after the lines exist, because a picking list is what a consumer of this event
-		// builds and a shipment with no lines yet is not one it could build anything from.
-		await this.announce(
-			FULFILLMENT_EVENTS[FulfillmentStatusDetail.PENDING],
-			fulfillment,
-			Number(fulfillment.version ?? 1)
-		);
 
 		return this.findOneByIdString(fulfillment.id, { relations: ['lines'] });
 	}
@@ -479,7 +541,8 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 			// The counters were given back above, so the order's derived fulfilment state has moved with
 			// them and is re-derived here. The repeat path returns before this — a shipment that is
 			// already `CANCELED` gives nothing back a second time — so a retried cancel re-derives
-			// nothing, which is what keeps the status from moving on a no-op.
+			// nothing, which is what keeps the status from moving on a no-op. The cancelation has
+			// committed by now, so a re-derivation that could not run is not answered as its failure.
 			await this.recomputeOrderFulfillmentStatus(fulfillment.orderId as ID);
 		}
 
@@ -504,6 +567,107 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		expectation: IVersionExpectation = ANY_FULFILLMENT_VERSION
 	): Promise<Fulfillment> {
 		return (await this.move(fulfillmentId, to, expectation)).fulfillment;
+	}
+
+	/**
+	 * Corrects a shipment, refusing a change to what its counters and its removal were decided on.
+	 *
+	 * The correction is the repair surface for what a shipment *says* — its tracking, its carrier, its note,
+	 * its payload — and the lifecycle's own conditional writes reach it too, with a status and a version.
+	 * What it may not do is re-point the shipment at another order or turn it round (`COUNTED_SHIPMENT_COLUMNS`):
+	 * `PUT /fulfillments/:id` validates a body that declares both, and a pending outbound shipment turned
+	 * into a return used to be written as asked — after which its cancelation gave nothing back, because a
+	 * return leg moved nothing, and `delete` let it go, because a return leg counts nothing, while
+	 * `fulfilledQuantity` kept its units for good. The `updateFulfillment` field declares neither member, so
+	 * the refusal is the route's today; it is made here, below both surfaces, so the two cannot come to
+	 * differ about it.
+	 *
+	 * A member that restates the value the row already holds is not a change and is accepted, so a client
+	 * that sends the whole row back with its tracking edited is not refused for the members it did not
+	 * touch. A row that states no direction is outbound, which is the column's default.
+	 *
+	 * @param id The shipment, or the conditions that select the shipments to correct.
+	 * @param partialEntity The fields to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException with `FULFILLMENT_IMMUTABLE` when the correction would move the order or
+	 * the direction of a shipment.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<Fulfillment>,
+		partialEntity: QueryDeepPartialEntity<Fulfillment>
+	): Promise<Fulfillment | UpdateResult> {
+		const patch = (partialEntity ?? {}) as Record<string, unknown>;
+		const stated = COUNTED_SHIPMENT_COLUMNS.filter((column) => patch[column] !== undefined);
+
+		if (stated.length > 0) {
+			const current =
+				typeof id === 'string' ? [await this.findOneByIdString(id)] : await this.find({ where: id });
+
+			for (const shipment of current) {
+				const moved = stated.filter((column) => !this.restates(column, shipment[column], patch[column]));
+
+				if (moved.length > 0) {
+					throw new BadRequestException({
+						message: `FULFILLMENT_IMMUTABLE: a correction cannot change ${moved.join(', ')} of fulfillment '${shipment.id}', because what the order line's counters were moved by, and what gives them back, was decided on them; cancel the shipment and raise the right one instead.`,
+						code: 'FULFILLMENT_IMMUTABLE',
+						details: { fulfillmentId: shipment.id, columns: moved }
+					});
+				}
+			}
+		}
+
+		return super.update(id, partialEntity);
+	}
+
+	/**
+	 * Removes a shipment outright, once nothing the order line counts still rests on it.
+	 *
+	 * **A shipment the counters still count is refused, whichever protocol asked.** An outbound shipment
+	 * moved `order_line.fulfilledQuantity` when it was created — and `shippedQuantity` and
+	 * `deliveredQuantity` as it travelled — and `cancel` is the one write that gives those units back. The
+	 * inherited removal gave nothing back: `DELETE /fulfillments/:id` and `deleteFulfillment` both reached
+	 * `TenantAwareCrudService.delete`, the lines went with the row (`FK_fulfillment_line_fulfillment` is
+	 * `ON DELETE CASCADE`), and the counters kept counting units nothing would ship. The order stayed
+	 * `FULFILLED`, the outstanding remainder stayed at zero so every later shipment of the line was refused
+	 * with `FULFILLMENT_QUANTITY_EXCEEDED`, and the nightly reconciliation, which derives from those same
+	 * counters, agreed with them. The refusal is made here rather than in either surface, so the route and
+	 * the field cannot diverge on it.
+	 *
+	 * What may go is what counts nothing (`isCountedShipment`): an outbound shipment that was cancelled —
+	 * the cancelation already gave its units back and re-derived the order — and a return leg, which never
+	 * moved a counter. A `PENDING` shipment is cancelled first; one that has left the building records goods
+	 * that moved and is refused for good, because no cancelation can reach it either.
+	 *
+	 * The read that decides includes a retired row, because a soft-deleted shipment is still counted, and it
+	 * selects exactly what the removal selects (`removalCriteria`): the caller's tenant through the base
+	 * class and the organization the request states. A shipment the caller cannot see is therefore neither
+	 * refused nor removed — the statement matches nothing and answers `affected: 0`, which is what the route
+	 * has always answered for an identifier that names nothing.
+	 *
+	 * @param criteria The shipment's identifier, or the conditions that select the shipments to remove.
+	 * @returns The result of the removal.
+	 * @throws ConflictException with `FULFILLMENT_NOT_DELETABLE` when a selected shipment is still counted.
+	 */
+	public async delete(criteria: ID | FindOptionsWhere<Fulfillment>): Promise<DeleteResult> {
+		const where = removalCriteria(criteria) as FindOptionsWhere<Fulfillment>;
+		const selected = await this.find({ where, withDeleted: true });
+
+		for (const fulfillment of selected) {
+			if (isCountedShipment(fulfillment)) {
+				throw new ConflictException({
+					message: `FULFILLMENT_NOT_DELETABLE: fulfillment '${fulfillment.id}' is ${fulfillment.status}, so the order line still counts its units; cancel it before removing it, or keep it as the record of goods that left.`,
+					code: 'FULFILLMENT_NOT_DELETABLE',
+					details: {
+						fulfillmentId: fulfillment.id,
+						status: fulfillment.status,
+						direction: fulfillment.direction ?? FulfillmentDirection.OUTBOUND,
+						deletableFrom: [FulfillmentStatusDetail.CANCELED]
+					}
+				});
+			}
+		}
+
+		return super.delete(where);
 	}
 
 	/**
@@ -692,7 +856,7 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 
 			await this.announce(FULFILLMENT_EVENTS[to], { ...fulfillment, ...patch, status: to }, version);
 		} catch (error) {
-			if (!(error instanceof ApiException) || error.code !== ApiErrorCode.ENTITY_VERSION_CONFLICT) {
+			if (!isVersionConflict(error)) {
 				throw error;
 			}
 
@@ -888,18 +1052,42 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 	 * rather than left blank because a summary row whose reason says nothing is a row an operator cannot
 	 * explain, and because the string had no production caller at all before this wave.
 	 *
-	 * **Awaited, and its failure is not swallowed.** A re-derivation that could not run is a
-	 * `fulfillmentStatus` that is wrong until somebody notices, and the nightly reconciliation that would
-	 * notice it does not exist (the order package registers no scheduled job, and nothing outside it calls
-	 * `recompute`). Failing the caller's request is therefore the only signal this platform produces, and
-	 * it is a safe one on both call sites: `create` is idempotent by a required key, so a retry replays
-	 * the stored refusal instead of shipping the goods twice, and a retried `cancel` finds the shipment
-	 * already cancelled and returns without giving the counters back again.
+	 * **Awaited, retried when it lost a race, and never the caller's failure.** Both call sites run it after
+	 * the shipment's own writes have committed, so an exception out of here would answer a shipment that
+	 * exists as one that failed — and on `create`, whose key is required, the idempotency kernel would store
+	 * that refusal and replay it to every retry, so the client would never learn the shipment exists. The
+	 * write this makes states the wildcard version, and the one conflict a wildcard can meet is a concurrent
+	 * re-derivation of the same order that took the version between `recompute`'s read and its update:
+	 * spurious, because this caller held no stale state to protect. It is answered by asking again — each
+	 * call reads the order afresh and derives it from the ledgers as they now stand, the winner's write
+	 * included — up to `RECOMPUTE_ATTEMPTS` times. Anything else, and a race still lost on the last attempt,
+	 * is logged and left to `OrderTotalsReconciliationScheduler`: its nightly pass selects every order whose
+	 * lines were written in its window — which the counter moves above are — and re-derives each one whose
+	 * columns disagree with its ledgers. That job did not exist when this call was first wired, which is why
+	 * the failure used to be surfaced instead; a signal that told the caller a committed shipment had failed
+	 * was the wrong one to rely on once a correcting one existed.
 	 *
 	 * @param orderId The order the moved shipment belongs to.
 	 */
 	private async recomputeOrderFulfillmentStatus(orderId: ID): Promise<void> {
-		await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
+		for (let attempt = 1; attempt <= RECOMPUTE_ATTEMPTS; attempt++) {
+			try {
+				await this.orderTotals.recompute(orderId, FULFILLMENT_COMMITTED);
+
+				return;
+			} catch (error) {
+				if (isVersionConflict(error) && attempt < RECOMPUTE_ATTEMPTS) {
+					continue;
+				}
+
+				this.logger.warn(
+					`The fulfilment state of order ${orderId} could not be re-derived after ${attempt} attempt(s), ` +
+						`and is left to the nightly reconciliation: ${error instanceof Error ? error.message : String(error)}`
+				);
+
+				return;
+			}
+		}
 	}
 
 	/**
@@ -921,5 +1109,25 @@ export class FulfillmentService extends TenantAwareCrudService<Fulfillment> {
 		void labelData;
 
 		return rest as Fulfillment;
+	}
+
+	/**
+	 * Whether a stated value is the value a counted column of a shipment already holds.
+	 *
+	 * @param column The column.
+	 * @param stored What the row holds.
+	 * @param stated What the correction states.
+	 * @returns True when the correction restates the stored value rather than changing it. A direction the
+	 * row does not state is outbound, which is the column's default, so restating `OUTBOUND` over it is not
+	 * a change.
+	 */
+	private restates(column: CountedShipmentColumn, stored: unknown, stated: unknown): boolean {
+		if (stated === null) {
+			return false;
+		}
+
+		const held = column === 'direction' ? (stored ?? FulfillmentDirection.OUTBOUND) : (stored ?? '');
+
+		return String(stated) === String(held);
 	}
 }

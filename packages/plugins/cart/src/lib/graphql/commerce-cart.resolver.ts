@@ -46,6 +46,11 @@ import { Cart, ICartConnection } from './types';
  * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
  * that switched the capability off is answered the refusal a disabled capability's routes answer with a
  * 404.
+ *
+ * No code of this plugin's own stands beside it, and that is deliberate: `FEATURE_CART` is
+ * declared by the cart catalogue but stated by none of the controllers serving the same resources,
+ * and a code stated here and not there would refuse over GraphQL what REST serves. `FeatureFlagGuard`
+ * now requires every code a class states, so the day the routes state it, this class states it with them.
  */
 @Resolver('Cart')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -191,8 +196,13 @@ export class CommerceCartResolver {
 	 * from under the change that moved it. The refusal is the guard's: a deletion has no update
 	 * statement for the conditional write to predicate.
 	 *
+	 * The answer is whether a row was removed — `affected > 0`, the rule the order plugin's deletes answer
+	 * with — rather than whether the statement ran: `TenantAwareCrudService.delete` checks no existence, and
+	 * a scoped statement that matched nothing reports `affected: 0` without raising, which `Boolean(result)`
+	 * used to answer as `true`. `deleteCommerceCheckoutSession` answers by the same rule.
+	 *
 	 * @param id The cart.
-	 * @returns True when the cart was removed.
+	 * @returns True when the cart was removed, false when the identifier matched none.
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_DELETE)
 	@Versioned({ resource: CommerceCartService })
@@ -200,7 +210,7 @@ export class CommerceCartResolver {
 	async deleteCart(@Args('id', { type: () => ID }) id: string): Promise<boolean> {
 		const result = await this.commerceCartService.delete(id);
 
-		return Boolean(result);
+		return Number(result?.affected ?? 0) > 0;
 	}
 
 	/**

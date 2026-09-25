@@ -30,7 +30,7 @@ import {
 	WAREHOUSE_LEVEL_VERSION_TARGET
 } from '../../warehouse.types';
 import { buildConnection, IPageSelection, resolveWindow } from '../pagination';
-import { toUserError } from '../wire';
+import { deleteOutcome, toUserError } from '../wire';
 
 /** The request that defines a bin, as the schema declares it. */
 interface IWarehouseBinInput {
@@ -63,17 +63,15 @@ interface IWarehouseBinInput {
  * same transaction as the row, and blocking one is how a position leaves rotation without pretending
  * the units in it are gone.
  *
- * **The gate is the catalogue's, and the domain code stands beside it.** `FeatureFlagGuard` reads one
- * code per target — `getAllAndOverride` over the handler and then the class — so the code stated first
- * on the class is the one that gates every field below, and it is `FEATURE_GRAPHQL`, the commerce
+ * **Both gates are checked: the catalogue's and the domain's.** The two `@FeatureFlag` statements on the
+ * class accumulate rather than the upper one replacing the lower, and `FeatureFlagGuard` requires every
+ * code a handler states or, where the handler states none — as no field below does — every code its
+ * class states. Each field therefore runs only for a tenant that has both `FEATURE_GRAPHQL`, the commerce
  * catalogue's entry for "the GraphQL endpoint and its resolvers, under the same guards and permissions
- * as REST": a tenant that switched the GraphQL surface off is answered the refusal a disabled
- * capability's routes answer with a 404, which is the hole this statement closes. `WarehouseFeatures.WAREHOUSE`
- * stays written below it because the warehouse capability is what the routes serving the same resources
- * carry and what this plugin's own feature catalogue declares, so a reader comparing the two surfaces
- * sees it; it is a record rather than a second check, because the feature metadata carries one value per
- * target, and a class that needs both codes checked needs `FeatureFlagGuard` to resolve a set of them —
- * a change to `packages/core/src/lib/shared/guards/feature-flag.guard.ts`, not to this file.
+ * as REST", and `WarehouseFeatures.WAREHOUSE`, the capability the routes serving the same resources
+ * carry. A tenant that switched either off is answered the refusal a disabled capability's routes
+ * answer with a 404 — which is what stops a write the REST route refuses with the warehouse switched off
+ * from still landing over this surface.
  */
 @Resolver('WarehouseBin')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
@@ -333,16 +331,21 @@ export class WarehouseBinResolver {
 	/**
 	 * Deletes a bin that is empty and holds no position under it.
 	 *
+	 * A removal that matched no row — an identifier of another tenant, a stale one, one already gone — is
+	 * not a removal: the scoped statement reports `affected: 0` without raising, and the payload answers it
+	 * with a `NOT_FOUND` outcome on `id` (`deleteOutcome`) rather than with the empty `userErrors` of a
+	 * success.
+	 *
 	 * @param id The bin.
-	 * @returns The payload.
+	 * @returns The payload, with the refusal or the `NOT_FOUND` in `userErrors`.
 	 */
 	@Permissions(WarehousePermissions.WAREHOUSE_BINS_DELETE)
 	@Mutation('deleteWarehouseBin')
 	async deleteWarehouseBin(@Args('id') id: ID) {
 		try {
-			await this.warehouseBinService.delete(id);
+			const result = await this.warehouseBinService.delete(id);
 
-			return { warehouseBin: null, userErrors: [] };
+			return { warehouseBin: null, userErrors: deleteOutcome(result, id) };
 		} catch (error) {
 			return { warehouseBin: null, userErrors: [toUserError(error)] };
 		}

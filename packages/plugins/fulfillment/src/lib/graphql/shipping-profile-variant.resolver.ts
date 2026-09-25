@@ -45,6 +45,11 @@ import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
  * the same guards and permissions as REST" — imported rather than restated, because a literal that drifted
  * names a code no catalogue row carries, which the guard resolves as disabled, so every field here would
  * answer `Cannot query field <name>` for every caller with nothing red anywhere.
+ *
+ * No code of this plugin's own stands beside it, and that is deliberate: `FEATURE_FULFILLMENT` is
+ * declared by the fulfilment catalogue but stated by none of the controllers serving the same resources,
+ * and a code stated here and not there would refuse over GraphQL what REST serves. `FeatureFlagGuard`
+ * now requires every code a class states, so the day the routes state it, this class states it with them.
  */
 @Resolver(() => ShippingProfileVariant)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)

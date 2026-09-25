@@ -40,8 +40,9 @@
 jest.mock('@gauzy/plugin-order', () => ({ OrderLineService: class OrderLineService {} }));
 
 import { FieldDefinitionNode, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, TypeNode } from 'graphql';
-import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FULFILLMENT_PERMISSIONS } from '../fulfillment.permissions';
 import { FulfillmentController } from '../fulfillment/fulfillment.controller';
 import { FulfillmentLineController } from '../fulfillment-line/fulfillment-line.controller';
@@ -408,6 +409,60 @@ describe('the soft-delete pair — the permission and the guards are the route�
 		for (const { field, route, controller, resolver } of PARITY) {
 			expect(guardsOf(controller, route)).toEqual(expect.arrayContaining(routeGuards));
 			expect(guardsOf(resolver, field)).toEqual(expect.arrayContaining(guardsOf(controller, route)));
+		}
+	});
+});
+
+/**
+ * The feature gates of every resolver, read from the metadata the real `@FeatureFlag` writes (AWR-4).
+ *
+ * The rule is the REST surface's: a resolver states every feature code the controllers serving the same
+ * resources state, beside `FEATURE_GRAPHQL`, and nothing else — a code the routes do not state would refuse
+ * over GraphQL what REST serves, and a code they state that the resolver left out would serve over GraphQL
+ * what REST refuses. `FEATURE_FULFILLMENT` is declared by this plugin's catalogue and stated by none of its
+ * controllers today, so the resolvers state `FEATURE_GRAPHQL` alone; the day a controller states a code,
+ * the first case below fails until its resolver states it too. `@FeatureFlag` stacks and the guard requires
+ * every code a class states, so stating it is all that is needed.
+ */
+describe('the feature gates — every resolver states the codes its routes state', () => {
+	/** Every code one target states, whichever of the two shapes the metadata holds. */
+	const flagsOf = (target: object): unknown[] => [Reflect.getMetadata(FEATURE_METADATA, target) ?? []].flat();
+
+	/** The three resolver classes, each with every controller whose resources it serves. */
+	const resolvers = [...new Set(RESOURCES.map(({ resolver }) => resolver))].map((resolver) => ({
+		resolver,
+		controllers: RESOURCES.filter((resource) => resource.resolver === resolver).map(({ controller }) => controller)
+	}));
+
+	it('states, on each resolver class, exactly the codes its controllers state and the GraphQL surface', () => {
+		expect(resolvers).toHaveLength(3);
+
+		for (const { resolver, controllers } of resolvers) {
+			const routeFlags = [...new Set(controllers.flatMap((controller) => flagsOf(controller)))];
+
+			expect({ resolver: resolver.name, flags: [...flagsOf(resolver)].sort() }).toEqual({
+				resolver: resolver.name,
+				flags: [FEATURE_GRAPHQL, ...routeFlags].sort()
+			});
+		}
+	});
+
+	it('lets no field replace its class’s gate with one of its own', () => {
+		// A handler's own codes replace its class's, so a field that stated one would be gated on it alone.
+		for (const { resolver } of resolvers) {
+			const prototype = resolver.prototype as Row;
+			const fields = Object.getOwnPropertyNames(prototype).filter(
+				(name) => name !== 'constructor' && typeof prototype[name] === 'function'
+			);
+
+			expect(fields.length).toBeGreaterThan(0);
+
+			for (const field of fields) {
+				expect({ field, flags: Reflect.getMetadata(FEATURE_METADATA, prototype[field]) }).toEqual({
+					field,
+					flags: undefined
+				});
+			}
 		}
 	});
 });

@@ -778,8 +778,12 @@ describe('the four fields — the two protocols make the same call', () => {
 		const { stubs, resolver } = surfaces(PARITY[3]);
 		const cartResolver = new (CommerceCartResolver as any)(stubs.get('cart')) as Row;
 
+		// `{ affected: 0 }` is the case that used to be wrong: a scoped removal that matched nothing — another
+		// tenant's session, a stale identifier — reports it without raising, and `Boolean(result)` answered
+		// `true` for it. Both fields now answer whether a row was removed.
 		for (const [result, expected] of [
 			[{ affected: 1 }, true],
+			[{ affected: 0, raw: [] }, false],
 			[undefined, false]
 		] as [any, boolean][]) {
 			(stubs.get('session') as Row).delete.mockResolvedValueOnce(result);

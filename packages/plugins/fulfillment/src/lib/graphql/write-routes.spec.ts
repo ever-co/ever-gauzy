@@ -81,13 +81,20 @@
  * `../fulfillment/fulfillment.service.spec.ts` rather than here, because which transitions are worth
  * re-deriving is a fact about the service and not about a root field.
  *
- * Two halves of ADR-26 remain open and are recorded rather than implied. The re-derivation is a **second
+ * One half of ADR-26 remains open and is recorded rather than implied. The re-derivation is a **second
  * write, not part of the first**: no transaction exists on this path to run it inside — neither the
  * service nor the concurrency kernel opens one, and `commitVersionedUpdate` takes a `CrudService` rather
- * than a manager — so closing that clause is a change to `packages/core` and to the order package. And
- * the safety net ADR-26 names beside it is missing too: **no scheduled job anywhere recomputes the
- * materialised statuses**, the order package registers none, and nothing outside that package calls
- * `recompute`, so a re-derivation that failed leaves a `fulfillmentStatus` nothing will correct.
+ * than a manager — so closing that clause is a change to `packages/core` and to the order package. The
+ * safety net ADR-26 names beside it now exists — `OrderTotalsReconciliationScheduler` re-derives, nightly,
+ * every order whose lines moved — which is why a re-derivation that could not run is logged and left to it
+ * rather than answered as the failure of a shipment that has already committed.
+ *
+ * **What the three deliveries write is now also what the order line's counters can follow.** The line's
+ * correction and both removals reached the inherited service methods, which moved rows the counters were
+ * summed from without giving the counters back. The services now refuse that — a correction may not
+ * change a line's shipment, order line or quantity, and neither removal may take a row of a shipment the
+ * counters still count — and the refusal is made below both surfaces, so the parity asserted here holds
+ * for the refusal as well; it is asserted in the two service suites, and the removals' answers below.
  *
  * **Nothing is doubled here but the services.** The two controllers are the real ones, the resolver is the
  * real one with its own decorators and signature, `CrudController` behind them is the kernel's own, and the
@@ -1207,4 +1214,76 @@ describe('the divergences between the routes and their serving fields', () => {
 		expect(createKey).toMatchObject({ scope: 'fulfillment.create', required: true });
 		expect(fieldKey).toMatchObject({ scope: 'fulfillment.create', required: true });
 	});
+});
+
+/**
+ * What a removal answers when it removed nothing, and when it was refused (C10, and the delete-answer
+ * finding).
+ *
+ * The boolean fields used to answer `Boolean(result)`, which is `true` for any `DeleteResult` at all — so an
+ * identifier of another tenant, a stale one or one already gone was answered as removed, while the route's
+ * own body carried `affected: 0`. They now answer whether a row was removed, which is the rule the order
+ * plugin's deletes answer with, and all four boolean removals of this document answer by it.
+ */
+describe('the removals — a removal that matched nothing is not a success', () => {
+	/** What the ORM's removal reports when its scoped statement matched no row. */
+	const NOTHING = { affected: 0, raw: [] };
+
+	it.each(PARITY.filter((entry) => entry.answersBoolean))(
+		'$field answers false where its route answers affected: 0',
+		async (entry) => {
+			const { stubs, controller, resolver } = surfaces(entry);
+
+			stubs[entry.service].delete.mockResolvedValue(NOTHING);
+
+			const overRest = await controller[entry.route](...entry.routeArgs);
+			const overGraphql = await resolver[entry.field](...entry.fieldArgs);
+
+			// The route passes the result on, so a REST caller reads `affected: 0`; the field says the same
+			// thing in its own vocabulary rather than the opposite.
+			expect(overRest).toBe(NOTHING);
+			expect(overGraphql).toBe(false);
+		}
+	);
+
+	it('answers the shipping profile and option removals by the same rule', async () => {
+		const optionService = { ...collaborator(FOREIGN), delete: jest.fn() };
+		const profileService = { ...collaborator(FOREIGN), delete: jest.fn() };
+		const resolver = new ShippingOptionResolver(optionService as never, profileService as never) as Row;
+
+		for (const [result, expected] of [
+			[REMOVED, true],
+			[NOTHING, false],
+			[undefined, false]
+		] as [unknown, boolean][]) {
+			optionService.delete.mockResolvedValueOnce(result);
+			profileService.delete.mockResolvedValueOnce(result);
+
+			expect(await resolver.deleteShippingOption(ID)).toBe(expected);
+			expect(await resolver.deleteShippingProfile(ID)).toBe(expected);
+		}
+
+		// The control: each field reached its own service, so the answers above are about that service's
+		// result and not about a shared double.
+		expect(optionService.delete).toHaveBeenCalledTimes(3);
+		expect(profileService.delete).toHaveBeenCalledTimes(3);
+	});
+
+	it.each(PARITY.filter((entry) => entry.answersBoolean))(
+		'$field reaches the refusal its route reaches, and answers it as an error rather than as false',
+		async (entry) => {
+			// A shipment the order line still counts is refused by the service both surfaces reach, so the
+			// refusal is one behaviour on both: the route answers it as the HTTP error and the field as the
+			// GraphQL one, and neither turns it into a quiet `false`.
+			const { stubs, controller, resolver } = surfaces(entry);
+			const refusal = new Error(
+				entry.service === 'line' ? 'FULFILLMENT_LINE_NOT_DELETABLE: refused' : 'FULFILLMENT_NOT_DELETABLE: refused'
+			);
+
+			stubs[entry.service].delete.mockRejectedValue(refusal);
+
+			await expect(controller[entry.route](...entry.routeArgs)).rejects.toBe(refusal);
+			await expect(resolver[entry.field](...entry.fieldArgs)).rejects.toBe(refusal);
+		}
+	);
 });
