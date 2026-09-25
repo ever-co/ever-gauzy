@@ -1508,8 +1508,21 @@ describe('OrderTotalsService — the outbox row, through the configured ORM', ()
 			mikroOutbox: orm.em.fork().getRepository(OutboxRow)
 		});
 
-	it('appends the event through MikroORM, and never through the TypeORM manager', async () => {
-		const fixture = onMikroOrm({ tenantId: 'tenant-1', organizationId: 'org-1' });
+	// The row itself — partition, gapless sequence, tenancy, payload — is the platform outbox's to write, and
+	// core's `event-outbox.orm-parity.spec.ts` proves it on the real mapping under both ORMs. What this package
+	// owes is to hand the platform append the MikroORM manager when MikroORM is the configured ORM, and the
+	// projection the TypeORM path carries. These cases used to assert a private MikroORM writer this package
+	// kept beside the kernel; the kernel's append is ORM-aware now, so the private copy is gone.
+	it('appends the event through the platform outbox with its MikroORM manager, and never the TypeORM one', async () => {
+		const mikroOutbox = orm.em.fork().getRepository(OutboxRow);
+		const fixture = orderFixture(
+			{ tenantId: 'tenant-1', organizationId: 'org-1' },
+			{
+				orm: 'mikro-orm',
+				unitOfWork: { usesMikroOrm: true, run: (work: () => Promise<unknown>) => work() },
+				mikroOutbox
+			}
+		);
 
 		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
 
@@ -1520,41 +1533,37 @@ describe('OrderTotalsService — the outbox row, through the configured ORM', ()
 			event: { name: 'order.confirmed' }
 		} as never);
 
-		// The TypeORM append was never reached.
-		expect(fixture.events).toEqual([]);
+		expect(fixture.events.map((event: any) => event.name)).toEqual(['order.placed', 'order.confirmed']);
 
-		const [first, second] = await rows();
+		for (const event of fixture.events as any[]) {
+			expect(event.manager).toBe(mikroOutbox.getEntityManager());
+			expect(event.manager).not.toBe(fixture.manager);
+			expect(event).toMatchObject({
+				aggregateType: 'ORDER',
+				aggregateId: 'order-1',
+				tenantId: 'tenant-1',
+				organizationId: 'org-1'
+			});
+		}
 
-		expect([first, second].map((row) => [row.eventName, row.partitionKey, row.sequence])).toEqual([
-			['order.placed', 'ORDER:order-1', 1],
-			['order.confirmed', 'ORDER:order-1', 2]
-		]);
-		expect(first).toMatchObject({
-			aggregateType: 'ORDER',
-			aggregateId: 'order-1',
-			status: 'PENDING',
-			attemptCount: 0
-		});
-		expect(first.availableAt).toBeInstanceOf(Date);
-		// The order's tenancy reached the columns, through the relations they key.
-		expect(
-			await orm.em
-				.fork()
-				.getConnection()
-				.execute(`SELECT tenantId, organizationId FROM event_outbox ORDER BY sequence ASC`)
-		).toEqual([
-			{ tenantId: 'tenant-1', organizationId: 'org-1' },
-			{ tenantId: 'tenant-1', organizationId: 'org-1' }
-		]);
-		expect(first.eventId).not.toBe(second.eventId);
-		// The same projection the TypeORM append carries: the identity, the version the write produced and
-		// the two materialised statuses, plus what the move adds.
-		expect(first.payload).toMatchObject({ orderId: 'order-1', version: placed.version, cartId: 'cart-1' });
-		expect(second.payload).toMatchObject({ orderId: 'order-1', version: confirmed.version });
+		// The same projection the TypeORM append carries: the identity, the version the write produced and the
+		// materialised statuses, plus what the move adds.
+		expect(fixture.events[0].data).toMatchObject({ orderId: 'order-1', version: placed.version, cartId: 'cart-1' });
+		expect(fixture.events[1].data).toMatchObject({ orderId: 'order-1', version: confirmed.version });
+		// Nothing is written by this package itself any more.
+		expect(await rows()).toEqual([]);
 	});
 
-	it('numbers each order’s events in a partition of its own', async () => {
-		const fixture = onMikroOrm();
+	it('appends each order’s events under that order, whichever ORM it runs on', async () => {
+		const mikroOutbox = orm.em.fork().getRepository(OutboxRow);
+		const fixture = orderFixture(
+			{},
+			{
+				orm: 'mikro-orm',
+				unitOfWork: { usesMikroOrm: true, run: (work: () => Promise<unknown>) => work() },
+				mikroOutbox
+			}
+		);
 
 		fixture.orders.push({ ...fixture.order, id: 'order-2' });
 
@@ -1562,11 +1571,12 @@ describe('OrderTotalsService — the outbox row, through the configured ORM', ()
 		await fixture.service.recompute('order-2', 'PLACED', { event: { name: 'order.placed' } } as never);
 		await fixture.service.recompute('order-1', 'CANCEL', { event: { name: 'order.canceled' } } as never);
 
-		expect((await rows()).map((row) => [row.partitionKey, row.sequence, row.eventName])).toEqual([
-			['ORDER:order-1', 1, 'order.placed'],
-			['ORDER:order-1', 2, 'order.canceled'],
-			['ORDER:order-2', 1, 'order.placed']
+		expect(fixture.events.map((event: any) => [event.aggregateId, event.name])).toEqual([
+			['order-1', 'order.placed'],
+			['order-2', 'order.placed'],
+			['order-1', 'order.canceled']
 		]);
+		expect((fixture.events as any[]).every((event) => event.manager === mikroOutbox.getEntityManager())).toBe(true);
 	});
 
 	it('appends through the order repository’s own TypeORM manager under TypeORM, and writes nothing through MikroORM', async () => {

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { EntityManager, FindOptionsWhere, IsNull } from 'typeorm';
+import { EntityManager as MikroOrmEntityManager, QueryOrder } from '@mikro-orm/core';
 import { randomUUID } from 'node:crypto';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
@@ -14,6 +15,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { isUniqueViolation } from '../core/errors/unique-violation';
+import { MultiORMEnum } from '../core/utils';
 import { EventDelivery } from './event-delivery.entity';
 import { EventOutbox } from './event-outbox.entity';
 import {
@@ -21,6 +23,7 @@ import {
 	EventDeliveryAction,
 	EventDeliveryEventPublisher
 } from './event-delivery.publisher';
+import { EventOutboxMikroOrmStore, isMikroOrmEntityManager } from './event-outbox-mikro-orm.store';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';
 import { TypeOrmEventOutboxRepository } from './repository/type-orm-event-outbox.repository';
 import { MikroOrmEventDeliveryRepository } from './repository/mikro-orm-event-delivery.repository';
@@ -118,6 +121,14 @@ export interface IDeliveryRowQuery {
  * apart by accident. Everything after that — the dispatch lease, the per-consumer delivery record,
  * the backoff and the dead-letter — exists to make a best-effort transport behave like a durable
  * one, and every step of it is a row an operator can read.
+ *
+ * **Both ORMs run every step.** `append` takes either ORM's manager and writes the row through the
+ * one it was handed, and every other operation reads and writes through the ORM `DB_ORM` configures.
+ * Under MikroORM the TypeORM entities for these two tables carry their base columns and nothing else
+ * — `@MultiORMColumn` registers the configured ORM's decorator alone — so a TypeORM statement would
+ * write a row with no event id and no sequence, and read one with no status; the MikroORM half of
+ * each operation is therefore {@link EventOutboxMikroOrmStore}'s, which states the same rows under the
+ * same rules. Every TypeORM statement below is the one this service has always made.
  */
 @Injectable()
 export class EventOutboxService extends CrudService<EventOutbox> {
@@ -149,6 +160,9 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	/** The envelope contract version this build produces. */
 	static readonly PAYLOAD_VERSION = 1;
 
+	/** The MikroORM half of every operation, over the same two repositories the CRUD base holds. */
+	private readonly mikroOrmStore: EventOutboxMikroOrmStore;
+
 	constructor(
 		readonly typeOrmEventOutboxRepository: TypeOrmEventOutboxRepository,
 		readonly mikroOrmEventOutboxRepository: MikroOrmEventOutboxRepository,
@@ -174,6 +188,8 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		private readonly deliveryPublisher?: EventDeliveryEventPublisher
 	) {
 		super(typeOrmEventOutboxRepository, mikroOrmEventOutboxRepository);
+
+		this.mikroOrmStore = new EventOutboxMikroOrmStore(mikroOrmEventOutboxRepository, mikroOrmEventDeliveryRepository);
 	}
 
 	/**
@@ -183,11 +199,22 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * change it describes. The method performs no I/O beyond the two statements it needs: no HTTP,
 	 * no queue publish, no notification.
 	 *
-	 * @param manager The caller's transaction manager.
+	 * **The manager decides the ORM, not the configuration.** A TypeORM manager — a transaction's, or a
+	 * repository's for a caller that writes without one — gets exactly the statements it always got. A
+	 * MikroORM manager gets the same row written through MikroORM, in the context that manager resolves
+	 * to: the transaction the caller opened, whether it hands over the transaction's own fork or a
+	 * repository's manager while the transaction is open, and otherwise the request's fork. Either way
+	 * the row joins the caller's unit of work and leaves with it on a rollback.
+	 *
+	 * @param manager The caller's transaction manager, of either ORM.
 	 * @param input What changed.
 	 * @returns The stored row, including the `eventId` and `sequence` consumers will see.
 	 */
-	async append(manager: EntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
+	async append(manager: EntityManager | MikroOrmEntityManager, input: IOutboxWriteInput): Promise<EventOutbox> {
+		if (isMikroOrmEntityManager(manager)) {
+			return this.mikroOrmStore.append(manager, input);
+		}
+
 		// The ordering key defaults to the aggregate, because per-aggregate ordering is the only
 		// ordering the platform promises.
 		const partitionKey = input.partitionKey ?? `${input.aggregateType}:${input.aggregateId}`;
@@ -222,6 +249,9 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * `attemptCount` increment: a row claimed by a process that then dies is reclaimed once the
 	 * lease expires.
 	 *
+	 * Under MikroORM the claim is the same read, lock, choice and lease, made in a transaction of the
+	 * store's own (see {@link EventOutboxMikroOrmStore.claimBatch}).
+	 *
 	 * @param policy Batch size, lease length and clock override.
 	 * @returns The rows this caller now owns, in partition then sequence order.
 	 */
@@ -229,6 +259,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 		const batchSize = policy.batchSize ?? EventOutboxService.DEFAULT_BATCH_SIZE;
 		const leaseMs = policy.leaseMs ?? EventOutboxService.DEFAULT_LEASE_MS;
 		const now = policy.now ?? new Date();
+
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.claimBatch({ batchSize, leaseMs, now });
+		}
 
 		return this.typeOrmEventOutboxRepository.manager.transaction(async (manager) => {
 			const query = manager
@@ -313,11 +347,11 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The updated row, or null when it no longer exists.
 	 */
 	async markPublished(id: ID, options: { at?: Date } = {}): Promise<EventOutbox | null> {
-		await this.typeOrmEventOutboxRepository.update({ id } as any, {
+		await this.updateOutboxRow(id, {
 			status: EventOutboxStatus.PUBLISHED,
 			publishedAt: options.at ?? new Date(),
 			lastError: null
-		} as any);
+		});
 
 		return this.findById(id);
 	}
@@ -347,11 +381,11 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			return this.markDead(id, error, { at: now });
 		}
 
-		await this.typeOrmEventOutboxRepository.update({ id } as any, {
+		await this.updateOutboxRow(id, {
 			status: EventOutboxStatus.FAILED,
 			availableAt: new Date(now.getTime() + this.backoffFor(record.attemptCount ?? 1)),
 			lastError: describeFailure(error)
-		} as any);
+		});
 
 		return this.findById(id);
 	}
@@ -368,12 +402,12 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The updated row, or null when it no longer exists.
 	 */
 	async markDead(id: ID, error: unknown, options: { at?: Date } = {}): Promise<EventOutbox | null> {
-		await this.typeOrmEventOutboxRepository.update({ id } as any, {
+		await this.updateOutboxRow(id, {
 			status: EventOutboxStatus.DEAD,
 			lastError: describeFailure(error),
 			publishedAt: null,
 			availableAt: options.at ?? new Date()
-		} as any);
+		});
 
 		return this.findById(id);
 	}
@@ -385,6 +419,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The row, or null.
 	 */
 	async findById(id: ID): Promise<EventOutbox | null> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, { id });
+		}
+
 		return this.typeOrmEventOutboxRepository.findOne({ where: { id } as any });
 	}
 
@@ -431,7 +469,7 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns Whether the caller must invoke the consumer, and the record to complete afterwards.
 	 */
 	async claimDelivery(input: IOutboxDeliveryClaimInput): Promise<IOutboxDeliveryClaim> {
-		const delivery = this.typeOrmEventDeliveryRepository.create({
+		const delivery = {
 			eventId: input.eventId,
 			consumerKey: input.consumerKey,
 			status: EventOutboxStatus.PENDING,
@@ -443,10 +481,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			// the one the event carries instead of none at all.
 			tenantId: input.tenantId ?? RequestContext.currentTenantId(),
 			organizationId: input.organizationId ?? RequestContext.currentOrganizationId()
-		} as Partial<EventDelivery>);
+		} as Partial<EventDelivery>;
 
 		try {
-			return { claimed: true, delivery: await this.typeOrmEventDeliveryRepository.save(delivery) };
+			return { claimed: true, delivery: await this.insertDelivery(delivery) };
 		} catch (error) {
 			if (!isUniqueViolation(error)) {
 				throw error;
@@ -468,7 +506,7 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 
 			// A pending or failed record means the event was lost mid-delivery the first time round,
 			// so it is handed over again and the attempt is counted against the consumer's budget.
-			await this.typeOrmEventDeliveryRepository.increment({ id: existing.id } as any, 'attemptCount', 1);
+			await this.incrementDeliveryAttempts(existing.id as ID);
 
 			return {
 				claimed: true,
@@ -506,7 +544,7 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			values.deliveredAt = new Date();
 		}
 
-		await this.typeOrmEventDeliveryRepository.update({ id } as any, values as any);
+		await this.updateDeliveryRow(id, values);
 
 		return this.findDeliveryById(id);
 	}
@@ -522,10 +560,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The updated delivery, or null when it no longer exists.
 	 */
 	async markDeliveryDead(id: ID, error: unknown): Promise<EventDelivery | null> {
-		await this.typeOrmEventDeliveryRepository.update({ id } as any, {
+		await this.updateDeliveryRow(id, {
 			status: EventOutboxStatus.DEAD,
 			lastError: describeFailure(error)
-		} as any);
+		});
 
 		return this.findDeliveryById(id);
 	}
@@ -538,6 +576,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The record, or null when this consumer has never seen the event.
 	 */
 	async findDelivery(eventId: ID, consumerKey: string): Promise<EventDelivery | null> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.findOne<EventDelivery>(EventDelivery, { eventId, consumerKey });
+		}
+
 		return this.typeOrmEventDeliveryRepository.findOne({
 			where: { eventId, consumerKey } as any
 		});
@@ -550,6 +592,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The record, or null.
 	 */
 	async findDeliveryById(id: ID): Promise<EventDelivery | null> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.findOne<EventDelivery>(EventDelivery, { id });
+		}
+
 		return this.typeOrmEventDeliveryRepository.findOne({ where: { id } as any });
 	}
 
@@ -572,6 +618,18 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The rows, due first.
 	 */
 	async listOutboxRows(query: IOutboxRowQuery = {}): Promise<EventOutbox[]> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.find<EventOutbox>(
+				EventOutbox,
+				this.rowsOfTheCallerOnMikroOrm({
+					...(query.status ? { status: query.status } : {}),
+					...(query.eventName ? { eventName: query.eventName } : {}),
+					...(query.aggregateId ? { aggregateId: query.aggregateId } : {})
+				}),
+				[{ availableAt: QueryOrder.ASC }, { sequence: QueryOrder.ASC }, { id: QueryOrder.ASC }]
+			);
+		}
+
 		return this.typeOrmEventOutboxRepository.find({
 			where: this.rowsOfTheCaller<EventOutbox>({
 				...(query.status ? { status: query.status } : {}),
@@ -593,6 +651,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The row, or null when it is not the caller's.
 	 */
 	async findOutboxRow(id: ID): Promise<EventOutbox | null> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.findOne<EventOutbox>(EventOutbox, this.rowsOfTheCallerOnMikroOrm({ id }));
+		}
+
 		return this.typeOrmEventOutboxRepository.findOne({
 			where: this.rowsOfTheCaller<EventOutbox>({ id })
 		});
@@ -609,6 +671,18 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The records, newest first.
 	 */
 	async listDeliveryRows(query: IDeliveryRowQuery = {}): Promise<EventDelivery[]> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.find<EventDelivery>(
+				EventDelivery,
+				this.rowsOfTheCallerOnMikroOrm({
+					...(query.status ? { status: query.status } : {}),
+					...(query.consumerKey ? { consumerKey: query.consumerKey } : {}),
+					...(query.eventId ? { eventId: query.eventId } : {})
+				}),
+				[{ createdAt: QueryOrder.DESC }, { id: QueryOrder.DESC }]
+			);
+		}
+
 		return this.typeOrmEventDeliveryRepository.find({
 			where: this.rowsOfTheCaller<EventDelivery>({
 				...(query.status ? { status: query.status } : {}),
@@ -626,6 +700,10 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The record, or null when it is not the caller's.
 	 */
 	async findDeliveryRow(id: ID): Promise<EventDelivery | null> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.findOne<EventDelivery>(EventDelivery, this.rowsOfTheCallerOnMikroOrm({ id }));
+		}
+
 		return this.typeOrmEventDeliveryRepository.findOne({
 			where: this.rowsOfTheCaller<EventDelivery>({ id })
 		});
@@ -648,14 +726,14 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	async replayDelivery(id: ID): Promise<EventDelivery> {
 		await this.deliveryOfTheCaller(id);
 
-		await this.typeOrmEventDeliveryRepository.update({ id } as any, {
+		await this.updateDeliveryRow(id, {
 			status: EventOutboxStatus.PENDING,
 			attemptCount: 0,
 			lastError: null,
 			// A record that is waiting to be re-driven has not been acknowledged, whatever it recorded
 			// before: leaving the instant on it would answer a `PENDING` row that claims a delivery.
 			deliveredAt: null
-		} as any);
+		});
 
 		return this.announce(id, EVENT_DELIVERY_ACTIONS.REPLAYED);
 	}
@@ -716,6 +794,14 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 	 * @returns The highest settled sequence, or 0 when nothing of the partition was settled.
 	 */
 	async findLastDeliveredSequence(consumerKey: string, partitionKey: string): Promise<number> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.highestSequence(EventDelivery, {
+				consumerKey,
+				partitionKey,
+				status: { $in: [EventOutboxStatus.PUBLISHED, EventOutboxStatus.DEAD] }
+			});
+		}
+
 		const raw = await this.typeOrmEventDeliveryRepository
 			.createQueryBuilder('delivery')
 			.select('MAX(delivery.sequence)', 'max')
@@ -753,6 +839,96 @@ export class EventOutboxService extends CrudService<EventOutbox> {
 			{ ...narrowing, tenantId, organizationId } as FindOptionsWhere<T>,
 			{ ...narrowing, tenantId, organizationId: IsNull() } as FindOptionsWhere<T>
 		];
+	}
+
+	/**
+	 * The criterion of {@link rowsOfTheCaller}, in MikroORM's spelling.
+	 *
+	 * The two alternatives are one `$or`, and a missing tenant or organization is `null`, which MikroORM
+	 * reads as `IS NULL` exactly as the TypeORM connection is configured to read it — so a caller with no
+	 * tenant reads the rows that carry none, never every tenant's. Each narrowing member is compared as
+	 * the text it is: a value that reached here as an object is never read as one of MikroORM's operators,
+	 * which would turn an equality into whatever the object spelled.
+	 *
+	 * @param narrowing The filters the read adds to the scope.
+	 * @returns The criterion.
+	 */
+	private rowsOfTheCallerOnMikroOrm(narrowing: Record<string, unknown> = {}): Record<string, unknown> {
+		const tenantId = RequestContext.currentTenantId() ?? null;
+		const organizationId = RequestContext.currentOrganizationId() ?? null;
+		const stated = Object.fromEntries(Object.entries(narrowing).map(([member, value]) => [member, String(value)]));
+
+		return {
+			$or: [
+				{ ...stated, tenantId, organizationId },
+				{ ...stated, tenantId, organizationId: null }
+			]
+		};
+	}
+
+	/**
+	 * Whether this installation reads and writes through MikroORM.
+	 *
+	 * @returns True when `DB_ORM` configures MikroORM.
+	 */
+	private get usesMikroOrm(): boolean {
+		return this.ormType === MultiORMEnum.MikroORM;
+	}
+
+	/**
+	 * Writes members of one outbox row, through the configured ORM.
+	 *
+	 * @param id The row id.
+	 * @param values The members to write.
+	 */
+	private async updateOutboxRow(id: ID, values: Record<string, unknown>): Promise<void> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.update(EventOutbox, id, values);
+		}
+
+		await this.typeOrmEventOutboxRepository.update({ id } as any, values as any);
+	}
+
+	/**
+	 * Writes members of one delivery record, through the configured ORM.
+	 *
+	 * @param id The record id.
+	 * @param values The members to write.
+	 */
+	private async updateDeliveryRow(id: ID, values: Record<string, unknown>): Promise<void> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.update(EventDelivery, id, values);
+		}
+
+		await this.typeOrmEventDeliveryRepository.update({ id } as any, values as any);
+	}
+
+	/**
+	 * Inserts a delivery record, through the configured ORM.
+	 *
+	 * @param values The record.
+	 * @returns The stored record.
+	 * @throws The driver's unique violation when the `(event, consumer)` pair already has a record.
+	 */
+	private async insertDelivery(values: Partial<EventDelivery>): Promise<EventDelivery> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.insertDelivery(values as Record<string, unknown>);
+		}
+
+		return this.typeOrmEventDeliveryRepository.save(this.typeOrmEventDeliveryRepository.create(values));
+	}
+
+	/**
+	 * Counts one more attempt on a delivery record, in one relative statement, through the configured ORM.
+	 *
+	 * @param id The record id.
+	 */
+	private async incrementDeliveryAttempts(id: ID): Promise<void> {
+		if (this.usesMikroOrm) {
+			return this.mikroOrmStore.incrementDeliveryAttempts(id);
+		}
+
+		await this.typeOrmEventDeliveryRepository.increment({ id } as any, 'attemptCount', 1);
 	}
 
 	/**

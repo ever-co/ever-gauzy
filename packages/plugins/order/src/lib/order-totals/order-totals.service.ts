@@ -1,10 +1,8 @@
 import { Injectable, InternalServerErrorException, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { randomUUID } from 'node:crypto';
 import { FindManyOptions, In, MoreThan, MoreThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
-	EventOutboxStatus,
 	FulfillmentStatus,
 	ID,
 	IOrderTotals,
@@ -20,7 +18,6 @@ import {
 	ApiErrorCode,
 	ApiException,
 	CrudService,
-	RequestContext,
 	TaxLineService,
 	EventOutboxService,
 	addDecimalStrings,
@@ -674,12 +671,14 @@ export class OrderTotalsService {
 	 * carry the order row: an event that shipped the entity would freeze its shape into every
 	 * consumer.
 	 *
-	 * **The row is written through the ORM the installation runs on.** The platform's `append` takes a
-	 * TypeORM entity manager, and under `DB_ORM=mikro-orm` the TypeORM entity for `event_outbox` carries
-	 * its base columns and nothing else — `@MultiORMColumn` registers the active ORM's decorator alone — so
-	 * the append wrote a row with no event id, no name and no sequence, the database refused it, and every
-	 * move that announces itself failed after the order's own write had committed. Under MikroORM the row is
-	 * therefore written through the outbox's MikroORM repository instead (see {@link appendThroughMikroOrm}).
+	 * **The row is written through the ORM the installation runs on.** Under `DB_ORM=mikro-orm` the TypeORM
+	 * entity for `event_outbox` carries its base columns and nothing else — `@MultiORMColumn` registers the
+	 * active ORM's decorator alone — so an append through the TypeORM manager wrote a row with no event id, no
+	 * name and no sequence, the database refused it, and every move that announces itself failed after the
+	 * order's own write had committed. The platform's `append` takes either ORM's manager, so under MikroORM it
+	 * is handed the MikroORM manager, which it resolves to the persistence context the move runs in — a
+	 * request's fork, or the unit a request-less pass opened (`OrderUnitOfWork`) — and writes the row there,
+	 * with the same partition, sequence and tenancy.
 	 *
 	 * @param order The order as the move left it.
 	 * @param version The version the conditional update produced.
@@ -714,68 +713,12 @@ export class OrderTotalsService {
 			organizationId: order.organizationId
 		};
 
-		if (this.unitOfWork?.usesMikroOrm) {
-			await this.appendThroughMikroOrm(input);
-
-			return;
-		}
-
-		await this.outbox.append(this.typeOrmOrderRepository.manager, input);
-	}
-
-	/**
-	 * Appends one outbox row through MikroORM, as the platform's `append` would write it through TypeORM.
-	 *
-	 * The row is the one `EventOutboxService.append` builds, member for member: a fresh event id, the
-	 * aggregate's partition, the next sequence of that partition, `PENDING` with no attempt, due now, and the
-	 * tenancy the order carries. The sequence is the partition's highest plus one, read in the same persistence
-	 * context the row is written in; two appends that compute the same position are refused by the unique index
-	 * over the pair, which is the loud failure the platform's append relies on too. The row's id is stated
-	 * rather than left to the column default, because that default is `gen_random_uuid()` — a Postgres
-	 * function — and the MikroORM path must write on every dialect.
-	 *
-	 * It is written through the outbox's MikroORM repository, which the outbox service exposes, so it goes
-	 * through the entity manager of the persistence context the move runs in — a request's fork, or the unit a
-	 * request-less pass opened (`OrderUnitOfWork`).
-	 *
-	 * **The tenancy is stated twice, and the row is created unmanaged.** On this ORM `tenantId` and
-	 * `organizationId` are the ids of the `tenant` and `organization` relations (`relationId: true` maps them
-	 * `persist: false`), so only a relation reaches the statement; each is therefore stated by its primary key,
-	 * which MikroORM takes as a reference to a row that exists, beside the scalar. The row names its own
-	 * primary key, and an entity created *managed* with its key is taken as a row already in the table — a
-	 * flush then inserts nothing — so it is created as the new row it is.
-	 *
-	 * @param input What changed, as the platform's append takes it.
-	 */
-	private async appendThroughMikroOrm(input: IOutboxWriteInput): Promise<void> {
-		const repository = this.outbox.mikroOrmEventOutboxRepository;
-		const partitionKey = input.partitionKey ?? `${input.aggregateType}:${input.aggregateId}`;
-		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
-		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId();
-		const last = await repository.findOne({ partitionKey } as never, { orderBy: { sequence: 'desc' } } as never);
-		const row = repository.create(
-			{
-				id: randomUUID(),
-				eventId: randomUUID(),
-				eventName: input.name,
-				aggregateType: input.aggregateType,
-				aggregateId: input.aggregateId,
-				payload: input.data ?? {},
-				headers: input.headers,
-				status: EventOutboxStatus.PENDING,
-				attemptCount: 0,
-				availableAt: new Date(),
-				partitionKey,
-				sequence: Number(last?.sequence ?? 0) + 1,
-				...(tenantId ? { tenant: tenantId, tenantId } : {}),
-				...(organizationId ? { organization: organizationId, organizationId } : {})
-			} as never,
-			{ partial: true } as never
+		await this.outbox.append(
+			this.unitOfWork?.usesMikroOrm
+				? this.outbox.mikroOrmEventOutboxRepository.getEntityManager()
+				: this.typeOrmOrderRepository.manager,
+			input
 		);
-		const manager = repository.getEntityManager();
-
-		manager.persist(row);
-		await manager.flush();
 	}
 
 	/**

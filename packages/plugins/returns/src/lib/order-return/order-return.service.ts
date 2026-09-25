@@ -1240,6 +1240,14 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	 * consumer that needs either reads them, and an event that shipped them would freeze their shape
 	 * into every subscriber.
 	 *
+	 * **The manager is the configured ORM's.** Under MikroORM the conditional update is written through the
+	 * MikroORM repository, and the TypeORM entity for `event_outbox` carries its base columns and nothing
+	 * else — `@MultiORMColumn` registers the configured ORM's decorator alone — so an append through the
+	 * TypeORM manager wrote a row with no event id, no name and no sequence, the database refused it, and
+	 * every lifecycle move failed after its header write had committed. The MikroORM repository's manager is
+	 * handed over instead, and the platform's `append` writes the row through it, in the persistence context
+	 * the header write ran in.
+	 *
 	 * @param name The event name.
 	 * @param orderReturn The return as the move left it.
 	 * @param version The version the conditional update produced.
@@ -1251,7 +1259,12 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		version: number,
 		data: Record<string, unknown> = {}
 	): Promise<void> {
-		await this.outbox.append(this.typeOrmOrderReturnRepository.manager, {
+		const manager =
+			this.ormType === MultiORMEnum.MikroORM
+				? this.mikroOrmOrderReturnRepository.getEntityManager()
+				: this.typeOrmOrderReturnRepository.manager;
+
+		await this.outbox.append(manager, {
 			name,
 			aggregateType: RETURN_AGGREGATE_TYPE,
 			aggregateId: orderReturn.id,

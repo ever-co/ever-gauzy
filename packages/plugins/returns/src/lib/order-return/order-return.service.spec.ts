@@ -299,6 +299,24 @@ function repository(tables: ITables, tableName: keyof ITables) {
 	/** The table an entity class names, for a read through MikroORM's entity manager. */
 	const tableOf = (entity: { name?: string }): keyof ITables =>
 		entity?.name === 'OrderReturnLine' ? 'order_return_line' : 'order_return';
+	/**
+	 * MikroORM's entity manager, which reads the table an entity class names, with the soft-delete filter on.
+	 *
+	 * One object for the repository's lifetime, as a repository's manager is, so a case can tell which
+	 * manager a write was handed.
+	 */
+	const entityManager = {
+		find: async (entity: { name?: string }, where: Row = {}) => {
+			reads.push({ entity: entity?.name, where });
+
+			return tables[tableOf(entity)].filter((row) => !row.deletedAt && matches(row, where));
+		},
+		findOne: async (entity: { name?: string }, where: Row = {}) => {
+			reads.push({ entity: entity?.name, where });
+
+			return tables[tableOf(entity)].find((row) => !row.deletedAt && matches(row, where)) ?? null;
+		}
+	};
 
 	return {
 		rows,
@@ -315,19 +333,7 @@ function repository(tables: ITables, tableName: keyof ITables) {
 
 			return readable(options).find((row) => matches(row, options.where)) ?? null;
 		},
-		// MikroORM's entity manager, which reads the table an entity class names, with the soft-delete filter on.
-		getEntityManager: () => ({
-			find: async (entity: { name?: string }, where: Row = {}) => {
-				reads.push({ entity: entity?.name, where });
-
-				return tables[tableOf(entity)].filter((row) => !row.deletedAt && matches(row, where));
-			},
-			findOne: async (entity: { name?: string }, where: Row = {}) => {
-				reads.push({ entity: entity?.name, where });
-
-				return tables[tableOf(entity)].find((row) => !row.deletedAt && matches(row, where)) ?? null;
-			}
-		}),
+		getEntityManager: () => entityManager,
 		findOneBy: async (where: any) => rows().find((row) => matches(row, where)) ?? null,
 		findAndCount: async (options: any = {}) => {
 			const items = rows().filter((row) => matches(row, options.where));
@@ -692,6 +698,8 @@ function returnFixture(
 		events,
 		totalsCalls,
 		manager: (typeOrmOrderReturnRepository as Row).manager,
+		/** The MikroORM return repository's manager: the one the header is written through on that ORM. */
+		mikroOrmManager: mikroOrmOrderReturnRepository.getEntityManager(),
 		movements,
 		recordedReceipts,
 		recordedRequests,
@@ -776,6 +784,34 @@ describe('OrderReturnService — requesting a return (doc 10 §11.5)', () => {
 			currency: 'USD',
 			version: 2
 		});
+	});
+
+	it('announces through the MikroORM repository’s manager when MikroORM is the configured ORM', async () => {
+		// Under MikroORM the TypeORM entity for `event_outbox` carries its base columns and nothing else, so an
+		// append through the TypeORM manager wrote a row with no event id, no name and no sequence: the
+		// database refused it and every lifecycle move failed after its header write had committed. The
+		// platform's `append` takes either ORM's manager, and the one handed over is the manager the header
+		// is written through on this ORM.
+		const fixture = returnFixture({ orm: 'mikro-orm', returns: [], lines: [] });
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			currency: 'USD',
+			lines: [{ orderLineId: ORDER_LINE, quantity: 2 }]
+		} as never);
+
+		await fixture.service.approve(created.id, 'Approved by supervisor');
+		await fixture.service.reject(created.id, 'Changed our mind');
+
+		expect(fixture.events.map((event) => event.name)).toEqual([
+			'return.requested',
+			'return.approved',
+			'return.rejected'
+		]);
+		expect(fixture.events.every((event) => event.manager === fixture.mikroOrmManager)).toBe(true);
+		// Control: the TypeORM manager is never handed over on this ORM.
+		expect(fixture.events.some((event) => event.manager === fixture.manager)).toBe(false);
+		expect(fixture.events[1].data).toMatchObject({ returnId: created.id, status: OrderReturnStatus.APPROVED, version: 2 });
 	});
 
 	it('announces nothing when the conditional write was refused', async () => {
