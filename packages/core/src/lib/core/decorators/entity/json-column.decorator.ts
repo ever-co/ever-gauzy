@@ -216,8 +216,14 @@ export function JsonColumn<T = unknown>(options: JsonColumnOptions<T> = {}): Pro
 /**
  * `@JsonbColumn<T>(options?)`
  *
- * Forces `jsonb` storage (PostgreSQL).
+ * Forces `jsonb` storage on PostgreSQL, and takes the dialect's own JSON storage everywhere else.
  * Accepts all native ORM column options directly.
+ *
+ * **`jsonb` is forced on Postgres only.** It used to be forced on every dialect, and TypeORM refuses the
+ * type outright on MySQL (`Data type "jsonb" … is not supported by "mysql" database`), so an entity declaring
+ * one — `SearchDocument.attributes` — stopped the API from booting on MySQL at all. The migrations already
+ * create the column as `jsonb` on Postgres, `json` on MySQL and `text` on SQLite, which is exactly what
+ * {@link JsonColumn} resolves for those dialects, so the entity now agrees with the table on every dialect.
  *
  * ```ts
  * @JsonbColumn<Payload>({ nullable: true })
@@ -225,7 +231,7 @@ export function JsonColumn<T = unknown>(options: JsonColumnOptions<T> = {}): Pro
  * ```
  */
 export function JsonbColumn<T = unknown>(options: Omit<JsonColumnOptions<T>, 'forceType'> = {}): PropertyDecorator {
-	return JsonColumn<T>({ ...options, forceType: 'jsonb' });
+	return JsonColumn<T>(getDbDriver() === 'postgres' ? { ...options, forceType: 'jsonb' } : { ...options });
 }
 
 /**

@@ -219,21 +219,26 @@ describe('@JsonColumn', () => {
 				expect(mikroOrmProperty(mikroOrmFixture)?.type.getColumnType()).toBe(mikroOrmType);
 				expect(mikroOrmProperty(mikroOrmFixture)?.nullable).toBe(true);
 
-				// `@JsonbColumn` forces jsonb whatever the dialect, on either ORM.
+				// `@JsonbColumn` forces jsonb on Postgres only, and takes the dialect's own JSON storage elsewhere.
+				// Corrected: this case used to assert jsonb on every dialect, which is the type TypeORM refuses on
+				// MySQL, so an entity declaring one (`SearchDocument.attributes`) stopped the API booting there.
+				// The migrations create the column as the plain JSON storage below on every other dialect.
 				const forcedTypeOrm = decorateUnder(
 					'typeorm',
 					dbType,
 					() => JsonbColumn(),
 					`ForcedTypeOrmOn_${dbType}`
 				);
-				expect(typeOrmColumn(forcedTypeOrm)?.options.type).toBe('jsonb');
+				expect(typeOrmColumn(forcedTypeOrm)?.options.type).toBe(dbType === 'postgres' ? 'jsonb' : typeOrmType);
 				const forcedMikroOrm = decorateUnder(
 					'mikro-orm',
 					dbType,
 					() => JsonbColumn(),
 					`ForcedMikroOrmOn_${dbType}`
 				);
-				expect(mikroOrmProperty(forcedMikroOrm)?.type.getColumnType()).toBe('jsonb');
+				expect(mikroOrmProperty(forcedMikroOrm)?.type.getColumnType()).toBe(
+					dbType === 'postgres' ? 'jsonb' : mikroOrmType
+				);
 			}
 		);
 
