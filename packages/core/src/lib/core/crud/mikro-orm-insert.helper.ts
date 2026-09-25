@@ -113,6 +113,22 @@ export function createNewMikroOrmEntity<T extends object>(
 	const [primaryKey] = primaryKeys;
 	const { [primaryKey.name]: stated, ...graph } = data as Record<string, unknown>;
 
+	// An embedded object the payload leaves out is created empty. TypeORM writes an absent embedded object as NULL in
+	// each of its columns; MikroORM refuses the row instead ("Value for OrganizationProject.customFields is
+	// required"), so a tag, an employee or a project created without `customFields` — which callers never state —
+	// failed under DB_ORM=mikro-orm. An empty embeddable writes the same NULLs.
+	for (const property of meta.props) {
+		if (
+			property.kind === ReferenceKind.EMBEDDED &&
+			!property.nullable &&
+			!property.array &&
+			!property.embedded &&
+			graph[property.name] === undefined
+		) {
+			graph[property.name] = {};
+		}
+	}
+
 	// To-many relations are set after the entity exists. A managed create leaves a collection uninitialised — as
 	// if it were a stored row's, not yet loaded — so the rows the payload names were silently not linked (a
 	// product's tags: no pivot row written), or the create failed with `Collection<Tag> … not initialized`.

@@ -57,7 +57,7 @@ import {
 	withCollectionsAsItems,
 	withPrimaryKeyForUpsert
 } from './mikro-orm-insert.helper';
-import { collapseRelationMirrors } from './mikro-orm-scope-column.helper';
+import { collapseRelationMirrors, stateRelationsFromMirrors } from './mikro-orm-scope-column.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
@@ -681,7 +681,15 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						const entity = await this.mikroOrmRepository.findOne(partialEntity['id']);
 						if (entity) {
 							// If the entity has an ID, perform an upsert operation
-							this.mikroOrmRepository.assign(entity, partialEntity as any, assignOptions);
+							// An embedded object's relation-id mirror (a plugin's `customFields: { repositoryId }`) is written only
+							// through its relation on an assign (see `stateRelationsFromMirrors`).
+							this.mikroOrmRepository.assign(
+								entity,
+								stateRelationsFromMirrors(this.mikroOrmMetadata(), partialEntity as object, {
+									embeddedOnly: true
+								}) as any,
+								assignOptions
+							);
 							await this.mikroOrmRepository.flush();
 
 							return this.serialize(entity);
@@ -1196,7 +1204,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				: null;
 
 			if (existing) {
-				repository.assign(existing, data as any, {
+				// An embedded object's relation-id mirror is written only through its relation on an assign.
+				repository.assign(existing, stateRelationsFromMirrors(meta, data, { embeddedOnly: true }) as any, {
 					updateNestedEntities: false,
 					onlyOwnProperties: true,
 					onlyProperties: true

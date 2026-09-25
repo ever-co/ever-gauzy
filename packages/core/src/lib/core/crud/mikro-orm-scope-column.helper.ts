@@ -117,35 +117,85 @@ export function readMikroOrmScopeColumn(entity: unknown, column: IMikroOrmScopeC
  * Only for `em.create()`: handed both keys, `nativeUpdate` and `upsert` name the relation as a column of its own
  * and the statement is refused.
  *
+ * **Embedded objects** — a plugin's custom fields, `customFields: { repositoryId }` — are read the same way against
+ * the embeddable's properties. There `assign()` onto a loaded entity does NOT write a mirror-only payload: measured,
+ * `customFields: { repositoryId }` left `organization_project.repositoryId` NULL through `create()`, `save()` and
+ * `em.assign()` alike (the GitHub integration links a repository exactly so). With `embeddedOnly`, only embedded
+ * objects are stated, which is what the `assign()` paths need: at the entity's own level a mirror-only payload is
+ * already written there.
+ *
  * @param meta The entity's MikroORM metadata.
  * @param data The payload.
+ * @param options `embeddedOnly`: leave the entity's own level as it is.
  * @returns The payload with the relations its mirrors describe, or the payload itself when there are none.
  */
-export function stateRelationsFromMirrors<D extends object>(meta: EntityMetadata | undefined, data: D): D {
+export function stateRelationsFromMirrors<D extends object>(
+	meta: EntityMetadata | undefined,
+	data: D,
+	options: { embeddedOnly?: boolean } = {}
+): D {
 	if (!meta?.properties || !data || typeof data !== 'object') {
 		return data;
 	}
 
-	const payload = data as Record<string, unknown>;
+	return (stateMirrorsAt(meta.properties as PropertyMap, data as Record<string, unknown>, !options.embeddedOnly) ??
+		data) as D;
+}
+
+/** The properties one level of a payload is read against: an entity's, or an embeddable's (`embeddedProps`). */
+type PropertyMap = Record<string, EntityProperty>;
+
+/** Whether a payload value is a plain object MikroORM reads as an embeddable's data. */
+const isEmbeddedData = (value: unknown): value is Record<string, unknown> =>
+	!!value && typeof value === 'object' && !Array.isArray(value) && !Utils.isEntity(value);
+
+/**
+ * {@link stateRelationsFromMirrors} at one level: the properties are keyed by the names the payload uses (an
+ * embeddable's by its own property names).
+ *
+ * @returns A copy with the stated relations, or `undefined` when nothing had to be stated.
+ */
+function stateMirrorsAt(
+	properties: PropertyMap,
+	payload: Record<string, unknown>,
+	atThisLevel: boolean
+): Record<string, unknown> | undefined {
 	let stated: Record<string, unknown> | undefined;
 
-	for (const mirror of Object.values(meta.properties)) {
-		if (mirror.kind !== ReferenceKind.SCALAR || mirror.persist !== false || payload[mirror.name] === undefined) {
+	for (const [name, property] of Object.entries(properties)) {
+		if (property.kind === ReferenceKind.EMBEDDED) {
+			const nested = payload[name];
+			if (property.embeddedProps && isEmbeddedData(nested)) {
+				const inner = stateMirrorsAt(property.embeddedProps as PropertyMap, nested, true);
+				if (inner) {
+					stated ??= { ...payload };
+					stated[name] = inner;
+				}
+			}
 			continue;
 		}
 
-		const owner = Object.values(meta.properties).find(
-			(candidate) => OWNS_A_COLUMN(candidate) && sameColumns(candidate.fieldNames, mirror.fieldNames)
+		if (
+			!atThisLevel ||
+			property.kind !== ReferenceKind.SCALAR ||
+			property.persist !== false ||
+			payload[name] === undefined
+		) {
+			continue;
+		}
+
+		const owner = Object.entries(properties).find(
+			([, candidate]) => OWNS_A_COLUMN(candidate) && sameColumns(candidate.fieldNames, property.fieldNames)
 		);
-		if (!owner || payload[owner.name] !== undefined) {
+		if (!owner || payload[owner[0]] !== undefined) {
 			continue;
 		}
 
 		stated ??= { ...payload };
-		stated[owner.name] = payload[mirror.name];
+		stated[owner[0]] = payload[name];
 	}
 
-	return (stated ?? data) as D;
+	return stated;
 }
 
 /**
@@ -189,31 +239,54 @@ export function collapseRelationMirrors<D extends object>(meta: EntityMetadata |
 		return data;
 	}
 
-	const payload = data as Record<string, unknown>;
+	return (collapseMirrorsAt(meta.properties as PropertyMap, data as Record<string, unknown>) ?? data) as D;
+}
+
+/**
+ * {@link collapseRelationMirrors} at one level, embedded objects (a plugin's `customFields`) included.
+ *
+ * @returns A copy with one key per column, or `undefined` when nothing was doubled.
+ */
+function collapseMirrorsAt(
+	properties: PropertyMap,
+	payload: Record<string, unknown>
+): Record<string, unknown> | undefined {
 	let collapsed: Record<string, unknown> | undefined;
 
-	for (const mirror of Object.values(meta.properties)) {
-		if (mirror.kind !== ReferenceKind.SCALAR || mirror.persist !== false || payload[mirror.name] === undefined) {
+	for (const [name, property] of Object.entries(properties)) {
+		if (property.kind === ReferenceKind.EMBEDDED) {
+			const nested = payload[name];
+			if (property.embeddedProps && isEmbeddedData(nested)) {
+				const inner = collapseMirrorsAt(property.embeddedProps as PropertyMap, nested);
+				if (inner) {
+					collapsed ??= { ...payload };
+					collapsed[name] = inner;
+				}
+			}
 			continue;
 		}
 
-		const owner = Object.values(meta.properties).find(
-			(candidate) => OWNS_A_COLUMN(candidate) && sameColumns(candidate.fieldNames, mirror.fieldNames)
+		if (property.kind !== ReferenceKind.SCALAR || property.persist !== false || payload[name] === undefined) {
+			continue;
+		}
+
+		const owner = Object.entries(properties).find(
+			([, candidate]) => OWNS_A_COLUMN(candidate) && sameColumns(candidate.fieldNames, property.fieldNames)
 		);
-		if (!owner || payload[owner.name] === undefined) {
+		if (!owner || payload[owner[0]] === undefined) {
 			continue;
 		}
 
 		collapsed ??= { ...payload };
-		const key = relationKeyOf(payload[owner.name]);
+		const key = relationKeyOf(payload[owner[0]]);
 
 		if (key === undefined) {
-			delete collapsed[mirror.name];
+			delete collapsed[name];
 		} else {
-			collapsed[mirror.name] = key;
-			delete collapsed[owner.name];
+			collapsed[name] = key;
+			delete collapsed[owner[0]];
 		}
 	}
 
-	return (collapsed ?? data) as D;
+	return collapsed;
 }
