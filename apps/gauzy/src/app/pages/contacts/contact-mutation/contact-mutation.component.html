@@ -347,37 +347,52 @@
 			<!-- Step 4 Members Form -->
 			<nb-step [label]="'CONTACTS_PAGE.MEMBERS' | translate">
 				<div class="custom-card">
-					<div class="fields">
-						<div class="row">
-							<div class="col-6">
-								<div class="form-group">
-									<ga-employee-multi-select
-										[selectedEmployeeIds]="selectedEmployeeIds"
-										(onLoadEmployees)="onLoadEmployees($event)"
-										(selectedChange)="onMembersSelected($event)"
-									>
-									</ga-employee-multi-select>
-								</div>
+					<div class="fields step-panel">
+						<div class="field-grid">
+							<div class="form-group">
+								<ga-employee-multi-select
+									[selectedEmployeeIds]="selectedEmployeeIds"
+									(onLoadEmployees)="onLoadEmployees($event)"
+									(selectedChange)="onMembersSelected($event)"
+								>
+								</ga-employee-multi-select>
 							</div>
-							@if (selectedMembers) {
-							<div class="col-6">
-								<div class="team-card">
-									@for (member of selectedMembers; track member.id) {
-									<div class="name-container">
-										<ngx-avatar
-											class="report-table"
-											[src]="member.user.imageUrl"
-											[name]="member.user.name"
-											[id]="member.id"
-											[employee]="member"
-											[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE' | translate"
-										></ngx-avatar>
-									</div>
-									}
-								</div>
-							</div>
-							}
 						</div>
+						@if (selectedMembers?.length) {
+						<div class="members">
+							<span class="label">
+								{{ 'CONTACTS_PAGE.MEMBERS' | translate }}
+								<span class="members-count">{{ selectedMembers.length }}</span>
+							</span>
+							<ul class="members-list">
+								@for (member of selectedMembers; track member.id) {
+								<li class="member-row">
+									<ngx-avatar
+										[src]="member.user.imageUrl"
+										[name]="member.user.name"
+										[caption]="member.user.email"
+										[id]="member.id"
+										[employee]="member"
+										[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE' | translate"
+									></ngx-avatar>
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="small"
+										status="basic"
+										class="member-remove"
+										[attr.aria-label]="('BUTTONS.REMOVE' | translate) + ' ' + member.user.name"
+										[nbTooltip]="'BUTTONS.REMOVE' | translate"
+										(click)="removeMember(member)"
+									>
+										<nb-icon icon="close-outline"></nb-icon>
+									</button>
+								</li>
+								}
+							</ul>
+						</div>
+						}
 					</div>
 					<div class="wizard-actions">
 						<button nbButton outline size="small" status="basic" class="wizard-quit" (click)="cancel()">

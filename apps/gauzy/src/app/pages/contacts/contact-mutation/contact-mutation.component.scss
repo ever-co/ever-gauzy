@@ -312,16 +312,143 @@
   .label {
     display: inline-flex;
     align-items: center;
-    margin-bottom: 10px;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 
-  /*
-   * REMOVED: `.image-container` (and its `img`) and `.button-container`.
-   * Neither class occurs anywhere in contact-mutation.component.html or
-   * contact-mutation.component.ts — the members step renders
-   * `.team-card > .name-container > ngx-avatar` and nothing else, and a
-   * component stylesheet cannot reach past its own template.
-   */
+  .members-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.375rem;
+    border-radius: 0.625rem;
+    background-color: nb-theme(color-primary-transparent-default);
+    color: nb-theme(color-primary-default);
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+}
+
+// Same width as the picker above it (the grid's first track), so the remove
+// action sits next to the name it belongs to instead of a screen away.
+@container (min-width: 30rem) {
+  .members {
+    max-width: calc(50% - 0.625rem);
+  }
+}
+
+// One bordered list, a row per member (the Hubstaff pattern): photo, name over
+// email, and a remove action at the end of the row. Rows share hairline dividers
+// instead of each being its own card.
+.members-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(border-radius);
+  overflow: hidden;
+  // The input surface, so the list reads as a field inset into the step panel.
+  background-color: var(--gauzy-card-1, transparent);
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  transition: background-color 150ms ease-in-out;
+
+  & + & {
+    border-top: 1px solid nb-theme(border-basic-color-4);
+  }
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
+
+  ngx-avatar {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  // The avatar only lays itself out as a row under a host-context class
+  // (`.avatar-dashboard`, `.report-table`); bare, it stacks a 48px square above
+  // the name. Here: a round 32px photo, then name over email.
+  ::ng-deep ngx-avatar {
+    .inner-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .image-container {
+      flex: 0 0 auto;
+      width: 2rem;
+      border-radius: 50%;
+      overflow: hidden;
+      // Backdrop for the default silhouette, a transparent PNG that otherwise
+      // floats with no edge.
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+
+      // `!important` on the size: the avatar's own `:host .image-container img`
+      // (48px) outranks anything reachable from here, so the photo rendered at
+      // 48px inside this 32px circle and was clipped to a sliver.
+      img {
+        width: 2rem !important;
+        height: 2rem !important;
+        object-fit: cover;
+        border-radius: 50% !important;
+      }
+    }
+
+    .names-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .link-text {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: nb-theme(text-paragraph-font-size);
+      font-weight: 600;
+      line-height: 1.25rem;
+      color: nb-theme(text-basic-color);
+    }
+
+    .caption {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: nb-theme(text-caption-font-size);
+      line-height: 1rem;
+      color: nb-theme(text-hint-color);
+    }
+  }
+
+  // Quiet until needed, but always there (never hover-only), so it works by
+  // keyboard and touch too.
+  .member-remove {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color: nb-theme(text-hint-color);
+
+    &:hover,
+    &:focus-visible {
+      color: nb-theme(color-danger-default);
+      background-color: nb-theme(color-danger-transparent-default);
+    }
+  }
 }
 
 /*

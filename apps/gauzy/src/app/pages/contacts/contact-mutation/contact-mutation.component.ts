@@ -319,6 +319,19 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.members);
 	}
 
+	/**
+	 * Removes one member from the list below the picker, and feeds the new
+	 * selection back into the picker so the two never disagree.
+	 *
+	 * @param member
+	 */
+	removeMember(member: IEmployee) {
+		const current = this.members?.length ? this.members : this.selectedEmployeeIds ?? [];
+		const ids = current.filter((id: string) => id !== member.id);
+		this.selectedEmployeeIds = ids;
+		this.onMembersSelected(ids);
+	}
+
 	cancel() {
 		this.canceled.emit();
 	}
