@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickListService } from '../pick-list/pick-list.service';
@@ -11,6 +12,7 @@ import {
 	PickListStatus
 } from '../warehouse.types';
 import { normalizeQuantity } from '../warehouse.quantity';
+import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PackSlip } from './pack-slip.entity';
 import { MikroOrmPackSlipRepository } from './repository/mikro-orm-pack-slip.repository';
 import { TypeOrmPackSlipRepository } from './repository/type-orm-pack-slip.repository';
@@ -39,6 +41,20 @@ export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 		private readonly sequenceService: SequenceService
 	) {
 		super(typeOrmPackSlipRepository, mikroOrmPackSlipRepository);
+	}
+
+	/**
+	 * The repository one of this package's tables is read and edited through outside the platform's CRUD
+	 * path, on the ORM the installation runs: the TypeORM repository itself under TypeORM — the call it
+	 * always was — and the same calls answered through MikroORM under MikroORM, through this service's own
+	 * MikroORM repository's entity manager (`warehouse-persistence.ts`).
+	 *
+	 * @param entity The table's entity.
+	 * @param typeOrm Its TypeORM repository, reached only under TypeORM.
+	 * @returns The repository.
+	 */
+	private rows<T extends ObjectLiteral>(entity: new () => T, typeOrm: () => Repository<T>): TWarehouseRows<T> {
+		return warehouseRowsOf(this.ormType, entity, typeOrm, () => this.mikroOrmPackSlipRepository);
 	}
 
 	/**
@@ -205,7 +221,7 @@ export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 	 * @returns The slip, with the lines it covers.
 	 */
 	public async findOneDetailed(id: ID): Promise<PackSlip> {
-		const slip = await this.typeOrmPackSlipRepository.findOne({
+		const slip = await this.rows(PackSlip, () => this.typeOrmPackSlipRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -229,7 +245,7 @@ export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	public async findOneScoped(id: ID): Promise<PackSlip> {
-		const slip = await this.typeOrmPackSlipRepository.findOne({
+		const slip = await this.rows(PackSlip, () => this.typeOrmPackSlipRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -264,7 +280,7 @@ export class PackSlipService extends TenantAwareCrudService<PackSlip> {
 	 * @throws BadRequestException when another live slip already carries it.
 	 */
 	private async assertTrackingNumberIsFree(carrierKey: string | undefined, trackingNumber: string): Promise<void> {
-		const existing = await this.typeOrmPackSlipRepository.findOne({
+		const existing = await this.rows(PackSlip, () => this.typeOrmPackSlipRepository).findOne({
 			where: {
 				carrierKey,
 				trackingNumber,

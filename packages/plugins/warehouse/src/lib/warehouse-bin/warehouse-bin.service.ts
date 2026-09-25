@@ -4,6 +4,7 @@ import { DeleteResult, In, Repository } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import {
 	commitVersionedUpdate,
+	MultiORMEnum,
 	prepareSQLQuery,
 	RequestContext,
 	TenantAwareCrudService,
@@ -40,6 +41,7 @@ import {
 	sumQuantities,
 	toQuantityUnits
 } from '../warehouse.quantity';
+import { TWarehouseRows, runMikroOrmStatement, warehouseRowsOf } from '../warehouse-persistence';
 import { WarehouseBin } from './warehouse-bin.entity';
 import { MikroOrmWarehouseBinRepository } from './repository/mikro-orm-warehouse-bin.repository';
 import { TypeOrmWarehouseBinRepository } from './repository/type-orm-warehouse-bin.repository';
@@ -409,7 +411,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	public async capacityWarnings(warehouseId?: ID): Promise<
 		Array<{ binId: ID; code: string; warehouseId: ID; type: WarehouseBinType; capacityUnits: DecimalString; notice: string }>
 	> {
-		const bins = await this.typeOrmWarehouseBinRepository.find({
+		const bins = await this.binRows().find({
 			where: {
 				...(warehouseId ? { warehouseId } : {}),
 				tenantId: RequestContext.currentTenantId(),
@@ -564,21 +566,30 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * a bin that holds stock would silently erase where the stock was picked from, and deleting one
 	 * that still has children would leave them parented to nothing.
 	 *
+	 * **A retired child is a child.** `FK_warehouse_bin_parent` is `ON DELETE SET NULL` whatever the
+	 * child's `deletedAt` says, so a position that was soft-deleted under this bin is detached by the
+	 * delete exactly as a live one would be — and comes back from `recover` as a root, cut off from the
+	 * rack it was retired from. The count therefore includes retired positions (`withDeleted`), and the
+	 * refusal says so: such a position is restored and moved, or restored and deleted, first.
+	 *
 	 * @param id The bin to delete.
 	 * @returns The delete result.
+	 * @throws BadRequestException with `BIN_HAS_CHILDREN` when a position, live or retired, is under it,
+	 * and with `BIN_HAS_CONTENT` when it holds stock.
 	 */
 	public async delete(id: ID): Promise<DeleteResult> {
 		const bin = await this.findOneScoped(id);
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		const children = await this.typeOrmWarehouseBinRepository.count({
-			where: { parentId: bin.id, tenantId, organizationId }
+		const children = await this.binRows().count({
+			where: { parentId: bin.id, tenantId, organizationId },
+			withDeleted: true
 		});
 
 		if (children > 0) {
 			throw new BadRequestException(
-				`BIN_HAS_CHILDREN: the bin still holds ${children} position(s) under it.`
+				`BIN_HAS_CHILDREN: the bin still holds ${children} position(s) under it, retired ones included; restore and move or delete them first.`
 			);
 		}
 
@@ -602,6 +613,10 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns The bin, with its zone and its parent.
 	 */
 	public async findOneDetailed(id: ID): Promise<WarehouseBin> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return await this.findOneDetailedThroughMikroOrm(id);
+		}
+
 		const bin = await this.typeOrmWarehouseBinRepository.findOne({
 			where: {
 				id,
@@ -619,6 +634,36 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	}
 
 	/**
+	 * Reads a bin with its zone, its parent and its children under MikroORM.
+	 *
+	 * The parent and the children are TypeORM's tree relations (`@TreeParent`, `@TreeChildren`) and have no
+	 * MikroORM mapping at all, so they cannot be populated there; they are read by the `parentId` column that
+	 * both ORMs persist, in the caller's tenant and organization, and attached as TypeORM attaches them — the
+	 * parent as a row or null, the children as a list. The zone is a relation on both and is populated.
+	 *
+	 * @param id The bin to read.
+	 * @returns The bin, with its zone, its parent and its children.
+	 * @throws NotFoundException when it is not the caller's.
+	 */
+	private async findOneDetailedThroughMikroOrm(id: ID): Promise<WarehouseBin> {
+		const scope = {
+			tenantId: RequestContext.currentTenantId(),
+			organizationId: RequestContext.currentOrganizationId()
+		};
+		const rows = this.binRows();
+		const bin = await rows.findOne({ where: { id, ...scope }, relations: { zone: true } });
+
+		if (!bin) {
+			throw new NotFoundException('The bin was not found.');
+		}
+
+		bin.parent = bin.parentId ? ((await rows.findOne({ where: { id: bin.parentId, ...scope } })) ?? null) : null;
+		bin.children = await rows.find({ where: { parentId: bin.id, ...scope } });
+
+		return bin;
+	}
+
+	/**
 	 * Reads a bin inside the caller's tenant and organization.
 	 *
 	 * @param id The bin to read.
@@ -626,7 +671,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	public async findOneScoped(id: ID): Promise<WarehouseBin> {
-		const bin = await this.typeOrmWarehouseBinRepository.findOne({
+		const bin = await this.binRows().findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -649,7 +694,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns The pickable positions, sorted for the walk.
 	 */
 	public async findPickableBins(warehouseId: ID, zoneId?: ID): Promise<WarehouseBin[]> {
-		return await this.typeOrmWarehouseBinRepository.find({
+		return await this.binRows().find({
 			where: {
 				warehouseId,
 				...(zoneId ? { zoneId } : {}),
@@ -669,7 +714,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns The positions.
 	 */
 	public async findInZone(zoneId: ID): Promise<WarehouseBin[]> {
-		return await this.typeOrmWarehouseBinRepository.find({
+		return await this.binRows().find({
 			where: {
 				zoneId,
 				tenantId: RequestContext.currentTenantId(),
@@ -687,7 +732,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns The roots of the forest, with their subtrees attached.
 	 */
 	public async findTree(warehouseId: ID, zoneId?: ID): Promise<WarehouseBin[]> {
-		const bins = await this.typeOrmWarehouseBinRepository.find({
+		const bins = await this.binRows().find({
 			where: {
 				warehouseId,
 				...(zoneId ? { zoneId } : {}),
@@ -735,7 +780,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return [];
 		}
 
-		return await this.typeOrmWarehouseBinRepository.find({
+		return await this.binRows().find({
 			where: {
 				id: In(ids),
 				tenantId: RequestContext.currentTenantId(),
@@ -1188,7 +1233,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return { requireFullPlacement: false };
 		}
 
-		const location = await this.typeOrmWarehouseRepository.findOne({
+		const location = await this.locationRows().findOne({
 			where: {
 				id: warehouseId,
 				tenantId: RequestContext.currentTenantId(),
@@ -1221,7 +1266,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		const organizationId = RequestContext.currentOrganizationId();
 
 		if (defaultBinId) {
-			const named = await this.typeOrmWarehouseBinRepository.findOne({
+			const named = await this.binRows().findOne({
 				where: { id: defaultBinId, warehouseId, tenantId, organizationId }
 			});
 
@@ -1230,13 +1275,13 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			}
 		}
 
-		const zones = await this.typeOrmWarehouseZoneRepository.find({
+		const zones = await this.zoneRows().find({
 			where: { warehouseId, type: WarehouseZoneType.RECEIVING, tenantId, organizationId },
 			order: { priority: 'DESC', code: 'ASC' }
 		});
 
 		for (const zone of zones ?? []) {
-			const bins = await this.typeOrmWarehouseBinRepository.find({
+			const bins = await this.binRows().find({
 				where: { warehouseId, zoneId: zone.id, tenantId, organizationId },
 				order: { sortOrder: 'ASC', code: 'ASC' }
 			});
@@ -1271,7 +1316,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return;
 		}
 
-		const bins = await this.typeOrmWarehouseBinRepository.find({
+		const bins = await this.binRows().find({
 			where: {
 				id: In(binIds),
 				warehouseId,
@@ -1300,7 +1345,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 				continue;
 			}
 
-			await this.typeOrmWarehouseBinRepository.update(bin.id, {
+			await this.binRows().update(bin.id, {
 				metadata: {
 					...metadata,
 					[BIN_BALANCES_KEY]: current,
@@ -1365,6 +1410,12 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @returns Whatever the driver answered.
 	 */
 	private async runClosureStatement(sql: string, parameters: Record<string, unknown>): Promise<any> {
+		// Under MikroORM the statement runs on MikroORM's own connection: the identifiers are quoted the same
+		// way, and the parameters are bound as the `?` MikroORM formats itself on every dialect.
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return await runMikroOrmStatement(this.mikroOrmWarehouseBinRepository, prepareSQLQuery(sql), parameters);
+		}
+
 		const bound = toPositionalStatement(prepareSQLQuery(sql), parameters);
 
 		return this.typeOrmWarehouseBinRepository.query(bound.sql, bound.parameters);
@@ -1528,7 +1579,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 	 * @throws BadRequestException when the code is already used inside the location.
 	 */
 	private async assertCodeIsFree(warehouseId: ID, code: string): Promise<void> {
-		const existing = await this.typeOrmWarehouseBinRepository.findOne({
+		const existing = await this.binRows().findOne({
 			where: {
 				warehouseId,
 				code,
@@ -1552,7 +1603,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return;
 		}
 
-		const zone: WarehouseZone = await this.typeOrmWarehouseZoneRepository.findOne({
+		const zone: WarehouseZone = await this.zoneRows().findOne({
 			where: {
 				id: zoneId,
 				tenantId: RequestContext.currentTenantId(),
@@ -1586,7 +1637,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return;
 		}
 
-		const parent = await this.typeOrmWarehouseBinRepository.findOne({
+		const parent = await this.binRows().findOne({
 			where: {
 				id: parentId,
 				tenantId: RequestContext.currentTenantId(),
@@ -1653,7 +1704,7 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			return input.binIds;
 		}
 
-		const bins = await this.typeOrmWarehouseBinRepository.find({
+		const bins = await this.binRows().find({
 			where: {
 				warehouseId: input.warehouseId,
 				...(input.zoneId ? { zoneId: input.zoneId } : {}),
@@ -1734,6 +1785,51 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 		const version = Number((bin as { version?: unknown })?.version ?? 1);
 
 		return Number.isSafeInteger(version) && version > 0 ? version : 1;
+	}
+
+	/**
+	 * The repository a bin is read and edited through outside the platform's CRUD path: the TypeORM one
+	 * under TypeORM — the call it always was — and the same calls answered through MikroORM under MikroORM
+	 * (`warehouse-persistence.ts`).
+	 *
+	 * @returns The repository.
+	 */
+	private binRows(): TWarehouseRows<WarehouseBin> {
+		return warehouseRowsOf(
+			this.ormType,
+			WarehouseBin,
+			() => this.typeOrmWarehouseBinRepository,
+			() => this.mikroOrmWarehouseBinRepository
+		);
+	}
+
+	/**
+	 * The repository a zone is read through, on the ORM the installation runs. Under MikroORM the read goes
+	 * through this service's own MikroORM repository's entity manager, which reaches every table.
+	 *
+	 * @returns The repository.
+	 */
+	private zoneRows(): TWarehouseRows<WarehouseZone> {
+		return warehouseRowsOf(
+			this.ormType,
+			WarehouseZone,
+			() => this.typeOrmWarehouseZoneRepository,
+			() => this.mikroOrmWarehouseBinRepository
+		);
+	}
+
+	/**
+	 * The repository the kernel's location row is read through, on the ORM the installation runs.
+	 *
+	 * @returns The repository.
+	 */
+	private locationRows(): TWarehouseRows<Warehouse> {
+		return warehouseRowsOf(
+			this.ormType,
+			Warehouse,
+			() => this.typeOrmWarehouseRepository,
+			() => this.mikroOrmWarehouseBinRepository
+		);
 	}
 }
 

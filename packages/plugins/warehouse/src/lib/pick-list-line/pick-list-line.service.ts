@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { PickList } from '../pick-list/pick-list.entity';
@@ -19,6 +20,7 @@ import {
 	subtractQuantities,
 	toQuantityUnits
 } from '../warehouse.quantity';
+import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickListLine } from './pick-list-line.entity';
 import { MikroOrmPickListLineRepository } from './repository/mikro-orm-pick-list-line.repository';
 import { TypeOrmPickListLineRepository } from './repository/type-orm-pick-list-line.repository';
@@ -51,6 +53,20 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 		private readonly stockLedger?: IWarehouseStockLedgerPort
 	) {
 		super(typeOrmPickListLineRepository, mikroOrmPickListLineRepository);
+	}
+
+	/**
+	 * The repository one of this package's tables is read and edited through outside the platform's CRUD
+	 * path, on the ORM the installation runs: the TypeORM repository itself under TypeORM — the call it
+	 * always was — and the same calls answered through MikroORM under MikroORM, through this service's own
+	 * MikroORM repository's entity manager (`warehouse-persistence.ts`).
+	 *
+	 * @param entity The table's entity.
+	 * @param typeOrm Its TypeORM repository, reached only under TypeORM.
+	 * @returns The repository.
+	 */
+	private rows<T extends ObjectLiteral>(entity: new () => T, typeOrm: () => Repository<T>): TWarehouseRows<T> {
+		return warehouseRowsOf(this.ormType, entity, typeOrm, () => this.mikroOrmPickListLineRepository);
 	}
 
 	/**
@@ -263,7 +279,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * @param packSlipId The slip being cancelled.
 	 */
 	public async detachFromPackSlip(packSlipId: ID): Promise<void> {
-		const lines = await this.typeOrmPickListLineRepository.find({
+		const lines = await this.rows(PickListLine, () => this.typeOrmPickListLineRepository).find({
 			where: {
 				packSlipId,
 				tenantId: RequestContext.currentTenantId(),
@@ -285,7 +301,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * @returns The lines.
 	 */
 	public async findForList(pickListId: ID, options: { withDeleted?: boolean } = {}): Promise<PickListLine[]> {
-		return await this.typeOrmPickListLineRepository.find({
+		return await this.rows(PickListLine, () => this.typeOrmPickListLineRepository).find({
 			where: {
 				pickListId,
 				tenantId: RequestContext.currentTenantId(),
@@ -305,7 +321,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	public async findOneScoped(id: ID): Promise<PickListLine> {
-		const line = await this.typeOrmPickListLineRepository.findOne({
+		const line = await this.rows(PickListLine, () => this.typeOrmPickListLineRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -337,7 +353,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 	 * @param startsWork Whether the change is an outcome recorded on a line.
 	 */
 	private async refreshListCounters(pickListId: ID, startsWork = true): Promise<void> {
-		const list = await this.typeOrmPickListRepository.findOne({
+		const list = await this.rows(PickList, () => this.typeOrmPickListRepository).findOne({
 			where: {
 				id: pickListId,
 				tenantId: RequestContext.currentTenantId(),
@@ -351,7 +367,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 
 		const lines = await this.findForList(pickListId);
 
-		await this.typeOrmPickListRepository.update(pickListId, {
+		await this.rows(PickList, () => this.typeOrmPickListRepository).update(pickListId, {
 			lineCount: lines.length,
 			pickedCount: lines.filter((line) =>
 				[PickListLineStatus.PICKED, PickListLineStatus.SHORT].includes(line.status)
@@ -460,7 +476,7 @@ export class PickListLineService extends TenantAwareCrudService<PickListLine> {
 			throw new BadRequestException('A pick line belongs to a list and must name it.');
 		}
 
-		const list = await this.typeOrmPickListRepository.findOne({
+		const list = await this.rows(PickList, () => this.typeOrmPickListRepository).findOne({
 			where: {
 				id: pickListId,
 				tenantId: RequestContext.currentTenantId(),

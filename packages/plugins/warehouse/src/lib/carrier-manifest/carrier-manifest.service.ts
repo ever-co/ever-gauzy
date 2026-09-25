@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import {
@@ -9,6 +10,7 @@ import {
 	WAREHOUSE_FULFILLMENT
 } from '../warehouse.types';
 import { sumQuantities } from '../warehouse.quantity';
+import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { CarrierManifest } from './carrier-manifest.entity';
 import { MikroOrmCarrierManifestRepository } from './repository/mikro-orm-carrier-manifest.repository';
 import { TypeOrmCarrierManifestRepository } from './repository/type-orm-carrier-manifest.repository';
@@ -51,6 +53,20 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 		private readonly fulfillment?: IWarehouseFulfillmentPort
 	) {
 		super(typeOrmCarrierManifestRepository, mikroOrmCarrierManifestRepository);
+	}
+
+	/**
+	 * The repository one of this package's tables is read and edited through outside the platform's CRUD
+	 * path, on the ORM the installation runs: the TypeORM repository itself under TypeORM — the call it
+	 * always was — and the same calls answered through MikroORM under MikroORM, through this service's own
+	 * MikroORM repository's entity manager (`warehouse-persistence.ts`).
+	 *
+	 * @param entity The table's entity.
+	 * @param typeOrm Its TypeORM repository, reached only under TypeORM.
+	 * @returns The repository.
+	 */
+	private rows<T extends ObjectLiteral>(entity: new () => T, typeOrm: () => Repository<T>): TWarehouseRows<T> {
+		return warehouseRowsOf(this.ormType, entity, typeOrm, () => this.mikroOrmCarrierManifestRepository);
 	}
 
 	/**
@@ -269,7 +285,7 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 	 * @returns The manifest, with the shipments it currently covers.
 	 */
 	public async findOneDetailed(id: ID): Promise<CarrierManifestWithMembers> {
-		const manifest = await this.typeOrmCarrierManifestRepository.findOne({
+		const manifest = await this.rows(CarrierManifest, () => this.typeOrmCarrierManifestRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -292,7 +308,7 @@ export class CarrierManifestService extends TenantAwareCrudService<CarrierManife
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	public async findOneScoped(id: ID): Promise<CarrierManifest> {
-		const manifest = await this.typeOrmCarrierManifestRepository.findOne({
+		const manifest = await this.rows(CarrierManifest, () => this.typeOrmCarrierManifestRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),

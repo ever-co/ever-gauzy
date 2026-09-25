@@ -3,8 +3,10 @@ import { DeleteResult } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { TypeOrmWarehouseBinRepository } from '../warehouse-bin/repository/type-orm-warehouse-bin.repository';
+import { WarehouseBin } from '../warehouse-bin/warehouse-bin.entity';
 import { WarehouseZoneType } from '../warehouse.types';
 import { normalizeQuantity, toQuantityUnits } from '../warehouse.quantity';
+import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { WarehouseZone } from './warehouse-zone.entity';
 import { MikroOrmWarehouseZoneRepository } from './repository/mikro-orm-warehouse-zone.repository';
 import { TypeOrmWarehouseZoneRepository } from './repository/type-orm-warehouse-zone.repository';
@@ -167,7 +169,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 		const resolved: Array<{ id: ID; priority: number; version: number }> = [];
 
 		for (const zone of zones) {
-			const existing = await this.typeOrmWarehouseZoneRepository.findOne({
+			const existing = await this.zoneRows().findOne({
 				where: { id: zone.id, tenantId, organizationId, warehouseId }
 			});
 
@@ -179,7 +181,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 		}
 
 		for (const zone of resolved) {
-			await this.typeOrmWarehouseZoneRepository.update(zone.id, {
+			await this.zoneRows().update(zone.id, {
 				priority: zone.priority,
 				version: zone.version
 			} as any);
@@ -194,23 +196,29 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * A zone with bins is refused rather than emptied: deleting it would take the addresses of the
 	 * stock inside it with it, and the operator's problem is the stock, not the row.
 	 *
+	 * **A retired bin is still a bin of the zone.** `FK_warehouse_bin_zone` is `ON DELETE SET NULL` whatever
+	 * the bin's `deletedAt` says, so deleting a zone whose only bins were soft-deleted detaches them, and a
+	 * bin recovered afterwards comes back with no zone at all — an address with no area. The count therefore
+	 * includes retired bins (`withDeleted`), and the refusal says so.
+	 *
 	 * @param id The zone to delete.
 	 * @returns The delete result.
-	 * @throws BadRequestException with `ZONE_HAS_BINS` when the area still holds positions.
+	 * @throws BadRequestException with `ZONE_HAS_BINS` when the area still holds positions, live or retired.
 	 */
 	public async delete(id: ID): Promise<DeleteResult> {
 		const zone = await this.findOneScoped(id);
-		const bins = await this.typeOrmWarehouseBinRepository.count({
+		const bins = await this.binRows().count({
 			where: {
 				zoneId: zone.id,
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
-			}
+			},
+			withDeleted: true
 		});
 
 		if (bins > 0) {
 			throw new BadRequestException(
-				`ZONE_HAS_BINS: the zone still holds ${bins} position(s); move or delete them before deleting the zone.`
+				`ZONE_HAS_BINS: the zone still holds ${bins} position(s), retired ones included; move or delete them before deleting the zone.`
 			);
 		}
 
@@ -224,7 +232,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * @returns The zone, with its bins.
 	 */
 	public async findOneDetailed(id: ID): Promise<WarehouseZone> {
-		const zone = await this.typeOrmWarehouseZoneRepository.findOne({
+		const zone = await this.zoneRows().findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -250,7 +258,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * another tenant's rows.
 	 */
 	public async findOneScoped(id: ID): Promise<WarehouseZone> {
-		const zone = await this.typeOrmWarehouseZoneRepository.findOne({
+		const zone = await this.zoneRows().findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -276,7 +284,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * @returns The eligible areas, visited first to last.
 	 */
 	public async findPickPath(warehouseId: ID): Promise<WarehouseZone[]> {
-		return await this.typeOrmWarehouseZoneRepository.find({
+		return await this.zoneRows().find({
 			where: {
 				warehouseId,
 				tenantId: RequestContext.currentTenantId(),
@@ -300,7 +308,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * @returns The eligible areas, most preferred first.
 	 */
 	public async findPutAwayPath(warehouseId: ID, types?: WarehouseZoneType[]): Promise<WarehouseZone[]> {
-		const zones = await this.typeOrmWarehouseZoneRepository.find({
+		const zones = await this.zoneRows().find({
 			where: {
 				warehouseId,
 				tenantId: RequestContext.currentTenantId(),
@@ -340,7 +348,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * @throws BadRequestException when the code is already used inside the location.
 	 */
 	private async assertCodeIsFree(warehouseId: ID, code: string): Promise<void> {
-		const existing = await this.typeOrmWarehouseZoneRepository.findOne({
+		const existing = await this.zoneRows().findOne({
 			where: {
 				warehouseId,
 				code,
@@ -360,7 +368,7 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 	 * @returns The next free position in the sequence for that type.
 	 */
 	private async nextPriority(warehouseId: ID, type: WarehouseZoneType): Promise<number> {
-		const zones = await this.typeOrmWarehouseZoneRepository.find({
+		const zones = await this.zoneRows().find({
 			where: {
 				warehouseId,
 				type,
@@ -372,6 +380,38 @@ export class WarehouseZoneService extends TenantAwareCrudService<WarehouseZone> 
 		});
 
 		return zones.length ? (zones[0].priority ?? 0) + 1 : 0;
+	}
+
+	/**
+	 * The repository a zone is read and edited through outside the platform's CRUD path: the TypeORM one
+	 * under TypeORM — the call it always was — and the same calls answered through MikroORM under MikroORM
+	 * (`warehouse-persistence.ts`).
+	 *
+	 * @returns The repository.
+	 */
+	private zoneRows(): TWarehouseRows<WarehouseZone> {
+		return warehouseRowsOf(
+			this.ormType,
+			WarehouseZone,
+			() => this.typeOrmWarehouseZoneRepository,
+			() => this.mikroOrmWarehouseZoneRepository
+		);
+	}
+
+	/**
+	 * The repository the bins of a zone are counted through, on the ORM the installation runs. Under
+	 * MikroORM the count goes through this service's own MikroORM repository's entity manager, which
+	 * reaches every table.
+	 *
+	 * @returns The repository.
+	 */
+	private binRows(): TWarehouseRows<WarehouseBin> {
+		return warehouseRowsOf(
+			this.ormType,
+			WarehouseBin,
+			() => this.typeOrmWarehouseBinRepository,
+			() => this.mikroOrmWarehouseZoneRepository
+		);
 	}
 
 	/**

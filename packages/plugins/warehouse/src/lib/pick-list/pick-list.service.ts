@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { PickListLineService } from '../pick-list-line/pick-list-line.service';
@@ -21,6 +22,7 @@ import {
 	WAREHOUSE_STOCK_LEDGER
 } from '../warehouse.types';
 import { isPositiveQuantity, normalizeQuantity } from '../warehouse.quantity';
+import { TWarehouseRows, warehouseRowsOf } from '../warehouse-persistence';
 import { PickList } from './pick-list.entity';
 import { MikroOrmPickListRepository } from './repository/mikro-orm-pick-list.repository';
 import { TypeOrmPickListRepository } from './repository/type-orm-pick-list.repository';
@@ -56,6 +58,20 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		private readonly stockLedger?: IWarehouseStockLedgerPort
 	) {
 		super(typeOrmPickListRepository, mikroOrmPickListRepository);
+	}
+
+	/**
+	 * The repository one of this package's tables is read and edited through outside the platform's CRUD
+	 * path, on the ORM the installation runs: the TypeORM repository itself under TypeORM — the call it
+	 * always was — and the same calls answered through MikroORM under MikroORM, through this service's own
+	 * MikroORM repository's entity manager (`warehouse-persistence.ts`).
+	 *
+	 * @param entity The table's entity.
+	 * @param typeOrm Its TypeORM repository, reached only under TypeORM.
+	 * @returns The repository.
+	 */
+	private rows<T extends ObjectLiteral>(entity: new () => T, typeOrm: () => Repository<T>): TWarehouseRows<T> {
+		return warehouseRowsOf(this.ormType, entity, typeOrm, () => this.mikroOrmPickListRepository);
 	}
 
 	/**
@@ -308,7 +324,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	 * @returns The list, with its lines in walking order and its wave.
 	 */
 	public async findOneDetailed(id: ID): Promise<PickList> {
-		const list = await this.typeOrmPickListRepository.findOne({
+		const list = await this.rows(PickList, () => this.typeOrmPickListRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -334,7 +350,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	 * @throws NotFoundException when it is not the caller's.
 	 */
 	public async findOneScoped(id: ID): Promise<PickList> {
-		const list = await this.typeOrmPickListRepository.findOne({
+		const list = await this.rows(PickList, () => this.typeOrmPickListRepository).findOne({
 			where: {
 				id,
 				tenantId: RequestContext.currentTenantId(),
@@ -529,7 +545,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 		const wave = await this.findWave(list.waveId);
 
 		if (wave.status === PickWaveStatus.RELEASED) {
-			await this.typeOrmPickWaveRepository.update(wave.id, {
+			await this.rows(PickWave, () => this.typeOrmPickWaveRepository).update(wave.id, {
 				status: PickWaveStatus.IN_PROGRESS,
 				startedAt: wave.startedAt ?? new Date(),
 				version: (wave.version ?? 1) + 1
@@ -560,7 +576,7 @@ export class PickListService extends TenantAwareCrudService<PickList> {
 	 * @throws BadRequestException when it does not exist.
 	 */
 	private async findWave(waveId: ID): Promise<PickWave> {
-		const wave = await this.typeOrmPickWaveRepository.findOne({
+		const wave = await this.rows(PickWave, () => this.typeOrmPickWaveRepository).findOne({
 			where: {
 				id: waveId,
 				tenantId: RequestContext.currentTenantId(),
