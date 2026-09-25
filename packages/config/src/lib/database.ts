@@ -15,6 +15,7 @@ import {
 	getLoggingMikroOptions,
 	getLoggingOptions,
 	getTlsOptions,
+	MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 	parseIntEnv,
 	TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
 } from './database-helpers';
@@ -221,6 +222,8 @@ switch (dbType) {
 			},
 			persistOnCreate: true,
 			extensions: [SoftDeleteHandler],
+			// Join only what a read populates, as TypeORM does; see database-helpers.ts.
+			autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -323,6 +326,8 @@ switch (dbType) {
 			},
 			persistOnCreate: true,
 			extensions: [SoftDeleteHandler],
+			// Join only what a read populates, as TypeORM does; see database-helpers.ts.
+			autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -426,6 +431,8 @@ switch (dbType) {
 			dbName: sqlitePath,
 			persistOnCreate: true,
 			extensions: [SoftDeleteHandler],
+			// Join only what a read populates, as TypeORM does; see database-helpers.ts.
+			autoJoinRefsForFilters: MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
