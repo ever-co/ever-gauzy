@@ -52,7 +52,9 @@ export class CollectionProductResolver {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.collectionProductService.findAll({
 			where: { ...filter },
-			order: { position: 'ASC', addedAt: 'ASC' },
+			// Closed by the row's identity: two members added at one position in one instant are otherwise a
+			// tie the store may break differently on each page, and the walk repeats one and skips the other.
+			order: { position: 'ASC', addedAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

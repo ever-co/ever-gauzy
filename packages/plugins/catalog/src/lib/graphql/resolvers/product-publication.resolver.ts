@@ -62,6 +62,9 @@ export class ProductPublicationResolver {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productChannelService.findAll({
 			where: { ...filterBy },
+			// The shelf order the service reads a product's publications in, closed by the row's identity: an
+			// offset cursor is a position, and ties the store may break differently per page repeat rows.
+			order: { sortOrder: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
@@ -94,6 +97,8 @@ export class ProductPublicationResolver {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productVariantChannelService.findAll({
 			where: { ...filterBy },
+			// As the product publications above: the shelf order, closed by the row's identity.
+			order: { sortOrder: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

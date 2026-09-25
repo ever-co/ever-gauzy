@@ -364,3 +364,83 @@ describe('The order list fields offer the soft-delete visibility their routes of
 		expect(historyService.timeline).toHaveBeenNthCalledWith(2, 'order-1', undefined);
 	});
 });
+
+/**
+ * The order a store-paged list field reads its page in.
+ *
+ * Each field below cuts its page with LIMIT/OFFSET and publishes offset cursors over it, so the read has to
+ * state an order the store cannot rearrange between two pages. `orders`, `orderChanges` and
+ * `orderTransactions` stated none — on Postgres that is heap order, and an `UPDATE` to an order on page one
+ * writes a new tuple at the end of the heap, so `after: endCursor` then skipped one unseen order and answered
+ * the updated one again — and `orderSummaries` stated `version` alone, which a retired summary read back with
+ * `withDeleted` can share with a live one. Every order here therefore ends with the primary key, the one
+ * column that leaves no tie, and the resource's own order comes first so the page still reads the way the
+ * field documents.
+ */
+describe('The order list fields read their page in a total order', () => {
+	/** A read that answers one empty page and records the options it was handed. */
+	const read = () => jest.fn(async (_options?: Record<string, unknown>) => ({ items: [], total: 0 }));
+
+	/** @returns The options the one read a field made was handed. */
+	const optionsOf = (findAll: jest.Mock): Record<string, unknown> => {
+		expect(findAll).toHaveBeenCalledTimes(1);
+
+		return findAll.mock.calls[0][0] as Record<string, unknown>;
+	};
+
+	it('reads `orders` newest first, closed by the identity, from the row the cursor names', async () => {
+		const orderService = { findAll: read() };
+		const resolver = new OrderResolver(
+			orderService as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any
+		);
+
+		await resolver.orders(undefined, undefined, undefined, undefined, undefined, { first: 20, after: 'MTk=' });
+
+		// `MTk=` is offset 19, so the page starts at row 20 — a row offset, which `findAll` reads as one on both ORMs.
+		expect(optionsOf(orderService.findAll)).toMatchObject({
+			order: { createdAt: 'DESC', id: 'DESC' },
+			skip: 20,
+			take: 20
+		});
+	});
+
+	it('closes the order of every list field of a change, a summary and a ledger with the identity', async () => {
+		const changeService = { findAll: read() };
+		const summaryService = { findAll: read() };
+		const transactionService = { findAll: read() };
+		const resolver = new OrderChangeResolver(
+			changeService as any,
+			{} as any,
+			summaryService as any,
+			transactionService as any,
+			{} as any
+		);
+
+		await resolver.orderChanges('order-1', undefined, { first: 2 });
+		await resolver.orderSummaries('order-1', { first: 2 });
+		await resolver.orderTransactions('order-1', undefined, { first: 2 });
+
+		const orders = [changeService, summaryService, transactionService].map(
+			(service) => optionsOf(service.findAll).order as Record<string, string>
+		);
+
+		expect(orders).toEqual([
+			{ createdAt: 'DESC', id: 'DESC' },
+			// Newest version first, as the field documents; the identity only breaks the tie a retired row makes.
+			{ version: 'DESC', id: 'DESC' },
+			// A ledger reads in the order it was written.
+			{ createdAt: 'ASC', id: 'ASC' }
+		]);
+
+		for (const order of orders) {
+			expect(Object.keys(order).pop()).toBe('id');
+		}
+	});
+});

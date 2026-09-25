@@ -114,6 +114,9 @@ export class OrderChangeResolver {
 		const listing = (await this.changeService.findAll({
 			where,
 			relations: ['actions'],
+			// Newest first, closed by the row's identity: an offset cursor is a position, and a position means
+			// nothing in an order the store may rearrange between two pages.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
@@ -155,7 +158,9 @@ export class OrderChangeResolver {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.summaryService.findAll({
 			where: { orderId },
-			order: { version: 'DESC' },
+			// The version is unique per order among the live summaries only: a retired one read back with
+			// `withDeleted` can share it, so the identity closes the order.
+			order: { version: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
@@ -197,6 +202,9 @@ export class OrderChangeResolver {
 
 		const listing = (await this.transactionService.findAll({
 			where,
+			// A ledger reads in the order it was written, closed by the row's identity so two rows posted in
+			// one instant page in one arrangement.
+			order: { createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

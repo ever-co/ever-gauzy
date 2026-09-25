@@ -94,6 +94,7 @@ import { CollectionVariantResolver } from './resolvers/collection-variant.resolv
 import { ProductPublicationResolver } from './resolvers/product-publication.resolver';
 import { ProductRelationResolver } from './resolvers/product-relation.resolver';
 import { ProductVariantMediaResolver } from './resolvers/product-variant-media.resolver';
+import { TagProductVariantResolver } from './resolvers/tag-product-variant.resolver';
 import { schemaExtensions } from './schema-extensions';
 
 /** The SDL as printed, so a declaration can be read the way a client reads it. */
@@ -235,5 +236,40 @@ describe('the catalog resolvers — the flag reaches the read the field delegate
 
 		expect(silent.findAll).toHaveBeenCalledTimes(1);
 		expect(silent.findAll.mock.calls[0][0]).not.toHaveProperty('withDeleted');
+	});
+
+	/**
+	 * Every store-paged list field of the package: the seven above, and the two whose soft-delete flag is
+	 * pinned elsewhere but whose page is cut the same way.
+	 */
+	const PAGED: readonly IFieldCase[] = [
+		...CASES,
+		{
+			field: 'productVariantPublications',
+			build: (service) => new ProductPublicationResolver({} as never, service, { ofType: () => null } as never),
+			call: (resolver, withDeleted) =>
+				resolver.productVariantPublications({}, undefined, undefined, undefined, withDeleted)
+		},
+		{
+			field: 'productVariantFacets',
+			build: (service) => new TagProductVariantResolver(service),
+			call: (resolver, withDeleted) =>
+				resolver.productVariantFacets({}, undefined, undefined, undefined, withDeleted)
+		}
+	];
+
+	it.each(PAGED)('$field reads its page in a total order, closed by the row’s identity', async (testCase) => {
+		const asked = serviceStub();
+
+		await testCase.call(testCase.build(asked));
+
+		// The page is cut with LIMIT/OFFSET and its cursors are offsets, so the read has to state an order the
+		// store cannot rearrange between two pages. An order with ties — or none — lets the planner, or a
+		// Postgres `UPDATE` that moves a tuple, break them differently on the next page, and the walk repeats
+		// one row and never shows another. The primary key is the one column that leaves no tie.
+		const { order } = asked.findAll.mock.calls[0][0] as { order?: Record<string, string> };
+
+		expect(order).toBeDefined();
+		expect(Object.keys(order ?? {}).pop()).toBe('id');
 	});
 });

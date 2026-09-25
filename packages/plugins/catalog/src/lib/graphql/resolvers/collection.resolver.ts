@@ -59,6 +59,9 @@ export class CollectionResolver {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.collectionService.findAll({
 			where: { ...(filter ?? {}) },
+			// The merchandiser's own order, then the row's identity: an offset cursor is a position, and a
+			// position means nothing in an order the store may rearrange between two pages.
+			order: { sortOrder: 'ASC', createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

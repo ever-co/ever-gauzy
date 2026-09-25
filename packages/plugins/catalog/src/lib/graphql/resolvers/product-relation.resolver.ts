@@ -53,7 +53,8 @@ export class ProductRelationResolver {
 		const listing = await this.productRelationService.findAll({
 			where: { ...filter },
 			relations: ['relatedProduct'],
-			order: { type: 'ASC', position: 'ASC' },
+			// Closed by the row's identity, so relations of one type at one position page in one arrangement.
+			order: { type: 'ASC', position: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

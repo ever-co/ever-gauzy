@@ -52,6 +52,9 @@ export class CollectionChannelResolver {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.collectionChannelService.findAll({
 			where: { ...filter },
+			// The order the service reads a collection's publications in, closed by the row's identity so a
+			// cursor names one row rather than a position among publications created in the same instant.
+			order: { createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

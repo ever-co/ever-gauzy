@@ -69,10 +69,10 @@ export class ProductPriceResolver {
 		@Args('offset') offset?: number,
 		@Args('withDeleted', { type: () => Boolean, nullable: true }) withDeleted?: boolean
 	): Promise<ProductPriceConnection> {
-		return await readConnection(page, limit, offset, (window) =>
+		return await readConnection(page, limit, offset, this.orderOf(sort), (window) =>
 			this.productPriceService.findAll({
 				where: this.whereOf(filter),
-				order: this.orderOf(sort),
+				order: window.order,
 				take: window.take,
 				skip: window.skip,
 				...(withDeleted ? { withDeleted: true } : {})

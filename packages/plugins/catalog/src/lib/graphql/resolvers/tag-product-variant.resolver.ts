@@ -47,6 +47,9 @@ export class TagProductVariantResolver {
 		const listing = await this.tagProductVariantService.findAll({
 			where: { ...filter },
 			relations: ['tag'],
+			// Oldest facet first, closed by the row's identity: an offset cursor is a position, and a position
+			// means nothing in an order the store may rearrange between two pages.
+			order: { createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

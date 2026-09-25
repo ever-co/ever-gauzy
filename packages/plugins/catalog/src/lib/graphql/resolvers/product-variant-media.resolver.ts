@@ -52,7 +52,8 @@ export class ProductVariantMediaResolver {
 		const { skip, take } = resolveConnectionWindow({ ...(page ?? {}), limit, offset });
 		const listing = await this.productVariantMediaService.findAll({
 			where: { ...filter },
-			order: { position: 'ASC' },
+			// Closed by the row's identity, so two images at one position page in one arrangement.
+			order: { position: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

@@ -148,6 +148,11 @@ export class OrderResolver {
 		// arguments — so the flag has to be stated rather than passed through.
 		const listing = (await this.orderService.findAll({
 			where,
+			// Newest first, closed by the row's identity. The page is cut with LIMIT/OFFSET and its cursors are
+			// offsets, so an order the store may rearrange between two pages — or none at all, which on Postgres
+			// is heap order, and an `UPDATE` to an order on page one moves it to the end of the heap — repeats
+			// one order and never shows another. The primary key is the one column that leaves no tie.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
