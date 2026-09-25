@@ -1,0 +1,686 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { DataSource, DataSourceOptions, EntityManager, EntitySchema, Logger } from 'typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { EntitySchema as MikroEntitySchema, MikroORM } from '@mikro-orm/core';
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { DatabaseModule } from './database.module';
+import {
+	EmbeddedTransactionWaitTimeoutError,
+	hasEmbeddedTransactionQueue,
+	IEmbeddedTransactionQueueOptions,
+	serializeEmbeddedTransactions
+} from './embedded-transaction-queue';
+
+/**
+ * The SQLite binding, required rather than imported: the type is imported and the value is required,
+ * so nothing loads a native binding at module-parse time.
+ */
+const Sqlite: typeof import('better-sqlite3') = require('better-sqlite3');
+
+/**
+ * Two requests' transactions on SQLite, each its own.
+ *
+ * TypeORM's better-sqlite3 driver hands every caller the same query runner, so without the queue two
+ * independent transactions drive one `BEGIN` / `SAVEPOINT` / `COMMIT` bookkeeping between them — see
+ * embedded-transaction-queue.ts for what that did, measured. Everything here runs against a real
+ * better-sqlite3 database, because the defect is in what reaches the connection: a mocked runner would
+ * only restate whichever order the code under test chose.
+ *
+ * What a transaction committed is read through a SECOND connection to the same file, never through the
+ * data source itself. The data source's one connection also answers reads inside whichever transaction
+ * holds it, so it would report rows that are not committed — which is the defect's own symptom, and no
+ * way to observe it.
+ */
+
+/** The row every transaction below writes: an id that says who wrote it. */
+class QueueRow {
+	id!: string;
+	tag!: string;
+}
+
+/** The MikroORM twin, a class of its own so neither ORM's metadata can reach the other's. */
+class MikroQueueRow {
+	id!: string;
+	tag!: string;
+}
+
+const TypeOrmQueueRow = new EntitySchema<QueueRow>({
+	name: 'QueueRow',
+	tableName: 'queue_row',
+	target: QueueRow,
+	columns: {
+		id: { primary: true, type: 'varchar' },
+		tag: { type: 'varchar' }
+	}
+});
+
+const MikroOrmQueueRow = new MikroEntitySchema<MikroQueueRow>({
+	class: MikroQueueRow,
+	tableName: 'queue_row',
+	properties: {
+		id: { type: 'string', primary: true },
+		tag: { type: 'string' }
+	}
+});
+
+/** Lets every other piece of pending work run, the way an awaited I/O call does between two statements. */
+const tick = (): Promise<void> => new Promise<void>((resolve) => setImmediate(resolve));
+
+/** A promise settled either way, so a rejection can be inspected next to a result. */
+async function settle<T>(promise: Promise<T>): Promise<{ value?: T; error?: Error }> {
+	try {
+		return { value: await promise };
+	} catch (error) {
+		return { error: error as Error };
+	}
+}
+
+/** A database file of its own for one test, and the rows committed to it. */
+class DatabaseFile {
+	private readonly directory = mkdtempSync(join(tmpdir(), 'gauzy-transaction-queue-'));
+	readonly path = join(this.directory, 'queue.sqlite3');
+
+	/**
+	 * The rows committed to the file, read through a connection of their own.
+	 *
+	 * @returns The ids, in order.
+	 */
+	committed(): string[] {
+		const reader = new Sqlite(this.path, { readonly: true, fileMustExist: true });
+
+		try {
+			return reader
+				.prepare('SELECT id FROM queue_row ORDER BY id')
+				.all()
+				.map((row: { id: string }) => row.id);
+		} finally {
+			reader.close();
+		}
+	}
+
+	remove(): void {
+		rmSync(this.directory, { recursive: true, force: true });
+	}
+}
+
+/**
+ * The statements that decide what a transaction is — its brackets, and the rows it writes — in the
+ * order the connection received them. A parameterised insert is recorded by the id it writes.
+ */
+class StatementLog implements Logger {
+	readonly statements: string[] = [];
+
+	logQuery(query: string, parameters?: unknown[]): void {
+		if (/^(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/.test(query)) {
+			this.statements.push(query);
+		} else if (/^INSERT INTO "queue_row"/.test(query) && parameters?.length) {
+			this.statements.push(`INSERT ${parameters[0]}`);
+		}
+	}
+
+	logQueryError(): void {
+		// A failed statement is asserted through the promise it rejects, not through the log.
+	}
+
+	logQuerySlow(): void {
+		// Timing is not what these tests are about.
+	}
+
+	logSchemaBuild(): void {
+		// The schema is built before every test and is not part of it.
+	}
+
+	logMigration(): void {
+		// No migration runs here.
+	}
+
+	log(): void {
+		// Nothing else TypeORM reports is read.
+	}
+
+	/** Forgets what the schema setup logged. */
+	clear(): void {
+		this.statements.length = 0;
+	}
+}
+
+/** One TypeORM data source over its own file. */
+interface ITypeOrmStore {
+	readonly dataSource: DataSource;
+	readonly file: DatabaseFile;
+	readonly log: StatementLog;
+}
+
+/** The options every TypeORM data source below is built with. */
+function typeOrmOptions(file: DatabaseFile, log: StatementLog): DataSourceOptions {
+	return {
+		type: 'better-sqlite3',
+		database: file.path,
+		entities: [TypeOrmQueueRow],
+		synchronize: true,
+		logging: ['query'],
+		logger: log
+	};
+}
+
+/**
+ * Opens a data source the way the platform does: the queue installed before it is initialized.
+ *
+ * @param options How long a transaction waits for the connection.
+ * @returns The store.
+ */
+async function openTypeOrm(options?: IEmbeddedTransactionQueueOptions): Promise<ITypeOrmStore> {
+	const file = new DatabaseFile();
+	const log = new StatementLog();
+	const dataSource = serializeEmbeddedTransactions(new DataSource(typeOrmOptions(file, log)), options);
+
+	await dataSource.initialize();
+	log.clear();
+
+	return { dataSource, file, log };
+}
+
+async function closeTypeOrm(store: ITypeOrmStore | undefined): Promise<void> {
+	if (store?.dataSource.isInitialized) {
+		await store.dataSource.destroy();
+	}
+	store?.file.remove();
+}
+
+/**
+ * A transaction that writes two rows with pending work between its statements, as a request's does.
+ *
+ * @param manager The manager it is opened on.
+ * @param tag Who writes: the rows are `<tag>1` and `<tag>2`.
+ * @param fail Whether it fails after writing both.
+ */
+function writeTwo(manager: EntityManager | DataSource, tag: string, fail = false): Promise<string> {
+	return manager.transaction(async (transactional) => {
+		await transactional.insert(QueueRow, { id: `${tag}1`, tag });
+		await tick();
+		await transactional.insert(QueueRow, { id: `${tag}2`, tag });
+		await tick();
+
+		if (fail) {
+			throw new Error(`${tag} fails`);
+		}
+
+		return tag;
+	});
+}
+
+/** The statements of one transaction that writes `<tag>1` and `<tag>2` and commits. */
+const committedBlock = (tag: string): string[] => ['BEGIN TRANSACTION', `INSERT ${tag}1`, `INSERT ${tag}2`, 'COMMIT'];
+
+describe('serializeEmbeddedTransactions — TypeORM on better-sqlite3', () => {
+	let store: ITypeOrmStore | undefined;
+
+	afterEach(async () => {
+		await closeTypeOrm(store);
+		store = undefined;
+	});
+
+	it('lets two transactions opened in the same tick each commit their own rows', async () => {
+		// Without the queue both issued BEGIN: the second failed, its ROLLBACK ended the first one's
+		// transaction, and both reported failure while the first one's rows were stored anyway.
+		store = await openTypeOrm();
+
+		const results = await Promise.all([
+			writeTwo(store.dataSource.manager, 'a'),
+			writeTwo(store.dataSource, 'b') // DataSource.transaction, which delegates to its manager
+		]);
+
+		expect(results).toEqual(['a', 'b']);
+		expect(store.file.committed()).toEqual(['a1', 'a2', 'b1', 'b2']);
+		expect(store.log.statements).toEqual([...committedBlock('a'), ...committedBlock('b')]);
+	});
+
+	it('rolls back only the failing one of two transactions opened in the same tick', async () => {
+		store = await openTypeOrm();
+
+		const [first, second] = await Promise.all([
+			settle(writeTwo(store.dataSource.manager, 'a', true)),
+			settle(writeTwo(store.dataSource.manager, 'b'))
+		]);
+
+		expect(first.error?.message).toBe('a fails');
+		expect(second.value).toBe('b');
+		expect(store.file.committed()).toEqual(['b1', 'b2']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT a1',
+			'INSERT a2',
+			'ROLLBACK',
+			...committedBlock('b')
+		]);
+	});
+
+	it('does not run a later transaction as a savepoint of an earlier one, so its rollback cannot undo the earlier commit', async () => {
+		// Without the queue the second one became SAVEPOINT typeorm_1: the first one's commit only released
+		// it, so nothing was committed when the first one reported success, and the second one's ROLLBACK
+		// then removed the first one's row as well.
+		store = await openTypeOrm();
+		const manager = store.dataSource.manager;
+
+		let letSecondFail!: () => void;
+		const secondMayFail = new Promise<void>((resolve) => (letSecondFail = resolve));
+
+		const first = manager.transaction(async (transactional) => {
+			await transactional.insert(QueueRow, { id: 'a1', tag: 'a' });
+			await tick();
+			await tick();
+			return 'a';
+		});
+		await tick();
+		const second = settle(
+			manager.transaction(async (transactional) => {
+				await transactional.insert(QueueRow, { id: 'b1', tag: 'b' });
+				await secondMayFail;
+				throw new Error('b fails');
+			})
+		);
+
+		await expect(first).resolves.toBe('a');
+		expect(store.file.committed()).toEqual(['a1']);
+
+		letSecondFail();
+		expect((await second).error?.message).toBe('b fails');
+		expect(store.file.committed()).toEqual(['a1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT a1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT b1',
+			'ROLLBACK'
+		]);
+	});
+
+	it('keeps a transaction opened inside another a savepoint of it, while a second request waits its turn', async () => {
+		// Nested through the manager the callback was handed, through the data source's own manager and
+		// through the data source: each is a savepoint of the transaction holding the connection, and none
+		// waits for it — a transaction that queued behind itself would never finish.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+
+		const outer = dataSource.manager.transaction(async (manager) => {
+			await manager.insert(QueueRow, { id: 'o1', tag: 'o' });
+			const failedInner = await settle(
+				manager.transaction(async (inner) => {
+					await inner.insert(QueueRow, { id: 'i1', tag: 'i' });
+					throw new Error('inner fails');
+				})
+			);
+			await tick();
+			await dataSource.manager.transaction((inner) => inner.insert(QueueRow, { id: 'i2', tag: 'i' }));
+			await dataSource.transaction((inner) => inner.insert(QueueRow, { id: 'i3', tag: 'i' }));
+			// A save through a repository of the data source joins the transaction its caller holds.
+			await dataSource.getRepository(QueueRow).save({ id: 'i4', tag: 'i' });
+
+			return failedInner.error?.message;
+		});
+		const other = writeTwo(dataSource.manager, 'b');
+
+		await expect(Promise.all([outer, other])).resolves.toEqual(['inner fails', 'b']);
+		expect(store.file.committed()).toEqual(['b1', 'b2', 'i2', 'i3', 'i4', 'o1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT o1',
+			'SAVEPOINT typeorm_1',
+			'INSERT i1',
+			'ROLLBACK TO SAVEPOINT typeorm_1',
+			'SAVEPOINT typeorm_1',
+			'INSERT i2',
+			'RELEASE SAVEPOINT typeorm_1',
+			'SAVEPOINT typeorm_1',
+			'INSERT i3',
+			'RELEASE SAVEPOINT typeorm_1',
+			'INSERT i4',
+			'COMMIT',
+			...committedBlock('b')
+		]);
+	});
+
+	it('queues a transaction opened by hand on a query runner, and keeps the one it opens inside a savepoint', async () => {
+		// The pattern a command handler uses: its own runner, started by hand, with a second handler that
+		// does the same from inside it. Without the queue the second flow's BEGIN failed.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+
+		const byHand = async (tag: string): Promise<string> => {
+			const runner = dataSource.createQueryRunner();
+			await runner.connect();
+			await runner.startTransaction();
+
+			try {
+				await runner.manager.insert(QueueRow, { id: `${tag}1`, tag });
+				await tick();
+
+				const inner = dataSource.createQueryRunner();
+				await inner.connect();
+				await inner.startTransaction();
+				await inner.manager.insert(QueueRow, { id: `${tag}2`, tag });
+				await inner.commitTransaction();
+
+				await runner.commitTransaction();
+				return tag;
+			} catch (error) {
+				await runner.rollbackTransaction();
+				throw error;
+			} finally {
+				await runner.release();
+			}
+		};
+
+		await expect(Promise.all([byHand('a'), byHand('b')])).resolves.toEqual(['a', 'b']);
+		expect(store.file.committed()).toEqual(['a1', 'a2', 'b1', 'b2']);
+		const block = (tag: string) => [
+			'BEGIN TRANSACTION',
+			`INSERT ${tag}1`,
+			'SAVEPOINT typeorm_1',
+			`INSERT ${tag}2`,
+			'RELEASE SAVEPOINT typeorm_1',
+			'COMMIT'
+		];
+		expect(store.log.statements).toEqual([...block('a'), ...block('b')]);
+	});
+
+	it("gives a save made while another request's transaction is open a transaction of its own", async () => {
+		// Without the queue the save read the shared runner's `isTransactionActive`, skipped the
+		// transaction it would have opened, and was rolled back with the other request's.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+
+		const failing = dataSource.manager.transaction(async (manager) => {
+			await manager.insert(QueueRow, { id: 'a1', tag: 'a' });
+			await tick();
+			await tick();
+			await tick();
+			throw new Error('a fails');
+		});
+		await tick();
+		const saved = dataSource.getRepository(QueueRow).save({ id: 'c1', tag: 'c' });
+
+		const [first, save] = await Promise.all([settle(failing), settle(saved)]);
+
+		expect(first.error?.message).toBe('a fails');
+		expect(save.value).toMatchObject({ id: 'c1' });
+		expect(store.file.committed()).toEqual(['c1']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT a1',
+			'ROLLBACK',
+			'BEGIN TRANSACTION',
+			'INSERT c1',
+			'COMMIT'
+		]);
+	});
+
+	it('gives up waiting after the time it is allowed, without ending the transaction it waited for', async () => {
+		store = await openTypeOrm({ waitTimeoutMs: 50 });
+		const dataSource = store.dataSource;
+
+		let release!: () => void;
+		const held = new Promise<void>((resolve) => (release = resolve));
+
+		const holder = dataSource.manager.transaction(async (manager) => {
+			await manager.insert(QueueRow, { id: 'a1', tag: 'a' });
+			await held;
+			await manager.insert(QueueRow, { id: 'a2', tag: 'a' });
+			return 'a';
+		});
+		await tick();
+
+		// The waiter's own rollback runs while the holder's transaction is open: TypeORM refuses it, because
+		// the transaction on the connection is not the waiter's.
+		const waiter = await settle(
+			dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'b1', tag: 'b' }))
+		);
+		expect(waiter.error).toBeInstanceOf(EmbeddedTransactionWaitTimeoutError);
+
+		release();
+		await expect(holder).resolves.toBe('a');
+		await dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'c1', tag: 'c' }));
+
+		expect(store.file.committed()).toEqual(['a1', 'a2', 'c1']);
+		expect(store.log.statements).toEqual([...committedBlock('a'), 'BEGIN TRANSACTION', 'INSERT c1', 'COMMIT']);
+	});
+
+	it('starts afresh after SQLite rolled a transaction back on its own', async () => {
+		// `INSERT OR ROLLBACK` ends the transaction inside SQLite, so TypeORM's ROLLBACK then fails and its
+		// runner went on believing a transaction was open: every later transaction became a savepoint of
+		// nothing, and the first one to fail left the connection inside a transaction nothing would commit.
+		store = await openTypeOrm();
+		const dataSource = store.dataSource;
+		await dataSource.manager.insert(QueueRow, { id: 'x', tag: 'x' });
+
+		const rolledBackBySqlite = await settle(
+			dataSource.manager.transaction(async (manager) => {
+				await manager.insert(QueueRow, { id: 'f1', tag: 'f' });
+				await manager.query(`INSERT OR ROLLBACK INTO "queue_row" ("id", "tag") VALUES ('x', 'again')`);
+			})
+		);
+		expect(rolledBackBySqlite.error?.message).toMatch(/UNIQUE constraint failed/);
+		store.log.clear();
+
+		await dataSource.transaction((manager) => manager.insert(QueueRow, { id: 'n1', tag: 'n' }));
+		const failing = await settle(
+			dataSource.transaction(async (manager) => {
+				await manager.insert(QueueRow, { id: 'n2', tag: 'n' });
+				throw new Error('n2 fails');
+			})
+		);
+
+		expect(failing.error?.message).toBe('n2 fails');
+		expect(
+			(dataSource.driver as unknown as { databaseConnection: { inTransaction: boolean } }).databaseConnection
+				.inTransaction
+		).toBe(false);
+		expect(store.file.committed()).toEqual(['n1', 'x']);
+		expect(store.log.statements).toEqual([
+			'BEGIN TRANSACTION',
+			'INSERT n1',
+			'COMMIT',
+			'BEGIN TRANSACTION',
+			'INSERT n2',
+			'ROLLBACK'
+		]);
+	});
+
+	it('installs on a data source that is already initialized, and a second install changes nothing', async () => {
+		const file = new DatabaseFile();
+		const log = new StatementLog();
+		const dataSource = new DataSource(typeOrmOptions(file, log));
+		store = { dataSource, file, log };
+
+		await dataSource.initialize();
+		// The shared runner exists already: initialize created it for the schema.
+		serializeEmbeddedTransactions(dataSource);
+		const transaction = dataSource.manager.transaction;
+		serializeEmbeddedTransactions(dataSource);
+		log.clear();
+
+		expect(hasEmbeddedTransactionQueue(dataSource)).toBe(true);
+		expect(dataSource.manager.transaction).toBe(transaction);
+		await expect(Promise.all([writeTwo(dataSource, 'a'), writeTwo(dataSource, 'b')])).resolves.toEqual(['a', 'b']);
+		expect(log.statements).toEqual([...committedBlock('a'), ...committedBlock('b')]);
+	});
+});
+
+describe('serializeEmbeddedTransactions — the dialects it leaves alone', () => {
+	it.each([
+		['postgres', { type: 'postgres', host: 'localhost' }],
+		['mysql', { type: 'mysql', host: 'localhost' }]
+	] as Array<[string, DataSourceOptions]>)(
+		'returns a %s data source exactly as TypeORM built it',
+		(_label, options) => {
+			// Their drivers give each runner its own pooled connection, and the database isolates the
+			// transactions; nothing here may wrap, replace or even look at a runner of theirs.
+			const dataSource = new DataSource(options);
+			const own = (target: object, key: string) => Object.prototype.hasOwnProperty.call(target, key);
+
+			expect(serializeEmbeddedTransactions(dataSource)).toBe(dataSource);
+			expect(hasEmbeddedTransactionQueue(dataSource)).toBe(false);
+			expect(own(dataSource.manager, 'transaction')).toBe(false);
+			expect(own(dataSource, 'createEntityManager')).toBe(false);
+			expect(own(dataSource.driver, 'createQueryRunner')).toBe(false);
+		}
+	);
+});
+
+describe('the DatabaseModule data source', () => {
+	/**
+	 * The factory the module's TypeORM connection is built with, read from the module's own metadata
+	 * rather than restated here, so a module that stopped using it would fail this.
+	 */
+	function dataSourceProviderFactory(): (options: DataSourceOptions) => Promise<DataSource> {
+		type Provider = { provide?: unknown; useFactory?: (options: DataSourceOptions) => Promise<DataSource> };
+		type DynamicModule = { module?: unknown; imports?: Array<{ providers?: Provider[] }> };
+
+		const imports: DynamicModule[] = Reflect.getMetadata('imports', DatabaseModule);
+		const typeOrm = imports.find((entry) => entry?.module === TypeOrmModule);
+		const provider = typeOrm?.imports?.[0]?.providers?.find((candidate) => candidate?.provide === DataSource);
+
+		return provider.useFactory;
+	}
+
+	it('queues the transactions of the SQLite data source it provides', async () => {
+		const file = new DatabaseFile();
+		const log = new StatementLog();
+		const dataSource = await dataSourceProviderFactory()(typeOrmOptions(file, log));
+		const store = { dataSource, file, log };
+
+		try {
+			log.clear();
+
+			expect(dataSource.isInitialized).toBe(true);
+			expect(hasEmbeddedTransactionQueue(dataSource)).toBe(true);
+			await expect(Promise.all([writeTwo(dataSource, 'a'), writeTwo(dataSource, 'b')])).resolves.toEqual([
+				'a',
+				'b'
+			]);
+			expect(file.committed()).toEqual(['a1', 'a2', 'b1', 'b2']);
+		} finally {
+			await closeTypeOrm(store);
+		}
+	});
+
+	it('leaves the data source it provides for PostgreSQL untouched', async () => {
+		const dataSource = await dataSourceProviderFactory()({
+			type: 'postgres',
+			host: 'localhost',
+			manualInitialization: true
+		} as DataSourceOptions);
+
+		expect(dataSource.isInitialized).toBe(false);
+		expect(hasEmbeddedTransactionQueue(dataSource)).toBe(false);
+		expect(Object.prototype.hasOwnProperty.call(dataSource.manager, 'transaction')).toBe(false);
+	});
+});
+
+/**
+ * The same three properties under MikroORM, which needs no queue of its own: knex gives SQLite a pool of
+ * exactly one connection, so a second transaction waits for the pool rather than sharing the first
+ * one's. These hold the platform to that — a change that let MikroORM share the connection would fail
+ * here just as TypeORM did.
+ */
+describe('MikroORM on better-sqlite — transactions are already one at a time', () => {
+	let orm: MikroORM | undefined;
+	let file: DatabaseFile | undefined;
+	const statements: string[] = [];
+
+	beforeEach(async () => {
+		file = new DatabaseFile();
+		orm = await MikroORM.init({
+			driver: BetterSqliteDriver,
+			dbName: file.path,
+			entities: [MikroOrmQueueRow],
+			allowGlobalContext: true,
+			discovery: { warnWhenNoEntities: false },
+			debug: ['query'],
+			logger: (message: string) => {
+				// eslint-disable-next-line no-control-regex
+				const statement = message.replace(/\x1b\[[0-9;]*m/g, '').replace(/^\[query\] /, '');
+
+				if (/^(begin|commit|rollback|savepoint|release)/.test(statement)) {
+					statements.push(statement.replace(/ \[took .*$/, ''));
+				}
+			}
+		});
+		await orm.getSchemaGenerator().createSchema();
+		statements.length = 0;
+	});
+
+	afterEach(async () => {
+		await orm?.close(true);
+		file?.remove();
+		orm = undefined;
+		file = undefined;
+	});
+
+	/** The value a `beforeEach` opened, which every test below runs after. */
+	function opened<T>(value: T | undefined): T {
+		if (value === undefined) {
+			throw new Error('The MikroORM store was not opened.');
+		}
+
+		return value;
+	}
+
+	/** The MikroORM form of {@link writeTwo}. */
+	const writeTwoWithMikroOrm = (tag: string, fail = false): Promise<string> =>
+		opened(orm)
+			.em.fork()
+			.transactional(async (em) => {
+				await em.insert(MikroQueueRow, { id: `${tag}1`, tag });
+				await tick();
+				await em.insert(MikroQueueRow, { id: `${tag}2`, tag });
+				await tick();
+
+				if (fail) {
+					throw new Error(`${tag} fails`);
+				}
+
+				return tag;
+			});
+
+	it('lets two transactions opened in the same tick each commit their own rows', async () => {
+		await expect(Promise.all([writeTwoWithMikroOrm('a'), writeTwoWithMikroOrm('b')])).resolves.toEqual(['a', 'b']);
+		expect(opened(file).committed()).toEqual(['a1', 'a2', 'b1', 'b2']);
+		expect(statements).toEqual(['begin', 'commit', 'begin', 'commit']);
+	});
+
+	it('rolls back only the failing one of two transactions opened in the same tick', async () => {
+		const [first, second] = await Promise.all([
+			settle(writeTwoWithMikroOrm('a', true)),
+			settle(writeTwoWithMikroOrm('b'))
+		]);
+
+		expect(first.error?.message).toBe('a fails');
+		expect(second.value).toBe('b');
+		expect(opened(file).committed()).toEqual(['b1', 'b2']);
+	});
+
+	it('keeps a transaction opened inside another a savepoint of it', async () => {
+		const outer = await opened(orm)
+			.em.fork()
+			.transactional(async (em) => {
+				await em.insert(MikroQueueRow, { id: 'o1', tag: 'o' });
+				const failedInner = await settle(
+					em.transactional(async (inner) => {
+						await inner.insert(MikroQueueRow, { id: 'i1', tag: 'i' });
+						throw new Error('inner fails');
+					})
+				);
+				await em.transactional((inner) => inner.insert(MikroQueueRow, { id: 'i2', tag: 'i' }));
+
+				return failedInner.error?.message;
+			});
+
+		expect(outer).toBe('inner fails');
+		expect(opened(file).committed()).toEqual(['i2', 'o1']);
+		expect(statements.filter((statement) => statement.startsWith('savepoint'))).toHaveLength(2);
+	});
+});

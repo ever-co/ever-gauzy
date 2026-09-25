@@ -7,6 +7,7 @@ import { MySqlDriver } from '@mikro-orm/mysql';
 import { KnexModule } from 'nest-knexjs';
 import { ConfigModule, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
+import { createPlatformDataSource } from './embedded-transaction-queue';
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
@@ -57,6 +58,10 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || BetterSqliteDri
 				const dbConnectionOptions = configService.getConfigValue('dbConnectionOptions');
 				return dbConnectionOptions;
 			},
+			// On SQLite every transaction shares the data source's one query runner, so this factory
+			// queues them one at a time; any other dialect gets the data source TypeORM builds, untouched.
+			// See embedded-transaction-queue.ts.
+			dataSourceFactory: (options) => createPlatformDataSource(options),
 			imports: [ConfigModule],
 			inject: [ConfigService]
 		}),
