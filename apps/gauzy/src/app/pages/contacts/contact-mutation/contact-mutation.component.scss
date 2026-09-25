@@ -468,9 +468,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+  // No rule above: the step panel's own edge already ends the form.
   margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid nb-theme(divider-color);
 
   .wizard-quit {
     margin-inline-end: auto;
