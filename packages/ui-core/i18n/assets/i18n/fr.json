@@ -2708,7 +2708,8 @@
 		"ADDRESS": "Adresse",
 		"ADDRESS_2": "Adresse 2",
 		"MEMBERS": "Membres",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Cliquez ou déposez une image pour la téléverser"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Langues",

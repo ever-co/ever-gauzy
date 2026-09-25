@@ -2713,7 +2713,8 @@
 		"ADDRESS": "Endereço",
 		"ADDRESS_2": "Endereço 2",
 		"MEMBERS": "Membros",
-		"BUDGET": "Orçamento"
+		"BUDGET": "Orçamento",
+		"PHOTO_HINT": "Clique ou solte uma imagem para enviar"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas",

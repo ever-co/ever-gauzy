@@ -2715,7 +2715,8 @@
 		"ADDRESS": "Dirección",
 		"ADDRESS_2": "Dirección 2",
 		"MEMBERS": "Miembros",
-		"BUDGET": "Presupuesto"
+		"BUDGET": "Presupuesto",
+		"PHOTO_HINT": "Haz clic o suelta una imagen para subirla"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas.",

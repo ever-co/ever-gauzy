@@ -2713,7 +2713,8 @@
 		"ADDRESS": "地址",
 		"ADDRESS_2": "地址2",
 		"MEMBERS": "成员",
-		"BUDGET": "预算"
+		"BUDGET": "预算",
+		"PHOTO_HINT": "点击或拖放图片以上传"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",

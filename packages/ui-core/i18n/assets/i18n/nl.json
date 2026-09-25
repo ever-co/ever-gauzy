@@ -2713,7 +2713,8 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres 2",
 		"MEMBERS": "Leden",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",

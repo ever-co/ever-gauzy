@@ -2698,7 +2698,8 @@
 		"ADDRESS": "عنوان",
 		"ADDRESS_2": "العنوان 2",
 		"MEMBERS": "أعضاء",
-		"BUDGET": "الميزانية"
+		"BUDGET": "الميزانية",
+		"PHOTO_HINT": "انقر أو أفلت صورة لرفعها"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "اللغات",

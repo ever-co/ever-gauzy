@@ -2738,7 +2738,8 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
