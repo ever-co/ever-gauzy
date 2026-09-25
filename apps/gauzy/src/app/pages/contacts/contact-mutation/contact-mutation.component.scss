@@ -742,11 +742,12 @@
    * anything `::ng-deep` reaches from here) or the global override, which pins
    * the connector with `!important` itself.
    */
+  // The inline inset keeps the first and last steps off the card edge.
   ::ng-deep nb-stepper > .header {
     align-items: center !important;
     gap: 0;
     margin-bottom: 0 !important;
-    padding: 0 0 0.875rem;
+    padding: 0 1.5rem 0.875rem;
     border-bottom: 1px solid nb-theme(divider-color);
   }
 
@@ -830,7 +831,8 @@
     height: 1px !important;
     margin: 0 0.75rem !important;
     border-radius: 0;
-    background-color: nb-theme(border-basic-color-4);
+    // -5, not -4: on the light themes -4 all but vanished against the page.
+    background-color: nb-theme(border-basic-color-5);
   }
 
   // `!important`: the grey reset above includes `.step.completed + .connector`,
