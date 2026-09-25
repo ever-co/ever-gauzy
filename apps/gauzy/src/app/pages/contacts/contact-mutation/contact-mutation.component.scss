@@ -167,11 +167,150 @@
  */
 .address-layout {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem 2rem;
+}
 
-  .name-container {
-    display: flex;
+.address-fields {
+  flex: 1 1 26rem;
+  min-width: 0;
+  container-type: inline-size;
+
+  ::ng-deep ga-location-form > .fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    align-items: start;
+
+    > .row {
+      display: contents;
+    }
+
+    > .row > [class*='col'] {
+      flex: none;
+      width: auto;
+      max-width: none;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    // Form labels only. `nb-checkbox` renders its own `label.label` around the
+    // box, and a blanket `.label` rule collapsed that box to a 2px sliver.
+    .form-group > .label {
+      display: inline-block;
+      margin-bottom: 0.375rem;
+    }
+
+    // The coordinates toggle. Its translation is all caps ("COORDINATES"), which
+    // shouted over every sentence-case label around it; shown in sentence case.
+    nb-checkbox {
+      .label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .custom-checkbox {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 1.125rem;
+        height: 1.125rem;
+        border-radius: 0.25rem;
+      }
+
+      .text {
+        display: inline-block;
+        padding: 0;
+        font-size: nb-theme(text-paragraph-font-size);
+        font-weight: 500;
+        line-height: 1.25rem;
+        letter-spacing: normal;
+        text-transform: lowercase;
+        color: nb-theme(text-basic-color);
+
+        &::first-letter {
+          text-transform: uppercase;
+        }
+      }
+    }
+
+    // Full-width rows: the search box and the coordinates toggle.
+    > .row > [class*='col']:has(#findInput),
+    > .row > [class*='col']:has(nb-checkbox) {
+      grid-column: 1 / -1;
+    }
+
+    // Pair the two address lines, and let the postcode follow them.
+    > .row > [class*='col']:has(#addressInput) {
+      order: 1;
+    }
+
+    > .row > [class*='col']:has(#address2Input) {
+      order: 2;
+    }
+
+    > .row > [class*='col']:has(#postcodeInput) {
+      order: 3;
+    }
+
+    > .row > [class*='col']:has(nb-checkbox) {
+      order: 4;
+    }
+
+    > .row[formGroupName] > [class*='col'] {
+      order: 5;
+    }
+  }
+}
+
+@container (max-width: 26rem) {
+  .address-fields ::ng-deep ga-location-form > .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The map drops by one label line so its top edge meets the first input, and
+// has a fixed height instead of the shared `calc(100vh - 30rem)`, which made
+// it a sliver on short windows and a wall on tall ones.
+.address-map {
+  flex: 1 1 24rem;
+  min-width: 0;
+  padding-top: calc(0.8125rem + 0.375rem);
+
+  ::ng-deep ga-leaflet-map > .row {
+    margin: 0 !important;
+
+    > [class*='col'] {
+      padding: 0;
+    }
+  }
+
+  ::ng-deep .leaflet-container {
+    height: 21rem !important;
+    border: 1px solid nb-theme(border-basic-color-4);
+    border-radius: nb-theme(border-radius);
+  }
+}
+
+/*
+ * Step 4 — Members. The picker sits on the same grid as every other field; the
+ * people it adds are shown as a wrap of cards under it instead of a bare
+ * column of avatars floating in the right half of the step.
+ */
+.members {
+  margin-top: 1.5rem;
+
+  .label {
+    display: inline-flex;
     align-items: center;
     margin-bottom: 10px;
   }

@@ -227,24 +227,22 @@
 					[formGroup]="locationForm"
 					(ngSubmit)="locationForm.markAsDirty()"
 				>
-					<div class="fields">
-						<div class="row">
-							<div class="col-5">
-								<ga-location-form
-									#locationFormDirective
-									[form]="locationForm"
-									[showAutocompleteSearch]="true"
-									[showCoordinateInput]="true"
-									(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
-									(mapGeometryEmitter)="onGeometrySend($event)"
-								>
-								</ga-location-form>
-							</div>
-							<div class="col-7">
-								@if (stepper.selectedIndex === 1) {
-								<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"> </ga-leaflet-map>
-								}
-							</div>
+					<div class="address-layout step-panel">
+						<div class="address-fields">
+							<ga-location-form
+								#locationFormDirective
+								[form]="locationForm"
+								[showAutocompleteSearch]="true"
+								[showCoordinateInput]="true"
+								(mapCoordinatesEmitter)="onCoordinatesChanges($event)"
+								(mapGeometryEmitter)="onGeometrySend($event)"
+							>
+							</ga-location-form>
+						</div>
+						<div class="address-map">
+							@if (stepper.selectedIndex === 1) {
+							<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"> </ga-leaflet-map>
+							}
 						</div>
 					</div>
 					<div class="wizard-actions">
