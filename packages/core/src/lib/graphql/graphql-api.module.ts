@@ -1,6 +1,7 @@
 import { DynamicModule, Module, Type } from '@nestjs/common';
 import { getConfig } from '@gauzy/config';
 import { getDynamicPluginsModules, getResolversFromPlugins } from '@gauzy/plugin';
+import { CORE_SCALARS } from './scalars';
 import { RoleEntityResolver } from './../role/role-entity.resolver';
 import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
@@ -251,6 +252,13 @@ export class GraphqlApiModule {
 	/**
 	 * Builds the resolver module for the plugins this installation has configured.
 	 *
+	 * 🛑 The kernel's scalars are providers here, and nowhere else. `scalar Decimal`, `scalar DateTime`
+	 * and `scalar JSON` were declared in `schema/common.type.gql` with no implementation anywhere, which
+	 * graphql-js does not refuse: it gives each a pass-through, so money was served as a JSON float and
+	 * any literal kind was accepted where a decimal or an instant was declared. The driver finds a
+	 * `@Scalar()` class by scanning the modules its `include` names, and this module is the first of
+	 * them. They are not exported: nothing injects a scalar.
+	 *
 	 * @returns The dynamic module to import.
 	 */
 	static withPlugins(): DynamicModule {
@@ -260,7 +268,7 @@ export class GraphqlApiModule {
 		return {
 			module: GraphqlApiModule,
 			imports: [...CORE_RESOLVER_MODULES, ...getDynamicPluginsModules()],
-			providers: resolvers,
+			providers: [...resolvers, ...CORE_SCALARS],
 			exports: resolvers
 		};
 	}

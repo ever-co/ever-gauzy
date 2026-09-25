@@ -6,21 +6,35 @@
 # type cannot both survive `buildSchema`, which is why the composition pass treats a redeclaration as
 # a boot failure with a readable message rather than leaving it to the schema builder.
 #
-# Scalars. `DateTime` is RFC 3339 with an offset, always UTC, which is the format the REST surface
-# emits. `Decimal` is an exact decimal serialised as a string with six fractional digits, matching
-# the wire format of a numeric(20,6) column: a money value read here and the same value read over
-# REST are string-identical, and money is never a `Float` because a binary fraction cannot hold a
-# cent exactly. `JSON` carries a document column through unchanged.
+# Scalars, implemented in `../scalars/`, whose classes carry these descriptions word for word.
+# `DateTime` is RFC 3339 with an offset, always UTC, which is the format the REST surface emits.
+# `Decimal` is an exact decimal serialised as a string with six fractional digits — up to twelve when
+# the value has more — the wire format of a numeric(20,6) column: string-identical to a REST read of a
+# column served as its text, numerically equal to one served as a number, the same text on every
+# dialect, and never a `Float` because a binary fraction cannot hold a cent exactly. `JSON` carries a
+# document column through unchanged.
 #
 # Entity shape. Every object type carries `id: ID!`; a versioned aggregate also carries
 # `version: Int!` and `updatedAt: DateTime!`, which is what a client cache keys and invalidates on.
 # That is a convention over fields rather than a shared interface, deliberately: an interface would
 # have to be implemented by every type in every domain, and `Node` is a reserved name here.
 
+"""
+An instant, served as RFC 3339 in UTC with milliseconds: "2026-09-21T10:15:30.000Z", the form the REST
+surface writes for the same value. Send an RFC 3339 date-time, or a date.
+"""
 scalar DateTime
 
+"""
+An exact decimal, served as a string in plain notation with six fractional digits, or up to twelve
+when the value has more: "20.010000". Never read it as a Float. Send it as a string; a JSON number is
+accepted when it has at most fourteen integer and twelve fractional digits.
+"""
 scalar Decimal
 
+"""
+An arbitrary JSON document, carried through unchanged.
+"""
 scalar JSON
 
 type Query
