@@ -383,17 +383,31 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 
 	let dbType: any;
 	switch (dbORM) {
-		case MultiORMEnum.MikroORM:
-			if (dbConnection.driver instanceof BetterSqliteDriver) {
+		case MultiORMEnum.MikroORM: {
+			// **The configured driver is the class, not an instance.** MikroORM's options state
+			// `driver: BetterSqliteDriver`, so an `instanceof` test never matched and every caller — the seeder's
+			// clean step, every raw-SQL dialect branch that asks this — was told Postgres on SQLite and MySQL:
+			// the seeder then sent `TRUNCATE … RESTART IDENTITY CASCADE` to SQLite. The driver is recognised as
+			// the class or an instance, and options shaped like TypeORM's (which callers pass, since
+			// `dbConnectionOptions` is the TypeORM configuration) are read by the dialect they name.
+			const driver = (dbConnection as { driver?: unknown })?.driver;
+			const isDriver = (candidate: Function): boolean =>
+				!!driver &&
+				(driver === candidate ||
+					driver instanceof candidate ||
+					(typeof driver === 'function' && driver.prototype instanceof candidate));
+
+			if (isDriver(BetterSqliteDriver)) {
 				dbType = DatabaseTypeEnum.betterSqlite3;
-			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
+			} else if (isDriver(PostgreSqlDriver)) {
 				dbType = DatabaseTypeEnum.postgres;
-			} else if (dbConnection.driver instanceof MySqlDriver) {
+			} else if (isDriver(MySqlDriver)) {
 				dbType = DatabaseTypeEnum.mysql;
 			} else {
-				dbType = DatabaseTypeEnum.postgres;
+				dbType = (dbConnection as TypeOrmModuleOptions)?.type ?? DatabaseTypeEnum.postgres;
 			}
 			break;
+		}
 
 		default:
 			dbType = (dbConnection as TypeOrmModuleOptions).type;
