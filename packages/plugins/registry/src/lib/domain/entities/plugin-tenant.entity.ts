@@ -283,7 +283,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_roles',
-		joinColumn: 'pluginTenantId',
+		// The column the marketplace migration created (TypeORM's default for the `plugin_tenants` table);
+		// `pluginTenantId` does not exist, so every MikroORM read or write of this list failed.
+		joinColumn: 'pluginTenantsId',
 		inverseJoinColumn: 'roleId'
 	})
 	@JoinTable({ name: 'plugin_tenant_allowed_roles' })
@@ -298,7 +300,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_users',
-		joinColumn: 'pluginTenantId',
+		// The column the marketplace migration created (TypeORM's default for the `plugin_tenants` table);
+		// `pluginTenantId` does not exist, so every MikroORM read or write of this list failed.
+		joinColumn: 'pluginTenantsId',
 		inverseJoinColumn: 'userId'
 	})
 	@JoinTable({ name: 'plugin_tenant_allowed_users' })
@@ -313,7 +317,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_denied_users',
-		joinColumn: 'pluginTenantId',
+		// The column the marketplace migration created (TypeORM's default for the `plugin_tenants` table);
+		// `pluginTenantId` does not exist, so every MikroORM read or write of this list failed.
+		joinColumn: 'pluginTenantsId',
 		inverseJoinColumn: 'userId'
 	})
 	@JoinTable({ name: 'plugin_tenant_denied_users' })
