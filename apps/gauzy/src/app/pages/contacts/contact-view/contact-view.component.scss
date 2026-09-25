@@ -280,6 +280,73 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 	}
 }
 
+/*
+ * The sidebar's fields (About, Budget) as a details list: a tinted icon beside
+ * each field, a sentence-case label over its value, and a hairline between
+ * rows. They used to be a column of 11px uppercase labels with bright links
+ * under them and nothing between one field and the next, which read as one
+ * undivided block. The Address tab's grid of fields keeps the compact
+ * uppercase style; nothing below reaches it.
+ */
+.contact-aside {
+	.fields {
+		row-gap: 0;
+	}
+
+	.field {
+		position: relative;
+		// Room for the 2rem icon plus a 0.75rem gap.
+		padding: 0.75rem 0 0.75rem 2.75rem;
+
+		&:first-child {
+			padding-top: 0.25rem;
+		}
+
+		&:last-child {
+			padding-bottom: 0.25rem;
+		}
+
+		& + .field {
+			border-top: $panel-border;
+		}
+	}
+
+	// Centred on the row whatever its height (a wrapped email, a row of tags),
+	// so no per-row offset has to be kept in step with the text.
+	.field-icon {
+		position: absolute;
+		left: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 2rem;
+		height: 2rem;
+		padding: 0.4375rem;
+		border-radius: var(--gauzy-radius-sm, 0.375rem);
+		background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+		color: var(--gauzy-text-color-2, var(--text-hint-color));
+		font-size: 1.125rem;
+	}
+
+	.field-label {
+		margin-bottom: 0.125rem;
+		font-size: 0.75rem;
+		font-weight: 500;
+		line-height: 1rem;
+		letter-spacing: normal;
+		text-transform: none;
+	}
+
+	.field-value {
+		font-weight: 500;
+
+		// The theme's primary rather than the shared link blue, which sat loud
+		// against every theme's palette.
+		::ng-deep a {
+			color: var(--color-primary-default);
+		}
+	}
+}
+
 .field-empty {
 	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	// A dash is a placeholder, not a value: keep it out of the reading order.
