@@ -84,7 +84,7 @@ Four things belong to other domains and are injected under tokens rather than im
 
 | Token | Capability | Without it |
 |---|---|---|
-| `RETURNS_ORDER_FULFILLMENT` | The fulfilled quantities of an order | A return cannot be validated and is refused |
+| `RETURNS_ORDER_FULFILLMENT` | The fulfilled quantities of an order, and the two order-line return counters a return moves: `returnRequestedQuantity` (raised by a return's lines, moved by an edit, released by a rejection or cancellation) and `returnReceivedQuantity` (every unit a receipt brought, sound or damaged) | A return cannot be validated, received or withdrawn, and is refused |
 | `RETURNS_STOCK_LEDGER` | The stock ledger the received units are written to | Goods can be received, but no movement is written |
 | `RETURNS_REFUND_GATEWAY` | The refund that sends money back | A refund cannot be issued |
 | `RETURNS_SHIPMENT_GATEWAY` | The return leg's carrier and label | No return leg can be created |
@@ -96,7 +96,10 @@ a refund itself.
 
 Declared in `returns.permissions.ts` (`RETURNS_*`, `CLAIMS_*`, `EXCHANGES_*`) and
 `returns.features.ts` (`FEATURE_RETURNS`, off by default: post-purchase flows change financial and
-stock behaviour and are enabled once the tenant's policy exists).
+stock behaviour and are enabled once the tenant's policy exists). The flag gates both surfaces alike:
+every controller declares it, and every resolver class declares it beside the platform's
+`FEATURE_GRAPHQL`, so a tenant that switched returns off is refused a mutation exactly as it is refused
+the route.
 
 ## Migrations
 

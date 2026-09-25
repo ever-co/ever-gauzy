@@ -15,6 +15,7 @@ import {
 } from '@gauzy/core';
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
+import { ReturnsFeatures } from '../../returns.features';
 import { IOrderExchangeLine } from '../../returns.types';
 import { ReturnsPermissions } from '../../returns.permissions';
 import { OrderExchangeLine } from '../../order-exchange-line/order-exchange-line.entity';
@@ -43,10 +44,18 @@ import { OrderExchangeLineService } from '../../order-exchange-line/order-exchan
  * asked for it. The platform gate is `FEATURE_GRAPHQL`, imported from the catalogue rather than
  * restated: a literal that drifted would name a code no catalogue row carries, which the guard resolves
  * as disabled and which would refuse every field here for every caller with nothing red anywhere.
+ *
+ * **The plugin's own gate is stated beside it.** The class also declares `ReturnsFeatures.RETURNS`, the
+ * flag every controller of this plugin declares, so a tenant that switched returns off is refused here
+ * exactly as `FeatureFlagGuard` refuses its REST routes: before it, a refund, a receipt or a deletion
+ * that REST answered with a 404 still ran over GraphQL. The two `@FeatureFlag` statements accumulate on
+ * the class, and the guard requires every flag the class declares when a field declares none — which no
+ * field here does, because a field-level flag would replace both class-level ones.
  */
 @Resolver('OrderExchangeLine')
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
+@FeatureFlag(ReturnsFeatures.RETURNS)
 @Permissions(ReturnsPermissions.EXCHANGES_VIEW)
 export class OrderExchangeLineResolver {
 	constructor(private readonly orderExchangeLineService: OrderExchangeLineService) {}
