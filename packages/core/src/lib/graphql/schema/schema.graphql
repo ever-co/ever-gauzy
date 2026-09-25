@@ -4855,9 +4855,9 @@ type Mutation {
   softDeleteAddress(id: ID!): Address!
 
   """
-  Puts a withdrawn address back, clearing the marker the withdrawal set. It states the class-level view
-  grant because the inherited `PUT /:id/recover` route it mirrors declares no permission of its own, and
-  the guard resolves a route's permission over its handler and then its controller.
+  Puts a withdrawn address back, clearing the marker the withdrawal set. Restoring undoes a removal, so
+  it requires the edit grant the two removals require, as the `PUT /:id/recover` route it mirrors does:
+  a role that may only read the address book cannot bring back an address an editor withdrew.
   """
   recoverAddress(id: ID!): Address!
 
@@ -5556,10 +5556,10 @@ type Mutation {
 
   """
   Puts a withdrawn group back, clearing the marker the withdrawal set, under the route the CRUD base
-  maps. It states the class-level view grant because the inherited `PUT /:id/recover` route it mirrors
-  declares no permission of its own, and the guard resolves a route's permission over its handler and
-  then its controller. A recovery is not announced on `contactGroupChanged`, because the route it
-  mirrors announces nothing and this field adds no second behaviour of its own.
+  maps. Restoring undoes a removal, so it requires the delete grant the two removals require, as the
+  `PUT /:id/recover` route it mirrors does: a role that may only read the groups cannot bring back one
+  that was removed. A recovery is not announced on `contactGroupChanged`, because the route it mirrors
+  announces nothing and this field adds no second behaviour of its own.
   """
   recoverContactGroup(id: ID!): ContactGroup!
 
@@ -8083,15 +8083,15 @@ type Mutation {
   createProductCategory(input: CreateProductCategoryInput!): ProductCategory!
 
   """
-  Replaces a category. A member the caller leaves out is written as the column's default rather than
-  left as it is, because the delivered update removes the row and persists the stated body under the
-  verified path identifier — see `UpdateProductCategoryInput`.
+  Edits a category in place. A member the caller leaves out is left as it is, and the categories
+  below it stay below it — see `UpdateProductCategoryInput`.
   """
   updateProductCategory(input: UpdateProductCategoryInput!): ProductCategory!
 
   """
-  Removes a category outright, together with the translation rows that belong to it. A category a
-  product still points at is the store's own constraint to refuse; this field does not pre-empt it.
+  Removes a category outright, together with the translation rows that belong to it. Its children
+  become roots rather than being removed with it, on every database; a category a product still
+  points at is the store's own constraint to answer, and this field does not pre-empt it.
   """
   deleteProductCategory(id: ID!): Boolean!
 
@@ -11103,7 +11103,8 @@ type Mutation {
   """
   Receives goods against a purchase order, writing the stock movements they produce. The order is
   the one the caller is already looking at, so the field carries it as its own argument and the
-  delivery is the input.
+  delivery is the input. The input's `idempotencyKey` is required, as it is on
+  `createGoodsReceipt`: both book a delivery, and one booked twice counts the stock twice.
   """
   receivePurchaseOrder(id: ID!, input: ReceivePurchaseOrderInput!): GoodsReceiptPayload!
 
@@ -11275,10 +11276,10 @@ type Mutation {
 
   """
   Corrects the recorded fields of a slot, without giving it back and without taking it away. The
-  input is the route's own body type member for member, including `deviceId` and `status`, which
-  that DTO's docstrings call closed while its metadata declares them and the inherited update writes
-  them: the two surfaces accept the same write, and the divergence is recorded on the field rather
-  than repaired on one side only.
+  input is the route's own body type member for member. A slot's state, its right, its key, its device
+  and its revocation reason are not in it and are refused by the service: a revoked slot set back to
+  `ACTIVE` by an edit would sit past the activation limit, because the limit is only counted when a slot
+  is taken.
   """
   updateEntitlementActivation(id: ID!, input: UpdateEntitlementActivationInput!): EntitlementActivationPayload!
 
@@ -11493,7 +11494,7 @@ type Mutation {
   createSellerPayout(sellerId: ID!, currency: String!, transactionIds: [String!], note: String, idempotencyKey: String): SellerPayout!
 
   """
-  Amends what a payout states about itself: its note and its provider references.
+  Amends what a payout states about itself: its note, its provider references, its period and schedule and its metadata. Its status and its figures are not in the input and are refused by the service: they move through the approve, pay, cancel and retry fields.
   
   Mirrors `PUT /seller-payouts/:id`, which takes `SELLER_PAYOUTS_CREATE` and not the approve grant beside it — preparing a payout is creating one, while approving it is what moves money. The route threads no seller scope into this write, so neither does the field: a divergence in either direction would be one protocol serving a caller the other refused.
   """
@@ -11587,7 +11588,7 @@ type Mutation {
   createSellerSettlement(sellerId: ID!, providerKey: String!, currency: String!, grossAmount: String!, commissionAmount: String, feeAmount: String, idempotencyKey: String): SellerSettlement!
 
   """
-  Amends the fields a settlement may still move: its status and what reconciliation found.
+  Amends what a settlement states about itself: its period, its report and external references, the holder it pays, its note and its metadata. Its status and its figures are not in the input and are refused by the service: they move through the reconcile, close and dispute fields.
   
   Mirrors `PUT /seller-settlements/:id`, which takes `SELLER_SETTLEMENTS_EDIT`. The route threads no seller scope into this write, so neither does the field.
   """
@@ -23928,10 +23929,20 @@ input UpdateGoalInput {
   organizationId: ID
 }
 
+"""
+An instant, served as RFC 3339 in UTC with milliseconds: "2026-09-21T10:15:30.000Z", the form the REST
+surface writes for the same value. Send an RFC 3339 date-time, or a date.
+"""
 scalar DateTime
 
+"""
+An exact decimal, served as a string in plain notation with six fractional digits, or up to twelve
+when the value has more: "20.010000". Never read it as a Float. Send it as a string; a JSON number is
+accepted when it has at most fourteen integer and twelve fractional digits.
+"""
 scalar Decimal
 
+"""An arbitrary JSON document, carried through unchanged."""
 scalar JSON
 
 """One event of the platform catalogue, as a subscriber receives it."""
@@ -34186,12 +34197,13 @@ input CreateProductCategoryInput {
 """
 What a caller states when it edits a category that exists.
 
-**A member that is absent is written as the column's default, not left as it is.** The delivered
-update replaces the row: the service reads the category to prove it is the caller's, removes it, and
-persists the stated body under the verified path identifier. `translations` is the sharpest case of
-that — the translation rows are removed with their category and the delivered service does not carry
-them over, so a body that omits them withdraws every language the category had. Stating this here is
-what keeps a client from reading "absent" as "unchanged".
+**A member that is absent is left as it is.** The service reads the category to prove it is the
+caller's and then updates that row where it stands — it is never removed and re-inserted, which is
+what keeps the categories below it attached to it. A member stated as `null` clears it: `parentId:
+null` makes the category a root. `translations`, when stated, replaces the category's languages as a
+set, so an empty list removes them all; when omitted, they are kept. `organizationId` identifies the
+caller's organization and does not move the category — a category stays in the organization whose
+tree it belongs to.
 """
 input UpdateProductCategoryInput {
   id: ID!
@@ -53800,13 +53812,11 @@ input RecordGoodsReceiptLineInput {
 """
 The delivery a caller records against the order the field already names.
 
-It is the body of `POST /purchase-orders/:id/receipts`, and it deliberately states neither of the two
-members the standalone delivery input carries: the order is the field's own argument on this path, and
-the retry key is not demanded here — the order path books a delivery the caller is already looking at
-rather than one raised on its own, so a key the route never asks for would refuse callers the route
-serves. The location is absent for the same reason it is absent from the route: a delivery anchored to
-an order inherits that order's receiving location, and an input that accepted a location the service
-never receives would tell a caller it had moved the goods somewhere it had not.
+It is the body of `POST /purchase-orders/:id/receipts` plus the two things that route reads from its
+headers. The order is the field's own argument on this path, as it is the route's path parameter. The
+location is absent for the same reason it is absent from the route: a delivery anchored to an order
+inherits that order's receiving location, and an input that accepted a location the service never
+receives would tell a caller it had moved the goods somewhere it had not.
 """
 input ReceivePurchaseOrderInput {
   receivedAt: DateTime
@@ -53817,6 +53827,20 @@ input ReceivePurchaseOrderInput {
   overReceiptTolerance: Decimal
   note: String
   lines: [GoodsReceiptLineInput!]!
+
+  """
+  The version of the purchase order the caller read, which the route states as `If-Match`. When it is
+  stated and the order has moved on since, the delivery is refused rather than booked against an order
+  another buyer has amended.
+  """
+  version: Int
+
+  """
+  The client's own key for this request, which this operation requires, as `createGoodsReceipt` does
+  and under the same scope. A delivery that is booked twice books the stock twice, so the mutation is
+  refused without one.
+  """
+  idempotencyKey: String
 }
 
 """The outcome of a mutation on a purchase order."""
@@ -54325,20 +54349,15 @@ input ReissueEntitlementKeyInput {
 """
 The recorded fields of an activation, as an edit may state them.
 
-This is the route's own body type (`PartialType(EntitlementActivationDTO)`) member for member,
-including the two the DTO's docstrings call closed — `deviceId` and `status`. §3.1 forbids GraphQL
-being narrower than REST, so the two surfaces accept the same write; the divergence between that
-DTO's docstrings and its metadata is recorded on the field that carries this input.
+This is the route's own body type (`UpdateEntitlementActivationDTO`) member for member: the descriptive
+fields of a slot, and nothing its lifecycle owns. `status`, `entitlementId`, `entitlementKeyId`,
+`deviceId` and `revocationReason` are absent from both, because each is written by the operation that
+takes, releases or revokes a slot, and each is what a rule of that operation is decided over — the
+activation limit, the right's ceiling, the key's release on revocation, the device the seat is counted
+over and the bar on a device withdrawn for abuse. A slot is taken through `activateEntitlement` and
+given back through `deactivateEntitlement`.
 """
 input UpdateEntitlementActivationInput {
-  """The right the slot belongs to."""
-  entitlementId: ID
-
-  """The key the activation went through, when one was used."""
-  entitlementKeyId: ID
-
-  """The stable device or instance identifier the limit is counted over."""
-  deviceId: String
   deviceName: String
   fingerprint: String
 
@@ -54350,14 +54369,8 @@ input UpdateEntitlementActivationInput {
   """
   activatedByCustomerId: ID
 
-  """
-  The activation's state. Written by the release, revoke and expiry paths, not by an edit.
-  """
-  status: EntitlementActivationStatus
-
   """Refreshed by validation calls, at most once per configured interval."""
   lastSeenAt: DateTime
-  revocationReason: String
   ipAddress: String
   userAgent: String
   metadata: JSON
@@ -55113,22 +55126,14 @@ input UpdateSellerOfferingInput {
 }
 
 """
-What a caller supplies to amend a payout.
+What a caller supplies to amend a payout: what the payout states about itself, and nothing its lifecycle owns.
 
-The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it covers, so a caller chooses which rows are paid and never how much. `sellerId` and `currency` are absent because `UpdateSellerPayoutDTO` omits them — both are fixed once the payout exists — and the lifecycle moves through the approve, pay, cancel and retry fields rather than through this input.
+The amounts are absent, and that is the point: a payout's amount is the sum of the transactions it covers, so a caller chooses which rows are paid and never how much. `status` is absent because the lifecycle moves through the approve, pay, cancel and retry fields — each under its own grant — rather than through this input; `feeAmount` because it is what the provider reported when the payout was paid; `transactionIds` because the lines are what the payout was built from; and `payoutMode`, `sellerId` and `currency` because each is fixed once the payout exists. `UpdateSellerPayoutDTO` omits the same members, and the service refuses them whichever way they arrive.
 """
 input UpdateSellerPayoutInput {
-  status: SellerPayoutStatus
-  payoutMode: SellerPayoutMode
-
-  """
-  The ledger rows this payout covers; stated only while the payout is still a draft.
-  """
-  transactionIds: [String!]
   periodStart: DateTime
   periodEnd: DateTime
   scheduledAt: DateTime
-  feeAmount: Decimal
   providerKey: String
   providerReference: String
   note: String
@@ -55162,15 +55167,10 @@ input RunSellerPayoutInput {
 """
 What a caller supplies to amend a settlement.
 
-The provider, the seller and the currency are absent because `UpdateSellerSettlementDTO` omits them: a settlement transcribes what one provider reported about one seller in one currency, and none of the three can change after the fact. `discrepancyAmount` is absent for the reason that DTO gives — it is what the reconciliation computes, and a caller that could set it could silence the one number the report exists to surface.
+The provider, the seller and the currency are absent because `UpdateSellerSettlementDTO` omits them: a settlement transcribes what one provider reported about one seller in one currency, and none of the three can change after the fact. `status` is absent because a settlement is reconciled, closed and disputed through its own fields, each with its own checks. The figures are absent because they are the provider's report as recorded, with the net derived from them rather than stated beside them, and `discrepancyAmount` is what the reconciliation computes — a caller that could set it could silence the one number the report exists to surface. The service refuses the same members whichever way they arrive.
 """
 input UpdateSellerSettlementInput {
   payoutAccountHolderId: ID
-  status: SellerSettlementStatus
-  grossAmount: Decimal
-  commissionAmount: Decimal
-  feeAmount: Decimal
-  netAmount: Decimal
   periodStart: DateTime
   periodEnd: DateTime
   providerReportId: String
