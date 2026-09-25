@@ -71,6 +71,9 @@ export class ShippingOptionResolver {
 	): Promise<IShippingProfileConnection> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.profileService.findAll({
+			// Newest first, closed by the row's identity: an offset cursor is a position, and a position means
+			// nothing in an order the store may rearrange between two pages.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
@@ -117,6 +120,11 @@ export class ShippingOptionResolver {
 	): Promise<IShippingOptionConnection> {
 		const { skip, take } = resolveConnectionWindow(page);
 		const listing = (await this.optionService.findAll({
+			// The option's own display order — `priority`, lowest first, the order `shippingOptionsForContext`
+			// answers in — then the order the options were configured in, closed by the row's identity: options
+			// imported together share a priority and an instant, and ties the store may break differently per
+			// page repeat rows.
+			order: { priority: 'ASC', createdAt: 'ASC', id: 'ASC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

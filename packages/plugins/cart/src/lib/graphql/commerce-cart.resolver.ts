@@ -101,6 +101,11 @@ export class CommerceCartResolver {
 
 		const listing = (await this.commerceCartService.findAll({
 			where,
+			// Newest first, closed by the row's identity. The page is cut with LIMIT/OFFSET and its cursors are
+			// offsets, so an order the store may rearrange between two pages — or none at all, which on Postgres
+			// is heap order, and every write to a versioned cart moves it to the end of the heap — repeats one
+			// cart and never shows another. The primary key is the one column that leaves no tie.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})

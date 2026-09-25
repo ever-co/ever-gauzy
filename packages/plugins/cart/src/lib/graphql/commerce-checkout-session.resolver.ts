@@ -97,6 +97,10 @@ export class CommerceCheckoutSessionResolver {
 
 		const listing = (await this.commerceCheckoutSessionService.findAll({
 			where,
+			// Newest first, closed by the row's identity, as `carts` reads: an offset cursor is a position, and a
+			// position means nothing in an order the store may rearrange between two pages — a step recorded on
+			// a session rewrites its row, which on Postgres moves it to the end of the heap.
+			order: { createdAt: 'DESC', id: 'DESC' },
 			skip,
 			take,
 			...(withDeleted ? { withDeleted: true } : {})
