@@ -34,11 +34,17 @@ import { TypeOrmOrderLineRepository } from '../order-line/repository/type-orm-or
 export type IOrderLineReturnRequestMove = IOrderLineReceiptMove;
 
 /**
- * The two return counters of an order line a post-purchase flow may move, and what a refusal of each
- * is called.
+ * The counters of an order line that are moved rather than set, and what a refusal of each is called.
  *
  * The column is a closed set rather than a parameter a caller names, because it is interpolated into
  * a statement: a counter this class does not list is not one any caller can reach.
+ *
+ * The first two are the post-purchase flows' own. The last two are the order change's: a
+ * `DISMISS_ITEM_RETURN` and a `WRITE_OFF_ITEM` are the only writers of theirs, and an `ITEM_RETURN` moves
+ * the requested counter the returns flow moves too. They are listed here because the change used to move
+ * them as a set — it read the line, added the delta in JavaScript and wrote the sum back — which is the
+ * lost update this class's single statement exists to prevent, and on `returnRequestedQuantity` it
+ * overwrote whatever a return had moved between that read and that write.
  */
 const RETURN_COUNTERS = {
 	/** What came back: sound and damaged units alike, since both arrived. */
@@ -48,7 +54,15 @@ const RETURN_COUNTERS = {
 		column: 'returnRequestedQuantity',
 		belowZero: 'ORDER_LINE_RETURN_REQUEST_BELOW_ZERO',
 		noun: 'requested for return'
-	}
+	},
+	/** What was asked back and will not come back, which the order no longer owes either. */
+	dismissed: {
+		column: 'returnDismissedQuantity',
+		belowZero: 'ORDER_LINE_RETURN_DISMISSAL_BELOW_ZERO',
+		noun: 'dismissed from return'
+	},
+	/** What the order gave up shipping. */
+	writtenOff: { column: 'writtenOffQuantity', belowZero: 'ORDER_LINE_WRITE_OFF_BELOW_ZERO', noun: 'written off' }
 } as const;
 
 /** One of the counters above. */
@@ -188,8 +202,9 @@ export class OrderLineFulfillmentService {
 	 * **This is the writer `order_line.returnReceivedQuantity` never had.** The column is read by
 	 * `deriveFulfillmentStatus`, which decides `PARTIALLY_RETURNED` and `RETURNED` from it — and until
 	 * this method existed, nothing in the repository assigned it: the three counters beside it are
-	 * written by `OrderChangeService.applyAction`, and this one was written by nobody, so the
-	 * derivation could never see goods come back and doc 10 §11.6 step 2 ("order line
+	 * moved by `OrderChangeService.applyAction` (through {@link recordReturnRequest},
+	 * {@link recordReturnDismissal} and {@link recordWriteOff}), and this one was written by nobody, so
+	 * the derivation could never see goods come back and doc 10 §11.6 step 2 ("order line
 	 * `returnReceivedQuantity` updated") described an update that did not happen.
 	 *
 	 * **It is a move, not a set, and the move is one statement.** The counter is the order's cache of
@@ -248,7 +263,45 @@ export class OrderLineFulfillmentService {
 	}
 
 	/**
-	 * Moves one return counter of an order's lines, all or nothing.
+	 * Moves the dismissed-return counter of an order's lines.
+	 *
+	 * `order_line.returnDismissedQuantity` is what was asked back and will not come back, and
+	 * `deriveFulfillmentStatus` subtracts it from what the order still owes. Its one writer is the order
+	 * change's `DISMISS_ITEM_RETURN`, which used to read the line and write back the sum it computed — so a
+	 * second dismissal of the same line landing between that read and that write was lost. It is now the
+	 * same statement as {@link recordReturnReceipt} on this column, with the same floor, the same scope and
+	 * the same all-or-nothing call.
+	 *
+	 * @param orderId The order whose lines are moved, and the scope the write is checked in.
+	 * @param moves One entry per order line whose dismissed quantity changed. An empty list moves nothing.
+	 * @throws BadRequestException when no order was named, a delta is not exact, or a move would take a
+	 * counter below zero.
+	 * @throws NotFoundException when the order, or a named line of it, is not the caller's.
+	 */
+	public async recordReturnDismissal(orderId: ID, moves: readonly IOrderLineReceiptMove[]): Promise<void> {
+		await this.moveCounters(RETURN_COUNTERS.dismissed, orderId, moves);
+	}
+
+	/**
+	 * Moves the written-off counter of an order's lines.
+	 *
+	 * `order_line.writtenOffQuantity` is what the order gave up shipping: the derivation subtracts it from
+	 * what the order owes and completion reads it beside the fulfilled quantity. Its one writer is the order
+	 * change's `WRITE_OFF_ITEM`, which moves it by this statement for the reason
+	 * {@link recordReturnDismissal} states.
+	 *
+	 * @param orderId The order whose lines are moved, and the scope the write is checked in.
+	 * @param moves One entry per order line whose written-off quantity changed. An empty list moves nothing.
+	 * @throws BadRequestException when no order was named, a delta is not exact, or a move would take a
+	 * counter below zero.
+	 * @throws NotFoundException when the order, or a named line of it, is not the caller's.
+	 */
+	public async recordWriteOff(orderId: ID, moves: readonly IOrderLineReceiptMove[]): Promise<void> {
+		await this.moveCounters(RETURN_COUNTERS.writtenOff, orderId, moves);
+	}
+
+	/**
+	 * Moves one counter of an order's lines, all or nothing.
 	 *
 	 * @param counter The counter to move.
 	 * @param orderId The order whose lines are moved.

@@ -1,11 +1,14 @@
 import { Injectable, InternalServerErrorException, NotFoundException, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { randomUUID } from 'node:crypto';
 import { FindManyOptions, In, MoreThan, MoreThanOrEqual } from 'typeorm';
 import {
 	AdjustmentOwnerType,
+	EventOutboxStatus,
 	FulfillmentStatus,
 	ID,
 	IOrderTotals,
+	IOutboxWriteInput,
 	IPagination,
 	OrderStatus,
 	OrderTransactionType,
@@ -14,7 +17,10 @@ import {
 } from '@gauzy/contracts';
 import {
 	AdjustmentService,
+	ApiErrorCode,
+	ApiException,
 	CrudService,
+	RequestContext,
 	TaxLineService,
 	EventOutboxService,
 	addDecimalStrings,
@@ -140,6 +146,21 @@ const ORDER_TOTALS_STATUS_COLUMNS = ['paymentStatus', 'fulfillmentStatus'];
 export const ORDER_TOTALS_AUDIT_BATCH_SIZE = 500;
 
 /**
+ * How many times one recomputation that states no version is attempted before its lost race is reported.
+ *
+ * A caller that states the wildcard has no stale state to protect: it asks for the order to be re-derived
+ * from ledgers it has already moved, and the write is predicated on whatever version the row holds when the
+ * write runs. Two such writes of one order at the same instant — a refund beside a receipt, a payment beside
+ * a shipment — still race on that row between the version's read and the conditional update, and the loser
+ * was answered `ENTITY_VERSION_CONFLICT` for a write that had nothing to conflict with. Each attempt reads the
+ * order afresh and derives it again from the ledgers as they now stand, the winner's write included, so a
+ * retry is a new derivation rather than a replay of the one that lost. Three attempts outlast any race short
+ * of a sustained stampede on one order, which is what the nightly reconciliation repairs. A caller that also
+ * retries on its own side — the fulfilment package does — multiplies the bound; it does not remove it.
+ */
+export const ORDER_RECOMPUTE_ATTEMPTS = 3;
+
+/**
  * One order whose stored derived columns disagree with the ledgers they are derived from.
  *
  * It carries both sides rather than a verdict, because the reader of a drift report is deciding
@@ -236,14 +257,53 @@ export class OrderTotalsService {
 	/**
 	 * Recomputes an order's totals, statusses and version.
 	 *
+	 * **A write that states no version is retried when it loses the version race**, up to
+	 * {@link ORDER_RECOMPUTE_ATTEMPTS} times, each attempt reading the order afresh. Two kinds of write are
+	 * never retried, because each carries a decision made from the row as its caller read it and a fresh
+	 * read would apply that decision to a row it was never checked against: a write predicated on a version
+	 * the caller stated — its `If-Match` — and a write that carries a `patch`, which is a lifecycle move the
+	 * state machine admitted from the status the caller read, or the order properties a change states. Both
+	 * answer the conflict as they always did. What is retried is the re-derivation alone, which is what the
+	 * returns flow, a payment, a fulfilment and a change's decision ask for; an attempt that lost wrote
+	 * nothing — the conditional update refused it before the summary row and the event — so asking again is
+	 * safe.
+	 *
 	 * @param orderId The order.
 	 * @param reason Why the totals moved, recorded on the summary row: `PLACED`, `CHANGE_CONFIRMED`,
 	 * `PAYMENT_RECONCILED`, `FULFILLMENT_COMMITTED`, `RETURN_RECEIVED`, `DRIFT_REPAIRED`, `CASH_ROUNDED`.
 	 * @param options The version the caller read the order at, and the columns the move commits with
 	 * the totals.
 	 * @returns The order, as written.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when a stated version, or a move, lost the race,
+	 * or when a re-derivation lost it on every attempt.
 	 */
 	public async recompute(orderId: ID, reason: string, options: IOrderRecalculation = {}): Promise<Order> {
+		const retried =
+			(options.expectation ?? ANY_ORDER_VERSION).wildcard === true &&
+			Object.keys(options.patch ?? {}).length === 0;
+
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await this.recomputeOnce(orderId, reason, options);
+			} catch (error) {
+				if (!retried || attempt >= ORDER_RECOMPUTE_ATTEMPTS || !isVersionConflict(error)) {
+					throw error;
+				}
+			}
+		}
+	}
+
+	/**
+	 * One attempt at {@link recompute}: a fresh read of the order, the derivation from its ledgers, and the
+	 * one conditional write of the columns the derivation produced.
+	 *
+	 * @param orderId The order.
+	 * @param reason Why the totals moved, recorded on the summary row.
+	 * @param options The version the caller read the order at, and the columns the move commits with the
+	 * totals.
+	 * @returns The order, as written.
+	 */
+	private async recomputeOnce(orderId: ID, reason: string, options: IOrderRecalculation): Promise<Order> {
 		const order = await this.readOrder(orderId);
 
 		if (!order) {
@@ -614,6 +674,13 @@ export class OrderTotalsService {
 	 * carry the order row: an event that shipped the entity would freeze its shape into every
 	 * consumer.
 	 *
+	 * **The row is written through the ORM the installation runs on.** The platform's `append` takes a
+	 * TypeORM entity manager, and under `DB_ORM=mikro-orm` the TypeORM entity for `event_outbox` carries
+	 * its base columns and nothing else — `@MultiORMColumn` registers the active ORM's decorator alone — so
+	 * the append wrote a row with no event id, no name and no sequence, the database refused it, and every
+	 * move that announces itself failed after the order's own write had committed. Under MikroORM the row is
+	 * therefore written through the outbox's MikroORM repository instead (see {@link appendThroughMikroOrm}).
+	 *
 	 * @param order The order as the move left it.
 	 * @param version The version the conditional update produced.
 	 * @param snapshot The totals written with it.
@@ -625,7 +692,7 @@ export class OrderTotalsService {
 		snapshot: IOrderTotals,
 		event: IOrderEvent
 	): Promise<void> {
-		await this.outbox.append(this.typeOrmOrderRepository.manager, {
+		const input: IOutboxWriteInput = {
 			name: event.name,
 			aggregateType: ORDER_AGGREGATE_TYPE,
 			aggregateId: order.id,
@@ -645,7 +712,70 @@ export class OrderTotalsService {
 			},
 			tenantId: order.tenantId,
 			organizationId: order.organizationId
-		});
+		};
+
+		if (this.unitOfWork?.usesMikroOrm) {
+			await this.appendThroughMikroOrm(input);
+
+			return;
+		}
+
+		await this.outbox.append(this.typeOrmOrderRepository.manager, input);
+	}
+
+	/**
+	 * Appends one outbox row through MikroORM, as the platform's `append` would write it through TypeORM.
+	 *
+	 * The row is the one `EventOutboxService.append` builds, member for member: a fresh event id, the
+	 * aggregate's partition, the next sequence of that partition, `PENDING` with no attempt, due now, and the
+	 * tenancy the order carries. The sequence is the partition's highest plus one, read in the same persistence
+	 * context the row is written in; two appends that compute the same position are refused by the unique index
+	 * over the pair, which is the loud failure the platform's append relies on too. The row's id is stated
+	 * rather than left to the column default, because that default is `gen_random_uuid()` — a Postgres
+	 * function — and the MikroORM path must write on every dialect.
+	 *
+	 * It is written through the outbox's MikroORM repository, which the outbox service exposes, so it goes
+	 * through the entity manager of the persistence context the move runs in — a request's fork, or the unit a
+	 * request-less pass opened (`OrderUnitOfWork`).
+	 *
+	 * **The tenancy is stated twice, and the row is created unmanaged.** On this ORM `tenantId` and
+	 * `organizationId` are the ids of the `tenant` and `organization` relations (`relationId: true` maps them
+	 * `persist: false`), so only a relation reaches the statement; each is therefore stated by its primary key,
+	 * which MikroORM takes as a reference to a row that exists, beside the scalar. The row names its own
+	 * primary key, and an entity created *managed* with its key is taken as a row already in the table — a
+	 * flush then inserts nothing — so it is created as the new row it is.
+	 *
+	 * @param input What changed, as the platform's append takes it.
+	 */
+	private async appendThroughMikroOrm(input: IOutboxWriteInput): Promise<void> {
+		const repository = this.outbox.mikroOrmEventOutboxRepository;
+		const partitionKey = input.partitionKey ?? `${input.aggregateType}:${input.aggregateId}`;
+		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
+		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId();
+		const last = await repository.findOne({ partitionKey } as never, { orderBy: { sequence: 'desc' } } as never);
+		const row = repository.create(
+			{
+				id: randomUUID(),
+				eventId: randomUUID(),
+				eventName: input.name,
+				aggregateType: input.aggregateType,
+				aggregateId: input.aggregateId,
+				payload: input.data ?? {},
+				headers: input.headers,
+				status: EventOutboxStatus.PENDING,
+				attemptCount: 0,
+				availableAt: new Date(),
+				partitionKey,
+				sequence: Number(last?.sequence ?? 0) + 1,
+				...(tenantId ? { tenant: tenantId, tenantId } : {}),
+				...(organizationId ? { organization: organizationId, organizationId } : {})
+			} as never,
+			{ partial: true } as never
+		);
+		const manager = repository.getEntityManager();
+
+		manager.persist(row);
+		await manager.flush();
 	}
 
 	/**
@@ -1117,6 +1247,16 @@ function orderIdOf(row: { orderId?: ID; order?: unknown }): ID | undefined {
 	}
 
 	return (row.order as { id?: ID } | null | undefined)?.id ?? undefined;
+}
+
+/**
+ * Whether an error is the concurrency kernel's refusal of a write predicated on a version that moved on.
+ *
+ * @param error What a conditional write threw.
+ * @returns True for `ENTITY_VERSION_CONFLICT`, false for anything else — a missing order included.
+ */
+function isVersionConflict(error: unknown): boolean {
+	return error instanceof ApiException && error.code === ApiErrorCode.ENTITY_VERSION_CONFLICT;
 }
 
 /**

@@ -13,15 +13,23 @@ import {
 import {
 	ApiErrorCode,
 	ApiException,
+	MultiORMEnum,
+	RequestContext,
 	TenantAwareCrudService,
 	addDecimalStrings,
+	getORMType,
 	matchesExpectation,
 	parseEntityVersion
 } from '@gauzy/core';
 import { OrderChange } from './order-change.entity';
 import { TypeOrmOrderChangeRepository } from './repository/type-orm-order-change.repository';
 import { MikroOrmOrderChangeRepository } from './repository/mikro-orm-order-change.repository';
-import { ANY_ORDER_VERSION, ORDER_CHANGE_STALE_HOURS, OrderVersionExpectation } from '../order.types';
+import {
+	ANY_ORDER_VERSION,
+	IOrderLineReceiptMove,
+	ORDER_CHANGE_STALE_HOURS,
+	OrderVersionExpectation
+} from '../order.types';
 import { OrderChangeAction } from '../order-change-action/order-change-action.entity';
 import { OrderChangeActionService } from '../order-change-action/order-change-action.service';
 import { OrderCreditLine } from '../order-credit-line/order-credit-line.entity';
@@ -32,12 +40,15 @@ import { OrderHistoryService } from '../order-history/order-history.service';
 import { scopeOfOrderRow } from '../order-history/order-row-scope';
 import { OrderLine } from '../order-line/order-line.entity';
 import { OrderLineService } from '../order-line/order-line.service';
+import { OrderLineFulfillmentService } from '../order-line-fulfillment/order-line-fulfillment.service';
 import { OrderShippingMethod } from '../order-shipping-method/order-shipping-method.entity';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderTransaction } from '../order-transaction/order-transaction.entity';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderUnitOfWork, inOwnUnitOfWork } from '../order-totals/order-unit-of-work';
+import { Order } from '../order/order.entity';
+import { MikroOrmOrderRepository } from '../order/repository/mikro-orm-order.repository';
 import { TypeOrmOrderRepository } from '../order/repository/type-orm-order.repository';
 
 /**
@@ -129,6 +140,17 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 		private readonly historyService: OrderHistoryService,
 		private readonly totalsService: OrderTotalsService,
 		/**
+		 * The one writer of the order line counters a change moves rather than sets. `ITEM_RETURN`,
+		 * `DISMISS_ITEM_RETURN` and `WRITE_OFF_ITEM` move them through its single relative statement, the
+		 * statement the returns flow moves the requested and received counters by.
+		 */
+		private readonly lineCounters: OrderLineFulfillmentService,
+		/**
+		 * The order row as MikroORM maps it, which is where the order a change decides against is read from
+		 * when that ORM is configured (see {@link readOrder}).
+		 */
+		private readonly mikroOrmOrderRepository: MikroOrmOrderRepository,
+		/**
 		 * The persistence context each change the staleness sweep cancels runs in. Optional so a service
 		 * constructed by hand behaves as it always did, which is the TypeORM behaviour; the module always
 		 * supplies it.
@@ -212,7 +234,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the order has moved on.
 	 */
 	private async assertOrderExpectationHolds(orderId: ID, expectation: OrderVersionExpectation): Promise<void> {
-		const order = await this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+		const order = await this.readOrder(orderId);
 		const actual = parseEntityVersion((order as { version?: unknown } | null)?.version);
 
 		// A missing row and a row with no usable version are both left to the conditional write: it is
@@ -230,6 +252,42 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				actualVersion: actual
 			}
 		);
+	}
+
+	/**
+	 * Reads the order a change decides against, through the configured ORM and in the caller's scope.
+	 *
+	 * **Through the configured ORM**, because the order's own columns are mapped by that ORM alone:
+	 * `@MultiORMColumn` registers the active ORM's decorator and nothing else, so under `DB_ORM=mikro-orm`
+	 * the TypeORM entity for `order` carries its base columns and a read through the TypeORM repository
+	 * answers a row with no version, no status and no currency. The three reads this service makes all
+	 * went through that repository, so under MikroORM a confirmation stated against a version the order had
+	 * moved past passed the check made before its first action, a change was accepted against an archived
+	 * order with a version of `NaN`, and a credit was written with no currency.
+	 *
+	 * **In the caller's scope**, because the order is named by an identifier the caller supplied: a read by
+	 * id alone found another organization's order, which a change could then be opened against. The scope
+	 * is the credential's tenant and organization, and a member the credential does not state is left out
+	 * rather than set to `undefined` — the two ORMs read a present-but-undefined criterion differently — so
+	 * a path with no request behind it reads by id exactly as it did.
+	 *
+	 * @param orderId The order.
+	 * @returns The order, or null when it is not the caller's.
+	 */
+	private async readOrder(orderId: ID): Promise<Order | null> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const where = {
+			id: orderId,
+			...(tenantId ? { tenantId } : {}),
+			...(organizationId ? { organizationId } : {})
+		};
+
+		if (getORMType() === MultiORMEnum.MikroORM) {
+			return (await this.mikroOrmOrderRepository.findOne(where as never)) ?? null;
+		}
+
+		return await this.typeOrmOrderRepository.findOne({ where });
 	}
 
 	/**
@@ -252,7 +310,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	 */
 	public async create(entity: DeepPartial<OrderChange>): Promise<OrderChange> {
 		const orderId = entity.orderId as ID;
-		const order = await this.typeOrmOrderRepository.findOne({ where: { id: orderId } });
+		const order = await this.readOrder(orderId);
 
 		if (!order) {
 			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
@@ -744,7 +802,7 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 
 			case OrderChangeActionType.CREDIT_LINE_ADD: {
 				const amount = Number(details['amount'] ?? action.amount ?? 0);
-				const order = await this.typeOrmOrderRepository.findOne({ where: { id: change.orderId } });
+				const order = await this.readOrder(change.orderId);
 
 				await this.creditLineService.create({
 					orderId: change.orderId,
@@ -791,32 +849,17 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 				);
 				break;
 
-			case OrderChangeActionType.ITEM_RETURN: {
-				const line = await this.loadLine(change.orderId, action.referenceId ?? details['orderLineId']);
-
-				await this.lineService.update(line.id, {
-					returnRequestedQuantity: this.movedCounter(line.returnRequestedQuantity, details['quantity'])
-				} as any);
+			case OrderChangeActionType.ITEM_RETURN:
+				await this.lineCounters.recordReturnRequest(change.orderId, [this.counterMove(action, details)]);
 				break;
-			}
 
-			case OrderChangeActionType.DISMISS_ITEM_RETURN: {
-				const line = await this.loadLine(change.orderId, action.referenceId ?? details['orderLineId']);
-
-				await this.lineService.update(line.id, {
-					returnDismissedQuantity: this.movedCounter(line.returnDismissedQuantity, details['quantity'])
-				} as any);
+			case OrderChangeActionType.DISMISS_ITEM_RETURN:
+				await this.lineCounters.recordReturnDismissal(change.orderId, [this.counterMove(action, details)]);
 				break;
-			}
 
-			case OrderChangeActionType.WRITE_OFF_ITEM: {
-				const line = await this.loadLine(change.orderId, action.referenceId ?? details['orderLineId']);
-
-				await this.lineService.update(line.id, {
-					writtenOffQuantity: this.movedCounter(line.writtenOffQuantity, details['quantity'])
-				} as any);
+			case OrderChangeActionType.WRITE_OFF_ITEM:
+				await this.lineCounters.recordWriteOff(change.orderId, [this.counterMove(action, details)]);
 				break;
-			}
 
 			default:
 				throw new BadRequestException({
@@ -860,21 +903,36 @@ export class OrderChangeService extends TenantAwareCrudService<OrderChange> {
 	}
 
 	/**
-	 * One of an order line's quantity counters, moved by what an action states.
+	 * The move of one order line counter an action states.
 	 *
-	 * The counters are `numeric(20,6)` decimals, and moving one by adding two doubles is the arithmetic
-	 * the rest of this branch exists to keep out of quantity code: a line written off `0.1` and then
-	 * dismissed `0.2` lands on `0.30000000000000004`, and the fulfilment derivation that subtracts both
-	 * from the ordered quantity then tests a difference for being exactly zero — which it never is
-	 * again. The addition is therefore made on the digits, and the result is handed back as the number
-	 * the column's transformer takes, so nothing about the write path changes but its exactness.
+	 * **The counter is moved, never set, and by one statement the database serialises.** The change used to
+	 * read the line, add the action's quantity to what it read and write the sum back — which is a lost
+	 * update: two moves of one line that both read before either wrote left the line holding one of them,
+	 * and on `returnRequestedQuantity` the move it overwrote could be the returns flow's own, which moves
+	 * that counter by a single relative statement exactly so that it cannot be lost. The action is now handed
+	 * to that statement (`OrderLineFulfillmentService`): the addition, the floor at zero and the write are one
+	 * `UPDATE`, predicated on the order, its tenant and its organization, and a move that would take the
+	 * counter below zero changes no row and is refused.
 	 *
-	 * @param current The counter as the line holds it.
-	 * @param delta The quantity the action states, which may be absent.
-	 * @returns The counter after the move.
+	 * The line reference is checked here rather than left to the statement, so an action that names none is
+	 * refused with the code this service has always given it. The quantity is read as it always was — a
+	 * figure's exact digits, and anything that is not a figure as zero, which moves nothing — and the
+	 * statement reads it at the column's scale, refusing a digit the column cannot hold rather than rounding
+	 * the move.
+	 *
+	 * @param action The action.
+	 * @param details The action's details.
+	 * @returns The move, stated as the counter's writer takes it.
+	 * @throws BadRequestException when the action names no line.
 	 */
-	private movedCounter(current: unknown, delta: unknown): number {
-		return Number(addDecimalStrings(this.decimalOf(current), this.decimalOf(delta)));
+	private counterMove(action: OrderChangeAction, details: Record<string, any>): IOrderLineReceiptMove {
+		const orderLineId = (action.referenceId ?? details['orderLineId']) as ID;
+
+		if (!orderLineId) {
+			throw new BadRequestException('ORDER_CHANGE_ACTION_INVALID: the action needs a line reference.');
+		}
+
+		return { orderLineId, quantityDelta: this.decimalOf(details['quantity']) };
 	}
 
 	/**

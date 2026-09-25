@@ -72,17 +72,48 @@ export class OrderHistoryService extends TenantAwareCrudService<OrderHistory> {
 	/**
 	 * Reads an order's timeline in the order it happened.
 	 *
+	 * **The order is total: the instant, then the identity.** The timeline is paged with offset cursors
+	 * (`orderHistory`), so the order it is read in has to be one no read can rearrange — and the instant
+	 * alone is not: one move writes several entries within one clock tick (a change's request, the note an
+	 * action records and the confirmation), and rows the order leaves tied come back in whatever order the
+	 * store chooses on that read, so a cursor walk could answer one entry twice and never another. The store
+	 * is asked for `createdAt, id`, and the sort in memory, which is what guarantees the order whatever the
+	 * store did with the request, breaks the same tie the same way.
+	 *
 	 * @param orderId The order.
 	 * @param withDeleted Whether entries retired from the timeline are included. Stated through the find
 	 * options rather than as a filter on the rows handed back, because the store is what knows a row was
 	 * retired.
-	 * @returns The entries, oldest first.
+	 * @returns The entries, oldest first, and in identity order within one instant.
 	 */
 	public async timeline(orderId: ID, withDeleted?: boolean): Promise<OrderHistory[]> {
-		const page = await this.findAll({ where: { orderId }, ...(withDeleted ? { withDeleted: true } : {}) });
+		const page = await this.findAll({
+			where: { orderId },
+			order: { createdAt: 'ASC', id: 'ASC' },
+			...(withDeleted ? { withDeleted: true } : {})
+		});
 
 		return [...page.items].sort(
-			(left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+			(left, right) =>
+				new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime() ||
+				compareIds(left.id, right.id)
 		);
 	}
+}
+
+/**
+ * Orders two identifiers the way the store orders the column.
+ *
+ * The identifiers are lowercase UUID text, which every supported dialect orders by its characters, so a plain
+ * comparison of the strings is the store's own order; a missing identifier sorts first rather than throwing.
+ *
+ * @param left One identifier.
+ * @param right The other.
+ * @returns A negative number, zero or a positive number, as `Array.prototype.sort` takes it.
+ */
+function compareIds(left: ID | undefined, right: ID | undefined): number {
+	const a = String(left ?? '');
+	const b = String(right ?? '');
+
+	return a < b ? -1 : a > b ? 1 : 0;
 }

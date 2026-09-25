@@ -160,6 +160,11 @@ jest.mock('@gauzy/core', () => {
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// Added when the totals writer began retrying a wildcard write that lost the version race: it tells that
+		// refusal apart by this class and its code, and a double without them would turn any failure of a
+		// recomputation into a `TypeError` about the double.
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;

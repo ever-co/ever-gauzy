@@ -100,6 +100,12 @@ export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInv
 	/**
 	 * Reads every link of one order line, in the order they were written.
 	 *
+	 * **The order is total: the instant, then the identity.** A line's links are paged with offset cursors
+	 * (`orderLineInvoices`), and the instant alone leaves ties — a bridge that records a deposit and its
+	 * balance in one pass writes two links of one line within one clock tick — which the store answers in
+	 * whatever order it chooses on that read, so a cursor walk could repeat one link and never answer
+	 * another. The primary key closes the order.
+	 *
 	 * @param orderLineId The line to read.
 	 * @param withDeleted Whether links retired from the register are included. Stated through the find
 	 * options rather than as a filter on the rows handed back, because the store is what knows a row was
@@ -113,7 +119,7 @@ export class OrderLineInvoiceService extends TenantAwareCrudService<OrderLineInv
 				tenantId: RequestContext.currentTenantId(),
 				organizationId: RequestContext.currentOrganizationId()
 			},
-			order: { createdAt: 'ASC' },
+			order: { createdAt: 'ASC', id: 'ASC' },
 			...(withDeleted ? { withDeleted: true } : {})
 		});
 	}

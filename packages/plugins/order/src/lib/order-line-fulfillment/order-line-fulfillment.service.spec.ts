@@ -170,6 +170,7 @@ interface ILineRow {
 	returnRequestedQuantity?: number;
 	returnReceivedQuantity?: number;
 	returnDismissedQuantity?: number;
+	writtenOffQuantity?: number;
 	unitPrice?: number;
 	deletedAt?: string;
 }
@@ -187,6 +188,7 @@ const LINE_COLUMNS = [
 	'returnRequestedQuantity',
 	'returnReceivedQuantity',
 	'returnDismissedQuantity',
+	'writtenOffQuantity',
 	'unitPrice',
 	'deletedAt'
 ];
@@ -207,6 +209,7 @@ function createStore(): ISqliteDatabase {
 			`"organizationId" varchar, "variantId" varchar, "position" integer NOT NULL DEFAULT (0), ` +
 			`"fulfilledQuantity" numeric(20,6) NOT NULL DEFAULT (0), "returnRequestedQuantity" numeric(20,6) NOT NULL DEFAULT (0), ` +
 			`"returnReceivedQuantity" numeric(20,6) NOT NULL DEFAULT (0), "returnDismissedQuantity" numeric(20,6) NOT NULL DEFAULT (0), ` +
+			`"writtenOffQuantity" numeric(20,6) NOT NULL DEFAULT (0), ` +
 			`"unitPrice" numeric(20,6) NOT NULL DEFAULT (0), "deletedAt" datetime)`
 	);
 
@@ -880,6 +883,126 @@ describe('OrderLineFulfillmentService — moving the return counters', () => {
 		expect(counters('line-1')).toMatchObject({ returnRequestedQuantity: 2 });
 		expect(counters('line-2')).toMatchObject({ returnRequestedQuantity: 0.5 });
 		expect(statements.every((statement) => statement.orm === 'mikro-orm' && statement.method === 'run')).toBe(true);
+		expect(orderLines.options).toEqual([]);
+	});
+});
+
+/**
+ * The order change's two counters: what a return will not bring back, and what the order gave up shipping.
+ *
+ * `DISMISS_ITEM_RETURN` and `WRITE_OFF_ITEM` are the only writers of `returnDismissedQuantity` and
+ * `writtenOffQuantity`, and they used to read the line and write back a sum computed in JavaScript. They
+ * are now the same statement the return counters are moved by, so what is pinned here is that the closed
+ * set reaches both columns and nothing else, with a refusal of its own for each, on every spelling and
+ * through both ORMs' connections.
+ */
+describe('OrderLineFulfillmentService — moving the dismissed and written-off counters', () => {
+	it('moves the dismissed counter by one relative statement, and no other counter', async () => {
+		const { service, statements, counters, orderLines } = fixture([
+			line({ id: 'line-1', returnRequestedQuantity: 3, returnDismissedQuantity: 1, writtenOffQuantity: 2 })
+		]);
+
+		await service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1.5' }]);
+
+		expect(counters('line-1')).toMatchObject({
+			returnDismissedQuantity: 2.5,
+			returnRequestedQuantity: 3,
+			writtenOffQuantity: 2
+		});
+		expect(statements).toHaveLength(1);
+		expect(statements[0].sql).toBe(
+			'UPDATE "order_line" SET "returnDismissedQuantity" = ROUND("returnDismissedQuantity" + CAST(? AS DECIMAL(20,6)), 6) ' +
+				'WHERE "id" = ? AND "orderId" = ? AND "tenantId" = ? AND "organizationId" = ? ' +
+				'AND "deletedAt" IS NULL AND ROUND("returnDismissedQuantity" + CAST(? AS DECIMAL(20,6)), 6) >= 0'
+		);
+		expect(statements[0].parameters).toEqual(['1.500000', 'line-1', ORDER, TENANT, ORG, '1.500000']);
+		// The line is never read before it is written: there is no value to write back.
+		expect(orderLines.options).toEqual([]);
+	});
+
+	it('moves the written-off counter, and lands both of two write-offs in flight at once', async () => {
+		const { service, counters } = fixture([line({ id: 'line-1', writtenOffQuantity: 0 })]);
+
+		await Promise.all([
+			service.recordWriteOff(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]),
+			service.recordWriteOff(ORDER, [{ orderLineId: 'line-1', quantityDelta: '2' }])
+		]);
+
+		expect(counters('line-1')).toMatchObject({ writtenOffQuantity: 3, returnDismissedQuantity: 0 });
+	});
+
+	it('refuses each counter below zero with a code of its own, and leaves it where it was', async () => {
+		const { service, counters } = fixture([
+			line({ id: 'line-1', returnDismissedQuantity: 1, writtenOffQuantity: 1 })
+		]);
+
+		await expect(
+			service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-2' }])
+		).rejects.toThrow(/ORDER_LINE_RETURN_DISMISSAL_BELOW_ZERO/);
+		await expect(
+			service.recordWriteOff(ORDER, [{ orderLineId: 'line-1', quantityDelta: '-1.000001' }])
+		).rejects.toThrow(/ORDER_LINE_WRITE_OFF_BELOW_ZERO/);
+
+		expect(counters('line-1')).toMatchObject({ returnDismissedQuantity: 1, writtenOffQuantity: 1 });
+	});
+
+	it('refuses a line of the order that carries another organization, because the write is scoped too', async () => {
+		const { service, counters } = fixture([
+			line({ id: 'line-foreign', organizationId: OTHER_ORG, writtenOffQuantity: 1 })
+		]);
+
+		await expect(
+			service.recordWriteOff(ORDER, [{ orderLineId: 'line-foreign', quantityDelta: '1' }])
+		).rejects.toThrow(/ORDER_LINE_NOT_FOUND/);
+		expect(counters('line-foreign')).toMatchObject({ writtenOffQuantity: 1 });
+	});
+
+	it('writes both counters in the MySQL spelling and binds the Postgres placeholders', async () => {
+		mockDialect.type = 'mysql';
+		const mysql = fixture([line({ id: 'line-1', returnDismissedQuantity: 1 })]);
+
+		await mysql.service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		expect(mysql.statements[0].sql).toContain(
+			'UPDATE `order_line` SET `returnDismissedQuantity` = ROUND(`returnDismissedQuantity` + CAST(? AS DECIMAL(20,6)), 6)'
+		);
+		expect(mysql.statements[0].sql).not.toContain('"');
+		expect(mysql.counters('line-1')).toMatchObject({ returnDismissedQuantity: 2 });
+
+		mockDialect.type = 'postgres';
+		const postgres = fixture([line({ id: 'line-1', writtenOffQuantity: 1 })]);
+
+		await postgres.service.recordWriteOff(ORDER, [{ orderLineId: 'line-1', quantityDelta: '1' }]);
+
+		expect(postgres.statements[0].sql).toContain(
+			'SET "writtenOffQuantity" = ROUND("writtenOffQuantity" + CAST($1 AS DECIMAL(20,6)), 6)'
+		);
+		expect(postgres.statements[0].sql).toContain('CAST($6 AS DECIMAL(20,6)), 6) >= 0');
+		expect(postgres.counters('line-1')).toMatchObject({ writtenOffQuantity: 2 });
+	});
+
+	it('moves both counters through the MikroORM connection, all or nothing, and never through TypeORM', async () => {
+		mockOrm.type = 'mikro-orm';
+		mockDialect.type = 'postgres';
+		const { service, statements, counters, orders, orderLines } = fixture([
+			line({ id: 'line-1', position: 1, writtenOffQuantity: 1 }),
+			line({ id: 'line-2', position: 2, writtenOffQuantity: 0 })
+		]);
+
+		await service.recordReturnDismissal(ORDER, [{ orderLineId: 'line-1', quantityDelta: '0.5' }]);
+		await expect(
+			service.recordWriteOff(ORDER, [
+				{ orderLineId: 'line-1', quantityDelta: '1' },
+				{ orderLineId: 'line-2', quantityDelta: '-1' }
+			])
+		).rejects.toThrow(/ORDER_LINE_WRITE_OFF_BELOW_ZERO/);
+
+		// The first write-off landed and was reversed when the second was refused.
+		expect(counters('line-1')).toMatchObject({ returnDismissedQuantity: 0.5, writtenOffQuantity: 1 });
+		expect(counters('line-2')).toMatchObject({ writtenOffQuantity: 0 });
+		expect(statements.every((statement) => statement.orm === 'mikro-orm' && statement.method === 'run')).toBe(true);
+		expect(statements.some((statement) => /\$\d/.test(statement.sql))).toBe(false);
+		expect(orders.options).toEqual([]);
 		expect(orderLines.options).toEqual([]);
 	});
 });

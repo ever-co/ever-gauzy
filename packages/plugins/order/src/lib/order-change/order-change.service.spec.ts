@@ -171,8 +171,12 @@ jest.mock('@gauzy/core', () => {
 		// The ORM a row about an order is written through when no request is behind the write. The value
 		// the doubled CRUD service answers (`typeorm`) is the one the real enum names.
 		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
-	// Added when core grew this export: the double has to carry it, or the code under
-	// test calls nothing and the suite fails for a reason that is not its own.
+		// Added when the change service began reading the order through the configured ORM: the double has to
+		// carry the probe, or the code under test calls nothing. `order-change.line-counters.spec.ts` drives
+		// the MikroORM answer; this suite is the TypeORM one.
+		getORMType: () => 'typeorm'
+		// Added when core grew this export: the double has to carry it, or the code under
+		// test calls nothing and the suite fails for a reason that is not its own.
 	};
 });
 
@@ -500,6 +504,44 @@ function orderFixture(
 		{ append: jest.fn() } as never,
 		{ get: () => orderWriter } as never
 	);
+	/**
+	 * The writer of the counters `ITEM_RETURN`, `DISMISS_ITEM_RETURN` and `WRITE_OFF_ITEM` move.
+	 *
+	 * The real one is a relative SQL statement (`OrderLineFulfillmentService`), and this datastore is plain
+	 * arrays, so the double restates what that statement does and nothing more: the delta is added to what the
+	 * row holds at the moment of the write, on the digits, only on a line of the named order, and refused
+	 * below zero. The statement itself — its spelling, its scope and the concurrent move it must not lose —
+	 * is what `order-change.line-counters.spec.ts` drives against a real store.
+	 */
+	const { addDecimalStrings } = jest.requireActual('@gauzy/core/src/lib/money/decimal');
+	const counterMove =
+		(column: string, belowZero: string) =>
+		async (orderId: string, moves: Array<{ orderLineId: string; quantityDelta: string }>) => {
+			for (const move of moves) {
+				const row = tables.order_line.find(
+					(candidate) => candidate.id === move.orderLineId && candidate.orderId === orderId
+				);
+
+				if (!row) {
+					throw new NotFoundException(
+						`ORDER_LINE_NOT_FOUND: order ${orderId} has no line ${move.orderLineId}.`
+					);
+				}
+
+				const moved: string = addDecimalStrings(String(row[column] ?? 0), move.quantityDelta);
+
+				if (moved.startsWith('-')) {
+					throw new Error(`${belowZero}: the move would take the counter below zero.`);
+				}
+
+				row[column] = Number(moved);
+			}
+		};
+	const lineCounters = {
+		recordReturnRequest: counterMove('returnRequestedQuantity', 'ORDER_LINE_RETURN_REQUEST_BELOW_ZERO'),
+		recordReturnDismissal: counterMove('returnDismissedQuantity', 'ORDER_LINE_RETURN_DISMISSAL_BELOW_ZERO'),
+		recordWriteOff: counterMove('writtenOffQuantity', 'ORDER_LINE_WRITE_OFF_BELOW_ZERO')
+	};
 	const service = new OrderChangeService(
 		repo('order_change') as never,
 		{} as never,
@@ -512,6 +554,9 @@ function orderFixture(
 		new OrderTransactionService(repo('order_transaction') as never, {} as never),
 		new OrderHistoryService(repo('order_history') as never, {} as never),
 		totalsService,
+		lineCounters as never,
+		// The MikroORM order repository, which this suite's TypeORM configuration never reads.
+		{} as never,
 		seeds.unitOfWork as never
 	);
 

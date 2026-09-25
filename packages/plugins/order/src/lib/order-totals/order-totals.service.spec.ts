@@ -66,6 +66,10 @@ jest.mock('@gauzy/core', () => {
 			.commitVersionedUpdate,
 		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
 			.versionExpectationOf,
+		// The refusal the conditional write raises, from the module it raises it from: a wildcard write that
+		// lost the version race is told apart from every other failure by exactly this class and its code.
+		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
+		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
 		ColumnNumericTransformerPipe: class {
 			to(value: unknown) {
 				return value;
@@ -121,7 +125,9 @@ import {
 } from '@gauzy/contracts';
 import { CronExpression } from '@nestjs/schedule';
 import { FindOperator } from 'typeorm';
-import { ORDER_TOTALS_AUDIT_BATCH_SIZE, OrderTotalsService } from './order-totals.service';
+import { EntitySchema as MikroEntitySchema, MikroORM } from '@mikro-orm/core';
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { ORDER_RECOMPUTE_ATTEMPTS, ORDER_TOTALS_AUDIT_BATCH_SIZE, OrderTotalsService } from './order-totals.service';
 import {
 	ORDER_TOTALS_RECONCILIATION_SCHEDULE,
 	OrderTotalsReconciliationScheduler
@@ -263,11 +269,13 @@ function query(rows: any[], options: any = {}, orm: 'typeorm' | 'mikro-orm' = 't
  *
  * @param order Columns the first order starts with.
  * @param options `orm` is the ORM the reads are answered as; `unitOfWork` is the persistence context
- * the module would inject, left out to construct the service the way a caller outside the module does.
+ * the module would inject, left out to construct the service the way a caller outside the module does;
+ * `mikroOutbox` is the outbox table's MikroORM repository, which the platform outbox service exposes and
+ * an order event is appended through when MikroORM is the configured ORM.
  */
 function orderFixture(
 	order: Record<string, unknown> = {},
-	options: { orm?: 'typeorm' | 'mikro-orm'; unitOfWork?: unknown } = {}
+	options: { orm?: 'typeorm' | 'mikro-orm'; unitOfWork?: unknown; mikroOutbox?: unknown } = {}
 ) {
 	const orm = options.orm ?? 'typeorm';
 	const row: any = {
@@ -320,7 +328,8 @@ function orderFixture(
 			events.push({ manager, ...input });
 
 			return input;
-		}
+		},
+		mikroOrmEventOutboxRepository: options.mikroOutbox
 	};
 	const update = async (criteria: any, partial: any) => {
 		const expected = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
@@ -1240,6 +1249,334 @@ describe('OrderTotalsService — the reconciliation’s bounds, tenancy and pers
 		// unit ended with its failure, and the next order was examined and repaired in a unit of its own.
 		expect(unitOfWork.run).toHaveBeenCalledTimes(4);
 		expect(writesOutsideAUnit).toEqual([]);
+	});
+});
+
+/**
+ * A write that states no version and loses the version race.
+ *
+ * `recompute` predicates its write on the version it read, and a caller that states the wildcard — the
+ * returns flow after a refund or a receipt, a payment, a fulfilment, a change's decline — has no stale state
+ * to protect: it only asks for the order to be re-derived from ledgers that have already moved. Losing the
+ * race to another writer of the same order used to throw `ENTITY_VERSION_CONFLICT` out of it, so the caller
+ * answered a spurious `409` for a write that had already committed, or left the order's columns stale until
+ * the nightly reconciliation. The retry is bounded, each attempt reads the order afresh, and it is never made
+ * for a version the caller stated, nor for a move the caller decided from the row it read.
+ */
+describe('OrderTotalsService — a wildcard write that loses the version race', () => {
+	/**
+	 * Makes the next `times` writes of the order lose to another writer that commits a version first.
+	 *
+	 * @param fixture The fixture.
+	 * @param times How many writes lose.
+	 * @param concurrent What the other writer changed beside the version.
+	 * @returns The write, which records every attempt.
+	 */
+	const loseRaces = (
+		fixture: ReturnType<typeof orderFixture>,
+		times: number,
+		concurrent: () => void = () => undefined
+	) => {
+		const update = fixture.orderWriter.update;
+		let lost = 0;
+		const attempts = jest.fn(async (criteria: any, partial: any) => {
+			if (lost < times) {
+				lost++;
+				fixture.order.version += 1;
+				concurrent();
+			}
+
+			return update(criteria, partial);
+		});
+
+		fixture.orderWriter.update = attempts;
+
+		return attempts;
+	};
+
+	it('re-derives the order from a fresh read and commits, when the race is lost once', async () => {
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+		await fixture.service.recompute('order-1', 'PLACED');
+
+		// The writer that wins the race recorded a capture: the retry reads the ledger as it now stands.
+		const attempts = loseRaces(fixture, 1, () =>
+			fixture.transactions.push({ orderId: 'order-1', amount: 100, type: OrderTransactionType.CAPTURE })
+		);
+		const written = await fixture.service.recompute('order-1', 'RETURN_RECEIVED');
+
+		expect(attempts).toHaveBeenCalledTimes(2);
+		// Placed at 2, the other writer committed 3, and this write committed 4.
+		expect(written.version).toBe(4);
+		expect(written.paidTotal).toBe(100);
+		expect(written.outstandingTotal).toBe(0);
+		// One summary row per version this service committed; the attempt that lost wrote none.
+		expect(fixture.summaries.map((summary) => [summary.version, summary.reason])).toEqual([
+			[2, 'PLACED'],
+			[4, 'RETURN_RECEIVED']
+		]);
+	});
+
+	it('gives up after a bounded number of attempts, having written nothing', async () => {
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		const attempts = loseRaces(fixture, Number.MAX_SAFE_INTEGER);
+
+		await expect(
+			fixture.service.recompute('order-1', 'PAYMENT_RECONCILED', { event: { name: 'order.placed' } } as never)
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT', status: 409 });
+
+		expect(ORDER_RECOMPUTE_ATTEMPTS).toBeGreaterThan(1);
+		expect(attempts).toHaveBeenCalledTimes(ORDER_RECOMPUTE_ATTEMPTS);
+		expect(fixture.summaries).toEqual([]);
+		expect(fixture.events).toEqual([]);
+	});
+
+	it('never retries a version the caller stated', async () => {
+		const fixture = orderFixture();
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		const attempts = loseRaces(fixture, 1);
+
+		await expect(
+			fixture.service.recompute('order-1', 'MANUAL', { expectation: { wildcard: false, versions: [1] } })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+
+		// The caller read version 1 and the order is at 2: re-deriving on its behalf would apply a decision made
+		// from a row it never saw.
+		expect(attempts).toHaveBeenCalledTimes(1);
+		expect(fixture.summaries).toEqual([]);
+	});
+
+	it('does not retry a move the caller decided from the row it read, and does retry one that states nothing', async () => {
+		const decided = orderFixture();
+
+		decided.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		const decidedAttempts = loseRaces(decided, 1);
+
+		// A lifecycle move is checked by the state machine against the row as its caller read it; laid over a
+		// fresh read it would land on an order the check never saw.
+		await expect(
+			decided.service.recompute('order-1', 'CANCEL', { patch: { status: OrderStatus.CANCELED } })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		expect(decidedAttempts).toHaveBeenCalledTimes(1);
+		expect(decided.order.status).toBe(OrderStatus.CONFIRMED);
+
+		// A change's confirmation states the order properties its actions carry, which is often none at all.
+		const empty = orderFixture();
+
+		empty.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		const emptyAttempts = loseRaces(empty, 1);
+
+		await expect(empty.service.recompute('order-1', 'CHANGE_CONFIRMED', { patch: {} })).resolves.toMatchObject({
+			version: 3
+		});
+		expect(emptyAttempts).toHaveBeenCalledTimes(2);
+	});
+
+	it('does not retry a failure that is not the version race', async () => {
+		const fixture = orderFixture();
+		const attempts = jest.fn(async () => {
+			throw new Error('the store is unreachable');
+		});
+
+		fixture.orderWriter.update = attempts;
+
+		await expect(fixture.service.recompute('order-1', 'MANUAL')).rejects.toThrow(/unreachable/);
+		expect(attempts).toHaveBeenCalledTimes(1);
+		await expect(fixture.service.recompute('order-absent', 'MANUAL')).rejects.toThrow(/ORDER_NOT_FOUND/);
+	});
+});
+
+/** The tenant and the organization an outbox row belongs to, as the relations its tenancy columns key. */
+class TenancyRow {
+	id!: string;
+}
+class TenantRow extends TenancyRow {}
+class OrganizationRow extends TenancyRow {}
+
+const MikroTenantRow = new MikroEntitySchema<TenantRow>({
+	class: TenantRow,
+	tableName: 'tenant',
+	properties: { id: { type: 'string', primary: true } }
+});
+const MikroOrganizationRow = new MikroEntitySchema<OrganizationRow>({
+	class: OrganizationRow,
+	tableName: 'organization',
+	properties: { id: { type: 'string', primary: true } }
+});
+
+/**
+ * One `event_outbox` row, as MikroORM maps the columns an order event writes.
+ *
+ * The tenancy is mapped as the kernel maps it on this ORM: `tenantId` and `organizationId` are the ids of the
+ * `tenant` and `organization` relations, `persist: false`, so a write that stated the scalars alone would
+ * leave both columns empty. The row's tenancy is asserted on the columns themselves, read back raw.
+ */
+class OutboxRow {
+	id!: string;
+	eventId!: string;
+	eventName!: string;
+	aggregateType!: string;
+	aggregateId!: string;
+	payload!: Record<string, unknown>;
+	headers?: Record<string, unknown> | null;
+	status!: string;
+	attemptCount!: number;
+	availableAt!: Date;
+	partitionKey!: string;
+	sequence!: number;
+	tenant?: TenantRow | null;
+	tenantId?: string | null;
+	organization?: OrganizationRow | null;
+	organizationId?: string | null;
+}
+
+const MikroOutboxRow = new MikroEntitySchema<OutboxRow>({
+	class: OutboxRow,
+	tableName: 'event_outbox',
+	properties: {
+		id: { type: 'string', primary: true },
+		eventId: { type: 'string' },
+		eventName: { type: 'string' },
+		aggregateType: { type: 'string' },
+		aggregateId: { type: 'string' },
+		payload: { type: 'json' },
+		headers: { type: 'json', nullable: true },
+		status: { type: 'string' },
+		attemptCount: { type: 'number' },
+		availableAt: { type: 'Date' },
+		partitionKey: { type: 'string' },
+		sequence: { type: 'number' },
+		tenant: { kind: 'm:1', entity: () => TenantRow, nullable: true, fieldName: 'tenantId' },
+		tenantId: { type: 'string', nullable: true, persist: false },
+		organization: { kind: 'm:1', entity: () => OrganizationRow, nullable: true, fieldName: 'organizationId' },
+		organizationId: { type: 'string', nullable: true, persist: false }
+	},
+	// The index the migration declares, which is what makes two appends of one position a loud failure.
+	uniques: [{ properties: ['partitionKey', 'sequence'] }]
+});
+
+/**
+ * Where an `order.*` event is appended when MikroORM is the configured ORM.
+ *
+ * The platform outbox's `append` takes a TypeORM entity manager, and under `DB_ORM=mikro-orm` the TypeORM
+ * entity for `event_outbox` carries its base columns and nothing else — `@MultiORMColumn` registers the active
+ * ORM's decorator alone — so an append through the order repository's TypeORM manager wrote a row with no
+ * event id, no name and no sequence, and the database refused it after the order's write had committed. The
+ * row is written through MikroORM instead, into a real in-memory store here, with the partition and the
+ * sequence the platform's append would have given it.
+ */
+describe('OrderTotalsService — the outbox row, through the configured ORM', () => {
+	let orm: MikroORM;
+
+	beforeAll(async () => {
+		orm = await MikroORM.init({
+			driver: BetterSqliteDriver,
+			dbName: ':memory:',
+			entities: [MikroTenantRow, MikroOrganizationRow, MikroOutboxRow],
+			allowGlobalContext: true,
+			discovery: { warnWhenNoEntities: false }
+		});
+		await orm.getSchemaGenerator().createSchema();
+		await orm.em.fork().getConnection().execute(`INSERT INTO tenant (id) VALUES ('tenant-1')`);
+		await orm.em.fork().getConnection().execute(`INSERT INTO organization (id) VALUES ('org-1')`);
+	});
+
+	afterAll(async () => {
+		await orm?.close(true);
+	});
+
+	beforeEach(async () => {
+		await orm.em.fork().nativeDelete(OutboxRow, {});
+	});
+
+	/** The rows the store holds, in partition then sequence order. */
+	const rows = async () => orm.em.fork().find(OutboxRow, {}, { orderBy: { partitionKey: 'asc', sequence: 'asc' } });
+
+	/** A fixture on MikroORM, whose outbox appends land in the store above. */
+	const onMikroOrm = (order: Record<string, unknown> = {}) =>
+		orderFixture(order, {
+			orm: 'mikro-orm',
+			unitOfWork: { usesMikroOrm: true, run: (work: () => Promise<unknown>) => work() },
+			mikroOutbox: orm.em.fork().getRepository(OutboxRow)
+		});
+
+	it('appends the event through MikroORM, and never through the TypeORM manager', async () => {
+		const fixture = onMikroOrm({ tenantId: 'tenant-1', organizationId: 'org-1' });
+
+		fixture.lines.push(line('L1', { quantity: 1, unitPrice: 100 }));
+
+		const placed = await fixture.service.recompute('order-1', 'PLACED', {
+			event: { name: 'order.placed', data: { cartId: 'cart-1' } }
+		} as never);
+		const confirmed = await fixture.service.recompute('order-1', 'CONFIRMED', {
+			event: { name: 'order.confirmed' }
+		} as never);
+
+		// The TypeORM append was never reached.
+		expect(fixture.events).toEqual([]);
+
+		const [first, second] = await rows();
+
+		expect([first, second].map((row) => [row.eventName, row.partitionKey, row.sequence])).toEqual([
+			['order.placed', 'ORDER:order-1', 1],
+			['order.confirmed', 'ORDER:order-1', 2]
+		]);
+		expect(first).toMatchObject({
+			aggregateType: 'ORDER',
+			aggregateId: 'order-1',
+			status: 'PENDING',
+			attemptCount: 0
+		});
+		expect(first.availableAt).toBeInstanceOf(Date);
+		// The order's tenancy reached the columns, through the relations they key.
+		expect(
+			await orm.em
+				.fork()
+				.getConnection()
+				.execute(`SELECT tenantId, organizationId FROM event_outbox ORDER BY sequence ASC`)
+		).toEqual([
+			{ tenantId: 'tenant-1', organizationId: 'org-1' },
+			{ tenantId: 'tenant-1', organizationId: 'org-1' }
+		]);
+		expect(first.eventId).not.toBe(second.eventId);
+		// The same projection the TypeORM append carries: the identity, the version the write produced and
+		// the two materialised statuses, plus what the move adds.
+		expect(first.payload).toMatchObject({ orderId: 'order-1', version: placed.version, cartId: 'cart-1' });
+		expect(second.payload).toMatchObject({ orderId: 'order-1', version: confirmed.version });
+	});
+
+	it('numbers each order’s events in a partition of its own', async () => {
+		const fixture = onMikroOrm();
+
+		fixture.orders.push({ ...fixture.order, id: 'order-2' });
+
+		await fixture.service.recompute('order-1', 'PLACED', { event: { name: 'order.placed' } } as never);
+		await fixture.service.recompute('order-2', 'PLACED', { event: { name: 'order.placed' } } as never);
+		await fixture.service.recompute('order-1', 'CANCEL', { event: { name: 'order.canceled' } } as never);
+
+		expect((await rows()).map((row) => [row.partitionKey, row.sequence, row.eventName])).toEqual([
+			['ORDER:order-1', 1, 'order.placed'],
+			['ORDER:order-1', 2, 'order.canceled'],
+			['ORDER:order-2', 1, 'order.placed']
+		]);
+	});
+
+	it('appends through the order repository’s own TypeORM manager under TypeORM, and writes nothing through MikroORM', async () => {
+		const fixture = orderFixture({}, { mikroOutbox: orm.em.fork().getRepository(OutboxRow) });
+
+		await fixture.service.recompute('order-1', 'PLACED', { event: { name: 'order.placed' } } as never);
+
+		expect(fixture.events).toHaveLength(1);
+		expect(fixture.events[0].manager).toBe(fixture.manager);
+		expect(await rows()).toEqual([]);
 	});
 });
 
