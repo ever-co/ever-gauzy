@@ -15,7 +15,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { convertToDatetime, getORMType, MultiORMEnum } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import { Organization } from '../../core/entities/internal';
-import { RequestContext } from '../../core';
+import { RequestContext } from '../../core/context';
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';

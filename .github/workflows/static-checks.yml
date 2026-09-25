@@ -309,3 +309,10 @@ jobs:
       - name: Every declared dependency range is resolved in yarn.lock
         if: always()
         run: node tools/scripts/lockfile-coverage-check.mjs
+
+      # The lib/core barrel re-exports core.module, so a kernel file that imports it closes a require cycle:
+      # it made TokenModule undefined in app.module.spec, then made the API fail to boot with
+      # "Nest cannot create the PaymentModule instance" once the first one was fixed.
+      - name: No kernel file imports the lib/core barrel
+        if: always()
+        run: node tools/scripts/core-barrel-import-check.mjs

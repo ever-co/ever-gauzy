@@ -18,7 +18,8 @@ import {
 } from '@gauzy/contracts';
 import { getEmailWithPostfix } from '../core/seeds/utils';
 import { User } from './user.entity';
-import { getUserDummyImage, Role } from '../core';
+import { getUserDummyImage } from '../core/utils';
+import { Role } from '../core/entities/internal';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from '../employee/default-employees';
 import { DEFAULT_CANDIDATES } from '../candidate/default-candidates';
 import { DEFAULT_SUPER_ADMINS, DEFAULT_ADMINS } from './default-users';

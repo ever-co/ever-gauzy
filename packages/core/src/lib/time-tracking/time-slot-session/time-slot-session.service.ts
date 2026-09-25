@@ -3,7 +3,7 @@ import { Between } from 'typeorm';
 import { ID, ITimeSlotSession } from '@gauzy/contracts';
 import { TimeSlotSession } from './time-slot-session.entity';
 import { MikroOrmTimeSlotSessionRepository, TypeOrmTimeSlotSessionRepository } from './repository';
-import { TenantAwareCrudService } from '../../core';
+import { TenantAwareCrudService } from '../../core/crud';
 
 @Injectable()
 export class TimeSlotSessionService extends TenantAwareCrudService<TimeSlotSession> {
