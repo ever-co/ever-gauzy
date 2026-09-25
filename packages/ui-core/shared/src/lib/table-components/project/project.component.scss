@@ -14,6 +14,19 @@
     object-fit: cover;
   }
 
+  // Thumbnail-only list (e.g. a contact's projects): keep it compact so it
+  // sits level with the member avatars in the same row.
+  &.project-list {
+    flex-wrap: wrap;
+    gap: 4px;
+
+    img {
+      width: 22px;
+      height: 22px;
+      box-shadow: none;
+    }
+  }
+
   span .member {
     color: var(--gauzy-text-color-2);
     font-size: 11px;
