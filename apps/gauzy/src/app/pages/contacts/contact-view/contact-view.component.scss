@@ -337,7 +337,10 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 	}
 
 	.field-value {
+		// 11px.
+		font-size: 0.6875rem;
 		font-weight: 500;
+		line-height: 1rem;
 
 		// The theme's primary rather than the shared link blue, which sat loud
 		// against every theme's palette.
