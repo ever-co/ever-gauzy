@@ -194,6 +194,10 @@ export async function createGraphqlModuleOptions(
 		// is added only when the transport package is installed, so an installation without it boots as
 		// it does today. The socket listens on this endpoint's path without being told: the driver hands
 		// `path` above to the subscription server, which uses it when the `graphql-ws` options name none.
+		// Each socket operation also runs inside a request context of its own, built from the request
+		// the `context` factory above gave it. `RequestContextMiddleware` opens that context for an HTTP
+		// request and never sees a WebSocket message, so without this the guards and every tenant-scoped
+		// read found no caller on the socket.
 		...subscriptionTransportOptions({ validationRules })
 	} as GqlModuleOptions;
 }

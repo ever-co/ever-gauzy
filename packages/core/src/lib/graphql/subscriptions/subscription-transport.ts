@@ -1,6 +1,15 @@
 import { ApolloDriverConfig } from '@nestjs/apollo';
-import { DocumentNode, GraphQLError, GraphQLSchema, ValidationRule, specifiedRules, validate } from 'graphql';
+import {
+	DocumentNode,
+	ExecutionArgs,
+	GraphQLError,
+	GraphQLSchema,
+	ValidationRule,
+	specifiedRules,
+	validate
+} from 'graphql';
 import type { CreateGraphqlRequestContextOptions } from '../graphql-context';
+import { executeInRequestContext, subscribeInRequestContext } from './subscription-request-context';
 
 /**
  * The transport package the sub-protocol needs.
@@ -106,9 +115,20 @@ export function supportsSubscriptionTransport(): boolean {
  *     `{ __schema { … } }` over the socket — introspection is answered by graphql-js itself, so no
  *     guard ever sees it. The socket now validates with the same rules the HTTP request does.
  *
+ * 🛑 **An operation on the socket had no request context, so no subscription could ever be served.**
+ * `RequestContext` is read from a CLS store that only `RequestContextMiddleware` opens, and that is
+ * Express middleware: an operation arriving in a WebSocket message ran with no store at all.
+ * `TenantPermissionGuard` found no tenant and refused every subscription, and the filter each
+ * subscription screens its events with compared every event's tenant with null. `execute` and
+ * `subscribe` are now `graphql`'s own, run inside a store of the operation's own holding a context
+ * built from the operation's request (see `subscription-request-context.ts`), so the guards, the
+ * credential and tenant and organization scoping behave as they do on HTTP.
+ *
  * `validate` is not in the subset of `graphql-ws` options `@nestjs/graphql` types, but it is passed
  * through: `GqlSubscriptionService` spreads the `graphql-ws` options into `useServer` verbatim, which is
  * what the cast below relies on and what the transport's spec exercises against `graphql-ws` itself.
+ * The same spread is what lets `execute` and `subscribe` here replace the plain `graphql` functions
+ * the service passes by default.
  *
  * @param options The rules the socket is held to.
  * @returns The `subscriptions` option, or an empty object.
@@ -137,12 +157,18 @@ export function subscriptionTransportOptions(
 export function createSubscriptionServerOptions(options: SubscriptionTransportOptions = {}): {
 	onConnect: (context: unknown) => boolean;
 	validate: (schema: GraphQLSchema, document: DocumentNode) => ReadonlyArray<GraphQLError>;
+	execute: (args: ExecutionArgs) => ReturnType<typeof executeInRequestContext>;
+	subscribe: (args: ExecutionArgs) => ReturnType<typeof subscribeInRequestContext>;
 } {
 	const rules = [...specifiedRules, ...(options.validationRules ?? [])];
 
 	return {
 		onConnect: (context: unknown) => acceptSubscriptionConnection(context),
-		validate: (schema: GraphQLSchema, document: DocumentNode) => validate(schema, document, rules)
+		validate: (schema: GraphQLSchema, document: DocumentNode) => validate(schema, document, rules),
+		// Each operation runs inside a request context of its own, built from the request the context
+		// factory gave it — the one the guards authenticate.
+		execute: (args: ExecutionArgs) => executeInRequestContext(args),
+		subscribe: (args: ExecutionArgs) => subscribeInRequestContext(args)
 	};
 }
 
@@ -234,11 +260,11 @@ export function subscriptionConnectionHeaders(
  * reported as `INTERNAL_ERROR` instead of being authenticated or refused.
  *
  * A socket operation now gets a request whose headers are the connection's credential and scope, so
- * the guards authenticate it with the resolver they use for HTTP. What that cannot do from here is
- * give the operation the request-context store `RequestContext` reads: that store is opened by
- * `RequestContextMiddleware`, an HTTP middleware that never runs for a socket, so
- * `TenantPermissionGuard` still finds no tenant and refuses. Opening that store around a socket
- * operation belongs in `core/context/`, beside the middleware.
+ * the guards authenticate it with the resolver they use for HTTP. The request is also what the
+ * operation's request context is built from: `createSubscriptionServerOptions`'s `execute` and
+ * `subscribe` open the store `RequestContext` reads around the operation (`RequestContextMiddleware`,
+ * which opens it on HTTP, never runs for a socket), and the user the `AuthGuard` attaches to this
+ * request is the one `TenantPermissionGuard` and every tenant-scoped read then see.
  *
  * @param source Whatever the driver handed the context factory.
  * @returns The request, and the headers to read the channel from.

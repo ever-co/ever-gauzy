@@ -1,7 +1,9 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { HttpException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
+import { ClsService } from 'nestjs-cls';
 import { RequestContext } from './request-context';
 
 /**
@@ -217,5 +219,88 @@ describe('RequestContext.currentCorrelationId', () => {
 		RequestContext.setContextId('correlation-xyz');
 
 		expect(RequestContext.currentCorrelationId()).toBe('correlation-xyz');
+	});
+});
+
+/**
+ * `runWithRequest` opens the store `RequestContextMiddleware` opens, for an operation the middleware
+ * never sees — an operation on the GraphQL subscription socket, which arrives in a WebSocket message.
+ * The subscription transport's own specs drive it through `graphql-ws`; these pin the store itself,
+ * with the real `ClsService` the application installs.
+ */
+describe('RequestContext.runWithRequest', () => {
+	const originalClsService = RequestContext['clsService'];
+	let cls: ClsService;
+
+	beforeEach(() => {
+		cls = new ClsService(new AsyncLocalStorage());
+		RequestContext.setClsService(cls);
+	});
+
+	afterEach(() => {
+		RequestContext['clsService'] = originalClsService;
+	});
+
+	it('reads the credential the request carries once a guard has attached it', async () => {
+		const req: any = { headers: {} };
+
+		const seen = await RequestContext.runWithRequest(req, async () => {
+			const before = RequestContext.currentTenantId();
+			// What the AuthGuard does: the user is attached to the request after the context was opened.
+			req.user = { id: 'user-1', tenantId: 'tenant-1', lastOrganizationId: 'organization-1' };
+			await Promise.resolve();
+
+			return {
+				before,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId(),
+				request: RequestContext.currentRequest()
+			};
+		});
+
+		expect(seen).toEqual({ before: null, tenantId: 'tenant-1', organizationId: 'organization-1', request: req });
+	});
+
+	it('gives each run a correlation id, the one it is handed or a generated one', () => {
+		const handed = RequestContext.runWithRequest({ headers: {} } as any, () => RequestContext.getContextId(), {
+			id: 'operation-1'
+		});
+		const generated = RequestContext.runWithRequest({ headers: {} } as any, () => RequestContext.getContextId());
+
+		expect(handed).toBe('operation-1');
+		expect(generated).toEqual(expect.any(String));
+		expect(generated).not.toBe('operation-1');
+	});
+
+	it('does not outlive the work, and keeps concurrent runs apart', async () => {
+		const run = (tenantId: string) =>
+			RequestContext.runWithRequest({ headers: {}, user: { id: tenantId, tenantId } } as any, async () => {
+				await new Promise((resolve) => setImmediate(resolve));
+				return RequestContext.currentTenantId();
+			});
+
+		expect(await Promise.all([run('tenant-a'), run('tenant-b')])).toEqual(['tenant-a', 'tenant-b']);
+		expect(RequestContext.currentRequestContext()).toBeUndefined();
+		expect(RequestContext.currentTenantId()).toBeNull();
+	});
+
+	it('opens a fresh store even inside another, so nothing from the enclosing one is inherited', () => {
+		const inner = cls.run(() => {
+			cls.set('leftover', 'from-the-enclosing-store');
+			cls.set(RequestContext.name, new RequestContext({ req: { headers: {}, user: { tenantId: 'outer' } } as any }));
+
+			return RequestContext.runWithRequest({ headers: {} } as any, () => ({
+				leftover: cls.get('leftover'),
+				tenantId: RequestContext.currentTenantId()
+			}));
+		});
+
+		expect(inner).toEqual({ leftover: undefined, tenantId: null });
+	});
+
+	it('runs the work without a context when no CLS service was installed', () => {
+		RequestContext.setClsService(undefined as any);
+
+		expect(RequestContext.runWithRequest({ headers: {} } as any, () => RequestContext.currentTenantId())).toBeNull();
 	});
 });

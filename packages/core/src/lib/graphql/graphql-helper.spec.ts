@@ -1,7 +1,10 @@
+import { AsyncLocalStorage } from 'async_hooks';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
-import { DocumentNode, GraphQLError, GraphQLSchema, buildSchema, parse } from 'graphql';
+import { DocumentNode, ExecutionArgs, GraphQLError, GraphQLSchema, buildSchema, parse } from 'graphql';
+import { ClsService } from 'nestjs-cls';
 import { ConfigService } from '@gauzy/config';
 import { GraphQLApiConfigurationOptions } from '@gauzy/common';
+import { RequestContext } from '../core/context/request-context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { createGraphqlModuleOptions } from './graphql-helper';
 
@@ -57,6 +60,8 @@ describe('createGraphqlModuleOptions', () => {
 			return options.subscriptions?.['graphql-ws'] as {
 				onConnect: (context: unknown) => boolean;
 				validate: (schema: GraphQLSchema, document: DocumentNode) => ReadonlyArray<GraphQLError>;
+				execute: (args: ExecutionArgs) => Promise<unknown>;
+				subscribe: (args: ExecutionArgs) => Promise<unknown>;
 			};
 		};
 
@@ -80,6 +85,30 @@ describe('createGraphqlModuleOptions', () => {
 
 			expect(onConnect({ connectionParams: {}, extra: {} })).toBe(false);
 			expect(onConnect({ connectionParams: { Authorization: 'Bearer token' }, extra: {} })).toBe(true);
+		});
+
+		it('runs an operation inside a request context built from the operation’s request', async () => {
+			// `RequestContextMiddleware` opens the request context for HTTP only, so an operation on the
+			// socket used to run with none: the guards found no tenant and refused every subscription.
+			const originalClsService = RequestContext['clsService'];
+			RequestContext.setClsService(new ClsService(new AsyncLocalStorage()));
+
+			try {
+				const { execute, subscribe } = await socketOptions();
+				const req = { headers: {}, user: { id: 'user-1', tenantId: 'tenant-1' } };
+
+				const result = await execute({
+					schema: buildSchema(SDL),
+					document: parse('{ hello }'),
+					rootValue: { hello: () => RequestContext.currentTenantId() },
+					contextValue: { req }
+				});
+
+				expect(result).toEqual({ data: { hello: 'tenant-1' } });
+				expect(subscribe).toEqual(expect.any(Function));
+			} finally {
+				RequestContext['clsService'] = originalClsService;
+			}
 		});
 	});
 

@@ -130,6 +130,51 @@ export class RequestContext {
 	}
 
 	/**
+	 * Runs work inside a request context of its own, for an operation `RequestContextMiddleware` never
+	 * sees.
+	 *
+	 * The middleware is Express middleware, so it opens the store for an HTTP request and for nothing
+	 * else. An operation on the GraphQL subscription socket arrives in a WebSocket message instead, and
+	 * without a store of its own every accessor on this class answered as if nobody were signed in:
+	 * `currentTenantId()` was null, so `TenantPermissionGuard` refused every subscription, and the filter
+	 * a subscription scopes its events with compared each event's tenant with null.
+	 *
+	 * This opens the store the middleware opens and puts a context built from `req` in it, under the
+	 * key the middleware uses. The store is always a **fresh** one (`ifNested: 'override'`): the default
+	 * would copy an enclosing store's values into it, and an operation must never start out holding a
+	 * context it did not build. The request is held by reference, which is what lets the credential
+	 * through — the guard that authenticates the operation attaches the user to `req`, and every
+	 * accessor here reads the user from there, exactly as on HTTP.
+	 *
+	 * The store lives as long as the work and whatever continues from it, and no longer: code that
+	 * runs after `callback` has returned, outside anything it started, sees no context at all.
+	 *
+	 * Without a CLS service — a script, or a unit test that never booted the application — the work
+	 * runs as it did before, with no context, rather than failing.
+	 *
+	 * @param req - The request the operation is authenticated and scoped from.
+	 * @param callback - The work to run inside the context.
+	 * @param options - The context id (the correlation id); a random one is generated when absent.
+	 * @returns Whatever `callback` returns.
+	 */
+	static runWithRequest<T>(req: Request, callback: () => T, options: { id?: ID } = {}): T {
+		const clsService = RequestContext.clsService;
+
+		if (!clsService) {
+			return callback();
+		}
+
+		return clsService.run({ ifNested: 'override' }, () => {
+			// The constructor stores the context id in this same store, so the correlation id of the
+			// operation is readable through `getContextId()` as it is on HTTP.
+			const context = new RequestContext({ id: options.id, req });
+			clsService.set(RequestContext.name, context);
+
+			return callback();
+		});
+	}
+
+	/**
 	 * Gets the current request context.
 	 *
 	 * @returns The current RequestContext instance.

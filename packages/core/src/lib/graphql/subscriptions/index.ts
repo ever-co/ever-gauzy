@@ -6,5 +6,6 @@ export * from './subscription-consumer';
 export * from './subscription-delivery';
 export * from './subscription-hub.service';
 export * from './subscription-limits';
+export * from './subscription-request-context';
 export * from './subscription-scope';
 export * from './subscription-transport';
