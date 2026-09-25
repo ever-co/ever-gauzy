@@ -251,8 +251,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			// Process response if available
 			if (employees) {
 				employees.forEach((employee: IEmployee) => {
-					const { firstName, lastName } = employee.user;
-					const fullName = firstName && lastName ? `${firstName} ${lastName}` : 'Unknown Employee';
+					const fullName = this.getEmployeeDisplayName(employee) || 'Unknown Employee';
 
 					this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
 						name: fullName,
