@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import {
+	Collection,
 	CreateOptions,
 	EntityProperty,
 	EntityRepository,
 	Platform,
+	ReferenceKind,
 	RequiredEntityData,
 	Utils,
 	UuidType
@@ -111,12 +113,46 @@ export function createNewMikroOrmEntity<T extends object>(
 	const [primaryKey] = primaryKeys;
 	const { [primaryKey.name]: stated, ...graph } = data as Record<string, unknown>;
 
+	// To-many relations are set after the entity exists. A managed create leaves a collection uninitialised — as
+	// if it were a stored row's, not yet loaded — so the rows the payload names were silently not linked (a
+	// product's tags: no pivot row written), or the create failed with `Collection<Tag> … not initialized`.
+	const collections = meta.relations.filter(
+		(relation) =>
+			(relation.kind === ReferenceKind.MANY_TO_MANY || relation.kind === ReferenceKind.ONE_TO_MANY) &&
+			graph[relation.name] !== undefined
+	);
+	const toMany: Record<string, unknown> = {};
+	for (const relation of collections) {
+		// An item that states its key is a reference to the stored row, as a nested `{ id }` is for a to-one
+		// relation under the managed create; `assign()` would insert it as a new row instead.
+		const target = em.getMetadata().find(relation.type);
+		const targetKey = target?.primaryKeys?.length === 1 ? target.primaryKeys[0] : undefined;
+		const value = graph[relation.name];
+		toMany[relation.name] =
+			Array.isArray(value) && target && targetKey
+				? value.map((item) =>
+						item && typeof item === 'object' && !Utils.isEntity(item) && isStated((item as any)[targetKey])
+							? em.getReference(target.class, (item as any)[targetKey])
+							: item
+					)
+				: value;
+		delete graph[relation.name];
+	}
+
 	const entity = repository.create(graph as RequiredEntityData<T>, options);
 
 	if (isStated(stated)) {
 		(entity as Record<string, unknown>)[primaryKey.name] = stated;
 	} else if (isUuidKey(primaryKey) && !databaseSuppliesPrimaryKey(em.getPlatform(), primaryKey)) {
 		(entity as Record<string, unknown>)[primaryKey.name] = randomUUID();
+	}
+
+	if (collections.length) {
+		// A new row's collections hold nothing yet: say so, then link what the payload names.
+		for (const relation of collections) {
+			(entity as Record<string, Collection<object>>)[relation.name]?.hydrate([], true);
+		}
+		em.assign(entity, toMany as never);
 	}
 
 	return entity;
