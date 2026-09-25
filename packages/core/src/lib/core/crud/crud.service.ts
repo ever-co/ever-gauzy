@@ -42,6 +42,7 @@ import {
 import { parseTypeORMFindCountOptions } from './utils';
 import { applyRowOffset, statesEmptyWindow } from './find-window.helper';
 import { assertCriteriaHasPredicate } from './criteria.helper';
+import { createNewMikroOrmEntity } from './mikro-orm-insert.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
@@ -629,6 +630,19 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	/**
 	 * Creates a new entity or updates an existing one based on the provided entity data.
 	 *
+	 * **Under MikroORM a new row is built by {@link createNewMikroOrmEntity}.** The managed create this method
+	 * has always used is what keeps a nested `{ id }` a reference to an existing row, but a managed entity
+	 * that carries its own primary key is registered as already stored, so MikroORM never inserted it: the
+	 * call answered with the entity it was handed and no row existed. And a new row left without a key relied
+	 * on a `gen_random_uuid()` default that only PostgreSQL has. The helper keeps the managed graph, states
+	 * the key after it is built, and generates a uuid where the dialect has no default.
+	 *
+	 * **A MikroORM failure is reported as one.** The MikroORM branch used to log its error and fall through
+	 * into the TypeORM branch, which under `DB_ORM=mikro-orm` knows only the skeleton of the entity — so a
+	 * refused insert was retried through a repository that knows nothing of the row but its identifier and
+	 * timestamps, and whatever that answered was returned as the created row. The error now reaches the
+	 * caller through the catch below, as every other failure does.
+	 *
 	 * @param entity The partial entity data for creation or update.
 	 * @param createOptions Options for the creation of the entity in MikroORM.
 	 * @param upsertOptions Options for the upsert operation in MikroORM.
@@ -649,32 +663,25 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	): Promise<T> {
 		try {
 			switch (this.ormType) {
-				case MultiORMEnum.MikroORM:
-					try {
-						if (partialEntity['id']) {
-							// Try to load the existing entity
-							const entity = await this.mikroOrmRepository.findOne(partialEntity['id']);
-							if (entity) {
-								// If the entity has an ID, perform an upsert operation
-								this.mikroOrmRepository.assign(entity, partialEntity as any, assignOptions);
-								await this.mikroOrmRepository.flush();
+				case MultiORMEnum.MikroORM: {
+					if (partialEntity['id']) {
+						// Try to load the existing entity
+						const entity = await this.mikroOrmRepository.findOne(partialEntity['id']);
+						if (entity) {
+							// If the entity has an ID, perform an upsert operation
+							this.mikroOrmRepository.assign(entity, partialEntity as any, assignOptions);
+							await this.mikroOrmRepository.flush();
 
-								return this.serialize(entity);
-							}
+							return this.serialize(entity);
 						}
-						// If the entity doesn't have an ID, it's new and should be persisted
-						// Create a new entity using MikroORM
-						const newEntity = this.mikroOrmRepository.create(
-							partialEntity as RequiredEntityData<T>,
-							createOptions
-						);
-
-						// Persist new entity and flush
-						await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
-						return this.serialize(newEntity);
-					} catch (error) {
-						console.error('Error during mikro orm create crud transaction:', redactDatabaseError(error));
 					}
+					// No stored row has this id (or none was stated): build the new row so that MikroORM inserts it.
+					const newEntity = createNewMikroOrmEntity<T>(this.mikroOrmRepository, partialEntity, createOptions);
+
+					// Persist new entity and flush
+					await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
+					return this.serialize(newEntity);
+				}
 				case MultiORMEnum.TypeORM:
 					const newEntity = this.typeOrmRepository.create(partialEntity as DeepPartial<T>);
 					return await this.typeOrmRepository.save(newEntity);
@@ -691,6 +698,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Creates multiple new entities in a single bulk operation.
 	 * More efficient than calling create() in a loop as it batches the database operations.
 	 *
+	 * Under MikroORM each row is built by {@link createNewMikroOrmEntity}, for the reason {@link create}
+	 * gives: a managed entity created with its own id was never inserted.
+	 *
 	 * @param entities The array of partial entity data for creation.
 	 * @returns The array of created entities.
 	 */
@@ -699,7 +709,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const created = entities.map((entity) =>
-						this.mikroOrmRepository.create(entity as RequiredEntityData<T>, {
+						createNewMikroOrmEntity<T>(this.mikroOrmRepository, entity, {
 							partial: true,
 							managed: true
 						})
