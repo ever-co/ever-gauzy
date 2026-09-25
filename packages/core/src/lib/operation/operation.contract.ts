@@ -1,5 +1,7 @@
-import { EntityManager } from 'typeorm';
+import { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
+import { EntityManager as TypeOrmEntityManager } from 'typeorm';
 import { ID, JsonData } from '@gauzy/contracts';
+import { MultiORMEnum } from '../core/utils';
 import { Operation } from './operation.entity';
 
 /**
@@ -31,9 +33,46 @@ export interface IOperationLogger {
 }
 
 /**
- * What a step is handed while it runs.
+ * The manager a step's local writes go through, and the ORM it belongs to.
+ *
+ * **The manager is the configured ORM's, and `orm` says which one it is.** `@MultiORMColumn` and the
+ * relation decorators register an entity with the active ORM alone, so under `DB_ORM=mikro-orm` TypeORM
+ * knows no column the kernel's entities declare with them: a TypeORM manager handed to a step there could
+ * not write a row of any of them. A step narrows on `orm` and receives the manager of that ORM, typed as
+ * one:
+ *
+ * - **`typeorm`** — the data source's own `EntityManager`, shared by every step. Each statement commits
+ *   on its own; `manager.transaction(...)` groups several.
+ * - **`mikro-orm`** — a fork of the installation's `EntityManager`, made for this attempt alone. Its
+ *   identity map starts empty and is the step's own, so nothing a step loads leaks into a request or
+ *   into the next attempt, and it is usable on a worker, where the global manager refuses work without
+ *   a request context. Nothing is flushed for the step: a native statement (`insert`, `nativeUpdate`)
+ *   commits on its own, a `flush()` commits what the step persisted, and `transactional(...)` groups
+ *   several.
+ *
+ * On both ORMs it is **the connection's manager, not a transaction around the attempt**: the row that
+ * records the step as `COMPLETED` is a further commit after the step returns. A process that dies between
+ * the two leaves an effect with the step still `RUNNING`; a resume invokes the step again, which is why a
+ * local write guards on {@link IOperationStepContext.idempotencyKey} exactly as a provider call does.
  */
-export interface IOperationStepContext {
+export type IOperationStepManager =
+	| {
+			/** The installation runs TypeORM. */
+			readonly orm: MultiORMEnum.TypeORM;
+			/** The data source's own manager. */
+			readonly manager: TypeOrmEntityManager;
+	  }
+	| {
+			/** The installation runs MikroORM. */
+			readonly orm: MultiORMEnum.MikroORM;
+			/** A fork of the installation's manager, made for this attempt. */
+			readonly manager: MikroOrmEntityManager;
+	  };
+
+/**
+ * What a step is handed while it runs, apart from its manager.
+ */
+export interface IOperationStepContextMembers {
 	/** The operation this step belongs to. */
 	readonly operationId: ID;
 	/** The step's stable name. */
@@ -45,17 +84,6 @@ export interface IOperationStepContext {
 	 * as the provider's own idempotency key and a step that writes locally can use it as a guard.
 	 */
 	readonly idempotencyKey: string;
-	/**
-	 * The manager for the step's local writes.
-	 *
-	 * **It is the data source's own manager, not a transaction around the attempt**: each statement a
-	 * step writes through it commits on its own, and the row that records the step as `COMPLETED` is a
-	 * further commit after the step returns. A process that dies between the two leaves an effect with
-	 * the step still `RUNNING`; a resume invokes the step again, which is why a local write guards on
-	 * {@link idempotencyKey} exactly as a provider call does. A step that needs several local writes to
-	 * land together opens its own transaction on this manager.
-	 */
-	readonly manager: EntityManager;
 	readonly logger: IOperationLogger;
 	/** The operation's shared variables; mutated values are persisted with the step's outcome. */
 	readonly variables: Record<string, unknown>;
@@ -74,6 +102,12 @@ export interface IOperationStepContext {
 	 */
 	cancelRequested(): Promise<boolean>;
 }
+
+/**
+ * What a step is handed while it runs: its members, and the manager of the ORM the installation runs
+ * (see {@link IOperationStepManager}).
+ */
+export type IOperationStepContext = IOperationStepContextMembers & IOperationStepManager;
 
 /**
  * What a step returns.

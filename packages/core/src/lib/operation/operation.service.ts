@@ -2,7 +2,17 @@ import { ConflictException, Injectable, Logger, NotFoundException } from '@nestj
 import { randomUUID } from 'node:crypto';
 import { FindManyOptions, FindOptionsWhere, In, IsNull } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { EntityData, FilterQuery, LockMode, ReferenceKind } from '@mikro-orm/core';
+import {
+	EntityClass,
+	EntityData,
+	EntityManager as MikroOrmEntityManager,
+	FilterQuery,
+	FindOneOptions,
+	FindOptions,
+	LockMode,
+	QueryOrder,
+	ReferenceKind
+} from '@mikro-orm/core';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID, IOperationError, OperationStatus, OperationStepStatus } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
@@ -14,6 +24,7 @@ import { OperationStep } from './operation-step.entity';
 import { OperationRegistry } from './operation.registry';
 import { OperationEventPublisher } from './operation-event.publisher';
 import {
+	IOperationDefinition,
 	IOperationExecutionOptions,
 	IOperationExecutionResult,
 	IOperationLogger,
@@ -21,6 +32,7 @@ import {
 	IOperationStartResult,
 	IOperationStepContext,
 	IOperationStepDefinition,
+	IOperationStepManager,
 	IOperationStepResult,
 	IStepRetryPolicy
 } from './operation.contract';
@@ -116,6 +128,16 @@ export class OperationLeaseLostError extends ConflictException {
  * through — {@link saveStep} and {@link settle} — rather than from the surfaces around it, so the
  * REST route and the GraphQL mutation that perform the same write announce it identically and a
  * subscriber cannot tell which protocol wrote the row.
+ *
+ * 🛑 **Every read and write of the two tables has an arm per ORM, and it is the configured ORM's.**
+ * `@MultiORMColumn` and the relation decorators register an entity with the active ORM alone, so under
+ * `DB_ORM=mikro-orm` TypeORM knows the two entities as skeletons — the base entity's own columns and
+ * nothing this domain declares — and every TypeORM read, insert, lock or save of them fails there. The
+ * runtime was written on the TypeORM repositories, so on that ORM no operation could be started, claimed,
+ * read or stepped. Each of those moves now dispatches on {@link ormType}, and the MikroORM arm keeps the
+ * TypeORM arm's rules: the same tenant scoping, the same lease and claim decisions under the same row lock
+ * (`FOR UPDATE` on Postgres and MySQL; the transaction on the embedded dialect), and the same unique
+ * indexes refusing the same inserts. The TypeORM arm of each is the code it always was.
  */
 @Injectable()
 export class OperationService extends CrudService<Operation> {
@@ -167,6 +189,18 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
+	 * The entity manager every MikroORM arm of the runtime reads and writes both tables through.
+	 *
+	 * One manager for the operation and its steps, because MikroORM's manager is not per entity and the
+	 * header and its plan are written in one of its transactions. Every read through it bypasses the
+	 * identity map and every write is native, so none of them needs a request context: a worker or a sweep
+	 * reaches the store through it exactly as a request does.
+	 */
+	private get mikroOrmEntityManager(): MikroOrmEntityManager {
+		return this.mikroOrmOperationRepository.getEntityManager();
+	}
+
+	/**
 	 * Creates an operation with its step definitions.
 	 *
 	 * A submission that repeats an earlier one does not start a second operation: the same
@@ -196,7 +230,7 @@ export class OperationService extends CrudService<Operation> {
 			return { operation: existing, created: false };
 		}
 
-		const operation = this.typeOrmOperationRepository.create({
+		const values = {
 			type: input.type,
 			status: OperationStatus.PENDING,
 			input: input.input ?? {},
@@ -214,30 +248,13 @@ export class OperationService extends CrudService<Operation> {
 			correlationId: input.correlationId ?? randomUUID(),
 			tenantId,
 			organizationId
-		} as Partial<Operation>);
+		} as Partial<Operation>;
 
 		try {
-			// The header and its steps are written in one transaction, so an operation is never visible
-			// without the plan it is supposed to execute.
-			const created = await this.typeOrmOperationRepository.manager.transaction(async (manager) => {
-				const saved = await manager.save(Operation, operation);
-
-				const steps = definition.steps.map((step) =>
-					manager.create(OperationStep, {
-						operationId: saved.id,
-						name: step.name,
-						order: step.order,
-						status: OperationStepStatus.PENDING,
-						attemptCount: 0,
-						tenantId,
-						organizationId
-					} as Partial<OperationStep>)
-				);
-
-				await manager.save(OperationStep, steps);
-
-				return saved;
-			});
+			const created =
+				this.ormType === MultiORMEnum.MikroORM
+					? await this.insertOnMikroOrm(values, definition)
+					: await this.insertOnTypeOrm(values, definition);
 
 			return { operation: created, created: true };
 		} catch (error) {
@@ -269,6 +286,98 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
+	 * Writes an operation's header and its plan through TypeORM.
+	 *
+	 * The header and its steps are written in one transaction, so an operation is never visible without
+	 * the plan it is supposed to execute.
+	 *
+	 * @param values The header's columns.
+	 * @param definition The registered definition, whose steps become the plan.
+	 * @returns The stored header.
+	 */
+	private async insertOnTypeOrm(values: Partial<Operation>, definition: IOperationDefinition): Promise<Operation> {
+		const operation = this.typeOrmOperationRepository.create(values);
+
+		return this.typeOrmOperationRepository.manager.transaction(async (manager) => {
+			const saved = await manager.save(Operation, operation);
+
+			const steps = definition.steps.map((step) =>
+				manager.create(OperationStep, {
+					operationId: saved.id,
+					name: step.name,
+					order: step.order,
+					status: OperationStepStatus.PENDING,
+					attemptCount: 0,
+					tenantId: values.tenantId,
+					organizationId: values.organizationId
+				} as Partial<OperationStep>)
+			);
+
+			await manager.save(OperationStep, steps);
+
+			return saved;
+		});
+	}
+
+	/**
+	 * Writes an operation's header and its plan through MikroORM, in one transaction as the TypeORM arm
+	 * does.
+	 *
+	 * **Native inserts, stated in full.** A unique index is what refuses a second submission, and a native
+	 * insert hands its violation straight back to {@link start}, which reads it as a lost race. The row is
+	 * therefore stated the way the idempotency kernel states its claim row (see {@link mikroOrmInsertOf}):
+	 * the scope and the parent travel as the relations MikroORM writes them through, because the
+	 * `relationId` mirrors are mapped `persist: false`; and the identifier, the timestamps and the two
+	 * flags are stated, because the identifier is a column default only on Postgres and a native insert
+	 * runs no `onCreate` hook. The header is read back inside the transaction, so the caller receives the
+	 * row as stored.
+	 *
+	 * @param values The header's columns.
+	 * @param definition The registered definition, whose steps become the plan.
+	 * @returns The stored header.
+	 */
+	private async insertOnMikroOrm(values: Partial<Operation>, definition: IOperationDefinition): Promise<Operation> {
+		const id = randomUUID() as ID;
+		const now = new Date();
+
+		return this.mikroOrmEntityManager.transactional(async (em) => {
+			await em.insert(Operation, mikroOrmInsertOf({ ...values, id }, now) as EntityData<Operation>);
+
+			if (definition.steps.length) {
+				await em.insertMany(
+					OperationStep,
+					definition.steps.map(
+						(step) =>
+							mikroOrmInsertOf(
+								{
+									id: randomUUID(),
+									operationId: id,
+									name: step.name,
+									order: step.order,
+									status: OperationStepStatus.PENDING,
+									attemptCount: 0,
+									tenantId: values.tenantId,
+									organizationId: values.organizationId
+								},
+								now
+							) as EntityData<OperationStep>
+					)
+				);
+			}
+
+			const stored = await readOneOnMikroOrm(em, Operation, { id } as FilterQuery<Operation>);
+
+			if (!stored) {
+				// The row was inserted by this transaction a statement ago; a read that misses it is a store
+				// fault, and it is reported as one rather than answered with an operation nobody can find.
+				throw new Error(`The operation "${id}" was inserted but could not be read back.`);
+			}
+
+			return stored;
+		});
+	}
+
+	/**
 	 * Takes the lease of an operation.
 	 *
 	 * The lease is the third layer of the exclusivity rule and the one that survives a crash: only the
@@ -290,6 +399,10 @@ export class OperationService extends CrudService<Operation> {
 		ownerId: string,
 		leaseMs: number = OperationService.DEFAULT_LEASE_MS
 	): Promise<Operation | null> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return this.claimOnMikroOrm(operationId, ownerId, leaseMs);
+		}
+
 		return this.typeOrmOperationRepository.manager.transaction(async (manager) => {
 			const query = manager.createQueryBuilder(Operation, 'operation').where({ id: operationId });
 
@@ -326,6 +439,58 @@ export class OperationService extends CrudService<Operation> {
 	}
 
 	/**
+	 * The MikroORM arm of {@link claim}: the same three refusals, decided on the same locked read.
+	 *
+	 * The row is read under `FOR UPDATE` on Postgres and MySQL — the lock the TypeORM arm takes, and not
+	 * `SKIP LOCKED`: a claim names one operation, and a row that is merely being written by `cancel()` or
+	 * by a lease renewal has to be waited for and then judged, not reported as held by a worker that does
+	 * not exist. The embedded dialect serializes writers, so there the transaction is the lock, as in the
+	 * TypeORM arm. The read bypasses the identity map for the reason {@link mergeOperation} gives, and the
+	 * lease is written as a targeted update of the columns the claim owns — the columns the TypeORM arm's
+	 * `save` finds changed.
+	 *
+	 * @param operationId The operation id.
+	 * @param ownerId Identity of the worker claiming it.
+	 * @param leaseMs How long the lease is valid.
+	 * @returns The claimed operation, or null when it is terminal, parked or held by a live lease.
+	 */
+	private async claimOnMikroOrm(operationId: ID, ownerId: string, leaseMs: number): Promise<Operation | null> {
+		const locking = isPostgres() || isMySQL();
+
+		return this.mikroOrmEntityManager.transactional(async (em) => {
+			const operation = await readOneOnMikroOrm(em, Operation, { id: operationId } as FilterQuery<Operation>, {
+				...(locking ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
+			});
+
+			if (!operation || isTerminalStatus(operation.status)) {
+				return null;
+			}
+
+			// Parked on an external decision: resumed by the decision, not by a passing worker.
+			if (operation.state?.awaitingApproval) {
+				return null;
+			}
+
+			if (this.isLeasedByAnother(operation, ownerId)) {
+				return null;
+			}
+
+			const patch = {
+				...this.leaseOf(ownerId, leaseMs),
+				...(operation.status === OperationStatus.PENDING
+					? { status: OperationStatus.RUNNING, startedAt: operation.startedAt ?? new Date() }
+					: {}),
+				// `nativeUpdate` runs no `onUpdate` hook, so the audit column TypeORM's `save` maintains is stated.
+				updatedAt: new Date()
+			};
+
+			await em.nativeUpdate(Operation, { id: operationId } as FilterQuery<Operation>, patch as EntityData<Operation>);
+
+			return Object.assign(operation, patch);
+		});
+	}
+
+	/**
 	 * The operations whose worker has stopped reporting, oldest lease first.
 	 *
 	 * The sweep the durable-operation runtime needs: an operation is stalled when its status is **live** —
@@ -348,6 +513,20 @@ export class OperationService extends CrudService<Operation> {
 	async findStalled(options: { staleMs?: number; limit?: number; now?: Date } = {}): Promise<Operation[]> {
 		const now = options.now ?? new Date();
 		const cutoff = new Date(now.getTime() - (options.staleMs ?? 0));
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			// The same predicate, order and bound as the builder below, in MikroORM's operators: a live
+			// status, a lease that exists, and one that lapsed before the cutoff.
+			return readManyOnMikroOrm(
+				this.mikroOrmEntityManager,
+				Operation,
+				{
+					status: { $in: LIVE_STATUSES },
+					leaseExpiresAt: { $ne: null, $lt: cutoff }
+				} as FilterQuery<Operation>,
+				{ orderBy: { leaseExpiresAt: QueryOrder.ASC }, limit: options.limit ?? 100 } as FindOptions<Operation>
+			);
+		}
 
 		return this.typeOrmOperationRepository
 			.createQueryBuilder('operation')
@@ -786,6 +965,10 @@ export class OperationService extends CrudService<Operation> {
 	 * @returns The operation, or null.
 	 */
 	async findById(id: ID): Promise<Operation | null> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readOneOnMikroOrm(this.mikroOrmEntityManager, Operation, { id } as FilterQuery<Operation>);
+		}
+
 		return this.typeOrmOperationRepository.findOne({ where: { id } as any });
 	}
 
@@ -914,6 +1097,15 @@ export class OperationService extends CrudService<Operation> {
 			return [];
 		}
 
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readManyOnMikroOrm(
+				this.mikroOrmEntityManager,
+				OperationStep,
+				{ operationId: { $in: [...operationIds] } } as FilterQuery<OperationStep>,
+				{ orderBy: { order: QueryOrder.ASC } } as FindOptions<OperationStep>
+			);
+		}
+
 		return this.typeOrmOperationStepRepository.find({
 			where: { operationId: In([...operationIds]) } as any,
 			order: { order: 'ASC' } as any
@@ -959,6 +1151,16 @@ export class OperationService extends CrudService<Operation> {
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			// The same tuple, with "the column is null" spelled as MikroORM spells it: `null` is `IS NULL`.
+			return readOneOnMikroOrm(this.mikroOrmEntityManager, Operation, {
+				type,
+				idempotencyKey,
+				tenantId: tenantId ? tenantId : null,
+				organizationId: organizationId ? organizationId : null
+			} as FilterQuery<Operation>);
+		}
+
 		return this.typeOrmOperationRepository.findOne({
 			where: {
 				type,
@@ -994,6 +1196,16 @@ export class OperationService extends CrudService<Operation> {
 		scope: { tenantId?: ID | null } = {}
 	): Promise<Operation | null> {
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
+
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readOneOnMikroOrm(this.mikroOrmEntityManager, Operation, {
+				aggregateType,
+				aggregateId,
+				status: { $in: LIVE_STATUSES },
+				tenantId: tenantId ? tenantId : null
+			} as FilterQuery<Operation>);
+		}
+
 		const query = this.typeOrmOperationRepository
 			.createQueryBuilder('operation')
 			.where('operation.aggregateType = :aggregateType', { aggregateType })
@@ -1014,6 +1226,15 @@ export class OperationService extends CrudService<Operation> {
 	 * @returns The steps, ascending by `order`.
 	 */
 	async findSteps(operationId: ID): Promise<OperationStep[]> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readManyOnMikroOrm(
+				this.mikroOrmEntityManager,
+				OperationStep,
+				{ operationId } as FilterQuery<OperationStep>,
+				{ orderBy: { order: QueryOrder.ASC } } as FindOptions<OperationStep>
+			);
+		}
+
 		return this.typeOrmOperationStepRepository.find({
 			where: { operationId } as any,
 			order: { order: 'ASC' } as any
@@ -1056,9 +1277,10 @@ export class OperationService extends CrudService<Operation> {
 	 * one onwards, or re-drive B's failed one under a fresh attempt budget. The read routes were
 	 * already scoped through {@link findOperation}; this is the same scope, applied to the moves.
 	 *
-	 * The row is read through the runtime's own repository rather than through the ORM-dispatching
-	 * {@link findOperation}, because the move that follows writes it back through that repository: the
-	 * object it acts on is the same kind of object whichever ORM serves the management reads.
+	 * The row is read through the runtime's own reader rather than through the CRUD base's
+	 * {@link findOperation}, because the move that follows writes it back through the runtime's own arm:
+	 * on either ORM the object it acts on is the row's columns, exactly as {@link require} answers them,
+	 * and never a serialized entity.
 	 *
 	 * **Only the runtime itself reads unscoped.** A caller with no user at all is a worker or a sweep —
 	 * a parent operation cancelling the child it started, a recovery pass resuming what it found
@@ -1080,15 +1302,28 @@ export class OperationService extends CrudService<Operation> {
 			return this.require(id);
 		}
 
-		const operation = scope
-			? await this.typeOrmOperationRepository.findOne({ where: { id, ...scope } as FindOptionsWhere<Operation> })
-			: null;
+		const operation = scope ? await this.findInScope(id, scope) : null;
 
 		if (!operation) {
 			throw new NotFoundException(`The operation "${id}" does not exist.`);
 		}
 
 		return operation;
+	}
+
+	/**
+	 * Reads an operation of one scope, on the configured ORM.
+	 *
+	 * @param id The operation id.
+	 * @param scope The tenant the row has to carry.
+	 * @returns The operation, or null when that scope holds none of this id.
+	 */
+	private async findInScope(id: ID, scope: FindOptionsWhere<Operation>): Promise<Operation | null> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readOneOnMikroOrm(this.mikroOrmEntityManager, Operation, { id, ...scope } as FilterQuery<Operation>);
+		}
+
+		return this.typeOrmOperationRepository.findOne({ where: { id, ...scope } as FindOptionsWhere<Operation> });
 	}
 
 	/**
@@ -1564,7 +1799,8 @@ export class OperationService extends CrudService<Operation> {
 			// Stable across the retries of this step and across processes, so a step that calls a provider
 			// passes it as the provider's own idempotency key and a step that writes locally guards on it.
 			idempotencyKey: `${operationId}:${step.name}`,
-			manager: this.typeOrmOperationRepository.manager,
+			// The configured ORM's manager, and the ORM it belongs to: see `IOperationStepManager`.
+			...this.stepManager(),
 			logger: this.stepLogger(operationId, step.name, attempt),
 			variables,
 			deadlineAt: operation.deadlineAt ? new Date(operation.deadlineAt) : undefined,
@@ -1602,6 +1838,23 @@ export class OperationService extends CrudService<Operation> {
 				return cancelSnapshot;
 			}
 		};
+	}
+
+	/**
+	 * The manager a step attempt writes through, on the configured ORM.
+	 *
+	 * Under TypeORM it is the data source's own manager, as it always was. Under MikroORM it is a fork
+	 * made for this attempt: the installation's manager refuses work outside a request context, which is
+	 * where a worker runs a step, and a fork's identity map is the attempt's own, so neither a request nor
+	 * the next attempt inherits what this one loaded. What each is, and how a step groups its writes, is
+	 * stated on `IOperationStepManager`.
+	 *
+	 * @returns The manager, and which ORM's it is.
+	 */
+	private stepManager(): IOperationStepManager {
+		return this.ormType === MultiORMEnum.MikroORM
+			? { orm: MultiORMEnum.MikroORM, manager: this.mikroOrmEntityManager.fork() }
+			: { orm: MultiORMEnum.TypeORM, manager: this.typeOrmOperationRepository.manager };
 	}
 
 	/**
@@ -1713,13 +1966,44 @@ export class OperationService extends CrudService<Operation> {
 	): Promise<OperationStep> {
 		Object.assign(step, values);
 
-		const saved = await this.typeOrmOperationStepRepository.save(step);
+		const saved =
+			this.ormType === MultiORMEnum.MikroORM
+				? await this.writeStepOnMikroOrm(step, values)
+				: await this.typeOrmOperationStepRepository.save(step);
 
 		if (operation) {
 			await this.operationEventPublisher.operationStepChanged(operation, saved, stepActionOf(saved.status));
 		}
 
 		return saved;
+	}
+
+	/**
+	 * The MikroORM arm of {@link saveStep}: a targeted update of the columns the move states.
+	 *
+	 * The TypeORM arm's `save` writes the columns of the step that differ from its row, and a step row is
+	 * only ever written by the worker holding the operation's lease, so those are the columns the move
+	 * states — which is what this writes, with the audit column a native update does not maintain. A row
+	 * that is no longer there is a fault the runtime reports, not a write that silently lands nowhere.
+	 *
+	 * @param step The step, already carrying the values.
+	 * @param values The columns to write.
+	 * @returns The step, as stored.
+	 * @throws NotFoundException when the step row no longer exists.
+	 */
+	private async writeStepOnMikroOrm(step: OperationStep, values: Record<string, unknown>): Promise<OperationStep> {
+		const updatedAt = new Date();
+		const written = await this.mikroOrmEntityManager.nativeUpdate(
+			OperationStep,
+			{ id: step.id } as FilterQuery<OperationStep>,
+			{ ...values, updatedAt } as EntityData<OperationStep>
+		);
+
+		if (!written) {
+			throw new NotFoundException(`The step "${step.name}" of the operation "${step.operationId}" does not exist.`);
+		}
+
+		return Object.assign(step, { updatedAt });
 	}
 
 	/**
@@ -1760,15 +2044,18 @@ export class OperationService extends CrudService<Operation> {
 
 		const { row, patch } =
 			this.ormType === MultiORMEnum.MikroORM
-				? await this.mikroOrmOperationRepository.getEntityManager().transactional(async (em) => {
+				? await this.mikroOrmEntityManager.transactional(async (em) => {
 						// Read from the table, not from an identity map. The transaction's fork starts from
 						// the caller's context, where an earlier read of this row may still sit, and without a
 						// lock mode — the embedded dialect — MikroORM answers a primary-key read from it
 						// without a query: the patch would be computed from the stale row this method exists
 						// to stop writing from. Nor is the row left managed, so nothing is merged back into
 						// the caller's context when the transaction ends.
-						const row = await em.findOne(Operation, { id } as FilterQuery<Operation>, {
-							disableIdentityMap: true,
+						//
+						// The caller's object takes the row's columns, as the TypeORM arm's read answers
+						// them: a relation MikroORM hydrates as a reference or an uninitialised collection is
+						// not part of the row this decision was made on (see `readOneOnMikroOrm`).
+						const row = await readOneOnMikroOrm(em, Operation, { id } as FilterQuery<Operation>, {
 							...(locking ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
 						});
 
@@ -1788,16 +2075,7 @@ export class OperationService extends CrudService<Operation> {
 							);
 						}
 
-						// The caller's object takes the row's columns, as the TypeORM arm's read answers
-						// them: a relation MikroORM hydrates as a reference or an uninitialised collection is
-						// not part of the row this decision was made on.
-						const columns = em
-							.getMetadata()
-							.get<Operation>(Operation.name)
-							.props.filter((prop) => prop.kind === ReferenceKind.SCALAR && row[prop.name] !== undefined)
-							.map((prop) => [prop.name, row[prop.name]]);
-
-						return { row: Object.fromEntries(columns) as Partial<Operation>, patch };
+						return { row: row as Partial<Operation>, patch };
 				  })
 				: await this.typeOrmOperationRepository.manager.transaction(async (manager) => {
 						const query = manager.createQueryBuilder(Operation, 'operation').where({ id });
@@ -2026,4 +2304,118 @@ function withScope(
 	}
 
 	return { ...(where ?? {}), ...scope };
+}
+
+/**
+ * The `relationId` mirrors of the two tables, and the relation MikroORM writes each one through.
+ *
+ * `@MultiORMColumn({ relationId: true })` maps a mirror with `persist: false` under MikroORM
+ * (`column.helper.ts`): the column belongs to the relation beside it, whose `joinColumn` it is. A write that
+ * names the mirror is therefore a write MikroORM is free to drop, and one that names the relation is the
+ * write MikroORM makes itself. Reads name the mirror — it is hydrated from the row and translated to the
+ * same column in a criterion — so only the writes go through this map.
+ */
+const MIKRO_ORM_RELATION_OF_MIRROR: Readonly<Record<string, string>> = {
+	tenantId: 'tenant',
+	organizationId: 'organization',
+	parentOperationId: 'parentOperation',
+	operationId: 'operation'
+};
+
+/**
+ * A row as MikroORM's native insert takes it.
+ *
+ * Three rules, each the reason an insert would otherwise differ from the TypeORM arm's `save`:
+ *
+ * - **A mirror is written through its relation** (see {@link MIKRO_ORM_RELATION_OF_MIRROR}), so the scope,
+ *   the parent and the owning operation reach their columns.
+ * - **An `undefined` member is left out**, as TypeORM leaves it out, so the column takes its default rather
+ *   than an explicit `NULL`.
+ * - **The timestamps and the two flags are stated.** A native insert runs no `onCreate` hook, and the
+ *   TypeORM arm's columns carry them as defaults the entity declares.
+ *
+ * @param values The row's columns, as the TypeORM arm states them.
+ * @param now The moment the row is created at.
+ * @returns The row, as MikroORM's `insert` reads it.
+ */
+function mikroOrmInsertOf(values: Record<string, unknown>, now: Date): Record<string, unknown> {
+	const row: Record<string, unknown> = { createdAt: now, updatedAt: now, isActive: true, isArchived: false };
+
+	for (const [column, value] of Object.entries(values)) {
+		if (value !== undefined) {
+			row[MIKRO_ORM_RELATION_OF_MIRROR[column] ?? column] = value;
+		}
+	}
+
+	return row;
+}
+
+/**
+ * The columns of a row MikroORM read, as a plain object.
+ *
+ * The TypeORM arm answers a row's columns and nothing else. MikroORM hydrates a relation as a reference
+ * and a collection as an uninitialised wrapper, neither of which is part of the row a decision is made
+ * on, and neither of which serializes as the row: so a MikroORM arm answers the scalar properties —
+ * the `relationId` mirrors among them, which MikroORM hydrates from their columns — and nothing else.
+ *
+ * @param em The manager that read the row.
+ * @param entity The entity the row is of.
+ * @param row The row, as MikroORM hydrated it.
+ * @returns Its columns.
+ */
+function mikroOrmColumns<T extends object>(em: MikroOrmEntityManager, entity: EntityClass<T>, row: T): T {
+	const columns = em
+		.getMetadata()
+		.get<T>(entity.name)
+		.props.filter((prop) => prop.kind === ReferenceKind.SCALAR && row[prop.name] !== undefined)
+		.map((prop) => [prop.name, row[prop.name]]);
+
+	return Object.fromEntries(columns) as T;
+}
+
+/**
+ * Reads one row through MikroORM, from the table rather than from an identity map.
+ *
+ * `disableIdentityMap` does two things every runtime read needs. The row is read by a query even when a
+ * context already holds it — a stale copy is exactly what a lease decision must not be made on — and the
+ * read runs on a fork of the context, so it is allowed where no request context exists: a worker, a
+ * sweep, a step's cancellation check. Inside a transaction the fork keeps the transaction, so a lock mode
+ * stated here is taken inside it.
+ *
+ * @param em The manager, or a transaction's.
+ * @param entity The entity to read.
+ * @param where The criterion.
+ * @param options Further find options, such as the lock mode.
+ * @returns The row's columns (see {@link mikroOrmColumns}), or null.
+ */
+async function readOneOnMikroOrm<T extends object>(
+	em: MikroOrmEntityManager,
+	entity: EntityClass<T>,
+	where: FilterQuery<T>,
+	options: FindOneOptions<T> = {}
+): Promise<T | null> {
+	const row = await em.findOne(entity, where, { ...options, disableIdentityMap: true } as FindOneOptions<T>);
+
+	return row ? mikroOrmColumns(em, entity, row as T) : null;
+}
+
+/**
+ * Reads rows through MikroORM, from the table rather than from an identity map (see
+ * {@link readOneOnMikroOrm}).
+ *
+ * @param em The manager, or a transaction's.
+ * @param entity The entity to read.
+ * @param where The criterion.
+ * @param options Further find options, such as the order and the bound.
+ * @returns The rows' columns.
+ */
+async function readManyOnMikroOrm<T extends object>(
+	em: MikroOrmEntityManager,
+	entity: EntityClass<T>,
+	where: FilterQuery<T>,
+	options: FindOptions<T> = {}
+): Promise<T[]> {
+	const rows = await em.find(entity, where, { ...options, disableIdentityMap: true } as FindOptions<T>);
+
+	return rows.map((row) => mikroOrmColumns(em, entity, row as T));
 }

@@ -48,7 +48,11 @@ function uniqueViolation(): Error {
 	return Object.assign(new Error('duplicate key value violates unique constraint'), { code: '23505' });
 }
 
-/** One column's criteria, including the `IN (:...values)` form the aggregate query builds and `IsNull()`. */
+/**
+ * One column's criteria, including the `IN (:...values)` form the aggregate query builds and `IsNull()`,
+ * and the three MikroORM operators the runtime's MikroORM arm states (`$in`, `$ne`, `$lt`). An operator
+ * the double does not model is refused rather than quietly matched.
+ */
 function matches(row: Row, criteria: Row = {}): boolean {
 	return Object.entries(criteria).every(([column, condition]) => {
 		const operator = condition as { _type?: string; _value?: unknown[] };
@@ -61,8 +65,35 @@ function matches(row: Row, criteria: Row = {}): boolean {
 			return row[column] === null || row[column] === undefined;
 		}
 
+		if (isMikroOrmOperator(condition)) {
+			return Object.entries(condition).every(([name, operand]) => {
+				switch (name) {
+					case '$in':
+						return (operand as unknown[]).includes(row[column]);
+					case '$ne':
+						return (row[column] ?? null) !== (operand ?? null);
+					case '$lt':
+						// `NULL < x` is unknown in SQL, so a missing column matches nothing.
+						return row[column] !== null && row[column] !== undefined && instant(row[column]) < instant(operand);
+					default:
+						throw new Error(`The in-memory table does not model the MikroORM operator "${name}".`);
+				}
+			});
+		}
+
 		return (row[column] ?? null) === (condition ?? null);
 	});
+}
+
+/** Whether a criterion member is a MikroORM operator object, such as `{ $in: [...] }`. */
+function isMikroOrmOperator(condition: unknown): condition is Row {
+	return (
+		!!condition &&
+		typeof condition === 'object' &&
+		!(condition instanceof Date) &&
+		Object.keys(condition).length > 0 &&
+		Object.keys(condition).every((key) => key.startsWith('$'))
+	);
 }
 
 /**
@@ -326,6 +357,47 @@ const OPERATION_COLUMNS = [
 	'correlationId'
 ];
 
+/** The columns of `operation_step`, as MikroORM's metadata lists the entity's scalar properties. */
+const OPERATION_STEP_COLUMNS = [
+	'id',
+	'createdAt',
+	'updatedAt',
+	'deletedAt',
+	'tenantId',
+	'organizationId',
+	'operationId',
+	'name',
+	'order',
+	'status',
+	'input',
+	'output',
+	'compensationData',
+	'attemptCount',
+	'lastError',
+	'startedAt',
+	'finishedAt'
+];
+
+/**
+ * The relations MikroORM writes the `relationId` mirrors through, and the column each one lands in.
+ *
+ * A mirror is mapped `persist: false` under MikroORM, so the runtime's MikroORM arm inserts the relation
+ * instead; the double stores it under the column the relation's `joinColumn` names, as the database does.
+ */
+const MIKRO_ORM_JOIN_COLUMNS: Record<string, string> = {
+	tenant: 'tenantId',
+	organization: 'organizationId',
+	parentOperation: 'parentOperationId',
+	operation: 'operationId'
+};
+
+/** A row as MikroORM's native insert hands it to the table: each relation stored under its join column. */
+function fromMikroOrmInsert(data: Row): Row {
+	return Object.fromEntries(
+		Object.entries(data).map(([property, value]) => [MIKRO_ORM_JOIN_COLUMNS[property] ?? property, value])
+	);
+}
+
 /** The tables one service writes to, plus the manager that rolls them back together. */
 class Database {
 	readonly tables = new Map<unknown, Table>();
@@ -375,29 +447,54 @@ class Database {
 		createQueryBuilder: (entity: unknown, alias: string) => this.tableOf(entity).createQueryBuilder(alias)
 	};
 
-	/** The options of every read the MikroORM entity manager was asked for, in order. */
+	/** The options of every single-row read the MikroORM entity manager was asked for, in order. */
 	readonly mikroOrmReads: Row[] = [];
+
+	/** The options of every multi-row read the MikroORM entity manager was asked for, in order. */
+	readonly mikroOrmFinds: Row[] = [];
 
 	/**
 	 * The same tables as MikroORM's entity manager reaches them, for the runtime's MikroORM arm: the
-	 * locking read and the targeted update it writes the operation row with, and the metadata that says
-	 * which of a read row's properties are its columns.
+	 * native inserts that start an operation, the reads — the locking one included — the targeted updates
+	 * it writes both rows with, the fork a step is handed, and the metadata that says which of a read row's
+	 * properties are its columns.
 	 */
 	readonly entityManager: Row = {
 		getMetadata: () => ({
-			get: () => ({
+			get: (name: string) => ({
 				props: [
-					...OPERATION_COLUMNS.map((name) => ({ name, kind: 'scalar' })),
+					...(name === 'OperationStep' ? OPERATION_STEP_COLUMNS : OPERATION_COLUMNS).map((column) => ({
+						name: column,
+						kind: 'scalar'
+					})),
 					{ name: 'tenant', kind: 'm:1' },
-					{ name: 'steps', kind: '1:m' }
+					{ name: name === 'OperationStep' ? 'operation' : 'steps', kind: name === 'OperationStep' ? 'm:1' : '1:m' }
 				]
 			})
 		}),
 		transactional: <R>(work: (em: Row) => Promise<R>): Promise<R> => this.transaction(() => work(this.entityManager)),
+		fork: () => this.entityManager,
+		insert: async (entity: unknown, data: Row) => {
+			await this.tableOf(entity).save(fromMikroOrmInsert(data));
+
+			return data.id;
+		},
+		insertMany: async (entity: unknown, rows: Row[]) => {
+			await this.tableOf(entity).save(rows.map((data) => fromMikroOrmInsert(data)));
+
+			return rows.map((data) => data.id);
+		},
 		findOne: (entity: unknown, where: Row, options: Row = {}) => {
 			this.mikroOrmReads.push(options);
 
 			return this.tableOf(entity).findOne({ where });
+		},
+		find: async (entity: unknown, where: Row, options: Row = {}) => {
+			this.mikroOrmFinds.push(options);
+
+			const rows = await this.tableOf(entity).find({ where, order: options.orderBy });
+
+			return typeof options.limit === 'number' ? rows.slice(0, options.limit) : rows;
 		},
 		nativeUpdate: async (entity: unknown, where: Row, values: Row) =>
 			(await this.tableOf(entity).update(where, values)).affected
@@ -1676,13 +1773,18 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('writing the operat
 	it.each(['postgres', 'mysql'] as const)('reads the row FOR UPDATE on %s before each of its writes', async (dialect) => {
 		const { db, operations } = await drive(dialect);
 
-		// Three writes of the row after the claim — the lease renewal, the step's success and the settlement
-		// — and each decides from a read that holds the row's write lock until it has written.
+		// The claim, then three writes of the row — the lease renewal, the step's success and the
+		// settlement — and each decides from a read that holds the row's write lock until it has written.
 		if (orm === MultiORMEnum.MikroORM) {
-			expect(db.mikroOrmReads).toHaveLength(3);
-			expect(db.mikroOrmReads.every((read) => read.lockMode === LockMode.PESSIMISTIC_WRITE)).toBe(true);
-			// The claim is the only locking read TypeORM still makes on this ORM.
-			expect(operations.locks).toEqual(['pessimistic_write']);
+			// The first read is `start` reading back the header its own transaction inserted a statement
+			// earlier: nothing is decided on it, and the TypeORM arm's `save` answers without a read at all.
+			expect(db.mikroOrmReads.map((read) => read.lockMode)).toEqual([
+				undefined,
+				...Array(4).fill(LockMode.PESSIMISTIC_WRITE)
+			]);
+			// Control: the claim was TypeORM's locking read on this ORM, where TypeORM knows none of the
+			// table's columns. Nothing reaches TypeORM's builder now.
+			expect(operations.locks).toEqual([]);
 		} else {
 			expect(db.mikroOrmReads).toHaveLength(0);
 			expect(operations.locks).toEqual(Array(4).fill('pessimistic_write'));
@@ -1695,7 +1797,7 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('writing the operat
 		expect(operations.locks).toEqual([]);
 
 		if (orm === MultiORMEnum.MikroORM) {
-			expect(db.mikroOrmReads).toHaveLength(3);
+			expect(db.mikroOrmReads).toHaveLength(5);
 			expect(db.mikroOrmReads.every((read) => read.lockMode === undefined)).toBe(true);
 		}
 	});
@@ -1704,12 +1806,16 @@ describe.each([MultiORMEnum.TypeORM, MultiORMEnum.MikroORM])('writing the operat
 		const { db } = await drive('sqlite');
 
 		// Without a lock mode MikroORM answers a primary-key read from the context the transaction was
-		// forked from, which is the stale row the merge exists to stop writing from.
+		// forked from, which is the stale row the merge exists to stop writing from — and a read made on
+		// the installation's own manager, outside a request, is refused unless it runs on a fork.
 		if (orm === MultiORMEnum.MikroORM) {
-			expect(db.mikroOrmReads).toHaveLength(3);
+			expect(db.mikroOrmReads).toHaveLength(5);
 			expect(db.mikroOrmReads.every((read) => read.disableIdentityMap === true)).toBe(true);
+			expect(db.mikroOrmFinds.length).toBeGreaterThan(0);
+			expect(db.mikroOrmFinds.every((read) => read.disableIdentityMap === true)).toBe(true);
 		} else {
 			expect(db.mikroOrmReads).toHaveLength(0);
+			expect(db.mikroOrmFinds).toHaveLength(0);
 		}
 	});
 });

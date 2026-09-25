@@ -1,10 +1,18 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { EntityManager, LessThan } from 'typeorm';
+import {
+	EntityData,
+	EntityManager as MikroOrmEntityManager,
+	FilterQuery,
+	LockMode,
+	ReferenceKind
+} from '@mikro-orm/core';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { IAllocatedNumber, ID, ISequence, IdempotencyOutcome, JsonData, SequenceResetPolicy } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { MultiORMEnum } from '../core/utils';
 import { readAffectedRows } from '../database/database.helper';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { IdempotencyService } from '../idempotency/idempotency.service';
@@ -21,6 +29,69 @@ import { MikroOrmSequenceRepository } from './repository/mikro-orm-sequence.repo
  * refused as a reused key rather than answered with another series' number.
  */
 const ALLOCATION_SCOPE = 'sequence.allocate';
+
+/**
+ * The manager a statement on the series row goes through: TypeORM's, or MikroORM's.
+ *
+ * Which one it is follows from the configured ORM, and the service only ever hands a statement the
+ * manager of the ORM it dispatches that statement to.
+ */
+type SeriesManager = EntityManager | MikroOrmEntityManager;
+
+/**
+ * The `relationId` mirrors of the series table, and the relation MikroORM writes each one through.
+ *
+ * `@MultiORMColumn({ relationId: true })` maps a mirror with `persist: false` under MikroORM
+ * (`column.helper.ts`), so an insert that names the mirror is one MikroORM is free to drop, and a series
+ * stored with no scope is one no scoped allocation can ever find. Reads name the mirror, which MikroORM
+ * hydrates from its column and translates to that column in a criterion.
+ */
+const MIKRO_ORM_RELATION_OF_MIRROR: Readonly<Record<string, string>> = {
+	tenantId: 'tenant',
+	organizationId: 'organization'
+};
+
+/**
+ * Reads one series through MikroORM, from the table rather than from an identity map.
+ *
+ * `disableIdentityMap` reads by a query even when a context holds the row — the counter an allocation
+ * decides on must be the stored one — and runs the read on a fork, which keeps the transaction it is
+ * made in and needs no request context. An `undefined` member of the criterion is left out and a `null`
+ * one is `IS NULL`, which is how the TypeORM arm's connection reads the same criterion.
+ *
+ * @param em The manager, or a transaction's.
+ * @param where The criterion.
+ * @param lock Whether to read `FOR UPDATE`; only ever true inside a transaction on Postgres or MySQL.
+ * @returns The series' columns, or null.
+ */
+async function readSeriesOnMikroOrm(
+	em: MikroOrmEntityManager,
+	where: Record<string, unknown>,
+	lock: boolean
+): Promise<Sequence | null> {
+	const criteria = Object.fromEntries(Object.entries(where).filter(([, value]) => value !== undefined));
+
+	const series = await em.findOne(Sequence, criteria as FilterQuery<Sequence>, {
+		disableIdentityMap: true,
+		...(lock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
+	});
+
+	if (!series) {
+		return null;
+	}
+
+	// The row's columns and nothing else, as the TypeORM arm answers them: MikroORM hydrates the scope as
+	// relation references, which are not the row and do not serialize as it. The `relationId` mirrors are
+	// scalar properties hydrated from their columns, so the scope is answered as `tenantId` and
+	// `organizationId`.
+	const columns = em
+		.getMetadata()
+		.get<Sequence>(Sequence.name)
+		.props.filter((prop) => prop.kind === ReferenceKind.SCALAR && series[prop.name] !== undefined)
+		.map((prop) => [prop.name, series[prop.name]]);
+
+	return Object.fromEntries(columns) as Sequence;
+}
 
 /**
  * Allocates human-facing document numbers from a series.
@@ -45,6 +116,15 @@ const ALLOCATION_SCOPE = 'sequence.allocate';
  * An allocation may also be claimed under an idempotency key, which is what makes a retried request
  * cost the series nothing: the retry is answered with the number the first attempt allocated instead
  * of consuming a second one.
+ *
+ * 🛑 **Every read and write of the series row has an arm per ORM, and it is the configured ORM's.** The
+ * series' columns are `@MultiORMColumn`s, which register with the active ORM alone, so under
+ * `DB_ORM=mikro-orm` TypeORM knows the entity as a skeleton and every lookup, lock and swap written on the
+ * TypeORM repository failed there — no document could be numbered on that ORM. The decisions — the
+ * fallback from a channel series to the organization's, the restart, the compare-and-swap and its retry —
+ * are written once and made the same way on both; only the four statements under them (the transaction,
+ * the locked read, the swap and the read-back) are the ORM's own. The TypeORM statement of each is the
+ * one it always was.
  */
 @Injectable()
 export class SequenceService extends CrudService<Sequence> {
@@ -86,18 +166,14 @@ export class SequenceService extends CrudService<Sequence> {
 		const organizationId = RequestContext.currentOrganizationId();
 
 		if (channelId) {
-			const channelSeries = await this.typeOrmSequenceRepository.findOne({
-				where: { key, channelId, tenantId, organizationId } as any
-			});
+			const channelSeries = await this.findOneSeries({ key, channelId, tenantId, organizationId });
 
 			if (channelSeries) {
 				return channelSeries;
 			}
 		}
 
-		const organizationSeries = await this.typeOrmSequenceRepository.findOne({
-			where: { key, channelId: null as any, tenantId, organizationId } as any
-		});
+		const organizationSeries = await this.findOneSeries({ key, channelId: null, tenantId, organizationId });
 
 		if (!organizationSeries) {
 			throw new NotFoundException(
@@ -193,7 +269,7 @@ export class SequenceService extends CrudService<Sequence> {
 				await this.pauseBeforeRetry(attempt - 1);
 			}
 
-			allocated = await this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
+			allocated = await this.seriesTransaction(async (manager) => {
 				const tenantId = RequestContext.currentTenantId();
 				const organizationId = RequestContext.currentOrganizationId();
 
@@ -295,20 +371,18 @@ export class SequenceService extends CrudService<Sequence> {
 		const tenantId = input.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = input.organizationId ?? RequestContext.currentOrganizationId();
 
-		const existing = await this.typeOrmSequenceRepository.findOne({
-			where: {
-				key: input.key,
-				channelId: (input.channelId ?? null) as any,
-				tenantId,
-				organizationId
-			} as any
+		const existing = await this.findOneSeries({
+			key: input.key,
+			channelId: input.channelId ?? null,
+			tenantId,
+			organizationId
 		});
 
 		if (existing) {
 			return existing;
 		}
 
-		const created = this.typeOrmSequenceRepository.create({
+		return this.insertSeries({
 			...input,
 			...(tenantId ? { tenantId } : {}),
 			...(organizationId ? { organizationId } : {}),
@@ -317,8 +391,6 @@ export class SequenceService extends CrudService<Sequence> {
 			nextValue: input.nextValue ?? 1,
 			resetPolicy: input.resetPolicy ?? SequenceResetPolicy.NEVER
 		} as Partial<Sequence>);
-
-		return this.typeOrmSequenceRepository.save(created);
 	}
 
 	/**
@@ -418,7 +490,7 @@ export class SequenceService extends CrudService<Sequence> {
 		// `IS NULL`, because `channelId = NULL` matches nothing in any dialect. This read runs outside a
 		// transaction, so that reader takes no lock here — TypeORM refuses one outside a transaction —
 		// which is why the unique indexes carry the guarantee.
-		const existing = await this.lockSeries(this.typeOrmSequenceRepository.manager, {
+		const existing = await this.lockSeries(this.seriesManager, {
 			key,
 			channelId,
 			...scope
@@ -438,7 +510,7 @@ export class SequenceService extends CrudService<Sequence> {
 		// `deletedAt`, or a `lastResetAt` — reach a row this write is not allowed to touch: with an id
 		// the save becomes an update, and an id naming another organization's series is the one thing a
 		// scoped create must never reach.
-		const created = this.typeOrmSequenceRepository.create({
+		return this.insertSeries({
 			key,
 			channelId: channelId as any,
 			prefix: input.prefix,
@@ -452,8 +524,6 @@ export class SequenceService extends CrudService<Sequence> {
 			description: input.description,
 			...scope
 		} as Partial<Sequence>);
-
-		return this.typeOrmSequenceRepository.save(created);
 	}
 
 	/**
@@ -564,7 +634,7 @@ export class SequenceService extends CrudService<Sequence> {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 
-		return this.typeOrmSequenceRepository.manager.transaction(async (manager) => {
+		return this.seriesTransaction(async (manager) => {
 			const series = await this.lockSeries(manager, {
 				id,
 				...(tenantId ? { tenantId } : {}),
@@ -621,7 +691,7 @@ export class SequenceService extends CrudService<Sequence> {
 
 			// Read back rather than answered from memory, so the caller is handed the row as it was stored
 			// — its `updatedAt` included — which is what the `save` this replaced returned.
-			return (await manager.findOne(Sequence, { where: { id: series.id } as any })) ?? series;
+			return (await this.rereadSeries(manager, series.id)) ?? series;
 		});
 	}
 
@@ -679,6 +749,10 @@ export class SequenceService extends CrudService<Sequence> {
 	 * @returns The series, or null.
 	 */
 	private async lockSeries(manager: any, where: Record<string, unknown>): Promise<Sequence | null> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return this.lockSeriesOnMikroOrm(manager as MikroOrmEntityManager, where);
+		}
+
 		const { channelId, ...scope } = where;
 
 		const query = manager.createQueryBuilder(Sequence, 'sequence').where(scope);
@@ -729,11 +803,15 @@ export class SequenceService extends CrudService<Sequence> {
 	 * @returns True when the row was written, false when another writer moved it first.
 	 */
 	private async swapCounter(
-		manager: EntityManager,
+		manager: SeriesManager,
 		series: Sequence,
 		observed: { nextValue: number; restartedInto?: Date; periodChanged: boolean }
 	): Promise<boolean> {
-		const result = await manager.update(
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return this.swapCounterOnMikroOrm(manager as MikroOrmEntityManager, series, observed);
+		}
+
+		const result = await (manager as EntityManager).update(
 			Sequence,
 			{
 				id: series.id,
@@ -747,6 +825,186 @@ export class SequenceService extends CrudService<Sequence> {
 		);
 
 		return readAffectedRows(result) === 1;
+	}
+
+	/**
+	 * The MikroORM arm of {@link lockSeries}: the same lookup, under the same lock, finding the same rows.
+	 *
+	 * The channel is asked for as the TypeORM arm asks for it: `channelId: null` is `IS NULL` in a MikroORM
+	 * criterion — the organization-wide series — an id is compared, and an absent member is not asked about.
+	 *
+	 * 🛑 **Every other member finds exactly what the TypeORM arm's query builder finds, and that includes
+	 * nothing.** The builder takes the scope as `where({...})`, which does not read the connection's
+	 * `null: 'sql-null'` setting: a member stated as `null` — an allocation with no tenant or no
+	 * organization in its request — is compiled to `= NULL`, which matches no row in any dialect. MikroORM
+	 * would read the same member as `IS NULL` and number the tenant's organization-less series, or the
+	 * tenant-less ones, for a caller the TypeORM arm refuses. Such a read is answered with no series here
+	 * rather than widened: whether the allocator should number a series for such a caller is a decision
+	 * both arms take together, and not one this arm may take alone.
+	 *
+	 * The lock is `FOR UPDATE` on Postgres and MySQL and only inside a transaction, because MikroORM refuses
+	 * a pessimistic lock outside one exactly as TypeORM does; the embedded dialects rely on
+	 * {@link swapCounter} instead. The read bypasses the identity map, so the counter an allocation decides
+	 * on is the stored one and never a copy a context kept.
+	 *
+	 * @param em The transaction's manager, or the plain one for a read that takes no lock.
+	 * @param where The lookup conditions, as {@link lockSeries} takes them.
+	 * @returns The series, or null.
+	 */
+	private async lockSeriesOnMikroOrm(em: MikroOrmEntityManager, where: Record<string, unknown>): Promise<Sequence | null> {
+		const { channelId, ...scope } = where;
+
+		if (Object.values(scope).some((value) => value === null || value === undefined)) {
+			return null;
+		}
+
+		return readSeriesOnMikroOrm(
+			em,
+			{ ...scope, ...(channelId === undefined ? {} : { channelId }) },
+			em.isInTransaction() && (isPostgres() || isMySQL())
+		);
+	}
+
+	/**
+	 * The MikroORM arm of {@link swapCounter}: the same predicate, the same columns, one native update.
+	 *
+	 * `$lt` is the `LessThan` of the TypeORM arm, and a row whose `lastResetAt` is `NULL` matches neither,
+	 * because `NULL < x` is unknown in SQL. The answer is the number of rows the statement changed, which
+	 * MikroORM reports as the update's own result. A native update runs no `onUpdate` hook, so the audit
+	 * column TypeORM's `update` maintains is stated.
+	 *
+	 * @param em The transaction's manager.
+	 * @param series The series as the caller leaves it.
+	 * @param observed What the caller read and decided on.
+	 * @returns True when the row was written, false when another writer moved it first.
+	 */
+	private async swapCounterOnMikroOrm(
+		em: MikroOrmEntityManager,
+		series: Sequence,
+		observed: { nextValue: number; restartedInto?: Date; periodChanged: boolean }
+	): Promise<boolean> {
+		const written = await em.nativeUpdate(
+			Sequence,
+			{
+				id: series.id,
+				nextValue: observed.nextValue,
+				...(observed.restartedInto ? { lastResetAt: { $lt: observed.restartedInto } } : {})
+			} as FilterQuery<Sequence>,
+			{
+				nextValue: series.nextValue,
+				...(observed.periodChanged ? { lastResetAt: series.lastResetAt ?? null } : {}),
+				updatedAt: new Date()
+			} as EntityData<Sequence>
+		);
+
+		return written === 1;
+	}
+
+	/**
+	 * The manager a read outside a transaction goes through, on the configured ORM.
+	 *
+	 * The TypeORM repository's own manager carries no query runner, and MikroORM's plain manager is in no
+	 * transaction: on both, {@link lockSeries} therefore reads without a lock.
+	 */
+	private get seriesManager(): SeriesManager {
+		return this.ormType === MultiORMEnum.MikroORM
+			? this.mikroOrmSequenceRepository.getEntityManager()
+			: this.typeOrmSequenceRepository.manager;
+	}
+
+	/**
+	 * Runs one allocation or one restart in a transaction of the configured ORM.
+	 *
+	 * The transaction is what the row lock of {@link lockSeries} lives in on Postgres and MySQL, and what
+	 * makes the swap and the read-back one unit on every dialect. The body is handed the transaction's own
+	 * manager, which is the manager {@link lockSeries}, {@link swapCounter} and {@link rereadSeries} expect.
+	 *
+	 * @param work The body.
+	 * @returns What the body returned.
+	 */
+	private seriesTransaction<R>(work: (manager: SeriesManager) => Promise<R>): Promise<R> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return this.mikroOrmSequenceRepository.getEntityManager().transactional((em) => work(em));
+		}
+
+		return this.typeOrmSequenceRepository.manager.transaction((manager) => work(manager));
+	}
+
+	/**
+	 * Reads one series by its identity and scope, on the configured ORM, taking no lock.
+	 *
+	 * The criterion is the caller's: `channelId: null` asks for the organization-wide series and a `null`
+	 * scope member for a row that carries none, on both arms — TypeORM's connection reads `null` as
+	 * `IS NULL` (`null: 'sql-null'`) and MikroORM does so itself. An `undefined` member is left out on both.
+	 *
+	 * @param where The series' key, channel and scope.
+	 * @returns The series, or null.
+	 */
+	private async findOneSeries(where: Record<string, unknown>): Promise<Sequence | null> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readSeriesOnMikroOrm(this.mikroOrmSequenceRepository.getEntityManager(), where, false);
+		}
+
+		return this.typeOrmSequenceRepository.findOne({ where: where as any });
+	}
+
+	/**
+	 * Stores a new series on the configured ORM, and answers the row as stored.
+	 *
+	 * The MikroORM arm is a native insert stated in full, as the kernel's other MikroORM inserts are:
+	 * the scope travels as the `tenant` and `organization` relations, because `tenantId` and
+	 * `organizationId` are `relationId` mirrors MikroORM maps `persist: false`; a member that is not a
+	 * property of the series is left out, as TypeORM's `create` leaves it out; and the identifier, the
+	 * timestamps and the two flags are stated, because the identifier is a column default only on Postgres
+	 * and a native insert runs no `onCreate` hook.
+	 *
+	 * @param values The series' columns.
+	 * @returns The stored series.
+	 */
+	private async insertSeries(values: Partial<Sequence>): Promise<Sequence> {
+		if (this.ormType !== MultiORMEnum.MikroORM) {
+			return this.typeOrmSequenceRepository.save(this.typeOrmSequenceRepository.create(values));
+		}
+
+		const em = this.mikroOrmSequenceRepository.getEntityManager();
+		const id = (values.id ?? randomUUID()) as ID;
+		const now = new Date();
+		const properties = em.getMetadata().get<Sequence>(Sequence.name).properties as Record<string, unknown>;
+		const row: Record<string, unknown> = { createdAt: now, updatedAt: now, isActive: true, isArchived: false };
+
+		for (const [column, value] of Object.entries({ ...values, id })) {
+			const property = MIKRO_ORM_RELATION_OF_MIRROR[column] ?? column;
+
+			if (value !== undefined && properties[property]) {
+				row[property] = value;
+			}
+		}
+
+		await em.insert(Sequence, row as EntityData<Sequence>);
+
+		const stored = await this.rereadSeries(em, id);
+
+		if (!stored) {
+			// Inserted a statement ago; a read that misses it is a store fault, reported as one.
+			throw new Error(`The numbering series "${id}" was inserted but could not be read back.`);
+		}
+
+		return stored;
+	}
+
+	/**
+	 * Reads a series back by id, on the configured ORM, through the manager the caller holds.
+	 *
+	 * @param manager The transaction's manager, or the plain one.
+	 * @param id The series id.
+	 * @returns The series as stored, or null.
+	 */
+	private async rereadSeries(manager: SeriesManager, id: ID): Promise<Sequence | null> {
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			return readSeriesOnMikroOrm(manager as MikroOrmEntityManager, { id }, false);
+		}
+
+		return (manager as EntityManager).findOne(Sequence, { where: { id } as any });
 	}
 
 	/**
