@@ -2,13 +2,14 @@ jest.mock('@gauzy/config', () => {
 	const actual = jest.requireActual('@gauzy/config');
 
 	// The dialect is decided once at boot from the environment; here it is decided per case so that
-	// the row-locked path and the embedded path are both exercised by this suite.
-	const dialect = { current: 'postgres' as 'postgres' | 'sqlite' };
+	// the row-locked path and the embedded path are both exercised by this suite — and MySQL's, whose
+	// row lock is Postgres's but whose `datetime` column keeps no fraction of a second.
+	const dialect = { current: 'postgres' as 'postgres' | 'mysql' | 'sqlite' };
 
 	return {
 		...actual,
 		isPostgres: () => dialect.current === 'postgres',
-		isMySQL: () => false,
+		isMySQL: () => dialect.current === 'mysql',
 		isBetterSqlite3: () => dialect.current === 'sqlite',
 		dialect
 	};
@@ -117,7 +118,17 @@ class SeriesStore {
 	private tail: Promise<unknown> = Promise.resolve();
 	private depth = 0;
 
-	constructor(rows: Partial<SeriesRow>[] = [{}], private readonly mode: TransactionMode = 'serialised') {
+	/**
+	 * @param rows The series the table starts with.
+	 * @param mode How two open transactions run.
+	 * @param storedMoment What the column keeps of a moment written to it. The default keeps it whole, as
+	 * a Postgres `timestamp` and SQLite's text both do; {@link mysqlDatetime} is MySQL's `datetime`.
+	 */
+	constructor(
+		rows: Partial<SeriesRow>[] = [{}],
+		private readonly mode: TransactionMode = 'serialised',
+		private readonly storedMoment: (moment: Date) => Date = (moment) => moment
+	) {
 		for (const row of rows) {
 			this.rows.push({
 				id: `seq-${this.rows.length + 1}`,
@@ -301,7 +312,7 @@ class SeriesStore {
 
 		for (const row of this.rows) {
 			if (Object.entries(criteria).every(([column, value]) => matches(row[column], value))) {
-				Object.assign(row, values);
+				Object.assign(row, this.asStored(values));
 				affected += 1;
 			}
 		}
@@ -309,8 +320,21 @@ class SeriesStore {
 		return { affected };
 	}
 
+	/** The values as the columns keep them: every moment through {@link storedMoment}. */
+	private asStored<T extends Row>(values: T): T {
+		return Object.fromEntries(
+			Object.entries(values).map(([column, value]) => [
+				column,
+				value instanceof Date ? this.storedMoment(value) : value
+			])
+		) as T;
+	}
+
 	private persist(row: SeriesRow): SeriesRow {
 		this.writes.push(this.depth);
+
+		// In place, so the row a caller saved is still the row the table holds, as it always was here.
+		Object.assign(row, this.asStored(row));
 
 		const index = this.rows.findIndex((existing) => existing.id === row.id);
 
@@ -348,15 +372,31 @@ function comparable(value: unknown): number {
 	return value instanceof Date ? value.getTime() : Number(value);
 }
 
+/**
+ * What MySQL's `datetime` keeps of a moment: the nearest whole second.
+ *
+ * The series table declares `lastResetAt` as `datetime` with no fractional precision on MySQL, and MySQL
+ * rounds — it does not truncate — a fractional value written to a column with fewer fractional digits. The
+ * driver sends the milliseconds a `Date` carries, so `23:59:59.700` is stored as the next second, which is
+ * the next day's `00:00:00`. Postgres's `timestamp` and SQLite's text keep the milliseconds.
+ */
+function mysqlDatetime(moment: Date): Date {
+	return new Date(Math.round(moment.getTime() / 1000) * 1000);
+}
+
 const ORGANIZATION = '6b1e0f2a-0000-4000-8000-00000000000a';
 const CHANNEL = '6b1e0f2a-0000-4000-8000-00000000000b';
 
 /** The dialect the mocked configuration reports, so a case can choose the path it exercises. */
-const dialect = (): { current: 'postgres' | 'sqlite' } => (jest.requireMock('@gauzy/config') as any).dialect;
+const dialect = (): { current: 'postgres' | 'mysql' | 'sqlite' } => (jest.requireMock('@gauzy/config') as any).dialect;
 
 /** The service under test and the store it allocates from. */
-function seriesStore(rows: Partial<SeriesRow>[] = [{}], mode: TransactionMode = 'serialised') {
-	const store = new SeriesStore(rows, mode);
+function seriesStore(
+	rows: Partial<SeriesRow>[] = [{}],
+	mode: TransactionMode = 'serialised',
+	storedMoment?: (moment: Date) => Date
+) {
+	const store = new SeriesStore(rows, mode, storedMoment);
 	// The idempotency ledger an allocation claims its caller's key through. It is the kernel's own
 	// service over a table of its own — the keys are a second table, not a second mechanism — so the
 	// replay a retry receives is the one the platform really stores.
@@ -680,6 +720,82 @@ describe('restarting a series', () => {
 
 		expect((await service.allocate('ORDER', { at: AT })).value).toBe(57);
 	});
+});
+
+/**
+ * A restart stamped in the last second of a period, on a column that keeps no fraction of a second.
+ *
+ * The restart decision compares the recorded restart with the start of the current period, in memory and
+ * in the conditional write (`lastResetAt < periodStart`). On MySQL the column is a `datetime` without
+ * fractional precision, and MySQL rounds what it is handed, so a restart stamped at `23:59:59.700` was
+ * stored as the next day's `00:00:00`: the next day's first allocation read a restart recorded inside its
+ * own period, took none, and the series went on counting from the day before. The stamp is written at the
+ * whole second instead, which every dialect stores exactly and which never leaves the period it was taken
+ * in, since every period starts on a whole second.
+ */
+describe('restarting a series whose restart was stamped in the last second of a period', () => {
+	/** The last second of 9 February 2026, with a fraction MySQL rounds up. */
+	const LAST_SECOND = new Date('2026-02-09T23:59:59.700Z');
+
+	/** A daily series whose last restart was on 8 February, holding the counter it reached then. */
+	const DAILY: Partial<SeriesRow> = {
+		nextValue: 40,
+		resetPolicy: SequenceResetPolicy.DAILY,
+		lastResetAt: new Date('2026-02-08T00:00:00Z')
+	};
+
+	it('takes the next day’s restart on MySQL after a restart in the last second of a day', async () => {
+		dialect().current = 'mysql';
+		const { store, service } = seriesStore([DAILY], 'serialised', mysqlDatetime);
+		const nextDay = new Date('2026-02-10T00:00:05Z');
+
+		const handedOut = [
+			(await service.allocate('ORDER', { at: LAST_SECOND })).value,
+			(await service.allocate('ORDER', { at: new Date('2026-02-09T23:59:59.900Z') })).value,
+			(await service.allocate('ORDER', { at: nextDay })).value
+		];
+
+		// The failure scenario: the 9 February restart was stored as `2026-02-10T00:00:00`, so the first
+		// allocation of 10 February read a restart inside its own day, took none, and was handed `3`.
+		expect(handedOut).toEqual([1, 2, 1]);
+		expect(store.rows[0]).toMatchObject({ nextValue: 2, lastResetAt: nextDay });
+		// The row lock MySQL takes is the one the allocation path asks for there.
+		expect(store.locks).toContain('sequence:pessimistic_write');
+	});
+
+	it('records a restart in the last second of a day inside that day on MySQL', async () => {
+		dialect().current = 'mysql';
+		const { store, service } = seriesStore([DAILY], 'serialised', mysqlDatetime);
+
+		await service.allocate('ORDER', { at: LAST_SECOND });
+
+		expect(store.rows[0].lastResetAt).toEqual(new Date('2026-02-09T23:59:59Z'));
+	});
+
+	it('takes the next day’s restart on MySQL after an operator restart in the last second of a day', async () => {
+		dialect().current = 'mysql';
+		const { store, service } = seriesStore([{ id: 'seq-1', ...DAILY }], 'serialised', mysqlDatetime);
+
+		const restarted = await service.resetSeries('seq-1', { at: LAST_SECOND });
+
+		expect(restarted).toMatchObject({ nextValue: 1, lastResetAt: new Date('2026-02-09T23:59:59Z') });
+		expect((await service.allocate('ORDER', { at: LAST_SECOND })).value).toBe(1);
+		expect((await service.allocate('ORDER', { at: new Date('2026-02-10T00:00:05Z') })).value).toBe(1);
+		expect(store.rows[0].nextValue).toBe(2);
+	});
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'stamps the restart at the same whole second on %s, whose column would have kept the fraction',
+		async (current) => {
+			dialect().current = current;
+			const { store, service } = seriesStore([DAILY]);
+
+			expect((await service.allocate('ORDER', { at: LAST_SECOND })).value).toBe(1);
+			// One stamp on every dialect, so what a series records does not depend on where it is stored.
+			expect(store.rows[0].lastResetAt).toEqual(new Date('2026-02-09T23:59:59Z'));
+			expect((await service.allocate('ORDER', { at: new Date('2026-02-10T00:00:05Z') })).value).toBe(1);
+		}
+	);
 });
 
 describe('formatting a number', () => {

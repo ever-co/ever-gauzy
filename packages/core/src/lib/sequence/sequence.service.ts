@@ -226,8 +226,8 @@ export class SequenceService extends CrudService<Sequence> {
 				if (restarted) {
 					// Stamped before the write rather than after it, so the rewind and the record of when the
 					// period started are one statement: a row carrying one without the other would restart
-					// twice inside one period.
-					series.lastResetAt = at;
+					// twice inside one period. At the whole second: see {@link restartStamp}.
+					series.lastResetAt = this.restartStamp(at);
 				}
 
 				const allocatedValue = series.nextValue;
@@ -600,8 +600,9 @@ export class SequenceService extends CrudService<Sequence> {
 
 			// Stamped after the rewind so the restart and its stamp commit together, as they do on the
 			// allocation path — the value a period starts at and the record of when it started are one
-			// fact, and a row carrying one without the other would restart twice in a period.
-			series.lastResetAt = at;
+			// fact, and a row carrying one without the other would restart twice in a period. At the whole
+			// second, as the allocation path stamps it: see {@link restartStamp}.
+			series.lastResetAt = this.restartStamp(at);
 
 			// Predicated on what this transaction read, for the same reason the allocation is: on the
 			// embedded dialects there is no row lock, so an allocation running beside this restart would
@@ -761,6 +762,32 @@ export class SequenceService extends CrudService<Sequence> {
 		const delay = Math.floor(Math.random() * SequenceService.ALLOCATION_RETRY_JITTER_MS * attemptsMade);
 
 		return new Promise((resolve) => setTimeout(resolve, delay));
+	}
+
+	/**
+	 * The moment a restart is recorded at: the moment it happened, to the whole second.
+	 *
+	 * 🛑 **The fraction is dropped here because MySQL would round it, and rounding can cross a period.**
+	 * `lastResetAt` is a `datetime` with no fractional precision on MySQL, the driver sends the milliseconds
+	 * a `Date` carries, and MySQL rounds a value it cannot hold exactly rather than truncating it. A restart
+	 * at `23:59:59.700` was therefore stored as the next day's `00:00:00`, and every later decision —
+	 * `applyResetIfDue` in memory and the `lastResetAt < periodStart` predicate of {@link swapCounter} —
+	 * read a restart recorded inside the next period: its first allocation took no restart, and a `DAILY`
+	 * series went on counting from the day before.
+	 *
+	 * Truncating before the write, on every dialect, is the smaller of the two fixes and the more complete
+	 * one. A whole second is stored exactly by all four dialects, so the row says the same thing wherever it
+	 * lives, and it never leaves the period it was taken in, because every period starts on a whole second.
+	 * Widening the column to `datetime(6)` would need a MySQL-only migration and an entity precision that
+	 * only one dialect reads, and would still leave `lastResetAt` depending on the column's declared
+	 * precision rather than on the service that decides by it. Nothing is lost: the stamp records which
+	 * period the series last restarted in, and no decision reads it at a finer grain than a second.
+	 *
+	 * @param at The moment of the restart.
+	 * @returns That moment, with its fraction of a second dropped.
+	 */
+	private restartStamp(at: Date): Date {
+		return new Date(Math.floor(at.getTime() / 1000) * 1000);
 	}
 
 	/**

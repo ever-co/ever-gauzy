@@ -70,6 +70,10 @@ export class Sequence extends TenantOrganizationBaseEntity implements ISequence 
 
 	/**
 	 * When the series last restarted, used to decide whether a restart is due.
+	 *
+	 * Written to the whole second by the service, because MySQL stores this column without a fraction of
+	 * a second and rounds one it is handed — which can carry a restart in a period's last second into the
+	 * next period. See `SequenceService.restartStamp`.
 	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
