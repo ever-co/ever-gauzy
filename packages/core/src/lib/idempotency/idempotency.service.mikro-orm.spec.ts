@@ -285,6 +285,26 @@ describe('claiming a key on MikroORM', () => {
 		expect(typeOrmReached).toEqual([]);
 	});
 
+	it('hands the store a response as the JSON value it is, and replays a refusal at its status', async () => {
+		const { service, table, typeOrmReached } = mikroStore();
+		const refusal = { message: 'The cart has no lines.', code: 'VALIDATION_FAILED', details: { lines: [] } };
+
+		const first = await service.claim(request());
+		await service.fail(first.record.id as string, { responseStatus: 422, responseBody: refusal });
+
+		// The body reaches the store as an object, on this ORM as on TypeORM: turning it into text is the column
+		// type's job (`simple-json` on TypeORM, `@JsonColumn`'s type on MikroORM), and a body stringified here would
+		// be stored quoted and replayed as a string. Whether MikroORM's assigner accepts the object is a question
+		// for the real store — a stand-in validates no property type — and is answered in
+		// `idempotency.service.mikro-orm-store.spec.ts`, where it once refused every response.
+		expect(table.rows[0]).toMatchObject({ status: IdempotencyStatus.FAILED, responseStatus: 422, responseBody: refusal });
+
+		const retry = await service.claim(request());
+
+		expect(retry).toMatchObject({ outcome: IdempotencyOutcome.REPLAYED, response: { status: 422, body: refusal } });
+		expect(typeOrmReached).toEqual([]);
+	});
+
 	it('resolves a lost race into the winner\'s row, read off the driver\'s own violation', async () => {
 		at('2026-03-01T10:00:00Z');
 

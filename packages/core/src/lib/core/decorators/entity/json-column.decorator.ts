@@ -173,6 +173,17 @@ function buildMikroOrmDecorator<T>(opts: MikroOrmJsonColumnOptions<T>): Property
 			return 'string';
 		}
 
+		// What the value is at runtime, which is not what it is compared as. A MikroORM `Type` answers its compare
+		// type here unless it says otherwise, so `compareAsType()` above made every JSON column a `string` property
+		// to MikroORM, and its assigner — `em.assign`, which `CrudService.save` writes a stored row with — refused
+		// every object and array such a column holds: `Trying to set IdempotencyKey.responseBody of type 'string'
+		// to { … }`, so no idempotency key was ever settled. `any` is what MikroORM's own `JsonType` answers: the
+		// value is not validated against a scalar type, as TypeORM does not validate it either. A property declared
+		// with a TypeScript type the metadata can read (`string[]`, `string`) keeps that type, as before.
+		get runtimeType(): string {
+			return 'any';
+		}
+
 		toJSON(value: T): T {
 			return value;
 		}
