@@ -41,7 +41,11 @@ const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '.
  * `providers` and hand it two mappers. `CrudService` is included beside the tenant-aware one because
  * a service that does not scope on the tenant is still built over a store.
  */
-const BASE_CLASSES = /\bextends\s+(?:[\w.]+\.)?(?:TenantAware)?CrudService\s*</;
+// Any class whose base is a CRUD service by name, not only the two kernel bases: packages put their own
+// abstract base between the kernel's and their services (promotion's `TenantScopedCrudService`, payment's
+// `PaymentScopedCrudService`), and a pattern that matched only direct subclasses of the kernel's stopped
+// measuring every service moved onto one — the gate still passed, and said nothing about them.
+const BASE_CLASSES = /\bextends\s+(?:[\w.]+\.)?\w*CrudService\s*</;
 
 /**
  * Where the script looks.
