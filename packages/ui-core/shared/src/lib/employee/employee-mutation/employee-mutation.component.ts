@@ -134,7 +134,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			this.loading = true;
 			// Create employees in bulk using service
 			const employees: IEmployee[] = await firstValueFrom(this.employeesService.createBulk(this.employees));
-			this.loading = false; // Set loading state to false regardless of success or failure
 
 			// Update employee action in store
 			this._employeeStore.employeeAction = {
@@ -147,6 +146,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			// Handle errors using error handler service
 			this.errorHandler.handleError(error);
+		} finally {
+			this.loading = false; // Set loading state to false regardless of success or failure
 		}
 	}
 
