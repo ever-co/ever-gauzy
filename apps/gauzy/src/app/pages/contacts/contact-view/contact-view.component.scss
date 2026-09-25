@@ -347,6 +347,55 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 	}
 }
 
+// Project rows on the same rhythm as the field rows above: a 2rem mark where
+// the field icon sits, the same row padding, and the same hairline between rows.
+.contact-aside {
+	.entity-list {
+		row-gap: 0;
+	}
+
+	.entity-row {
+		gap: 0.75rem;
+		padding: 0.625rem 0;
+
+		&:first-child {
+			padding-top: 0.25rem;
+		}
+
+		&:last-child {
+			padding-bottom: 0.25rem;
+		}
+
+		& + .entity-row {
+			border-top: $panel-border;
+		}
+	}
+
+	.entity-avatar {
+		width: 2rem;
+		height: 2rem;
+		box-shadow: none;
+	}
+
+	.entity-avatar-fallback {
+		font-size: 0.8125rem;
+	}
+
+	.entity-name {
+		font-weight: 500;
+		line-height: 1.25rem;
+	}
+
+	.entity-meta {
+		font-size: 0.75rem;
+		line-height: 1rem;
+	}
+
+	.panel-empty {
+		padding: 0.25rem 0;
+	}
+}
+
 .field-empty {
 	color: var(--gauzy-text-color-2, var(--text-hint-color));
 	// A dash is a placeholder, not a value: keep it out of the reading order.
