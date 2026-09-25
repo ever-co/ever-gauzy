@@ -30,6 +30,12 @@ type EntityClass = Exclude<TableMetadataArgs['target'], string>;
  * - `@Index([...])` and `@Unique([...])` naming properties that are `@MultiORMColumn`s, which fail the same
  *   build with "Index … contains column that is missing in the entity".
  *
+ * **Now a safety net.** `@MultiORMColumn`, `@ColumnIndex`, `@JsonColumn` and the `@MultiORM*` relation
+ * decorators have since been changed to register TypeORM's metadata under both ORMs (the seeder and every
+ * TypeORM-only service write through that data source, and a skeleton made each of those inserts fail
+ * `NOT NULL`), so on the core entities this pass finds nothing left to remove. It stays for any decorator that
+ * still registers a property with the active ORM alone, where it turns a boot failure into a logged pruning.
+ *
  * **What is removed.** Exactly the entries that name a property TypeORM does not know, resolved the way
  * TypeORM resolves them while it builds an entity's metadata:
  *

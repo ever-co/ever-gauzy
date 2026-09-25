@@ -70,14 +70,13 @@ export function MultiORMOneToOne<T, O>(
 		// Determine which ORM is in use
 		const ormType = getORMType();
 
-		// Apply TypeORM decorator when using TypeORM
-		if (ormType === MultiORMEnum.TypeORM) {
-			TypeOrmOneToOne(
-				typeFunctionOrTarget as TypeORMTarget<T>,
-				inverseSideOrOptions as TypeORMInverseSide<T>,
-				options as TypeORMRelationOptions
-			)(target, propertyKey);
-		}
+		// TypeORM's relation under every ORM, MikroORM's only under `DB_ORM=mikro-orm`: the TypeORM
+		// DataSource runs in both modes (see `MultiORMColumn`).
+		TypeOrmOneToOne(
+			typeFunctionOrTarget as TypeORMTarget<T>,
+			inverseSideOrOptions as TypeORMInverseSide<T>,
+			options as TypeORMRelationOptions
+		)(target, propertyKey);
 
 		// Apply MikroORM decorator when using MikroORM
 		if (ormType === MultiORMEnum.MikroORM) {

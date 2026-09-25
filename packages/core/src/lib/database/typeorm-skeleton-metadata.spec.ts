@@ -33,10 +33,12 @@ import {
 /**
  * TypeORM's metadata under `DB_ORM=mikro-orm`, and the proof that nothing changes under `DB_ORM=typeorm`.
  *
- * Under MikroORM the `@MultiORM*` decorators register columns and relations with MikroORM alone, but the raw
- * TypeORM `@RelationId`, `@Index` and `@Unique` beside them still register — so TypeORM, which both ORMs'
+ * Under MikroORM the `@MultiORM*` decorators used to register columns and relations with MikroORM alone, but the
+ * raw TypeORM `@RelationId`, `@Index` and `@Unique` beside them still registered — so TypeORM, which both ORMs'
  * boot initialises, failed its metadata build with "Cannot find relation undefined", and the API could not
- * start. The platform's own `dataSourceFactory` (`database.module.ts`) now prunes those entries first.
+ * start. The platform's own `dataSourceFactory` (`database.module.ts`) prunes such entries first. The decorators
+ * now register TypeORM's mapping under both ORMs, so on the core entities the pass finds nothing, and the
+ * fixtures below keep the skeleton shapes it still guards against.
  *
  * Everything below goes through TypeORM itself: the real core entities are loaded under each ORM, the data
  * source is built by the exact factory `DatabaseModule` hands `TypeOrmModule`, and what the pruner removed is
@@ -445,11 +447,14 @@ describe('pruneTypeOrmSkeletonMetadata', () => {
 	});
 
 	describe('under MikroORM', () => {
-		/** The core entities as `DB_ORM=mikro-orm` defines them: TypeORM sees their skeleton. */
-		let mikroEntities: EntityClass[];
 		/** Every pruned kind's entries before any pass — what "removed" is measured against. */
 		const before = new Map<TypeOrmSkeletonPrunedKind, StorageEntry[]>();
 
+		const snapshotBefore = (): void => {
+			for (const kind of TYPEORM_SKELETON_PRUNED_KINDS) {
+				before.set(kind, [...entriesOf(kind)]);
+			}
+		};
 		const removed = (kind: TypeOrmSkeletonPrunedKind): StorageEntry[] =>
 			before.get(kind)!.filter((entry) => !entriesOf(kind).includes(entry));
 		const wasRemoved = (kind: TypeOrmSkeletonPrunedKind, entry: StorageEntry | undefined): boolean => {
@@ -457,117 +462,136 @@ describe('pruneTypeOrmSkeletonMetadata', () => {
 			return !entriesOf(kind).includes(entry!);
 		};
 
+		/**
+		 * Runs `body` over the core entities as `DB_ORM=mikro-orm` defines them, imported in a fresh module registry
+		 * that stays open until `body` settles. It has to stay open: `BaseEntity` requires `User` from its relation
+		 * callbacks, which TypeORM calls while it builds the metadata, and a registry already closed by then answers
+		 * the outer registry's `User` — a class the data source was not given.
+		 */
+		async function withMikroOrmEntities(body: (entities: EntityClass[]) => Promise<void>): Promise<void> {
+			process.env.DB_ORM = 'mikro-orm';
+			await jest.isolateModulesAsync(async () => {
+				await body(require('../core/entities').coreEntities);
+			});
+		}
+
 		beforeAll(() => {
 			process.env.DB_ORM = 'mikro-orm';
-			jest.isolateModules(() => {
-				mikroEntities = require('../core/entities').coreEntities;
-			});
-			for (const kind of TYPEORM_SKELETON_PRUNED_KINDS) {
-				before.set(kind, [...entriesOf(kind)]);
-			}
-		}, ENTITY_GRAPH_TIMEOUT);
+			snapshotBefore();
+		});
 
 		beforeEach(() => {
 			process.env.DB_ORM = 'mikro-orm';
 		});
 
 		it(
-			'reproduces the defect: as registered, TypeORM cannot build the skeleton metadata',
+			'builds the full TypeORM metadata of the core entities, the same as under TypeORM, with nothing pruned',
 			async () => {
-				expect(entriesOf('relationIds')).toHaveLength(before.get('relationIds')!.length);
+				const underTypeOrm = new DataSource(inMemory(coreEntities as unknown as EntityClass[]));
+				await buildMetadatas(underTypeOrm);
 
-				await expect(buildMetadatas(new DataSource(inMemory(mikroEntities)))).rejects.toThrow(
-					/Cannot find relation undefined\. Wrong relation specified for @RelationId decorator/
-				);
+				await withMikroOrmEntities(async (mikroEntities) => {
+					// This build used to fail "Cannot find relation undefined. Wrong relation specified for @RelationId
+					// decorator": the `@MultiORM*` decorators gave TypeORM a skeleton under MikroORM. They now register
+					// TypeORM's mapping under both ORMs, because the seeder and every TypeORM-only service write
+					// through this data source, and a skeleton made each insert omit every mapped column.
+					const underMikroOrm = new DataSource(inMemory(mikroEntities));
+					await buildMetadatas(underMikroOrm);
+
+					expect(fingerprint(underMikroOrm.entityMetadatas)).toEqual(
+						fingerprint(underTypeOrm.entityMetadatas)
+					);
+				});
 			},
 			ENTITY_GRAPH_TIMEOUT
 		);
 
 		it(
-			'lets the platform data source initialise, removing only entries TypeORM itself cannot resolve',
-			async () => {
-				const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+			'lets the platform data source initialise, removing nothing any core entity is built from',
+			() =>
+				withMikroOrmEntities(async (mikroEntities) => {
+					// What "removed" is measured against now includes this registry's entries.
+					snapshotBefore();
+					const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
 
-				const dataSource = await platformDataSource(inMemory(mikroEntities));
-				try {
-					expect(dataSource.isInitialized).toBe(true);
-					const metadatas = dataSource.entityMetadatas;
-					expect(metadatas.length).toBeGreaterThanOrEqual(mikroEntities.length);
+					const dataSource = await platformDataSource(inMemory(mikroEntities));
+					try {
+						expect(dataSource.isInitialized).toBe(true);
+						const metadatas = dataSource.entityMetadatas;
+						expect(metadatas.length).toBeGreaterThanOrEqual(mikroEntities.length);
 
-					const counts = Object.fromEntries(
-						TYPEORM_SKELETON_PRUNED_KINDS.map((kind) => [kind, removed(kind).length])
-					) as ITypeOrmSkeletonPruneReport;
-					expect(counts.relationIds).toBeGreaterThan(0);
-					expect(counts.indices).toBeGreaterThan(0);
+						const counts = Object.fromEntries(
+							TYPEORM_SKELETON_PRUNED_KINDS.map((kind) => [kind, removed(kind).length])
+						) as ITypeOrmSkeletonPruneReport;
+						// The skeleton fixtures above share the global storage, so the pass does remove something.
+						expect(counts.relationIds).toBeGreaterThan(0);
+						expect(counts.indices).toBeGreaterThan(0);
 
-					for (const kind of TYPEORM_SKELETON_PRUNED_KINDS) {
-						// Every removed entry that names a core entity's property really is one TypeORM does not know:
-						// at least one entity it is built into fails to resolve it against TypeORM's own metadata.
-						for (const entry of removed(kind)) {
-							const consumers = consumersIn(metadatas, entry);
-							if (consumers.length > 0) {
+						for (const kind of TYPEORM_SKELETON_PRUNED_KINDS) {
+							// ...but none of it is anything a core entity is built from: TypeORM's mapping of the core
+							// entities is complete under MikroORM, so the pass is a safety net there.
+							for (const entry of removed(kind)) {
 								expect({
 									kind,
 									entry,
-									resolvesEverywhere: consumers.every((metadata) => resolvesOn(kind, entry, metadata))
-								}).toEqual(expect.objectContaining({ resolvesEverywhere: false }));
+									consumers: consumersIn(metadatas, entry).map((it) => it.name)
+								}).toEqual(expect.objectContaining({ consumers: [] }));
 							}
-						}
 
-						// Every kept entry resolves on every core entity it is built into.
-						for (const entry of entriesOf(kind)) {
-							for (const metadata of consumersIn(metadatas, entry)) {
-								expect({
-									kind,
-									entity: metadata.name,
-									resolves: resolvesOn(kind, entry, metadata)
-								}).toEqual(expect.objectContaining({ resolves: true }));
-							}
-						}
-
-						// The TypeORM-mapped classes (and their bases) share the storage, and every entry they declare
-						// resolves: none was removed.
-						const typeOrmClasses = new Set<EntityClass>(
-							(coreEntities as unknown as EntityClass[]).flatMap((entity) => {
-								const tree: EntityClass[] = [];
-								for (
-									let current: any = entity;
-									current?.name;
-									current = Object.getPrototypeOf(current)
-								) {
-									tree.push(current);
+							// Every kept entry resolves on every core entity it is built into.
+							for (const entry of entriesOf(kind)) {
+								for (const metadata of consumersIn(metadatas, entry)) {
+									expect({
+										kind,
+										entity: metadata.name,
+										resolves: resolvesOn(kind, entry, metadata)
+									}).toEqual(expect.objectContaining({ resolves: true }));
 								}
-								return tree;
-							})
+							}
+
+							// The TypeORM-mapped classes (and their bases) share the storage, and every entry they declare
+							// resolves: none was removed.
+							const typeOrmClasses = new Set<EntityClass>(
+								(coreEntities as unknown as EntityClass[]).flatMap((entity) => {
+									const tree: EntityClass[] = [];
+									for (
+										let current: any = entity;
+										current?.name;
+										current = Object.getPrototypeOf(current)
+									) {
+										tree.push(current);
+									}
+									return tree;
+								})
+							);
+							expect(
+								removed(kind).filter((entry) => typeOrmClasses.has(entry.target as EntityClass))
+							).toEqual([]);
+						}
+
+						// Said once, with the per-kind counts.
+						const calls = log.mock.calls.filter(
+							(_call, index) => (log.mock.contexts[index] as any)?.context === 'TypeOrmSkeletonMetadata'
 						);
-						expect(
-							removed(kind).filter((entry) => typeOrmClasses.has(entry.target as EntityClass))
-						).toEqual([]);
-					}
+						expect(calls).toHaveLength(1);
+						for (const kind of TYPEORM_SKELETON_PRUNED_KINDS) {
+							expect(String(calls[0][0])).toContain(`${kind}: ${counts[kind]}`);
+						}
 
-					// Said once, with the per-kind counts.
-					const calls = log.mock.calls.filter(
-						(_call, index) => (log.mock.contexts[index] as any)?.context === 'TypeOrmSkeletonMetadata'
-					);
-					expect(calls).toHaveLength(1);
-					for (const kind of TYPEORM_SKELETON_PRUNED_KINDS) {
-						expect(String(calls[0][0])).toContain(`${kind}: ${counts[kind]}`);
+						// A second pass finds nothing left and says nothing.
+						const logger = recordingLogger();
+						expect(pruneTypeOrmSkeletonMetadata(undefined, logger)).toEqual({
+							relationIds: 0,
+							indices: 0,
+							uniques: 0,
+							checks: 0,
+							exclusions: 0
+						});
+						expect(logger.log).not.toHaveBeenCalled();
+					} finally {
+						await dataSource.destroy();
 					}
-
-					// A second pass finds nothing left and says nothing.
-					const logger = recordingLogger();
-					expect(pruneTypeOrmSkeletonMetadata(undefined, logger)).toEqual({
-						relationIds: 0,
-						indices: 0,
-						uniques: 0,
-						checks: 0,
-						exclusions: 0
-					});
-					expect(logger.log).not.toHaveBeenCalled();
-				} finally {
-					await dataSource.destroy();
-				}
-			},
+				}),
 			ENTITY_GRAPH_TIMEOUT
 		);
 

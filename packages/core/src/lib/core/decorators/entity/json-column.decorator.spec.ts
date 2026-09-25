@@ -16,6 +16,10 @@ type EntityClass = Exclude<TableMetadataArgs['target'], string>;
  * other JSON column on the platform were therefore unmapped on the ORM actually running: never written, never
  * read.
  *
+ * Under `DB_ORM=mikro-orm` the TypeORM column is registered as well, like every `@MultiORMColumn`: the TypeORM
+ * data source runs in both modes (migrations, the seeder, the services still on TypeORM), and a skeleton made
+ * each of its inserts omit the column. MikroORM's property stays off under `DB_ORM=typeorm`.
+ *
  * The decorators register at class-definition time, so the real entity is re-imported in a fresh module
  * registry per `DB_ORM`, as `product-category.entity.mikro-orm.spec.ts` does. TypeORM's metadata storage and
  * MikroORM's are both globals; MikroORM's files a class under `<className>-<hash of its file>`, which both
@@ -142,14 +146,17 @@ describe('@JsonColumn', () => {
 		);
 
 		it(
-			'under DB_ORM=mikro-orm: a MikroORM property for input, state and result, no TypeORM column, and discovery accepts every entity',
+			'under DB_ORM=mikro-orm: a MikroORM property for input, state and result, the TypeORM column too, and discovery accepts every entity',
 			async () => {
 				const isolated = importEntitiesUnder('mikro-orm');
 				const { coreEntities, Operation } = isolated;
 
-				// The defect: these were TypeORM columns, and MikroORM had no property at all.
-				for (const propertyName of Object.keys(OPERATION_JSON_COLUMNS)) {
-					expect(typeOrmColumn(Operation, propertyName)).toBeUndefined();
+				// The TypeORM column is kept, since TypeORM's data source runs under MikroORM too; the defect was that
+				// MikroORM had no property at all.
+				for (const [propertyName, nullable] of Object.entries(OPERATION_JSON_COLUMNS)) {
+					const column = typeOrmColumn(Operation, propertyName);
+					expect(column?.options.type).toBe('simple-json');
+					expect(column?.options.nullable).toBe(nullable ? true : undefined);
 				}
 
 				const metas = mikroOrmMetadataFor('Operation');
@@ -198,7 +205,7 @@ describe('@JsonColumn', () => {
 			['postgres', 'jsonb', 'jsonb'],
 			['mysql', 'json', 'json']
 		])(
-			'on %s: TypeORM stores %s under DB_ORM=typeorm, MikroORM %s under DB_ORM=mikro-orm',
+			'on %s: TypeORM stores %s under either ORM, MikroORM %s under DB_ORM=mikro-orm',
 			(dbType, typeOrmType, mikroOrmType) => {
 				const typeOrmFixture = decorateUnder(
 					'typeorm',
@@ -215,7 +222,7 @@ describe('@JsonColumn', () => {
 					() => JsonColumn({ nullable: true }),
 					`MikroOrmOn_${dbType}`
 				);
-				expect(typeOrmColumn(mikroOrmFixture)).toBeUndefined();
+				expect(typeOrmColumn(mikroOrmFixture)?.options.type).toBe(typeOrmType);
 				expect(mikroOrmProperty(mikroOrmFixture)?.type.getColumnType()).toBe(mikroOrmType);
 				expect(mikroOrmProperty(mikroOrmFixture)?.nullable).toBe(true);
 
@@ -276,7 +283,8 @@ describe('@JsonColumn', () => {
 				'MikroOrmNoOrmTypeFixture'
 			);
 
-			expect(typeOrmColumn(Fixture)).toBeUndefined();
+			// TypeORM's column as well: its data source runs under MikroORM too.
+			expect(typeOrmColumn(Fixture)?.options.type).toBe('simple-json');
 			const property = mikroOrmProperty(Fixture);
 			expect(property).toBeDefined();
 			expect(property.type.convertToJSValue(null)).toEqual([]);

@@ -1,19 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	Unique as TypeOrmUnique,
-	RelationId,
-	JoinTable
-} from 'typeorm';
+import { JoinColumn, Unique as TypeOrmUnique, RelationId, JoinTable } from 'typeorm';
 import { Unique as MikroOrmUnique } from '@mikro-orm/core';
-import {
-	IsString,
-	IsNumber,
-	IsBoolean,
-	IsDate,
-	IsOptional,
-	IsEnum
-} from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
 	IInvoice,
 	CurrenciesEnum,
@@ -38,7 +26,14 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { ExportRedacted } from '../export-import/export-redact.decorator';
 import { MultiORMEnum, getORMType } from '../core/utils';
@@ -48,17 +43,16 @@ import { MultiORMEnum, getORMType } from '../core/utils';
  *
  * A global UNIQUE(invoiceNumber) made every tenant share one sequence: a tenant could learn which
  * numbers other tenants hold from unique-violation errors, and push everyone's "next number" by
- * saving a huge one (GHSA-57hw-jqpj-ww97). Only the decorator of the active ORM is applied, because
- * MikroORM validates index properties against the properties registered for it. MikroORM keys on the
- * `tenant` relation (its `tenantId` property is not persisted); both resolve to the same column.
+ * saving a huge one (GHSA-57hw-jqpj-ww97). TypeORM's constraint is registered under every ORM, like
+ * its columns (see `MultiORMColumn`); MikroORM's only under `DB_ORM=mikro-orm`, because MikroORM validates
+ * index properties against the properties registered for it. MikroORM keys on the `tenant` relation (its
+ * `tenantId` property is not persisted); both resolve to the same column.
  */
 function InvoiceNumberUniquePerTenant(): ClassDecorator {
 	return (target: any) => {
-		const ormType = getORMType();
-		if (ormType === MultiORMEnum.TypeORM) {
-			TypeOrmUnique(['tenantId', 'invoiceNumber'])(target);
-		}
-		if (ormType === MultiORMEnum.MikroORM) {
+		TypeOrmUnique(['tenantId', 'invoiceNumber'])(target);
+
+		if (getORMType() === MultiORMEnum.MikroORM) {
 			MikroOrmUnique({ properties: ['tenant', 'invoiceNumber'] } as any)(target);
 		}
 	};
@@ -79,7 +73,6 @@ function InvoiceNumberUniquePerTenant(): ClassDecorator {
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @InvoiceNumberUniquePerTenant()
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
-
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@MultiORMColumn({ nullable: true })
@@ -238,7 +231,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsOptional()
 	@MultiORMColumn({
 		nullable: true,
-		...(isMySQL() ? { type: "text" } : {})
+		...(isMySQL() ? { type: 'text' } : {})
 	})
 	token?: string;
 
@@ -265,7 +258,6 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsString()
 	@MultiORMColumn({ type: 'uuid', nullable: true })
 	vendorId?: ID;
-
 
 	/*
 	|--------------------------------------------------------------------------
@@ -339,7 +331,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		owner: true,
 		pivotTable: 'tag_invoice',
 		joinColumn: 'invoiceId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_invoice'
