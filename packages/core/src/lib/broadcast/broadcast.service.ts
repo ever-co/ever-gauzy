@@ -18,6 +18,7 @@ import {
 	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
+import { parseToBoolean } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { parseFindOptionsRelations } from '../core/utils';
@@ -202,13 +203,21 @@ export class BroadcastService extends TenantAwareCrudService<Broadcast> {
 			isActive: true
 		};
 
-		// Retrieve broadcasts matching base criteria with pagination
+		// Retrieve broadcasts matching base criteria with pagination.
+		//
+		// These options are built by *naming* the members forwarded, so anything not named is dropped —
+		// and `withDeleted` used to be, answering the live broadcasts to a caller who asked for the retired
+		// ones on both ORMs. It is forwarded to the CRUD base, which lifts TypeORM's `deletedAt IS NULL` and
+		// disables MikroORM's soft-delete filter by name; the tenant and organization in `where` stay. It is
+		// read as a boolean because the REST list route's pipe does not transform, so its query string
+		// arrives as 'true' / 'false' and a truthiness test would read 'false' as true.
 		const queryOptions: FindManyOptions<Broadcast> = {
 			where,
 			relations: parseFindOptionsRelations(relations),
 			order: { publishedAt: 'DESC' },
 			...(take !== undefined && { take }),
-			...(skip !== undefined && { skip })
+			...(skip !== undefined && { skip }),
+			...(parseToBoolean(filters.withDeleted) && { withDeleted: true })
 		};
 
 		const { items } = await super.findAll(queryOptions);

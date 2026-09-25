@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets, FindOptionsWhere, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { FilterQuery as MikroFilterQuery } from '@mikro-orm/core';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import * as Handlebars from 'handlebars';
 import {
 	AccountingTemplateTypeEnum,
@@ -10,7 +11,7 @@ import {
 	IPagination,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/utils';
+import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { AccountingTemplate } from './accounting-template.entity';
 import {
 	IAccountingTemplateLookup,
@@ -276,6 +277,13 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	/**
 	 * Get Accounting Templates using pagination params
 	 *
+	 * **`withDeleted` is honoured on both ORMs.** This method builds its own reads rather than going
+	 * through the CRUD base, so a member of `params` it does not name is dropped — and the flag used to
+	 * be one of them, answering the live rows to a caller who asked for the retired ones. On MikroORM
+	 * soft delete is a filter, disabled by name for this one read; on TypeORM it is the query builder's
+	 * own `deletedAt IS NULL`, lifted with `withDeleted`. Neither touches the tenant and global arms
+	 * below, so a retired row of another tenant stays as unreachable as a live one.
+	 *
 	 * @param params
 	 * @returns
 	 */
@@ -283,6 +291,10 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(params);
+
+		// The GraphQL field hands a boolean; the REST list route's pipe does not transform, so its query
+		// string arrives as 'true' / 'false', and a truthiness test would read 'false' as true.
+		const withDeleted = parseToBoolean(params?.withDeleted);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -307,7 +319,9 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
 					...(params?.relations ? { populate: Object.keys(params.relations) as any[] } : {}),
-					...(params?.order ? { orderBy: params.order as any } : {})
+					...(params?.order ? { orderBy: params.order as any } : {}),
+					// Only the soft-delete filter is disabled, by name: the tenant scope is the `$or` above.
+					...(withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {})
 				});
 				return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
@@ -330,7 +344,9 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 						? {
 								order: params.order
 						  }
-						: {})
+						: {}),
+					// Lifts only the builder's own `deletedAt IS NULL`; the tenant arms are the `where` below.
+					...(withDeleted ? { withDeleted: true } : {})
 				});
 				query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
 					qb.andWhere(

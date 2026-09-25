@@ -278,7 +278,11 @@ describe('AccountingTemplateResolver — the SDL declares the capabilities the R
 	});
 
 	it('offers no argument it cannot honour', () => {
-		// The read hands its options to `findAll`, which carries `withDeleted` to the store on both dialects, so the connection offers it — the same visibility the REST list route inherits from `BaseQueryDTO`.
+		// The read hands its options to `findAll`, which carries `withDeleted` to the store on both ORMs, so
+		// the connection offers it — the same visibility the REST list route inherits from `BaseQueryDTO`.
+		// This case only proves the argument is printed: that the store honours it is asserted against a
+		// real database per ORM in `accounting-template.service.with-deleted.spec.ts`, because this comment
+		// once stood over a `findAll` that dropped the flag on both.
 		expect(printed).toMatch(/accountingTemplates\([^)]*withDeleted/);
 		// The count route passes its query string through as the store's own `where`, which this surface
 		// cannot hand to that call, so the count states no filter it could not honour.
