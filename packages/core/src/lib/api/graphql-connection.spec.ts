@@ -8,8 +8,10 @@ import {
 	connectionFromOffsetPage,
 	connectionFromPage,
 	encodeOffsetCursor,
+	paginateRows,
 	resolveConnectionWindow
 } from './graphql-connection';
+import { API_QUERY_LIMITS } from './query-ast';
 
 /**
  * The connection contract, at the kernel rather than through a domain.
@@ -291,7 +293,39 @@ describe('resolveConnectionWindow — the window a cursor names', () => {
 		// The same misreading turned `last: 5, before: <offset 12>` into rows 12 to 16 — the wrong
 		// direction as well as the wrong rows.
 		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(12) })).toEqual({ skip: 7, take: 5 });
-		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(3) })).toEqual({ skip: 0, take: 5 });
+		// Corrected from `{ skip: 0, take: 5 }`, which pinned the defect rather than the contract: with
+		// only three rows before the cursor, a five-row window starting at 0 reads rows 0 to 4 — the
+		// cursor's own row (exclusive) and the row after it among them.
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(3) })).toEqual({ skip: 0, take: 3 });
+	});
+
+	it('never reaches the `before` cursor’s own row when fewer rows than the page size lie before it', () => {
+		// A client showing rows 3-7 steps back with `last: 5, before: <offset 3>`: the rows before the
+		// window it has are 0, 1 and 2, and nothing else.
+		const rows = Array.from({ length: 10 }, (_, offset) => offset);
+		const window = resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(3) });
+		const page = connectionFromOffsetPage(paginateRows(rows, window.take, window.skip), window.skip);
+
+		expect(page.nodes).toEqual([0, 1, 2]);
+		expect(page.pageInfo.hasPreviousPage).toBe(false);
+		expect(page.pageInfo.hasNextPage).toBe(true);
+
+		// Exactly the page size before the cursor is still a full page, starting at the first row.
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(5) })).toEqual({ skip: 0, take: 5 });
+	});
+
+	it('answers an empty window for a backward walk from the first row, because nothing lies before it', () => {
+		// `before: <offset 0>` used to answer rows 0-4. The window is empty instead — the only window whose
+		// `take` is zero — and every store this platform pages through reads it as "no rows".
+		const window = resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(0) });
+		expect(window).toEqual({ skip: 0, take: 0 });
+
+		const rows = Array.from({ length: 10 }, (_, offset) => offset);
+		const page = connectionFromOffsetPage(paginateRows(rows, window.take, window.skip), window.skip, window.take);
+
+		expect(page.nodes).toEqual([]);
+		expect(page.totalCount).toBe(10);
+		expect(page.pageInfo).toEqual({ hasNextPage: true, hasPreviousPage: false, startCursor: null, endCursor: null });
 	});
 
 	it('walks from a page boundary to exactly the next page', () => {
@@ -324,6 +358,92 @@ describe('resolveConnectionWindow — the window a cursor names', () => {
 		expect(refuse({ first: 1, offset: 4 })).toContain('PAGINATION_STYLE_CONFLICT');
 
 		expect(resolveConnectionWindow({ first: 5000 }).take).toBe(MAX_CONNECTION_PAGE_SIZE);
+	});
+
+	it('reads a member stated as null as a member not stated, so a Relay first fetch is the first page', () => {
+		// Relay sends the cursor variable as `null` on the first fetch and graphql-js keeps it: the page
+		// arrives as `{ first: 20, after: null }`. Reading that `null` as a cursor refused the first page
+		// of every store-paged connection with PAGINATION_CURSOR_INVALID.
+		expect(resolveConnectionWindow({ first: 20, after: null })).toEqual({ skip: 0, take: 20 });
+
+		// The same reading made a stated-null opposite direction a conflict.
+		expect(resolveConnectionWindow({ first: 20, last: null })).toEqual({ skip: 0, take: 20 });
+		expect(resolveConnectionWindow({ first: 3, after: encodeOffsetCursor(7), before: null })).toEqual({
+			skip: 8,
+			take: 3
+		});
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(12), first: null, after: null })).toEqual({
+			skip: 7,
+			take: 5
+		});
+
+		// And a generated client that sends the offset spelling's arguments as `null` beside `page` — the
+		// shape `{ ...(page ?? {}), limit, offset }` hands over — is not stating two styles.
+		expect(resolveConnectionWindow({ limit: null, offset: null, first: 5 })).toEqual({ skip: 0, take: 5 });
+		expect(resolveConnectionWindow({ first: null, after: null, limit: 5, offset: 10 })).toEqual({ skip: 10, take: 5 });
+
+		// Every member null, or no selection at all, is the first page at the default size.
+		expect(
+			resolveConnectionWindow({ first: null, after: null, last: null, before: null, limit: null, offset: null })
+		).toEqual(resolveConnectionWindow());
+		expect(resolveConnectionWindow(null)).toEqual(resolveConnectionWindow());
+	});
+
+	it('still refuses the conflicts a caller actually stated once nulls are set aside', () => {
+		expect(refuse({ first: 1, last: 1, after: null })).toContain('PAGINATION_DIRECTION_CONFLICT');
+		expect(refuse({ first: 1, offset: 4, before: null })).toContain('PAGINATION_STYLE_CONFLICT');
+		expect(refuse({ last: 5, before: null })).toContain('PAGINATION_ANCHOR_REQUIRED');
+		expect(refuse({ first: 3, after: 'not-a-cursor', before: null })).toContain('PAGINATION_CURSOR_INVALID');
+	});
+
+	it('reports hasNextPage exactly when the window resolver will accept the next page', () => {
+		// 2,500 rows walked two at a time. The cap accepts a page that starts at 2 × maxPageNumber and
+		// refuses the one after it, so the page at the ceiling must not advertise a next page: a client
+		// that pages while `hasNextPage` is true was otherwise told to continue into a refusal.
+		const take = 2;
+		const ceiling = take * API_QUERY_LIMITS.maxPageNumber;
+		const total = ceiling + 500;
+
+		for (const skip of [ceiling - 4, ceiling - 2, ceiling - 1, ceiling]) {
+			const page = connectionFromOffsetPage({ items: ['a', 'b'], total }, skip, take);
+			const accepted = refuse({ first: take, after: page.pageInfo.endCursor }) === undefined;
+
+			expect({ skip, hasNextPage: page.pageInfo.hasNextPage }).toEqual({ skip, hasNextPage: accepted });
+			// The count is still the whole count: that is how a client tells a walk stopped by the ceiling
+			// from a walk that ran out of rows.
+			expect(page.totalCount).toBe(total);
+		}
+
+		// The two sides of the boundary, stated outright.
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling - 2, take).pageInfo.hasNextPage).toBe(true);
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling, take).pageInfo.hasNextPage).toBe(false);
+		expect(refuse({ first: take, after: encodeOffsetCursor(ceiling + 1) })).toContain('QUERY_PAGE_LIMIT_EXCEEDED');
+
+		// A caller that does not pass the page size has it read from the full page it answered.
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling).pageInfo.hasNextPage).toBe(false);
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling - 2).pageInfo.hasNextPage).toBe(true);
+	});
+
+	it('walks a whole list with the cursors it hands out, stopping exactly where hasNextPage says', () => {
+		// The walk a Relay client performs: first page, then `after: endCursor` while `hasNextPage` holds.
+		// Every row comes back once, in order, and no step is refused.
+		const rows = Array.from({ length: 47 }, (_, offset) => offset);
+		const seen: number[] = [];
+		let after: string | null = null;
+
+		for (let step = 0; step < 10; step++) {
+			const window = resolveConnectionWindow({ first: 10, after });
+			const page = connectionFromOffsetPage(paginateRows(rows, window.take, window.skip), window.skip, window.take);
+
+			seen.push(...page.nodes);
+
+			if (!page.pageInfo.hasNextPage) {
+				break;
+			}
+			after = page.pageInfo.endCursor;
+		}
+
+		expect(seen).toEqual(rows);
 	});
 
 	it('refuses with the platform’s own error class, not a bare Error', () => {

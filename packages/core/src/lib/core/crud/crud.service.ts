@@ -39,6 +39,7 @@ import {
 	parseTypeORMFindToMikroOrm
 } from './../../core/utils';
 import { parseTypeORMFindCountOptions } from './utils';
+import { applyRowOffset, statesEmptyWindow } from './find-window.helper';
 import { assertCriteriaHasPredicate } from './criteria.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
@@ -193,35 +194,54 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Also counts all entities that match given conditions,
 	 * but ignores pagination settings (from and take options).
 	 *
+	 * **`skip` is a row offset under both ORMs.** `findAll({ skip: 20, take: 20 })` answers rows 20-39,
+	 * which is what TypeORM's `skip` has always meant and what every caller of this method passes — the
+	 * store-paged GraphQL connections, and the services that multiply a page number out before calling.
+	 * The MikroORM branch used to inherit the shared parser's page-number reading (the one `paginate`
+	 * needs), so the same call answered rows 380-399 there; {@link applyRowOffset} puts the row offset
+	 * back. `paginate` keeps its page-number `skip` on both ORMs.
+	 *
+	 * **A stated `take` of zero is an empty page, not an unbounded one.** Neither ORM reads a zero limit
+	 * reliably (see {@link statesEmptyWindow}), so the read is issued for a single row, whose only purpose
+	 * is to have the store compute `total` through exactly the criteria, scope and `withDeleted` a real
+	 * page would have used, and the row is discarded.
+	 *
 	 * @param options
 	 * @returns
 	 */
 	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
 		this.assertRelationsPermitted(options);
 
+		const emptyWindow = statesEmptyWindow(options);
+		const read = emptyWindow ? ({ ...options, take: 1 } as IFindManyOptions<T>) : options;
+
 		let total: number;
 		let items: T[];
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(read as FindManyOptions);
+				applyRowOffset(mikroOptions, read);
 				[items, total] = (await this.mikroOrmRepository.findAndCount(where, mikroOptions)) as any;
 				items = items.map((entity: T) => this.serialize(entity)) as T[];
 				break;
 			case MultiORMEnum.TypeORM:
 				[items, total] = await this.typeOrmRepository.findAndCount(
-					parseTypeORMFindOptions(options as FindManyOptions<T>)
+					parseTypeORMFindOptions(read as FindManyOptions<T>)
 				);
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 
-		return { items, total };
+		return { items: emptyWindow ? [] : items, total };
 	}
 
 	/**
 	 * Finds entities that match given find options.
+	 *
+	 * `skip` is a row offset under both ORMs and a stated `take` of zero answers no rows, for the reasons
+	 * given on {@link findAll}; nothing needs counting here, so an empty window is answered without a read.
 	 *
 	 * @param options
 	 * @returns
@@ -229,9 +249,14 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
 		this.assertRelationsPermitted(options);
 
+		if (statesEmptyWindow(options)) {
+			return [];
+		}
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				applyRowOffset(mikroOptions, options);
 				const items = await this.mikroOrmRepository.find(where, mikroOptions);
 				return items.map((entity: T) => this.serialize(entity)) as T[];
 			case MultiORMEnum.TypeORM:

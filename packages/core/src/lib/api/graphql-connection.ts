@@ -804,14 +804,45 @@ export function connectionFromPage<T>(
  * Two spellings, because two are in use and both are the query protocol's: the cursor spelling
  * (`first`/`after`, `last`/`before`) and the offset spelling (`limit`/`offset`). Stating a forward and
  * a backward walk together has no defined meaning and is refused rather than resolved by preferring one.
+ *
+ * Every member may arrive as `null` as well as absent: every one of them is a nullable argument in the
+ * schema, and GraphQL keeps an explicit `null` — a Relay client sends `after: null` on every first fetch,
+ * and a generated client sends `limit: null` beside `page`. A `null` member states nothing, exactly like
+ * an absent one; {@link resolveConnectionWindow} reads it that way.
  */
 export interface IConnectionPageSelection {
+	first?: number | null;
+	after?: string | null;
+	last?: number | null;
+	before?: string | null;
+	limit?: number | null;
+	offset?: number | null;
+}
+
+/**
+ * The members of a page selection that state something, with every `null` member dropped.
+ *
+ * GraphQL distinguishes an argument that was never written from one that was written as `null`, and the
+ * window below must not: `{ first: 20, after: null }` is how a Relay client asks for the first page, and
+ * reading that `null` as a stated cursor refused the first page of every store-paged connection as a
+ * cursor this platform did not mint. The same reading turned `{ first: 10, last: null }` into a direction
+ * conflict and `page` beside `limit: null` into a style conflict. Dropping the `null` members once, before
+ * any check runs, is what makes every check below mean "the caller stated this".
+ *
+ * @param selection The selection as the resolver received it.
+ * @returns The members the caller actually stated.
+ */
+function statedPageMembers(selection?: IConnectionPageSelection | null): {
 	first?: number;
 	after?: string;
 	last?: number;
 	before?: string;
 	limit?: number;
 	offset?: number;
+} {
+	return Object.fromEntries(
+		Object.entries(selection ?? {}).filter(([, value]) => value !== null && value !== undefined)
+	);
 }
 
 /**
@@ -849,18 +880,33 @@ export const MAX_CONNECTION_PAGE_SIZE = API_QUERY_LIMITS.maxPageSize;
  * A backward walk is a window that ends at the cursor rather than one that starts there, so its `skip` is
  * the page size subtracted from the cursor's offset: `last: 5, before: <offset 12>` reads rows 7 to 11.
  *
+ * **A backward window never reaches the cursor it ends at.** Near the start of the list there are fewer
+ * rows before the cursor than the page size asks for, so the window is shortened rather than merely
+ * clamped: `last: 5, before: <offset 3>` reads rows 0 to 2. Clamping the start alone kept five rows and
+ * answered rows 0 to 4 — the cursor's own row, which is exclusive, and a row after it, both of which the
+ * client already had on screen. `before: <offset 0>` names the first row, so nothing lies before it and
+ * the window is **empty**: `{ skip: 0, take: 0 }`. That is the one window whose `take` is zero, and it
+ * means "no rows" — `CrudService.findAll` answers it with the count alone and `paginateRows` with an
+ * empty slice. A caller that reads through a store of its own must do the same rather than hand a zero
+ * `take` to its ORM, where a zero limit is ignored and the read is unbounded.
+ *
  * A backward walk needs its anchor: `last` with no `before` means "the last n rows", and the offset that
  * starts is `total - n`, which this function cannot know before the read. It is refused rather than
  * answered from the beginning, because answering the first page to a request for the last one is a wrong
  * answer a client cannot detect.
  *
+ * A member stated as `null` states nothing (see {@link statedPageMembers}), so `{ first: 20, after: null }`
+ * is the first page, as a Relay client means it.
+ *
  * @param selection The requested page.
- * @returns The offset the page starts at and how many rows it holds.
+ * @returns The offset the page starts at and how many rows it holds; `take` is zero only for the empty
+ * backward window described above.
  * @throws BadRequestException when a caller mixes forward and backward pagination, mixes the two styles,
- * states a cursor this platform did not mint, or asks for a backward walk with no anchor.
+ * states a cursor this platform did not mint, asks for a backward walk with no anchor, or states a
+ * position past the deepest page the protocol allows.
  */
-export function resolveConnectionWindow(selection?: IConnectionPageSelection): { skip: number; take: number } {
-	const stated = selection ?? {};
+export function resolveConnectionWindow(selection?: IConnectionPageSelection | null): { skip: number; take: number } {
+	const stated = statedPageMembers(selection);
 
 	if (stated.first !== undefined && stated.last !== undefined) {
 		throw new BadRequestException('PAGINATION_DIRECTION_CONFLICT: state first or last, not both.');
@@ -891,12 +937,44 @@ export function resolveConnectionWindow(selection?: IConnectionPageSelection): {
 		stated.after !== undefined
 			? { skip: readCursorOffset(stated.after) + 1, take }
 			: stated.before !== undefined
-				? { skip: Math.max(readCursorOffset(stated.before) - take, 0), take }
+				? backwardWindow(readCursorOffset(stated.before), take)
 				: { skip: stated.offset !== undefined ? Math.max(Math.trunc(stated.offset) || 0, 0) : 0, take };
 
+	// Checked against the requested page size rather than the window's own `take`, which a backward
+	// window near the start shortens: the cap is a statement about how deep a page may start, and the
+	// page size the caller asked for is what that depth is counted in.
 	assertPageInRange(window.skip, take);
 
 	return window;
+}
+
+/**
+ * The window that ends at the row before a cursor, holding at most `take` rows.
+ *
+ * Both edges move near the start of the list: the start is clamped to the first row, and the size shrinks
+ * to the rows that actually lie before the cursor, so the window never reaches the cursor's own row. At
+ * the first row the window is empty — `take` zero — because there is nothing before it.
+ *
+ * @param end The offset of the row the `before` cursor names; the window stops short of it.
+ * @param take The page size the caller asked for.
+ * @returns The window.
+ */
+function backwardWindow(end: number, take: number): { skip: number; take: number } {
+	return { skip: Math.max(end - take, 0), take: Math.min(take, end) };
+}
+
+/**
+ * The deepest offset a page of `take` rows may start at.
+ *
+ * One number, read by the two places that must agree on it: {@link assertPageInRange}, which refuses a
+ * window that starts past it, and {@link connectionFromOffsetPage}, which must not advertise a next page
+ * that the refusal would then turn away.
+ *
+ * @param take The page size.
+ * @returns The largest accepted `skip`.
+ */
+function deepestPageStart(take: number): number {
+	return take * API_QUERY_LIMITS.maxPageNumber;
 }
 
 /**
@@ -907,12 +985,19 @@ export function resolveConnectionWindow(selection?: IConnectionPageSelection): {
  * every row before it, so an offset is a cost, not just a number. `QUERY_PAGE_LIMIT_EXCEEDED` is the code
  * REST raises for the same request.
  *
+ * **The cap applies to cursor continuation as well as to `offset`, deliberately.** A position cursor is
+ * the offset encoded — anyone can mint `after: <offset 10⁹>` — so a cap that exempted cursors would be no
+ * cap at all. What a walk must not meet is a refusal the connection told it to expect nothing of, and that
+ * is kept on the other side: {@link connectionFromOffsetPage} reports `hasNextPage: false` on the last page
+ * this cap accepts, so a client that walks while `hasNextPage` is true stops where the cap does, with
+ * `totalCount` still stating how many rows the filter selects.
+ *
  * @param skip The offset the page starts at.
  * @param take The page size.
  * @throws BadRequestException when the page starts beyond `maxPageNumber` pages in.
  */
 function assertPageInRange(skip: number, take: number): void {
-	const deepest = take * API_QUERY_LIMITS.maxPageNumber;
+	const deepest = deepestPageStart(take);
 
 	if (skip > deepest) {
 		throw new BadRequestException(
@@ -978,26 +1063,43 @@ export function encodeOffsetCursor(offset: number): string {
  * the offset it sits at, so the next page is `first: n, after: pageInfo.endCursor` — the cursor is
  * exclusive, and the walk neither repeats nor skips a row it has already answered.
  *
+ * **`hasNextPage` is a promise the next request will be answered.** The window resolver refuses a page
+ * that starts past the protocol's deepest one (see {@link assertPageInRange}), and the next page of this
+ * one starts at `end`. Reporting `hasNextPage: true` whenever rows remain told a client at the ceiling to
+ * continue and then refused the continuation with `QUERY_PAGE_LIMIT_EXCEEDED` — a Relay client that pages
+ * while `hasNextPage` is true failed on a walk the API itself had advertised. The ceiling is therefore
+ * applied here too: past it `hasNextPage` is `false` while `totalCount` still states the whole count, which
+ * is how a client tells a walk that ended at the ceiling from one that ran out of rows. The page size the
+ * ceiling is counted in is the one the window resolver used; a caller that does not pass it has it read
+ * from the page itself, which is the same number for every page that has a next one — only a full page
+ * can be followed by more rows.
+ *
  * @param page The page the service returned.
  * @param skip The offset the page started at.
+ * @param take The page size the window was resolved with; defaults to the number of rows on the page.
  * @returns The connection, in the shape every `*Connection` type declares.
  */
 export function connectionFromOffsetPage<T>(
 	page: { items?: readonly T[]; total?: number } | null | undefined,
-	skip = 0
+	skip = 0,
+	take?: number
 ): GraphqlConnection<T> {
 	const nodes = page?.items ?? [];
 	const start = Math.max(skip, 0);
 	const totalCount = page?.total ?? nodes.length;
 	const end = start + nodes.length;
 	const cursorOf = (offset: number): string => encodeOffsetCursor(offset);
+	const pageSize = take !== undefined && take > 0 ? take : nodes.length;
+	// The next page starts at `end`; it is only a next page if the window resolver would accept it. A page
+	// with no rows hands out no cursor to continue from, so the ceiling has nothing to say about it.
+	const nextPageAccepted = nodes.length === 0 || end <= deepestPageStart(pageSize);
 
 	return {
 		nodes: [...nodes],
 		edges: nodes.map((node, index) => ({ node, cursor: cursorOf(start + index) })),
 		totalCount,
 		pageInfo: {
-			hasNextPage: end < totalCount,
+			hasNextPage: end < totalCount && nextPageAccepted,
 			hasPreviousPage: start > 0,
 			startCursor: nodes.length > 0 ? cursorOf(start) : null,
 			// The boundary cursor is the cursor of the last row rather than the offset past it: a client
