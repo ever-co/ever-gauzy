@@ -46,8 +46,7 @@
 			{
 				"provider": "github",
 				"repo": "ever-gauzy-desktop",
-				"releaseType": "release",
-				"channel": "latest-x64"
+				"releaseType": "release"
 			}
 		],
 		"mac": {

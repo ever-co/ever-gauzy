@@ -15,6 +15,7 @@ import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '
 import {
 	DEFAULT_DATE_PICKER_CONFIG,
 	DateRangePickerBuilderService,
+	IDatePickerConfig,
 	NavigationService,
 	OrganizationsService,
 	SelectorBuilderService,
@@ -25,7 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
+import { dayOfWeekAsString, selectUnitOfTime, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
@@ -45,6 +46,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	public ranges: DateRanges; // Define ngx-daterangepicker-material range configuration
 	private readonly dates$: BehaviorSubject<IDateRangePicker> = this._dateRangePickerBuilderService.dates$; // Default selected date picker ranges
 	private readonly range$: Subject<IDateRangePicker> = new Subject(); // Local store date picker ranges
+
+	/**
+	 * The date picker configuration this picker has already applied. The config object is rebuilt
+	 * once per route RESOLUTION, so a change of reference means "a new route settled", which is what
+	 * separates a route-driven unit from an in-page one the user chose from the ranges menu.
+	 */
+	private _appliedDatePickerConfig: IDatePickerConfig | null = null;
 
 	// Declaration of arrow variables
 	private arrow: Arrow = new Arrow();
@@ -244,6 +252,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		// issues through the router (replaceState never made it emit), and each
 		// emission costs an organization round-trip plus a re-derivation — narrow +
 		// distinct so only an actual unit change (or the first load) wakes it.
+		//
+		// This is the IN-PAGE signal only: it carries a unit the user chose from the
+		// ranges menu between two route resolutions. The authority on what unit a
+		// route runs at is the resolved date picker config — see the tap below.
 		const queryParamsUnitOfTime$ = this._route.queryParams.pipe(
 			map((params) => params['unit_of_time'] as moment.unitOfTime.Base | undefined),
 			distinctUntilChanged()
@@ -293,10 +305,23 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
 
-					// Query-param values are `string | undefined`, never null — the explicit
-					// `??` keeps the ROUTE-CONFIG unit as the fallback (the setter's own
-					// internal fallback is the global default, wrong for month routes).
-					this.unitOfTime = unitOfTimeFromQuery ?? datePickerConfig.unitOfTime;
+					// Reference equality: the config object is rebuilt once per route RESOLUTION,
+					// so this separates "a new route settled" from an organization or timezone
+					// re-emission of the same one. `selectUnitOfTime` holds the precedence rule
+					// and the reasoning behind it, and is unit-tested on its own.
+					const isNewRouteConfig = datePickerConfig !== this._appliedDatePickerConfig;
+					this._appliedDatePickerConfig = datePickerConfig;
+
+					const nextUnitOfTime = selectUnitOfTime({
+						isNewRouteConfig,
+						routeUnitOfTime: datePickerConfig.unitOfTime,
+						queryUnitOfTime: unitOfTimeFromQuery,
+						currentUnitOfTime: this.unitOfTime
+					});
+
+					if (nextUnitOfTime) {
+						this.unitOfTime = nextUnitOfTime;
+					}
 				}),
 				tap(() => {
 					this.createDateRangeMenus();

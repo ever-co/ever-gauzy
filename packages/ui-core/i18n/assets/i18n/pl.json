@@ -1153,7 +1153,11 @@
 		"APPLICATIONS": "Aplikacje",
 		"OPEN_GA_BROWSER": "Otwórz Gauzy w przeglądarce",
 		"START_SERVER": "Uruchom serwer",
-		"STOP_SERVER": "Zatrzymaj serwer"
+		"STOP_SERVER": "Zatrzymaj serwer",
+		"DOCUMENTS": "Dokumenty",
+		"BILLING": "Fakturacja",
+		"MONITORING": "Monitorowanie",
+		"ADD_ITEM": "Dodaj {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -4553,7 +4557,7 @@
 			"SELECT_DEFAULT_CDN": "Wybierz domyślny serwer CDN do aktualizacji",
 			"TOGGLE_UPDATE_LOCALLY": "Przełącznik do aktualizacji lokalnie",
 			"LOCAL_SERVER": "Lokalny serwer",
-			"LOCAL_SERVER_NOTE": "Wybrane katalogi powinny zawierać zdecydowanie plik <strong>latest.yml</strong> i/lub <strong>latest-mac.yml</strong> manifestu w celu przeprowadzenia walidacji aktualizacji",
+			"LOCAL_SERVER_NOTE": "Wybrany katalog musi zawierać manifest aktualizacji dla Twojego systemu (Windows: <strong>latest-x64.yml</strong> lub <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> lub <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) oraz wymienione w nim pliki aktualizacji w celu przeprowadzenia walidacji aktualizacji",
 			"OTHER_SETTINGS": "Inne ustawienia",
 			"ALLOW_PRERELEASE_VERSIONS": "Zezwól na wersje przedpremierowe",
 			"CHECK_UPDATE_APP_VERSION": "Sprawdź i zaktualizuj wersję swojej aplikacji",
@@ -5302,7 +5306,8 @@
 				"TERMS_AND_CONDITIONS": "Regulamin",
 				"AND": " oraz ",
 				"PRIVACY_POLICY": "Polityka prywatności"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Hasło powinno zawierać co najmniej 4 znaki"
 		}
 	},
 	"LOGIN_PAGE": {

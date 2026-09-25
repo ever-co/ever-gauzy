@@ -80,7 +80,13 @@ concurrency:
   # can never delay or displace a real production probe.
   group: >-
     external-uptime-monitor-${{ github.event_name == 'pull_request' && github.ref || 'live' }}
-  cancel-in-progress: false
+  # Per-event, because the two halves of that group want opposite answers. A LIVE probe must never
+  # be cancelled: it owns the alert issue, and killing it mid-flight can leave an incident open with
+  # no run left to close it. A pull-request self-test owns nothing — alerting is force-disabled on
+  # `pull_request` (see "Decide alerting mode") — so when a reviewer pushes again, the older
+  # self-test is pure waste and the newest commit should win, which is what this repository does
+  # everywhere else on pull requests.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   probe:

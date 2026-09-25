@@ -1154,7 +1154,11 @@
 		"APPLICATIONS": "应用程序",
 		"OPEN_GA_BROWSER": "在浏览器中打开 Gauzy",
 		"START_SERVER": "开始服务器",
-		"STOP_SERVER": "停止服务器"
+		"STOP_SERVER": "停止服务器",
+		"DOCUMENTS": "文件",
+		"BILLING": "计费",
+		"MONITORING": "监控",
+		"ADD_ITEM": "添加{{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -4554,7 +4558,7 @@
 			"SELECT_DEFAULT_CDN": "选择更新的默认 CDN 服务器",
 			"TOGGLE_UPDATE_LOCALLY": "切换以本地方式更新",
 			"LOCAL_SERVER": "本地服务器",
-			"LOCAL_SERVER_NOTE": "所选择的目录应该明确包含 <strong>latest.yml</strong> 和/或 <strong>latest-mac.yml</strong> 清单，以进行更新验证。",
+			"LOCAL_SERVER_NOTE": "所选目录必须包含适用于您系统的更新清单（Windows：<strong>latest-x64.yml</strong> 或 <strong>latest-arm64.yml</strong>；Linux：<strong>latest-x64-linux.yml</strong> 或 <strong>latest-arm64-linux-arm64.yml</strong>；macOS：<strong>latest-mac.yml</strong>）以及其中列出的更新文件，以进行更新验证。",
 			"OTHER_SETTINGS": "其他设置",
 			"ALLOW_PRERELEASE_VERSIONS": "允许预发布版本",
 			"CHECK_UPDATE_APP_VERSION": "检查并更新您的应用版本",
@@ -5303,7 +5307,8 @@
 				"TERMS_AND_CONDITIONS": "条款和条件",
 				"AND": " 和 ",
 				"PRIVACY_POLICY": "隐私政策"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "密码应至少包含 4 个字符"
 		}
 	},
 	"LOGIN_PAGE": {

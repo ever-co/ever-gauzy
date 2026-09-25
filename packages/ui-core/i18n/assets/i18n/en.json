@@ -789,6 +789,10 @@
 			"PROJECT_URL": "Project url is invalid.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid.",
 			"INVALID_IMAGE_URL": "Invalid image URL."
+		},
+		"VALIDATION": {
+			"REQUIRED": "This field is required",
+			"INVALID_URL": "Please enter a valid URL"
 		}
 	},
 	"POP_UPS": {
@@ -1505,12 +1509,16 @@
 				"NO_INTEGRATION_ID": "No Zapier integration ID was provided",
 				"START_AUTHORIZATION": "Please start the authorization process",
 				"INVALID_TOKEN": "Invalid token provided",
-				"TOKEN_NOT_FOUND": "Token not found"
+				"TOKEN_NOT_FOUND": "Token not found",
+				"AUTHORIZATION": "Failed to authorize with Zapier",
+				"INVALID_CALLBACK": "Invalid callback parameters. Check that authorization was completed correctly.",
+				"WEBHOOK_NOT_FOUND": "Webhook not found"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier settings saved successfully",
 				"DELETE_WEBHOOK": "Webhook deleted successfully",
-				"CREATE_ZAP": "Zap created successfully"
+				"CREATE_ZAP": "Zap created successfully",
+				"AUTHORIZATION": "Successfully authorized with Zapier"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
@@ -1710,7 +1718,9 @@
 				"PROJECT_ID_REQUIRED": "Project ID is required",
 				"LOAD_CONNECTIONS": "Failed to load connections",
 				"DELETE_CONNECTION": "Failed to delete connection",
-				"INVALID_CONNECTION": "Invalid connection data"
+				"INVALID_CONNECTION": "Invalid connection data",
+				"INTEGRATION_MISMATCH": "This connection belongs to a different integration",
+				"LOAD_MCP_SERVERS": "Failed to load MCP servers"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Successfully authorized with Activepieces",
@@ -1948,16 +1958,19 @@
 			"DELETE_CONFIRM": "Are you sure you want to delete the dashboard \"{{ name }}\"? This cannot be undone.",
 			"EDIT_HINT": "Drag & drop widgets to rearrange them, or use the Manage Widget menu to show/hide widgets. Click Save to persist this layout.",
 			"DISCARD_CHANGES": "Discard unsaved changes?",
-			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?"
+			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?",
+			"IS_DEFAULT": "Default dashboard"
 		},
 		"BUILDER": {
-			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, use the grip to rearrange them, then click Save above.",
+			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, drag a card to rearrange them, then click Save above.",
 			"UNSAVED_CHANGES": "Unsaved changes",
 			"HOST": {
 				"WIDGET_MENU": "Widget menu",
 				"CONFIGURE": "Configure",
 				"WIDTH": "Width",
 				"WIDTH_COLUMNS": "Width: {{ count }} columns",
+				"HEIGHT": "Height",
+				"HEIGHT_ROWS": "Height: {{ count }} rows",
 				"REMOVE": "Remove",
 				"RETRY": "Retry",
 				"LOADING": "Loading widget",
@@ -1974,7 +1987,7 @@
 				"HINT": "These settings apply to this widget only."
 			},
 			"CANVAS": {
-				"DRAG_HANDLE": "Drag to move this widget",
+				"DRAG_HANDLE": "Move this widget: drag the card, or use the arrow keys",
 				"EMPTY_TITLE": "Your canvas is empty",
 				"EMPTY_HINT": "Drag widgets from the panel on the right, or click one to add it.",
 				"EMPTY_HINT_READONLY": "Click \"Edit Dashboard\" to start adding widgets to this tab."
@@ -3427,7 +3440,8 @@
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
-		"TAGS_SELECT_TYPE": "Tag type"
+		"TAGS_SELECT_TYPE": "Tag type",
+		"TAGS_FETCH_FAILED": "Failed to fetch tag types"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -3630,7 +3644,12 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
 		"INVENTORY": "Inventory",
-		"IMAGE_WAS_DELETED": "Image was deleted"
+		"IMAGE_WAS_DELETED": "Image was deleted",
+		"BROWSE": "Browse",
+		"COULD_NOT_CREATE_MERCHANT": "Could not create merchant",
+		"COULD_NOT_UPDATE_MERCHANT": "Could not update merchant",
+		"COULD_NOT_UPLOAD_IMAGE": "Could not upload image",
+		"ERROR": "Something went wrong"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -3766,7 +3785,7 @@
 		"EMPLOYEE": "Employee",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"CONFIRM_DELETE": "Are you sure you want to delete this proposal template?",
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
@@ -3865,7 +3884,8 @@
 		"DOCUMENTS": {
 			"NEW_PAGE": "New Page",
 			"UPLOAD": "Upload"
-		}
+		},
+		"VIEW_INVOICE": "View Invoice"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Accounting",
@@ -4070,7 +4090,8 @@
 			"CONFIRMATION_INVOICE": "Download this invoice ?",
 			"CONFIRMATION_ESTIMATE": "Download this estimate ?",
 			"INVOICE_DOWNLOAD": "Invoice downloaded",
-			"ESTIMATE_DOWNLOAD": "Estimate downloaded"
+			"ESTIMATE_DOWNLOAD": "Estimate downloaded",
+			"ERROR": "Download failed"
 		},
 		"EMAIL": {
 			"EMAIL_INVOICE": "Send this invoice by email ?",
@@ -4320,7 +4341,8 @@
 			"MAXIMUM_LENGTH": "Maximum length exceeded 255 characters.",
 			"ARTICLE_DESC_REQUIRE": "Article description is require",
 			"ARTICLE_NAME_REQUIRE": "Name of the article is require."
-		}
+		},
+		"NO_MATCHING_ARTICLES": "No matching articles found"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
@@ -4803,7 +4825,15 @@
 			"MODULE_CREATED": "Module created successfully!",
 			"MODULE_UPDATED": "Module updated successfully!",
 			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again.",
-			"PASSWORD_REQUIRED": "Password is required."
+			"PASSWORD_REQUIRED": "Password is required.",
+			"ERROR_APPLYING_JOB": "Error while applying for the job, please try again",
+			"ERROR_DELETING_TIME_LOG": "Error while deleting the time log, please try again",
+			"ERROR_HIDING_JOB": "Error while hiding the job, please try again",
+			"GOAL_CREATION_ERROR": "Goal creation failed: {{ error }}",
+			"GOAL_CREATION_FAILED": "Goal could not be created",
+			"KPI_CREATION_FAILED": "KPI '{{ name }}' could not be created",
+			"MODULE_DELETED": "Module was removed",
+			"SETTINGS_UPDATE_ERROR": "Error while updating settings, please try again"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -5122,7 +5152,7 @@
 			"SELECT_DEFAULT_CDN": "Select default CDN server for update",
 			"TOGGLE_UPDATE_LOCALLY": "Toggle to update locally",
 			"LOCAL_SERVER": "Local Server",
-			"LOCAL_SERVER_NOTE": "Directory selected should contains definitely the <strong>latest.yml</strong> and/or <strong>latest-mac.yml</strong> manifest in order to make update validation",
+			"LOCAL_SERVER_NOTE": "The selected directory must contain the update manifest for your system (Windows: <strong>latest-x64.yml</strong> or <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> or <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) and the update files it lists, in order to validate the update",
 			"OTHER_SETTINGS": "Other Settings",
 			"ALLOW_PRERELEASE_VERSIONS": "Allow prerelease versions",
 			"CHECK_UPDATE_APP_VERSION": "Check & update your app version",
@@ -5928,7 +5958,8 @@
 				"TERMS_AND_CONDITIONS": "Terms & Conditions",
 				"AND": " and ",
 				"PRIVACY_POLICY": "Privacy Policy"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Password must be at least 4 characters!"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -6095,7 +6126,8 @@
 			"EMAIL_MULTIPLE_WORKSPACE": "The email associated with multiple workspaces, please select one to continue",
 			"SELECT_WORKSPACE_FOR": "Select Workspace for",
 			"OPEN": "Open"
-		}
+		},
+		"EDIT_EMAIL": "Edit email"
 	},
 	"WORKSPACE_CREATE": {
 		"ACCOUNT_CREATION": {
@@ -6960,5 +6992,10 @@
 		},
 		"CHARACTERS": "{{count}} characters",
 		"WORDS": "{{count}} words"
+	},
+	"FAVORITES": {
+		"ERROR": {
+			"LOAD_FAILED": "Failed to load favorites"
+		}
 	}
 }

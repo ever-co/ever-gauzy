@@ -1158,7 +1158,11 @@
 		"APPLICATIONS": "Applications",
 		"OPEN_GA_BROWSER": "פתח את Gauzy בדפדפן",
 		"START_SERVER": "התחל את השרת",
-		"STOP_SERVER": "עצור את השרת"
+		"STOP_SERVER": "עצור את השרת",
+		"DOCUMENTS": "מסמכים",
+		"BILLING": "חיוב",
+		"MONITORING": "ניטור",
+		"ADD_ITEM": "הוסף {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -4566,7 +4570,7 @@
 			"SELECT_DEFAULT_CDN": "בחירת שרת CDN בררת מחדל לעדכון",
 			"TOGGLE_UPDATE_LOCALLY": "החלפה לתהליך עדכון מקומי",
 			"LOCAL_SERVER": "שרת מקומי",
-			"LOCAL_SERVER_NOTE": "הספרייה שנבחרה צריכה להכיל לפחות את המדף <strong>latest.yml</strong> ו/או <strong>latest-mac.yml</strong> כדי לבצע אימות עדכונים",
+			"LOCAL_SERVER_NOTE": "הספרייה שנבחרה חייבת להכיל את קובץ המניפסט של העדכון עבור המערכת שלך (Windows: <strong>latest-x64.yml</strong> או <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> או <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) ואת קובצי העדכון המפורטים בו, כדי לבצע אימות עדכונים",
 			"OTHER_SETTINGS": "הגדרות נוספות",
 			"ALLOW_PRERELEASE_VERSIONS": "אפשר גרסאות גרסה חשמלית",
 			"CHECK_UPDATE_APP_VERSION": "בדיקת ועדכון גרסת האפליקציה",
@@ -5294,7 +5298,8 @@
 				"TERMS_AND_CONDITIONS": "תנאים והגבלות",
 				"AND": " וגם ",
 				"PRIVACY_POLICY": "מדיניות פרטיות"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "סיסמה צריכה להכיל לפחות 4 תווים"
 		}
 	},
 	"LOGIN_PAGE": {

@@ -1153,7 +1153,11 @@
 		"APPLICATIONS": "تطبيقات",
 		"OPEN_GA_BROWSER": "افتح Gauzy في المتصفح",
 		"START_SERVER": "تشغيل الخادم",
-		"STOP_SERVER": "توقف الخادم"
+		"STOP_SERVER": "توقف الخادم",
+		"DOCUMENTS": "المستندات",
+		"BILLING": "الفوترة",
+		"MONITORING": "المراقبة",
+		"ADD_ITEM": "إضافة {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -4539,7 +4543,7 @@
 			"SELECT_DEFAULT_CDN": "اختر خادم CDN الافتراضي للتحديث",
 			"TOGGLE_UPDATE_LOCALLY": "تبديل لتحديث محلياً",
 			"LOCAL_SERVER": "الخادم المحلي",
-			"LOCAL_SERVER_NOTE": "يجب أن يحتوي الدليل المحدد بالتأكيد على ملف <strong>latest.yml</strong> و/أو <strong>latest-mac.yml</strong> بغية إجراء التحقق من التحديث.",
+			"LOCAL_SERVER_NOTE": "يجب أن يحتوي الدليل المحدد على ملف بيان التحديث الخاص بنظامك (Windows: <strong>latest-x64.yml</strong> أو <strong>latest-arm64.yml</strong>؛ Linux: <strong>latest-x64-linux.yml</strong> أو <strong>latest-arm64-linux-arm64.yml</strong>؛ macOS: <strong>latest-mac.yml</strong>) مع ملفات التحديث المدرجة فيه، بغية إجراء التحقق من التحديث.",
 			"OTHER_SETTINGS": "الإعدادات الأخرى",
 			"ALLOW_PRERELEASE_VERSIONS": "السماح بالإصدارات التجريبية المسبقة",
 			"CHECK_UPDATE_APP_VERSION": "تحقق وقم بتحديث نسخة التطبيق الخاصة بك",
@@ -5288,7 +5292,8 @@
 				"TERMS_AND_CONDITIONS": "البنود والشروط",
 				"AND": " و ",
 				"PRIVACY_POLICY": "سياسة الخصوصية"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "يجب أن تحتوي كلمة المرور على 4 أحرف على الأقل"
 		}
 	},
 	"LOGIN_PAGE": {

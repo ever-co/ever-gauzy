@@ -67,9 +67,7 @@
 				nbButton
 				status="basic"
 				size="small"
-				ngxConfirmDialog
-				[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
-				(confirm)="deleteProposalTemplate()"
+				(click)="deleteProposalTemplate()"
 				[disabled]="!selectedItem && disableButton"
 				class="action mr-2"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
