@@ -641,7 +641,7 @@ $panel-border: 1px solid var(--gauzy-border-default-color, var(--border-basic-co
 .member-grid {
 	list-style: none;
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
 	gap: 0.625rem;
 	margin: 0;
 	padding: 0;

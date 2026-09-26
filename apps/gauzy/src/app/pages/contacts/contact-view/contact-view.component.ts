@@ -36,6 +36,9 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	members: string[];
 	employees: IEmployee[] = [];
 
+	/** Tail of the queued member saves; see `updateOrganizationContactMembers`. */
+	private _membersUpdate: Promise<void> = Promise.resolve();
+
 	/** Entity type the record-side Documents tab attaches its links to. */
 	readonly documentEntity = BaseEntityEnum.OrganizationContact;
 
@@ -171,23 +174,33 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	 * @param member
 	 */
 	removeMember(member: IEmployee) {
-		const ids = (this.selectedMembers ?? [])
-			.map((selected: IEmployee) => selected.id)
-			.filter((id: string) => id !== member.id);
-		this.selectedEmployeeIds = ids;
-		this.onMembersSelected(ids);
+		// Filter the member objects already held rather than rebuilding them from
+		// `employees`, which only lists active employees and would drop any
+		// inactive or archived members from the saved relation.
+		this.selectedMembers = (this.selectedMembers ?? []).filter((selected: IEmployee) => selected.id !== member.id);
+		this.members = this.selectedMembers.map((selected: IEmployee) => selected.id);
+		this.selectedEmployeeIds = this.members;
+		this.updateOrganizationContactMembers();
 	}
 
-	public async updateOrganizationContactMembers() {
+	/**
+	 * Saves the members relation. Each call writes the whole list, so calls are
+	 * queued: an earlier request finishing late cannot overwrite a newer list.
+	 */
+	public updateOrganizationContactMembers(): Promise<void> {
 		const organizationContactData: IOrganizationContactCreateInput = {
 			name: this.selectedContact.name,
 			organizationId: this.selectedContact.organizationId,
 			id: this.selectedContact.id,
-			members: this.selectedMembers,
+			members: [...(this.selectedMembers ?? [])],
 			contactType: this.selectedContact.contactType
 		};
 
-		await this.organizationContactService.update(this.selectedContact.id, organizationContactData);
+		this._membersUpdate = this._membersUpdate
+			.catch(() => undefined)
+			.then(() => this.organizationContactService.update(this.selectedContact.id, organizationContactData))
+			.then(() => undefined);
+		return this._membersUpdate;
 	}
 
 	/**
