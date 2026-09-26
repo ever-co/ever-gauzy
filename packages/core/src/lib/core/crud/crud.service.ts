@@ -21,6 +21,7 @@ import {
 	CreateOptions,
 	EntityMetadata,
 	FilterQuery as MikroFilterQuery,
+	ReferenceKind,
 	RequiredEntityData,
 	Utils,
 	raw,
@@ -686,9 +687,11 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 							// through its relation on an assign (see `stateRelationsFromMirrors`).
 							this.mikroOrmRepository.assign(
 								entity,
-								stateRelationsFromMirrors(this.mikroOrmMetadata(), partialEntity as object, {
-									embeddedOnly: true
-								}) as any,
+								stateRelationsFromMirrors(
+									this.mikroOrmMetadata(),
+									this.withoutUncascadedNewRows(partialEntity as object),
+									{ embeddedOnly: true }
+								) as any,
 								assignOptions
 							);
 							await this.mikroOrmRepository.flush();
@@ -697,7 +700,11 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						}
 					}
 					// No stored row has this id (or none was stated): build the new row so that MikroORM inserts it.
-					const newEntity = createNewMikroOrmEntity<T>(this.mikroOrmRepository, partialEntity, createOptions);
+					const newEntity = createNewMikroOrmEntity<T>(
+						this.mikroOrmRepository,
+						this.withoutUncascadedNewRows(partialEntity as object),
+						createOptions
+					);
 
 					// Persist new entity and flush
 					await this.mikroOrmRepository.persistAndFlush(newEntity); // This will also persist the relations
@@ -710,6 +717,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service create method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -730,10 +738,14 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
 					const created = entities.map((entity) =>
-						createNewMikroOrmEntity<T>(this.mikroOrmRepository, entity, {
-							partial: true,
-							managed: true
-						})
+						createNewMikroOrmEntity<T>(
+							this.mikroOrmRepository,
+							this.withoutUncascadedNewRows(entity as object),
+							{
+								partial: true,
+								managed: true
+							}
+						)
 					);
 					await this.mikroOrmRepository.persistAndFlush(created);
 					return created.map((entity) => this.serialize(entity));
@@ -748,6 +760,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service createMany method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -771,6 +784,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service save method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -795,6 +809,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
+			this.clearMikroOrmUnitOfWork();
 			console.error('Error in crud service saveMany method:', redactDatabaseError(error));
 			throw new BadRequestException(toClientSafeError(error));
 		}
@@ -1199,7 +1214,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				continue;
 			}
 
-			const data = withCollectionsAsItems(this.withOneKeyPerColumn(payload as object) as Record<string, unknown>);
+			const data = this.withoutUncascadedNewRows(
+				withCollectionsAsItems(this.withOneKeyPerColumn(payload as object) as Record<string, unknown>)
+			);
 			const key = data[primaryKey.name];
 			const existing = isStated(key)
 				? await repository.findOne({ [primaryKey.name]: key } as MikroFilterQuery<T>, { filters: false })
@@ -1267,6 +1284,81 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		return row as D;
 	}
 
+	/**
+	 * The payload without the new rows of a to-many relation TypeORM would not insert.
+	 *
+	 * TypeORM writes a new (keyless) row of a one-to-many or many-to-many relation only when the relation cascades
+	 * inserts; otherwise it ignores it, and callers rely on that: `FulfillmentService.create` hands the CRUD base the
+	 * fulfilment with its `lines` and then creates each line itself. MikroORM persists new rows by default, so under
+	 * `DB_ORM=mikro-orm` every such line was inserted twice and the second insert broke `UQ_fulfillment_line` — no
+	 * line shipped, and no return could be taken against it. A row that states its key is kept (both ORMs link it),
+	 * and so is every row of a relation whose TypeORM mapping cascades inserts. TypeORM's mapping is read from its
+	 * metadata, which is complete under either ORM; without it (a stand-in) the payload is passed on as it is.
+	 *
+	 * @param data The payload.
+	 * @returns The payload without those rows, or the payload itself when there are none.
+	 */
+	protected withoutUncascadedNewRows<D>(data: D): D {
+		const meta = this.mikroOrmMetadata();
+		const typeOrm = this.typeOrmRepository?.metadata;
+		if (!meta || typeof typeOrm?.findRelationWithPropertyPath !== 'function' || !data || typeof data !== 'object') {
+			return data;
+		}
+		if (Utils.isEntity(data)) {
+			return data;
+		}
+
+		const payload = data as Record<string, unknown>;
+		let kept: Record<string, unknown> | undefined;
+
+		for (const relation of meta.relations) {
+			if (relation.kind !== ReferenceKind.ONE_TO_MANY && relation.kind !== ReferenceKind.MANY_TO_MANY) {
+				continue;
+			}
+			const items = payload[relation.name];
+			if (!Array.isArray(items)) {
+				continue;
+			}
+			const typeOrmRelation = typeOrm.findRelationWithPropertyPath(relation.name);
+			if (!typeOrmRelation || typeOrmRelation.isCascadeInsert) {
+				continue;
+			}
+
+			const key = relation.targetMeta?.primaryKeys?.length === 1 ? relation.targetMeta.primaryKeys[0] : 'id';
+			const stored = items.filter(
+				(item) =>
+					!item ||
+					typeof item !== 'object' ||
+					(Utils.isEntity(item) ? wrap(item, true).hasPrimaryKey() : isStated((item as any)[key]))
+			);
+			if (stored.length !== items.length) {
+				kept ??= { ...payload };
+				kept[relation.name] = stored;
+			}
+		}
+
+		return (kept ?? data) as D;
+	}
+
+	/**
+	 * Forgets what a failed MikroORM write left pending in the request's unit of work.
+	 *
+	 * A flush that fails leaves its change sets behind, and MikroORM's own guidance is to clear the entity manager
+	 * then: otherwise the next flush in the same request — the idempotency interceptor settling the key, say —
+	 * retries the failed statement and fails with it ("An idempotency key could not be settled: A record with these
+	 * values already exists"). TypeORM has no unit of work to leave behind. A stand-in repository has nothing to clear.
+	 */
+	protected clearMikroOrmUnitOfWork(): void {
+		if (this.ormType !== MultiORMEnum.MikroORM) {
+			return;
+		}
+		try {
+			const repository = this.mikroOrmRepository as Partial<MikroOrmBaseEntityRepository<T>> | undefined;
+			repository?.getEntityManager?.()?.clear();
+		} catch {
+			// Clearing is best effort: the error being reported is the one that matters.
+		}
+	}
 	/**
 	 * This entity's MikroORM metadata, or `undefined` for a stand-in that is not a MikroORM repository (a unit
 	 * test's), which has no mapping to read.
