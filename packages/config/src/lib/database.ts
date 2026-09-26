@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { EntityCaseNamingStrategy } from '@mikro-orm/core';
 import { SoftDeleteHandler } from 'mikro-orm-soft-delete';
-import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
+import { Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
 import { Options as MikroOrmMySqlOptions, MySqlDriver } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
@@ -19,6 +19,7 @@ import {
 	parseIntEnv,
 	TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR
 } from './database-helpers';
+import { TypeOrmCompatibleBetterSqliteDriver } from './mikro-orm-sqlite.driver';
 
 /**
  * Type representing the ORM types.
@@ -427,7 +428,10 @@ switch (dbType) {
 
 		// MikroORM DB Config (Better-SQLite3)
 		const mikroOrmBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
-			driver: BetterSqliteDriver,
+			// Stores and compares dates as TypeORM does on the same file, and reads its text as UTC; see
+			// mikro-orm-sqlite.driver.ts.
+			driver: TypeOrmCompatibleBetterSqliteDriver,
+			forceUtcTimezone: true,
 			dbName: sqlitePath,
 			persistOnCreate: true,
 			extensions: [SoftDeleteHandler],

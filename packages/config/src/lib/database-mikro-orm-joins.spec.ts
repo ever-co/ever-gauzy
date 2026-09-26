@@ -46,6 +46,19 @@ describe('MikroORM joins only the references a read loads', () => {
 		expect(MIKRO_ORM_AUTO_JOIN_REFS_FOR_FILTERS).toBe(false);
 	});
 
+	it.each(['better-sqlite3', 'sqlite'])(
+		'makes the %s MikroORM profile store, read and compare dates as TypeORM does on the same file',
+		(dbType) => {
+			const { dbMikroOrmConnectionConfig, dbTypeOrmConnectionConfig } = loadDatabaseConfig(dbType);
+			const { TypeOrmCompatibleBetterSqliteDriver } = require('./mikro-orm-sqlite.driver');
+
+			// Compared by name: the profile was loaded in its own module registry (see mikro-orm-sqlite.driver.spec.ts).
+			expect(dbMikroOrmConnectionConfig.driver.name).toBe(TypeOrmCompatibleBetterSqliteDriver.name);
+			expect(dbMikroOrmConnectionConfig.forceUtcTimezone).toBe(true);
+			expect(dbTypeOrmConnectionConfig).not.toHaveProperty('forceUtcTimezone');
+		}
+	);
+
 	it.each(['postgres', 'mysql', 'better-sqlite3', 'sqlite'])('is stated by the %s MikroORM profile', (dbType) => {
 		const { dbMikroOrmConnectionConfig, dbTypeOrmConnectionConfig } = loadDatabaseConfig(dbType);
 

@@ -1,27 +1,27 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
 import { KnexModule } from 'nest-knexjs';
-import { ConfigModule, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
+import { ConfigModule, ConfigService, DatabaseTypeEnum, TypeOrmCompatibleBetterSqliteDriver } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
 import { createPlatformDataSource } from './embedded-transaction-queue';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
- * Defaults to BetterSqliteDriver (matching the default DB_TYPE in database config).
+ * Defaults to the SQLite driver (matching the default DB_TYPE in database config), which is the one the SQLite
+ * profile configures: MikroORM's better-sqlite3 driver storing dates as TypeORM does (see @gauzy/config).
  */
 const mikroOrmDriverMap: Record<string, any> = {
 	[DatabaseTypeEnum.postgres]: PostgreSqlDriver,
 	[DatabaseTypeEnum.mysql]: MySqlDriver,
-	[DatabaseTypeEnum.sqlite]: BetterSqliteDriver,
-	[DatabaseTypeEnum.betterSqlite3]: BetterSqliteDriver
+	[DatabaseTypeEnum.sqlite]: TypeOrmCompatibleBetterSqliteDriver,
+	[DatabaseTypeEnum.betterSqlite3]: TypeOrmCompatibleBetterSqliteDriver
 };
 
-const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || BetterSqliteDriver;
+const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatibleBetterSqliteDriver;
 
 /**
  * Import and provide base typeorm related classes.
