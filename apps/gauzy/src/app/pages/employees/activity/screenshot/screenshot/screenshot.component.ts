@@ -43,6 +43,28 @@ export interface IScreenshotUrls {
 	fullUrl: string;
 }
 
+/**
+ * One cell of an hour row: a time slot's card, or a run of 10-minute positions
+ * without tracked time merged into a single block (`span` columns wide).
+ */
+export interface IHourSegment {
+	key: string;
+	slot?: ITimeSlot;
+	startTime?: string;
+	endTime?: string;
+	minutes?: number;
+	span?: number;
+}
+
+export interface IHourSlotGroup extends IScreenshotMap {
+	/** The hour's cards and gaps, in time order. */
+	segments: IHourSegment[];
+	/** Whether each of the six 10-minute positions has tracked time. */
+	filled: boolean[];
+	/** Minutes of tracked time in the hour. */
+	trackedMinutes: number;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-screenshots',
@@ -68,7 +90,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
 	filters: ITimeLogFilters = this.request;
-	timeSlots: IScreenshotMap[] = [];
+	timeSlots: IHourSlotGroup[] = [];
 	originalTimeSlots: ITimeSlot[] = [];
 	screenshotsUrls: IScreenshotUrls[] = [];
 	selectedIdsCount: number = 0;
@@ -314,7 +336,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	 * @param slots An array of time slots to be grouped.
 	 * @returns An array of grouped time slots for display.
 	 */
-	private groupTimeSlots(slots: ITimeSlot[]): IScreenshotMap[] {
+	private groupTimeSlots(slots: ITimeSlot[]): IHourSlotGroup[] {
 		this.selectedIds = {};
 		this._slotIdsMap = new Map();
 		const timezone = this.filters?.timeZone;
@@ -336,7 +358,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 		const result = chain(slots)
 			.groupBy(getHour)
-			.mapObject((hourSlots: ITimeSlot[], hour): IScreenshotMap => {
+			.mapObject((hourSlots: ITimeSlot[], hour): IHourSlotGroup => {
 				const groupByMinutes = chain(hourSlots).groupBy(getMinute).value();
 				const byMinutes = indexBy(sortBy(hourSlots, 'screenshots'), getMinute);
 
@@ -367,7 +389,22 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				const startTime = time.format('HH:mm');
 				const endTime = time.add(1, 'hour').format('HH:mm');
 
-				return { startTime, endTime, timeSlots: slotsByMinute };
+				// Tracked minutes: the longest slot of each position, so two people
+				// working the same 10 minutes do not count it twice.
+				const trackedSeconds = Object.values(groupByMinutes).reduce(
+					(total: number, bucket: ITimeSlot[]) =>
+						total + Math.max(...bucket.map((slot: ITimeSlot) => slot.duration || 0)),
+					0
+				);
+
+				return {
+					startTime,
+					endTime,
+					timeSlots: slotsByMinute,
+					segments: this.toHourSegments(startTime, slotsByMinute),
+					filled: slotsByMinute.map((slot: ITimeSlot) => !!slot),
+					trackedMinutes: Math.round(trackedSeconds / 60)
+				};
 			})
 			.values()
 			.sortBy(({ startTime }) => moment(startTime, 'HH:mm').toDate().getTime())
@@ -375,6 +412,45 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 		this.updateSelections();
 		return result;
+	}
+
+	/**
+	 * Turns an hour's six 10-minute positions into cards and gaps, merging each run
+	 * of empty positions into one gap that says how long nothing was tracked.
+	 *
+	 * @param hourStart The hour's start, as `HH:mm`.
+	 * @param slotsByMinute The slot at each position, or `null` where there is none.
+	 * @returns The hour's segments, in time order.
+	 */
+	private toHourSegments(hourStart: string, slotsByMinute: ITimeSlot[]): IHourSegment[] {
+		const at = (position: number) =>
+			moment(hourStart, 'HH:mm')
+				.add(position * 10, 'minutes')
+				.format('HH:mm');
+
+		const segments: IHourSegment[] = [];
+		slotsByMinute.forEach((slot: ITimeSlot, position: number) => {
+			if (slot) {
+				segments.push({ key: slot.id as string, slot });
+				return;
+			}
+
+			const previous = segments[segments.length - 1];
+			if (previous && !previous.slot) {
+				previous.span += 1;
+				previous.minutes += 10;
+				previous.endTime = at(position + 1);
+			} else {
+				segments.push({
+					key: `gap-${hourStart}-${position}`,
+					startTime: at(position),
+					endTime: at(position + 1),
+					minutes: 10,
+					span: 1
+				});
+			}
+		});
+		return segments;
 	}
 
 	/**
