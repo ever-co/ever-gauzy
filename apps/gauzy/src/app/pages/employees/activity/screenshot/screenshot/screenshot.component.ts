@@ -5,7 +5,6 @@ import {
 	ViewChild,
 	inject
 } from '@angular/core';
-import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, EMPTY, from, Observable, Subject } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { chain, indexBy, pick, sortBy } from 'underscore';
@@ -33,6 +32,7 @@ import {
 import {
 	BaseSelectorFilterComponent,
 	DeleteConfirmationComponent,
+	GalleryItem,
 	GalleryService,
 	GauzyFiltersComponent,
 	TimeZoneService
@@ -48,10 +48,13 @@ export interface IScreenshotUrls {
 	selector: 'ngx-screenshots',
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss'],
-	standalone: false
+	standalone: false,
+	// As the dashboard's Recent Activities widget does: a screenshot store of this
+	// page's own, and the dialog service that hands it to the gallery (and View
+	// Info) dialogs. With the root dialog service they resolve the root store.
+	providers: [GalleryService, NbDialogService]
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
-	private readonly _router = inject(Router);
 	private readonly _timesheetService = inject(TimesheetService);
 	private readonly _timesheetFilterService = inject(TimesheetFilterService);
 	private readonly _nbDialogService = inject(NbDialogService);
@@ -60,6 +63,8 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 
 	private _slotIdsMap: Map<string, ID[]> = new Map();
+	/** Ids of the screenshots on screen, so a reload drops only the ones that left. */
+	private _galleryItemIds: Set<ID> = new Set();
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
 	filters: ITimeLogFilters = this.request;
@@ -109,15 +114,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			.pipe(
 				filter(() => !!this.organization && !isEmpty(this.request)),
 				switchMap(() => this.fetchTimeSlotsScreenshots()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		// Clear gallery on navigation away
-		this._router.events
-			.pipe(
-				filter((event) => event instanceof NavigationStart),
-				tap(() => this._galleryService.clearGallery()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -187,6 +183,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		return from(this._timesheetService.getTimeSlots(payloads)).pipe(
 			tap((timeSlots: ITimeSlot[]) => {
 				this.originalTimeSlots = timeSlots;
+				this._syncGallery(timeSlots);
 				this.timeSlots = this.groupTimeSlots(timeSlots);
 			}),
 			catchError((error) => {
@@ -404,6 +401,29 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		if (screenshotsToRemove.length) {
 			this._galleryService.removeGalleryItems(screenshotsToRemove);
 		}
+	}
+
+	/**
+	 * Brings the gallery store in line with the fetched slots, as the dashboard's
+	 * Recent Activities widget does. Only the screenshots that are no longer shown
+	 * are removed: the cards' `ngxGallery` directives add their own once, when
+	 * created, so emptying the store would strip the cards that survive a reload.
+	 *
+	 * @param slots The time slots that were just fetched.
+	 */
+	private _syncGallery(slots: ITimeSlot[]): void {
+		const next = new Set<ID>(
+			slots.flatMap((slot: ITimeSlot) => (slot.screenshots ?? []).map((screenshot: IScreenshot) => screenshot.id))
+		);
+
+		const stale = [...this._galleryItemIds]
+			.filter((id: ID) => !next.has(id))
+			.map((id: ID) => ({ id } as GalleryItem));
+		if (stale.length) {
+			this._galleryService.removeGalleryItems(stale);
+		}
+
+		this._galleryItemIds = next;
 	}
 
 	ngOnDestroy(): void {

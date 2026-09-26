@@ -27,7 +27,7 @@
 								</h6>
 							</div>
 							<div class="row grid-container">
-								@for (timeSlot of hourSlot.timeSlots; track $index) {
+								@for (timeSlot of hourSlot.timeSlots; track timeSlot?.id ?? $index) {
 									@if (timeSlot) {
 										<div>
 											<ngx-screenshots-item
