@@ -323,3 +323,10 @@ jobs:
       - name: No spec mocks a workspace package virtually
         if: always()
         run: node tools/scripts/jest-virtual-mock-check.mjs
+
+      # SQLite accepts column types Postgres and MySQL refuse, so an entity that is wrong for them boots
+      # everywhere CI runs and fails where it is deployed: 29 literal `jsonb` columns stopped the API on MySQL,
+      # and a `simple-enum` with a length stopped it on Postgres.
+      - name: Every literal entity column type is accepted on Postgres, MySQL and SQLite
+        if: always()
+        run: node tools/scripts/entity-column-dialect-check.mjs
