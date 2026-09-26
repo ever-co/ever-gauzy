@@ -564,20 +564,22 @@ describe('CountryResolver — why this surface carries no feature gate', () => {
 		// the capability switched on. That is the observation this case pins, and the reason the exemption
 		// is recorded rather than the decorator being restored.
 		//
-		// The code the guard asks about is therefore **absent rather than the shared one**: the exemption is
-		// what removed the class-level `@FeatureFlag`, so `getAllAndOverride` resolves nothing and the guard
-		// asks with `undefined`. Both halves are stated — that the shared code is *not* what this surface is
-		// gated by, and that the guard still refuses — because it is the refusal below, not the code, that
-		// states what the exemption is for.
+		// The exemption removed the class-level `@FeatureFlag`, so a gate installed here would find no code to ask
+		// about, and since c9a64fdc27 the guard refuses a target that names none without asking: nothing was named
+		// that could be enabled. (It used to ask the catalogue about `undefined`, an answer that depended on how each
+		// ORM treats an undefined criterion.) Both halves are stated — that the shared code is *not* what this surface
+		// is gated by, and that the guard still refuses — because it is the refusal below, not the code, that states
+		// what the exemption is for.
 		expect(featureService.isFeatureEnabled).not.toHaveBeenCalledWith(FEATURE_GRAPHQL);
-		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(undefined);
+		expect(featureService.isFeatureEnabled).not.toHaveBeenCalled();
 		expect(refusal).toBeInstanceOf(NotFoundException);
 		expect((refusal as NotFoundException).getStatus()).toBe(404);
 	});
 
-	it('serves the field when the capability resolves on, which is what an installation with the code on gets', async () => {
-		const { guard } = gate(true);
+	it('is refused by an installed gate even where the capability would resolve on, because the surface names no code', async () => {
+		const { guard, featureService } = gate(true);
 
-		await expect(guard.canActivate(graphqlContext('countries'))).resolves.toBe(true);
+		await expect(guard.canActivate(graphqlContext('countries'))).rejects.toBeInstanceOf(NotFoundException);
+		expect(featureService.isFeatureEnabled).not.toHaveBeenCalled();
 	});
 });
