@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -105,6 +105,8 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	organization: IOrganization;
 	organizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 
+	private readonly employeesService = inject(EmployeesService);
+
 	/**
 	 * Main Content Stepper Form Group
 	 */
@@ -164,8 +166,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly filterArrayPipe: FilterArrayPipe,
-		private readonly employeesService: EmployeesService
+		private readonly filterArrayPipe: FilterArrayPipe
 	) {
 		super(translateService);
 	}
@@ -217,9 +218,14 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		}
 		try {
 			const { tenantId } = this.store.user;
+			const organizationId = this.organization.id;
 			const { items } = await firstValueFrom(
-				this.employeesService.getAll(['user'], { organizationId: this.organization.id, tenantId })
+				this.employeesService.getAll(['user'], { organizationId, tenantId })
 			);
+			// The organization may have changed while this request was pending.
+			if (this.organization?.id !== organizationId) {
+				return;
+			}
 			this.onLoadEmployees(items ?? []);
 		} catch (error) {
 			this.errorHandler.handleError(error);
