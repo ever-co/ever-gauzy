@@ -28,13 +28,9 @@ import { join } from 'node:path';
  * where the MikroORM repository the service is handed records every member anything asks it for, so "MikroORM is
  * never reached" is measured rather than assumed.
  *
- * **One SQLite limitation is stepped around, not fixed.** `PluginSubscription.metadata` is typed `text` off
- * PostgreSQL and MySQL, and TypeORM's SQLite driver hands an object bound for a `text` column to better-sqlite3 as
- * it is, which reads it as a set of named parameters and fails the statement (`RangeError: Too few parameter values
- * were provided`) — so on SQLite the cancel handler's final save, which writes `metadata`, fails on TypeORM, and so
- * under `DB_ORM=typeorm` too. That is the entity's column type, not the ORM the registry runs on, so the store maps
- * that one column as `simple-json` (still a `text` column) to let the cancellation be seen to the end. The delete
- * flow writes no JSON and runs on the mapping as it stands.
+ * The registry's JSON columns are mapped as TypeORM's `simple-json` on SQLite, so the cancel handler's final save,
+ * which writes `metadata`, runs on the mapping as it stands (declared `text`, the object was handed to better-sqlite3
+ * as it was and the statement failed under either ORM).
  */
 
 const TIMEOUT = 15 * 60 * 1000;
@@ -207,9 +203,6 @@ async function observe(): Promise<IObserved> {
 			}
 
 			try {
-				// See the header: the one SQLite limitation this suite steps around.
-				dataSource.getMetadata(PluginSubscription).findColumnWithPropertyName('metadata').type = 'simple-json';
-
 				/*
 				 * The pin, as every service of the module answers it.
 				 */

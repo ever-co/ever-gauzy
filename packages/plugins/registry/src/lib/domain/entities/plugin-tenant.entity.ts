@@ -164,7 +164,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		}
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	tenantConfiguration?: Record<string, any>;
 
 	@ApiPropertyOptional({
@@ -176,7 +178,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		}
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	preferences?: Record<string, any>;
 
 	/**
