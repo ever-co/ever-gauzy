@@ -316,3 +316,10 @@ jobs:
       - name: No kernel file imports the lib/core barrel
         if: always()
         run: node tools/scripts/core-barrel-import-check.mjs
+
+      # A virtual mock of a package that resolves is filed under the bare name, a plain one under the resolved
+      # path, and Jest's per-worker id cache mixes the two across spec files: plugin-purchasing's feature-gate
+      # spec failed on every cold cache because its @gauzy/common mock was missed after a virtual one ran first.
+      - name: No spec mocks a workspace package virtually
+        if: always()
+        run: node tools/scripts/jest-virtual-mock-check.mjs
