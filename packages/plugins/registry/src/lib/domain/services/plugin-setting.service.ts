@@ -1,4 +1,4 @@
-import { parseFindOptionsRelations, TenantAwareCrudService } from '@gauzy/core';
+import { parseFindOptionsRelations } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import {
@@ -9,9 +9,10 @@ import {
 import { PluginSetting } from '../entities/plugin-setting.entity';
 import { MikroOrmPluginSettingRepository } from '../repositories/mikro-orm-plugin-setting.repository';
 import { TypeOrmPluginSettingRepository } from '../repositories/type-orm-plugin-setting.repository';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginSettingService extends TenantAwareCrudService<PluginSetting> {
+export class PluginSettingService extends RegistryTenantAwareCrudService<PluginSetting> {
 	private readonly logger = new Logger(PluginSettingService.name);
 
 	constructor(

@@ -1,14 +1,15 @@
 import { IPagination, PluginScope } from '@gauzy/contracts';
-import { parseFindOptionsRelations, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { parseFindOptionsRelations, RequestContext } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { IPluginTenant } from '../../shared/models/plugin-tenant.model';
 import { PluginTenant } from '../entities/plugin-tenant.entity';
 import { MikroOrmPluginTenantRepository } from '../repositories/tenant/mikro-orm-plugin-tenant.repository';
 import { TypeOrmPluginTenantRepository } from '../repositories/tenant/type-orm-plugin-tenant.repository';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginTenantService extends TenantAwareCrudService<PluginTenant> {
+export class PluginTenantService extends RegistryTenantAwareCrudService<PluginTenant> {
 	private readonly logger = new Logger(PluginTenantService.name);
 
 	constructor(

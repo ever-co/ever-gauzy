@@ -4,6 +4,10 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { PluginTenantService } from './plugin-tenant.service';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
+//
+// Deliberately `DB_ORM`, not the registry's TypeORM pin (`REGISTRY_ORM_TYPE`): it decides only how the caller's
+// roles are read, and roles are core rows read through the core `RoleService`, which runs on `DB_ORM`. The
+// plugin tenant rows this service works on are read through `PluginTenantService`, which is pinned.
 const ormType: MultiORM = getORMType();
 
 export interface UserAssignmentRecord {
