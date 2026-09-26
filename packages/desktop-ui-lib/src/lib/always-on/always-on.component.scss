@@ -93,8 +93,8 @@ button {
 	}
 
 	&.recording {
-		background: #ff3b30;
-		box-shadow: 0 0 6px #ff3b30;
+		background: var(--color-danger-default);
+		box-shadow: 0 0 6px var(--color-danger-default);
 		animation: pulse-ring 1.5s infinite;
 	}
 }
@@ -103,6 +103,7 @@ button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	gap: 4px;
 	padding: 2px 4px;
 	cursor: pointer;
 
@@ -110,13 +111,26 @@ button {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background-color: #8e8e93;
+		background-color: var(--gauzy-text-color-2);
 
 		&.recording {
-			background-color: #ff3b30;
-			box-shadow: 0 0 6px #ff3b30;
+			background-color: var(--color-danger-default);
+			box-shadow: 0 0 6px var(--color-danger-default);
 			animation: pulse-ring 1.5s infinite;
 		}
+	}
+
+	.monitoring-text {
+		font-size: 10px;
+		color: var(--gauzy-text-color-2);
+		white-space: nowrap;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.status.recording,
+	.monitoring-badge .pulse-dot.recording {
+		animation: none;
 	}
 }
 

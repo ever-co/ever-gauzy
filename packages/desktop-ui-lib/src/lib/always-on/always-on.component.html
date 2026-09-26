@@ -16,10 +16,13 @@
 							<div
 								class="monitoring-badge"
 								[class.active]="running"
+								role="status"
+								[attr.aria-label]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
 								[nbTooltip]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
 								nbTooltipPlacement="bottom"
 							>
 								<span class="pulse-dot" [class.recording]="running"></span>
+								<span class="monitoring-text">{{ running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate) }}</span>
 							</div>
 							<div class="status" [class.offline]="isOffline$ | async"></div>
 							<button
@@ -83,6 +86,8 @@
 				class="status"
 				[class.offline]="isOffline$ | async"
 				[class.recording]="running"
+				role="status"
+				[attr.aria-label]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
 				[nbTooltip]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
 				nbTooltipPlacement="bottom"
 			></div>

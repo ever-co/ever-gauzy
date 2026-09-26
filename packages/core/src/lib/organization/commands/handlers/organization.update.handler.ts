@@ -38,15 +38,33 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			throw new NotFoundException(`Organization with ID ${id} not found.`);
 		}
 
-		// Check if attempting to set allowAgentAppExit or allowLogoutFromAgentApp to false
-		const errorMsg = validateAgentExitLogoutRestriction(input, {
-			regionCode: input.regionCode || organization.regionCode,
-			timeZone: input.timeZone || organization.timeZone,
+		const effectiveLocation = {
+			regionCode: input.regionCode !== undefined ? input.regionCode : organization.regionCode,
+			timeZone: input.timeZone !== undefined ? input.timeZone : organization.timeZone,
 			country: organization.contact?.country
-		});
+		};
+
+		const effectiveAllowExit = input.allowAgentAppExit !== undefined ? input.allowAgentAppExit : organization.allowAgentAppExit;
+		const effectiveAllowLogout = input.allowLogoutFromAgentApp !== undefined ? input.allowLogoutFromAgentApp : organization.allowLogoutFromAgentApp;
+
+		// Validate using effective merged input and location
+		const errorMsg = validateAgentExitLogoutRestriction(
+			{
+				allowAgentAppExit: effectiveAllowExit,
+				allowLogoutFromAgentApp: effectiveAllowLogout,
+				acknowledgeAgentExitLogoutRestriction: input.acknowledgeAgentExitLogoutRestriction
+			},
+			effectiveLocation
+		);
 
 		if (errorMsg) {
-			throw new BadRequestException(errorMsg);
+			// If transitioning to EEA/UK without explicitly setting restriction controls, force both to true
+			if (isEEAOrUKRegion(effectiveLocation) && input.allowAgentAppExit === undefined && input.allowLogoutFromAgentApp === undefined) {
+				input.allowAgentAppExit = true;
+				input.allowLogoutFromAgentApp = true;
+			} else {
+				throw new BadRequestException(errorMsg);
+			}
 		}
 
 		if (

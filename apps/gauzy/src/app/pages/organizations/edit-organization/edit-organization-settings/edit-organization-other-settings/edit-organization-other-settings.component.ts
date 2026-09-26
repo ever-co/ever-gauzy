@@ -372,7 +372,18 @@ export class EditOrganizationOtherSettingsComponent
 		const regionCode = <FormControl>this.form.get('regionCode');
 		regionCode.valueChanges
 			.pipe(
-				tap((value: IOrganization['regionCode']) => (this.regionCode = value)),
+				tap((value: IOrganization['regionCode']) => {
+					this.regionCode = value;
+					applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const timeZone = <FormControl>this.form.get('timeZone');
+		timeZone.valueChanges
+			.pipe(
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -855,11 +866,14 @@ export class EditOrganizationOtherSettingsComponent
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 
-		this.form.patchValue({
-			...this.organization, // This will patch all matching form controls
-			fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
-			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
-		});
+		this.form.patchValue(
+			{
+				...this.organization, // This will patch all matching form controls
+				fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
+				fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
+			},
+			{ emitEvent: false }
+		);
 
 		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
 

@@ -36,28 +36,45 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			}
 		}
 
-		// Check if attempting to set allowAgentAppExit or allowLogoutFromAgentApp to false
-		if (input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) {
-			const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
-				relations: { organization: { contact: true }, user: true, contact: true }
-			});
+		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
+			relations: { organization: { contact: true }, user: true, contact: true }
+		});
 
-			const errorMsg = validateAgentExitLogoutRestriction(input, {
-				regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
-				timeZone: employee?.user?.timeZone || employee?.organization?.timeZone,
-				country: employee?.contact?.country || employee?.organization?.contact?.country
-			});
+		const effectiveAllowExit = input.allowAgentAppExit !== undefined ? input.allowAgentAppExit : employee?.allowAgentAppExit;
+		const effectiveAllowLogout = input.allowLogoutFromAgentApp !== undefined ? input.allowLogoutFromAgentApp : employee?.allowLogoutFromAgentApp;
 
-			if (errorMsg) {
+		const effectiveLocation = {
+			regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
+			timeZone: input.user?.timeZone || employee?.user?.timeZone || employee?.organization?.timeZone,
+			country: employee?.contact?.country || employee?.organization?.contact?.country
+		};
+
+		const errorMsg = validateAgentExitLogoutRestriction(
+			{
+				allowAgentAppExit: effectiveAllowExit,
+				allowLogoutFromAgentApp: effectiveAllowLogout,
+				acknowledgeAgentExitLogoutRestriction: input.acknowledgeAgentExitLogoutRestriction
+			},
+			effectiveLocation
+		);
+
+		if (errorMsg) {
+			if (isEEAOrUKRegion(effectiveLocation) && input.allowAgentAppExit === undefined && input.allowLogoutFromAgentApp === undefined) {
+				input.allowAgentAppExit = true;
+				input.allowLogoutFromAgentApp = true;
+			} else {
 				throw new BadRequestException(errorMsg);
 			}
+		}
 
-			if (input.acknowledgeAgentExitLogoutRestriction) {
-				const currentUserId = RequestContext.currentUserId();
-				this.logger.log(
-					`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Employee ID: ${id} at ${new Date().toISOString()}`
-				);
-			}
+		if (
+			(input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) &&
+			input.acknowledgeAgentExitLogoutRestriction
+		) {
+			const currentUserId = RequestContext.currentUserId();
+			this.logger.log(
+				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Employee ID: ${id} at ${new Date().toISOString()}`
+			);
 		}
 
 		try {

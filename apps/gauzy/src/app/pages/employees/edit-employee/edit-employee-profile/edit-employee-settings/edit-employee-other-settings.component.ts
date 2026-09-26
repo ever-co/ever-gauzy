@@ -32,10 +32,15 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 
 	public get isEEAOrUK(): boolean {
 		if (!this.selectedEmployee) return false;
-		const formTimeZone = this.form?.get('timeZone')?.value;
+		const userTz = this.selectedEmployee.user?.timeZone;
+		const formTz = this.form?.get('timeZone')?.value;
+		const activeTz =
+			userTz ||
+			(formTz && formTz !== moment.tz.guess() ? formTz : undefined) ||
+			this.selectedEmployee.organization?.timeZone;
 		return isEEAOrUKRegion({
 			regionCode: this.selectedEmployee.organization?.regionCode || this.selectedEmployee.contact?.regionCode,
-			timeZone: formTimeZone || this.selectedEmployee.user?.timeZone || this.selectedEmployee.organization?.timeZone,
+			timeZone: activeTz,
 			country: this.selectedEmployee.contact?.country || this.selectedEmployee.organization?.contact?.country
 		});
 	}
@@ -172,20 +177,23 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackKeyboardMouseActivity,
 			trackAllDisplays
 		} = employee;
-		this.form.patchValue({
-			timeZone: user?.timeZone ?? moment.tz.guess(),
-			timeFormat: user?.timeFormat,
-			upworkId,
-			linkedInId,
-			allowManualTime,
-			allowDeleteTime,
-			allowModifyTime,
-			allowScreenshotCapture,
-			allowAgentAppExit: allowAgentAppExit ?? true,
-			allowLogoutFromAgentApp: allowLogoutFromAgentApp ?? true,
-			trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
-			trackAllDisplays: trackAllDisplays ?? true
-		});
+		this.form.patchValue(
+			{
+				timeZone: user?.timeZone ?? moment.tz.guess(),
+				timeFormat: user?.timeFormat,
+				upworkId,
+				linkedInId,
+				allowManualTime,
+				allowDeleteTime,
+				allowModifyTime,
+				allowScreenshotCapture,
+				allowAgentAppExit: allowAgentAppExit ?? true,
+				allowLogoutFromAgentApp: allowLogoutFromAgentApp ?? true,
+				trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
+				trackAllDisplays: trackAllDisplays ?? true
+			},
+			{ emitEvent: false }
+		);
 
 		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
 

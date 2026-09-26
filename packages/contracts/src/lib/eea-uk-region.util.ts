@@ -28,9 +28,73 @@ const EEA_LANGUAGE_LOCALES: ReadonlySet<string> = new Set([
 	'hr', 'da', 'fi', 'sv', 'et', 'lv', 'lt', 'ga', 'mt', 'el'
 ]);
 
-const NON_EEA_EUROPE_TZS = [
-	'europe/moscow', 'europe/samara', 'europe/kaliningrad', 'europe/volgograd', 'europe/minsk', 'europe/istanbul'
-];
+export const EEA_UK_TIMEZONES: ReadonlySet<string> = new Set([
+	// Austria
+	'europe/vienna',
+	// Belgium
+	'europe/brussels',
+	// Bulgaria
+	'europe/sofia',
+	// Croatia
+	'europe/zagreb',
+	// Cyprus
+	'asia/nicosia', 'europe/nicosia', 'asia/famagusta',
+	// Czech Republic
+	'europe/prague',
+	// Denmark
+	'europe/copenhagen',
+	// Estonia
+	'europe/tallinn',
+	// Finland
+	'europe/helsinki',
+	// France
+	'europe/paris',
+	// Germany
+	'europe/berlin', 'europe/busingen',
+	// Greece
+	'europe/athens',
+	// Hungary
+	'europe/budapest',
+	// Ireland
+	'europe/dublin',
+	// Italy
+	'europe/rome',
+	// Latvia
+	'europe/riga',
+	// Lithuania
+	'europe/vilnius',
+	// Luxembourg
+	'europe/luxembourg',
+	// Malta
+	'europe/malta',
+	// Netherlands
+	'europe/amsterdam',
+	// Poland
+	'europe/warsaw',
+	// Portugal
+	'europe/lisbon', 'atlantic/madeira', 'atlantic/azores',
+	// Romania
+	'europe/bucharest',
+	// Slovakia
+	'europe/bratislava',
+	// Slovenia
+	'europe/ljubljana',
+	// Spain
+	'europe/madrid', 'africa/ceuta', 'atlantic/canary',
+	// Sweden
+	'europe/stockholm',
+	// Iceland
+	'atlantic/reykjavik',
+	// Liechtenstein
+	'europe/vaduz',
+	// Norway
+	'europe/oslo',
+	// UK
+	'europe/london', 'europe/belfast', 'gb', 'gb-eire',
+	// EU dependencies / Microstates with EEA ties
+	'europe/andorra', 'europe/monaco', 'europe/san_marino', 'europe/vatican',
+	'europe/gibraltar', 'europe/guernsey', 'europe/isle_of_man', 'europe/jersey', 'europe/mariehamn'
+]);
 
 export const EEA_UK_AGENT_RESTRICTION_ERR_MSG =
 	'In accordance with EEA/UK privacy regulations (GDPR / ECHR Art 8), desktop agent exit and logout restrictions cannot be enabled for workers in EEA/UK tenants.';
@@ -72,7 +136,7 @@ function checkRegionCode(regionCode?: string): boolean {
 function checkTimeZone(timeZone?: string): boolean {
 	if (!timeZone || typeof timeZone !== 'string') return false;
 	const normTz = timeZone.trim().toLowerCase();
-	return normTz.startsWith('europe/') && !NON_EEA_EUROPE_TZS.some((nonEea) => normTz.includes(nonEea));
+	return EEA_UK_TIMEZONES.has(normTz);
 }
 
 /**

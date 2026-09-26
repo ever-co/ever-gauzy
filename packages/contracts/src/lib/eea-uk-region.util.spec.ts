@@ -45,6 +45,12 @@ describe('isEEAOrUKRegion', () => {
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/London' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Berlin' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Sofia' })).toBe(true);
+		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Canary' })).toBe(true);
+		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Madeira' })).toBe(true);
+		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Azores' })).toBe(true);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Zurich' })).toBe(false);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Kyiv' })).toBe(false);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Belgrade' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'America/New_York' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'Asia/Kolkata' })).toBe(false);
 	});
