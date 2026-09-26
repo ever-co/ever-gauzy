@@ -92,8 +92,9 @@
 										}
 									</div>
 									<div class="form-group">
-										<label class="label">{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}</label>
+										<label class="label" for="contactType">{{ 'CONTACTS_PAGE.CONTACT_TYPE' | translate }}</label>
 										<ng-select
+											labelForId="contactType"
 											formControlName="contactType"
 											[clearable]="false"
 											[searchable]="false"
