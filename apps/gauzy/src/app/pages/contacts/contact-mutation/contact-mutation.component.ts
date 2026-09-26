@@ -11,7 +11,7 @@ import {
 	IImageAsset,
 	IOrganizationProjectEmployee
 } from '@gauzy/contracts';
-import { NbStepperComponent } from '@nebular/theme';
+import { NbStepChangeEvent, NbStepperComponent } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -530,13 +530,19 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Progresses the stepper and adds a map marker on the second step.
+	 * Progresses the stepper. The map marker is placed by `onStepChange`.
 	 */
 	nextStep() {
 		this.stepper.next();
+	}
 
-		// Assuming the second step is related to map operations.
-		if (this.stepper.selectedIndex === 1) {
+	/**
+	 * Adds the map marker whenever the Address step opens, whether through the
+	 * Next button or a header click (header navigation is on in edit mode).
+	 */
+	onStepChange({ index }: NbStepChangeEvent) {
+		// The second step is the Address step with the map.
+		if (index === 1) {
 			// Directly destructure 'coordinates' from the location form value.
 			const {
 				loc: {

@@ -11,7 +11,11 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-stepper #stepper [disableStepNavigation]="!organizationContact">
+		<nb-stepper
+			#stepper
+			[disableStepNavigation]="!organizationContact"
+			(stepChange)="onStepChange($event)"
+		>
 			<!-- Step 1 Contact Main Form -->
 			<nb-step [stepControl]="contMainForm" [label]="'CONTACTS_PAGE.MAIN' | translate">
 				<div class="custom-card">
