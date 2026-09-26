@@ -362,7 +362,8 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				const groupByMinutes = chain(hourSlots).groupBy(getMinute).value();
 				const byMinutes = indexBy(sortBy(hourSlots, 'screenshots'), getMinute);
 
-				const slotsByMinute = ['00', '10', '20', '30', '40', '50'].map((key) => {
+				const positions = ['00', '10', '20', '30', '40', '50'];
+				const slotsByMinute = positions.map((key) => {
 					if (!(key in byMinutes)) {
 						return null;
 					}
@@ -390,10 +391,11 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				const endTime = time.add(1, 'hour').format('HH:mm');
 
 				// Tracked minutes: the longest slot of each position, so two people
-				// working the same 10 minutes do not count it twice.
-				const trackedSeconds = Object.values(groupByMinutes).reduce(
-					(total: number, bucket: ITimeSlot[]) =>
-						total + Math.max(...bucket.map((slot: ITimeSlot) => slot.duration || 0)),
+				// working the same 10 minutes do not count it twice. Only the six
+				// positions on screen count, so the total matches the strip and cards.
+				const trackedSeconds = positions.reduce(
+					(total: number, key: string) =>
+						total + Math.max(0, ...(groupByMinutes[key] ?? []).map((slot: ITimeSlot) => slot.duration || 0)),
 					0
 				);
 
