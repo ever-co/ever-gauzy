@@ -1,0 +1,163 @@
+# The approval policy's object type.
+#
+# A policy is one approval type an organization offers — the label a request form shows (`name`), the
+# note beside it (`description`), and the code the platform matches on (`approvalType`). It has no
+# relation of its own: the only two rows it points at are its tenant and its organization, and both are
+# carried as identifiers here for the reason every resource carries them — a read does not join a row
+# whose whole content is another domain's to answer.
+#
+# **`approvalType` is carried as its string value rather than declared as a schema enum, and the
+# vocabulary is deliberately open.** The delivered write derives the code from the name — the name with
+# its whitespace folded to underscores, upper-cased — so the set of codes an installation holds is the
+# set of names its administrators have written, not a fixed list this domain could enumerate. The
+# kernel's own `ApprovalPolicyTypesStringEnum` names the codes the delivered seeds and the platform's
+# own request flows use; a schema enum here would refuse every policy an administrator names something
+# else, which is exactly the write the delivered route accepts.
+#
+# `archivedAt`, `deletedAt` and the two flags are the base row, carried because withdrawing and
+# restoring are delivered routes: without `deletedAt` a caller could not tell a live policy from a
+# withdrawn one on the answer to the write that withdrew it.
+
+"""
+One approval type an organization offers, as an administrator named it.
+"""
+type ApprovalPolicy {
+	id: ID!
+	"The label the policy is known by, as the administrator wrote it."
+	name: String!
+	"The note shown beside the label, when one was written."
+	description: String
+	"""
+	The code the platform matches on: the name with its whitespace folded to underscores and its letters
+	upper-cased, derived by the delivered write. Carried as a value rather than a schema enum because the
+	vocabulary is open — it is whatever the organization's administrators have named.
+	"""
+	approvalType: String
+	"The tenant the policy belongs to, by identifier."
+	tenantId: ID
+	"The organization whose request forms the policy belongs to, by identifier."
+	organizationId: ID
+	"Whether the policy is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the policy is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the policy was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the policy was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	"When the policy was filed."
+	createdAt: DateTime
+	"When the policy was last changed."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of policies.
+"""
+type ApprovalPolicyEdge {
+	node: ApprovalPolicy!
+	cursor: String!
+}
+
+"""
+One page of policies, with the total the filters select and the boundary cursors.
+"""
+type ApprovalPolicyConnection {
+	nodes: [ApprovalPolicy!]!
+	edges: [ApprovalPolicyEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a policy list may be sorted by.
+"""
+enum ApprovalPolicySortField {
+	id
+	name
+	approvalType
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the policies are returned in. At most three keys are accepted.
+"""
+input ApprovalPolicySort {
+	field: ApprovalPolicySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a policy list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the policy row, because the delivered list read answers the rows the
+command's own `where` selected and joins only the relations a REST caller names — which this surface
+does not name. `approvalType` is the member the request-approval reader's condition is expressed
+with: the codes an organization's request forms must not offer are excluded by naming them, which is
+the `nin` operator rather than a second read. The tenant comes from the credential on every read, so
+the two identifier members narrow the row's own columns rather than restating a scope decision the
+caller does not have.
+"""
+input ApprovalPolicyFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	approvalType: StringFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [ApprovalPolicyFilter!]
+	or: [ApprovalPolicyFilter!]
+	not: ApprovalPolicyFilter
+}
+
+"""
+What a caller states when it files a policy.
+
+The organization is stated because the delivered create does not derive one — the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant, for
+the same reason there is none on any other write here.
+
+**`approvalType` is deliberately not a member, and its absence is a statement about the write rather
+than an omission.** The delivered service derives the code from the name — the name with its whitespace
+folded to underscores, upper-cased — so a body stating a code would be accepted by a schema and then
+overwritten by the service. A caller that wants a particular code names the policy accordingly.
+"""
+input CreateApprovalPolicyInput {
+	"The label the policy is known by. The code is derived from it."
+	name: String!
+	"The note shown beside the label."
+	description: String
+	"The organization whose request forms the policy belongs to."
+	organizationId: ID!
+}
+
+"""
+What a caller states when it edits a policy that exists.
+
+The delivered update DTO is not a partial one — it declares the same members as the create — so the
+label is required here as well, and the code is derived from it again: renaming a policy renames its
+code. Everything the create does not accept is absent, for the reason the create states.
+"""
+input UpdateApprovalPolicyInput {
+	id: ID!
+	"The label the policy is known by. The code is derived from it."
+	name: String!
+	"The note shown beside the label."
+	description: String
+	"The organization whose request forms the policy belongs to."
+	organizationId: ID!
+}

@@ -5,6 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
 import { IncomeController } from './income.controller';
+import { IncomeResolver } from './income.resolver';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeRecurringExpenseModule } from './../employee-recurring-expense/employee-recurring-expense.module';
 import { EmployeeStatisticsModule } from './../employee-statistics/employee-statistics.module';
@@ -28,7 +29,15 @@ import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.reposito
 		forwardRef(() => EmployeeStatisticsModule)
 	],
 	controllers: [IncomeController],
-	providers: [IncomeService, TypeOrmIncomeRepository, MikroOrmIncomeRepository, ...CommandHandlers],
+	providers: [
+		IncomeService,
+		// The GraphQL surface is declared beside the service it calls, so the host that scans this module
+		// for resolvers reaches everything the resolver injects.
+		IncomeResolver,
+		TypeOrmIncomeRepository,
+		MikroOrmIncomeRepository,
+		...CommandHandlers
+	],
 	exports: [IncomeService]
 })
 export class IncomeModule {}

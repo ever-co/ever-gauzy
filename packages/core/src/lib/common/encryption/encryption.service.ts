@@ -8,10 +8,17 @@ export const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 @Injectable()
 export class EncryptionService {
     private readonly algorithm = ENCRYPTION_ALGORITHM;
-    private readonly key = Buffer.from(process.env.ENCRYPTION_KEY, 'base64');
+    private readonly key: Buffer;
 
     constructor() {
-        if (!process.env.ENCRYPTION_KEY) {
+        // The key is derived here rather than in a field initializer, and that ordering is the whole
+        // point: an initializer runs before the constructor body, so reading the environment there
+        // threw on an unset variable and the fallback below could never be reached. The service is
+        // constructed whether or not the deployment configures a key, so the unset case has to be
+        // the one that survives.
+        if (process.env.ENCRYPTION_KEY) {
+            this.key = Buffer.from(process.env.ENCRYPTION_KEY, 'base64');
+        } else {
             console.warn('ENCRYPTION_KEY is not set. Generating a temporary key for this session. This is not secure for production!');
 
             // Generate a random key for this session

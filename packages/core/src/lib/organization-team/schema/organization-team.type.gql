@@ -1,0 +1,242 @@
+# The team row's GraphQL types.
+#
+# A team is the working group a task, a daily plan and a tracked stretch of time are filed under: it
+# is the smallest scope this platform serves that has a membership of its own, and it is how work is
+# divided inside an organization. The row is deliberately narrow — the group's identity and the
+# presentation of it — because everything that hangs off a team hangs off it by a pivot rather than by
+# a column.
+#
+# **The relations are identifiers here, and the collections are absent.** `imageId` is the relation
+# column this row itself carries, and the asset it names is declared eager on the entity, so `image`
+# travels on every row either read of this surface answers: the member and its identifier are always
+# answered together. Nothing else is. The membership, the projects, the tags, the tasks, the modules,
+# the vocabularies a team owns (its statuses, priorities, sizes, versions, issue types and views), the
+# goals that name it, the daily plans scheduled into it, the approval requests raised against it and
+# the comments assigned to it are all joined only when a REST caller names them in `relations`, and
+# this surface names none — a field for one of them would be absent on exactly the answers this
+# connection serves, and a client would read null and conclude the team has none. Each is read where
+# it lives: the membership as rows of the team-employee surface, the projects from the project
+# surface, the tags from the tag surface, the tasks from the task surface and the vocabularies from
+# the surfaces that own them.
+#
+# **A relation is never a filter either.** The connection's filter is applied to the rows the
+# delivered read returned, so a filter on a collection would be evaluated against a row that carries
+# none of it and would select nothing at all — which is why `OrganizationTeamFilter` below states the
+# row's own columns and no member of a pivot.
+#
+# `public` is carried as its own flag rather than declared as anything richer: it is the team's
+# visibility inside the organization, a boolean column of this row, and the vocabulary of who may read
+# what is the permission model's, not a value set this table owns. `profile_link` is spelled with an
+# underscore because the column is: a client reading the same row over the two protocols has to read
+# the same member names.
+
+"""
+One working group inside an organization: the scope a task, a daily plan and a tracked stretch of time
+are filed under, with a membership of its own.
+"""
+type OrganizationTeam {
+	id: ID!
+	"The tenant the team belongs to, by identifier. The row is read from the tenant surface."
+	tenantId: ID
+	"The organization the team works in, by identifier. The row is read from the organization surface."
+	organizationId: ID
+	"""The team's name. A team that names nothing names no group, so the delivered body requires it."""
+	name: String!
+	"The colour the team is presented in, as the row records it."
+	color: String
+	"The emoji the team is presented with, as the row records it."
+	emoji: String
+	"How large the team is, as the row records it. A figure the row carries rather than one this surface counts."
+	teamSize: String
+	"A denormalised logo URL, kept for lists that must not join the asset table."
+	logo: String
+	"The prefix the team's records are numbered under, when the team keeps one."
+	prefix: String
+	"The team's public profile path segment, when the organization publishes one."
+	profile_link: String
+	"Whether the team is visible to the organization beyond its own membership."
+	public: Boolean
+	"""
+	Whether the team's members may see each other's profiles. The column defaults it to true, and the
+	delivered create read drops the member, so this is a value the edit writes and a filing cannot.
+	"""
+	shareProfileView: Boolean
+	"""
+	Whether tracked time on the team's plans requires a daily plan to exist first. The column defaults
+	it to false, and the delivered create read drops the member for the same reason as the flag above.
+	"""
+	requirePlanToTrack: Boolean
+	"The logo asset, by identifier. The relation is eager, so this and `image` always travel together."
+	imageId: ID
+	"The logo asset itself."
+	image: ImageAsset
+	"When the team was filed."
+	createdAt: DateTime
+	"When the team was last changed."
+	updatedAt: DateTime
+	"""
+	When the team was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write — so without it the answer to the write that
+	withdrew a team would not say that it did.
+	"""
+	deletedAt: DateTime
+	"When the team was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"Whether the team is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the team is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the team, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the team, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the team, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of teams.
+"""
+type OrganizationTeamEdge {
+	node: OrganizationTeam!
+	cursor: String!
+}
+
+"""
+One page of teams, with the total the filters select and the boundary cursors.
+"""
+type OrganizationTeamConnection {
+	nodes: [OrganizationTeam!]!
+	edges: [OrganizationTeamEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a team list may be sorted by.
+"""
+enum OrganizationTeamSortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the teams are returned in. At most three keys are accepted.
+"""
+input OrganizationTeamSort {
+	field: OrganizationTeamSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a team list may be narrowed by.
+"""
+input OrganizationTeamFilter {
+	id: IDFilter
+	name: StringFilter
+	color: StringFilter
+	emoji: StringFilter
+	teamSize: StringFilter
+	logo: StringFilter
+	prefix: StringFilter
+	profile_link: StringFilter
+	public: BooleanFilter
+	shareProfileView: BooleanFilter
+	requirePlanToTrack: BooleanFilter
+	imageId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationTeamFilter!]
+	or: [OrganizationTeamFilter!]
+	not: OrganizationTeamFilter
+}
+
+"""
+What a caller states when it files a team.
+
+The members are the ones the delivered create body validates and the delivered write reads. Four
+groups the body accepts are deliberately absent, and each for its own reason:
+
+- the tenant is never stated, because a write's tenant comes from the credential;
+- the five presentation members of the edit below — `color`, `emoji`, `teamSize`, `shareProfileView`
+  and `requirePlanToTrack` — are not offered here. The delivered body validates them and the delivered
+  create read then builds its row from an explicit set of members that does not include them, so a
+  filing that stated one would accept a value and write nothing at all;
+- the tags and the projects are stated by identifier rather than as rows, because an identifier is
+  what the relation records and what the delivered write attaches;
+- `organization` and `sentTo` are omitted: the first is the delivered body's other spelling of the
+  same scope, a row rather than an identifier, and the second is the escape hatch the delivered
+  validator consults before it requires a scope at all. Neither is a member the write reads.
+"""
+input CreateOrganizationTeamInput {
+	name: String!
+	"The organization the team works in. The delivered body checks it against the caller's own memberships."
+	organizationId: ID!
+	"The team's public profile path segment, when the organization publishes one."
+	profile_link: String
+	"A denormalised logo URL, kept for lists that must not join the asset table."
+	logo: String
+	"The prefix the team's records are numbered under."
+	prefix: String
+	"The logo asset to file the team with, by identifier."
+	imageId: ID
+	"Whether the team is visible to the organization beyond its own membership."
+	public: Boolean
+	"""The employees the team is made of, by identifier. They are stored as the team's membership."""
+	memberIds: [ID!]
+	"""
+	The employees who manage the team, by identifier. A caller acting as an employee is added to this
+	list by the delivered write itself, which is how the person filing a team keeps hold of it.
+	"""
+	managerIds: [ID!]
+	"The tags to attach to the team, by identifier."
+	tagIds: [ID!]
+	"The projects the team is attached to, by identifier."
+	projectIds: [ID!]
+}
+
+"""
+What a caller states when it edits a team that exists.
+
+The members are the create input's with the criterion stated, plus the five presentation members the
+delivered create read drops and the delivered edit writes: the edit hands its whole body to the
+persist call, so the row's presentation is written here rather than at the filing. `name` is optional
+where the filing requires it, because the delivered edit body declares it optional — a member the
+caller leaves out is left as it is.
+"""
+input UpdateOrganizationTeamInput {
+	id: ID!
+	name: String
+	organizationId: ID!
+	profile_link: String
+	logo: String
+	prefix: String
+	imageId: ID
+	public: Boolean
+	color: String
+	emoji: String
+	teamSize: String
+	shareProfileView: Boolean
+	requirePlanToTrack: Boolean
+	memberIds: [ID!]
+	managerIds: [ID!]
+	tagIds: [ID!]
+	projectIds: [ID!]
+}
+
+"""
+What a caller states when it removes a team.
+
+The delivered query DTO picks the organization and the tenant for this route; only the organization is
+carried. The removal is scoped to the organization it names, and the tenant is not offered because the
+tenant a write runs under comes from the credential — the delivered service reads it from the request
+context and falls back to what it was handed, so a caller could only ever restate its own.
+"""
+input OrganizationTeamDeleteInput {
+	"The organization the removal is scoped to."
+	organizationId: ID!
+}

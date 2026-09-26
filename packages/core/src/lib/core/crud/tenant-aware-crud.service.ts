@@ -10,8 +10,19 @@ import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { assertCriteriaHasPredicate } from './criteria.helper';
 import { assertGraphNotForeign } from './nested-graph-ownership.helper';
+import {
+	IMikroOrmScopeColumn,
+	readMikroOrmScopeColumn,
+	resolveMikroOrmScopeColumn
+} from './mikro-orm-scope-column.helper';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
+
+/** The columns this service scopes a statement by. */
+type ScopeColumn = 'tenantId' | 'employeeId';
+
+/** The relation each scope column is the foreign key of, which the scoping names beside the column. */
+const SCOPE_RELATION: Record<ScopeColumn, string> = { tenantId: 'tenant', employeeId: 'employee' };
 
 /**
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
@@ -26,8 +37,128 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/** The sequence keeps the key unique even when two services share a runtime class name. */
 	private readonly skipEmployeeFilterKey = `skipEmployeeFilter:${this.constructor.name}:${++TenantAwareCrudService.skipEmployeeFilterSequence}`;
 
+	/** How MikroORM maps each scope column of this entity, read once: metadata does not change after discovery. */
+	private readonly mikroOrmScopeColumns = new Map<ScopeColumn, IMikroOrmScopeColumn | null>();
+
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
+	}
+
+	/**
+	 * Whether the entity has the given scope column, read from the metadata of the ORM that runs the statement.
+	 *
+	 * **Every tenant condition this service adds hangs on this answer**, and it used to be asked of TypeORM
+	 * whichever ORM was running. Under `DB_ORM=mikro-orm` TypeORM then held only a skeleton of each entity —
+	 * `MultiORMColumn` and the relation decorators registered with the active ORM alone — so it answered "no
+	 * tenant column" for every entity, and no read, update, delete or soft-delete on that ORM was scoped to
+	 * the caller's tenant, nor to the caller's employee, and nothing written was stamped with either. TypeORM's
+	 * mapping has been complete under either ORM since d739d81b25, but the statement is MikroORM's, so on
+	 * MikroORM the answer comes from MikroORM's own metadata ({@link resolveMikroOrmScopeColumn}).
+	 *
+	 * The TypeORM answer is the expression this service has always evaluated, unchanged.
+	 *
+	 * @param column The scope column.
+	 * @returns Whether statements against this entity can be scoped by it.
+	 */
+	protected hasScopeColumn(column: ScopeColumn): boolean {
+		if (this.readsMikroOrmMapping()) {
+			return !!this.mikroOrmScopeColumn(column);
+		}
+		return this.typeOrmRepository.metadata?.hasColumnWithPropertyPath(column);
+	}
+
+	/**
+	 * Whether this service's statements are scoped by the MikroORM mapping: MikroORM runs them, and the
+	 * repository the service was given is one MikroORM can describe.
+	 *
+	 * Every MikroORM repository the platform injects is one, so under `DB_ORM=mikro-orm` this holds for every
+	 * service there is. What it leaves out is a stand-in that is not a MikroORM repository at all — the
+	 * scripted doubles unit tests hand the MikroORM branch, which state the entity's columns through the
+	 * TypeORM double instead — and those keep the answer this service has always given them.
+	 *
+	 * @returns True when the MikroORM mapping decides the scoping.
+	 */
+	private readsMikroOrmMapping(): boolean {
+		return (
+			this.ormType === MultiORMEnum.MikroORM &&
+			typeof (this.mikroOrmRepository as { getEntityManager?: unknown })?.getEntityManager === 'function'
+		);
+	}
+
+	/**
+	 * The members that scope a statement, or stamp a write, with one value of a scope column.
+	 *
+	 * TypeORM is handed the shape it has always been handed: the relation by its id, and the column. MikroORM
+	 * is handed the column — which it filters on even where the platform maps it as the `persist: false`
+	 * mirror of the relation — and the relation only when the mapping has one, since a `where` naming a
+	 * relation the entity does not have is refused.
+	 *
+	 * @param column The scope column.
+	 * @param value The caller's tenant or employee.
+	 * @returns The members to merge into a `where`, or into a payload.
+	 */
+	private scopedBy(column: ScopeColumn, value: ID): Record<string, unknown> {
+		if (this.readsMikroOrmMapping()) {
+			const relation = this.mikroOrmScopeColumn(column)?.relation;
+			return { ...(relation ? { [relation]: { id: value } } : {}), [column]: value };
+		}
+		return { [SCOPE_RELATION[column]]: { id: value }, [column]: value };
+	}
+
+	/**
+	 * A payload for `save()` / `saveMany()`, stamped with the caller's value of a scope column.
+	 *
+	 * TypeORM's save is handed the members {@link scopedBy} gives, as it always was. MikroORM's is an
+	 * `upsert`, which maps a relation onto its join column only when the relation is given by its primary
+	 * key — a `{ id }` object is written as a column named after the relation, which does not exist — and
+	 * which writes a relation and its `persist: false` mirror as two assignments of the same column. The
+	 * payload therefore carries exactly one of them: the relation, by primary key, where the mapping has one,
+	 * with any value the caller sent for the mirror removed so it can neither collide with the stamp nor
+	 * contradict it; and the column itself where the mapping has no relation.
+	 *
+	 * @param entity The caller's payload.
+	 * @param column The scope column.
+	 * @param value The caller's tenant.
+	 * @returns A new payload carrying the stamp.
+	 */
+	private stampedForSave(entity: IPartialEntity<T>, column: ScopeColumn, value: ID): IPartialEntity<T> {
+		if (!this.readsMikroOrmMapping()) {
+			return { ...entity, ...this.scopedBy(column, value) } as IPartialEntity<T>;
+		}
+
+		const relation = this.mikroOrmScopeColumn(column)?.relation;
+		if (!relation) {
+			return { ...entity, [column]: value } as IPartialEntity<T>;
+		}
+
+		const payload = { ...entity } as Record<string, unknown>;
+		delete payload[column];
+		return { ...payload, [relation]: value } as IPartialEntity<T>;
+	}
+
+	/**
+	 * The tenant column as the MikroORM branch of the foreign-row guards loads and reads it: through the
+	 * mapping where it can be read ({@link readsMikroOrmMapping}), and by name, as it always was, where not.
+	 */
+	private mikroOrmTenantColumnToLoad(): IMikroOrmScopeColumn {
+		return this.readsMikroOrmMapping()
+			? this.mikroOrmScopeColumn('tenantId')
+			: { property: 'tenantId', hydratedBy: 'tenantId' };
+	}
+
+	/**
+	 * How MikroORM maps a scope column of this entity.
+	 *
+	 * @param column The scope column.
+	 * @returns The mapping, or `null` when the entity has no such column.
+	 */
+	private mikroOrmScopeColumn(column: ScopeColumn): IMikroOrmScopeColumn | null {
+		if (!this.mikroOrmScopeColumns.has(column)) {
+			const repository = this.mikroOrmRepository;
+			const meta = repository.getEntityManager().getMetadata(repository.getEntityName());
+			this.mikroOrmScopeColumns.set(column, resolveMikroOrmScopeColumn(meta, column));
+		}
+		return this.mikroOrmScopeColumns.get(column);
 	}
 
 	/**
@@ -75,15 +206,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 
 		const employeeId = RequestContext.currentEmployeeId();
 
-		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const hasEmployeeColumn = this.hasScopeColumn('employeeId');
 		const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		// Restrict to current employee only
 		if (isNotEmpty(employeeId) && hasEmployeeColumn && !canChangeEmployee) {
-			return {
-				employee: { id: employeeId },
-				employeeId
-			} as unknown as FindOptionsWhere<T>;
+			return this.scopedBy('employeeId', employeeId) as unknown as FindOptionsWhere<T>;
 		}
 
 		// A caller who may not act for other employees, but has no employee record of their own.
@@ -146,14 +274,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	private findConditionsWithTenantByUser(user: IUser): FindOptionsWhere<T> {
 		return {
-			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
-				? {
-						tenant: {
-							id: user.tenantId
-						},
-						tenantId: user.tenantId
-					}
-				: {}),
+			...(this.hasScopeColumn('tenantId') ? this.scopedBy('tenantId', user.tenantId) : {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
 	}
@@ -409,27 +530,33 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * overwrote — and re-tenanted — another tenant's row (GHSA-gwpq-mmw7-vx85 / GHSA-x4mv-fhwj-g3rp
 	 * class). Rows the caller's tenant owns, and ids that do not exist yet, are untouched.
 	 *
+	 * On MikroORM the stored tenant is loaded through whatever hydrates it
+	 * ({@link IMikroOrmScopeColumn.hydratedBy}): the platform maps `tenantId` as the `persist: false` mirror of
+	 * the `tenant` relation, and a load that names the mirror in `fields` leaves it unset — which read every
+	 * row, the caller's own included, as another tenant's.
+	 *
 	 * @param entity - The payload about to be persisted.
 	 * @param tenantId - The caller's tenant.
 	 */
 	protected async assertNotForeignRow(entity: IPartialEntity<T>, tenantId: ID | null): Promise<void> {
 		const id = (entity as any)?.id;
-		if (!id || !tenantId || !this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')) {
+		if (!id || !tenantId || !this.hasScopeColumn('tenantId')) {
 			return;
 		}
 		let existing: unknown;
 		let existingTenantId: ID | null | undefined;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
+				const tenantColumn = this.mikroOrmTenantColumnToLoad();
 				// `filters: false` matters: MikroORM applies the soft-delete filter by default, so a
 				// foreign row that was soft-deleted would be invisible here — the guard would pass and
 				// the upsert would claim it. The TypeORM branch uses `withDeleted: true` for the same
 				// reason.
 				existing = await this.mikroOrmRepository.findOne({ id } as any, {
-					fields: ['id', 'tenantId'] as any,
+					fields: ['id', tenantColumn.hydratedBy] as any,
 					filters: false
 				});
-				existingTenantId = (existing as any)?.tenantId;
+				existingTenantId = readMikroOrmScopeColumn(existing, tenantColumn) as ID | null | undefined;
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -456,17 +583,22 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	protected async assertNotForeignRows(entities: IPartialEntity<T>[], tenantId: ID | null): Promise<void> {
 		const ids = (entities ?? []).map((entity) => (entity as any)?.id).filter((id) => !!id);
-		if (!ids.length || !tenantId || !this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')) {
+		if (!ids.length || !tenantId || !this.hasScopeColumn('tenantId')) {
 			return;
 		}
 		let existing: any[];
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				existing = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, {
-					fields: ['id', 'tenantId'] as any,
+			case MultiORMEnum.MikroORM: {
+				// Loaded through what hydrates the stored tenant, for the reason assertNotForeignRow gives, and
+				// read into the shape the comparison below reads.
+				const tenantColumn = this.mikroOrmTenantColumnToLoad();
+				const rows = await this.mikroOrmRepository.find({ id: { $in: ids } } as any, {
+					fields: ['id', tenantColumn.hydratedBy] as any,
 					filters: false
 				});
+				existing = rows.map((row) => ({ tenantId: readMikroOrmScopeColumn(row, tenantColumn) }));
 				break;
+			}
 			case MultiORMEnum.TypeORM:
 			default:
 				existing = await this.typeOrmRepository.find({
@@ -514,22 +646,19 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		await this.assertNotForeignRow(entity, tenantId);
 		await this.assertNestedGraphNotForeign([entity], tenantId);
 
-		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
-		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const hasTenantColumn = this.hasScopeColumn('tenantId');
+		const hasEmployeeColumn = this.hasScopeColumn('employeeId');
 
 		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		return await super.create({
 			...entity,
-			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {}),
+			...(hasTenantColumn ? this.scopedBy('tenantId', tenantId) : {}),
 			/**
 			 * If employee has login & create data for self
 			 */
 			...(isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn
-				? {
-						employee: { id: employeeId },
-						employeeId: employeeId
-					}
+				? this.scopedBy('employeeId', employeeId)
 				: {})
 		});
 	}
@@ -548,16 +677,16 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		await this.assertNestedGraphNotForeign(entities, tenantId);
 		const employeeId = RequestContext.currentEmployeeId();
 
-		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
-		const hasEmployeeColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId');
+		const hasTenantColumn = this.hasScopeColumn('tenantId');
+		const hasEmployeeColumn = this.hasScopeColumn('employeeId');
 		const hasPermission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		const shouldSetEmployee = isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn;
 
 		const enriched = entities.map((entity) => ({
 			...entity,
-			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {}),
-			...(shouldSetEmployee ? { employee: { id: employeeId }, employeeId } : {})
+			...(hasTenantColumn ? this.scopedBy('tenantId', tenantId) : {}),
+			...(shouldSetEmployee ? this.scopedBy('employeeId', employeeId) : {})
 		}));
 
 		return await super.createMany(enriched);
@@ -572,14 +701,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 */
 	public async save(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
-		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		const hasTenantColumn = this.hasScopeColumn('tenantId');
 		await this.assertNotForeignRow(entity, tenantId);
 		await this.assertNestedGraphNotForeign([entity], tenantId);
 
-		return await super.save({
-			...entity,
-			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {})
-		});
+		return await super.save(hasTenantColumn ? this.stampedForSave(entity, 'tenantId', tenantId) : { ...entity });
 	}
 
 	/**
@@ -612,12 +738,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRows(entities, tenantId);
 		await this.assertNestedGraphNotForeign(entities, tenantId);
-		const hasTenantColumn = this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId');
+		const hasTenantColumn = this.hasScopeColumn('tenantId');
 
-		const enriched = entities.map((entity) => ({
-			...entity,
-			...(hasTenantColumn ? { tenant: { id: tenantId }, tenantId } : {})
-		}));
+		const enriched = entities.map((entity) =>
+			hasTenantColumn ? this.stampedForSave(entity, 'tenantId', tenantId) : { ...entity }
+		);
 
 		return await super.saveMany(enriched);
 	}
@@ -637,20 +762,83 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/**
 	 * Updates entity partially. Entity can be found by a given conditions.
 	 *
-	 * @param id
-	 * @param partialEntity
-	 * @returns
+	 * **Two things this does beyond the base update, and both are about which rows the statement may
+	 * touch.**
+	 *
+	 * The tenant and organization conditions are merged into the criteria the `UPDATE` runs with, so the
+	 * scoping is the statement's own rather than a pre-read's. The read below is still made — it is what
+	 * answers a caller with the platform's refusal instead of a silent no-op — but a row another tenant
+	 * owns is now excluded by the write itself, which is the stronger of the two guarantees and the one
+	 * that survives a caller assembling its criteria by hand. Only the scoping a statement can express
+	 * travels: see {@link scalarConditions}.
+	 *
+	 * **A criterion that names a `version` is a precondition rather than a locator**, so the pre-read is
+	 * skipped for it. That column is evaluated by the `UPDATE` — which is what makes a conditional write
+	 * one statement instead of two — and a row that does not match it has to be reported as the conflict
+	 * it is. Reading first would answer "not found" for a record that exists and has merely moved on,
+	 * which sends the caller down the deleted-record path instead of the re-read-and-reapply path, and
+	 * it would do so before the affected-row count the concurrency kernel's error contract is built on
+	 * could be seen at all. The tenant conditions are still merged in, because the merge above is what
+	 * scopes the write.
+	 *
+	 * @param id A record id, or the conditions the record must satisfy.
+	 * @param partialEntity The columns to write.
+	 * @returns The update result, or the updated record, whichever the ORM answers.
 	 */
 	public async update(
 		id: string | FindOptionsWhere<T>,
 		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<T | UpdateResult> {
+		const user = RequestContext.currentUser();
+		// A write with no caller in context — a seeder, a job, the sign-in path stamping a last-login
+		// time — has no tenant to be scoped by, and the criteria it states are the criteria the statement
+		// runs with. Reading the tenant off a user that is not there would fail the write instead.
+		const scoped = user ? this.scalarConditions(this.findConditionsWithTenantByUser(user)) : {};
+
 		if (typeof id === 'string') {
 			await this.findOneByIdString(id);
-		} else if (typeof id === 'object') {
-			await this.findOneByWhereOptions(id as FindOptionsWhere<T>);
+
+			return await super.update({ ...scoped, id } as FindOptionsWhere<T>, partialEntity);
 		}
+
+		if (typeof id === 'object' && id !== null) {
+			const criteria = id as FindOptionsWhere<T>;
+
+			if (!('version' in criteria)) {
+				await this.findOneByWhereOptions(criteria);
+			}
+
+			return await super.update({ ...criteria, ...scoped }, partialEntity);
+		}
+
 		return await super.update(id, partialEntity);
+	}
+
+	/**
+	 * The scoping conditions a statement can carry.
+	 *
+	 * A `where` for a read may name a relation — the tenant, the employee — and the read joins to
+	 * resolve it. An `UPDATE` addresses columns, so a relation condition is not something it can express;
+	 * handing one to it produces invalid SQL rather than a narrower write. Only the scalar members are
+	 * kept, and nothing is lost by that here: the two relations this platform scopes by are reached
+	 * through foreign-key columns (`tenantId`, `employeeId`) that travel beside them in the same object,
+	 * and those columns are exactly what the statement can be scoped by.
+	 *
+	 * @param conditions The conditions the read would use.
+	 * @returns The subset a write can be predicated on.
+	 */
+	private scalarConditions(conditions: FindOptionsWhere<T>): FindOptionsWhere<T> {
+		const scalars: Record<string, unknown> = {};
+
+		for (const [column, value] of Object.entries(conditions ?? {})) {
+			if (value !== null && typeof value === 'object') {
+				continue;
+			}
+
+			scalars[column] = value;
+		}
+
+		return scalars as FindOptionsWhere<T>;
 	}
 
 	/**
@@ -734,6 +922,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * This method sets a flag or timestamp indicating the entity is considered deleted.
 	 * It does not actually remove the entity from the database, allowing for recovery or audit purposes.
 	 *
+	 * On MikroORM the row retired is the one the tenant-scoped read found, named by its id. That branch of
+	 * the base class retires a single row, which it looks up again by the criteria alone — so for criteria
+	 * that are not an id, the second lookup was free to settle on another tenant's row with the same values.
+	 *
 	 * @param criteria - Entity ID or complex query to identify which entity to soft-delete.
 	 * @param options - Additional options for the operation.
 	 * @returns {Promise<DeleteResult>} - Result indicating success or failure.
@@ -758,8 +950,27 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				throw new NotFoundException(`The requested record was not found`);
 			}
 
-			// Proceed with the soft-delete operation from the superclass.
-			return await super.softDelete(criteria);
+			if (this.ormType === MultiORMEnum.MikroORM) {
+				return await super.softDelete(typeof criteria === 'object' ? record.id : criteria);
+			}
+
+			// **The statement carries the caller's scope, not only the read before it.** The pre-read above
+			// is tenant-scoped, but `criteria` used to reach TypeORM's `softDelete` raw, so an object
+			// criteria retired every matching row of every tenant (`UPDATE … SET deletedAt … WHERE name = ?`)
+			// once one row of the caller's own had been found. The same scalar scope `update` merges is
+			// merged here: a criteria still retires every row it names, but only the caller's, and a
+			// by-id call is predicated on the tenant as well. A call with no caller in context — a seeder, a
+			// job — has no tenant to add, as in `update`.
+			const user = RequestContext.currentUser();
+			const scoped = user ? this.scalarConditions(this.findConditionsWithTenantByUser(user)) : {};
+
+			if (typeof criteria === 'object' && criteria !== null) {
+				return await super.softDelete({ ...(criteria as FindOptionsWhere<T>), ...scoped });
+			}
+
+			return await super.softDelete(
+				Object.keys(scoped).length ? ({ ...scoped, id: criteria } as FindOptionsWhere<T>) : criteria
+			);
 		} catch (err) {
 			// If any error occurs, rethrow it as a NotFoundException with additional context.
 			throw new NotFoundException(`The record was not found or could not be soft-deleted`, err);

@@ -1,0 +1,53 @@
+# The import history domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The controller is mounted at `/api/import/history` and serves one route, `GET /`, under
+# `ALL_ORG_VIEW` and `IMPORT_ADD` — both stated on the class and neither on the handler — so the field
+# below states both, exactly as the route runs under them. That pair is the delivered scope: reading the
+# ledger is granted to whoever may read the organization and to whoever may import into it, which is why
+# the two are stated together rather than as one.
+#
+# **The ledger is a connection, and it is the only field this domain declares.**
+#
+# - There is no node read, because the controller serves none: the ledger is a log, and the delivered API
+#   answers it as a list rather than reaching one entry. A caller that means one entry narrows the
+#   connection.
+# - There is no count, because the controller serves no count route. A count a client can reach here and
+#   not over REST is exactly the asymmetry the two-protocol rule forbids; the connection's own
+#   `totalCount` is the only count the delivered resource states.
+# - There is no write of any kind. A ledger entry is written by the import itself, through
+#   `ImportHistoryCreateCommand`, and never by a caller of this resource: the archive is uploaded to
+#   `POST /api/import`, which records what became of it. A creation, an edit or a removal here would let
+#   a caller rewrite the record of what was imported.
+#
+# **The ledger is the answer to an import, and it is declared here rather than in the import domain.**
+# `POST /api/import` answers the `ImportHistory` row it wrote — on success and on failure alike, with the
+# row's status carrying the outcome. That row is this type, declared once by the domain that owns the
+# entity and read through the connection below; the import domain's own documents say so and declare
+# nothing themselves, so the ledger is neither flattened nor restated.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so the field below is behind the
+# one capability. The REST route is not gated by that code — it is the door that stays open, which is
+# what keeps an operator able to see what was imported without the GraphQL surface — so a disabled
+# capability is answered `Cannot query field <name>` here while that route answers as it always did.
+
+extend type Query {
+	"""
+	The import ledger of the caller's tenant, newest import first: one entry per archive the platform
+	took in, with the outcome recorded on it.
+	"""
+	importHistories(
+		filter: ImportHistoryFilter
+		sort: [ImportHistorySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): ImportHistoryConnection!
+}

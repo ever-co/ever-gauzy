@@ -1,13 +1,13 @@
 import { ID, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
 import { IPluginSubscription } from '../../shared';
 import { PluginSubscription } from '../entities';
 import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubscription> {
+export class PluginSubscriptionService extends RegistryTenantAwareCrudService<PluginSubscription> {
 	private readonly logger = new Logger(PluginSubscriptionService.name);
 
 	constructor(

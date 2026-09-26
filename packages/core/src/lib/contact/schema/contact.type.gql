@@ -1,0 +1,197 @@
+# The customer record's GraphQL types.
+#
+# A contact is the person-or-place detail row behind a party: the name, the postal address and the
+# coordinates an order, an invoice and a shipping label print. It is deliberately one table rather
+# than a column set copied onto every document — the row is what an organization contact, an employee
+# and a candidate each point at, so a change of address is one write rather than one per reader.
+#
+# **The three relations are absent, and they are absent because nothing on this row carries their
+# identifier.** `organizationContact`, `employee` and `candidate` are all declared on the *other* side
+# of a 1:1 — this table holds no foreign key for any of them — and the delivered read joins none of
+# them (`GET /contact` passes the `relations` its caller named and nothing else). A relation field
+# here would therefore be absent on every row this surface answers, which is worse than an absent
+# field: a client would select it, read `null`, and conclude the contact has no party. The link is
+# read from the row that owns it — `OrganizationContact.contactId` is the identifier that always
+# travels, and `contact(id)` on that domain is the read.
+#
+# `latitude` and `longitude` are coordinates rather than amounts and are carried as `Float`, exactly
+# as the address book carries its own pair. Every money value in this schema is `Decimal`, serialised
+# as a string with six fractional digits: a binary fraction cannot hold a cent exactly.
+#
+# The type carries the members the row always holds — including the base's `isActive` and the
+# `deletedAt` the two lifecycle routes write — and deliberately not `isArchived`, `archivedAt` or the
+# three audit-user columns: no route of this resource reads or writes them and no delivered party
+# type carries them, so a field for one would be a column no client of this surface can act on.
+
+"""
+A party's person-or-place detail row: the name, the address and the coordinates documents print.
+"""
+type Contact {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"""The display name of the person or the place, as entered."""
+	name: String
+	firstName: String
+	lastName: String
+	"""The country as text, as entered. It is not the country master's code."""
+	country: String
+	city: String
+	"""Street address. A contact carries exactly one: the address book holds the many."""
+	address: String
+	"""Second line of the street address — a unit, a floor, a building."""
+	address2: String
+	postcode: String
+	"""Latitude of the address, from -90 to 90. A coordinate, so a `Float`."""
+	latitude: Float
+	"""Longitude of the address, from -180 to 180. A coordinate, so a `Float`."""
+	longitude: Float
+	"""The region or state code the country's own vocabulary uses."""
+	regionCode: String
+	fax: String
+	"""
+	The registration or tax identity as printed on the party's own document. Reverse charge and
+	intra-community zero-rating are conditional on the **buyer's** registration being present, and this
+	is where a legacy row keeps it — the party row carries its own, more specific pair.
+	"""
+	fiscalInformation: String
+	website: String
+	"""Whether the row is active. A removal sets `deletedAt`; it does not clear this flag."""
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+	"""When the row was withdrawn, or null while it is live. The two lifecycle routes write this alone."""
+	deletedAt: DateTime
+}
+
+"""
+The boundary of one page of contacts.
+"""
+type ContactEdge {
+	node: Contact!
+	cursor: String!
+}
+
+"""
+One page of contacts, with the total the filters select and the boundary cursors.
+"""
+type ContactConnection {
+	nodes: [Contact!]!
+	edges: [ContactEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a contact list may be sorted by.
+"""
+enum ContactSortField {
+	createdAt
+	updatedAt
+	name
+	firstName
+	lastName
+	city
+	country
+}
+
+"""
+The order the contacts are returned in. At most three keys are accepted.
+"""
+input ContactSort {
+	field: ContactSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a contact list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned: a member the read does not select would be a filter that silently
+selects nothing. Three members of the type are deliberately not here: `latitude` and `longitude` are
+coordinates, not a narrowing a list of parties is ever read by, and `isActive` is a flag no delivered
+read of this resource narrows on — the list answers live rows through the soft-delete column, so a
+filter on the flag would be a second, weaker way to ask the question the read already answers.
+"""
+input ContactFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	firstName: StringFilter
+	lastName: StringFilter
+	country: StringFilter
+	city: StringFilter
+	address: StringFilter
+	address2: StringFilter
+	postcode: StringFilter
+	regionCode: StringFilter
+	fax: StringFilter
+	fiscalInformation: StringFilter
+	website: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ContactFilter!]
+	or: [ContactFilter!]
+	not: ContactFilter
+}
+
+"""
+What a caller states when it records a contact.
+
+**Every member is optional, and that is the delivered route's own contract.** `POST /contact` binds
+its body to a partial entity and validates nothing beyond the credential's tenant, so the input
+states the row's descriptive columns — what a contact *is* — and adds no member the row does not
+have. The organization is among them because it is a column of this row and the route writes the
+value it is given; the tenant is not, because the service stamps the caller's own tenant and
+overwrites whatever a body states.
+
+The base entity's lifecycle flags (`isActive`, `isArchived`, `archivedAt`), its soft-delete marker
+and its three audit-user columns are deliberately not members: the two lifecycle routes are what move
+the marker, and an input that could set an audit column would be a way to write a fact the platform's
+own bookkeeping owns.
+"""
+input CreateContactInput {
+	organizationId: ID
+	name: String
+	firstName: String
+	lastName: String
+	country: String
+	city: String
+	address: String
+	address2: String
+	postcode: String
+	latitude: Float
+	longitude: Float
+	regionCode: String
+	fax: String
+	fiscalInformation: String
+	website: String
+}
+
+"""
+What a caller states when it changes a contact.
+
+**A member the caller leaves out is left as it is.** The delivered edit is a partial column update
+against the criterion the path names, not a replacement of the row, so the input is the create input
+with the criterion stated and every other member optional. The tenant is absent for the reason it is
+absent above: the service takes it from the credential and overwrites whatever a body states.
+"""
+input UpdateContactInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	firstName: String
+	lastName: String
+	country: String
+	city: String
+	address: String
+	address2: String
+	postcode: String
+	latitude: Float
+	longitude: Float
+	regionCode: String
+	fax: String
+	fiscalInformation: String
+	website: String
+}

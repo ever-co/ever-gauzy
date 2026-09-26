@@ -1,0 +1,163 @@
+# The configured integration's object types.
+#
+# A configured integration is what a tenant has connected: which catalogue entry it is (`integration`),
+# what the provider calls it (`name`), when it last synchronised, and the credentials and per-row-type
+# decisions that hang off it. It is the row an outbound sync is configured on, and the row a machine
+# caller resolves through a provider name when it reports what it has just synchronised.
+#
+# **`name` is carried as text rather than as a closed enum, and the reason is that the provider set
+# grows outside this package.** The column holds the contract's own provider vocabulary — `Github`,
+# `Jira`, `Hubstaff`, `Import_Export`, `Ever_Async`, … — and a provider a plugin introduces is a row
+# this resource must still answer. A closed enum here would make a new provider a schema change and
+# would refuse to serialize a row whose provider this file does not know; text is what the column is.
+# The row-type vocabulary beside it is a different case and *is* a closed enum, declared once by the
+# integration catalogue: which kinds of row the platform can synchronise is the platform's own set.
+#
+# **Two relation members are carried and the rest are not.** `integration` and `settings` are the two
+# the delivered reads load on request, and both are served by a resolver that ships with this one — the
+# catalogue entry the sync is against, and the credentials it authenticates with (whose stored value
+# that surface withholds). A configured integration's `entitySettings` collection is deliberately not
+# carried: those rows are the subject of their own resource, reached with `integrationEntitySettings`,
+# where the delivered read loads the tied rows beside them as well. `entityMaps` is not carried either,
+# and for a different reason: `IntegrationMapController` declares no route at all, so nothing in the
+# delivered API serves a map row — this schema would be inventing a surface for it.
+#
+# The audit columns are absent, as they are on every type here: bookkeeping about the write rather than
+# facts about the integration.
+
+"""
+One integration a tenant has connected.
+"""
+type IntegrationTenant {
+	id: ID!
+	"""
+	The provider this connection is for, in the contract's own provider vocabulary. Carried as text
+	because a provider a plugin introduces is a row this resource must still answer.
+	"""
+	name: String!
+	"When this connection last synchronised, or null while it never has."
+	lastSyncedAt: DateTime
+	"The catalogue entry the connection is configured against."
+	integration: Integration
+	"The same catalogue entry, by identifier."
+	integrationId: ID
+	"""
+	The credentials this connection authenticates with. Loaded when the read is asked for them; each
+	row's stored value is never answered, which is the decision the credential type states at length.
+	"""
+	settings: [IntegrationSetting!]
+	"The tenant the connection belongs to. Stamped from the credential, never stated by a caller."
+	tenantId: ID
+	"The organization the connection belongs to."
+	organizationId: ID
+	"""
+	When the connection was withdrawn, or null while it is live. Withdrawing and restoring are the CRUD
+	base's own routes and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of connections.
+"""
+type IntegrationTenantEdge {
+	node: IntegrationTenant!
+	cursor: String!
+}
+
+"""
+One page of connections, with the total the filters select and the boundary cursors.
+"""
+type IntegrationTenantConnection {
+	nodes: [IntegrationTenant!]!
+	edges: [IntegrationTenantEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a connection list may be sorted by.
+"""
+enum IntegrationTenantSortField {
+	createdAt
+	updatedAt
+	name
+	lastSyncedAt
+}
+
+"""
+The order the connections are returned in. At most three keys are accepted.
+"""
+input IntegrationTenantSort {
+	field: IntegrationTenantSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a connection list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`name` narrows by the provider the connection is for, which is the question a caller actually asks of
+this list — and `lastSyncedAt: { isNull: true }` is the connections that have never run, which is the
+set an operator looks at when a sync is expected and nothing has happened.
+"""
+input IntegrationTenantFilter {
+	id: IDFilter
+	name: StringFilter
+	integrationId: IDFilter
+	lastSyncedAt: DateTimeFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IntegrationTenantFilter!]
+	or: [IntegrationTenantFilter!]
+	not: IntegrationTenantFilter
+}
+
+"""
+What a caller states when it connects an integration.
+
+The members are the delivered creation body's own: the provider, the catalogue entry, the organization
+the connection belongs to, and the credentials and per-row-type decisions to file with it. There is no
+member for the tenant — the delivered service stamps the caller's own and overwrites whatever a body
+states — and none for `lastSyncedAt`, which is a fact the synchronisation itself produces rather than
+something a caller announces.
+"""
+input CreateIntegrationTenantInput {
+	"The provider to connect, in the contract's own provider vocabulary."
+	name: String!
+	"The catalogue entry this connection is for."
+	integrationId: ID
+	"The organization the connection belongs to."
+	organizationId: ID
+	"The credentials to file with the connection, one member per key."
+	settings: [IntegrationSettingInput!]
+	"The per-row-type synchronisation decisions to file with the connection."
+	entitySettings: [IntegrationEntitySettingInput!]
+}
+
+"""
+What a caller states when it changes a connection that exists.
+
+Every member but the identifier is optional and a member the caller leaves out is left as it is: the
+delivered edit is a partial column update against the identifier the path names, not a replacement of
+the row. The provider is not among the mutable members — a connection that could change provider would
+be a different connection under the same identifier, with the decisions and credentials of the old one
+still attached to it.
+"""
+input UpdateIntegrationTenantInput {
+	id: ID!
+	"The organization the connection belongs to."
+	organizationId: ID
+	"Whether the connection is active."
+	isActive: Boolean
+	"Whether the connection is archived."
+	isArchived: Boolean
+	"The credentials to write with the edit, one member per key."
+	settings: [IntegrationSettingInput!]
+}

@@ -1,0 +1,276 @@
+# The user's object type.
+#
+# A user row is the actor the whole platform names: every permission is granted to a role a user
+# holds, every assignment names the user it was given to, and every audit column on every other table
+# stores a user's identifier. It is also the platform's most personal row — a name, an address, a
+# telephone number and the identity it signs in as — which is why what this type carries and what it
+# refuses is the delivery rather than a transcription of the entity.
+#
+# **Six members of the row are refused, and every one of them for the same reason: the delivered read
+# excludes them from the answer.** `hash` is the password digest; `refreshToken` is a live credential
+# that mints new access tokens until it is rotated; `code` and `codeExpireAt` are a single-use sign-in
+# code and the window it stays usable in; `emailToken` is the token a verification link carries; and
+# `emailVerifiedAt` is the stamp the reader turns into the derived `isEmailVerified` below. All six
+# are marked `@Exclude({ toPlainOnly: true })` on the entity, so they are absent from every REST
+# answer this surface mirrors. Naming them here would make the schema a second projection of the same
+# row — one that answers what the delivered projection deliberately drops — and a client that read a
+# digest or a token over GraphQL would have gone round the exclusion rather than through it. The
+# derived fact a client actually needs is carried instead: `isEmailVerified` says whether the address
+# was verified without saying when, and the verification stamp itself is not a member.
+#
+# **The relation objects are absent, and the identifiers for them are not.** The delivered list read
+# answers the relations its caller names in `data.relations`, and the `GET /:id` route filters that
+# list through an allowlist before it reads; this surface's reads name none, so `role`, `image`,
+# `defaultTeam`, `lastTeam`, `defaultOrganization`, `lastOrganization`, `employee`, `candidate`,
+# `tags`, `organizations`, `invites` and `socialAccounts` would all be absent on every row answered
+# here. A client would select one, read `null`, and conclude the fact is not recorded. What always
+# travels is the row's own foreign key, so each relation is carried as its identifier and the row
+# behind it is read from the domain that owns it — the role from the role domain, the team from the
+# team domain, the organization from the organization domain, the tags from the tag domain, and the
+# membership rows from `UserOrganization.userId`, which is where this surface's sibling resource
+# answers them.
+#
+# **`imageUrl` is carried and `image` is not.** The avatar's URL is a column of this row, refreshed on
+# every load from the asset the row points at; the asset row itself is not part of any answer this
+# surface serves, and is read from the asset domain by `imageId`.
+#
+# The base row's `createdByUserId`, `updatedByUserId` and `deletedByUserId` stamps are not carried
+# either: each names a user, and a `User` that carried them would answer three more user identifiers
+# on a row whose own identity is what the request is authorized by. The audit trail is read from the
+# rows those stamps belong to. `archivedAt` is not carried for a smaller reason: the flag is what this
+# resource's own routes and its list read act on, and no read or write of this surface consults the
+# timestamp behind it.
+#
+# `timeFormat`, `preferredLanguage` and `preferredComponentLayout` are carried as their string values
+# rather than declared as schema enums. The vocabularies are the kernel's own (`TimeFormatEnum`,
+# `LanguagesEnum`, `ComponentLayoutStyleEnum`), shared with the rest of the platform, so declaring
+# them here would claim a vocabulary this domain does not own.
+
+"""
+One person's account: who they are, how they are reached, and what they sign in as.
+"""
+type User {
+	id: ID!
+	tenantId: ID
+	"""
+	The identity this account signs in as at a third-party provider, when it signs in through one.
+	Null on an account that only signs in with a password.
+	"""
+	thirdPartyId: String
+	firstName: String
+	lastName: String
+	"""
+	The full name, merged from the two parts by the delivered reader before it answers. Null on a row
+	that states neither part.
+	"""
+	name: String
+	"The email address, which is also one of the two ways this account signs in."
+	email: String
+	phoneNumber: String
+	"The handle, where the account states one. The other way this account signs in."
+	username: String
+	"The zone this person's times are shown in."
+	timeZone: String
+	"""
+	How a time is rendered for this person, as the kernel's own `TimeFormatEnum` value. Carried as its
+	value rather than as a schema enum, because the vocabulary belongs to the platform.
+	"""
+	timeFormat: String
+	"""
+	The avatar URL. A column of this row, refreshed on every load from the asset `imageId` names.
+	"""
+	imageUrl: String
+	"""
+	The avatar asset. The asset row itself is read from the asset domain by this identifier; the URL a
+	client shows is `imageUrl`, which the delivered reader keeps in step with it.
+	"""
+	imageId: ID
+	"The language this person reads and is answered in."
+	preferredLanguage: String
+	"The layout this person's lists open in."
+	preferredComponentLayout: String
+	"""
+	Per-user, per-feature interface state, keyed by feature. Written only through
+	`updateUserUiPreferences`, which merges one key at a time.
+	"""
+	uiPreferences: JSON
+	"When this person last signed in. Null before the first sign-in."
+	lastLoginAt: DateTime
+	"""
+	Whether the account's email address has been verified.
+
+	Carried as the derived fact rather than as the stamp it is derived from: the delivered reader
+	computes it from `emailVerifiedAt` on every load, and that column is one of the six the delivered
+	answer excludes.
+	"""
+	isEmailVerified: Boolean
+	"""
+	The role this account acts under. The role row is read from the role domain by this identifier; the
+	delivered read of this resource joins no relation.
+	"""
+	roleId: ID
+	"The team this person's session opens in. The team row is read from the team domain by this identifier."
+	defaultTeamId: ID
+	"The team this person was last in. The team row is read from the team domain by this identifier."
+	lastTeamId: ID
+	"The organization this person's session opens in. The organization row is read from the organization domain by this identifier."
+	defaultOrganizationId: ID
+	"The organization this person was last in. The organization row is read from the organization domain by this identifier."
+	lastOrganizationId: ID
+	"Whether the account is active. A removal sets `deletedAt`; it does not clear this flag."
+	isActive: Boolean
+	isArchived: Boolean
+	"""
+	When the account was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write — so without it a caller could not tell a
+	live account from a withdrawn one on the answer to the write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of users.
+"""
+type UserEdge {
+	node: User!
+	cursor: String!
+}
+
+"""
+One page of users, with the total the filters select and the boundary cursors.
+"""
+type UserConnection {
+	nodes: [User!]!
+	edges: [UserEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a user list may be sorted by.
+
+The two timestamps, the three parts of a name, the address a person is looked up by, the handle they
+sign in with, and the last sign-in — which is the order an access review reads the list in. The
+identifiers are not here: a list of the accounts holding one role is that role stated as a filter,
+which is both narrower and cheaper than an order.
+"""
+enum UserSortField {
+	createdAt
+	updatedAt
+	name
+	firstName
+	lastName
+	email
+	username
+	lastLoginAt
+}
+
+"""
+The order the users are returned in. At most three keys are accepted.
+"""
+input UserSort {
+	field: UserSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a user list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a value the delivered list read answers on the row, because the connection narrows the
+rows the service returned: a member the read does not select would be a filter that silently selects
+nothing. The six excluded columns have no member, and their absence is the point — a filter on `hash`
+would answer which digest a password produced, which is the same disclosure the read refuses, asked
+sideways.
+
+`name` and `isEmailVerified` are filterable although neither is a column, because the delivered reader
+merges both onto the row before the connection sees it — the name from the two name columns, the flag
+from the verification stamp — so narrowing by either is a question the read answers.
+"""
+input UserFilter {
+	id: IDFilter
+	thirdPartyId: StringFilter
+	name: StringFilter
+	firstName: StringFilter
+	lastName: StringFilter
+	email: StringFilter
+	phoneNumber: StringFilter
+	username: StringFilter
+	timeZone: StringFilter
+	timeFormat: StringFilter
+	imageUrl: StringFilter
+	imageId: IDFilter
+	preferredLanguage: StringFilter
+	preferredComponentLayout: StringFilter
+	uiPreferences: JSONFilter
+	lastLoginAt: DateTimeFilter
+	isEmailVerified: BooleanFilter
+	roleId: IDFilter
+	defaultTeamId: IDFilter
+	lastTeamId: IDFilter
+	defaultOrganizationId: IDFilter
+	lastOrganizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [UserFilter!]
+	or: [UserFilter!]
+	not: UserFilter
+}
+
+"""
+What a caller states when it files an account.
+
+The members are the ones the delivered body validates: the address is required, because an account
+without one cannot be reached or signed into, and the role, the two name parts, the avatar URL and the
+language are optional. There is no member for the tenant, which the service stamps from the credential
+and overwrites whatever a body states, and none for the organization either — a user is a row of a
+tenant and not of an organization; which organizations the account belongs to is the membership
+resource's fact.
+"""
+input CreateUserInput {
+	email: String!
+	"The role the account acts under. Resolved from the database, and refused when the caller may not grant it."
+	roleId: ID
+	firstName: String
+	lastName: String
+	imageUrl: String
+	preferredLanguage: String
+}
+
+"""
+What a caller states when it edits an account that exists.
+
+Every other member is optional, and a member the caller leaves out is left as it is: the delivered edit
+is a partial column update against the criterion the path names, not a replacement of the row.
+
+**`hash` carries the new password, in clear text**, under the name the delivered body states it by —
+the service hashes it before the write. It is an input member and never an output one: no field of
+`User` answers a digest back, and this is the only place the schema spells the word at all. The
+credential columns the delivered read excludes stay excluded either way; this member writes a
+replacement, it does not read the old one.
+
+The two preferred-interface columns are deliberately not members. Each has a route of its own that
+writes it for the caller's own account and nothing else, and a general edit that could set them would
+be a second, wider path to the same two facts.
+"""
+input UpdateUserInput {
+	id: ID!
+	email: String
+	roleId: ID
+	firstName: String
+	lastName: String
+	imageUrl: String
+	preferredLanguage: String
+	"The new password, in clear text. Hashed by the service before it is stored."
+	hash: String
+	defaultOrganizationId: ID
+	defaultTeamId: ID
+	lastOrganizationId: ID
+	lastTeamId: ID
+	imageId: ID
+	isActive: Boolean
+}

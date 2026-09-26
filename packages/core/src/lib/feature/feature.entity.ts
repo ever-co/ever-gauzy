@@ -22,7 +22,7 @@ export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	code: FeatureEnum;
 
 	@ApiProperty({ type: () => Boolean, default: false })

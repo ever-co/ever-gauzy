@@ -1,0 +1,318 @@
+# The payroll run's object types.
+#
+# A run is one pay period for one organization, its earning and deduction lines, and the three totals
+# derived from them. Money is `Decimal` everywhere here and never `Float`: the columns are `numeric`, a
+# binary fraction cannot hold a cent exactly, and the delivered service recomputes the totals in integer
+# cents for the same reason.
+#
+# **The three totals are stored rather than computed on read, and that is why they are members.** A run
+# that has been paid keeps the numbers it was actually paid with even after a line is corrected, so a
+# caller reading `totalNet` is reading the settled figure rather than a fresh sum. The service recomputes
+# them from the lines on every line mutation and at the moment a run is processed.
+#
+# **`items` is nullable, and the nullability is the delivered reads' own asymmetry.** The node route
+# loads the lines with the run; the list route does not join them at all. So the member is answered on a
+# run read by its identifier and absent on a run read out of the connection — which is what the type says
+# rather than something a client has to discover. A caller that needs the lines of a row it found in a
+# list reads that row by its identifier.
+#
+# **`approvedBy` is not carried and `approvedByUserId` is.** Payroll is money leaving the company, so the
+# sign-off is recorded on the row — but no delivered read joins the approving user, so a member for the
+# relation would be absent everywhere; the identifier is the fact the row actually holds, and the user it
+# names is reachable from the user domain.
+#
+# **The line item's relations are not carried.** A line is answered by the route that adds it, and that
+# route loads neither the run nor the employee it points at — the identifiers are the columns it holds.
+# They are not filterable either, for the same reason: a filter compares against a value the row carries.
+#
+# `frequency`, `status`, `type` and `category` are carried as their delivered values rather than declared
+# as schema enums. The vocabularies are `PayrollFrequencyEnum`, `PayrollRunStatusEnum`,
+# `PayrollItemTypeEnum` and `PayrollItemCategoryEnum` in the platform's contract package; the status in
+# particular is a state machine the service owns — which transitions it will accept, and from which
+# states — and a closed enum in this file would claim a vocabulary that is enforced somewhere else. The
+# value sets are stated in the descriptions so a client does not have to guess them.
+#
+# No run member carries a secret, and the delivered reads answer none: what a payroll run holds is pay
+# data, which is sensitive rather than secret, and its guard chain is what keeps it inside an
+# organization. The internals this surface refuses are the service's own working values rather than
+# columns — see `PayrollStatistics` and `PayrollSummary` below.
+
+"""
+One payroll run: a single pay period for an organization, with the three totals derived from its lines.
+"""
+type PayrollRun {
+	id: ID!
+	"The first day of the period this run pays for."
+	periodStart: DateTime!
+	"The last day of the period this run pays for."
+	periodEnd: DateTime!
+	"The day the pay is dated for."
+	payDate: DateTime!
+	"""
+	How often a run of this kind recurs: `WEEKLY`, `BI_WEEKLY`, `SEMI_MONTHLY`, `MONTHLY`, `QUARTERLY`
+	or `ANNUALLY`.
+	"""
+	frequency: String!
+	"""
+	Where the run stands: `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `PROCESSING`, `PAID` or `CANCELLED`.
+	The moves between them are the delivered workflow routes and nothing else: no input on this surface
+	accepts a status.
+	"""
+	status: String!
+	"The ISO 4217 code of the currency every amount on this run is denominated in."
+	currency: String!
+	"The sum of the earning lines, recomputed in integer cents by the delivered write paths."
+	totalGross: Decimal!
+	"The sum of the deduction lines, recomputed in integer cents by the delivered write paths."
+	totalDeductions: Decimal!
+	"What is left after the deductions — `totalGross` less `totalDeductions`, on the same terms."
+	totalNet: Decimal!
+	"Whatever the operator who opened the run wrote on it."
+	notes: String
+	"When the run was approved."
+	approvedAt: DateTime
+	"The user who approved the run. A column, because no delivered read joins the relation."
+	approvedByUserId: ID
+	"When the run was marked paid."
+	paidAt: DateTime
+	"""
+	The earning and deduction lines that make up the run. Answered on a run read by its identifier —
+	the delivered node read loads them — and null on a run read out of the list, which does not.
+	"""
+	items: [PayrollItem!]
+	"The organization the run belongs to. Payroll is per organization, and every route names one."
+	organizationId: ID
+	"The tenant the run belongs to, stamped from the credential."
+	tenantId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+One earning or deduction line of a payroll run.
+"""
+type PayrollItem {
+	id: ID!
+	"""
+	What the line represents: `BASIC_SALARY`, `ALLOWANCE`, `BONUS`, `COMMISSION`, `OVERTIME`,
+	`TAX_DEDUCTION`, `SOCIAL_SECURITY`, `HEALTH_INSURANCE`, `LOAN_DEDUCTION`, `ADVANCE_DEDUCTION`,
+	`LEAVE_DEDUCTION`, `OTHER_ADDITION` or `OTHER_DEDUCTION`.
+	"""
+	type: String!
+	"Whether the line adds to or subtracts from net pay: `EARNING` or `DEDUCTION`."
+	category: String!
+	"What the line is for, in the operator's own words."
+	description: String
+	"Always a positive amount — `category` decides the sign, never the value."
+	amount: Decimal!
+	"How many units the line covers, when it is a rate rather than a flat amount."
+	quantity: Decimal
+	"The rate one unit is paid at, when the line is a rate rather than a flat amount."
+	unitPrice: Decimal
+	"Whether the amount is subject to tax. Lines default to taxable."
+	taxable: Boolean!
+	"The run the line belongs to. A column, because the route that answers a line loads no relation."
+	payrollRunId: ID!
+	"The employee the line is paid to. A column, for the same reason — and nullable, because a line outlives the employee record it was paid to."
+	employeeId: ID
+	"The organization the line belongs to."
+	organizationId: ID
+	"The tenant the line belongs to."
+	tenantId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+Total pay across every paid run of one organization, grouped by currency.
+
+Runs are grouped rather than summed together because adding amounts denominated in different currencies
+produces a number that means nothing. The type is the delivered answer's own members and no more: the
+service sums in integer cents and strips its accumulators before it answers, so a member for the cents or
+for the working set of employees it counted would answer an internal of the calculation rather than a
+fact about the payroll — and it would be absent on every row a caller could reach.
+"""
+type PayrollStatistics {
+	"How many paid runs the totals cover."
+	totalRuns: Int!
+	"How many distinct employees those runs paid."
+	totalEmployeesPaid: Int!
+	"The sum of the gross totals of every paid run in this currency."
+	totalGrossPaid: Decimal!
+	"The sum of the deduction totals of every paid run in this currency."
+	totalDeductions: Decimal!
+	"The sum of the net totals of every paid run in this currency."
+	totalNetPaid: Decimal!
+	"The currency every amount above is denominated in."
+	currency: String!
+}
+
+"""
+What one employee earned, was deducted and takes home in one payroll run.
+
+The delivered breakdown computes this from the run's lines, in integer cents, and strips its
+accumulators before it answers — so a member for the cents would answer an internal of the calculation.
+`employee` is not carried either: the run's lines are loaded without the employee relation, so the
+member the delivered breakdown copies onto its answer is absent on every row this surface could reach.
+`employeeId` is the fact the row holds, and the employee it names is reachable from the employee domain.
+"""
+type PayrollSummary {
+	"The employee this summary is about."
+	employeeId: ID!
+	"The first day of the period the run paid for."
+	periodStart: DateTime!
+	"The last day of the period the run paid for."
+	periodEnd: DateTime!
+	"The sum of this employee's earning lines."
+	grossPay: Decimal!
+	"The sum of this employee's deduction lines."
+	totalDeductions: Decimal!
+	"What the employee takes home — `grossPay` less `totalDeductions`."
+	netPay: Decimal!
+	"The currency every amount above is denominated in, taken from the run."
+	currency: String!
+}
+
+"""
+The boundary of one page of payroll runs.
+"""
+type PayrollRunEdge {
+	node: PayrollRun!
+	cursor: String!
+}
+
+"""
+One page of payroll runs, with the total the filters select and the boundary cursors.
+"""
+type PayrollRunConnection {
+	nodes: [PayrollRun!]!
+	edges: [PayrollRunEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a payroll run list may be sorted by.
+"""
+enum PayrollRunSortField {
+	periodStart
+	periodEnd
+	payDate
+	createdAt
+	updatedAt
+	status
+	currency
+}
+
+"""
+The order the payroll run list is returned in. At most three keys are accepted.
+"""
+input PayrollRunSort {
+	field: PayrollRunSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a payroll run list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+The organization is not filterable here: it is a required argument of the connection, because the
+delivered read refuses to answer without one — payroll is per organization, and a read that named none
+would answer every organization of the tenant. `status` and `frequency` are stated through the string
+family, and the period window through `periodStart: { between: [...] }`, which is the range the delivered
+read applies to that column and no other.
+"""
+input PayrollRunFilter {
+	id: IDFilter
+	status: StringFilter
+	frequency: StringFilter
+	currency: StringFilter
+	periodStart: DateTimeFilter
+	periodEnd: DateTimeFilter
+	payDate: DateTimeFilter
+	notes: StringFilter
+	approvedByUserId: IDFilter
+	totalGross: DecimalFilter
+	totalDeductions: DecimalFilter
+	totalNet: DecimalFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [PayrollRunFilter!]
+	or: [PayrollRunFilter!]
+	not: PayrollRunFilter
+}
+
+"""
+What a caller states when it opens a run.
+
+`status` and the three totals are members of no input: the status only moves through the workflow
+operations below, and the totals are derived from the lines. The delivered body refuses both for the same
+reason, which is what keeps a caller from marking a run paid with a plain write. The organization is
+stated because the delivered body requires it and checks it against the caller's own memberships.
+"""
+input CreatePayrollRunInput {
+	"The organization the run belongs to. Checked against the caller's own memberships."
+	organizationId: ID!
+	"The first day of the period the run pays for."
+	periodStart: DateTime!
+	"The last day of the period the run pays for."
+	periodEnd: DateTime!
+	"The day the pay is dated for. It cannot fall before the period starts."
+	payDate: DateTime!
+	"How often a run of this kind recurs. The delivered vocabulary is the platform's own."
+	frequency: String!
+	"The ISO 4217 code of the currency the run is denominated in — exactly three characters."
+	currency: String!
+	"Whatever the operator wants written on the run."
+	notes: String
+}
+
+"""
+What a caller states when it edits a run that has not been paid.
+
+Every member but the identifier is optional, and a member the caller leaves out is left as it is: the
+delivered edit reads the run, assigns the stated members onto it and saves it. The organization is
+required although it is not written — it is the scope the run is read under, so a caller must name the
+organization whose run it is changing, and the delivered route states it as a query parameter for exactly
+that reason. A run that has been paid cannot be edited at all, which the service refuses.
+"""
+input UpdatePayrollRunInput {
+	id: ID!
+	"The organization the run belongs to. It scopes the read and is not written onto the row."
+	organizationId: ID!
+	periodStart: DateTime
+	periodEnd: DateTime
+	payDate: DateTime
+	frequency: String
+	currency: String
+	notes: String
+}
+
+"""
+What a caller states when it adds one earning or deduction line to a draft run.
+
+The run is not a member: it is the identifier in the path of the delivered route, so a caller cannot post
+a line into another run by naming one here. The employee must belong to the same organization as the run,
+which the service checks rather than trusting the body. Totals are not members — they are recomputed from
+the lines, in integer cents, by the write itself.
+"""
+input CreatePayrollItemInput {
+	"The organization the run belongs to. Checked against the caller's own memberships."
+	organizationId: ID!
+	"The employee the line is paid to. Must be an employee of the same organization."
+	employeeId: ID!
+	"What the line represents. The delivered vocabulary is the platform's own."
+	type: String!
+	"Whether the line adds to or subtracts from net pay."
+	category: String!
+	"What the line is for."
+	description: String
+	"Always a positive amount; the category decides the sign."
+	amount: Decimal!
+	"How many units the line covers, when it is a rate."
+	quantity: Decimal
+	"The rate one unit is paid at, when it is a rate."
+	unitPrice: Decimal
+	"Whether the amount is subject to tax. Omit for the delivered default, which is taxable."
+	taxable: Boolean
+}

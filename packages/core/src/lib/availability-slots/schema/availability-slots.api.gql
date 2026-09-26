@@ -1,0 +1,130 @@
+# The availability slot domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/availability-slots` routes already serve, under the same
+# guard chain, so a client that reaches a capability over one protocol is not given a narrower or a wider
+# one than the client that reaches it over the other.
+#
+# **This resource's guard chain is the tenant guard alone, and neither surface states a permission.** The
+# controller carries `TenantPermissionGuard` and no `@Permissions` — at class level or on any handler — so
+# every route it serves, the list, the one slot, the count, the create, the bulk create, the upsert and
+# the two lifecycle moves, runs under that guard alone, and every field below states the same and nothing
+# more. A resolver that demanded a permission would refuse here a caller the REST route serves; tightening
+# this resource is a change to make in both places at once, and it is not this delivery's to make.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol every other
+# connection takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives them, so a cursor obtained over one surface
+# resumes on the other. The delivered list route binds a `data` query string rather than a query protocol:
+# the narrowing it carries (`findInput`) is stated here in `filter`, which is that same narrowing in the
+# connection protocol's own vocabulary, and the `relations` it can name are not offered because no read
+# this surface performs names any. `withDeleted` is offered because the delivered list route offers it:
+# the `data` query string it binds is handed straight to the same read, which carries the member to the
+# store, so a REST caller can ask for withdrawn slots and a connection that could not would hide them.
+#
+# The controller serves its list twice — `GET /` and the `GET /pagination` it inherits — and the two
+# answer the same rows, one of them sliced by a page and the other not. That is one capability, so it is
+# one root field: `availabilitySlots`, mirroring `GET /`, which is the route that reads the whole filtered
+# set the connection protocol is applied to.
+#
+# `availabilitySlotCount` takes no filter, and that is a statement rather than an omission. The delivered
+# count route passes its query string through as the store's own `where`, which the connection protocol
+# does not speak; a `filter` argument here would either be handed to a service call that cannot accept it
+# or be evaluated over a second code path that could disagree with the connection's `totalCount`. It is
+# nullable because a count is an aggregate a resource may legitimately have no answer for, and a non-null
+# field would turn "not answered" into a fabricated zero.
+
+extend type Query {
+	"""
+	The slots of the caller's tenant, newest first.
+
+	When the caller states no sort, the order is the platform's own: newest first, then the identifier,
+	because the delivered read states no order of its own and a cursor walk needs a total one.
+	"""
+	availabilitySlots(
+		filter: AvailabilitySlotFilter
+		sort: [AvailabilitySlotSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): AvailabilitySlotConnection!
+
+	"""
+	One slot of the caller's tenant, or null when there is none.
+
+	A slot that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such row"
+	on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	availabilitySlot(id: ID!): AvailabilitySlot
+
+	"""
+	How many slots the caller's tenant holds.
+	"""
+	availabilitySlotCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files one slot.
+
+	**A slot that conflicts with one the tenant already has is merged into it rather than filed beside
+	it.** The delivered write looks for the slots whose window overlaps the stated one and widens the
+	existing row to cover both, removing the rows it folded in; the stored vocabulary's merge mode is what
+	decides that, and the route dispatches it with the mode that merges. The answer is the row the write
+	produced.
+
+	It is nullable because the write can produce nothing at all: the delivered handler returns before it
+	writes when the body states no start or no end, and a non-null field would turn that empty answer into
+	an execution error rather than the answer the route itself gives.
+	"""
+	createAvailabilitySlot(input: CreateAvailabilitySlotInput!): AvailabilitySlot
+
+	"""
+	Files several slots at once.
+
+	The write is the command the `POST /bulk` route dispatches, and the answer is the list of rows the
+	write produced — what the delivered command answers, rather than a statement about the write. Each
+	entry is folded through the single-slot write above, so the merge applies entry by entry and **the
+	answer is a list of rows rather than a positional echo of the input**: an entry the write answered
+	nothing for is not a row, and the list may therefore be shorter than the input. A caller reads the rows,
+	never the positions.
+	"""
+	createAvailabilitySlots(input: [CreateAvailabilitySlotInput!]!): [AvailabilitySlot!]!
+
+	"""
+	Writes a slot under an identifier the caller states.
+
+	The call is the route's own, and it is **an upsert**: the delivered service writes a new row, or
+	updates the existing one the stated identifier names, with the columns the body states. The identifier
+	travels inside the input because this surface has no path to take it from — the delivered route merges
+	the same value from its path into the same body.
+	"""
+	updateAvailabilitySlot(input: UpdateAvailabilitySlotInput!): AvailabilitySlot!
+
+	"""
+	Removes a slot outright.
+
+	The delivered route answers the store's own delete result rather than a row, so this field answers
+	whether the removal ran — the fact that call establishes.
+	"""
+	deleteAvailabilitySlot(id: ID!): Boolean!
+
+	"""
+	Withdraws a slot without removing it: the row keeps its identifier and the delivered list stops
+	answering it.
+	"""
+	softDeleteAvailabilitySlot(id: ID!): AvailabilitySlot!
+
+	"""
+	Puts a withdrawn slot back.
+	"""
+	recoverAvailabilitySlot(id: ID!): AvailabilitySlot!
+}

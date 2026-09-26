@@ -1,11 +1,110 @@
-type Query {
+# The role domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own. The field
+# signatures are unchanged, including `roles: Role!` — retyping an existing field is a breaking
+# schema change and belongs to a separate, reviewed decision.
+#
+# Every other field is one the delivered `/api/roles` routes already serve, under the same guard chain
+# and with the same permission — read from the controller's own metadata rather than restated — so a
+# client that reaches a capability over one protocol is not given a narrower or a wider one than the
+# client that reaches it over the other.
+#
+# **The list is `tenantRoles` and not `roles`, because `roles` is taken.** That field answers the one
+# role the credential is acting in and is declared `Role!`; retyping it to a connection is the
+# breaking change the paragraph above refuses. The tenant's role list therefore states whose roles it
+# is, which is the one thing the name it could not take would have left unsaid.
+#
+# `tenantRoles` is the connection for both list routes. The controller serves its list twice — `GET /`
+# and `GET /pagination` — and the two answer the same rows under the same filters, one sliced by
+# `take`/`skip` and the other not: that is one capability, so it is one root field, and the page the
+# paginated spelling performs is what the connection's own `limit` and `offset` state. A second root
+# field for it would be a second surface that could disagree with this one.
+#
+# `roleCount` takes no argument, and that is a statement rather than an omission: the delivered count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak. It is nullable because a count is an aggregate a resource may legitimately have no answer
+# for, and a non-null field would turn "not answered" into a fabricated zero.
+#
+# `roleByOptions` mirrors `GET /roles/options` and is a field of its own rather than a narrowing of
+# the connection, for two reasons that are about the delivered route rather than about taste. It
+# answers **one** role, selected by a rule the connection cannot state — the role the caller is acting
+# in when that role is the employee one, and otherwise the role the options select — and it is served
+# under a **different** permission: `CHANGE_ROLES_PERMISSIONS` **or** `ORG_TEAM_ADD`, while the
+# connection runs under the controller's class-level `CHANGE_ROLES_PERMISSIONS` alone. Folding it into
+# the connection would therefore refuse a team manager a row REST serves, which is the narrowing this
+# delivery exists to prevent.
+#
+# The migration route — `POST /roles/import/migrate` — has no field here, and the reason is its
+# answer rather than its operation. What it answers is the export-import ledger's own rows, a concept
+# this domain does not own and which no document in this schema declares; declaring it here would make
+# the role domain the schema's owner of another subsystem's record, and the first domain that needed
+# it would then collide with this one instead of referencing it.
+
+extend type Query {
 	roles: Role!
 	role(id: ID!): Role
+
+	"""
+	The roles of the caller's tenant.
+
+	The order is the resource's own: by name, which is what a role is and what an administrator selects
+	between, with the identifier as the last key so the order is total and a cursor walk over it is
+	stable.
+	"""
+	tenantRoles(
+		filter: RoleFilter
+		sort: [RoleSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): RoleConnection!
+
+	"""
+	The role the delivered options look-up answers, or null when this tenant has none.
+
+	`name` is the only member the route's own query DTO narrows by, and it defaults to the employee
+	role exactly as that DTO defaults it, because that default is what the route answers a caller that
+	states nothing. The answer is one role rather than a page of them, which is why this is a field of
+	its own and not a filter on the connection above — see the note at the top of this document.
+	"""
+	roleByOptions(name: String): Role
+
+	"""
+	How many roles the caller's tenant has.
+	"""
+	roleCount: Int
 }
 
-type Mutation {
+extend type Mutation {
 	createRole(input: CreateRoleInput!): Role!
 	updateRole(input: UpdateRoleInput!): Role!
+
+	"""
+	Removes a role outright.
+
+	The delivered removal narrows its own criteria before it runs — a system role is not selected, and
+	neither is a name of the platform's own set — so this field does not pre-empt that rule: it reports
+	that the removal ran, which is the same fact the REST route states with its own result, and a
+	caller that must know whether a row went reads it back through `tenantRoles`.
+	"""
+	deleteRole(id: ID!): Boolean!
+
+	"""
+	Withdraws a role without removing it: the row keeps its identifier and the permission rows that
+	point at it keep resolving, and the delivered list stops answering it.
+	"""
+	softDeleteRole(id: ID!): Role!
+
+	"""
+	Puts a withdrawn role back.
+	"""
+	recoverRole(id: ID!): Role!
 }
 
 input CreateRoleInput {

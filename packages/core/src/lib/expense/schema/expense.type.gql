@@ -1,0 +1,365 @@
+# The expense's object types.
+#
+# An expense is one row per cost the organization incurred: what it cost, when it belonged to the
+# book, who incurred it and what it was for. The row is the platform's own record of that cost — the
+# recurring-expense resources are the standing arrangements that produce rows like it, and the income
+# resource is the same book with the sign reversed — so this file declares the row and the two
+# readings of it that answer a figure no stored row holds.
+#
+# **Every amount and every rate is `Decimal`, never `Float`.** `amount` is the cost and `rateValue` is
+# the tax rate applied to it: both are `numeric` columns read through the platform's numeric
+# transformer, and money compared, added or taxed as a binary fraction is money that is a cent out. An
+# amount a client reads as a `Float` is an amount that will not add up, which is why nothing here
+# rescales, rounds or reformats a stored figure — the arithmetic over them is the platform's money
+# layer's, and this surface performs none.
+#
+# **The currency is the row's own three-letter code.** `currency` is the ISO 4217 code `amount` and
+# `rateValue` are expressed in, and the row states it once for both. It is carried as its value rather
+# than as a schema enum because the vocabulary is the contracts' own `CurrenciesEnum`, shared with
+# every other row on the platform that states an amount, so declaring it here would claim a value set
+# this domain does not own.
+#
+# **A rate is not an amount, and it travels in the same exact family anyway.** `rateValue` is a rate
+# applied to the cost — a percentage when `taxType` says `PERCENTAGE` and a value when it says `VALUE`
+# — so it is neither money nor a whole number, and `Decimal` is the family that holds it without loss.
+# `taxType` is carried as its value for the same reason `currency` is: the vocabulary is the
+# contracts' own `TaxTypesEnum`.
+#
+# **The related rows are carried as the identifiers the columns hold, and never as objects.** An
+# expense names an employee, a vendor, a category, a project and a contact, and not one delivered read
+# behind this surface joins any of them: the list read is handed its `relations` from a query string
+# this surface has no spelling for, the node read states none, and the write answers the row it stored.
+# A member carrying a related row would therefore be absent from exactly the rows this surface answers
+# while looking like a fact about the expense, so `employeeId`, `vendorId`, `categoryId`, `projectId`
+# and `organizationContactId` are carried instead, and each row is read from the resource that owns it.
+# The tags are absent for the same reason: the pivot is a relation, and the connection's rows carry no
+# membership. The invoice items an expense may be billed through are absent too — that collection
+# belongs to the invoice domain's own rows.
+#
+# **`status` is carried as its value rather than declared as a schema enum.** The vocabulary is the
+# contracts' own `ExpenseStatusesEnum`, shared with the invoice side of the platform, so a schema enum
+# here would be a second spelling of a set this domain does not own.
+
+"""
+One cost the organization incurred: what it cost, when it belonged to the book and what it was for.
+"""
+type Expense {
+	id: ID!
+	"The cost, in the row's own `currency`."
+	amount: Decimal!
+	"What kind of expense this is, in the tenant's own vocabulary. Null on a row written without one."
+	typeOfExpense: String
+	"The note kept with the cost, for the operator rather than for the ledger."
+	notes: String
+	"The ISO 4217 code `amount` and `rateValue` are expressed in."
+	currency: String!
+	"The date the cost belongs to. Null on a row written without one, which is a row no book order can place."
+	valueDate: DateTime
+	"What the cost was incurred for."
+	purpose: String
+	"""
+	How `rateValue` is to be read: `PERCENTAGE` when it is a share of the cost and `VALUE` when it is an
+	amount in the row's own currency. Null on a row that carries no tax.
+	"""
+	taxType: String
+	"The label the tax is printed under. Null on a row that carries no tax."
+	taxLabel: String
+	"The tax rate or tax value the row carries, read as `taxType` states. Null on a row that carries no tax."
+	rateValue: Decimal
+	"The stored receipt reference, which a client resolves to a document through its own asset surface."
+	receipt: String
+	"""
+	Whether the platform divides this cost among the organization's employees. A divided row is what the
+	split reads below answer a share of, and the flag is what tells a share from a stored amount.
+	"""
+	splitExpense: Boolean
+	"The human reference for the cost, such as the supplier's document number."
+	reference: String
+	"""
+	Where the cost stands in the billing cycle, as the contracts' own value: `INVOICED`, `UNINVOICED`,
+	`PAID` or `NOT_BILLABLE`. Null on a row written without one.
+	"""
+	status: String
+	"The employee the cost is recorded against, as the identifier of the employee's own row."
+	employeeId: ID
+	"The vendor the cost was paid to, as the identifier of the vendor's own row."
+	vendorId: ID
+	"The category the cost is filed under, as the identifier of the category's own row."
+	categoryId: ID
+	"The project the cost belongs to, as the identifier of the project's own row."
+	projectId: ID
+	"The contact the cost is billed to, as the identifier of the contact's own row."
+	organizationContactId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+One row of a split read: the expense, and the whole a divided cost was divided from.
+
+The read behind `splitExpensesByEmployee` and `mySplitExpenses` answers the employee's own expenses
+beside the organization's shared ones, and it divides the amount of exactly the rows the platform
+splits. On a divided row the expense's own `amount` is the employee's share — the read replaces the
+member before it answers — and `originalValue` and `employeeCount` carry the whole it was divided from
+and the number of people it was divided among. On every other row the amount is the stored cost and
+both members are null, which is why they are nullable here: the delivered answer leaves a row it does
+not divide exactly as it found it, and a figure this surface fabricated for those rows would be a
+share nobody computed.
+"""
+type ExpenseSplitRow {
+	"""
+	The expense, as the split read answered it. Its `amount` is the employee's share on a row whose
+	`splitExpense` is true, and the stored cost on every other row.
+	"""
+	expense: Expense!
+	"The whole the divided amount was divided from; null on a row the read did not divide."
+	originalValue: Decimal
+	"How many people the divided amount was divided among; null on a row the read did not divide."
+	employeeCount: Int
+}
+
+"""
+The boundary of one page of expenses.
+"""
+type ExpenseEdge {
+	node: Expense!
+	cursor: String!
+}
+
+"""
+One page of expenses, with the total the filters select and the boundary cursors.
+"""
+type ExpenseConnection {
+	nodes: [Expense!]!
+	edges: [ExpenseEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an expense list may be sorted by.
+
+`valueDate` is the book's own order, which is the order a cost report is read in and the column the
+delivered report read orders the same rows by; `amount` is what a list of costs is taken by; `status`
+is offered because a work list is taken in status groups, and the values sort as their spelling, which
+groups like with like.
+
+The flags and the identifiers are not sort keys: a boolean or an identifier order is not an order an
+expense book is read in, and the questions those columns answer are filters. `rateValue` is filtered
+rather than sorted for the same reason — a tax rate is a question about one row, not an order for a
+page of them.
+"""
+enum ExpenseSortField {
+	createdAt
+	updatedAt
+	valueDate
+	amount
+	status
+}
+
+"""
+The order the expenses are returned in. At most three keys are accepted.
+"""
+input ExpenseSort {
+	field: ExpenseSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an expense list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is: the delivered list read
+answers those columns, so each one narrows rows the connection was handed. The amounts are stated
+through the decimal family, which is the family money is compared in; **the values are the row's own**,
+so an equality states the amount as the read produces it (`150.5`, not a padded string), while the
+range operators — which are what a book is actually searched with — need no such care. The two
+patterns the paginated spelling of the list interprets are stated here in the connection's own
+vocabulary: `ilike` on `notes` and `ilike` on `purpose`.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set, and an argument that
+cannot be honoured is worse than an argument that is not offered. The tenant and the organization are
+absent for a different reason — both are applied to the criterion from the credential rather than from
+the caller, so a member here would suggest a scope decision the caller does not have. The relations are
+absent for a third: the delivered list read loads none, so a condition on the tags, the category or
+the vendor row could only ever select the empty set. Which expenses belong to one employee is the
+split-read root fields' question rather than a filter's, because that read answers a figure these rows
+do not carry.
+"""
+input ExpenseFilter {
+	id: IDFilter
+	valueDate: DateTimeFilter
+	amount: DecimalFilter
+	currency: StringFilter
+	typeOfExpense: StringFilter
+	notes: StringFilter
+	purpose: StringFilter
+	taxType: StringFilter
+	taxLabel: StringFilter
+	rateValue: DecimalFilter
+	receipt: StringFilter
+	reference: StringFilter
+	splitExpense: BooleanFilter
+	status: StringFilter
+	employeeId: IDFilter
+	vendorId: IDFilter
+	categoryId: IDFilter
+	projectId: IDFilter
+	organizationContactId: IDFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ExpenseFilter!]
+	or: [ExpenseFilter!]
+	not: ExpenseFilter
+}
+
+# The write surface.
+#
+# `CreateExpenseInput` and `UpdateExpenseInput` declare what the delivered write paths store, and
+# nothing else. Four consequences are deliberate:
+#
+# - A member that names a related row is stated as that row's identifier. The delivered create and edit
+#   bodies accept the related object beside the identifier, but what a write of this row persists is the
+#   foreign key, and the schema declares no object type for the vendor, the category, the project or the
+#   employee — each belongs to the resource that owns it — so the identifier is what this surface
+#   offers.
+# - The facets are stated as identifiers, because the pivot row is a pair of identifiers: the delivered
+#   path writes the membership, never a tag row beside it.
+# - `splitExpense` is a member of both inputs, because the delivered bodies carry it and the row stores
+#   it: whether a cost is shared is a decision the caller makes when it records the cost, not a figure
+#   the platform derives.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant onto
+#   the row and refuses a row that belongs to another one, so a member here would promise a scope the
+#   write refuses.
+#
+# The employee is a member of the create and not of the edit, for the same reason the delivered edit
+# DTO drops it: the delivered create passes the employee through and the edit body carries none at all.
+
+"""
+What a caller states when it records a cost.
+
+`amount` and `currency` are the two members the delivered body validation requires: the amount column
+is `numeric`, and a JSON number — which is what the REST body carries the same quantity as — is a
+binary fraction that cannot hold a cent, while the currency is the code the amount is read in.
+
+The organization is stated as an identifier and is *not* required, because the delivered validation
+requires an organization only when the body names neither the organization object nor a `sentTo` — and
+the object spelling is a type this schema does not declare, so the identifier is what this surface
+offers and the condition stays the delivered validator's rather than being restated as a non-null
+member that would refuse a body the route serves.
+"""
+input CreateExpenseInput {
+	"The cost, in the currency below."
+	amount: Decimal!
+	"The ISO 4217 code the amount and the rate are expressed in."
+	currency: String!
+	"What kind of expense this is."
+	typeOfExpense: String
+	"The date the cost belongs to."
+	valueDate: DateTime
+	"The note kept with the cost."
+	notes: String
+	"The human reference for the cost."
+	reference: String
+	"What the cost was incurred for."
+	purpose: String
+	"How `rateValue` is to be read."
+	taxType: String
+	"The label the tax is printed under."
+	taxLabel: String
+	"The tax rate or tax value the row carries."
+	rateValue: Decimal
+	"The stored receipt reference."
+	receipt: String
+	"Whether the platform divides this cost among the organization's employees."
+	splitExpense: Boolean
+	"Where the cost stands in the billing cycle."
+	status: String
+	"The organization the cost is filed under."
+	organizationId: ID
+	"The employee the cost is recorded against."
+	employeeId: ID
+	"The vendor the cost was paid to."
+	vendorId: ID
+	"The category the cost is filed under."
+	categoryId: ID
+	"The project the cost belongs to."
+	projectId: ID
+	"The contact the cost is billed to."
+	organizationContactId: ID
+	"The facets attached to the cost, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes a cost that exists.
+
+**The delivered edit is the platform's own upsert, and it is reached through the same write the create
+is.** The route reads the row's identifier from the path, spreads the body beside it and calls the
+delivered create, so a member the caller leaves out is left as it is — the write touches the members
+the body states and no others — and two consequences follow from that same fact and are worth stating
+plainly:
+
+- An identifier that names a row of another tenant is refused outright, which is the ownership guard
+  the delivered write applies before it persists anything.
+- An identifier that names no row at all is **stored as a new row** rather than refused, because an
+  upsert is what the delivered write is. A client that means "change this cost" reads it first, or
+  reaches for the mutation above only with an identifier it obtained from this surface.
+
+`employeeId` is not a member, because the delivered edit body does not carry it — the delivered DTO
+drops that member on the edit and keeps it on the create.
+"""
+input UpdateExpenseInput {
+	id: ID!
+	"The cost, in the currency below."
+	amount: Decimal!
+	"The ISO 4217 code the amount and the rate are expressed in."
+	currency: String!
+	"What kind of expense this is."
+	typeOfExpense: String
+	"The date the cost belongs to."
+	valueDate: DateTime
+	"The note kept with the cost."
+	notes: String
+	"The human reference for the cost."
+	reference: String
+	"What the cost was incurred for."
+	purpose: String
+	"How `rateValue` is to be read."
+	taxType: String
+	"The label the tax is printed under."
+	taxLabel: String
+	"The tax rate or tax value the row carries."
+	rateValue: Decimal
+	"The stored receipt reference."
+	receipt: String
+	"Whether the platform divides this cost among the organization's employees."
+	splitExpense: Boolean
+	"Where the cost stands in the billing cycle."
+	status: String
+	"The organization the cost is filed under."
+	organizationId: ID
+	"The vendor the cost was paid to."
+	vendorId: ID
+	"The category the cost is filed under."
+	categoryId: ID
+	"The project the cost belongs to."
+	projectId: ID
+	"The contact the cost is billed to."
+	organizationContactId: ID
+	"The facets attached to the cost, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}

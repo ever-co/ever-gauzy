@@ -4,7 +4,7 @@ import {
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsString, IsOptional, MaxLength, Min } from 'class-validator';
 import {
 	IInvoiceItem,
 	IImageAsset,
@@ -24,9 +24,33 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	JsonColumn,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
+import { ProductStatus } from '../core/enums/kernel-extension.enums';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 
+/**
+ * Catalogue identity and lifecycle.
+ *
+ * The four indexes are the catalogue's read paths: one slug per organization, the lifecycle filter,
+ * the featured strip in its manual order, and the external key the import jobs upsert on.
+ */
+@ColumnIndex('UQ_product_org_slug', ['organizationId', 'slug'], {
+	unique: true,
+	where: '"slug" IS NOT NULL AND "deletedAt" IS NULL'
+})
+@ColumnIndex('IDX_product_org_status', ['organizationId', 'status'], { where: '"deletedAt" IS NULL' })
+@ColumnIndex('IDX_product_org_featured_sort', ['organizationId', 'isFeatured', 'sortOrder'], {
+	where: '"deletedAt" IS NULL'
+})
+@ColumnIndex('IDX_product_org_external', ['organizationId', 'externalId'], { where: '"externalId" IS NOT NULL' })
 @MultiORMEntity('product', { mikroOrmRepository: () => MikroOrmProductRepository })
 export class Product extends TranslatableBase implements IProductTranslatable {
 
@@ -43,6 +67,73 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	imageUrl: string;
+
+	/**
+	 * Stable, human-readable, URL-safe identity used by the catalogue route `/products/:slug`.
+	 *
+	 * Null on every row that predates the catalogue surface; uniqueness is per organization and only
+	 * among live rows, so a slug freed by a soft delete can be reused.
+	 */
+	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
+	@IsOptional()
+	@IsString()
+	@MaxLength(255)
+	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
+	slug?: string;
+
+	/**
+	 * Lifecycle gate of the row. It is authoritative for the catalogue surface, while `enabled` stays
+	 * authoritative for the legacy product API; a product is listable only when both say so.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: ProductStatus, default: ProductStatus.ACTIVE })
+	@IsEnum(ProductStatus)
+	@MultiORMColumn({ type: 'simple-enum', enum: ProductStatus, default: ProductStatus.ACTIVE })
+	status?: ProductStatus;
+
+	/**
+	 * Instant of first publication to any channel. Per-channel instants live on the channel
+	 * publication row, not here.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ nullable: true })
+	publishedAt?: Date;
+
+	/**
+	 * Organization-level merchandising flag for "featured products" queries.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsBoolean()
+	@MultiORMColumn({ type: 'boolean', default: false })
+	isFeatured?: boolean;
+
+	/**
+	 * Manual ordering inside a curated list when no collection position applies.
+	 */
+	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsInt()
+	@Min(0)
+	@MultiORMColumn({ type: 'int', default: 0 })
+	sortOrder?: number;
+
+	/**
+	 * The row's key in an upstream system (ERP, PIM, marketplace), used as the upsert key by the
+	 * import jobs. Putting it on a mapping table would force a join on every import.
+	 */
+	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
+	@IsOptional()
+	@IsString()
+	@MaxLength(255)
+	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
+	externalId?: string;
+
+	/**
+	 * Tenant-defined, non-indexed extras that do not deserve a column of their own.
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@JsonColumn<Record<string, unknown>>({ nullable: true })
+	metadata?: Record<string, unknown>;
 
 	/*
 	|--------------------------------------------------------------------------

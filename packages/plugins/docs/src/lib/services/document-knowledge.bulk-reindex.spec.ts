@@ -11,17 +11,13 @@
  * `document-processing.snapshot.spec.ts` — `RequestContext` is mocked at the module boundary, and
  * every collaborator the service's imports would pull in is stubbed; `bulkReindex()` itself is real.
  */
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		RequestContext: {
-			currentTenantId: jest.fn(),
-			currentUserId: jest.fn(),
-			currentCorrelationId: jest.fn()
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/core', () => ({
+	RequestContext: {
+		currentTenantId: jest.fn(),
+		currentUserId: jest.fn(),
+		currentCorrelationId: jest.fn()
+	}
+}));
 jest.mock('../docs.config', () => ({ getDocsConfig: () => ({ embeddingModel: 'test-embedding-model' }) }));
 jest.mock('../dto', () => ({}));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));

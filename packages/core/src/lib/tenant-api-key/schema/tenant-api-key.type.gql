@@ -1,0 +1,55 @@
+# The tenant API key's object types.
+#
+# A tenant API key is how a machine caller authenticates to this platform: a storefront, an ERP or a
+# marketplace integration presents the key pair instead of a signed-in user, and every request it makes
+# is served under the tenant the pair belongs to. The resource is therefore small and pointed — it
+# **issues** a pair and does nothing else. There is no list, no read of one row, no edit and no
+# removal: a delivered installation rotates a key by issuing one for a tenant that has none.
+#
+# **The stored pair is never a member of anything, and that is the whole secret decision here.** The
+# row carries the key and the secret, and the entity excludes both from serialization because the
+# secret column holds a *hash*: nothing on the platform can read a stored secret back, and the
+# delivered API has no route that answers the row. So no type below is named for the row, no member
+# anywhere in this schema answers `apiKey` or `apiSecret` off a stored row, and a client cannot reach
+# key material by asking for a row that the REST surface does not serve either.
+#
+# **What a caller can read is the pair it has just minted, exactly once.** The delivered route answers
+# the plaintext secret as part of the issuance — a secret no caller is ever shown is a secret nobody
+# can use — and `TenantApiKeyPair` is that answer, carried here because the answer is the delivery.
+# It is an **answer type and not a read type**: the one field that returns it is the mutation that
+# mints a pair, no query in this schema returns it, and the same call twice does not answer the same
+# secret twice. A client that loses the secret has not lost a read — it has to issue a new pair,
+# which is the property that makes the pair a credential rather than a document.
+
+"""
+The pair a caller has just had issued: the identifier it sends on every request, and the secret that
+proves the request is its own.
+
+The secret is present on this answer and nowhere else in the schema, which is what the delivered
+issuance route does with it: it is shown once, at the moment it is generated, and no read can produce
+it again.
+"""
+type TenantApiKeyPair {
+	"The tenant the pair authenticates as. Read from the credential, never chosen by the caller."
+	tenantId: ID!
+	"The label the caller gave the pair, for telling two of them apart in an operator's notes."
+	name: String
+	"""
+	The public half of the pair. It travels as the application identifier on every request the machine
+	caller makes.
+	"""
+	apiKey: String!
+	"""
+	The secret half, in clear text, on this answer only. It is stored hashed, so no later read — over
+	either protocol — can produce it again.
+	"""
+	apiSecret: String!
+}
+
+"""
+What a caller states when it has a pair issued.
+"""
+input GenerateTenantApiKeyInput {
+	"The label to store with the pair."
+	name: String
+}

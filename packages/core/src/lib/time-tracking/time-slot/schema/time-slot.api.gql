@@ -1,0 +1,129 @@
+# The time slot domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered REST routes already serve, under the same guard and with the
+# same permission, so a client that reaches a capability over one protocol is not given a narrower or
+# a wider one than the client that reaches it over the other.
+#
+# **The list is the connection.** The delivered `GET /` route binds a query DTO from its query string
+# and hands it to the list read; the connection takes the same narrowing as its own arguments, the
+# same query protocol as its `filter`, `sort` and `page`, and answers with the shape the kernel's
+# `PageInfo` gives every other connection — so a cursor obtained over one surface resumes on the
+# other. There is no `/pagination` route beside it to fold in, and no count route: a client that needs
+# the number of slots a filter selects reads the connection's own `totalCount`, which is the count of
+# exactly the rows that filter selected.
+#
+# **The node query is the node query.** `GET /:id` reads one slot by its path identifier, which is
+# what `timeSlot` states, and it is not a filter of the list: the delivered service reads it through
+# its own finder rather than through the list read, and the two are different reads of different
+# shapes.
+#
+# **The lifecycle routes are three writes and stay three.** `POST /` records a slot or returns the one
+# the instant already belongs to, `PUT /:id` edits a slot that exists, and `DELETE /` removes the slots
+# a caller names — a removal in its own right, which is why it has a field of its own rather than a
+# flag on the edit. The two writes that state a permission of their own are the parity case this file
+# exists to keep honest: their routes add `OrganizationPermissionGuard` and state `ALLOW_MODIFY_TIME`
+# and `ALLOW_DELETE_TIME` rather than the controller's own permissions, and the two fields below run
+# under exactly those — the guard included, stated on the field, which is how a method-level guard
+# travels to a resolver.
+#
+# **What is not here is as deliberate as what is.** The resource has no withdrawal route and no
+# recovery route, so there is no soft-delete field and no restore field; `deletedAt` is carried on the
+# row because a REST caller can filter by it, but nothing on this surface writes it.
+
+extend type Query {
+	"""
+	The slots one organization recorded over a range, oldest first.
+	"""
+	timeSlots(
+		"The organization whose slots are read. The delivered read resolves the range and the logs through it."
+		organizationId: ID!
+		"The start of the range. Omit it and the delivered read takes the start of the current day."
+		startDate: DateTime
+		"The end of the range. Omit it and the delivered read takes the end of the current day."
+		endDate: DateTime
+		"""
+		The employees whose slots are read. Omit it and every employee of the organization counts,
+		unless the caller may not select employees — in which case the delivered read narrows the
+		answer to the caller's own.
+		"""
+		employeeIds: [ID!]
+		"The projects whose slots are read, by the project behind each slot's logs."
+		projectIds: [ID!]
+		"The sources the logs behind the slots are narrowed to, by value (`DESKTOP`, `BROWSER`, …)."
+		source: [String!]
+		"The kinds of log the slots are narrowed to, by value (`TRACKED`, `MANUAL`, `IDLE`, `RESUMED`)."
+		logType: [String!]
+		"""
+		The band of activity the slots are narrowed to, as percentages of the slot. The delivered read
+		converts the band into the seconds its activity counter is stored in — a ten-minute slot is six
+		hundred seconds, so one percent of it is six — and narrows by those; the conversion is stated
+		here because a caller stating a raw counter instead would be stating a different question.
+		"""
+		activityLevel: TimeSlotActivityLevelInput
+		"The fields the returned slots are narrowed by, applied to the rows the read returned."
+		filter: TimeSlotFilter
+		"The order the returned slots are answered in. At most three keys are accepted."
+		sort: [TimeSlotSort!]
+		"Cursor pagination, exclusive with `limit` and `offset`."
+		page: PageInput
+		"The page size, walking forwards from `after`."
+		first: Int
+		"Resume after this cursor. Exclusive."
+		after: String
+		"The page size, walking backwards from `before`."
+		last: Int
+		"Resume before this cursor. Exclusive."
+		before: String
+		"The page size, walking from `offset`. Exclusive with `page`, `first`, `after`, `last` and `before`."
+		limit: Int
+		"How many rows to skip, in the connection's default order. Exclusive with the cursor arguments."
+		offset: Int
+	): TimeSlotConnection!
+
+	"""
+	One slot of the caller's organization, or null when there is none.
+	"""
+	timeSlot(
+		"The slot to read."
+		id: ID!
+	): TimeSlot
+}
+
+extend type Mutation {
+	"""
+	Records a slot for an instant, or answers the slot that instant already belongs to. The delivered
+	write merges the result into the ten-minute window the instant falls in, so the row it answers is
+	the merged slot rather than the body that was posted.
+	"""
+	createTimeSlot(
+		"The slot to record."
+		input: CreateTimeSlotInput!
+	): TimeSlot!
+
+	"""
+	Edits a slot that exists, or answers null when there is none. A caller whose body withdraws a member
+	the delivered write does not state leaves that column as it was, because the write persists exactly
+	the body it is handed.
+	"""
+	updateTimeSlot(
+		"The slot to edit, and the body to edit it with."
+		input: UpdateTimeSlotInput!
+	): TimeSlot
+
+	"""
+	Removes the slots a caller names, as a withdrawal or as a hard delete. The identifiers are required
+	and must not be empty, and the removal spans the logs the slots cover unless the force flag is
+	stated.
+	"""
+	deleteTimeSlots(
+		"The slots to remove."
+		ids: [ID!]!
+		"Whether the removal is a hard delete rather than a withdrawal. Defaults to a withdrawal."
+		forceDelete: Boolean
+		"The organization the slots are read under."
+		organizationId: ID
+	): Boolean!
+}

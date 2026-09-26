@@ -7,6 +7,7 @@ import { QueryHandlers } from './queries/handlers';
 import { EmailReset } from './email-reset.entity';
 import { EmailResetService } from './email-reset.service';
 import { EmailResetController } from './email-reset.controller';
+import { EmailResetResolver } from './email-reset.resolver';
 import { UserModule } from '../user/user.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { EmailSendModule } from './../email-send/email-send.module';
@@ -27,7 +28,18 @@ import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset
 		AuthModule
 	],
 	controllers: [EmailResetController],
-	providers: [EmailResetService, TypeOrmEmailResetRepository, MikroOrmEmailResetRepository, ...CommandHandlers, ...QueryHandlers],
+	providers: [
+		EmailResetService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them. It injects the
+		// service and nothing else — both fields call the methods the two routes call, and the buses
+		// those methods dispatch through are this module's own, resolved beside it.
+		EmailResetResolver,
+		TypeOrmEmailResetRepository,
+		MikroOrmEmailResetRepository,
+		...CommandHandlers,
+		...QueryHandlers
+	],
 	exports: [EmailResetService]
 })
 export class EmailResetModule {}

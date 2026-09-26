@@ -1,0 +1,110 @@
+# The shared entity domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The guard chain is the controller's: one guard and no permission.** `SharedEntityController`
+# carries `TenantPermissionGuard` on the class and states no `@Permissions` anywhere, so no field
+# below states a permission and the class states none — a permission here would demand a grant no
+# route asks for.
+#
+# Every route of the resource is mirrored: the list and the page fold into one connection, the
+# one-row read, the count, the creation, the edit, the removal and the lifecycle pair are each a root
+# field of their own, and the token read is a root field for the reason stated below.
+#
+# **The token read is a root field rather than a filter, because it does not answer a share.** A
+# filter over the connection selects `SharedEntity` rows; the token read loads the record the share
+# points at, applies the share's rules to it member by member, and answers *that* — a document whose
+# shape is decided per share at read time rather than by this schema. It is therefore stated as a
+# root field of its own and typed as `JSON`, which is the one honest type for an answer whose members
+# are the target's and whose selection is the caller's stored rules.
+#
+# **That field is not marked `@Public()`, although the route it mirrors is, and the reason is the gate
+# over this surface.** The marker is read by the global authentication guard, which returns before it
+# authenticates the caller; a marked field would run with no user on the request, the capability gate
+# would resolve from a context carrying no tenant, and the field would be refused to *every* caller —
+# including one whose tenant has the capability switched on. That is the failure the platform already
+# observed when its two reference-data resolvers were gated. So the token read is served to a caller
+# who presents a credential and is narrower than the open route; a share recipient holding only a
+# token reaches the route, not this field. The narrowing is stated rather than worked around, because
+# the alternative is a field that answers `Cannot query field sharedEntityByToken` to everybody.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection.
+# The count is a nullable `Int` with no argument, because a count is not a connection and the
+# delivered count route's query string is the store's own `where`.
+
+extend type Query {
+	"""
+	The shares of the caller's tenant, newest first.
+	"""
+	sharedEntities(
+		filter: SharedEntityFilter
+		sort: [SharedEntitySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): SharedEntityConnection!
+
+	"""
+	One share of the caller's tenant, or null when there is none.
+	"""
+	sharedEntity(id: ID!): SharedEntity
+
+	"""
+	How many shares the caller's tenant holds.
+	"""
+	sharedEntityCount: Int
+
+	"""
+	The record a share's token points at, with the share's own rules applied to it.
+
+	The answer is the **target**, not the share: the delivered read resolves the token, resolves the
+	record the share names, applies the rules to select the members a reader may see and to bound how
+	far the reader may walk its relations, and answers that document. Its shape therefore depends on
+	what the share was created with, which is why the field is typed as `JSON` rather than as a type
+	this schema could declare.
+
+	A token that is not there, one whose share has been withdrawn and one whose target has since gone
+	are one answer on purpose — the delivered method catches every failure and raises the same miss —
+	so this field is a refusal rather than a null, because telling the three apart would confirm which
+	tokens are live.
+	"""
+	sharedEntityByToken(token: String!): JSON
+}
+
+extend type Mutation {
+	"""
+	Creates a share over one record of the caller's tenant, minting its token.
+	"""
+	createSharedEntity(input: CreateSharedEntityInput!): SharedEntity!
+
+	"""
+	Changes a share's rules. The target and the token are pinned at creation and are not members of the
+	input — see `UpdateSharedEntityInput`.
+	"""
+	updateSharedEntity(input: UpdateSharedEntityInput!): SharedEntity!
+
+	"""
+	Removes a share outright. A token that has been removed no longer resolves, and there is nothing to
+	restore; the withdrawal below is the removal that can be undone.
+	"""
+	deleteSharedEntity(id: ID!): Boolean!
+
+	"""
+	Withdraws a share without removing it: the row keeps its token, and a withdrawn share's token stops
+	resolving while the row is withdrawn. The answer is the row as it now stands.
+	"""
+	softDeleteSharedEntity(id: ID!): SharedEntity!
+
+	"""
+	Puts a withdrawn share back, clearing the marker the withdrawal set and restoring what its token
+	resolves.
+	"""
+	recoverSharedEntity(id: ID!): SharedEntity!
+}

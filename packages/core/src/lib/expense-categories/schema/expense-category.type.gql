@@ -1,0 +1,147 @@
+# The expense category's object types.
+#
+# A category is the label an expense is filed under: a tenant's own vocabulary of cost kinds, seeded
+# with the platform's defaults and extended by the tenant. It carries nothing but its name, which is
+# what makes it a vocabulary rather than a taxonomy — the categories stand beside each other and never
+# nest.
+#
+# **There is no amount on this type, and that is the row's own shape rather than an omission.** What a
+# category cost over a period is a total over the expenses filed under it, and that total is the
+# expense book's answer to compute: the rows carry the amounts, the connection filters by `categoryId`,
+# and a member here would be a figure this resource neither stores nor computes. A count or a total
+# that hangs off a vocabulary row is the failure mode this file avoids — one answer, in the domain that
+# owns the rows it is computed from.
+#
+# **The two collections the row carries are absent.** The expenses filed under a category and the tags
+# attached to it are relations, and no read behind this surface joins either: the list read is handed
+# its criterion from a query string and its relations from none, and the node read states none. A
+# member carrying either would therefore be absent from exactly the rows this surface answers while
+# looking like a fact about the category. The expenses are reachable as `Expense.categoryId`.
+#
+# A category's own lifecycle is carried, because this resource serves both removals: the withdrawal
+# writes `deletedAt` and nothing else, so without it a caller could not tell a live category from a
+# withdrawn one on the answer to the write that withdrew it.
+
+"""
+One label an expense is filed under.
+"""
+type ExpenseCategory {
+	id: ID!
+	"The category's name, as the tenant states it."
+	name: String!
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of categories.
+"""
+type ExpenseCategoryEdge {
+	node: ExpenseCategory!
+	cursor: String!
+}
+
+"""
+One page of categories, with the total the filters select and the boundary cursors.
+"""
+type ExpenseCategoryConnection {
+	nodes: [ExpenseCategory!]!
+	edges: [ExpenseCategoryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a category list may be sorted by.
+
+The two timestamps are how a change is found again, and the name is the vocabulary's own order — the
+order an operator scans a filing list in.
+"""
+enum ExpenseCategorySortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the categories are returned in. At most three keys are accepted.
+"""
+input ExpenseCategorySort {
+	field: ExpenseCategorySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a category list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is: the delivered list read
+answers those columns, so each one narrows rows the connection was handed. `deletedAt` is deliberately
+absent although the object carries it — the delivered list read answers live rows only, so a condition
+on that column could only ever match the empty set. The tenant and the organization are absent because
+both are applied to the criterion from the credential rather than from the caller, so a member here
+would suggest a scope decision the caller does not have.
+"""
+input ExpenseCategoryFilter {
+	id: IDFilter
+	name: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isArchived: BooleanFilter
+	and: [ExpenseCategoryFilter!]
+	or: [ExpenseCategoryFilter!]
+	not: ExpenseCategoryFilter
+}
+
+# The write surface.
+#
+# `name` is the one member the delivered body validation requires, and it is required here for the same
+# reason: the validator refuses a body without it, so a nullable member would promise a write the route
+# answers with a 400.
+#
+# The organization is stated as an identifier and is *not* required, because the delivered validation
+# requires an organization only when the body names neither the organization object nor a `sentTo` —
+# and the object spelling is a type this schema does not declare, so the identifier is what this surface
+# offers and the condition stays the delivered validator's rather than being restated as a non-null
+# member that would refuse a body the route serves. The tenant is not a member of either input: the
+# delivered write stamps the caller's own tenant onto the row and refuses a row that belongs to another
+# one.
+
+"""
+What a caller states when it files a category.
+"""
+input CreateExpenseCategoryInput {
+	"The category's name, which the tenant's vocabulary must not already carry."
+	name: String!
+	"The organization the category is filed under."
+	organizationId: ID
+	"The facets attached to the category, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it renames a category.
+
+The delivered edit is the platform's own upsert: the route reads the row's identifier from the path,
+spreads the body beside it and calls the same write the create reaches, so a member the caller leaves
+out is left as it is — and an identifier that names no row at all is **stored as a new row** rather
+than refused. A client that means "rename this category" reads it first.
+"""
+input UpdateExpenseCategoryInput {
+	id: ID!
+	"The category's name."
+	name: String!
+	"The organization the category is filed under."
+	organizationId: ID
+	"The facets attached to the category, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}

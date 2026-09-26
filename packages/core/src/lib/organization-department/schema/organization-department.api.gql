@@ -1,0 +1,144 @@
+# The organization department's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The guard chain and the permission are the route's, field by field.** The delivered controller
+# carries `TenantPermissionGuard` on the class and states no `@Permissions` on the class at all, but
+# what its routes state is not uniform: the five writing routes it declares — the create, the edit,
+# the removal, the withdrawal and the restoration — each add `PermissionGuard` with `ALL_ORG_EDIT` and
+# `ORG_EMPLOYEES_EDIT`, and the employee assignment adds it with `ORG_EMPLOYEES_EDIT`. Each of those
+# six is mirrored by the field that serves the same capability under the same guard and the same
+# permission. The list route and the employee read state nothing, and the one-row read and the count
+# the controller inherits from the CRUD base state nothing either. The paginated spelling of the list
+# states `ORG_INCOMES_VIEW` of its own; that declaration belongs to the route, and folding the route
+# into the connection below does not restate it here. A field that demanded a permission its route
+# does not would refuse a caller the REST route serves, and one that demanded less would be a way
+# around the permission model; tightening the reads is a change to make in both places at once, and
+# it is not this delivery's to make.
+#
+# **The paginated spelling folds into the connection and gets no field of its own.** `GET
+# /organization-department/pagination` answers the same rows under the same filters as `GET
+# /organization-department/`, and this surface states that one question once. The paginated route's
+# own declaration — `@UseGuards(PermissionGuard)` with `@Permissions(ORG_INCOMES_VIEW)`, an
+# income-reporting permission on a paginated spelling of these rows — belongs to that route;
+# folding the route into the connection below does not restate it here, because the connection
+# mirrors the list route, which states no permission at all.
+#
+# **The employee read is a root field of its own rather than a filter on the connection**, and that
+# is a decision about the delivered read rather than a second spelling of the same one. The route's
+# read joins the department-member pivot — the pivot the list read does not load — so a `members`
+# filter on the connection would be evaluated against rows that carry no members at all and would
+# therefore select nothing, which is the worst answer a filter can give. The field mirrors the route
+# instead, read and projection alike: it delegates to the same `findByEmployee` and answers the rows
+# that read returns as the connection, so a client walks one employee's departments with the cursor
+# protocol every other list here speaks.
+#
+# The connection takes the same query protocol the REST list route takes — the same filters in
+# `filter`, the same keys in `sort`, the same page in `page` — and answers with the same shape the
+# kernel's `PageInfo` gives every other connection, so a cursor obtained over one surface resumes on
+# the other. `withDeleted` is offered because the delivered list route offers it: the paginated spelling
+# of that list takes `BaseQueryDTO`, which carries the member, and hands its query string straight to
+# the same read — so a REST caller can ask for withdrawn rows and a connection that could not would
+# hide them.
+
+extend type Query {
+	"""
+	The departments of the caller's tenant, in name order.
+	"""
+	organizationDepartments(
+		filter: OrganizationDepartmentFilter
+		sort: [OrganizationDepartmentSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationDepartmentConnection!
+
+	"""
+	One department of the caller's tenant, or null when there is none.
+	"""
+	organizationDepartment(id: ID!): OrganizationDepartment
+
+	"""
+	How many departments the caller's tenant has.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero — two facts a client that reports
+	on a headcount has to keep apart. The delivered count route binds its query string to the store's
+	own `where`, a shape no schema can state, so the field offers no narrowing of its own rather than
+	an argument the resolver could not pass on.
+	"""
+	organizationDepartmentCount: Int
+
+	"""
+	The departments one employee is a member of, as the delivered route answers them.
+
+	The route states the employee and nothing else — no filter, no order and no page of its own — so
+	the field states no argument beyond the employee. The answer is the connection: it is built over
+	the rows the read returns, ordered by the resource's own default, and presented under the query
+	protocol's own page, with the total the read selected. The read joins the department-member pivot
+	the list read does not, which is why this capability is a root field of its own rather than a
+	`members` filter on `organizationDepartments`.
+	"""
+	organizationDepartmentsByEmployee(employeeId: ID!): OrganizationDepartmentConnection!
+}
+
+extend type Mutation {
+	"""
+	Files a department, through the same call the delivered create route makes.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller; the organization is stated, because the route's body carries it and the column is the
+	organization the row is filed under.
+	"""
+	createOrganizationDepartment(
+		input: CreateOrganizationDepartmentInput!
+	): OrganizationDepartment!
+
+	"""
+	Changes the stated facts of a department, through the command the delivered edit route dispatches.
+
+	The route carries the identifier in the path and the facts in the body, and the command's handler
+	writes through the create path with the identifier merged in — so this is an upsert rather than a
+	replacement: a member the caller leaves out is left as it is, and the answer is the row as it now
+	stands rather than a statement about the write.
+	"""
+	updateOrganizationDepartment(
+		input: UpdateOrganizationDepartmentInput!
+	): OrganizationDepartment!
+
+	"""
+	Moves a set of departments into or out of one employee's book, in one call.
+
+	Both directions are one operation because they are one fact about one employee, and the delivered
+	command applies both lists together. The answer is the write's own success: the route's declared
+	answer is empty, and the command behind it answers the success of the write, which is what the
+	field answers with — a refusal is the command's own failure and reaches the caller as one, rather
+	than being flattened into a `false` that would read as "nothing to do".
+	"""
+	updateOrganizationDepartmentByEmployee(
+		input: UpdateOrganizationDepartmentByEmployeeInput!
+	): Boolean!
+
+	"""
+	Removes a department outright: the row is gone and nothing reads it back.
+	"""
+	deleteOrganizationDepartment(id: ID!): Boolean!
+
+	"""
+	Withdraws a department without removing it: the row keeps its identifier and the people filed
+	under it keep pointing at it, and the delivered list stops answering it. The answer is the row as
+	it now stands, which is what the delivered route answers with.
+	"""
+	softDeleteOrganizationDepartment(id: ID!): OrganizationDepartment!
+
+	"""
+	Puts a withdrawn department back, clearing the marker the withdrawal set.
+	"""
+	recoverOrganizationDepartment(id: ID!): OrganizationDepartment!
+}

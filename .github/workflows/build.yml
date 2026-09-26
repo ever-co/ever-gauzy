@@ -2,18 +2,18 @@ name: Build
 
 # Replaces the CircleCI `build` workflow, which could not complete on that plan: a cold
 # `yarn install` for this monorepo takes ~46 minutes and saving the node_modules cache another ~9,
-# which exceeds the 60-minute job cap — so the cache was never written and every run started cold.
+# which exceeds the 60-minute job cap - so the cache was never written and every run started cold.
 # Self-hosted runners have no such cap.
 #
 # LATENCY IS A CORRECTNESS PROPERTY OF THIS GATE. The 2026-08-13 template-error incident was not
-# a coverage gap — build-web caught the error — but its verdict landed 74 minutes AFTER the PR
+# a coverage gap - build-web caught the error - but its verdict landed 74 minutes AFTER the PR
 # had been merged on a still-pending check (~3h19m push-to-verdict). Two structural causes fixed
 # here:
 #   1. `build-libs` is its own job: `build:package:all` is where every LIBRARY's strict template
-#      check runs (each lib's tsconfig sets strictTemplates — the app tsconfig is lax in every
+#      check runs (each lib's tsconfig sets strictTemplates - the app tsconfig is lax in every
 #      configuration), so the verdict that catches template errors now reports as its own named
 #      check ~install+~20min after push instead of at the end of the longest job. Treat a
-#      pending/cancelled `build-libs`/`build-web` as a red: NEVER merge on yellow — the PR
+#      pending/cancelled `build-libs`/`build-web` as a red: NEVER merge on yellow - the PR
 #      concurrency group cancels superseded runs, so "no failure" often just means "never ran".
 #   2. The `needs: build-monorepo-root` edges are BACK, because that job now produces something the
 #      others consume. They were removed when it produced nothing and the edge was pure serial
@@ -23,7 +23,7 @@ name: Build
 #      ceiling with their build steps never started. build-monorepo-root now installs once and
 #      publishes the tree; the other four restore it in minutes. On the warm path (~most PRs) they
 #      report EARLIER than before, because the install in front of them is a cache lookup.
-#      They carry `if: !cancelled()` so a dead producer still yields a real red — a `needs:` edge
+#      They carry `if: !cancelled()` so a dead producer still yields a real red - a `needs:` edge
 #      alone would SKIP them, and a skipped required check does not block a merge, which is the same
 #      "never ran" hazard as (1).
 # The dev-config "Build packages" pre-step was removed from build-api/build-web: the app builds
@@ -32,6 +32,11 @@ name: Build
 
 on:
   pull_request:
+    # Off by owner decision (2026-09-21): a pull request INTO develop does not start this workflow. The cost
+    # belonged to every commit on the branch being merged, and the run belongs to the merge - the push
+    # trigger below runs it when code lands on develop. PRs aimed at other branches still run it.
+    branches-ignore:
+      - develop
   push:
     branches:
       - develop
@@ -64,8 +69,8 @@ concurrency:
     || format('{0}@{1}', github.repository, github.ref_name) }}
   # Was `github.event_name == 'pull_request'`, which left branch pushes uncancelled:
   # four merges to develop in an hour meant four full 3-h compiles of commits that were
-  # already superseded. This job only compiles — nothing outside the run depends on a
-  # half-finished one — so the newest commit always wins.
+  # already superseded. This job only compiles - nothing outside the run depends on a
+  # half-finished one - so the newest commit always wins.
   cancel-in-progress: true
 
 env:
@@ -81,7 +86,7 @@ env:
   NODE_MODULES_ARCHIVE: node-modules.tar.zst
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
-# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+# This workflow only builds/tests/deploys from a checkout - read access is sufficient.
 permissions:
   contents: read
 
@@ -161,7 +166,7 @@ jobs:
         uses: actions/cache/save@v4
         continue-on-error: true
         # Explicit save so a FAILED install can never publish a half-built tree. BEST EFFORT, and only
-        # a CROSS-run optimization — see the upload below for why it cannot be the handoff.
+        # a CROSS-run optimization - see the upload below for why it cannot be the handoff.
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
           # Pinned to the key the RESTORE computed, not re-derived: Configure Registry rewrites
@@ -173,7 +178,7 @@ jobs:
         uses: actions/upload-artifact@v7
         # THE HANDOFF. The cache above cannot be relied on for it: an Actions cache is a REPOSITORY
         # resource on a 10 GB budget, so a build on any other ref can evict this entry between the
-        # save and the consumer's restore. That is not hypothetical — it happened on the first run of
+        # save and the consumer's restore. That is not hypothetical - it happened on the first run of
         # this design (run 32377379196): the producer logged "Cache saved with key: …2b58b651…",
         # build-libs asked for the byte-identical key 32 seconds later and got "Failed to restore
         # cache entry", because three 4.66 GB setup-node yarn caches written by develop, stage and
@@ -196,7 +201,7 @@ jobs:
     name: build-libs
     needs: build-monorepo-root
     # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
-    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # not block a merge - the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
@@ -213,7 +218,7 @@ jobs:
       - name: Download node_modules archive
         id: artifact
         uses: actions/download-artifact@v8
-        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        # Primary handoff - run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
         with:
           name: build-node-modules
@@ -262,7 +267,7 @@ jobs:
     name: build-api
     needs: build-monorepo-root
     # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
-    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # not block a merge - the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
@@ -291,7 +296,7 @@ jobs:
       - name: Download node_modules archive
         id: artifact
         uses: actions/download-artifact@v8
-        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        # Primary handoff - run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
         with:
           name: build-node-modules
@@ -353,7 +358,7 @@ jobs:
     name: build-web
     needs: build-monorepo-root
     # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
-    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # not block a merge - the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
@@ -370,7 +375,7 @@ jobs:
       - name: Download node_modules archive
         id: artifact
         uses: actions/download-artifact@v8
-        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        # Primary handoff - run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
         with:
           name: build-node-modules
@@ -419,11 +424,11 @@ jobs:
     name: build-desktop
     needs: build-monorepo-root
     # `needs:` alone would make a producer failure SKIP this job, and a skipped required check does
-    # not block a merge — the exact "no failure just means never ran" trap this file's header warns
+    # not block a merge - the exact "no failure just means never ran" trap this file's header warns
     # about. `!cancelled()` keeps the ordering but still runs on producer failure, where the restore
     # fails loudly and this reports a real red instead of vanishing.
     # The second half matches the CircleCI branch filter: desktop was never built on ordinary PR
-    # branches. Both conditions live in ONE expression — two `if:` keys is a duplicate mapping key and
+    # branches. Both conditions live in ONE expression - two `if:` keys is a duplicate mapping key and
     # the file will not parse.
     if: >-
       ${{ !cancelled() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/stage' ||
@@ -446,7 +451,7 @@ jobs:
       - name: Download node_modules archive
         id: artifact
         uses: actions/download-artifact@v8
-        # Primary handoff — run-scoped, so no other workflow can evict it between jobs.
+        # Primary handoff - run-scoped, so no other workflow can evict it between jobs.
         continue-on-error: true
         with:
           name: build-node-modules
@@ -492,7 +497,7 @@ jobs:
         run: yarn build:desktop
 
   # ---------------------------------------------------------------------------------------------
-  # cleanup — the dependency archive exists only to cross job boundaries; delete it when the run ends.
+  # cleanup - the dependency archive exists only to cross job boundaries; delete it when the run ends.
   # ---------------------------------------------------------------------------------------------
   cleanup:
     name: Delete node_modules artifact
@@ -526,6 +531,6 @@ jobs:
             if gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null 2>&1; then
               echo "deleted artifact $id"
             else
-              echo "::warning::could not delete artifact $id — already gone?"
+              echo "::warning::could not delete artifact $id - already gone?"
             fi
           done

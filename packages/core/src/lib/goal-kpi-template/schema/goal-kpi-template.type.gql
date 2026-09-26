@@ -1,0 +1,149 @@
+# The goal KPI template's object type.
+#
+# A KPI template is the catalogue row a measure is copied from: the metric, the unit, the operator and
+# the two readings a key result starts with when it is authored from the catalogue rather than typed
+# from scratch. It has no relation of its own that the delivered reads name — the entity declares a
+# lead relation without a relation column beside it, and the delivered reads load it only when a REST
+# caller names it in `relations` — so this type carries the columns the table always answers and
+# nothing that only one read would.
+#
+# The two readings are nullable here where the working measure's are not, and that is the column's own
+# shape rather than an inconsistency: a catalogue entry states a target it suggests, and one that
+# suggests none is a row the delivered creation accepts. Both are whole numbers, and neither is money:
+# the unit is the caller's own text.
+
+"""
+One catalogue entry a measure can be authored from.
+"""
+type GoalKPITemplate {
+	id: ID!
+	"The suggested measure's name."
+	name: String!
+	"What the suggested measure is for."
+	description: String
+	"""
+	The kind of metric the entry suggests. The value set belongs to the domain's own contract, so it is
+	carried as its value rather than declared here as an enum.
+	"""
+	type: String!
+	"The unit the suggested measure is read in, as text."
+	unit: String
+	"How the reading is compared with the target: at least, at most, equal to."
+	operator: String!
+	"The reading the entry suggests starting from, when it suggests one."
+	currentValue: Int
+	"The reading the entry suggests aiming at, when it suggests one."
+	targetValue: Int
+	"""
+	When the entry was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the entry belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the entry is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of catalogue entries.
+"""
+type GoalKPITemplateEdge {
+	node: GoalKPITemplate!
+	cursor: String!
+}
+
+"""
+One page of catalogue entries, with the total the filters select and the boundary cursors.
+"""
+type GoalKPITemplateConnection {
+	nodes: [GoalKPITemplate!]!
+	edges: [GoalKPITemplateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a catalogue list may be sorted by.
+"""
+enum GoalKPITemplateSortField {
+	createdAt
+	updatedAt
+	name
+	type
+	currentValue
+	targetValue
+}
+
+"""
+The order the catalogue is returned in. At most three keys are accepted.
+"""
+input GoalKPITemplateSort {
+	field: GoalKPITemplateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a catalogue list may be narrowed by. Every member is a column of the template row.
+"""
+input GoalKPITemplateFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	type: StringFilter
+	unit: StringFilter
+	operator: StringFilter
+	currentValue: NumberFilter
+	targetValue: NumberFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [GoalKPITemplateFilter!]
+	or: [GoalKPITemplateFilter!]
+	not: GoalKPITemplateFilter
+}
+
+"""
+What a caller states when it files a catalogue entry.
+
+The delivered creation takes the row's own shape rather than a DTO, so the members the store requires
+are the members the columns require: a name, the metric, and the operator. The two readings are
+optional because the columns are. The tenant is never a member — the service stamps it from the
+credential — and `organizationId` is, because it is the row's own column and the delivered validation
+does not strip it.
+"""
+input CreateGoalKPITemplateInput {
+	name: String!
+	description: String
+	type: String!
+	unit: String
+	operator: String!
+	currentValue: Int
+	targetValue: Int
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a catalogue entry.
+
+**A member that is absent is left as it is.** The delivered edit is the CRUD base's partial column
+update rather than a replacement: it reads the row first — so an entry of another tenant, or one that
+is not there, is a miss rather than a write — and then updates the stated columns and no others.
+"""
+input UpdateGoalKPITemplateInput {
+	id: ID!
+	name: String
+	description: String
+	type: String
+	unit: String
+	operator: String
+	currentValue: Int
+	targetValue: Int
+	organizationId: ID
+}

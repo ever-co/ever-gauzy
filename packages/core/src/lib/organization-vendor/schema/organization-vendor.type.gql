@@ -1,0 +1,258 @@
+# The organization vendor's object types.
+#
+# A vendor is the supplier an expense is recorded against: the party the organization paid, named once in
+# a master the expense book points at rather than repeated on every cost. It is the same concept as a
+# party — the supplier is the party on the other side of the trade — so the master also carries the
+# commercial terms a purchase order needs: a code, a default purchase currency, the settlement terms, a
+# lead time, an advisory minimum and the link to the party row when one counterparty is both a customer
+# and a supplier.
+#
+# **The minimum order amount is `Decimal`, never `Float`.** It is an advisement in money rather than a
+# quantity, and a minimum compared as a binary fraction is a minimum that admits the wrong orders.
+# Nothing here rescales or reformats it.
+#
+# **The currency is a three-letter code and is nullable.** The vendor-level default purchase currency is
+# the code a purchase order is prefilled with; a supplier who quotes one product in one currency and
+# another in a second is ordinary, so the per-product term overrides it and an absent code is a supplier
+# whose currency is stated per product.
+#
+# **The settlement term is carried twice, and deliberately.** `paymentTermsDays` is the legacy simple form
+# in days and `paymentTermId` is the instalment schedule the purchasing package owns; a non-null schedule
+# wins over the days, and stating both is what makes that precedence readable rather than implied. The
+# same is true of the two minimums: the advisory minimum order **value** is here, and the per-product
+# minimum is a quantity on the vendor product term, because two members called "minimum" that mean
+# different things are not merged.
+#
+# **The two references the other packages own are carried without their foreign keys.** `paymentTermId`
+# and `taxRegimeId` name rows the purchasing and tax packages create; the columns exist, and those sets
+# add the constraints. `contactId` names the party row in this platform's own party data.
+#
+# **The expenses a supplier stands behind are absent**, although the row carries the collection: no read
+# behind this surface joins it — the list read is handed its relations from no query string at all, the
+# node read states none, and the write answers the row it stored — so a member carrying them would be
+# absent from exactly the rows this surface answers while looking like a fact about the supplier. What was
+# paid to a supplier is `expense`'s question, answered by its own `vendorId` filter.
+
+"""
+One supplier an expense may be recorded against.
+"""
+type OrganizationVendor {
+	id: ID!
+	"The supplier's name, as the tenant states it."
+	name: String!
+	"The address the organization orders through."
+	email: String
+	"The telephone number the organization orders through."
+	phone: String
+	"The supplier's site."
+	website: String
+	"""
+	The operator-facing supplier code, unique per organization where it is set, and the key an order or an
+	import quotes.
+	"""
+	code: String
+	"The ISO 4217 code a purchase order from this supplier is prefilled with; null when the currency is stated per product."
+	currency: String
+	"The settlement terms in days, as the legacy simple form. A non-null `paymentTermId` wins over it."
+	paymentTermsDays: Int
+	"The instalment schedule agreed with this supplier, as the identifier of the term's own row."
+	paymentTermId: ID
+	"Advisory default lead time in days, used only when no product term carries one."
+	leadTimeDays: Int
+	"""
+	The advisory minimum order value, surfaced as a warning at order time and never enforced. It is not the
+	per-product minimum, which is a quantity and lives on the supplier's product terms.
+	"""
+	minimumOrderAmount: Decimal
+	"The party row of the same counterparty, where this supplier also exists as a customer or a seller contact; null otherwise. It is not unique: one counterparty may hold two supplier accounts."
+	contactId: ID
+	"The tax regime that applies to purchases from this supplier, as the identifier of the regime's own row."
+	taxRegimeId: ID
+	"Tenant-defined, non-indexed extras."
+	metadata: JSON
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered routes —
+	the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of suppliers.
+"""
+type OrganizationVendorEdge {
+	node: OrganizationVendor!
+	cursor: String!
+}
+
+"""
+One page of suppliers, with the total the filters select and the boundary cursors.
+"""
+type OrganizationVendorConnection {
+	nodes: [OrganizationVendor!]!
+	edges: [OrganizationVendorEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a supplier list may be sorted by.
+
+The name is the master's own order, which is the order an operator scans a supplier list in; the code is
+offered because an operator who files suppliers by code reads them by it; and the two timestamps are how a
+change is found again. The amounts and the terms are not sort keys: a minimum order value or a lead time
+is a question about one supplier, not an order for a page of them.
+"""
+enum OrganizationVendorSortField {
+	createdAt
+	updatedAt
+	name
+	code
+}
+
+"""
+The order the suppliers are returned in. At most three keys are accepted.
+"""
+input OrganizationVendorSort {
+	field: OrganizationVendorSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a supplier list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is: the delivered list read answers
+those columns, so each one narrows rows the connection was handed. The minimum order amount is stated
+through the decimal family, which is the family money is compared in; **the value is the row's own**, so
+an equality states the amount as the read produces it, while the range operators need no such care.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set. The tenant and the
+organization are absent for a different reason — both are applied to the criterion from the credential
+rather than from the caller. The expenses a supplier stands behind are absent for a third: the delivered
+list read loads no relations, so a condition on them could only ever select the empty set.
+"""
+input OrganizationVendorFilter {
+	id: IDFilter
+	name: StringFilter
+	email: StringFilter
+	phone: StringFilter
+	website: StringFilter
+	code: StringFilter
+	currency: StringFilter
+	paymentTermsDays: NumberFilter
+	paymentTermId: IDFilter
+	leadTimeDays: NumberFilter
+	minimumOrderAmount: DecimalFilter
+	contactId: IDFilter
+	taxRegimeId: IDFilter
+	metadata: JSONFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isArchived: BooleanFilter
+	and: [OrganizationVendorFilter!]
+	or: [OrganizationVendorFilter!]
+	not: OrganizationVendorFilter
+}
+
+# The write surface.
+#
+# The delivered creation and edit both bind the row itself as their body — the controller declares no DTO
+# and no validation pipe on either — so these are the entity's own columns, and the delivered handler
+# stores exactly what it is handed. Two consequences are deliberate:
+#
+# - The two references the purchasing and tax packages own are stated as identifiers, because the schema
+#   declares no object type for a settlement term or a tax regime: each belongs to the package that
+#   created it, and the identifier is what the row stores.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant onto
+#   the row and refuses a row that belongs to another one, so a member here would promise a scope the
+#   write refuses.
+
+"""
+What a caller states when it records a supplier.
+"""
+input CreateOrganizationVendorInput {
+	"The supplier's name."
+	name: String!
+	"The address the organization orders through."
+	email: String
+	"The telephone number the organization orders through."
+	phone: String
+	"The supplier's site."
+	website: String
+	"The operator-facing supplier code, unique per organization where it is set."
+	code: String
+	"The ISO 4217 code a purchase order from this supplier is prefilled with."
+	currency: String
+	"The settlement terms in days, as the legacy simple form."
+	paymentTermsDays: Int
+	"The instalment schedule agreed with this supplier."
+	paymentTermId: ID
+	"The advisory default lead time in days."
+	leadTimeDays: Int
+	"""
+	The advisory minimum order value, surfaced as a warning at order time and never enforced. It is money,
+	and it is stated as the exact decimal the column stores.
+	"""
+	minimumOrderAmount: Decimal
+	"The party row of the same counterparty, where one exists."
+	contactId: ID
+	"The tax regime that applies to purchases from this supplier."
+	taxRegimeId: ID
+	"Tenant-defined, non-indexed extras."
+	metadata: JSON
+	"The organization the supplier is filed under."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a supplier.
+
+**The delivered edit is the platform's own upsert, and it is reached through the same write the creation
+is.** The route reads the row's identifier from the path, spreads the body beside it and calls the
+delivered service, so a member the caller leaves out is left as it is — and an identifier that names no
+row at all is **stored as a new row** rather than refused, because an upsert is what the delivered write
+is. A client that means "change this supplier" reads it first, or reaches for the mutation above only with
+an identifier it obtained from this surface.
+
+This input declares the same members the creation does, because the delivered edit body is the same row:
+the route binds the entity itself on both, and nothing is dropped on the edit.
+"""
+input UpdateOrganizationVendorInput {
+	id: ID!
+	"The supplier's name."
+	name: String!
+	"The address the organization orders through."
+	email: String
+	"The telephone number the organization orders through."
+	phone: String
+	"The supplier's site."
+	website: String
+	"The operator-facing supplier code, unique per organization where it is set."
+	code: String
+	"The ISO 4217 code a purchase order from this supplier is prefilled with."
+	currency: String
+	"The settlement terms in days, as the legacy simple form."
+	paymentTermsDays: Int
+	"The instalment schedule agreed with this supplier."
+	paymentTermId: ID
+	"The advisory default lead time in days."
+	leadTimeDays: Int
+	"The advisory minimum order value, as the exact decimal the column stores."
+	minimumOrderAmount: Decimal
+	"The party row of the same counterparty, where one exists."
+	contactId: ID
+	"The tax regime that applies to purchases from this supplier."
+	taxRegimeId: ID
+	"Tenant-defined, non-indexed extras."
+	metadata: JSON
+	"The organization the supplier is filed under."
+	organizationId: ID
+}

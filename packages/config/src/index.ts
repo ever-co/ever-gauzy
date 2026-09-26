@@ -4,6 +4,7 @@
 export * from './lib/default-config';
 export * from './lib/database-helpers';
 export * from './lib/database';
+export * from './lib/mikro-orm-sqlite.driver';
 
 export * from './lib/config-loader';
 export * from './lib/config.module';

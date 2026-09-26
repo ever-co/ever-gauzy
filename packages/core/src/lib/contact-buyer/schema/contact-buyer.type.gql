@@ -1,0 +1,156 @@
+# The company-account membership domain's GraphQL types.
+#
+# A membership is a pivot: a person stays exactly one contact row, and their company relationship is a
+# relation rather than a duplicate record. The type carries both identifiers because neither side is
+# optional, and the row's state is the inherited `isActive` flag rather than a second active column to
+# keep in step with the first.
+#
+# **The ceilings are `Decimal`.** They are amounts, and money is never a `Float` anywhere in this schema:
+# `Decimal` is serialised as a string with six fractional digits, matching the wire format of the
+# `numeric(20,6)` columns they are stored in. Null means the ceiling does not apply — for a per-order
+# limit, that the account's credit facility governs alone.
+
+"""
+One company-account membership: who may buy for an organization contact, in what role, and up to what.
+"""
+type ContactBuyer {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"""The company account. A contact whose kind is `COMPANY`."""
+	companyCustomerId: ID!
+	"""The individual buyer. A different contact from the account, always."""
+	buyerCustomerId: ID!
+	"""What the buyer may do inside the account. The membership's authority, not a tenant role."""
+	role: ContactBuyerRole!
+	"""
+	The per-order ceiling for this buyer.
+
+	When both this and the account's credit facility are set, the effective ceiling is the **lower** of
+	the two: a buyer limit narrows what the account allows and never widens it.
+	"""
+	spendingLimit: Decimal
+	"""The ceiling over one rolling period, evaluated as spent plus total against it."""
+	periodSpendingLimit: Decimal
+	"""Orders at or above this amount require an approval."""
+	approvalThreshold: Decimal
+	"""The day of the month the rolling period restarts, 1–28 so that every month has it."""
+	periodStartDay: Int
+	"""When the buyer was attached to the account."""
+	assignedAt: DateTime
+	"""The staff user who invited the buyer, when a member of staff did. History, not an authority."""
+	invitedByUserId: ID
+	"""Whether the membership currently grants what its role allows."""
+	isActive: Boolean
+	"""Tenant-defined extras."""
+	metadata: JSON
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+What a buyer may do inside the company account it belongs to.
+
+The role is the membership discriminator and not a capability: it says what kind of member this is,
+while the approval capability of an approver is the platform permission the staff side already evaluates.
+"""
+enum ContactBuyerRole {
+	"""Administers the account: its buyer list, its limits and its approval thresholds."""
+	ADMIN
+	"""May approve or reject an order a purchaser raised above that purchaser's threshold."""
+	APPROVER
+	"""May place orders on the account, inside its own per-order and rolling-period limits."""
+	PURCHASER
+	"""May read the account's orders and invoices, and may not place one."""
+	VIEWER
+}
+
+"""
+The boundary of one page of memberships.
+"""
+type ContactBuyerEdge {
+	node: ContactBuyer!
+	cursor: String!
+}
+
+"""
+One page of memberships, with the total the filters select and the boundary cursors.
+"""
+type ContactBuyerConnection {
+	nodes: [ContactBuyer!]!
+	edges: [ContactBuyerEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a membership may be sorted by.
+"""
+enum ContactBuyerSortField {
+	createdAt
+	updatedAt
+	assignedAt
+	role
+	spendingLimit
+	periodSpendingLimit
+	approvalThreshold
+}
+
+"""
+The order the memberships are returned in. At most three keys are accepted.
+"""
+input ContactBuyerSort {
+	field: ContactBuyerSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the role a buyer holds.
+"""
+input ContactBuyerRoleFilter {
+	eq: ContactBuyerRole
+	ne: ContactBuyerRole
+	in: [ContactBuyerRole!]
+	nin: [ContactBuyerRole!]
+	isNull: Boolean
+}
+
+"""
+The fields a membership list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input ContactBuyerFilter {
+	id: IDFilter
+	companyCustomerId: IDFilter
+	buyerCustomerId: IDFilter
+	role: ContactBuyerRoleFilter
+	periodStartDay: NumberFilter
+	invitedByUserId: IDFilter
+	isActive: BooleanFilter
+	assignedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ContactBuyerFilter!]
+	or: [ContactBuyerFilter!]
+	not: ContactBuyerFilter
+}
+
+"""
+What a caller states when a buyer is attached to a company account.
+
+Both sides of the pivot are required and neither is mutable afterwards: a membership that could be
+re-pointed would be a way to move purchasing authority without a trace.
+"""
+input CreateContactBuyerInput {
+	organizationId: ID!
+	companyCustomerId: ID!
+	buyerCustomerId: ID!
+	role: ContactBuyerRole
+	spendingLimit: Decimal
+	periodSpendingLimit: Decimal
+	approvalThreshold: Decimal
+	periodStartDay: Int
+	assignedAt: DateTime
+	invitedByUserId: ID
+	metadata: JSON
+}

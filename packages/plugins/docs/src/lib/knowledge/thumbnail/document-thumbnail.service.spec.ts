@@ -20,20 +20,16 @@ const providerStub = {
 	url: jest.fn()
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FileStorage: class {
-			setProvider() {
-				return this;
-			}
-			getProviderInstance() {
-				return providerStub;
-			}
+jest.mock('@gauzy/core', () => ({
+	FileStorage: class {
+		setProvider() {
+			return this;
 		}
-	}),
-	{ virtual: true }
-);
+		getProviderInstance() {
+			return providerStub;
+		}
+	}
+}));
 jest.mock('../../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));
 

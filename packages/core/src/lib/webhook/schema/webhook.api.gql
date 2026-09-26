@@ -1,0 +1,172 @@
+# The webhook kernel's root fields.
+#
+# `Query`, `Mutation` and `Subscription` are declared by the kernel and extended here: a root
+# operation type exists once for the whole platform, so a domain adds fields to it and never declares
+# its own. The names are the ones the GraphQL API specification fixes for these resources, field by
+# field, so the REST surface and this one expose the same capabilities under the same words.
+#
+# Every field below is one a route of `/webhooks/subscriptions` or `/webhooks/deliveries` already
+# serves, under the same guard chain and with the same permission, so a client that reaches a
+# capability over one protocol is not given a narrower or a wider one than the client that reaches it
+# over the other. Nothing here decides anything: each field calls the same service method the route
+# behind it calls, with the same payload and the same request facts, which is the whole of what a
+# resolver on this platform owns.
+#
+# **Both lists are connections.** They take the same query protocol every other list on this platform
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answer
+# with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over
+# one surface resumes on the other. The delivery log's own sub-reads fold in rather than becoming
+# fields of their own: a subscription's deliveries are `webhookDeliveries` narrowed by
+# `filter: { subscriptionId: … }`, which is the same rows under the same rules.
+#
+# **The lifecycle is mutations, and so is the one operation that is neither a read nor an edit.**
+# Enabling, disabling and rotating a secret each change state through a route of their own, so each is
+# a mutation here; redelivering a delivery puts a row back in the queue, which is a write to it, and is
+# a mutation for the same reason. There is no mutation for a delivery's status: the retry worker is
+# what moves one, and a caller that could set it could claim a delivery nobody attempted.
+
+extend type Query {
+	"""
+	The subscriptions of the caller's organization, newest first.
+
+	A subscription's secret is answered as a fingerprint and never as material, on this field as on
+	every other read of the resource.
+	"""
+	webhookSubscriptions(
+		filter: WebhookSubscriptionFilter
+		sort: [WebhookSubscriptionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): WebhookSubscriptionConnection!
+
+	"""
+	One subscription of the caller's organization, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	webhookSubscription(id: ID!): WebhookSubscription
+
+	"""
+	The delivery log of the caller's organization, newest first.
+
+	The stored body of a delivery is not a member of the type this field answers; what the endpoint
+	answered, how long it took and why it failed are. A subscription's deliveries are this same
+	connection narrowed by `filter: { subscriptionId: … }`.
+	"""
+	webhookDeliveries(
+		filter: WebhookDeliveryFilter
+		sort: [WebhookDeliverySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): WebhookDeliveryConnection!
+
+	"""
+	One delivery of the caller's organization, or null when there is none.
+	"""
+	webhookDelivery(id: ID!): WebhookDelivery
+}
+
+extend type Mutation {
+	"""
+	Subscribes an endpoint and generates its signing secret.
+
+	The secret is answered here and never again: every later read of the subscription answers a
+	fingerprint. The endpoint must use HTTPS, and the events must name at least one pattern, because a
+	subscription that could never deliver anything is refused rather than stored.
+	"""
+	createWebhookSubscription(input: CreateWebhookSubscriptionInput!): WebhookSubscriptionCredential!
+
+	"""
+	Changes the mutable facts of a subscription: its endpoint, its event selection, its channel and the
+	descriptive members. A member the caller omits is left as it is.
+
+	The switch, the counters and the secret are not among them — each has an operation of its own,
+	because each is a different decision from editing an endpoint.
+	"""
+	updateWebhookSubscription(input: UpdateWebhookSubscriptionInput!): WebhookSubscription!
+
+	"""
+	Removes a subscription and, by the table's own cascade, its delivery log.
+
+	Removal is the only way to stop a subscription for good: disabling keeps the row, its counters and
+	its history, which is what an incident needs.
+	"""
+	deleteWebhookSubscription(id: ID!): Boolean!
+
+	"""
+	Generates a new signing secret.
+
+	The previous secret stays valid for a grace window, so the endpoint can be reconfigured without
+	losing deliveries; the instant it stops being accepted is answered beside the new one. This is the
+	second and last moment a plaintext secret exists.
+	"""
+	rotateWebhookSecret(id: ID!): WebhookSubscriptionCredential!
+
+	"""
+	Switches a subscription back on and resets its failure counter.
+
+	The reset is the point: keeping the count that switched the endpoint off would switch it off again
+	on its first hiccup. Events produced while it was off are not replayed — a gap is redelivered
+	deliberately, through `redeliverWebhook`, rather than by accident.
+	"""
+	enableWebhookSubscription(id: ID!): WebhookSubscription!
+
+	"""
+	Switches a subscription off.
+
+	Disabling is immediate and loses nothing already queued: the deliveries already written walk their
+	retry schedule to its end and dead-letter on their own. The switch is announced to subscribers of
+	`webhookSubscriptionDisabled`, whichever protocol threw it.
+	"""
+	disableWebhookSubscription(id: ID!, reason: String): WebhookSubscription!
+
+	"""
+	Requeues one delivery for another attempt.
+
+	The row is reset rather than duplicated and the payload it already holds is what goes out again, so
+	a redelivery reproduces the original request rather than a newer projection of the same event. A
+	delivery is requeued whatever status it reached, the terminal one included: a dead delivery is
+	precisely the row an operator redelivers once the receiver has been fixed.
+
+	The answer is the requeued row, not an attempt's outcome: the retry worker is what calls an
+	endpoint, so neither this field nor the route behind it ever blocks on a partner's server.
+	"""
+	redeliverWebhook(id: ID!): WebhookDelivery!
+}
+
+extend type Subscription {
+	"""
+	Every attempt an endpoint of the caller's tenant has refused, as it is refused.
+
+	The stream is narrowed by `subscriptionId`, which only ever narrows what the credential may already
+	read. A delivery that reaches `DEAD` is announced too, so an integration owner that is only told
+	about the retryable failures does not miss the moment its events stop arriving.
+
+	A subscription is a notification and never a system of record: an event produced while the client
+	is disconnected is not replayed, and a client that must not miss one registers a webhook — which is
+	the resource this one is about.
+	"""
+	webhookDeliveryFailed(subscriptionId: ID): WebhookDelivery!
+
+	"""
+	Every subscription of the caller's tenant that has been switched off, whether by an operator or by
+	the auto-disable rule.
+
+	This is the fact an integration owner cannot poll for cheaply, which is why it is one of the two
+	facts this domain streams. The row is answered with its secret replaced by a fingerprint, as it is
+	on every other read.
+	"""
+	webhookSubscriptionDisabled(subscriptionId: ID): WebhookSubscription!
+}

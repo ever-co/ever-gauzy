@@ -1,0 +1,242 @@
+# The equipment-sharing domain's object type.
+#
+# **A sharing row is a period, not a flag.** The three interval members are the whole of what it says
+# about time, and each is a different question:
+#
+# - `shareRequestDay` is when the request was filed — it is the audit fact, not the period;
+# - `shareStartDay` is the first instant the asset is handed over;
+# - `shareEndDay` is the last instant it is due back.
+#
+# There is no stored "in force" column, and `isActive` is not one: that member is the base entity's own
+# live/archived marker, which says whether the row is part of the working set at all. **An active period
+# is the one whose window contains now** — `shareStartDay <= now <= shareEndDay` — and the connection's
+# date filters state exactly that question, so a caller asks it rather than reading a flag this domain
+# does not keep. All three members are nullable, because the delivered writes do not require a window,
+# and a row whose window was never recorded is one no interval question can place: `isNull` on either
+# bound is how a client finds those.
+#
+# `status` is carried as its own value and not as a schema enum. The vocabulary is the contracts' own
+# `RequestApprovalStatusTypesEnum` — `1` requested, `2` approved, `3` refused — which the delivered
+# service writes as a number: the two lifecycle routes move it to `2` and `3`, the create states what
+# the period starts at, and the approval row the delivered handler writes beside the sharing takes the
+# same value. Declaring an enum here would claim a value set this domain does not own, and the next
+# domain that needs the same vocabulary would collide with this file rather than reuse it. (The
+# contracts also declare a *string* enum of the same name; no delivered route writes it, so it is not
+# what this member carries.)
+#
+# `employees` and `teams` are the two memberships a period carries, and they are the reason this domain
+# has two list reads rather than one. They are nullable, and the reason is which read answers the row: the
+# delivered list connection is grounded on `GET /`, which is handed no `relations` by this surface, so its
+# rows carry neither membership — while the two by-organization and by-employee reads join both pivots and
+# their rows carry both. Null therefore means "the read behind this row did not join the pivot", which is a
+# fact about the read rather than about the period, and it is stated here rather than left for a client to
+# discover.
+
+"""
+One period for which an asset is handed to one or more employees or teams.
+"""
+type EquipmentSharing {
+	id: ID!
+	"The label the period is filed under."
+	name: String
+	"When the request for this period was filed."
+	shareRequestDay: DateTime
+	"The first instant the asset is handed over. With `shareEndDay`, this is the period's own window."
+	shareStartDay: DateTime
+	"The last instant the asset is due back."
+	shareEndDay: DateTime
+	"""
+	Where the request stands, as the contracts' own value: `1` requested, `2` approved, `3` refused. It
+	is carried as its value rather than declared as a schema enum because the vocabulary is shared with
+	the approval row the delivered write records beside this one.
+	"""
+	status: Int!
+	"The asset whose period this is, as the identifier of the asset's own row."
+	equipmentId: ID
+	"The policy the period was filed under, as the identifier of the policy's own row."
+	equipmentSharingPolicyId: ID
+	"""
+	The employees the asset is handed to. Joined by the two by-organization and by-employee reads, which
+	is why the members are nullable: the list connection's own rows are not joined.
+	"""
+	employees: [Employee!]
+	"""
+	The teams the asset is handed to. Joined by the same two reads, and null on the connection's rows for
+	the same reason.
+	"""
+	teams: [OrganizationTeam!]
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered routes
+	— the two removals this resource serves — and this column is the whole of what they write, so without
+	it a caller could not tell a live row from a withdrawn one on the answer to the write that withdrew
+	it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+	"The user who filed the period, as the identifier of the user's own row."
+	createdByUserId: ID
+}
+
+"""
+The boundary of one page of sharing periods.
+"""
+type EquipmentSharingEdge {
+	node: EquipmentSharing!
+	cursor: String!
+}
+
+"""
+One page of sharing periods, with the total the filters select and the boundary cursors.
+"""
+type EquipmentSharingConnection {
+	nodes: [EquipmentSharing!]!
+	edges: [EquipmentSharingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a sharing list may be sorted by.
+
+The window's two bounds are the orders this resource is read in — what is handed out next, and what is
+due back next; the request day is how the queue of pending requests is worked; the name is what a
+period is found by; `status` is offered because a work list is taken in status groups, and the values
+sort as the numbers they are, which groups like with like; and the two timestamps are how a change is
+found again.
+"""
+enum EquipmentSharingSortField {
+	createdAt
+	updatedAt
+	name
+	shareRequestDay
+	shareStartDay
+	shareEndDay
+	status
+}
+
+"""
+The order the sharing periods are returned in. At most three keys are accepted.
+"""
+input EquipmentSharingSort {
+	field: EquipmentSharingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a sharing list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers. The three interval members are
+date filters, which is what makes the period questions stateable: **a period in force now is
+`shareStartDay: { lte: <now> }` beside `shareEndDay: { gte: <now> }`**, and `isNull` on either bound is
+a row whose window was never recorded. `isActive` is the base entity's own marker and answers a
+different question — whether the row is part of the working set — so the two are not the same filter and
+neither replaces the other.
+
+The collections the row is joined with by the two by-organization and by-employee reads are not
+filterable here, and the reason is the read rather than a preference: the list connection's rows are not
+joined, so a condition on a membership could only ever match the empty set. The membership questions are
+answered by narrowing those two fields instead.
+
+`deletedAt` is absent although the object carries it: the delivered list read answers live rows only.
+The tenant is absent because the read applies it from the credential; the organization is present,
+because the two sub-route reads take it and a caller may legitimately narrow to one organization.
+"""
+input EquipmentSharingFilter {
+	id: IDFilter
+	name: StringFilter
+	shareRequestDay: DateTimeFilter
+	shareStartDay: DateTimeFilter
+	shareEndDay: DateTimeFilter
+	status: NumberFilter
+	equipmentId: IDFilter
+	equipmentSharingPolicyId: IDFilter
+	createdByUserId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EquipmentSharingFilter!]
+	or: [EquipmentSharingFilter!]
+	not: EquipmentSharingFilter
+}
+
+# The write surface.
+#
+# The create route takes the row itself as its body rather than a validated DTO, so the members below
+# are the columns the delivered write persists and nothing else. Four decisions are deliberate:
+#
+# - The asset and the policy are stated as the identifiers the row's foreign keys hold. The delivered
+#   body accepts the related object beside the identifier, but what the write persists is the key, and
+#   the delivered update path re-checks both against the row's own organization before it persists
+#   anything — an asset or a policy of another organization is refused rather than attached.
+# - The two memberships are stated as identifiers, because the pivot rows are pairs of identifiers.
+# - The tenant is not a member. The delivered handler stamps the caller's own tenant onto the row.
+# - `status` is a member of the create because the column is `NOT NULL`: the two lifecycle routes are
+#   what move a period to approved or refused, and the create is where a caller states what it starts
+#   at. The approval row the delivered handler writes beside the sharing takes the same value.
+
+"""
+What a caller states when it files a sharing period.
+
+The organization is an argument of the field rather than a member here, because the delivered route
+reads it from its own path segment and the handler stamps the row with it.
+"""
+input CreateEquipmentSharingInput {
+	"The label the period is filed under."
+	name: String
+	"When the request for this period was filed."
+	shareRequestDay: DateTime
+	"The first instant the asset is handed over."
+	shareStartDay: DateTime
+	"The last instant the asset is due back."
+	shareEndDay: DateTime
+	"Where the request starts: `1` requested, `2` approved, `3` refused."
+	status: Int!
+	"The asset whose period this is, by identifier."
+	equipmentId: ID
+	"The policy the period is filed under, by identifier."
+	equipmentSharingPolicyId: ID
+	"The employees the asset is handed to, by identifier. The pivot is written from these."
+	employeeIds: [ID!]
+	"The teams the asset is handed to, by identifier. The pivot is written from these."
+	teamIds: [ID!]
+}
+
+"""
+What a caller states when it changes a period that exists.
+
+**The delivered edit is a delete and a re-insert under the same identifier, not a column-wise update.**
+The handler reads the row to prove it is in the caller's scope, removes it together with its approval
+row, and then persists the stated body under the identifier the route read from its path. Two
+consequences follow from that same fact and are worth stating plainly:
+
+- A member the caller leaves out is written as the column's default rather than left as it is.
+- `status` is therefore **not optional in effect** even though a partial body is what the delivered DTO
+  describes: the column is `NOT NULL`, so a body that omits it removes the row and then fails the insert
+  that was to replace it. It is stated as required here so that the refusal arrives at the schema rather
+  than after the row is gone.
+
+The identifier names the row and is not repeated in the body, which is the shape the route itself has.
+An identifier naming no row is refused rather than recreated: the handler's own read is what proves the
+row exists.
+"""
+input UpdateEquipmentSharingInput {
+	id: ID!
+	name: String
+	shareRequestDay: DateTime
+	shareStartDay: DateTime
+	shareEndDay: DateTime
+	"Where the request stands: `1` requested, `2` approved, `3` refused."
+	status: Int!
+	equipmentId: ID
+	equipmentSharingPolicyId: ID
+	employeeIds: [ID!]
+	teamIds: [ID!]
+}

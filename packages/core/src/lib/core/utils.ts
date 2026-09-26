@@ -24,6 +24,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/utils';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 
@@ -382,17 +383,31 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 
 	let dbType: any;
 	switch (dbORM) {
-		case MultiORMEnum.MikroORM:
-			if (dbConnection.driver instanceof BetterSqliteDriver) {
+		case MultiORMEnum.MikroORM: {
+			// **The configured driver is the class, not an instance.** MikroORM's options state
+			// `driver: BetterSqliteDriver`, so an `instanceof` test never matched and every caller — the seeder's
+			// clean step, every raw-SQL dialect branch that asks this — was told Postgres on SQLite and MySQL:
+			// the seeder then sent `TRUNCATE … RESTART IDENTITY CASCADE` to SQLite. The driver is recognised as
+			// the class or an instance, and options shaped like TypeORM's (which callers pass, since
+			// `dbConnectionOptions` is the TypeORM configuration) are read by the dialect they name.
+			const driver = (dbConnection as { driver?: unknown })?.driver;
+			const isDriver = (candidate: Function): boolean =>
+				!!driver &&
+				(driver === candidate ||
+					driver instanceof candidate ||
+					(typeof driver === 'function' && driver.prototype instanceof candidate));
+
+			if (isDriver(BetterSqliteDriver)) {
 				dbType = DatabaseTypeEnum.betterSqlite3;
-			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
+			} else if (isDriver(PostgreSqlDriver)) {
 				dbType = DatabaseTypeEnum.postgres;
-			} else if (dbConnection.driver instanceof MySqlDriver) {
+			} else if (isDriver(MySqlDriver)) {
 				dbType = DatabaseTypeEnum.mysql;
 			} else {
-				dbType = DatabaseTypeEnum.postgres;
+				dbType = (dbConnection as TypeOrmModuleOptions)?.type ?? DatabaseTypeEnum.postgres;
 			}
 			break;
+		}
 
 		default:
 			dbType = (dbConnection as TypeOrmModuleOptions).type;
@@ -444,20 +459,21 @@ export const flatten = (input: any): any => {
 	}
 
 	if (typeof input === 'object' && input !== null) {
-		return (
-			Object.keys(input).reduce((acc, key) => {
-				const value = input[key];
-				if (value) {
-					const nestedKeys = flatten(value);
-					const newKey = Array.isArray(value)
-						? key
-						: nestedKeys.length > 0
-							? `${key}.${nestedKeys.join('.')}`
-							: key;
-					return acc.concat(newKey);
-				}
-			}, []) || []
-		);
+		// A key whose value is falsy (`{ tags: false }`) names nothing and is skipped. It used to end the reduction's
+		// accumulator (the callback answered `undefined`), so the next key threw on `undefined.concat` — and a nested
+		// object naming several keys (`{ kind: { owner: true, labels: true } }`) became the one path
+		// `kind.owner.labels` rather than `kind.owner` and `kind.labels`, a path neither ORM can resolve.
+		return Object.keys(input).reduce((acc: string[], key) => {
+			const value = input[key];
+			if (!value) {
+				return acc;
+			}
+			if (Array.isArray(value)) {
+				return acc.concat(key);
+			}
+			const nestedKeys: string[] = flatten(value);
+			return acc.concat(nestedKeys.length > 0 ? nestedKeys.map((nested) => `${key}.${nested}`) : [key]);
+		}, []);
 	}
 
 	// If input is neither an array nor an object, return an empty array
@@ -924,8 +940,9 @@ export function parseTypeORMFindToMikroOrm<T>(options: LegacyFindManyOptions<any
 		mikroOptions.limit = options.take;
 	}
 
-	// If options contain 'withDeleted', add the SOFT_DELETABLE_FILTER to existing filters
-	if (options && options.withDeleted) {
+	// If options state 'withDeleted', lift the SOFT_DELETABLE_FILTER. Read as the boolean it states: a raw
+	// query delivers `?withDeleted=false` as the string 'false', which a truthiness test read as true.
+	if (options && parseToBoolean(options.withDeleted)) {
 		mikroOptions.filters = { [SOFT_DELETABLE_FILTER]: false };
 	}
 
@@ -946,13 +963,31 @@ export function parseOrderOptions(order: FindOptionsOrder<any>) {
 
 /**
  * Transforms a FindOperator object into a query condition suitable for database operations.
- * It handles simple conditions such as 'equal', 'in' and 'between',
- * as well as complex conditions like recursive 'not' operators and range queries with 'between'.
+ *
+ * **Every operator TypeORM can produce is translated, and one it cannot express is refused rather
+ * than dropped.** The reason is what an untranslated operator used to mean: the default branch
+ * warned to the console and answered `{}`, and an empty condition on a property is not a narrower
+ * read — it is *no condition at all*. So under `DB_ORM=mikro-orm` a sweep predicated on
+ * `LessThan(expiresAt)` selected every row in the table, a search predicated on `Like('%term%')`
+ * matched everything, and a tax read predicated on an effective-date range returned rates that are
+ * not in force. The read succeeded, returned rows, and was wrong — which is the failure that costs
+ * the most to find, because nothing anywhere reports it.
+ *
+ * `raw` and `jsonContains` have no MikroORM equivalent at all: the first is a SQL fragment the other
+ * ORM never sees, and the second is a dialect-specific JSON predicate. Both raise, because a caller
+ * that reaches one of them on this ORM has to be told, and telling it by returning every row is not
+ * telling it.
  *
  * @param operator A FindOperator object containing the type of condition and its corresponding value.
  * @returns A query condition in the format of a Record<string, any> that represents the translated condition.
- *
+ * @throws Error when the operator has no MikroORM equivalent, rather than widening the read.
  */
+/**
+ * Marks the parts of an `And(...)` that state the same operator, which `processFindOperator` cannot fold into one
+ * object; `convertTypeORMConditionToMikroORM` states each at the entity level.
+ */
+const AND_PARTS = '__andParts';
+
 export function processFindOperator<T>(operator: FindOperator<T>) {
 	switch (operator.type) {
 		case 'isNull': {
@@ -961,13 +996,29 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'not': {
 			// If the nested value is also a FindOperator, process it recursively
 			if (operator.child && operator.child instanceof FindOperator) {
-				return { $ne: processFindOperator(operator.child) };
-			} else {
-				const nested = operator.value || null;
-				return { $ne: nested };
+				const child = processFindOperator(operator.child);
+
+				// `Not(IsNull())` is `$ne: null`, and so is `Not(<scalar>)`. A child that translated to a
+				// condition *object* — `Not(In([...]))`, `Not(Like('%x%'))` — is negated with `$not`:
+				// `{ $ne: { $in: [...] } }` compares the column against an object and matches nothing.
+				// MikroORM negates a condition only at the entity level, so `convertTypeORMConditionToMikroORM`
+				// lifts this `$not` off the property before the statement is built.
+				// `Not(Not(x))` is `x`: negating the negation keeps it off the property, where MikroORM refuses it.
+				if (child !== null && typeof child === 'object' && Object.keys(child).length === 1 && '$not' in child) {
+					return (child as { $not: unknown }).$not;
+				}
+				return child !== null && typeof child === 'object' ? { $not: child } : { $ne: child };
 			}
+
+			// `|| null` here turned `Not(0)`, `Not(false)` and `Not('')` into `IS NOT NULL`, which is a
+			// different question and one that is true for almost every row.
+			return { $ne: operator.value === undefined ? null : operator.value };
 		}
 		case 'in': {
+			return { $in: operator.value };
+		}
+		case 'any': {
+			// `Any([...])` is `= ANY(array)`, which is membership — the same question `$in` asks.
 			return { $in: operator.value };
 		}
 		case 'equal': {
@@ -986,11 +1037,54 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'moreThan': {
 			return { $gt: operator.value };
 		}
-		// Add additional cases for other operator types if needed
+		case 'lessThanOrEqual': {
+			return { $lte: operator.value };
+		}
+		case 'lessThan': {
+			return { $lt: operator.value };
+		}
+		case 'like': {
+			// The caller's value already carries its own `%` wildcards, in both ORMs.
+			return { $like: operator.value };
+		}
+		case 'ilike': {
+			return { $ilike: operator.value };
+		}
+		case 'arrayContains': {
+			return { $contains: operator.value };
+		}
+		case 'arrayContainedBy': {
+			return { $contained: operator.value };
+		}
+		case 'arrayOverlap': {
+			return { $overlap: operator.value };
+		}
+		case 'and': {
+			// `And(a, b)` is several conditions on one property, which MikroORM spells as one object
+			// carrying both — `{ $gte: 1, $lte: 5 }` — rather than as a list.
+			const parts = (Array.isArray(operator.value) ? operator.value : [operator.value]).map((part: unknown) =>
+				part instanceof FindOperator ? processFindOperator(part) : { $eq: part }
+			);
+
+			// Parts that state the same operator (`And(Not(1), Not(4))`, `And(MoreThan(3), MoreThan(1))`) cannot share one
+			// object: merged, the last one replaced the others and the read asked a different question. They are kept as
+			// a list instead, which `convertTypeORMConditionToMikroORM` states at the entity level, one part each.
+			const operators = parts.flatMap((part) => (part && typeof part === 'object' ? Object.keys(part) : []));
+			if (new Set(operators).size !== operators.length) {
+				return { [AND_PARTS]: parts };
+			}
+
+			return Object.assign({}, ...parts);
+		}
 		default: {
-			// Handle unknown or unimplemented operator types
-			console.warn(`Unsupported FindOperator type: ${operator.type}`);
-			return {};
+			// `raw` and `jsonContains` land here, and so would any operator a future TypeORM adds. An
+			// empty condition would be answered as "every row", so the caller is told instead.
+			throw new Error(
+				`UNSUPPORTED_FIND_OPERATOR: "${operator.type}" has no MikroORM equivalent, so the read it ` +
+					`predicates cannot be translated. Answering it without the predicate would return every ` +
+					`row; express the condition with a supported operator, or keep this read on the TypeORM ` +
+					`repository.`
+			);
 		}
 	}
 }
@@ -1006,11 +1100,51 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>) {
 	const mikroORMCondition = {};
 
+	// The conditions of this level stated at the entity level: each negation lifted off its property, and each part of an
+	// `And(...)` whose parts could not share one object (see below).
+	const negations: Record<string, unknown>[] = [];
+
 	for (const [key, value] of Object.entries(where)) {
 		if (typeof value === 'object' && value !== null && !(value instanceof Array)) {
 			if (value instanceof FindOperator) {
 				// Convert nested FindOperators
-				mikroORMCondition[key] = processFindOperator(value);
+				const condition = processFindOperator(value);
+
+				// `Not(In([...]))`, `Not(Like('%x%'))`, `Not(MoreThan(n))` translate to `{ $not: <condition> }` on
+				// the property, and MikroORM's SQL drivers have no `$not` on a property: knex refuses the whole
+				// statement with `The operator "not" is not permitted` — a find, a count, an update and a delete
+				// alike. So under `DB_ORM=mikro-orm` every statement predicated on such a negation failed; a role
+				// was never deleted (`RoleService.delete` guards the system roles with `Not(In([...]))`), and its
+				// name stayed taken. MikroORM negates at the entity level — `{ $not: { name: { $in: [...] } } }`
+				// is `not (name in (...))`, the SQL TypeORM writes for `Not(In([...]))` — so the negation is
+				// lifted there. Each one is its own `$not` under `$and`: a single `$not` over two properties
+				// would negate their conjunction, which is a different question.
+				// `And(...)` parts that could not share one object (see `processFindOperator`): each is its own condition
+				// on the property, in the entity-level conjunction, and a negated one is lifted like any other.
+				const parts =
+					condition !== null && typeof condition === 'object' && AND_PARTS in condition
+						? ((condition as Record<string, unknown>)[AND_PARTS] as Record<string, unknown>[])
+						: [condition as Record<string, unknown>];
+
+				for (const part of parts) {
+					if (part !== null && typeof part === 'object' && '$not' in part) {
+						const { $not: negated, ...rest } = part as Record<string, unknown>;
+						negations.push({ $not: { [key]: negated } });
+
+						// What `And(...)` folded in beside the negation stays on the property.
+						if (Object.keys(rest).length > 0) {
+							if (parts.length > 1) {
+								negations.push({ [key]: rest });
+							} else {
+								mikroORMCondition[key] = rest;
+							}
+						}
+					} else if (parts.length > 1) {
+						negations.push({ [key]: part });
+					} else {
+						mikroORMCondition[key] = part;
+					}
+				}
 			} else {
 				// Recursively convert nested objects
 				mikroORMCondition[key] = convertTypeORMConditionToMikroORM(value);
@@ -1019,6 +1153,14 @@ export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>)
 			// Assign simple key-value pairs directly
 			mikroORMCondition[key] = value;
 		}
+	}
+
+	if (negations.length > 0) {
+		const conjunction = mikroORMCondition['$and'];
+		mikroORMCondition['$and'] = [
+			...(conjunction === undefined ? [] : Array.isArray(conjunction) ? conjunction : [conjunction]),
+			...negations
+		];
 	}
 
 	return mikroORMCondition;

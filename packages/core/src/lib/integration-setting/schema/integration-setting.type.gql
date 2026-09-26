@@ -1,0 +1,88 @@
+# The integration setting's object type.
+#
+# One row is one credential or one configuration fact of a configured integration: `settingsName` is
+# the key the provider's own handshake names (`access_token`, `client_secret`, `installation_id`,
+# `zone`, …) and `settingsValue` is what was stored under it. A provider link is therefore a handful of
+# these rows.
+#
+# **The resource serves one delivered route — the rotation of a single credential — so the surface
+# states one field and this file declares no list.** There is no list route, no node route and no count
+# route for a credential in the delivered API, so a connection, an edge or a filter input here would be
+# a read the REST surface does not serve, and would be declared, unreachable, in this schema.
+#
+# **`settingsValue` is not a field, and that is the whole secret decision here.** The platform treats
+# every stored value as sensitive by default: a subscriber on the entity masks the value while the row
+# is being loaded, unless the key is on an explicit allowlist of non-secret names (`isEnabled`, `sync`,
+# `zone`, `region`, `installation_id`, …), and the delivered API answers the masked copy — which is
+# what keeps an OAuth token or a client secret out of a REST response. The row a resolver holds,
+# however, is the entity the subscriber ran on: its `settingsValue` property still carries the stored
+# value, and only the *serialized* form is masked. A GraphQL member named `settingsValue` resolves
+# straight off that property, so declaring one would hand a client exactly the cleartext the delivered
+# projection exists to withhold — the one way round the masking that a schema could offer.
+#
+# It is therefore refused, and so is the masked copy: that copy is produced on the response path by the
+# serializer rather than being a property the row holds, so a member for it would answer a value that
+# depends on which reader produced the row — present on a row a load produced, absent on one a write
+# answered. What the type carries instead is everything about the row that is not the value: the key it
+# is stored under, the integration it belongs to, the scope columns and the lifecycle flags.
+#
+# **The write states the value, and that asymmetry is deliberate.** `PUT /api/integration-setting/:id`
+# is how a credential is rotated: the delivered body carries `settingsValue` and stores it. A schema
+# that refused the member on the way in as well as on the way out would leave a client unable to
+# configure the integration at all, so the member lives on the input, where it travels one way.
+
+"""
+One credential of a configured integration, with its value withheld.
+"""
+type IntegrationSetting {
+	id: ID!
+	"""
+	The key the value is stored under. The column is named `settingsName` and it stays named that:
+	renaming a core column is not an additive change, and the delivered rules name it.
+	"""
+	settingsName: String!
+	"The configured integration this credential belongs to."
+	integrationId: ID
+	"The tenant the row belongs to. Stamped from the credential, never stated by a caller."
+	tenantId: ID
+	"The organization the row belongs to, when the integration is configured per organization."
+	organizationId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are routes every
+	resource on this platform inherits, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+One credential as a write states it: the key, and the value to store under it.
+
+This input is what the configured-integration write composes, and it is the one place the value
+appears — it travels into the store and is never answered back.
+"""
+input IntegrationSettingInput {
+	"The key the value is stored under."
+	settingsName: String!
+	"The value to store. Sent, withheld on the way out, and never returned in clear text."
+	settingsValue: String!
+}
+
+"""
+What a caller states when it rotates one credential.
+
+The delivered route binds this body and nothing else: the identifier comes from the path, the
+organization scopes the row, and the value replaces what was stored. `id` is required here because the
+delivered route takes the identifier from the path; stating it in the input as well is what keeps the
+two readings of one identifier from disagreeing.
+"""
+input UpdateIntegrationSettingInput {
+	id: ID!
+	"The organization the credential belongs to."
+	organizationId: ID
+	"The value to store under the row's existing key."
+	settingsValue: String!
+}

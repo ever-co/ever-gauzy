@@ -1,0 +1,417 @@
+# The time-log domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered REST routes already serve, under the same guard and with the
+# same permission, so a client that reaches a capability over one protocol is not given a narrower or
+# a wider one than the client that reaches it over the other.
+#
+# **What each field mirrors, route for route:**
+#
+# - `timeLogs` mirrors `GET /`, the list. It is a connection rather than a bare array: it takes the
+#   same query protocol the REST list route takes — the same narrowing in `filter`, the same keys in
+#   `sort`, the same page in `page` — and answers with the same shape the kernel's `PageInfo` gives
+#   every other connection, so a cursor obtained over one surface resumes on the other.
+# - `timeLog` mirrors `GET /:id`.
+# - `timeLogConflicts` mirrors `GET /conflict`, which answers the logs of one employee that overlap a
+#   window.
+# - `timeLogDailyReport`, `timeLogDailyReportChart`, `timeLogWeeklyReport`,
+#   `timeLogOwedAmountReport`, `timeLogOwedAmountReportChart` and `timeLogTimeLimitReport` mirror the
+#   six report routes under `report/` and `time-limit`.
+# - `projectBudgetLimit` and `clientBudgetLimit` mirror `GET /project-budget-limit` and
+#   `GET /client-budget-limit`.
+# - `addManualTime`, `updateManualTime` and `deleteTimeLogs` mirror the three writes.
+#
+# **The list states the members its own read scopes by, and the rest are filters.** The delivered list
+# read narrows in the store: the organization is applied to every query it builds, the range goes
+# through the platform's own date-range formatter, the activity window is a condition on the tracked
+# slots the row itself does not carry, and the employee and team selectors are handed to the read's own
+# manager check — a caller that may not change the selected employee is answered the employees it
+# manages among those it named. None of those can be stated as a filter over an answer, so each is an
+# argument, and `organizationId` is required rather than optional because the read applies it
+# unconditionally: a call without one answers no row at all, and a field that accepted it would be
+# publishing a request the read cannot serve. Every other selector the delivered query DTO carries
+# (`projectIds`, `taskIds`, `source`, `logType`, `timesheetId`, `isEdited`) is a column of the row the
+# read returns — which is exactly what the connection protocol evaluates a filter against — so each is
+# a member of `filter` and is not published a second time as an argument.
+#
+# `relations` is not an argument on any field here, although the delivered query DTO carries one. The
+# reads load a relation only when the caller names it, and no type in this domain declares a relation
+# object for a loaded row to fill — an argument whose effect is invisible is worse than an argument
+# that is absent. The same rule keeps `timeZone` and `groupBy` off `timeLogs`: the list read computes
+# no calendar grouping and reads no time zone, and an argument the read ignores is the same defect.
+#
+# **A computed answer is a root field of its own.** A per-day aggregation, a rate applied to a duration
+# and a budget spent against it are not subsets of the list's rows: the connection protocol evaluates a
+# filter against rows rather than performing a computation on them, so none of the eight report fields
+# below could be a filter of `timeLogs`. `timeLogConflicts` is a root field of its own for the adjacent
+# reason: it selects rows by an interval overlap, which is not a condition on either end of the row.
+# Each of the nine states the narrowing its own delivered read binds and answers a type declared for it
+# in `time-log.type.gql`. Two of the reports nest rows — the daily report and the weekly one — and each
+# nested row is carried there as the identifier it is read by, because both of those reads select only a
+# handful of columns of the row they nest; the owed report carries its employee the same way, and the
+# remaining six answers are flat lists of figures their routes computed.
+#
+# **The three writes state the guard and the permission their own handlers state.** The delivered
+# `POST`, `PUT :id` and `DELETE` each add `OrganizationPermissionGuard` to the controller's class
+# chain and replace the class-level grant with a single permission of their own — `ALLOW_MANUAL_TIME`,
+# `ALLOW_MODIFY_TIME` and `ALLOW_DELETE_TIME` — which is why those three fields carry a guard of their
+# own while every read above runs under the class grant. `updateManualTime` takes its identifier as a
+# member of its input because that is the only place this protocol has for it, the route's path
+# parameter having no counterpart here.
+#
+# `deleteTimeLogs` answers a boolean rather than the store's delete result: the delivered route
+# answers `{ affected }`, which is a statement about the write and not a row. A caller that needs the
+# surviving rows reads them back through `timeLogs`.
+
+extend type Query {
+	"""
+	The time logs of one organization, oldest first.
+
+	The order is the delivered read's own — both of its branches fix `startedAt` ascending — so the
+	same rows read over either protocol come back in the same sequence. The employee narrowing the
+	delivered read performs from the credential is not a filter here: a caller that may not change the
+	selected employee is answered its own logs, or those of the employees it manages, which is the
+	scope the route itself applies.
+	"""
+	timeLogs(
+		"The organization whose logs are read. The delivered read applies it to every query it builds and has no default for it."
+		organizationId: ID!
+		"The start of the range. The delivered read applies the two ends together, through the platform's own date-range formatter."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"""
+		The employees to answer for, where the caller names any. The read hands the pair of employee and
+		team selectors to its own manager check, so a caller that may not change the selected employee is
+		answered the employees it manages among those it named rather than being refused.
+		"""
+		employeeIds: [ID!]
+		"The teams the named employees are managed within, which the read's own manager check consults."
+		teamIds: [ID!]
+		"The activity window to answer for, expressed as a percentage of tracked activity."
+		activityLevel: TimeLogActivityLevelInput
+		filter: TimeLogFilter
+		sort: [TimeLogSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TimeLogConnection!
+
+	"""
+	One time log of the caller's tenant, or null when there is none.
+	"""
+	timeLog(id: ID!): TimeLog
+
+	"""
+	The logs of one employee that overlap a window, or an empty list when none does.
+
+	The overlap is the delivered read's own: a log is answered when either of the two instants the
+	caller names falls inside the log's own interval, which is the condition a hand-recorded interval
+	is checked against before it is written.
+	"""
+	timeLogConflicts(
+		"The start of the window."
+		startDate: DateTime!
+		"The end of the window."
+		endDate: DateTime!
+		"The employee whose logs are compared against the window."
+		employeeId: ID!
+		"The organization the logs must belong to."
+		organizationId: ID!
+		"Logs to leave out of the comparison — the row being edited, when the caller is editing one."
+		ignoreId: [ID!]
+	): [TimeLog!]!
+
+	"""
+	One report of one organization over a range, grouped the way the caller asks.
+
+	The answer's shape is chosen by `groupBy`: by date (the delivered default), by employee, by project
+	or by client. A value the delivered calculation does not recognise is answered the date grouping,
+	which is the delivered behaviour rather than a refusal invented here. Days are read in the time
+	zone the caller names.
+	"""
+	timeLogDailyReport(
+		"The organization whose logs are reported."
+		organizationId: ID!
+		"How the report is grouped: `date`, `employee`, `project` or `client`. An absent or unrecognised value is the date grouping."
+		groupBy: String
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees to report on."
+		employeeIds: [ID!]
+		"The projects to report on."
+		projectIds: [ID!]
+		"The tasks to report on."
+		taskIds: [ID!]
+		"The teams to report on."
+		teamIds: [ID!]
+		"The sources to report on."
+		source: [String!]
+		"The log types to report on."
+		logType: [String!]
+		"The payroll period to report on."
+		timesheetId: ID
+		"`true` reports only the edited logs, `false` only those that have not been edited."
+		isEdited: Boolean
+		"The activity window to report on."
+		activityLevel: TimeLogActivityLevelInput
+		"The time zone the days are read in."
+		timeZone: String
+	): [TimeLogDailyReportEntry!]!
+
+	"""
+	How much of every day of a range was tracked, recorded by hand, idle and resumed.
+
+	One entry per day of the range, whether or not anything was recorded on it, and every figure is in
+	hours.
+	"""
+	timeLogDailyReportChart(
+		"The organization whose logs are charted."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees to chart."
+		employeeIds: [ID!]
+		"The projects to chart."
+		projectIds: [ID!]
+		"The tasks to chart."
+		taskIds: [ID!]
+		"The teams to chart."
+		teamIds: [ID!]
+		"The sources to chart."
+		source: [String!]
+		"The log types to chart."
+		logType: [String!]
+		"The payroll period to chart."
+		timesheetId: ID
+		"`true` charts only the edited logs, `false` only those that have not been edited."
+		isEdited: Boolean
+		"The activity window to chart."
+		activityLevel: TimeLogActivityLevelInput
+		"The time zone the days are read in."
+		timeZone: String
+	): [TimeLogDailyReportChartPoint!]!
+
+	"""
+	What one organization owes for a range, priced per employee and per day.
+
+	The amounts are the delivered calculation's own: each employee's summed duration over the day,
+	priced at the rate the read selected for them. The answer is money and the lines it is made of,
+	which is what an operator reconciles against payroll.
+	"""
+	timeLogOwedAmountReport(
+		"The organization whose owed amount is reported."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees to price."
+		employeeIds: [ID!]
+		"The projects to price."
+		projectIds: [ID!]
+		"The tasks to price."
+		taskIds: [ID!]
+		"The teams to price."
+		teamIds: [ID!]
+		"The sources to price."
+		source: [String!]
+		"The log types to price."
+		logType: [String!]
+		"The payroll period to price."
+		timesheetId: ID
+		"`true` prices only the edited logs, `false` only those that have not been edited."
+		isEdited: Boolean
+		"The activity window to price."
+		activityLevel: TimeLogActivityLevelInput
+		"The time zone the days are read in."
+		timeZone: String
+	): [TimeLogOwedAmountReportEntry!]!
+
+	"""
+	The same sums as one figure per day, for a chart.
+
+	This is the day's total and `timeLogOwedAmountReport` is the lines that total is made of; the two
+	are deliberately two fields, because a chart and the table behind it are two different reads of one
+	calculation.
+	"""
+	timeLogOwedAmountReportChart(
+		"The organization whose owed amount is charted."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees to price."
+		employeeIds: [ID!]
+		"The projects to price."
+		projectIds: [ID!]
+		"The tasks to price."
+		taskIds: [ID!]
+		"The teams to price."
+		teamIds: [ID!]
+		"The sources to price."
+		source: [String!]
+		"The log types to price."
+		logType: [String!]
+		"The payroll period to price."
+		timesheetId: ID
+		"`true` prices only the edited logs, `false` only those that have not been edited."
+		isEdited: Boolean
+		"The activity window to price."
+		activityLevel: TimeLogActivityLevelInput
+		"The time zone the days are read in."
+		timeZone: String
+	): [TimeLogOwedAmountReportChartPoint!]!
+
+	"""
+	One entry per employee who recorded time in the range, with the days behind the entry.
+
+	`sum` is the employee's summed duration over the range, **in seconds**, and it is null where the
+	range holds no log of theirs at all — the delivered answer rather than a fabricated zero.
+	`activity` is the tracked activity of the range as a percentage of its tracked time.
+	"""
+	timeLogWeeklyReport(
+		"The organization whose week is reported."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees to report on."
+		employeeIds: [ID!]
+		"The projects to report on."
+		projectIds: [ID!]
+		"The tasks to report on."
+		taskIds: [ID!]
+		"The teams to report on."
+		teamIds: [ID!]
+		"The sources to report on."
+		source: [String!]
+		"The log types to report on."
+		logType: [String!]
+		"The payroll period to report on."
+		timesheetId: ID
+		"`true` reports only the edited logs, `false` only those that have not been edited."
+		isEdited: Boolean
+		"The activity window to report on."
+		activityLevel: TimeLogActivityLevelInput
+		"The time zone the days are read in."
+		timeZone: String
+	): [TimeLogWeeklyReport!]!
+
+	"""
+	How much of every employee's limit the range used, one period per entry.
+
+	`duration` is one of `day`, `week` or `month` — the three the delivered calculation converts an
+	employee's weekly limit to — and an absent value is a day, which is the delivered default. Both the
+	durations and the limits are **in seconds**.
+	"""
+	timeLogTimeLimitReport(
+		"The organization whose limits are reported."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees to report on."
+		employeeIds: [ID!]
+		"The projects to report on."
+		projectIds: [ID!]
+		"The tasks to report on."
+		taskIds: [ID!]
+		"The teams to report on."
+		teamIds: [ID!]
+		"The sources to report on."
+		source: [String!]
+		"The log types to report on."
+		logType: [String!]
+		"The payroll period to report on."
+		timesheetId: ID
+		"`true` reports only the edited logs, `false` only those that have not been edited."
+		isEdited: Boolean
+		"The activity window to report on."
+		activityLevel: TimeLogActivityLevelInput
+		"The time zone the periods are read in."
+		timeZone: String
+		"The period each entry covers: `day`, `week` or `month`. An absent value is a day."
+		duration: String
+	): [TimeLogTimeLimitReportEntry!]!
+
+	"""
+	How much of every project's budget the range consumed.
+
+	The delivered read walks the projects and their logs directly rather than through the time-log
+	query builder, so it takes the organization, the range and the two selectors it actually reads and
+	nothing else.
+	"""
+	projectBudgetLimit(
+		"The organization whose projects are reported."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees whose time counts against the budget."
+		employeeIds: [ID!]
+		"The projects to report on. Omit it and every project that was worked on is answered."
+		projectIds: [ID!]
+	): [ProjectBudgetLimit!]!
+
+	"""
+	How much of every client's budget the range consumed.
+	"""
+	clientBudgetLimit(
+		"The organization whose clients are reported."
+		organizationId: ID!
+		"The start of the range."
+		startDate: DateTime
+		"The end of the range."
+		endDate: DateTime
+		"The employees whose time counts against the budget."
+		employeeIds: [ID!]
+		"The projects whose time counts against the budget."
+		projectIds: [ID!]
+	): [ClientBudgetLimit!]!
+}
+
+extend type Mutation {
+	"""
+	Records time by hand, and answers the row that was written.
+
+	The delivered write resolves the conflicts of the interval first — trimming the conflicting slots
+	of the logs it finds — and files the interval into the payroll period it belongs to. That is the
+	handler's work and is not restated here; what this field states is the same body the route states,
+	with the employee replaced by the caller's own and the log type and source set as the delivered
+	body sets them.
+	"""
+	addManualTime(input: CreateManualTimeLogInput!): TimeLog!
+
+	"""
+	Edits a hand-recorded interval, and answers the row as it stands after the write.
+
+	The delivered write resolves the interval's conflicts again, stamps the instant it was edited and
+	files the row into the period its new start belongs to. A body that states an employee the caller
+	may not choose has it replaced by the caller's own, exactly as the create does.
+	"""
+	updateManualTime(input: UpdateManualTimeLogInput!): TimeLog!
+
+	"""
+	Removes time logs, outright or by withdrawal, and answers whether the removal ran.
+
+	The delivered write refuses a caller that names no row, and refuses one that may not change the
+	selected employee when the named rows belong to employees it does not manage; both refusals are the
+	handler's and are not restated here.
+	"""
+	deleteTimeLogs(input: DeleteTimeLogsInput!): Boolean!
+}

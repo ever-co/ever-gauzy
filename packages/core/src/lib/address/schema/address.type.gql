@@ -1,0 +1,257 @@
+# The address book's GraphQL types.
+#
+# A row of the book is a reusable postal address owned by a party, a stock location, a seller, a
+# supplier or the organization itself — the owner is a *dimension* (`ownerType` + `ownerId`) rather
+# than a column per addressable thing, which is why the type carries the pair instead of a relation
+# per case. The relations that would need a type of their own (`country`, `customer`) are
+# deliberately absent: the scalar columns beside them are what every consumer of this type filters
+# and prints, and a relation field whose type no domain declares is a field nothing can resolve.
+#
+# Money is never a `Float` anywhere in this schema. `latitude` and `longitude` are coordinates rather
+# than amounts, so they are the one numeric pair carried as `Float`; every money value in the platform
+# is `Decimal`, serialised as a string so a value read here and the same value read over REST are
+# identical.
+
+"""
+One row of the address book: a reusable postal address with the roles it plays and the two defaults
+it may carry.
+"""
+type Address {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"""Customer-facing nickname ("Home", "Warehouse 2")."""
+	label: String
+	"""The person to address at this location."""
+	contactName: String
+	"""Company name as it should appear on a label or an invoice."""
+	company: String
+	firstName: String
+	lastName: String
+	phone: String
+	email: String
+	"""Street address. Always present: an address that names no street names nothing."""
+	line1: String!
+	"""Second line of the street address — a unit, a floor, a building."""
+	line2: String
+	"""City or locality. Always present."""
+	city: String
+	"""Free-text province name as entered."""
+	province: String
+	"""Normalised province or state code — the member a rate table is keyed by."""
+	provinceCode: String
+	"""Postal or ZIP code, as entered."""
+	postalCode: String
+	"""ISO 3166-1 alpha-2 country code, upper case. The member tax and shipping rules match on."""
+	countryCode: String!
+	"""The country lookup row, non-null exactly when `countryCode` matched one."""
+	countryId: ID
+	latitude: Float
+	longitude: Float
+	"""
+	Whether this is the party's default shipping address.
+
+	A derived mirror, not the authority: the party's own column is authoritative and the two are
+	written in one transaction by the set-default and clear-default operations, so a write that
+	disagrees is refused rather than reconciled.
+	"""
+	isDefaultShipping: Boolean!
+	"""The billing counterpart of the above, on the same terms."""
+	isDefaultBilling: Boolean!
+	"""Whether an address-validation strategy has confirmed this address."""
+	isValidated: Boolean!
+	"""Which validator produced the verdict, when one did."""
+	validationProviderKey: String
+	"""What kind of thing the address belongs to."""
+	ownerType: AddressOwnerType!
+	"""The id of the row `ownerType` names. No foreign key: the target table depends on the type."""
+	ownerId: ID!
+	"""The buyer this address is scoped to, when it is a party's. Null on an anonymous cart address."""
+	customerId: ID
+	"""Tenant extras, including the raw provider response once a validator has answered."""
+	metadata: JSON
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+What kind of thing a row of the address book belongs to.
+"""
+enum AddressOwnerType {
+	"""The address belongs to an organization contact; `customerId` equals `ownerId`."""
+	CONTACT
+	"""The address belongs to a stock location — the ship-from a carrier label prints."""
+	WAREHOUSE
+	"""The address belongs to a marketplace seller."""
+	SELLER
+	"""The address belongs to a supplier — what a purchase order prints as its remit-to."""
+	VENDOR
+	"""The address belongs to the organization itself, not to any party."""
+	ORGANIZATION
+}
+
+"""
+The boundary of one page of addresses.
+"""
+type AddressEdge {
+	node: Address!
+	cursor: String!
+}
+
+"""
+One page of addresses, with the total the filters select and the boundary cursors.
+"""
+type AddressConnection {
+	nodes: [Address!]!
+	edges: [AddressEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an address may be sorted by.
+"""
+enum AddressSortField {
+	createdAt
+	updatedAt
+	label
+	city
+	countryCode
+	postalCode
+	isDefaultShipping
+	isDefaultBilling
+}
+
+"""
+The order the addresses are returned in. At most three keys are accepted.
+"""
+input AddressSort {
+	field: AddressSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the kind of thing an address belongs to.
+"""
+input AddressOwnerTypeFilter {
+	eq: AddressOwnerType
+	ne: AddressOwnerType
+	in: [AddressOwnerType!]
+	nin: [AddressOwnerType!]
+	isNull: Boolean
+}
+
+"""
+The fields an address list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input AddressFilter {
+	id: IDFilter
+	label: StringFilter
+	contactName: StringFilter
+	company: StringFilter
+	phone: StringFilter
+	email: StringFilter
+	line1: StringFilter
+	line2: StringFilter
+	city: StringFilter
+	province: StringFilter
+	provinceCode: StringFilter
+	postalCode: StringFilter
+	countryCode: StringFilter
+	countryId: IDFilter
+	isDefaultShipping: BooleanFilter
+	isDefaultBilling: BooleanFilter
+	isValidated: BooleanFilter
+	ownerType: AddressOwnerTypeFilter
+	ownerId: IDFilter
+	customerId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [AddressFilter!]
+	or: [AddressFilter!]
+	not: AddressFilter
+}
+
+"""
+What a caller states when it records an address in the book.
+
+The validation verdict is absent by construction — it is the address-validation strategy's own
+statement — and a body that states one is refused rather than ignored. The two default members are
+accepted and are routed to the set-default operation, so a create never writes a default flag itself.
+"""
+input CreateAddressInput {
+	organizationId: ID!
+	label: String
+	contactName: String
+	company: String
+	firstName: String
+	lastName: String
+	phone: String
+	email: String
+	line1: String!
+	line2: String
+	city: String!
+	province: String
+	provinceCode: String
+	postalCode: String
+	countryCode: String!
+	countryId: ID
+	latitude: Float
+	longitude: Float
+	isDefaultShipping: Boolean
+	isDefaultBilling: Boolean
+	ownerType: AddressOwnerType
+	ownerId: ID!
+	customerId: ID
+	metadata: JSON
+}
+
+"""
+What a caller may change on an address that exists.
+
+Every member is optional, and the owner pair is among them: an address legitimately moves from one
+warehouse to another, and the service re-runs the owner-consistency check and the default rule on the
+new owner's book when it does.
+"""
+input UpdateAddressInput {
+	id: ID!
+	organizationId: ID!
+	label: String
+	contactName: String
+	company: String
+	firstName: String
+	lastName: String
+	phone: String
+	email: String
+	line1: String
+	line2: String
+	city: String
+	province: String
+	provinceCode: String
+	postalCode: String
+	countryCode: String
+	countryId: ID
+	latitude: Float
+	longitude: Float
+	isDefaultShipping: Boolean
+	isDefaultBilling: Boolean
+	ownerType: AddressOwnerType
+	ownerId: ID
+	customerId: ID
+	metadata: JSON
+}
+
+"""
+The role a default operation names, and which way the fact moves.
+
+One input for both directions because the fact is one: the address either becomes the party's default
+for the role or stops being it, and a client that had to choose between two root fields would be
+choosing a spelling rather than a capability. `isDefault` defaults to true, so the common call states
+only the role.
+"""
+input SetDefaultAddressInput {
+	id: ID!
+	role: AddressRoleEnum!
+	isDefault: Boolean
+}

@@ -1,0 +1,60 @@
+# The email reset domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The domain is served by `/api/email-reset`, whose controller declares two routes — both of them
+# `POST`s — and inherits none: asking for the address on an account to be changed, and presenting the
+# code that was mailed to the new address. Both are mirrored below, and they are the whole of the
+# surface, because a `POST` is the only thing either route is.
+#
+# **The two fields are named for the resource rather than for the route's own spelling.** The routes
+# spell the operation out — `request-change-email` and `verify-change-email` — while the row both of them
+# leave behind, and the controller, the service and the module around it, are all called the email reset.
+# A field is named for the concept, and the route it mirrors is stated on the field itself.
+#
+# **There is deliberately no read here, and that is a statement rather than an omission.** This
+# controller declares no list, no node and no count, and the service method that reads a reset record is
+# reached by the verification itself rather than by a route of its own. A field with no route behind it
+# would be a capability REST does not serve, which is the same defect as a route without a field, only in
+# the other direction. The reset row is an internal record of an attempt, and neither protocol exposes it.
+#
+# **The guard chain and the permission are the controller's.** The class carries `TenantPermissionGuard`
+# and `PermissionGuard`, and its permission pair is stated on the class rather than on either handler —
+# so both routes run under both permissions, and both fields here state the same pair rather than
+# narrowing one of them to whichever of the two reads as the obvious fit. Which of the two grants a
+# caller needs is the guard's question, asked against the same metadata on both protocols.
+#
+# **The acknowledgement is the answer.** Both routes answer the same shape with the same values whatever
+# they did, so both fields answer `EmailResetOutcome` rather than a boolean: "the request was received"
+# and "the address was changed" are different facts, and only the first of them is one this surface —
+# or the REST one — tells a caller.
+
+extend type Mutation {
+	"""
+	Asks for the address on the caller's own account to be changed, and mails a code to the new address.
+
+	The same service method the delivered route calls, with the same language: the route reads the
+	`language` request header, `RequestContext.getLanguageCode()` reads the same header off the same
+	request, and the mailed message is written in it.
+
+	The answer says the request was received and says nothing else — not whether the address was already
+	taken, not whether the mail went out. A caller that learns either of those from this answer has
+	learned it about an address that may not be its own, which is what the delivered handler's own
+	`finally` prevents.
+	"""
+	requestEmailReset(input: RequestEmailResetInput!): EmailResetOutcome!
+
+	"""
+	Presents the code mailed to the new address.
+
+	The same service method the delivered route calls. The account and the address it is being changed
+	from are read from the credential rather than stated, so the code is matched against the caller's own
+	attempt.
+
+	The answer is the same acknowledgement the request answers with, and for the same reason: the
+	delivered handler answers it in a `finally`, so a caller cannot use this field to find out whether a
+	code was live, whether it matched, or whether the address had meanwhile been taken by somebody else.
+	"""
+	verifyEmailReset(input: VerifyEmailResetInput!): EmailResetOutcome!
+}

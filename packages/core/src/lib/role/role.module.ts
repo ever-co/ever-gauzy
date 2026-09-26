@@ -6,6 +6,7 @@ import { Role } from './role.entity';
 import { RoleService } from './role.service';
 import { RoleAuthorizationService } from './role-authorization.service';
 import { RoleController } from './role.controller';
+import { RoleEntityResolver } from './role-entity.resolver';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
@@ -19,7 +20,18 @@ import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 		forwardRef(() => RolePermissionModule)
 	],
 	controllers: [RoleController],
-	providers: [RoleService, RoleAuthorizationService, TypeOrmRoleRepository, MikroOrmRoleRepository, ...CommandHandlers],
-	exports: [RoleService, RoleAuthorizationService, TypeOrmRoleRepository, MikroOrmRoleRepository]
+	// The GraphQL resolver is declared here rather than in the module that hosts the resolvers,
+	// because a resolver is an ordinary provider: it can only inject what its own module can reach.
+	// Declaring it beside the service it calls is what makes `RoleService` injectable into it, and
+	// the resolver host imports this module for exactly that reason.
+	providers: [
+		RoleService,
+		RoleAuthorizationService,
+		RoleEntityResolver,
+		TypeOrmRoleRepository,
+		MikroOrmRoleRepository,
+		...CommandHandlers
+	],
+	exports: [RoleService, RoleAuthorizationService, RoleEntityResolver, TypeOrmRoleRepository, MikroOrmRoleRepository]
 })
 export class RoleModule {}

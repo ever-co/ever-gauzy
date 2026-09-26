@@ -29,7 +29,7 @@ export class ImportHistory extends TenantBaseEntity implements IImportHistory {
 	@ApiProperty({ type: () => String, enum: ImportStatusEnum })
 	@IsNotEmpty()
 	@IsEnum(ImportStatusEnum)
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	status: ImportStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })

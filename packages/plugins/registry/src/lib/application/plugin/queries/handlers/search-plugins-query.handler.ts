@@ -1,12 +1,9 @@
 import { IPagination, IPlugin } from '@gauzy/contracts';
-import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
+import { MultiORMEnum } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginService } from '../../../../domain';
 import { PLUGIN_SORTABLE_FIELDS, PLUGIN_SORT_DIRECTIONS, PluginSearchFilterDTO } from '../../../../shared';
 import { SearchPluginsQuery } from '../search-plugins.query';
-
-// Get the type of the Object-Relational Mapping (ORM) used in the application.
-const ormType: MultiORM = getORMType();
 
 /**
  * Query handler for searching and filtering plugins with advanced criteria
@@ -74,7 +71,13 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 
 		const isArray = Array.isArray(relations);
 
-		switch (ormType) {
+		// The ORM the plugin service runs on, not `DB_ORM`: each arm reads that service's own repository, and the
+		// registry's tables are read through TypeORM under either ORM (see `REGISTRY_ORM_TYPE`). Deciding by
+		// `DB_ORM` sent the search to the MikroORM arm under `DB_ORM=mikro-orm`, which answers raw Knex rows —
+		// without the relations it was asked for, and without the download count, latest version and
+		// installation state `PluginSubscriber.afterLoad` computes on a TypeORM load. Under `DB_ORM=typeorm`
+		// both answers are TypeORM.
+		switch (this.pluginService.ormType) {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for the complex search query
 				const knex = (this.pluginService.mikroOrmPluginRepository as any).getKnex();

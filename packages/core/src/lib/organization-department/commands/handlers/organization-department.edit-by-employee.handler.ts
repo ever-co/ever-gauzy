@@ -1,7 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationDepartmentEditByEmployeeCommand } from '../organization-department.edit-by-employee.command';
 import { OrganizationDepartmentService } from '../../organization-department.service';
-import { UpdateEntityByMembersHandler } from '../../../shared/handlers';
+// Imported from its own module rather than from the `shared/handlers` barrel: the barrel reaches
+// `core/index.ts`, which reaches `core.module`, which imports every domain module including this one — so
+// entering the graph here yields an undefined base class and the suite fails to load.
+import { UpdateEntityByMembersHandler } from '../../../shared/handlers/update-entity.by-member.handler';
 
 @CommandHandler(OrganizationDepartmentEditByEmployeeCommand)
 export class OrganizationDepartmentEditByEmployeeHandler

@@ -1,0 +1,124 @@
+# The approval policy domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **Each field states the permission its own route runs under, and the controller's metadata is where
+# that permission was read.** The delivered controller states `APPROVAL_POLICY_EDIT` on the class and
+# `APPROVAL_POLICY_VIEW` on each of the three read routes it declares; of the routes it inherits from
+# the CRUD base, none states a permission of its own, so every one of them runs under the class-level
+# edit permission. `approvalPolicy` is therefore narrower than `approvalPolicies` — reading one policy
+# costs the edit grant while listing them costs the view grant — and that is the controller's decision,
+# not this delivery's to widen: a field that stated the view permission because it reads would serve a
+# caller the REST route refuses, which is the asymmetry the two-protocol rule forbids in the other
+# direction.
+#
+# Every field below is one the delivered `/api/approval-policy` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is offered because the delivered list
+# route offers it: `BaseQueryDTO` carries it and that route hands its query string straight to the same
+# read, so a REST caller can ask for withdrawn policies and a connection that could not would hide them.
+# The `relations` a REST caller may name are absent because this read names none.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination`, each stating the view
+# permission on its own handler — and the two answer the same rows under the same filters, one of them
+# sliced by `take`/`skip` and the other not. That is one capability, so it is one root field:
+# `approvalPolicies`, mirroring `GET /`, which is the route that reads the whole filtered set the
+# connection protocol is applied to. A second root field for the paginated spelling would be a second
+# surface that could disagree with this one, and the connection's own `limit`/`offset` already are the
+# page it performs.
+#
+# **`GET /request-approval` is not a root field of its own.** Its reader selects the policies whose
+# `approvalType` is neither `TIME_OFF` nor `EQUIPMENT_SHARING`, which is a condition on a column every
+# row of this connection carries, so the capability is exactly `approvalPolicies` narrowed by
+# `approvalType: { nin: ["TIME_OFF", "EQUIPMENT_SHARING"] }`. It joins no pivot the list read does not
+# join, so a second root field would be the same read under another name — and two names for one read
+# are two surfaces that can disagree about which rows a request form may offer.
+#
+# `approvalPolicyCount` takes no filter, and that is a statement rather than an omission. The inherited
+# count route passes its query string through as the store's own `where`, which the connection protocol
+# does not speak; a `filter` argument here would either be handed to a service call that cannot accept
+# it or be evaluated over a second code path that could disagree with the connection's `totalCount`.
+# What it answers is the count of the caller's own rows, which is the call the route makes when it is
+# given no options.
+
+extend type Query {
+	"""
+	The approval policies of the caller's tenant, newest first.
+
+	Narrowed by `approvalType: { nin: ["TIME_OFF", "EQUIPMENT_SHARING"] }` this is the read the
+	delivered `GET /request-approval` route serves: the policies an approval request may be filed
+	under.
+	"""
+	approvalPolicies(
+		filter: ApprovalPolicyFilter
+		sort: [ApprovalPolicySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): ApprovalPolicyConnection!
+
+	"""
+	One approval policy of the caller's tenant, or null when there is none.
+
+	This field carries the edit permission, not the view permission its read siblings carry, because
+	the delivered `GET /:id` route carries it: the route is inherited from the base controller without
+	a permission of its own, so the controller's class-level edit permission is the one it runs under.
+	Stating anything else here would widen GraphQL past REST on a route the controller decided.
+	"""
+	approvalPolicy(id: ID!): ApprovalPolicy
+
+	"""
+	How many approval policies the caller's tenant records. Carries the edit permission, for the reason
+	`approvalPolicy` states: the inherited count route declares none of its own.
+	"""
+	approvalPolicyCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a policy for one organization.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
+	and the code the platform matches on is derived from the label rather than stated — see
+	`CreateApprovalPolicyInput`.
+	"""
+	createApprovalPolicy(input: CreateApprovalPolicyInput!): ApprovalPolicy!
+
+	"""
+	Renames a policy, or rewrites the note beside its label.
+
+	The command the delivered route dispatches carries the path identifier beside the body, and this
+	field dispatches the same pair. The code is derived from the label again, so renaming a policy
+	renames the code the platform matches on; a member the caller leaves out is written as the column's
+	default rather than left as it is, because the delivered update assigns every member it holds.
+	"""
+	updateApprovalPolicy(input: UpdateApprovalPolicyInput!): ApprovalPolicy!
+
+	"""
+	Removes a policy outright. The answer says whether the removal happened rather than returning the
+	removed row, because the delivered route answers the store's delete result.
+	"""
+	deleteApprovalPolicy(id: ID!): Boolean!
+
+	"""
+	Withdraws a policy without removing it: the row keeps its identifier and the delivered list stops
+	answering it, while the requests already filed under it keep their history.
+	"""
+	softDeleteApprovalPolicy(id: ID!): ApprovalPolicy!
+
+	"""
+	Puts a withdrawn policy back, clearing the marker the withdrawal set.
+	"""
+	recoverApprovalPolicy(id: ID!): ApprovalPolicy!
+}

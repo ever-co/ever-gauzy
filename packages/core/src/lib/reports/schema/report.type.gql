@@ -1,0 +1,240 @@
+# The report catalogue's GraphQL types.
+#
+# A report is a catalogue row rather than an organization's record: the name, the slug, the icon and
+# the image of a report this platform knows how to build, seeded once and shared by every
+# installation. Convenience of reading is the whole point of the row — the report itself is built
+# from the domain that owns its facts — so what a client reads here is the menu it can offer, not the
+# rows a report would aggregate.
+#
+# The menu is the second type. `ReportOrganization` is the per-organization row that says whether
+# *this* organization shows the report, and the pair is why both types are declared in one file: a
+# report is global and its visibility is not, and a client that reads the catalogue without that
+# distinction would offer every organization every report.
+#
+# `showInMenu` is the member that joins the two, and it is **computed rather than read**. The
+# delivered list joins the calling organization's menu rows and answers `true` on exactly the reports
+# that have an enabled, active and unarchived one, so the value the table happens to hold is not the
+# answer. It is carried, and it is `Boolean!` rather than nullable, because the one read that answers
+# these rows sets it on every row it returns — and because it is the member the menu sub-route is
+# expressed as a filter of, see `report.api.gql`.
+#
+# `reportOrganizations` is deliberately absent. The delivered reader deletes the collection in the
+# same step it copies `showInMenu` out of it, so a member for it would be null on precisely the rows
+# this surface answers and present only on rows no delivered read returns — the failure mode the
+# catalogue's other surfaces avoid by carrying the scalar and leaving the collection to the type that
+# owns it. The menu row is read as `updateReportMenu`'s own answer.
+#
+# `deletedAt`, `isArchived` and the audit-user columns are absent too: no route of this resource
+# delivers a withdrawal — the report controller serves no `DELETE` at all — so the lifecycle marker is
+# a column nothing on this surface can observe changing, and the audit stamps are columns no reader
+# of a catalogue menu acts on.
+
+"""
+One report of the platform's catalogue: what a client offers, and whether this organization shows it.
+"""
+type Report {
+	id: ID!
+	"The report's display name, as the navigation prints it."
+	name: String
+	"The URL-safe identity of the report, and how a route addresses it."
+	slug: String
+	"One line describing what the report answers."
+	description: String
+	"The stored image key. `imageUrl` is the URL a client renders."
+	image: String
+	"The URL the delivered subscriber resolves from `image` as the row is loaded."
+	imageUrl: String
+	"The icon class the navigation renders beside the name."
+	iconClass: String
+	"""
+	Whether the calling organization's menu shows this report.
+
+	Computed by the delivered read from the organization's own menu row: `true` means an enabled,
+	active and unarchived menu row exists for it, and `false` means none does — including the case
+	where the caller named no organization at all, which is the answer the route gives that same
+	query string.
+	"""
+	showInMenu: Boolean!
+	"The category the report is filed under, by identifier. The categories are `reportCategories`."
+	categoryId: ID
+	"Whether the catalogue row is active. No route of this resource writes it."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+One category of the report catalogue: the heading a group of reports is listed under.
+"""
+type ReportCategory {
+	id: ID!
+	"The heading's display name."
+	name: String
+	"The icon class the navigation renders beside the heading."
+	iconClass: String
+	"Whether the catalogue row is active. No route of this resource writes it."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+One organization's menu row for one report: the pair that decides whether the report is offered.
+
+A row is not a report and not an organization — it is the membership between them, and it carries the
+flag the report list reads to compute `showInMenu`.
+"""
+type ReportOrganization {
+	id: ID!
+	"The report this menu row is about."
+	reportId: ID
+	"Whether the report is switched on in the organization's menu."
+	isEnabled: Boolean
+	tenantId: ID
+	organizationId: ID
+	"Whether the menu row is active. It is one of the conditions the report list reads."
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of reports.
+"""
+type ReportEdge {
+	node: Report!
+	cursor: String!
+}
+
+"""
+One page of reports, with the total the filters select and the boundary cursors.
+"""
+type ReportConnection {
+	nodes: [Report!]!
+	edges: [ReportEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The boundary of one page of report categories.
+"""
+type ReportCategoryEdge {
+	node: ReportCategory!
+	cursor: String!
+}
+
+"""
+One page of report categories, with the total the filters select and the boundary cursors.
+"""
+type ReportCategoryConnection {
+	nodes: [ReportCategory!]!
+	edges: [ReportCategoryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a report list may be sorted by.
+"""
+enum ReportSortField {
+	createdAt
+	updatedAt
+	name
+	slug
+}
+
+"""
+The order the reports are returned in. At most three keys are accepted.
+"""
+input ReportSort {
+	field: ReportSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a category list may be sorted by.
+"""
+enum ReportCategorySortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the categories are returned in. At most three keys are accepted.
+"""
+input ReportCategorySort {
+	field: ReportCategorySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a report list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`showInMenu` is filterable because that is how the delivered menu sub-route is expressed here: the
+reports the menu shows are this one list narrowed to `showInMenu: { eq: true }`, which is the same
+selection the menu route performs with its own join rather than a second root field over the same
+rows.
+
+There is no member for the organization. The catalogue row carries no organization column — the
+organization is a dimension of the *menu* row — so an organization filter here could only be
+evaluated against a member the row does not have; the organization is an argument of the root field,
+see `report.api.gql`.
+"""
+input ReportFilter {
+	id: IDFilter
+	name: StringFilter
+	slug: StringFilter
+	description: StringFilter
+	image: StringFilter
+	imageUrl: StringFilter
+	iconClass: StringFilter
+	showInMenu: BooleanFilter
+	categoryId: IDFilter
+	isActive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ReportFilter!]
+	or: [ReportFilter!]
+	not: ReportFilter
+}
+
+"""
+The fields a category list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+"""
+input ReportCategoryFilter {
+	id: IDFilter
+	name: StringFilter
+	iconClass: StringFilter
+	isActive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ReportCategoryFilter!]
+	or: [ReportCategoryFilter!]
+	not: ReportCategoryFilter
+}
+
+"""
+What a caller states when it switches a report on or off in an organization's menu.
+
+`reportId` and `organizationId` are required because the delivered write requires them: it looks the
+menu row up by that pair and answers `400` for a body that names neither, and stating them here is
+what keeps a caller from issuing a request that cannot succeed.
+
+The tenant is deliberately **not** a member. The delivered write resolves it from the credential and
+falls back to the body, then builds the row it saves from that same body — so a caller-stated tenant
+would be a way to write another tenant's menu row through a surface that never asked for one. The
+route accepts such a body only because its body is unvalidated; this surface states the members the
+write is for.
+"""
+input UpdateReportMenuInput {
+	"The report whose menu row is being switched."
+	reportId: ID!
+	"The organization whose menu is being written."
+	organizationId: ID!
+	"Whether the report is shown. Omit it to leave the row's own value as it is."
+	isEnabled: Boolean
+}

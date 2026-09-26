@@ -68,12 +68,28 @@ describe('worker AppModule', () => {
 	 * The consuming side of the split introduced with the API's producer-only root. The API
 	 * registers `{ enabled: false, enableQueueing: true }`; the worker must register BOTH halves,
 	 * or the queue fills up with nothing draining it and the reconcile cron never fires.
+	 *
+	 * **The environment this asserts about is stated here rather than inherited.** Both halves are
+	 * read from `process.env` when `worker.constants.ts` is first evaluated, so a developer whose
+	 * `.env.local` says `WORKER_QUEUE_ENABLED=false` — the ordinary state on a machine with no
+	 * Redis, and this repository ships that line — was failing a test about *wiring* with an answer
+	 * about *deployment*. The module is isolated and re-imported with the values the case is about,
+	 * so the assertion is the same one it always was and no longer depends on whose machine runs it.
 	 */
-	it('registers a BullMQ root with BOTH queueing and the job runner enabled', () => {
-		const [options] = (SchedulerModule.forRoot as jest.Mock).mock.calls.at(-1) ?? [];
+	it('registers a BullMQ root with BOTH queueing and the job runner enabled', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+		process.env.WORKER_SCHEDULER_ENABLED = 'true';
 
-		expect(options.enableQueueing).toBe(true);
-		expect(options.enabled).toBe(true);
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+			const [options] = (SchedulerModule.forRoot as jest.Mock).mock.calls.at(-1) ?? [];
+
+			// A control first: the isolated module is the real one, so the options below are its own.
+			expect(order.some((imported) => imported?.module === PluginModule)).toBe(true);
+			expect(options.enableQueueing).toBe(true);
+			expect(options.enabled).toBe(true);
+		});
 	});
 
 	it('declares the scheduler root BEFORE PluginModule, so plugin queues find a root', () => {

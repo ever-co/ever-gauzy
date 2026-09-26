@@ -1,0 +1,130 @@
+# The membership's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/user-organization` routes already serve, under the same
+# guard chain and with the same scope, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. The controller
+# declares three routes of its own — the list, the removal and the per-person organization count — and
+# inherits the rest from the CRUD base: the paginated list, the caller's own count, one membership, the
+# creation, the edit and the two lifecycle moves. Every one of them is mirrored here except the
+# paginated list, whose page is what the connection answers with.
+#
+# **No route of this resource carries a permission, so no field below states one.** The controller
+# carries `TenantPermissionGuard` at class level and states no `@Permissions` anywhere — not on its own
+# three routes and not on any of the routes it inherits — so every route it serves is tenant-guarded
+# and otherwise unpermissioned, and the resolver class carries the same guard. A field that demanded a
+# permission here would refuse a caller the REST route serves, and one that demanded less would be a
+# way round the tenancy the guard establishes. Tightening the resource is a change to make in both
+# places at once; it is not this delivery's to make.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `GET /pagination` has no field of its own: it answers
+# the same rows under the same filters, sliced, and the page is what the connection answers with. The
+# count does have one, and it is a bare nullable `Int`: a number is not a connection, and `totalCount`
+# is not that number — it counts the rows the connection narrowed to, while the count route counts the
+# caller's own rows.
+#
+# **The delivered list route's `includeEmployee` is not an argument here, and its absence is stated
+# rather than an argument that quietly does nothing.** The route attaches each row's employee to the
+# user it joins when the flag is set; this surface's type carries no employee member and no `Employee`
+# type exists in this schema to answer one with. The employee a person is, is read from the employee
+# domain by `userId`, which is where the delivered join starts from too.
+#
+# The per-person count is a field of its own rather than a filter on the connection, because it is not
+# a list: the delivered route reads one membership by its identifier and answers a number, and folding
+# it into a connection would mean a filter whose answer is an aggregate.
+
+extend type Query {
+	"""
+	The memberships of the caller's tenant, newest first.
+	"""
+	userOrganizations(
+		filter: UserOrganizationFilter
+		sort: [UserOrganizationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): UserOrganizationConnection!
+
+	"""
+	One membership of the caller's tenant, or null when there is none.
+	"""
+	userOrganization(id: ID!): UserOrganization
+
+	"""
+	How many memberships the caller's tenant holds.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+	query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	userOrganizationCount: Int
+
+	"""
+	How many organizations the person of one membership belongs to.
+
+	The delivered route takes the membership's identifier, reads the row, and counts the live
+	memberships the account it names holds — so the answer is a fact about the person, asked from the
+	membership, which is why it is a field of its own and not a filter on the connection above. A
+	membership that is not there is refused rather than answered as a zero: the delivered route raises
+	instead of returning, and this field carries the same refusal through rather than flattening a
+	missing row into a count of nothing.
+	"""
+	userOrganizationOrganizationsCount(userOrganizationId: ID!): Int
+}
+
+extend type Mutation {
+	"""
+	Puts a person inside an organization.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
+	so a membership cannot be written into a tenant the caller is not acting in. Both identifiers are
+	required: a membership is the pivot between exactly two rows.
+	"""
+	createUserOrganization(input: CreateUserOrganizationInput!): UserOrganization!
+
+	"""
+	Changes the flags of a membership that exists.
+
+	The delivered edit is a partial column update against the identifier the path names, so a member the
+	caller leaves out is left as it is. The answer is the row the write produced, read back through the
+	same service: the delivered route answers the store's own update result — a statement about the
+	write — which is not a row and not what a field named `updateUserOrganization` may return.
+	"""
+	updateUserOrganization(input: UpdateUserOrganizationInput!): UserOrganization!
+
+	"""
+	Removes a person from an organization.
+
+	The same command the REST route dispatches, and the delivered handler is deliberately more than a
+	row deletion: it removes the person outright when this was their last membership, refuses the
+	platform's own default accounts in a demo environment, and reserves removing a super administrator
+	for a super administrator. None of that is restated here — the command is the whole of it on both
+	protocols.
+
+	Answering whether the removal happened rather than the removed row: which of the handler's two
+	outcomes occurred is not a row either way, and a client that needs the row reads it before the call.
+	"""
+	deleteUserOrganization(id: ID!): Boolean!
+
+	"""
+	Withdraws a membership without removing it: the row keeps its identifier, and the recovery below
+	reads it back. The answer is the row as it now stands, which is what the delivered route answers
+	with.
+	"""
+	softDeleteUserOrganization(id: ID!): UserOrganization!
+
+	"""
+	Puts a withdrawn membership back, clearing the marker the withdrawal set.
+	"""
+	recoverUserOrganization(id: ID!): UserOrganization!
+}

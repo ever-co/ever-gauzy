@@ -15,9 +15,21 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		super(typeOrmProductVariantRepository, mikroOrmProductVariantRepository);
 	}
 
+	/**
+	 * Reads every variant of the caller's tenant, with the three rows a caller reads a variant for.
+	 *
+	 * **The relation is `setting`, singular**, and the plural spelling this method carried answered
+	 * `500 Property "settings" was not found in "ProductVariant"` for every caller of
+	 * `GET /api/product-variants`: the entity declares a one-to-one to `ProductVariantSetting` under the
+	 * singular name, so a relation that names nothing is a list route that cannot be read at all. The
+	 * sweep in `tools/scripts/commerce-e2e.mjs` now reads this route for that reason — a resource that is
+	 * mounted and unreadable is exactly what a sweep looking for mounted resources does not see.
+	 *
+	 * @returns The variants, with their setting, their price and their image.
+	 */
 	async findAllProductVariants(): Promise<IPagination<IProductVariant>> {
 		return this.findAll({
-			relations: ['settings', 'price', 'image']
+			relations: ['setting', 'price', 'image']
 		});
 	}
 

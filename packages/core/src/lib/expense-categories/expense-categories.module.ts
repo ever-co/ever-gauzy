@@ -6,6 +6,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { ExpenseCategory } from './expense-category.entity';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategoriesController } from './expense-categories.controller';
+import { ExpenseCategoriesResolver } from './expense-categories.resolver';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmExpenseCategoryRepository } from './repository/type-orm-expense-category.repository';
 import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-category.repository';
@@ -20,6 +21,9 @@ import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expens
 	controllers: [ExpenseCategoriesController],
 	providers: [
 		ExpenseCategoriesService,
+		// The GraphQL surface is declared beside the service it calls, so the host that scans this
+		// module for resolvers reaches everything the resolver injects.
+		ExpenseCategoriesResolver,
 		TypeOrmExpenseCategoryRepository,
 		MikroOrmExpenseCategoryRepository,
 		...CommandHandlers

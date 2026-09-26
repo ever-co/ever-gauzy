@@ -1,0 +1,222 @@
+# The organization task setting's object type.
+#
+# A task setting is the row that decides how the task tracker behaves inside one organization: whether
+# tasks carry privacy, whether they take more than one assignee, whether they may be estimated in hours
+# or in story points, whether a completion needs proof, what has to be commented, linked, accepted and
+# drafted, and how long before a task is notified, closed and archived. It is not a list of settings —
+# it is one row per organization, which is why this domain has no list root field: the delivered
+# controller serves a read by organization, a create and an edit, and nothing else.
+#
+# **The row may be scoped more narrowly than the organization.** `projectId` and `organizationTeamId`
+# are both nullable: a row with neither is the organization's own answer, and a row that names one is
+# that project's or that team's. The read the delivered route performs resolves the organization's row
+# by organization, tenant and the two lifecycle flags — so a row scoped to a project or a team is
+# written by the same create and read by whoever names that scope, not by this field.
+#
+# `tasksProofOfCompletionType` is carried as its value rather than declared as an enum. Its vocabulary
+# is the shared constants' `TaskProofOfCompletionTypeEnum`, which types the column; SDL cannot reference
+# a TypeScript enum, and a second declaration here would be a value set this domain does not own.
+#
+# The two relations are carried as identifiers. `project` and `organizationTeam` are joined only when a
+# REST caller names them in its query string, and the delivered read names none — so a member here
+# would always answer null, while the identifiers are columns of the row.
+
+"""
+The row that decides how the task tracker behaves inside one organization.
+"""
+type OrganizationTaskSetting {
+	id: ID!
+	"Whether tasks carry privacy features, such as restricted visibility."
+	isTasksPrivacyEnabled: Boolean!
+	"Whether a task may be assigned to more than one person."
+	isTasksMultipleAssigneesEnabled: Boolean!
+	"Whether time may be recorded on a task by hand rather than by timer."
+	isTasksManualTimeEnabled: Boolean!
+	"Whether a task may be estimated collectively by a group."
+	isTasksGroupEstimationEnabled: Boolean!
+	"Whether a task may be estimated in hours."
+	isTasksEstimationInHoursEnabled: Boolean!
+	"Whether a task may be estimated in story points."
+	isTasksEstimationInStoryPointsEnabled: Boolean!
+	"Whether a task's completion may require proof."
+	isTasksProofOfCompletionEnabled: Boolean!
+	"""
+	What kind of proof a completion requires. Carried as its own value rather than declared as an enum:
+	the vocabulary is the shared constants' `TaskProofOfCompletionTypeEnum`, which types the column.
+	"""
+	tasksProofOfCompletionType: String!
+	"Whether tasks may be linked to one another."
+	isTasksLinkedEnabled: Boolean!
+	"Whether a task accepts comments."
+	isTasksCommentsEnabled: Boolean!
+	"Whether changes to a task are recorded for later reference."
+	isTasksHistoryEnabled: Boolean!
+	"Whether a task may state acceptance criteria for its completion."
+	isTasksAcceptanceCriteriaEnabled: Boolean!
+	"Whether a task may be saved as a draft before it is published."
+	isTasksDraftsEnabled: Boolean!
+	"Whether a notification is sent as a task's due date approaches."
+	isTasksNotifyLeftEnabled: Boolean!
+	"How many days before its due date a task is notified about."
+	tasksNotifyLeftPeriodDays: Int!
+	"Whether a task is closed automatically after a period."
+	isTasksAutoCloseEnabled: Boolean!
+	"How many days after it is filed a task is closed automatically."
+	tasksAutoClosePeriodDays: Int!
+	"Whether a task is archived automatically after a period."
+	isTasksAutoArchiveEnabled: Boolean!
+	"How many days after it is filed a task is archived automatically."
+	tasksAutoArchivePeriodDays: Int!
+	"Whether a task's status is updated automatically."
+	isTasksAutoStatusEnabled: Boolean!
+	"""
+	The project this row is scoped to, when it is scoped more narrowly than the organization. The
+	project is not joined by the delivered read, so the identifier is carried rather than a member that
+	would answer null.
+	"""
+	projectId: ID
+	"""
+	The team this row is scoped to, when it is scoped more narrowly than the organization. The team is
+	not joined by the delivered read, so the identifier is carried rather than a member that would
+	answer null.
+	"""
+	organizationTeamId: ID
+	"The organization the row answers for, by identifier."
+	organizationId: ID
+	"The tenant the row belongs to, by identifier."
+	tenantId: ID
+	"When the row was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	"When the row was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the row was filed."
+	createdAt: DateTime
+	"When the row was last changed."
+	updatedAt: DateTime
+	"Whether the row is active. The delivered read answers active rows only."
+	isActive: Boolean
+	"Whether the row is archived. The delivered read answers unarchived rows only."
+	isArchived: Boolean
+	"The person who filed the row, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the row, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the row, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+What a caller states when it files the settings for an organization.
+
+Every setting is optional, because the columns behind them all carry a default: a body that states none
+of them files a row with the platform's own defaults, which is what an organization that never opened
+this screen already runs on. The organization is required — the delivered read and the delivered write
+both address a task setting by the organization it answers for.
+
+The object spelling of the organization the delivered body also accepts is not offered: a write names
+the row it is scoped to by identifier, and the tenant is stamped from the credential rather than
+stated.
+"""
+input CreateOrganizationTaskSettingInput {
+	organizationId: ID!
+	"Whether tasks carry privacy features, such as restricted visibility."
+	isTasksPrivacyEnabled: Boolean
+	"Whether a task may be assigned to more than one person."
+	isTasksMultipleAssigneesEnabled: Boolean
+	"Whether time may be recorded on a task by hand rather than by timer."
+	isTasksManualTimeEnabled: Boolean
+	"Whether a task may be estimated collectively by a group."
+	isTasksGroupEstimationEnabled: Boolean
+	"Whether a task may be estimated in hours."
+	isTasksEstimationInHoursEnabled: Boolean
+	"Whether a task may be estimated in story points."
+	isTasksEstimationInStoryPointsEnabled: Boolean
+	"Whether a task's completion may require proof."
+	isTasksProofOfCompletionEnabled: Boolean
+	"What kind of proof a completion requires. The vocabulary is the shared constants' own."
+	tasksProofOfCompletionType: String
+	"Whether tasks may be linked to one another."
+	isTasksLinkedEnabled: Boolean
+	"Whether a task accepts comments."
+	isTasksCommentsEnabled: Boolean
+	"Whether changes to a task are recorded for later reference."
+	isTasksHistoryEnabled: Boolean
+	"Whether a task may state acceptance criteria for its completion."
+	isTasksAcceptanceCriteriaEnabled: Boolean
+	"Whether a task may be saved as a draft before it is published."
+	isTasksDraftsEnabled: Boolean
+	"Whether a notification is sent as a task's due date approaches."
+	isTasksNotifyLeftEnabled: Boolean
+	"How many days before its due date a task is notified about."
+	tasksNotifyLeftPeriodDays: Int
+	"Whether a task is closed automatically after a period."
+	isTasksAutoCloseEnabled: Boolean
+	"How many days after it is filed a task is closed automatically."
+	tasksAutoClosePeriodDays: Int
+	"Whether a task is archived automatically after a period."
+	isTasksAutoArchiveEnabled: Boolean
+	"How many days after it is filed a task is archived automatically."
+	tasksAutoArchivePeriodDays: Int
+	"Whether a task's status is updated automatically."
+	isTasksAutoStatusEnabled: Boolean
+	"The project to scope the row to, when it is scoped more narrowly than the organization."
+	projectId: ID
+	"The team to scope the row to, when it is scoped more narrowly than the organization."
+	organizationTeamId: ID
+}
+
+"""
+What a caller states when it edits the settings of an organization.
+
+The delivered edit body is the same body the create validates — every setting is optional and the
+organization is stated — and the identifier is carried in the path, so it is the one member stated
+outside the body here too.
+"""
+input UpdateOrganizationTaskSettingInput {
+	id: ID!
+	organizationId: ID!
+	"Whether tasks carry privacy features, such as restricted visibility."
+	isTasksPrivacyEnabled: Boolean
+	"Whether a task may be assigned to more than one person."
+	isTasksMultipleAssigneesEnabled: Boolean
+	"Whether time may be recorded on a task by hand rather than by timer."
+	isTasksManualTimeEnabled: Boolean
+	"Whether a task may be estimated collectively by a group."
+	isTasksGroupEstimationEnabled: Boolean
+	"Whether a task may be estimated in hours."
+	isTasksEstimationInHoursEnabled: Boolean
+	"Whether a task may be estimated in story points."
+	isTasksEstimationInStoryPointsEnabled: Boolean
+	"Whether a task's completion may require proof."
+	isTasksProofOfCompletionEnabled: Boolean
+	"What kind of proof a completion requires. The vocabulary is the shared constants' own."
+	tasksProofOfCompletionType: String
+	"Whether tasks may be linked to one another."
+	isTasksLinkedEnabled: Boolean
+	"Whether a task accepts comments."
+	isTasksCommentsEnabled: Boolean
+	"Whether changes to a task are recorded for later reference."
+	isTasksHistoryEnabled: Boolean
+	"Whether a task may state acceptance criteria for its completion."
+	isTasksAcceptanceCriteriaEnabled: Boolean
+	"Whether a task may be saved as a draft before it is published."
+	isTasksDraftsEnabled: Boolean
+	"Whether a notification is sent as a task's due date approaches."
+	isTasksNotifyLeftEnabled: Boolean
+	"How many days before its due date a task is notified about."
+	tasksNotifyLeftPeriodDays: Int
+	"Whether a task is closed automatically after a period."
+	isTasksAutoCloseEnabled: Boolean
+	"How many days after it is filed a task is closed automatically."
+	tasksAutoClosePeriodDays: Int
+	"Whether a task is archived automatically after a period."
+	isTasksAutoArchiveEnabled: Boolean
+	"How many days after it is filed a task is archived automatically."
+	tasksAutoArchivePeriodDays: Int
+	"Whether a task's status is updated automatically."
+	isTasksAutoStatusEnabled: Boolean
+	"The project to scope the row to, when it is scoped more narrowly than the organization."
+	projectId: ID
+	"The team to scope the row to, when it is scoped more narrowly than the organization."
+	organizationTeamId: ID
+}

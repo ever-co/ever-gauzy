@@ -1,4 +1,3 @@
-import { isMySQL } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -21,7 +20,10 @@ import { PluginInstallation } from './plugin-installation.entity';
 import { PluginSource } from './plugin-source.entity';
 import { Plugin } from './plugin.entity';
 
-@Index(isMySQL ? ['pluginId', 'organizationId', 'number'] : ['pluginId', 'tenantId', 'organizationId', 'number'], {
+// The columns the marketplace migration (1766045577607) created this unique index on, on every dialect. The decorator
+// used to test `isMySQL` itself rather than call it, so the function (always truthy) chose these columns everywhere
+// and the migration was generated from that; naming them outright states the index the tables have.
+@Index(['pluginId', 'organizationId', 'number'], {
 	unique: true
 })
 @Index(['tenantId', 'organizationId'])

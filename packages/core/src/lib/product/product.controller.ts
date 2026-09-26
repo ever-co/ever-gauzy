@@ -15,10 +15,24 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { PermissionsEnum, IProductTranslated, IImageAsset, IPagination, LanguagesEnum, ID } from '@gauzy/contracts';
+import {
+	BulkExecutor,
+	BulkItemResult,
+	BulkOperation,
+	BulkResult,
+	IBulkItemContext
+} from './../api';
+import { Idempotent } from './../idempotency/idempotent.decorator';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
+import {
+	IBulkProductItem,
+	IBulkProductsRequest,
+	PRODUCT_BULK_REQUIRED_KEYS,
+	productBulkOptions
+} from './product.bulk';
 import { ProductCreateCommand, ProductUpdateCommand, ProductDeleteCommand } from './commands';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
@@ -29,7 +43,11 @@ import { CreateProductDTO, UpdateProductDTO } from './dto';
 @UseGuards(TenantPermissionGuard)
 @Controller('/products')
 export class ProductController extends CrudController<Product> {
-	constructor(private readonly productService: ProductService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly productService: ProductService,
+		private readonly commandBus: CommandBus,
+		private readonly bulkExecutor: BulkExecutor
+	) {
 		super(productService);
 	}
 
@@ -269,13 +287,20 @@ export class ProductController extends CrudController<Product> {
 	}
 
 	/**
-	 * GET product by id
+	 * GET product by id or slug
 	 *
-	 * @param id
+	 * The path carries one value and the resource decides which of the two things it names: an
+	 * identifier is read by identifier and anything else is read by slug, in the service, because
+	 * which column a value addresses is a fact about the resource and not about the transport that
+	 * carried it. The path shape is unchanged, so a client that already sends an identifier sends
+	 * exactly what it sent before, and the value that matches no product of the caller's scope is
+	 * answered with the platform's own not-found code whichever form it took.
+	 *
+	 * @param idOrSlug
 	 * @param data
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Find Product by id ' })
+	@ApiOperation({ summary: 'Find Product by id or slug ' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
@@ -283,20 +308,103 @@ export class ProductController extends CrudController<Product> {
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'RESOURCE_NOT_FOUND'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
-	@Get(':id')
+	@Get(':idOrSlug')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('idOrSlug') idOrSlug: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Product> {
 		const { relations = [], findInput = null } = data;
-		return this.productService.findOneByIdString(id, {
+		return this.productService.findOneByIdOrSlug(idOrSlug, {
 			relations,
 			where: findInput
 		});
+	}
+
+	/**
+	 * POST products in bulk
+	 *
+	 * One request applies a catalogue batch and answers one outcome per item: what applied, what did
+	 * not and the counts derived from both. The batch itself is the platform's — `@BulkOperation`
+	 * declares what this route accepts, the executor is configured from that declaration, and it
+	 * authorises the whole request once, refuses a batch it cannot read before writing anything, and
+	 * rolls an atomic batch back when one of its items fails. A second runner beside that one would be
+	 * a second answer to the same question, which is what the platform's bulk contract exists to
+	 * prevent.
+	 *
+	 * The items are applied through the service that owns the product's writes, and the transaction
+	 * the atomic case runs in is the service's own, so a batch produces the same rows, the same
+	 * refusals and the same authorisation answer as the items would one by one.
+	 *
+	 * `atomic` is the whole point of the flag: an atomic batch applies every item or none of them, and
+	 * a batch that is not atomic applies what it can and reports the rest.
+	 *
+	 * The route declares no body type: the batch's own checks — the cap, the unreadable item, the
+	 * member an item does not carry — belong to the executor, so a validation pipe here could only
+	 * refuse a request the contract already refuses, in a second vocabulary.
+	 *
+	 * @param request
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Create, update and archive products in bulk' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The batch was applied, with one outcome per item'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'The request or an item could not be read'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'An atomic batch was refused whole, naming the item that failed'
+	})
+	@ApiResponse({
+		status: HttpStatus.PAYLOAD_TOO_LARGE,
+		description: 'BULK_LIMIT_EXCEEDED'
+	})
+	@ApiResponse({
+		status: HttpStatus.UNPROCESSABLE_ENTITY,
+		description: 'BULK_ALL_ITEMS_FAILED'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.PRODUCTS_BULK_IMPORT)
+	@Idempotent({ scope: 'product.bulk', required: false, resourceType: 'product' })
+	@BulkOperation({
+		resource: 'product',
+		maxItems: 200,
+		permission: PermissionsEnum.PRODUCTS_BULK_IMPORT
+	})
+	@Post('/bulk')
+	async bulk(@Body() request: IBulkProductsRequest): Promise<BulkResult<IBulkProductItem>> {
+		return await this.bulkExecutor.execute<IBulkProductItem>(
+			request,
+			(item, context) => this.applyBulkItem(item, context),
+			productBulkOptions(ProductController, 'bulk', {
+				requiredKeys: PRODUCT_BULK_REQUIRED_KEYS,
+				transaction: this.productService.transaction
+			})
+		);
+	}
+
+	/**
+	 * Applies one item of a batch through the service that owns the product's writes.
+	 *
+	 * The route owns no write of its own: the item is handed on with the batch's transactional manager
+	 * exactly as the executor resolved it, and the outcome names the row that changed so a client can
+	 * match an answer to the row it asked about.
+	 *
+	 * @param item
+	 * @param context
+	 * @returns
+	 */
+	private async applyBulkItem(item: IBulkProductItem, context: IBulkItemContext): Promise<BulkItemResult> {
+		const product = await this.productService.applyBulkItem(item, context.manager);
+
+		return { index: context.index, id: product.id };
 	}
 
 	/**

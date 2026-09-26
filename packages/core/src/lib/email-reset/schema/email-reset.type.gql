@@ -1,0 +1,58 @@
+# The email reset's object types.
+#
+# This domain serves a request and its verification, and nothing else: a caller asks for the address on
+# its account to be changed, the platform mails a code to the new address, and the code is presented
+# back. There is no route that reads a reset record, no route that lists them and no route that edits
+# one — the row those two writes leave behind is an internal record of an attempt, and the delivered
+# controller does not expose it on either protocol.
+#
+# So the type below is not an entity shape. It is what both routes answer, and it is the only thing they
+# answer: an acknowledgement. There is deliberately no `EmailReset` object type beside it — a resolver's
+# name labels the domain it serves, while the shape its fields answer is this one, and a type declared
+# for a row no route returns would be an entity the schema claims and no read can produce.
+#
+# **`status` is the member the delivered routes put in the body, not the transport's response code.**
+# Both handlers answer `200` there while the verify route's transport answers `202`, because the body is
+# what the handler decided and the transport code is a decorator's. A client that read this member as
+# the response code would be reading the wrong one of the two.
+
+"""
+What the request and the verification both answer.
+
+The two members are always the same pair, and that is the design rather than an accident: the delivered
+handlers answer this shape in a `finally`, so a caller is told the request was received and is told
+nothing about what was done with it. A caller that could tell "the code was right" from "the code was
+wrong" by the answer alone could use this endpoint to probe which addresses exist and which codes are
+live, which is exactly what the shape exists to prevent.
+"""
+type EmailResetOutcome {
+	"The status the delivered handler states in the body: `200` on both routes."
+	status: Int!
+	"The message the delivered handler states in the body: `OK` on both routes."
+	message: String!
+}
+
+"""
+What a caller states when it asks for the address on its account to be changed.
+
+The subject of the request is not a member. Both delivered routes act on the caller — the user is read
+from the credential, never from the body — so an address is the only thing there is to state, and a
+member naming the account would promise a scope the write does not honour. The language the
+acknowledgement and the mailed code are written in is the request's own language rather than a member,
+exactly as the delivered route reads it from the `language` header.
+"""
+input RequestEmailResetInput {
+	"The address the account is to be changed to. The code is mailed to this address."
+	email: String!
+}
+
+"""
+What a caller states when it presents the code mailed to the new address.
+
+The code is the only member for the same reason: the delivered read matches it against the caller's own
+address and identifier, so naming either of those would be naming something the write already knows.
+"""
+input VerifyEmailResetInput {
+	"The code mailed to the address the change was requested for."
+	code: String!
+}

@@ -12,7 +12,7 @@ export default {
 			}
 		]
 	},
-	transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+	transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$|(?:.*/)?(@ngneat|@datorama|uuid|lodash-es|camelcase|nanoid)/)'],
 	snapshotSerializers: [
 		'jest-preset-angular/build/serializers/no-ng-attributes',
 		'jest-preset-angular/build/serializers/ng-snapshot',

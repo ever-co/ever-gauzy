@@ -123,7 +123,15 @@ export class RequestApprovalController extends CrudController<RequestApproval> {
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get()
 	findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IRequestApproval>> {
-		const { relations, findInput } = data;
+		/*
+		 * The list can be asked for without the `?data=` envelope, and it has to be: a caller reading the
+		 * register — the purchase-order flow, an approver's own screen — asks for the collection, not for
+		 * a query document. Destructuring the parameter directly answered `500 Cannot destructure property
+		 * 'organizationId' of 'findInput' as it is undefined` for exactly that request, so an unstated
+		 * envelope now means "no filter, no relations" rather than a crash.
+		 */
+		const { relations = [], findInput = {} } = data ?? {};
+
 		return this.requestApprovalService.findAllRequestApprovals({ relations }, findInput);
 	}
 

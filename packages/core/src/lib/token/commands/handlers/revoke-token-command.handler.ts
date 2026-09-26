@@ -5,6 +5,7 @@ import { ITokenHasher } from '../../interfaces/jwt-service.interface';
 import { ITokenReadRepository, ITokenWriteRepository } from '../../interfaces/token-repository.interface';
 import { TokenReadRepositoryToken, TokenWriteRepositoryToken } from '../../shared';
 import { TokenHasher } from '../../shared/token-hasher';
+import { tokenWithRules } from '../../shared/token-rules';
 import { RevokeTokenCommand } from '../revoke-token.command';
 
 @CommandHandler(RevokeTokenCommand)
@@ -23,11 +24,14 @@ export class RevokeTokenHandler implements ICommandHandler<RevokeTokenCommand, v
 		const rawToken = dto.rawToken;
 		const tokenDigest = this.tokenHasher.hashToken(rawToken);
 
-		const token = await this.tokenReadRepository.findByHash(tokenDigest);
+		const stored = await this.tokenReadRepository.findByHash(tokenDigest);
 
-		if (!token) {
+		if (!stored) {
 			throw new NotFoundException('Token not found');
 		}
+
+		// The rule is the record's own method; a MikroORM read answers the row without it, see `tokenWithRules`.
+		const token = tokenWithRules(stored);
 
 		if (!token.canRevoke()) {
 			return; // Already revoked/expired

@@ -1,0 +1,169 @@
+# The role permission domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field is one the delivered `/api/role-permissions` routes already serve, under the same guard
+# chain and with the same permission — read from the controller's own metadata rather than restated.
+# That parity is field by field and it is deliberately not uniform, which is the point: the class
+# carries `CHANGE_ROLES_PERMISSIONS`, which the list, the node, the count, the two lifecycle moves and
+# the three writes all run under, while the reading of **the caller's own** permissions carries no
+# permission at all — its route states an empty permission set, because the caller's own rows are what
+# every client boots on, and a field that demanded more here would refuse a caller REST serves.
+#
+# Two properties of the delivered reads are stated here because a client that does not know them will
+# read the surface wrongly.
+#
+# **The list is scoped by the caller's role, and its `totalCount` is not the tenant's total.** The
+# delivered list reader answers, for a super administrator, every row of the tenant; for a caller
+# holding `CHANGE_ROLES_PERMISSIONS`, every row except the super administrator's own; and for every
+# other caller, the rows of the role it is acting in. That is the read this connection is built over,
+# so `totalCount` counts the rows the filters selected *from what the caller may see* — which is why
+# the count field below exists beside it and is not the same number.
+#
+# **The list is served twice by the controller and is one root field here.** `GET /role-permissions`
+# and `GET /role-permissions/pagination` answer the same rows under the same filters, one of them
+# sliced by `take`/`skip` and the other not. That is one capability, so it is one field, and the page
+# the paginated spelling performs is what the connection's own `limit` and `offset` state: a second
+# root field for it would be a second surface that could disagree with this one.
+#
+# `rolePermissionCount` takes no argument, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak, and the count it answers is the tenant's own rows rather than
+# the scoped set the list reader returns — a `filter` argument here would either be handed to a call
+# that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`. It is nullable because a count is an aggregate a resource may
+# legitimately have no answer for, and a non-null field would turn "not answered" into a fabricated
+# zero.
+#
+# The migration route — `POST /role-permissions/import/migrate` — has no field here, and the reason is
+# its answer rather than its operation. What it answers is the export-import ledger's own rows, a
+# concept this domain does not own and which no document in this schema declares; declaring it here
+# would make the role permission domain the schema's owner of another subsystem's record, and the
+# first domain that needed it would then collide with this one instead of referencing it.
+
+extend type Query {
+	"""
+	The role permissions the caller may read, in the catalogue's own order.
+
+	The rows are the ones the delivered list reader answers for this caller — every row of the tenant
+	for a super administrator, every row but the super administrator's own for a holder of
+	`CHANGE_ROLES_PERMISSIONS`, and the acting role's own rows for anybody else — narrowed by `filter`
+	and paged by the connection protocol. The permissions of one role are this same field narrowed by
+	`roleId`, which is the narrowing the delivered route expresses through its own query string.
+	"""
+	rolePermissions(
+		filter: RolePermissionFilter
+		sort: [RolePermissionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): RolePermissionConnection!
+
+	"""
+	One role permission of the caller's tenant, or null when there is none.
+	"""
+	rolePermission(id: ID!): RolePermission
+
+	"""
+	The permissions of the role the caller is acting in.
+
+	This is the delivered `GET /role-permissions/me` read, and it is the one read of this resource that
+	asks for no permission: the route that serves it states an empty permission set, and the field
+	states the same one, so a caller that may not administer roles at all is still answered its own
+	rows. The rows are narrowed by the delivered reader to the enabled ones — a permission this role
+	does not carry is not answered here, which is what makes the answer usable as the list of what the
+	credential may do.
+	"""
+	myRolePermissions: [RolePermission!]!
+
+	"""
+	How many role permissions the caller's tenant has.
+
+	The delivered count route's own answer: every row of the tenant, whatever role it belongs to and
+	whatever the caller may read through the list above — which is why the two numbers differ, and why
+	neither is a substitute for the other.
+	"""
+	rolePermissionCount: Int
+}
+
+extend type Mutation {
+	"""
+	Adds a permission row for a role.
+
+	The write is the delivered one, with its own refusal rules: nobody, not even a super
+	administrator, may grant themselves a permission through this field, and an administrator may not
+	touch the super administrator's own rows. Those rules are the service's, and it refuses here
+	exactly as it refuses over REST. The row is filed under the caller's tenant, which the service
+	stamps from the credential rather than reading from the input.
+	"""
+	createRolePermission(input: CreateRolePermissionInput!): RolePermission!
+
+	"""
+	Changes the permission a row names and whether the role carries it.
+
+	The delivered route names the row in its path and carries the members in its body, and its service
+	applies the same refusal rules as the create above; the answer is the row the write produced, read
+	back through the same service, because the delivered result is the store's own statement about the
+	write rather than a row.
+	"""
+	updateRolePermission(input: UpdateRolePermissionInput!): RolePermission!
+
+	"""
+	Removes a role permission outright: the row is gone and nothing reads it back.
+
+	The delivered removal applies the same rules the two writes above do — the super administrator's own
+	rows are refused — and that refusal is the service's rather than this field's.
+	"""
+	deleteRolePermission(id: ID!): Boolean!
+
+	"""
+	Withdraws a role permission without removing it: the row keeps its identifier, and the delivered
+	reads stop answering it, because every one of them excludes a row a withdrawal has marked.
+	"""
+	softDeleteRolePermission(id: ID!): RolePermission!
+
+	"""
+	Puts a withdrawn role permission back, clearing the marker the withdrawal set.
+	"""
+	recoverRolePermission(id: ID!): RolePermission!
+}
+
+"""
+What a caller states when it adds a permission to a role.
+
+The role is named by its identifier: the delivered body admits either the identifier or a whole role
+object, and the one the service resolves is always the identifier — it reads `roleId` first and
+refuses the write when neither is stated, which is the fail-closed rule this input states by requiring
+the identifier outright.
+
+There is no member for the tenant, for the same reason there is none on any other write in this
+schema: the tenant is stamped from the credential and a body that stated one would be overwritten. Nor
+is there one for an organization: a role permission belongs to a role, and a role belongs to a tenant.
+"""
+input CreateRolePermissionInput {
+	"The permission, named exactly as the platform's catalogue names it."
+	permission: String!
+	"Whether the role carries it."
+	enabled: Boolean!
+	"The role the row belongs to."
+	roleId: ID!
+}
+
+"""
+What a caller states when it edits a role permission that exists.
+
+The identifier names the row, which is the one member the delivered route carries in its path rather
+than in its body: the other three are the same shape the create above takes, because the delivered
+update DTO is the create's own.
+"""
+input UpdateRolePermissionInput {
+	id: ID!
+	permission: String!
+	enabled: Boolean!
+	roleId: ID!
+}

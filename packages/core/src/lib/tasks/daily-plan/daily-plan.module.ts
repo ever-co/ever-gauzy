@@ -9,7 +9,15 @@ import { EmployeeModule } from '../../employee/employee.module';
 import { TaskModule } from '../task.module';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
+import { DailyPlanResolver } from './daily-plan.resolver';
 
+/**
+ * The days planned for the people who work them.
+ *
+ * The resolver's three membership writes and its five reads all go through `DailyPlanService`, which
+ * this module already provides, so nothing else had to be reachable for the GraphQL view to exist
+ * beside the routes.
+ */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([DailyPlan]),
@@ -19,7 +27,7 @@ import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.r
 		TaskModule
 	],
 	controllers: [DailyPlanController],
-	providers: [DailyPlanService, TypeOrmDailyPlanRepository, MikroOrmDailyPlanRepository],
+	providers: [DailyPlanService, DailyPlanResolver, TypeOrmDailyPlanRepository, MikroOrmDailyPlanRepository],
 	exports: [DailyPlanService]
 })
 export class DailyPlanModule {}

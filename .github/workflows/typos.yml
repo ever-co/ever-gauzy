@@ -3,16 +3,20 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
+  # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
+  # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
+  # trigger below runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # replace this comment with:
+  #   pull_request:
+  #     branches:
+  #       - develop
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
-# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+# This workflow only builds/tests/deploys from a checkout - read access is sufficient.
 permissions:
   contents: read
 

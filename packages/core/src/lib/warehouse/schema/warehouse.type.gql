@@ -1,0 +1,406 @@
+# The warehouse domain's GraphQL types.
+#
+# A warehouse is the stock location and its role in the network: its trading identity, the kind of
+# place it is, how it ranks against the other locations that could serve the same line, whether it
+# can be picked up from and whether it ships. The levels of stock it holds are rows of their own, and
+# this file declares both — the location and the level — because one delivered controller serves both.
+#
+# **Nine columns of the location row are readable here and writeable nowhere, and that is the
+# delivered routes' shape rather than this file's.** `type`, `priority`, `isPickupLocation`,
+# `isFulfillmentLocation`, `latitude`, `longitude`, `timezone`, `cutoffTime`, `sellerId` and
+# `metadata` are columns of the entity, and the delivered list and one-row reads answer them — so
+# they are members below. But the write DTOs the delivered create and edit routes bind carry none of
+# them, and those routes validate with `whitelist: true`, which strips a body member the DTO does not
+# declare. A write member here would therefore be accepted by the schema, sent to the service, and
+# dropped before it arrived — the worst of the three possible states — so the inputs state only what
+# the delivered body can carry, and the gap is stated rather than papered over.
+#
+# **The two relations are carried as identifiers and never as rows.** `logo` and `contact` are owned
+# by this row, so `logoId` and `contactId` always travel; the rows they point at travel only when a
+# REST caller names them in `relations`, and neither read this surface mirrors names any. `tags` is a
+# many-to-many pivot — this row holds no foreign key for it — so there is not even an identifier, and
+# the delivered reads join it only when asked.
+#
+# `latitude` and `longitude` are coordinates rather than amounts and are carried as `Float`. Every
+# quantity on a stock level is a `numeric` column and is carried as a `Decimal`, serialised as a string
+# with six fractional digits: the level columns are declared `numeric(20,6)`, and a stock number read
+# as a binary fraction is a number that stops adding up.
+
+"""
+One stock location and its role in the network.
+"""
+type Warehouse {
+	id: ID!
+	"The name of the location, as entered."
+	name: String!
+	"The location's own code, unique within the organization among the live rows."
+	code: String!
+	"The address the location is written to."
+	email: String!
+	description: String
+	"Whether the location is in service. A removal sets `deletedAt`; it does not clear this flag."
+	active: Boolean!
+	"""
+	What kind of place this is, as the kernel extension's own value: `WAREHOUSE`, `STORE`,
+	`THIRD_PARTY`, `DROPSHIP` or `VIRTUAL`. It decides which locations an allocation may pick and
+	whether the stock held there is own stock or a supplier's. The vocabulary is the extension's, so
+	the member is carried as its value rather than declared as an enum here.
+	"""
+	type: String
+	"""
+	Allocation preference when several locations can serve a line. An integer rank, and **lower
+	wins**; the default is `0`.
+	"""
+	priority: Int
+	"Whether the location can be selected as an in-store pickup point."
+	isPickupLocation: Boolean
+	"""
+	Whether the location may ship. False on a virtual or dropship placeholder that only aggregates.
+	"""
+	isFulfillmentLocation: Boolean
+	"Latitude of the location, from -90 to 90. A coordinate, so a `Float`."
+	latitude: Float
+	"Longitude of the location, from -180 to 180. A coordinate, so a `Float`."
+	longitude: Float
+	"The IANA zone the location's daily cutoff and its local reporting are read in."
+	timezone: String
+	"`HH:mm` local time after which an order ships the next working day."
+	cutoffTime: String
+	"""
+	The seller whose own location this is, or null for a platform location. The seller table belongs
+	to another package, so this is an identifier and nothing more.
+	"""
+	sellerId: ID
+	"The asset the location is shown with. Null on a location filed without one."
+	logoId: ID
+	"The location's own contact row. Null on a location filed without one."
+	contactId: ID
+	"Tenant extras: dock count, carrier accounts."
+	metadata: JSON
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the location was withdrawn, or null while it is live. Withdrawing and restoring are
+	delivered routes — the two removals this resource serves — and this column is the whole of what
+	they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of locations.
+"""
+type WarehouseEdge {
+	node: Warehouse!
+	cursor: String!
+}
+
+"""
+One page of locations, with the total the filters select and the boundary cursors.
+"""
+type WarehouseConnection {
+	nodes: [Warehouse!]!
+	edges: [WarehouseEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a location list may be sorted by.
+"""
+enum WarehouseSortField {
+	createdAt
+	updatedAt
+	name
+	code
+	email
+	priority
+}
+
+"""
+The order the locations are returned in. At most three keys are accepted.
+"""
+input WarehouseSort {
+	field: WarehouseSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a location list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned rather than translating the filter into a query. `type` is carried as
+text for the same reason the object type carries it that way.
+"""
+input WarehouseFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	name: StringFilter
+	code: StringFilter
+	email: StringFilter
+	description: StringFilter
+	active: BooleanFilter
+	type: StringFilter
+	priority: NumberFilter
+	isPickupLocation: BooleanFilter
+	isFulfillmentLocation: BooleanFilter
+	timezone: StringFilter
+	cutoffTime: StringFilter
+	sellerId: IDFilter
+	logoId: IDFilter
+	contactId: IDFilter
+	metadata: JSONFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [WarehouseFilter!]
+	or: [WarehouseFilter!]
+	not: WarehouseFilter
+}
+
+"""
+What a caller states when it files a location.
+
+The organization is required because the delivered create validates it: `POST /warehouses` binds a
+DTO that intersects the organization base. The name, the code and the email are required for the same
+reason — the DTO marks all three non-empty. There is no member for the tenant, because the service
+stamps the caller's own tenant onto the row.
+
+The members the entity carries but the delivered body does not — the location's kind, its rank, its
+two role flags, its coordinates, its zone, its cutoff, its seller and its metadata — are deliberately
+absent: that body is validated with `whitelist: true`, so a member the DTO does not declare is
+stripped before the write sees it. Filing a location that ships, or one that can be picked up from,
+is therefore not something either protocol currently offers, and this input says so by not offering
+it either.
+
+The tag pivot is stated as an identifier list, which is this protocol's spelling of the same write:
+the delivered body carries a whole `tags` array and the store persists the pivot rows for it.
+"""
+input CreateWarehouseInput {
+	organizationId: ID!
+	name: String!
+	code: String!
+	email: String!
+	description: String
+	active: Boolean
+	"The asset the location is shown with, by identifier."
+	logoId: ID
+	"The location's own contact row, by identifier."
+	contactId: ID
+	"The tags to classify the location with."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes a location that exists.
+
+**The organization, the name, the code and the email are required, and the write is nevertheless a
+save.** The delivered route validates those four on the body and then hands the parsed body to a
+service whose edit persists the stated columns beside the path identifier: the columns the body
+carries are written and the ones it does not are left as they are. The route is simply stricter about
+what a caller must restate than the write is about what it overwrites.
+"""
+input UpdateWarehouseInput {
+	id: ID!
+	organizationId: ID!
+	name: String!
+	code: String!
+	email: String!
+	description: String
+	active: Boolean
+	logoId: ID
+	contactId: ID
+	tagIds: [ID!]
+}
+
+"""
+The cached product-level stock of one location: the level row an allocation reads.
+"""
+type WarehouseProduct {
+	id: ID!
+	"The location the level belongs to."
+	warehouseId: ID!
+	"The product the level counts."
+	productId: ID!
+	"""
+	The quantity held, in the reference unit of the level's measurement family, as an exact decimal
+	with six fractional digits.
+	"""
+	quantity: Decimal
+	"Quantity held by open reservations, aggregated over the variants of this product at this location."
+	reservedQuantity: Decimal
+	"Quantity on approved purchase orders and inbound transfers, not yet received."
+	incomingQuantity: Decimal
+	"The buffer that has to remain unsold; availability subtracts it."
+	safetyStock: Decimal
+	"Whether orders may be taken beyond availability at this location."
+	allowBackorder: Boolean
+	"""
+	The most negative availability permitted when `allowBackorder` is true. Null means no ceiling was
+	set, which is not the same as a ceiling of zero.
+	"""
+	backorderLimit: Decimal
+	"The level at or below which the low-stock alert and the purchasing suggestion fire."
+	restockThreshold: Decimal
+	"When false the ledger is not consulted and the product is always sellable at this location."
+	trackInventory: Boolean
+	"Whether availability at this location is reported as unlimited."
+	isUnlimited: Boolean
+	"The physical shelf or bin label, where the location is not organised into zones and bins."
+	binLocation: String
+	"The optimistic-lock counter: every write takes the value it read and bumps it."
+	version: Int
+	"Tenant extras."
+	metadata: JSON
+	"""
+	The variant levels under this product at this location. Nullable because the delivered quantity
+	write answers the level row it saved without loading them, while the inventory read loads them —
+	so a client that selects this member on the answer to a write may be told there are none loaded
+	rather than that there are none.
+	"""
+	variants: [WarehouseProductVariant!]
+	tenantId: ID
+	organizationId: ID
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The authoritative quantity of one variant at one location.
+"""
+type WarehouseProductVariant {
+	id: ID!
+	"The product-level row this variant's quantity rolls up into."
+	warehouseProductId: ID!
+	"The variant being counted."
+	variantId: ID!
+	"The quantity held at this level, as an exact decimal with six fractional digits."
+	quantity: Decimal
+	"Quantity held by open reservations at this level."
+	reservedQuantity: Decimal
+	"The buffer that has to stay unsold, subtracted from availability."
+	safetyStock: Decimal
+	"Quantity already on its way to this level."
+	incomingQuantity: Decimal
+	"How far a hold may exceed the quantity on hand. Null means no ceiling was set."
+	backorderLimit: Decimal
+	"Whether the level is untracked. A write never drives an untracked level negative."
+	isUnlimited: Boolean
+	"Whether a hold may exceed the quantity on hand at this level."
+	allowBackorder: Boolean
+	"The optimistic-lock counter for this level."
+	version: Int
+	"The threshold for low-stock alerting and replenishment suggestions at this level."
+	restockThreshold: Decimal
+	"When false this variant is not counted at this location."
+	trackInventory: Boolean
+	"The pick location for this variant, where the location is not organised into zones and bins."
+	binLocation: String
+	"The level's home bin on a location in zone-and-bin mode. The bin table belongs to another package."
+	binId: ID
+	"The measurement family every quantity on this row is expressed in."
+	unitCategoryId: ID
+	"Tenant extras."
+	metadata: JSON
+	tenantId: ID
+	organizationId: ID
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of stock levels.
+"""
+type WarehouseProductEdge {
+	node: WarehouseProduct!
+	cursor: String!
+}
+
+"""
+One page of stock levels, with the total the filters select and the boundary cursors.
+"""
+type WarehouseProductConnection {
+	nodes: [WarehouseProduct!]!
+	edges: [WarehouseProductEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a stock-level list may be sorted by.
+"""
+enum WarehouseProductSortField {
+	createdAt
+	updatedAt
+	quantity
+	reservedQuantity
+	productId
+	binLocation
+}
+
+"""
+The order the stock levels are returned in. At most three keys are accepted.
+"""
+input WarehouseProductSort {
+	field: WarehouseProductSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a stock-level list may be narrowed by.
+
+`quantity` and `reservedQuantity` are `Decimal` rather than `NUMBER`: they are `numeric` columns, and
+a bound compared through a binary fraction would select the wrong rows.
+"""
+input WarehouseProductFilter {
+	id: IDFilter
+	warehouseId: IDFilter
+	productId: IDFilter
+	quantity: DecimalFilter
+	reservedQuantity: DecimalFilter
+	incomingQuantity: DecimalFilter
+	safetyStock: DecimalFilter
+	allowBackorder: BooleanFilter
+	backorderLimit: DecimalFilter
+	restockThreshold: DecimalFilter
+	trackInventory: BooleanFilter
+	isUnlimited: BooleanFilter
+	binLocation: StringFilter
+	version: NumberFilter
+	metadata: JSONFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [WarehouseProductFilter!]
+	or: [WarehouseProductFilter!]
+	not: WarehouseProductFilter
+}
+
+"""
+What a caller states when it opens stock levels at one location.
+
+The delivered body is an array of rows, each carrying a product identifier; this protocol states the
+same list as one member of one input, because an argument that is itself a list of documents has no
+spelling this schema's other resolvers establish, and the delivered service reads nothing from each
+row but that identifier — it loads each product with its own variants and opens a level for every one
+of them.
+
+The `variantIds` member of the contracts type the delivered body accepts is deliberately not here:
+the delivered service never reads it. A member a write accepts and drops is worse stated than one it
+does not have.
+"""
+input AddWarehouseProductsInput {
+	"The products to open a level for, at the location the field names."
+	productIds: [ID!]!
+}

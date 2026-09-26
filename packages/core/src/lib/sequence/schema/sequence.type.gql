@@ -1,0 +1,277 @@
+# The numbering domain's object types.
+#
+# A series is not a document and it is not a document number. It is the *counter* a document number
+# is allocated from: one row per key and scope, holding the value the next document will be numbered
+# with and the shape of the numbers the series produces. Every domain that numbers a human-facing
+# document — a sales order, a return, a purchase order, a stock movement, a pick list — allocates from
+# a series, and the commerce packages read this table through their own ports.
+#
+# **Two kinds of member sit on one row, and the surface keeps them apart.** The *configuration* is
+# what a caller may edit: `key` and `channelId` state which series this is, and `prefix`, `padding`,
+# `step`, `resetPolicy` and `description` state the shape of the numbers it produces. The *state* is
+# what the series has already counted: `nextValue` is the value the next allocation hands out and
+# `lastResetAt` is the period it last restarted in. `isActive` is the lifecycle between them: a
+# retired series keeps its counter and refuses to allocate. The distinction is not cosmetic — the
+# value in `nextValue` is the number the next invoice will carry, so a caller that edits the state
+# through a configuration write renumbers documents that are already printed and quoted, silently,
+# because nothing about a number that has been issued twice is visible until the numbered table
+# refuses the second one.
+#
+# Consequently the type carries `nextValue` and `lastResetAt` — a reader has to see where a series
+# stands — while no write input on this surface declares either, and the edit's own body refuses one
+# that is stated rather than dropping it quietly.
+#
+# **`nextValue` is carried as `Int`, which is the family the delivered column has.** The schema
+# chapter widens the reservoir to `bigint` (§2.10b) because a series an external system steps in
+# ranges can exhaust a 32-bit counter; that widening is a column change and it has not landed, so a
+# `Decimal` here would promise a precision the column does not hold — and a counter is a whole number,
+# not an amount, which is why it is not carried in the money family either.
+#
+# **`deletedAt` is deliberately absent.** The delivered reads answer live rows and no route of this
+# resource withdraws a series: a series is retired by `isActive: false`, which keeps the counter and
+# the documents numbered from it, and a removal would answer every later allocation for the key "no
+# series is configured" while a re-created series counted from one again. A member that could only
+# ever be null on every row this surface answers is worse than a member that is not offered.
+
+"""
+One numbering series: the counter a key allocates from, and the shape of the numbers it produces.
+"""
+type Sequence {
+	id: ID!
+	"The tenant the series belongs to, which the caller's credential states and never the caller."
+	tenantId: ID
+	"The organization whose documents the series numbers. A series is never read across organizations."
+	organizationId: ID
+	"""
+	Series key, upper snake case, for example `ORDER` or `PURCHASE_ORDER`. It is the word every
+	allocation resolves the series by, and it is written once: an edit that renamed it would leave the
+	counter reachable under no name at all.
+	"""
+	key: String!
+	"""
+	The channel the counter belongs to, or null for the organization-wide series.
+	`null` is not "no channel is configured" — it is a scope of its own, and it is the series an
+	allocation falls back to when a channel has none. One organization therefore holds at most one
+	organization-wide series and one series per channel under one key, which is what the table's two
+	partial unique indexes state.
+	"""
+	channelId: ID
+	"Text placed before the number, for example `SO-`."
+	prefix: String
+	"""
+	Minimum number of digits; a shorter value is left-padded with zeroes. A value that outgrows the
+	width is never truncated — a number a person quotes is not silently shortened.
+	"""
+	padding: Int!
+	"""
+	**The state, not the configuration.** The value the next allocation hands out. It moves when a
+	number is allocated, and backwards only through the restart the series' own policy describes —
+	which is what `resetSequence` performs and what an edit refuses to write.
+	"""
+	nextValue: Int!
+	"""
+	The increment each allocation applies. Larger than one when a range is reserved for an external
+	system: the allocation hands out one value and advances by this much, so the values in between are
+	the reserved block.
+	"""
+	step: Int!
+	"When the series restarts, and the reason `lastResetAt` exists."
+	resetPolicy: SequenceResetPolicy!
+	"""
+	**The state, not the configuration.** The moment the series last restarted, or null when it never
+	has. The restart check compares the period this falls in with the period an allocation happens in,
+	and a series restarts at most once per period — which is why a manual restart is refused inside a
+	period that has already been restarted.
+	"""
+	lastResetAt: DateTime
+	"Free-text note for operators."
+	description: String
+	"""
+	Whether the series numbers documents at all. Retiring a series is this member and not a removal:
+	the counter and the documents numbered from it stay, and an allocation answers with a reason
+	instead of a number.
+	"""
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+When a series restarts.
+"""
+enum SequenceResetPolicy {
+	"The series never restarts; it continues for the life of the organization."
+	NEVER
+	"The series restarts on the first day of each calendar year, in UTC."
+	YEARLY
+	"The series restarts on the first day of each calendar month, in UTC."
+	MONTHLY
+	"The series restarts at the start of each calendar day, in UTC."
+	DAILY
+}
+
+"""
+The boundary of one page of series.
+"""
+type SequenceEdge {
+	node: Sequence!
+	cursor: String!
+}
+
+"""
+One page of series, with the total the filters select and the boundary cursors.
+"""
+type SequenceConnection {
+	nodes: [Sequence!]!
+	edges: [SequenceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a series list may be sorted by.
+
+`key` is how a numbering configuration is read — the series of one key together, whichever scope each
+belongs to — and the two timestamps are how a change is found again. `nextValue` is offered because
+"where does this counter stand" is the question an operator brings to this resource, and `resetPolicy`
+because a work list of the series that restart is read in policy groups. The identifiers are not sort
+keys: an order by identifier is not an order anyone reads a configuration in, and the questions those
+columns answer are filters.
+"""
+enum SequenceSortField {
+	key
+	nextValue
+	resetPolicy
+	createdAt
+	updatedAt
+}
+
+"""
+The order the series are returned in. At most three keys are accepted.
+"""
+input SequenceSort {
+	field: SequenceSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the restart policy.
+"""
+input SequenceResetPolicyFilter {
+	eq: SequenceResetPolicy
+	ne: SequenceResetPolicy
+	in: [SequenceResetPolicy!]
+	nin: [SequenceResetPolicy!]
+	isNull: Boolean
+}
+
+"""
+The fields a series list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is — the delivered list read
+answers those columns, so each one narrows rows the connection was handed. `key` and `channelId` are
+the two members the endpoint table names for this resource's list route, stated here in the
+connection's own vocabulary so a caller who narrows over REST narrows the same way here. The tenant
+and the organization are absent because both are applied to the read from the credential rather than
+from the caller: a member here would suggest a scope decision the caller does not have.
+"""
+input SequenceFilter {
+	id: IDFilter
+	key: StringFilter
+	channelId: IDFilter
+	prefix: StringFilter
+	padding: NumberFilter
+	nextValue: NumberFilter
+	step: NumberFilter
+	resetPolicy: SequenceResetPolicyFilter
+	lastResetAt: DateTimeFilter
+	description: StringFilter
+	isActive: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [SequenceFilter!]
+	or: [SequenceFilter!]
+	not: SequenceFilter
+}
+
+# The write surface.
+#
+# `CreateSequenceInput` and `UpdateSequenceInput` declare what the delivered write paths store, and
+# nothing else. Three consequences are deliberate:
+#
+# - **A create states the counter, and an edit does not.** A series has to start somewhere, and an
+#   installation that adopts numbering an external system has already stepped states the value the new
+#   series must continue from — which is the one moment stating a counter is not a renumbering.
+#   Afterwards the counter moves by allocating, and backwards only through `resetSequence`.
+# - **The identity is stated once.** `key` and `channelId` are members of the create and of neither
+#   edit: the key is what every allocation resolves the series by and the channel is the scope of its
+#   counter, so moving either re-points a counter at another surface's documents.
+# - **The tenant is not a member of either input.** The delivered write stamps the caller's own tenant
+#   and organization onto the row, so a member here would promise a scope the write refuses.
+
+"""
+What a caller states when it opens a series.
+"""
+input CreateSequenceInput {
+	"Series key, upper snake case, for example `ORDER`."
+	key: String!
+	"""
+	The channel the counter belongs to. Absent means the organization-wide series.
+	"""
+	channelId: ID
+	"Text placed before the number, for example `SO-`."
+	prefix: String
+	"Minimum number of digits. Defaults to the width a document number is quoted at."
+	padding: Int
+	"""
+	The value the first allocation hands out. Stated when the series continues numbering an external
+	system has already begun, and stated once: from here on the counter moves by allocating a number.
+	"""
+	nextValue: Int
+	"""
+	The increment each allocation applies. Larger than one when a range is reserved for an external
+	system.
+	"""
+	step: Int
+	"When the series restarts. `NEVER` when the caller states none, which is the honest default."
+	resetPolicy: SequenceResetPolicy
+	"Free-text note for operators."
+	description: String
+}
+
+"""
+What a caller may change on a series that exists.
+
+**The members this input does not declare are the contract.** `nextValue` and `lastResetAt` are the
+series' state — the value the next document will be numbered with and the period it last restarted in
+— and an edit that could write either would renumber documents the installation has already issued.
+`key` and `channelId` are absent for the neighbouring reason: they are the series' identity and the
+scope of its counter.
+
+A `nextValue` a REST body states is refused as an unknown field by the route's own validation rather
+than stripped, so a caller is told its edit was not applied instead of being answered `200` for a
+write that changed nothing it asked for. Over this protocol the refusal is the schema's: an input
+member that is not declared cannot be stated.
+
+`isActive` is a member, and it is the retirement path: an allocation refuses a series that is not
+active, so an operator who must stop numbering from a key retires the series instead of removing it —
+the counter stays, and stating `true` puts it back to work.
+"""
+input UpdateSequenceInput {
+	id: ID!
+	"Text placed before the number, for example `SO-`."
+	prefix: String
+	"Minimum number of digits; a shorter value is left-padded with zeroes."
+	padding: Int
+	"The increment each allocation applies."
+	step: Int
+	"When the series restarts."
+	resetPolicy: SequenceResetPolicy
+	"Free-text note for operators."
+	description: String
+	"""
+	Whether the series numbers documents at all. `false` retires it without removing its counter.
+	"""
+	isActive: Boolean
+}

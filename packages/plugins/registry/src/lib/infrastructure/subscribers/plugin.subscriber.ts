@@ -1,5 +1,5 @@
 import { ID, PluginInstallationStatus } from '@gauzy/contracts';
-import { MultiORM, MultiORMEnum, getORMType, RequestContext } from '@gauzy/core';
+import { MultiORMEnum, RequestContext } from '@gauzy/core';
 import { Logger } from '@nestjs/common';
 import { DataSource, EntitySubscriberInterface, EventSubscriber, InsertEvent } from 'typeorm';
 import { Plugin } from '../../domain/entities/plugin.entity';
@@ -8,9 +8,6 @@ import { PluginSourceService } from '../../domain/services/plugin-source.service
 import { PluginSubscriptionPlanService } from '../../domain/services/plugin-subscription-plan.service';
 import { PluginVersionService } from '../../domain/services/plugin-version.service';
 import { IPluginVersion } from '../../shared/models/plugin-version.model';
-
-// Get the type of the Object-Relational Mapping (ORM) used in the application.
-const ormType: MultiORM = getORMType();
 
 @EventSubscriber()
 export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
@@ -156,7 +153,11 @@ export class PluginSubscriber implements EntitySubscriberInterface<Plugin> {
 
 			let allVersions: any[];
 
-			switch (ormType) {
+			// The ORM the version service runs on, not `DB_ORM`: the registry's tables are read through TypeORM
+			// under either ORM (see `REGISTRY_ORM_TYPE`), and the TypeORM arm below reads that service's TypeORM
+			// repository. Deciding by `DB_ORM` took the MikroORM arm under `DB_ORM=mikro-orm` while every other
+			// read of these rows was on TypeORM. Under `DB_ORM=typeorm` both answers are TypeORM.
+			switch (this.pluginVersionService.ormType) {
 				case MultiORMEnum.MikroORM: {
 					// MikroORM: Use ORM-agnostic findAll on the version service
 					const result = await this.pluginVersionService.findAll({

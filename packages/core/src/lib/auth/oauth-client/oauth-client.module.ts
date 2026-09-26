@@ -20,9 +20,27 @@ import { RolePermissionModule } from '../../role-permission/role-permission.modu
 import { OAuthClient } from './oauth-client.entity';
 import { OAuthClientService } from './oauth-client.service';
 import { OAuthClientController } from './oauth-client.controller';
+import { OAuthClientResolver } from './oauth-client.resolver';
 import { TypeOrmOAuthClientRepository } from './repository/type-orm-oauth-client.repository';
 import { MikroOrmOAuthClientRepository } from './repository/mikro-orm-oauth-client.repository';
 
+/**
+ * `OAuthClientModule` — registers the multi-app OAuth client registry
+ * (entity, dual-ORM repositories, service, admin controller).
+ *
+ * What changed from the single-app version:
+ * Previously there was no module — the one OAuth client was an env var
+ * read by `SocialAuthService.getOAuthAppConfig()`. This module exposes
+ * the registry so the auth pipeline (Section 3) can inject
+ * `OAuthClientService` to resolve clients per-request, and so the admin
+ * UI can register Activepieces / n8n / etc. via `/oauth/clients`.
+ *
+ * `RolePermissionModule` is imported because the controller is guarded
+ * with `TenantPermissionGuard` + `PermissionGuard`, both of which depend
+ * on the role-permission service. The GraphQL view of the same registry is
+ * declared here beside them: a resolver can only inject services its own
+ * module can reach, and this module is what reaches them.
+ */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([OAuthClient]),
@@ -30,7 +48,12 @@ import { MikroOrmOAuthClientRepository } from './repository/mikro-orm-oauth-clie
 		RolePermissionModule
 	],
 	controllers: [OAuthClientController],
-	providers: [OAuthClientService, TypeOrmOAuthClientRepository, MikroOrmOAuthClientRepository],
+	providers: [
+		OAuthClientService,
+		OAuthClientResolver,
+		TypeOrmOAuthClientRepository,
+		MikroOrmOAuthClientRepository
+	],
 	exports: [OAuthClientService, TypeOrmOAuthClientRepository, MikroOrmOAuthClientRepository]
 })
 export class OAuthClientModule {}

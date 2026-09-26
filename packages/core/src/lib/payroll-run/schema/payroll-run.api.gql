@@ -1,0 +1,163 @@
+# The payroll run domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/payroll-run` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other.
+#
+# **Three grants, and the field states the one its own route runs under.** The controller carries
+# `ORG_PAYROLL_EDIT` on its class, so a route that states nothing runs under the edit permission. The two
+# reads state `ORG_PAYROLL_VIEW`, and the two operations that move money state `ORG_PAYROLL_APPROVE` —
+# approving a run and marking it paid. That separation is the delivered resource's whole point: the person
+# who prepares a payroll run should not be able to approve their own work unaided, and collapsing the
+# three into one grant here would give GraphQL a scope REST does not have.
+#
+# **Every field names its organization, and that is the delivered read's own requirement.** Payroll is per
+# organization: the list route declares its organization as a required query member and checks it against
+# the caller's own memberships, and each workflow route takes it as a required query member too. The
+# connection therefore states it as a required argument rather than as a filter, because a read that named
+# none would answer every organization of the tenant — which is the read the delivered route refuses to
+# perform.
+#
+# **Two reads are not the list and are not narrowed lists.** `payrollRunStatistics` mirrors
+# `GET /payroll-run/statistics`, which reads every paid run of an organization and groups the totals by
+# currency; `payrollRunSummary` mirrors `GET /payroll-run/:id/summary`, which breaks one run down into
+# what each employee earned, was deducted and takes home. Each computes something the list read does not,
+# so each is a root field of its own and neither could be a filter over the connection.
+#
+# **There is no count field.** The controller serves no count route, and this surface does not invent one:
+# a count is a capability, and a capability a client can reach here but not over REST is exactly the
+# asymmetry the two-protocol rule forbids. The connection's own `totalCount` answers how many rows the
+# filters selected.
+#
+# **The list read pages at the store, and this surface states that rather than hiding it.** The delivered
+# read applies a page size of its own — ten rows when the caller states none — and slices with it before
+# answering. A caller's connection page size is passed through as that page size, so a caller asking for a
+# wider window gets one; a caller that states none is answered the delivered default, which is the same
+# window the REST route answers when its `limit` is absent. The connection protocol then narrows and
+# orders the rows that read answered, so `totalCount` is the count of the rows the connection holds rather
+# than a count of the whole table, which no page of `nodes` would agree with.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open,
+# which is what keeps a payroll operator able to work without the GraphQL surface — so a disabled
+# capability is answered `Cannot query field <name>` here while those routes answer as they always did.
+
+extend type Query {
+	"""
+	The payroll runs of one organization, newest pay period first.
+	"""
+	payrollRuns(
+		"The organization whose runs are read. Required, and checked against the caller's memberships."
+		organizationId: ID!
+		filter: PayrollRunFilter
+		sort: [PayrollRunSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): PayrollRunConnection!
+
+	"""
+	One payroll run with its lines, or null when there is none.
+
+	A run that is not there — or that belongs to another organization — answers `null` rather than a
+	refusal: GraphQL has one answer for "no such row" on a field that may have none, and the REST route's
+	`404` is that same fact stated in the other protocol's vocabulary. The lookup is scoped by the
+	organization the caller names and by the caller's own tenant, which is the delivered read's own rule.
+	"""
+	payrollRun(
+		"The run to read."
+		id: ID!
+		"The organization the run belongs to."
+		organizationId: ID!
+	): PayrollRun
+
+	"""
+	Total pay across every paid run of one organization, grouped by currency.
+
+	Only paid runs are counted: a draft or an approved run is a plan rather than money that has left, and
+	the delivered read selects on the paid status alone. The answer is one entry per currency, and the
+	currency is on each entry rather than stated once, because one organization can pay in more than one.
+	"""
+	payrollRunStatistics(
+		"The organization to report on."
+		organizationId: ID!
+	): [PayrollStatistics!]!
+
+	"""
+	What each employee earned, was deducted and takes home in one payroll run.
+
+	The breakdown is computed from the run's own lines rather than read from a table: there is no summary
+	row to page, which is why the answer is a list tied to one run rather than a connection.
+	"""
+	payrollRunSummary(
+		"The run to break down."
+		id: ID!
+		"The organization the run belongs to."
+		organizationId: ID!
+	): [PayrollSummary!]!
+}
+
+extend type Mutation {
+	"""
+	Opens a run in `DRAFT`. The status and the three totals are outside this operation: the status moves
+	only through the workflow below, and the totals are derived from the lines.
+	"""
+	createPayrollRun(input: CreatePayrollRunInput!): PayrollRun!
+
+	"""
+	Edits a run that has not been paid. A member the caller leaves out is left as it is.
+	"""
+	updatePayrollRun(input: UpdatePayrollRunInput!): PayrollRun!
+
+	"""
+	Moves a draft run to `PENDING_APPROVAL`, recomputing its totals first so the approver sees what they
+	are signing off.
+	"""
+	submitPayrollRun(id: ID!, organizationId: ID!): PayrollRun!
+
+	"""
+	Approves a run that is pending approval, recording when it was approved and by whom. This is the
+	operation the separate approve grant exists for.
+	"""
+	approvePayrollRun(id: ID!, organizationId: ID!): PayrollRun!
+
+	"""
+	Recomputes the totals from the run's lines and marks it paid.
+
+	The totals and the status move together inside one transaction, and the transition is claimed in a
+	single statement whose criterion still names the state that was read — so a second concurrent call is
+	refused rather than paying the run twice. That is the delivered operation's own guarantee and not a
+	simplification here.
+	"""
+	processPayrollRun(id: ID!, organizationId: ID!): PayrollRun!
+
+	"""
+	Cancels a run that has not been paid. Cancelling an already cancelled run answers the run unchanged,
+	which is the delivered operation's own behaviour.
+	"""
+	cancelPayrollRun(id: ID!, organizationId: ID!): PayrollRun!
+
+	"""
+	Adds one earning or deduction line to a draft run and recomputes the run's totals from its lines.
+
+	The run is the identifier, not an input member, so a caller cannot post a line into a run it did not
+	name. The employee must belong to the same organization, which the service checks before it writes.
+	"""
+	addPayrollRunItem(id: ID!, input: CreatePayrollItemInput!): PayrollItem!
+
+	"""
+	Removes a line from a draft run and recomputes the run's totals.
+
+	The delivered route answers the store's deletion result; this field answers the fact of the removal,
+	which is the one member of that result a caller reads.
+	"""
+	removePayrollRunItem(id: ID!, itemId: ID!, organizationId: ID!): Boolean!
+}

@@ -1,0 +1,2148 @@
+/**
+ * Two module boundaries are doubled here, and the reason is the same for both.
+ *
+ * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
+ * registry, the module scanner — none of which a shipment lifecycle needs and none of which is
+ * available outside a running application. `@gauzy/plugin-order`'s barrel re-exports the whole order
+ * and cart domain, which a service that only reads one line's counters does not need either. Both
+ * seams are therefore doubled at the module boundary and **the services under test are the real
+ * ones**: the shipment service, and the real `FulfillmentLineService` it writes its lines through, so
+ * the line's own refusals are exercised rather than imitated.
+ *
+ * The base-class double mirrors `CrudService` / `TenantAwareCrudService` exactly where the behaviour
+ * is observable to a caller, which includes the part that is easy to get wrong: **a lookup that does
+ * not match raises `NotFoundException`** rather than answering `null`
+ * (`packages/core/src/lib/core/crud/crud.service.ts`, the `if (!record)` branch of
+ * `findOneByIdString` and of `findOneByWhereOptions`, both reached through
+ * `TenantAwareCrudService`). That is the contract for reading a resource by id — the kernel's own doc
+ * comment states it, and a caller that must treat absence as an ordinary answer uses the
+ * `findOneOrFailBy*` pair instead. `update` likewise loads the row first for a string id, as
+ * `TenantAwareCrudService.update` does. A double that answered `null` instead would silently make the
+ * "not found" cases below vacuous.
+ */
+jest.mock('@gauzy/core', () => {
+	const { NotFoundException } = require('@nestjs/common');
+
+	// The platform's exact decimal primitives are pulled through the seam rather than restated: this
+	// double replaces the application graph the barrel boots, not the arithmetic the assertions below
+	// turn on, and a subtraction re-implemented here would make the decimal case assert the double.
+	const decimals = jest.requireActual('@gauzy/core/src/lib/money/decimal');
+	// The kernel's conditional write is the real one for the same reason: the label cases below are
+	// about what `commitVersionedUpdate` does with the version a caller stated and with a version that
+	// moved on, and a re-implementation here would assert the double rather than the platform.
+	const versionedWrite = jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write');
+	// The platform's error type and its catalogue, because the lifecycle move now *reads* the code the
+	// kernel raised in order to decide whether a lost race was a racer heading for the same status. A
+	// stand-in here would let that branch pass against a shape the platform does not produce.
+	const apiException = jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception');
+	const apiErrorCodes = jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes');
+
+	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
+	const decorator = () => () => undefined;
+
+	class BaseEntity {}
+
+	class TenantAwareCrudService {
+		constructor(
+			protected readonly typeOrmRepository: any,
+			protected readonly mikroOrmRepository?: any
+		) {}
+
+		get ormType(): string {
+			return 'typeorm';
+		}
+
+		async findAll(options: any = {}): Promise<any> {
+			const [items, total] = await this.typeOrmRepository.findAndCount(options);
+
+			return { items, total };
+		}
+
+		async find(options: any = {}): Promise<any> {
+			return this.typeOrmRepository.find(options);
+		}
+
+		async paginate(options: any = {}): Promise<any> {
+			const [items, total] = await this.typeOrmRepository.findAndCount(options);
+
+			return { items, total };
+		}
+
+		async findOneByIdString(id: any, options: any = {}): Promise<any> {
+			if (!id) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			const record = await this.typeOrmRepository.findOne({
+				...options,
+				where: { ...(options.where ?? {}), id }
+			});
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return record;
+		}
+
+		async findOneByWhereOptions(where: any): Promise<any> {
+			const record = await this.typeOrmRepository.findOneBy(where);
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return record;
+		}
+
+		async create(entity: any): Promise<any> {
+			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
+		}
+
+		async update(id: any, partial: any): Promise<any> {
+			if (typeof id === 'string') {
+				await this.findOneByIdString(id);
+			}
+
+			return this.typeOrmRepository.update(id, partial);
+		}
+
+		async delete(criteria: any): Promise<any> {
+			return this.typeOrmRepository.delete(criteria);
+		}
+	}
+
+	return {
+		TenantAwareCrudService,
+		BaseEntity,
+		TenantBaseEntity: BaseEntity,
+		TenantOrganizationBaseEntity: BaseEntity,
+		TenantOrganizationBaseDTO: class {},
+		MikroOrmBaseEntityRepository: class {},
+		subtractDecimalStrings: decimals.subtractDecimalStrings,
+		addDecimalStrings: decimals.addDecimalStrings,
+		compareDecimalStrings: decimals.compareDecimalStrings,
+		ColumnIndex: decorator,
+		MultiORMColumn: decorator,
+		MultiORMEntity: decorator,
+		VersionedColumn: decorator,
+		MultiORMOneToMany: decorator,
+		MultiORMManyToOne: decorator,
+		JsonColumn: decorator,
+		// The kernel's own conditional write, so a conflict is the platform's conflict rather than this
+		// suite's.
+		commitVersionedUpdate: versionedWrite.commitVersionedUpdate,
+		versionExpectationOf: versionedWrite.versionExpectationOf,
+		ApiException: apiException.ApiException,
+		ApiErrorCode: apiErrorCodes.ApiErrorCode,
+		EventOutboxService: class {},
+		VERSION_EXPECTATION_PROPERTY: 'versionExpectation',
+		ColumnNumericTransformerPipe: class {
+			to(value: unknown) {
+				return value;
+			}
+			from(value: unknown) {
+				return value;
+			}
+		},
+		BaseEvent: class {},
+		EventBus: class {},
+		RequestContext: {
+			currentUser: () => null,
+			currentUserId: () => null,
+			currentTenantId: () => null,
+			currentOrganizationId: () => null,
+			currentEmployeeId: () => null,
+			hasPermission: () => false
+		}
+	};
+});
+
+jest.mock('@gauzy/plugin-order', () => ({
+	// The counter writer is a collaborator of this package, not of the thing under test: the suite
+	// hands the service its own line service below, so the class here is only the module's identity.
+	OrderLineService: class OrderLineService {},
+	// The re-derivation is a collaborator for the same reason — the suite hands the service its own
+	// double below — and its class is stated rather than left out so that the service's emitted
+	// `design:paramtypes` names a class at that slot rather than an empty hole.
+	OrderTotalsService: class OrderTotalsService {},
+	// The derivation itself is **not** doubled. Which transitions are worth re-deriving is decided by
+	// what `OrderStateMachine.deriveFulfillmentStatus` reads, so the assertions at the end of this file
+	// are made against the platform's own function rather than against a description of it — a doubled
+	// state machine would let the suite agree with a claim the order package does not make.
+	OrderStateMachine: jest.requireActual('@gauzy/plugin-order/src/lib/order-state-machine/order-state-machine')
+		.OrderStateMachine
+}));
+
+import { BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
+import { FulfillmentDirection, FulfillmentStatus, FulfillmentStatusDetail, OrderStatus } from '@gauzy/contracts';
+// Read from the module mock above: the error type and its catalogue are the platform's own, passed
+// through, and the request context is the mock's, so a case can state which organization it runs in.
+import { ApiErrorCode, ApiException, RequestContext } from '@gauzy/core';
+// The state machine the re-derivation is asserted against, read from the module mock above rather than
+// from the package: that mock substitutes the module's collaborators and passes this one through, so this
+// import is the platform's own function and not a double of it.
+import { OrderStateMachine } from '@gauzy/plugin-order';
+import { FulfillmentLineService } from '../fulfillment-line/fulfillment-line.service';
+import { FulfillmentService } from './fulfillment.service';
+
+/**
+ * One shipment's lifetime, and the order-line counters it moves.
+ *
+ * A fulfilment is a shipment with a lifecycle of its own — deliberately not the order's — and the
+ * properties the specification fixes are the ones this suite pins:
+ *
+ * - a shipment is created `PENDING`, `OUTBOUND`, at version one, and **a quantity may never exceed
+ *   what the order line has left** — the ordered quantity less what was written off, dismissed on a
+ *   return and already fulfilled (doc 09 §12.6, INV-14), which is the precondition the inventory
+ *   package's sale movement depends on;
+ * - a return shipment is exempt from that guard, because returning more than is outstanding is a
+ *   credit decision the returns domain makes (doc 09 §12.10);
+ * - the lifecycle only moves forward, one legal move at a time, and `DELIVERED` and `CANCELED` are
+ *   terminal: a delivered fulfilment is returned, never cancelled (doc 09 §12.5, §12.9);
+ * - the three counters on the order line are the sum of the shipment lines that caused them — a
+ *   fulfilment created takes `fulfilledQuantity`, one handed to the carrier takes `shippedQuantity`,
+ *   one delivered takes `deliveredQuantity` (doc 05 I-45) — and a cancelled shipment gives its
+ *   quantity back, so the same units can be shipped again (doc 09 §12.6, §12.9);
+ * - a cancelation is idempotent: the endpoint answers a second submission with the unchanged
+ *   resource rather than moving the counters a second time (doc 09 §12.9);
+ * - the quantities are decimals: their arithmetic is exact, which is why the platform keeps decimal
+ *   primitives at all (doc 07 §2).
+ *
+ * The service is constructed directly with an in-memory double of each table's repository. The
+ * double states the `where` and the relations the service states — `findOneByIdString(id, {
+ * relations: ['lines'] })` is how every method answers — because a double that ignored the relations
+ * would make the assertions about a shipment's lines vacuous.
+ */
+
+const TENANT = '00000000-0000-4000-8000-000000000001';
+const ORG = '00000000-0000-4000-8000-000000000002';
+const ORDER = '00000000-0000-4000-8000-000000000010';
+const LINE_A = '00000000-0000-4000-8000-0000000000a1';
+const LINE_B = '00000000-0000-4000-8000-0000000000b1';
+const UNKNOWN = '00000000-0000-4000-8000-0000000000ff';
+
+/** A deterministic instant, so the timestamps a move records are exact rather than approximate. */
+const SHIPPED_AT = new Date('2026-02-14T09:31:07.412Z');
+const DELIVERED_AT = new Date('2026-02-18T16:02:44.000Z');
+
+/**
+ * Everything the fake-timer installation must leave alone, so that freezing the clock freezes only
+ * the clock: the asynchronous code in this suite runs on the real timers and microtasks.
+ */
+const NOT_FAKED_BESIDES_DATE: Array<
+	| 'hrtime'
+	| 'nextTick'
+	| 'performance'
+	| 'queueMicrotask'
+	| 'requestAnimationFrame'
+	| 'cancelAnimationFrame'
+	| 'requestIdleCallback'
+	| 'cancelIdleCallback'
+	| 'setImmediate'
+	| 'clearImmediate'
+	| 'setInterval'
+	| 'clearInterval'
+	| 'setTimeout'
+	| 'clearTimeout'
+> = [
+	'hrtime',
+	'nextTick',
+	'performance',
+	'queueMicrotask',
+	'requestAnimationFrame',
+	'cancelAnimationFrame',
+	'requestIdleCallback',
+	'cancelIdleCallback',
+	'setImmediate',
+	'clearImmediate',
+	'setInterval',
+	'clearInterval',
+	'setTimeout',
+	'clearTimeout'
+];
+
+type Row = Record<string, any>;
+
+/** The tables this suite drives, as plain arrays. */
+interface ITables {
+	order_line: Row[];
+	fulfillment: Row[];
+	fulfillment_line: Row[];
+}
+
+/**
+ * An in-memory stand-in for one table's TypeORM repository.
+ *
+ * @param tables The whole datastore.
+ * @param tableName The table this repository writes.
+ * @param relations The relation names the service asks for, and the table each resolves to.
+ * @param defaults The column defaults the table itself carries, which an insert does not have to
+ * state — the migration declares them (`requiresShipping`, `noNotification`, `status`, `version`).
+ */
+function repository(
+	tables: ITables,
+	tableName: keyof ITables,
+	relations: Record<string, { table: keyof ITables; foreignKey: string }> = {},
+	defaults: Row = {}
+) {
+	let sequence = 0;
+	const rows = () => tables[tableName];
+	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
+	const matches = (row: Row, where: Row = {}): boolean =>
+		Object.entries(where).every(([field, expected]) => {
+			// A missing column and a null column are the same thing to the database, and TypeORM drops
+			// an `undefined` member from the condition rather than matching nothing.
+			if (expected === undefined) {
+				return true;
+			}
+
+			return same(row[field], expected);
+		});
+	const sorted = (found: Row[], order?: Record<string, 'ASC' | 'DESC'>) => {
+		const columns = Object.keys(order ?? {});
+
+		if (!columns.length) {
+			return found;
+		}
+
+		return [...found].sort((left, right) => {
+			for (const column of columns) {
+				if (left[column] === right[column]) {
+					continue;
+				}
+
+				const direction = order?.[column] === 'DESC' ? -1 : 1;
+
+				return (left[column] > right[column] ? 1 : -1) * direction;
+			}
+
+			return 0;
+		});
+	};
+	/**
+	 * Resolves the relations the caller asked for, which is the repository's job and not the
+	 * service's: `findOneByIdString(id, { relations: ['lines'] })` has to answer with the lines.
+	 */
+	const withRelations = (record: Row | null, requested?: string[]): Row | null => {
+		if (!record || !requested?.length) {
+			return record;
+		}
+
+		const related = { ...record };
+
+		for (const name of requested) {
+			const relation = relations[name];
+
+			if (!relation) {
+				throw new Error(`the in-memory double does not know the relation "${name}"`);
+			}
+
+			related[name] = tables[relation.table].filter((row) => same(row[relation.foreignKey], related.id));
+		}
+
+		return related;
+	};
+
+	return {
+		rows,
+		metadata: { tableName, hasColumnWithPropertyPath: () => false },
+		find: async (options: Row = {}) =>
+			sorted(rows().filter((row) => matches(row, options.where)), options.order).map((row) =>
+				withRelations(row, options.relations)
+			),
+		findOne: async (options: Row = {}) =>
+			withRelations(rows().find((row) => matches(row, options.where)) ?? null, options.relations),
+		findOneBy: async (where: Row) => rows().find((row) => matches(row, where)) ?? null,
+		findAndCount: async (options: Row = {}) => {
+			const items = rows().filter((row) => matches(row, options.where));
+
+			return [items, items.length];
+		},
+		count: async () => rows().length,
+		create: (partial: Row) => ({ ...partial }),
+		save: async (entity: Row) => {
+			if (entity.id) {
+				const index = rows().findIndex((row) => same(row.id, entity.id));
+
+				if (index >= 0) {
+					rows()[index] = { ...rows()[index], ...entity };
+
+					return rows()[index];
+				}
+			}
+
+			// The header row is what this repository writes. The lines are written by the line service
+			// in its own table, so the `lines` a caller supplied are not stored here — exactly as a
+			// TypeORM save of the header would leave them to the caller's own line writes.
+			const { lines, ...header } = entity;
+			const created = { id: `${String(tableName)}-new-${++sequence}`, ...defaults, ...header };
+
+			rows().push(created);
+
+			return created;
+		},
+		// The platform's `update` reaches TypeORM's own, which answers an `UpdateResult` and not the row —
+		// and which applies the whole criteria it was handed rather than the id alone. The version the
+		// conditional write predicates its statement on is part of that criteria, so a double that
+		// matched on the id only would report a stale write as a successful one and make every
+		// concurrency case below vacuous.
+		update: async (criteria: any, partial: Row) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows().findIndex((row) => matches(row, where));
+
+			if (index >= 0) {
+				Object.assign(rows()[index], partial);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		},
+		// TypeORM's `delete` applies the whole criteria it is handed, exactly as its `update` does — and the
+		// removal now states the caller's organization beside the id, so a double that matched on the id
+		// alone would report a foreign organization's shipment as removed and make that case vacuous.
+		delete: async (criteria: any) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = rows().findIndex((row) => matches(row, where));
+
+			if (index >= 0) {
+				rows().splice(index, 1);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		}
+	};
+}
+
+/** One `order_line` row, as the shipment service reads it. */
+const orderLine = (id: string, overrides: Row = {}) => ({
+	id,
+	tenantId: TENANT,
+	organizationId: ORG,
+	orderId: ORDER,
+	quantity: 10,
+	fulfilledQuantity: 0,
+	shippedQuantity: 0,
+	deliveredQuantity: 0,
+	writtenOffQuantity: 0,
+	returnDismissedQuantity: 0,
+	...overrides
+});
+
+/** One `fulfillment` row, as the service reads it. */
+const shipment = (id: string, overrides: Row = {}) => ({
+	id,
+	tenantId: TENANT,
+	organizationId: ORG,
+	orderId: ORDER,
+	direction: FulfillmentDirection.OUTBOUND,
+	status: FulfillmentStatusDetail.PENDING,
+	requiresShipping: true,
+	noNotification: false,
+	version: 1,
+	...overrides
+});
+
+/** One `fulfillment_line` row. */
+const shipmentLine = (id: string, fulfillmentId: string, orderLineId: string, quantity: number) => ({
+	id,
+	tenantId: TENANT,
+	organizationId: ORG,
+	fulfillmentId,
+	orderLineId,
+	quantity
+});
+
+/**
+ * The order-line counter service, over the same in-memory table.
+ *
+ * It is a hand-written double rather than the order package's real service, because that package is
+ * not what this suite is about; it states the two calls the shipment service makes and the lookup
+ * behaviour the platform's CRUD base has.
+ */
+function orderLineService(tables: ITables) {
+	return {
+		findOneByIdString: async (id: string): Promise<Row> => {
+			const row = tables.order_line.find((candidate) => String(candidate.id) === String(id));
+
+			if (!row) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return row;
+		},
+		update: async (id: string, changes: Row): Promise<Row> => {
+			const row = tables.order_line.find((candidate) => String(candidate.id) === String(id));
+
+			if (!row) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			Object.assign(row, changes);
+
+			return { affected: 1 };
+		}
+	};
+}
+
+/**
+ * Builds the shipment service over one in-memory datastore, with the real line service over the
+ * `fulfillment_line` table.
+ *
+ * @param options.seed The order lines, shipments and shipment lines the fixture starts with.
+ * @param options.labelProvider The carrier label provider the service is given. Omitted, the port is
+ * unbound — which is the state a deployment with no carrier integration is in, and the state the
+ * label cases below have to answer for.
+ */
+function fulfillmentFixture(options: { seed?: Partial<ITables>; labelProvider?: any } = {}) {
+	const tables: ITables = {
+		order_line: [...(options.seed?.order_line ?? [])],
+		fulfillment: [...(options.seed?.fulfillment ?? [])],
+		fulfillment_line: [...(options.seed?.fulfillment_line ?? [])]
+	};
+	const lineService = new FulfillmentLineService(
+		repository(tables, 'fulfillment_line') as never,
+		{} as never
+	);
+	/** Every `fulfillment.*` row the service appended, in the order it appended them. */
+	const events: Row[] = [];
+	/**
+	 * The platform outbox, reduced to the one call this service makes on it.
+	 *
+	 * The manager it is handed is the shipment repository's own, which is what the assertions below
+	 * check: an event appended through some other connection is an event a crash can separate from the
+	 * write it describes, and the outbox is a table rather than a bus for exactly that reason.
+	 */
+	const outbox = {
+		append: async (manager: any, input: Row) => {
+			events.push({ manager, ...input });
+
+			return input;
+		}
+	};
+	const fulfillmentRepository = repository(
+		tables,
+		'fulfillment',
+		{ lines: { table: 'fulfillment_line', foreignKey: 'fulfillmentId' } },
+		{
+			// The table's own defaults, as the migration declares them: a shipment is shippable and
+			// notifies the customer unless the caller says otherwise.
+			requiresShipping: true,
+			noNotification: false,
+			status: FulfillmentStatusDetail.PENDING,
+			direction: FulfillmentDirection.OUTBOUND,
+			version: 1
+		}
+	);
+
+	// The entity manager the conditional update and the event both go through.
+	(fulfillmentRepository as Row).manager = { name: 'fulfillment-manager' };
+	/**
+	 * Every re-derivation the service asked the order aggregate for, in the order it asked.
+	 *
+	 * The service gained this collaborator when it started re-deriving `order.fulfillmentStatus` on the
+	 * transitions that move what that status is derived from, and this suite has no order behind it — so
+	 * the double records the call rather than performing one. It answers a resolved promise because the
+	 * call is awaited: a stub that returned nothing would make every create and cancel below fail at the
+	 * await, which is a suite testing its own double rather than the service.
+	 */
+	const recomputed: { orderId: string; reason: string }[] = [];
+	const orderTotals = {
+		recompute: jest.fn(async (orderId: string, reason: string) => {
+			recomputed.push({ orderId, reason });
+
+			return {} as never;
+		})
+	};
+	const service = new FulfillmentService(
+		fulfillmentRepository as never,
+		{} as never,
+		lineService,
+		orderLineService(tables) as never,
+		outbox as never,
+		orderTotals as never,
+		options.labelProvider as never
+	);
+
+	return {
+		service,
+		tables,
+		events,
+		recomputed,
+		orderTotals,
+		manager: (fulfillmentRepository as Row).manager,
+		line: (id: string = LINE_A) => tables.order_line.find((row) => row.id === id),
+		row: (id: string) => tables.fulfillment.find((row) => row.id === id),
+		linesOf: (fulfillmentId: string) =>
+			tables.fulfillment_line.filter((row) => row.fulfillmentId === fulfillmentId)
+	};
+}
+
+/** One line of a shipment request, so a case states only what it is about. */
+const request = (orderLineId: string = LINE_A, quantity = 3, overrides: Row = {}) => ({
+	orderLineId,
+	quantity,
+	...overrides
+});
+
+describe('FulfillmentService — a shipment against what the order line has left (doc 09 §12.6, INV-14)', () => {
+	it('creates a pending outbound shipment at version one and answers with its lines', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			warehouseId: UNKNOWN,
+			lines: [request(LINE_A, 3)]
+		} as never);
+
+		expect(created).toMatchObject({
+			orderId: ORDER,
+			direction: FulfillmentDirection.OUTBOUND,
+			status: FulfillmentStatusDetail.PENDING,
+			version: 1,
+			requiresShipping: true,
+			noNotification: false
+		});
+		// The lines arrive through the line service, addressed at the shipment that was just created.
+		expect(created.lines).toHaveLength(1);
+		expect(created.lines[0]).toMatchObject({ orderLineId: LINE_A, quantity: 3, fulfillmentId: created.id });
+		expect(fixture.linesOf(created.id)).toHaveLength(1);
+		// Creating a shipment takes the quantity it ships: it is no longer outstanding.
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+	});
+
+	it('refuses a shipment with no lines and writes nothing at all', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+		await expect(fixture.service.create({ orderId: ORDER, lines: [] } as never)).rejects.toThrow(
+			/FULFILLMENT_EMPTY/
+		);
+		await expect(fixture.service.create({ orderId: ORDER } as never)).rejects.toThrow(/FULFILLMENT_EMPTY/);
+		expect(fixture.tables.fulfillment).toEqual([]);
+		expect(fixture.tables.fulfillment_line).toEqual([]);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('refuses a line of zero or a negative quantity, and leaves the order line alone', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+
+		for (const quantity of [0, -1]) {
+			await expect(
+				fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, quantity)] } as never)
+			).rejects.toThrow(/FULFILLMENT_LINE_QUANTITY_INVALID/);
+		}
+
+		expect(fixture.tables.fulfillment).toEqual([]);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('takes exactly what the order line has left and refuses one unit past it', async () => {
+		// The boundary, from both sides: `outstanding` is legal, `outstanding + 1` is not, and the
+		// refusal names the numbers the caller has to reconcile (doc 09 §12.6).
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [
+					orderLine(LINE_A, { quantity: 5 }),
+					orderLine(LINE_B, { quantity: 5 })
+				]
+			}
+		});
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			lines: [request(LINE_A, 5)]
+		} as never);
+
+		expect(created.lines[0].quantity).toBe(5);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+
+		// Both figures are named as the digits the comparison was made on, not as doubles rendered from
+		// them: the quantity is a `numeric(20,6)`, and a refusal that printed a remainder through
+		// `Number` would name a value the guard did not actually refuse the request against.
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_B, 6)] } as never)
+		).rejects.toMatchObject({
+			response: {
+				code: 'FULFILLMENT_QUANTITY_EXCEEDED',
+				details: { orderLineId: LINE_B, requested: '6', outstanding: '5' }
+			}
+		});
+		expect(fixture.tables.fulfillment).toHaveLength(1);
+	});
+
+	it('counts what was written off and dismissed on a return as no longer shippable', async () => {
+		// The three subtrahends of §12.6 in one row: ten ordered, four written off, two dismissed and
+		// one already fulfilled leaves three.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [
+					orderLine(LINE_A, {
+						quantity: 10,
+						writtenOffQuantity: 4,
+						returnDismissedQuantity: 2,
+						fulfilledQuantity: 1
+					}),
+					orderLine(LINE_B, {
+						quantity: 10,
+						writtenOffQuantity: 4,
+						returnDismissedQuantity: 2,
+						fulfilledQuantity: 1
+					})
+				]
+			}
+		});
+
+		expect(await fixture.service.outstandingOf(LINE_A)).toBe(3);
+
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		expect(created.lines[0].quantity).toBe(3);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(4);
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_B, 4)] } as never)
+		).rejects.toMatchObject({ response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED' } });
+	});
+
+	it('lets a line ship in parts, and never lets the parts exceed what was ordered', async () => {
+		// The property partial fulfilment exists for: two shipments of one line are two fulfilments,
+		// each one a separate picking list, and together they stay inside the ordered quantity.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+
+		const first = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+		const second = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		expect(first.id).not.toBe(second.id);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(4);
+		expect(fixture.tables.fulfillment_line).toHaveLength(2);
+
+		// The refusal reports both figures as the digits the comparison was made on. It used to render
+		// the remainder through `Number`, which prints a value that differs from the one the guard
+		// actually refused it against — the least helpful thing a refusal about a decimal boundary can
+		// do, and the reason the remainder is carried as text in the first place.
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never)
+		).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED', details: { requested: '2', outstanding: '1' } }
+		});
+	});
+
+	it('exempts a return shipment from the outstanding guard (doc 09 §12.10)', async () => {
+		// A return moves the other way: returning more than is outstanding is a credit decision the
+		// returns domain makes, not a shipping constraint this one imposes.
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 3, fulfilledQuantity: 3 })] }
+		});
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 10)]
+		} as never);
+
+		expect(created).toMatchObject({ direction: FulfillmentDirection.RETURN, status: FulfillmentStatusDetail.PENDING });
+		expect(created.lines[0].quantity).toBe(10);
+	});
+
+	it('writes a return shipment’s lines without moving the order line’s fulfilled counter', async () => {
+		// `createReturnLeg`'s own rule, which `create` used to break: a return does not fulfil anything,
+		// so adding its quantity to `fulfilledQuantity` counts the same units twice — once when they went
+		// out and once when they came back. A line ordered for 10 that shipped 10 and is then returned 4
+		// through `POST /fulfillments/returns` reached 14 against a `quantity` of 10, the outstanding
+		// remainder went negative, and every later outbound shipment on the line was refused. The lines
+		// themselves are still written, because they are what the returns package reconciles against.
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 10, fulfilledQuantity: 10 })] }
+		});
+
+		const created = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 4)]
+		} as never);
+
+		expect(fixture.linesOf(created.id)).toHaveLength(1);
+		expect(Number(fixture.linesOf(created.id)[0].quantity)).toBe(4);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(10);
+		// And the line is therefore still fully accounted for rather than over-fulfilled, so the
+		// remainder it reports is zero rather than a negative number.
+		expect(Number(await fixture.service.outstandingOf(LINE_A))).toBe(0);
+	});
+
+	it('moves no counter when a return leg ships, is delivered or is cancelled', async () => {
+		// The same rule on the three moves that ride on a shipment's lines. `shippedQuantity` and
+		// `deliveredQuantity` measure what reached the buyer, and a cancelation only gives back what the
+		// creation took — which, for a return leg, is nothing.
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 10, fulfilledQuantity: 10, shippedQuantity: 10 })] }
+		});
+
+		const leg = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 4)]
+		} as never);
+
+		await fixture.service.ship(leg.id);
+		await fixture.service.deliver(leg.id);
+
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(10);
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(0);
+
+		const cancelled = await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 2)]
+		} as never);
+
+		await fixture.service.cancel(cancelled.id, 'CUSTOMER_KEPT_THE_GOODS');
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(10);
+	});
+
+	it('refuses a line whose order line is not there', async () => {
+		// The platform's CRUD base raises the generic not-found before the service's own
+		// `ORDER_LINE_NOT_FOUND` message can be reached; what a caller observes is the 404.
+		const fixture = fulfillmentFixture();
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(UNKNOWN, 1)] } as never)
+		).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.tables.fulfillment).toEqual([]);
+	});
+
+	it('reads the quantities a numeric column hands back without concatenating them', async () => {
+		// Control: `numeric(20,6)` arrives from the driver as text in a fixture and as a number through
+		// the entity's transformer, and `'10.000000' + 4` is `'10.0000004'` for an implementation that
+		// adds the values it was handed. Every read of a quantity in this service goes through
+		// `Number(...)` for exactly that reason.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [
+					orderLine(LINE_A, { quantity: '10.000000', fulfilledQuantity: '4.000000' }),
+					orderLine(LINE_B, { quantity: '10.000000', fulfilledQuantity: '4.000000' })
+				]
+			}
+		});
+
+		expect(await fixture.service.outstandingOf(LINE_A)).toBe(6);
+
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 6)] } as never);
+
+		expect(created.lines[0].quantity).toBe(6);
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_B, 7)] } as never)
+		).rejects.toMatchObject({ response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED' } });
+	});
+
+	// The defect: the outstanding quantity is computed by subtracting binary floating point numbers
+	// (`fulfillment.service.ts`, `outstandingOf`, lines 242–247), so `0.3 − 0.1` is
+	// `0.19999999999999998` rather than `0.2`. The last partial shipment of a decimal quantity is then
+	// refused by the guard on line 275 — `0.2 > 0.19999999999999998` — and a picking screen is told
+	// there is nothing left to ship. The platform keeps exact decimal primitives for this reason
+	// (`packages/core/src/lib/money/decimal.ts`, `subtractDecimalStrings` / `compareDecimalStrings`).
+	it('[DEFECT] treats a decimal remaining quantity as exact, so the last partial shipment is not refused', async () => {
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 0.3, fulfilledQuantity: 0.1 })] }
+		});
+
+		expect(Number(await fixture.service.outstandingOf(LINE_A))).toBe(0.2);
+
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 0.2)] } as never);
+
+		expect(created.lines[0].quantity).toBe(0.2);
+	});
+});
+
+describe('FulfillmentService — the shipment’s own lifecycle (doc 09 §12.5)', () => {
+	/**
+	 * The clock is frozen to one instant for this block, so the timestamps a move records are asserted
+	 * exactly rather than by shape. Only `Date` is faked — every timer and microtask the asynchronous
+	 * code runs on is the real one.
+	 */
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => jest.useRealTimers());
+
+	/** A fixture with one order line of `quantity` and one pending shipment of all of it. */
+	async function pending(quantity = 5) {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity })] } });
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, quantity)] } as never);
+
+		return { fixture, created };
+	}
+
+	it('hands a pending shipment to the carrier and stamps the instant it left', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		const shipped = await fixture.service.ship(created.id, {
+			trackingNumber: 'TRACK-0001',
+			carrier: 'CARRIER-A',
+			service: 'EXPRESS'
+		});
+
+		expect(shipped).toMatchObject({
+			status: FulfillmentStatusDetail.SHIPPED,
+			trackingNumber: 'TRACK-0001',
+			carrier: 'CARRIER-A',
+			service: 'EXPRESS',
+			shippedAt: SHIPPED_AT,
+			version: 2
+		});
+		expect(shipped.lines).toHaveLength(1);
+		// Handing over moves `shippedQuantity` and only `shippedQuantity`.
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(3);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(0);
+	});
+
+	it('keeps the tracking the shipment already carries when the caller states none', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5 })],
+				fulfillment: [
+					shipment('ready', { trackingNumber: 'TRACK-EXISTING', carrier: 'CARRIER-B', noNotification: true })
+				],
+				fulfillment_line: [shipmentLine('settled-line', 'ready', LINE_A, 2)]
+			}
+		});
+
+		const shipped = await fixture.service.ship('ready');
+
+		expect(shipped).toMatchObject({
+			trackingNumber: 'TRACK-EXISTING',
+			carrier: 'CARRIER-B',
+			noNotification: true,
+			status: FulfillmentStatusDetail.SHIPPED
+		});
+	});
+
+	it('moves a shipped shipment to in transit without changing what has shipped', async () => {
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+
+		const before = { ...fixture.line(LINE_A) };
+		const inTransit = await fixture.service.markInTransit(created.id);
+
+		expect(inTransit.status).toBe(FulfillmentStatusDetail.IN_TRANSIT);
+		expect(inTransit.version).toBe(3);
+		expect(fixture.line(LINE_A).shippedQuantity).toBe(before.shippedQuantity);
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(0);
+	});
+
+	/** The two routes the machine contains from a pending shipment to a delivered one. */
+	const routes: Array<[string, FulfillmentStatusDetail[]]> = [
+		['SHIPPED → DELIVERED', [FulfillmentStatusDetail.SHIPPED]],
+		['SHIPPED → IN_TRANSIT → DELIVERED', [FulfillmentStatusDetail.SHIPPED, FulfillmentStatusDetail.IN_TRANSIT]]
+	];
+
+	it.each(routes)('reaches delivered along %s and records the delivery', async (_route, steps) => {
+		const { fixture, created } = await pending();
+
+		for (const step of steps) {
+			if (step === FulfillmentStatusDetail.SHIPPED) {
+				await fixture.service.ship(created.id);
+				continue;
+			}
+
+			await fixture.service.markInTransit(created.id);
+		}
+
+		const delivered = await fixture.service.deliver(created.id, DELIVERED_AT);
+
+		expect(delivered).toMatchObject({ status: FulfillmentStatusDetail.DELIVERED, deliveredAt: DELIVERED_AT });
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(5);
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(5);
+	});
+
+	it('refuses a move the machine does not contain, and names what it would have allowed', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		for (const move of [FulfillmentStatusDetail.DELIVERED, FulfillmentStatusDetail.IN_TRANSIT]) {
+			await expect(fixture.service.transition(created.id, move)).rejects.toMatchObject({
+				response: {
+					code: 'FULFILLMENT_STATUS_TRANSITION_INVALID',
+					details: {
+						from: FulfillmentStatusDetail.PENDING,
+						to: move,
+						allowed: [FulfillmentStatusDetail.SHIPPED, FulfillmentStatusDetail.CANCELED]
+					}
+				}
+			});
+		}
+
+		// A refused move writes nothing.
+		expect(fixture.row(created.id)).toMatchObject({ status: FulfillmentStatusDetail.PENDING, version: 1 });
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(0);
+	});
+
+	it('refuses to move a delivered shipment anywhere it is not already', async () => {
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+		await fixture.service.deliver(created.id);
+
+		for (const move of [
+			FulfillmentStatusDetail.SHIPPED,
+			FulfillmentStatusDetail.IN_TRANSIT,
+			FulfillmentStatusDetail.CANCELED
+		]) {
+			await expect(fixture.service.transition(created.id, move)).rejects.toMatchObject({
+				response: { code: 'FULFILLMENT_STATUS_TRANSITION_INVALID' }
+			});
+		}
+
+		expect(fixture.row(created.id).status).toBe(FulfillmentStatusDetail.DELIVERED);
+	});
+
+	it('refuses to move a cancelled shipment, which is where its lifecycle ends', async () => {
+		const { fixture, created } = await pending();
+
+		await fixture.service.cancel(created.id);
+
+		for (const move of [
+			FulfillmentStatusDetail.SHIPPED,
+			FulfillmentStatusDetail.IN_TRANSIT,
+			FulfillmentStatusDetail.DELIVERED
+		]) {
+			await expect(fixture.service.transition(created.id, move)).rejects.toMatchObject({
+				response: { code: 'FULFILLMENT_STATUS_TRANSITION_INVALID' }
+			});
+		}
+
+		expect(fixture.row(created.id).status).toBe(FulfillmentStatusDetail.CANCELED);
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(0);
+	});
+
+	it('answers a transition to the status the shipment already holds without writing to it', async () => {
+		// The machine's own idempotence at the level of `transition`: the row is returned unchanged, so
+		// a repeated call is not a second write. What that means for the counters a caller moves beside
+		// it is the subject of the double-submission cases below.
+		const { fixture, created } = await pending();
+
+		const answered = await fixture.service.transition(created.id, FulfillmentStatusDetail.PENDING);
+
+		expect(answered.id).toBe(created.id);
+		expect(fixture.row(created.id)).toMatchObject({ status: FulfillmentStatusDetail.PENDING, version: 1 });
+	});
+
+	it('bumps the optimistic lock exactly once per move', async () => {
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+		await fixture.service.markInTransit(created.id);
+		await fixture.service.deliver(created.id);
+
+		expect(Number(fixture.row(created.id).version)).toBe(4);
+	});
+
+	it('refuses a move on a shipment that does not exist', async () => {
+		const fixture = fulfillmentFixture();
+
+		await expect(fixture.service.markInTransit(UNKNOWN)).rejects.toBeInstanceOf(NotFoundException);
+		await expect(fixture.service.transition(UNKNOWN, FulfillmentStatusDetail.SHIPPED)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+	});
+
+	it('announces every lifecycle move into the outbox, through the write’s own manager', async () => {
+		// The package emitted nothing at all, so a parcel could be created, handed over, tracked and
+		// delivered and nothing outside it — no webhook subscriber, no search index, no buyer
+		// notification — could learn of any of it. Each event is appended by the call that committed the
+		// move, through the shipment repository's own entity manager, so the two cannot be separated by
+		// a crash.
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0001', carrier: 'DHL' });
+		await fixture.service.markInTransit(created.id);
+		await fixture.service.deliver(created.id);
+
+		expect(fixture.events.map((event) => event.name)).toEqual([
+			'fulfillment.created',
+			'fulfillment.shipped',
+			'fulfillment.in_transit',
+			'fulfillment.delivered'
+		]);
+		expect(fixture.events.every((event) => event.manager === fixture.manager)).toBe(true);
+		expect(fixture.events.every((event) => event.aggregateType === 'FULFILLMENT')).toBe(true);
+		expect(fixture.events.every((event) => event.aggregateId === created.id)).toBe(true);
+
+		// The hand-over's event describes a row that already carries the carrier's number, because the
+		// tracking details ride the same statement as the status rather than a write after it.
+		expect(fixture.events[1].data).toMatchObject({
+			fulfillmentId: created.id,
+			status: FulfillmentStatusDetail.SHIPPED,
+			trackingNumber: 'TRACK-0001',
+			carrier: 'DHL',
+			version: 2
+		});
+	});
+
+	it('announces nothing for a move that did not happen', async () => {
+		// A repeat submission writes nothing, so it announces nothing: an outbox that emitted on every
+		// call would tell a consumer a parcel had been delivered twice.
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+		await fixture.service.deliver(created.id);
+
+		const announced = fixture.events.length;
+
+		await fixture.service.deliver(created.id);
+
+		expect(fixture.events).toHaveLength(announced);
+	});
+
+	it('predicates the move on the version the caller read, and refuses one that moved on', async () => {
+		// The move used to be an unconditional `UPDATE … WHERE id = ?` carrying a version this service
+		// computed after a read, which is exactly the read-then-write window the kernel exists to close:
+		// a caller holding version 1 could overwrite whatever the row had become. The write is now the
+		// kernel's conditional statement, so a stated version that has been spent is a conflict.
+		const { fixture, created } = await pending();
+
+		await fixture.service.ship(created.id);
+
+		await expect(
+			fixture.service.markInTransit(created.id, { wildcard: false, versions: [1] })
+		).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+		expect(fixture.row(created.id)).toMatchObject({ status: FulfillmentStatusDetail.SHIPPED, version: 2 });
+
+		// The version the shipment actually holds is accepted, and the statement that compares it is the
+		// statement that increments it.
+		await fixture.service.markInTransit(created.id, { wildcard: false, versions: [2] });
+
+		expect(fixture.row(created.id)).toMatchObject({ status: FulfillmentStatusDetail.IN_TRANSIT, version: 3 });
+	});
+
+	it('confines the conditional write to the shipment’s own tenant and organization', async () => {
+		// A shipment id travels — it is in a URL, a carrier callback and an exported manifest — so the
+		// statement has to say *whose* row it may touch as well as which row: criteria that name only
+		// the id are criteria another tenant's identifier can satisfy. The scope is taken from the row
+		// this call read, which is the only source available on the paths that run with no request
+		// behind them, and the version is the kernel's own precondition rather than a number this
+		// service computed.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5 })],
+				fulfillment: [shipment('pending', { version: 3 })],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+		// `as never` on the receiver makes the spy itself `never`, so its recorded calls cannot be
+		// read back. The receiver is widened instead of erased: the spy keeps a usable type and the
+		// assertions below can still name the criteria the conditional write stated.
+		const update = jest.spyOn(fixture.service as unknown as { update: (...args: unknown[]) => unknown }, 'update');
+
+		await fixture.service.ship('pending');
+
+		const conditional = update.mock.calls
+			.map(([criteria]) => criteria as Record<string, unknown>)
+			.filter((criteria) => criteria !== null && typeof criteria === 'object');
+
+		expect(conditional).toContainEqual({
+			id: 'pending',
+			tenantId: TENANT,
+			organizationId: ORG,
+			version: 3
+		});
+		expect(fixture.row('pending')).toMatchObject({ status: FulfillmentStatusDetail.SHIPPED, version: 4 });
+
+		update.mockRestore();
+	});
+});
+
+/**
+ * What a shipment hands to the carrier, once.
+ *
+ * The counter on the order line is a cache of the shipment lines that caused it (doc 05 I-45), so the
+ * second submission of the same move has to leave it where the first one put it. The cases below
+ * state the invariant rather than the mechanism: whatever a repeated call answers — a refusal, as the
+ * API contract's `FULFILLMENT_ALREADY_SHIPPED` requires (doc 06 §6.9), or the unchanged resource —
+ * the units a line reports must be the units that moved.
+ */
+describe('FulfillmentService — handing the same shipment over twice (doc 06 §6.9, doc 05 I-45)', () => {
+	/** A fixture with one shipment of three against a line of five. */
+	async function shipmentOfThree() {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		return { fixture, created };
+	}
+
+	it('moves each counter exactly as far as the shipment lines justify', async () => {
+		// The control for the three cases below: one move each, and the three counters are the sum of
+		// the one line that caused them.
+		const { fixture, created } = await shipmentOfThree();
+
+		await fixture.service.ship(created.id);
+		await fixture.service.deliver(created.id);
+
+		const line = fixture.line(LINE_A);
+		const lines = fixture.linesOf(created.id);
+		const shippedQuantity = lines.reduce((sum, row) => sum + Number(row.quantity), 0);
+
+		expect(Number(line.fulfilledQuantity)).toBe(shippedQuantity);
+		expect(Number(line.shippedQuantity)).toBe(shippedQuantity);
+		expect(Number(line.deliveredQuantity)).toBe(shippedQuantity);
+	});
+
+	// The defect: `transition` answers the unchanged row when the status is already the requested one
+	// (`fulfillment.service.ts`, lines 209–211) and `ship` reads that as permission to carry on, so a
+	// second hand-over writes the tracking details again and bumps `shippedQuantity` a second time. The
+	// API contract names the refusal — `FULFILLMENT_ALREADY_SHIPPED`, 409 (doc 06 §6.9).
+	it('[DEFECT] refuses to hand an already shipped fulfilment to the carrier again', async () => {
+		const { fixture, created } = await shipmentOfThree();
+
+		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0001' });
+
+		await expect(fixture.service.ship(created.id, { trackingNumber: 'TRACK-0002' })).rejects.toThrow(
+			/FULFILLMENT_ALREADY_SHIPPED/
+		);
+	});
+
+	// The same defect seen from the order line: the second hand-over counts the same three units
+	// again, so `shippedQuantity` stops being the sum of the rows that caused it (doc 05 I-45). The
+	// second call's answer is tolerated either way, so that fixing the refusal above turns this case
+	// green rather than red.
+	it('[DEFECT] ships the units once, however many times the shipment is handed over', async () => {
+		const { fixture, created } = await shipmentOfThree();
+
+		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0001' });
+		await fixture.service.ship(created.id, { trackingNumber: 'TRACK-0002' }).catch(() => undefined);
+
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(3);
+		expect(fixture.row(created.id)).toMatchObject({
+			status: FulfillmentStatusDetail.SHIPPED,
+			trackingNumber: 'TRACK-0001'
+		});
+	});
+
+	// The same defect on the delivery move: `deliver` bumps `deliveredQuantity` after a `transition`
+	// that answered the unchanged row.
+	it('[DEFECT] delivers the units once, however many times delivery is reported', async () => {
+		const { fixture, created } = await shipmentOfThree();
+
+		await fixture.service.ship(created.id);
+		await fixture.service.deliver(created.id, DELIVERED_AT);
+		await fixture.service.deliver(created.id, DELIVERED_AT).catch(() => undefined);
+
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(3);
+	});
+});
+
+describe('FulfillmentService — cancelation (doc 09 §12.9)', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => jest.useRealTimers());
+
+	it('cancels a pending shipment, records why, and gives the quantity back', async () => {
+		// The shipment is seeded as a settled row, because what is under test is the cancelation and
+		// not the creation that precedes it.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending', { metadata: { pickedBy: 'operator-1' } })],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		const canceled = await fixture.service.cancel('pending', 'DAMAGED_PACKAGING');
+
+		expect(canceled).toMatchObject({
+			status: FulfillmentStatusDetail.CANCELED,
+			canceledAt: SHIPPED_AT,
+			version: 2
+		});
+		// The reason is merged into the metadata the shipment already carried, never over it.
+		expect(canceled.metadata).toEqual({ pickedBy: 'operator-1', cancelReason: 'DAMAGED_PACKAGING' });
+		// A cancelled shipment no longer accounts for its quantity, so the line has it back.
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('cancels without a reason, keeping the metadata it already carried', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		const canceled = await fixture.service.cancel('pending');
+
+		expect(canceled.status).toBe(FulfillmentStatusDetail.CANCELED);
+		expect(canceled.metadata?.cancelReason).toBeUndefined();
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('lets a cancelled shipment’s quantity be shipped again', async () => {
+		// The consequence of the counter going back: INV-14 counts the lines of *non-cancelled*
+		// fulfilments, so the units a cancelled shipment held are outstanding again, and the order can
+		// be shipped a second time without a phantom shortfall.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+
+		const first = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 5)] } as never);
+
+		expect(await fixture.service.outstandingOf(LINE_A)).toBe(0);
+
+		await fixture.service.cancel(first.id);
+
+		expect(await fixture.service.outstandingOf(LINE_A)).toBe(5);
+
+		const again = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 5)] } as never);
+
+		expect(again.lines[0].quantity).toBe(5);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+		expect(again.id).not.toBe(first.id);
+	});
+
+	// The defect: the cancelation matrix of doc 09 §12.9 permits a cancelation from `PENDING` only —
+	// `SHIPPED`, `IN_TRANSIT` and `DELIVERED` are refused with `FULFILLMENT_NOT_CANCELABLE`, because
+	// goods that have left are handled by a return. `ALLOWED_TRANSITIONS` (`fulfillment.service.ts`,
+	// lines 24–28) lists `CANCELED` as reachable from `SHIPPED`, so the shipment is cancelled and the
+	// counters are moved back on a parcel that is already with the carrier.
+	//
+	// The cancelation of a shipped fulfilment is also where a second, narrow defect is visible: `cancel`
+	// reverses `shippedQuantity` only when `fulfillment.status === SHIPPED` (lines 182–184), and the
+	// `fulfillment` it tests is the row `transition` has *already* written as `CANCELED` (line 221) —
+	// so the branch cannot fire, and a cancelled shipped fulfilment keeps reporting its units as
+	// shipped. It is recorded here rather than asserted separately because the two readings of §12.9
+	// disagree about whether that scenario is reachable at all, and the case that matters is the one
+	// above: the cancelation should not be permitted.
+	it('[DEFECT] refuses to cancel a fulfilment the carrier has already taken', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		await fixture.service.ship(created.id);
+
+		await expect(fixture.service.cancel(created.id, 'CHANGED_MIND')).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_NOT_CANCELABLE' }
+		});
+	});
+
+	// The defect: for the two statuses both readings agree are not cancelable, the refusal is raised
+	// with the generic transition code (`fulfillment.service.ts`, line 216) rather than the one the API
+	// contract publishes for this situation — `FULFILLMENT_NOT_CANCELABLE`, 409 (doc 06 §6.9, doc 09
+	// §12.9), which is what a storefront branches on to tell a customer that a parcel cannot be called
+	// back.
+	it('[DEFECT] refuses a cancelation of an in-transit or delivered shipment by its documented code', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 9 })] } });
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		await fixture.service.ship(created.id);
+		await fixture.service.markInTransit(created.id);
+
+		await expect(fixture.service.cancel(created.id)).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_NOT_CANCELABLE' }
+		});
+
+		await fixture.service.deliver(created.id);
+
+		await expect(fixture.service.cancel(created.id)).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_NOT_CANCELABLE' }
+		});
+	});
+
+	// The defect: a cancelation is documented as idempotent — "CANCELED → no-op, 200 with the unchanged
+	// resource" (doc 09 §12.9) — but after `transition` has answered the already-cancelled row,
+	// `cancel` carries on and subtracts the shipment's quantity from `fulfilledQuantity` a second time
+	// (`fulfillment.service.ts`, the `bumpOrderLineCounters(..., -quantity, 'FULFILLED')` on line 180).
+	// The clamp on line 309 hides it while nothing else is fulfilled; as soon as a second fulfilment
+	// holds part of the line, the second cancelation returns *its* quantity, and the order line claims
+	// less has been fulfilled than the shipments that exist.
+	it('[DEFECT] returns a cancelled shipment’s quantity once, however often it is submitted', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 6 })] } });
+
+		const first = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+		const second = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		await fixture.service.cancel(first.id);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+
+		await fixture.service.cancel(first.id).catch(() => undefined);
+
+		// The second shipment's three units are still fulfilled and must still be counted.
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(fixture.row(second.id).status).toBe(FulfillmentStatusDetail.PENDING);
+	});
+
+	it('refuses a cancelation of a shipment that does not exist', async () => {
+		const fixture = fulfillmentFixture();
+
+		await expect(fixture.service.cancel(UNKNOWN, 'CHANGED_MIND')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+describe('FulfillmentService — what an order line still has to ship (doc 09 §12.6)', () => {
+	/** One row of the subtraction, and what it leaves: `quantity` is ten in every row. */
+	const remainders: Array<[string, Row, number]> = [
+		['nothing has happened to it', {}, 10],
+		['part of it has shipped', { fulfilledQuantity: 4 }, 6],
+		['all of it has shipped', { fulfilledQuantity: 10 }, 0],
+		['some of it was written off', { writtenOffQuantity: 3 }, 7],
+		['a return was dismissed', { returnDismissedQuantity: 2 }, 8],
+		[
+			'a return was dismissed, some was written off and some shipped',
+			{ writtenOffQuantity: 3, returnDismissedQuantity: 2, fulfilledQuantity: 4 },
+			1
+		]
+	];
+
+	it.each(remainders)('answers what is left when %s', async (_situation, overrides, expected) => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, overrides)] } });
+
+		expect(await fixture.service.outstandingOf(LINE_A)).toBe(expected);
+	});
+
+	it('answers an empty remainder rather than a negative one for a line that was over-shipped', async () => {
+		// The counters can legitimately pass the ordered quantity when an excess was recorded, and the
+		// guard reads the negative remainder as "nothing may ship" — which is the safe direction.
+		const fixture = fulfillmentFixture({
+			seed: { order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 6 })] }
+		});
+
+		expect(await fixture.service.outstandingOf(LINE_A)).toBe(-1);
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 1)] } as never)
+		).rejects.toMatchObject({ response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED' } });
+	});
+
+	it('refuses to answer for an order line that does not exist', async () => {
+		const fixture = fulfillmentFixture();
+
+		await expect(fixture.service.outstandingOf(UNKNOWN)).rejects.toBeInstanceOf(NotFoundException);
+	});
+
+	// The defect: the positivity guard is written `quantity <= 0` (`fulfillment.service.ts`, line 265,
+	// and the same shape again in `fulfillment-line.service.ts`, line 35), and every comparison with
+	// `NaN` is false — so a quantity that is not a number at all passes both guards, is written to a
+	// `numeric(20,6)` column whose check constraint says it is positive
+	// (`CHK_fulfillment_line_positive`), and reaches the order line's counter as `NaN`. The service
+	// states the rule it means to enforce: "a shipment quantity is positive".
+	it('[DEFECT] refuses a shipment quantity that is not a positive number', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, Number.NaN)] } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(fixture.tables.fulfillment).toEqual([]);
+		expect(Number.isNaN(Number(fixture.line(LINE_A).fulfilledQuantity))).toBe(false);
+	});
+});
+
+describe('FulfillmentService — requesting a carrier label (doc 06 §7.13)', () => {
+	/** The shipment every case here is about, once the carrier has taken it. */
+	const SHIPMENT = '00000000-0000-4000-8000-0000000000c1';
+
+	/** What the carrier answers with: the document, and the provider's own payload for it. */
+	const LABEL = {
+		labelUrl: 'https://labels.invalid/TRACK-1.pdf',
+		labelData: { format: 'PDF', size: 'A6', widthMm: 100, heightMm: 150 }
+	};
+
+	/** The version a caller states back, which is the one it read the shipment at. */
+	const AT_VERSION = (...versions: number[]) => ({ wildcard: false, versions });
+
+	/** One shipment handed to a carrier: the only state a label can be requested for. */
+	const shipped = (overrides: Row = {}) =>
+		shipment(SHIPMENT, {
+			status: FulfillmentStatusDetail.SHIPPED,
+			trackingNumber: 'TRACK-1',
+			carrier: 'the carrier',
+			service: 'express-24h',
+			shippedAt: SHIPPED_AT,
+			version: 3,
+			...overrides
+		});
+
+	/** A carrier that answers with the label above, so a case can assert what was asked of it. */
+	const carrier = (label: Row = LABEL) => ({ requestLabel: jest.fn(async () => label) });
+
+	it('refuses a shipment the carrier has not taken, naming the platform code for that state', async () => {
+		// Control: a provider is registered and would answer, so the refusal below is the shipment's own
+		// state rather than the installation's missing integration.
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({
+			seed: { fulfillment: [shipment(SHIPMENT, { version: 3 })] },
+			labelProvider
+		});
+
+		await expect(
+			fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3))
+		).rejects.toMatchObject({
+			status: 400,
+			response: {
+				code: 'SHIPMENT_NOT_DEPARTED',
+				details: { fulfillmentId: SHIPMENT, status: FulfillmentStatusDetail.PENDING }
+			}
+		});
+		// Nothing was asked of the carrier and nothing was written: a label for a parcel no carrier has
+		// taken is a request that cannot be answered, not one to guess at.
+		expect(labelProvider.requestLabel).not.toHaveBeenCalled();
+		expect(fixture.row(SHIPMENT).labelUrl).toBeUndefined();
+		expect(fixture.row(SHIPMENT).version).toBe(3);
+	});
+
+	it('refuses with the label-unavailable code when this installation has no carrier integration', async () => {
+		// Control: the shipment is in the state a label can be requested for, so the refusal below is
+		// the installation's rather than the parcel's. The port is left unbound, which is what a
+		// deployment with no carrier integration is.
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped()] } });
+
+		await expect(
+			fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3))
+		).rejects.toMatchObject({
+			status: 502,
+			response: {
+				code: 'FULFILLMENT_LABEL_UNAVAILABLE',
+				details: { fulfillmentId: SHIPMENT, providerId: 'carrier-strategy' }
+			}
+		});
+		expect(fixture.row(SHIPMENT).labelUrl).toBeUndefined();
+		expect(fixture.row(SHIPMENT).version).toBe(3);
+	});
+
+	it('asks the carrier for the parcel and records the label, moving the version in the same write', async () => {
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped()] }, labelProvider });
+
+		const labelled = await fixture.service.requestLabel(
+			SHIPMENT,
+			{ providerId: 'carrier-strategy' },
+			AT_VERSION(3)
+		);
+
+		// The provider is told which parcel it is labelling, and the service level falls back to the one
+		// the shipment records when the caller does not restate it.
+		expect(labelProvider.requestLabel).toHaveBeenCalledTimes(1);
+		expect(labelProvider.requestLabel).toHaveBeenCalledWith(
+			expect.objectContaining({
+				fulfillmentId: SHIPMENT,
+				orderId: ORDER,
+				providerId: 'carrier-strategy',
+				trackingNumber: 'TRACK-1',
+				service: 'express-24h',
+				carrier: 'the carrier'
+			})
+		);
+		expect(labelled).toMatchObject({ labelUrl: LABEL.labelUrl, labelData: LABEL.labelData, version: 4 });
+		// The version and the label columns are one row afterwards, which is what routing the write
+		// through the conditional update means: the increment cannot land without the label it describes.
+		expect(fixture.row(SHIPMENT)).toMatchObject({
+			labelUrl: LABEL.labelUrl,
+			labelData: LABEL.labelData,
+			version: 4
+		});
+	});
+
+	it('lets a caller restate the service level the label is issued for', async () => {
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped()] }, labelProvider });
+
+		await fixture.service.requestLabel(
+			SHIPMENT,
+			{ providerId: 'carrier-strategy', service: 'economy' },
+			AT_VERSION(3)
+		);
+
+		expect(labelProvider.requestLabel).toHaveBeenCalledWith(expect.objectContaining({ service: 'economy' }));
+	});
+
+	it('re-fetches over a label the shipment already holds, at the version the caller now has', async () => {
+		// A re-fetch is not a second label: the carrier answers with the document it holds, and the two
+		// columns are written again from the same place. The write is what makes it safe, and the
+		// version is what makes it ordered.
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({
+			seed: {
+				fulfillment: [shipped({ labelUrl: 'https://labels.invalid/earlier.pdf', labelData: { format: 'PDF' } })]
+			},
+			labelProvider
+		});
+
+		const fetched = await fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3));
+
+		expect(fetched).toMatchObject({ labelUrl: LABEL.labelUrl, labelData: LABEL.labelData, version: 4 });
+		expect(fixture.row(SHIPMENT)).toMatchObject({ labelUrl: LABEL.labelUrl, version: 4 });
+	});
+
+	it('refuses a write based on a version the shipment has moved past', async () => {
+		const labelProvider = carrier();
+		const fixture = fulfillmentFixture({ seed: { fulfillment: [shipped({ version: 5 })] }, labelProvider });
+
+		await expect(
+			fixture.service.requestLabel(SHIPMENT, { providerId: 'carrier-strategy' }, AT_VERSION(3))
+		).rejects.toMatchObject({ status: 409, code: 'ENTITY_VERSION_CONFLICT' });
+		// The conditional update matched no row, so the shipment keeps the version another writer left it
+		// at and carries no label from this attempt. On the route the guard answers this before the
+		// handler runs, which is why the carrier is not reached there at all; this call is the half that
+		// cannot be skipped, and it is the one asserted here.
+		expect(fixture.row(SHIPMENT).labelUrl).toBeUndefined();
+		expect(fixture.row(SHIPMENT).version).toBe(5);
+	});
+
+	it('withholds the provider payload from a list read and answers it on a single read', async () => {
+		const fixture = fulfillmentFixture({
+			seed: { fulfillment: [shipped({ labelUrl: LABEL.labelUrl, labelData: LABEL.labelData })] }
+		});
+
+		const page = await fixture.service.findAll({});
+
+		expect(page.total).toBe(1);
+		// The address is one field a list renders; the payload is a document, and a page of shipments is
+		// not a page of documents.
+		expect(page.items[0].labelUrl).toBe(LABEL.labelUrl);
+		expect('labelData' in page.items[0]).toBe(false);
+
+		// Control: the same row answers the payload when it is read on its own, so the list is a
+		// projection of a row that still holds one rather than a row that never did.
+		const one = await fixture.service.findOneByIdString(SHIPMENT);
+		expect(one.labelData).toEqual(LABEL.labelData);
+	});
+});
+
+/**
+ * The order's materialised fulfilment state, re-derived by the writes that move it (ADR-26).
+ *
+ * ADR-26 makes `order.fulfillmentStatus` a cache "recomputed by a single function from the ledgers every
+ * time a transaction, fulfillment, return, claim or exchange changes", and that function is
+ * `OrderTotalsService.recompute`, which this service now calls. **Which writes call it is decided by the
+ * derivation and by nothing else**, so the assertions below are in three layers:
+ *
+ * 1. the derivation reads five figures — `orderedQuantity`, `writtenOffQuantity`, `dismissedQuantity`,
+ *    `fulfilledQuantity`, `receivedReturnQuantity` — and this service writes exactly one of them,
+ *    `fulfilledQuantity`. That is asserted against the platform's own `OrderStateMachine` rather than
+ *    described, because the whole choice of which transitions are wired rests on it;
+ * 2. therefore `create` (outbound) and `cancel` (outbound) ask for the re-derivation, and the writes that
+ *    move only `shippedQuantity` or `deliveredQuantity` — `ship`, `markInTransit`, `deliver` — do not;
+ * 3. and the reason the call is made with, `FULFILLMENT_COMMITTED`, is the one `recompute`'s own
+ *    docstring names for this write.
+ *
+ * The transitions that move no counter at all — a `RETURN`-direction shipment, a repeat cancelation — are
+ * asserted too, and they are the cases where a re-derivation would be worse than useless: it would bump
+ * the order's version for a no-op and invalidate every client holding the order's `ETag`.
+ */
+describe('FulfillmentService — the order’s derived fulfilment state (ADR-26)', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => jest.useRealTimers());
+
+	/** The reason every re-derivation this domain asks for must carry. */
+	const REASON = 'FULFILLMENT_COMMITTED';
+
+	/**
+	 * The status the platform derives for one order line, read through the real state machine.
+	 *
+	 * The five inputs are named explicitly, and that is the point of the helper: a reader can see that
+	 * `shippedQuantity` and `deliveredQuantity` are not among them, which is why the transitions that
+	 * move those two ask for no re-derivation.
+	 */
+	const derivedFor = (line: Row) =>
+		OrderStateMachine.deriveFulfillmentStatus({
+			orderStatus: OrderStatus.CONFIRMED,
+			orderedQuantity: line.quantity,
+			writtenOffQuantity: line.writtenOffQuantity,
+			dismissedQuantity: line.returnDismissedQuantity,
+			fulfilledQuantity: line.fulfilledQuantity,
+			receivedReturnQuantity: 0
+		});
+
+	it('derives the status from the fulfilled quantity, which is the one figure this service writes', async () => {
+		// The control first, and the reason the two `create` and `cancel` call sites exist: a line with
+		// nothing fulfilled and a line fully fulfilled derive different statuses, so a write that moves
+		// `fulfilledQuantity` moves the answer.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 3 })] } });
+
+		expect(derivedFor(fixture.line(LINE_A))).toBe(FulfillmentStatus.NOT_FULFILLED);
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(derivedFor(fixture.line(LINE_A))).toBe(FulfillmentStatus.FULFILLED);
+	});
+
+	it('re-derives the order after an outbound shipment is created', async () => {
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 4 })] } });
+
+		await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		// Once, for the order, with the reason the order package documents for this write — not once per
+		// line, because the derivation reads the whole order and the counters of every line have settled
+		// by the time it runs.
+		expect(fixture.recomputed).toEqual([{ orderId: ORDER, reason: REASON }]);
+	});
+
+	it('re-derives the order after an outbound shipment is cancelled, because the quantity goes back', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await fixture.service.cancel('pending');
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(fixture.recomputed).toEqual([{ orderId: ORDER, reason: REASON }]);
+	});
+
+	it('re-derives nothing for a return leg, which moves no counter', async () => {
+		// A return is raised with no lines and moves no counter — the rule `createReturnLeg` states — so
+		// there is nothing for the derivation to see differently. The assertion is on the call, because
+		// the counters being unchanged is already covered by the create tests above.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A)] } });
+
+		await fixture.service.createReturnLeg({ orderId: ORDER });
+
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('re-derives nothing for a return-direction shipment created through the ordinary path', async () => {
+		// The other door onto the same act: `POST /fulfillments/returns` reaches `create` with the
+		// direction appended, and that path also writes lines without moving a counter.
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 5 })] } });
+
+		await fixture.service.create({
+			orderId: ORDER,
+			direction: FulfillmentDirection.RETURN,
+			lines: [request(LINE_A, 2)]
+		} as never);
+
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('re-derives nothing for a repeat cancelation, which gives nothing back a second time', async () => {
+		// The endpoint is idempotent: a second submission answers the unchanged resource. Re-deriving on
+		// it would move the order's version for a call that changed nothing.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		await fixture.service.cancel('pending');
+		expect(fixture.recomputed).toHaveLength(1);
+
+		await fixture.service.cancel('pending');
+
+		// Still one: the second call took the already-cancelled path and moved nothing.
+		expect(fixture.recomputed).toHaveLength(1);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('re-derives nothing when a shipment is handed over, and the counter that moved is why', async () => {
+		// A hand-over takes `shippedQuantity`. The derivation does not read it, so the order's status
+		// cannot have changed and a re-derivation would be a write that buys nothing — it would bump the
+		// order's version and invalidate every client holding the order's `ETag`.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 5)]
+			}
+		});
+
+		await fixture.service.ship('pending', { trackingNumber: 'TRACK-1' });
+
+		// The control: the counter the hand-over owns did move, so the absence below is a measurement
+		// about the derivation rather than about a write that never happened.
+		expect(Number(fixture.line(LINE_A).shippedQuantity)).toBe(5);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('re-derives nothing when a shipment is delivered, and nothing when it is in transit', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5, shippedQuantity: 5 })],
+				fulfillment: [shipment('moving', { status: FulfillmentStatusDetail.SHIPPED })],
+				fulfillment_line: [shipmentLine('line-1', 'moving', LINE_A, 5)]
+			}
+		});
+
+		await fixture.service.markInTransit('moving');
+
+		expect(fixture.row('moving').status).toBe(FulfillmentStatusDetail.IN_TRANSIT);
+		expect(fixture.recomputed).toEqual([]);
+
+		await fixture.service.deliver('moving');
+
+		// `deliveredQuantity` moved — the control — and the figure the derivation reads did not.
+		expect(Number(fixture.line(LINE_A).deliveredQuantity)).toBe(5);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+		expect(fixture.recomputed).toEqual([]);
+	});
+
+	it('does not answer a committed shipment as failed when its re-derivation could not run', async () => {
+		// This case used to assert the opposite — `rejects.toThrow('ORDER_WRITER_UNAVAILABLE')` — on the
+		// reasoning that no nightly reconciliation existed, so the caller's refusal was the only signal.
+		// That signal was wrong for the shipment: the rows and the counters below had committed, the
+		// idempotency kernel stored the refusal under the required key and replayed it to every retry, and
+		// the `fulfillment.created` event a picking list is built from was never appended. The
+		// reconciliation exists now (`OrderTotalsReconciliationScheduler`, which selects every order whose
+		// lines moved in its window), so the failure is logged and left to it, and the shipment is answered.
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 2 })] } });
+
+		fixture.orderTotals.recompute.mockRejectedValueOnce(new Error('ORDER_WRITER_UNAVAILABLE'));
+
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		expect(created.status).toBe(FulfillmentStatusDetail.PENDING);
+		expect(fixture.tables.fulfillment).toHaveLength(1);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(2);
+		expect(fixture.events.map((event) => event.name)).toEqual(['fulfillment.created']);
+
+		// A failure that is not a lost race is not retried — asking again would meet the same fault — and
+		// it is reported where an operator reads it, naming the order the reconciliation will repair.
+		expect(fixture.orderTotals.recompute).toHaveBeenCalledTimes(1);
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn.mock.calls[0][0]).toContain(ORDER);
+		expect(warn.mock.calls[0][0]).toContain('ORDER_WRITER_UNAVAILABLE');
+
+		warn.mockRestore();
+	});
+});
+
+/**
+ * A re-derivation that lost the order's version to a concurrent one (C9).
+ *
+ * The re-derivation states the wildcard version, so `recompute` reads the version the order holds and
+ * updates `WHERE version = <what it read>`. Two writes re-deriving one order at once — two shipments of
+ * it, or a shipment beside a return, a refund or a payment — race on that row, and the loser is refused
+ * with `ENTITY_VERSION_CONFLICT` although it held no stale state to protect. The service used to let that
+ * refusal out of `create` and `cancel` after their own writes had committed, so a shipment that existed was
+ * answered with a `409`, the key replayed that `409` forever, and no `fulfillment.created` event was ever
+ * appended for it. The refusal is the kernel's own `ApiException`, so the branch the service takes on it is
+ * the branch it takes in production.
+ */
+describe('FulfillmentService — a re-derivation that lost a version race is not the shipment’s failure', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => {
+		jest.useRealTimers();
+		jest.restoreAllMocks();
+	});
+
+	/** The reason every re-derivation this domain asks for carries. */
+	const REASON = 'FULFILLMENT_COMMITTED';
+
+	/** How many times the service asks before leaving the order to the reconciliation. */
+	const ATTEMPTS = 3;
+
+	/** The kernel's refusal of a wildcard write whose version was taken by a concurrent writer. */
+	const lostRace = () =>
+		new ApiException(409, ApiErrorCode.ENTITY_VERSION_CONFLICT, 'The record changed since you read it.', {
+			expectedVersion: 4,
+			actualVersion: 5
+		});
+
+	/** Silences, and records, what the service reports for a re-derivation it left behind. */
+	const warnings = () => jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+
+	it('asks again, from a fresh read, when a concurrent re-derivation of the order won the version', async () => {
+		const warn = warnings();
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 4 })] } });
+
+		fixture.orderTotals.recompute.mockRejectedValueOnce(lostRace());
+
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never);
+
+		// The shipment is answered, not the lost race.
+		expect(created.status).toBe(FulfillmentStatusDetail.PENDING);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(2);
+
+		// Twice, with the same order and reason: the second call is a whole `recompute`, which reads the
+		// order and derives it again from the ledgers as they stand after the winner's write — a new
+		// derivation, not a replay of the one that lost. It landed, so nothing is left to the reconciliation.
+		expect(fixture.orderTotals.recompute).toHaveBeenCalledTimes(2);
+		expect(fixture.orderTotals.recompute).toHaveBeenNthCalledWith(1, ORDER, REASON);
+		expect(fixture.orderTotals.recompute).toHaveBeenNthCalledWith(2, ORDER, REASON);
+		expect(fixture.recomputed).toEqual([{ orderId: ORDER, reason: REASON }]);
+		expect(warn).not.toHaveBeenCalled();
+
+		// And the shipment was announced, which is what the picking list is built from.
+		expect(fixture.events.map((event) => event.name)).toEqual(['fulfillment.created']);
+	});
+
+	it('answers the committed shipment when every attempt loses, and leaves the order to the reconciliation', async () => {
+		const warn = warnings();
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 4 })] } });
+
+		fixture.orderTotals.recompute.mockRejectedValue(lostRace());
+
+		const created = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 3)] } as never);
+
+		expect(created.status).toBe(FulfillmentStatusDetail.PENDING);
+		expect(created.lines).toHaveLength(1);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(3);
+		expect(fixture.events.map((event) => event.name)).toEqual(['fulfillment.created']);
+
+		// Bounded: a sustained stampede on one order is the reconciliation's to repair, not a loop's.
+		expect(fixture.orderTotals.recompute).toHaveBeenCalledTimes(ATTEMPTS);
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn.mock.calls[0][0]).toContain(ORDER);
+		expect(warn.mock.calls[0][0]).toContain(`${ATTEMPTS} attempt(s)`);
+	});
+
+	it('answers a committed cancelation as cancelled when its re-derivation lost the race', async () => {
+		warnings();
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 3 })],
+				fulfillment: [shipment('pending')],
+				fulfillment_line: [shipmentLine('line-1', 'pending', LINE_A, 3)]
+			}
+		});
+
+		fixture.orderTotals.recompute.mockRejectedValueOnce(lostRace());
+
+		const cancelled = await fixture.service.cancel('pending', 'customer changed their mind');
+
+		expect(cancelled.status).toBe(FulfillmentStatusDetail.CANCELED);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+		expect(fixture.orderTotals.recompute).toHaveBeenCalledTimes(2);
+		expect(fixture.events.map((event) => event.name)).toEqual(['fulfillment.canceled']);
+	});
+
+	it('still refuses what the shipment itself refused, because only the re-derivation is forgiven', async () => {
+		// The control: a create the quantity guard refuses writes nothing and asks for no re-derivation, so
+		// the retry above is not a blanket that swallows the shipment's own refusals.
+		warnings();
+		const fixture = fulfillmentFixture({ seed: { order_line: [orderLine(LINE_A, { quantity: 1 })] } });
+
+		fixture.orderTotals.recompute.mockRejectedValue(lostRace());
+
+		await expect(
+			fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 2)] } as never)
+		).rejects.toMatchObject({ response: { code: 'FULFILLMENT_QUANTITY_EXCEEDED' } });
+		expect(fixture.tables.fulfillment).toEqual([]);
+		expect(fixture.orderTotals.recompute).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * A shipment the order line still counts is not removed outright (C10).
+ *
+ * `DELETE /fulfillments/:id` and the `deleteFulfillment` field both reach `FulfillmentService.delete`, and
+ * it used to be the inherited removal: the shipment and — through the cascade — its lines went, while the
+ * order line's `fulfilledQuantity` kept counting their units. The order stayed `FULFILLED`, the remainder
+ * stayed at zero, and every later shipment of the line was refused as exceeding it. The counters are given
+ * back by `cancel` and by nothing else, so the removal now refuses a shipment they still count.
+ */
+describe('FulfillmentService — a shipment the order line still counts is not removed outright', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => {
+		jest.useRealTimers();
+		jest.restoreAllMocks();
+	});
+
+	/** A pending outbound shipment of five units of line A, with the counter it moved. */
+	const counted = (status: FulfillmentStatusDetail = FulfillmentStatusDetail.PENDING) =>
+		fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('five', { status })],
+				fulfillment_line: [shipmentLine('five-a', 'five', LINE_A, 5)]
+			}
+		});
+
+	it('refuses to remove a pending outbound shipment, and leaves its rows and the counter where they were', async () => {
+		const fixture = counted();
+
+		await expect(fixture.service.delete('five')).rejects.toMatchObject({
+			response: {
+				code: 'FULFILLMENT_NOT_DELETABLE',
+				details: {
+					fulfillmentId: 'five',
+					status: FulfillmentStatusDetail.PENDING,
+					direction: FulfillmentDirection.OUTBOUND,
+					deletableFrom: [FulfillmentStatusDetail.CANCELED]
+				}
+			}
+		});
+		await expect(fixture.service.delete('five')).rejects.toBeInstanceOf(ConflictException);
+
+		expect(fixture.row('five')).toBeDefined();
+		expect(fixture.linesOf('five')).toHaveLength(1);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+	});
+
+	it('refuses a shipment that has left the building, which no cancelation can reach either', async () => {
+		for (const status of [
+			FulfillmentStatusDetail.SHIPPED,
+			FulfillmentStatusDetail.IN_TRANSIT,
+			FulfillmentStatusDetail.DELIVERED
+		]) {
+			const fixture = counted(status);
+
+			await expect(fixture.service.delete('five')).rejects.toMatchObject({
+				response: { code: 'FULFILLMENT_NOT_DELETABLE', details: { status } }
+			});
+			expect(fixture.row('five')).toBeDefined();
+		}
+	});
+
+	it('removes it once it was cancelled, and the units it gave back can ship again', async () => {
+		// The failure scenario, end to end: before the refusal, removing the pending shipment left the
+		// remainder at zero and the next shipment of the line was refused. Cancelling gives the five back,
+		// the removal is then accepted, and a new shipment of all five is accepted too.
+		const fixture = counted();
+
+		await fixture.service.cancel('five');
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+
+		await expect(fixture.service.delete('five')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.row('five')).toBeUndefined();
+
+		const again = await fixture.service.create({ orderId: ORDER, lines: [request(LINE_A, 5)] } as never);
+
+		expect(again.status).toBe(FulfillmentStatusDetail.PENDING);
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+	});
+
+	it('removes a return leg at any point, because it never moved a counter', async () => {
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('back', { direction: FulfillmentDirection.RETURN })]
+			}
+		});
+
+		await expect(fixture.service.delete('back')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.row('back')).toBeUndefined();
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+	});
+
+	it('answers nothing affected for a shipment that is not there, rather than refusing or claiming one', async () => {
+		const fixture = counted();
+
+		await expect(fixture.service.delete(UNKNOWN)).resolves.toMatchObject({ affected: 0 });
+		expect(fixture.row('five')).toBeDefined();
+	});
+
+	it('selects only the organization the request states, for the check and for the removal alike', async () => {
+		// The base class scopes a removal by tenant alone. The removal now states the caller's organization
+		// too, and the read that decides states the same, so a cancelled shipment of another organization
+		// of the same tenant is neither removed nor even looked at.
+		const fixture = fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A)],
+				fulfillment: [shipment('theirs', { status: FulfillmentStatusDetail.CANCELED })]
+			}
+		});
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(UNKNOWN as never);
+
+		await expect(fixture.service.delete('theirs')).resolves.toMatchObject({ affected: 0 });
+		expect(fixture.row('theirs')).toBeDefined();
+
+		// The control: under the shipment's own organization the same removal goes through.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG as never);
+
+		await expect(fixture.service.delete('theirs')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.row('theirs')).toBeUndefined();
+	});
+});
+
+/**
+ * A correction may not turn a shipment round or re-point it at another order (C10).
+ *
+ * `PUT /fulfillments/:id` validates a body that declares `direction` and `orderId`, and both used to be
+ * written as asked. A pending outbound shipment re-labelled a return was then one whose cancelation gave
+ * nothing back — a return leg moved nothing — and whose removal the rule above no longer refused — a
+ * return leg counts nothing — so the refusal on `delete` could be walked round in two requests while
+ * `fulfilledQuantity` kept the units for good. The correction now refuses both columns, below both
+ * surfaces.
+ */
+describe('FulfillmentService — a correction never moves what the counters were decided on', () => {
+	beforeEach(() => jest.useFakeTimers({ now: SHIPPED_AT, doNotFake: NOT_FAKED_BESIDES_DATE }));
+	afterEach(() => {
+		jest.useRealTimers();
+		jest.restoreAllMocks();
+	});
+
+	/** A pending outbound shipment of five units of line A, with the counter it moved. */
+	const counted = (overrides: Row = {}) =>
+		fulfillmentFixture({
+			seed: {
+				order_line: [orderLine(LINE_A, { quantity: 5, fulfilledQuantity: 5 })],
+				fulfillment: [shipment('five', overrides)],
+				fulfillment_line: [shipmentLine('five-a', 'five', LINE_A, 5)]
+			}
+		});
+
+	it('refuses to turn a counted shipment into a return, so its removal stays refused', async () => {
+		// The failure scenario, end to end: before the refusal the correction landed, the removal below
+		// was accepted, and line A kept counting five units nothing would ship.
+		const fixture = counted();
+
+		await expect(
+			fixture.service.update('five', { direction: FulfillmentDirection.RETURN } as never)
+		).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_IMMUTABLE', details: { fulfillmentId: 'five', columns: ['direction'] } }
+		});
+		await expect(
+			fixture.service.update('five', { direction: FulfillmentDirection.RETURN } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(fixture.row('five')!.direction).toBe(FulfillmentDirection.OUTBOUND);
+		await expect(fixture.service.delete('five')).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_NOT_DELETABLE' }
+		});
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(5);
+
+		// And the cancelation still gives the five back, because the shipment is still outbound.
+		await fixture.service.cancel('five');
+		expect(Number(fixture.line(LINE_A).fulfilledQuantity)).toBe(0);
+	});
+
+	it('refuses to re-point a shipment at another order, which its re-derivation would then be asked for', async () => {
+		const fixture = counted();
+
+		await expect(fixture.service.update('five', { orderId: UNKNOWN } as never)).rejects.toMatchObject({
+			response: { code: 'FULFILLMENT_IMMUTABLE', details: { columns: ['orderId'] } }
+		});
+		expect(fixture.row('five')!.orderId).toBe(ORDER);
+
+		// The same refusal when the shipments are selected by conditions rather than by an identifier.
+		await expect(
+			fixture.service.update({ orderId: ORDER } as never, { direction: FulfillmentDirection.RETURN } as never)
+		).rejects.toMatchObject({ response: { code: 'FULFILLMENT_IMMUTABLE', details: { columns: ['direction'] } } });
+		expect(fixture.row('five')!.direction).toBe(FulfillmentDirection.OUTBOUND);
+	});
+
+	it('accepts a correction that restates both columns, and writes the members it does change', async () => {
+		// A client that sends the row back with its tracking edited is not refused for the members it did
+		// not touch; a row that states no direction is outbound, so restating `OUTBOUND` over it is no change.
+		for (const direction of [FulfillmentDirection.OUTBOUND, null]) {
+			const fixture = counted({ direction });
+
+			await expect(
+				fixture.service.update('five', {
+					orderId: ORDER,
+					direction: FulfillmentDirection.OUTBOUND,
+					trackingNumber: '1Z999AA10123456784'
+				} as never)
+			).resolves.toMatchObject({ affected: 1 });
+			expect(fixture.row('five')).toMatchObject({ orderId: ORDER, trackingNumber: '1Z999AA10123456784' });
+		}
+	});
+
+	it('leaves a correction that states neither column to the base class, unread', async () => {
+		// The lifecycle's own conditional writes reach `update` with a status and a version and nothing
+		// else, so the refusal must cost them nothing: no read is made for a patch that states neither. The
+		// criteria are an object, as the conditional write's are, which is the shape the refusal reads with.
+		const fixture = counted();
+		const find = jest.spyOn(fixture.service, 'find');
+
+		await expect(
+			fixture.service.update({ id: 'five', version: 1 } as never, { note: 'fragile' } as never)
+		).resolves.toMatchObject({ affected: 1 });
+		expect(find).not.toHaveBeenCalled();
+		expect(fixture.row('five')!.note).toBe('fragile');
+	});
+});

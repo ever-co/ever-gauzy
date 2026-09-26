@@ -1,0 +1,359 @@
+# The party row's GraphQL types.
+#
+# An organization contact is the CRM record behind a customer, a client, a lead and a seller contact
+# alike: the payer, the buyer and the company account an order, an invoice and a subscription all
+# point at. The row is deliberately wide — the commercial terms a relationship is governed by live on
+# it rather than on a second table — so the type states them all and a client reads one row instead
+# of joining four.
+#
+# **The relations are identifiers here, and the collections are absent.** `contactId` and `imageId`
+# are the two relation columns this row itself carries: they travel with every read of the full row
+# and they are what a client needs to reach the detail row or the asset. The rows beside them
+# (`contact`, `image`, the projects, the documents, the time logs, the tag set and the member set) are
+# joined by the reads whose caller names them in `relations`, and not by the list this connection
+# answers — a field for one of them would be absent on exactly the answers this surface serves, and a
+# client would read null and conclude the party has none. The party's detail row is read with
+# `contact(id)` on the contact domain, which is where its own type lives.
+#
+# `budget`, `creditLimit`, `creditUsed` and `loyaltyPoints` are **amounts**, so they are `Decimal` —
+# serialised as a string with six fractional digits, matching the wire format of the `numeric`
+# columns they are stored in. Money is never a `Float` anywhere in this schema: a binary fraction
+# cannot hold a cent exactly. `latitude` and `longitude` are coordinates rather than amounts and are
+# carried as `Float`, exactly as the address book and the contact domain carry their own pair.
+#
+# Three vocabularies are carried as their value rather than declared as enums here — `status`
+# (`ContactStatus`), `partyKind` (`PartyKind`) and `taxRegistrationScheme`
+# (`TaxRegistrationScheme`) — because each types a column of another table as well as this one: the
+# company-account membership reads `partyKind`, the supplier row shares the registration scheme, and
+# the lifecycle state is read and written by the checkout and order paths. Declaring one of them here
+# would claim a vocabulary this domain does not own, and the next domain that needs the same value
+# set would collide with this file rather than reuse it.
+
+"""
+One commercial counterparty: the party an order, an invoice and a subscription all point at.
+"""
+type OrganizationContact {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"""The display name of the party. A party that names nothing names no counterparty."""
+	name: String!
+	"""The address a document is mailed to and a guest order is matched on. Not unique, by design."""
+	primaryEmail: String
+	primaryPhone: String
+	"""How far the invitation to the party's own portal has come."""
+	inviteStatus: String
+	notes: String
+	"""What the party is to the organization. The discriminator every list of parties is read by."""
+	contactType: ContactType!
+	"""A denormalised avatar URL, kept for lists that must not join the asset table."""
+	imageUrl: String
+	"""
+	The amount the relationship was budgeted for. Its unit is `budgetType`: money when that is `cost`,
+	hours when it is `hours`.
+	"""
+	budget: Decimal
+	"""Whether `budget` is an amount of money or a number of hours."""
+	budgetType: String
+	"""
+	The staff user the party is also linked to, when it is. Null for a party who never logs into the
+	back office, which is the common case.
+	"""
+	userId: ID
+	"""The channel the relationship was acquired through."""
+	channelId: ID
+	"""The commercial lifecycle: `GUEST`, `ACTIVE`, `BLOCKED` or `ARCHIVED`."""
+	status: String
+	"""The price list assigned to this party. It wins over a group list and over the default list."""
+	priceListId: ID
+	"""Party-wide tax exemption: an export customer, an exempt institution."""
+	taxExempt: Boolean
+	"""The tax category applied to this party's lines when the variant's own category does not govern."""
+	taxCategoryId: ID
+	"""Ceiling on outstanding credit. Null means no credit facility."""
+	creditLimit: Decimal
+	"""
+	Outstanding credit, re-derived from the order and refund ledgers by the nightly reconciliation.
+	The ceiling check reads both members, which is why they are on one row.
+	"""
+	creditUsed: Decimal
+	"""Net-N terms for invoiced orders; null means due on receipt or the assigned term's schedule."""
+	paymentTermsDays: Int
+	"""The loyalty balance: the cached figure a checkout reads without summing the movement ledger."""
+	loyaltyPoints: Decimal
+	"""The address pre-selected at checkout. A reference into the address book, never a copy."""
+	defaultShippingAddressId: ID
+	"""The billing counterpart of the above, on the same terms."""
+	defaultBillingAddressId: ID
+	"""Whether the party consented to marketing, with its own audit value."""
+	acceptsMarketing: Boolean
+	"""Free-text acquisition source for reporting (`organic`, `campaign-x`, `import`)."""
+	acquiredChannel: String
+	"""
+	The normalised (trimmed, lower-cased) form of `primaryEmail`, maintained by a subscriber. It is
+	the key duplicate detection and guest-order matching compare on.
+	"""
+	emailKey: String
+	"""The party's key in an upstream CRM or ERP, used as the upsert key by the import jobs."""
+	externalId: String
+	"""Whether the party is a natural person (`INDIVIDUAL`) or a legal entity (`COMPANY`)."""
+	partyKind: String
+	"""The currency this party contracts in. Null means the region's currency."""
+	currency: String
+	"""The instalment schedule this party is settled against. It supersedes `paymentTermsDays`."""
+	paymentTermId: ID
+	"""
+	The party's VAT / GST / TIN number. Reverse charge and intra-community zero-rating are
+	conditional on the **buyer's** registration being present.
+	"""
+	taxRegistrationNumber: String
+	"""Which registration scheme the number belongs to."""
+	taxRegistrationScheme: String
+	"""The tax regime assigned to this party by hand. It always wins over automatic matching."""
+	taxRegimeId: ID
+	"""Tenant-defined, non-indexed extras."""
+	metadata: JSON
+	"""
+	The party's person-or-place detail row. The identifier always travels with this row: the detail
+	itself is joined only by the reads whose caller names it, and is read as `contact(id)` on the
+	contact domain.
+	"""
+	contactId: ID
+	"""The avatar asset. The identifier travels; the asset row is joined on request."""
+	imageId: ID
+	"""Whether the row is active. The commercial lifecycle is `status`, not this flag."""
+	isActive: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+	"""When the row was withdrawn, or null while it is live. The two lifecycle routes write this alone."""
+	deletedAt: DateTime
+}
+
+"""
+What a party is to the organization.
+
+It is the resource's own discriminator and the narrowing every list of parties is read by, so it is
+declared here as a closed set. The three values are the ones the column stores.
+"""
+enum ContactType {
+	"""A party the organization sells to on account."""
+	CLIENT
+	"""A party that buys, typically a consumer rather than an account."""
+	CUSTOMER
+	"""A party that has not bought yet."""
+	LEAD
+}
+
+"""
+The boundary of one page of parties.
+"""
+type OrganizationContactEdge {
+	node: OrganizationContact!
+	cursor: String!
+}
+
+"""
+One page of parties, with the total the filters select and the boundary cursors.
+"""
+type OrganizationContactConnection {
+	nodes: [OrganizationContact!]!
+	edges: [OrganizationContactEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a party list may be sorted by.
+"""
+enum OrganizationContactSortField {
+	createdAt
+	updatedAt
+	name
+	primaryEmail
+	contactType
+	status
+	creditLimit
+	loyaltyPoints
+}
+
+"""
+The order the parties are returned in. At most three keys are accepted.
+"""
+input OrganizationContactSort {
+	field: OrganizationContactSortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on what a party is to the organization.
+"""
+input ContactTypeFilter {
+	eq: ContactType
+	ne: ContactType
+	in: [ContactType!]
+	nin: [ContactType!]
+	isNull: Boolean
+}
+
+"""
+The fields a party list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read answers, because the connection narrows
+the rows the service returned: a member the read does not select would be a filter that silently
+selects nothing. The collections are absent for the same reason — a filter on `members` would be
+evaluated against a row the list read never joined, and would select nothing at all rather than
+selecting the wrong rows, which is the worst answer a filter can give.
+"""
+input OrganizationContactFilter {
+	id: IDFilter
+	name: StringFilter
+	primaryEmail: StringFilter
+	primaryPhone: StringFilter
+	inviteStatus: StringFilter
+	contactType: ContactTypeFilter
+	imageUrl: StringFilter
+	userId: IDFilter
+	channelId: IDFilter
+	status: StringFilter
+	priceListId: IDFilter
+	taxExempt: BooleanFilter
+	taxCategoryId: IDFilter
+	budget: DecimalFilter
+	budgetType: StringFilter
+	creditLimit: DecimalFilter
+	creditUsed: DecimalFilter
+	paymentTermsDays: NumberFilter
+	loyaltyPoints: DecimalFilter
+	defaultShippingAddressId: IDFilter
+	defaultBillingAddressId: IDFilter
+	acceptsMarketing: BooleanFilter
+	acquiredChannel: StringFilter
+	emailKey: StringFilter
+	externalId: StringFilter
+	partyKind: StringFilter
+	currency: StringFilter
+	paymentTermId: IDFilter
+	taxRegistrationNumber: StringFilter
+	taxRegistrationScheme: StringFilter
+	taxRegimeId: IDFilter
+	contactId: IDFilter
+	imageId: IDFilter
+	metadata: JSONFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [OrganizationContactFilter!]
+	or: [OrganizationContactFilter!]
+	not: OrganizationContactFilter
+}
+
+"""
+The party's person-or-place detail row, as the two delivered writes carry it.
+
+It is not a type of its own here: the detail row's type lives on the contact domain, and this input
+states only the members the create and the edit copy into the row they hand the contact service. A
+party is stored with its detail in one call rather than two, which is why the nested member exists at
+all; stating the detail's identifier updates that same row instead of writing a second one.
+"""
+input ContactDetailInput {
+	id: ID
+	name: String
+	firstName: String
+	lastName: String
+	country: String
+	city: String
+	address: String
+	address2: String
+	postcode: String
+	latitude: Float
+	longitude: Float
+	regionCode: String
+	fax: String
+	fiscalInformation: String
+	website: String
+}
+
+"""
+What a caller states when it records a party.
+
+Every member is one the delivered body declares, and that is the whole of the list: the input states
+the descriptive facts the route carries and nothing else. The commercial terms that live on the same
+row — `creditLimit`, `status`, `partyKind`, the registration pair, the two default addresses — are
+readable and filterable on the type above but are written by no declared body of this resource, so a
+member for one would be a promise this surface makes and the REST contract does not.
+
+`name` is required because the delivered body is validated from the entity's own members and the
+column is not nullable: a party that names nothing names no counterparty. `contactType` is optional
+here and defaulted by the column, and a stated one must be a member of the closed set above.
+
+The three identifier lists are the relations the delivered write maps onto the row it stores: the
+detail row, the employees the party is worked by and the projects it is attached to. A related row is
+named by its identifier and never by the row beside it, because that is what the delivered write
+persists — and a list the caller does not state is left out of the payload rather than sent empty,
+because the delivered handler reads "no members stated" as "derive them from the projects".
+"""
+input CreateOrganizationContactInput {
+	organizationId: ID!
+	name: String!
+	primaryEmail: String
+	primaryPhone: String
+	inviteStatus: String
+	contactType: ContactType
+	notes: String
+	budget: Decimal
+	budgetType: String
+	imageId: ID
+	"""The detail row to store with the party. Stating its identifier updates the row it names."""
+	contact: ContactDetailInput
+	"""The employees the party is worked by, by identifier."""
+	memberIds: [ID!]
+	"""The projects the party is attached to, by identifier. The delivered write derives the member set
+	from them when no member is stated."""
+	projectIds: [ID!]
+	"""The tags to attach, by identifier."""
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes a party that exists.
+
+The members are the create input's, with the criterion stated. **A member the caller leaves out is
+left as it is**: the delivered edit reads the row, writes the members stated onto it and reads it
+back, so an absent member is not an instruction to clear anything — unlike a relation list, which is
+replaced by the set the caller states.
+"""
+input UpdateOrganizationContactInput {
+	id: ID!
+	organizationId: ID!
+	name: String!
+	primaryEmail: String
+	primaryPhone: String
+	inviteStatus: String
+	contactType: ContactType
+	notes: String
+	budget: Decimal
+	budgetType: String
+	imageId: ID
+	contact: ContactDetailInput
+	memberIds: [ID!]
+	projectIds: [ID!]
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it moves a set of parties into or out of one employee's book.
+
+One payload for both directions because the fact is one: the employee either gains the named parties
+or loses them, and the delivered write applies both lists in the one call. The employee is named by
+its identifier — the delivered command takes the row the identifier names — and a list the caller
+does not state is left out rather than sent empty.
+"""
+input UpdateOrganizationContactsByEmployeeInput {
+	organizationId: ID!
+	"""The employee whose book of parties changes."""
+	memberId: ID!
+	"""The parties the employee gains, by identifier."""
+	addedEntityIds: [ID!]
+	"""The parties the employee loses, by identifier."""
+	removedEntityIds: [ID!]
+}

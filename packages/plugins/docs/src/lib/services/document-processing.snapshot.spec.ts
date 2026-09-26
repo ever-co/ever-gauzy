@@ -5,19 +5,15 @@
  * `document-processing.transitions.spec.ts` — the framework seam this test touches
  * (`RequestContext`) is mocked at the module boundary; `snapshotOf()` itself is real.
  */
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FileStorage: class {},
-		EventBus: class {},
-		RequestContext: {
-			currentUserId: jest.fn(),
-			currentCorrelationId: jest.fn()
-		}
-	}),
-	{ virtual: true }
-);
-jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }), { virtual: true });
+jest.mock('@gauzy/core', () => ({
+	FileStorage: class {},
+	EventBus: class {},
+	RequestContext: {
+		currentUserId: jest.fn(),
+		currentCorrelationId: jest.fn()
+	}
+}));
+jest.mock('@gauzy/config', () => ({ isSqlite: () => false, isBetterSqlite3: () => false }));
 jest.mock('../docs.config', () => ({ getDocsConfig: () => ({ maxExtractedChars: 500_000 }) }));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../events/document.event', () => ({ DocumentEvent: class {} }));

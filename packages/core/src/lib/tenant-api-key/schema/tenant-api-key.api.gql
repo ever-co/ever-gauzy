@@ -1,0 +1,42 @@
+# The tenant API key's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The resource serves one route and the surface states one field.** `TenantApiKeyController` is a
+# single handler — `POST /api/tenant-api-key/generate-key-pair` — and there is no list route, no node
+# route and no count route for a key row anywhere in the delivered API. So this domain contributes no
+# query at all: a `tenantApiKeys` connection or a `tenantApiKey` node here would be a read that the
+# REST surface does not serve and, worse, a read that the stored row cannot honestly answer, because
+# the secret column holds a hash and the entity excludes the key material from every answer.
+#
+# **The permission is the route's own, and the guard chain is the controller's.** The controller
+# carries `TenantPermissionGuard` and `PermissionGuard` on the class and states
+# `TENANT_API_KEY_CREATE` on its one handler, so the resolver carries the same two guards on its class
+# and the field states the same permission — no narrower and no wider than the route that issues a
+# pair.
+#
+# **The tenant is not an argument, and that is the route's own contract rather than a simplification.**
+# The delivered body carries a `tenantId` member which the delivered DTO validates against the
+# caller's own membership: the value is accepted only when it equals the tenant of the credential, so
+# the route has exactly one legal value for it. The service falls back to the credential's tenant when
+# the member is absent, which is the same outcome for the same caller, so the field offers the label
+# and not the tenant. Offering the member would offer a choice with one legal answer; omitting it
+# leaves a caller unable to name a tenant it is not entitled to, which is what the validator
+# guarantees over REST.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
+# the GraphQL endpoint and its resolvers, applied once on the resolver class so the field below is
+# behind the same capability as every other resolver. `FeatureFlagGuard` reads it from
+# `FEATURE_METADATA`, over the handler and then the class. The REST route is not gated by that code —
+# it is the door that stays open — so a tenant that switched the capability off is answered
+# `Cannot query field <name>` here and served as it always was there.
+
+extend type Mutation {
+	"""
+	Has an API key pair issued for the caller's own tenant, and answers it in clear text — the one and
+	only time the secret is readable. A tenant that already holds a pair is refused, as the delivered
+	route refuses it: the resource issues a pair for a tenant that has none.
+	"""
+	generateTenantApiKeyPair(input: GenerateTenantApiKeyInput!): TenantApiKeyPair!
+}

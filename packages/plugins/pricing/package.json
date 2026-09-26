@@ -1,0 +1,71 @@
+{
+	"name": "@gauzy/plugin-pricing",
+	"version": "0.1.0",
+	"description": "Gauzy Pricing Plugin - Price lists, product prices, tax-inclusivity preferences and foreign-exchange rates for the Gauzy Platform.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/pricing"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"typings": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-pricing",
+		"lib:build:prod": "yarn nx build plugin-pricing",
+		"lib:watch": "yarn nx build plugin-pricing --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.26",
+		"@nestjs/core": "^11.1.26"
+	},
+	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/utils": "^0.1.0",
+		"@mikro-orm/nestjs": "^6.1.2",
+		"@nestjs/graphql": "^13.4.2",
+		"@nestjs/swagger": "^11.4.4",
+		"@nestjs/typeorm": "^11.0.1",
+		"chalk": "^4.1.0",
+		"class-validator": "^0.14.2",
+		"graphql": "^16.11.0",
+		"graphql-tag": "^2.12.6",
+		"tslib": "^2.6.2",
+		"typeorm": "^1.0.0"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"gauzy",
+		"pricing",
+		"plugin",
+		"nestjs",
+		"typescript",
+		"price-list",
+		"exchange-rate",
+		"e-commerce"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}

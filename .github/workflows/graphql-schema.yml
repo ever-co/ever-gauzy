@@ -1,0 +1,111 @@
+name: 'GraphQL Schema'
+
+# The schema is a published contract: a client generator compiles against it, and a client that
+# compiled against yesterday's schema must not discover a removal by failing in production.
+#
+# Three checks, in the order that makes the failure readable:
+#
+#   1. regenerate - `nx run core:graphql-snapshot` composes the schema the API actually serves
+#      (core SDL + the SDL every registered plugin contributes) and rewrites the committed file.
+#      It is the composition itself, not a second implementation of it.
+#   2. `git diff --exit-code` - a difference means the committed snapshot no longer describes the
+#      schema, which is the gate E14 states: changing the schema without regenerating fails here.
+#   3. `tools/scripts/check-graphql-schema.js` - the change is classified against the revision the
+#      pull request targets. A removal, a changed type, a tightened nullability or a new required
+#      argument fails the job unless the pull request carries the `schema-breaking-change` label
+#      (which is what passes `--allow-breaking`). A deprecated element whose
+#      `@deprecated(reason: "...; removal planned for <release>")` has not yet come due fails even
+#      WITH the label: the deprecation window is a promise to callers, and a label cannot revoke it.
+#
+# The comparison needs the base revision's snapshot, so the base branch is fetched explicitly -
+# the default checkout is one commit deep, and without it the gate could only report that it has
+# nothing to compare against.
+
+on:
+  push:
+    branches:
+      - develop
+  # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
+  # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
+  # trigger below runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # replace this comment with:
+  #   pull_request:
+  #     branches:
+  #       - develop
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+# Least-privilege scope for the automatic GITHUB_TOKEN: this job reads the checkout and the label.
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  NODE_MODULES_ARCHIVE: node-modules.tar.zst
+
+jobs:
+  schema:
+    name: schema
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    # A cold dependency install on this fleet is measured in hours, not minutes. The ceiling costs
+    # nothing on the warm path, which is a cache lookup.
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Restore node_modules archive
+        # The same key the build workflow writes, so a push that already built this exact lockfile
+        # reuses that tree instead of installing again. The restore script below installs from
+        # scratch when the archive is absent, so a miss is not fatal.
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: ${{ env.NODE_MODULES_ARCHIVE }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
+
+      - name: Configure Registry
+        uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
+        with:
+          verdaccio-registry: ${{ vars.VERDACCIO_REGISTRY }}
+          verdaccio-token: ${{ secrets.VERDACCIO_TOKEN }}
+          force-public: ${{ vars.VERDACCIO_FORCE_PUBLIC }}
+          expect-vip: ${{ vars.RUNNER_LINUX_X64_8 != '' }}
+
+      - name: Restore node_modules
+        shell: bash
+        run: .github/scripts/restore-node-modules.sh
+
+      - name: Fetch the base revision
+        # Only a pull request has a base to compare with, and only its snapshot matters.
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin \
+            "+refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+
+      - name: Regenerate the committed schema snapshot
+        run: yarn nx run core:graphql-snapshot
+
+      - name: Fail when the snapshot is stale
+        # The composition just ran, so any difference is a schema change nobody committed.
+        run: |
+          if ! git diff --exit-code -- packages/core/src/lib/graphql/schema/schema.graphql; then
+            echo "::error::packages/core/src/lib/graphql/schema/schema.graphql is stale. Run 'yarn nx run core:graphql-snapshot' and commit the result."
+            exit 1
+          fi
+
+      - name: Check the deprecation contract and classify the change
+        shell: bash
+        run: |
+          node tools/scripts/check-graphql-schema.js \
+            --base "origin/${{ github.base_ref || 'develop' }}" \
+            --require-classification \
+            ${{ contains(github.event.pull_request.labels.*.name, 'schema-breaking-change') && '--allow-breaking' || '' }}

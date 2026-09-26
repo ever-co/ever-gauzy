@@ -20,10 +20,23 @@ const SAFE_CORRELATION_ID = /^[\x21-\x7E]{1,128}$/;
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
+	/**
+	 * The instance Nest built, for the one route that the module graph does not reach.
+	 *
+	 * A middleware declared with a module consumer covers the routes its pattern matches, and Nest
+	 * scopes that pattern to the global prefix — so the GraphQL endpoint, mounted outside the prefix,
+	 * is never covered by it. Mounting the same middleware there needs the instance, and asking the
+	 * container for it once the application has been created does not return; the constructor is the
+	 * one place the instance passes through for certain.
+	 */
+	static instance?: RequestContextMiddleware;
+
 	private readonly logger = new Logger(RequestContextMiddleware.name);
 	private readonly loggingEnabled = true;
 
-	constructor(private readonly clsService: ClsService) {}
+	constructor(private readonly clsService: ClsService) {
+		RequestContextMiddleware.instance = this;
+	}
 
 	/**
 	 * Middleware to manage request context and log request lifecycle.

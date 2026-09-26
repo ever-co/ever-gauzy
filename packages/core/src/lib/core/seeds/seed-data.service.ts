@@ -7,6 +7,8 @@ import * as path from 'node:path';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { serializeEmbeddedTransactions } from './../../database/embedded-transaction-queue';
+import { pruneTypeOrmSkeletonMetadata } from './../../database/typeorm-skeleton-metadata';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
@@ -46,6 +48,7 @@ import {
 import { createRolePermissions } from '../../role-permission/role-permission.seed';
 import { createDefaultTenant, createRandomTenants, DEFAULT_EVER_TENANT, DEFAULT_TENANT } from '../../tenant';
 import { createDefaultTenantSetting } from './../../tenant/tenant-setting/tenant-setting.seed';
+import { createDefaultCommerceDefaults } from './commerce-defaults.seed';
 import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
@@ -508,6 +511,21 @@ export class SeedDataService {
 		);
 
 		await this.tryExecute('Default Email Templates', createDefaultEmailTemplates(this.dataSource));
+
+		/**
+		 * The defaults an organization needs before it can issue a document — its default channel, its
+		 * default region and the seven numbering series — are seeded here rather than only by the
+		 * data-only kernel migration, because that migration runs **before** this seeding creates the
+		 * organization, and it seeds only the organizations it can see. Without this step a fresh
+		 * installation has no `ORDER` series and no `PO` series, so it can create parties, suppliers,
+		 * warehouses and products and then fail to raise a single order — which is exactly what happened
+		 * before it was added. Every insert is guarded by the row it would create, so a second boot
+		 * creates nothing.
+		 */
+		await this.tryExecute(
+			'Commerce Defaults',
+			createDefaultCommerceDefaults(this.dataSource, this.organizations)
+		);
 
 		await this.tryExecute('Default Accounting Templates', createDefaultAccountingTemplates(this.dataSource));
 
@@ -1681,9 +1699,16 @@ export class SeedDataService {
 					...dbConnectionOptions,
 					...this.overrideDbConfig
 				};
-				const dataSource = new DataSource({
-					...options
-				} as DataSourceOptions);
+				// The same transaction queue the application's data source gets on SQLite, where every
+				// transaction would otherwise share the data source's one query runner.
+				// Under DB_ORM=mikro-orm TypeORM sees skeleton entities; drop the metadata entries that name a
+				// property it was never given, or the data source cannot build (a strict no-op under TypeORM).
+				pruneTypeOrmSkeletonMetadata();
+				const dataSource = serializeEmbeddedTransactions(
+					new DataSource({
+						...options
+					} as DataSourceOptions)
+				);
 
 				if (!dataSource.isInitialized) {
 					this.dataSource = await dataSource.initialize();

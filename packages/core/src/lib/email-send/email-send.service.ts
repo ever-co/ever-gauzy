@@ -10,6 +10,27 @@ import { CustomSmtpService } from './../custom-smtp/custom-smtp.service';
 import { SMTPUtils } from './utils';
 import { EmailTemplateRenderService } from './email-template-render.service';
 
+/**
+ * The transport a stored SMTP configuration describes, whichever ORM read it.
+ *
+ * On TypeORM the configuration is a `CustomSmtp` and carries `getSmtpTransporter`, which is called exactly as it
+ * always was. On MikroORM `CustomSmtpService.findOneByOptions` answers the CRUD base's `wrap(entity).toJSON()` — the
+ * row's data without the entity's prototype — so the call failed with `getSmtpTransporter is not a function`: with an
+ * organization's own configuration no e-mail was sent at all (the error left `getEmailInstance` answering nothing),
+ * and with only a tenant's the error was swallowed and mail went out through the platform's default server instead.
+ * The method reads only the row's columns, so it is run on the serialized row as `CustomSmtp`'s own.
+ *
+ * @param smtp The configuration, as the CRUD base answered it.
+ * @returns The SMTP transport configuration.
+ */
+function smtpConfigOf(smtp: CustomSmtp): ISMTPConfig {
+	if (typeof smtp.getSmtpTransporter === 'function') {
+		return smtp.getSmtpTransporter();
+	}
+
+	return CustomSmtp.prototype.getSmtpTransporter.call(smtp);
+}
+
 @Injectable()
 export class EmailSendService {
 	constructor(
@@ -71,7 +92,7 @@ export class EmailSendService {
 				}
 			});
 			// console.log('Custom SMTP configuration for organization: %s', smtpTransporter);
-			const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
+			const smtpConfig: ISMTPConfig = smtpConfigOf(smtpTransporter);
 			const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
 
 			/** Verifies SMTP configuration */
@@ -99,7 +120,7 @@ export class EmailSendService {
 					});
 					// console.log('Custom SMTP configuration for tenant: %s', smtpTransporter);
 
-					const smtpConfig: ISMTPConfig = smtpTransporter.getSmtpTransporter();
+					const smtpConfig: ISMTPConfig = smtpConfigOf(smtpTransporter);
 					const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
 
 					// /** Verifies SMTP configuration */

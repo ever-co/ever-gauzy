@@ -1,0 +1,47 @@
+# The tied integration entity setting's root fields.
+#
+# `Mutation` is declared by the kernel and extended here: a root operation type exists once for the
+# whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The controller serves one route and the surface states one field.**
+# `IntegrationEntitySettingTiedController` serves `PUT /api/integration-entity-setting-tied/integration/:id`
+# — the tied decisions of one configured integration — and nothing else: there is no list route, no node
+# route and no count route, so this domain contributes no read.
+#
+# **The permission is the controller's, stated on the class and on the field.** The controller carries
+# `INTEGRATION_EDIT` on its class and its handler states nothing of its own, so the route runs under
+# `INTEGRATION_EDIT` and the field states the same one.
+#
+# **The write answers the list the delivered handler returns.** The delivered route annotates its answer
+# as a single tied row, but the delivered handler stores an array — it folds a single object into a list
+# before it saves anything, and the store answers what it saved — so the field states the list, which is
+# the answer the route actually produces.
+#
+# **A note on what this field can reach today.** The delivered controller dispatches
+# `IntegrationEntitySettingTiedUpdateCommand`, and `IntegrationEntitySettingTiedModule` does not declare
+# that command's handler among its providers — the handler exists, beside the command, and is exported
+# by the handlers barrel the module does not import. Until that registration lands, the delivered route
+# and this field both answer the command bus's own "no handler" refusal. The field mirrors the route
+# rather than working around it: the two protocols serve the same operations, and a surface that reached
+# the service directly would serve a capability REST does not, which is the asymmetry this delivery
+# exists to prevent. The write a client can perform today is the one the resource is reachable through —
+# the tied rows carried by `updateIntegrationEntitySettings`, whose delivered handler cascades them.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class. The REST route is not gated by
+# that code — it is the door that stays open — so a tenant that switched the capability off is answered
+# `Cannot query field <name>` here and served as it always was there.
+
+extend type Mutation {
+	"""
+	Stores the tied decisions of one configured integration: the rows that travel with a decision the
+	caller already made. The delivered write stores what it is given rather than merging it, and it
+	answers the rows it stored.
+	"""
+	updateIntegrationEntitySettingsTied(
+		"The configured integration whose tied decisions are written. The delivered route takes it in the path."
+		integrationId: ID!
+		"The tied decisions to store, one member per row type."
+		input: [IntegrationEntitySettingTiedInput!]!
+	): [IntegrationEntitySettingTied!]!
+}

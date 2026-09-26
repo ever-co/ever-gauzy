@@ -1,0 +1,128 @@
+# The tag domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/tags` routes already serve, under the same guard and
+# with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination`, the latter inherited — and the
+# two answer the same rows under the same filters, one of them sliced by `take`/`skip` and the other
+# not. That is one capability, so it is one root field: `tags`, mirroring `GET /`, which is the route
+# that reads the whole filtered set the connection protocol is applied to. A second root field for the
+# paginated spelling would be a second surface that could disagree with this one, and the connection's
+# own `limit`/`offset` already are the page it performs. `withDeleted` is deliberately absent: the
+# delivered reader answers live rows only, and offering an argument that cannot be honoured would be
+# worse than not offering it.
+#
+# `tagsByLevel` is the lookup this controller serves in its own right — `GET /tags/level` — and it is
+# a root field of its own rather than an argument on `tags` because the two reach different readers.
+# The list route dispatches `TagListCommand`, whose reader answers the rows with the usage columns the
+# tag screen totals beside them; the level route calls `findTagsByLevel`, whose reader answers the rows
+# themselves. A sub-route is a filter when it narrows the capability the list already serves, and this
+# one is the same table read by the other of the two readers this resource has, so it is stated as the
+# operation it is. Both take the connection protocol, because both readers narrow by the same fragment
+# — the caller's tenant, the tenant-level rows together with the caller's own organization's, and never
+# the platform's own tags — and the protocol states the caller's own narrowing in `filter`. That
+# fragment is built from the credential, never from an argument: the delivered clients send the
+# organization they are acting in with the request, and this surface reads the same value off the
+# credential rather than letting a caller choose a scope.
+#
+# `tagCount` takes no filter, and that is a statement rather than an omission. The delivered count
+# route binds its query string to the store's own `where`, which the connection protocol does not
+# speak; a `filter` argument here would either be handed to a service call that cannot accept it or
+# be evaluated over a second code path that could disagree with the connection's `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options. It is nullable because a count is an aggregate a resource may legitimately have no answer
+# for, and a non-null field would turn "not answered" into a fabricated zero — two facts a client that
+# reports on labels has to keep apart.
+#
+# **No permission is stated on the reads, because no read route states one.** This controller's class
+# carries the tenant guard and no `@Permissions`, and its list, its level lookup, its count and the
+# node query it inherits from the CRUD base all run under that alone. The five writes carry the
+# permissions their own routes carry: `create` and `update` their two, and the three lifecycle moves —
+# delete, softRemove and softRecover — `ALL_ORG_EDIT` beside the tag permissions those same three
+# routes state. Stating a permission on a read here would refuse a caller the REST route serves, and
+# dropping one from a write would serve a caller the REST route refuses; tightening the resource is a
+# change to make in both places at once, and it is not this delivery's to make.
+
+extend type Query {
+	"""
+	The tags of the caller's tenant.
+	"""
+	tags(
+		filter: TagFilter
+		sort: [TagSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TagConnection!
+
+	"""
+	The tags the caller may pick from where they act: the tenant-level rows together with the rows of
+	the caller's own organization, the platform's own tags left out, as `GET /tags/level` answers them.
+	"""
+	tagsByLevel(
+		filter: TagFilter
+		sort: [TagSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TagConnection!
+
+	"""
+	One tag of the caller's tenant, or null when there is none.
+	"""
+	tag(id: ID!): Tag
+
+	"""
+	How many tags the caller's tenant holds.
+	"""
+	tagCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a tag.
+	"""
+	createTag(input: CreateTagInput!): Tag!
+
+	"""
+	Changes the facts of a tag that exists. A member the caller leaves out is left as it is: the
+	delivered write updates the columns the body states rather than replacing the row — see
+	`UpdateTagInput`.
+	"""
+	updateTag(input: UpdateTagInput!): Tag!
+
+	"""
+	Removes a tag outright, with the pivot rows that attach it to the records it labelled. A tag is a
+	label rather than a record of its own, so removing it unlabels whatever carried it; that cascade is
+	the store's, and this field does not pre-empt it.
+	"""
+	deleteTag(id: ID!): Boolean!
+
+	"""
+	Withdraws a tag without removing it: the row keeps its identifier and the records that carry it
+	keep pointing at it, and the delivered readers stop answering it.
+	"""
+	softDeleteTag(id: ID!): Tag!
+
+	"""
+	Puts a withdrawn tag back.
+	"""
+	recoverTag(id: ID!): Tag!
+}

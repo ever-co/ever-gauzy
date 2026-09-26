@@ -1,25 +1,27 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
 import { KnexModule } from 'nest-knexjs';
-import { ConfigModule, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
+import { ConfigModule, ConfigService, DatabaseTypeEnum, TypeOrmCompatibleBetterSqliteDriver } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
+import { createPlatformDataSource } from './embedded-transaction-queue';
+import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
- * Defaults to BetterSqliteDriver (matching the default DB_TYPE in database config).
+ * Defaults to the SQLite driver (matching the default DB_TYPE in database config), which is the one the SQLite
+ * profile configures: MikroORM's better-sqlite3 driver storing dates as TypeORM does (see @gauzy/config).
  */
 const mikroOrmDriverMap: Record<string, any> = {
 	[DatabaseTypeEnum.postgres]: PostgreSqlDriver,
 	[DatabaseTypeEnum.mysql]: MySqlDriver,
-	[DatabaseTypeEnum.sqlite]: BetterSqliteDriver,
-	[DatabaseTypeEnum.betterSqlite3]: BetterSqliteDriver
+	[DatabaseTypeEnum.sqlite]: TypeOrmCompatibleBetterSqliteDriver,
+	[DatabaseTypeEnum.betterSqlite3]: TypeOrmCompatibleBetterSqliteDriver
 };
 
-const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || BetterSqliteDriver;
+const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatibleBetterSqliteDriver;
 
 /**
  * Import and provide base typeorm related classes.
@@ -56,6 +58,19 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || BetterSqliteDri
 			useFactory: async (configService: ConfigService) => {
 				const dbConnectionOptions = configService.getConfigValue('dbConnectionOptions');
 				return dbConnectionOptions;
+			},
+			// On SQLite every transaction shares the data source's one query runner, so this factory
+			// queues them one at a time; any other dialect gets the data source TypeORM builds, untouched.
+			// See embedded-transaction-queue.ts.
+			//
+			// Under DB_ORM=mikro-orm TypeORM is still initialised, and its mapping is complete there too since
+			// d739d81b25. The pass that removes raw TypeORM `@RelationId`, `@Index` and `@Unique` entries naming a
+			// property TypeORM does not map stays as a safety net for any decorator that still registers with one
+			// ORM alone; on the core entities it removes nothing. Under TypeORM (production) the call returns before
+			// reading anything. See typeorm-skeleton-metadata.ts.
+			dataSourceFactory: (options) => {
+				pruneTypeOrmSkeletonMetadata();
+				return createPlatformDataSource(options);
 			},
 			imports: [ConfigModule],
 			inject: [ConfigService]

@@ -6,6 +6,7 @@ import { RolePermissionModule } from './../role-permission/role-permission.modul
 import { TimeOffPolicy } from './../time-off-policy/time-off-policy.entity';
 import { TimeOffBalance } from './time-off-balance.entity';
 import { TimeOffBalanceController } from './time-off-balance.controller';
+import { TimeOffBalanceResolver } from './time-off-balance.resolver';
 import { TimeOffBalanceService } from './time-off-balance.service';
 import { MikroOrmTimeOffBalanceRepository } from './repository/mikro-orm-time-off-balance.repository';
 import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-balance.repository';
@@ -22,7 +23,14 @@ import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-
 		RolePermissionModule
 	],
 	controllers: [TimeOffBalanceController],
-	providers: [TimeOffBalanceService, TypeOrmTimeOffBalanceRepository, MikroOrmTimeOffBalanceRepository],
+	providers: [
+		TimeOffBalanceService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them.
+		TimeOffBalanceResolver,
+		TypeOrmTimeOffBalanceRepository,
+		MikroOrmTimeOffBalanceRepository
+	],
 	exports: [TimeOffBalanceService, TypeOrmTimeOffBalanceRepository, MikroOrmTimeOffBalanceRepository]
 })
 export class TimeOffBalanceModule {}

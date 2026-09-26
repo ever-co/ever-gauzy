@@ -1,0 +1,307 @@
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { NotFoundException, UseGuards } from '@nestjs/common';
+import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
+import { ID } from '@gauzy/contracts';
+import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FeatureFlag } from '@gauzy/common';
+import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
+import { IResolvedTaxRegime, TaxWriteInput } from '../../tax.types';
+import { TaxRegimeRate } from '../../tax-regime-rate/tax-regime-rate.entity';
+import { TaxRegime } from '../../tax-regime/tax-regime.entity';
+import { TaxRegimeService } from '../../tax-regime/tax-regime.service';
+import { toConnection } from '../connection.helper';
+import { applyPageWindow, liveWindowConditions } from '../predicate.helper';
+import {
+	CreateTaxRegimeInput,
+	PageInput,
+	ResolveTaxRegimeInput,
+	SetTaxRegimeRatesInput,
+	SortInput,
+	TaxRegimeConnection,
+	TaxRegimeFilterInput,
+	TaxRegimeSortField,
+	UpdateTaxRegimeInput
+} from '../graphql.types';
+
+/**
+ * The fields of the regime type that may be sorted by, as the entity names them.
+ */
+const TAX_REGIME_SORT_FIELDS: Record<TaxRegimeSortField, string> = {
+	PRIORITY: 'priority',
+	NAME: 'name',
+	CODE: 'code',
+	STARTS_AT: 'startsAt',
+	CREATED_AT: 'createdAt',
+	UPDATED_AT: 'updatedAt'
+};
+
+/**
+ * The tax regime resource over GraphQL.
+ *
+ * The resolver mirrors the controller field for field, under the same guards and the same permissions, so
+ * the two protocols cannot drift: a caller reaches the regime, its rate membership and the resolution that
+ * selects it over either door with the same authority.
+ *
+ * Membership is a field of the regime and a mutation on the regime rather than a resource of its own,
+ * because a membership row has no lifecycle: it is the statement "this rate belongs to this set", and the
+ * permission that guards reshaping a set is the regime's own.
+ *
+ * **The gate is the catalogue's.** `FeatureFlagGuard` is appended to the guard chain this resolver
+ * already carried, and the code it reads is `FEATURE_GRAPHQL` — the commerce catalogue's entry for "the
+ * GraphQL endpoint and its resolvers, under the same guards and permissions as REST". The code is
+ * imported rather than restated because the value has to agree with the catalogue's `code` and nothing
+ * checks one string against another: a literal that drifted names a code no catalogue row carries, which
+ * the guard resolves as disabled, so every field here would answer `Cannot query field <name>` for every
+ * caller with nothing red anywhere. One statement on the class puts every field behind it, and a tenant
+ * that switched the capability off is answered the refusal a disabled capability's routes answer with a
+ * 404.
+ */
+@Resolver('TaxRegime')
+@UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
+@FeatureFlag(FEATURE_GRAPHQL)
+@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_VIEW))
+export class TaxRegimeResolver {
+	constructor(private readonly taxRegimeService: TaxRegimeService) {}
+
+	/**
+	 * Lists the regimes of the caller's organization.
+	 */
+	@Query('taxRegimes')
+	async taxRegimes(
+		@Args('filter') filter?: TaxRegimeFilterInput,
+		@Args('sort') sort?: Array<SortInput<TaxRegimeSortField>>,
+		@Args('page') page?: PageInput,
+		@Args('limit') limit?: number,
+		@Args('offset') offset?: number,
+		@Args('withDeleted') withDeleted?: boolean
+	): Promise<TaxRegimeConnection> {
+		const options = applyPageWindow(this.toFindOptions(filter, sort, withDeleted), {
+			limit,
+			first: page?.first,
+			offset
+		});
+
+		const { items, total } = await this.taxRegimeService.paginate(options);
+
+		return toConnection<TaxRegime, TaxRegime>(items, total, page);
+	}
+
+	/**
+	 * Reads one regime.
+	 *
+	 * @throws NotFoundException when it does not exist in the caller's tenant.
+	 */
+	@Query('taxRegime')
+	async taxRegime(@Args('id') id: ID): Promise<TaxRegime> {
+		const regime = await this.taxRegimeService.findOneByIdString(id);
+		if (!regime) {
+			throw new NotFoundException(`The tax regime ${id} was not found.`);
+		}
+
+		return regime;
+	}
+
+	/**
+	 * Reads the rates one regime selects.
+	 */
+	@Query('taxRegimeRates')
+	async taxRegimeRates(@Args('id') id: ID): Promise<TaxRegimeRate[]> {
+		return await this.taxRegimeService.listRates(id);
+	}
+
+	/**
+	 * Resolves the regime a document is taxed under.
+	 *
+	 * The party's own assignment always wins; when it names none the most specific matching regime of the
+	 * destination is selected, and when nothing matches the general set of rates applies.
+	 */
+	@Query('resolveTaxRegime')
+	async resolveTaxRegime(@Args('input') input: ResolveTaxRegimeInput): Promise<IResolvedTaxRegime | undefined> {
+		return await this.taxRegimeService.resolveRegime({
+			taxRegimeId: input.taxRegimeId,
+			partyTaxRegistrationPresent: input.partyTaxRegistrationPresent,
+			regionId: input.regionId,
+			countryCode: input.countryCode,
+			provinceCode: input.provinceCode,
+			postalCode: input.postalCode,
+			now: input.at ? new Date(input.at) : undefined
+		});
+	}
+
+	/**
+	 * Creates a regime.
+	 */
+	@Mutation('createTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async createTaxRegime(@Args('input') input: CreateTaxRegimeInput): Promise<TaxRegime> {
+		return await this.taxRegimeService.create(input as TaxWriteInput<TaxRegime>);
+	}
+
+	/**
+	 * Amends a regime.
+	 */
+	@Mutation('updateTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async updateTaxRegime(@Args('input') input: UpdateTaxRegimeInput): Promise<TaxRegime> {
+		const { id, ...changes } = input;
+
+		return await this.taxRegimeService.update(id, changes as TaxWriteInput<TaxRegime>);
+	}
+
+	/**
+	 * Retires a regime and returns the retired row.
+	 *
+	 * @throws NotFoundException when it does not exist in the caller's tenant.
+	 */
+	@Mutation('deleteTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async deleteTaxRegime(@Args('id') id: ID): Promise<TaxRegime> {
+		const regime = await this.taxRegimeService.findOneByIdString(id);
+		if (!regime) {
+			throw new NotFoundException(`The tax regime ${id} was not found.`);
+		}
+
+		await this.taxRegimeService.delete(id);
+
+		return regime;
+	}
+
+	/**
+	 * Retires a regime recoverably, keeping it and the membership that selects its rates.
+	 *
+	 * The route it mirrors is `DELETE /tax-regimes/:id/soft`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. Without this
+	 * field a regime retired over GraphQL could not be brought back over GraphQL, while a REST caller
+	 * could do both — and getting a regime wrong zeroes a jurisdiction's tax, which is precisely the
+	 * mistake a caller has to be able to undo.
+	 *
+	 * The permission is the controller's own for the route — `TAX_REGIMES_EDIT` — and not the class-level
+	 * view grant, because a retired regime stops selecting the rates a destination is taxed under.
+	 *
+	 * @param id The regime to retire.
+	 * @returns The regime, as the soft delete left it.
+	 */
+	@Mutation('softDeleteTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async softDeleteTaxRegime(@Args('id') id: ID): Promise<TaxRegime> {
+		return await this.taxRegimeService.softRemove(id);
+	}
+
+	/**
+	 * Restores a regime that was retired recoverably.
+	 *
+	 * The route it mirrors is `PUT /tax-regimes/:id/recover`, inherited from `CrudController` and
+	 * overridden by the controller only to state the permission the base left unstated. A restored regime
+	 * selects its rates again, which is why the route states the editing grant rather than the reading
+	 * one.
+	 *
+	 * @param id The regime to restore.
+	 * @returns The restored regime.
+	 */
+	@Mutation('recoverTaxRegime')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async recoverTaxRegime(@Args('id') id: ID): Promise<TaxRegime> {
+		return await this.taxRegimeService.softRecover(id);
+	}
+
+	/**
+	 * Sets which rates a regime selects.
+	 */
+	@Mutation('setTaxRegimeRates')
+	@Permissions(taxPermission(TAX_PERMISSION_VALUES.TAX_REGIMES_EDIT))
+	async setTaxRegimeRates(@Args('input') input: SetTaxRegimeRatesInput): Promise<TaxRegimeRate[]> {
+		return await this.taxRegimeService.setRates(input.id, input.taxRateIds);
+	}
+
+	/**
+	 * The rates the regime selects, read through the membership service.
+	 */
+	@ResolveField('rates')
+	async rates(@Parent() regime: TaxRegime): Promise<TaxRegimeRate[]> {
+		return await this.taxRegimeService.listRates(regime.id);
+	}
+
+	/**
+	 * @param filter How the listing is narrowed.
+	 * @param sort How it is ordered; the newest first when it is omitted.
+	 * @param withDeleted Whether retired rows are included.
+	 * @returns The find options the service paginates with.
+	 */
+	private toFindOptions(
+		filter?: TaxRegimeFilterInput,
+		sort?: Array<SortInput<TaxRegimeSortField>>,
+		withDeleted?: boolean
+	): FindManyOptions<TaxRegime> {
+		const where: FindOptionsWhere<TaxRegime> = {};
+
+		if (filter?.ids?.length) {
+			where.id = In(filter.ids);
+		}
+		if (filter?.code) {
+			where.code = filter.code;
+		}
+		if (filter?.name) {
+			where.name = filter.name;
+		}
+		if (filter?.regionId) {
+			where.regionId = filter.regionId;
+		}
+		if (filter?.countryCode) {
+			where.countryCode = filter.countryCode;
+		}
+		if (filter?.provinceCode) {
+			where.provinceCode = filter.provinceCode;
+		}
+		if (filter?.postalCodePattern) {
+			where.postalCodePattern = filter.postalCodePattern;
+		}
+		if (filter?.requiresPartyTaxRegistration !== undefined) {
+			where.requiresPartyTaxRegistration = filter.requiresPartyTaxRegistration;
+		}
+		if (filter?.isActive !== undefined) {
+			where.isActive = filter.isActive;
+		}
+
+		return {
+			where: filter?.liveAt ? this.applyLiveWindow(where, filter.liveAt) : where,
+			order: this.toOrder(sort),
+			...(withDeleted ? { withDeleted: true } : {})
+		};
+	}
+
+	/**
+	 * Narrows the listing to the regimes whose validity window contains a moment. An open bound is
+	 * unbounded, so a regime that never started and one that was never ended both stay eligible.
+	 *
+	 * The window used to be written as two `Raw()` SQL fragments, which only TypeORM can read: under
+	 * `DB_ORM=mikro-orm` the predicate was answered as no predicate at all and the listing returned
+	 * regimes that are not in force. It is now stated with operators both ORMs translate.
+	 *
+	 * @param where The conditions built so far.
+	 * @param liveAt The moment to test.
+	 * @returns The conditions to read as a disjunction.
+	 */
+	private applyLiveWindow(where: FindOptionsWhere<TaxRegime>, liveAt: Date): Array<FindOptionsWhere<TaxRegime>> {
+		return liveWindowConditions<TaxRegime>(where, liveAt);
+	}
+
+	/**
+	 * @param sort The requested ordering.
+	 * @returns The ordering the repository reads, newest first by default.
+	 */
+	private toOrder(sort?: Array<SortInput<TaxRegimeSortField>>): Record<string, 'ASC' | 'DESC'> {
+		if (!sort?.length) {
+			return { createdAt: 'DESC' };
+		}
+
+		return sort.reduce<Record<string, 'ASC' | 'DESC'>>((order, entry) => {
+			const field = TAX_REGIME_SORT_FIELDS[entry.field];
+			if (field) {
+				order[field] = entry.direction === 'ASC' ? 'ASC' : 'DESC';
+			}
+
+			return order;
+		}, {});
+	}
+}

@@ -18,16 +18,12 @@
  * `handleExtract` — deliberately NOT serialized — is driven through the same harness as a
  * known-dirty control: it reproduces the starvation the cap removes.
  */
-jest.mock(
-	'@gauzy/scheduler',
-	() => ({
-		QueueWorker: () => () => undefined,
-		QueueJobHandler: () => () => undefined,
-		QueueWorkerHost: class {},
-		SchedulerQueueService: class {}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/scheduler', () => ({
+	QueueWorker: () => () => undefined,
+	QueueJobHandler: () => () => undefined,
+	QueueWorkerHost: class {},
+	SchedulerQueueService: class {}
+}));
 jest.mock('./docs-pipeline.service', () => ({ DocsPipelineService: class {} }));
 jest.mock('../../docs.config', () => ({ getDocsConfig: () => ({ queueConcurrency: 2 }) }));
 
