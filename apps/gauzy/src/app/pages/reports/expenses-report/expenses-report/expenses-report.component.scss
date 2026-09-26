@@ -1,4 +1,5 @@
 @use 'gauzy/_gauzy-overrides' as *;
+@use 'report-table' as *;
 @forward 'report';
 
 :host {
@@ -21,6 +22,10 @@
       min-width: 10rem;
     }
     @include ng-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+
+    // The library theme leaves these triggers white, which on the dark themes
+    // is near-white text on a white pill.
+    @include report-filter-select();
   }
 }
 

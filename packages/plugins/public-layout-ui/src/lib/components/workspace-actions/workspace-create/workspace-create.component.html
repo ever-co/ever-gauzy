@@ -62,7 +62,7 @@
                   <div class="error-message">
                     @if (fullName.errors?.required) {
                       <span>
-                        {{ 'REGISTER_PAGE.VALIDATION.FULL_NAME_REQUIRED' | translate }}
+                        {{ 'REGISTER_PAGE.VALIDATIONS.FULL_NAME_REQUIRED' | translate }}
                       </span>
                     }
                   </div>
@@ -94,12 +94,12 @@
                     <div class="error-message">
                       @if (password.errors?.required) {
                         <span>
-                          {{ 'REGISTER_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
+                          {{ 'REGISTER_PAGE.VALIDATIONS.PASSWORD_REQUIRED' | translate }}
                         </span>
                       }
                       @if (password.errors?.minlength) {
                         <span>
-                          {{ 'REGISTER_PAGE.VALIDATION.PASSWORD_MIN_LENGTH' | translate }}
+                          {{ 'REGISTER_PAGE.VALIDATIONS.PASSWORD_MIN_LENGTH' | translate }}
                         </span>
                       }
                     </div>
@@ -137,14 +137,14 @@
                       <div class="error-message">
                         @if (confirmPassword.errors?.required) {
                           <span>
-                            {{ 'REGISTER_PAGE.VALIDATION.CONFIRM_PASSWORD_REQUIRED' | translate }}
+                            {{ 'REGISTER_PAGE.VALIDATIONS.CONFIRM_PASSWORD_REQUIRED' | translate }}
                           </span>
                         }
                       </div>
                     }
                     @if (accountForm.errors?.['mustMatch'] && confirmPassword.touched) {
                       <div class="error-message">
-                        {{ 'REGISTER_PAGE.VALIDATION.PASSWORDS_NOT_MATCH' | translate }}
+                        {{ 'REGISTER_PAGE.VALIDATIONS.PASSWORDS_NOT_MATCH' | translate }}
                       </div>
                     }
                   </div>

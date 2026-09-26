@@ -12,7 +12,6 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
-	DialogsModule,
 	EmployeeMultiSelectModule,
 	NebularModule,
 	RecordViewModule,
@@ -35,7 +34,6 @@ import { ProposalTemplateFormComponent } from './components/proposal-template-fo
 		SmartDataViewLayoutModule,
 		StatusBadgeModule,
 		EmployeeMultiSelectModule,
-		DialogsModule,
 		RecordViewModule
 	],
 	providers: [

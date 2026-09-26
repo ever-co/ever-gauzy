@@ -1154,7 +1154,11 @@
 		"APPLICATIONS": "Aplicações",
 		"OPEN_GA_BROWSER": "Abrir Gauzy no navegador.",
 		"START_SERVER": "Iniciar Servidor",
-		"STOP_SERVER": "Parar Servidor"
+		"STOP_SERVER": "Parar Servidor",
+		"DOCUMENTS": "Documentos",
+		"BILLING": "Faturamento",
+		"MONITORING": "Monitoramento",
+		"ADD_ITEM": "Adicionar {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
 		"PREFERRED_UI": {
@@ -4554,7 +4558,7 @@
 			"SELECT_DEFAULT_CDN": "Selecionar servidor CDN padrão para atualização",
 			"TOGGLE_UPDATE_LOCALLY": "Alternar para atualizar localmente",
 			"LOCAL_SERVER": "Servidor Local",
-			"LOCAL_SERVER_NOTE": "O diretório selecionado definitivamente deve conter o manifesto <strong>latest.yml</strong> e/ou <strong>latest-mac.yml</strong> para realizar a validação da atualização.",
+			"LOCAL_SERVER_NOTE": "O diretório selecionado deve conter o manifesto de atualização do seu sistema (Windows: <strong>latest-x64.yml</strong> ou <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> ou <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) e os arquivos de atualização nele listados, para realizar a validação da atualização.",
 			"OTHER_SETTINGS": "Outras Configurações",
 			"ALLOW_PRERELEASE_VERSIONS": "Permita versões de pré-lançamento.",
 			"CHECK_UPDATE_APP_VERSION": "Verifique e atualize a versão do seu aplicativo",
@@ -5303,7 +5307,8 @@
 				"TERMS_AND_CONDITIONS": "Termos e Condições",
 				"AND": " e ",
 				"PRIVACY_POLICY": "Política de Privacidade"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "A senha deve conter pelo menos 4 caracteres"
 		}
 	},
 	"LOGIN_PAGE": {
