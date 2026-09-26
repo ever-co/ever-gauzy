@@ -1,6 +1,6 @@
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ID, IOrganization, IOrganizationUpdateInput, validateAgentExitLogoutRestriction } from '@gauzy/contracts';
+import { ID, IOrganization, IOrganizationUpdateInput, validateAndUpdateAgentRestrictions } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
@@ -44,27 +44,9 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			country: organization.contact?.country
 		};
 
-		const effectiveAllowExit = input.allowAgentAppExit !== undefined ? input.allowAgentAppExit : organization.allowAgentAppExit;
-		const effectiveAllowLogout = input.allowLogoutFromAgentApp !== undefined ? input.allowLogoutFromAgentApp : organization.allowLogoutFromAgentApp;
-
-		// Validate using effective merged input and location
-		const errorMsg = validateAgentExitLogoutRestriction(
-			{
-				allowAgentAppExit: effectiveAllowExit,
-				allowLogoutFromAgentApp: effectiveAllowLogout,
-				acknowledgeAgentExitLogoutRestriction: input.acknowledgeAgentExitLogoutRestriction
-			},
-			effectiveLocation
-		);
-
+		const errorMsg = validateAndUpdateAgentRestrictions(input, organization, effectiveLocation);
 		if (errorMsg) {
-			// If transitioning to EEA/UK without explicitly setting restriction controls, force both to true
-			if (isEEAOrUKRegion(effectiveLocation) && input.allowAgentAppExit === undefined && input.allowLogoutFromAgentApp === undefined) {
-				input.allowAgentAppExit = true;
-				input.allowLogoutFromAgentApp = true;
-			} else {
-				throw new BadRequestException(errorMsg);
-			}
+			throw new BadRequestException(errorMsg);
 		}
 
 		if (

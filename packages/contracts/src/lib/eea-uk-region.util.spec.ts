@@ -1,6 +1,7 @@
 import {
 	isEEAOrUKRegion,
 	validateAgentExitLogoutRestriction,
+	validateAndUpdateAgentRestrictions,
 	EEA_UK_AGENT_RESTRICTION_ERR_MSG,
 	ACKNOWLEDGEMENT_REQUIRED_ERR_MSG
 } from './eea-uk-region.util';
@@ -92,5 +93,30 @@ describe('validateAgentExitLogoutRestriction', () => {
 			{ countryCode: 'US' }
 		);
 		expect(result).toBeNull();
+	});
+});
+
+describe('validateAndUpdateAgentRestrictions', () => {
+	it('should auto-reset restrictions to true when transitioning to EEA/UK without explicit restriction input', () => {
+		const input: { allowAgentAppExit?: boolean; allowLogoutFromAgentApp?: boolean } = {};
+		const persisted = { allowAgentAppExit: false, allowLogoutFromAgentApp: false };
+		const result = validateAndUpdateAgentRestrictions(input, persisted, { countryCode: 'DE' });
+		expect(result).toBeNull();
+		expect(input.allowAgentAppExit).toBe(true);
+		expect(input.allowLogoutFromAgentApp).toBe(true);
+	});
+
+	it('should return EEA error if user explicitly sets restriction to false in EEA/UK region', () => {
+		const input = { allowAgentAppExit: false };
+		const persisted = { allowAgentAppExit: true };
+		const result = validateAndUpdateAgentRestrictions(input, persisted, { countryCode: 'DE' });
+		expect(result).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+	});
+
+	it('should return acknowledgement error when non-EEA without acknowledgement', () => {
+		const input = { allowAgentAppExit: false };
+		const persisted = { allowAgentAppExit: true };
+		const result = validateAndUpdateAgentRestrictions(input, persisted, { countryCode: 'US' });
+		expect(result).toBe(ACKNOWLEDGEMENT_REQUIRED_ERR_MSG);
 	});
 });

@@ -197,3 +197,55 @@ export function validateAgentExitLogoutRestriction(
 
 	return null;
 }
+
+/**
+ * Validates merged effective restriction settings against target location.
+ * If transitioning to an EEA/UK location without explicit restriction payload fields, auto-resets exit and logout settings to true.
+ * Returns error string if validation fails, or null if valid.
+ */
+export function validateAndUpdateAgentRestrictions(
+	input: {
+		allowAgentAppExit?: boolean;
+		allowLogoutFromAgentApp?: boolean;
+		acknowledgeAgentExitLogoutRestriction?: boolean;
+	},
+	persisted: {
+		allowAgentAppExit?: boolean;
+		allowLogoutFromAgentApp?: boolean;
+	} | undefined | null,
+	location: {
+		regionCode?: string;
+		countryCode?: string;
+		country?: string;
+		timeZone?: string;
+	}
+): string | null {
+	const effectiveAllowExit =
+		input.allowAgentAppExit !== undefined ? input.allowAgentAppExit : persisted?.allowAgentAppExit;
+	const effectiveAllowLogout =
+		input.allowLogoutFromAgentApp !== undefined ? input.allowLogoutFromAgentApp : persisted?.allowLogoutFromAgentApp;
+
+	const errorMsg = validateAgentExitLogoutRestriction(
+		{
+			allowAgentAppExit: effectiveAllowExit,
+			allowLogoutFromAgentApp: effectiveAllowLogout,
+			acknowledgeAgentExitLogoutRestriction: input.acknowledgeAgentExitLogoutRestriction
+		},
+		location
+	);
+
+	if (errorMsg) {
+		if (
+			isEEAOrUKRegion(location) &&
+			input.allowAgentAppExit === undefined &&
+			input.allowLogoutFromAgentApp === undefined
+		) {
+			input.allowAgentAppExit = true;
+			input.allowLogoutFromAgentApp = true;
+			return null;
+		}
+		return errorMsg;
+	}
+
+	return null;
+}

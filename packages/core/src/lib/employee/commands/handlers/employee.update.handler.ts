@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
-import { IEmployee, validateAgentExitLogoutRestriction, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, validateAndUpdateAgentRestrictions, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
@@ -40,31 +40,15 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			relations: { organization: { contact: true }, user: true, contact: true }
 		});
 
-		const effectiveAllowExit = input.allowAgentAppExit !== undefined ? input.allowAgentAppExit : employee?.allowAgentAppExit;
-		const effectiveAllowLogout = input.allowLogoutFromAgentApp !== undefined ? input.allowLogoutFromAgentApp : employee?.allowLogoutFromAgentApp;
-
 		const effectiveLocation = {
 			regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
 			timeZone: input.user?.timeZone || employee?.user?.timeZone || employee?.organization?.timeZone,
 			country: employee?.contact?.country || employee?.organization?.contact?.country
 		};
 
-		const errorMsg = validateAgentExitLogoutRestriction(
-			{
-				allowAgentAppExit: effectiveAllowExit,
-				allowLogoutFromAgentApp: effectiveAllowLogout,
-				acknowledgeAgentExitLogoutRestriction: input.acknowledgeAgentExitLogoutRestriction
-			},
-			effectiveLocation
-		);
-
+		const errorMsg = validateAndUpdateAgentRestrictions(input, employee, effectiveLocation);
 		if (errorMsg) {
-			if (isEEAOrUKRegion(effectiveLocation) && input.allowAgentAppExit === undefined && input.allowLogoutFromAgentApp === undefined) {
-				input.allowAgentAppExit = true;
-				input.allowLogoutFromAgentApp = true;
-			} else {
-				throw new BadRequestException(errorMsg);
-			}
+			throw new BadRequestException(errorMsg);
 		}
 
 		if (
