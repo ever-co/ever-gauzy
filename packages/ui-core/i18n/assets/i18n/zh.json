@@ -2713,7 +2713,10 @@
 		"ADDRESS": "地址",
 		"ADDRESS_2": "地址2",
 		"MEMBERS": "成员",
-		"BUDGET": "预算"
+		"BUDGET": "预算",
+		"PHOTO_HINT": "点击或拖放图片以上传",
+		"SEARCH_EMPLOYEES": "按姓名或邮箱搜索员工",
+		"NO_MEMBERS": "尚未添加成员"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",

@@ -2715,7 +2715,10 @@
 		"ADDRESS": "Dirección",
 		"ADDRESS_2": "Dirección 2",
 		"MEMBERS": "Miembros",
-		"BUDGET": "Presupuesto"
+		"BUDGET": "Presupuesto",
+		"PHOTO_HINT": "Haz clic o suelta una imagen para subirla",
+		"SEARCH_EMPLOYEES": "Busca empleados por nombre o correo",
+		"NO_MEMBERS": "Aún no se han añadido miembros"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas.",

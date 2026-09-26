@@ -2713,7 +2713,10 @@
 		"ADDRESS": "Indirizzo",
 		"ADDRESS_2": "Indirizzo 2",
 		"MEMBERS": "Membri",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Fai clic o trascina un'immagine per caricarla",
+		"SEARCH_EMPLOYEES": "Cerca dipendenti per nome o email",
+		"NO_MEMBERS": "Nessun membro aggiunto"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Lingue",

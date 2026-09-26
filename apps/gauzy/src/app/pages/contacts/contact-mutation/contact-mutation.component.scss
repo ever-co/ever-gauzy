@@ -1,31 +1,60 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
+/*
+ * Step 1 layout: a fixed photo column beside the field column.
+ *
+ * The fields used to sit in Bootstrap `col-7`/`col-5` pairs, so every row had
+ * a different left and right edge depending on what shared it (Name and Fiscal
+ * Information ran alone at 7/12 with a hole beside them). They now sit in one
+ * two-track grid, two fields per row, all on the same edges.
+ */
+.contact-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem 2.5rem;
+}
+
 .contact-container {
-  transition: transform 150ms ease-in-out;
   display: flex;
   flex-direction: column;
-  position: relative;
-  // Logical property, so RTL flips it without a second rule.
-  margin-inline-end: 2rem;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  width: 11rem;
+  // Drops the photo by one label line (label line box + its gap) so its top
+  // edge lines up with the first row of inputs rather than with their labels.
+  padding-top: calc(0.8125rem + 0.375rem);
+
+  .photo-hint {
+    margin: 0;
+    font-size: nb-theme(text-caption-font-size);
+    line-height: nb-theme(text-caption-line-height);
+    color: nb-theme(text-hint-color);
+  }
 
   .contact-photo {
-    // Was a 299x294 slab that took up most of the first step and pushed the rest
-    // of the form out of view. A square thumbnail is enough to preview an avatar,
-    // and the centring maths below is written against 50% so it still holds.
-    width: 12.5rem;
-    height: 12.5rem;
+    width: 11rem;
+    height: 11rem;
     position: relative;
+    border-radius: nb-theme(border-radius);
+    border: 1px solid nb-theme(border-basic-color-4);
+    overflow: hidden;
+    transition: border-color 150ms ease-in-out;
+
+    &:hover {
+      border-color: nb-theme(color-primary-default);
+    }
 
     .image-overlay {
       pointer-events: none;
       // Deliberately a literal, and deliberately NOT a theme token: this is a
-      // scrim over the uploaded PHOTO (0 -> 0.2 opacity on hover), so what it has
-      // to darken is the picture, not the surface the card is painted on.
+      // scrim over the uploaded PHOTO, so what it has to darken is the picture,
+      // not the surface the card is painted on.
       background: black;
       position: absolute;
-      height: 100%;
-      width: 100%;
-      border-radius: nb-theme(border-radius);
+      inset: 0;
+      z-index: 1;
+      transition: opacity 0.2s ease-in;
     }
 
     img,
@@ -33,49 +62,47 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: nb-theme(border-radius);
     }
 
-    // The empty-state placeholder behind the uploader. It is a NEUTRAL tint, not
-    // a colour of its own: the same token the rest of the app hovers with, so it
-    // darkens a white card and lightens a near-black one instead of staying a
-    // fixed light grey that vanishes on the four dark themes.
+    // Empty state. A neutral tint with a dashed edge so it reads as a drop zone
+    // on light and dark themes alike.
     .image {
       background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-      // Centers the prompt for real. It used to be absolutely positioned at
-      // `left: calc(50% - 141px / 2)` — 141px being a guess at the width of the
-      // English string. Any other translation, or any other root font size, put
-      // the label off center, and a longer one ran out of the 12.5rem box with
-      // nowhere to wrap.
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 0.75rem;
-
-      i {
-        margin: 5px;
-      }
+      padding: 0 1rem;
 
       > span {
-        // `rgba(126, 126, 143, 1)` is the LIGHT themes' muted text value written
-        // out by hand; on a dark card it is barely above the background.
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
         color: var(--gauzy-text-color-2, var(--text-hint-color));
-        z-index: 2;
-        transition: opacity 0.2s ease-in;
+        font-size: nb-theme(text-caption-font-size);
+        line-height: nb-theme(text-caption-line-height);
         text-align: center;
+        z-index: 2;
+      }
+
+      i {
+        font-size: 1.5rem;
+        opacity: 0.7;
       }
     }
 
+    // The "change photo" badge only appears on hover; at rest it sat on top of
+    // the uploaded picture at 30% and made every avatar look watermarked.
     svg {
       z-index: 2;
       transition: opacity 0.2s ease-in;
-      opacity: 0.3;
       position: absolute;
       top: calc(50% - 68px / 2);
       left: calc(50% - 68px / 2);
+      pointer-events: none;
 
       g circle {
-        fill: nb-theme(text-primary-color);
+        fill: nb-theme(color-primary-default);
       }
     }
   }
@@ -86,50 +113,474 @@
   flex-direction: column;
 }
 
-// Bootstrap's `.container` caps the field column and centres it; inside the
-// step's flex row it also has to be allowed to shrink, or the photo column
-// squeezes it into an overflow at narrow widths.
-//
-// The basis is a real minimum rather than `auto`: `.container` is `width: 100%`,
-// which as an auto basis would claim the whole row and drop the fields under
-// the photo the moment the row is allowed to wrap. From 20rem the two columns
-// stay side by side until the canvas (the AI chat column can take up to 860px
-// of it) is genuinely too narrow, and only then does the form wrap below.
 .fields {
-  flex: 1 1 20rem;
+  flex: 1 1 24rem;
   min-width: 0;
 
-  // Bootstrap's 1rem field gap was set against a 16px label; the density pass put
-  // labels at 0.75rem, which left the rows floating. 0.75rem keeps a clear break
-  // between fields without the form reading as a stack of unrelated boxes.
   .form-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
+    min-width: 0;
   }
 
-  .label {
+  .label,
+  // The tags input renders its own label; give it the same gap so it lines up
+  // with the Projects label beside it.
+  ::ng-deep ga-tags-color-input .label {
     display: inline-block;
     margin-bottom: 0.375rem;
   }
 }
 
-.team-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+// Exactly two equal tracks, so every row holds a pair of fields sharing the
+// same edges. (`auto-fit` used to open a third track on wide screens.) It falls
+// to one track only when the field column itself is too narrow for two readable
+// fields — measured on the column, not the viewport, because the AI chat can
+// take up to 860px of the canvas.
+.fields {
+  container-type: inline-size;
+}
 
-  .name-container {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+  align-items: start;
+}
+
+@container (max-width: 30rem) {
+  .field-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * Step 2 — Address.
+ *
+ * The shared location form lays its fields out in Bootstrap rows of uneven
+ * widths (`col-11`, `col-8`, `col-6`, `col-sm-5`), so no two inputs ended on
+ * the same edge. Here its rows are flattened (`display: contents`) so every
+ * column becomes an item of one two-track grid, the same grid step 1 uses.
+ * Scoped to this wizard: the other pages that embed the form are untouched.
+ *
+ * Resulting rows: Find address (full) · Country | City · Address | Address 2 ·
+ * Postcode · coordinates toggle (full) · Latitude | Longitude.
+ */
+.address-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.5rem 2rem;
+}
+
+.address-fields {
+  flex: 1 1 26rem;
+  min-width: 0;
+  container-type: inline-size;
+
+  ::ng-deep ga-location-form > .fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    align-items: start;
+
+    > .row {
+      display: contents;
+    }
+
+    > .row > [class*='col'] {
+      flex: none;
+      width: auto;
+      max-width: none;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    // Form labels only. `nb-checkbox` renders its own `label.label` around the
+    // box, and a blanket `.label` rule collapsed that box to a 2px sliver.
+    .form-group > .label {
+      display: inline-block;
+      margin-bottom: 0.375rem;
+    }
+
+    // The coordinates toggle. Its translation is all caps ("COORDINATES"), which
+    // shouted over every sentence-case label around it; shown in sentence case.
+    nb-checkbox {
+      .label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .custom-checkbox {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 1.125rem;
+        height: 1.125rem;
+        border-radius: 0.25rem;
+      }
+
+      .text {
+        display: inline-block;
+        padding: 0;
+        font-size: nb-theme(text-paragraph-font-size);
+        font-weight: 500;
+        line-height: 1.25rem;
+        letter-spacing: normal;
+        text-transform: lowercase;
+        color: nb-theme(text-basic-color);
+
+        &::first-letter {
+          text-transform: uppercase;
+        }
+      }
+    }
+
+    // Full-width rows: the search box and the coordinates toggle.
+    > .row > [class*='col']:has(#findInput),
+    > .row > [class*='col']:has(nb-checkbox) {
+      grid-column: 1 / -1;
+    }
+
+    // Pair the two address lines, and let the postcode follow them.
+    > .row > [class*='col']:has(#addressInput) {
+      order: 1;
+    }
+
+    > .row > [class*='col']:has(#address2Input) {
+      order: 2;
+    }
+
+    > .row > [class*='col']:has(#postcodeInput) {
+      order: 3;
+    }
+
+    > .row > [class*='col']:has(nb-checkbox) {
+      order: 4;
+    }
+
+    > .row[formGroupName] > [class*='col'] {
+      order: 5;
+    }
+  }
+}
+
+@container (max-width: 26rem) {
+  .address-fields ::ng-deep ga-location-form > .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The map drops by one label line so its top edge meets the first input, and
+// has a fixed height instead of the shared `calc(100vh - 30rem)`, which made
+// it a sliver on short windows and a wall on tall ones.
+.address-map {
+  flex: 1 1 24rem;
+  min-width: 0;
+  padding-top: calc(0.8125rem + 0.375rem);
+
+  ::ng-deep ga-leaflet-map > .row {
+    margin: 0 !important;
+
+    > [class*='col'] {
+      padding: 0;
+    }
   }
 
-  /*
-   * REMOVED: `.image-container` (and its `img`) and `.button-container`.
-   * Neither class occurs anywhere in contact-mutation.component.html or
-   * contact-mutation.component.ts — the members step renders
-   * `.team-card > .name-container > ngx-avatar` and nothing else, and a
-   * component stylesheet cannot reach past its own template.
-   */
+  ::ng-deep .leaflet-container {
+    height: 21rem !important;
+    border: 1px solid nb-theme(border-basic-color-4);
+    border-radius: nb-theme(border-radius);
+  }
+}
+
+/*
+ * Step 4 — Members. The picker sits on the same grid as every other field; the
+ * people it adds are shown as a wrap of cards under it instead of a bare
+ * column of avatars floating in the right half of the step.
+ */
+.members {
+  margin-top: 1.5rem;
+
+  .label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .members-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.375rem;
+    border-radius: 0.625rem;
+    background-color: nb-theme(color-primary-transparent-default);
+    color: nb-theme(color-primary-default);
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+}
+
+// A grid of member cards across the whole panel: photo, name over email, and
+// the remove action at the end of each card, so it is never a screen away from
+// the name it belongs to. Same card as the contact view's Members tab.
+.members-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border: 1px solid nb-theme(border-basic-color-4);
+  border-radius: nb-theme(border-radius);
+  // The input surface, so each card reads as set into the step panel.
+  background-color: var(--gauzy-card-1, transparent);
+  transition: border-color 150ms ease-in-out;
+
+  &:hover {
+    border-color: nb-theme(color-primary-default);
+  }
+
+  ngx-avatar {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  // The avatar only lays itself out as a row under a host-context class
+  // (`.avatar-dashboard`, `.report-table`); bare, it stacks a 48px square above
+  // the name. Here: a round 32px photo, then name over email.
+  ::ng-deep ngx-avatar {
+    .inner-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .image-container {
+      flex: 0 0 auto;
+      width: 2rem;
+      border-radius: 50%;
+      overflow: hidden;
+      // Backdrop for the default silhouette, a transparent PNG that otherwise
+      // floats with no edge.
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+
+      // `!important` on the size: the avatar's own `:host .image-container img`
+      // (48px) outranks anything reachable from here, so the photo rendered at
+      // 48px inside this 32px circle and was clipped to a sliver.
+      img {
+        width: 2rem !important;
+        height: 2rem !important;
+        object-fit: cover;
+        border-radius: 50% !important;
+      }
+    }
+
+    .names-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .link-text {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: nb-theme(text-paragraph-font-size);
+      font-weight: 600;
+      line-height: 1.25rem;
+      color: nb-theme(text-basic-color);
+    }
+
+    .caption {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: nb-theme(text-caption-font-size);
+      line-height: 1rem;
+      color: nb-theme(text-hint-color);
+    }
+  }
+
+  // Quiet until needed, but always there (never hover-only), so it works by
+  // keyboard and touch too.
+  .member-remove {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    color: nb-theme(text-hint-color);
+
+    &:hover,
+    &:focus-visible {
+      color: nb-theme(color-danger-default);
+      background-color: nb-theme(color-danger-transparent-default);
+    }
+  }
+}
+
+// Shown instead of an empty list, so the step says what it is waiting for.
+.members-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  padding: 1rem;
+  border: 1px dashed nb-theme(border-basic-color-4);
+  border-radius: nb-theme(border-radius);
+  color: nb-theme(text-hint-color);
+  font-size: nb-theme(text-paragraph-font-size);
+
+  nb-icon {
+    font-size: 1.25rem;
+  }
+}
+
+/*
+ * Members picker.
+ *
+ * The trigger never lists the selection (that is the card grid below); it stays
+ * a search box with a search glyph, and the placeholder hides as soon as the
+ * user types.
+ */
+.members-select-placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: nb-theme(text-hint-color);
+
+  nb-icon {
+    font-size: 1rem;
+  }
+}
+
+:host ::ng-deep .ng-select.members-select {
+  &.ng-select-filtered .members-select-placeholder {
+    display: none;
+  }
+
+  // The multi-label template sits in the value container; the search input is
+  // laid over it, so it has to start at the same place.
+  .ng-value-container {
+    flex-wrap: nowrap;
+  }
+
+  // The typed search term took the library's dark default text colour, which
+  // all but vanished on the dark themes.
+  .ng-input input {
+    color: nb-theme(text-basic-color) !important;
+  }
+}
+
+/*
+ * The dropdown is appended to <body>, outside this component, so these rules
+ * are unscoped. ng-select copies the trigger's classes onto the panel, which is
+ * what `ng-dropdown-panel.members-select` matches: no other select is touched.
+ */
+::ng-deep ng-dropdown-panel.members-select {
+  border-radius: nb-theme(border-radius);
+  overflow: hidden;
+
+  .ng-dropdown-panel-items {
+    max-height: 18rem;
+  }
+
+  .ng-option {
+    padding: 0.375rem 0.75rem !important;
+  }
+
+  .member-option {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+  }
+
+  .member-option-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid nb-theme(border-basic-color-5);
+    border-radius: 0.25rem;
+    color: nb-theme(text-control-color);
+    font-size: 0.75rem;
+
+    &.checked {
+      background-color: nb-theme(color-primary-default);
+      border-color: nb-theme(color-primary-default);
+    }
+  }
+
+  .member-option-avatar {
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  }
+
+  .member-option-initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: nb-theme(text-hint-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .member-option-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .member-option-name,
+  .member-option-email {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .member-option-name {
+    font-size: nb-theme(text-paragraph-font-size);
+    font-weight: 500;
+    line-height: 1.125rem;
+  }
+
+  .member-option-email {
+    font-size: nb-theme(text-caption-font-size);
+    line-height: 1rem;
+    color: nb-theme(text-hint-color);
+  }
 }
 
 /*
@@ -149,9 +600,8 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+  // No rule above: the step panel's own edge already ends the form.
   margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid nb-theme(divider-color);
 
   .wizard-quit {
     margin-inline-end: auto;
@@ -216,124 +666,201 @@
     width: 100%;
   }
 
-  /*
-   * Step bodies shrink with the canvas.
-   *
-   * The wizard is an inline page card, so it is as wide as the layout column —
-   * which loses up to 860px to the expanded AI chat. Step 1's photo/fields row
-   * may wrap (`flex-wrap` in the template; the fields' minimum is set on
-   * `.fields` above), and the fixed Bootstrap splits of steps 2 and 4
-   * (`col-5`/`col-7` around the map, `col-6`/`col-6` around the member list) are
-   * turned into "at least this wide, else wrap": the grow factors keep the 5:7
-   * proportion whenever both fit on one line. Scoped to the bare grid columns
-   * of `.fields > .row` — step 1's `form-group col-*` field pairs keep their
-   * percentages, which shrink with the row on their own.
-   */
-  .contact-columns {
-    row-gap: 1rem;
-  }
-
-  .contact-container {
-    flex: 0 0 auto;
-  }
-
-  .fields > .row > .col-5:not(.form-group) {
-    flex: 5 1 18rem;
-    max-width: 100%;
-  }
-
-  .fields > .row > .col-7:not(.form-group) {
-    flex: 7 1 22rem;
-    max-width: 100%;
-  }
-
-  .fields > .row > .col-6:not(.form-group) {
-    flex: 1 1 16rem;
-    max-width: 100%;
-  }
-
   ::ng-deep ngx-image-uploader input {
+    top: 0;
+    left: 0;
     height: 100% !important;
+    cursor: pointer;
   }
 
   /*
-   * Step indicator.
+   * Multi-selects (Projects, Tags).
+   *
+   * The trigger was held at a single control height, so once the chips wrapped
+   * to a second line they spilled out over the top edge of the field. Let it grow
+   * with its chips, give the chips the same vertical rhythm as the text in a
+   * single-line field, and paint them from theme tokens instead of the library's
+   * light-blue-on-white, which glared on the dark themes. The chip paint is
+   * scoped to Projects: the tags input draws its own coloured badges.
+   */
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container {
+    height: auto !important;
+    align-items: center;
+  }
+
+  ::ng-deep .ng-select.projects-select .ng-select-container {
+    .ng-value-container {
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding-top: 0.375rem;
+      padding-bottom: 0.375rem;
+
+      .ng-value {
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+        border: none;
+        border-radius: 0.375rem;
+        background-color: nb-theme(color-primary-transparent-default);
+        color: nb-theme(text-basic-color);
+        font-size: nb-theme(text-caption-font-size);
+        line-height: 1.25rem;
+
+        .ng-value-label {
+          padding: 0 0.5rem 0 0.25rem;
+        }
+
+        .ng-value-icon {
+          order: -1;
+          padding: 0 0.25rem 0 0.5rem;
+          border: none !important;
+          background: transparent !important;
+          color: nb-theme(text-hint-color);
+
+          &:hover {
+            color: nb-theme(text-basic-color);
+          }
+        }
+      }
+
+      .ng-input {
+        padding: 0;
+      }
+    }
+  }
+
+  /*
+   * Step indicator: numbered chip with the name beside it, joined by a thin line
+   * that fills in up to the current step.
    *
    * The global override (styles/gauzy/_gauzy-overrides.scss) hides the step
-   * LABELS and joins the numbers with 10px bars, which reads as a progress meter
-   * with no legend — you cannot tell what step 3 is without clicking into it.
-   * This wizard has four named steps, so it shows them: numbered chip, name, and
-   * a hairline connector. Scoped to this component so no other stepper moves.
+   * labels and joins the numbers with 10px bars; this wizard names its four
+   * steps, so it shows them.
+   *
+   * `!important` where it appears answers either Nebular's own emulated rules
+   * (`:host(.horizontal) .header .step { flex-direction: column }` outranks
+   * anything `::ng-deep` reaches from here) or the global override, which pins
+   * the connector with `!important` itself.
    */
+  // The inline inset keeps the first and last steps off the card edge.
   ::ng-deep nb-stepper > .header {
-    align-items: center;
-    gap: 0.25rem;
+    align-items: center !important;
+    gap: 0;
     margin-bottom: 0 !important;
-    padding-bottom: 1rem;
+    padding: 0 1.5rem 0.875rem;
     border-bottom: 1px solid nb-theme(divider-color);
   }
 
-  // Chip and name side by side. Nebular stacks them (`flex-direction: column`
-  // for a horizontal stepper) and centres the name UNDER a 2rem-wide step, so
-  // it overflows the step box; the width, the shrinkability and the ellipsis on
-  // the label are now the global stepper override's job
-  // (styles/gauzy/_gauzy-overrides.scss) — this only picks the row layout.
   ::ng-deep nb-stepper.horizontal > .header .step {
     display: flex;
-    flex-direction: row;
+    flex-direction: row !important;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.5rem;
-    margin: 0;
+    gap: 0.4375rem;
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 0;
+    margin: 0 !important;
   }
 
   ::ng-deep nb-stepper > .header .step .label {
     display: inline-block;
-    font-size: nb-theme(menu-text-font-size);
-    font-weight: 400;
-    line-height: 1.25rem;
+    font-size: nb-theme(text-caption-font-size);
+    font-weight: 500;
+    line-height: 1rem;
     letter-spacing: normal;
     color: nb-theme(text-hint-color);
-    margin: 0;
+    margin: 0 !important;
     padding: 0;
   }
 
-  ::ng-deep nb-stepper > .header .step.selected .label,
+  ::ng-deep nb-stepper > .header .step.selected .label {
+    color: nb-theme(text-basic-color);
+    font-weight: 600;
+  }
+
   ::ng-deep nb-stepper > .header .step.completed .label {
     color: nb-theme(text-basic-color);
   }
 
-  ::ng-deep nb-stepper > .header .step.selected .label {
-    font-weight: 600;
-  }
-
-  // A circle rather than the theme's rounded square: it is a step marker, not a
-  // control, and it should not read as a small button.
+  // Upcoming step: an outlined circle, so it reads as "not reached yet".
   ::ng-deep nb-stepper > .header .step .label-index {
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 50%;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
     flex: 0 0 auto;
+    margin: 0 !important;
+    border-radius: 50%;
+    border: 1px solid nb-theme(border-basic-color-4) !important;
+    background-color: transparent;
+    color: nb-theme(text-hint-color);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
   }
 
-  // The connector carries `height`/`margin` with `!important` globally, so the
-  // hairline has to answer in kind — the selector is more specific, which is what
-  // decides it between two `!important` declarations. The walked-past connectors
-  // are matched by a SEPARATE, more specific global rule (`.step.selected + …`),
-  // so they need their own override or only the untouched ones would thin out.
-  ::ng-deep nb-stepper > .header .connector {
-    flex: 1 1 auto;
-    min-width: 1rem;
-    height: 1px !important;
-    margin: 0 0.5rem !important;
-    border-radius: 0;
+  // Current step: solid primary.
+  ::ng-deep nb-stepper > .header .step.selected .label-index {
+    background-color: nb-theme(color-primary-default);
+    border-color: nb-theme(color-primary-default) !important;
+    color: nb-theme(text-control-color);
+    box-shadow: 0 0 0 3px nb-theme(color-primary-transparent-default);
   }
 
+  // Done: a tinted chip carrying Nebular's checkmark.
+  ::ng-deep nb-stepper > .header .step.completed .label-index {
+    background-color: nb-theme(color-primary-transparent-default);
+    border-color: nb-theme(color-primary-default) !important;
+    color: nb-theme(color-primary-default);
+
+    nb-icon {
+      font-size: 0.75rem;
+      color: inherit;
+    }
+  }
+
+  // Connectors: a 1px track between steps. The ones already walked past
+  // (Nebular marks them `.connector-past`) are filled with the primary colour;
+  // the global `.step.selected + .connector` rule used to fill the one AHEAD of
+  // the current step instead, which read as progress that had not happened.
+  ::ng-deep nb-stepper > .header .connector,
   ::ng-deep nb-stepper > .header .step.selected + .connector,
   ::ng-deep nb-stepper > .header .step.completed + .connector {
+    flex: 1 1 1.5rem;
+    min-width: 1rem;
     height: 1px !important;
-    margin: 0 0.5rem !important;
+    margin: 0 0.75rem !important;
     border-radius: 0;
+    // -5, not -4: on the light themes -4 all but vanished against the page.
+    background-color: nb-theme(border-basic-color-5);
+  }
+
+  // `!important`: the grey reset above includes `.step.completed + .connector`,
+  // which is more specific than this and would otherwise keep every walked-past
+  // connector grey.
+  ::ng-deep nb-stepper > .header .connector.connector-past {
+    background-color: nb-theme(color-primary-default) !important;
+  }
+
+  // Nebular pads the step body by 1.25rem on every side, which indented the
+  // content past the step bar and the page title. Only the top keeps a gap, so
+  // the step panel below starts on the same edges as the bar above it.
+  ::ng-deep nb-stepper > .step-content {
+    padding: 1.25rem 0 0 !important;
+  }
+
+  /*
+   * The fields of every step sit in their own panel, set off from the page by a
+   * tint and a hairline. The tint is `gauzy-sidebar-background-4`, a translucent
+   * wash (white on dark themes, grey on light ones), so it separates the panel
+   * from the page on either and keeps the inputs, painted `gauzy-card-1`, reading
+   * as fields inset into it. The step buttons stay outside, under the panel.
+   */
+  .step-panel {
+    padding: 1.5rem;
+    border: 1px solid nb-theme(border-basic-color-3);
+    border-radius: nb-theme(border-radius);
+    background-color: var(--gauzy-sidebar-background-4, rgba(126, 126, 143, 0.05));
   }
 
   // The second argument paints every input/select in the wizard. It needs a
