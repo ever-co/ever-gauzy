@@ -85,7 +85,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 
 	private _slotIdsMap: Map<string, ID[]> = new Map();
-	/** Ids of the screenshots on screen, so a reload drops only the ones that left. */
+	/** Ids of the screenshots the last load fetched, so the next reload can drop them. */
 	private _galleryItemIds: Set<ID> = new Set();
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
@@ -480,26 +480,27 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	}
 
 	/**
-	 * Brings the gallery store in line with the fetched slots, as the dashboard's
-	 * Recent Activities widget does. Only the screenshots that are no longer shown
-	 * are removed: the cards' `ngxGallery` directives add their own once, when
-	 * created, so emptying the store would strip the cards that survive a reload.
+	 * Drops every screenshot the previous load put in the gallery store, then
+	 * tracks the ones just fetched for the next reload.
+	 *
+	 * Nothing from the previous load is kept. `fetchTimeSlotsScreenshots` empties
+	 * `timeSlots` before the request, so every card is rebuilt and its `ngxGallery`
+	 * directive appends its screenshots afresh. Keeping an item left behind the
+	 * screenshot of a slot that is no longer its minute's primary card, and because
+	 * the store keeps the first item per id, it also kept the old copy over the new.
 	 *
 	 * @param slots The time slots that were just fetched.
 	 */
 	private _syncGallery(slots: ITimeSlot[]): void {
-		const next = new Set<ID>(
-			slots.flatMap((slot: ITimeSlot) => (slot.screenshots ?? []).map((screenshot: IScreenshot) => screenshot.id))
-		);
-
-		const stale = [...this._galleryItemIds]
-			.filter((id: ID) => !next.has(id))
-			.map((id: ID) => ({ id } as GalleryItem));
-		if (stale.length) {
-			this._galleryService.removeGalleryItems(stale);
+		if (this._galleryItemIds.size) {
+			this._galleryService.removeGalleryItems(
+				[...this._galleryItemIds].map((id: ID) => ({ id } as GalleryItem))
+			);
 		}
 
-		this._galleryItemIds = next;
+		this._galleryItemIds = new Set<ID>(
+			slots.flatMap((slot: ITimeSlot) => (slot.screenshots ?? []).map((screenshot: IScreenshot) => screenshot.id))
+		);
 	}
 
 	ngOnDestroy(): void {
