@@ -140,7 +140,7 @@
 // whenever six fit at $slot-min-width, and fewer, wrapping to the next line, on a
 // narrower screen. The column minimum is a sixth of the row (less a pixel, so
 // rounding never drops the sixth) or $slot-min-width, whichever is larger.
-$slot-min-width: 10rem;
+$slot-min-width: 12rem;
 $slot-gap: 1rem;
 // The row's content width at which six columns fit.
 $six-columns-width: $slot-min-width * 6 + $slot-gap * 5;
