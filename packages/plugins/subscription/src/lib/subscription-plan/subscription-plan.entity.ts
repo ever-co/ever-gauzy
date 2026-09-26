@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ColumnIndex, JsonColumn, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ISubscriptionPlan, SubscriptionBillingPeriod } from '../subscription.types';
 import { MikroOrmSubscriptionPlanRepository } from './repository/mikro-orm-subscription-plan.repository';
 
@@ -135,7 +135,7 @@ export class SubscriptionPlan extends TenantOrganizationBaseEntity implements IS
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

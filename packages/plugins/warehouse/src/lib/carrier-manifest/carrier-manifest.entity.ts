@@ -15,6 +15,7 @@ import {
 import { DecimalString, ID, IWarehouse } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -161,7 +162,7 @@ export class CarrierManifest extends TenantOrganizationBaseEntity implements ICa
 	/** The same document as data: the payload is always available as JSON. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	documentData?: Record<string, unknown>;
 
 	/** An operator note kept beside the hand-over. */
@@ -190,7 +191,7 @@ export class CarrierManifest extends TenantOrganizationBaseEntity implements ICa
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

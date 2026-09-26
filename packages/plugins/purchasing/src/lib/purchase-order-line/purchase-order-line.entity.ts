@@ -4,6 +4,7 @@ import { IsDate, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID } from 'clas
 import { DecimalString, ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -197,7 +198,7 @@ export class PurchaseOrderLine extends TenantOrganizationBaseEntity implements I
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

@@ -4,6 +4,7 @@ import { IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLen
 import { ID, IUser, IWarehouse } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -141,7 +142,7 @@ export class PickList extends TenantOrganizationBaseEntity implements IPickList 
 	/** Tenant extras: the bin sequence walked, the substitutions and short picks the operator saw. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

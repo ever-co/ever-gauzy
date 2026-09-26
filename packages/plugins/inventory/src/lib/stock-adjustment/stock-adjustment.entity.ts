@@ -4,6 +4,7 @@ import { IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID, M
 import { ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -107,7 +108,7 @@ export class StockAdjustment extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, any>;
 
 	/*

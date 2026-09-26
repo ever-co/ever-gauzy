@@ -4,6 +4,7 @@ import { IsBoolean, IsInt, IsObject, IsOptional, IsUUID } from 'class-validator'
 import { ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -52,7 +53,7 @@ export class ChannelWarehouse extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, any>;
 
 	/*

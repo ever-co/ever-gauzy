@@ -15,6 +15,7 @@ import {
 import { DecimalString, ID, IWarehouse } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -224,7 +225,7 @@ export class WarehouseBin extends TenantOrganizationBaseEntity implements IWareh
 	/** Tenant extras: display colours, handling instructions, the aisle map's own labels. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

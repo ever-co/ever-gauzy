@@ -15,6 +15,7 @@ import {
 import { DecimalString, ID, IUser, IWarehouse } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -164,7 +165,7 @@ export class PackSlip extends TenantOrganizationBaseEntity implements IPackSlip 
 	/** Tenant extras: the package identifiers, the packaging materials, the bench that packed it. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

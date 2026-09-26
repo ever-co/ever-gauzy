@@ -16,6 +16,7 @@ import {
 import { DecimalString, ID, IUser } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -176,7 +177,7 @@ export class PickListLine extends TenantOrganizationBaseEntity implements IPickL
 	/** Tenant extras: the scanned barcode, the alternate bins the device offered. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

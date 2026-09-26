@@ -15,6 +15,7 @@ import { CurrencyCode, DecimalString, ID, IOrganizationVendor } from '@gauzy/con
 import {
 	ColumnIndex,
 	ColumnNumericTransformerPipe,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -267,6 +268,6 @@ export class VendorProductTerm extends TenantOrganizationBaseEntity implements I
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 }

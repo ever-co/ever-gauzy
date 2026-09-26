@@ -4,6 +4,7 @@ import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'cla
 import { DecimalString, ID, IProductVariant } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -81,7 +82,7 @@ export class OrderClaimLine extends TenantOrganizationBaseEntity implements IOrd
 	 */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, unknown>;
 
 	/*

@@ -4,6 +4,7 @@ import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsObject, IsOptional, I
 import { ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
+	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToOne,
@@ -78,7 +79,7 @@ export class StockCount extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	scope?: Record<string, any>;
 
 	/**
@@ -87,7 +88,7 @@ export class StockCount extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	scopeCriteria?: Record<string, any>;
 
 	/**
@@ -148,7 +149,7 @@ export class StockCount extends TenantOrganizationBaseEntity {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@MultiORMColumn({ type: 'jsonb', nullable: true })
+	@JsonColumn({ nullable: true })
 	metadata?: Record<string, any>;
 
 	/*
