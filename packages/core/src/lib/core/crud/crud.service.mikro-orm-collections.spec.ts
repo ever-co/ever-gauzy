@@ -108,6 +108,22 @@ describe('CrudService links to-many relations under MikroORM', () => {
 		expect(await linked(id)).toEqual(['t3']);
 	});
 
+	it('takes a payload spread from a loaded entity, whose unloaded collection states nothing', async () => {
+		// A service spreading an entity it loaded (`{ ...product }`) hands create() a MikroORM Collection. Unloaded,
+		// assign() failed on it ("Collection<Tag> of entity Product[…] not initialized"); TypeORM's spread of an
+		// unloaded relation is undefined and ignored.
+		const created = await service().create({ name: 'loaded', tags: ['t1'] });
+		const em = orm.em.fork();
+		const loaded = await em.findOneOrFail(SpecProduct, created.id);
+
+		await service().create({ ...(loaded as object), name: 'renamed' } as any);
+		expect(await linked(created.id)).toEqual(['t1']);
+
+		const loadedWithTags = await em.fork().findOneOrFail(SpecProduct, created.id, { populate: ['tags'] as never });
+		const copy = await service().create({ ...(loadedWithTags as object), id: undefined, name: 'copied' } as any);
+		expect(await linked(copy.id)).toEqual(['t1']);
+	});
+
 	it('replaces the tags of a stored row through save()', async () => {
 		const created = await service().create({ name: 'resaved', tags: ['t1'] });
 

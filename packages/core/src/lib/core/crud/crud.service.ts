@@ -689,7 +689,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 								entity,
 								stateRelationsFromMirrors(
 									this.mikroOrmMetadata(),
-									this.withoutUncascadedNewRows(partialEntity as object),
+									this.withoutUncascadedNewRows(
+										withCollectionsAsItems(partialEntity as Record<string, unknown>)
+									),
 									{ embeddedOnly: true }
 								) as any,
 								assignOptions
@@ -702,7 +704,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					// No stored row has this id (or none was stated): build the new row so that MikroORM inserts it.
 					const newEntity = createNewMikroOrmEntity<T>(
 						this.mikroOrmRepository,
-						this.withoutUncascadedNewRows(partialEntity as object),
+						this.withoutUncascadedNewRows(withCollectionsAsItems(partialEntity as Record<string, unknown>)),
 						createOptions
 					);
 
@@ -740,7 +742,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					const created = entities.map((entity) =>
 						createNewMikroOrmEntity<T>(
 							this.mikroOrmRepository,
-							this.withoutUncascadedNewRows(entity as object),
+							this.withoutUncascadedNewRows(withCollectionsAsItems(entity as Record<string, unknown>)),
 							{
 								partial: true,
 								managed: true
