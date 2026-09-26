@@ -104,8 +104,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { RequestContext } from '@gauzy/core';

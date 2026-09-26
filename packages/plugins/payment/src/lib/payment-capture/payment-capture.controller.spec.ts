@@ -105,8 +105,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 /**

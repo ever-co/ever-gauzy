@@ -116,8 +116,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { print } from 'graphql';

@@ -98,8 +98,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { RequestContext, WarehouseProductVariant, addDecimalStrings, compareDecimalStrings } from '@gauzy/core';

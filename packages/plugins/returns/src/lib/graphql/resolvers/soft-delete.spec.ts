@@ -147,8 +147,7 @@ jest.mock(
 	'@gauzy/common',
 	() => ({
 		FeatureFlag: () => () => undefined
-	}),
-	{ virtual: true }
+	})
 );
 
 import { FieldDefinitionNode, ObjectTypeDefinitionNode, ObjectTypeExtensionNode, TypeNode } from 'graphql';

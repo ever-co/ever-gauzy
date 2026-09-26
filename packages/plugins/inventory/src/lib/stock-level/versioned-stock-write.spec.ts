@@ -150,8 +150,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { HttpException, HttpStatus } from '@nestjs/common';

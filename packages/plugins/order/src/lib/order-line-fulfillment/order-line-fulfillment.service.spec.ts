@@ -16,8 +16,7 @@ jest.mock(
 	() => ({
 		isMySQL: () => mockDialect.type === 'mysql',
 		isPostgres: () => mockDialect.type === 'postgres'
-	}),
-	{ virtual: true }
+	})
 );
 
 /**

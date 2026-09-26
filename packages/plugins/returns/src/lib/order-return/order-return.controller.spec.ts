@@ -113,8 +113,7 @@ jest.mock(
 	'@gauzy/common',
 	() => ({
 		FeatureFlag: () => () => undefined
-	}),
-	{ virtual: true }
+	})
 );
 
 /**

@@ -129,8 +129,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';

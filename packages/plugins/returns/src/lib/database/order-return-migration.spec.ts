@@ -4,19 +4,15 @@
  * specs do, and **the migration under test is the real one**: its dialect routing, its statements and
  * its probes are the platform's, over a query runner that records what it was asked for.
  */
-jest.mock(
-	'@gauzy/config',
-	() => ({
-		DatabaseTypeEnum: {
-			mongodb: 'mongodb',
-			sqlite: 'sqlite',
-			betterSqlite3: 'better-sqlite3',
-			postgres: 'postgres',
-			mysql: 'mysql'
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/config', () => ({
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
 import { QueryRunner } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';

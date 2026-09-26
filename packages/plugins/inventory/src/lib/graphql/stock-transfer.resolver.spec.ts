@@ -103,19 +103,15 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-jest.mock(
-	'@gauzy/config',
-	() => ({
-		DatabaseTypeEnum: {
-			mongodb: 'mongodb',
-			sqlite: 'sqlite',
-			betterSqlite3: 'better-sqlite3',
-			postgres: 'postgres',
-			mysql: 'mysql'
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/config', () => ({
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
 import { print } from 'graphql';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';

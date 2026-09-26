@@ -132,8 +132,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { Product, ProductVariant, WarehouseProduct, WarehouseProductVariant } from '@gauzy/core';

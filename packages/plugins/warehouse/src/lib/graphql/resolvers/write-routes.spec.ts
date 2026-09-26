@@ -235,8 +235,7 @@ jest.mock(
 	'@gauzy/common',
 	() => ({
 		FeatureFlag: () => () => undefined
-	}),
-	{ virtual: true }
+	})
 );
 
 import { getMetadataStorage } from 'class-validator';

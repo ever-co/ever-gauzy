@@ -94,13 +94,9 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-jest.mock(
-	'@gauzy/common',
-	() => ({
-		FeatureFlag: () => () => undefined
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/common', () => ({
+	FeatureFlag: () => () => undefined
+}));
 
 /**
  * The interceptor names `IdempotencyService` as its injected dependency, and a class used in a

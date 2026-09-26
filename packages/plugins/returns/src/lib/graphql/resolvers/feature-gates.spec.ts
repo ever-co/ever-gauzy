@@ -149,8 +149,7 @@ jest.mock(
 
 				mockDeclaredFlags.set(holder, [...(mockDeclaredFlags.get(holder) ?? []), feature]);
 			}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';

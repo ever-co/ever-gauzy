@@ -152,8 +152,7 @@ jest.mock(
 			postgres: 'postgres',
 			mysql: 'mysql'
 		}
-	}),
-	{ virtual: true }
+	})
 );
 
 import { PERMISSIONS_METADATA } from '@gauzy/constants';

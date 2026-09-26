@@ -275,13 +275,9 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-jest.mock(
-	'@gauzy/common',
-	() => ({
-		FeatureFlag: () => () => undefined
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/common', () => ({
+	FeatureFlag: () => () => undefined
+}));
 
 // The collaborators the three surfaces inject are doubled at their own modules, so nothing below them
 // is loaded: what these cases assert is a declaration and a permission, not what a service returns.

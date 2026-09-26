@@ -96,8 +96,7 @@ jest.mock(
 		},
 		isMySQL: () => false,
 		isPostgres: () => true
-	}),
-	{ virtual: true }
+	})
 );
 
 /**

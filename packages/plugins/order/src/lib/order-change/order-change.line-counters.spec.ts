@@ -8,14 +8,10 @@
 const mockOrm = { type: 'typeorm' };
 const mockDialect = { type: 'better-sqlite3' };
 
-jest.mock(
-	'@gauzy/config',
-	() => ({
-		isMySQL: () => mockDialect.type === 'mysql',
-		isPostgres: () => mockDialect.type === 'postgres'
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => mockDialect.type === 'mysql',
+	isPostgres: () => mockDialect.type === 'postgres'
+}));
 
 /**
  * The cart barrel re-exports the cart plugin, which imports the catalogue and the rest of the marketplace;

@@ -23,8 +23,7 @@ jest.mock(
 		IsOptional()(TenantOrganizationBaseDTO.prototype, 'organizationId');
 		IsUUID()(TenantOrganizationBaseDTO.prototype, 'organizationId');
 		return { TenantOrganizationBaseDTO, BaseQueryDTO: class {} };
-	},
-	{ virtual: true }
+	}
 );
 
 import { plainToInstance } from 'class-transformer';

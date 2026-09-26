@@ -108,8 +108,7 @@ jest.mock(
 		// The refund-line service reads the dialect at import time to pick a column type.
 		isMySQL: () => false,
 		isPostgres: () => true
-	}),
-	{ virtual: true }
+	})
 );
 
 /**

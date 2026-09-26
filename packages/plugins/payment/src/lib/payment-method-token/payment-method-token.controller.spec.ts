@@ -110,19 +110,15 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-jest.mock(
-	'@gauzy/config',
-	() => ({
-		DatabaseTypeEnum: {
-			mongodb: 'mongodb',
-			sqlite: 'sqlite',
-			betterSqlite3: 'better-sqlite3',
-			postgres: 'postgres',
-			mysql: 'mysql'
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/config', () => ({
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
 /**
  * The interceptor names `IdempotencyService` as its injected dependency, and a class used in a
