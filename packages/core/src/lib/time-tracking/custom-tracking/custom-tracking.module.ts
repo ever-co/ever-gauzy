@@ -5,6 +5,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { EmployeeModule } from '../../employee/employee.module';
 import { CustomTrackingController } from './custom-tracking.controller';
+import { CustomTrackingResolver } from './custom-tracking.resolver';
 import { CustomTrackingService } from './custom-tracking.service';
 import { TimeSlot } from '../time-slot/time-slot.entity';
 import { TimeLog } from '../time-log/time-log.entity';
@@ -31,6 +32,9 @@ import { MikroOrmTimeSlotSessionRepository } from '../time-slot-session/reposito
 	controllers: [CustomTrackingController],
 	providers: [
 		CustomTrackingService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject services
+		// its own module can reach, and this module is what reaches them.
+		CustomTrackingResolver,
 		TimeSlotSessionService,
 		TypeOrmTimeSlotRepository,
 		MikroOrmTimeSlotRepository,

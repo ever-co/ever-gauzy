@@ -1,0 +1,156 @@
+# The membership's GraphQL types.
+#
+# A user organization is the row that puts a person inside an organization: it is what a caller's
+# session is scoped to, what the platform reads to decide which organizations that caller may act in,
+# and what the removal handler reads to decide whether removing a person from one organization removes
+# the person or only the membership. It carries no facts of its own beyond that — the two identifiers
+# and the two flags are the whole row.
+#
+# **The two relation objects are absent, and the identifiers for them are carried instead.** The
+# delivered list read answers the relations its caller names, and this surface's reads name none, so a
+# `user` or an `organization` member would be absent on every row answered here — a client would select
+# one, read `null`, and conclude the membership has no person. `userId` and `organizationId` are the
+# foreign keys that always travel, and each row behind one is read from the domain that owns it: the
+# account from `user(id)`, the organization from the organization's own surface.
+#
+# That absence is also why the delivered controller's sensitive-relations policy has nothing to strip
+# here. The REST list route runs an interceptor that removes the organization relation's classified
+# members — payments, invoices, employees, contacts and the rest — for a caller who does not hold the
+# permission each one is gated by. No member of this type is one of those: the interceptor's subject is
+# a relation this surface never joins, so the classified members are absent by construction rather than
+# by a second filter that could disagree with the first.
+#
+# The base row's `createdByUserId`, `updatedByUserId` and `deletedByUserId` stamps are not carried.
+# They are written by the platform's own bookkeeping rather than stated by a caller, and a membership
+# is read to answer who may act where — a question the two identifiers already answer.
+
+"""
+One person's membership of one organization: the row that scopes a caller to an organization.
+"""
+type UserOrganization {
+	id: ID!
+	tenantId: ID
+	"The organization this membership grants access to. The organization row is read from the organization domain by this identifier."
+	organizationId: ID
+	"The account this membership belongs to. The account row is read from this surface's own `user(id)` by this identifier."
+	userId: ID
+	"""
+	Whether this is the membership the person's session opens in.
+
+	A person belongs to several organizations and acts in one at a time, and this flag is which one. It
+	is the only fact the row carries that is not an identifier.
+	"""
+	isDefault: Boolean!
+	"""
+	Whether the membership currently grants what it says.
+
+	The removal handler and the per-person organization count both read this flag, which is why the two
+	writes below can state it: suspending a membership is a write to this column and there is no route
+	of its own for it.
+	"""
+	isActive: Boolean
+	isArchived: Boolean
+	"""
+	When the membership was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of memberships.
+"""
+type UserOrganizationEdge {
+	node: UserOrganization!
+	cursor: String!
+}
+
+"""
+One page of memberships, with the total the filters select and the boundary cursors.
+"""
+type UserOrganizationConnection {
+	nodes: [UserOrganization!]!
+	edges: [UserOrganizationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a membership list may be sorted by.
+
+The two timestamps and the flag. The identifiers are not here: a list of one person's memberships or
+of one organization's members is that identifier stated as a filter, which is both narrower and cheaper
+than an order.
+"""
+enum UserOrganizationSortField {
+	createdAt
+	updatedAt
+	isDefault
+}
+
+"""
+The order the memberships are returned in. At most three keys are accepted.
+"""
+input UserOrganizationSort {
+	field: UserOrganizationSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a membership list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a value the delivered list read answers on the row, because the connection narrows the
+rows the service returned. The two relation members the type does not carry have no filter either: a
+filter on `user.email` would be a narrowing the rows this read returns cannot be evaluated against.
+"""
+input UserOrganizationFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	userId: IDFilter
+	isDefault: BooleanFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [UserOrganizationFilter!]
+	or: [UserOrganizationFilter!]
+	not: UserOrganizationFilter
+}
+
+"""
+What a caller states when it puts a person inside an organization.
+
+Both identifiers are required, because a membership is the pivot between exactly two rows and one
+without either is not a membership. There is no member for the tenant: the service stamps the caller's
+own tenant onto the row and overwrites whatever a body states.
+
+`isActive` and `isDefault` are members because both are facts about the membership that the delivered
+writes store and the delivered reads act on. The base's `isArchived`, its soft-delete marker and its
+three audit-user columns are not: the two lifecycle routes are what move the marker, and an input that
+could set an audit column would be a way to write a fact the platform's own bookkeeping owns.
+"""
+input CreateUserOrganizationInput {
+	organizationId: ID!
+	userId: ID!
+	"Whether the membership is the one the person's session opens in."
+	isDefault: Boolean
+	"Whether the membership grants what it says. Defaults to true."
+	isActive: Boolean
+}
+
+"""
+What a caller states when it changes a membership that exists.
+
+Every member but the criterion is optional, and a member the caller leaves out is left as it is: the
+delivered edit is a partial column update against the identifier the path names, not a replacement of
+the row. The identifier is not among the mutable members — a membership that could be re-pointed at
+another person or another organization would be a way to move access without a trace.
+"""
+input UpdateUserOrganizationInput {
+	id: ID!
+	isDefault: Boolean
+	isActive: Boolean
+}

@@ -1,0 +1,89 @@
+# The platform statistics document's GraphQL types.
+#
+# The statistics resource answers one thing: a single document of aggregates over the platform's own
+# records — how many tenants, people, tasks, teams and organizations there are, what the invoicing and
+# payment tables add up to, how many users signed in during the last month and how much time has been
+# tracked. It is therefore **not** a resource with rows, an identifier, a lifecycle or a store of its
+# own: there is no table behind it, no key to address it by, and nothing to create, edit or remove. The
+# document is computed on every request by the services that own those records, which is why the types
+# below have no `id` and no timestamps — a member every member of the surface would have to invent.
+#
+# **The document is typed rather than carried as free-form JSON, and that is the statement about what
+# the route actually answers.** The delivered method builds every member by name and each is a number,
+# so a `JSON` member would tell a client nothing it could not learn from the route's own response and
+# would let the shape drift with no schema change to record it. The shape is declared here member by
+# member, in the order the delivered document states them, so a client generator and a reviewer read
+# the same contract the method implements.
+#
+# The two amounts are `Decimal` and never `Float`. Every money value in this schema is an exact decimal
+# — a binary fraction cannot hold a cent exactly — and an aggregate of money is money: `Decimal` is
+# what the sum of a `numeric` column is, and a filter or a client computation over it must not round.
+# `hours` is the one `Float` here, and deliberately: it is a *duration* rather than an amount, the
+# delivered method divides tracked seconds by 3600, and a duration genuinely has a fractional part that
+# rounding would lose.
+#
+# A `count` is `Int` because a count is a whole number of rows the store answered with.
+
+"""
+The platform's own aggregates, as the statistics resource computes and answers them.
+
+Every member is computed on the request: the counts are the number of rows the owning service's own
+count answers, and the two amounts are the sums its own aggregation answers. Nothing here is stored, so
+nothing here is cached or versioned, and two calls a second apart may legitimately disagree.
+"""
+type GlobalStats {
+	"How many tenants the count of the tenant service answers."
+	tenants: Int!
+	"How many employees the count of the employee service answers."
+	employees: Int!
+	"How many tasks the count of the task service answers."
+	tasks: Int!
+	"How many teams the count of the organization-team service answers."
+	teams: Int!
+	"How many organizations the count of the organization service answers."
+	organizations: Int!
+	"The user aggregate: the total the user service counts, and how many of them signed in during the last month."
+	users: UserStats!
+	"""
+	The invoice aggregate: how many documents that are not estimates the invoice service counted, and
+	what their total value adds up to.
+	"""
+	invoices: InvoiceStats!
+	"The payment aggregate: how many payment rows the payment service counted, and what their amounts add up to."
+	payments: PaymentStats!
+	"""
+	The overall tracked time in hours, as the statistic service computes it: the summed duration of the
+	platform's time logs, divided by 3600. A duration rather than an amount, so it carries its fraction.
+	"""
+	hours: Float!
+}
+
+"""
+The user aggregate: the total, and how many of them were active recently.
+"""
+type UserStats {
+	"How many users the count of the user service answers."
+	count: Int!
+	"How many users signed in during the last 30 days."
+	lastMonthActiveUsers: Int!
+}
+
+"""
+The invoice aggregate over the documents that are not estimates.
+"""
+type InvoiceStats {
+	"How many invoices the count answers. Estimates are not among them: the delivered aggregate selects the documents whose `isEstimate` is false."
+	count: Int!
+	"What the total value of those invoices adds up to, as an exact decimal."
+	amount: Decimal!
+}
+
+"""
+The payment aggregate over the recorded payments.
+"""
+type PaymentStats {
+	"How many payment rows the count answers."
+	count: Int!
+	"What the recorded amounts add up to, as an exact decimal."
+	amount: Decimal!
+}

@@ -1,0 +1,161 @@
+# The key result template's object type.
+#
+# A key result template is the catalogue row a key result is copied from: the metric it is read as,
+# the unit, the two readings it starts with, and which deadline the catalogue suggests. It sits
+# between the two other catalogue rows — it belongs to a goal template and it may point at a KPI
+# template — and both of those are named here by the identifiers the row itself holds, so a caller can
+# walk the catalogue in either direction without a member that only one read would populate.
+#
+# `deadline` is carried as its value rather than declared here as an enum: the vocabulary belongs to
+# the domain's own contract, and it is the same vocabulary the working key result's deadline column
+# carries — so a set declared in this file could not be reused by the file beside it, which is exactly
+# what a shared value set must not be. `unit` is the caller's own text, and the two readings are whole
+# numbers in the column and are nullable because the catalogue may suggest none.
+
+"""
+One catalogue entry a key result can be authored from.
+"""
+type KeyResultTemplate {
+	id: ID!
+	"The name of the key result this entry offers."
+	name: String!
+	"""
+	The kind of key result the entry offers. The value set belongs to the domain's own contract, so it
+	is carried as its value rather than declared here as an enum.
+	"""
+	type: String!
+	"The unit the reading is expressed in, as text."
+	unit: String
+	"The reading the entry suggests aiming at, when it suggests one."
+	targetValue: Int
+	"The reading the entry suggests starting from, when it suggests one."
+	initialValue: Int
+	"""
+	Which deadline the entry suggests. Carried as its value rather than declared here as an enum, for
+	the reason `type` is.
+	"""
+	deadline: String!
+	"The KPI template this entry suggests tracking, by identifier."
+	kpiId: ID
+	"""
+	The goal template this entry belongs to, by identifier. A goal template's key results are this
+	connection narrowed by it.
+	"""
+	goalId: ID
+	"""
+	When the entry was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the entry belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the entry is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of catalogue entries.
+"""
+type KeyResultTemplateEdge {
+	node: KeyResultTemplate!
+	cursor: String!
+}
+
+"""
+One page of catalogue entries, with the total the filters select and the boundary cursors.
+"""
+type KeyResultTemplateConnection {
+	nodes: [KeyResultTemplate!]!
+	edges: [KeyResultTemplateEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a catalogue list may be sorted by.
+"""
+enum KeyResultTemplateSortField {
+	createdAt
+	updatedAt
+	name
+	type
+	targetValue
+	initialValue
+	deadline
+}
+
+"""
+The order the catalogue is returned in. At most three keys are accepted.
+"""
+input KeyResultTemplateSort {
+	field: KeyResultTemplateSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a catalogue list may be narrowed by.
+"""
+input KeyResultTemplateFilter {
+	id: IDFilter
+	name: StringFilter
+	type: StringFilter
+	unit: StringFilter
+	targetValue: NumberFilter
+	initialValue: NumberFilter
+	deadline: StringFilter
+	kpiId: IDFilter
+	goalId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [KeyResultTemplateFilter!]
+	or: [KeyResultTemplateFilter!]
+	not: KeyResultTemplateFilter
+}
+
+"""
+What a caller states when it files a catalogue entry.
+
+The delivered body is validated by a DTO that joins this row's own members to the two relations it
+carries, and it requires a name, a kind and a deadline. The tenant is never a member — the service
+stamps it from the credential — and `organizationId` is, because it is the row's own column and the
+delivered validation does not strip it.
+"""
+input CreateKeyResultTemplateInput {
+	name: String!
+	type: String!
+	unit: String
+	targetValue: Int
+	initialValue: Int
+	deadline: String!
+	kpiId: ID
+	"The goal template to file the entry under."
+	goalId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a catalogue entry.
+
+**A member that is absent is left as it is.** The delivered edit is the CRUD base's partial column
+update rather than a replacement: it reads the row first — so an entry of another tenant, or one that
+is not there, is a miss rather than a write — and then updates the stated columns and no others.
+"""
+input UpdateKeyResultTemplateInput {
+	id: ID!
+	name: String
+	type: String
+	unit: String
+	targetValue: Int
+	initialValue: Int
+	deadline: String
+	kpiId: ID
+	goalId: ID
+	organizationId: ID
+}

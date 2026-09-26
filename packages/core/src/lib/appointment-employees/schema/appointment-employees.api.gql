@@ -1,0 +1,115 @@
+# The appointment employee domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/appointment-employees` routes already serve, under the same
+# guard and with the same permission, so a client that reaches a capability over one protocol is not given
+# a narrower or a wider one than the client that reaches it over the other. The guard and the permission
+# are read from `AppointmentEmployeesController`'s own metadata in the resolver, and the resolver's spec
+# compares the two rather than restating a list that could agree with the resolver while disagreeing with
+# the controller. That controller carries `TenantPermissionGuard` on the class and states no permission at
+# all — not on its two sub-routes, and not on any of the routes it inherits from the CRUD base — so every
+# field here states the same tenant guard and no permission, and a field that demanded a permission would
+# refuse a caller the REST route serves.
+#
+# **The list is a connection rather than a bare array.** It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other. `withDeleted` is offered because the delivered list route offers
+# it: `BaseQueryDTO` carries it and that route hands its query string straight to the same read, so a REST
+# caller can ask for withdrawn invitations and a connection that could not would hide them.
+#
+# **The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer one
+# question.** One is sliced by `take`/`skip` and the other is not, and both apply the same narrowing to the
+# same rows, so they are one capability: `appointmentEmployees`, mirroring `GET /`, which is the route that
+# reads the whole filtered set the connection protocol is applied to. A second root field for the paginated
+# spelling would be a second surface that could disagree with this one, and the connection's own
+# `limit`/`offset` already are the page it performs.
+#
+# **The two sub-routes are filters of this connection, never root fields of their own.**
+# `GET /appointment/:appointmentId` answers this resource's rows for one appointment and
+# `GET /employee-appointments/:employeeId` answers them for one employee; both are the same table, the
+# same read and the same rows as the list, narrowed by a single field, so they are stated as
+# `appointmentEmployees(filter: { appointmentId: { eq: … } })` and
+# `appointmentEmployees(filter: { employeeId: { eq: … } })`. A root field per narrowing would be a second
+# surface over the same rows, free to disagree with this one about the ordering and the page — and the name
+# the second one would want is already taken by a different answer: `employeeAppointments` is the
+# appointment connection of the sibling surface, which answers appointments rather than invitations.
+#
+# The second sub-route is also the case that reads oddly and is nevertheless a filter. It names
+# `employeeAppointment` among the relations it joins, and this surface carries relations as the
+# identifiers that always travel rather than as objects — so what it narrows by is `employeeId`, the
+# identifier the route itself takes from its path, and the appointment it would have joined is read from
+# its own surface: `employeeAppointment(id: …)`. Carrying a filter the read cannot apply, or an object
+# member the read does not join, would each be a promise this surface could not keep.
+#
+# `appointmentEmployeeCount` takes no filter, and that is a statement rather than an omission. The count
+# route passes its query string through as the store's own `where`, which the connection protocol does not
+# speak; a `filter` argument here would either be handed to a service call that cannot accept it or be
+# evaluated over a second code path that could disagree with the connection's `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options — and it is nullable, because an aggregate the resource has no answer for must not be answered as
+# a zero.
+
+extend type Query {
+	"""
+	The invitations of the caller's tenant, newest first. An appointment's invitees are this connection
+	narrowed by `appointmentId`; an employee's invitations are the same connection narrowed by `employeeId`.
+	"""
+	appointmentEmployees(
+		filter: AppointmentEmployeeFilter
+		sort: [AppointmentEmployeeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): AppointmentEmployeeConnection!
+
+	"""
+	One invitation of the caller's tenant, or null when there is none.
+	"""
+	appointmentEmployee(id: ID!): AppointmentEmployee
+
+	"""
+	How many invitations the caller's tenant holds.
+	"""
+	appointmentEmployeeCount: Int
+}
+
+extend type Mutation {
+	"""
+	Invites an employee to an appointment, and answers the row it wrote, as the inherited `POST /` does.
+	"""
+	createAppointmentEmployee(input: CreateAppointmentEmployeeInput!): AppointmentEmployee!
+
+	"""
+	Changes an invitation, and answers the row the write produced. The delivered route answers the store's
+	update result — a statement about the write rather than a row — so the row is read back through the same
+	service the node query uses; see `UpdateAppointmentEmployeeInput` for why an absent member is left as it
+	is.
+	"""
+	updateAppointmentEmployee(input: UpdateAppointmentEmployeeInput!): AppointmentEmployee!
+
+	"""
+	Removes an invitation outright. The delivered route answers the store's delete result, which is not a
+	row, so the field answers whether the removal was performed; a caller naming an invitation that is not
+	there is answered with the service's own `404`-shaped refusal rather than with a success.
+	"""
+	deleteAppointmentEmployee(id: ID!): Boolean!
+
+	"""
+	Withdraws an invitation without removing it: the row keeps its identifier and the delivered list stops
+	answering it. The answer is the withdrawn row, whose `deletedAt` says when it happened.
+	"""
+	softDeleteAppointmentEmployee(id: ID!): AppointmentEmployee!
+
+	"""
+	Puts a withdrawn invitation back.
+	"""
+	recoverAppointmentEmployee(id: ID!): AppointmentEmployee!
+}

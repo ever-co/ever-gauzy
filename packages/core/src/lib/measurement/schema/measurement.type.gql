@@ -1,0 +1,76 @@
+# The measurement domain's GraphQL types.
+#
+# A family and the units inside it are two types rather than one: a unit's factor is meaningful only
+# against the family that defines the base quantity it counts, so a client that read a unit without its
+# family would have a number it could not use. `factor` and every quantity are `String`, never `Float` —
+# they are exact decimals, and a float would round the one value a conversion is computed from.
+
+type UnitCategory {
+	id: ID!
+	organizationId: ID
+	code: String!
+	name: String!
+	isSystem: Boolean!
+	units: [Unit!]
+}
+
+type Unit {
+	id: ID!
+	organizationId: ID
+	categoryId: ID!
+	category: UnitCategory
+	code: String!
+	name: String!
+	symbol: String
+	factor: String!
+	isReference: Boolean!
+	decimalPlaces: Int!
+	isSystem: Boolean!
+}
+
+input CreateUnitCategoryReferenceInput {
+	code: String!
+	name: String!
+	symbol: String
+	decimalPlaces: Int
+}
+
+input CreateUnitCategoryInput {
+	organizationId: ID!
+	code: String!
+	name: String!
+	isSystem: Boolean
+	reference: CreateUnitCategoryReferenceInput!
+}
+
+input UpdateUnitCategoryInput {
+	id: ID!
+	organizationId: ID!
+	name: String
+}
+
+input CreateUnitInput {
+	organizationId: ID!
+	categoryId: ID!
+	code: String!
+	name: String!
+	symbol: String
+	factor: String
+	isReference: Boolean
+	decimalPlaces: Int
+}
+
+input UpdateUnitInput {
+	id: ID!
+	organizationId: ID!
+	name: String
+	symbol: String
+	factor: String
+	decimalPlaces: Int
+}
+
+type UnitConversion {
+	value: String!
+	fromUnitId: ID!
+	toUnitId: ID!
+}

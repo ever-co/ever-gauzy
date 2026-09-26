@@ -1,0 +1,222 @@
+# The organization strategic initiative's object type.
+#
+# A strategic initiative is a direction an organization has decided to move in: a title, the long-form
+# intent behind it, where it has got to, and who may see it. It is filed under the organization, and
+# projects and goals align to it — which is what makes it the strategic context a plan is read against
+# rather than a task list.
+#
+# **The visibility members are carried as their values rather than declared as enums.** `state` walks
+# the initiative through its life — a draft intent, an active direction, a resolved one, a retired one
+# — and `visibilityScope` decides who may read the row at all. Both vocabularies belong to this domain's
+# contract, but SDL cannot reference a TypeScript enum, so an enum declared here would be a second
+# declaration of a value set the delivered service already switches on, and it would diverge the day a
+# state is added. They are carried as their string values, which is what the service compares.
+#
+# **`signals` is a document, not a set of columns.** The qualitative signals an initiative carries —
+# confidence, perceived momentum, known risks, notes, when it was last assessed and by whom — are
+# authored by a person and stored as one structured document rather than derived from project data.
+# The type carries the document whole, because that is what the row stores and what the signals write
+# merges into.
+#
+# **The three relations are not members, and each for its own reason:**
+#
+# - `steward` is a relation the delivered reads do not join, so a member here would always answer null.
+#   The steward is carried as `stewardId`, and the person is read from the employee surface.
+# - `projects` *is* loaded — the delivered list read forces it, because the visibility rule for the
+#   `team` scope is computed from the teams of the aligned projects. It is nevertheless not a member:
+#   an aligned project is a row of the project domain, this schema declares no project object type for
+#   the member to answer with, and the alignment is read from the project. What this surface offers
+#   instead is the read that names a project and answers the initiatives aligned to it.
+# - `goals` is a collection the delivered reads do not join, and no goal object type is declared here
+#   either. A goal names its initiative, so the alignment is read from the goal.
+#
+# The base row's identifiers, timestamps and lifecycle columns are carried in full: withdrawing and
+# restoring are delivered routes whose whole effect is the `deletedAt` column.
+
+"""
+One direction an organization has decided to move in.
+"""
+type OrganizationStrategicInitiative {
+	id: ID!
+	"A short human-readable name for the initiative."
+	title: String!
+	"The long-form statement of what the organization is deliberately trying to move forward, and why."
+	intent: String
+	"""
+	Where the initiative has got to — `draft`, `active`, `resolved` or `retired`. Carried as its own
+	value rather than declared as an enum: the vocabulary is the delivered service's, and it is the same
+	one the column is typed with.
+	"""
+	state: String!
+	"""
+	Who may read the initiative — `leadership`, `organization` or `team`. Carried as its own value for
+	the same reason `state` is: the service switches on this vocabulary when it decides what a caller
+	may see, and a second declaration here could disagree with it.
+	"""
+	visibilityScope: String!
+	"""
+	The qualitative signals the initiative carries, as one structured document: the confidence level,
+	the perceived momentum, the known risks, the strategic notes, and when and by whom it was last
+	assessed. Human-authored rather than derived, so it is carried whole.
+	"""
+	signals: JSON
+	"""
+	The steward who owns the clarity of the initiative's intent, by identifier. The person is a row of
+	the employee domain and the delivered reads do not join it, so the identifier is carried rather
+	than a member that would answer null.
+	"""
+	stewardId: ID
+	"The organization the initiative is filed under, by identifier."
+	organizationId: ID
+	"The tenant the initiative belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the initiative was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the initiative was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the initiative was filed."
+	createdAt: DateTime
+	"When the initiative was last changed."
+	updatedAt: DateTime
+	"Whether the initiative is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the initiative is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the initiative, by identifier. The user row is not joined by this surface's read."
+	createdByUserId: ID
+	"The person who last changed the initiative, by identifier. The user row is not joined by this surface's read."
+	updatedByUserId: ID
+	"The person who withdrew the initiative, by identifier. The user row is not joined by this surface's read."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of strategic initiatives.
+"""
+type OrganizationStrategicInitiativeEdge {
+	node: OrganizationStrategicInitiative!
+	cursor: String!
+}
+
+"""
+One page of strategic initiatives, with the total the filters select and the boundary cursors.
+"""
+type OrganizationStrategicInitiativeConnection {
+	nodes: [OrganizationStrategicInitiative!]!
+	edges: [OrganizationStrategicInitiativeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a strategic-initiative list may be sorted by.
+"""
+enum OrganizationStrategicInitiativeSortField {
+	createdAt
+	updatedAt
+	title
+	state
+	visibilityScope
+}
+
+"""
+The order the strategic initiatives are returned in. At most three keys are accepted.
+"""
+input OrganizationStrategicInitiativeSort {
+	field: OrganizationStrategicInitiativeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a strategic-initiative list may be narrowed by.
+
+`state` and `visibilityScope` are here because they are the two questions a list of directions is
+actually narrowed by. The aligned projects and goals are not, and that is a statement rather than an
+omission — the connection is applied to the rows the delivered read decided the caller may see, and an
+alignment is read from the project or the goal that names this initiative.
+"""
+input OrganizationStrategicInitiativeFilter {
+	id: IDFilter
+	title: StringFilter
+	intent: StringFilter
+	state: StringFilter
+	visibilityScope: StringFilter
+	signals: JSONFilter
+	stewardId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	and: [OrganizationStrategicInitiativeFilter!]
+	or: [OrganizationStrategicInitiativeFilter!]
+	not: OrganizationStrategicInitiativeFilter
+}
+
+"""
+What a caller states when it files a strategic initiative.
+
+The organization is required because the delivered create body requires it, and the steward is
+optional because the delivered handler answers with the caller's own employee when none is stated —
+which is what makes a person who files a direction its first steward without having to say so.
+
+The aligned projects and goals are not members: the delivered create does not cascade them, so a body
+stating them would be accepted and then dropped. An alignment is written from the project that names
+the initiative.
+"""
+input CreateOrganizationStrategicInitiativeInput {
+	organizationId: ID!
+	title: String!
+	intent: String
+	"The lifecycle state. The vocabulary is the delivered service's: `draft`, `active`, `resolved`, `retired`."
+	state: String
+	"Who may read it. The vocabulary is the delivered service's: `leadership`, `organization`, `team`."
+	visibilityScope: String
+	"The qualitative signals document, as the caller states it."
+	signals: JSON
+	"The steward who owns the clarity of the intent. Omit it and the caller's own employee is recorded."
+	stewardId: ID
+}
+
+"""
+What a caller states when it edits a strategic initiative that exists.
+
+Every member is optional, which is the shape the delivered edit body has — it is the create body made
+partial — and the delivered handler reads the row before it writes, so an initiative that is not the
+caller's is a miss rather than a write under an identifier the caller does not own.
+"""
+input UpdateOrganizationStrategicInitiativeInput {
+	id: ID!
+	organizationId: ID
+	title: String
+	intent: String
+	state: String
+	visibilityScope: String
+	signals: JSON
+	stewardId: ID
+}
+
+"""
+The signals a caller states when it assesses an initiative.
+
+**These merge into the document rather than replacing it.** The delivered write reads the signals the
+row already carries, lays the stated members over them, and stamps the assessment with its time and the
+assessing employee — so a caller states what it has just learned and the signals a previous assessment
+left behind are kept.
+"""
+input UpdateOrganizationStrategicSignalsInput {
+	id: ID!
+	"The subjective confidence in the initiative's progress."
+	confidenceLevel: String
+	"The directional energy the caller perceives."
+	perceivedMomentum: String
+	"Current blockers or concerns, as free text."
+	knownRisks: [String!]
+	"Additional context or observations."
+	strategicNotes: String
+	"The employee who performed this assessment. The delivered write stamps the caller's own employee."
+	lastAssessedById: ID
+}

@@ -1,0 +1,124 @@
+# The invoice item domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/invoice-item` routes already serve, under the same
+# guard chain and with the same permission, so a client that reaches a capability over one protocol is
+# not given a narrower or a wider one than the client that reaches it over the other.
+#
+# **This resource's guard chain is the tenant guard alone, and it states no permission.** The
+# controller carries `TenantPermissionGuard` and no `@Permissions`, so every route it serves — the
+# list, the one line, the count, the create, the edit, the removal and the two lifecycle moves — runs
+# under that guard alone. The single exception is the bulk write, whose route states `PermissionGuard`
+# with the invoice edit permission, and whose field below states the same guard and the same
+# permission. A resolver that demanded a permission on the other fields would refuse here a caller the
+# REST route serves; tightening the resource is a change to make in both places at once, and it is not
+# this delivery's to make.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol every other
+# connection takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` —
+# and answers with the same shape the kernel's `PageInfo` gives them, so a cursor obtained over one
+# surface resumes on the other. The delivered list route binds a `data` query string rather than a
+# query protocol: the narrowing it carries (`findInput`) is stated here in `filter`, which is that same
+# narrowing in the connection protocol's own vocabulary, and the `relations` it can name are not
+# offered because no read this surface performs names any. `withDeleted` is offered because the
+# delivered list route offers it: the paginated spelling of that list takes `BaseQueryDTO`, which
+# carries the member, and hands its query string straight to the same read — so a REST caller can ask
+# for withdrawn rows and a connection that could not would hide them.
+#
+# The controller serves its list twice — its own `GET /` and the `GET /pagination` it inherits — and
+# the two answer the same rows, one of them sliced by the page the connection performs itself. That is
+# one capability, so it is one root field: `invoiceItems`, mirroring `GET /`, which is the route that
+# reads the whole filtered set the connection protocol is applied to.
+#
+# `invoiceItemCount` takes no filter, and that is a statement rather than an omission. The delivered
+# count route passes its query string through as the store's own `where`, which the connection
+# protocol does not speak; a `filter` argument here would either be handed to a service call that
+# cannot accept it or be evaluated over a second code path that could disagree with the connection's
+# `totalCount`. It is nullable because a count is an aggregate a resource may legitimately have no
+# answer for, and a non-null field would turn "not answered" into a fabricated zero.
+
+extend type Query {
+	"""
+	The billed lines of the caller's tenant, newest first.
+	"""
+	invoiceItems(
+		filter: InvoiceItemFilter
+		sort: [InvoiceItemSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): InvoiceItemConnection!
+
+	"""
+	One line of the caller's tenant, or null when there is none.
+
+	A line that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	invoiceItem(id: ID!): InvoiceItem
+
+	"""
+	How many lines the caller's tenant holds.
+	"""
+	invoiceItemCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records one line.
+
+	The write is the service call the REST route makes, and the tenant the new row belongs to is
+	stamped from the credential rather than stated by the caller, so a line cannot be written into a
+	tenant the caller is not acting in.
+	"""
+	createInvoiceItem(input: CreateInvoiceItemInput!): InvoiceItem!
+
+	"""
+	Changes a line that exists.
+
+	The delivered update is a primitive statement over the columns the body states, never a
+	replacement of the row, so a member the caller leaves out is left as it is — see
+	`UpdateInvoiceItemInput`.
+	"""
+	updateInvoiceItem(input: UpdateInvoiceItemInput!): InvoiceItem!
+
+	"""
+	Removes a line outright.
+	"""
+	deleteInvoiceItem(id: ID!): Boolean!
+
+	"""
+	Withdraws a line without removing the row. The answer is the withdrawn line.
+	"""
+	softDeleteInvoiceItem(id: ID!): InvoiceItem!
+
+	"""
+	Puts a withdrawn line back.
+	"""
+	recoverInvoiceItem(id: ID!): InvoiceItem!
+
+	"""
+	Stores a document's whole line set at once.
+
+	**This is a replacement rather than an append.** The delivered write removes the lines the named
+	document already has and then stores the lines the caller states, so the body is the document's
+	complete line set and a line that is left out of it is gone. The document is named twice for that
+	reason, and neither statement is redundant: the identifier in the argument is what the removal
+	narrows by, and each line's own `invoiceId` is what attaches it to the document it is stored under —
+	the delivered client states both, which is why the member is part of the input rather than assumed
+	from the argument.
+
+	A document that does not exist is not refused by this field: nothing here reads the document, and
+	the lines are stored as they are stated. The document's own surface is where its existence is
+	established.
+	"""
+	createInvoiceItemsInBulk(invoiceId: ID!, input: [CreateInvoiceItemInput!]!): [InvoiceItem!]!
+}

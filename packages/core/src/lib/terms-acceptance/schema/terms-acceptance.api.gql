@@ -1,0 +1,41 @@
+# The terms acceptance domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **One field, because the controller serves one route, and it is not a connection.** `GET
+# /api/terms/required` answers the published corpus: a short, ordered, unpaginated set of documents with
+# no store behind it, no filter beyond the locale and no order a caller could state. A connection here
+# would offer a cursor, a total and a page over a list that is already complete, which is machinery for
+# a problem this read does not have; the field therefore answers a list, which is the shape the route
+# itself answers. Nothing writes and nothing counts, so there is no mutation and no count field either.
+#
+# **The field is `@Public()`, and that is the route's own decision rather than a relaxation here.** The
+# delivered handler carries the platform's public marker and no guard and no permission, because the
+# documents are read by the signup and invite-acceptance forms *before any account exists*. A guard or a
+# permission on this field would refuse a caller the REST route serves, so neither is stated.
+#
+# **The capability gate is the one thing this surface cannot express fully, and the limitation is stated
+# rather than worked around.** `FEATURE_GRAPHQL` is the code the catalogue declares for the GraphQL
+# endpoint and its resolvers, and `FeatureFlagGuard` reads it over the handler and then the class. The
+# capability it resolves is tenant-scoped: `FeatureService.isFeatureEnabled` answers from the caller's
+# own toggle rows when the request carries a tenant and falls back to the deployment's configured state
+# when it does not — and `FEATURE_GRAPHQL` is not a code that configuration names, so a request that
+# carries no tenant scope resolves the capability as disabled and is refused. That is precisely the case
+# this field is for: a caller reading it has no account yet and therefore no tenant. The field is served
+# only when the capability resolves for the caller's scope, which is a narrower door than the route it
+# mirrors, and a field cannot be more open than the gate over it. Dropping the gate is not an option a
+# delivery has — it would leave the whole endpoint served to a deployment that switched the capability
+# off — so the limitation is written down here instead.
+
+extend type Query {
+	"""
+	The legal documents a new account must accept, as currently published.
+	"""
+	termsAcceptanceDocuments(
+		"""
+		The locale to publish the documents in. Omit for the corpus's own default rendering.
+		"""
+		locale: String
+	): [TermsAcceptanceDocument!]!
+}

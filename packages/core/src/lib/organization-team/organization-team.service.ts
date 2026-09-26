@@ -432,6 +432,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
+		// Whether retired (soft-deleted) teams are answered too. Both surfaces reach this read: the GraphQL
+		// field hands a boolean, while the REST list route mounts its validation pipe without `transform`,
+		// so its query string arrives as the text 'true' / 'false' — and a truthiness test reads 'false' as
+		// a request for the retired rows. It is read once, as a boolean, so both ORM branches answer the
+		// same request the same way. Lifting the soft-delete predicate never lifts the tenant scope: each
+		// branch still pins `tenantId` itself below.
+		const withDeleted = parseToBoolean(options?.withDeleted);
+
 		// Initialize variables to store the retrieved items and total count.
 		let items: OrganizationTeam[]; // Array to store retrieved items
 		let total: number; // Variable to store total count of items
@@ -498,10 +506,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					options.where.id = In(organizationTeamIds);
 				}
 
-				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>(
-					options as FindManyOptions
-				);
+				// Converts TypeORM find options to a format compatible with MikroORM for a given entity. The
+				// normalised `withDeleted` replaces the raw one, so the converter disables MikroORM's
+				// soft-delete filter (and only that filter) exactly when the caller asked for retired teams.
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>({
+					...options,
+					withDeleted
+				} as FindManyOptions);
 				// Retrieve the items and total count
 				const [entities, totalEntities] = await this.mikroOrmOrganizationTeamRepository.findAndCount(
 					enhanceWhereWithTenantId(tenantId, where), // Add a condition for the tenant ID
@@ -576,7 +587,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
 						...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 						...(options.where ? { where: options.where } : {}),
-						...(options.order ? { order: options.order } : {})
+						...(options.order ? { order: options.order } : {}),
+						// A query builder adds `deletedAt IS NULL` to every read of a soft-deletable entity
+						// unless it is told otherwise, so without this the flag the MikroORM branch honours
+						// was dropped here and the two ORMs answered the same request differently.
+						...(withDeleted ? { withDeleted: true } : {})
 					});
 				}
 

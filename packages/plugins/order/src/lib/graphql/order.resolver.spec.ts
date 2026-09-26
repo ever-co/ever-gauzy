@@ -1,0 +1,446 @@
+/**
+ * The GraphQL surface answers a retry and a stale version exactly as the REST surface does.
+ *
+ * A caller picks a protocol; the rules do not. The mutations mirror the routes, so the two are asserted
+ * against each other rather than against a restated table: whatever the route declares, the mutation
+ * that mirrors it declares too — the same retry scope, the same versioned resource — and both name the
+ * version and the retry key as nullable members, because a GraphQL operation travels over `POST`
+ * whichever root type it selects and a header could not say which mutation either belongs to.
+ *
+ * The kernel's own decorators are the real ones here, since a route's behaviour is decided by the
+ * metadata they write. `@gauzy/core`'s barrel is doubled at the module boundary for the reason the
+ * package's other suites state, and the cart package's barrel with it, because the totals service
+ * imports the shared calculator through it.
+ */
+jest.mock('@gauzy/plugin-cart', () => ({
+	TotalsCalculator: jest.requireActual('@gauzy/plugin-cart/src/lib/totals/totals-calculator').TotalsCalculator
+}));
+
+jest.mock('@gauzy/core', () => {
+	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
+	const decorator = () => () => undefined;
+
+	class BaseEntity {}
+
+	return {
+		// The statement helpers are pure and dialect-driven; loading the real module here would pull
+		// `@gauzy/config` and the request context into a suite that doubles the barrel on purpose.
+		quoteIdentifier: (identifier: string) => `"${identifier}"`,
+		prepareSQLQuery: (query: string) => query,
+		BaseEntity,
+		TenantBaseEntity: BaseEntity,
+		TenantOrganizationBaseEntity: BaseEntity,
+		TenantOrganizationBaseDTO: class {},
+		MikroOrmBaseEntityRepository: class {},
+		CrudService: class {},
+		TenantAwareCrudService: class {},
+		CrudController: class {
+			constructor(protected readonly service: any) {}
+		},
+		BaseQueryDTO: class {},
+		UUIDValidationPipe: class {},
+		ColumnIndex: decorator,
+		MultiORMColumn: decorator,
+		MultiORMEntity: decorator,
+		MultiORMOneToMany: decorator,
+		MultiORMManyToOne: decorator,
+		JsonColumn: decorator,
+		Permissions: decorator,
+		UseValidationPipe: decorator,
+		PermissionGuard: class {},
+		TenantPermissionGuard: class {},
+		// Every resolver class carries the platform's feature guard, so the double provides the class
+		// the resolver imports: an undefined guard handed to the real `@UseGuards` fails the suite.
+		FeatureFlagGuard: class {},
+		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
+		// Rebuilt rather than required: the real decorator imports the version guard, the interceptor behind
+		// it and the idempotency service behind that, which reaches the entity graph and — under this
+		// workspace's ESM-only `uuid` — fails the whole suite to LOAD. What this suite reads is the
+		// metadata the decorator writes, so that is what the double writes.
+		Versioned: (options: any = {}) =>
+			require('@nestjs/common').SetMetadata(
+				jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').VERSIONED_METADATA_KEY,
+				options
+			),
+		VersionedColumn: decorator,
+		commitVersionedUpdate: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.commitVersionedUpdate,
+		versionExpectationOf: jest.requireActual('@gauzy/core/src/lib/concurrency/versioned-write')
+			.versionExpectationOf,
+		// The connection helpers the list fields page and answer with, taken from the kernel: a double that
+		// left them undefined would have the suite fail with "not a function" the moment a case called one
+		// of those fields, rather than tell it anything about the page it answered.
+		connectionFromOffsetPage: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.connectionFromOffsetPage,
+		resolveConnectionWindow: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection')
+			.resolveConnectionWindow,
+		paginateRows: jest.requireActual('@gauzy/core/src/lib/api/graphql-connection').paginateRows,
+		ColumnNumericTransformerPipe: class {
+			to(value: unknown) {
+				return value;
+			}
+			from(value: unknown) {
+				return value;
+			}
+		},
+		// The validation pipe the resolvers' routes build at class-definition time; Nest refuses a pipe with
+		// no `transform`, and the resolver file reaches it through this barrel.
+		AbstractValidationPipe: class AbstractValidationPipe {
+			constructor(..._args: any[]) {
+				/* no validation happens in this suite */
+			}
+			transform(value: any): any {
+				return value;
+			}
+		},
+		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		RequestContext: {
+			currentUser: () => null,
+			currentUserId: () => null,
+			currentTenantId: () => null,
+			currentOrganizationId: () => null,
+			currentEmployeeId: () => null,
+			hasPermission: () => false
+		},
+		AdjustmentService: class {},
+		TaxLineService: class {},
+		SequenceService: class {}
+	};
+});
+
+import { Reflector } from '@nestjs/core';
+import { print } from 'graphql';
+import { OrderController } from '../order/order.controller';
+import { OrderService } from '../order/order.service';
+import { OrderResolver } from './order.resolver';
+import { OrderChangeResolver } from './order-change.resolver';
+import { orderSchemaExtensions } from './schema-extensions';
+
+const { IDEMPOTENT_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy');
+const { VERSIONED_METADATA_KEY } = jest.requireActual('@gauzy/core/src/lib/concurrency/version.util');
+
+const reflector = new Reflector();
+
+/** What a handler declares about retrying it. */
+const retryOf = (handler: any): any => reflector.get(IDEMPOTENT_METADATA_KEY, handler);
+
+/** What a handler declares about the version it carries. */
+const versionedOf = (handler: any): any => reflector.get(VERSIONED_METADATA_KEY, handler);
+
+/** The operations the two surfaces share, as the route and the mutation that mirror each other. */
+const MIRRORED: Array<{ route: any; mutation: any }> = [
+	{ route: OrderController.prototype.findById, mutation: OrderResolver.prototype.order },
+	{ route: OrderController.prototype.create, mutation: OrderResolver.prototype.createOrder },
+	{ route: OrderController.prototype.update, mutation: OrderResolver.prototype.updateOrder },
+	{ route: OrderController.prototype.place, mutation: OrderResolver.prototype.placeOrder },
+	{ route: OrderController.prototype.cancel, mutation: OrderResolver.prototype.cancelOrder },
+	{ route: OrderController.prototype.archive, mutation: OrderResolver.prototype.archiveOrder },
+	{ route: OrderController.prototype.recalculate, mutation: OrderResolver.prototype.recalculateOrder },
+	{ route: OrderController.prototype.createChange, mutation: OrderResolver.prototype.requestOrderEdit },
+	{ route: OrderController.prototype.declineChange, mutation: OrderChangeResolver.prototype.declineOrderChange },
+	{ route: OrderController.prototype.cancelChange, mutation: OrderChangeResolver.prototype.cancelOrderChange }
+];
+
+describe('The order mutations mirror the order routes', () => {
+	it('carries the same retry scope on the mutation as on the route it mirrors', () => {
+		for (const { route, mutation } of MIRRORED) {
+			// The scope is part of the key's identity: a client that retries over the other protocol must
+			// be answered from the same record, and two operations must never replay each other's answer.
+			expect(retryOf(mutation)?.scope).toBe(retryOf(route)?.scope);
+			expect(retryOf(mutation)?.required ?? false).toBe(retryOf(route)?.required ?? false);
+		}
+
+		// The confirmation is the fifth key-bearing operation and is compared on its own below, because
+		// the two surfaces address it differently: the route names the order as well as the change, and
+		// the mutation names only the change.
+		expect(OrderChangeResolver.prototype.confirmOrderChange).toBeDefined();
+		expect(retryOf(OrderController.prototype.confirmChange)?.scope).toBe('order.change.confirm');
+		expect(retryOf(OrderChangeResolver.prototype.confirmOrderChange)?.scope).toBe('order.change.confirm');
+		expect(retryOf(OrderChangeResolver.prototype.confirmOrderChange)?.required).toBe(true);
+
+		// A control: the routes that adopted the convention are the ones compared, not two tables of
+		// `undefined`.
+		expect(MIRRORED.filter(({ route }) => retryOf(route) !== undefined).length).toBe(4);
+	});
+
+	it('carries the same versioned resource on the mutation as on the route it mirrors', () => {
+		for (const { route, mutation } of MIRRORED) {
+			expect(versionedOf(mutation)?.resource).toBe(versionedOf(route)?.resource);
+			expect(versionedOf(mutation)?.write ?? true).toBe(versionedOf(route)?.write ?? true);
+		}
+
+		// A read states no version on either surface, so a caller that states none is still served.
+		expect(versionedOf(OrderResolver.prototype.order)?.write).toBe(false);
+	});
+
+	it('takes the order’s version on the confirmation, and says so on whichever surface can', () => {
+		// The route names the order in its path, so it declares the service that owns it and the guard
+		// reads that order before the handler runs. The mutation names only the change, so it declares no
+		// resource: the handler resolves the order, and the order's conditional update compares the
+		// version. Neither takes a version of the change — the change has none.
+		expect(versionedOf(OrderController.prototype.confirmChange)?.resource).toBe(OrderService);
+		expect(versionedOf(OrderChangeResolver.prototype.confirmOrderChange)?.resource).toBeUndefined();
+		expect(versionedOf(OrderChangeResolver.prototype.confirmOrderChange)?.write ?? true).toBe(true);
+	});
+
+	it('requires a retry key on the confirmation, and on nothing else that mirrors a key-optional route', () => {
+		const required = [...MIRRORED.map(({ mutation }) => mutation), OrderChangeResolver.prototype.confirmOrderChange]
+			.filter((mutation) => retryOf(mutation)?.required === true);
+
+		expect(required.map((mutation) => retryOf(mutation).scope)).toEqual(['order.change.confirm']);
+	});
+});
+
+describe('The order schema states the version and the retry key a caller supplies', () => {
+	/**
+	 * The document as the schema is composed from it, printed from its own definitions rather than read
+	 * as the source text.
+	 *
+	 * The printer states every declaration on one line whatever the template's layout, so a signature is
+	 * asserted the way a caller would write it — and an argument list the template happens to wrap does
+	 * not turn into an expectation about the template's line breaks.
+	 */
+	const schema = print(orderSchemaExtensions);
+
+	it('carries the version of both versioned aggregates on their object types', () => {
+		for (const type of ['type Order {', 'type OrderChange {']) {
+			const body = schema.slice(schema.indexOf(type), schema.indexOf('}', schema.indexOf(type)));
+
+			expect({ type, version: body.includes('version: Int!') }).toEqual({ type, version: true });
+		}
+	});
+
+	it('accepts the version an update of an order is based on', () => {
+		const body = schema.slice(
+			schema.indexOf('input UpdateOrderInput {'),
+			schema.indexOf('}', schema.indexOf('input UpdateOrderInput {'))
+		);
+
+		// Nullable on purpose: the kernel answers a write that states none with the platform's own code,
+		// which is the same answer the route gives.
+		expect(body).toContain('version: Int');
+		expect(body).not.toContain('version: Int!');
+	});
+
+	it('accepts a retry key wherever the route it mirrors honours one', () => {
+		for (const declaration of [
+			'input CreateOrderInput {',
+			'input RequestOrderEditInput {',
+			'placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!',
+			'cancelOrder(id: ID!, reason: String, version: Int, idempotencyKey: String): Order!',
+			'confirmOrderChange(id: ID!, version: Int, idempotencyKey: String): OrderChange!'
+		]) {
+			expect({ declaration, declared: schema.includes(declaration) }).toEqual({ declaration, declared: true });
+		}
+	});
+
+	it('answers every list field of the domain with the one connection shape, pageable', () => {
+		// Four page types used to be `{ items, total }`, which told a client how many rows there are and
+		// nothing about whether it had seen them all. The shape is asserted here as the client reads it.
+		for (const [type, edge] of [
+			['type OrderConnection {', 'OrderEdge'],
+			['type OrderChangeConnection {', 'OrderChangeEdge'],
+			['type OrderSummaryConnection {', 'OrderSummaryEdge'],
+			['type OrderTransactionConnection {', 'OrderTransactionEdge']
+		]) {
+			const body = schema.slice(schema.indexOf(type), schema.indexOf('}', schema.indexOf(type)));
+
+			for (const member of ['nodes: [', `edges: [${edge}!]!`, 'totalCount: Int!', 'pageInfo: PageInfo!']) {
+				expect({ type, member, declares: body.includes(member) }).toEqual({ type, member, declares: true });
+			}
+		}
+
+		// A connection whose field accepts no page can only ever answer one page, whatever its `pageInfo`
+		// claims, so every field that answers one states the page it takes — and the soft-delete
+		// visibility its REST list route offers, because a field that stated only the page would be a
+		// question the other protocol answers and this one refuses.
+		for (const field of [
+			'orderSummaries(orderId: ID!, page: PageInput, withDeleted: Boolean)',
+			'orderTransactions(orderId: ID!, type: String, page: PageInput, withDeleted: Boolean)',
+			'orderChanges(orderId: ID!, status: String, page: PageInput, withDeleted: Boolean)'
+		]) {
+			expect({ field, declared: schema.includes(field) }).toEqual({ field, declared: true });
+		}
+	});
+
+	it('answers the timeline and a line’s invoice links with that same shape, pageable', () => {
+		// Both fields used to answer a bare array — `[OrderHistory!]!` and `[OrderLineInvoice!]!` — so a
+		// client that had the REST list had nothing to page over GraphQL while the schema said otherwise.
+		for (const [type, edge, row, field] of [
+			[
+				'OrderHistoryConnection',
+				'OrderHistoryEdge',
+				'OrderHistory',
+				'orderHistory(orderId: ID!, page: PageInput, withDeleted: Boolean)'
+			],
+			[
+				'OrderLineInvoiceConnection',
+				'OrderLineInvoiceEdge',
+				'OrderLineInvoice',
+				'orderLineInvoices(orderLineId: ID!, page: PageInput, withDeleted: Boolean)'
+			]
+		]) {
+			const body = schema.slice(schema.indexOf(`type ${type} {`), schema.indexOf('}', schema.indexOf(`type ${type} {`)));
+
+			for (const member of [`nodes: [${row}!]!`, `edges: [${edge}!]!`, 'totalCount: Int!', 'pageInfo: PageInfo!']) {
+				expect({ type, member, declares: body.includes(member) }).toEqual({ type, member, declares: true });
+			}
+
+			// The edge is what a client walks from, so it carries the row and the cursor that addresses
+			// it: an edge type the document never declares is a selection that fails at request time.
+			const edgeBody = schema.slice(
+				schema.indexOf(`type ${edge} {`),
+				schema.indexOf('}', schema.indexOf(`type ${edge} {`))
+			);
+
+			for (const member of [`node: ${row}!`, 'cursor: String!']) {
+				expect({ edge, member, declares: edgeBody.includes(member) }).toEqual({ edge, member, declares: true });
+			}
+
+			expect({ field, connection: schema.includes(`${field}: ${type}!`) }).toEqual({ field, connection: true });
+			// The control: the field no longer answers the bare array it used to, stated as the document
+			// spelled it before the conversion — the field name and the one argument that identifies the
+			// rows it lists.
+			const wasBare = `${field.slice(0, field.indexOf(','))}: [${row}!]!`;
+
+			expect({ field, bare: schema.includes(wasBare) }).toEqual({ field, bare: false });
+		}
+	});
+});
+
+/**
+ * The soft-delete visibility the REST list routes have.
+ *
+ * Every list route of the order controller reads through `BaseQueryDTO`, so its caller can ask for the
+ * rows a tenant retired. Each field here is one of those routes' counterparts, and the two kinds of read
+ * behind them take the flag differently: a listing read through `findAll` carries it in the find options,
+ * while a read through a method of its own — the timeline — is handed it as an argument, because that
+ * method is what builds the options the store sees. A field that declared the argument and dropped it
+ * would be worse than one without it: the document would say the client may ask, and the answer would be
+ * the live rows either way.
+ */
+describe('The order list fields offer the soft-delete visibility their routes offer', () => {
+	/** The reader the two cases below drive, over the reads their fields call. */
+	function readers() {
+		const summaryService = { findAll: jest.fn(async (_options?: Record<string, unknown>) => ({ items: [], total: 0 })) };
+		const historyService = { timeline: jest.fn(async (_orderId?: string, _withDeleted?: boolean) => []) };
+
+		return {
+			summaryService,
+			historyService,
+			resolver: new OrderChangeResolver(
+				{} as any,
+				{} as any,
+				summaryService as any,
+				{} as any,
+				historyService as any
+			)
+		};
+	}
+
+	it('asks the listing read for retired rows when the caller states withDeleted, and states nothing when it does not', async () => {
+		const { summaryService, resolver } = readers();
+
+		await resolver.orderSummaries('order-1', undefined, true);
+		await resolver.orderSummaries('order-1', undefined, undefined);
+
+		const asked = summaryService.findAll.mock.calls.map(
+			(call) => (call as Array<Record<string, unknown>>)[0]
+		);
+
+		expect(asked[0]).toMatchObject({ withDeleted: true });
+		// Absent rather than `false`: the two select the same rows, but the option is not stated, so a read
+		// whose default ever changes is not silently pinned to the older behaviour by this field.
+		expect('withDeleted' in asked[1]).toBe(false);
+	});
+
+	it('hands the flag to the read that builds the timeline’s own options, because that read is the one that decides', async () => {
+		const { historyService, resolver } = readers();
+
+		await resolver.orderHistory('order-1', undefined, true);
+		await resolver.orderHistory('order-1', undefined, undefined);
+
+		expect(historyService.timeline).toHaveBeenNthCalledWith(1, 'order-1', true);
+		expect(historyService.timeline).toHaveBeenNthCalledWith(2, 'order-1', undefined);
+	});
+});
+
+/**
+ * The order a store-paged list field reads its page in.
+ *
+ * Each field below cuts its page with LIMIT/OFFSET and publishes offset cursors over it, so the read has to
+ * state an order the store cannot rearrange between two pages. `orders`, `orderChanges` and
+ * `orderTransactions` stated none — on Postgres that is heap order, and an `UPDATE` to an order on page one
+ * writes a new tuple at the end of the heap, so `after: endCursor` then skipped one unseen order and answered
+ * the updated one again — and `orderSummaries` stated `version` alone, which a retired summary read back with
+ * `withDeleted` can share with a live one. Every order here therefore ends with the primary key, the one
+ * column that leaves no tie, and the resource's own order comes first so the page still reads the way the
+ * field documents.
+ */
+describe('The order list fields read their page in a total order', () => {
+	/** A read that answers one empty page and records the options it was handed. */
+	const read = () => jest.fn(async (_options?: Record<string, unknown>) => ({ items: [], total: 0 }));
+
+	/** @returns The options the one read a field made was handed. */
+	const optionsOf = (findAll: jest.Mock): Record<string, unknown> => {
+		expect(findAll).toHaveBeenCalledTimes(1);
+
+		return findAll.mock.calls[0][0] as Record<string, unknown>;
+	};
+
+	it('reads `orders` newest first, closed by the identity, from the row the cursor names', async () => {
+		const orderService = { findAll: read() };
+		const resolver = new OrderResolver(
+			orderService as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any,
+			{} as any
+		);
+
+		await resolver.orders(undefined, undefined, undefined, undefined, undefined, { first: 20, after: 'MTk=' });
+
+		// `MTk=` is offset 19, so the page starts at row 20 — a row offset, which `findAll` reads as one on both ORMs.
+		expect(optionsOf(orderService.findAll)).toMatchObject({
+			order: { createdAt: 'DESC', id: 'DESC' },
+			skip: 20,
+			take: 20
+		});
+	});
+
+	it('closes the order of every list field of a change, a summary and a ledger with the identity', async () => {
+		const changeService = { findAll: read() };
+		const summaryService = { findAll: read() };
+		const transactionService = { findAll: read() };
+		const resolver = new OrderChangeResolver(
+			changeService as any,
+			{} as any,
+			summaryService as any,
+			transactionService as any,
+			{} as any
+		);
+
+		await resolver.orderChanges('order-1', undefined, { first: 2 });
+		await resolver.orderSummaries('order-1', { first: 2 });
+		await resolver.orderTransactions('order-1', undefined, { first: 2 });
+
+		const orders = [changeService, summaryService, transactionService].map(
+			(service) => optionsOf(service.findAll).order as Record<string, string>
+		);
+
+		expect(orders).toEqual([
+			{ createdAt: 'DESC', id: 'DESC' },
+			// Newest version first, as the field documents; the identity only breaks the tie a retired row makes.
+			{ version: 'DESC', id: 'DESC' },
+			// A ledger reads in the order it was written.
+			{ createdAt: 'ASC', id: 'ASC' }
+		]);
+
+		for (const order of orders) {
+			expect(Object.keys(order).pop()).toBe('id');
+		}
+	});
+});

@@ -1,0 +1,169 @@
+# The availability slot's object type.
+#
+# A slot is one window of hours: `startTime` and `endTime` are the two instants that bound it, `allDay`
+# says whether the window is the whole day rather than the hours stated, and `type` says which of the two
+# kinds of window it is. The employee availability rows beside this resource say which days of the week an
+# arrangement holds and between which dates; a slot is the hours of a particular one.
+#
+# `type` is carried as its string value rather than declared as a schema enum. The vocabulary is the
+# delivered `AvailabilitySlotType`, whose values are `Default` and `Recurring`, and it belongs to the
+# contracts package, which is where the entity's own validation reads it from — declaring it a second time
+# here would claim a value set this domain does not own, and the next domain that needed the same two
+# kinds would collide with this file rather than reuse the vocabulary. The member is the value, and the
+# value is what a filter on it compares against.
+#
+# `employee` is deliberately not a field. The relation is loaded only when a REST caller names it in
+# `relations`, and none of the reads this surface performs names it, so the member would be absent from
+# exactly the rows answered here. What always travels is the foreign key, `employeeId` — which is nullable,
+# because a slot may be filed for an organization rather than for one person — and everything about the
+# employee is read from the employee's own surface.
+#
+# The three lifecycle columns are carried because the two lifecycle routes are delivered: `deletedAt` is
+# the whole of what withdrawing writes, and without it the answer to the write that withdrew a row could
+# not say so.
+
+"""
+One window of bookable hours.
+"""
+type AvailabilitySlot {
+	id: ID!
+	"The instant the window opens."
+	startTime: DateTime!
+	"The instant the window closes."
+	endTime: DateTime!
+	"Whether the window is the whole day rather than the hours the two instants bound."
+	allDay: Boolean!
+	"""
+	Which kind of window this is, as `AvailabilitySlotType` states it: `Default` or `Recurring`. The value
+	is the string the delivered vocabulary carries, and it is deliberately not redeclared as a schema enum
+	here.
+	"""
+	type: String!
+	"""
+	The employee the window belongs to, or null when it belongs to the organization rather than to one
+	person. Read the employee itself from its own surface.
+	"""
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"When the row was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of slots.
+"""
+type AvailabilitySlotEdge {
+	node: AvailabilitySlot!
+	cursor: String!
+}
+
+"""
+One page of slots, with the total the filters select and the boundary cursors.
+"""
+type AvailabilitySlotConnection {
+	nodes: [AvailabilitySlot!]!
+	edges: [AvailabilitySlotEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a slot list may be sorted by.
+"""
+enum AvailabilitySlotSortField {
+	createdAt
+	updatedAt
+	startTime
+	endTime
+	type
+}
+
+"""
+The order the slots are returned in. At most three keys are accepted.
+"""
+input AvailabilitySlotSort {
+	field: AvailabilitySlotSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a slot list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+The two bounds of the window compare as instants, which is what makes "which slots overlap this fortnight"
+a question this input can express; `allDay` compares as the flag it is, so narrowing to the whole-day rows
+is a read of the same shape. `type` compares as text, because the value is the vocabulary's own string.
+"""
+input AvailabilitySlotFilter {
+	id: IDFilter
+	startTime: DateTimeFilter
+	endTime: DateTimeFilter
+	allDay: BooleanFilter
+	type: StringFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [AvailabilitySlotFilter!]
+	or: [AvailabilitySlotFilter!]
+	not: AvailabilitySlotFilter
+}
+
+"""
+What a caller states when it files a slot.
+
+The two instants and the flag are what make the window, and `type` is what says which kind of window it
+is, so all four are required — that is the delivered `IAvailabilitySlotsCreateInput` stated in the schema's
+vocabulary.
+
+`employeeId` is optional because the column is nullable: a slot may be filed for an organization rather
+than for one person, and a required member here would refuse a row the delivered write accepts.
+
+`organizationId` is optional because the delivered input type carries it as the write is
+organization-scoped. The tenant is never a member: the handler stamps it from the credential for every
+row, exactly as it does over REST.
+"""
+input CreateAvailabilitySlotInput {
+	"""
+	Which kind of window this is, as `AvailabilitySlotType` states it: `Default` or `Recurring`.
+	"""
+	type: String!
+	"Whether the window is the whole day rather than the hours the two instants bound."
+	allDay: Boolean!
+	"The instant the window opens."
+	startTime: DateTime!
+	"The instant the window closes."
+	endTime: DateTime!
+	"The employee the window belongs to. Omit for a slot that belongs to the organization."
+	employeeId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it writes a slot under an identifier it names.
+
+The delivered route takes the row's own interface as its body rather than a partial of the create input,
+so the four members that make a window are stated here too: the write is an upsert, and the columns the
+body states are the ones the row is written with. Every member but the identifier is the same member the
+create above declares, with the same optionality, because the two writes reach the same service call.
+"""
+input UpdateAvailabilitySlotInput {
+	id: ID!
+	type: String!
+	allDay: Boolean!
+	startTime: DateTime!
+	endTime: DateTime!
+	employeeId: ID
+	organizationId: ID
+}

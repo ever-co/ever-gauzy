@@ -69,7 +69,9 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@ApiPropertyOptional({ type: Object, description: 'Category metadata (JSON object)' })
 	@IsOptional()
 	@IsObject({ message: 'Metadata must be a valid JSON object' })
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	metadata?: Record<string, any>;
 
 	/*
@@ -79,7 +81,10 @@ export class PluginCategory extends TenantOrganizationBaseEntity implements IPlu
 	@IsOptional()
 	@IsUUID()
 	@RelationId((category: PluginCategory) => category.parent)
-	@MultiORMColumn({ type: 'uuid', nullable: true, relationId: true })
+	// A persisted column on both ORMs, not a relation id: the parent is TypeORM's tree relation only, and
+	// `relationId: true` would map this `persist: false` on MikroORM with no relation behind it, so the
+	// parent was dropped on every MikroORM write and read back empty.
+	@MultiORMColumn({ type: 'uuid', nullable: true })
 	parentId?: ID;
 
 	@ApiPropertyOptional({ type: () => PluginCategory, description: 'Parent category' })

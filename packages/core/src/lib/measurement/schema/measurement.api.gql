@@ -1,0 +1,21 @@
+# The measurement domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+
+extend type Query {
+	unitCategories: [UnitCategory!]!
+	unitCategory(id: ID!): UnitCategory
+	units(categoryId: ID): [Unit!]!
+	unit(id: ID!): Unit
+}
+
+extend type Mutation {
+	createUnitCategory(input: CreateUnitCategoryInput!): UnitCategory!
+	updateUnitCategory(input: UpdateUnitCategoryInput!): UnitCategory!
+	createUnit(input: CreateUnitInput!): Unit!
+	updateUnit(input: UpdateUnitInput!): Unit!
+	archiveUnit(id: ID!): Boolean!
+	archiveUnitCategory(id: ID!): Boolean!
+	convertQuantity(value: String!, fromUnitId: ID!, toUnitId: ID!): UnitConversion!
+}

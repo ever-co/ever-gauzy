@@ -11,7 +11,7 @@ name: External Uptime Monitor
 #  homelab cluster. On 2026-08-15 a routing fault at the owner's ISP (Orange, Spain) made
 #  Cloudflare's 188.114.96.0/22 prefix unreachable *from the homelab only*. All gauzy.co
 #  hostnames resolve into that prefix, so every internal probe went red at once and it
-#  looked exactly like "production is down". It was not — real users were served the whole
+#  looked exactly like "production is down". It was not - real users were served the whole
 #  time. Hours were lost chasing a false alarm.
 #
 #  The ONLY value of this workflow is that it observes production from a vantage point
@@ -47,7 +47,7 @@ on:
         # Without this, every route into the alerting code is closed off in advance: pull_request
         # forces alerting off, dry_run forces it off, and a manual run against a HEALTHY production
         # takes the recovery branch and exits early. That leaves `gh issue create` / `comment` /
-        # `close` executing for the first time in their lives DURING a real incident — a monitor
+        # `close` executing for the first time in their lives DURING a real incident - a monitor
         # whose alert delivery has only ever been assumed. This input lets a human rehearse the
         # full open → comment → close cycle on demand.
         description: 'Rehearsal only: add an extra CRITICAL target that is expected to FAIL (e.g. https://httpstat.us/503) to exercise the real alert open/comment/close path. This WILL open a real issue.'
@@ -60,11 +60,17 @@ on:
   # This trigger is also the only way to exercise the workflow pre-merge: `workflow_dispatch`
   # is not available until the file exists on the default branch.
   pull_request:
+    # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts this self-test. Here it
+    # proves the YAML parses and the probes work before the change is merged, and develop is the branch the
+    # merge itself is about - so the rehearsal stays for PRs aimed at other branches, and the scheduled and
+    # manual runs below are untouched.
+    branches-ignore:
+      - develop
     paths:
       - '.github/workflows/external-uptime-monitor.yml'
 
 # Least privilege: the workflow default is read-only. `issues: write` is granted narrowly to the
-# one job that needs it (below). GITHUB_TOKEN is provided automatically — NO new secrets required.
+# one job that needs it (below). GITHUB_TOKEN is provided automatically - NO new secrets required.
 permissions:
   contents: read
 
@@ -85,7 +91,7 @@ concurrency:
 jobs:
   probe:
     name: Probe public endpoints from outside the homelab
-    # 🛑 DO NOT CHANGE — see the header block. GitHub-hosted is the whole point.
+    # 🛑 DO NOT CHANGE - see the header block. GitHub-hosted is the whole point.
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
@@ -163,7 +169,7 @@ jobs:
           # answer 200 for a wrong-image deploy, a different app on the hostname, or a default
           # page. `<ga-app` is the Angular root selector, verified present in the live index.html.
           # Be honest about what this buys: it closes "the content served is not the Gauzy app",
-          # NOT "the app boots in a browser" — the selector is in index.html whether or not the JS
+          # NOT "the app boots in a browser" - the selector is in index.html whether or not the JS
           # bundle loads. It also cannot detect a bad route: this is an SPA, so a bogus path
           # correctly returns the same shell (measured: /bogus-xyz-9931 -> 200, identical bytes).
           TARGETS=(
@@ -179,7 +185,7 @@ jobs:
           # reorder a real target.
           if [ -n "${TEST_TARGET_URL}" ]; then
             TARGETS+=("selftest|critical|${TEST_TARGET_URL}|")
-            echo "::warning::Rehearsal target added: ${TEST_TARGET_URL} — if it fails, this run WILL open a real ${ALERT_LABEL} issue."
+            echo "::warning::Rehearsal target added: ${TEST_TARGET_URL} - if it fails, this run WILL open a real ${ALERT_LABEL} issue."
           fi
 
           REPORT="${RUNNER_TEMP}/report.md"
@@ -256,7 +262,7 @@ jobs:
             if [ "$ok" = true ]; then
               verdict="✅ up"
             else
-              verdict="❌ DOWN — ${reason}"
+              verdict="❌ DOWN - ${reason}"
               if [ "$sev" = "critical" ]; then
                 FAILED_CRITICAL="${FAILED_CRITICAL}${id} "
               else
@@ -277,7 +283,7 @@ jobs:
           FAILED_WARN=$(echo "$FAILED_WARN" | xargs || true)
 
           # Fingerprint of the exact failing set, so a sustained outage does not produce a
-          # comment every 15 minutes — we only comment when the situation actually changes.
+          # comment every 15 minutes - we only comment when the situation actually changes.
           FP=$(printf '%s|%s' "$FAILED_CRITICAL" "$FAILED_WARN" | sha256sum | cut -c1-12)
 
           {
@@ -328,8 +334,8 @@ jobs:
           {
             echo "## 🔴 Production unreachable from OUTSIDE the homelab"
             echo
-            echo "A GitHub-hosted runner — which is **not** on the homelab network or the owner's"
-            echo "ISP uplink — could not reach the endpoint(s) below on **${ATTEMPTS} consecutive**"
+            echo "A GitHub-hosted runner - which is **not** on the homelab network or the owner's"
+            echo "ISP uplink - could not reach the endpoint(s) below on **${ATTEMPTS} consecutive**"
             echo "attempts, ${RETRY_SLEEP}s apart."
             echo
             echo "Because this vantage point is external, this is evidence of a **real, user-facing**"
@@ -357,7 +363,7 @@ jobs:
             echo "<!-- uptime-fingerprint: ${FINGERPRINT} -->"
           } > "$BODY"
 
-          # A FAILED lookup must never be mistaken for "no issue is open" — that would open a
+          # A FAILED lookup must never be mistaken for "no issue is open" - that would open a
           # duplicate issue on every run during an API blip, which is exactly the spam that gets
           # monitors muted. Distinguish command failure from an empty result.
           if ! NUM=$(gh issue list --repo "${GITHUB_REPOSITORY}" --label "${ALERT_LABEL}" \
@@ -367,7 +373,7 @@ jobs:
           fi
 
           if [ -z "${NUM}" ]; then
-            echo "No open alert issue — creating one."
+            echo "No open alert issue - creating one."
             gh issue create --repo "${GITHUB_REPOSITORY}" \
               --title "🔴 External uptime alert: ${FAILED_CRITICAL} unreachable from outside the homelab" \
               --label "${ALERT_LABEL}" \
@@ -383,11 +389,11 @@ jobs:
             fi
             # No pipe in a decision. Under `pipefail`, a producer killed by SIGPIPE can make an
             # already-MATCHED grep report failure, which would post a redundant comment on every
-            # run of a steady outage — defeating the de-duplication exactly when it matters most.
+            # run of a steady outage - defeating the de-duplication exactly when it matters most.
             if grep -q "uptime-fingerprint: ${FINGERPRINT}" <<< "${LAST}"; then
-              echo "State unchanged (fingerprint ${FINGERPRINT}) — not commenting, to avoid issue spam."
+              echo "State unchanged (fingerprint ${FINGERPRINT}) - not commenting, to avoid issue spam."
             else
-              echo "State changed — adding one comment."
+              echo "State changed - adding one comment."
               gh issue comment "${NUM}" --repo "${GITHUB_REPOSITORY}" --body-file "$BODY"
             fi
           fi
@@ -408,7 +414,7 @@ jobs:
             exit 1
           fi
           if [ -z "${NUM}" ]; then
-            echo "All critical endpoints healthy and no alert issue open — nothing to do."
+            echo "All critical endpoints healthy and no alert issue open - nothing to do."
             exit 0
           fi
 
@@ -430,11 +436,11 @@ jobs:
 
           # Never let a failed recovery comment block the close. Under `set -e` a transient
           # secondary-rate-limit on the comment would abort this step BEFORE the close below,
-          # leaving a stale "production is down" issue open on a recovered service — exactly the
+          # leaving a stale "production is down" issue open on a recovered service - exactly the
           # outcome the comment above says this step exists to prevent. Warn, then close anyway.
           gh issue comment "${NUM}" --repo "${GITHUB_REPOSITORY}" --body-file "$BODY" \
             || echo "::warning::Recovery comment on #${NUM} failed; closing the issue regardless."
-          # The close itself stays fatal under -e — that one must never fail silently.
+          # The close itself stays fatal under -e - that one must never fail silently.
           gh issue close "${NUM}" --repo "${GITHUB_REPOSITORY}" --reason completed
 
       - name: Fail the run if a critical endpoint is down
@@ -451,4 +457,4 @@ jobs:
         # broke" becomes indistinguishable from "production is down". Say so explicitly.
         if: failure() && steps.probe.outcome == 'failure'
         run: |
-          echo "::error::The probe step itself failed — this run is NOT evidence about production. Investigate the runner/tooling, not the endpoints."
+          echo "::error::The probe step itself failed - this run is NOT evidence about production. Investigate the runner/tooling, not the endpoints."

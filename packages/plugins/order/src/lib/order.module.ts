@@ -1,0 +1,217 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import {
+	AdjustmentModule,
+	ChannelModule,
+	EventOutboxModule,
+	IdempotencyModule,
+	Product,
+	ProductTranslation,
+	ProductVariant,
+	SequenceModule,
+	TaxLineModule,
+	RolePermissionModule
+} from '@gauzy/core';
+import { CartModule } from '@gauzy/plugin-cart';
+import { PricingModule } from '@gauzy/plugin-pricing';
+import { TaxModule } from '@gauzy/plugin-tax';
+import { ALL_ORDER_ENTITIES } from './entities';
+import { ORDER_AGGREGATE_WRITER } from './order.types';
+import { OrderController } from './order/order.controller';
+import { OrderService } from './order/order.service';
+import { TypeOrmOrderRepository } from './order/repository/type-orm-order.repository';
+import { MikroOrmOrderRepository } from './order/repository/mikro-orm-order.repository';
+import { OrderLineController } from './order-line/order-line.controller';
+import { OrderLineService } from './order-line/order-line.service';
+import { TypeOrmOrderLineRepository } from './order-line/repository/type-orm-order-line.repository';
+import { MikroOrmOrderLineRepository } from './order-line/repository/mikro-orm-order-line.repository';
+import { OrderLineFulfillmentService } from './order-line-fulfillment/order-line-fulfillment.service';
+import { OrderLineInvoiceController } from './order-line-invoice/order-line-invoice.controller';
+import { OrderLineInvoiceService } from './order-line-invoice/order-line-invoice.service';
+import { TypeOrmOrderLineInvoiceRepository } from './order-line-invoice/repository/type-orm-order-line-invoice.repository';
+import { MikroOrmOrderLineInvoiceRepository } from './order-line-invoice/repository/mikro-orm-order-line-invoice.repository';
+import { OrderAddressController } from './order-address/order-address.controller';
+import { OrderAddressService } from './order-address/order-address.service';
+import { TypeOrmOrderAddressRepository } from './order-address/repository/type-orm-order-address.repository';
+import { MikroOrmOrderAddressRepository } from './order-address/repository/mikro-orm-order-address.repository';
+import { OrderShippingMethodController } from './order-shipping-method/order-shipping-method.controller';
+import { OrderShippingMethodService } from './order-shipping-method/order-shipping-method.service';
+import { TypeOrmOrderShippingMethodRepository } from './order-shipping-method/repository/type-orm-order-shipping-method.repository';
+import { MikroOrmOrderShippingMethodRepository } from './order-shipping-method/repository/mikro-orm-order-shipping-method.repository';
+import { orderResolvers } from './graphql';
+import { OrderSummaryController } from './order-summary/order-summary.controller';
+import { OrderSummaryService } from './order-summary/order-summary.service';
+import { TypeOrmOrderSummaryRepository } from './order-summary/repository/type-orm-order-summary.repository';
+import { MikroOrmOrderSummaryRepository } from './order-summary/repository/mikro-orm-order-summary.repository';
+import { OrderTransactionController } from './order-transaction/order-transaction.controller';
+import { OrderTransactionService } from './order-transaction/order-transaction.service';
+import { TypeOrmOrderTransactionRepository } from './order-transaction/repository/type-orm-order-transaction.repository';
+import { MikroOrmOrderTransactionRepository } from './order-transaction/repository/mikro-orm-order-transaction.repository';
+import { OrderChangeController } from './order-change/order-change.controller';
+import { OrderChangeService } from './order-change/order-change.service';
+import { TypeOrmOrderChangeRepository } from './order-change/repository/type-orm-order-change.repository';
+import { MikroOrmOrderChangeRepository } from './order-change/repository/mikro-orm-order-change.repository';
+import { OrderChangeActionController } from './order-change-action/order-change-action.controller';
+import { OrderChangeActionService } from './order-change-action/order-change-action.service';
+import { TypeOrmOrderChangeActionRepository } from './order-change-action/repository/type-orm-order-change-action.repository';
+import { MikroOrmOrderChangeActionRepository } from './order-change-action/repository/mikro-orm-order-change-action.repository';
+import { OrderCreditLineController } from './order-credit-line/order-credit-line.controller';
+import { OrderCreditLineService } from './order-credit-line/order-credit-line.service';
+import { TypeOrmOrderCreditLineRepository } from './order-credit-line/repository/type-orm-order-credit-line.repository';
+import { MikroOrmOrderCreditLineRepository } from './order-credit-line/repository/mikro-orm-order-credit-line.repository';
+import { OrderHistoryController } from './order-history/order-history.controller';
+import { OrderHistoryService } from './order-history/order-history.service';
+import { TypeOrmOrderHistoryRepository } from './order-history/repository/type-orm-order-history.repository';
+import { MikroOrmOrderHistoryRepository } from './order-history/repository/mikro-orm-order-history.repository';
+import { OrderCheckoutHandler } from './checkout/order-checkout.handler';
+import { OrderTotalsService } from './order-totals/order-totals.service';
+import { OrderTotalsReconciliationScheduler } from './order-totals/order-totals-reconciliation.scheduler';
+import { OrderUnitOfWork } from './order-totals/order-unit-of-work';
+import { OrderChangeStalenessScheduler } from './order-change/order-change-staleness.scheduler';
+import { SubscriptionOrderService } from './subscription-order/subscription-order.service';
+
+/**
+ * The order module.
+ *
+ * Every entity is registered with both ORMs from the one entity array, so the package cannot boot with a
+ * table one ORM knows about and the other does not. Three core modules are imported because the order's
+ * money and its number are *theirs*: the `adjustment` and `tax_line` modules own the ledgers the totals
+ * are computed from, and the `sequence` module owns document numbering — an order number generated here
+ * would be a second, divergent answer to a question the kernel already answers.
+ *
+ * The cart module is imported for one reason: completing a cart produces an order, and the handler that
+ * does it must be able to read the cart it is completing. The dependency is one-way — the cart package
+ * never imports this one.
+ *
+ * Four more modules are imported for the order a recurring cycle raises. `ChannelModule` answers which
+ * channel and region a renewal that names no originating order is raised in, `PricingModule` answers
+ * whether the prices it carries already contain tax, `TaxModule` rates its lines, and
+ * `IdempotencyModule` is the platform's retry-safe request store the cycle's own key is claimed under
+ * — because a retried attempt at one cycle must not raise a second order. The product, its
+ * translations and its variants are the catalogue's own tables and are registered here rather than
+ * read across a package boundary: an order line has to state a title and a tax category, and only the
+ * catalogue's rows say what they are.
+ *
+ * The order aggregate's writer is registered under a token as well as under its own class. The totals
+ * service commits every write of an order row, and the service that owns the row is `OrderService` —
+ * which is constructed from the totals service, so the totals service cannot inject it without closing
+ * a cycle the container cannot express. The token is resolved through `ModuleRef` when a write runs,
+ * which is the same late lookup the platform's concurrency guard performs for the service a route
+ * names.
+ */
+@Module({
+	controllers: [
+		OrderController,
+		OrderLineController,
+		OrderLineInvoiceController,
+		OrderAddressController,
+		OrderShippingMethodController,
+		OrderSummaryController,
+		OrderTransactionController,
+		OrderChangeController,
+		OrderChangeActionController,
+		OrderCreditLineController,
+		OrderHistoryController
+	],
+	imports: [
+		// The controllers below are guarded, and the guard resolves the caller's permissions.
+		RolePermissionModule,
+		TypeOrmModule.forFeature([...ALL_ORDER_ENTITIES, Product, ProductTranslation, ProductVariant]),
+		MikroOrmModule.forFeature([...ALL_ORDER_ENTITIES, Product, ProductTranslation, ProductVariant]),
+		AdjustmentModule,
+		TaxLineModule,
+		SequenceModule,
+		ChannelModule,
+		IdempotencyModule,
+		// Every `order.*` event is appended by the same call that commits the state change it describes,
+		// so the module that owns the outbox row is imported here rather than the event being published
+		// after the fact through a bus — an event published after a commit is an event a crash loses, and
+		// the outbox exists precisely so that it is not.
+		EventOutboxModule,
+		PricingModule,
+		TaxModule,
+		CartModule
+	],
+	providers: [
+		OrderService,
+		{
+			provide: ORDER_AGGREGATE_WRITER,
+			useExisting: OrderService
+		},
+		TypeOrmOrderRepository,
+		MikroOrmOrderRepository,
+		OrderTotalsService,
+		// The persistence context each unit of a request-less pass runs in — a MikroORM fork per order
+		// under that ORM, the work itself under TypeORM — and the one answer to which ORM an order row is
+		// read through. The two scheduled passes below cannot run on MikroORM without it.
+		OrderUnitOfWork,
+		OrderCheckoutHandler,
+		SubscriptionOrderService,
+		OrderLineService,
+		TypeOrmOrderLineRepository,
+		MikroOrmOrderLineRepository,
+		OrderLineFulfillmentService,
+		OrderLineInvoiceService,
+		TypeOrmOrderLineInvoiceRepository,
+		MikroOrmOrderLineInvoiceRepository,
+		OrderAddressService,
+		TypeOrmOrderAddressRepository,
+		MikroOrmOrderAddressRepository,
+		OrderShippingMethodService,
+		TypeOrmOrderShippingMethodRepository,
+		MikroOrmOrderShippingMethodRepository,
+		OrderSummaryService,
+		TypeOrmOrderSummaryRepository,
+		MikroOrmOrderSummaryRepository,
+		OrderTransactionService,
+		TypeOrmOrderTransactionRepository,
+		MikroOrmOrderTransactionRepository,
+		OrderChangeService,
+		TypeOrmOrderChangeRepository,
+		MikroOrmOrderChangeRepository,
+		OrderChangeActionService,
+		TypeOrmOrderChangeActionRepository,
+		MikroOrmOrderChangeActionRepository,
+		OrderCreditLineService,
+		TypeOrmOrderCreditLineRepository,
+		MikroOrmOrderCreditLineRepository,
+		OrderHistoryService,
+		TypeOrmOrderHistoryRepository,
+		MikroOrmOrderHistoryRepository,
+		// The package's two scheduled entries. They are ordinary providers rather than a scheduler
+		// registration, because neither of them targets a queue: the scheduler discovers a decorated
+		// method by scanning the providers of every module, so a job that runs inline where it is
+		// declared needs nothing but to be declared — while a job that fans out to a queue would need
+		// `SchedulerModule.forFeature` and a BullMQ root, and would then not run at all in a process
+		// without one. Both of these restore an invariant nothing else restores, so neither may be
+		// absent exactly where the platform is smallest: the totals reconciliation repairs an order
+		// whose derived columns a missed recompute left stale (ADR-26), and the staleness sweep
+		// releases an order whose exclusive change slot an abandoned request still holds.
+		OrderTotalsReconciliationScheduler,
+		OrderChangeStalenessScheduler,
+		// The GraphQL resolvers are providers of this module, beside their controllers. Nest discovers a
+		// resolver by scanning the providers of every module, so a resolver a plugin declares only in its
+		// plugin metadata — `extensions.resolvers` — is never registered: the schema advertises its
+		// fields and the default resolver answers `null` for each of them, which is a non-null violation
+		// at the caller. Every other package in this set lists them here for that reason.
+		...orderResolvers
+	],
+	exports: [
+		OrderService,
+		OrderTotalsService,
+		OrderChangeService,
+		OrderLineService,
+		OrderLineFulfillmentService,
+		OrderLineInvoiceService,
+		OrderAddressService,
+		OrderShippingMethodService,
+		OrderSummaryService,
+		OrderTransactionService,
+		OrderCreditLineService,
+		OrderHistoryService,
+		OrderCheckoutHandler,
+		SubscriptionOrderService
+	]
+})
+export class OrderModule {}

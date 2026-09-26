@@ -38,8 +38,43 @@ export {
 	generateMigration,
 	prepareSQLQuery,
 	revertLastDatabaseMigration,
-	runDatabaseMigrations
+	runDatabaseMigrations,
+	// An app that builds its own TypeORM data source on SQLite needs the same transaction queue the
+	// platform's data source gets — see embedded-transaction-queue.ts.
+	createPlatformDataSource,
+	serializeEmbeddedTransactions,
+	hasEmbeddedTransactionQueue,
+	EmbeddedTransactionWaitTimeoutError,
+	EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS
 } from './lib/database';
+// The four things a service needs to write one raw statement that runs on all four dialects: the
+// identifier quoting MySQL disagrees about, the timestamp and boolean spellings it also disagrees
+// about, the rewrite from named parameters into the placeholders every driver actually binds, and
+// the affected-row count whose shape differs in every driver. A plugin that has to restate any of
+// them writes its own, and the four copies drift — which is exactly how a conditional UPDATE came
+// to zero the column it was supposed to increment.
+export {
+	booleanLiteral,
+	currentTimestampExpression,
+	quoteIdentifier,
+	readAffectedRows,
+	toPositionalStatement
+} from './lib/database/database.helper';
+export type { IPositionalStatement } from './lib/database/database.helper';
+// The probes a migration needs to add a `CHECK` safely: a rule about a populated table is added on its
+// own tick, long after the file that created the table, and every package that adds one needs the same
+// four probes — the table, the columns the rule reads, the constraint's own absence, and the embedded
+// dialect, which cannot add a constraint to an existing table at all.
+export {
+	addCheckConstraint,
+	dropCheckConstraint,
+	hasCheckConstraint,
+	supportsCheckConstraints
+} from './lib/database/check-constraint.helper';
+export type {
+	ICheckConstraintDefinition,
+	TCheckConstraintOutcome
+} from './lib/database/check-constraint.helper';
 export * from './lib/event-bus';
 export * from './lib/logger';
 export { EVER_REDIS_CLIENT, RedisModule } from './lib/redis';
@@ -72,6 +107,12 @@ export { FeatureService } from './lib/feature/feature.service';
 export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
 export { RoleAuthorizationService, RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
+// The approval machinery is public API for the same reason as `FeatureModule` above: a package that
+// wants a decision recorded on a document it owns has to file the request against the platform's own
+// `request_approval` row rather than declaring a parallel approval table, and it can only do that
+// through the module that provides the service and the service itself.
+export { RequestApprovalModule } from './lib/request-approval/request-approval.module';
+export { RequestApprovalService } from './lib/request-approval/request-approval.service';
 export * from './lib/tenant';
 export { UserModule, UserService } from './lib/user';
 
@@ -188,4 +229,93 @@ export { IncomeCreateCommand, IncomeModule, IncomeService } from './lib/income';
 export { TagTypeModule, TagTypeService } from './lib/tag-type';
 export { AutomationLabelSyncCommand, RelationalTagDTO, Taggable, TagModule, TagService } from './lib/tags';
 export * from './lib/token';
+
+// Retry safety and optimistic concurrency are conventions a controller adopts with a decorator, and
+// the controllers that adopt them live in this package and in plugins alike — a decorator that is
+// not part of the public surface cannot be applied from a plugin at all.
+export {
+	IdempotencyInterceptor,
+	// The sweep's module, exported because the process that *ticks* a schedule is not the process
+	// that declares it: core's own `AppModule` registers the scheduler root with `enabled: false`, so
+	// a maintenance module imported only there contributes its worker and never its cron. The worker
+	// application imports this by name for exactly that reason.
+	IdempotencyMaintenanceModule,
+	IdempotencyModule,
+	IdempotencyService,
+	Idempotent,
+	IDEMPOTENT_METADATA_KEY,
+	IDEMPOTENCY_KEY_MEMBER
+} from './lib/idempotency';
+// The concurrency kernel's surface is the decorator a route adopts *and* the pieces a plugin has to
+// name to implement one: the type of the expectation its write is predicated on, the increment that
+// keeps every writer moving the counter by the same step, the comparison a write makes when it has a
+// child row to write first, and the metadata key a spec reads to assert a route declared the
+// convention. A plugin that has to derive or restate any of them from the outside is a plugin that can
+// drift from the kernel it is implementing.
+//
+// `matchesExpectation` and `parseEntityVersion` are on that list because an aggregate whose child rows
+// are written before the parent's conditional write has to ask the question *before* it writes them —
+// otherwise a caller whose version no longer holds is refused after its change has landed. Asking it
+// with a second, hand-written comparison is how the two answers drift apart.
+export {
+	Versioned,
+	VersionGuard,
+	VersionInterceptor,
+	VersionedColumn,
+	commitVersionedUpdate,
+	parseIfMatch,
+	formatEntityTag,
+	versionExpectationOf,
+	bumpVersion,
+	matchesExpectation,
+	parseEntityVersion,
+	IVersionExpectation,
+	VERSIONED_METADATA_KEY,
+	VERSION_EXPECTATION_PROPERTY
+} from './lib/concurrency';
+/**
+ * The API conventions a resource adopts: the query protocol, field-level visibility, bulk
+ * application and the accepted-operation handle.
+ *
+ * Exported because a plugin package has to be able to implement the same conventions as a resource
+ * built into core. Without this a plugin can expose a list endpoint but cannot declare what may be
+ * filtered, sorted or selected on it, cannot withhold a field from a caller who may not read it, and
+ * cannot accept a long-running request — so it would either invent its own or go without.
+ */
+export * from './lib/api';
+/**
+ * The kernel capabilities every domain builds on: exact money arithmetic, the generic rule engine,
+ * the money-adjustment and tax ledgers, document numbering, the retry-safe request store, the
+ * transactional outbox, the durable-operation runtime, outbound delivery, and platform search.
+ *
+ * Exported for the same reason as the API conventions above — a plugin package has to be able to
+ * build on the same kernel a resource in core does. A domain that cannot reach the money layer
+ * writes its own arithmetic, and a domain that cannot reach the rule engine writes its own
+ * conditions; both are how a platform ends up with three of everything.
+ */
+export * from './lib/money';
+export * from './lib/measurement';
+export * from './lib/channel';
+export * from './lib/channel-domain';
+export * from './lib/channel-region';
+export * from './lib/region';
+export * from './lib/region-country';
+export * from './lib/address';
+export * from './lib/contact-group';
+export * from './lib/contact-group-member';
+export * from './lib/contact-credential';
+export * from './lib/contact-buyer';
+export * from './lib/payment-account-holder';
+export * from './lib/payment-method-token';
+export * from './lib/payment-instrument';
+export * from './lib/rule';
+export * from './lib/adjustment';
+export * from './lib/tax-line';
+export * from './lib/sequence';
+export * from './lib/search';
+export * from './lib/event-outbox';
+export * from './lib/operation';
+export * from './lib/webhook';
+export * from './lib/job-execution';
+export * from './lib/job-dead-letter';
 export * from './lib/auth/purpose-token';

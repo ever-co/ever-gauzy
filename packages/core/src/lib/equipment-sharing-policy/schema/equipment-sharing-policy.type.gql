@@ -1,0 +1,147 @@
+# The equipment-sharing-policy domain's object type.
+#
+# A policy is the vocabulary a sharing period is filed under — the organization's own names for the
+# terms it hands equipment out on — so the row is a name, the operator's note beside it, and the
+# periods that point at it. It carries no rule of its own: nothing in the delivered write path reads a
+# policy to decide anything, and the caps that govern a share are columns of the equipment row rather
+# than of this one. A client should read the row as a label and a filter, not as a configuration.
+#
+# `equipmentSharings` is deliberately absent. The relation is a `OneToMany` loaded only when a REST
+# caller names it in `relations`, and no read behind this surface names one, so a member carrying the
+# periods would be absent from exactly the rows this surface answers while looking like a fact about
+# the policy. The periods that point at a policy are reachable as the sharing's own
+# `equipmentSharingPolicyId`, and the sharing resource is served as one of its own.
+
+"""
+One of the organization's own terms for handing equipment out.
+"""
+type EquipmentSharingPolicy {
+	id: ID!
+	"The policy's name, which is how it is chosen from the organization's vocabulary."
+	name: String!
+	"What the policy means, for the operator rather than for the caller."
+	description: String
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of sharing policies.
+"""
+type EquipmentSharingPolicyEdge {
+	node: EquipmentSharingPolicy!
+	cursor: String!
+}
+
+"""
+One page of sharing policies, with the total the filters select and the boundary cursors.
+"""
+type EquipmentSharingPolicyConnection {
+	nodes: [EquipmentSharingPolicy!]!
+	edges: [EquipmentSharingPolicyEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a policy list may be sorted by.
+
+The name is what a vocabulary is scanned by, and the two timestamps are how a change is found again.
+Nothing else is offered: the row has no other member an order would be meaningful on.
+"""
+enum EquipmentSharingPolicySortField {
+	createdAt
+	updatedAt
+	name
+}
+
+"""
+The order the sharing policies are returned in. At most three keys are accepted.
+"""
+input EquipmentSharingPolicySort {
+	field: EquipmentSharingPolicySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a policy list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row, because the connection narrows the rows the delivered read
+returned. `deletedAt` is deliberately absent although the object carries it: the delivered list read
+answers live rows only, so a condition on that column could only ever match the empty set. The tenant is
+absent for a different reason — it is applied to the criterion from the credential — and the
+organization is present, because the delivered read takes its whole query DTO from the query string and
+a caller may legitimately narrow to one organization of its tenant. The periods filed under a policy are
+in neither list: the delivered list read joins no relation, so a condition on that collection could
+only ever match the empty set.
+"""
+input EquipmentSharingPolicyFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EquipmentSharingPolicyFilter!]
+	or: [EquipmentSharingPolicyFilter!]
+	not: EquipmentSharingPolicyFilter
+}
+
+# The write surface.
+#
+# One DTO serves both writes — `UpdateOrCreateEquipmentSharingPolicyDTO` is the class the delivered
+# create and the delivered edit both bind — so the two inputs declare the same members, and the
+# difference between them is where the delivered validation actually runs.
+
+"""
+What a caller states when it files a policy.
+
+`name` is required because the delivered create is the one route of the two that runs its validation
+pipe: the body's name is validated as a non-empty string there, and the organization is validated
+against the caller's own memberships. The organization is stated rather than stamped because it is a
+member the delivered DTO carries, while the tenant is not a member at all — the delivered write stamps
+the caller's own tenant onto the row and refuses a row that belongs to another one.
+"""
+input CreateEquipmentSharingPolicyInput {
+	"The policy's name."
+	name: String!
+	"What the policy means, for the operator."
+	description: String
+	"The organization the policy belongs to."
+	organizationId: ID!
+}
+
+"""
+What a caller states when it changes a policy that exists.
+
+**A member the caller leaves out is left as it is, and `name` is not required here although the create
+requires it.** The two routes bind the same DTO, but only the create runs the validation pipe over it,
+and the delivered edit is a column-wise update rather than a replacement: it reads the row to prove it
+is the caller's and then writes the columns the body states. A body that states no name therefore keeps
+the policy's name, which is why the member is optional on this input and required on the one above —
+stating it as required here would refuse a body the delivered route serves and writes.
+
+The identifier is the criterion and is not repeated in the body, which is the shape the route itself
+has. An identifier that names no row, or one of another tenant, is refused by the delivered read the
+edit performs before it writes anything.
+"""
+input UpdateEquipmentSharingPolicyInput {
+	id: ID!
+	name: String
+	description: String
+	organizationId: ID!
+}

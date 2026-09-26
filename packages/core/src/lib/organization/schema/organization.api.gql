@@ -1,0 +1,96 @@
+# The organization domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered REST routes already serve, under the same guard chain and
+# with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other.
+#
+# **The connection is both list routes.** The controller serves its list twice — `GET /` and
+# `GET /pagination` — and the two answer the same rows under the same filters, one of them sliced by
+# `take`/`skip` and the other not. That is one capability, so it is one root field: `organizations`,
+# mirroring `GET /`, which is the route that reads the whole filtered set the connection protocol is
+# applied to. A second root field for the paginated spelling would be a second surface that could
+# disagree with this one, and the connection's own `limit`/`offset` already are the page it performs.
+#
+# `organizationCount` takes no filter, and that is a statement rather than an omission. The delivered
+# count route passes its query string through as the store's own `where`, which the connection
+# protocol does not speak; a `filter` argument here would either be handed to a service call that
+# cannot accept it or be evaluated over a second code path that could disagree with the connection's
+# `totalCount`. It answers the count of the caller's own rows, which is the call the route makes when
+# it is given no options.
+#
+# **`organization` states an empty permission, and that is the parity rather than a mistake.** The
+# delivered `GET /:id` route carries `@Permissions()` with no argument, which is not the same thing as
+# carrying none: the permission guard reads the handler's own declaration before the class's, so an
+# empty declaration on the route *overrides* the controller's class-level edit permission and the
+# route runs unpermissioned. Leaving the declaration off this field would let it inherit the class's
+# edit permission, which would refuse a caller the REST route serves. Stating it empty is how the two
+# surfaces are held to one rule.
+#
+# The two writes dispatch the same commands the delivered create and edit routes dispatch, because
+# filing an organization is more than an insert: the handler also puts the tenant's administrators
+# into it, files the contact row beside it, and provisions the organization's report menu, task
+# statuses, sizes, priorities, issue types and task settings. A field that reached for the service
+# instead would create a row the rest of the platform never finished setting up.
+
+extend type Query {
+	"""
+	The organizations of the caller's tenant, in the order the organization list reads them in.
+	"""
+	organizations(
+		filter: OrganizationFilter
+		sort: [OrganizationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationConnection!
+
+	"""
+	One organization of the caller's tenant, or null when there is none.
+	"""
+	organization(id: ID!): Organization
+
+	"""
+	How many organizations the caller's tenant has.
+	"""
+	organizationCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an organization, together with the contact row the caller states beside it and the settings
+	its first administrators need.
+	"""
+	createOrganization(input: CreateOrganizationInput!): Organization!
+
+	"""
+	Replaces the stated facts of an organization. The visibility flags of the public profile are
+	written from the body as stated, so a member of that family the caller leaves out is turned off
+	rather than left as it is — see `UpdateOrganizationInput`.
+	"""
+	updateOrganization(input: UpdateOrganizationInput!): Organization!
+
+	"""
+	Removes an organization outright. The store's own constraints are what refuse a row other records
+	still point at; this field does not pre-empt them.
+	"""
+	deleteOrganization(id: ID!): Boolean!
+
+	"""
+	Withdraws an organization without removing it: the row keeps its identifier and the records filed
+	under it keep pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteOrganization(id: ID!): Organization!
+
+	"""
+	Puts a withdrawn organization back.
+	"""
+	recoverOrganization(id: ID!): Organization!
+}

@@ -1,0 +1,159 @@
+# The product type's object type.
+#
+# A type is the operator's classification of a product — the coarse kind a back-office list groups by
+# — as opposed to the category, which is the merchandising taxonomy the storefront navigates. The two
+# are deliberately separate rows: a product carries both, and collapsing them would make one of the two
+# readings impossible.
+#
+# `name` and `description` are the translated members. They live on `ProductTypeTranslation` rows — one
+# per language — and the delivered reader merges the row for the requested language onto the type
+# before it answers, so a client reads them off the object exactly as the REST surface does. They are
+# nullable because a type with no translation for the requested language genuinely has neither.
+#
+# The two members below are deliberately absent, and each for its own reason:
+#
+# - `translations` is not exposed. The merge that produces `name` and `description` deletes the
+#   collection in the same step it copies the members out of it, so a `translations` member would be
+#   absent from exactly the rows this surface answers and present only on the ones no merge reached. A
+#   field whose presence depends on whether a translation happened to match is worse than no field.
+# - `products` is not exposed. The relation is loaded only when a REST caller names it in `relations`,
+#   and the list root field asks the service for its rows without it, so the member would always be
+#   absent here. The products of a type are reachable as `Product.productTypeId`.
+
+"""
+One operator-facing classification of a product.
+"""
+type ProductType {
+	id: ID!
+	"The type's name in the requested language, merged from its translation."
+	name: String
+	"The type's description in the requested language, merged from its translation."
+	description: String
+	"""
+	The icon the back office draws beside the type, as the icon set's own name (`car-outline`). It is
+	carried as its value rather than declared as a schema enum: the value set belongs to the interface
+	library the console is built from and grows with it, so a closed enum here would make every new
+	icon a schema change — and the delivered route validates the member against that same set.
+	"""
+	icon: String
+	"""
+	When the type was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of product types.
+"""
+type ProductTypeEdge {
+	node: ProductType!
+	cursor: String!
+}
+
+"""
+One page of product types, with the total the filters select and the boundary cursors.
+"""
+type ProductTypeConnection {
+	nodes: [ProductType!]!
+	edges: [ProductTypeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a product type list may be sorted by.
+"""
+enum ProductTypeSortField {
+	createdAt
+	updatedAt
+	name
+	icon
+}
+
+"""
+The order the product types are returned in. At most three keys are accepted.
+"""
+input ProductTypeSort {
+	field: ProductTypeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a product type list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`name` and `description` are filterable because the delivered reader merges them onto the row before
+the connection sees it: narrowing a back-office list by the name in one language is the read the
+merged member exists for. A row for which no translation matched carries neither, which is what
+`isNull` states and what an `eq` never matches.
+"""
+input ProductTypeFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductTypeFilter!]
+	or: [ProductTypeFilter!]
+	not: ProductTypeFilter
+}
+
+"""
+One language's copy of a type's descriptive facts.
+
+The rows are the type's own: a translation carries the type it belongs to, so the write states the
+language and the text, never which type — the parent of the write is the type the call is made on.
+"""
+input ProductTypeTranslationInput {
+	"The language this text is written in."
+	languageCode: String!
+	name: String!
+	description: String
+}
+
+"""
+What a caller states when it declares a type.
+
+The organization is stated because the delivered create does not derive one: the tenant is stamped
+from the credential, never from an argument, but the organization is a member the caller names and the
+delivered route validates against the caller's own memberships. There is no member for the tenant, for
+the same reason there is none on any other write here.
+
+The type's product list is not a member either. The relation is not a column of this row and the
+delivered write does not cascade it, so a body stating it would be accepted and then dropped; a
+product is classified under a type by writing the product's own `productTypeId`.
+"""
+input CreateProductTypeInput {
+	organizationId: ID!
+	"The text of the type, one member per language. A type with none has no name yet."
+	translations: [ProductTypeTranslationInput!]
+	icon: String
+}
+
+"""
+What a caller states when it edits a type that exists.
+
+The update replaces the row: the service reads the type to prove it is the caller's, removes it and
+persists the stated body under the verified path identifier, so a member the caller leaves out is
+written as the column's default rather than left as it is. `translations` is the one exception, and it
+is the reason this paragraph exists: the delivered service carries the existing rows over when the
+body omits them, because the rows are removed with their type and a caller editing the icon must not
+lose every language by not restating them. An explicit empty list is a caller asking for them to be
+cleared, and is honoured as such.
+"""
+input UpdateProductTypeInput {
+	id: ID!
+	organizationId: ID!
+	translations: [ProductTypeTranslationInput!]
+	icon: String
+}

@@ -6,8 +6,16 @@
  * "IsEmployeeBelongsToOrganization is not a function". Loading the entity graph FIRST resolves the
  * cycle in the order the application itself uses, so this side-effect import must stay above the
  * others.
+ *
+ * The kernel barrel follows it for a second cycle this handler is on, and the two imports are one
+ * guard in this order: the handler reaches the `shared` barrel, which reaches the kernel barrel, which
+ * reaches the module that hosts the GraphQL resolvers — and that module reaches a controller which
+ * reads its validation pipe off the `shared` barrel. Entering that barrel before the kernel has been
+ * evaluated leaves the pipe undefined, and the suite dies at import time with "UseValidationPipe is not
+ * a function".
  */
 import '../../../core/entities/internal';
+import '../../../core';
 
 import { StartDateUpdateTypeEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';

@@ -1,0 +1,222 @@
+# The product option's object types.
+#
+# An option is one value a product is offered in — a colour, a size, a capacity — and a group is the
+# set of options that answer one question about it. They are two rows rather than one because the
+# question is asked once ("which colours?") and answered many times, and because a variant, a cart
+# line and an order line all name the option rather than the group.
+#
+# **The translations are carried, not merged.** A product's `name` and `description` are merged onto
+# the product by the service that reads it, so that type carries the translated member; these rows are
+# answered with their translations joined instead, which is what the delivered option routes return.
+# The option's own `name` and `code` are therefore its untranslated columns, and the per-language text
+# is the translation rows below — a client that wants the name in one language reads the row for that
+# language, which is the shape the delivered surface actually has.
+#
+# **The group is a type here and not a root field**, and the difference is deliberate. No delivered
+# route serves a group as a resource — `/api/product-options` is the whole of this domain's REST
+# surface, and the group's own service is reached only from the product commands — so there is no
+# `productOptionGroups` field to add, and adding one would be a capability the other protocol does not
+# have. What travels on every option row is `groupId`; the group is declared so that the identifier a
+# client already holds names a typed row — with the product it belongs to and the languages it is
+# written in — rather than an opaque string, and so that an option read with its group keeps that
+# group's type. The delivered option routes do not join it, so `group` answers only a row that was
+# read with the relation; `groupId` is the member that always travels.
+
+"""
+One value a product is offered in, such as a colour or a size.
+"""
+type ProductOption {
+	id: ID!
+	"The option's text, untranslated. The per-language copies are the translation rows below."
+	name: String!
+	"The operator's short code for the option, when the catalogue names one."
+	code: String
+	"The group this option is filed under, as the identifier every delivered row carries."
+	groupId: ID
+	"The same fact as a row: the group named above, with its own product and translations."
+	group: ProductOptionGroup
+	"""
+	The option's per-language text, joined with the row rather than merged onto it.
+
+	Null and empty are different facts here and the two are kept apart: an option that has no
+	translation answers an empty collection, and a row a write has just answered with — which has not
+	been read back with its translations — answers null.
+	"""
+	translations: [ProductOptionTranslation!]
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+One language's copy of an option's text.
+"""
+type ProductOptionTranslation {
+	id: ID!
+	"The option's name in this language."
+	name: String!
+	"The option's description in this language, when the catalogue carries one."
+	description: String
+	"The language this row is written in, as the platform's own language code."
+	languageCode: String!
+	"The option this row is a translation of."
+	referenceId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+A set of options a product offers together, such as all of its colours or all of its sizes.
+"""
+type ProductOptionGroup {
+	id: ID!
+	"The group's text, untranslated, as on the option."
+	name: String!
+	"The product this group belongs to."
+	productId: ID
+	product: Product
+	"The options filed under this group."
+	options: [ProductOption!]
+	"The group's per-language text, joined with the row. Null on a row that was not read with it."
+	translations: [ProductOptionGroupTranslation!]
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+One language's copy of an option group's name.
+"""
+type ProductOptionGroupTranslation {
+	id: ID!
+	"The group's name in this language."
+	name: String!
+	"The language this row is written in, as the platform's own language code."
+	languageCode: String!
+	"The group this row is a translation of."
+	referenceId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of options.
+"""
+type ProductOptionEdge {
+	node: ProductOption!
+	cursor: String!
+}
+
+"""
+One page of options, with the total the filters select and the boundary cursors.
+"""
+type ProductOptionConnection {
+	nodes: [ProductOption!]!
+	edges: [ProductOptionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an option list may be sorted by.
+
+`groupId` is not among them. A relation key narrows a list, which is what the filter is for; the
+options of one group in a chosen order are that filter plus a sort key stated here.
+"""
+enum ProductOptionSortField {
+	createdAt
+	updatedAt
+	name
+	code
+}
+
+"""
+The order the options are returned in. At most three keys are accepted.
+"""
+input ProductOptionSort {
+	field: ProductOptionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an option list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`groupId` is stated as a filter rather than served as a root field of its own: the options of one
+group are these rows narrowed to that group, and a second root field for them would be a second
+surface that could disagree with this one.
+
+`name` and `code` narrow the option's own columns, never the translated text. A translation is a
+collection of rows, and the query protocol compares columns: the way to read the options whose French
+name is `Rouge` is to read the translations, not to state a filter this surface could not evaluate.
+"""
+input ProductOptionFilter {
+	id: IDFilter
+	name: StringFilter
+	code: StringFilter
+	groupId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductOptionFilter!]
+	or: [ProductOptionFilter!]
+	not: ProductOptionFilter
+}
+
+"""
+What a caller states when it files an option.
+
+`name` is stated rather than optional because the column is: it carries no default and cannot be
+absent, so an option without one is a row the store refuses — requiring it here states that fact where
+a caller can read it instead of leaving it to a driver error.
+
+`code` and `groupId` are optional, as their columns are: an option the catalogue has no short name for
+is a row, and so is one that is not filed under a group.
+
+The tenant is not among the members. The delivered route stamps the tenant of the credential onto the
+row it writes, so a caller cannot state a scope it is not acting in. The organization is optional
+because the delivered route takes it from the body and nothing else supplies it.
+
+`translations` is deliberately absent, and its absence is the honest half of this input: the rows live
+in their own table with their own service methods, and the delivered create does not cascade to them.
+A member here would be accepted and silently dropped, which is worse than a member that does not
+exist. The option's per-language text is written by the product's own write, which is the operation
+that owns the option set as a whole.
+"""
+input CreateProductOptionInput {
+	name: String!
+	code: String
+	groupId: ID
+	organizationId: ID
+}
+
+"""
+What a caller may change on an option that exists. A member that is absent is left as it is.
+
+That is the delivered update's own behaviour rather than a promise made here: the route writes the
+members the body states and touches no others, so "absent" and "unchanged" coincide.
+
+`groupId` stated as `null` is therefore a different statement from omitting it — it files the option
+under no group — and the delivered route honours both, because the column is nullable and the write
+distinguishes the two.
+"""
+input UpdateProductOptionInput {
+	id: ID!
+	name: String
+	code: String
+	groupId: ID
+	organizationId: ID
+}

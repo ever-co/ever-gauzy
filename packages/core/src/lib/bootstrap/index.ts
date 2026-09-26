@@ -42,9 +42,18 @@ import { IncomingMessage } from 'node:http';
 import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, defineConfig, environment } from '@gauzy/config';
-import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
+import { DEFAULT_GRAPHQL_API_PATH } from '@gauzy/constants';
+import {
+	getEntitiesFromPlugins,
+	getMigrationsFromPlugins,
+	getPluginConfigurations,
+	getSubscribersFromPlugins,
+	isDynamicModule,
+	orderPluginMigrations
+} from '@gauzy/plugin';
 import { MultiORMEnum, getORMType } from '../core/utils';
-import { DatabaseErrorFilter } from '../core/errors';
+import { ApiExceptionFilter, DatabaseErrorFilter } from '../core/errors';
+import { RequestContextMiddleware } from '../core/context';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
@@ -72,6 +81,17 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Pre-bootstrap the application configuration
 	const config = await preBootstrapApplicationConfig(pluginConfig);
 
+	// Under DB_ORM=mikro-orm the custom entity fields have to reach MikroORM before it discovers the entities,
+	// which it does while the Nest application below is created. Registered after that, they sat in metadata
+	// MikroORM never read again, so every read or write of a plugin's custom field failed on MikroORM — the
+	// GitHub plugin's `OrganizationProject.customFields.repository` included ("property 'repository' does not
+	// exist in embeddable 'MikroOrmOrganizationProjectEntityCustomFields'"). Under TypeORM (production) the
+	// registration stays exactly where it was, after the application is created.
+	const registerMikroOrmCustomFieldsFirst = getORMType() === MultiORMEnum.MikroORM;
+	if (registerMikroOrmCustomFieldsFirst) {
+		await registerMikroOrmCustomFields(config);
+	}
+
 	// Import the BootstrapModule dynamically
 	console.time(chalk.yellow('✔ Import BootstrapModule Time'));
 	const { BootstrapModule } = await import('./bootstrap.module');
@@ -88,8 +108,11 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Set query parser to extended (In Express v5, query parameters are no longer parsed using the qs library by default.)
 	app.set('query parser', 'extended');
 
-	// Register custom entity fields for Mikro ORM
-	await registerMikroOrmCustomFields(config);
+	// Register custom entity fields for Mikro ORM (under DB_ORM=mikro-orm they were registered above,
+	// before MikroORM discovered the entities)
+	if (!registerMikroOrmCustomFieldsFirst) {
+		await registerMikroOrmCustomFields(config);
+	}
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html).
 	//
@@ -175,6 +198,16 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			'Accept',
 			'Accept-Language',
 			'Observe',
+			// A machine caller authenticates with a key pair rather than a bearer token, and a caller
+			// that works on behalf of one sales surface states which.
+			'X-APP-ID',
+			'X-API-KEY',
+			'X-Channel-Id',
+			// Retry-safe writes and conditional updates.
+			'Idempotency-Key',
+			'If-Match',
+			// A conditional read states the version it already has.
+			'If-None-Match',
 			// TASK 9 (improvement roadmap) — Unified Observability and Correlation IDs: lets a
 			// cross-origin browser client send its own correlation id (`RequestContextMiddleware`
 			// already trusted it server-side; this only affects whether the BROWSER is allowed to
@@ -223,6 +256,74 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
 
+	// The request context on the one route that lives outside the prefix.
+	//
+	// `RequestContextMiddleware` is registered with `forRoutes('*')`, and Nest scopes a middleware
+	// pattern to the global prefix — so it covers `/api/*` and nothing else. The GraphQL endpoint is
+	// mounted at `/graphql`, outside the prefix, so an operation arriving there ran with no request
+	// context at all: `RequestContext.currentTenantId()` answered null inside every resolver, and the
+	// tenant guard therefore refused every guarded operation, including the kernel's own, for callers
+	// whose grants were perfectly correct. Mounting the same middleware on that endpoint is what makes
+	// a resolver's request scope real; the REST surface is untouched, because the pattern it already
+	// had still applies.
+	const graphqlPath = `/${DEFAULT_GRAPHQL_API_PATH}`;
+	try {
+		// Resolved per request, not once here. Nest instantiates the middleware while the application
+		// is initialised — after this code runs — so an instance read now does not exist yet, and one
+		// looked up from the container instead does not return at all. By the time a request arrives
+		// the instance is there; until it is, the request is passed through rather than failed, because
+		// a missing request scope is a degraded operation and not a reason to refuse one.
+		let warned = false;
+		app.getHttpAdapter()
+			.getInstance()
+			.use(graphqlPath, (request, response, next) => {
+				const requestContextMiddleware = RequestContextMiddleware.instance;
+				if (!requestContextMiddleware) {
+					if (!warned) {
+						warned = true;
+						console.warn(
+							`Request context middleware is not available; an operation on ${graphqlPath} runs without a request scope.`
+						);
+					}
+					return next();
+				}
+				return requestContextMiddleware.use(request, response, next);
+			});
+		console.log(`Request context middleware mounted on ${graphqlPath}`);
+	} catch (error) {
+		// Reported rather than thrown: a deployment whose GraphQL operations cannot be scoped is worse
+		// off than one that boots without them, but a boot that fails here would take the REST surface
+		// down with it — and REST is the surface that already works.
+		console.warn(`Could not mount the request context middleware on ${graphqlPath}: ${error}`);
+	}
+
+	// MikroORM's request context on the same endpoint, for the same reason. `@mikro-orm/nestjs` registers its
+	// own middleware for every route, and Nest scopes that pattern to the prefix too, so an operation on
+	// `/graphql` ran on MikroORM's global EntityManager, which refuses context-specific work: under
+	// `DB_ORM=mikro-orm` the JWT strategy's user lookup failed with "Using global EntityManager instance
+	// methods for context specific actions is disallowed", and every authenticated GraphQL operation was
+	// answered AUTH_REQUIRED while the same token worked over REST. Each operation now gets its own fork, as
+	// each REST request does. Under TypeORM nothing is mounted.
+	if (getORMType() === MultiORMEnum.MikroORM) {
+		try {
+			let orm: MikroORM | undefined;
+			app.getHttpAdapter()
+				.getInstance()
+				.use(graphqlPath, (request, response, next) => {
+					try {
+						// Resolved on the first request, like the middleware above: the container is not ready here.
+						orm ??= app.get(MikroORM, { strict: false });
+					} catch {
+						return next();
+					}
+					return RequestContext.create(orm.em, next);
+				});
+			console.log(`MikroORM request context mounted on ${graphqlPath}`);
+		} catch (error) {
+			console.warn(`Could not mount the MikroORM request context on ${graphqlPath}: ${error}`);
+		}
+	}
+
 	// Never let database internals reach a client. Many services re-throw a caught ORM error as
 	// `new BadRequestException(error)`, and Nest serializes that object's enumerable properties —
 	// which on a TypeORM QueryFailedError are exactly `query`, `parameters` and `driverError`. This
@@ -231,6 +332,19 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// which only runs under DI. Constructed with `new`, it would have none, and super.catch() would
 	// throw while handling every ordinary HttpException.
 	app.useGlobalFilters(new DatabaseErrorFilter(app.getHttpAdapter()));
+
+	// The error envelope. It is registered SECOND on purpose, and that order is load-bearing:
+	// Nest reverses the global filter list before it selects the first match
+	// (`RouterExceptionFilters.create` → `setCustomFilters(filters.reverse())`, then
+	// `selectExceptionFilterMetadata` → `Array.find`), so the LAST filter registered globally is
+	// the FIRST one consulted. Both filters are declared `@Catch(HttpException)`; registered the
+	// other way round, the database filter would answer first and no response would ever carry a
+	// code.
+	//
+	// The database filter's line above is NOT removed and must not be: it is the net that keeps
+	// database internals out of responses if this filter is ever reverted, and the envelope filter
+	// delegates to that same filter's own `catch` for every exception it does not own.
+	app.useGlobalFilters(new ApiExceptionFilter(app.getHttpAdapter()));
 
 	// Get the AppService
 	const appService = app.select(AppModule).get(AppService);
@@ -439,16 +553,18 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 		await defineConfig(applicationConfig);
 	}
 
-	// Register core and plugin entities and subscribers in parallel
-	const [entities, subscribers] = await Promise.all([
+	// Register core and plugin entities, subscribers and migrations in parallel
+	const [entities, subscribers, migrations] = await Promise.all([
 		preBootstrapRegisterEntities(applicationConfig),
-		preBootstrapRegisterSubscribers(applicationConfig)
+		preBootstrapRegisterSubscribers(applicationConfig),
+		preBootstrapRegisterMigrations(applicationConfig)
 	]);
 
 	// Update configuration with migrations, registered entities and subscribers
 	await defineConfig({
 		dbConnectionOptions: {
 			...getMigrationsConfig(),
+			migrations,
 			entities: entities as Array<Type<any>>, // Core and plugin entities
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
 		},
@@ -499,6 +615,73 @@ async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig)
 
 	// Return the modified configuration
 	return config;
+}
+
+/**
+ * Registers the database migrations of the application.
+ *
+ * The platform's own migrations are discovered from a directory glob; a plugin instead ships the
+ * migration classes for the tables it owns and declares them on its metadata. Both are merged into
+ * one list here, before the connection is created, so that a plugin's schema travels with the
+ * plugin rather than being added to the platform's shared migration folder.
+ *
+ * Ordering is decided by each migration's own timestamp, never by the order plugins are listed in,
+ * and an installation whose declared migrations cannot be ordered is refused at boot rather than
+ * applied in file-system order.
+ *
+ * @param config - The application configuration that may contain plugin migrations.
+ * @returns A promise that resolves to the merged list of migration paths and classes.
+ * @throws Error when a plugin migration carries no timestamp or two migrations share one.
+ */
+export async function preBootstrapRegisterMigrations(
+	config: Partial<ApplicationPluginConfig>
+): Promise<Array<Function | string>> {
+	try {
+		console.time(chalk.yellow('✔ Pre Bootstrap Register Migrations Time'));
+
+		// The platform's own migrations remain a directory glob.
+		const { migrations: platformMigrationPaths } = getMigrationsConfig();
+
+		// Collect every migration declared by a plugin, remembering which plugin declared it so a
+		// conflicting timestamp can be reported against a package rather than against a class name.
+		const ownerByMigration = new Map<Type<any>, string>();
+		for (const plugin of config.plugins ?? []) {
+			const identity = isDynamicModule(plugin) ? plugin.module : plugin;
+			for (const migration of getMigrationsFromPlugins([plugin])) {
+				if (!ownerByMigration.has(migration)) {
+					ownerByMigration.set(migration, identity?.name ?? 'unnamed plugin');
+				}
+			}
+		}
+
+		const declaredMigrations = getMigrationsFromPlugins(config.plugins);
+		const orderedMigrations = orderPluginMigrations(
+			declaredMigrations,
+			(migration) => ownerByMigration.get(migration) ?? 'unknown plugin'
+		);
+
+		if (orderedMigrations.length > 0) {
+			console.log(
+				chalk.green(
+					`Plugin migrations registered: ${orderedMigrations.length} ` +
+						`(oldest ${orderedMigrations[0].timestamp}, newest ${
+							orderedMigrations[orderedMigrations.length - 1].timestamp
+						})`
+				)
+			);
+		}
+
+		const registeredMigrations: Array<Function | string> = [
+			...(platformMigrationPaths as Array<string>),
+			...orderedMigrations.map((entry) => entry.migration as Function)
+		];
+
+		console.timeEnd(chalk.yellow('✔ Pre Bootstrap Register Migrations Time'));
+		return registeredMigrations;
+	} catch (error) {
+		console.log(chalk.red('Error registering migrations:'), error);
+		throw error;
+	}
 }
 
 /**

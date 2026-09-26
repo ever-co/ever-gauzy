@@ -1,0 +1,347 @@
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	Req,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ID, IPagination, ISellerPayoutRunResult, PermissionsEnum } from '@gauzy/contracts';
+import {
+	AbstractValidationPipe,
+	BaseQueryDTO,
+	CrudController,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantOrganizationBaseDTO,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe
+} from '@gauzy/core';
+import { SellerPayout } from './seller-payout.entity';
+import { SellerPayoutService } from './seller-payout.service';
+import { CreateSellerPayoutDTO, UpdateSellerPayoutDTO } from './dto';
+import { SellerAccessGuard } from '../seller-scope/seller-access.guard';
+import { ISellerScope } from '../seller-scope/seller-scope';
+
+/**
+ * The payout surface: build, run, approve, execute and cancel.
+ *
+ * Approving is a separate permission from creating, because creating a payout is preparation and
+ * approving one moves money — a tenant that wants four-eyes control assigns the two to different roles.
+ */
+@ApiTags('SellerPayout')
+@UseGuards(TenantPermissionGuard, PermissionGuard, SellerAccessGuard)
+@Permissions(PermissionsEnum.SELLER_PAYOUTS_VIEW)
+@Controller('/seller-payouts')
+export class SellerPayoutController extends CrudController<SellerPayout> {
+	constructor(private readonly sellerPayoutService: SellerPayoutService) {
+		super(sellerPayoutService);
+	}
+
+	/**
+	 * Lists payouts.
+	 *
+	 * @param request The request.
+	 * @param filter The query filter.
+	 * @returns The page of payouts.
+	 */
+	@ApiOperation({ summary: 'List payouts' })
+	@ApiResponse({ status: 200, description: 'Payouts retrieved successfully', type: SellerPayout })
+	@Get('/')
+	@UseValidationPipe({ transform: true })
+	async findAll(@Req() request: any, @Query() filter: BaseQueryDTO<SellerPayout>): Promise<IPagination<SellerPayout>> {
+		return this.sellerPayoutService.listPayouts(filter, this.scope(request));
+	}
+
+	/**
+	 * Reads one payout with its lines.
+	 *
+	 * @param request The request.
+	 * @param id The payout id.
+	 * @returns The payout.
+	 */
+	@ApiOperation({ summary: 'Read one payout with its lines' })
+	@ApiResponse({ status: 200, description: 'Payout retrieved successfully', type: SellerPayout })
+	@Get('/:id')
+	async findById(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
+		return this.sellerPayoutService.getPayout(id, this.scope(request));
+	}
+
+	/**
+	 * Creates a payout from settleable transactions.
+	 *
+	 * Declared rather than inherited: a request body is validated from the type the handler names, and the
+	 * base class names the entity's shape, whose reflected type is `Object` — a parameter the validation
+	 * pipe skips, so an inherited `create` would write any body at all.
+	 *
+	 * `seller.payout.create` is adopted as retry-safe without requiring a key: a client that presents
+	 * one is answered from its first attempt instead of building a second payout over the same ledger
+	 * rows, and a client that presents none is served exactly as it was before. The key stays optional
+	 * here because a duplicated payout is a row an operator can still cancel, while the execution route
+	 * — the one that instructs the provider — is the one that demands it.
+	 *
+	 * @param request The request.
+	 * @param body What to pay.
+	 * @returns The created payout.
+	 */
+	@ApiOperation({ summary: 'Create a payout from settleable transactions' })
+	@ApiResponse({ status: 201, description: 'Payout created successfully', type: SellerPayout })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	@Idempotent({ scope: 'seller.payout.create', required: false, resourceType: 'seller_payout' })
+	@Post('/')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Req() request: any, @Body() body: CreateSellerPayoutDTO): Promise<SellerPayout> {
+		return this.sellerPayoutService.createPayout(
+			{
+				sellerId: body.sellerId,
+				currency: body.currency,
+				transactionIds: body.transactionIds,
+				periodStart: body.periodStart ? new Date(body.periodStart) : undefined,
+				periodEnd: body.periodEnd ? new Date(body.periodEnd) : undefined,
+				note: body.note,
+				isFinal: body.isFinal
+			},
+			this.scope(request)
+		);
+	}
+
+	/**
+	 * Updates what a payout states about itself: its note and the provider references.
+	 *
+	 * The amounts are not writable — they are the sum of the transactions the payout covers — and the
+	 * lifecycle moves through the approve, pay, cancel and retry routes rather than through a body.
+	 * `UpdateSellerPayoutDTO` omits the status, the fee, the transactions and the payout mode, and the
+	 * service refuses every member the payout's own operations write, so a caller holding only
+	 * `SELLER_PAYOUTS_CREATE` cannot mark a payout approved or paid by editing it.
+	 *
+	 * The return is the platform's own: the service's `update` answers either the row or the result of a
+	 * partial update, which is why the CRUD base declares `Promise<any>` on this route too.
+	 *
+	 * @param id The payout id.
+	 * @param entity The fields to change.
+	 * @returns The updated payout.
+	 */
+	@ApiOperation({ summary: 'Update a payout' })
+	@ApiResponse({ status: 200, description: 'Payout updated successfully', type: SellerPayout })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	@Put('/:id')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdateSellerPayoutDTO
+	): Promise<any> {
+		return this.sellerPayoutService.update(id, entity as any);
+	}
+
+	/**
+	 * Runs the payout pass for the sellers whose schedule is due.
+	 *
+	 * `seller.payout.run` is adopted as retry-safe without requiring a key: a scheduler that re-sends a
+	 * pass it never received an answer for is answered from the first attempt's result rather than
+	 * repeating the pass. The pass is already guarded against paying one ledger row twice, which is why
+	 * the key stays optional — a client that presents none still cannot be paid twice by this route.
+	 *
+	 * @param body The period and the optional sellers, currency and dry-run flag.
+	 * @returns What the run decided for each seller.
+	 */
+	@ApiOperation({ summary: 'Run the scheduled payout pass' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CREATE)
+	@Idempotent({ scope: 'seller.payout.run', required: false, resourceType: 'seller_payout' })
+	@Post('/run')
+	@UseValidationPipe({ transform: true })
+	async run(
+		@Body()
+		body: {
+			periodStart?: string;
+			periodEnd?: string;
+			sellerIds?: ID[];
+			currency?: string;
+			dryRun?: boolean;
+		}
+	): Promise<ISellerPayoutRunResult[]> {
+		return this.sellerPayoutService.run({
+			periodStart: body?.periodStart ? new Date(body.periodStart) : undefined,
+			periodEnd: body?.periodEnd ? new Date(body.periodEnd) : undefined,
+			sellerIds: body?.sellerIds,
+			currency: body?.currency,
+			dryRun: body?.dryRun === true
+		});
+	}
+
+	/**
+	 * Approves a payout.
+	 *
+	 * @param request The request.
+	 * @param id The payout id.
+	 * @returns The payout, in `APPROVED`.
+	 */
+	@ApiOperation({ summary: 'Approve a payout' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
+	@Post('/:id/approve')
+	async approve(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
+		return this.sellerPayoutService.approve(id, this.scope(request));
+	}
+
+	/**
+	 * Records the provider's execution of a payout.
+	 *
+	 * This is the route that moves money out of the platform and to the seller, and a retried execution
+	 * instructs the provider a second time, so `seller.payout.pay` is the one route here that requires
+	 * the key: a client that cannot state which attempt this is receives `IDEMPOTENCY_KEY_REQUIRED`
+	 * instead of a second transfer. The first attempt's answer is what a retry of the same key and the
+	 * same body receives, and a different body under that key is refused as a reused key.
+	 *
+	 * `resourceType` records what the key was holding, so an operator reading a stuck client's row knows
+	 * which payout it belongs to without reconstructing the request.
+	 *
+	 * @param request The request.
+	 * @param id The payout id.
+	 * @param body What the provider reported.
+	 * @returns The payout, in `PAID` or `FAILED`.
+	 */
+	@ApiOperation({ summary: 'Execute a payout through the provider' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
+	@Idempotent({ scope: 'seller.payout.pay', required: true, resourceType: 'seller_payout' })
+	@Post('/:id/pay')
+	@UseValidationPipe({ transform: true })
+	async pay(
+		@Req() request: any,
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body()
+		body: {
+			paid: boolean;
+			providerKey?: string;
+			providerTransferId?: string;
+			feeAmount?: string;
+			failureCode?: string;
+			failureReason?: string;
+		}
+	): Promise<SellerPayout> {
+		return this.sellerPayoutService.recordExecution(id, body, this.scope(request));
+	}
+
+	/**
+	 * Cancels an unpaid payout and releases its transactions.
+	 *
+	 * @param request The request.
+	 * @param id The payout id.
+	 * @param body The reason.
+	 * @returns The payout and the number of released rows.
+	 */
+	@ApiOperation({ summary: 'Cancel an unpaid payout' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_CANCEL)
+	@Post('/:id/cancel')
+	async cancel(
+		@Req() request: any,
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() body: { reason: string }
+	): Promise<{ payout: SellerPayout; releasedTransactionCount: number }> {
+		return this.sellerPayoutService.cancel(id, body?.reason, this.scope(request));
+	}
+
+	/**
+	 * Re-drives a failed payout.
+	 *
+	 * `seller.payout.retry` is adopted as retry-safe without requiring a key: re-driving a payout the
+	 * client never saw the answer for would clear a failure an operator is still reading and put the
+	 * payout back in front of the execution route. A client that presents a key is answered from its
+	 * first attempt instead.
+	 *
+	 * @param request The request.
+	 * @param id The payout id.
+	 * @returns The payout, in `APPROVED`.
+	 */
+	@ApiOperation({ summary: 'Retry a failed payout' })
+	@Permissions(PermissionsEnum.SELLER_PAYOUTS_APPROVE)
+	@Idempotent({ scope: 'seller.payout.retry', required: false, resourceType: 'seller_payout' })
+	@Post('/:id/retry')
+	async retry(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerPayout> {
+		return this.sellerPayoutService.retry(id, this.scope(request));
+	}
+
+	/**
+	 * DELETE a payout by id
+	 *
+	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
+	 * `PermissionGuard` answers `true` to that empty metadata — its `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler stood on this
+	 * controller's class-level view grant alone. This override exists only to state its permission: the path
+	 * and the body are the base class's, and a payout is a child row of the seller, so deleting one takes
+	 * SELLERS_DELETE, the DELETE value the catalogue declares for the seller it hangs off.
+	 *
+	 * @param id The payout id.
+	 * @returns The result of the deletion.
+	 */
+	@ApiOperation({ summary: 'Delete a payout' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Payout deleted successfully' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@Delete(':id')
+	@HttpCode(HttpStatus.ACCEPTED)
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * SOFT DELETE a payout by id
+	 *
+	 * The route belongs to `CrudController.softRemove()`, which declares it with no permission metadata at
+	 * all, so `PermissionGuard` answers `true` to the empty metadata — the `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — and only this controller's class-level view
+	 * grant was left in front of it. This override exists only to state its permission: the route and its
+	 * body are unchanged, and archiving a child row of the seller takes SELLERS_DELETE.
+	 *
+	 * @param id The payout id.
+	 * @returns The soft-deleted payout.
+	 */
+	@ApiOperation({ summary: 'Soft delete a payout' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Payout soft deleted successfully' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@Delete(':id/soft')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted payout by id
+	 *
+	 * The route belongs to `CrudController.softRecover()` and carries no permission metadata of its own, so
+	 * `PermissionGuard` answers `true` to the empty metadata — the `isEmpty(permissions)` return in
+	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — before it consults the role grants at all.
+	 * This override exists only to state its permission on the same path and the same body: restoring a row
+	 * under the seller takes SELLERS_DELETE, the same destructive grant its deletion takes.
+	 *
+	 * @param id The payout id.
+	 * @returns The restored payout.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted payout' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Payout restored successfully' })
+	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@Put(':id/recover')
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
+		return await super.softRecover(id, ...options);
+	}
+
+	/**
+	 * The seller scope the guard resolved.
+	 *
+	 * @param request The request.
+	 * @returns The scope, when the request carries one.
+	 */
+	private scope(request: any): ISellerScope | undefined {
+		return request?.sellerScope as ISellerScope | undefined;
+	}
+}

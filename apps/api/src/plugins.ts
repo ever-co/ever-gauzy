@@ -38,9 +38,28 @@ import { VideosPlugin } from '@gauzy/plugin-videos';
 import { RegistryPlugin } from '@gauzy/plugin-registry';
 import { CamshotPlugin } from '@gauzy/plugin-camshot';
 
+import { CatalogPlugin } from '@gauzy/plugin-catalog';
+import { PricingPlugin } from '@gauzy/plugin-pricing';
+import { TaxPlugin } from '@gauzy/plugin-tax';
+import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { WarehousePlugin } from '@gauzy/plugin-warehouse';
+import { CartPlugin } from '@gauzy/plugin-cart';
+import { OrderPlugin } from '@gauzy/plugin-order';
+import { PaymentPlugin } from '@gauzy/plugin-payment';
+import { PromotionPlugin } from '@gauzy/plugin-promotion';
+import { FulfillmentPlugin } from '@gauzy/plugin-fulfillment';
+import { ReturnsPlugin } from '@gauzy/plugin-returns';
+import { SubscriptionPlugin } from '@gauzy/plugin-subscription';
+import { PurchasingPlugin } from '@gauzy/plugin-purchasing';
+import { EntitlementPlugin } from '@gauzy/plugin-entitlement';
+import { MarketplacePlugin } from '@gauzy/plugin-marketplace';
+import { SearchPlugin } from '@gauzy/plugin-search';
+
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SoundshotPlugin } from '@gauzy/plugin-soundshot';
+
+import { PluginCompositionModule } from './plugin-composition';
 
 const { jitsu, sentry, posthog } = environment;
 
@@ -126,5 +145,45 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the SoundshotPlugin in the codebase.
 	SoundshotPlugin,
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
-	RegistryPlugin
+	RegistryPlugin,
+
+	// The commerce domains. Each owns its own tables, migrations, permissions and feature flags.
+	// Their migrations are merged into the connection before it is opened and ORDERED BY THE
+	// PLATFORM, so their position here does not affect them. Their mount order is resolved from
+	// `dependsOn` by `resolvePluginLoadOrder`, which is applied to this list where it is installed —
+	// so this order is a readable default rather than the contract, and the declaration each plugin
+	// makes is what actually decides. A prerequisite that is not in this list is refused at boot,
+	// naming the plugin and the dependency, rather than surfacing later as a missing provider.
+	//
+	// The order below is the dependency order for a full installation:
+	//   catalog, pricing, tax        — the sellable thing, what it costs, what it is taxed
+	//   inventory, warehouse         — the stock ledger, then the inside of the building
+	//   cart, order, payment         — the cart, the order it becomes, the money that settles it
+	//   promotion, fulfillment       — what discounts an order, how it reaches the buyer
+	//   returns, subscription        — post-purchase flows, and the recurring ones
+	//   purchasing, entitlement      — procuring stock, and the rights a purchase grants
+	//   marketplace, search          — third-party selling, and the global index over all of it
+	CatalogPlugin,
+	PricingPlugin,
+	TaxPlugin,
+	InventoryPlugin,
+	WarehousePlugin,
+	CartPlugin,
+	OrderPlugin,
+	PaymentPlugin,
+	PromotionPlugin,
+	FulfillmentPlugin,
+	ReturnsPlugin,
+	SubscriptionPlugin,
+	PurchasingPlugin,
+	EntitlementPlugin,
+	MarketplacePlugin,
+	SearchPlugin,
+
+	// Not a plugin: this installation's composition point, and the one entry here that carries no
+	// plugin metadata. It declares no table, migration or route — it is what binds the capabilities
+	// one package offers to the ports another package declares, so that neither has to import the
+	// other. It is global, so the tokens it binds resolve inside every module that injects them, and
+	// it declares no `dependsOn`, so the load-order resolver leaves it exactly here.
+	PluginCompositionModule
 ];

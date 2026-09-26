@@ -1,0 +1,825 @@
+/**
+ * 🛑 This import must stay FIRST, before any import that pulls a core service or controller — see
+ * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the
+ * entity applies it if the graph is entered through the validators rather than through the entities.
+ */
+import '../core/entities/internal';
+
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { BadRequestException, ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { buildSchema, printSchema } from 'graphql';
+import { ContactGroupSource, ContactGroupType, PermissionsEnum } from '@gauzy/contracts';
+import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { CursorCodec } from '../api/cursor';
+import { GraphqlPubSub } from '../graphql/subscriptions/graphql-pubsub.service';
+import { SubscriptionCatalogue } from '../graphql/subscriptions/subscription-catalogue';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { ContactGroupController } from './contact-group.controller';
+import { ContactGroupResolver } from './contact-group.resolver';
+import {
+	CONTACT_GROUP_EVENT_NAMES,
+	CONTACT_GROUP_SUBSCRIBED_EVENT_NAMES,
+	ContactGroupEventPublisher,
+	IContactGroupChangedEnvelope
+} from './contact-group-event.publisher';
+
+/**
+ * The request context, doubled so the tenant a credential carries is a value this suite states.
+ *
+ * The subscription is the one field whose topic is built from the credential rather than from an
+ * argument, so the tenant has to be knowable here for the assertion to be about the topic and not
+ * about whichever tenant the ambient context happened to hold.
+ */
+let mockTenantId: string | null = '00000000-0000-4000-8000-000000000001';
+let mockOrganizationId: string | null = '00000000-0000-4000-8000-000000000002';
+
+jest.mock('../core/context/request-context', () => ({
+	RequestContext: {
+		currentUser: () => (mockTenantId ? { id: 'user-1', tenantId: mockTenantId, roleId: 'role-1' } : null),
+		currentUserId: () => (mockTenantId ? 'user-1' : null),
+		currentTenantId: () => mockTenantId,
+		// The two the real permission guard reads to identify the caller's role.
+		currentRoleId: () => (mockTenantId ? 'role-1' : null),
+		currentRoleName: () => null,
+		currentOrganizationId: () => mockOrganizationId,
+		currentEmployeeId: () => null,
+		hasPermission: () => false
+	}
+}));
+
+/**
+ * Contact groups over GraphQL (GraphQL specification §3.2 row 4, §3.1, §7.1–§7.2, §9.7).
+ *
+ * The programme's API doctrine is one concept reachable over both protocols with the same scope, and this
+ * suite pins the half of it that is easy to get quietly wrong:
+ *
+ * - every root field the specification names for this resource exists **in the SDL**, read from the
+ *   `.gql` files the boot loader globs rather than from a decorator, because a resolver whose field the
+ *   schema does not declare is a field nothing can call;
+ * - the list root field is a connection with the platform's own cursor codec behind it, so a cursor
+ *   obtained over REST resumes here and a refusal is the query protocol's own code;
+ * - a mutation delegates to the same service method the REST route calls, with the same scope — a client
+ *   does not choose a better surface by choosing a protocol;
+ * - every field carries the permission its own route runs under, read from the controller's metadata by
+ *   the rule the guards apply, so a role that may create a group cannot delete one by asking GraphQL
+ *   instead of REST, and no field states a permission its route does not carry;
+ * - both protocols are tenant- and permission-guarded, asserted against the metadata a guard reads.
+ */
+
+const TENANT = '00000000-0000-4000-8000-000000000001';
+const ORGANIZATION = '00000000-0000-4000-8000-000000000002';
+const GROUP = '00000000-0000-4000-8000-000000000060';
+const OTHER_GROUP = '00000000-0000-4000-8000-000000000061';
+const OTHER_TENANT = '00000000-0000-4000-8000-000000000009';
+const CUSTOMER = '00000000-0000-4000-8000-000000000040';
+
+/** The rows a scripted service answers with, in the order the delivered list method returns them. */
+const ROWS = [
+	{
+		id: GROUP,
+		tenantId: TENANT,
+		organizationId: ORGANIZATION,
+		name: 'Wholesale',
+		code: 'WHOLESALE',
+		type: ContactGroupType.STATIC,
+		isSystem: false,
+		discountPercent: 0.1,
+		createdAt: new Date('2026-03-01T10:00:00.000Z'),
+		updatedAt: new Date('2026-03-01T10:00:00.000Z')
+	},
+	{
+		id: OTHER_GROUP,
+		tenantId: TENANT,
+		organizationId: ORGANIZATION,
+		name: 'Guests',
+		code: 'GUESTS',
+		type: ContactGroupType.RULE_BASED,
+		isSystem: true,
+		createdAt: new Date('2026-02-01T10:00:00.000Z'),
+		updatedAt: new Date('2026-02-01T10:00:00.000Z')
+	}
+];
+
+/** The resolver, over a scripted service and a fan-out that records the topic it was opened on. */
+function surfaces() {
+	const contactGroupService = {
+		listGroups: jest.fn().mockResolvedValue(ROWS),
+		findGroup: jest.fn().mockResolvedValue(ROWS[0]),
+		findGroupOrFail: jest.fn().mockResolvedValue(ROWS[0]),
+		createGroup: jest.fn().mockResolvedValue(ROWS[0]),
+		updateGroup: jest.fn().mockResolvedValue(ROWS[0]),
+		removeGroup: jest.fn().mockResolvedValue(ROWS[1]),
+		softRecover: jest.fn().mockResolvedValue(ROWS[1])
+	};
+	const pubSub = {
+		topicFor: jest.fn((eventName: string, tenantId: string) => `${eventName}:${tenantId}`),
+		asyncIterableIterator: jest.fn().mockReturnValue('the contact group stream')
+	};
+
+	return {
+		contactGroupService,
+		pubSub,
+		resolver: new ContactGroupResolver(contactGroupService as never, pubSub as never)
+	};
+}
+
+/**
+ * The deployment's own fan-out, with the real publisher over it.
+ *
+ * The publisher under test is the real one, because what this suite pins is the envelope a subscriber
+ * receives and not that some collaborator was called: the fan-out is the platform's in-process engine,
+ * so a fact published here is a fact the subscription's own stream hands back.
+ */
+function announcements() {
+	const pubSub = new GraphqlPubSub();
+	const catalogue = new SubscriptionCatalogue();
+	const publisher = new ContactGroupEventPublisher(pubSub as never, catalogue);
+
+	publisher.onModuleInit();
+
+	return { pubSub, catalogue, publisher };
+}
+
+/**
+ * Reads one message from a stream, refusing to hang the suite when none arrives.
+ *
+ * The deadline is cleared on every path, so a case that reads five messages leaves five timers behind
+ * for a run that has already decided — which is what makes Jest force a worker to exit.
+ */
+async function nextOrNothing<T>(stream: AsyncIterator<T>): Promise<IteratorResult<T>> {
+	let deadline: ReturnType<typeof setTimeout> | undefined;
+
+	try {
+		return await Promise.race([
+			stream.next(),
+			new Promise<IteratorResult<T>>((resolve) => {
+				deadline = setTimeout(() => resolve({ value: undefined, done: true }), 50);
+			})
+		]);
+	} finally {
+		clearTimeout(deadline);
+	}
+}
+
+/** Whether an HTTP failure is a refusal rather than a miss. */
+function isRefusal(error: unknown): boolean {
+	return error instanceof HttpException && error.getStatus() >= 400 && error.getStatus() !== 404;
+}
+
+/**
+ * The composed schema, as text: the domain's own documents, the membership domain's, and the kernel's —
+ * exactly the set the boot loader globs and the composition pass asserts. The membership document is
+ * included because the group type carries the pivot's two fields and references its type.
+ */
+function composedSchema(): string {
+	const directories = [
+		join(__dirname, 'schema'),
+		join(__dirname, '..', 'contact-group-member', 'schema'),
+		join(__dirname, '..', 'graphql', 'schema')
+	];
+
+	const documents = directories.flatMap((directory) =>
+		readdirSync(directory)
+			.filter((name) => name.endsWith('.gql'))
+			.map((name) => readFileSync(join(directory, name), 'utf8'))
+	);
+
+	return documents.join('\n');
+}
+
+/** The schema, built once: the composition itself is asserted by the composition check, not here. */
+const schema = buildSchema(composedSchema());
+
+/** The fields one root operation type declares, as a client reads them. */
+function rootFields(operation: 'Query' | 'Mutation' | 'Subscription'): string[] {
+	const root = schema.getType(operation) as { getFields(): Record<string, unknown> } | undefined;
+
+	return Object.keys(root?.getFields() ?? {});
+}
+
+/** The handlers of one controller, as functions, inherited ones included. */
+function handlersOf(controller: typeof ContactGroupController): Record<string, object> {
+	return controller.prototype as unknown as Record<string, object>;
+}
+
+/**
+ * The permission one route runs under: what its handler states, else what its controller states.
+ *
+ * This is the rule the guards themselves apply — the reflector's `getAllAndOverride` over
+ * `[handler, class]` — restated here, so a field is held to the controller's own metadata rather than
+ * to a second copy of the same list written out in this file.
+ */
+function permissionOfRoute(controller: typeof ContactGroupController, handler: string): unknown {
+	return (
+		Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(controller)[handler]) ??
+		Reflect.getMetadata(PERMISSIONS_METADATA, controller)
+	);
+}
+
+beforeEach(() => {
+	mockTenantId = TENANT;
+	mockOrganizationId = ORGANIZATION;
+});
+
+describe('ContactGroupResolver — the SDL declares the root fields the specification names (§3.2 row 4)', () => {
+	it('declares the two group queries', () => {
+		expect(rootFields('Query')).toEqual(expect.arrayContaining(['contactGroups', 'contactGroup']));
+	});
+
+	it('declares every group mutation the specification names', () => {
+		expect(rootFields('Mutation')).toEqual(
+			expect.arrayContaining([
+				'createContactGroup',
+				'updateContactGroup',
+				'deleteContactGroup',
+				'softDeleteContactGroup',
+				'recoverContactGroup'
+			])
+		);
+	});
+
+	it('declares the subscription the coverage table promises, with its two narrowing arguments', () => {
+		const printed = printSchema(schema);
+
+		expect(rootFields('Subscription')).toEqual(expect.arrayContaining(['contactGroupChanged']));
+		// The two arguments are the ones the channel subscription takes, narrowed to this concept: they
+		// can only narrow the stream, and neither of them can name a tenant.
+		expect(printed).toMatch(/contactGroupChanged\(groupId: ID, action: String\): ContactGroup!/);
+	});
+
+	it('declares the membership of a group as fields of the group rather than as a root', () => {
+		const printed = printSchema(schema);
+
+		expect(printed).toMatch(/members: \[ContactGroupMember!\]/);
+		expect(printed).toMatch(/memberCount: Int!/);
+		// The pivot is a child of the group: it has no node query of its own, which is the graph rather
+		// than a gap — a membership has no meaning without the group it belongs to.
+		expect(rootFields('Query')).not.toEqual(expect.arrayContaining(['contactGroupMembers']));
+	});
+
+	it('declares the group connection, its edges, its filters and its sorts', () => {
+		const printed = printSchema(schema);
+
+		expect(printed).toMatch(
+			/type ContactGroupConnection \{\s*nodes: \[ContactGroup!\]!\s*edges: \[ContactGroupEdge!\]!\s*totalCount: Int!\s*pageInfo: PageInfo!\s*\}/
+		);
+		expect(printed).toMatch(/type ContactGroupEdge \{\s*node: ContactGroup!\s*cursor: String!\s*\}/);
+		expect(printed).toMatch(/input ContactGroupFilter \{/);
+		expect(printed).toMatch(/input ContactGroupSort \{/);
+		expect(printed).toMatch(/enum ContactGroupSortField \{/);
+		expect(printed).toMatch(/input ContactGroupTypeFilter \{/);
+		// The kernel's page info is referenced, never redeclared: the schema builds rather than fails when
+		// the same name is declared twice, and the composition check is what refuses it.
+		expect(printed).toMatch(/type PageInfo \{/);
+	});
+
+	it('declares no root field for the capabilities this delivery cannot honour', () => {
+		const printed = printSchema(schema);
+
+		// The segment evaluation the preview would need, and the rule type the expansion would return,
+		// are both undelivered: a root field that promised either would be a field that cannot resolve.
+		expect(rootFields('Mutation')).not.toEqual(expect.arrayContaining(['previewContactGroupMembers']));
+		expect(printed).not.toMatch(/previewContactGroup/);
+	});
+});
+
+describe('ContactGroupResolver — the connection contract (§7.1, §7.2)', () => {
+	it('answers the list with nodes, edges, a total and the boundary cursors', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		const connection = await resolver.contactGroups(undefined, undefined, undefined, 20);
+
+		expect(contactGroupService.listGroups).toHaveBeenCalledWith();
+		expect(connection.nodes).toHaveLength(2);
+		expect(connection.totalCount).toBe(2);
+		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
+		expect(connection.pageInfo.endCursor).toBe(connection.edges[1].cursor);
+		expect(connection.pageInfo.hasNextPage).toBe(false);
+		// The cursor is the platform's own codec, so the same cursor is valid on the REST surface.
+		expect(CursorCodec.decode(connection.edges[0].cursor).id).toBe(GROUP);
+	});
+
+	it('narrows by a filter the resource declares', async () => {
+		const { resolver } = surfaces();
+
+		const connection = await resolver.contactGroups({ type: { eq: ContactGroupType.RULE_BASED } });
+
+		expect(connection.nodes.map((node) => node.id)).toEqual([OTHER_GROUP]);
+		// The total is the filtered total, which is what the REST envelope reports as `total`.
+		expect(connection.totalCount).toBe(1);
+	});
+
+	it('orders by the keys the sort enum offers', async () => {
+		const { resolver } = surfaces();
+
+		const connection = await resolver.contactGroups(undefined, [{ field: 'name', direction: 'ASC' }]);
+
+		expect(connection.nodes.map((node) => node.code)).toEqual(['GUESTS', 'WHOLESALE']);
+	});
+
+	it('resumes a walk from an opaque cursor', async () => {
+		const { resolver } = surfaces();
+		const first = await resolver.contactGroups(undefined, undefined, undefined, 1);
+
+		const second = await resolver.contactGroups(undefined, undefined, {
+			first: 1,
+			after: first.pageInfo.endCursor ?? undefined
+		});
+
+		expect(second.nodes.map((node) => node.id)).toEqual([OTHER_GROUP]);
+		expect(second.pageInfo.hasPreviousPage).toBe(true);
+	});
+
+	it('refuses a sort field the resource does not declare, with the query protocol’s own code', async () => {
+		const { resolver } = surfaces();
+
+		const error = await resolver
+			.contactGroups(undefined, [{ field: 'priceListId', direction: 'ASC' }] as never)
+			.catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('QUERY_SORT_NOT_ALLOWED');
+	});
+
+	it('refuses a filter field the resource does not declare', async () => {
+		const { resolver } = surfaces();
+
+		const error = await resolver.contactGroups({ rules: { eq: 'x' } }).catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
+	});
+
+	it('refuses both pagination styles at once rather than silently preferring one', async () => {
+		const { resolver } = surfaces();
+
+		const error = await resolver
+			.contactGroups(undefined, undefined, undefined, 5, undefined, undefined, undefined, 5)
+			.catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('QUERY_NESTING_LIMIT_EXCEEDED');
+	});
+
+	it('caps the page rather than answering every row', async () => {
+		const { resolver } = surfaces();
+
+		const error = await resolver.contactGroups(undefined, undefined, undefined, 500).catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('QUERY_PAGE_LIMIT_EXCEEDED');
+	});
+});
+
+describe('ContactGroupResolver — one concept, two protocols, the same writes', () => {
+	it('reads one group, answering null rather than failing when there is none', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		await expect(resolver.contactGroup(GROUP)).resolves.toBe(ROWS[0]);
+		contactGroupService.findGroup.mockResolvedValueOnce(null);
+		await expect(resolver.contactGroup(GROUP)).resolves.toBeNull();
+	});
+
+	it('creates, updates and removes through the same service methods the REST routes call', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		await resolver.createContactGroup({ organizationId: ORGANIZATION, name: 'Wholesale', code: 'WHOLESALE' });
+		await resolver.updateContactGroup({ id: GROUP, name: 'Renamed' });
+		await resolver.deleteContactGroup(OTHER_GROUP);
+
+		expect(contactGroupService.createGroup).toHaveBeenCalledWith(
+			expect.objectContaining({ name: 'Wholesale', code: 'WHOLESALE' })
+		);
+		expect(contactGroupService.updateGroup).toHaveBeenCalledWith(GROUP, expect.objectContaining({ name: 'Renamed' }));
+		expect(contactGroupService.removeGroup).toHaveBeenCalledWith(OTHER_GROUP);
+	});
+
+	it('surfaces a refusal of a system group as a 4xx that is not a 404', async () => {
+		const refusal = new BadRequestException(
+			"CONTACT_GROUP_SYSTEM: 'GUESTS' is a group the platform maintains, and it is not deletable."
+		);
+		const contactGroupService = {
+			listGroups: jest.fn().mockResolvedValue(ROWS),
+			removeGroup: jest.fn().mockRejectedValue(refusal)
+		};
+		const resolver = new ContactGroupResolver(contactGroupService as never, surfaces().pubSub as never);
+
+		const error = await resolver.deleteContactGroup(OTHER_GROUP).catch((thrown) => thrown);
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('CONTACT_GROUP_SYSTEM');
+	});
+
+	it('removes through the soft-delete spelling the same call that route makes', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		await resolver.softDeleteContactGroup(OTHER_GROUP);
+
+		// The route is the CRUD base's soft-delete route, restated by the controller and routed to the
+		// domain's own removal, so the field calls exactly what its handler calls — the same method the
+		// other removal field calls, because removal here is soft under either spelling.
+		expect(contactGroupService.removeGroup).toHaveBeenCalledWith(OTHER_GROUP);
+	});
+
+	it('recovers through the same service method the recovery route reaches', async () => {
+		const { resolver, contactGroupService } = surfaces();
+
+		await expect(resolver.recoverContactGroup(OTHER_GROUP)).resolves.toBe(ROWS[1]);
+
+		// The route is the CRUD base's `PUT /:id/recover`, which the controller restates only to state its
+		// permission, so the field calls exactly what that handler calls: `softRecover(id)`. Following the
+		// domain's removal instead would restore through a method the route never reaches.
+		expect(contactGroupService.softRecover).toHaveBeenCalledWith(OTHER_GROUP);
+		expect(contactGroupService.removeGroup).toHaveBeenCalledTimes(0);
+	});
+});
+
+describe('ContactGroupResolver — subscriptions (§10.2, §10.4)', () => {
+	it('guards the subscription exactly as the resource’s reads are guarded, and never more widely', () => {
+		const proto = ContactGroupResolver.prototype;
+		const guards = Reflect.getMetadata('__guards__', ContactGroupResolver) ?? [];
+
+		// A subscription is a read of the same resource, so it carries the class's guard chain and the
+		// read permission: a caller who may not list groups may not watch them either, and a caller who
+		// may list them needs nothing else to watch them.
+		expect(guards).toEqual(expect.arrayContaining([TenantPermissionGuard, PermissionGuard]));
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto.contactGroupChanged)).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_VIEW
+		]);
+	});
+
+	it('opens one topic per announced fact, each scoped to the tenant the credential carries', () => {
+		const { resolver, pubSub } = surfaces();
+
+		resolver.contactGroupChanged(GROUP, 'assigned');
+
+		// The tenant is the credential's and never an argument's: the field takes `groupId` and
+		// `action`, and neither of them can reach the topic this way.
+		for (const eventName of CONTACT_GROUP_SUBSCRIBED_EVENT_NAMES) {
+			expect(pubSub.topicFor).toHaveBeenCalledWith(eventName, TENANT);
+			expect(pubSub.asyncIterableIterator).toHaveBeenCalledWith(`${eventName}:${TENANT}`);
+		}
+	});
+
+	it('subscribes to nothing when no tenant is resolved, rather than to every tenant’s facts', () => {
+		mockTenantId = null;
+		const { resolver, pubSub } = surfaces();
+
+		resolver.contactGroupChanged();
+
+		// The topic of an unauthenticated connection is one no fact is ever published on, so the stream
+		// is silent rather than wide — which is the fail-closed answer the other domains give too.
+		for (const eventName of CONTACT_GROUP_SUBSCRIBED_EVENT_NAMES) {
+			expect(pubSub.topicFor).toHaveBeenCalledWith(eventName, '');
+		}
+	});
+
+	it('carries every producing write’s envelope on the stream the subscription resolves', async () => {
+		const { pubSub, publisher } = announcements();
+		const resolver = new ContactGroupResolver(surfaces().contactGroupService as never, pubSub as never);
+		const stream = resolver.contactGroupChanged(GROUP)[Symbol.asyncIterator]();
+
+		// The writes, as the services announce them: the group's own definition changing, and its
+		// membership being granted and withdrawn.
+		await publisher.groupChanged(ROWS[0], 'created');
+		await publisher.groupChanged(ROWS[0], 'updated');
+		await publisher.groupChanged(ROWS[1], 'deleted');
+		await publisher.membersAssigned(ROWS[0], [CUSTOMER], ContactGroupSource.MANUAL);
+		await publisher.membersUnassigned(ROWS[0], [CUSTOMER], ContactGroupSource.MANUAL);
+
+		const received: IContactGroupChangedEnvelope[] = [];
+
+		for (let index = 0; index < 5; index++) {
+			const message = await nextOrNothing(stream);
+
+			expect(message.done).toBe(false);
+			received.push(message.value);
+		}
+
+		await stream.return?.(undefined);
+
+		// Every producing write reached the one stream the field returns. The order is asserted as a set
+		// rather than as a sequence: each topic preserves its own order, and the merge makes no promise
+		// across topics — which is the platform's own rule for facts of different partitions.
+		expect(received.map((envelope) => `${envelope.name}:${envelope.action}`).sort()).toEqual(
+			[
+				`${CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED}:created`,
+				`${CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED}:updated`,
+				`${CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED}:deleted`,
+				`${CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_ASSIGNED}:assigned`,
+				`${CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_UNASSIGNED}:unassigned`
+			].sort()
+		);
+
+		// The envelope is the platform's own, with the scoping members the delivery decision is made on
+		// and the aggregate the facts belong to.
+		for (const envelope of received) {
+			expect(envelope.tenantId).toBe(TENANT);
+			expect(envelope.organizationId).toBe(ORGANIZATION);
+			expect(envelope.channelId).toBeNull();
+			expect(envelope.aggregate.type).toBe('ContactGroup');
+			expect(envelope.occurredAt).toBeInstanceOf(Date);
+		}
+
+		// A group's own change carries the row, and the two membership facts carry the catalogued
+		// payload — `groupId`, `customerIds[]`, `source` — beside the group a subscriber resolves.
+		const created = received.find((envelope) => envelope.action === 'created');
+		const deleted = received.find((envelope) => envelope.action === 'deleted');
+		const assigned = received.find((envelope) => envelope.action === 'assigned');
+		const unassigned = received.find((envelope) => envelope.action === 'unassigned');
+
+		expect(created.data).toBe(ROWS[0]);
+		expect(created.group).toBe(ROWS[0]);
+		expect(deleted.group).toBe(ROWS[1]);
+		expect(assigned.data).toEqual({ groupId: GROUP, customerIds: [CUSTOMER], source: ContactGroupSource.MANUAL });
+		expect(assigned.customerIds).toEqual([CUSTOMER]);
+		expect(assigned.source).toBe(ContactGroupSource.MANUAL);
+		expect(unassigned.data).toEqual({ groupId: GROUP, customerIds: [CUSTOMER], source: ContactGroupSource.MANUAL });
+	});
+
+	it('never delivers a fact produced for another tenant, whatever the topic it was published on', async () => {
+		const { pubSub, publisher } = announcements();
+		// No credential behind the write, so each fact travels on the topic its own row names — which is
+		// what lets this case publish on both tenants' topics and read one of them.
+		mockTenantId = null;
+
+		const tenantStream = pubSub.asyncIterableIterator<IContactGroupChangedEnvelope>(
+			pubSub.topicFor(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED, TENANT)
+		);
+
+		await publisher.groupChanged(ROWS[0], 'created');
+		await publisher.groupChanged(
+			{ ...ROWS[0], id: OTHER_GROUP, tenantId: OTHER_TENANT, organizationId: null },
+			'created'
+		);
+
+		const received = await nextOrNothing(tenantStream);
+
+		expect(received.done).toBe(false);
+		expect(received.value.tenantId).toBe(TENANT);
+		expect(received.value.group.id).toBe(GROUP);
+		// The other tenant's fact travelled on `<event>:<other tenant>`, a topic this stream was never
+		// given, so there is nothing left to filter and nothing to leak.
+		expect(pubSub.topicFor(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED, OTHER_TENANT)).not.toBe(
+			pubSub.topicFor(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_CHANGED, TENANT)
+		);
+
+		await tenantStream.return?.(undefined);
+	});
+
+	it('declares every fact it carries, so the kernel’s own event selection can resolve them', () => {
+		const { catalogue } = announcements();
+
+		expect(catalogue.names()).toEqual([...CONTACT_GROUP_SUBSCRIBED_EVENT_NAMES].sort());
+		expect(catalogue.has(CONTACT_GROUP_EVENT_NAMES.CONTACT_GROUP_ASSIGNED)).toBe(true);
+		expect(catalogue.resolve(['contact_group.*'])).toEqual([...CONTACT_GROUP_SUBSCRIBED_EVENT_NAMES].sort());
+	});
+});
+
+/**
+ * The real permission guard, over a role that holds exactly `grants`.
+ *
+ * The role store answers the way `RolePermissionService.checkRolePermission` does — an `IN` over the
+ * permissions the route states, so a role holding any one of them passes — and the cache always misses,
+ * so every decision is the store's. The metadata the guard reads is the resolver's and the
+ * controller's own, which is the point: a spec that read the decorator alone would keep passing if the
+ * guard resolved a handler's permission some other way.
+ *
+ * @param grants The permissions the caller's role holds.
+ * @returns The guard and the role store it asks.
+ */
+function permissionGate(grants: PermissionsEnum[]) {
+	const checkRolePermission = jest.fn(async (_tenantId: string, _roleId: string, permissions: string[]) =>
+		permissions.some((permission) => grants.includes(permission as PermissionsEnum))
+	);
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn() };
+
+	return {
+		guard: new PermissionGuard(cache as never, new Reflector(), { checkRolePermission } as never),
+		checkRolePermission
+	};
+}
+
+/** The execution context of one resolver field, as the permission guard reads it. */
+function fieldContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (ContactGroupResolver.prototype as never)[field],
+		getClass: () => ContactGroupResolver
+	} as unknown as ExecutionContext;
+}
+
+/** The execution context of one REST route, inherited handlers included, as the permission guard reads it. */
+function routeContext(handler: string): ExecutionContext {
+	return {
+		getHandler: () => handlersOf(ContactGroupController)[handler],
+		getClass: () => ContactGroupController
+	} as unknown as ExecutionContext;
+}
+
+describe('ContactGroupResolver — the guard stack and the permission every root field declares', () => {
+	it('guards the resolver with both protocol guards', () => {
+		const guards = Reflect.getMetadata('__guards__', ContactGroupResolver) ?? [];
+
+		expect(guards).toEqual(expect.arrayContaining([TenantPermissionGuard, PermissionGuard]));
+	});
+
+	it('carries the read permission on the resource and the catalogue’s permission on every write', () => {
+		const proto = ContactGroupResolver.prototype;
+		const expected: Array<[string, PermissionsEnum]> = [
+			['contactGroups', PermissionsEnum.CONTACT_GROUPS_VIEW],
+			['contactGroup', PermissionsEnum.CONTACT_GROUPS_VIEW],
+			['createContactGroup', PermissionsEnum.CONTACT_GROUPS_CREATE],
+			['updateContactGroup', PermissionsEnum.CONTACT_GROUPS_EDIT],
+			['deleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE],
+			['softDeleteContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE],
+			// Corrected (AWR-5): the recovery undoes a removal, so it carries the removal's grant rather
+			// than the read grant it used to mirror from the un-overridden route.
+			['recoverContactGroup', PermissionsEnum.CONTACT_GROUPS_DELETE]
+		];
+
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactGroupResolver)).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_VIEW
+		]);
+
+		for (const [field, permission] of expected) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([permission]);
+		}
+	});
+
+	it('states on every field the permission its own route runs under', () => {
+		const routes: Array<[string, string]> = [
+			['contactGroups', 'findAll'],
+			['contactGroup', 'findById'],
+			['createContactGroup', 'create'],
+			['updateContactGroup', 'update'],
+			['deleteContactGroup', 'delete'],
+			['softDeleteContactGroup', 'softRemove'],
+			['recoverContactGroup', 'softRecover']
+		];
+
+		const fields = ContactGroupResolver.prototype as unknown as Record<string, object>;
+		const stated = Object.fromEntries(
+			routes.map(([field]) => [field, Reflect.getMetadata(PERMISSIONS_METADATA, fields[field])])
+		);
+		const expected = Object.fromEntries(
+			routes.map(([field, handler]) => [field, permissionOfRoute(ContactGroupController, handler)])
+		);
+
+		// The permissions are the controller's own metadata, applied the way the guards apply it, so a
+		// field that widened or narrowed a route would be caught here rather than by a second list that
+		// agrees with the resolver because it was copied from it.
+		expect(stated).toEqual(expected);
+	});
+
+	it('states the delete grant on the recovery, on the field and on the route it mirrors', () => {
+		const proto = ContactGroupResolver.prototype;
+
+		// Corrected (AWR-5): this case used to pin the read grant here — `PUT /:id/recover` was inherited
+		// with no permission of its own, so the guard resolved the class-level `CONTACT_GROUPS_VIEW` for it
+		// and the field mirrored that, which let a view-only role undo a `CONTACT_GROUPS_DELETE` removal
+		// over either surface. Restoring undoes a removal, so the controller now restates the route with
+		// the grant the removals carry, the handler states it itself rather than inheriting the class's,
+		// and the field states the same grant.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ContactGroupController)['softRecover'])).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_DELETE
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactGroupController)).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_VIEW
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto.recoverContactGroup)).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_DELETE
+		]);
+		expect(permissionOfRoute(ContactGroupController, 'softRecover')).toEqual([
+			PermissionsEnum.CONTACT_GROUPS_DELETE
+		]);
+	});
+
+	it('refuses the recovery to a caller who holds only the read grant, on both surfaces', async () => {
+		// The failure scenario itself (AWR-5): a role holding `CONTACT_GROUPS_VIEW` alone called
+		// `recoverContactGroup` — or `PUT /:id/recover` — and the real guard let it through, because the
+		// handler stated nothing and the class stated the read grant that role holds.
+		const readOnly = permissionGate([PermissionsEnum.CONTACT_GROUPS_VIEW]);
+
+		await expect(readOnly.guard.canActivate(fieldContext('recoverContactGroup'))).resolves.toBe(false);
+		await expect(readOnly.guard.canActivate(routeContext('softRecover'))).resolves.toBe(false);
+		// Refused on the removal's grant, which is the question the guard asked the role store.
+		expect(readOnly.checkRolePermission).toHaveBeenCalledWith(
+			TENANT,
+			'role-1',
+			[PermissionsEnum.CONTACT_GROUPS_DELETE],
+			true
+		);
+		// The control: the same role still reads, so the refusal is about the write and not the role.
+		await expect(readOnly.guard.canActivate(fieldContext('contactGroups'))).resolves.toBe(true);
+	});
+
+	it('refuses the recovery to a role that may create and edit groups but not remove them', async () => {
+		// Restoring undoes a removal, so a role that could not have removed the group cannot bring it back.
+		const writer = permissionGate([
+			PermissionsEnum.CONTACT_GROUPS_VIEW,
+			PermissionsEnum.CONTACT_GROUPS_CREATE,
+			PermissionsEnum.CONTACT_GROUPS_EDIT
+		]);
+
+		await expect(writer.guard.canActivate(fieldContext('recoverContactGroup'))).resolves.toBe(false);
+		await expect(writer.guard.canActivate(routeContext('softRecover'))).resolves.toBe(false);
+	});
+
+	it('lets a caller who holds the delete grant restore, on both surfaces', async () => {
+		const remover = permissionGate([PermissionsEnum.CONTACT_GROUPS_VIEW, PermissionsEnum.CONTACT_GROUPS_DELETE]);
+
+		await expect(remover.guard.canActivate(fieldContext('recoverContactGroup'))).resolves.toBe(true);
+		await expect(remover.guard.canActivate(routeContext('softRecover'))).resolves.toBe(true);
+	});
+
+	it('refuses every write to a caller who holds only the read permission', () => {
+		// "No credential" at the level a unit test can observe: the class-level chain refuses a request
+		// that presents none, and the metadata below is what the permission guard reads. A write field
+		// that carried the read permission — or none — would be reachable by every caller that may look.
+		// Corrected (AWR-5): `recoverContactGroup` used to be excluded here because it stated the read
+		// grant; it is a write, and a view-only role must not reach it either.
+		const proto = ContactGroupResolver.prototype;
+
+		for (const field of [
+			'createContactGroup',
+			'updateContactGroup',
+			'deleteContactGroup',
+			'softDeleteContactGroup',
+			'recoverContactGroup'
+		]) {
+			const stated = Reflect.getMetadata(PERMISSIONS_METADATA, proto[field]) ?? [];
+
+			expect(stated).not.toContain(PermissionsEnum.CONTACT_GROUPS_VIEW);
+			expect(stated.length).toBeGreaterThan(0);
+		}
+	});
+
+	it('offers no argument it cannot honour', () => {
+		const printed = printSchema(schema);
+
+		expect(printed).not.toMatch(/contactGroups\([^)]*withDeleted/);
+	});
+});
+
+/** The code the commerce catalogue declares for this surface, as the guard’s metadata carries it. */
+const FEATURE_GRAPHQL = 'FEATURE_GRAPHQL';
+
+/**
+ * The gate, over a scripted cache and a scripted feature service.
+ *
+ * The guard under test is the real one and the metadata it reads is the metadata this resolver
+ * declares, which is the point: a spec that asserted the decorator alone would keep passing if the
+ * guard stopped reading that key.
+ *
+ * @param enabled Whether the capability is switched on for the caller’s scope.
+ * @returns The guard and the service it resolves through.
+ */
+function gate(enabled: boolean) {
+	const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn() };
+	const featureService = { isFeatureEnabled: jest.fn().mockResolvedValue(enabled) };
+
+	return {
+		guard: new FeatureFlagGuard(cache as never, new Reflector(), featureService as never),
+		featureService
+	};
+}
+
+/** A GraphQL execution context for one field, which is what the guard has to read without crashing. */
+function graphqlContext(field: string): ExecutionContext {
+	return {
+		getHandler: () => (ContactGroupResolver.prototype as never)[field],
+		getClass: () => ContactGroupResolver,
+		getType: () => 'graphql',
+		getArgByIndex: () => ({ fieldName: field })
+	} as unknown as ExecutionContext;
+}
+
+describe('ContactGroupResolver — a capability that is switched off is not served', () => {
+	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {
+		// One statement, read by the guard with `getAllAndOverride` over the handler and then the class,
+		// so every field is behind it.
+		expect(Reflect.getMetadata(FEATURE_METADATA, ContactGroupResolver)).toBe(FEATURE_GRAPHQL);
+		expect(Reflect.getMetadata('__guards__', ContactGroupResolver)).toContain(FeatureFlagGuard);
+	});
+
+	it('refuses a field whose capability is switched off, and names the field it refused', async () => {
+		const { guard, featureService } = gate(false);
+
+		const refusal = await guard.canActivate(graphqlContext('contactGroups')).catch((thrown) => thrown);
+
+		// The code the guard resolved is the one this resolver declared, not a second copy of it.
+		expect(featureService.isFeatureEnabled).toHaveBeenCalledWith(FEATURE_GRAPHQL);
+		expect(refusal).toBeInstanceOf(NotFoundException);
+		// A disabled capability answers the way a missing one does, and says which field was refused.
+		expect((refusal as Error).message).toContain('contactGroups');
+		expect((refusal as NotFoundException).getStatus()).toBe(404);
+	});
+
+	it('serves the field once the capability is switched on', async () => {
+		const { guard } = gate(true);
+
+		await expect(guard.canActivate(graphqlContext('contactGroups'))).resolves.toBe(true);
+	});
+});

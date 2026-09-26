@@ -28,7 +28,7 @@ export class EntitySubscription extends BasePerEntityType implements IEntitySubs
 	@IsNotEmpty()
 	@IsEnum(EntitySubscriptionTypeEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	type: EntitySubscriptionTypeEnum;
 
 	/*

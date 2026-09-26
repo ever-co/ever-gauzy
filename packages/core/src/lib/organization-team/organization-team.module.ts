@@ -9,6 +9,7 @@ import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
 import { OrganizationTeamController } from './organization-team.controller';
+import { OrganizationTeamResolver } from './organization-team.resolver';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 import { QueryHandlers } from './queries/handlers';
@@ -19,6 +20,15 @@ import { TaskModule } from './../tasks/task.module';
 import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 
+/**
+ * The team: the working group a task, a daily plan and a tracked stretch of time are filed under.
+ *
+ * `CqrsModule` is re-exported, not merely imported, because the GraphQL view of the same resource
+ * dispatches the create command through the command bus and the statistics read through the query bus
+ * rather than writing or reading the row itself. A resolver is a provider of whichever module hosts
+ * the resolver graph, so the module that hosts it reaches those buses only if the domain module hands
+ * them on — which is also why the service and both repositories are exported.
+ */
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([OrganizationTeam]),
@@ -37,11 +47,19 @@ import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organ
 	controllers: [OrganizationTeamController],
 	providers: [
 		OrganizationTeamService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services and buses its own module can reach, and this module is what reaches them.
+		OrganizationTeamResolver,
 		TypeOrmOrganizationTeamRepository,
 		MikroOrmOrganizationTeamRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [OrganizationTeamService, TypeOrmOrganizationTeamRepository, MikroOrmOrganizationTeamRepository]
+	exports: [
+		OrganizationTeamService,
+		CqrsModule,
+		TypeOrmOrganizationTeamRepository,
+		MikroOrmOrganizationTeamRepository
+	]
 })
 export class OrganizationTeamModule {}

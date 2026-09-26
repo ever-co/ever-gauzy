@@ -1,0 +1,193 @@
+# The goal's object type.
+#
+# A goal is the objective half of the pair this tree is named for: a named result the organization
+# committed to inside a time frame, with the level it was taken at, a deadline and the progress the
+# key results under it roll up to. The key results themselves are the sibling aggregate's own rows and
+# are reachable there by `goalId`; this file declares the objective and the columns a caller reads off
+# it.
+#
+# **Every relation is carried as its identifier, never as an object.** The delivered list read passes
+# on the `relations` a REST caller names in its query string, and the connection has none to pass, so
+# the rows this surface answers carry the four relation columns the table holds — `ownerTeamId`,
+# `ownerEmployeeId`, `leadId`, `alignedKeyResultId` — and nothing else. A member that answered an
+# object on a read that joined it and `null` on every other read would be worse than an identifier
+# that always travels; the team, the employee, the key result and the strategic initiative each name a
+# row that has a surface of its own.
+#
+# `progress` is a whole number of percent, which is what the column is: the delivered write and the
+# delivered read both treat it as one, so it is an `Int` rather than a decimal, and a filter on it is
+# the kernel's `NumberFilter`.
+#
+# `deadline` is text rather than an instant, and that is the column's own shape rather than a choice
+# made here: the delivered entity maps it as a string, the platform's own contract declares it as one,
+# and the rows a tenant already holds are written that way. Typing it as a `DateTime` would refuse the
+# values the store carries today, so it is carried as the text it is. The instants this domain really
+# has — when the row was written, when it was withdrawn — are `createdAt`, `updatedAt` and `deletedAt`.
+
+"""
+One objective an organization committed to.
+"""
+type Goal {
+	id: ID!
+	"The objective's name."
+	name: String!
+	"What the objective is for."
+	description: String
+	"""
+	When the objective is due. The column is text, so this is carried as text; see the note above the
+	type.
+	"""
+	deadline: String!
+	"""
+	The level the objective was taken at: the organization, the team or the individual. The value set
+	belongs to the domain's own contract, so it is carried as its value rather than declared here as an
+	enum.
+	"""
+	level: String!
+	"How far the objective has come, as the whole number of percent the column holds."
+	progress: Int!
+	"The team that owns the objective, by identifier."
+	ownerTeamId: ID
+	"The employee who owns the objective, by identifier."
+	ownerEmployeeId: ID
+	"The employee who leads the objective, by identifier."
+	leadId: ID
+	"The key result this objective is aligned to, by identifier."
+	alignedKeyResultId: ID
+	"The strategic initiative this objective supports, by identifier."
+	organizationStrategicInitiativeId: ID
+	"""
+	When the objective was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two lifecycle moves this resource serves — and this column is the whole of what they
+	write, so without it a caller could not tell a live row from a withdrawn one on the answer to the
+	write that withdrew it.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the objective belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the objective is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of objectives.
+"""
+type GoalEdge {
+	node: Goal!
+	cursor: String!
+}
+
+"""
+One page of objectives, with the total the filters select and the boundary cursors.
+"""
+type GoalConnection {
+	nodes: [Goal!]!
+	edges: [GoalEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an objective list may be sorted by.
+"""
+enum GoalSortField {
+	createdAt
+	updatedAt
+	name
+	level
+	progress
+}
+
+"""
+The order the objectives are returned in. At most three keys are accepted.
+"""
+input GoalSort {
+	field: GoalSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an objective list may be narrowed by.
+
+Every member is a column of the goal row, because that is what the connection protocol evaluates. The
+key results under an objective are **not** here: they are the sibling aggregate's rows and a key
+result names its objective by `goalId`, so they are read from their own surface with that identifier
+in `filter`.
+"""
+input GoalFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	deadline: StringFilter
+	level: StringFilter
+	progress: NumberFilter
+	ownerTeamId: IDFilter
+	ownerEmployeeId: IDFilter
+	leadId: IDFilter
+	alignedKeyResultId: IDFilter
+	organizationStrategicInitiativeId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [GoalFilter!]
+	or: [GoalFilter!]
+	not: GoalFilter
+}
+
+"""
+What a caller states when it files an objective.
+
+The tenant is never a member: it is stamped from the credential by the delivered write, which is the
+one value a caller must not be able to misstate. `organizationId` is a member even though the
+delivered body's own DTO does not declare it, because the delivered validation pipe does not strip
+members it does not know and the column is the row's own; it is optional rather than required, since
+a body that omits it is one the delivered route accepts.
+
+`deadline`, `level` and `progress` are members the delivered DTO marks optional while the columns
+behind them are not nullable, so a body that omits one is refused by the store rather than by
+validation. They are optional here for the same reason they are optional there: a surface that
+demanded them would refuse a body the delivered route accepts.
+"""
+input CreateGoalInput {
+	name: String!
+	description: String
+	deadline: String
+	level: String
+	progress: Int
+	ownerTeamId: ID
+	ownerEmployeeId: ID
+	leadId: ID
+	alignedKeyResultId: ID
+	organizationStrategicInitiativeId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it edits an objective that exists.
+
+**A member that is absent is left as it is.** The delivered edit is the delivered creation called with
+the verified identifier: the row is read first, so an objective of another tenant or one that is not
+there is a miss rather than a write, and the stated members are then merged onto the row the store
+holds. This is therefore a partial write rather than a replacement, and stating so is what keeps a
+client from reading "absent" as "cleared".
+"""
+input UpdateGoalInput {
+	id: ID!
+	name: String
+	description: String
+	deadline: String
+	level: String
+	progress: Int
+	ownerTeamId: ID
+	ownerEmployeeId: ID
+	leadId: ID
+	alignedKeyResultId: ID
+	organizationStrategicInitiativeId: ID
+	organizationId: ID
+}

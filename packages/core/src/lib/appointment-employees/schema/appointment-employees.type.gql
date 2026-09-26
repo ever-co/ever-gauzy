@@ -1,0 +1,161 @@
+# The appointment employee's object type.
+#
+# The row is an invitation: one employee, named as an invitee of one appointment. It has no descriptive
+# column of its own — everything a reader wants to know about it is on the two rows it points at — which
+# is why the type is small and why its filters are the identifiers.
+#
+# **The type carries two appointment identifiers, and they are not the same thing.**
+#
+# - `appointmentId` is a plain column of this table: the identifier of the appointment the employee is
+#   invited to. Nothing joins it, so it is the value the row stores and the value a caller narrows by.
+# - `employeeAppointmentId` is the relation's own key: the identifier of the `employeeAppointment` row
+#   this invitation belongs to, which the entity declares as the relation id of its many-to-one. The two
+#   name the same concept and are read from different places, which is exactly why both are carried
+#   rather than one being presented as the other.
+#
+# Neither is joined by the list read: the delivered `GET /employee-appointments/:employeeId` names
+# `employeeAppointment` among its relations and the list read names none, so `employee` and
+# `employeeAppointment` are deliberately not members here — a member that is present for one caller and
+# absent for another is worse than no member. The appointment behind either identifier is read from its
+# own surface, `employeeAppointment(id: …)`, and the employee from the employees resource.
+
+"""
+One employee's invitation to one appointment.
+"""
+type AppointmentEmployee {
+	id: ID!
+	"""
+	The appointment the employee is invited to, as the plain column this table stores. It is the field the
+	delivered `GET /appointment/:appointmentId` narrows by, and therefore the filter that answers an
+	appointment's invitees.
+	"""
+	appointmentId: ID!
+	"""
+	The employee invited. Not joined by the list read — the member is the identifier that always travels,
+	and the row behind it is read from the employees resource.
+	"""
+	employeeId: ID
+	"""
+	The relation id of `employeeAppointment`: the appointment row this invitation belongs to, as opposed
+	to the plain `appointmentId` column above. Either one names the appointment; this is the one the
+	entity's many-to-one is declared with.
+	"""
+	employeeAppointmentId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the invitation was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two lifecycle removals this resource serves — and this column is the whole of what they
+	write, so without it a caller could not tell a live row from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of invitations.
+"""
+type AppointmentEmployeeEdge {
+	node: AppointmentEmployee!
+	cursor: String!
+}
+
+"""
+One page of invitations, with the total the filters select and the boundary cursors.
+"""
+type AppointmentEmployeeConnection {
+	nodes: [AppointmentEmployee!]!
+	edges: [AppointmentEmployeeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an invitation list may be sorted by.
+"""
+enum AppointmentEmployeeSortField {
+	createdAt
+	updatedAt
+}
+
+"""
+The order the invitations are returned in. At most three keys are accepted.
+"""
+input AppointmentEmployeeSort {
+	field: AppointmentEmployeeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an invitation list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+**The two identifier filters are how the delivered sub-routes are stated here.** `appointmentId` answers
+what `GET /appointment/:appointmentId` answers — `findAll({ where: { appointmentId } })` — and
+`employeeId` answers what `GET /employee-appointments/:employeeId` answers, which is the same read with
+the same table and one more field named. Both are narrowings of this connection and therefore filters,
+never root fields of their own.
+
+Every member is a column of the row the read answers, because the connection narrows the rows the service
+returned: a member the read does not select would be a filter that silently selects nothing. `tenantId`
+is absent because the tenant a read runs under comes from the credential and never from a filter, and the
+four bookkeeping members — `isActive`, `isArchived`, `archivedAt` and `deletedAt` — are absent because the
+delivered read already answers live rows through the soft-delete column.
+"""
+input AppointmentEmployeeFilter {
+	id: IDFilter
+	appointmentId: IDFilter
+	employeeId: IDFilter
+	employeeAppointmentId: IDFilter
+	organizationId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [AppointmentEmployeeFilter!]
+	or: [AppointmentEmployeeFilter!]
+	not: AppointmentEmployeeFilter
+}
+
+"""
+What a caller states when it invites an employee to an appointment.
+
+Every member is a column of the row, because the delivered `POST /` is inherited from the CRUD base and
+hands the service the entity as the store's own partial: there is no body type of its own to mirror, so
+this input mirrors the row. The tenant is deliberately not a member — the service stamps the caller's own
+tenant from the credential and overwrites whatever a body states — and so are the base entity's lifecycle
+flags, its soft-delete marker and its audit-user columns: the two lifecycle routes are what move the
+marker, and an input that could set an audit column would be a way to write a fact the platform's own
+bookkeeping owns.
+
+A caller that may not select an employee has the employee stamped from the credential by the same service:
+the invitation is then the caller's own, which is the service's scope decision rather than a member here.
+"""
+input CreateAppointmentEmployeeInput {
+	"The appointment the employee is invited to."
+	appointmentId: ID!
+	"The employee invited."
+	employeeId: ID!
+	"The organization the invitation is filed under."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes an invitation.
+
+**A member the caller leaves out is left as it is.** The delivered edit is a partial column update against
+the criterion the path names — the inherited `PUT /:id` hands the store the body it received — so the input
+is the create input with the criterion stated and every other member optional. Moving an invitation is
+therefore stating either identifier and nothing else; the tenant is absent for the reason it is absent
+above.
+"""
+input UpdateAppointmentEmployeeInput {
+	id: ID!
+	appointmentId: ID
+	employeeId: ID
+	organizationId: ID
+}

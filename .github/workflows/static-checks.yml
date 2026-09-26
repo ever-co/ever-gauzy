@@ -1,16 +1,22 @@
 name: 'Static Checks'
 
-# Two checks that nothing in CI did before, added after a duplicated `transformIgnorePatterns`
-# key sat in `packages/core/jest.config.ts` undetected (TS1117):
+# Three checks that nothing in CI did before. The first two were added after a duplicated
+# `transformIgnorePatterns` key sat in `packages/core/jest.config.ts` undetected (TS1117):
 #
-#   * `typecheck-configs` — `tsc --noEmit` over every jest.config.ts, sub-second for the compile
+#   * `typecheck-configs` - `tsc --noEmit` over every jest.config.ts, sub-second for the compile
 #     itself and under a minute for the whole job. This one is REAL: it is green today and it
 #     fails the job if it ever stops being. It is the check that would have caught that bug.
-#   * `lint` — reports the ESLint backlog. Deliberately NON-BLOCKING (`continue-on-error`), and
+#   * `lint` - reports the ESLint backlog. Deliberately NON-BLOCKING (`continue-on-error`), and
 #     it must stay that way until the backlog below is worked through. As of the repair in
 #     #10117 the workspace reports roughly 2,650 errors and 6,100 warnings, so a blocking lint
 #     gate would wedge every PR on day one. The tracking task lives in the agent workspace at
 #     `knowledge/TASKS.md` ("Burn down the ESLint backlog").
+#   * `platform-gates` - the structural rules the platform-extensions programme added under
+#     `tools/scripts/`. They existed and were green, and nothing in CI ran a single one of them,
+#     so the rules they state could be broken by any pull request without a word. Each reads the
+#     source tree with `node:fs` alone - no install, no compiler, no database - which is why this
+#     job needs nothing but Node and finishes in seconds. REAL: green today, and it fails the job
+#     if it stops being.
 #
 # Promote `lint` to blocking only once `nx run-many -t lint` is actually green.
 
@@ -18,9 +24,13 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
+  # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
+  # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
+  # trigger below runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # replace this comment with:
+  #   pull_request:
+  #     branches:
+  #       - develop
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -50,14 +60,14 @@ jobs:
         with:
           node-version: 24
 
-      # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone — `types: []`,
-      # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` — precisely so
+      # No `yarn install`. `tools/tsconfig.jest-configs.json` is standalone - `types: []`,
+      # `noResolve`, and a two-declaration shim in `tools/jest-config-globals.d.ts` - precisely so
       # this job needs nothing but the compiler. The compile itself is well under a second across
       # all 95 configs; fetching the compiler dominates. Against the hours a cold `yarn install`
       # costs on this fleet, that is the whole trade.
       #
       # Installed rather than run through `npx --yes`, which fetches on demand and runs the
-      # fetched package's lifecycle scripts — Sonar flags that as a vulnerability (rules S6505
+      # fetched package's lifecycle scripts - Sonar flags that as a vulnerability (rules S6505
       # and S8543). Exact version, no scripts, no lockfile writes, and into RUNNER_TEMP so it
       # cannot disturb the checkout. It is also faster: ~4s to install against ~37s for npx.
       - name: Install TypeScript
@@ -73,8 +83,8 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
     # Non-blocking at the JOB level, not just on the ESLint step. The step-level flag below keeps
-    # a red lint result from failing the job; this keeps anything else in the job — a cache miss,
-    # a registry hiccup, an install failure on the fleet — from doing it either. The requirement
+    # a red lint result from failing the job; this keeps anything else in the job - a cache miss,
+    # a registry hiccup, an install failure on the fleet - from doing it either. The requirement
     # is that this job cannot redden CI for anyone, and a job that goes red because a runner had
     # a bad day would break that just as surely as a lint error would.
     continue-on-error: true
@@ -104,7 +114,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-node-modules-${{ hashFiles('yarn.lock', 'package.json', 'patches/**', '.scripts/postinstall.js') }}
 
       # Placed AFTER the cache restore because this action rewrites yarn.lock's resolved URLs, and
-      # `hashFiles()` in the key above evaluates at step runtime — configuring the registry first
+      # `hashFiles()` in the key above evaluates at step runtime - configuring the registry first
       # would move the key and split the cache namespace by VIP reachability.
       - name: Configure Registry
         uses: ever-co/ever-gauzy/.github/actions/configure-registry@aa4ee19926fabcf820aa1294385a76aec6bdb548
@@ -140,9 +150,176 @@ jobs:
               echo "This job can now be promoted to blocking: drop \`continue-on-error\` from the"
               echo "\`Run ESLint\` step in \`.github/workflows/static-checks.yml\`."
             else
-              echo "\`nx run-many -t lint\` reported problems. **This does not fail CI** — the"
+              echo "\`nx run-many -t lint\` reported problems. **This does not fail CI** - the"
               echo "backlog predates the job (see \`knowledge/TASKS.md\` in the agent workspace)."
               echo
               echo "Full output is in the \`Run ESLint (report only)\` step above."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  platform-gates:
+    name: platform-gates
+    # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Read-only job; the checkout credential does not need to outlive the step.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # No `yarn install`, for the same reason `typecheck-configs` above does without one: every
+      # script below imports `node:fs`, `node:path` and `node:url` and nothing else. Against the
+      # hours a cold install costs on this fleet, that is the whole trade.
+      #
+      # Each gate is its own step so the run page names which rule broke, rather than one step that
+      # says a loop exited non-zero. `if: always()` on every step after the first so one red gate
+      # still lets the rest report - otherwise the first failure hides the others and each fix costs
+      # another full run to find the next one.
+      - name: Plugin package contract
+        run: node tools/scripts/plugin-contract-check.mjs
+
+      - name: Capability port bindings
+        if: always()
+        run: node tools/scripts/port-binding-check.mjs
+
+      - name: Permission and feature contributions
+        if: always()
+        run: node tools/scripts/permission-contribution-check.mjs
+
+      - name: REST and GraphQL surface parity
+        if: always()
+        run: node tools/scripts/api-parity-check.mjs
+
+      - name: GraphQL feature gates
+        if: always()
+        run: node tools/scripts/graphql-feature-gate-check.mjs
+
+      - name: Constraint parity across dialects
+        if: always()
+        run: node tools/scripts/constraint-parity-check.mjs
+
+      - name: SQLite table rebuilds
+        if: always()
+        run: node tools/scripts/sqlite-rebuild-check.mjs
+
+      - name: Nullable reads
+        if: always()
+        run: node tools/scripts/nullable-read-check.mjs
+
+      - name: Injectable CRUD services
+        if: always()
+        run: node tools/scripts/service-injectable-check.mjs
+
+      # `CrudController` declares its five mutating routes with no permission metadata of its own, so a
+      # controller that does not override one inherits a route that stands on its class-level view grant.
+      # This gate fails the run when any plugin controller does that again.
+      - name: Inherited mutating routes state their permission
+        if: always()
+        run: node tools/scripts/mutating-route-permission-check.mjs
+
+      # `@nestjs/graphql` refuses to build the schema when a resolver claims a field its own type does not
+      # declare - that is a boot failure, and it is invisible until the resolvers are actually registered.
+      # This gate compares every resolver field against the composed schema.
+      - name: Resolver fields exist on the type that resolves them
+        if: always()
+        run: node tools/scripts/graphql-field-binding-check.mjs
+
+      # The list surface is where GraphQL parity is easiest to lose: a bare array cannot be paged,
+      # filtered or counted, so the client that has the REST list has no counterpart to move to - and a
+      # connection that offers no `withDeleted` tells a client the retired rows are unreachable while the
+      # REST route beside it reaches them. The gate names whatever is still off the contract, so the
+      # remainder is countable and a new one cannot appear unnoticed.
+      - name: The list surface follows the connection contract
+        if: always()
+        run: node tools/scripts/connection-shape-check.mjs
+
+      # Money is an exact decimal on this platform, and a field declared `Float` tells every generated
+      # client to parse the amount as a double - the loss then happens in the client, silently, after
+      # the server did everything right. The gate reads every money-named field in the composed schema.
+      - name: Money is never declared as a float
+        if: always()
+        run: node tools/scripts/money-type-check.mjs
+
+      # Owner decision (2026-09-21): a pull request into develop does not start a workflow - the Actions
+      # minutes belonged to every commit of the branch being merged, and the run belongs to the merge. The
+      # decision is a trigger, so a job-level guard cannot express it and only this check can keep it.
+      - name: A pull request into develop does not start a workflow
+        if: always()
+        run: node tools/scripts/pr-trigger-check.mjs
+
+      # Two gates existed and neither ran here: a check nothing invokes is a check that measures nothing, and
+      # the GraphQL schema is exactly the surface those two guard (one composes it and proves every kernel type
+      # is declared once, the other compares it against the committed classification). One gate per step: a
+      # `run: |` block stops at the first failure, so the second gate in it would go unrun in the run that
+      # mattered — the same hiding this workflow's own comment warns about, one level further in.
+      - name: The GraphQL schema composes
+        if: always()
+        run: node tools/scripts/check-graphql-composition.js
+
+      - name: The GraphQL schema is unchanged
+        if: always()
+        run: node tools/scripts/check-graphql-schema.js
+
+      # And the wiring itself is checked, so the next gate cannot be added and left uninvoked. This one caught
+      # itself before it was added here, which is the proof that it reads what it claims to.
+      - name: Every gate is wired into this workflow
+        if: always()
+        run: node tools/scripts/gate-wiring-check.mjs
+
+      # An event name is an API contract for subscribers and webhook receivers, and the doctrine spells
+      # its aggregate segment the way the table it names is spelled. A name whose aggregate follows the
+      # *package* spelling instead (`seller-offering.created`) names one concept two ways and cannot be
+      # derived from the table, which is the kind of inconsistency that is cheap now and expensive once
+      # anything is subscribed to it.
+      - name: Durable event names spell their aggregate in snake_case
+        if: always()
+        run: node tools/scripts/event-name-check.mjs
+
+      # This workspace is dual-ORM and the entity mappings are written once for both. TypeORM is the permissive
+      # one, so a mapping it accepts can be one MikroORM refuses — and the refusal is `MetadataError` during
+      # discovery, which means the application never boots on that ORM at all. Nothing on the default path can
+      # see it, so the shapes MikroORM rejects are checked here instead: a column that duplicates a relation's
+      # field name, a relation pair whose two sides disagree about cardinality, and a one-to-one whose owning
+      # side is stated only for TypeORM. Starting the API with `DB_ORM=mikro-orm` is what found them.
+      - name: Entity mappings are ones both ORMs can build metadata for
+        if: always()
+        run: node tools/scripts/dual-orm-metadata-check.mjs
+
+      # §3.1 requires one mutation per REST write route, including the `DELETE /:id/soft` and
+      # `PUT /:id/recover` pair every `CrudController<T>` contributes. A controller inherits both routes
+      # whether or not it declares them, so a resource can serve a gated withdraw/restore pair over REST
+      # while no resolver declares either field — and nothing says so: the suites pass, the build passes,
+      # the API boots. That is how the plugin tree came to serve the pair on ninety-six controllers with
+      # zero resolvers declaring either field, found by an audit rather than by a check. The gate's
+      # baseline is the measured backlog and shrinks as waves land; a new resource has no row and fails.
+      - name: Every CRUD resource serving the soft-delete/recover pair answers it over GraphQL
+        if: always()
+        run: node tools/scripts/graphql-write-parity-check.mjs
+
+      # Every range a workspace declares must be a key of yarn.lock. Thirteen commerce plugins asked for
+      # `@nestjs/graphql@^13.0.0` while the lockfile resolved only core's `^13.4.2`: a `--frozen-lockfile`
+      # install refused the branch, and a plain one hoisted a second copy of the package, so the API failed
+      # to boot with "Nest can't resolve dependencies of the ApolloDriver (graphQlFactory)".
+      - name: Every declared dependency range is resolved in yarn.lock
+        if: always()
+        run: node tools/scripts/lockfile-coverage-check.mjs
+
+      # The lib/core barrel re-exports core.module, so a kernel file that imports it closes a require cycle:
+      # it made TokenModule undefined in app.module.spec, then made the API fail to boot with
+      # "Nest cannot create the PaymentModule instance" once the first one was fixed.
+      - name: No kernel file imports the lib/core barrel
+        if: always()
+        run: node tools/scripts/core-barrel-import-check.mjs
+
+      # A virtual mock of a package that resolves is filed under the bare name, a plain one under the resolved
+      # path, and Jest's per-worker id cache mixes the two across spec files: plugin-purchasing's feature-gate
+      # spec failed on every cold cache because its @gauzy/common mock was missed after a virtual one ran first.
+      - name: No spec mocks a workspace package virtually
+        if: always()
+        run: node tools/scripts/jest-virtual-mock-check.mjs

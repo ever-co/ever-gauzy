@@ -13,7 +13,7 @@
  *  2. without it, stages are dispatched INLINE to the same pipeline handlers the BullMQ
  *     worker host calls, in the background, coalesced per stage+document.
  */
-jest.mock('@gauzy/scheduler', () => ({ SchedulerQueueService: class {} }), { virtual: true });
+jest.mock('@gauzy/scheduler', () => ({ SchedulerQueueService: class {} }));
 
 import { DOCS_JOB_ATTEMPTS, DOCS_JOB_BACKOFF_DELAY_MS } from '../../docs.constants';
 import { DOCS_JOB_CHUNK, DOCS_JOB_EXTRACT, DOCS_PROCESSING_QUEUE } from './constants';

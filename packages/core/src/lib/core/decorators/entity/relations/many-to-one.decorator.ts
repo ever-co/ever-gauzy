@@ -70,14 +70,13 @@ export function MultiORMManyToOne<T, O>(
 		// Determine which ORM is in use
 		const ormType = getORMType();
 
-		// Apply TypeORM decorator when using TypeORM
-		if (ormType === MultiORMEnum.TypeORM) {
-			TypeOrmManyToOne(
-				typeFunctionOrTarget as TypeORMTarget<T>,
-				inverseSideOrOptions as TypeORMInverseSide<T>,
-				options as TypeORMRelationOptions
-			)(target, propertyKey);
-		}
+		// TypeORM's relation under every ORM, MikroORM's only under `DB_ORM=mikro-orm`: the TypeORM
+		// DataSource runs in both modes (see `MultiORMColumn`).
+		TypeOrmManyToOne(
+			typeFunctionOrTarget as TypeORMTarget<T>,
+			inverseSideOrOptions as TypeORMInverseSide<T>,
+			options as TypeORMRelationOptions
+		)(target, propertyKey);
 
 		// Apply MikroORM decorator when using MikroORM
 		if (ormType === MultiORMEnum.MikroORM) {
@@ -141,6 +140,14 @@ export function mapManyToOneArgsForMikroORM<T, O>({
 		...(typeOrmOptions?.onDelete ? { deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase() } : {}),
 		...(typeOrmOptions?.onUpdate ? { updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase() } : {})
 	};
+
+	// Nullable unless stated otherwise, as TypeORM's many-to-one is. MikroORM's default is the opposite, so a
+	// relation declared without `nullable` was optional on TypeORM (and in the migrations, which TypeORM's mapping
+	// wrote) and required on MikroORM: a standalone product variant, which TypeORM saves, was refused with
+	// "Value for ProductVariant.product is required".
+	if (mikroOrmOptions.nullable === undefined) {
+		mikroOrmOptions.nullable = true;
+	}
 
 	// Set default joinColumn and referenceColumnName if not provided
 	if (!mikroOrmOptions.joinColumn && propertyKey) {

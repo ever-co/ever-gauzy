@@ -1,0 +1,112 @@
+# The comment domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **No field here states a permission, and that is the parity rather than an omission.** The delivered
+# controller carries `TenantPermissionGuard` and `PermissionGuard` on the class and no `@Permissions`
+# anywhere — not on the five routes it declares and not on the four it inherits from the CRUD base — so
+# every one of its routes is tenant-guarded and otherwise unpermissioned. A field that demanded a
+# permission would refuse a caller the REST route serves, which is the asymmetry the two-protocol rule
+# forbids; tightening the resource is a change to make in both places at once, and it is not this
+# delivery's to make.
+#
+# Every field below is one the delivered `/api/comment` routes already serve, under the same guard
+# chain and with the same permission — none — so a client that reaches a capability over one protocol
+# is not given a narrower or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained
+# over one surface resumes on the other. `withDeleted` is offered because the delivered list route offers
+# it: `BaseQueryDTO` carries it and that route hands its query string straight to the same read, so a REST
+# caller can ask for withdrawn comments and a connection that could not would hide them. The `relations` a
+# REST caller may name are absent because this read names none, so the collections behind them are
+# answered by the reads the object type names instead.
+#
+# The controller serves its list twice — `GET /` and the inherited `GET /pagination` — and the two
+# answer the same rows under the same filters, one of them sliced by `take`/`skip` and the other not.
+# That is one capability, so it is one root field: `comments`, mirroring `GET /`, which is the route
+# whose whole filtered set the connection protocol is applied to. A second root field for the paginated
+# spelling would be a second surface that could disagree with this one, and the connection's own
+# `limit`/`offset` already are the page it performs.
+#
+# `commentCount` takes no filter, and that is a statement rather than an omission. The inherited count
+# route passes its query string through as the store's own `where`, which the connection protocol does
+# not speak; a `filter` argument here would either be handed to a service call that cannot accept it or
+# be evaluated over a second code path that could disagree with the connection's `totalCount`. What it
+# answers is the count of the caller's own rows, which is the call the route makes when it is given no
+# options.
+
+extend type Query {
+	"""
+	The comments of the caller's tenant, newest first.
+	"""
+	comments(
+		filter: CommentFilter
+		sort: [CommentSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): CommentConnection!
+
+	"""
+	One comment of the caller's tenant, or null when there is none.
+	"""
+	comment(id: ID!): Comment
+
+	"""
+	How many comments the caller's tenant records.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+	query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	commentCount: Int
+}
+
+extend type Mutation {
+	"""
+	Posts a comment against a row of another resource.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the
+	caller. A mention is published for every employee the body names, which is why that member is here
+	even though nothing about it is stored on the comment row.
+	"""
+	createComment(input: CreateCommentInput!): Comment!
+
+	"""
+	Edits a comment that exists.
+
+	The command the delivered route dispatches carries the path identifier beside the body, and this
+	field dispatches the same pair. The row the comment is attached to cannot be changed here: the
+	delivered update DTO omits both members rather than moving a comment to another resource.
+
+	The answer is the edited row, read back through the same service the reads call — the handler itself
+	answers the store's update result, which is a statement about the write rather than a row.
+	"""
+	updateComment(input: UpdateCommentInput!): Comment!
+
+	"""
+	Removes a comment outright. The answer says whether the removal happened rather than returning the
+	removed row, because the delivered route answers the store's delete result.
+	"""
+	deleteComment(id: ID!): Boolean!
+
+	"""
+	Withdraws a comment without removing it: the row keeps its identifier and the delivered list stops
+	answering it, while the replies that point at it keep their parent.
+	"""
+	softDeleteComment(id: ID!): Comment!
+
+	"""
+	Puts a withdrawn comment back, clearing the marker the withdrawal set.
+	"""
+	recoverComment(id: ID!): Comment!
+}

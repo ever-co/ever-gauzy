@@ -39,27 +39,47 @@ function parseNumeric(value: unknown): number {
 }
 
 /**
+ * Keeps a numeric column a number on the way in, and a number on the way out.
+ *
  * Convert Non-integer numbers string to integer
  *
  * From https://github.com/typeorm/typeorm/issues/873#issuecomment-502294597
  *
  * Pass `scale` (for money, 2) so SQLite REAL and skipped class-transform still persist
  * the declared decimal places.
+ *
+ * ## Why an undefined value is passed through rather than turned into `null`
+ *
+ * A column the caller did not state has to be **left out of the statement**, because that is the only
+ * way the column's own default can apply: TypeORM omits an `undefined` property from the `INSERT`, and
+ * the database then writes the `default` the migration declared. Returning `null` here instead put an
+ * explicit `NULL` into the statement, which overrode that default — so every `numeric` column declared
+ * `NOT NULL DEFAULT 0` refused the insert whenever a caller created the row without naming the field,
+ * and the caller saw a validation error about a member no request is supposed to state. A party's
+ * `creditUsed` and `loyaltyPoints` are the case that surfaced it; every other numeric column with a
+ * default had the same behaviour. It is a defect in the transformer rather than in its callers: a
+ * default exists precisely so that the field may be omitted.
+ *
+ * A `null` the caller *did* state is still a `null` — clearing a nullable column is a legitimate write.
  */
 export class ColumnNumericTransformerPipe implements ValueTransformer {
 	constructor(private readonly scale?: number) {}
 
 	/**
 	 * Converts a number for storage in the database.
-	 * If the value is not defined, it returns null.
 	 *
-	 * @param value - The number to convert. Typed `unknown`: routes that skip DTO validation (e.g.
-	 * employee create) pass the raw request value through.
-	 * @returns The number itself, or null if undefined.
+	 * @param value - The number to store, `null` to clear the column, or `undefined` to leave it out
+	 * of the statement so the column's own default applies. Typed `unknown`: routes that skip DTO
+	 * validation (e.g. employee create) pass the raw request value through.
+	 * @returns The number itself, `null`, or `undefined`.
 	 * @throws BadRequestException when a `scale` is set and the value is not a finite number.
 	 */
-	to(value: unknown): number | null {
-		if (!isNotNullOrUndefined(value)) {
+	to(value?: unknown): number | null | undefined {
+		if (value === undefined) {
+			// Deliberately undefined rather than null: see the class comment.
+			return undefined;
+		}
+		if (value === null) {
 			return null;
 		}
 		if (this.scale == null) {

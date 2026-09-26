@@ -11,7 +11,7 @@ import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked
 export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITaskLinkedIssue {
 	@ApiProperty({ enum: TaskRelatedIssuesRelationEnum })
 	@IsEnum(TaskRelatedIssuesRelationEnum)
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'int' })
 	action: TaskRelatedIssuesRelationEnum;
 
 	/*

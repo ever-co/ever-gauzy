@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@gauzy/config';
-import { PasswordHashModule } from '@gauzy/core';
+import { createPlatformDataSource, PasswordHashModule } from '@gauzy/core';
 import { McpOAuthModule } from './mcp-oauth/mcp-oauth.module';
 
 /**
@@ -21,7 +21,10 @@ import { McpOAuthModule } from './mcp-oauth/mcp-oauth.module';
 				autoLoadEntities: true
 			}),
 			imports: [ConfigModule],
-			inject: [ConfigService]
+			inject: [ConfigService],
+			// `dbConnectionOptions` may name SQLite, where every transaction shares the data source's one query
+			// runner; the platform's factory queues them, and leaves any other dialect's data source untouched.
+			dataSourceFactory: (options) => createPlatformDataSource(options)
 		}),
 		McpOAuthModule
 	],

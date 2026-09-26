@@ -1,0 +1,165 @@
+# The goal KPI's object type.
+#
+# A KPI is the measure a key result tracks when the result is a number rather than a deliverable: the
+# metric it is read as, the unit it is read in, the operator the target is compared with, and the
+# current reading beside the target. The key results that point at one name it by `kpiId` and are the
+# sibling aggregate's rows.
+#
+# **Every relation is carried as its identifier.** The delivered list read does join `lead` — it is the
+# one reader in this resource that names a relation of its own — but the node read, the count and the
+# five writes answer rows that carry neither, so a member that answered an object here would be present
+# on exactly one of the nine routes this surface mirrors. The identifier the table always holds is
+# carried instead, and the employee it names has a surface of its own.
+#
+# `currentValue` and `targetValue` are whole numbers in the column, so they are `Int` and their filter
+# is the kernel's `NumberFilter`. Neither is money: the unit is the caller's own — a count, a score, a
+# ratio — and an amount that *is* money has a currency column and a `Decimal` on the surface that owns
+# it, which is not this one. `operator` is text rather than an enum for the same reason `type` is: the
+# vocabulary belongs to the domain's own contract, and declaring it here would claim a value set this
+# file does not own.
+
+"""
+One measure a key result can track.
+"""
+type GoalKPI {
+	id: ID!
+	"The measure's name."
+	name: String!
+	"What the measure is for."
+	description: String
+	"""
+	The kind of metric the measure is: a number, a percentage or a currency figure. The value set
+	belongs to the domain's own contract, so it is carried as its value rather than declared here as an
+	enum.
+	"""
+	type: String!
+	"The unit the measure is read in, as text: a count, a score, a ratio, an abbreviation."
+	unit: String
+	"How the reading is compared with the target: at least, at most, equal to."
+	operator: String!
+	"The reading as it stands."
+	currentValue: Int!
+	"The reading the measure is aiming at."
+	targetValue: Int!
+	"The employee who leads the measure, by identifier."
+	leadId: ID
+	"""
+	When the measure was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the measure belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the measure is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of measures.
+"""
+type GoalKPIEdge {
+	node: GoalKPI!
+	cursor: String!
+}
+
+"""
+One page of measures, with the total the filters select and the boundary cursors.
+"""
+type GoalKPIConnection {
+	nodes: [GoalKPI!]!
+	edges: [GoalKPIEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a measure list may be sorted by.
+"""
+enum GoalKPISortField {
+	createdAt
+	updatedAt
+	name
+	type
+	currentValue
+	targetValue
+}
+
+"""
+The order the measures are returned in. At most three keys are accepted.
+"""
+input GoalKPISort {
+	field: GoalKPISortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a measure list may be narrowed by.
+
+Every member is a column of the KPI row, which is what the connection protocol evaluates.
+"""
+input GoalKPIFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	type: StringFilter
+	unit: StringFilter
+	operator: StringFilter
+	currentValue: NumberFilter
+	targetValue: NumberFilter
+	leadId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [GoalKPIFilter!]
+	or: [GoalKPIFilter!]
+	not: GoalKPIFilter
+}
+
+"""
+What a caller states when it files a measure.
+
+The delivered creation takes the row's own shape rather than a DTO — the controller declares no
+validation pipe on that route — so the members the store requires are the members the columns
+require: a name, the metric it is read as, the operator, the reading and the target. `leadId` and
+`organizationId` are the two relations the row carries, and the tenant is never a member because the
+service stamps it from the credential.
+"""
+input CreateGoalKPIInput {
+	name: String!
+	description: String
+	type: String!
+	unit: String
+	operator: String!
+	currentValue: Int!
+	targetValue: Int!
+	leadId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a measure.
+
+**A member that is absent is left as it is.** The delivered edit is the delivered creation called with
+the stated identifier — the controller's route is an update-through-create, because the write has to
+go through the save that a partial column update would bypass — so the stated members are merged onto
+the row the store holds. An identifier that names no row of the caller's tenant is an insert rather
+than a miss, which is the delivered route's own behaviour and not something this surface narrows.
+"""
+input UpdateGoalKPIInput {
+	id: ID!
+	name: String
+	description: String
+	type: String
+	unit: String
+	operator: String
+	currentValue: Int
+	targetValue: Int
+	leadId: ID
+	organizationId: ID
+}

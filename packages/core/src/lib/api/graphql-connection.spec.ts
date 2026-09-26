@@ -1,0 +1,466 @@
+import { BadRequestException } from '@nestjs/common';
+import { CursorCodec } from './cursor';
+import {
+	ConnectionFilter,
+	ConnectionFieldKind,
+	MAX_CONNECTION_PAGE_SIZE,
+	buildConnection,
+	connectionFromOffsetPage,
+	connectionFromPage,
+	encodeOffsetCursor,
+	paginateRows,
+	resolveConnectionWindow
+} from './graphql-connection';
+import { API_QUERY_LIMITS } from './query-ast';
+
+/**
+ * The connection contract, at the kernel rather than through a domain.
+ *
+ * Every list root field of the platform answers through `buildConnection`, so a defect here is a
+ * defect in every one of them at once, and this suite pins the three behaviours a domain resolver
+ * spec cannot see from its own side:
+ *
+ * - **a date column is compared as an instant.** A store returns a `timestamp` column as a `Date`
+ *   and a caller states an instant as RFC 3339 text, so the two sides of one comparison arrive in two
+ *   different shapes. Comparing them as they arrived compared epoch milliseconds against a calendar
+ *   date, and `createdAt: { eq: "..." }` — as well as every range over a date — matched no row at all.
+ *   A filter that silently selects nothing is the worst kind of wrong answer, so it is asserted here
+ *   rather than trusted;
+ * - a value that is absent sorts last in both directions, and `isNull` is a condition of its own;
+ * - a field the resource does not declare, or an operator its kind does not offer, is refused with
+ *   the query protocol's own code rather than ignored.
+ *
+ * The rows are plain objects: what a domain hands the connection is what its own list method
+ * answered, which is a row shape rather than an entity this suite would have to build.
+ */
+
+const EARLY = '00000000-0000-4000-8000-000000000001';
+const LATE = '00000000-0000-4000-8000-000000000002';
+const UNDATED = '00000000-0000-4000-8000-000000000003';
+
+/** The fields the resource declares filterable, and the kind each is compared as. */
+const FILTERABLE: Readonly<Record<string, ConnectionFieldKind>> = {
+	id: 'ID',
+	name: 'STRING',
+	quantity: 'NUMBER',
+	placedAt: 'DATE',
+	enabled: 'BOOLEAN'
+};
+
+/** Three rows: one before the instant under test, one exactly at it, and one that states no date. */
+const ROWS = [
+	{ id: EARLY, name: 'earlier', quantity: 1, enabled: true, placedAt: new Date('2026-02-01T09:00:00.000Z') },
+	{ id: LATE, name: 'later', quantity: 3, enabled: false, placedAt: new Date('2026-03-01T10:00:00.000Z') },
+	{ id: UNDATED, name: 'undated', quantity: 2, enabled: true, placedAt: null }
+];
+
+/** The declaration every case below narrows, in the delivered order of the rows. */
+const DECLARATION = {
+	rows: ROWS,
+	filterable: FILTERABLE,
+	sortable: ['name', 'quantity', 'placedAt'] as const,
+	defaultSort: [{ field: 'name', direction: 'ASC' }] as const
+};
+
+/** One connection over the fixture rows, with whatever the caller stated. */
+function connect(request: Parameters<typeof buildConnection>[0]['request']) {
+	return buildConnection({ ...DECLARATION, request });
+}
+
+/** Whether an error is a refusal rather than a miss. */
+function isRefusal(error: unknown): boolean {
+	return (
+		error instanceof BadRequestException &&
+		(error.getStatus() === 400 || error.getStatus() === 422)
+	);
+}
+
+describe('buildConnection — a date column is compared as an instant', () => {
+	it('matches one row by the instant it was placed at, stated as the wire states it', () => {
+		const connection = connect({ filter: { placedAt: { eq: '2026-03-01T10:00:00.000Z' } } });
+
+		expect(connection.nodes.map((row) => row.id)).toEqual([LATE]);
+		expect(connection.totalCount).toBe(1);
+	});
+
+	it('matches the same row when the caller states the instant in another of its spellings', () => {
+		// The zone is an offset spelling of the same instant, and a comparison on instants is blind to
+		// how the instant was written down.
+		const connection = connect({ filter: { placedAt: { eq: '2026-03-01T11:00:00.000+01:00' } } });
+
+		expect(connection.nodes.map((row) => row.id)).toEqual([LATE]);
+	});
+
+	it('orders a range over a date column by the calendar rather than by the text', () => {
+		const after = connect({ filter: { placedAt: { gt: '2026-02-15T00:00:00.000Z' } } });
+		expect(after.nodes.map((row) => row.id)).toEqual([LATE]);
+
+		const before = connect({ filter: { placedAt: { lt: '2026-02-15T00:00:00.000Z' } } });
+		expect(before.nodes.map((row) => row.id)).toEqual([EARLY]);
+
+		const between = connect({
+			filter: { placedAt: { between: ['2026-01-01T00:00:00.000Z', '2026-02-15T00:00:00.000Z'] } }
+		});
+		expect(between.nodes.map((row) => row.id)).toEqual([EARLY]);
+	});
+
+	it('excludes the rows that state no date from a range, and selects them with isNull', () => {
+		// A row with no instant is not "before" the bound: it has nothing to compare, so it is out of
+		// every range and reachable only by the condition that asks for its absence.
+		const range = connect({ filter: { placedAt: { gt: '2026-01-01T00:00:00.000Z' } } });
+		expect(range.nodes.map((row) => row.id)).toEqual([EARLY, LATE]);
+
+		const absent = connect({ filter: { placedAt: { isNull: true } } });
+		expect(absent.nodes.map((row) => row.id)).toEqual([UNDATED]);
+	});
+
+	it('matches a stated instant the calendar cannot read against nothing rather than against the epoch', () => {
+		// The value is refused by the parser before it reaches here on the REST side; a value that
+		// reaches the connection in a shape no calendar reads is compared as it stands, so it selects
+		// no dated row instead of quietly selecting every row.
+		const connection = connect({ filter: { placedAt: { eq: 'the day before' } } });
+
+		expect(connection.nodes).toEqual([]);
+	});
+
+	it('compares a text column by its text, so a date-shaped identifier is not read as an instant', () => {
+		const rows = [{ id: EARLY, name: '2026-03-01T10:00:00.000Z' }, { id: LATE, name: '2026-03-01T10:00:00.001Z' }];
+
+		const connection = buildConnection({
+			rows,
+			filterable: { id: 'ID', name: 'STRING' },
+			sortable: ['name'],
+			defaultSort: [{ field: 'name', direction: 'ASC' }],
+			request: { filter: { name: { eq: '2026-03-01T10:00:00.000Z' } } }
+		});
+
+		expect(connection.nodes.map((row) => row.id)).toEqual([EARLY]);
+	});
+});
+
+describe('connectionFromPage — the page a service already sliced', () => {
+	it('answers the rows, the count of the filtered set and the boundary cursors', () => {
+		const connection = connectionFromPage({ items: ROWS.slice(0, 2), total: ROWS.length }, { skip: 0 });
+
+		// The count is the filtered total the service reported, not the size of the page: a client that
+		// is told "2" for a set of three cannot know whether to ask for more.
+		expect(connection.nodes).toHaveLength(2);
+		expect(connection.totalCount).toBe(ROWS.length);
+		expect(connection.pageInfo.hasNextPage).toBe(true);
+		expect(connection.pageInfo.hasPreviousPage).toBe(false);
+		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
+		expect(connection.pageInfo.endCursor).toBe(connection.edges[1].cursor);
+	});
+
+	it('decides the boundary from the offset the caller stated, not from the rows', () => {
+		const connection = connectionFromPage({ items: ROWS.slice(2), total: ROWS.length }, { skip: 2 });
+
+		// A second page has a previous page whatever its rows look like, and the offset is the only fact
+		// that says so — which is why it is passed in rather than inferred.
+		expect(connection.pageInfo.hasPreviousPage).toBe(true);
+		expect(connection.pageInfo.hasNextPage).toBe(false);
+	});
+
+	it('derives a row’s cursor from the caller’s own key when it states one', () => {
+		const connection = connectionFromPage(
+			{ items: [{ id: EARLY, code: 'PO-1' }], total: 1 },
+			{ cursorOf: (row) => row.code }
+		);
+
+		expect(connection.edges[0].cursor).toBe('PO-1');
+		expect(connection.pageInfo.endCursor).toBe('PO-1');
+	});
+
+	it('answers an empty page rather than nulls when there is nothing to answer', () => {
+		const connection = connectionFromPage(undefined);
+
+		expect(connection.nodes).toEqual([]);
+		expect(connection.edges).toEqual([]);
+		expect(connection.totalCount).toBe(0);
+		expect(connection.pageInfo.startCursor).toBeNull();
+		expect(connection.pageInfo.endCursor).toBeNull();
+	});
+
+	it('takes the page size as the count when the service states no total', () => {
+		const connection = connectionFromPage({ items: ROWS.slice(0, 2) });
+
+		expect(connection.totalCount).toBe(2);
+		expect(connection.pageInfo.hasNextPage).toBe(false);
+	});
+});
+
+describe('buildConnection — the shape of a page', () => {
+	it('answers with nodes, edges, the total and the boundary cursors', () => {
+		const connection = connect(undefined);
+
+		expect(connection.nodes).toHaveLength(3);
+		expect(connection.totalCount).toBe(3);
+		expect(connection.edges).toHaveLength(3);
+		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);
+		expect(connection.pageInfo.endCursor).toBe(connection.edges[2].cursor);
+		expect(connection.pageInfo.hasNextPage).toBe(false);
+		expect(connection.pageInfo.hasPreviousPage).toBe(false);
+	});
+
+	it('walks from an opaque cursor the platform’s own codec can read', () => {
+		const first = connect({ first: 1 });
+		expect(first.nodes.map((row) => row.id)).toEqual([EARLY]);
+		expect(first.pageInfo.hasNextPage).toBe(true);
+
+		const second = connect({ first: 1, after: first.pageInfo.endCursor ?? undefined });
+		expect(second.nodes.map((row) => row.id)).toEqual([LATE]);
+		expect(second.pageInfo.hasPreviousPage).toBe(true);
+		expect(CursorCodec.decode(second.edges[0].cursor).id).toBe(LATE);
+	});
+
+	it('sorts by a declared key, and treats an absent value as the largest one in both directions', () => {
+		// One rule rather than two, and the same rule on every installation: a null sorts after every
+		// present value ascending and before every present value descending. A cursor walk is only
+		// stable if the order it walks is, which is why this is stated rather than left to a store.
+		const ascending = connect({ sort: [{ field: 'placedAt', direction: 'ASC' }] });
+		expect(ascending.nodes.map((row) => row.id)).toEqual([EARLY, LATE, UNDATED]);
+
+		const descending = connect({ sort: [{ field: 'placedAt', direction: 'DESC' }] });
+		expect(descending.nodes.map((row) => row.id)).toEqual([UNDATED, LATE, EARLY]);
+	});
+});
+
+describe('buildConnection — what a caller may state', () => {
+	it('refuses a field the resource does not declare', () => {
+		const error = (() => {
+			try {
+				connect({ filter: { productId: { eq: EARLY } } as ConnectionFilter });
+
+				return undefined;
+			} catch (thrown) {
+				return thrown;
+			}
+		})();
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('QUERY_UNKNOWN_FILTER_FIELD');
+	});
+
+	it('refuses a sort key the resource does not declare', () => {
+		const error = (() => {
+			try {
+				connect({ sort: [{ field: 'placedAt', direction: 'ASC' }, { field: 'id', direction: 'ASC' }] });
+
+				return undefined;
+			} catch (thrown) {
+				return thrown;
+			}
+		})();
+
+		expect(isRefusal(error)).toBe(true);
+		expect((error as Error).message).toContain('QUERY_SORT_NOT_ALLOWED');
+	});
+
+	it('refuses both pagination styles at once rather than silently preferring one', () => {
+		const error = (() => {
+			try {
+				connect({ first: 1, offset: 1 });
+
+				return undefined;
+			} catch (thrown) {
+				return thrown;
+			}
+		})();
+
+		expect(isRefusal(error)).toBe(true);
+	});
+});
+
+describe('resolveConnectionWindow — the window a cursor names', () => {
+	/** The failure a window resolver raised, or undefined when it answered. */
+	function refuse(selection: Parameters<typeof resolveConnectionWindow>[0]): string | undefined {
+		try {
+			resolveConnectionWindow(selection);
+
+			return undefined;
+		} catch (thrown) {
+			return (thrown as Error).message;
+		}
+	}
+
+	it('resumes past the row an `after` cursor names, because the schema says the cursor is exclusive', () => {
+		// Reading `after` as "the offset to resume at" re-answered the row the client had just been given,
+		// so a walk that paged with the cursors it was handed repeated one row per page.
+		expect(resolveConnectionWindow({ first: 3, after: encodeOffsetCursor(7) })).toEqual({ skip: 8, take: 3 });
+	});
+
+	it('ends a backward walk at the row a `before` cursor names rather than starting there', () => {
+		// The same misreading turned `last: 5, before: <offset 12>` into rows 12 to 16 — the wrong
+		// direction as well as the wrong rows.
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(12) })).toEqual({ skip: 7, take: 5 });
+		// Corrected from `{ skip: 0, take: 5 }`, which pinned the defect rather than the contract: with
+		// only three rows before the cursor, a five-row window starting at 0 reads rows 0 to 4 — the
+		// cursor's own row (exclusive) and the row after it among them.
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(3) })).toEqual({ skip: 0, take: 3 });
+	});
+
+	it('never reaches the `before` cursor’s own row when fewer rows than the page size lie before it', () => {
+		// A client showing rows 3-7 steps back with `last: 5, before: <offset 3>`: the rows before the
+		// window it has are 0, 1 and 2, and nothing else.
+		const rows = Array.from({ length: 10 }, (_, offset) => offset);
+		const window = resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(3) });
+		const page = connectionFromOffsetPage(paginateRows(rows, window.take, window.skip), window.skip);
+
+		expect(page.nodes).toEqual([0, 1, 2]);
+		expect(page.pageInfo.hasPreviousPage).toBe(false);
+		expect(page.pageInfo.hasNextPage).toBe(true);
+
+		// Exactly the page size before the cursor is still a full page, starting at the first row.
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(5) })).toEqual({ skip: 0, take: 5 });
+	});
+
+	it('answers an empty window for a backward walk from the first row, because nothing lies before it', () => {
+		// `before: <offset 0>` used to answer rows 0-4. The window is empty instead — the only window whose
+		// `take` is zero — and every store this platform pages through reads it as "no rows".
+		const window = resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(0) });
+		expect(window).toEqual({ skip: 0, take: 0 });
+
+		const rows = Array.from({ length: 10 }, (_, offset) => offset);
+		const page = connectionFromOffsetPage(paginateRows(rows, window.take, window.skip), window.skip, window.take);
+
+		expect(page.nodes).toEqual([]);
+		expect(page.totalCount).toBe(10);
+		expect(page.pageInfo).toEqual({ hasNextPage: true, hasPreviousPage: false, startCursor: null, endCursor: null });
+	});
+
+	it('walks from a page boundary to exactly the next page', () => {
+		// What a client does with the boundary it was given: the first page of three, then the cursor it
+		// answered with. Nothing is repeated and nothing is skipped.
+		const first = resolveConnectionWindow({ first: 3 });
+		const boundary = connectionFromOffsetPage({ items: [1, 2, 3], total: 9 }, first.skip).pageInfo.endCursor;
+
+		expect(resolveConnectionWindow({ first: 3, after: boundary ?? undefined })).toEqual({ skip: 3, take: 3 });
+
+		const second = connectionFromOffsetPage({ items: [4, 5, 6], total: 9 }, 3);
+		expect(second.edges.map((edge) => edge.cursor)).toEqual([3, 4, 5].map(encodeOffsetCursor));
+		expect(second.edges[second.edges.length - 1].cursor).toBe(second.pageInfo.endCursor);
+	});
+
+	it('refuses a cursor this platform did not mint rather than reading it as the first page', () => {
+		expect(refuse({ first: 3, after: 'not-a-cursor' })).toContain('PAGINATION_CURSOR_INVALID');
+		expect(refuse({ first: 3, after: encodeOffsetCursor(7).slice(0, -1) })).toContain('PAGINATION_CURSOR_INVALID');
+	});
+
+	it('refuses a backward walk with no anchor rather than answering the first page', () => {
+		expect(refuse({ last: 5 })).toContain('PAGINATION_ANCHOR_REQUIRED');
+	});
+
+	it('refuses a request that states both directions, both styles, or a cursor past the cap', () => {
+		expect(refuse({ first: 1, last: 1 })).toContain('PAGINATION_DIRECTION_CONFLICT');
+		expect(refuse({ after: encodeOffsetCursor(1), before: encodeOffsetCursor(9) })).toContain(
+			'PAGINATION_DIRECTION_CONFLICT'
+		);
+		expect(refuse({ first: 1, offset: 4 })).toContain('PAGINATION_STYLE_CONFLICT');
+
+		expect(resolveConnectionWindow({ first: 5000 }).take).toBe(MAX_CONNECTION_PAGE_SIZE);
+	});
+
+	it('reads a member stated as null as a member not stated, so a Relay first fetch is the first page', () => {
+		// Relay sends the cursor variable as `null` on the first fetch and graphql-js keeps it: the page
+		// arrives as `{ first: 20, after: null }`. Reading that `null` as a cursor refused the first page
+		// of every store-paged connection with PAGINATION_CURSOR_INVALID.
+		expect(resolveConnectionWindow({ first: 20, after: null })).toEqual({ skip: 0, take: 20 });
+
+		// The same reading made a stated-null opposite direction a conflict.
+		expect(resolveConnectionWindow({ first: 20, last: null })).toEqual({ skip: 0, take: 20 });
+		expect(resolveConnectionWindow({ first: 3, after: encodeOffsetCursor(7), before: null })).toEqual({
+			skip: 8,
+			take: 3
+		});
+		expect(resolveConnectionWindow({ last: 5, before: encodeOffsetCursor(12), first: null, after: null })).toEqual({
+			skip: 7,
+			take: 5
+		});
+
+		// And a generated client that sends the offset spelling's arguments as `null` beside `page` — the
+		// shape `{ ...(page ?? {}), limit, offset }` hands over — is not stating two styles.
+		expect(resolveConnectionWindow({ limit: null, offset: null, first: 5 })).toEqual({ skip: 0, take: 5 });
+		expect(resolveConnectionWindow({ first: null, after: null, limit: 5, offset: 10 })).toEqual({ skip: 10, take: 5 });
+
+		// Every member null, or no selection at all, is the first page at the default size.
+		expect(
+			resolveConnectionWindow({ first: null, after: null, last: null, before: null, limit: null, offset: null })
+		).toEqual(resolveConnectionWindow());
+		expect(resolveConnectionWindow(null)).toEqual(resolveConnectionWindow());
+	});
+
+	it('still refuses the conflicts a caller actually stated once nulls are set aside', () => {
+		expect(refuse({ first: 1, last: 1, after: null })).toContain('PAGINATION_DIRECTION_CONFLICT');
+		expect(refuse({ first: 1, offset: 4, before: null })).toContain('PAGINATION_STYLE_CONFLICT');
+		expect(refuse({ last: 5, before: null })).toContain('PAGINATION_ANCHOR_REQUIRED');
+		expect(refuse({ first: 3, after: 'not-a-cursor', before: null })).toContain('PAGINATION_CURSOR_INVALID');
+	});
+
+	it('reports hasNextPage exactly when the window resolver will accept the next page', () => {
+		// 2,500 rows walked two at a time. The cap accepts a page that starts at 2 × maxPageNumber and
+		// refuses the one after it, so the page at the ceiling must not advertise a next page: a client
+		// that pages while `hasNextPage` is true was otherwise told to continue into a refusal.
+		const take = 2;
+		const ceiling = take * API_QUERY_LIMITS.maxPageNumber;
+		const total = ceiling + 500;
+
+		for (const skip of [ceiling - 4, ceiling - 2, ceiling - 1, ceiling]) {
+			const page = connectionFromOffsetPage({ items: ['a', 'b'], total }, skip, take);
+			const accepted = refuse({ first: take, after: page.pageInfo.endCursor }) === undefined;
+
+			expect({ skip, hasNextPage: page.pageInfo.hasNextPage }).toEqual({ skip, hasNextPage: accepted });
+			// The count is still the whole count: that is how a client tells a walk stopped by the ceiling
+			// from a walk that ran out of rows.
+			expect(page.totalCount).toBe(total);
+		}
+
+		// The two sides of the boundary, stated outright.
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling - 2, take).pageInfo.hasNextPage).toBe(true);
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling, take).pageInfo.hasNextPage).toBe(false);
+		expect(refuse({ first: take, after: encodeOffsetCursor(ceiling + 1) })).toContain('QUERY_PAGE_LIMIT_EXCEEDED');
+
+		// A caller that does not pass the page size has it read from the full page it answered.
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling).pageInfo.hasNextPage).toBe(false);
+		expect(connectionFromOffsetPage({ items: ['a', 'b'], total }, ceiling - 2).pageInfo.hasNextPage).toBe(true);
+	});
+
+	it('walks a whole list with the cursors it hands out, stopping exactly where hasNextPage says', () => {
+		// The walk a Relay client performs: first page, then `after: endCursor` while `hasNextPage` holds.
+		// Every row comes back once, in order, and no step is refused.
+		const rows = Array.from({ length: 47 }, (_, offset) => offset);
+		const seen: number[] = [];
+		let after: string | null = null;
+
+		for (let step = 0; step < 10; step++) {
+			const window = resolveConnectionWindow({ first: 10, after });
+			const page = connectionFromOffsetPage(paginateRows(rows, window.take, window.skip), window.skip, window.take);
+
+			seen.push(...page.nodes);
+
+			if (!page.pageInfo.hasNextPage) {
+				break;
+			}
+			after = page.pageInfo.endCursor;
+		}
+
+		expect(seen).toEqual(rows);
+	});
+
+	it('refuses with the platform’s own error class, not a bare Error', () => {
+		// The class is the whole point of the refusal: a `BadRequestException` reaches the caller as the
+		// platform's BAD_REQUEST code and status, and a bare `Error` reaches it as an internal fault — so a
+		// client that branches on the code cannot tell a request it can fix from a server that broke.
+		const thrown = (() => {
+			try {
+				resolveConnectionWindow({ first: 1, offset: 4 });
+
+				return undefined;
+			} catch (error) {
+				return error;
+			}
+		})();
+
+		expect(thrown).toBeInstanceOf(BadRequestException);
+		expect((thrown as BadRequestException).getStatus()).toBe(400);
+	});
+});

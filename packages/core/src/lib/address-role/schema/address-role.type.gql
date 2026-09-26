@@ -1,0 +1,31 @@
+# The address-role domain's GraphQL types.
+#
+# A role is a dimension of the address book and not a resource of its own, so the type is small on
+# purpose: what an address is for, and whether it is the default for that role within its owner.
+#
+# The value set carries the `Enum` suffix because the object type already holds the bare name — a
+# schema may not declare one name twice — and it is the same suffix the TypeScript enumeration uses.
+
+type AddressRole {
+	id: ID!
+	organizationId: ID
+	addressId: ID!
+	role: AddressRoleEnum!
+	isDefault: Boolean!
+}
+
+enum AddressRoleEnum {
+	SHIPPING
+	BILLING
+	REGISTERED
+	PAYOUT
+	RETURN
+	REMIT_TO
+}
+
+input CreateAddressRoleInput {
+	organizationId: ID!
+	addressId: ID!
+	role: AddressRoleEnum!
+	isDefault: Boolean
+}

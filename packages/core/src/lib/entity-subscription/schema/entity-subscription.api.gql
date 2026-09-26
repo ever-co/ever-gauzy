@@ -1,0 +1,143 @@
+# The entity subscription domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **No field here states a permission, and that is the parity rather than an omission.** The delivered
+# controller carries `TenantPermissionGuard` and `PermissionGuard` on the class and no `@Permissions`
+# anywhere: not on the four routes it declares and not on the five it inherits from the CRUD base.
+# Every one of its nine routes is therefore tenant-guarded and otherwise unpermissioned, and a field
+# that demanded a permission would refuse a caller the REST route serves — the asymmetry the
+# two-protocol rule forbids. Tightening the resource is a change to make in both places at once, and it
+# is not this delivery's to make.
+#
+# Every field below is one of those nine routes, under the same guard chain and with the same
+# permission — none — so a client that reaches a capability over one protocol is not given a narrower
+# or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is offered because the delivered list
+# route offers it: `BaseQueryDTO` carries it and that route hands its query string straight to the same
+# read, so a REST caller can ask for withdrawn subscriptions and a connection that could not would hide
+# them. The `relations` such a route can be given are absent because this read names none, so the
+# employee is not joined and the object type carries the identifier.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `entitySubscriptions`, mirroring `GET /`, which is the route
+# whose whole filtered set the connection protocol is applied to. A second root field for the paginated
+# spelling would be a second surface that could disagree with this one, and the connection's own
+# `limit`/`offset` already are the page it performs.
+#
+# There is no root field beyond the nine, and that is a statement about the delivered routes rather
+# than a pruning of them. This controller declares no read of its own beyond the list and the node
+# query, so it has no sub-route whose read joins a pivot the list read does not — the case that would
+# earn a root field of its own — and every other route it serves is one of the CRUD base's nine.
+#
+# `entitySubscriptionCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a service call
+# that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`. What it answers is the count of the caller's own rows, which is the call
+# the route makes when it is given no options. It is nullable because an aggregate a resource has no
+# answer for must not be answered as a fabricated zero.
+#
+# `createEntitySubscription` dispatches the command the route dispatches rather than the service the
+# command handler calls, because the route's whole write is the command: the handler is what turns the
+# input into a subscription, and reaching the service directly would be a second path that could
+# disagree with it. `updateEntitySubscription` is the opposite case and for the same reason — the
+# delivered route is the inherited `PUT /:id`, which calls the service — and `unsubscribeFromEntity`
+# is a delete with the narrowing the route itself requires rather than a plain removal, which is why it
+# states the three members below.
+#
+# `unsubscribeFromEntity` is not a filter on the connection, because it is not a read: it mirrors
+# `DELETE /:id`, which removes the subscription for one record rather than listing subscriptions. The
+# route binds `entity`, `entityId` and `organizationId` out of its query string and hands them to the
+# service beside the path identifier; the service derives the employee and the tenant from the
+# credential and merges them into the same criterion, so the subscription that is removed is the
+# caller's own for that record. The field therefore states exactly the members the route lets a caller
+# state — the three the criterion is narrowed by — and nothing else: an `employeeId` or a `tenantId`
+# argument here would let a caller aim the removal at somebody else's subscription, which the delivered
+# route does not allow and this surface must not invent. It answers whether the removal happened,
+# because the delivered route answers the store's delete result.
+
+extend type Query {
+	"""
+	The subscriptions of the caller's tenant, newest first.
+	"""
+	entitySubscriptions(
+		filter: EntitySubscriptionFilter
+		sort: [EntitySubscriptionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): EntitySubscriptionConnection!
+
+	"""
+	One subscription of the caller's tenant, or null when there is none.
+	"""
+	entitySubscription(id: ID!): EntitySubscription
+
+	"""
+	How many subscriptions the caller's tenant records.
+
+	Nullable by design: a count is an aggregate a resource may legitimately have no answer for, and a
+	non-null field would turn "not answered" into a fabricated zero. The delivered count route binds its
+	query string to the store's own `where`, a shape no schema can state, so the field offers no
+	narrowing of its own rather than an argument the resolver could not pass on.
+	"""
+	entitySubscriptionCount: Int
+}
+
+extend type Mutation {
+	"""
+	Subscribes the caller to an entity, through the command the delivered route dispatches.
+
+	The tenant and the employee who is to be told are stamped from the credential and are never stated
+	by the caller. A subscription for the same record and the same employee that already exists is
+	answered with the row that exists rather than with a second one beside it, because the delivered
+	command handler looks it up before it writes.
+	"""
+	createEntitySubscription(input: CreateEntitySubscriptionInput!): EntitySubscription!
+
+	"""
+	Changes a subscription that exists.
+
+	**A member the caller leaves out is left as it is.** The delivered route reads the row the
+	identifier names — proving it is the caller's own — and writes the members the body states to it,
+	so this is a column update and not a replacement; see `UpdateEntitySubscriptionInput`.
+
+	The answer is the row the write produced, read back through the read the node query performs. The
+	delivered route answers the store's own update result — a statement about the write, `{ affected }`
+	— which is not a row, and a field declared as the object type cannot answer it.
+	"""
+	updateEntitySubscription(input: UpdateEntitySubscriptionInput!): EntitySubscription!
+
+	"""
+	Unsubscribes the caller from one entity: the subscription for that record is removed outright.
+
+	The three arguments are the members the delivered route binds out of its query string, and the
+	employee and the tenant the criterion also carries are derived from the credential rather than
+	stated. The answer says whether the removal happened, because the delivered route answers the
+	store's delete result rather than the removed row.
+	"""
+	unsubscribeFromEntity(id: ID!, entity: String, entityId: ID, organizationId: ID): Boolean!
+
+	"""
+	Withdraws a subscription without removing it: the row keeps its identifier and the recovery below
+	reads it back, and the delivered list stops answering it.
+	"""
+	softDeleteEntitySubscription(id: ID!): EntitySubscription!
+
+	"""
+	Puts a withdrawn subscription back, clearing the marker the withdrawal set.
+	"""
+	recoverEntitySubscription(id: ID!): EntitySubscription!
+}

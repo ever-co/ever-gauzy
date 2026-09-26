@@ -1,0 +1,120 @@
+# The SMTP configuration's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The domain is served by one CRUD controller and the surface mirrors every route it serves.**
+# `CustomSmtpController` is mounted at `/api/smtp` and extends the platform's CRUD base, so the delivered
+# resource is a list, a node, a count, a creation, an edit, a removal, the two lifecycle moves — and,
+# on top of them, the two routes that are the reason this resource exists: the read that resolves the
+# configuration an organization's mail actually uses, and the validator that proves one works by sending
+# through it. Every one of those is a field below.
+#
+# **The permission is the controller's and there is one of it.** The class carries `CUSTOM_SMTP_VIEW`
+# and no handler states a permission of its own — the creation, the edit and the validator included — so
+# every field below runs under that one permission and the class states it once. Reading a transport
+# configuration and replacing it are the same grant on this resource; that is the delivered scope, and
+# widening it here would be a decision this delivery has no business making.
+#
+# **The list is the route that reads the whole filtered set.** The delivered resource serves its rows
+# twice — `GET /` and `GET /pagination` — and both reach the CRUD base's list method, so the connection
+# field states that read and applies the page itself: the paginated spelling folds into it rather than
+# becoming a second root field that could disagree with the first.
+#
+# **The resolved configuration is a root field of its own, because it is not a narrowing of the list.**
+# `GET /setting` answers the organization's own configuration when it has one and the installation-wide
+# one otherwise, taking the organization as a query parameter and a miss as a reason to fall back rather
+# than a reason to refuse. That is a different read from the list — it resolves one answer with a
+# fallback — so it is stated as the read it is, and the type it answers says which of the two a caller
+# received.
+#
+# **The validator is a mutation although it changes nothing.** `POST /validate` opens a connection with
+# the configuration it is given and reports whether the transport accepted it. The route states a body
+# rather than an effect, and the field is a mutation for the same reason: it is a question asked *of* a
+# configuration rather than a fact read from the store, and it costs a conversation with a mail server
+# every time it is asked.
+#
+# **The count takes no argument**, as the delivered count route passes its query string through as the
+# store's own criterion — which the connection protocol does not speak — and it answers a nullable
+# number, because a count is an aggregate a resource may legitimately have no answer for.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open,
+# which is what keeps a tenant that switched GraphQL off able to configure the mail it sends — so a
+# disabled capability is answered `Cannot query field <name>` here while those routes answer as they
+# always did.
+
+extend type Query {
+	"""
+	The SMTP configurations of the caller's tenant, the installation-wide one included.
+	"""
+	customSmtpSettings(
+		filter: SmtpSettingFilter
+		sort: [SmtpSettingSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): SmtpSettingConnection!
+
+	"""
+	One SMTP configuration, or null when there is none.
+	"""
+	customSmtpSetting(id: ID!): SmtpSetting
+
+	"""
+	How many SMTP configurations the caller's tenant holds.
+	"""
+	customSmtpSettingCount: Int
+
+	"""
+	The configuration one organization's mail is sent through: its own when it has one, the
+	installation-wide one otherwise. The answer's `id` says which of the two it is.
+	"""
+	smtpSetting(
+		"The organization to resolve the configuration for. Omit for the installation-wide one."
+		organizationId: ID
+	): SmtpSetting!
+}
+
+extend type Mutation {
+	"""
+	Files an SMTP configuration for an organization, or for the whole installation when no organization
+	is stated. The credentials travel one way: they are stored, and no read answers them back.
+	"""
+	createSmtpSetting(input: CreateSmtpSettingInput!): SmtpSetting!
+
+	"""
+	Replaces the writable columns of an SMTP configuration. The delivered edit binds the creation body
+	and the identifier from the path, so a member the caller leaves out is written as the column's
+	default rather than left as it is.
+	"""
+	updateSmtpSetting(input: UpdateSmtpSettingInput!): SmtpSetting!
+
+	"""
+	Removes an SMTP configuration outright. The delivered route answers with the store's deletion
+	result; this field answers the fact of the removal, which is the one member of it a caller reads.
+	"""
+	deleteSmtpSetting(id: ID!): Boolean!
+
+	"""
+	Withdraws an SMTP configuration without removing it.
+	"""
+	softDeleteSmtpSetting(id: ID!): SmtpSetting!
+
+	"""
+	Puts a withdrawn SMTP configuration back.
+	"""
+	recoverSmtpSetting(id: ID!): SmtpSetting!
+
+	"""
+	Opens a connection with the configuration the caller states and reports whether the transport
+	accepted it. The connection is closed immediately: nothing is sent, and nothing is stored.
+	"""
+	validateSmtpSetting(input: ValidateSmtpSettingInput!): Boolean!
+}

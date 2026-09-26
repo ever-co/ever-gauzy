@@ -1,0 +1,126 @@
+# The tag type's object type.
+#
+# A tag type is the grouping a tag belongs to — the kind a picker groups its labels by — rather than a
+# label itself. The two are deliberately separate rows: the group is administered once, every tag
+# filed under it refers to it by identifier, and a grouping is what makes a long label list navigable
+# where a flat one is not. The concept stays in the domain that owns the entity, and the tag domain
+# refers to it.
+#
+# `tags` is deliberately absent, and that is the rule this schema applies to every reverse side: the
+# collection is loaded only when a REST caller names it in `relations`, and no read this surface
+# performs does, so the member would always be absent here. It is not a column of the row either, so a
+# write cannot state it — a tag is grouped by writing the tag's own `tagTypeId`, which is where the
+# delivered write stores the grouping, and the tags of a group are reachable that way.
+
+"""
+One grouping of labels.
+"""
+type TagType {
+	id: ID!
+	"The group's name as the operator writes it (`Category`, `Department`, `Priority`)."
+	type: String!
+	"""
+	When the group was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live group from a withdrawn one on the answer to the write
+	that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of tag types.
+"""
+type TagTypeEdge {
+	node: TagType!
+	cursor: String!
+}
+
+"""
+One page of tag types, with the total the filters select and the boundary cursors.
+"""
+type TagTypeConnection {
+	nodes: [TagType!]!
+	edges: [TagTypeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a tag type list may be sorted by.
+"""
+enum TagTypeSortField {
+	createdAt
+	updatedAt
+	type
+}
+
+"""
+The order the tag types are returned in. At most three keys are accepted.
+"""
+input TagTypeSort {
+	field: TagTypeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a tag type list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`type` is the whole of what a caller selects a group by, and the name is a column of the row rather
+than a translated member, so an `eq` on it is exact and a `like` on it is the prefix search a picker
+performs.
+
+No member narrows by tenant or organization. Both are applied to the criterion by the delivered reader
+from the credential rather than from the caller, so offering them here would suggest a scope decision
+the caller does not have. `deletedAt` is not filterable for the reason the tag list gives: the reader
+answers live rows only, so a condition on that column could only ever match the empty set.
+"""
+input TagTypeFilter {
+	id: IDFilter
+	type: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TagTypeFilter!]
+	or: [TagTypeFilter!]
+	not: TagTypeFilter
+}
+
+"""
+What a caller states when it declares a group.
+
+The organization is required here, unlike the tag's own create, and the asymmetry is the delivered
+controllers': this route binds a body that requires an organization identifier (or the organization
+itself, which this input does not offer), while the tag's binds one whose organization members are
+partial. The tenant is not a member on either, for the same reason: the write stamps the caller's own
+tenant onto the row and overwrites whatever a body states.
+
+The group's tags are not a member. The collection is a reverse side rather than a column of this row,
+so the delivered write has nothing to store it in; a tag is grouped by writing the tag's own
+`tagTypeId`.
+"""
+input CreateTagTypeInput {
+	"An identifier of one of the caller's own organizations."
+	organizationId: ID!
+	"The group's name as the operator writes it."
+	type: String!
+}
+
+"""
+What a caller states when it changes a group that exists.
+
+**A member the caller leaves out is left as it is.** The delivered write reads the row, proves it is
+the caller's, and then updates the columns the body states — a primitive `UPDATE`, never a replacement
+of the row — so omitting `type` keeps the name the group already has.
+"""
+input UpdateTagTypeInput {
+	id: ID!
+	organizationId: ID
+	type: String
+}

@@ -1,0 +1,413 @@
+# The webhook kernel's GraphQL types.
+#
+# Outbound webhooks are not a business domain: a subscription is how any consumer outside the platform
+# receives events, and the delivery log is what an operator reads when one of them stops arriving. The
+# two resources are therefore one document, and the third type beside them — `WebhookAttempt` — is the
+# concept the delivery contract itself names: one attempt of one delivery, which is the identity a
+# receiver deduplicates on.
+#
+# **The signing secret is a member of no type here, of no filter and of no input.** A subscription
+# stores the secret's material encrypted at rest, and the API's own projection replaces it with a
+# fingerprint — enough for an operator to tell two subscriptions apart, useless for signing anything.
+# The plaintext exists at exactly two moments, creation and rotation, and travels as a *mutation
+# answer* (`WebhookSubscriptionCredential`) rather than as a field of the resource: a type member is
+# something any read could select, which is the one thing a secret may never be.
+#
+# **The stored delivery body is a member of no type either.** `webhook_delivery.payload` is the exact
+# event envelope that will be, or was, sent — verbatim, including whatever the producing domain put in
+# its `data`. A redelivery resends those stored bytes, so nothing an operator does with this resource
+# needs to read one, and the log is read under the permission that configures integrations rather than
+# the one the event's own domain demands. What triage needs is served instead: the status the attempt
+# answered, how long it took, the receiver's truncated response, and the transport error when there
+# was no answer at all.
+#
+# Money appears nowhere on this surface, and no member here is a `Float`: the only numbers are counts,
+# an HTTP status and a duration in milliseconds.
+
+"""
+An outbound delivery endpoint: where a consumer outside the platform receives events.
+
+A subscription matches an event name against its `events` patterns at dispatch time, so a domain that
+writes to the outbox is immediately subscribable without this table being told about it. One
+subscription per `(organization, url)`, because a duplicate endpoint would double-deliver every
+matching event; and an endpoint that keeps refusing is switched off rather than left to be hammered.
+"""
+type WebhookSubscription {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"The operator-facing name of the endpoint."
+	name: String!
+	"Absolute HTTPS endpoint. The platform refuses to call anything else, in production."
+	url: String!
+	"""
+	The event names or patterns this endpoint receives: `order.placed` matches exactly that event,
+	`order.*` matches one more segment, `*` matches any event at any depth, and `*.payment.*` matches a
+	payment event under any aggregate. The list is never empty — a subscription that could never
+	deliver anything is refused rather than stored.
+	"""
+	events: [String!]!
+	"The channel this subscription listens to; null means every channel."
+	channelId: ID
+	"Free-text note for operators."
+	description: String
+	"""
+	Static extra headers sent with every delivery, for a routing key a receiver needs. Non-secret by
+	contract, and never allowed to override a reserved delivery header.
+	"""
+	headers: JSON
+	"The payload version this endpoint receives; the platform's own version when it pins none."
+	apiVersion: String
+	"Consecutive refusals; reset by a success and by the enable operation."
+	failureCount: Int!
+	"When the endpoint last accepted a delivery."
+	lastSuccessAt: DateTime
+	"When the endpoint last refused one."
+	lastFailureAt: DateTime
+	"When the switch was thrown, by an operator or by the auto-disable rule."
+	disabledAt: DateTime
+	"The operator switch. A disabled subscription is never selected for a delivery."
+	isActive: Boolean
+	"""
+	Operator metadata. It carries the previous secret's *ciphertext* and its expiry during a rotation
+	grace window, along with the reason the last disable recorded — never a readable secret.
+	"""
+	metadata: JSON
+	"""
+	A short digest of the signing secret: enough to tell two subscriptions apart, and useless for
+	signing. It is what every read of this resource answers in the secret's place.
+	"""
+	secretFingerprint: String!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of subscriptions.
+"""
+type WebhookSubscriptionEdge {
+	node: WebhookSubscription!
+	cursor: String!
+}
+
+"""
+One page of subscriptions, with the total the filters select and the boundary cursors.
+"""
+type WebhookSubscriptionConnection {
+	nodes: [WebhookSubscription!]!
+	edges: [WebhookSubscriptionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a subscription list may be sorted by.
+
+A webhook list is read as a fleet: what was added most recently, what is failing most, and what has
+not been heard from in the longest. The identifiers and the event patterns are not sort keys — those
+are filters — and neither is the secret, in any form.
+"""
+enum WebhookSubscriptionSortField {
+	createdAt
+	updatedAt
+	name
+	failureCount
+	lastSuccessAt
+	lastFailureAt
+	isActive
+}
+
+"""
+The order the subscriptions are returned in. At most three keys are accepted.
+"""
+input WebhookSubscriptionSort {
+	field: WebhookSubscriptionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a subscription list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+Every member is a column of the row, which is why the set is what it is. The secret is deliberately
+absent although the row carries it: a condition on a value no read answers could only ever be a
+condition a client cannot verify, and the fingerprint is a digest rather than something a caller
+filters on. The tenant and the organization are absent because both are applied to the criterion from
+the credential rather than from the caller.
+"""
+input WebhookSubscriptionFilter {
+	id: IDFilter
+	name: StringFilter
+	url: StringFilter
+	events: JSONFilter
+	channelId: IDFilter
+	description: StringFilter
+	headers: JSONFilter
+	apiVersion: StringFilter
+	failureCount: NumberFilter
+	lastSuccessAt: DateTimeFilter
+	lastFailureAt: DateTimeFilter
+	disabledAt: DateTimeFilter
+	isActive: BooleanFilter
+	metadata: JSONFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [WebhookSubscriptionFilter!]
+	or: [WebhookSubscriptionFilter!]
+	not: WebhookSubscriptionFilter
+}
+
+"""
+One delivery of one event to one subscription.
+
+`(subscriptionId, eventId)` is unique, which is what makes the dispatcher idempotent: a re-run of the
+dispatch pass finds this row instead of creating a second one, so an event is never delivered twice
+because a pass was retried. The row holds the body that was decided on and never regenerates it, so a
+redelivery sends exactly what was originally intended.
+
+The body itself is deliberately not a member; see the note at the head of this document.
+"""
+type WebhookDelivery {
+	id: ID!
+	tenantId: ID
+	organizationId: ID
+	"The subscription the delivery belongs to."
+	subscriptionId: ID!
+	"The event this delivery carries, as the outbox recorded it."
+	eventId: ID!
+	"Denormalised event name, so a delivery list is readable without the outbox row."
+	eventName: String!
+	"Where the delivery stands. `DEAD` is terminal and is reached only when nothing is left to try."
+	status: WebhookDeliveryStatus!
+	"Times the endpoint was called."
+	attemptCount: Int!
+	"HTTP status the endpoint answered with, absent when the request never completed."
+	responseStatus: Int
+	"The receiver's response body, truncated, kept for triage."
+	responseBody: String
+	"How long the last attempt took, in milliseconds."
+	durationMs: Int
+	"When the next attempt is due; null once the delivery is settled."
+	nextAttemptAt: DateTime
+	"When the endpoint acknowledged the delivery."
+	deliveredAt: DateTime
+	"The transport, TLS or timeout error of the last attempt."
+	lastError: String
+	"""
+	The attempt the row records, or null when it has not been attempted yet. One attempt rather than a
+	history: the row keeps the counter and the outcome of the attempt it last made, and what a receiver
+	deduplicated on is the two of them joined.
+	"""
+	lastAttempt: WebhookAttempt
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+Where a delivery stands.
+"""
+enum WebhookDeliveryStatus {
+	"Written and not yet attempted, or awaiting the instant the next attempt is due."
+	PENDING
+	"The endpoint answered `2xx`; the delivery is settled and the subscription's failure count resets."
+	DELIVERED
+	"The last attempt was refused and a further one is scheduled."
+	FAILED
+	"Nothing left to try: the schedule ran out, or the endpoint answered in a way that will not change."
+	DEAD
+}
+
+"""
+One attempt of one delivery.
+
+The platform's webhook contract names an attempt `<deliveryId>.<attempt>` — that is the `X-Delivery`
+header value a receiver deduplicates on — so an attempt is a concept rather than a row, and this is
+it: the identity the receiver saw and the outcome the delivery row kept. Nothing else is stored per
+attempt, and nothing here claims to be a history of them.
+"""
+type WebhookAttempt {
+	"The attempt identity the receiver saw in `X-Delivery`: `<deliveryId>.<attempt>`."
+	id: ID!
+	"The delivery the attempt belongs to."
+	deliveryId: ID!
+	"The 1-based attempt number, which is the `X-Attempt` header value."
+	attempt: Int!
+	"Whether the endpoint answered `2xx`."
+	delivered: Boolean!
+	"HTTP status of the attempt, absent when the request never completed."
+	responseStatus: Int
+	"The receiver's response body, truncated for triage."
+	responseBody: String
+	"How long the attempt took, in milliseconds."
+	durationMs: Int
+	"The transport, TLS or timeout error, when there was no answer."
+	lastError: String
+}
+
+"""
+The boundary of one page of deliveries.
+"""
+type WebhookDeliveryEdge {
+	node: WebhookDelivery!
+	cursor: String!
+}
+
+"""
+One page of deliveries, with the total the filters select and the boundary cursors.
+"""
+type WebhookDeliveryConnection {
+	nodes: [WebhookDelivery!]!
+	edges: [WebhookDeliveryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a delivery list may be sorted by.
+
+The two timestamps are how a delivery is found again, `nextAttemptAt` is the work list's own order —
+what is due first stands first, and the rows already settled carry no instant and trail it — and the
+rest answer the questions a queue is inspected with.
+"""
+enum WebhookDeliverySortField {
+	createdAt
+	updatedAt
+	nextAttemptAt
+	deliveredAt
+	attemptCount
+	responseStatus
+	eventName
+	status
+}
+
+"""
+The order the deliveries are returned in. At most three keys are accepted.
+"""
+input WebhookDeliverySort {
+	field: WebhookDeliverySortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the delivery status.
+"""
+input WebhookDeliveryStatusFilter {
+	eq: WebhookDeliveryStatus
+	ne: WebhookDeliveryStatus
+	in: [WebhookDeliveryStatus!]
+	nin: [WebhookDeliveryStatus!]
+	isNull: Boolean
+}
+
+"""
+The fields a delivery list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, and the one column the row carries that is absent here is the
+stored body — for the reason stated at the head of this document, and because a condition on a value
+this surface does not answer could only ever be a condition a client cannot verify.
+"""
+input WebhookDeliveryFilter {
+	id: IDFilter
+	subscriptionId: IDFilter
+	eventId: IDFilter
+	eventName: StringFilter
+	status: WebhookDeliveryStatusFilter
+	attemptCount: NumberFilter
+	responseStatus: NumberFilter
+	responseBody: StringFilter
+	durationMs: NumberFilter
+	nextAttemptAt: DateTimeFilter
+	deliveredAt: DateTimeFilter
+	lastError: StringFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [WebhookDeliveryFilter!]
+	or: [WebhookDeliveryFilter!]
+	not: WebhookDeliveryFilter
+}
+
+# The write surface.
+#
+# `CreateWebhookSubscriptionInput` and `UpdateWebhookSubscriptionInput` declare what the delivered
+# write paths store, and nothing else. Four consequences are deliberate:
+#
+# - **The secret is a member of neither.** It is generated by the service — a caller that could set its
+#   own could sign a payload the platform never sent — and it is answered once, by the operation that
+#   generated it.
+# - **`isActive`, `disabledAt` and `failureCount` are members of neither.** The switch is claimed
+#   through the enable and disable operations, which reset the counter with it; a body stating the
+#   column would let a caller switch an endpoint on while keeping the count that switched it off.
+# - **The tenant and the organization are members of neither.** The delivered write stamps both from
+#   the credential and refuses a row that belongs to another one, so a member here would promise a
+#   scope the write refuses.
+# - **`events` is stated as patterns, not as an enumeration.** The event catalogue is a platform-wide
+#   list that grows with every domain, so closing the value set here would make each new event a
+#   schema change.
+
+"""
+What a caller states when it subscribes an endpoint.
+"""
+input CreateWebhookSubscriptionInput {
+	"The operator-facing name of the endpoint."
+	name: String!
+	"Absolute HTTPS endpoint."
+	url: String!
+	"The event names or patterns the endpoint receives. At least one is required."
+	events: [String!]!
+	"The channel to listen to; omit for every channel."
+	channelId: ID
+	"Free-text note for operators."
+	description: String
+	"Static extra headers sent with every delivery; a reserved header name is ignored, never honoured."
+	headers: JSON
+	"The payload version this endpoint expects."
+	apiVersion: String
+	"Operator metadata, including the development-only `allowInsecure` the endpoint check reads."
+	metadata: JSON
+}
+
+"""
+What a caller may change on a subscription that exists.
+
+Every member is optional: the delivered write touches the members the body states and leaves the rest
+as they are. `channelId: null` is a statement rather than an absence — it widens the subscription back
+to every channel — and an omitted member leaves the current channel alone.
+"""
+input UpdateWebhookSubscriptionInput {
+	id: ID!
+	"The operator-facing name of the endpoint."
+	name: String
+	"Absolute HTTPS endpoint."
+	url: String
+	"The event names or patterns the endpoint receives, replacing the set whole."
+	events: [String!]
+	"The channel to listen to; an explicit null listens to every channel."
+	channelId: ID
+	"Free-text note for operators."
+	description: String
+	"Static extra headers, replacing the set whole."
+	headers: JSON
+	"The payload version this endpoint expects."
+	apiVersion: String
+	"Operator metadata, replaced whole."
+	metadata: JSON
+}
+
+"""
+The subscription and the secret that was generated for it.
+
+The secret is readable at exactly two moments — creation and rotation — and this is how those two
+operations hand it over. It is an answer rather than a type member on purpose: a member would be
+selectable by any read of the resource, and a secret that any read can produce is not a secret.
+`previousSecretValidUntil` is stated on a rotation and absent on a creation, where there is no
+previous secret to keep working.
+"""
+type WebhookSubscriptionCredential {
+	"The subscription, with its secret replaced by a fingerprint."
+	subscription: WebhookSubscription!
+	"The plaintext secret, which no later read can produce again."
+	secret: String!
+	"When the previous secret stops being accepted, on a rotation."
+	previousSecretValidUntil: DateTime
+}

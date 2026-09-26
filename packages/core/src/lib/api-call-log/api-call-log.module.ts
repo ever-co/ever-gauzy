@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ApiCallLogController } from './api-call-log.controller';
 import { ApiCallLog } from './api-call-log.entity';
+import { ApiCallLogResolver } from './api-call-log.resolver';
 import { ApiCallLogService } from './api-call-log.service';
 import { ApiCallLogMiddleware } from './api-call-log-middleware';
 import { TypeOrmApiCallLogRepository } from './repository/type-orm-api-call-log.repository';
@@ -12,7 +13,16 @@ import { MikroOrmApiCallLogRepository } from './repository/mikro-orm-api-call-lo
 @Module({
 	imports: [TypeOrmModule.forFeature([ApiCallLog]), MikroOrmModule.forFeature([ApiCallLog]), RolePermissionModule],
 	controllers: [ApiCallLogController],
-	providers: [ApiCallLogService, TypeOrmApiCallLogRepository, MikroOrmApiCallLogRepository, ApiCallLogMiddleware],
+	providers: [
+		ApiCallLogService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches the service. Nothing has
+		// to be re-exported for it — the resolver calls the service and nothing else.
+		ApiCallLogResolver,
+		TypeOrmApiCallLogRepository,
+		MikroOrmApiCallLogRepository,
+		ApiCallLogMiddleware
+	],
 	exports: [ApiCallLogService]
 })
 export class ApiCallLogModule implements NestModule {

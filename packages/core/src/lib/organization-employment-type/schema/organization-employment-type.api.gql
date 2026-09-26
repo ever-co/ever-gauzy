@@ -1,0 +1,92 @@
+# The organization employment type domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The controller declares two routes and inherits seven.** Its list and its edit are its own; the
+# count, the paginated list, the one-row read, the create, the removal and the two lifecycle moves come
+# from the CRUD base it extends. Inherited is not the same as absent — Nest registers an inherited
+# handler with the decorators it carries — so this surface mirrors all nine, and the two list routes
+# fold into one connection because they answer one question.
+#
+# **The guard chain and the permission are the route's, field by field.** The delivered controller
+# carries `TenantPermissionGuard` on the class, and its five writing routes — create, update, delete,
+# softRemove and softRecover — each add `PermissionGuard` with `ALL_ORG_EDIT`. The three reads state
+# nothing, and their routes state nothing either. Every field here restates exactly what the route it
+# mirrors states and no more: a field that demanded a permission its route does not would refuse a
+# caller the REST route serves, and a field that dropped one its route demands would serve a caller the
+# REST route refuses — the two asymmetries the two-protocol rule forbids, each in one direction.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection. `withDeleted` is
+# offered because the delivered list route offers it: `BaseQueryDTO` carries it and that route hands its
+# query string straight to the same read, so a REST caller can ask for withdrawn rows and a connection
+# that could not would hide them.
+#
+# `organizationEmploymentTypeCount` takes no filter, and that is a statement rather than an omission.
+# The delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak.
+
+extend type Query {
+	"""
+	The employment types of the caller's tenant, newest first.
+	"""
+	organizationEmploymentTypes(
+		filter: OrganizationEmploymentTypeFilter
+		sort: [OrganizationEmploymentTypeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationEmploymentTypeConnection!
+
+	"""
+	One employment type of the caller's tenant, or null when there is none.
+	"""
+	organizationEmploymentType(id: ID!): OrganizationEmploymentType
+
+	"""
+	How many employment types the caller's tenant keeps.
+	"""
+	organizationEmploymentTypeCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files an employment type.
+	"""
+	createOrganizationEmploymentType(
+		input: CreateOrganizationEmploymentTypeInput!
+	): OrganizationEmploymentType!
+
+	"""
+	Changes the stated facts of an employment type. The delivered edit writes through the create path —
+	it is an upsert rather than a replacement of the row — so a member the caller leaves out is left as
+	it is.
+	"""
+	updateOrganizationEmploymentType(
+		input: UpdateOrganizationEmploymentTypeInput!
+	): OrganizationEmploymentType!
+
+	"""
+	Removes an employment type outright. Who was classified under it is the store's own constraint to
+	refuse; this field does not pre-empt it.
+	"""
+	deleteOrganizationEmploymentType(id: ID!): Boolean!
+
+	"""
+	Withdraws an employment type without removing it: the row keeps its identifier and the people
+	classified under it keep pointing at it, and the delivered list stops answering it.
+	"""
+	softDeleteOrganizationEmploymentType(id: ID!): OrganizationEmploymentType!
+
+	"""
+	Puts a withdrawn employment type back.
+	"""
+	recoverOrganizationEmploymentType(id: ID!): OrganizationEmploymentType!
+}

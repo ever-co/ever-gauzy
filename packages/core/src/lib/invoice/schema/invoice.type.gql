@@ -1,0 +1,493 @@
+# The invoice's object types.
+#
+# An invoice is the finance document: what an order or a subscription raises, what a buyer is sent,
+# and the row a payment is applied against. The domain owns the table rather than a commerce-side
+# copy of it — the numbering series, the totals and the buyer's link all live on this row, and a
+# second table would be a second answer to what a document is owed.
+#
+# **Every amount on this type is `Decimal`, never `Float`.** The columns are `numeric` read through
+# the platform's numeric transformer, and a binary fraction cannot hold a cent: an amount a client
+# reads as a `Float` is an amount that will not add up. The amounts are carried as the exact family
+# the row stores them in, and nothing is rescaled, reformatted or re-paired on the way out.
+#
+# **The document states one `currency`, and every amount beside it is expressed in that one
+# currency.** That is the shape the delivered read returns — the table has a single `currency` column
+# and no per-amount code — and it is the opposite of the variant price, whose every amount carries
+# its own code. A schema that paired each amount with a currency here would be inventing a second
+# representation of a fact the row already states once.
+#
+# Arithmetic over these amounts is the platform's money layer's, which computes exactly; a client that
+# adds two of them itself has left the exact family it read them in. This type answers what the row
+# holds and computes nothing.
+#
+# `invoiceNumber` is the numbering series, and it is carried in the same exact family for the same
+# reason: the column is `numeric` (a `bigint` on the store that declares it so), the series is what
+# the next document's number is derived from, and the platform's 32-bit `Int` would refuse a series
+# the column holds while a `Float` could not hold it at all. The delivered look-up that answers the
+# series' highest number states the number in the same family — see `InvoiceNumberSeries`.
+#
+# **The document is not translatable, and no member here pretends otherwise.** There are no
+# translation rows behind an invoice and no reader merges one onto the row: `terms` and `internalNote`
+# are columns that hold the text as it was written, and the language-dependent half of an invoice is
+# its *rendered* document, which the delivered renderer translates at render time from the caller's
+# own language. A merged member would therefore be absent from every row this surface answers, which
+# is worse than no member at all.
+#
+# Members the delivered readers can produce are deliberately absent, each for its own reason:
+#
+# - `fromOrganization`, `toContact`, `invoiceItems`, `payments`, `historyRecords` and `tags` are not
+#   exposed as relations. Each is loaded only when a REST caller names it in the `relations` of its
+#   query string, and no read this surface performs names any: the connection states none and the
+#   node query carries none either. A relation member would therefore be absent from exactly the rows
+#   this surface answers. The identifiers are columns and are answered by every read —
+#   `fromOrganizationId`, `toContactId` — and the rows themselves are reachable from the resources
+#   that own them: the lines of an invoice are `InvoiceItem`'s own connection narrowed to
+#   `invoiceId`, and the buyer is the contact resource's row named by `toContactId`.
+# - `organizationContactName` is not a member. The write DTO carries it, but no column holds it and
+#   the delivered write stores nothing under it, so a member here would be answered `null` on every
+#   row while looking like a fact about the document.
+# - `status`, `discountType`, `taxType`, `tax2Type` and `invoiceType` are carried as their string
+#   values rather than declared as schema enums. Their vocabularies are the contracts' own and are
+#   shared — the status column is read by the estimate as well as by the invoice, and the discount
+#   and tax vocabulary is the one the rest of the platform states its charges in — so declaring them
+#   here would claim a vocabulary this domain does not own, and the next domain that needs the same
+#   value set would collide with this file rather than reuse it.
+# - `deletedAt` is carried, because withdrawing and restoring are delivered routes whose whole effect
+#   is that column; without it the answer to the write that withdrew a document would not say so. It
+#   is not filterable — see `InvoiceFilter`.
+
+"""
+The finance document: what one buyer owes, in one currency, under one number of the tenant's series.
+"""
+type Invoice {
+	id: ID!
+	"""
+	The number this document carries, from the tenant's series.
+
+	Unique across the table, which is the constraint the delivered schema declares — a series is what
+	makes a document quotable, and two documents under one number cannot be told apart. Nullable
+	because the column is: a row written outside the numbering path carries none.
+	"""
+	invoiceNumber: Decimal
+	"The date the document is issued. The delivered write requires it."
+	invoiceDate: DateTime
+	"The date the document falls due. The delivered write requires it."
+	dueDate: DateTime
+	"The ISO 4217 code every amount on this document is expressed in."
+	currency: String!
+	"""
+	The discount, as an amount in the document's own currency or as a percentage of the subtotal —
+	`discountType` states which of the two it is.
+	"""
+	discountValue: Decimal!
+	"Whether the document is marked settled."
+	paid: Boolean
+	"The first tax applied, as an amount in the document's own currency or as a rate — `taxType`."
+	tax: Decimal
+	"The second tax applied, on the same terms as the first."
+	tax2: Decimal
+	"The payment terms as text, as they are printed on the document."
+	terms: String!
+	"The document's total, in the document's own currency."
+	totalValue: Decimal
+	"""
+	Where the document stands, as the contracts' own value: `DRAFT`, `SENT`, `VIEWED`, `FULLY_PAID`,
+	`PARTIALLY_PAID`, `OVERPAID` or `VOID` for an invoice, and `ACCEPTED` or `REJECTED` in place of the
+	payment states for an estimate. One column serves both readings, which is why the member is the
+	value rather than a schema enum.
+	"""
+	status: String!
+	"Whether this row is an estimate rather than an invoice. The same table holds both."
+	isEstimate: Boolean
+	"Whether the buyer accepted the estimate. An estimate that is not accepted is not billed."
+	isAccepted: Boolean
+	"The discount's kind: `PERCENT` of the subtotal, or `FLAT` as an amount."
+	discountType: String
+	"The first tax's kind: `PERCENT` of the subtotal, or `FLAT` as an amount."
+	taxType: String
+	"The second tax's kind, on the same two values as the first."
+	tax2Type: String
+	"""
+	How the document's lines are chosen, when the client says so: by employee hours, by project
+	hours, by task hours, by products, by expenses, or as detailed items. Stated when the document is
+	recorded and not changed afterwards — the delivered edit body does not carry it.
+	"""
+	invoiceType: String
+	"The recipient the document was sent to, when it was sent."
+	sentTo: String
+	"The contact the document is addressed to, as the identifier of the contact's own row."
+	organizationContactId: String
+	"The note kept for the operator rather than printed for the buyer."
+	internalNote: String
+	"The amount already received against this document, in the document's own currency."
+	alreadyPaid: Decimal
+	"The amount still owed, in the document's own currency."
+	amountDue: Decimal
+	"Whether the buyer still has something to be invoiced for on the agreement behind this document."
+	hasRemainingAmountInvoiced: Boolean
+	"""
+	The capability the document's public link is made of. Written by the link route and carried here,
+	so a caller that generated the link reads it off the answer to that write.
+	"""
+	token: String
+	"""
+	The settlement schedule this document is settled against.
+
+	Its instalments are derived from the term and the document's own date, so `dueDate` becomes the
+	last instalment's date rather than a fixed offset, and the schedule is served by the term's own
+	resource rather than stored here.
+	"""
+	paymentTermId: ID
+	"""
+	The supplier this document bills *from*, when it is a vendor bill rather than a sales invoice.
+	Null on a sales invoice, whose issuing organization is `fromOrganizationId`.
+	"""
+	vendorId: ID
+	"The organization that issued the document."
+	fromOrganizationId: ID
+	"The contact the document is addressed to, as an identifier."
+	toContactId: ID
+	"""
+	When the document was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write,
+	so without it a caller could not tell a live document from a withdrawn one on the answer to the
+	write that withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The highest number the tenant's invoice series has reached.
+
+The delivered look-up answers the aggregate row its own statement selects — the SQL alias it computes
+the maximum under is `max`, and that is the whole of what it returns — rather than an invoice, which
+is what its own return type says. This type is that answer stated as what it is, so a client taking
+the next number reads it without mistaking the row for a document.
+
+The number is carried as the exact decimal the column holds rather than as a `Float`, for the reason
+the numbering series is carried that way on `Invoice`; and rather than as an `Int`, because the
+series is the column's own and a 32-bit integer would refuse a series the column holds.
+"""
+type InvoiceNumberSeries {
+	"The highest number issued, or zero when the tenant has issued none."
+	max: Decimal!
+}
+
+"""
+One rendered document: the bytes the delivered renderer produced, and what they are.
+
+The REST routes stream a PDF and state its media type and its length in the response headers. A
+GraphQL answer has no binary scalar, so the same bytes travel base64-encoded with the media type and
+the exact length beside them — which is what lets a client write the document it asked for to disk
+without guessing either. The delivered renderer answers nothing when it fails (it logs the failure
+rather than raising it), and the REST routes answer an empty body in that case; the fields that
+answer this type are therefore nullable, and `null` is that same fact in this protocol's vocabulary.
+"""
+type InvoiceDocument {
+	"The media type of the bytes. The delivered renderer produces PDFs."
+	contentType: String!
+	"The document's exact length in bytes, as the REST routes state in `Content-Length`."
+	byteLength: Int!
+	"The document's bytes, base64-encoded."
+	content: String!
+}
+
+"""
+The boundary of one page of invoices.
+"""
+type InvoiceEdge {
+	node: Invoice!
+	cursor: String!
+}
+
+"""
+One page of invoices, with the total the filters select and the boundary cursors.
+"""
+type InvoiceConnection {
+	nodes: [Invoice!]!
+	edges: [InvoiceEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an invoice list may be sorted by.
+
+The two timestamps are how a change is found again; the number and the two dates are the document's
+own order, which is the order a ledger is read in; `totalValue` and `amountDue` are what a receivable
+list is taken by; and `status` is offered because a work list is taken in status groups — the values
+sort as their spelling, which groups like with like.
+
+`paid` and `isEstimate` are not sort keys: a boolean order is not an order a document list is read
+in, and the questions they answer are filters.
+"""
+enum InvoiceSortField {
+	createdAt
+	updatedAt
+	invoiceNumber
+	invoiceDate
+	dueDate
+	totalValue
+	amountDue
+	status
+}
+
+"""
+The order the invoices are returned in. At most three keys are accepted.
+"""
+input InvoiceSort {
+	field: InvoiceSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an invoice list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the document's own row, which is why the set is what it is: the delivered
+list read answers those columns, so each one narrows rows the connection was handed.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list reads answer
+live rows only, so a condition on that column could only ever match the empty set, and an argument
+that cannot be honoured is worse than an argument that is not offered. The tenant and the
+organization are absent for a different reason — both are applied to the criterion from the credential
+rather than from the caller, so a member here would suggest a scope decision the caller does not have.
+
+The amounts are stated through the decimal family, which is the family money is compared in. **The
+values are the row's own**: the columns are `numeric` read through the platform's numeric transformer,
+so an equality states the amount as the read produces it (`100.5`, not a padded string), while the
+range operators — which are what a receivable list is actually searched with — need no such care.
+"""
+input InvoiceFilter {
+	id: IDFilter
+	invoiceNumber: DecimalFilter
+	invoiceDate: DateTimeFilter
+	dueDate: DateTimeFilter
+	currency: StringFilter
+	discountValue: DecimalFilter
+	discountType: StringFilter
+	paid: BooleanFilter
+	tax: DecimalFilter
+	taxType: StringFilter
+	tax2: DecimalFilter
+	tax2Type: StringFilter
+	terms: StringFilter
+	totalValue: DecimalFilter
+	status: StringFilter
+	isEstimate: BooleanFilter
+	isAccepted: BooleanFilter
+	invoiceType: StringFilter
+	sentTo: StringFilter
+	organizationContactId: StringFilter
+	internalNote: StringFilter
+	alreadyPaid: DecimalFilter
+	amountDue: DecimalFilter
+	hasRemainingAmountInvoiced: BooleanFilter
+	token: StringFilter
+	paymentTermId: IDFilter
+	vendorId: IDFilter
+	fromOrganizationId: IDFilter
+	toContactId: IDFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [InvoiceFilter!]
+	or: [InvoiceFilter!]
+	not: InvoiceFilter
+}
+
+# The write surface.
+#
+# `CreateInvoiceInput` and `UpdateInvoiceInput` declare what the delivered write paths store, and
+# nothing else. Three consequences are deliberate:
+#
+# - A member that names a related row is stated as that row's identifier. The delivered paths persist
+#   the reference — the foreign key, or the pair of identifiers the pivot row is made of — and never
+#   the object beside it, so an input member carrying a whole related object would offer members
+#   nothing honours.
+# - The lines of the document are not members. They are the invoice item resource's own rows and are
+#   written by its own delivered bulk route, which replaces the whole line set of one invoice; a
+#   nested line list here would be a second write path for rows that resource already serves.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant
+#   onto the row and overwrites whatever a body states, so a member here would promise a scope the
+#   write refuses.
+
+"""
+What a caller states when it raises an invoice or an estimate.
+
+The members the delivered body validation requires are required here too, so that a request this
+surface accepts is a request the delivered write serves: the number, the two dates, the status, the
+currency and the issuing organization. The organization the document is filed under is stated as an
+identifier and is *not* required, because the delivered validation requires an organization only when
+the body names neither the organization object nor a `sentTo` — and the object spelling is a type this
+schema does not declare, so the identifier is what this surface offers and the condition stays the
+delivered validator's rather than being restated as a non-null member that would refuse a body the
+route serves.
+"""
+input CreateInvoiceInput {
+	"The number from the tenant's series."
+	invoiceNumber: Decimal!
+	"The date the document is issued."
+	invoiceDate: DateTime!
+	"The date the document falls due."
+	dueDate: DateTime!
+	"The status the document starts in."
+	status: String!
+	"The ISO 4217 code every amount on the document is expressed in."
+	currency: String!
+	"The organization that issues the document. The delivered write requires it."
+	fromOrganizationId: ID!
+	"The organization the document is filed under."
+	organizationId: ID
+	"The recipient, when the document is recorded as already sent."
+	sentTo: String
+	"How the document's lines are chosen."
+	invoiceType: String
+	"The total, in the document's own currency."
+	totalValue: Decimal
+	"The discount, as an amount or as a percentage of the subtotal — `discountType` states which."
+	discountValue: Decimal
+	"The discount's kind: `PERCENT` or `FLAT`."
+	discountType: String
+	"The first tax, as an amount or as a rate — `taxType` states which."
+	tax: Decimal
+	"The first tax's kind: `PERCENT` or `FLAT`."
+	taxType: String
+	"The second tax, on the same terms as the first."
+	tax2: Decimal
+	"The second tax's kind, on the same two values as the first."
+	tax2Type: String
+	"Whether the document is recorded as already settled."
+	paid: Boolean
+	"The payment terms as text, as they are printed on the document."
+	terms: String
+	"The contact the document is addressed to."
+	organizationContactId: String
+	"The contact the document is addressed to, as an identifier."
+	toContactId: ID
+	"Whether this row is an estimate rather than an invoice."
+	isEstimate: Boolean
+	"Whether the buyer has already accepted the estimate."
+	isAccepted: Boolean
+	"The note kept for the operator rather than printed for the buyer."
+	internalNote: String
+	"The amount already received against the document."
+	alreadyPaid: Decimal
+	"The amount still owed."
+	amountDue: Decimal
+	"Whether the agreement behind the document still has something to be invoiced for."
+	hasRemainingAmountInvoiced: Boolean
+	"Whether the document is filed away rather than live."
+	isArchived: Boolean
+	"The settlement schedule the document is settled against."
+	paymentTermId: ID
+	"The facets attached to the document, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it edits a document that exists.
+
+The delivered edit dispatches the same command the create dispatches, with the identifier path and the
+body together, so the members the delivered validation requires are required here for the same reason
+they are required on the create.
+
+**A member the caller leaves out is left as it is.** The delivered write is the platform's own upsert:
+it writes the members the body states onto the row the identifier names and touches no others, so
+"absent" and "unchanged" coincide and a caller that means to clear an optional member states it as
+null. Two consequences follow from the same fact and are worth stating plainly:
+
+- An identifier that names a row of another tenant is refused outright, which is the ownership guard
+  the delivered write applies before it persists anything.
+- An identifier that names no row at all is **stored as a new row** rather than refused, because an
+  upsert is what the delivered write is. A client that means "change this document" reads it first, or
+  reaches for the mutation above only with an identifier it obtained from this surface.
+
+`invoiceType` is not a member: the delivered edit body does not carry it, and the way the document's
+lines were chosen is fixed when the document is raised.
+"""
+input UpdateInvoiceInput {
+	id: ID!
+	invoiceNumber: Decimal!
+	invoiceDate: DateTime!
+	dueDate: DateTime!
+	status: String!
+	currency: String!
+	organizationId: ID
+	sentTo: String
+	totalValue: Decimal
+	discountValue: Decimal
+	discountType: String
+	tax: Decimal
+	taxType: String
+	tax2: Decimal
+	tax2Type: String
+	paid: Boolean
+	terms: String
+	organizationContactId: String
+	toContactId: ID
+	isEstimate: Boolean
+	isAccepted: Boolean
+	internalNote: String
+	alreadyPaid: Decimal
+	amountDue: Decimal
+	hasRemainingAmountInvoiced: Boolean
+	isArchived: Boolean
+	paymentTermId: ID
+	"The facets attached to the document, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it moves a document along.
+
+Every member is optional, because every one of them is a step rather than a replacement: the delivered
+route states only the members the caller names, writes them onto the document, and leaves the rest as
+they are. The statuses the two flags move between are the contracts' own vocabulary, which is why
+`status` is a `String` here — see the note on the object type.
+"""
+input UpdateInvoiceActionInput {
+	"The status to move the document to."
+	status: String
+	"Whether the row is an estimate rather than an invoice."
+	isEstimate: Boolean
+	"The note kept for the operator rather than printed for the buyer."
+	internalNote: String
+	"Whether the document is filed away rather than live."
+	isArchived: Boolean
+	"Whether the document is marked settled."
+	paid: Boolean
+	"The amount received against the document."
+	alreadyPaid: Decimal
+	"The amount still owed."
+	amountDue: Decimal
+	"The recipient the document has been sent to."
+	sentTo: String
+}
+
+"""
+What a caller states when it sends a document to a recipient.
+
+The delivered route takes the recipient in its path, a body whose `params` member names the document,
+and the language and the origin from the request's own headers. Those headers are read here from the
+same request — the language is the one the delivered `language` header names and the origin the one
+the `origin` header carries — so a message sent over either protocol is the same message.
+"""
+input SendInvoiceEmailInput {
+	"The recipient's email address."
+	email: String!
+	"The document the message is about."
+	invoiceId: ID!
+	"The number of the document the message is about."
+	invoiceNumber: Decimal!
+	"Whether the document is an estimate rather than an invoice."
+	isEstimate: Boolean!
+	"The organization that issued the document."
+	organizationId: ID!
+}

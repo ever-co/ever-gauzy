@@ -1,0 +1,338 @@
+# The custom-tracking domain's object types.
+#
+# Custom tracking is how a client that is not the platform's own timer reports what it observed. The client
+# encodes its observations into a document, posts it, and the platform decodes it just far enough to learn
+# which *session* the document belongs to, then stores **both** the encoded document and the decoded one
+# inside the slot's own custom-activity document column. Everything this domain answers is read back out
+# of that column.
+#
+# That is why every root field of this domain is a computed answer rather than a resource read: a tracking
+# session is not a row this platform stores. It is a grouping of the payloads the documents carry, decoded
+# on the way out, and the rows that *are* stored — the slots and the mapping rows that index them — are the
+# slot domain's own resource. The type below therefore has no identifier of its own: it is identified by
+# the session identifier the decoding recovered.
+#
+# **The one honest use of `JSON` is `decodedData`.** The document a client posts is opaque to this schema:
+# its shape belongs to whichever tracker produced it, it is versioned by that tracker rather than by this
+# platform, and re-declaring it here would be claiming a shape this platform does not own and cannot
+# validate. It is carried as the document it is. The members beside it are not opaque: the session
+# identifier, the instants and the encoded document are the three things the platform itself reads, and
+# they are typed.
+#
+# **The instants of a decoded session are carried as the text the tracker wrote.** They are members of the
+# document rather than columns of a row, the platform stores them as it decoded them, and re-typing them
+# here would be inventing a conversion the delivered answers do not perform. That is why `startTime`,
+# `lastActivity`, `createdAt` and `updatedAt` on `TrackingSession` are text rather than `DateTime`.
+#
+# **A duration states its unit, and the unit is seconds.** The slot's own column documents itself as the
+# number of seconds spent in it, and the log rows this domain carries are the same resource the slot's
+# pivot joins; a duration is never money.
+#
+# The rows behind every identifier here belong to the domains that own them — the slot, the engagement, the
+# project, the task, the log — and none of them is re-declared on this surface: what travels is the
+# identifier, which is the value that is always there.
+
+"""
+One observation a client reported, as it was stored and as it can be decoded.
+
+`encodedData` is the payload exactly as the client sent it, which is what makes a stored session
+re-decodable by the client that produced it. `decodedData` is the same observation as the platform decoded
+it, which is what makes it readable without the client.
+"""
+type TrackingSessionPayload {
+	"When the observation was made, as the text the payload carries."
+	timestamp: String!
+	"The payload as the client sent it, verbatim. It is the only form the platform can hand back unchanged."
+	encodedData: String!
+	"The observation as the platform decoded it, carried as the opaque document it is."
+	decodedData: JSON
+}
+
+"""
+One tracked session, decoded out of the slot documents that carry it.
+
+A session spans slots: a client that keeps tracking past the end of one ten-minute slot continues the same
+session in the next, and the delivered reads either carry one row per slot or fold the rows of one session
+together — which is what the `groupBySession` argument of the sessions field states.
+"""
+type TrackingSession {
+	"The identifier the tracker minted for this session. It is not a row of this platform; it is a key."
+	sessionId: String!
+	"When the session began, as the text the tracker wrote."
+	startTime: String!
+	"When the session was last active, as the text the tracker wrote."
+	lastActivity: String!
+	"When the platform first stored a payload of this session, as the text it wrote."
+	createdAt: String!
+	"When the platform last stored a payload of this session, as the text it wrote."
+	updatedAt: String!
+	"The observations the session holds, oldest first."
+	payloads: [TrackingSessionPayload!]!
+}
+
+"""
+As much of the slot a decoded session was filed into as the session answers carry.
+
+The two members are the two the delivered answers expose: when the slot started and how long it lasted. The
+slot's own resource is the slot domain's, and the rows behind `timeSlotId` are read through it.
+"""
+type CustomTrackingTimeSlotSummary {
+	"When the slot started."
+	startedAt: DateTime!
+	"How long the slot lasted, **in seconds**."
+	duration: Int
+}
+
+"""
+One slot a session was filed into, as the answers that list them state it.
+"""
+type CustomTrackingTimeSlotEntry {
+	"The slot."
+	timeSlotId: ID!
+	"The slot's own summary."
+	timeSlot: CustomTrackingTimeSlotSummary!
+}
+
+"""
+One tracked log row, projected to the members a tracking answer is read for.
+
+The rows are the delivered reads' own: the slot's pivot joins complete log rows, and a tracking answer
+carries them whole. This type is the projection those rows are read through on **this** surface, and it is
+not a second declaration of the log resource — the log's own domain owns that resource and its whole row,
+including the label pivot and the nested relations this projection does not join.
+"""
+type CustomTrackingTimeLog {
+	id: ID!
+	"When the log started."
+	startedAt: DateTime
+	"When the log stopped, or null while it is running."
+	stoppedAt: DateTime
+	"When the log was last edited by hand."
+	editedAt: DateTime
+	"How long the log lasted, **in seconds**."
+	duration: Int!
+	"The kind of log this is, as the delivered value."
+	logType: String
+	"Where the log was tracked from, as the delivered value."
+	source: String
+	"Whether the log is billable."
+	isBillable: Boolean
+	"Whether the log is still running."
+	isRunning: Boolean
+	"Whether the log has been edited since it was recorded."
+	isEdited: Boolean
+	"What the log is about."
+	description: String
+	"Why the log was entered or edited by hand, when it was."
+	reason: String
+	"The engagement the log belongs to."
+	employeeId: ID
+	"The project the log is attributed to."
+	projectId: ID
+	"The task the log is attributed to."
+	taskId: ID
+	"The timesheet the log was filed into."
+	timesheetId: ID
+	"The client the log is attributed to."
+	organizationContactId: ID
+	"The team the log was worked in."
+	organizationTeamId: ID
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+One tracked session as a read answers it: the session, the slots it touched, and the logs of those slots.
+
+Two of the members the delivered contract declares are carried although the reads this surface mirrors do
+not fill them, and saying so is the point of naming them here: `timeSlotId` and `timeSlot` belong to the
+*ungrouped* shape the delivered service builds internally, and the shape it answers with carries the
+`timeSlots` list instead. A client that reads the pair is reading a member that is null on every row these
+fields return, and it should know that before it builds on it.
+"""
+type CustomTrackingSessionResponse {
+	"The session identifier every row of this answer shares."
+	sessionId: String!
+	"The slot the ungrouped shape pointed at; null on the answers these fields return."
+	timeSlotId: ID
+	"The slot summary of the ungrouped shape; null on the answers these fields return."
+	timeSlot: CustomTrackingTimeSlotSummary
+	"The logs of the slots this session touched."
+	timeLogs: [CustomTrackingTimeLog!]!
+	"The session itself, with its payloads."
+	session: TrackingSession!
+	"The slots this session touched, in the order the read answered them."
+	timeSlots: [CustomTrackingTimeSlotEntry!]
+}
+
+"""
+What a set of answered sessions adds up to.
+
+The three members are the delivered summary's own. The range is the span of the slots the sessions touched
+— not of the payloads — which is why it is null for an answer whose sessions carry no slot summary at all.
+"""
+type TrackingSessionSummary {
+	"How many distinct sessions the answer holds."
+	totalSessions: Int!
+	"How many distinct slots those sessions touched."
+	totalTimeSlots: Int!
+	"The span of the slots that were touched, or null when none carried a start."
+	dateRange: TrackingSessionDateRange
+}
+
+"""
+The span of slots a set of sessions touched.
+"""
+type TrackingSessionDateRange {
+	"The earliest slot start."
+	start: DateTime!
+	"The latest slot start."
+	end: DateTime!
+}
+
+"""
+The sessions a read answered, with what they add up to.
+"""
+type CustomTrackingSessions {
+	"The sessions, as the caller asked for them: grouped by session or one row per slot."
+	sessions: [CustomTrackingSessionResponse!]!
+	"What the answered sessions add up to."
+	summary: TrackingSessionSummary!
+}
+
+"""
+One slot's tracking data: the slot, and the sessions decoded out of its document column.
+
+The slot carries three members rather than the two a session's own summary carries, because this answer is
+*about* the slot: it is the row the write filed the tracking into, and the logs are what the slot is
+attributed to.
+"""
+type CustomTrackingTimeSlot {
+	"When the slot started."
+	startedAt: DateTime!
+	"How long the slot lasted, **in seconds**."
+	duration: Int!
+	"The logs the slot is attributed to."
+	timeLogs: [CustomTrackingTimeLog!]!
+}
+
+"""
+One slot's tracking data, as the delivered read answers it.
+
+A slot that holds no tracking data is a different answer from a slot that is not there: the first carries
+`hasTrackingData: false` and a message, the second is a miss — which is why the root field that answers
+this is nullable and this type's own members are not.
+"""
+type CustomTrackingTimeSlotData {
+	"The slot the answer is about."
+	timeSlotId: ID!
+	"Whether the slot's document column holds any tracking session at all."
+	hasTrackingData: Boolean!
+	"Why there is no tracking data, when there is none."
+	message: String
+	"The slot and the logs it is attributed to, when it holds tracking data."
+	timeSlot: CustomTrackingTimeSlot
+	"The sessions decoded out of the slot, when it holds any."
+	trackingSessions: [TrackingSession!]
+}
+
+"""
+The outcome of submitting one tracking payload.
+
+A submission that could not be processed is a failure of the *request* and is reported as an error rather
+than as this payload with `success: false`: the delivered write either files the payload or refuses it.
+"""
+type CustomTrackingSubmission {
+	"Whether the payload was filed."
+	success: Boolean!
+	"The session identifier the payload decoded to."
+	sessionId: String!
+	"The slot the payload was filed into."
+	timeSlotId: ID!
+	"What the write reports about itself."
+	message: String!
+	"The session as it stands after the write, or null when the write could not read it back."
+	session: TrackingSession
+}
+
+"""
+One submission's outcome inside a bulk call, with the position it held in the list.
+
+The index is part of the answer because a bulk call is answered in one piece: a caller that sent twenty
+payloads and was told some failed needs to know which, and the position in the list it sent is the only
+name a caller already has for a payload that failed before a session existed.
+"""
+type CustomTrackingBulkResult {
+	"Whether this payload was filed."
+	success: Boolean!
+	"The session identifier this payload decoded to, when it decoded."
+	sessionId: String!
+	"The slot this payload was filed into, when it was filed."
+	timeSlotId: ID!
+	"What the write reports about this payload."
+	message: String!
+	"The session as it stands, or null when this payload could not be read back."
+	session: TrackingSession
+	"The position this payload held in the list that was sent."
+	index: Int!
+	"Why this payload failed, when it did."
+	error: String
+}
+
+"""
+What a bulk submission adds up to.
+"""
+type CustomTrackingBulkSummary {
+	"How many payloads were sent."
+	total: Int!
+	"How many of them were filed."
+	successful: Int!
+	"How many of them failed."
+	failed: Int!
+}
+
+"""
+The outcome of submitting several tracking payloads in one call.
+"""
+type CustomTrackingBulkSubmission {
+	"One outcome per payload, in the order the payloads were sent."
+	results: [CustomTrackingBulkResult!]!
+	"What the outcomes add up to."
+	summary: CustomTrackingBulkSummary!
+}
+
+"""
+What a caller states when it submits one tracking payload.
+
+The organization is required, exactly as the delivered body requires it: a tracking write is attributed to
+an organization, and the delivered validation refuses a body that names none even though its handler would
+otherwise fall back to the caller's own. The engagement is optional, and a payload that names none is
+attributed to the caller's own.
+"""
+input CustomTrackingSubmissionInput {
+	"The organization the tracking is attributed to."
+	organizationId: ID!
+	"The encoded payload, exactly as the tracker produced it."
+	payload: String!
+	"""
+	When the tracking began: the instant the payload belongs to, and the instant the slot it is filed into
+	is found by. Required, because the delivered write refuses an unreadable instant and an absent one is
+	exactly that — stating the requirement in the schema is what keeps a client from discovering it as a
+	runtime refusal.
+	"""
+	startTime: DateTime!
+	"The engagement the tracking is attributed to. Omit it for the caller's own."
+	employeeId: ID
+}
+
+"""
+What a caller states when it submits several tracking payloads in one call.
+
+The list is the body's own member, and it must hold at least one payload: the delivered validation refuses
+an empty list rather than answering an empty result, because a bulk call that files nothing is a mistake
+rather than an outcome.
+"""
+input CustomTrackingBulkInput {
+	"The payloads to submit."
+	list: [CustomTrackingSubmissionInput!]!
+}

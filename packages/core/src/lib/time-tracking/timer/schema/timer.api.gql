@@ -1,0 +1,132 @@
+# The timer domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered REST routes already serve, under the same guard and with the
+# same permission, so a client that reaches a capability over one protocol is not given a narrower or
+# a wider one than the client that reaches it over the other.
+#
+# **Two of the five fields are computed answers, and they are root fields of their own because there
+# is no resource for them to hang off.** A timer's status is not a row: it has no identifier of its
+# own, nothing to withdraw and nothing to state. It is a computation over the time logs of a period —
+# the sum of the seconds already recorded, whether a log is open right now, and which log the answer
+# was derived from — and the two reads below answer two views of that computation:
+#
+# - `timerStatus` is one state: the caller's own timer (or the employee the caller names, when it may
+#   select one) as it stands over the period the delivered read is anchored to.
+# - `timerWorkedStatus` is one state per employee the read considered: the last log each of them has,
+#   whatever day it belongs to, and how long ago it stopped.
+#
+# That is why this file declares no connection, no node query and no count. The controller serves
+# `GET /status` and `GET /status/worked` and three writes, and nothing else: there is no list route
+# for a connection to mirror, no `GET /:id` for a node query to mirror, and no `GET /count` for a
+# count to mirror. Where a client needs the rows a state was computed from, those are time logs and
+# belong to the surface that owns them; the states here name them by identifier so they can be read
+# there.
+#
+# **What each field mirrors, route for route:**
+#
+# - `timerStatus` mirrors `GET /status`, which dispatches the status query on the query bus.
+# - `timerWorkedStatus` mirrors `GET /status/worked`, which calls the worked-status read directly.
+# - `toggleTimer` mirrors `POST /toggle`, which hands its body to the toggle write and lets that
+#   write decide whether the timer starts or stops.
+# - `startTimer` mirrors `POST /start`, which dispatches the start command.
+# - `stopTimer` mirrors `POST /stop`, which dispatches the stop command.
+#
+# **The three writes answer the log row itself, because that is what their routes answer.** The
+# controller declares each of them as answering a time log — the start as a log, the toggle and the
+# stop as a log or null — so a field that answered only the log's identifier would be a narrower answer
+# than the route's rather than the same answer in this protocol's spelling. The row is returned
+# unprojected: whatever the delivered write read back is what a client receives.
+#
+# The type is the time-log domain's own, declared by `time-log.type.gql`, and it is referenced here
+# rather than restated. That is the same rule the state members below follow from the other side: a
+# domain that owns a row declares its type once, and a surface that answers that row points at the
+# declaration instead of writing a second one that would diverge from it the moment either is edited.
+# A state, by contrast, is not a row — `TimerStatus.lastLogId` and `TimerWorkedStatus.lastLogId` name
+# the log a computation was derived from, which is the identifier's job and not the row's.
+#
+# **The nullability of the three is the routes' and the handlers' own, and it differs between them.**
+# The start answers a row and never nothing: its handler ends by reading back the row it wrote through
+# a finder that raises on a miss, so its two outcomes are a row and a raised refusal. The toggle and
+# the stop answer a row *or null*, which is what their routes declare and what their handlers can
+# produce — the stop side's last statement is a re-read that answers nothing when the row is not there,
+# and a toggle that stops the timer ends where the stop ends. A non-null claim on those two would be a
+# promise the write can break.
+#
+# **The three writes take one input, because the two bodies the routes bind are one body.** `POST /stop`
+# validates its body against a DTO that widens the start body's two enum members to optional, and the
+# start DTO already states them as optional, so the two member sets are the same set. One input states
+# that set once, and a client that can start a timer can stop it with the same body.
+
+extend type Query {
+	"""
+	The caller's timer as it stands today: the seconds recorded in the period, whether a log is open,
+	and which log the state was derived from.
+	"""
+	timerStatus(
+		"The organization whose logs the state is computed over."
+		organizationId: ID!
+		"The source the logs are narrowed to, by value (`DESKTOP`, `BROWSER`, …). Omit it and every source counts."
+		source: String
+		"The start of the period the computation is anchored to. Omit it and the delivered read takes the start of the current day."
+		todayStart: DateTime
+		"The end of the period. Omit it and the delivered read takes the end of the current day."
+		todayEnd: DateTime
+		"""
+		The employee whose timer is read. The delivered read honours it only for a caller that may
+		change the selected employee, and answers every other caller its own timer whatever is named
+		here — which is the route's rule, not one this surface states twice.
+		"""
+		employeeId: ID
+	): TimerStatus!
+
+	"""
+	The last worked state of each employee the read considered, one entry per employee.
+	"""
+	timerWorkedStatus(
+		"The organization whose logs the states are computed over."
+		organizationId: ID!
+		"The source the logs are narrowed to, by value. Omit it and every source counts."
+		source: String
+		"The employee whose state is read. Used when no set of employees is stated."
+		employeeId: ID
+		"""
+		The employees whose states are read. The delivered read consults the set only for a caller
+		that may change the selected employee or read another member's last log, and answers every
+		other caller its own state — which is the route's rule, not one this surface states twice.
+		"""
+		employeeIds: [ID!]
+	): [TimerWorkedStatus!]!
+}
+
+extend type Mutation {
+	"""
+	Starts the timer when none is running and stops it when one is, and answers the log it touched.
+
+	Nullable, because a toggle that stops the timer ends where the stop write ends — a re-read that
+	answers nothing when the row it wrote cannot be found — which is the possibility the route's own
+	`log or null` declares.
+	"""
+	toggleTimer(input: TimerToggleInput!): TimeLog
+
+	"""
+	Starts the timer, and answers the log it created.
+
+	Non-null, and the write cannot break that: the handler ends by reading back the row it wrote through
+	a finder that raises on a miss, so its outcomes are a row and a raised refusal, never an empty
+	answer.
+	"""
+	startTimer(input: TimerToggleInput!): TimeLog!
+
+	"""
+	Stops the running timer, and answers the log it stopped — the log itself, not a projection of it.
+
+	Nullable for the same reason the toggle is, and declared as such by its own route: the handler's
+	last statement re-reads the row it wrote and answers nothing when the row is not there. A caller
+	whose timer is already stopped is refused by the delivered handler instead — the same refusal the
+	REST route raises, in this protocol's vocabulary.
+	"""
+	stopTimer(input: TimerToggleInput!): TimeLog
+}

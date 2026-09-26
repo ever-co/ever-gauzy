@@ -8,6 +8,7 @@ import {
 	IPagination,
 	IApprovalPolicyCreateInput
 } from '@gauzy/contracts';
+import { parseToBoolean } from '@gauzy/utils';
 import { ApprovalPolicy } from './approval-policy.entity';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -53,7 +54,16 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 				? {
 						relations: options.relations
 				  }
-				: {})
+				: {}),
+			// This reader builds its options by *naming* the members it forwards, so anything it does not name is
+			// dropped — and `withDeleted` is not a criterion, so leaving it out would answer the live rows to a
+			// caller that asked for the retired ones, with nothing to tell it so. The REST list route beside this
+			// one inherits the flag from `BaseQueryDTO`, so both surfaces have to honour it.
+			//
+			// It is read as a boolean rather than by truthiness: that route mounts its validation pipe without
+			// `transform`, so `?withDeleted=false` arrives as the non-empty string 'false', which a truthiness
+			// test turned into a request for the soft-deleted policies.
+			...(parseToBoolean(options?.withDeleted) ? { withDeleted: true } : {})
 		});
 	}
 

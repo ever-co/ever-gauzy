@@ -1,0 +1,168 @@
+# The variant setting's object type.
+#
+# A setting row is the capability record of one variant: the flags below are what the platform asks
+# about a variant before it may be sold, purchased, charged, rented, stocked or subscribed to. It is
+# a row of its own rather than a handful of columns on the variant because the question is asked
+# wherever a variant is read, and because the flags are a set that grows with what the catalogue
+# offers while the variant's own columns are the facts a cart line, a stock level and an order line
+# point at.
+#
+# **The type is `ProductVariantSetting`, and the directory it lives in is `product-setting`.** The
+# resource is a setting *of a variant* — that is what the entity declares and what the delivered
+# route `/product-variant-settings` serves — while the directory is named for the shorter thing the
+# module was first cut for. A GraphQL type has exactly one name in one schema, so it takes the
+# unambiguous one: `ProductSetting` would name a setting of a product, which is not a row this
+# platform has.
+#
+# **The flags carry no per-flag sentence, deliberately.** The entity declares them and states nothing
+# about what any one of them governs, so a description here would be a second statement about a
+# column whose owner states none — right on the day it is written and unverifiable afterwards. What
+# a flag governs is read where it is declared and where it is used.
+
+"""
+The capability record of one variant.
+"""
+type ProductVariantSetting {
+	id: ID!
+	isSubscription: Boolean!
+	isPurchaseAutomatically: Boolean!
+	canBeSold: Boolean!
+	canBePurchased: Boolean!
+	canBeCharged: Boolean!
+	canBeRented: Boolean!
+	isEquipment: Boolean!
+	trackInventory: Boolean!
+	"""
+	The variant this row is the setting of. The foreign key is on the setting, which is the owning
+	side of the pairing; the variant reaches back through it rather than carrying one of its own.
+	"""
+	productVariantId: ID
+	productVariant: ProductVariant
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of settings.
+"""
+type ProductVariantSettingEdge {
+	node: ProductVariantSetting!
+	cursor: String!
+}
+
+"""
+One page of settings, with the total the filters select and the boundary cursors.
+"""
+type ProductVariantSettingConnection {
+	nodes: [ProductVariantSetting!]!
+	edges: [ProductVariantSettingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a setting list may be sorted by.
+
+The two timestamps and the flags. A flag is a column with two values and therefore an order — the
+rows that carry it and the rows that do not — and offering a subset of a resource's own members
+would be a line no caller could predict. `productVariantId` is not among them: a relation key narrows
+a list, which is what the filter is for, and the order of variants is read from the variant
+connection rather than from this one.
+"""
+enum ProductVariantSettingSortField {
+	createdAt
+	updatedAt
+	isSubscription
+	isPurchaseAutomatically
+	canBeSold
+	canBePurchased
+	canBeCharged
+	canBeRented
+	isEquipment
+	trackInventory
+}
+
+"""
+The order the settings are returned in. At most three keys are accepted.
+"""
+input ProductVariantSettingSort {
+	field: ProductVariantSettingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a setting list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+`productVariantId` is stated as a filter rather than served as a root field of its own: the setting
+of one variant is one of these rows narrowed to that variant, and a second root field for it would
+be a second surface that could disagree with this one.
+"""
+input ProductVariantSettingFilter {
+	id: IDFilter
+	isSubscription: BooleanFilter
+	isPurchaseAutomatically: BooleanFilter
+	canBeSold: BooleanFilter
+	canBePurchased: BooleanFilter
+	canBeCharged: BooleanFilter
+	canBeRented: BooleanFilter
+	isEquipment: BooleanFilter
+	trackInventory: BooleanFilter
+	productVariantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ProductVariantSettingFilter!]
+	or: [ProductVariantSettingFilter!]
+	not: ProductVariantSettingFilter
+}
+
+"""
+What a caller states when it opens a setting.
+
+The variant, the organization and the flags, and every one of them optional: a setting's columns all
+carry a default, so a create that names nothing is the row the platform's own default-row operation
+writes, and requiring a member here would refuse a caller the delivered route serves.
+
+The tenant is not among the members. The delivered route stamps the tenant of the credential onto
+the row it writes, so a caller cannot state a scope it is not acting in; the organization is among
+them because the route takes it from the body and nothing else supplies it.
+
+`id` is not among them: a create that names an existing row is the update route stated on the create
+route, and a caller that means to change a row has the update field for it.
+"""
+input CreateProductVariantSettingInput {
+	productVariantId: ID
+	organizationId: ID
+	isSubscription: Boolean
+	isPurchaseAutomatically: Boolean
+	canBeSold: Boolean
+	canBePurchased: Boolean
+	canBeCharged: Boolean
+	canBeRented: Boolean
+	isEquipment: Boolean
+	trackInventory: Boolean
+}
+
+"""
+What a caller may change on a setting that exists. A member that is absent is left as it is.
+
+Every member but `id` is optional, which is the shape the delivered update route has: it writes the
+members the body states and leaves the rest of the row alone.
+"""
+input UpdateProductVariantSettingInput {
+	id: ID!
+	productVariantId: ID
+	organizationId: ID
+	isSubscription: Boolean
+	isPurchaseAutomatically: Boolean
+	canBeSold: Boolean
+	canBePurchased: Boolean
+	canBeCharged: Boolean
+	canBeRented: Boolean
+	isEquipment: Boolean
+	trackInventory: Boolean
+}

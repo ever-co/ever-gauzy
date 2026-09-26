@@ -1,0 +1,243 @@
+# The broadcast domain's object type.
+#
+# A broadcast is one published message, filed against the record it is about: `entity` and `entityId`
+# are a polymorphic pair, so the same row shape carries a status report about a project, an announcement
+# to a team and an alert about an organization. It is a communication entry rather than a notification:
+# the notification rows a delivery produces are the employee-notification resource's, and this row is
+# what was published.
+#
+# **`visibilityMode` is carried as its value and not as a schema enum, and the reason is the delivered
+# code rather than a preference.** The service switches on that column's own strings —
+# `ENTITY_MEMBERS`, `ORGANIZATION`, `RESTRICTED`, `EXTERNAL_VIEW` — to decide who may read a row, and a
+# value set the reader branches on is a value set the reader owns: declaring it here would fix a
+# vocabulary in the schema that the service is free to extend, and the next domain that needs the same
+# four words would collide with this file rather than reuse it. `category` is carried the same way, for
+# the same reason and with the same seven values beside it.
+#
+# **What the reader's visibility rule means for a client.** Every read behind this surface answers the
+# rows the caller may see and no others: the delivered filter admits a row whose publisher is the caller,
+# every row of an organization-wide broadcast, the rows whose entity the caller belongs to, and the rows
+# whose audience rules name the caller — while a row published for external viewing is never answered by
+# a direct read, because a share link is not a credential. A row that exists is therefore not a row a
+# caller necessarily sees, and a miss is the delivered reader's answer rather than an accident.
+#
+# Three members are absent, each for its own reason:
+#
+# - `employee` is absent and `employeeId` is carried instead. No read behind this surface loads the
+#   relation, while the identifier is a column every read answers, and the publisher is stamped from the
+#   credential rather than chosen by a caller.
+# - `audienceRules` is carried as the document it is, and it is *not* filterable. The column is a
+#   document type on one dialect and plain text on another, so the value a read produces is an object on
+#   one installation and its text on another; a filter over it would answer differently on two
+#   installations running the same query, which is worse than not offering the question.
+# - The organization is carried as its identifier for the ordinary reason: it is a column, and the row a
+#   client holds is scoped to the organization the caller is acting in.
+
+"""
+One published message, filed against the record it is about.
+"""
+type Broadcast {
+	id: ID!
+	"The message's title, which is what a reader sees before opening it."
+	title: String!
+	"The message body, as the document column the platform stores rich content in."
+	content: JSON!
+	"""
+	What kind of message this is, as the contracts' own value: `STATUS_REPORT`, `MILESTONE`,
+	`ANNOUNCEMENT`, `ALERT`, `DECISION` or `CHANGELOG`.
+	"""
+	category: String!
+	"""
+	Who may read it, as the delivered reader's own value: `ENTITY_MEMBERS` — the members of the record
+	below; `ORGANIZATION` — everyone in the organization; `RESTRICTED` — the audience rules below; or
+	`EXTERNAL_VIEW` — a share link, which is not a credential and which no read here answers.
+	"""
+	visibilityMode: String!
+	"The audience constraints of a restricted message: the users, employees, teams and roles it names."
+	audienceRules: JSON
+	"When the message was published. Null on a row written without one, which is a row no reading order can place."
+	publishedAt: DateTime
+	"The kind of record the message is about, as the contracts' own entity-type value."
+	entity: String!
+	"The record the message is about, as the identifier of that record's own row."
+	entityId: ID!
+	"The employee who published it, as the identifier of the employee's own row."
+	employeeId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of broadcasts.
+"""
+type BroadcastEdge {
+	node: Broadcast!
+	cursor: String!
+}
+
+"""
+One page of broadcasts, with the total the filters select and the boundary cursors.
+"""
+type BroadcastConnection {
+	nodes: [Broadcast!]!
+	edges: [BroadcastEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a broadcast list may be sorted by.
+
+The publication instant is the reading order and the delivered read's own order beside it; the title and
+the two vocabularies are how a list is taken in groups — a work list by kind, an audience report by
+visibility; and the two timestamps are how a change is found again. The identifiers and the document
+columns are not sort keys: an identifier order is not an order a message list is read in, and the
+questions those columns answer are filters.
+"""
+enum BroadcastSortField {
+	createdAt
+	updatedAt
+	publishedAt
+	title
+	category
+	visibilityMode
+}
+
+"""
+The order the broadcasts are returned in. At most three keys are accepted.
+"""
+input BroadcastSort {
+	field: BroadcastSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a broadcast list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row the delivered read answers, and the read answers it after its own
+visibility rule has been applied — so each condition below narrows the rows the caller may see rather
+than the rows the store holds.
+
+Three absences are deliberate and each is a statement:
+
+- `audienceRules` is not filterable. The column is a document type on one dialect and plain text on
+  another, so the value a read produces differs by installation and a condition over it would answer
+  differently on two installations running the same query.
+- `isArchived` and `isActive` are not filterable, although the object carries both. The delivered list
+  read applies them itself — it answers live, unarchived rows — so a condition on either could only ever
+  restate what the read already did, and a caller stating the other value would be answered the empty set
+  rather than the rows they asked for.
+- The organization is not filterable, because the read takes it from the credential rather than from the
+  caller: it is the organization the caller is acting in, and a member here would suggest a scope
+  decision the caller does not have.
+"""
+input BroadcastFilter {
+	id: IDFilter
+	title: StringFilter
+	category: StringFilter
+	visibilityMode: StringFilter
+	entity: StringFilter
+	entityId: IDFilter
+	employeeId: IDFilter
+	publishedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [BroadcastFilter!]
+	or: [BroadcastFilter!]
+	not: BroadcastFilter
+}
+
+# The write surface.
+#
+# `POST /` binds `CreateBroadcastDTO` and `PUT /:id` binds that DTO with the polymorphic pair removed and
+# every remaining member optional, so the two inputs are not the same shape and the two below are not
+# either. Four decisions are deliberate:
+#
+# - `entity` and `entityId` are members of the create and **not** of the edit, which is exactly what the
+#   delivered edit body does: what a message is about is decided when it is published, and a later edit
+#   that could re-point it would move the message to another record's readers.
+# - The publisher is not a member of either input. The delivered write stamps the caller's own employee
+#   onto the row and validates it, so a member here would promise a byline the write refuses.
+# - The tenant is not a member of either input, for the same reason: it is stamped from the credential.
+# - The delivered write's own sanitisation and its audience notification are not restated here. Both
+#   happen inside the write this surface dispatches, so a message filed over GraphQL is the message a
+#   REST caller files, with the same body cleaning and the same audience told about it.
+
+"""
+What a caller states when it publishes a message.
+
+The three vocabularies are stated as their own values rather than as schema enums, and the delivered
+body validation is what requires them: it validates `category` and `visibilityMode` against the
+contracts' enums and requires a title and a body.
+
+The organization is stated as an identifier and is *not* required, because the delivered validation
+requires an organization only when the body names neither the organization object nor a `sentTo` — and
+the object spelling is a type this schema does not declare, so the identifier is what this surface
+offers and the condition stays the delivered validator's rather than being restated as a non-null
+member that would refuse a body the route serves.
+
+`audienceRules` is the body of a restricted message — the users, employees, teams and roles it names —
+and the delivered write stores the document it is given.
+"""
+input CreateBroadcastInput {
+	"The message's title."
+	title: String!
+	"The message body, as the platform's document shape."
+	content: JSON!
+	"What kind of message this is."
+	category: String!
+	"Who may read it."
+	visibilityMode: String!
+	"The audience constraints of a restricted message."
+	audienceRules: JSON
+	"When the message was published. Omitted, the delivered write publishes it now."
+	publishedAt: DateTime
+	"The kind of record the message is about."
+	entity: String!
+	"The record the message is about, by identifier."
+	entityId: ID!
+	"The organization the message is filed under."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a message that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit reads the row it is allowed to
+edit, then merges the stated members onto it through the same write the create uses, so omitting `title`
+keeps the title and omitting `content` keeps the body.
+
+**`entity` and `entityId` are not members.** The delivered edit body removes the pair, so a message
+cannot be re-pointed at another record: what it is about is fixed when it is published, and everything
+that reads it — the membership rule that decides who may see it among them — is read from that pair.
+
+**The edit is the publisher's, or a permission holder's.** The delivered write refuses a caller who is
+neither the row's publisher nor a holder of `CHANGE_SELECTED_EMPLOYEE`, and refuses an employee-less
+caller outright rather than dropping the missing criterion from its query. That refusal is the write's
+own and reaches the caller as it is; this input does not restate it as a member.
+
+The identifier is the criterion and is not repeated in the payload, which is the shape the route itself
+has.
+"""
+input UpdateBroadcastInput {
+	id: ID!
+	title: String
+	content: JSON
+	category: String
+	visibilityMode: String
+	audienceRules: JSON
+	publishedAt: DateTime
+	organizationId: ID
+}

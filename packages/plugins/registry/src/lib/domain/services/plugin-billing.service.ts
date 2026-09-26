@@ -1,5 +1,5 @@
 import { PluginBillingStatus } from '@gauzy/contracts';
-import { MultiORMEnum, parseFindOptionsRelations, TenantAwareCrudService } from '@gauzy/core';
+import { MultiORMEnum, parseFindOptionsRelations } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Between, LessThan, UpdateResult } from 'typeorm';
 import {
@@ -11,9 +11,10 @@ import {
 } from '../../shared/models/plugin-billing.model';
 import { PluginBilling } from '../entities/plugin-billing.entity';
 import { MikroOrmPluginBillingRepository, TypeOrmPluginBillingRepository } from '../repositories';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginBillingService extends TenantAwareCrudService<PluginBilling> {
+export class PluginBillingService extends RegistryTenantAwareCrudService<PluginBilling> {
 	constructor(
 		public readonly typeOrmPluginBillingRepository: TypeOrmPluginBillingRepository,
 		public readonly mikroOrmPluginBillingRepository: MikroOrmPluginBillingRepository

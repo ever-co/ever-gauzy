@@ -1,0 +1,245 @@
+# The key result's object type.
+#
+# A key result is the measurable half of the pair this tree is named for: the outcome one objective is
+# judged by, with the reading it started at, the reading it is aiming at, the progress between them,
+# the deadline the domain attaches to it, and the row it measures — a KPI, a task, or a project.
+# Every one of those is an identifier the row itself holds, so a caller can read any of them from the
+# surface that owns it and none of them is a member that only one read would populate.
+#
+# **The delivered node read joins four relations the list read does not, and none of them is a member
+# here.** `GET /key-results/:id` hands the store `relations: ['updates', 'goal', 'lead', 'owner']`;
+# the list read joins nothing, and a row that answered an object on one read and `null` on the other
+# would be worse than an identifier that always travels. The three that are single rows are the four
+# columns this type carries — `goalId`, `leadId`, `ownerId` — and the fourth is answered by its own
+# connection: a key result's updates are `keyResultUpdates` narrowed by `keyResultId`, which is the
+# read that always answers them on both protocols.
+#
+# **`weight` is carried as the text the column holds, and that is a deliberate reading of the rule
+# that a weight is a number.** The delivered entity maps the column as a string and the platform's own
+# contract declares it as one, so the rows a tenant already holds may carry a unit or a label beside
+# the figure. Typing it as a number here would refuse those rows on a surface that reads them; the
+# numbers this domain really has — `targetValue`, `initialValue`, `update` and `progress` — are `Int`,
+# which is what their columns are.
+#
+# `deadline` is carried as its value rather than declared here as an enum: the vocabulary is the
+# domain's own contract's, and it is the same one the catalogue's deadline column carries.
+
+"""
+One measurable outcome an objective is judged by.
+"""
+type KeyResult {
+	id: ID!
+	"The outcome's name."
+	name: String!
+	"What the outcome is for."
+	description: String
+	"""
+	The kind of key result this is: a measure, a piece of work, or a project's own result. The value set
+	belongs to the domain's own contract, so it is carried as its value rather than declared here as an
+	enum.
+	"""
+	type: String!
+	"The reading the outcome is aiming at, when one is stated."
+	targetValue: Int
+	"The reading the outcome started from, when one is stated."
+	initialValue: Int
+	"The unit the readings are expressed in, as text."
+	unit: String
+	"The latest reading recorded against the outcome."
+	update: Int!
+	"How far the outcome has come, as the whole number of percent the column holds."
+	progress: Int!
+	"""
+	Which deadline the outcome runs on. Carried as its value rather than declared here as an enum, for
+	the reason `type` is.
+	"""
+	deadline: String!
+	"The instant the outcome must be met by, when the deadline is a hard one."
+	hardDeadline: DateTime
+	"The instant the outcome is aimed at, when the deadline is a soft one."
+	softDeadline: DateTime
+	"The state the outcome is in, as the row states it."
+	status: String
+	"""
+	The weight the outcome carries among its siblings. The column is text, so this is carried as text;
+	see the note above the type.
+	"""
+	weight: String
+	"The employee who owns the outcome, by identifier."
+	ownerId: ID!
+	"The employee who leads the outcome, by identifier."
+	leadId: ID
+	"The project the outcome is filed under, by identifier."
+	projectId: ID
+	"The task the outcome is measured by, by identifier."
+	taskId: ID
+	"The measure the outcome tracks, by identifier."
+	kpiId: ID
+	"""
+	The objective this outcome belongs to, by identifier. An objective's key results are this
+	connection narrowed by it.
+	"""
+	goalId: ID
+	"""
+	When the outcome was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the outcome belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the outcome is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of key results.
+"""
+type KeyResultEdge {
+	node: KeyResult!
+	cursor: String!
+}
+
+"""
+One page of key results, with the total the filters select and the boundary cursors.
+"""
+type KeyResultConnection {
+	nodes: [KeyResult!]!
+	edges: [KeyResultEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a key result list may be sorted by.
+"""
+enum KeyResultSortField {
+	createdAt
+	updatedAt
+	name
+	type
+	progress
+	targetValue
+	deadline
+	status
+}
+
+"""
+The order the key results are returned in. At most three keys are accepted.
+"""
+input KeyResultSort {
+	field: KeyResultSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a key result list may be narrowed by.
+
+Every member is a column of the key-result row, which is what the connection protocol evaluates. An
+objective's key results are this connection narrowed by `goalId`; one employee's are the same
+connection narrowed by `ownerId`.
+"""
+input KeyResultFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	type: StringFilter
+	targetValue: NumberFilter
+	initialValue: NumberFilter
+	unit: StringFilter
+	update: NumberFilter
+	progress: NumberFilter
+	deadline: StringFilter
+	hardDeadline: DateTimeFilter
+	softDeadline: DateTimeFilter
+	status: StringFilter
+	weight: StringFilter
+	ownerId: IDFilter
+	leadId: IDFilter
+	projectId: IDFilter
+	taskId: IDFilter
+	kpiId: IDFilter
+	goalId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [KeyResultFilter!]
+	or: [KeyResultFilter!]
+	not: KeyResultFilter
+}
+
+"""
+What a caller states when it authors a key result.
+
+**No member is required, and that is the delivered DTO's own shape rather than an oversight.** The
+body the delivered route validates marks every member optional; the columns behind six of them —
+`name`, `type`, `update`, `progress`, `deadline` and `ownerId` — are not nullable, so a body that
+omits one is refused by the store rather than by validation. Stating them as required here would
+refuse a body the delivered route accepts, which is the one thing a second surface may not do.
+
+The tenant is never a member: the service stamps it from the credential. `organizationId` is, because
+it is the row's own column and the delivered validation does not strip it. The updates the outcome
+will carry are not a member either — they are filed from their own surface against this row's
+identifier.
+"""
+input CreateKeyResultInput {
+	name: String
+	description: String
+	type: String
+	targetValue: Int
+	initialValue: Int
+	unit: String
+	update: Int
+	progress: Int
+	deadline: String
+	hardDeadline: DateTime
+	softDeadline: DateTime
+	status: String
+	weight: String
+	ownerId: ID
+	leadId: ID
+	projectId: ID
+	taskId: ID
+	kpiId: ID
+	goalId: ID
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a key result.
+
+**A member that is absent is left as it is.** The delivered edit is the delivered creation called with
+the stated identifier spread over the body — the controller's route is an update-through-create,
+because the write has to go through the save a partial column update would bypass — so the stated
+members are merged onto the row the store holds. An identifier that names no row of the caller's
+tenant is an insert rather than a miss, which is the delivered route's own behaviour and not
+something this surface narrows.
+"""
+input UpdateKeyResultInput {
+	id: ID!
+	name: String
+	description: String
+	type: String
+	targetValue: Int
+	initialValue: Int
+	unit: String
+	update: Int
+	progress: Int
+	deadline: String
+	hardDeadline: DateTime
+	softDeadline: DateTime
+	status: String
+	weight: String
+	ownerId: ID
+	leadId: ID
+	projectId: ID
+	taskId: ID
+	kpiId: ID
+	goalId: ID
+	organizationId: ID
+}

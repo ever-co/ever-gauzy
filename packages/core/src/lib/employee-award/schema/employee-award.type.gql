@@ -1,0 +1,185 @@
+# The employee award's object type.
+#
+# An award is a recognition recorded against one employee of one organization: a title and the year it
+# was given in, filed on the person it belongs to. The row carries nothing else of its own, which is
+# what makes this object type two members, the employee it is filed on, and the base row.
+#
+# `year` is carried as text rather than as an `Int`. The column is text, and it holds what the
+# organization wrote — a calendar year, a financial year, a season — so declaring it a number here
+# would refuse values the delivered write already stores. It is not the order the connection returns
+# awards in, for the same reason: text that merely looks like a year is not a chronology.
+#
+# **The employee is an identifier and never a member.** The delivered reads join nothing: the list
+# route hands the service a `where` and the one-row read hands it nothing, so neither loads the
+# employee. An `employee: Employee` member would therefore be absent on every row this surface answers,
+# and a field that always reads null is worse than no field. What always travels is `employeeId` — the
+# column the row carries in its own right — and the person behind it is read from the employee domain's
+# own `employee(id: ID!)`, while the awards of one person are read from this connection's own
+# `employeeAwards(filter: { employeeId: ... })`, which is where the employee's own type points.
+#
+# The base row is carried in full — its identifiers, its timestamps and its lifecycle columns — because
+# they are what every surface of this platform answers about a row, and because withdrawing and
+# restoring are two of the routes this resource serves: without `deletedAt` the answer to the write that
+# withdrew a row would not say that it had.
+
+"""
+One recognition recorded against an employee.
+"""
+type EmployeeAward {
+	id: ID!
+	"The award's title, as the organization wrote it."
+	name: String!
+	"""
+	The period the award belongs to, as the organization wrote it. Text rather than a number: the column
+	is text and holds whatever was stated, a financial year as readily as a calendar one.
+	"""
+	year: String!
+	"""
+	The employee the award is filed on, by identifier. The employee row is not joined by this surface's
+	reads; the person behind the identifier is read from `employee(id: ID!)`.
+	"""
+	employeeId: ID
+	"The organization the award was filed under, by identifier."
+	organizationId: ID
+	"The tenant the award belongs to, by identifier."
+	tenantId: ID
+	"""
+	When the award was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	"When the award was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"When the award was filed."
+	createdAt: DateTime
+	"When the award was last changed."
+	updatedAt: DateTime
+	"Whether the award is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the award is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"The person who filed the award, by identifier. The account behind it is not joined by this read."
+	createdByUserId: ID
+	"The person who last changed the award, by identifier. The account behind it is not joined here."
+	updatedByUserId: ID
+	"The person who withdrew the award, by identifier. The account behind it is not joined here."
+	deletedByUserId: ID
+}
+
+"""
+The boundary of one page of awards.
+"""
+type EmployeeAwardEdge {
+	node: EmployeeAward!
+	cursor: String!
+}
+
+"""
+One page of awards, with the total the filters select and the boundary cursors.
+"""
+type EmployeeAwardConnection {
+	nodes: [EmployeeAward!]!
+	edges: [EmployeeAwardEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an award list may be sorted by.
+"""
+enum EmployeeAwardSortField {
+	id
+	name
+	year
+	employeeId
+	tenantId
+	organizationId
+	isActive
+	isArchived
+	createdAt
+	updatedAt
+	deletedAt
+}
+
+"""
+The order the awards are returned in. At most three keys are accepted.
+"""
+input EmployeeAwardSort {
+	field: EmployeeAwardSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an award list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the award row, because the delivered list read joins nothing: a reader
+answers these columns themselves, so each one narrows the rows the connection was handed rather than a
+collection that reader would have had to load. `employeeId` is the one that matters most — it is the
+column the row carries in place of the relation it does not join, so narrowing an award list to one
+person is a question this surface can answer.
+
+No member narrows by the relation itself: the tenant comes from the credential on every read and the
+organization is the one the caller is acting in, so the two identifier members above narrow the row's
+own columns rather than restating a scope decision the caller does not have.
+"""
+input EmployeeAwardFilter {
+	id: IDFilter
+	name: StringFilter
+	year: StringFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [EmployeeAwardFilter!]
+	or: [EmployeeAwardFilter!]
+	not: EmployeeAwardFilter
+}
+
+"""
+What a caller states when it files an award.
+
+The organization and the employee are stated because the delivered create derives neither: the tenant
+is stamped from the credential, never from an argument, but the organization and the employee are the
+two members the delivered body declares and validates against the caller's own memberships — and there
+is no member for the tenant, for the same reason there is none on any other write here.
+
+Both of them are required, which is the delivered body's own shape rather than a choice made here: the
+create DTO validates the organization as one of the caller's and the employee as one of that
+organization's, and a body omitting either is refused before the write.
+"""
+input CreateEmployeeAwardInput {
+	"The organization the award is filed under. It must be one of the caller's own."
+	organizationId: ID!
+	"The employee the award belongs to. It must be one of that organization's."
+	employeeId: ID!
+	"The award's title."
+	name: String!
+	"The period the award belongs to, as the caller writes it."
+	year: String!
+}
+
+"""
+What a caller states when it changes an award that exists.
+
+The identifier is the one member stated outside the body, and it is stated because the delivered route
+carries it in the path. The delivered edit is a partial column update rather than a replacement of the
+row, so a member the caller leaves out is left as it is.
+
+**The employee is not a member.** The delivered update body carries no employee, and the route's
+validation pipe strips what its DTO does not declare, so an award's employee is fixed when it is filed
+— moving one to another person is a removal and a filing, not an edit.
+"""
+input UpdateEmployeeAwardInput {
+	id: ID!
+	"The organization the award is filed under."
+	organizationId: ID!
+	"The award's title."
+	name: String!
+	"The period the award belongs to, as the caller writes it."
+	year: String!
+}

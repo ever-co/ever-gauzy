@@ -18,7 +18,7 @@ export class Reaction extends TenantOrganizationBaseEntity implements IReaction 
 	@IsNotEmpty()
 	@IsEnum(ReactionEntityEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	entity: ReactionEntityEnum;
 
 	// Indicate the ID of entity record reacted

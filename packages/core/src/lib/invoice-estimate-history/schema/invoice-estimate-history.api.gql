@@ -1,0 +1,97 @@
+# The invoice estimate history domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The controller states one permission, on one handler, and this surface mirrors that exactly.** The
+# list route declares `@UseGuards(TenantPermissionGuard, PermissionGuard)` and `@Permissions(INVOICES_VIEW)`
+# on itself, and the controller declares neither on its class — so the list field states both, and every
+# other field states neither. That is not a gap in this delivery: the other routes are the CRUD base's own
+# — the count, the node, the creation, the edit, the removal, the withdrawal and the restoration — and the
+# base declares no guard and no permission on any of them, so each of them runs under the application's
+# authentication guard and nothing else. A permission or a guard stated here on those fields would give
+# REST a wider scope than GraphQL for the same route, which is the asymmetry the two-protocol rule
+# forbids; narrowing the REST side is a change to files outside this delivery.
+#
+# **The list is the route that reads the whole filtered set.** The delivered resource serves its rows
+# twice — `GET /` and `GET /pagination` — and both reach the CRUD base's list method, so the connection
+# field states that read and applies the page itself: the paginated spelling folds into it rather than
+# becoming a second root field that could disagree with the first.
+#
+# **The node and the count are root fields because their routes are.** `GET /:id` and `GET /count` are
+# mounted, so a caller can reach one entry and count the log over REST; the fields below state the same
+# two capabilities, and the count is a nullable `Int` with no filter, because the delivered count route
+# passes its query string through as the store's own criterion — a shape no schema can state — and a count
+# is an aggregate a resource may legitimately have no answer for.
+#
+# **The five lifecycle fields count.** The creation, the edit, the removal, the withdrawal and the
+# restoration are delivered routes: the first, the fourth and the fifth are inherited from the CRUD base
+# and mounted on this controller, and this surface would be missing three capabilities REST serves if it
+# declared none of them.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, applied once on the resolver class so every field below is behind
+# the one capability. The REST routes are not gated by that code — they are the door that stays open — so
+# a disabled capability is answered `Cannot query field <name>` here while those routes answer as they
+# always did.
+
+extend type Query {
+	"""
+	The log entries of the caller's tenant, newest first.
+	"""
+	invoiceEstimateHistories(
+		filter: InvoiceEstimateHistoryFilter
+		sort: [InvoiceEstimateHistorySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): InvoiceEstimateHistoryConnection!
+
+	"""
+	One log entry, or null when there is none.
+
+	An entry that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	invoiceEstimateHistory(id: ID!): InvoiceEstimateHistory
+
+	"""
+	How many log entries the caller's tenant holds.
+	"""
+	invoiceEstimateHistoryCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a log entry.
+	"""
+	createInvoiceEstimateHistory(input: CreateInvoiceEstimateHistoryInput!): InvoiceEstimateHistory!
+
+	"""
+	Changes a log entry that exists. A member the caller leaves out is left as it is.
+	"""
+	updateInvoiceEstimateHistory(input: UpdateInvoiceEstimateHistoryInput!): InvoiceEstimateHistory!
+
+	"""
+	Removes a log entry outright. The row is gone and nothing reads it back, which is why a caller that
+	means "this entry should not count" reaches for the soft removal below instead.
+	"""
+	deleteInvoiceEstimateHistory(id: ID!): Boolean!
+
+	"""
+	Withdraws a log entry without removing it: the row keeps its identifier and the delivered reads stop
+	answering it.
+	"""
+	softDeleteInvoiceEstimateHistory(id: ID!): InvoiceEstimateHistory!
+
+	"""
+	Puts a withdrawn log entry back.
+	"""
+	recoverInvoiceEstimateHistory(id: ID!): InvoiceEstimateHistory!
+}

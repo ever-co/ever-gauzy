@@ -1,0 +1,167 @@
+# The API call log's object type.
+#
+# One row is one request the platform answered: what was called, with what, what came back and how long
+# it took. The correlation identifier is what makes the table useful rather than merely large — every
+# row a single operation produced, across every service it touched, carries the same `correlationId`,
+# and the `correlationId` filter below is the whole of that read.
+#
+# **The three document members are carried whole, and they are the row rather than a projection of it.**
+# A request's headers, its body and the response body are what an operator reads when a call is being
+# investigated; the delivered read answers them on every row and narrows by none of them, so refusing
+# them here would make GraphQL the narrower protocol for the one read this resource exists for. They are
+# the kernel's `JSON` scalar because that is what the columns are — a document whose shape is the
+# caller's, which no input type can state.
+#
+# `method` is carried as its value rather than declared as a schema enum: the vocabulary is the
+# platform's own `RequestMethod`, shared with the HTTP layer that writes it.
+#
+# **No relation is carried as an object.** The delivered list read joins only the relations its caller
+# names in the query string, and this surface's read names none, so `user` would be absent on every row
+# answered here. The row's own foreign key always travels, so the caller is carried as `userId` and the
+# account behind it is read from the user domain.
+#
+# The base row's audit stamps are not carried: a log row is written by the middleware that observes the
+# request and by nothing else, so a member for any of them would answer the audit trail of the audit
+# trail. `archivedAt` is carried beside `isArchived` because the delivered read answers the row and a
+# client reading why a row left a list needs the timestamp with the flag.
+
+"""
+One request the platform answered, as the middleware recorded it.
+"""
+type ApiCallLog {
+	id: ID!
+	"The identifier that ties every row one operation produced together."
+	correlationId: ID!
+	"The path that was called."
+	url: String!
+	"The HTTP method the request used."
+	method: String!
+	"The status the platform answered with."
+	statusCode: Int!
+	"When the request arrived."
+	requestTime: DateTime!
+	"When the response was completed."
+	responseTime: DateTime!
+	"The address the request came from."
+	ipAddress: String
+	"The protocol the request used."
+	protocol: String
+	"The client's own identification of itself. A browser, a desktop application or a script."
+	userAgent: String
+	"Where the request was initiated from, when the client states it."
+	origin: String
+	"The account the request was made as, by identifier. The account row is not joined by this read."
+	userId: ID
+	"The headers the request carried."
+	requestHeaders: JSON!
+	"The body the request carried."
+	requestBody: JSON!
+	"The body the platform answered with."
+	responseBody: JSON!
+	"The tenant the request was made in, by identifier."
+	tenantId: ID
+	"The organization the request was made in, by identifier."
+	organizationId: ID
+	"Whether the row is active. A flag the writer sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the row is archived. A flag the writer sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the row was archived, as opposed to withdrawn."
+	archivedAt: DateTime
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing is one of the two removals this
+	resource serves, and this column is the whole of what it writes — so without it a caller could not
+	tell a live row from a withdrawn one, nor read back a removal that was asked for as a withdrawal.
+	"""
+	deletedAt: DateTime
+	"When the request was recorded."
+	createdAt: DateTime
+	"When the row was last changed. A log row is written once, so this is normally the same instant."
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of log rows.
+"""
+type ApiCallLogEdge {
+	node: ApiCallLog!
+	cursor: String!
+}
+
+"""
+One page of log rows, with the total the filters select and the boundary cursors.
+"""
+type ApiCallLogConnection {
+	nodes: [ApiCallLog!]!
+	edges: [ApiCallLogEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a call log list may be sorted by.
+
+The two instants the row records, the two columns an operator triages by — the status and the path —
+the method, and the row's own timestamps. The identifier is not here: a page of one caller's calls is
+`userId` stated as a filter, which is both narrower and cheaper than an order.
+"""
+enum ApiCallLogSortField {
+	requestTime
+	responseTime
+	statusCode
+	url
+	method
+	createdAt
+	updatedAt
+}
+
+"""
+The order the log rows are returned in. At most three keys are accepted.
+"""
+input ApiCallLogSort {
+	field: ApiCallLogSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a call log list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, because the connection narrows the rows the delivered read
+returned. The delivered read narrows by `correlationId`, `statusCode`, `ipAddress`, `method`, `userId`
+and a `requestTime` range; the remaining members are narrowing the connection performs over the rows
+that read answered, which is the same set the route answers.
+
+The three document members carry the kernel's `JSON` operators. A `contains` is a substring match over
+the serialised document rather than a query into it, which is what the query protocol's own `JSON`
+condition means on every resource that declares one — and the document is answered in full on the same
+row, so filtering by it discloses nothing the row does not already carry.
+"""
+input ApiCallLogFilter {
+	id: IDFilter
+	correlationId: IDFilter
+	url: StringFilter
+	method: StringFilter
+	statusCode: NumberFilter
+	requestTime: DateTimeFilter
+	responseTime: DateTimeFilter
+	ipAddress: StringFilter
+	protocol: StringFilter
+	userAgent: StringFilter
+	origin: StringFilter
+	userId: IDFilter
+	requestHeaders: JSONFilter
+	requestBody: JSONFilter
+	responseBody: JSONFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	and: [ApiCallLogFilter!]
+	or: [ApiCallLogFilter!]
+	not: ApiCallLogFilter
+}

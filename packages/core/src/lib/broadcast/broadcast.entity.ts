@@ -48,7 +48,7 @@ export class Broadcast extends BasePerEntityType implements IBroadcast {
 	@IsNotEmpty()
 	@IsEnum(BroadcastCategoryEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	category: BroadcastCategoryEnum;
 
 	/**
@@ -58,7 +58,7 @@ export class Broadcast extends BasePerEntityType implements IBroadcast {
 	@IsNotEmpty()
 	@IsEnum(BroadcastVisibilityModeEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	visibilityMode: BroadcastVisibilityModeEnum;
 
 	/**

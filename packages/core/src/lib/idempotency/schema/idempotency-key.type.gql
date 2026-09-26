@@ -1,0 +1,181 @@
+# The retry-safety domain's object types.
+#
+# A stored key is not a client's resource. A client presents a key in a header and never reads the row
+# back — what it receives is the response the first attempt produced, replayed. The row exists for the
+# platform and for the two people who ever need to look at it: an operator whose integration is stuck
+# and cannot say whether the work ran, and an operator whose client has lost its key and has no way to
+# make the next attempt a first attempt again.
+#
+# **Consequently this surface is a read and a removal, and there is no create and no edit.** A key is
+# written by the retry-safety interceptor from a request that carried one; a caller that could create a
+# row here would be able to answer another caller's retry with a response of its own choosing, which is
+# the one thing the mechanism must not allow.
+#
+# **The stored response is not a member of the type.** `responseBody` holds what the first attempt
+# answered, and that answer is the calling client's own data — an order, a refund, an instrument. The
+# permission to release a key is a permission to unblock a retry, not a permission to read what the
+# retry produced, so the projection both protocols answer drops the member and carries the row's
+# diagnostic columns instead: which operation it belongs to, how far it got, what it points at, and
+# when it was written.
+#
+# **The removal is the one destructive route on the platform's infrastructure surface, and the reason
+# is the unique tuple.** `(organizationId, scope, key)` is what makes two concurrent identical requests
+# resolve to one owner. A key that was *marked* released would still occupy that tuple, so the retry
+# the operator is trying to unblock would be refused as a reused key — which is the opposite of what
+# releasing it is for. The row is therefore removed, and the release refuses while a live claim holds
+# it, because deleting a claim whose work is still executing would let the retry start a second run of
+# that work.
+
+"""
+One stored idempotency key: the claim a client's retry is answered from.
+"""
+type IdempotencyKey {
+	id: ID!
+	"The tenant the key belongs to, which the caller's credential states and never the caller."
+	tenantId: ID
+	"""
+	The organization the key was presented in. Keys are scoped by it, so one tenant's key can never
+	replay another's response — not even inside the same tenant across two organizations.
+	"""
+	organizationId: ID
+	"""
+	The key the client presented, exactly as it sent it. It is the client's own string and is stored so
+	the client can find its own row; it is never generated and never rewritten.
+	"""
+	key: String!
+	"""
+	The operation the key was presented to, for example `checkout.complete`. Two operations may
+	legitimately be called with the same client key, which is why the scope is part of the identity
+	rather than a filter applied after the lookup.
+	"""
+	scope: String!
+	"""
+	The first eight characters of the SHA-256 of the canonicalised request.
+	A replay with a different body is a conflict rather than a replay, and the stored hash is what makes
+	the two distinguishable — without keeping the body itself, which is why only the prefix is carried
+	here. Eight hex characters tell two requests apart and reconstruct neither.
+	"""
+	requestHash: String!
+	"""
+	How far the first attempt got: `IN_PROGRESS` while it runs, `COMPLETED` when its response was
+	recorded, `FAILED` when it was refused. A terminal row is what a retry is answered from, and the
+	distinction is what an operator reads to decide whether to release it.
+	"""
+	status: IdempotencyStatus!
+	"""
+	The status the first attempt answered with, or null while the attempt is still running. A replay
+	returns this status verbatim, which is why it is recorded rather than recomputed.
+	"""
+	responseStatus: Int
+	"What the operation was recorded as creating, for example `order`. Null while the attempt runs."
+	resourceType: String
+	"Id of what was created, when the response carried one. It is how an operator finds the row."
+	resourceId: ID
+	"""
+	The moment past which the stored response is no longer replayable and the row is swept. The lookup
+	refuses an expired row on its own, so the horizon holds even if the sweep is behind.
+	"""
+	expiresAt: DateTime!
+	"""
+	When the claim was taken. A claim whose lease has gone stale is treated as abandoned and may be
+	taken over by another attempt, which is what stops a request whose process died mid-flight from
+	holding its key forever — and what decides whether a release is allowed to remove the row.
+	"""
+	lockedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The lifecycle of a stored key.
+"""
+enum IdempotencyStatus {
+	"A first attempt owns the key and its work is running."
+	IN_PROGRESS
+	"The attempt finished; its response is what a retry is answered from."
+	COMPLETED
+	"The attempt was refused; a retry receives the refusal rather than a second run."
+	FAILED
+}
+
+"""
+The boundary of one page of keys.
+"""
+type IdempotencyKeyEdge {
+	node: IdempotencyKey!
+	cursor: String!
+}
+
+"""
+One page of keys, with the total the filters select and the boundary cursors.
+"""
+type IdempotencyKeyConnection {
+	nodes: [IdempotencyKey!]!
+	edges: [IdempotencyKeyEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a key list may be sorted by.
+
+`createdAt` is what an operator chasing a stuck client reaches for — the newest rows are the retries in
+flight — and `expiresAt` is what a retention question is read in. The identifiers are not sort keys: an
+order by identifier is not an order anybody reads a key table in, and the questions those columns
+answer are filters.
+"""
+enum IdempotencyKeySortField {
+	createdAt
+	expiresAt
+	lockedAt
+	scope
+	status
+}
+
+"""
+The order the keys are returned in. At most three keys are accepted.
+"""
+input IdempotencyKeySort {
+	field: IdempotencyKeySortField!
+	direction: SortDirection!
+}
+
+"""
+Comparison on the lifecycle of a key.
+"""
+input IdempotencyStatusFilter {
+	eq: IdempotencyStatus
+	ne: IdempotencyStatus
+	in: [IdempotencyStatus!]
+	nin: [IdempotencyStatus!]
+	isNull: Boolean
+}
+
+"""
+The fields a key list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row, and the set is deliberately the columns an operator actually
+searches by: the operation, the client's own key, the lifecycle and the resource it points at. A key
+table is not browsed — an operator arrives at it already knowing which operation and which key the
+stuck client is holding — and a pattern match over the request hash, or a range over the whole table,
+would invite the scan the unique index exists to avoid. The tenant and the organization are absent
+because both are applied to the read from the credential rather than from the caller.
+"""
+input IdempotencyKeyFilter {
+	id: IDFilter
+	key: StringFilter
+	scope: StringFilter
+	requestHash: StringFilter
+	status: IdempotencyStatusFilter
+	responseStatus: NumberFilter
+	resourceType: StringFilter
+	resourceId: IDFilter
+	expiresAt: DateTimeFilter
+	lockedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IdempotencyKeyFilter!]
+	or: [IdempotencyKeyFilter!]
+	not: IdempotencyKeyFilter
+}

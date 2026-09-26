@@ -13,7 +13,7 @@ export abstract class BasePerEntityType extends TenantOrganizationBaseEntity imp
 	@IsNotEmpty()
 	@IsEnum(BaseEntityEnum)
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'varchar' })
 	entity: BaseEntityEnum;
 
 	/**

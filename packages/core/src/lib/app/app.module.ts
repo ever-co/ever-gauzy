@@ -21,6 +21,7 @@ import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } 
 import { AccessTokenModule } from '../access-token/access-token.module';
 import { AccountingTemplateModule } from '../accounting-template/accounting-template.module';
 import { ActivityLogModule } from '../activity-log/activity-log.module';
+import { AdjustmentModule } from '../adjustment/adjustment.module';
 import { ApiCallLogModule } from '../api-call-log/api-call-log.module'; // Global Api Call Log Module
 import { AppointmentEmployeesModule } from '../appointment-employees/appointment-employees.module';
 import { ApprovalPolicyModule } from '../approval-policy/approval-policy.module';
@@ -57,6 +58,7 @@ import { EmailHistoryModule } from '../email-history/email-history.module';
 import { EmailResetModule } from '../email-reset/email-reset.module';
 import { EmailTemplateModule } from '../email-template/email-template.module';
 import { EmployeeAppointmentModule } from '../employee-appointment/employee-appointment.module';
+import { EmployeeAvailabilityModule } from '../employee-availability/employee-availability.module';
 import { EmployeeAwardModule } from '../employee-award/employee-award.module';
 import { EmployeeLevelModule } from '../employee-level/employee-level.module';
 import { EmployeeNotificationSettingModule } from '../employee-notification-setting/employee-notification-setting.module';
@@ -106,6 +108,7 @@ import { KeyResultModule } from '../keyresult/keyresult.module';
 import { LanguageModule } from '../language/language.module';
 import { MentionModule } from '../mention/mention.module';
 import { MerchantModule } from '../merchant/merchant.module';
+import { MoneyModule } from '../money/money.module';
 import { OrganizationAwardModule } from '../organization-award/organization-award.module';
 import { OrganizationContactModule } from '../organization-contact/organization-contact.module';
 import { OrganizationDepartmentModule } from '../organization-department/organization-department.module';
@@ -144,6 +147,22 @@ import { RequestApprovalTeamModule } from '../request-approval-team/request-appr
 import { RequestApprovalModule } from '../request-approval/request-approval.module';
 import { ResourceLinkModule } from '../resource-link/resource-link.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { PluginContributionModule } from '../plugin-contributions/plugin-contribution.module';
+import { RuleModule } from '../rule/rule.module';
+import { SequenceModule } from '../sequence/sequence.module';
+import { SearchModule } from '../search/search.module';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
+import { IdempotencyMaintenanceModule } from '../idempotency/idempotency-maintenance.module';
+import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
+import { EventOutboxModule } from '../event-outbox/event-outbox.module';
+import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maintenance.module';
+import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
+import { OperationModule } from '../operation/operation.module';
+import { WebhookModule } from '../webhook/webhook.module';
+import { MeasurementModule } from '../measurement/measurement.module';
+import { PaymentTermModule } from '../payment-term/payment-term.module';
+import { AddressRoleModule } from '../address-role/address-role.module';
+import { GraphqlSubscriptionModule } from '../graphql/subscriptions/graphql-subscription.module';
 import { RoleModule } from '../role/role.module';
 import { SharedEntityModule } from '../shared-entity/shared-entity.module';
 import { ApiKeyAuthGuard } from '../shared/guards/api-key-auth.guard';
@@ -165,6 +184,7 @@ import { TaskStatusModule } from '../tasks/statuses/status.module';
 import { TaskModule } from '../tasks/task.module';
 import { TaskVersionModule } from '../tasks/versions/version.module';
 import { TaskViewModule } from '../tasks/views/view.module';
+import { TaxLineModule } from '../tax-line/tax-line.module';
 import { OAuthClientModule } from '../auth/oauth-client/oauth-client.module';
 import { TenantApiKeyModule } from '../tenant-api-key/tenant-api-key.module';
 import { TenantSettingModule } from '../tenant/tenant-setting/tenant-setting.module';
@@ -429,6 +449,11 @@ if (environment.THROTTLE_ENABLED) {
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,
+		// The availability resource's module, which nothing imported until its GraphQL surface existed: a
+		// module that is not in the application's graph is not mounted, so its REST routes answered 404 and
+		// its resolver was never scanned — the endpoint carried the fields its SDL declares and resolved
+		// every one of them to null, with no error anywhere. Naming it here is what mounts both surfaces.
+		EmployeeAvailabilityModule,
 		AppointmentEmployeesModule,
 		RoleModule,
 		OrganizationModule,
@@ -464,6 +489,37 @@ if (environment.THROTTLE_ENABLED) {
 		EquipmentSharingPolicyModule,
 		RequestApprovalModule,
 		RolePermissionModule,
+		PluginContributionModule,
+		SequenceModule,
+		// Platform search. The index tables are core because the platform searches contacts,
+		// invoices, expenses, products, orders, projects, tasks, employees and documents alike —
+		// the search plugin owns the pipeline and the providers, core owns the schema.
+		SearchModule,
+		// Kernel capabilities every domain above builds on: one rule engine, one money-adjustment ledger,
+		// one tax ledger, and the money layer the three of them round through.
+		RuleModule,
+		AdjustmentModule,
+		TaxLineModule,
+		MoneyModule,
+		// The event kernel: retryable requests, the transactional outbox, the durable-operation runtime
+		// and outbound delivery. Each is read by any domain that changes state and emits a fact.
+		IdempotencyModule,
+		EventOutboxModule,
+		OperationModule,
+		WebhookModule,
+		// What a number means and when a document is settled. The measurement families are read by
+		// inventory, purchasing, projects and time tracking alike, a settlement term is read by the
+		// accounting document and by procurement, and an address role is a dimension of the address book —
+		// so all three are kernel capabilities with their own guarded routes rather than fields on a
+		// resource some other module owns.
+		MeasurementModule,
+		PaymentTermModule,
+		AddressRoleModule,
+		// The subscription surface: the fan-out, the catalogue of streamable events, the delivery
+		// decision, and the two routes an event takes to a subscriber — the outbox consumer for a
+		// durable fact and the bus bridge for a domain that publishes in process. Adding it changes
+		// no existing route.
+		GraphqlSubscriptionModule,
 		TenantModule,
 		TenantSettingModule,
 		// In-product billing pages. Every route inside 404s unless STRIPE_SECRET_KEY is set, so a
@@ -589,7 +645,27 @@ if (environment.THROTTLE_ENABLED) {
 						enabled: false,
 						enableQueueing: true,
 						logRegisteredJobs: false
-					})
+					}),
+					// The hourly sweep over the retry keys travels on that queue, so it is registered exactly
+					// when the queue exists. A scheduled job needs a worker, a worker needs a connection, and
+					// registering one where there is no root is not a degraded sweep — it is a boot that fails
+					// on `Worker requires a connection`, which is what a single-container dev setup would meet.
+					IdempotencyMaintenanceModule,
+					// The per-minute pass that drains the transactional outbox, registered under the same
+					// condition and for the same reason. 🛑 Note what its absence means, because it is not the
+					// same as the sweep's: without a queue root nothing hands appended events to their
+					// consumers, so GraphQL subscriptions, the search index and every outbound webhook go
+					// quiet while `event_outbox` grows. Appending still works and no writer sees an error —
+					// which is exactly why this is called out here rather than left to be discovered. A
+					// deployment that wants events delivered needs `REDIS_ENABLED` and a worker process.
+					EventOutboxMaintenanceModule,
+					// The per-minute pass that re-attempts a delivery the ladder says is due. It is the
+					// second half of the outbound surface: the fan-out above makes the first attempt, and
+					// without this one there is never a second — `WebhookDeliveryService` writes seven rungs
+					// onto every row and `findDue` reads exactly the rows that are due, and nothing called
+					// it, so an endpoint unreachable for the one moment it was reached never heard about
+					// that event again.
+					WebhookMaintenanceModule
 			  ]
 			: []),
 		//Token cleanup scheduler is disabled by default; enable when ready
@@ -613,6 +689,14 @@ if (environment.THROTTLE_ENABLED) {
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
+		},
+		// Retry safety. Registered once, for the whole application, and inert on every handler that
+		// does not declare `@Idempotent(...)`: a route that has not adopted the convention reads no
+		// header, hashes nothing and writes no row it did not write before. Registered after the
+		// serialization interceptor so the response it records is the one the handler produced.
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: IdempotencyInterceptor
 		}
 	]
 })

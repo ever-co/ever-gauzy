@@ -6,6 +6,8 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { registerPluginConfig } from '../bootstrap';
+import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
+import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
 import { isDatabaseType, isSqliteDB } from './../core/utils';
@@ -213,13 +215,20 @@ export async function initializeDatabaseConnection(config: Partial<ApplicationPl
 		throw new Error('❌ Missing database connection options in plugin config.');
 	}
 
-	const dataSource = new DataSource({
-		...dbConnectionOptions,
-		subscribers: [],
-		synchronize: false,
-		migrationsRun: false,
-		dropSchema: false
-	} as DataSourceOptions);
+	// The same queue the application's data source gets, so a migration's transaction on SQLite can never
+	// share the connection's one query runner with another transaction (see embedded-transaction-queue.ts).
+	// Under DB_ORM=mikro-orm TypeORM sees skeleton entities; drop the metadata entries that name a property it
+	// was never given, or the data source cannot build (a strict no-op under TypeORM).
+	pruneTypeOrmSkeletonMetadata();
+	const dataSource = serializeEmbeddedTransactions(
+		new DataSource({
+			...dbConnectionOptions,
+			subscribers: [],
+			synchronize: false,
+			migrationsRun: false,
+			dropSchema: false
+		} as DataSourceOptions)
+	);
 
 	console.log(chalk.yellow('NOTE: No existing database connection found. Creating a new one...'));
 

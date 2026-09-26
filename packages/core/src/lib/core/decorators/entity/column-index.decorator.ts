@@ -22,7 +22,7 @@ export function ColumnIndex<T>(fields: string[], options?: CombinedIndexOptions<
 
 /**
  * ColumnIndex decorator for TypeOrm and MikroOrm.
- * Applies only the active ORM's index decorator based on the DB_ORM environment variable.
+ * Applies TypeORM's index under every ORM and MikroORM's only under `DB_ORM=mikro-orm`, like `@MultiORMColumn`.
  *
  * @param nameOrFieldsOrOptions
  * @param maybeFieldsOrOptions
@@ -59,10 +59,9 @@ export function ColumnIndex<T>(
 		// Determine which ORM is in use
 		const ormType = getORMType();
 
-		// Apply TypeORM index when using TypeORM
-		if (ormType === MultiORMEnum.TypeORM) {
-			applyTypeOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
-		}
+		// TypeORM's index under every ORM, MikroORM's only under `DB_ORM=mikro-orm`: the TypeORM DataSource
+		// runs in both modes (see `MultiORMColumn`).
+		applyTypeOrmIndex(target, propertyKey, name, fields, options as TypeOrmIndexOptions);
 
 		// Apply MikroORM index when using MikroORM
 		if (ormType === MultiORMEnum.MikroORM) {

@@ -1,0 +1,155 @@
+# The email history's object type.
+#
+# A row is one message the platform sent or tried to send: the address it went to, the subject it
+# carried, the body it rendered and what became of it. The address is both a column and a criterion —
+# the delivered list read narrows by organization and tenant and nothing else, so an operator looking
+# for one message filters this type by `email`, `name` or `status`.
+#
+# **The body is carried, and it is not a secret.** `content` is the rendered message the delivered list
+# read answers on every row it returns, and the resend route reads it back out of the row to send the
+# same message again — so a member for it is the delivered projection rather than a widening of it.
+# Nothing in this domain is a credential: the transport's own account and secret belong to the SMTP
+# configuration, which is a different resource with its own projection, and no row here holds one.
+#
+# **`user` and `emailTemplate` are not carried.** The delivered list read loads them differently on its
+# two ORM branches — one populates both relations in full, the other joins the template without
+# selecting its columns and selects four columns of the user — so a member for either would be present
+# on one installation and absent on another, and partial where it is present. That is a member whose
+# presence a client cannot predict, which is the kind of member this schema refuses. The two identifier
+# columns are carried instead, and each relation has its own surface: `User` is reachable from the user
+# domain and `EmailTemplate` from the message-template domain.
+#
+# `status` is carried as its delivered value rather than declared as a schema enum. The vocabulary is
+# `EmailStatusEnum` in the platform's contract package — `SENT` and `FAILED` — which types the column and
+# which the delivered send and resend paths write. Carrying the value keeps the column's own case
+# visible, which is what a caller comparing against a stored row needs.
+#
+# `deletedAt` is not carried. No delivered route on this controller withdraws a message: the resource
+# serves a list, an edit and a resend, and the row's own column is therefore null on every row this
+# surface can reach.
+
+"""
+One message the platform sent, or tried to send: its recipient, its subject, its rendered body and what
+became of it.
+"""
+type EmailHistory {
+	id: ID!
+	"The subject the message carried, as the delivered send wrote it."
+	name: String
+	"The rendered body of the message, as it was sent."
+	content: String
+	"The address the message was sent to."
+	email: String!
+	"""
+	What became of the message: `SENT` when the transport accepted it, `FAILED` when it did not. The
+	resend route writes this column, which is what makes it a state a caller reads rather than a
+	by-product.
+	"""
+	status: String
+	"The user the message was sent to, when it was addressed to one. A column, not the joined relation."
+	userId: ID
+	"The message template the body was rendered from, when it was rendered from one."
+	emailTemplateId: ID
+	"The organization the message belongs to, or null for one sent outside any organization."
+	organizationId: ID
+	"The tenant the message belongs to."
+	tenantId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of sent messages.
+"""
+type EmailHistoryEdge {
+	node: EmailHistory!
+	cursor: String!
+}
+
+"""
+One page of sent messages, with the total the filters select and the boundary cursors.
+"""
+type EmailHistoryConnection {
+	nodes: [EmailHistory!]!
+	edges: [EmailHistoryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a message list may be sorted by.
+"""
+enum EmailHistorySortField {
+	createdAt
+	updatedAt
+	name
+	email
+	status
+}
+
+"""
+The order the message list is returned in. At most three keys are accepted.
+"""
+input EmailHistorySort {
+	field: EmailHistorySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a message list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+`status` is a `StringFilter` because the vocabulary belongs to the platform's own enum rather than to
+this file: `eq: "FAILED"` is how an operator asks for what did not go out, and `isNull: true` selects the
+rows a send recorded before any outcome was known.
+
+The two relations are not filterable — neither is a member — and `content` is not filterable either: a
+condition on a rendered body would scan the whole of every message for a pattern, which is a question
+the delivered read never asks.
+"""
+input EmailHistoryFilter {
+	id: IDFilter
+	name: StringFilter
+	email: StringFilter
+	status: StringFilter
+	userId: IDFilter
+	emailTemplateId: IDFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmailHistoryFilter!]
+	or: [EmailHistoryFilter!]
+	not: EmailHistoryFilter
+}
+
+"""
+What a caller states when it changes a sent message.
+
+One member, and it is the whole of what the delivered body declares: a message that has been sent is a
+record, and the only fact about it the API lets a caller restate is whether it is still active. The
+delivered route carries the identifier in its path, so it is not repeated here as a body member — and the
+organization the row belongs to is not a member either, because the delivered update reaches the row by
+its identifier under the caller's own scope.
+"""
+input UpdateEmailHistoryInput {
+	id: ID!
+	"Whether the message is still active. Withdrawing a sent message marks it rather than removing it."
+	isArchived: Boolean
+}
+
+"""
+What a caller states when it resends a sent message.
+
+The delivered body is the address the message was filed under, and the delivered handler reads one member
+out of it: the organization to resolve the transport for. The tenant is never stated — the resend reads
+it from the credential, and the delivered implementation states why — and the recipient is not stated
+either, because the message that is resent is the row the caller named, addressed to the address that row
+carries.
+"""
+input ResendEmailHistoryInput {
+	"The organization whose transport the message is sent through."
+	organizationId: ID
+}

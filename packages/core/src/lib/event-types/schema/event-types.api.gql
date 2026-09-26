@@ -1,0 +1,112 @@
+# The event-type domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/event-type` routes already serve, under the same guard and
+# with the same permission — and this resource is one of the two in this delivery where "the same
+# permission" means none at all. The controller declares no permission on its class and none on any of its
+# handlers, so no field here states one either: a permission restated here would be a grant the routes do
+# not ask for, and an empty `@Permissions()` would be a second statement of the same absence. What decides
+# who may reach these rows is the guard chain the controller runs under and the service behind it, which
+# both protocols share.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list route
+# takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and answers with
+# the same shape the kernel's `PageInfo` gives every other connection, so a cursor obtained over one
+# surface resumes on the other. `withDeleted` is offered because the delivered list route offers it: the
+# `data` document its list route binds is handed to the same read, which carries the member to the store,
+# so a REST caller can ask for withdrawn meeting lengths and a connection that could not would hide them.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same rows
+# under the same filters, one of them sliced by `take`/`skip` and the other not. That is one capability, so
+# it is one root field: `eventTypes`, mirroring `GET /`, which is the route that reads the whole filtered
+# set the connection protocol is applied to. The paginated spelling's own two narrowings are partial
+# matches on `title` and `description`, and both survive the fold as `ilike` on the same members of
+# `filter`; a second root field for the paginated spelling would be a second surface that could disagree
+# with this one, and the connection's own `limit`/`offset` already are the page it performs.
+#
+# `eventTypeCount` takes no filter, and that is a statement rather than an omission: the delivered count
+# route passes its query string through as the store's own `where`, which the connection protocol does not
+# speak, so a `filter` argument here would either be handed to a service call that cannot accept it or be
+# evaluated over a second code path that could disagree with the connection's `totalCount`. It is nullable
+# because a count is an aggregate a resource may legitimately have no answer for, and a non-null field
+# would turn "not answered" into a fabricated zero.
+#
+# The controller serves no sub-route of its own beyond the paginated spelling, so this resource has no
+# root field beyond the list, the row, the count and the five writes. The node read is the controller's own
+# rather than the CRUD base's — it is the one read of these five resources that overrides it — and it
+# answers the same row under the same absence of a permission.
+
+extend type Query {
+	"""
+	The meeting lengths of the caller's tenant, in title order.
+	"""
+	eventTypes(
+		filter: EventTypeFilter
+		sort: [EventTypeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): EventTypeConnection!
+
+	"""
+	One meeting length of the caller's tenant, or null when there is none.
+	"""
+	eventType(id: ID!): EventType
+
+	"""
+	How many meeting lengths the caller's tenant offers.
+	"""
+	eventTypeCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a meeting length.
+
+	The write is dispatched as the same command the REST create route dispatches, with the same payload —
+	which is the only way to reach this write at all: the handler resolves the organization and the
+	employee the body names before it builds the row, so calling the service beside the command would skip
+	a step the REST route performs.
+	"""
+	createEventType(input: CreateEventTypeInput!): EventType!
+
+	"""
+	Changes a meeting length that exists.
+
+	The delivered edit reaches the same service call the create route reaches — the entity spread beside
+	the identifier the route read from its path — and that is *not* the command above: no handler runs on
+	this route, so the write merges the stated members onto the row the store holds and leaves the rest as
+	they are. See `UpdateEventTypeInput`.
+	"""
+	updateEventType(input: UpdateEventTypeInput!): EventType!
+
+	"""
+	Removes a meeting length outright.
+
+	This is the hard removal, and the delivered store rather than this field decides what still pointing at
+	the row means: the answer is the one fact the removal establishes, that it ran, and a constraint the
+	store raises reaches the caller as it is. A length the organization means to stop offering is withdrawn
+	instead, which leaves every row that names it resolvable.
+	"""
+	deleteEventType(id: ID!): Boolean!
+
+	"""
+	Withdraws a meeting length without removing the row.
+
+	The delivered list stops answering it and the rows that reference it keep resolving the identifier
+	they hold. The answer is the withdrawn row, whose `deletedAt` says when it happened.
+	"""
+	softDeleteEventType(id: ID!): EventType!
+
+	"""
+	Puts a withdrawn meeting length back.
+	"""
+	recoverEventType(id: ID!): EventType!
+}

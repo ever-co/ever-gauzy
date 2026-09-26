@@ -10,7 +10,7 @@ import { getDefaultOrganizations } from './../organization/organization.seed';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
-import { getApiPublicPath } from '../core';
+import { getApiPublicPath } from '../core/util';
 import { copyAssets } from '../core/seeds/utils';
 
 /**

@@ -1,0 +1,160 @@
+# The resource link's GraphQL types.
+#
+# A resource link is a URL with a title, attached to one record of the platform and authored by one
+# employee: the reading list a task, an invoice or a project carries beside it. It is a
+# **polymorphic** row — `entity` names the table and `entityId` names the row — which is why it holds
+# no foreign key to the record it points at and why neither identifier is ever absent.
+#
+# **The attached record is carried as its two identifiers and never as an object.** A polymorphic
+# target has no relation to join: the pair is the address, the delivered reads join nothing, and a
+# member naming one of the platform's twenty record types here would be a member that is null for
+# every share pointing at another of them.
+#
+# `metaData` is carried as `JSON`. On the production dialects the column is a document; on the
+# embedded one it is text, because that dialect has no document type, and the scalar passes either
+# through unchanged rather than parsing one into the other.
+#
+# `deletedAt` is carried because withdrawing and restoring are delivered routes and this column is the
+# whole of what they write; without it the answer to the write that withdrew a link could not say so.
+
+"""
+One URL with a title, attached to one record of the platform and authored by one employee.
+"""
+type ResourceLink {
+	id: ID!
+	"The title the link is shown under, as entered."
+	title: String!
+	"The address the link points at."
+	url: String
+	"""
+	What the link is attached to, as the platform's own entity vocabulary names it — for example
+	`Task` or `Invoice`. A polymorphic row names its target's table rather than holding a key to one.
+	"""
+	entity: String
+	"The record the link is attached to, within the entity named beside it."
+	entityId: ID
+	"Metadata read from the address, when a reader was able to fetch some."
+	metaData: JSON
+	"The employee the link is attributed to. Null on a link written without an author."
+	employeeId: ID
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	"When the row was archived, or null while it is not."
+	archivedAt: DateTime
+	"""
+	When the link was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of links.
+"""
+type ResourceLinkEdge {
+	node: ResourceLink!
+	cursor: String!
+}
+
+"""
+One page of links, with the total the filters select and the boundary cursors.
+"""
+type ResourceLinkConnection {
+	nodes: [ResourceLink!]!
+	edges: [ResourceLinkEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a link list may be sorted by.
+"""
+enum ResourceLinkSortField {
+	createdAt
+	updatedAt
+	title
+	entity
+}
+
+"""
+The order the links are returned in. At most three keys are accepted.
+"""
+input ResourceLinkSort {
+	field: ResourceLinkSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a link list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+The two polymorphic identifiers are here, and they are what makes this list usable at all: the
+question a client actually asks is "the links of *this* record", and it is asked by narrowing
+`entity` and `entityId` together. The delivered list route takes the same narrowing in its query
+string, so a connection narrowed this way is the same read the route performs.
+"""
+input ResourceLinkFilter {
+	id: IDFilter
+	organizationId: IDFilter
+	entity: StringFilter
+	entityId: IDFilter
+	title: StringFilter
+	url: StringFilter
+	metaData: JSONFilter
+	employeeId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ResourceLinkFilter!]
+	or: [ResourceLinkFilter!]
+	not: ResourceLinkFilter
+}
+
+"""
+What a caller states when it files a link.
+
+The title and the address are required because the delivered create validates them — the DTO marks
+both non-empty and validates the address as one — and the organization is required for the same
+reason. The target is stated as the platform's own entity name beside the record's identifier; the
+delivered body states the same pair.
+
+The author is optional because the delivered service decides it rather than the body: it takes the
+caller's own employee, falling back to the body only when the credential carries none. A member the
+write overwrites is stated as optional rather than as a claim the caller cannot make.
+"""
+input CreateResourceLinkInput {
+	organizationId: ID!
+	entity: String!
+	entityId: ID!
+	title: String!
+	url: String!
+	metaData: JSON
+	employeeId: ID
+}
+
+"""
+What a caller states when it changes a link that exists.
+
+**Every member but the identifier is optional**, because the delivered edit binds a partial type of
+the create body. The delivered write behind it is a create beside the stated identifier — a save of
+the columns the body carries — so a member the caller leaves out is left as it is, and the target and
+the author are the two the delivered contract expects a caller to leave alone: a link that moved to
+another record would be a different link, and the delivered edit types both as excluded even though
+its body would accept them.
+"""
+input UpdateResourceLinkInput {
+	id: ID!
+	organizationId: ID
+	entity: String
+	entityId: ID
+	title: String
+	url: String
+	metaData: JSON
+	employeeId: ID
+}

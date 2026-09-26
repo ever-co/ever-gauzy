@@ -1,0 +1,923 @@
+# The work-tracking domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered routes already serve, under the same guard and with the same
+# permission, so a client that reaches a capability over one protocol is not given a narrower or a
+# wider one than the client that reaches it over the other.
+#
+# **The list is the connection, and a sub-route is that connection narrowed.** A task's own rows —
+# its estimates, the issues it is linked to, the vocabulary it points at, the days it is planned into
+# — are not a root field hanging off `Task`. Each is a connection of its own, and a task's share of it
+# is that connection with `taskId` in `filter`; a team's share is `teamTasks`, because the team is a
+# pivot the list reader does not join and no filter could state it. A route that answers a projection
+# the connection cannot state is a field of its own: `taskMaxNumber` is a maximum, `tasksByView` is
+# the replay of a filter set stored in a row, and `taskMetadata` is the whole vocabulary in one
+# answer.
+#
+# A controller that serves its list twice — `GET /` and the inherited `GET /pagination` — serves one
+# capability, and the two answer the same rows under the same filters, one of them sliced by
+# `take`/`skip` and the other not. That is one field: the connection's own `limit`/`offset` already
+# are the page it performs, and a second field for the paginated spelling would be a second surface
+# that could disagree with this one.
+#
+# **A count route gets a nullable `Int` field with no argument.** The delivered count route binds its
+# query string to the store's own `where`, which the connection protocol does not speak, so a `filter`
+# argument here would either be handed to a call that cannot accept it or evaluated over a second code
+# path that could disagree with the connection's `totalCount`. It is nullable because an aggregate a
+# resource may legitimately have no answer for must not be reported as a fabricated zero.
+#
+# **The lifecycle routes count.** Every resource here is removable, withdrawable and restorable; all
+# three are delivered routes, so all three are fields. Withdrawing writes `deletedAt`, which is why
+# the object types carry that column: without it the answer to the write that withdrew a row would
+# not say so.
+
+extend type Query {
+	# --------------------------------------------------------------------------------------------
+	# The unit of work
+	# --------------------------------------------------------------------------------------------
+
+	"""
+	The tasks of the caller's tenant and organization.
+	"""
+	tasks(
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): TaskConnection!
+
+	"""
+	The tasks assigned to the caller, read through the delivered reader that resolves the employee
+	from the credential — a narrowing no filter can state, because a filter narrows rows and this
+	narrows by who is asking.
+	"""
+	myTasks(
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	The tasks one employee holds, read through the delivered reader that joins the assignment pivot
+	the list reader does not.
+
+	The controller spells this capability twice — `GET /tasks/employee/:id`, with the employee in the
+	path, and `GET /tasks/employee`, with the employee in the query string — and the two answer the
+	same rows. That is one capability, so it is one field, mirroring the route that names the employee
+	in the path.
+	"""
+	employeeTasks(
+		employeeId: ID!
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	The tasks a team works, read through the delivered reader that joins the team pivot the list
+	reader does not.
+	"""
+	teamTasks(
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	The tasks filed under a project module, read through the delivered reader that joins the module
+	pivot the list reader does not.
+	"""
+	moduleTasks(
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	The tasks whose start date or due date falls in the windows the caller states, as the board's
+	"what starts and what is due today" read answers them.
+
+	This is the connection narrowed — the four bounds are the `between` operator on the two date
+	columns, which `TaskFilter` states — and it is a field of its own only because the delivered reader
+	carries a default the caller cannot state: it reads tasks that are not screening tasks unless told
+	otherwise, and it is the one reader that reads them that way.
+	"""
+	tasksByDate(
+		startDateFrom: DateTime
+		startDateTo: DateTime
+		dueDateFrom: DateTime
+		dueDateTo: DateTime
+		"Whether to read screening tasks. Omitted means what the delivered reader means: neither."
+		isScreeningTask: Boolean
+		createdByUserId: ID
+		projectId: ID
+		organizationSprintId: ID
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	The tasks a saved view selects: the delivered reader loads the view's stored filter set and
+	replays it.
+
+	A projection the connection cannot state — the narrowing lives in a row rather than in the
+	request — so it is a field of its own rather than a filter on `tasks`.
+	"""
+	tasksByView(
+		viewId: ID!
+		filter: TaskFilter
+		sort: [TaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskConnection!
+
+	"""
+	One task of the caller's tenant, or null when there is none.
+	"""
+	task(
+		id: ID!
+		"Whether to also answer the epic the task descends from, which is a recursive read."
+		includeRootEpic: Boolean
+	): Task
+
+	"""
+	How many tasks the caller's tenant holds.
+	"""
+	taskCount: Int
+
+	"""
+	The highest task number in a project — the projection a client reads to know where the next task
+	will land. Null when the project holds none.
+
+	The project is the only member the delivered route needs from the caller; the organization and the
+	tenant are read from the credential, which is the value every client of the route sends.
+	"""
+	taskMaxNumber(projectId: ID): Int
+
+	# --------------------------------------------------------------------------------------------
+	# What hangs off a task
+	# --------------------------------------------------------------------------------------------
+
+	"""
+	The estimates the caller's tenant holds. One task's estimates are this connection with `taskId` in
+	`filter`.
+	"""
+	taskEstimations(
+		filter: TaskEstimationFilter
+		sort: [TaskEstimationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): TaskEstimationConnection!
+
+	"""
+	One estimate, or null when there is none.
+	"""
+	taskEstimation(id: ID!): TaskEstimation
+
+	"""
+	How many estimates the caller's tenant holds.
+	"""
+	taskEstimationCount: Int
+
+	"""
+	The links between tasks the caller's tenant holds. One task's links are this connection with
+	`taskFromId` or `taskToId` in `filter`.
+	"""
+	taskLinkedIssues(
+		filter: TaskLinkedIssueFilter
+		sort: [TaskLinkedIssueSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): TaskLinkedIssueConnection!
+
+	"""
+	One link, or null when there is none.
+	"""
+	taskLinkedIssue(id: ID!): TaskLinkedIssue
+
+	"""
+	How many links the caller's tenant holds.
+	"""
+	taskLinkedIssueCount: Int
+
+	"""
+	The saved views the caller's tenant holds.
+	"""
+	taskViews(
+		filter: TaskViewFilter
+		sort: [TaskViewSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): TaskViewConnection!
+
+	"""
+	One saved view, or null when there is none.
+	"""
+	taskView(id: ID!): TaskView
+
+	"""
+	How many saved views the caller's tenant holds.
+	"""
+	taskViewCount: Int
+
+	"""
+	The days planned in the caller's tenant and organization.
+	"""
+	dailyPlans(
+		filter: DailyPlanFilter
+		sort: [DailyPlanSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DailyPlanConnection!
+
+	"""
+	The days planned for the caller, resolved from the credential rather than from an argument.
+	"""
+	myDailyPlans(
+		filter: DailyPlanFilter
+		sort: [DailyPlanSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DailyPlanConnection!
+
+	"""
+	The days planned for the caller's team, as the delivered reader resolves the team from the
+	credential.
+	"""
+	teamDailyPlans(
+		filter: DailyPlanFilter
+		sort: [DailyPlanSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DailyPlanConnection!
+
+	"""
+	The days planned for one employee.
+	"""
+	employeeDailyPlans(
+		employeeId: ID!
+		filter: DailyPlanFilter
+		sort: [DailyPlanSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DailyPlanConnection!
+
+	"""
+	The plans one task is filed into — the inverse of the plan's own task list, read through the
+	delivered reader that joins the pivot.
+	"""
+	dailyPlansForTask(
+		taskId: ID!
+		filter: DailyPlanFilter
+		sort: [DailyPlanSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): DailyPlanConnection!
+
+	"""
+	One planned day, or null when there is none.
+	"""
+	dailyPlan(id: ID!): DailyPlan
+
+	"""
+	How many planned days the caller's tenant holds.
+	"""
+	dailyPlanCount: Int
+
+	"""
+	The tasks that are being screened before they become work.
+	"""
+	screeningTasks(
+		filter: ScreeningTaskFilter
+		sort: [ScreeningTaskSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): ScreeningTaskConnection!
+
+	"""
+	One screening decision, or null when there is none.
+	"""
+	screeningTask(id: ID!): ScreeningTask
+
+	"""
+	How many screening decisions the caller's tenant holds.
+	"""
+	screeningTaskCount: Int
+
+	# --------------------------------------------------------------------------------------------
+	# The vocabulary a task points at
+	# --------------------------------------------------------------------------------------------
+	#
+	# Six resources, one shape, one resolver — see `TaskMetadataResolver` for why they are one surface
+	# rather than six. Each pair below is the same three reads: the connection, the row, the count.
+
+	"""
+	The lifecycle states a task can be in.
+	"""
+	taskStatuses(
+		filter: TaskStatusFilter
+		sort: [TaskStatusSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskStatusConnection!
+
+	"""
+	One status, or null when there is none.
+	"""
+	taskStatus(id: ID!): TaskStatus
+
+	"""
+	How many statuses the caller's tenant holds.
+	"""
+	taskStatusCount: Int
+
+	"""
+	The sizes a task can be sized as.
+	"""
+	taskSizes(
+		filter: TaskSizeFilter
+		sort: [TaskSizeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskSizeConnection!
+
+	"""
+	One size, or null when there is none.
+	"""
+	taskSize(id: ID!): TaskSize
+
+	"""
+	How many sizes the caller's tenant holds.
+	"""
+	taskSizeCount: Int
+
+	"""
+	The urgencies a task can be worked at.
+	"""
+	taskPriorities(
+		filter: TaskPriorityFilter
+		sort: [TaskPrioritySort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskPriorityConnection!
+
+	"""
+	One priority, or null when there is none.
+	"""
+	taskPriority(id: ID!): TaskPriority
+
+	"""
+	How many priorities the caller's tenant holds.
+	"""
+	taskPriorityCount: Int
+
+	"""
+	The releases a task can be filed against.
+	"""
+	taskVersions(
+		filter: TaskVersionFilter
+		sort: [TaskVersionSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskVersionConnection!
+
+	"""
+	One version, or null when there is none.
+	"""
+	taskVersion(id: ID!): TaskVersion
+
+	"""
+	How many versions the caller's tenant holds.
+	"""
+	taskVersionCount: Int
+
+	"""
+	The kinds of work a task can be.
+	"""
+	issueTypes(
+		filter: IssueTypeFilter
+		sort: [IssueTypeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): IssueTypeConnection!
+
+	"""
+	One issue type, or null when there is none.
+	"""
+	issueType(id: ID!): IssueType
+
+	"""
+	How many issue types the caller's tenant holds.
+	"""
+	issueTypeCount: Int
+
+	"""
+	The kinds of relation one task can have to another.
+	"""
+	taskRelatedIssueTypes(
+		filter: TaskRelatedIssueTypeFilter
+		sort: [TaskRelatedIssueTypeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TaskRelatedIssueTypeConnection!
+
+	"""
+	One related-issue type, or null when there is none.
+	"""
+	taskRelatedIssueType(id: ID!): TaskRelatedIssueType
+
+	"""
+	How many related-issue types the caller's tenant holds.
+	"""
+	taskRelatedIssueTypeCount: Int
+
+	"""
+	The whole vocabulary one board needs, in one request.
+
+	This is the projection the six connections above cannot state: the delivered route answers every
+	section at once, because a board that renders a task form needs all of them before it can render
+	anything. Each section of the answer is the connection its own root field answers, built by the
+	same codec, so a page walked here resumes there.
+	"""
+	taskMetadata(
+		organizationId: ID!
+		organizationTeamId: ID
+		projectId: ID
+		"Which sections to answer. Omitted means all of them, as the delivered route means."
+		include: [TaskMetadataSection!]
+	): TaskMetadata!
+}
+
+extend type Mutation {
+	# --------------------------------------------------------------------------------------------
+	# The unit of work
+	# --------------------------------------------------------------------------------------------
+
+	"""
+	Files a task.
+	"""
+	createTask(input: CreateTaskInput!): Task!
+
+	"""
+	Edits a task that exists.
+	"""
+	updateTask(input: UpdateTaskInput!): Task!
+
+	"""
+	Removes a task outright.
+	"""
+	deleteTask(id: ID!): Boolean!
+
+	"""
+	Takes one employee off every task of one team.
+
+	The delivered route answers nothing at all — it is a statement about the tasks it touched rather
+	than about a row — so this field answers whether it ran, which is the most the route's own answer
+	carries.
+	"""
+	unassignEmployeeFromTeamTasks(employeeId: ID!, organizationTeamId: ID!): Boolean!
+
+	# --------------------------------------------------------------------------------------------
+	# What hangs off a task
+	# --------------------------------------------------------------------------------------------
+
+	"""
+	Records an estimate for a task.
+	"""
+	createTaskEstimation(input: CreateTaskEstimationInput!): TaskEstimation!
+
+	"""
+	Changes an estimate.
+	"""
+	updateTaskEstimation(input: UpdateTaskEstimationInput!): TaskEstimation!
+
+	"""
+	Removes an estimate outright, with the activity log the delivered service writes beside it.
+	"""
+	deleteTaskEstimation(id: ID!): Boolean!
+
+	"""
+	Withdraws an estimate without removing it.
+	"""
+	softDeleteTaskEstimation(id: ID!): TaskEstimation!
+
+	"""
+	Puts a withdrawn estimate back.
+	"""
+	recoverTaskEstimation(id: ID!): TaskEstimation!
+
+	"""
+	Links two tasks.
+	"""
+	createTaskLinkedIssue(input: CreateTaskLinkedIssueInput!): TaskLinkedIssue!
+
+	"""
+	Changes an existing link.
+	"""
+	updateTaskLinkedIssue(input: UpdateTaskLinkedIssueInput!): TaskLinkedIssue!
+
+	"""
+	Removes a link outright, with the activity log the delivered service writes beside it.
+	"""
+	deleteTaskLinkedIssue(id: ID!): Boolean!
+
+	"""
+	Withdraws a link without removing it.
+	"""
+	softDeleteTaskLinkedIssue(id: ID!): TaskLinkedIssue!
+
+	"""
+	Puts a withdrawn link back.
+	"""
+	recoverTaskLinkedIssue(id: ID!): TaskLinkedIssue!
+
+	"""
+	Saves a view.
+	"""
+	createTaskView(input: CreateTaskViewInput!): TaskView!
+
+	"""
+	Changes a saved view.
+	"""
+	updateTaskView(input: UpdateTaskViewInput!): TaskView!
+
+	"""
+	Removes a saved view outright.
+	"""
+	deleteTaskView(id: ID!): Boolean!
+
+	"""
+	Withdraws a saved view without removing it.
+	"""
+	softDeleteTaskView(id: ID!): TaskView!
+
+	"""
+	Puts a withdrawn view back.
+	"""
+	recoverTaskView(id: ID!): TaskView!
+
+	"""
+	Opens a day's plan.
+	"""
+	createDailyPlan(input: CreateDailyPlanInput!): DailyPlan!
+
+	"""
+	Changes a day's plan.
+	"""
+	updateDailyPlan(input: UpdateDailyPlanInput!): DailyPlan!
+
+	"""
+	Removes a planned day outright.
+	"""
+	deleteDailyPlan(id: ID!): Boolean!
+
+	"""
+	Withdraws a planned day without removing it.
+	"""
+	softDeleteDailyPlan(id: ID!): DailyPlan!
+
+	"""
+	Puts a withdrawn planned day back.
+	"""
+	recoverDailyPlan(id: ID!): DailyPlan!
+
+	"""
+	Files one task into one planned day.
+	"""
+	addTaskToDailyPlan(planId: ID!, input: DailyPlanTaskInput!): DailyPlan!
+
+	"""
+	Takes one task out of one planned day.
+	"""
+	removeTaskFromDailyPlan(planId: ID!, input: DailyPlanTaskInput!): DailyPlan!
+
+	"""
+	Takes one task out of the plans it is in, for one employee.
+	"""
+	removeTaskFromDailyPlans(taskId: ID!, input: DailyPlanTaskRemovalInput!): [DailyPlan!]!
+
+	"""
+	Puts a task up for screening, filing the task itself in the same write.
+	"""
+	createScreeningTask(input: CreateScreeningTaskInput!): ScreeningTask!
+
+	"""
+	Records where a screening decision stands, and moves the task with it: a declined or duplicated
+	decision cancels the task, and a pending or snoozed one keeps it in screening.
+	"""
+	updateScreeningTask(input: UpdateScreeningTaskInput!): ScreeningTask!
+
+	"""
+	Removes a screening decision outright.
+	"""
+	deleteScreeningTask(id: ID!): Boolean!
+
+	"""
+	Withdraws a screening decision without removing it.
+	"""
+	softDeleteScreeningTask(id: ID!): ScreeningTask!
+
+	"""
+	Puts a withdrawn screening decision back.
+	"""
+	recoverScreeningTask(id: ID!): ScreeningTask!
+
+	# --------------------------------------------------------------------------------------------
+	# The vocabulary a task points at
+	# --------------------------------------------------------------------------------------------
+
+	"""
+	Files a status.
+	"""
+	createTaskStatus(input: CreateTaskStatusInput!): TaskStatus!
+
+	"""
+	Changes a status.
+	"""
+	updateTaskStatus(input: UpdateTaskStatusInput!): TaskStatus!
+
+	"""
+	Removes a status outright. A status the platform maintains is the store's own constraint to
+	refuse; this field does not pre-empt it.
+	"""
+	deleteTaskStatus(id: ID!): Boolean!
+
+	"""
+	Withdraws a status without removing it.
+	"""
+	softDeleteTaskStatus(id: ID!): TaskStatus!
+
+	"""
+	Puts a withdrawn status back.
+	"""
+	recoverTaskStatus(id: ID!): TaskStatus!
+
+	"""
+	Writes the board's column order for a set of statuses, one row per step.
+	"""
+	reorderTaskStatuses(reorder: [TaskStatusOrderInput!]!): TaskStatusReorderResult!
+
+	"""
+	Makes one status the default of one scope, clearing the mark from every other status of that
+	scope and answering them all back.
+	"""
+	markTaskStatusAsDefault(id: ID!, scope: TaskMetadataScopeInput!): [TaskStatus!]!
+
+	"""
+	Files a size.
+	"""
+	createTaskSize(input: CreateTaskSizeInput!): TaskSize!
+
+	"""
+	Changes a size.
+	"""
+	updateTaskSize(input: UpdateTaskSizeInput!): TaskSize!
+
+	"""
+	Removes a size outright. A size the platform maintains is the store's own constraint to refuse.
+	"""
+	deleteTaskSize(id: ID!): Boolean!
+
+	"""
+	Withdraws a size without removing it.
+	"""
+	softDeleteTaskSize(id: ID!): TaskSize!
+
+	"""
+	Puts a withdrawn size back.
+	"""
+	recoverTaskSize(id: ID!): TaskSize!
+
+	"""
+	Files a priority.
+	"""
+	createTaskPriority(input: CreateTaskPriorityInput!): TaskPriority!
+
+	"""
+	Changes a priority.
+	"""
+	updateTaskPriority(input: UpdateTaskPriorityInput!): TaskPriority!
+
+	"""
+	Removes a priority outright. A priority the platform maintains is the store's own constraint to
+	refuse.
+	"""
+	deleteTaskPriority(id: ID!): Boolean!
+
+	"""
+	Withdraws a priority without removing it.
+	"""
+	softDeleteTaskPriority(id: ID!): TaskPriority!
+
+	"""
+	Puts a withdrawn priority back.
+	"""
+	recoverTaskPriority(id: ID!): TaskPriority!
+
+	"""
+	Files a version.
+	"""
+	createTaskVersion(input: CreateTaskVersionInput!): TaskVersion!
+
+	"""
+	Changes a version.
+	"""
+	updateTaskVersion(input: UpdateTaskVersionInput!): TaskVersion!
+
+	"""
+	Removes a version outright. A version the platform maintains is the store's own constraint to
+	refuse.
+	"""
+	deleteTaskVersion(id: ID!): Boolean!
+
+	"""
+	Withdraws a version without removing it.
+	"""
+	softDeleteTaskVersion(id: ID!): TaskVersion!
+
+	"""
+	Puts a withdrawn version back.
+	"""
+	recoverTaskVersion(id: ID!): TaskVersion!
+
+	"""
+	Files an issue type.
+	"""
+	createIssueType(input: CreateIssueTypeInput!): IssueType!
+
+	"""
+	Changes an issue type.
+	"""
+	updateIssueType(input: UpdateIssueTypeInput!): IssueType!
+
+	"""
+	Removes an issue type outright. An issue type the platform maintains is the store's own
+	constraint to refuse.
+	"""
+	deleteIssueType(id: ID!): Boolean!
+
+	"""
+	Withdraws an issue type without removing it.
+	"""
+	softDeleteIssueType(id: ID!): IssueType!
+
+	"""
+	Puts a withdrawn issue type back.
+	"""
+	recoverIssueType(id: ID!): IssueType!
+
+	"""
+	Makes one issue type the default of one scope, clearing the mark from every other issue type of
+	that scope and answering them all back.
+	"""
+	markIssueTypeAsDefault(id: ID!, scope: TaskMetadataScopeInput!): [IssueType!]!
+
+	"""
+	Files a related-issue type.
+	"""
+	createTaskRelatedIssueType(input: CreateTaskRelatedIssueTypeInput!): TaskRelatedIssueType!
+
+	"""
+	Changes a related-issue type.
+	"""
+	updateTaskRelatedIssueType(input: UpdateTaskRelatedIssueTypeInput!): TaskRelatedIssueType!
+
+	"""
+	Removes a related-issue type outright. One the platform maintains is the store's own constraint
+	to refuse.
+	"""
+	deleteTaskRelatedIssueType(id: ID!): Boolean!
+
+	"""
+	Withdraws a related-issue type without removing it.
+	"""
+	softDeleteTaskRelatedIssueType(id: ID!): TaskRelatedIssueType!
+
+	"""
+	Puts a withdrawn related-issue type back.
+	"""
+	recoverTaskRelatedIssueType(id: ID!): TaskRelatedIssueType!
+}

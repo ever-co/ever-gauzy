@@ -1,0 +1,1674 @@
+# The work-tracking domain's object types.
+#
+# A task is the platform's unit of work: a warehouse picking job, a fulfilment exception and a seller
+# onboarding step are all rows of this one table, and everything the platform records *about* work —
+# how long it is estimated to take, what it is blocked by, what labels it carries, when it is planned
+# — hangs off it rather than off a second table invented beside it.
+#
+# Every type here is declared once, by this file, and every root field that answers with one is in
+# `task.api.gql` beside it. Two members are deliberately shared rather than re-declared:
+#
+# - **a task's labels are tags.** The platform already has one labelling concept, and a task carries
+#   it through the `tag_task` pivot it owns. There is no `TaskLabel` type here and no second labelling
+#   table anywhere: the labels of a task are `Tag` rows, served by the tag domain's own surface, and
+#   the tag connection this domain refers to is declared by `tags/schema/tag.type.gql`.
+# - **a task's status, size, priority, version, type and related-issue type are rows of their own
+#   resources**, not a closed enum. They are declared here as the six types below and referenced from
+#   a task by identifier (`taskStatusId`, `taskSizeId`, …), so an installation extends its own
+#   vocabulary by writing rows and never by changing the schema. The *value* columns a task also
+#   carries (`status`, `priority`, `size`, `issueType`) are the delivered denormalised copies of those
+#   rows and are carried as their string value for the same reason: the value set belongs to the rows,
+#   which the operator maintains.
+#
+# Money never appears on this domain. The one numeric member that is not a count is a *duration*, and
+# each such member says in its own description which unit it is in — an estimate in hours, a planned
+# day in minutes — because a duration read without its unit is a number nobody can use.
+
+# ------------------------------------------------------------------------------------------------
+# The unit of work
+# ------------------------------------------------------------------------------------------------
+
+"""
+One unit of work.
+"""
+type Task {
+	id: ID!
+	"The task's title, which is what every list and every notification shows."
+	title: String!
+	"The task's number within its project. Null on a task filed without a project."
+	number: Int
+	"The project's prefix, stamped onto the task when it was filed."
+	prefix: String
+	"What the task is about."
+	description: String
+	"""
+	The task's lifecycle, as the denormalised value of the status row it points at (`taskStatusId`).
+	Carried as its string value rather than declared as a schema enum: the value set is the status
+	rows' own, and an operator who adds a status adds a row.
+	"""
+	status: String
+	"The task's urgency, as the value of the priority row it points at (`taskPriorityId`)."
+	priority: String
+	"The task's size, as the value of the size row it points at (`taskSizeId`)."
+	size: String
+	"The task's kind, as the value of the issue-type row it points at (`taskTypeId`)."
+	issueType: String
+	"""
+	How long the task is estimated to take, **in hours**. A duration rather than an amount, so a
+	`Float` and not a `Decimal`: the delivered column documents its unit as hours and the estimate is
+	frequently fractional.
+	"""
+	estimate: Float
+	"When work on the task is scheduled to start."
+	startDate: DateTime
+	"When the task is due."
+	dueDate: DateTime
+	"When the task was marked resolved."
+	resolvedAt: DateTime
+	"Whether the task is visible beyond the people it is assigned to."
+	public: Boolean
+	"The release or build the task is filed against, as free text."
+	version: String
+	"Whether the task is still being written and is not yet offered for work."
+	isDraft: Boolean
+	"""
+	Whether the task is a screening task — one that is decided on before it becomes work. The
+	screening resource's own row is served by `ScreeningTask` beside this type.
+	"""
+	isScreeningTask: Boolean
+	"The parent task, when this task is a sub-task of one. Null on a root task."
+	parentId: ID
+	"The project the task belongs to."
+	projectId: ID
+	"The sprint the task is worked in."
+	organizationSprintId: ID
+	"The status row the task points at. The row itself is a `TaskStatus`."
+	taskStatusId: ID
+	"The size row the task points at. The row itself is a `TaskSize`."
+	taskSizeId: ID
+	"The priority row the task points at. The row itself is a `TaskPriority`."
+	taskPriorityId: ID
+	"The issue-type row the task points at. The row itself is an `IssueType`."
+	taskTypeId: ID
+	"""
+	The epic this task descends from. Populated by the one-row query alone, and only when the caller
+	asks for it: the delivered reader walks the parent chain with a recursive query that no list read
+	performs, so on a connection's rows the member is absent.
+	"""
+	rootEpic: Task
+	"""
+	When the task was withdrawn, or null while it is live. Withdrawing a task is the delivered
+	removal route, and this column is the whole of what it writes.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of tasks.
+"""
+type TaskEdge {
+	node: Task!
+	cursor: String!
+}
+
+"""
+One page of tasks, with the total the filters select and the boundary cursors.
+"""
+type TaskConnection {
+	nodes: [Task!]!
+	edges: [TaskEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a task list may be sorted by.
+"""
+enum TaskSortField {
+	createdAt
+	updatedAt
+	number
+	title
+	startDate
+	dueDate
+	resolvedAt
+	status
+	priority
+	size
+	issueType
+	estimate
+}
+
+"""
+The order the tasks are returned in. At most three keys are accepted.
+"""
+input TaskSort {
+	field: TaskSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a task list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the task row, which is what the connection protocol can evaluate over the
+rows a delivered reader answers. The three narrowings that are *not* columns are deliberately absent,
+each because it is a root field of its own rather than a filter that could not be honoured:
+
+- who a task is assigned to is a `task_employee` pivot the list reader does not join, so it is
+  `myTasks` and `employeeTasks`;
+- which team works a task is a `task_team` pivot, so it is `teamTasks`;
+- which module a task belongs to is a `project_module_task` pivot, so it is `moduleTasks`.
+
+A filter on one of those would be evaluated against a row that carries none of them and would select
+nothing at all, which is the worst answer a filter can give.
+"""
+input TaskFilter {
+	id: IDFilter
+	number: NumberFilter
+	prefix: StringFilter
+	title: StringFilter
+	description: StringFilter
+	status: StringFilter
+	priority: StringFilter
+	size: StringFilter
+	issueType: StringFilter
+	estimate: NumberFilter
+	startDate: DateTimeFilter
+	dueDate: DateTimeFilter
+	resolvedAt: DateTimeFilter
+	public: BooleanFilter
+	version: StringFilter
+	isDraft: BooleanFilter
+	isScreeningTask: BooleanFilter
+	parentId: IDFilter
+	projectId: IDFilter
+	organizationSprintId: IDFilter
+	taskStatusId: IDFilter
+	taskSizeId: IDFilter
+	taskPriorityId: IDFilter
+	taskTypeId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskFilter!]
+	or: [TaskFilter!]
+	not: TaskFilter
+}
+
+"""
+What a caller states when it files a task.
+
+The organization is stated because the delivered body states it and the handler stamps it onto the
+row; the tenant is not, because the delivered handler reads it from the credential and overwrites
+whatever a body carries.
+
+The relations are stated as identifiers and handed to the write as the rows the delivered handler
+reads: `members` are the employees the task is assigned to, `teams` the teams working it, `modules`
+the project modules it belongs to, and `tags` the labels it carries. `mentionEmployeeIds` is not a
+relation at all — it is the list the handler mentions after the row is written.
+"""
+input CreateTaskInput {
+	organizationId: ID!
+	title: String!
+	description: String
+	status: String
+	priority: String
+	size: String
+	issueType: String
+	"An estimate **in hours** — see `Task.estimate`."
+	estimate: Float
+	startDate: DateTime
+	dueDate: DateTime
+	resolvedAt: DateTime
+	public: Boolean
+	version: String
+	isDraft: Boolean
+	isScreeningTask: Boolean
+	parentId: ID
+	projectId: ID
+	organizationSprintId: ID
+	taskStatusId: ID
+	taskSizeId: ID
+	taskPriorityId: ID
+	taskTypeId: ID
+	"The labels the task carries. Tags are the platform's one labelling concept."
+	tagIds: [ID!]
+	"The employees the task is assigned to."
+	memberIds: [ID!]
+	"The teams working the task."
+	teamIds: [ID!]
+	"The project modules the task belongs to."
+	moduleIds: [ID!]
+	"The employees the write mentions once the task exists."
+	mentionEmployeeIds: [ID!]
+}
+
+"""
+What a caller states when it edits a task that exists.
+
+The delivered edit route binds the same body the create route binds, so `organizationId` and `title`
+are required here exactly as they are there. The handler dispatches the delivered update, which reads
+the row, proves it is the caller's, and writes the columns the body states.
+"""
+input UpdateTaskInput {
+	id: ID!
+	organizationId: ID!
+	title: String!
+	description: String
+	status: String
+	priority: String
+	size: String
+	issueType: String
+	"An estimate **in hours** — see `Task.estimate`."
+	estimate: Float
+	startDate: DateTime
+	dueDate: DateTime
+	resolvedAt: DateTime
+	public: Boolean
+	version: String
+	isDraft: Boolean
+	isScreeningTask: Boolean
+	parentId: ID
+	projectId: ID
+	organizationSprintId: ID
+	taskStatusId: ID
+	taskSizeId: ID
+	taskPriorityId: ID
+	taskTypeId: ID
+	tagIds: [ID!]
+	memberIds: [ID!]
+	teamIds: [ID!]
+	moduleIds: [ID!]
+	mentionEmployeeIds: [ID!]
+	"Why the task moved between sprints, when the delivered update moved it."
+	taskSprintMoveReason: String
+}
+
+# ------------------------------------------------------------------------------------------------
+# What hangs off a task
+# ------------------------------------------------------------------------------------------------
+
+"""
+One person's estimate of how long a task takes.
+
+The rows are the task's own: an estimation carries the task it belongs to, so a caller narrows the
+connection it reads them through with `taskId` rather than reaching for a root field per task.
+"""
+type TaskEstimation {
+	id: ID!
+	"The estimate, **in hours**, exactly as `Task.estimate` states its unit."
+	estimate: Float!
+	"The employee who made the estimate."
+	employeeId: ID!
+	"The task the estimate is about."
+	taskId: ID!
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of estimations.
+"""
+type TaskEstimationEdge {
+	node: TaskEstimation!
+	cursor: String!
+}
+
+"""
+One page of estimations, with the total the filters select and the boundary cursors.
+"""
+type TaskEstimationConnection {
+	nodes: [TaskEstimation!]!
+	edges: [TaskEstimationEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an estimation list may be sorted by.
+"""
+enum TaskEstimationSortField {
+	createdAt
+	updatedAt
+	estimate
+}
+
+"""
+The order the estimations are returned in. At most three keys are accepted.
+"""
+input TaskEstimationSort {
+	field: TaskEstimationSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an estimation list may be narrowed by. `taskId` is the narrowing that matters: it is how a
+task's own estimates are read.
+"""
+input TaskEstimationFilter {
+	id: IDFilter
+	estimate: NumberFilter
+	employeeId: IDFilter
+	taskId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskEstimationFilter!]
+	or: [TaskEstimationFilter!]
+	not: TaskEstimationFilter
+}
+
+"""
+What a caller states when it records an estimate. The delivered body requires every member, so every
+member is required here.
+"""
+input CreateTaskEstimationInput {
+	organizationId: ID!
+	"An estimate **in hours**."
+	estimate: Float!
+	employeeId: ID!
+	taskId: ID!
+}
+
+"""
+What a caller states when it changes an estimate. The delivered update binds the same body the create
+binds, so the same members are required.
+"""
+input UpdateTaskEstimationInput {
+	id: ID!
+	organizationId: ID!
+	"An estimate **in hours**."
+	estimate: Float!
+	employeeId: ID!
+	taskId: ID!
+}
+
+"""
+One task's relation to another: it is blocked by it, it duplicates it, it relates to it, and so on.
+"""
+type TaskLinkedIssue {
+	id: ID!
+	"""
+	Which way the relation runs, as the integer the delivered column holds: `1` is-blocked-by, `2`
+	blocks, `3` is-cloned-by, `4` clones, `5` is-duplicated-by, `6` duplicates, `7` relates-to. It is
+	carried as its value rather than declared as a schema enum because it is a fixed contract value set
+	rather than a vocabulary an operator maintains.
+	"""
+	action: Int!
+	"The task the relation runs from."
+	taskFromId: ID!
+	"The task the relation runs to."
+	taskToId: ID!
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of linked issues.
+"""
+type TaskLinkedIssueEdge {
+	node: TaskLinkedIssue!
+	cursor: String!
+}
+
+"""
+One page of linked issues, with the total the filters select and the boundary cursors.
+"""
+type TaskLinkedIssueConnection {
+	nodes: [TaskLinkedIssue!]!
+	edges: [TaskLinkedIssueEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a linked-issue list may be sorted by.
+"""
+enum TaskLinkedIssueSortField {
+	createdAt
+	updatedAt
+	action
+}
+
+"""
+The order the linked issues are returned in. At most three keys are accepted.
+"""
+input TaskLinkedIssueSort {
+	field: TaskLinkedIssueSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a linked-issue list may be narrowed by. Narrowing on `taskFromId` or `taskToId` is how the
+links of one task are read — the connection is the list, and a task's own links are this list filtered.
+"""
+input TaskLinkedIssueFilter {
+	id: IDFilter
+	action: NumberFilter
+	taskFromId: IDFilter
+	taskToId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskLinkedIssueFilter!]
+	or: [TaskLinkedIssueFilter!]
+	not: TaskLinkedIssueFilter
+}
+
+"""
+What a caller states when it links two tasks.
+"""
+input CreateTaskLinkedIssueInput {
+	organizationId: ID!
+	"The direction of the relation, as `TaskLinkedIssue.action` states it."
+	action: Int!
+	taskFromId: ID!
+	taskToId: ID!
+}
+
+"""
+What a caller states when it changes an existing link. Every member but the identifier and the
+organization is optional: the delivered update binds a partial body.
+"""
+input UpdateTaskLinkedIssueInput {
+	id: ID!
+	organizationId: ID!
+	action: Int
+	taskFromId: ID
+	taskToId: ID
+}
+
+# ------------------------------------------------------------------------------------------------
+# The vocabulary a task points at
+# ------------------------------------------------------------------------------------------------
+#
+# Six resources, one shape. Each is a row an operator maintains: a name and a stable value other rows
+# point at, an icon and a colour the clients render, and a scope — the tenant, the organization, the
+# project or the team the row belongs to. A read of any of them falls back to the installation's own
+# system rows when the scope the caller named holds none, which is why a list answers rows whose
+# `tenantId` is null: those are the platform's own defaults, and they are answered rather than hidden.
+
+"""
+One lifecycle state a task can be in.
+"""
+type TaskStatus {
+	id: ID!
+	"The status as it reads to a person."
+	name: String!
+	"The stable value the task's own `status` column carries."
+	value: String!
+	"What the status means, for the operator."
+	description: String
+	"Where the status sits in the board's column order."
+	order: Int
+	"An icon name the clients resolve."
+	icon: String
+	"The status's colour."
+	color: String
+	"Whether the platform maintains the row rather than an operator. A system row cannot be removed."
+	isSystem: Boolean
+	"Whether the board shows the column collapsed."
+	isCollapsed: Boolean
+	"Whether the status is the scope's default for a newly filed task."
+	isDefault: Boolean
+	"Whether the status means the work has not started."
+	isTodo: Boolean
+	"Whether the status means the work is under way."
+	isInProgress: Boolean
+	"Whether the status means the work is finished."
+	isDone: Boolean
+	"The icon resolved to a URL, for clients that render it directly."
+	fullIconUrl: String
+	"The project the row belongs to. Null on a row that belongs to the whole scope above it."
+	projectId: ID
+	"The team the row belongs to. Null for the whole organization."
+	organizationTeamId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of statuses.
+"""
+type TaskStatusEdge {
+	node: TaskStatus!
+	cursor: String!
+}
+
+"""
+One page of statuses, with the total the filters select and the boundary cursors.
+"""
+type TaskStatusConnection {
+	nodes: [TaskStatus!]!
+	edges: [TaskStatusEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a status list may be sorted by.
+"""
+enum TaskStatusSortField {
+	createdAt
+	updatedAt
+	name
+	value
+	order
+	isSystem
+}
+
+"""
+The order the statuses are returned in. At most three keys are accepted.
+"""
+input TaskStatusSort {
+	field: TaskStatusSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a status list may be narrowed by.
+"""
+input TaskStatusFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	description: StringFilter
+	order: NumberFilter
+	icon: StringFilter
+	color: StringFilter
+	isSystem: BooleanFilter
+	isCollapsed: BooleanFilter
+	isDefault: BooleanFilter
+	isTodo: BooleanFilter
+	isInProgress: BooleanFilter
+	isDone: BooleanFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskStatusFilter!]
+	or: [TaskStatusFilter!]
+	not: TaskStatusFilter
+}
+
+"""
+What a caller states when it files a status.
+
+`template` names one of the delivered workflow templates — `TODO`, `IN_PROGRESS` or `DONE` — and the
+delivered create merges that workflow's flags onto the row it writes. It is a member of the delivered
+body and of no column, which is why it is offered on the write and not on the type.
+
+`isSystem` is not a member: the column is the platform's own mark on the rows it maintains, and a
+caller that could set it would file a row the removal route refuses to remove.
+"""
+input CreateTaskStatusInput {
+	organizationId: ID
+	name: String!
+	value: String!
+	description: String
+	order: Int
+	icon: String
+	color: String
+	isCollapsed: Boolean
+	isDefault: Boolean
+	isTodo: Boolean
+	isInProgress: Boolean
+	isDone: Boolean
+	projectId: ID
+	organizationTeamId: ID
+	template: String
+}
+
+"""
+What a caller states when it changes a status. Every member but the identifier is optional.
+"""
+input UpdateTaskStatusInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	value: String
+	description: String
+	order: Int
+	icon: String
+	color: String
+	isCollapsed: Boolean
+	isDefault: Boolean
+	isTodo: Boolean
+	isInProgress: Boolean
+	isDone: Boolean
+	projectId: ID
+	organizationTeamId: ID
+	template: String
+}
+
+"""
+One step the status board is dragged into.
+
+`order` is the whole member set: the delivered route writes that one column per row and never moves
+the rows' other facts.
+"""
+input TaskStatusOrderInput {
+	id: ID!
+	order: Int!
+}
+
+"""
+One step of a status reordering, as the delivered route answers it back.
+"""
+type TaskStatusOrder {
+	id: ID!
+	order: Int!
+}
+
+"""
+The outcome of a status reordering: whether it succeeded, and the list it wrote.
+"""
+type TaskStatusReorderResult {
+	success: Boolean!
+	list: [TaskStatusOrder!]
+}
+
+"""
+One size a task can be sized as.
+"""
+type TaskSize {
+	id: ID!
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	"Whether the platform maintains the row rather than an operator. A system row cannot be removed."
+	isSystem: Boolean
+	fullIconUrl: String
+	projectId: ID
+	organizationTeamId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of sizes.
+"""
+type TaskSizeEdge {
+	node: TaskSize!
+	cursor: String!
+}
+
+"""
+One page of sizes, with the total the filters select and the boundary cursors.
+"""
+type TaskSizeConnection {
+	nodes: [TaskSize!]!
+	edges: [TaskSizeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a size list may be sorted by.
+"""
+enum TaskSizeSortField {
+	createdAt
+	updatedAt
+	name
+	value
+	isSystem
+}
+
+"""
+The order the sizes are returned in. At most three keys are accepted.
+"""
+input TaskSizeSort {
+	field: TaskSizeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a size list may be narrowed by.
+"""
+input TaskSizeFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	color: StringFilter
+	isSystem: BooleanFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskSizeFilter!]
+	or: [TaskSizeFilter!]
+	not: TaskSizeFilter
+}
+
+"""
+What a caller states when it files a size.
+"""
+input CreateTaskSizeInput {
+	organizationId: ID
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+What a caller states when it changes a size. Every member but the identifier is optional.
+"""
+input UpdateTaskSizeInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	value: String
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+One urgency a task can be worked at.
+"""
+type TaskPriority {
+	id: ID!
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	"Whether the platform maintains the row rather than an operator. A system row cannot be removed."
+	isSystem: Boolean
+	fullIconUrl: String
+	projectId: ID
+	organizationTeamId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of priorities.
+"""
+type TaskPriorityEdge {
+	node: TaskPriority!
+	cursor: String!
+}
+
+"""
+One page of priorities, with the total the filters select and the boundary cursors.
+"""
+type TaskPriorityConnection {
+	nodes: [TaskPriority!]!
+	edges: [TaskPriorityEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a priority list may be sorted by.
+"""
+enum TaskPrioritySortField {
+	createdAt
+	updatedAt
+	name
+	value
+	isSystem
+}
+
+"""
+The order the priorities are returned in. At most three keys are accepted.
+"""
+input TaskPrioritySort {
+	field: TaskPrioritySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a priority list may be narrowed by.
+"""
+input TaskPriorityFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	color: StringFilter
+	isSystem: BooleanFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskPriorityFilter!]
+	or: [TaskPriorityFilter!]
+	not: TaskPriorityFilter
+}
+
+"""
+What a caller states when it files a priority.
+"""
+input CreateTaskPriorityInput {
+	organizationId: ID
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+What a caller states when it changes a priority. Every member but the identifier is optional.
+"""
+input UpdateTaskPriorityInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	value: String
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+One release a task can be filed against.
+"""
+type TaskVersion {
+	id: ID!
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	"Whether the platform maintains the row rather than an operator. A system row cannot be removed."
+	isSystem: Boolean
+	fullIconUrl: String
+	projectId: ID
+	organizationTeamId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of versions.
+"""
+type TaskVersionEdge {
+	node: TaskVersion!
+	cursor: String!
+}
+
+"""
+One page of versions, with the total the filters select and the boundary cursors.
+"""
+type TaskVersionConnection {
+	nodes: [TaskVersion!]!
+	edges: [TaskVersionEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a version list may be sorted by.
+"""
+enum TaskVersionSortField {
+	createdAt
+	updatedAt
+	name
+	value
+	isSystem
+}
+
+"""
+The order the versions are returned in. At most three keys are accepted.
+"""
+input TaskVersionSort {
+	field: TaskVersionSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a version list may be narrowed by.
+"""
+input TaskVersionFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	color: StringFilter
+	isSystem: BooleanFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskVersionFilter!]
+	or: [TaskVersionFilter!]
+	not: TaskVersionFilter
+}
+
+"""
+What a caller states when it files a version.
+"""
+input CreateTaskVersionInput {
+	organizationId: ID
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+What a caller states when it changes a version. Every member but the identifier is optional.
+"""
+input UpdateTaskVersionInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	value: String
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+One kind of work a task can be: an epic, a story, a task, a bug or a memo.
+"""
+type IssueType {
+	id: ID!
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	"Whether the type is the scope's default for a newly filed task."
+	isDefault: Boolean
+	"Whether the platform maintains the row rather than an operator. A system row cannot be removed."
+	isSystem: Boolean
+	fullIconUrl: String
+	"The asset the clients show for the type, when it carries one rather than an icon name."
+	imageId: ID
+	projectId: ID
+	organizationTeamId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of issue types.
+"""
+type IssueTypeEdge {
+	node: IssueType!
+	cursor: String!
+}
+
+"""
+One page of issue types, with the total the filters select and the boundary cursors.
+"""
+type IssueTypeConnection {
+	nodes: [IssueType!]!
+	edges: [IssueTypeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an issue-type list may be sorted by.
+"""
+enum IssueTypeSortField {
+	createdAt
+	updatedAt
+	name
+	value
+	isDefault
+	isSystem
+}
+
+"""
+The order the issue types are returned in. At most three keys are accepted.
+"""
+input IssueTypeSort {
+	field: IssueTypeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an issue-type list may be narrowed by.
+"""
+input IssueTypeFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	color: StringFilter
+	isDefault: BooleanFilter
+	isSystem: BooleanFilter
+	imageId: IDFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [IssueTypeFilter!]
+	or: [IssueTypeFilter!]
+	not: IssueTypeFilter
+}
+
+"""
+What a caller states when it files an issue type.
+
+`value` is not a member: the delivered body omits it, and the delivered write derives it from `name`
+the way the platform's own types are derived.
+"""
+input CreateIssueTypeInput {
+	organizationId: ID
+	name: String!
+	description: String
+	icon: String
+	color: String
+	isDefault: Boolean
+	imageId: ID
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+What a caller states when it changes an issue type. Every member but the identifier is optional.
+"""
+input UpdateIssueTypeInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	description: String
+	icon: String
+	color: String
+	isDefault: Boolean
+	imageId: ID
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+One kind of relation a task can have to another: a duplicate of it, a blocker of it, and so on.
+"""
+type TaskRelatedIssueType {
+	id: ID!
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	"Whether the platform maintains the row rather than an operator. A system row cannot be removed."
+	isSystem: Boolean
+	fullIconUrl: String
+	projectId: ID
+	organizationTeamId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of related-issue types.
+"""
+type TaskRelatedIssueTypeEdge {
+	node: TaskRelatedIssueType!
+	cursor: String!
+}
+
+"""
+One page of related-issue types, with the total the filters select and the boundary cursors.
+"""
+type TaskRelatedIssueTypeConnection {
+	nodes: [TaskRelatedIssueType!]!
+	edges: [TaskRelatedIssueTypeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a related-issue-type list may be sorted by.
+"""
+enum TaskRelatedIssueTypeSortField {
+	createdAt
+	updatedAt
+	name
+	value
+	isSystem
+}
+
+"""
+The order the related-issue types are returned in. At most three keys are accepted.
+"""
+input TaskRelatedIssueTypeSort {
+	field: TaskRelatedIssueTypeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a related-issue-type list may be narrowed by.
+"""
+input TaskRelatedIssueTypeFilter {
+	id: IDFilter
+	name: StringFilter
+	value: StringFilter
+	description: StringFilter
+	icon: StringFilter
+	color: StringFilter
+	isSystem: BooleanFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskRelatedIssueTypeFilter!]
+	or: [TaskRelatedIssueTypeFilter!]
+	not: TaskRelatedIssueTypeFilter
+}
+
+"""
+What a caller states when it files a related-issue type.
+"""
+input CreateTaskRelatedIssueTypeInput {
+	organizationId: ID
+	name: String!
+	value: String!
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+What a caller states when it changes a related-issue type. Every member but the identifier is optional.
+"""
+input UpdateTaskRelatedIssueTypeInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	value: String
+	description: String
+	icon: String
+	color: String
+	projectId: ID
+	organizationTeamId: ID
+}
+
+"""
+The scope one vocabulary row is made the default of.
+
+The three members are the three the delivered reader scopes a status or an issue type by, and the
+write marks the named row the default of exactly that scope: the whole organization when none of the
+narrower two is stated, one project when `projectId` is, one team when `organizationTeamId` is.
+"""
+input TaskMetadataScopeInput {
+	organizationId: ID
+	organizationTeamId: ID
+	projectId: ID
+}
+
+# ------------------------------------------------------------------------------------------------
+# What is served beside the tasks
+# ------------------------------------------------------------------------------------------------
+
+"""
+A saved set of task filters, and how its result is presented.
+
+The three document members are the view's own: `queryParams` is the filter set the delivered task
+reader replays to answer the view's tasks, and `filterOptions` and `displayOptions` are what the board
+renders it with. They are carried as `JSON` because they are documents rather than columns with a
+shape this schema could state.
+"""
+type TaskView {
+	id: ID!
+	"The view's name, as the board lists it."
+	name: String!
+	"What the view is for."
+	description: String
+	"""
+	Who the view is visible to, as the integer the delivered column holds: `0` module-and-sprint, `1`
+	team-and-project, `2` organization, `3` workspace. Carried as its value because it is a fixed
+	contract value set rather than a vocabulary an operator maintains.
+	"""
+	visibilityLevel: Int
+	"The filter set the delivered task reader replays to answer this view's tasks."
+	queryParams: JSON
+	"What the board renders the result with."
+	filterOptions: JSON
+	"How the board lays the result out."
+	displayOptions: JSON
+	"Which columns the board shows."
+	properties: JSON
+	"Whether the view is protected from edits. The delivered create never sets it and the column is not updateable."
+	isLocked: Boolean
+	projectId: ID
+	organizationTeamId: ID
+	projectModuleId: ID
+	organizationSprintId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of views.
+"""
+type TaskViewEdge {
+	node: TaskView!
+	cursor: String!
+}
+
+"""
+One page of views, with the total the filters select and the boundary cursors.
+"""
+type TaskViewConnection {
+	nodes: [TaskView!]!
+	edges: [TaskViewEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a view list may be sorted by.
+"""
+enum TaskViewSortField {
+	createdAt
+	updatedAt
+	name
+	visibilityLevel
+}
+
+"""
+The order the views are returned in. At most three keys are accepted.
+"""
+input TaskViewSort {
+	field: TaskViewSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a view list may be narrowed by.
+"""
+input TaskViewFilter {
+	id: IDFilter
+	name: StringFilter
+	description: StringFilter
+	visibilityLevel: NumberFilter
+	projectId: IDFilter
+	organizationTeamId: IDFilter
+	projectModuleId: IDFilter
+	organizationSprintId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TaskViewFilter!]
+	or: [TaskViewFilter!]
+	not: TaskViewFilter
+}
+
+"""
+What a caller states when it saves a view.
+"""
+input CreateTaskViewInput {
+	organizationId: ID!
+	name: String!
+	description: String
+	visibilityLevel: Int
+	queryParams: JSON
+	filterOptions: JSON
+	displayOptions: JSON
+	properties: JSON
+	projectId: ID
+	organizationTeamId: ID
+	projectModuleId: ID
+	organizationSprintId: ID
+}
+
+"""
+What a caller states when it changes a saved view. Every member but the identifier is optional.
+"""
+input UpdateTaskViewInput {
+	id: ID!
+	organizationId: ID
+	name: String
+	description: String
+	visibilityLevel: Int
+	queryParams: JSON
+	filterOptions: JSON
+	displayOptions: JSON
+	properties: JSON
+	projectId: ID
+	organizationTeamId: ID
+	projectModuleId: ID
+	organizationSprintId: ID
+}
+
+"""
+One day's plan for one person: how much work the day holds and which tasks are in it.
+"""
+type DailyPlan {
+	id: ID!
+	"The day the plan is for."
+	date: DateTime!
+	"""
+	How much work the day reserves, **in minutes**. The delivered column is an exact decimal, carried
+	as a `Float` because a duration genuinely has a fractional part and this is not an amount.
+	"""
+	workTimePlanned: Float!
+	"""
+	How far the day has come, as the delivered column's own value: `open`, `in-progress` or
+	`completed`.
+	"""
+	status: String!
+	"The person the day belongs to."
+	employeeId: ID
+	"The team the day is worked in, when it belongs to one."
+	organizationTeamId: ID
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of daily plans.
+"""
+type DailyPlanEdge {
+	node: DailyPlan!
+	cursor: String!
+}
+
+"""
+One page of daily plans, with the total the filters select and the boundary cursors.
+"""
+type DailyPlanConnection {
+	nodes: [DailyPlan!]!
+	edges: [DailyPlanEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a daily-plan list may be sorted by.
+"""
+enum DailyPlanSortField {
+	createdAt
+	updatedAt
+	date
+	workTimePlanned
+	status
+}
+
+"""
+The order the daily plans are returned in. At most three keys are accepted.
+"""
+input DailyPlanSort {
+	field: DailyPlanSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a daily-plan list may be narrowed by.
+
+The plan's tasks are **not** filterable. They live in the `daily_plan_task` pivot, which none of the
+plan readers this surface mirrors joins, so a filter on them could only ever select the empty set.
+Which plans carry a task is `dailyPlansForTask` — a root field of its own, answered by a reader that
+does join the pivot.
+"""
+input DailyPlanFilter {
+	id: IDFilter
+	date: DateTimeFilter
+	workTimePlanned: NumberFilter
+	status: StringFilter
+	employeeId: IDFilter
+	organizationTeamId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [DailyPlanFilter!]
+	or: [DailyPlanFilter!]
+	not: DailyPlanFilter
+}
+
+"""
+What a caller states when it opens a day's plan.
+
+`taskId` is the one task the delivered create files into the new plan; the plan's remaining tasks are
+added by the two membership writes beside it.
+"""
+input CreateDailyPlanInput {
+	organizationId: ID!
+	date: DateTime!
+	"How much work the day reserves, **in minutes**."
+	workTimePlanned: Float!
+	status: String!
+	employeeId: ID
+	organizationTeamId: ID
+	"The task to file into the new plan."
+	taskId: ID
+}
+
+"""
+What a caller states when it changes a day's plan. Every member but the identifier and the
+organization is optional.
+"""
+input UpdateDailyPlanInput {
+	id: ID!
+	organizationId: ID!
+	date: DateTime
+	"How much work the day reserves, **in minutes**."
+	workTimePlanned: Float
+	status: String
+	employeeId: ID
+	organizationTeamId: ID
+}
+
+"""
+One task's membership of one day's plan, as the two membership writes state it.
+"""
+input DailyPlanTaskInput {
+	organizationId: ID!
+	taskId: ID!
+	employeeId: ID!
+}
+
+"""
+The tasks to take out of every plan they are in, for one employee.
+"""
+input DailyPlanTaskRemovalInput {
+	organizationId: ID!
+	employeeId: ID!
+	"The plans to consider. An empty list means every plan the employee holds for the task."
+	planIds: [ID!]
+}
+
+"""
+A task that is being screened before it becomes work: a decision, and the row it is a decision about.
+"""
+type ScreeningTask {
+	id: ID!
+	"""
+	Where the decision stands, as the delivered column's own value: `accepted`, `declined`,
+	`duplicated`, `snoozed` or `pending`.
+	"""
+	status: String!
+	"When a snoozed decision comes back, or null while it is not on hold."
+	onHoldUntil: DateTime
+	"The task the decision is about."
+	taskId: ID!
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of screening tasks.
+"""
+type ScreeningTaskEdge {
+	node: ScreeningTask!
+	cursor: String!
+}
+
+"""
+One page of screening tasks, with the total the filters select and the boundary cursors.
+"""
+type ScreeningTaskConnection {
+	nodes: [ScreeningTask!]!
+	edges: [ScreeningTaskEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a screening-task list may be sorted by.
+"""
+enum ScreeningTaskSortField {
+	createdAt
+	updatedAt
+	status
+	onHoldUntil
+}
+
+"""
+The order the screening tasks are returned in. At most three keys are accepted.
+"""
+input ScreeningTaskSort {
+	field: ScreeningTaskSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a screening-task list may be narrowed by.
+"""
+input ScreeningTaskFilter {
+	id: IDFilter
+	status: StringFilter
+	onHoldUntil: DateTimeFilter
+	taskId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ScreeningTaskFilter!]
+	or: [ScreeningTaskFilter!]
+	not: ScreeningTaskFilter
+}
+
+"""
+What a caller states when it puts a task up for screening.
+
+The delivered create **files the task too**: the `task` member is the body of the task to be created,
+and the delivered handler writes it before it writes the decision. `taskId` is required by the
+delivered body and then overwritten by the identifier of the task the handler just created — it is
+stated here because a body the REST route refuses must not be a body this surface accepts.
+"""
+input CreateScreeningTaskInput {
+	organizationId: ID!
+	"The task to file and then screen."
+	task: CreateTaskInput!
+	"The identifier the delivered body requires; the handler replaces it with the task it writes."
+	taskId: ID!
+	"The employees the write mentions once the task exists."
+	mentionEmployeeIds: [ID!]
+}
+
+"""
+What a caller states when it records where a decision stands. The delivered body requires the status
+and omits the task: which task is being screened is not a thing a decision changes.
+"""
+input UpdateScreeningTaskInput {
+	id: ID!
+	organizationId: ID!
+	status: String!
+	onHoldUntil: DateTime
+}
+
+# ------------------------------------------------------------------------------------------------
+# The vocabulary, in one answer
+# ------------------------------------------------------------------------------------------------
+
+"""
+Which sections of the vocabulary a caller asks for by name.
+"""
+enum TaskMetadataSection {
+	taskStatuses
+	taskPriorities
+	taskSizes
+	taskLabels
+	taskVersions
+	issueTypes
+	relatedIssueTypes
+}
+
+"""
+The vocabulary one board needs, answered in one request.
+
+Each member is the connection its own root field answers, narrowed the same way and built by the same
+codec, so a caller that walks a page here can resume the walk on that root field. `taskLabels` is the
+tag domain's own connection: the platform has one labelling concept and this is it, carried here
+rather than re-declared.
+"""
+type TaskMetadata {
+	taskStatuses: TaskStatusConnection
+	taskPriorities: TaskPriorityConnection
+	taskSizes: TaskSizeConnection
+	taskLabels: TagConnection
+	taskVersions: TaskVersionConnection
+	issueTypes: IssueTypeConnection
+	relatedIssueTypes: TaskRelatedIssueTypeConnection
+}

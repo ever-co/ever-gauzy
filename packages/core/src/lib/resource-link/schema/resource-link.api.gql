@@ -1,0 +1,85 @@
+# The resource link domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The guard chain is the controller's, and the controller's is two guards and no permission.**
+# `ResourceLinkController` carries `TenantPermissionGuard` and `PermissionGuard` on the class and
+# states no `@Permissions` anywhere — not on the five routes it overrides and not on any of the four
+# it inherits from the CRUD base. Every route is therefore guarded and otherwise unpermissioned, and
+# no field below states a permission: one here would demand a grant no route asks for.
+#
+# Every route of the resource is mirrored, because every one of them is a capability a client would
+# otherwise have to reach over the other protocol: the list and the page fold into one connection, the
+# one-row read, the count, the creation, the edit, the removal and the lifecycle pair are each a root
+# field of their own.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route has no field of its own — the page
+# is what the connection answers with — and the count is a nullable `Int` with no argument, because a
+# count is not a connection and the delivered count route's query string is the store's own `where`.
+#
+# **A link's whole purpose is the record it hangs off, and that is asked as a filter.** The delivered
+# list route takes the polymorphic pair in its query string; the connection states the same narrowing
+# as `entity` and `entityId` together, which is the read a client performs rather than a second root
+# field that could disagree with the list.
+
+extend type Query {
+	"""
+	The links of the caller's tenant, newest first.
+	"""
+	resourceLinks(
+		filter: ResourceLinkFilter
+		sort: [ResourceLinkSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): ResourceLinkConnection!
+
+	"""
+	One link of the caller's tenant, or null when there is none.
+	"""
+	resourceLink(id: ID!): ResourceLink
+
+	"""
+	How many links the caller's tenant holds.
+	"""
+	resourceLinkCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a link against one record, attributed to the caller's own employee where the credential
+	carries one.
+	"""
+	createResourceLink(input: CreateResourceLinkInput!): ResourceLink!
+
+	"""
+	Changes a link. A member the caller leaves out is left as it is — see `UpdateResourceLinkInput` for
+	what the delivered edit expects a caller not to restate.
+	"""
+	updateResourceLink(input: UpdateResourceLinkInput!): ResourceLink!
+
+	"""
+	Removes a link outright. The two removals this resource serves are not the same operation, so both
+	are stated rather than one of them being left to a client to discover on the other protocol.
+	"""
+	deleteResourceLink(id: ID!): Boolean!
+
+	"""
+	Withdraws a link without removing it. The answer is the row as it now stands, which is what the
+	delivered route answers with.
+	"""
+	softDeleteResourceLink(id: ID!): ResourceLink!
+
+	"""
+	Puts a withdrawn link back, clearing the marker the withdrawal set.
+	"""
+	recoverResourceLink(id: ID!): ResourceLink!
+}

@@ -1,0 +1,200 @@
+# The event-type domain's object type.
+#
+# An event type is the organization's own vocabulary of meetings: a title, the length one runs for and
+# the unit that length is stated in. It is what a scheduling screen offers before anything is booked, and
+# it carries no occurrence of its own — the meetings it names belong to the calendars that read it.
+#
+# `duration` is carried in the family the column stores it in and not as a whole number. The column is
+# `numeric` and is read through the platform's numeric transformer, so the read produces a number that
+# may carry a fraction — an hour and a half is a length this vocabulary can state — and a member declared
+# `Int` would claim a precision the column does not have.
+#
+# `title`, `description`, `durationUnit` and the base entity's `isActive` are nullable, and that is the
+# columns rather than a preference: only `duration` is declared `NOT NULL`, so a row filed without a
+# title is a row this domain has to be able to answer.
+#
+# Two relations are deliberately absent, and the reason is the same for both: no read behind this surface
+# joins one.
+#
+# - `employee` is absent, and its identifier is carried instead. The delivered list and node reads are
+#   handed no `relations` by this surface — the REST node spelling takes its `relations` from a query
+#   string — so the related row is never loaded, while `employeeId` is a column every read answers.
+# - `tags` is absent because the pivot is loaded only when a REST caller names it in `relations`. The
+#   facets a row carries are stated as identifiers on the write inputs, which is the pair the pivot is
+#   written from.
+
+"""
+One length of meeting the organization offers, with the name it offers it under.
+"""
+type EventType {
+	id: ID!
+	"The length of the meeting, as the exact number the column stores."
+	duration: Decimal!
+	"The unit `duration` is stated in — the organization's own spelling of minutes, hours or days."
+	durationUnit: String
+	"The name the meeting is offered under."
+	title: String
+	"What the meeting is for, for the person choosing it."
+	description: String
+	"The employee the meeting length is recorded against, as the identifier of the employee's own row."
+	employeeId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write, so
+	without it a caller could not tell a live row from a withdrawn one on the answer to the write that
+	withdrew it.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of event types.
+"""
+type EventTypeEdge {
+	node: EventType!
+	cursor: String!
+}
+
+"""
+One page of event types, with the total the filters select and the boundary cursors.
+"""
+type EventTypeConnection {
+	nodes: [EventType!]!
+	edges: [EventTypeEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an event-type list may be sorted by.
+
+The title is what a vocabulary of meetings is scanned by and the length is what it is chosen by — a
+scheduler picks "the half-hour one" as readily as it picks a name — and the unit groups the lengths that
+are stated on one scale. The two timestamps are how a change is found again. Nothing else is offered: the
+remaining columns are identifiers and flags, whose questions are filters rather than orders.
+"""
+enum EventTypeSortField {
+	createdAt
+	updatedAt
+	title
+	duration
+	durationUnit
+}
+
+"""
+The order the event types are returned in. At most three keys are accepted.
+"""
+input EventTypeSort {
+	field: EventTypeSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an event-type list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the row, because the connection narrows the rows the delivered read
+returned. `title` and `description` are the two columns the delivered paginated spelling turns into a
+partial match before it queries, and that narrowing survives the fold as `ilike` on the same two members.
+`duration` is stated through the decimal family, which is the family the column is stored and compared
+in, so a window on it — "everything between half an hour and an hour" — selects the rows the column
+actually holds.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list read answers live
+rows only, so a condition on that column could only ever match the empty set. The tenant is absent for a
+different reason — it is applied to the criterion from the credential — and the organization is present,
+because the delivered list route hands its own criterion through and a caller may legitimately narrow to
+one organization of its tenant. The facets are in neither list: the delivered list read loads no
+relations, so a condition on that collection could only ever match the empty set.
+"""
+input EventTypeFilter {
+	id: IDFilter
+	title: StringFilter
+	description: StringFilter
+	duration: DecimalFilter
+	durationUnit: StringFilter
+	employeeId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EventTypeFilter!]
+	or: [EventTypeFilter!]
+	not: EventTypeFilter
+}
+
+# The write surface.
+#
+# `POST /` binds the contracts' own create input and `PUT /:id` binds the entity itself, so the two
+# bodies are not the same shape and the two inputs below are not either. Four decisions are deliberate:
+#
+# - `employeeId` and the facets are stated as identifiers, because that is what the row's foreign key and
+#   the pivot row hold. The related employee row is never a member: this schema declares `Employee` for
+#   reading rather than as a body member.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant onto
+#   the row, and the handler reads it from the credential before it writes anything.
+# - `tags` is a member of both, as identifiers: the handler hands the tag list it is given straight to the
+#   service, and what the pivot is written from is the pair of identifiers.
+# - `deletedAt`, the timestamps and `isArchived` are members of neither. They are the base entity's own
+#   bookkeeping, and the delivered writes do not take them from a caller.
+
+"""
+What a caller states when it files a meeting length.
+
+The organization is required because the delivered handler resolves it before it writes — it is the
+organization the row is filed under, and the write does not proceed without it. The four members the
+delivered create input declares are required here as well: the delivered route binds that input directly
+and reads each of its members straight onto the row, and `duration` is the one of the four whose column
+the store refuses to do without.
+"""
+input CreateEventTypeInput {
+	"The name the meeting is offered under."
+	title: String!
+	"What the meeting is for."
+	description: String
+	"The length of the meeting, as the exact decimal the column stores."
+	duration: Decimal!
+	"The unit `duration` is stated in."
+	durationUnit: String!
+	"Whether the meeting length is offered at all."
+	isActive: Boolean!
+	"The employee the meeting length is recorded against, by identifier."
+	employeeId: ID
+	"The organization the row is filed under."
+	organizationId: ID!
+	"The facets attached to the row, by identifier. The pivot is written from these."
+	tagIds: [ID!]
+}
+
+"""
+What a caller states when it changes a meeting length that exists.
+
+**A member the caller leaves out is left as it is.** The delivered edit spreads the body beside the
+identifier the route read from its path and hands the result to the same write the create uses, and that
+write merges what it is given onto the row the store holds rather than replacing it — so omitting
+`durationUnit` keeps the unit and omitting `title` keeps the name. The delivered edit body is the entity
+itself rather than the create input, and it runs no validation pipe, which is why every member here is
+optional where the create requires four of them.
+
+The organization is a member because the entity the delivered body binds carries it, and omitting it
+leaves the row where it is. The identifier is the criterion and is not repeated in the payload, which is
+the shape the route itself has.
+"""
+input UpdateEventTypeInput {
+	id: ID!
+	title: String
+	description: String
+	duration: Decimal
+	durationUnit: String
+	isActive: Boolean
+	employeeId: ID
+	organizationId: ID
+	tagIds: [ID!]
+}
