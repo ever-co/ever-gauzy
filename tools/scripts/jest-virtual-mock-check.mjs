@@ -68,9 +68,14 @@ function walk(directory, wanted) {
 function isRunByJest(spec) {
 	for (let directory = dirname(spec); directory.startsWith(PACKAGES); directory = dirname(directory)) {
 		if (existsSync(join(directory, 'project.json'))) {
-			return ['jest.config.ts', 'jest.config.js', 'jest.config.cjs', 'jest.config.mjs'].some((config) =>
-				existsSync(join(directory, config))
-			);
+			return [
+				'jest.config.ts',
+				'jest.config.cts',
+				'jest.config.mts',
+				'jest.config.js',
+				'jest.config.cjs',
+				'jest.config.mjs'
+			].some((config) => existsSync(join(directory, config)));
 		}
 	}
 

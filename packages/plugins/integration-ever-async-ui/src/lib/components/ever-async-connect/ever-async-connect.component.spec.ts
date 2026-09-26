@@ -13,27 +13,17 @@ import {
 } from '../../services/ever-async.service';
 import { EverAsyncConnectComponent } from './ever-async-connect.component';
 
-jest.mock('@gauzy/ui-config', () => ({ environment: { API_BASE_URL: 'https://api.gauzy.example' } }), {
-	virtual: true
-});
-jest.mock('@gauzy/ui-core/core', () => ({ Store: class {}, ErrorHandlingService: class {}, ToastrService: class {} }), {
-	virtual: true
-});
-jest.mock(
-	'@gauzy/ui-core/i18n',
-	() => ({
-		TranslationBaseComponent: class {
-			getTranslation(key: string) {
-				return key;
-			}
+jest.mock('@gauzy/ui-config', () => ({ environment: { API_BASE_URL: 'https://api.gauzy.example' } }));
+jest.mock('@gauzy/ui-core/core', () => ({ Store: class {}, ErrorHandlingService: class {}, ToastrService: class {} }));
+jest.mock('@gauzy/ui-core/i18n', () => ({
+	TranslationBaseComponent: class {
+		getTranslation(key: string) {
+			return key;
 		}
-	}),
-	{ virtual: true }
-);
-jest.mock('@gauzy/ui-core/common', () => ({ API_PREFIX: '/api' }), { virtual: true });
-jest.mock('@gauzy/contracts', () => ({ PermissionsEnum: { INTEGRATION_EDIT: 'edit', INTEGRATION_ADD: 'add' } }), {
-	virtual: true
-});
+	}
+}));
+jest.mock('@gauzy/ui-core/common', () => ({ API_PREFIX: '/api' }));
+jest.mock('@gauzy/contracts', () => ({ PermissionsEnum: { INTEGRATION_EDIT: 'edit', INTEGRATION_ADD: 'add' } }));
 
 describe('EverAsyncConnectComponent request lifetime', () => {
 	const orgA = { id: 'organization-a' } as IOrganization;
