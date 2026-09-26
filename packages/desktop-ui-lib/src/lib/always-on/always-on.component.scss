@@ -91,6 +91,62 @@ button {
 	&.offline {
 		background: var(--color-danger-default);
 	}
+
+	&.recording {
+		background: var(--color-danger-default);
+		box-shadow: 0 0 6px var(--color-danger-default);
+		animation: pulse-ring 1.5s infinite;
+	}
+}
+
+.monitoring-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 2px 4px;
+	cursor: pointer;
+
+	.pulse-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: var(--gauzy-text-color-2);
+
+		&.recording {
+			background-color: var(--color-danger-default);
+			box-shadow: 0 0 6px var(--color-danger-default);
+			animation: pulse-ring 1.5s infinite;
+		}
+	}
+
+	.monitoring-text {
+		font-size: 10px;
+		color: var(--gauzy-text-color-2);
+		white-space: nowrap;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.status.recording,
+	.monitoring-badge .pulse-dot.recording {
+		animation: none;
+	}
+}
+
+@keyframes pulse-ring {
+	0% {
+		transform: scale(0.95);
+		opacity: 0.8;
+	}
+	50% {
+		transform: scale(1.15);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(0.95);
+		opacity: 0.8;
+	}
 }
 
 .main {

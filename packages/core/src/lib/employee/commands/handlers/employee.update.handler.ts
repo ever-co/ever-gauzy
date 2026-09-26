@@ -1,5 +1,5 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
-import { IEmployee, PermissionsEnum } from '@gauzy/contracts';
+import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { IEmployee, validateAndUpdateAgentRestrictions, PermissionsEnum } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
@@ -7,6 +7,8 @@ import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
+	private readonly logger = new Logger(EmployeeUpdateHandler.name);
+
 	constructor(private readonly _employeeService: EmployeeService) {}
 
 	/**
@@ -34,6 +36,31 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			}
 		}
 
+		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
+			relations: { organization: { contact: true }, user: true, contact: true }
+		});
+
+		const effectiveLocation = {
+			regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
+			timeZone: input.user?.timeZone || employee?.user?.timeZone || employee?.organization?.timeZone,
+			country: employee?.contact?.country || employee?.organization?.contact?.country
+		};
+
+		const errorMsg = validateAndUpdateAgentRestrictions(input, employee, effectiveLocation);
+		if (errorMsg) {
+			throw new BadRequestException(errorMsg);
+		}
+
+		if (
+			(input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) &&
+			input.acknowledgeAgentExitLogoutRestriction
+		) {
+			const currentUserId = RequestContext.currentUserId();
+			this.logger.log(
+				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Employee ID: ${id} at ${new Date().toISOString()}`
+			);
+		}
+
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
 			return await this._employeeService.create({
@@ -44,6 +71,9 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			});
 		} catch (error) {
 			// Handle any errors during the update process
+			if (error instanceof BadRequestException || error instanceof ForbiddenException) {
+				throw error;
+			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
 		}
 	}

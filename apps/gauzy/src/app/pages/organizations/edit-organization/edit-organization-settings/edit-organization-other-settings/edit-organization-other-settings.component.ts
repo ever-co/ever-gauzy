@@ -46,7 +46,8 @@ import {
 	IOrganization,
 	RegionsEnum,
 	WeekDaysEnum,
-	IOrganizationTaskSetting
+	IOrganizationTaskSetting,
+	isEEAOrUKRegion
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import {
@@ -54,8 +55,9 @@ import {
 	OrganizationEditStore,
 	OrganizationTaskSettingService,
 	OrganizationsService,
-	Store,
-	ToastrService
+	ToastrService,
+	applyEEAUKFormRestrictions,
+	bindAgentRestrictionListeners
 } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
@@ -73,6 +75,17 @@ export class EditOrganizationOtherSettingsComponent
 	public get isTrackInactivity(): boolean {
 		return this.form.get('allowTrackInactivity').value;
 	}
+
+	public get isEEAOrUK(): boolean {
+		if (!this.organization) return false;
+		return isEEAOrUKRegion({
+			regionCode: this.form.get('regionCode')?.value || this.organization.regionCode,
+			timeZone: this.form.get('timeZone')?.value || this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
+	}
+
+	public acknowledgeAgentExitLogoutRestriction: boolean = false;
 
 	public organization: IOrganization;
 	public organizationTaskSetting: IOrganizationTaskSetting;
@@ -359,7 +372,18 @@ export class EditOrganizationOtherSettingsComponent
 		const regionCode = <FormControl>this.form.get('regionCode');
 		regionCode.valueChanges
 			.pipe(
-				tap((value: IOrganization['regionCode']) => (this.regionCode = value)),
+				tap((value: IOrganization['regionCode']) => {
+					this.regionCode = value;
+					applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const timeZone = <FormControl>this.form.get('timeZone');
+		timeZone.valueChanges
+			.pipe(
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -449,6 +473,14 @@ export class EditOrganizationOtherSettingsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		bindAgentRestrictionListeners(
+			this.form,
+			() => this.isEEAOrUK,
+			this.translateService,
+			untilDestroyed(this),
+			() => (this.acknowledgeAgentExitLogoutRestriction = true)
+		);
 	}
 
 	/**
@@ -504,7 +536,11 @@ export class EditOrganizationOtherSettingsComponent
 		const { id: organizationId, name } = this.organization;
 
 		try {
-			const organization: IOrganization = await this._organizationService.update(organizationId, this.form.value);
+			const organization: IOrganization = await this._organizationService.update(organizationId, {
+				...this.form.getRawValue(),
+				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
+			});
+			this.acknowledgeAgentExitLogoutRestriction = false;
 
 			// Update the organization in the store
 			this._organizationEditStore.organizationAction = {
@@ -826,14 +862,21 @@ export class EditOrganizationOtherSettingsComponent
 		if (!this.organization) {
 			return;
 		}
+		this.acknowledgeAgentExitLogoutRestriction = false;
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 
-		this.form.patchValue({
-			...this.organization, // This will patch all matching form controls
-			fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
-			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
-		});
+		this.form.patchValue(
+			{
+				...this.organization, // This will patch all matching form controls
+				fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
+				fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
+			},
+			{ emitEvent: false }
+		);
+
+		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
+
 		this.form.updateValueAndValidity();
 
 		const {

@@ -82,10 +82,12 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 						switch (state) {
 							case AlwaysOnStateEnum.STARTED:
 								this.start$.next(true);
+								this.running = true;
 								this.loading = false;
 								break;
 							case AlwaysOnStateEnum.STOPPED:
 								this.start$.next(false);
+								this.running = false;
 								this.loading = false;
 								break;
 							case AlwaysOnStateEnum.LOADING:
@@ -110,16 +112,17 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this._alwaysOnService.checkTimerStatus$
+			.pipe(
+				tap(() => {
+					this.checkAndRunTimer();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.checkAndRunTimer();
+
 		if (this.isExpandMode) {
-			this._alwaysOnService.checkTimerStatus$
-				.pipe(
-					tap(() => {
-						this.checkAndRunTimer();
-					}),
-					untilDestroyed(this)
-				)
-				.subscribe();
-			this.checkAndRunTimer();
 			this.renderer.setStyle(document.body, 'background-color', 'transparent');
 			this.renderer.setStyle(document.body, 'overflow', 'hidden');
 			this.isRounded = true;

@@ -1,12 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ID, IOrganization, IOrganizationUpdateInput } from '@gauzy/contracts';
+import { ID, IOrganization, IOrganizationUpdateInput, validateAndUpdateAgentRestrictions } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
 export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUpdateCommand> {
+	private readonly logger = new Logger(OrganizationUpdateHandler.name);
+
 	constructor(private readonly organizationService: OrganizationService) {}
 
 	/**
@@ -28,10 +30,33 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	 * @returns The updated organization.
 	 */
 	private async update(id: ID, input: IOrganizationUpdateInput): Promise<IOrganization> {
-		const organization: IOrganization = await this.organizationService.findOneByIdString(id);
+		const organization: IOrganization = await this.organizationService.findOneByIdString(id, {
+			relations: { contact: true }
+		});
 
 		if (!organization) {
 			throw new NotFoundException(`Organization with ID ${id} not found.`);
+		}
+
+		const effectiveLocation = {
+			regionCode: input.regionCode !== undefined ? input.regionCode : organization.regionCode,
+			timeZone: input.timeZone !== undefined ? input.timeZone : organization.timeZone,
+			country: organization.contact?.country
+		};
+
+		const errorMsg = validateAndUpdateAgentRestrictions(input, organization, effectiveLocation);
+		if (errorMsg) {
+			throw new BadRequestException(errorMsg);
+		}
+
+		if (
+			(input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) &&
+			input.acknowledgeAgentExitLogoutRestriction
+		) {
+			const currentUserId = RequestContext.currentUserId();
+			this.logger.log(
+				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Organization ID: ${id} at ${new Date().toISOString()}`
+			);
 		}
 
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
