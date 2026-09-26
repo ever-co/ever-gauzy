@@ -140,6 +140,15 @@ const CASES: ReadonlyArray<[label: string, where: () => FindOptionsWhere<any>, i
 		() => ({ rank: And(Not(Equal(3)), MoreThanOrEqual(2)) }),
 		['r2', 'r4']
 	],
+	// And(...) used to merge its parts into one object, so two parts stating the same operator kept only the last.
+	['two negations And(...) folds on one property', () => ({ rank: And(Not(Equal(1)), Not(Equal(4))) }), ['r2', 'r3']],
+	['two Not(<scalar>) on one property', () => ({ name: And(Not('alpha'), Not('beta')) }), ['r3', 'r4']],
+	[
+		'two bounds of one kind on one property, the later the weaker',
+		() => ({ rank: And(MoreThan(3), MoreThan(1)) }),
+		['r4']
+	],
+	['Not(Not(In([...])))', () => ({ name: Not(Not(In(['alpha', 'beta']))) }), ['r1', 'r2']],
 	['control: Not(<scalar>)', () => ({ name: Not('alpha') }), ['r2', 'r3', 'r4']],
 	['control: Not(IsNull())', () => ({ name: Not(IsNull()) }), ['r1', 'r2', 'r3', 'r4']]
 ];

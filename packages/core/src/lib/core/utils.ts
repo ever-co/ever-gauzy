@@ -982,6 +982,12 @@ export function parseOrderOptions(order: FindOptionsOrder<any>) {
  * @returns A query condition in the format of a Record<string, any> that represents the translated condition.
  * @throws Error when the operator has no MikroORM equivalent, rather than widening the read.
  */
+/**
+ * Marks the parts of an `And(...)` that state the same operator, which `processFindOperator` cannot fold into one
+ * object; `convertTypeORMConditionToMikroORM` states each at the entity level.
+ */
+const AND_PARTS = '__andParts';
+
 export function processFindOperator<T>(operator: FindOperator<T>) {
 	switch (operator.type) {
 		case 'isNull': {
@@ -997,6 +1003,10 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 				// `{ $ne: { $in: [...] } }` compares the column against an object and matches nothing.
 				// MikroORM negates a condition only at the entity level, so `convertTypeORMConditionToMikroORM`
 				// lifts this `$not` off the property before the statement is built.
+				// `Not(Not(x))` is `x`: negating the negation keeps it off the property, where MikroORM refuses it.
+				if (child !== null && typeof child === 'object' && Object.keys(child).length === 1 && '$not' in child) {
+					return (child as { $not: unknown }).$not;
+				}
 				return child !== null && typeof child === 'object' ? { $not: child } : { $ne: child };
 			}
 
@@ -1052,9 +1062,17 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'and': {
 			// `And(a, b)` is several conditions on one property, which MikroORM spells as one object
 			// carrying both — `{ $gte: 1, $lte: 5 }` — rather than as a list.
-			const parts = (Array.isArray(operator.value) ? operator.value : [operator.value]).map(
-				(part: unknown) => (part instanceof FindOperator ? processFindOperator(part) : { $eq: part })
+			const parts = (Array.isArray(operator.value) ? operator.value : [operator.value]).map((part: unknown) =>
+				part instanceof FindOperator ? processFindOperator(part) : { $eq: part }
 			);
+
+			// Parts that state the same operator (`And(Not(1), Not(4))`, `And(MoreThan(3), MoreThan(1))`) cannot share one
+			// object: merged, the last one replaced the others and the read asked a different question. They are kept as
+			// a list instead, which `convertTypeORMConditionToMikroORM` states at the entity level, one part each.
+			const operators = parts.flatMap((part) => (part && typeof part === 'object' ? Object.keys(part) : []));
+			if (new Set(operators).size !== operators.length) {
+				return { [AND_PARTS]: parts };
+			}
 
 			return Object.assign({}, ...parts);
 		}
@@ -1082,7 +1100,8 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>) {
 	const mikroORMCondition = {};
 
-	// The negated conditions of this level, each lifted off its property (see below).
+	// The conditions of this level stated at the entity level: each negation lifted off its property, and each part of an
+	// `And(...)` whose parts could not share one object (see below).
 	const negations: Record<string, unknown>[] = [];
 
 	for (const [key, value] of Object.entries(where)) {
@@ -1100,16 +1119,31 @@ export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>)
 				// is `not (name in (...))`, the SQL TypeORM writes for `Not(In([...]))` — so the negation is
 				// lifted there. Each one is its own `$not` under `$and`: a single `$not` over two properties
 				// would negate their conjunction, which is a different question.
-				if (condition !== null && typeof condition === 'object' && '$not' in condition) {
-					const { $not: negated, ...rest } = condition as Record<string, unknown>;
-					negations.push({ $not: { [key]: negated } });
+				// `And(...)` parts that could not share one object (see `processFindOperator`): each is its own condition
+				// on the property, in the entity-level conjunction, and a negated one is lifted like any other.
+				const parts =
+					condition !== null && typeof condition === 'object' && AND_PARTS in condition
+						? ((condition as Record<string, unknown>)[AND_PARTS] as Record<string, unknown>[])
+						: [condition as Record<string, unknown>];
 
-					// What `And(...)` folded in beside the negation stays on the property.
-					if (Object.keys(rest).length > 0) {
-						mikroORMCondition[key] = rest;
+				for (const part of parts) {
+					if (part !== null && typeof part === 'object' && '$not' in part) {
+						const { $not: negated, ...rest } = part as Record<string, unknown>;
+						negations.push({ $not: { [key]: negated } });
+
+						// What `And(...)` folded in beside the negation stays on the property.
+						if (Object.keys(rest).length > 0) {
+							if (parts.length > 1) {
+								negations.push({ [key]: rest });
+							} else {
+								mikroORMCondition[key] = rest;
+							}
+						}
+					} else if (parts.length > 1) {
+						negations.push({ [key]: part });
+					} else {
+						mikroORMCondition[key] = part;
 					}
-				} else {
-					mikroORMCondition[key] = condition;
 				}
 			} else {
 				// Recursively convert nested objects
