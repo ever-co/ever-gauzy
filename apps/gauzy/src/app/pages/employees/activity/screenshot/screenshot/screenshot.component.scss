@@ -136,16 +136,36 @@
   border-radius: nb-theme(border-radius);
   background-color: nb-theme(background-basic-color-1);
 }
+// An hour is six 10-minute positions, so a row holds at most six cards: six
+// whenever six fit at $slot-min-width, and fewer, wrapping to the next line, on a
+// narrower screen. The column minimum is a sixth of the row (less a pixel, so
+// rounding never drops the sixth) or $slot-min-width, whichever is larger.
+$slot-min-width: 10rem;
+$slot-gap: 1rem;
+// The row's content width at which six columns fit.
+$six-columns-width: $slot-min-width * 6 + $slot-gap * 5;
+
 .grid-container {
   display: grid;
   -webkit-box-align: center;
   align-items: center;
   -webkit-box-pack: start;
   justify-content: start;
-  column-gap: 1rem;
-  grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  column-gap: $slot-gap;
+  grid-gap: $slot-gap;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(#{$slot-min-width}, calc((100% - #{$slot-gap * 5}) / 6 - 1px)), 1fr)
+  );
   padding: 0 1rem;
+  // Lets the gap blocks ask whether this row has its six columns.
+  container-type: inline-size;
+
+  // Held to their column: a card's time line is cut with an ellipsis rather than
+  // widening the card into its neighbour.
+  > * {
+    min-width: 0;
+  }
 }
 .hour-label {
   font-size: 14px;
@@ -154,11 +174,6 @@
   letter-spacing: 0em;
   text-align: left;
   text-transform: none;
-}
-@media screen and (min-width: 1690px) {
-  .grid-container {
-    grid-template-columns: repeat(6, 1fr);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -249,9 +264,9 @@
 //
 // Each hour row has six 10-minute positions. A run of empty positions is one
 // dashed block that names the gap, so blank space never reads as a card that
-// failed to load. On the 6-column layout the block spans the positions it
-// covers, keeping every card under its minute; on narrower layouts, where the
-// columns no longer line up with the minutes, it takes one cell.
+// failed to load. When the row has its six columns the block spans the positions
+// it covers, keeping every card under its minute; when the row wraps, the
+// columns no longer line up with the minutes, so it takes one cell.
 // ---------------------------------------------------------------------------
 .hour-header {
 	display: flex;
@@ -325,7 +340,7 @@
 	opacity: 0.8;
 }
 
-@media screen and (min-width: 1690px) {
+@container (min-width: #{$six-columns-width}) {
 	.empty-range {
 		grid-column: span var(--span, 1);
 	}
