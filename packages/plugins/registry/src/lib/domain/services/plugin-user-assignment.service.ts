@@ -1,14 +1,7 @@
 import { IRole } from '@gauzy/contracts';
-import { MultiORM, MultiORMEnum, getORMType, RequestContext, RoleService } from '@gauzy/core';
+import { MultiORMEnum, RequestContext, RoleService } from '@gauzy/core';
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PluginTenantService } from './plugin-tenant.service';
-
-// Get the type of the Object-Relational Mapping (ORM) used in the application.
-//
-// Deliberately `DB_ORM`, not the registry's TypeORM pin (`REGISTRY_ORM_TYPE`): it decides only how the caller's
-// roles are read, and roles are core rows read through the core `RoleService`, which runs on `DB_ORM`. The
-// plugin tenant rows this service works on are read through `PluginTenantService`, which is pinned.
-const ormType: MultiORM = getORMType();
 
 export interface UserAssignmentRecord {
 	id?: string;
@@ -353,7 +346,10 @@ export class PluginUserAssignmentService {
 				return [];
 			}
 
-			switch (ormType) {
+			// The role service's ORM (`DB_ORM`), deliberately not the registry's TypeORM pin (`REGISTRY_ORM_TYPE`): it
+			// decides only how the caller's roles are read, and roles are core rows read through the core `RoleService`.
+			// The plugin tenant rows this service works on are read through `PluginTenantService`, which is pinned.
+			switch (this.roleService.ormType) {
 				case MultiORMEnum.MikroORM: {
 					// MikroORM: Use roleService's ORM-agnostic findAll through the base service
 					const result = await this.roleService.findAll({
