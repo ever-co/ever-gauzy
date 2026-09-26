@@ -63,10 +63,11 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatib
 			// queues them one at a time; any other dialect gets the data source TypeORM builds, untouched.
 			// See embedded-transaction-queue.ts.
 			//
-			// Under DB_ORM=mikro-orm TypeORM is still initialised, over skeleton entities, and the raw
-			// TypeORM `@RelationId`, `@Index` and `@Unique` entries naming properties only MikroORM maps
-			// would fail its metadata build — so they are removed first. Under TypeORM (production) the
-			// call returns before reading anything. See typeorm-skeleton-metadata.ts.
+			// Under DB_ORM=mikro-orm TypeORM is still initialised, and its mapping is complete there too since
+			// d739d81b25. The pass that removes raw TypeORM `@RelationId`, `@Index` and `@Unique` entries naming a
+			// property TypeORM does not map stays as a safety net for any decorator that still registers with one
+			// ORM alone; on the core entities it removes nothing. Under TypeORM (production) the call returns before
+			// reading anything. See typeorm-skeleton-metadata.ts.
 			dataSourceFactory: (options) => {
 				pruneTypeOrmSkeletonMetadata();
 				return createPlatformDataSource(options);

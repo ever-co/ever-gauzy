@@ -48,11 +48,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	 * Whether the entity has the given scope column, read from the metadata of the ORM that runs the statement.
 	 *
 	 * **Every tenant condition this service adds hangs on this answer**, and it used to be asked of TypeORM
-	 * whichever ORM was running. Under `DB_ORM=mikro-orm` TypeORM holds only a skeleton of each entity —
-	 * `MultiORMColumn` and the relation decorators register with the active ORM alone — so it answered "no
+	 * whichever ORM was running. Under `DB_ORM=mikro-orm` TypeORM then held only a skeleton of each entity —
+	 * `MultiORMColumn` and the relation decorators registered with the active ORM alone — so it answered "no
 	 * tenant column" for every entity, and no read, update, delete or soft-delete on that ORM was scoped to
-	 * the caller's tenant, nor to the caller's employee, and nothing written was stamped with either. On
-	 * MikroORM the answer now comes from MikroORM's own metadata ({@link resolveMikroOrmScopeColumn}).
+	 * the caller's tenant, nor to the caller's employee, and nothing written was stamped with either. TypeORM's
+	 * mapping has been complete under either ORM since d739d81b25, but the statement is MikroORM's, so on
+	 * MikroORM the answer comes from MikroORM's own metadata ({@link resolveMikroOrmScopeColumn}).
 	 *
 	 * The TypeORM answer is the expression this service has always evaluated, unchanged.
 	 *
