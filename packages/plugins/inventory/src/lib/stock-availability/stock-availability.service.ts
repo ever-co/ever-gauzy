@@ -134,12 +134,13 @@ export class StockAvailabilityService {
 	 * the class documents: it is the row that carries the tenant and the organization of the stock.
 	 *
 	 * **The read is expressed once per ORM, because a query builder is not portable between them.**
-	 * `@MultiORMColumn` and `@MultiORMManyToOne` emit only the configured ORM's decorator, so under
-	 * `DB_ORM=mikro-orm` TypeORM's metadata for `warehouse_product_variant` carries the base entity's
-	 * four columns and nothing else — and this read, which filters on `level.variantId` and joins
-	 * through `level.warehouseProduct`, raised `EntityPropertyNotFoundError` on the first add-to-cart
-	 * of the installation. The two arms answer the same question and produce the same shape; the
-	 * TypeORM one below is unchanged.
+	 * `@MultiORMColumn` and `@MultiORMManyToOne` used to emit only the configured ORM's decorator, so
+	 * under `DB_ORM=mikro-orm` TypeORM's metadata for `warehouse_product_variant` carried the base
+	 * entity's four columns and nothing else — and this read, which filters on `level.variantId` and
+	 * joins through `level.warehouseProduct`, raised `EntityPropertyNotFoundError` on the first
+	 * add-to-cart of the installation. The kernel now registers TypeORM's metadata under both ORMs
+	 * (d739d81b25); the arms stay so the read goes through the configured ORM's connection. The two
+	 * arms answer the same question and produce the same shape; the TypeORM one below is unchanged.
 	 */
 	private async levelsOf(variantId: ID, warehouseId?: ID): Promise<TSellableLevel[]> {
 		if (this.connection?.usesMikroOrm) {

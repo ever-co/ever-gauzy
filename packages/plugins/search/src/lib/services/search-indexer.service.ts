@@ -57,11 +57,12 @@ export interface IIndexRunOutcome {
  *
  * **Both ORMs read.** The source rows are reached through {@link SearchSourceConnection} rather than
  * through TypeORM's `DataSource` directly. The whole indexer used to be wired to TypeORM's runtime
- * metadata, which under `DB_ORM=mikro-orm` describes entities carrying four columns — the four the
- * base entity declares with raw TypeORM decorators — because `@MultiORMColumn` emits only the active
+ * metadata, which under `DB_ORM=mikro-orm` described entities carrying four columns — the four the
+ * base entity declares with raw TypeORM decorators — because `@MultiORMColumn` emitted only the active
  * ORM's. Every declared field came back as "not a column", the ordering was dropped, the tenant
  * predicate raised `EntityPropertyNotFoundError`, and the installation's global search answered
- * nothing with nothing to point at.
+ * nothing with nothing to point at. The kernel now registers TypeORM's metadata under both ORMs
+ * (d739d81b25); the source connection still reads through the configured ORM.
  */
 @Injectable()
 export class SearchIndexerService {

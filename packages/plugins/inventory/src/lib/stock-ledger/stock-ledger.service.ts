@@ -595,12 +595,13 @@ export class StockLedgerService {
 	|--------------------------------------------------------------------------
 	|
 	| Every read in this class was written against TypeORM's query builder, joining through entity
-	| metadata that `@MultiORMColumn` and `@MultiORMManyToOne` only emit when `getORMType()` names
-	| TypeORM. Under `DB_ORM=mikro-orm` that metadata carries the base entity's four columns and
+	| metadata that `@MultiORMColumn` and `@MultiORMManyToOne` used to emit only when `getORMType()`
+	| named TypeORM. Under `DB_ORM=mikro-orm` that metadata carried the base entity's four columns and
 	| nothing else, so `movement.warehouseId` raised `EntityPropertyNotFoundError` and the join through
 	| `level.warehouseProduct` raised for the relation — on a seam the cart, the order and the
-	| warehouse packages all bind to. The arms below answer the same questions on that ORM, and the
-	| TypeORM ones above are unchanged.
+	| warehouse packages all bind to. The kernel now registers TypeORM's metadata under both ORMs
+	| (d739d81b25); the arms below still answer the same questions through the MikroORM connection, so
+	| a read goes through the ORM the request writes with, and the TypeORM ones above are unchanged.
 	|
 	| The two derived balances are raw statements rather than entity reads, because they are sums
 	| grouped in the database and that is what they are for: a count compares every position in scope,

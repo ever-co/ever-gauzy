@@ -23,10 +23,12 @@ export interface ISearchSourceEntity {
 	 * The property names the reading ORM declares for the entity.
 	 *
 	 * It is the reading ORM's list and not the other one's, which is the whole point of the type:
-	 * `@MultiORMColumn` emits only the active ORM's decorator, so under `DB_ORM=mikro-orm` TypeORM's
-	 * metadata for the same class carries four columns — `id`, `createdAt`, `updatedAt`, `deletedAt`
-	 * — and nothing else. A `tenantId` predicate built from that list is an
-	 * `EntityPropertyNotFoundError`, and an ordering built from it is silently dropped.
+	 * `@MultiORMColumn` used to emit only the active ORM's decorator, so under `DB_ORM=mikro-orm`
+	 * TypeORM's metadata for the same class carried four columns — `id`, `createdAt`, `updatedAt`,
+	 * `deletedAt` — and nothing else. A `tenantId` predicate built from that list was an
+	 * `EntityPropertyNotFoundError`, and an ordering built from it was silently dropped. The kernel
+	 * now registers TypeORM's metadata under both ORMs (d739d81b25), but a property one ORM maps and
+	 * the other does not is still possible, so the list stays the reading ORM's.
 	 */
 	properties: ReadonlySet<string>;
 }
@@ -54,12 +56,14 @@ export interface ISearchSourceCriteria {
  *
  * The whole write path used to be wired to TypeORM: `dataSource.entityMetadatas` for the metadata,
  * `dataSource.getRepository(target).find(...)` for the rows and `metadata.columns` for the "does this
- * entity carry that column" probes. Under `DB_ORM=mikro-orm` none of that describes the entities the
- * platform is actually running: `MultiORMEntity` applies TypeORM's `@Entity()` unconditionally, so
- * the table names are still there and nothing fails at boot, but `@MultiORMColumn` applies only the
- * active ORM's decorator — so every domain column is missing from TypeORM's metadata. The ordering is
- * dropped, the tenant predicate raises `EntityPropertyNotFoundError`, and global search returns
- * nothing for the whole installation with no boot-time error to point at.
+ * entity carry that column" probes. Under `DB_ORM=mikro-orm` none of that described the entities the
+ * platform was actually running: `MultiORMEntity` applies TypeORM's `@Entity()` unconditionally, so
+ * the table names were still there and nothing failed at boot, but `@MultiORMColumn` applied only the
+ * active ORM's decorator — so every domain column was missing from TypeORM's metadata. The ordering
+ * was dropped, the tenant predicate raised `EntityPropertyNotFoundError`, and global search returned
+ * nothing for the whole installation with no boot-time error to point at. The kernel now registers
+ * TypeORM's metadata under both ORMs (d739d81b25); the source still reads through the configured
+ * ORM, as below.
  *
  * Both ORMs' connections are global and both are initialised on every boot
  * (`packages/core/src/lib/database/database.module.ts`), so both are injected optionally and exactly

@@ -13,13 +13,15 @@ import {
  *
  * **Why this exists.** Both of the package's capability seams — what may be sold of a variant, and
  * the ledger as another package reads it — were written against TypeORM's query builder, joining
- * through entity metadata. Under `DB_ORM=mikro-orm` that metadata is not there: `@MultiORMColumn`
- * and `@MultiORMManyToOne` emit the TypeORM decorator only when `getORMType()` names TypeORM, so on
- * the other ORM the TypeORM entity for `warehouse_product_variant` carries the base columns and
- * nothing else. A read that filters on `level.variantId` then raises
+ * through entity metadata. Under `DB_ORM=mikro-orm` that metadata used not to be there: `@MultiORMColumn`
+ * and `@MultiORMManyToOne` emitted the TypeORM decorator only when `getORMType()` named TypeORM, so on
+ * the other ORM the TypeORM entity for `warehouse_product_variant` carried the base columns and
+ * nothing else. A read that filtered on `level.variantId` then raised
  * `EntityPropertyNotFoundError: Property "variantId" was not found`, and a join through
- * `level.warehouseProduct` raises for the relation. Both seams are what cart, order and warehouse
- * bind to, so the failure propagates out of this package into theirs.
+ * `level.warehouseProduct` raised for the relation. Both seams are what cart, order and warehouse
+ * bind to, so the failure propagated out of this package into theirs. The kernel now registers
+ * TypeORM's metadata under both ORMs (d739d81b25), so that failure is gone; the seams still read
+ * through the configured ORM's connection, which is the one the request's writes go through.
  *
  * The answer is the pattern `MeasurementAuditConnection` already establishes in the kernel: both ORMs
  * expose a global module, both are injected optionally, and exactly one of them is used — the
