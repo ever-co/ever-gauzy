@@ -79,7 +79,9 @@ satisfy a downstream consumer's stricter flags) plus the same `transformIgnorePa
 `allowJs: true` `packages/core/jest.config.ts`/`tsconfig.spec.json` already had for the ESM-only
 deps (`uuid`, ...) reached through `@gauzy/core`'s entity graph. No production code touched by this
 part of the fix. (Since then the pattern has moved to the root `jest.preset.js`, and `allowJs` turned
-out not to matter for it: ts-jest >= 29.3.2 compiles `.js` under `node_modules` regardless.)
+out not to matter for it: ts-jest >= 29.3.2 compiles `.js` under `node_modules` regardless. The
+pattern is what lets the ESM-only dependencies through; `allowJs` only affects repository-local
+`.js` files.)
 
 The structurally identical `integration-make-com` and `integration-sim` timer handlers share the
 same webhook-duplication gap and are **not** fixed here — see Known gaps below.
