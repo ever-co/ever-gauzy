@@ -323,11 +323,13 @@ export class OrderLine extends TenantOrganizationBaseEntity implements IOrderLin
 	@ApiProperty({ type: () => String, enum: OrderLineInvoiceStatus, default: OrderLineInvoiceStatus.NOT_INVOICED })
 	@IsOptional()
 	@IsEnum(OrderLineInvoiceStatus)
+	// No `length`, like `kind` above: TypeORM maps `simple-enum` to a native enum on Postgres and MySQL, and
+	// refuses a length on one ("Column invoiceStatus of Entity OrderLine does not support length property"),
+	// which stopped the API from booting on either. The migration's `varchar(32)` is unaffected.
 	@MultiORMColumn({
 		type: 'simple-enum',
 		enum: OrderLineInvoiceStatus,
-		default: OrderLineInvoiceStatus.NOT_INVOICED,
-		length: 32
+		default: OrderLineInvoiceStatus.NOT_INVOICED
 	})
 	invoiceStatus: OrderLineInvoiceStatus;
 
