@@ -180,7 +180,8 @@
         "default",
         "^production",
         "{workspaceRoot}/jest.preset.js",
-        "{workspaceRoot}/jest.resolver.js"
+        "{workspaceRoot}/jest.resolver.js",
+        "{workspaceRoot}/jest.interop.js"
       ],
       "options": {
         "passWithNoTests": true

@@ -47,5 +47,8 @@ module.exports = {
 	...nxPreset,
 	transformIgnorePatterns,
 	// Nx's resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
-	resolver: require.resolve('./jest.resolver.js')
+	resolver: require.resolve('./jest.resolver.js'),
+	// `moment` loads with both `import moment from` and `import * as moment from`, as the bundlers
+	// allow. Jest CONCATENATES a preset's `setupFiles` with a project's own, so no project loses it.
+	setupFiles: [require.resolve('./jest.interop.js')]
 };
