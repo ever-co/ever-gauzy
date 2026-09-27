@@ -77,7 +77,6 @@
 						[nbContextMenu]="menuItemsFor(node.data)"
 						[nbContextMenuTag]="menuTag(node.data)"
 						[attr.data-docs-node-menu]="node.data.id"
-						(click)="$event.stopPropagation()"
 						[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
 					>
 						<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
