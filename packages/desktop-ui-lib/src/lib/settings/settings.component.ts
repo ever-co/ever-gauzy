@@ -612,6 +612,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				...this.config,
 				...config
 			};
+			this.rememberSettings(this.appSetting, this.persistedAppSetting);
+			this.rememberSettings(this.config, this.persistedServerConfig);
 			this.checkDatabaseConnectivity();
 			this.authSetting = auth;
 			this.mappingAdditionalSetting(additionalSetting || null);
@@ -670,6 +672,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				this._ngZone.run(() => {
 					const { setting } = arg.data;
 					this.appSetting = setting;
+					this.rememberSettings(this.appSetting, this.persistedAppSetting);
 				});
 				break;
 			case 'update_not_available': {
@@ -866,10 +869,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	updateSetting(value, type: string, showNotification = true) {
 		// Re-selecting the current option used to toast again and stack alerts.
-		if (this.isSameSettingValue(this.appSetting?.[type], value)) {
+		// Compare the last saved copy: some controls write appSetting before this runs.
+		if (this.isSameSettingValue(this.persistedAppSetting[type], value)) {
 			return;
 		}
 		this.appSetting[type] = value;
+		this.persistedAppSetting[type] = this.cloneSettingValue(value);
 		this.electronService.ipcRenderer.send('update_app_setting', {
 			values: this.appSetting
 		});
@@ -1400,15 +1405,41 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	public updateServerConfig(value, type: string, showNotification = true) {
-		if (this.isSameSettingValue(this.config?.[type], value)) {
+		// SSL and auto-start mutate config before this runs, so compare the last saved copy.
+		if (this.isSameSettingValue(this.persistedServerConfig[type], value)) {
 			return;
 		}
 		this.config[type] = value;
+		this.persistedServerConfig[type] = this.cloneSettingValue(value);
 		this.electronService.ipcRenderer.send('update_server_config', this.config);
 		if (showNotification) {
 			this._notifier.success(
 				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 			);
+		}
+	}
+
+	/** Last values sent to the desktop process. Forms may mutate appSetting/config before save. */
+	private persistedAppSetting: Record<string, unknown> = {};
+	private persistedServerConfig: Record<string, unknown> = {};
+
+	private rememberSettings(source: object | null | undefined, target: Record<string, unknown>): void {
+		if (!source) {
+			return;
+		}
+		for (const key of Object.keys(source)) {
+			target[key] = this.cloneSettingValue(source[key]);
+		}
+	}
+
+	private cloneSettingValue(value: unknown): unknown {
+		if (value == null || typeof value !== 'object') {
+			return value;
+		}
+		try {
+			return JSON.parse(JSON.stringify(value));
+		} catch {
+			return value;
 		}
 	}
 
