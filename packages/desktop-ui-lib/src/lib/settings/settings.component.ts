@@ -865,6 +865,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	updateSetting(value, type: string, showNotification = true) {
+		// Re-selecting the current option used to toast again and stack alerts.
+		if (this.isSameSettingValue(this.appSetting?.[type], value)) {
+			return;
+		}
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
 			values: this.appSetting
@@ -1396,12 +1400,30 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	public updateServerConfig(value, type: string, showNotification = true) {
+		if (this.isSameSettingValue(this.config?.[type], value)) {
+			return;
+		}
 		this.config[type] = value;
 		this.electronService.ipcRenderer.send('update_server_config', this.config);
 		if (showNotification) {
 			this._notifier.success(
 				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 			);
+		}
+	}
+
+	/** True when a settings write would not change the stored value. */
+	private isSameSettingValue(current: unknown, next: unknown): boolean {
+		if (Object.is(current, next)) {
+			return true;
+		}
+		if (current == null || next == null || typeof current !== 'object' || typeof next !== 'object') {
+			return false;
+		}
+		try {
+			return JSON.stringify(current) === JSON.stringify(next);
+		} catch {
+			return false;
 		}
 	}
 
