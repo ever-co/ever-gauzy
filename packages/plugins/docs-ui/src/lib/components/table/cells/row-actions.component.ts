@@ -51,5 +51,5 @@ export class RowActionsComponent {
 	/** `<prefix><documentId>` — the table resolves the row from it. */
 	@Input() tag = '';
 
-	readonly menuClass = DOCS_ACTION_MENU_CLASS;
+	protected readonly menuClass = DOCS_ACTION_MENU_CLASS;
 }
