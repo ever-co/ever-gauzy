@@ -21,6 +21,7 @@ import {
 	docsActionMenuSignature,
 	docsActionOf,
 	DocsActionId,
+	DOCS_ACTION_MENU_CLASS,
 	IDocsActionMenuContext
 } from '../actions/docs-action-menu';
 import { DocsRowActionsService } from '../actions/docs-row-actions.service';
@@ -74,6 +75,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	public recents: IRecentEntry[] = [];
 	public favorites$: Observable<{ title: string; link?: string; icon?: unknown }[]>;
 	public readonly kindEnum = DocumentKindEnum;
+	public readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
 
 	/** Public: the empty-state create buttons are gated on it in the template. */
 	public canCreate = false;

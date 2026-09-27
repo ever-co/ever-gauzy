@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NbMenuItem } from '@nebular/theme';
 import { IDocument } from '@gauzy/contracts';
+import { DOCS_ACTION_MENU_CLASS } from '../../actions/docs-action-menu';
 
 /**
  * Actions column renderer (`01-ux-spec.md` §4.1, column 9): a kebab opening the
@@ -28,6 +29,7 @@ import { IDocument } from '@gauzy/contracts';
 			class="docs-row-actions"
 			[nbContextMenu]="menuItems"
 			[nbContextMenuTag]="tag"
+			[nbContextMenuClass]="menuClass"
 			[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
 		>
 			<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
@@ -48,4 +50,6 @@ export class RowActionsComponent {
 	@Input() menuItems: NbMenuItem[] = [];
 	/** `<prefix><documentId>` — the table resolves the row from it. */
 	@Input() tag = '';
+
+	readonly menuClass = DOCS_ACTION_MENU_CLASS;
 }

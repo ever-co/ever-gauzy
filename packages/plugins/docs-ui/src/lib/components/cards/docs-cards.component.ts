@@ -12,6 +12,7 @@ import {
 	docsActionMenuSignature,
 	docsActionOf,
 	toDocsActionTarget,
+	DOCS_ACTION_MENU_CLASS,
 	IDocsActionMenuContext
 } from '../actions/docs-action-menu';
 import { DocsRowActionsService } from '../actions/docs-row-actions.service';
@@ -184,6 +185,7 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 	@Output() loadMore = new EventEmitter<void>();
 
 	public readonly kindEnum = DocumentKindEnum;
+	public readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
 
 	/**
 	 * Documents whose thumbnail failed to load — a signed provider URL that expired between
