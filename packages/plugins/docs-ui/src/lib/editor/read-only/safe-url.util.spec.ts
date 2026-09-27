@@ -16,6 +16,33 @@ const LF = ch(0x0a);
 const CR = ch(0x0d);
 const NUL = ch(0x00);
 
+/**
+ * How much slower `isAllowedUrl` gets when its input grows fourfold: ~4 for linear work, 16 or more
+ * for the catastrophic backtracking the linearity tests guard against.
+ *
+ * Those tests used to assert an absolute wall-clock bound instead (`< 100 ms`, `< 200 ms`). That
+ * measured the machine rather than the algorithm: in CI, with two Jest projects running side by side
+ * on the shared runner pool, the linear entity case took 346 ms and failed on every run. A ratio
+ * of the same code on the same machine moments apart cancels the machine out. Each size is timed
+ * several times and the median taken, after a warm-up, so one GC pause cannot decide the result.
+ */
+function growthFactor(hostileOfLength: (n: number) => string, n: number): number {
+	const median = (value: string): number => {
+		const samples: number[] = [];
+		for (let i = 0; i < 3; i++) {
+			const started = performance.now();
+			expect(isAllowedUrl(value)).toBe(false);
+			samples.push(performance.now() - started);
+		}
+		return samples.sort((a, b) => a - b)[1];
+	};
+	const small = hostileOfLength(n);
+	const large = hostileOfLength(4 * n);
+	median(small); // warm-up: JIT and regex compilation must not be billed to the small input
+	// The floor keeps a sub-millisecond small run from inflating the ratio with timer noise.
+	return median(large) / Math.max(median(small), 1);
+}
+
 describe('isAllowedUrl', () => {
 	describe('allows what real content is made of', () => {
 		it.each([
@@ -94,26 +121,18 @@ describe('isAllowedUrl', () => {
 	});
 
 	it('is linear on a long value (no catastrophic backtracking)', () => {
-		const hostile = `data:text/html;base64,${'A'.repeat(400_000)}`;
+		const hostile = (n: number) => `data:text/html;base64,${'A'.repeat(n)}`;
 
-		const started = Date.now();
-		const allowed = isAllowedUrl(hostile);
-		const elapsed = Date.now() - started;
-
-		expect(allowed).toBe(false);
-		expect(elapsed).toBeLessThan(100);
-	});
+		// Linear is ~4; quadratic would be ~16.
+		expect(growthFactor(hostile, 400_000)).toBeLessThan(10);
+	}, 30_000);
 
 	it('is linear on a long run of entities', () => {
-		const hostile = `${'&#106;'.repeat(60_000)}avascript:alert(1)`;
+		const hostile = (n: number) => `${'&#106;'.repeat(n)}avascript:alert(1)`;
 
-		const started = Date.now();
-		const allowed = isAllowedUrl(hostile);
-		const elapsed = Date.now() - started;
-
-		expect(allowed).toBe(false);
-		expect(elapsed).toBeLessThan(200);
-	});
+		// Linear is ~4; quadratic would be ~16.
+		expect(growthFactor(hostile, 60_000)).toBeLessThan(10);
+	}, 30_000);
 });
 
 describe('stripUnsafeUrls', () => {

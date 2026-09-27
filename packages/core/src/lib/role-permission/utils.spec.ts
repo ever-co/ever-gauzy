@@ -1,4 +1,5 @@
 import { DataSource, EntitySchema, QueryRunner } from 'typeorm';
+import { environment } from '@gauzy/config';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RolePermissionUtils } from './utils';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
@@ -70,8 +71,40 @@ const SEEDED_ROLES: RolesEnum[] = [
 const TENANT_COUNT = 3;
 const EXPECTED_ROLE_COUNT = TENANT_COUNT * SEEDED_ROLES.length;
 
-/** Every permission the migration considers — the same list the production code walks. */
+/**
+ * Every permission the migration considers outside demo mode — the same list the production code
+ * walks. The suites below pin `environment.demo` to `false` so this holds whatever the process
+ * environment says; the demo-mode list is covered by its own suite at the end of the file.
+ */
 const ALL_PERMISSIONS = Object.values(PermissionsEnum);
+
+/**
+ * What `getPermissions()` leaves out in demo mode. Kept in step with `utils.ts` on purpose: if the
+ * production list changes, the demo-mode suite below fails instead of silently asserting a stale set.
+ */
+const DEMO_EXCLUDED_PERMISSIONS: PermissionsEnum[] = [
+	PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+	PermissionsEnum.ACCESS_DELETE_ALL_DATA
+];
+
+/**
+ * `environment.demo` is read from `process.env.DEMO` once, when `@gauzy/config` loads — so without
+ * pinning it, the expected row counts here depend on whichever `.env` file happened to be loaded
+ * into the test process. Nx loads the committed `.env.local` (DEMO=true) into every task by default,
+ * which is why this suite failed in CI with 5016 rows (24 roles x 209) against 5064 (24 x 211) while
+ * passing on a machine without that file. Assigned directly rather than with `jest.replaceProperty`
+ * because the tests below call `jest.restoreAllMocks()`, which would un-pin it half-way through.
+ */
+let savedEnvironmentDemo: boolean;
+
+beforeAll(() => {
+	savedEnvironmentDemo = environment.demo;
+	environment.demo = false;
+});
+
+afterAll(() => {
+	environment.demo = savedEnvironmentDemo;
+});
 
 interface Recorded {
 	sql: string;
@@ -330,6 +363,56 @@ describe('RolePermissionUtils.migrateRolePermissions', () => {
 
 			jest.restoreAllMocks();
 			await dataSource.destroy();
+		});
+	});
+
+	describe('demo mode', () => {
+		/**
+		 * Demo deployments must never hand anyone the account- and data-deletion permissions, so the
+		 * reload grants every permission EXCEPT those two. This is the case CI used to run by accident
+		 * (through `.env.local`); here it runs on purpose, with its own expected count.
+		 */
+		let dataSource: DataSource;
+
+		beforeAll(async () => {
+			environment.demo = true;
+			const built = await createSeededDataSource();
+			dataSource = built.dataSource;
+			await RolePermissionUtils.migrateRolePermissions(built.queryRunner);
+		});
+
+		afterAll(async () => {
+			environment.demo = false;
+			jest.restoreAllMocks();
+			await dataSource.destroy();
+		});
+
+		it('grants every role all permissions except the two deletion permissions', async () => {
+			// 211 permissions today, so 209 per role.
+			const expectedPerRole = ALL_PERMISSIONS.length - DEMO_EXCLUDED_PERMISSIONS.length;
+
+			// CONTROL: the exclusion list must actually name permissions that exist, or the count
+			// below would equal the non-demo count and prove nothing.
+			for (const permission of DEMO_EXCLUDED_PERMISSIONS) {
+				expect(ALL_PERMISSIONS).toContain(permission);
+			}
+
+			const perRole: Array<{ roleId: string; total: number }> = await dataSource.manager.query(
+				`SELECT "roleId", COUNT(*) AS total FROM "role_permission" GROUP BY "roleId"`
+			);
+			expect(perRole).toHaveLength(EXPECTED_ROLE_COUNT);
+			for (const { total } of perRole) {
+				expect(Number(total)).toBe(expectedPerRole);
+			}
+		});
+
+		it('never grants the deletion permissions to any role', async () => {
+			const placeholders = DEMO_EXCLUDED_PERMISSIONS.map(() => '?').join(', ');
+			const [{ total }] = await dataSource.manager.query(
+				`SELECT COUNT(*) AS total FROM "role_permission" WHERE "permission" IN (${placeholders})`,
+				DEMO_EXCLUDED_PERMISSIONS
+			);
+			expect(Number(total)).toBe(0);
 		});
 	});
 });
