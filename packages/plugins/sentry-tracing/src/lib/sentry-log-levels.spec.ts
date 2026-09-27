@@ -9,6 +9,10 @@ describe('parseSentryLogLevels', () => {
 		expect(parseSentryLogLevels(' Error , WARN ')).toEqual(['error', 'warn']);
 	});
 
+	it('accepts fatal, which SentryService routes like error', () => {
+		expect(parseSentryLogLevels('fatal')).toEqual(['fatal']);
+	});
+
 	it('ignores unknown names and duplicates but keeps the valid ones', () => {
 		expect(parseSentryLogLevels('error,info,error,log')).toEqual(['error', 'log']);
 	});

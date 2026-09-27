@@ -192,6 +192,28 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	}
 
 	/**
+	 * A fatal log is at least as severe as an error, so it becomes an event whenever `fatal` or `error`
+	 * is captured. Without this override Nest's ConsoleLogger.fatal printed it and Sentry never saw it.
+	 *
+	 * @param message
+	 * @param context
+	 */
+	fatal(message: string, context?: string) {
+		message = `${this.app} ${message}`;
+		try {
+			super.fatal(message, context);
+			if (!this.isEnabled()) return;
+			if (this.captures('fatal') || this.captures('error')) {
+				Sentry.captureMessage(message, 'fatal');
+			} else {
+				Sentry.addBreadcrumb({ message, level: 'fatal', data: { context } });
+			}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
+	}
+
+	/**
 	 *
 	 * @returns
 	 */

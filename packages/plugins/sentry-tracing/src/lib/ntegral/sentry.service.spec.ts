@@ -57,6 +57,19 @@ describe('SentryService', () => {
 		});
 	});
 
+	it('sends fatal logs to Sentry whenever errors are captured', () => {
+		new SentryService({ dsn: DSN, logLevels: ['error'] }).fatal('database unreachable', 'Bootstrap');
+
+		expect(Sentry.captureMessage).toHaveBeenCalledWith(expect.stringContaining('database unreachable'), 'fatal');
+	});
+
+	it('keeps fatal logs as breadcrumbs when neither fatal nor error is captured', () => {
+		new SentryService({ dsn: DSN, logLevels: ['warn'] }).fatal('database unreachable', 'Bootstrap');
+
+		expect(Sentry.captureMessage).not.toHaveBeenCalled();
+		expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(expect.objectContaining({ level: 'fatal' }));
+	});
+
 	it('captures every level listed, e.g. SENTRY_LOG_LEVELS=error,warn', () => {
 		const logger = new SentryService({ dsn: DSN, logLevels: ['error', 'warn'] });
 
