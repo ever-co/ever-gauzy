@@ -37,6 +37,10 @@
   min-height: 2rem;
   padding: 0.25rem 0.375rem 0;
 
+  .docs-column-chooser-hint {
+    display: inline-flex;
+  }
+
   .docs-column-chooser-toggle {
     display: inline-flex;
     align-items: center;
@@ -174,24 +178,199 @@
   }
 }
 
+// Renders inside the popover overlay, outside `.docs-table`, so the `--docs-*`
+// tokens are not in scope there — the theme's own variables are used directly.
 .docs-column-chooser {
-  margin: 0;
-  min-width: 13rem;
-  max-width: 18rem;
+  width: 16.5rem;
+  padding: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--text-basic-color);
+}
 
-  nb-card-header {
-    font-size: var(--docs-label-size, 0.6875rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--docs-text-muted, var(--text-hint-color));
+.docs-column-chooser-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.375rem 0.5rem 0.5rem;
+}
+
+.docs-column-chooser-title {
+  font-weight: 600;
+}
+
+.docs-column-chooser-count {
+  font-size: 0.75rem;
+  color: var(--text-hint-color);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.docs-column-chooser-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  // The popover anchors to a button low on the page; on a short viewport the list
+  // scrolls instead of running off-screen with the footer actions.
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.docs-column-option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.3125rem 0.5rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--text-hint-color);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: var(--background-basic-color-2);
   }
 
-  nb-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    font-size: var(--docs-body-size, 0.8125rem);
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: -2px;
+  }
+
+  &.on,
+  &.locked {
+    color: var(--text-basic-color);
+  }
+
+  &.locked {
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+}
+
+.docs-column-option-icon {
+  flex: none;
+  font-size: 1rem;
+  color: var(--text-hint-color);
+
+  .docs-column-option.on & {
+    color: var(--color-primary-default);
+  }
+}
+
+.docs-column-option-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.docs-column-option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docs-column-option-hint {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  color: var(--text-hint-color);
+}
+
+.docs-column-option-lock {
+  flex: none;
+  font-size: 0.875rem;
+  color: var(--text-hint-color);
+}
+
+// Pill switch — reads as on/off at a glance, which a column of identical ticks did not.
+.docs-column-switch {
+  position: relative;
+  flex: none;
+  width: 1.75rem;
+  height: 1rem;
+  border-radius: 1rem;
+  // Neutral grey rather than a theme background token: `background-basic-color-4`
+  // is near-black in the dark theme, and the off track vanished into the popover.
+  background: rgba(143, 155, 179, 0.45);
+  transition: background-color 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+  }
+
+  .docs-column-option.on & {
+    background: var(--color-primary-default);
+
+    &::after {
+      transform: translateX(0.75rem);
+    }
+  }
+}
+
+.docs-column-chooser-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+  padding: 0.5rem 0.25rem 0.125rem;
+  border-top: 1px solid var(--border-basic-color-3);
+}
+
+.docs-column-chooser-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--color-primary-default);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--background-basic-color-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    color: var(--text-disabled-color);
+    cursor: default;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-column-option,
+  .docs-column-switch,
+  .docs-column-switch::after {
+    transition: none;
   }
 }
 
