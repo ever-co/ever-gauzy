@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TimeReportsComponent } from './time-reports.component';
 import { TimeReportsModule } from '../time-reports.module';
-import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG, EmployeesService } from '@gauzy/ui-core/core';
 describe('TimeReportsComponent', () => {
 	let component: TimeReportsComponent;
 	let fixture: ComponentFixture<TimeReportsComponent>;
@@ -9,6 +9,8 @@ describe('TimeReportsComponent', () => {
 		await TestBed.configureTestingModule({
 			// Not standalone: import the NgModule that declares it, for the template's real scope.
 			imports: [TimeReportsModule],
+			// Provided by the host feature module in the app (e.g. the employees/reports parents).
+			providers: [EmployeesService],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
@@ -24,4 +26,3 @@ describe('TimeReportsComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
-

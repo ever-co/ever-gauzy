@@ -1,6 +1,7 @@
 /**
- * Jest `setupFiles` entry for the whole workspace (wired in `jest.preset.js`): make `moment` loadable
- * with BOTH import styles this codebase uses, the way the app bundlers already treat it.
+ * Jest `setupFiles` entry for the whole workspace (wired in `jest.preset.js`): make the callable
+ * CommonJS packages that this codebase imports BOTH ways load under either import style, the way the
+ * app bundlers already treat them.
  *
  * `moment` is a CommonJS function (`module.exports = moment`, no `default`, no `__esModule`), and the
  * code imports it two ways:
@@ -12,22 +13,33 @@
  *     which is undefined — "(0, moment_1.default) is not a function" failed ~50 Angular suites at load
  *     time, in every project that reaches ui-core's date-range-picker service;
  *   - `esModuleInterop: true` fixes that, but compiles the namespace import through `__importStar`,
- *     which copies moment's properties into a plain object — so `moment()` stops being callable.
+ *     which copies the module's properties into a plain object — so `moment()` stops being callable.
+ * `randomcolor` has the same shape and is namespace-imported and called (ui-core's tags colour input,
+ * apps/gauzy's weekly report), which breaks in exactly the projects that set `esModuleInterop: true`.
  *
- * Giving the loaded module `default` (itself) and `__esModule` makes every combination resolve to the
- * moment function itself, exactly as the bundlers do. `moment-timezone` returns this same object.
+ * Giving each loaded module `default` (itself) and `__esModule` makes every combination resolve to the
+ * function itself, exactly as the bundlers do. `moment-timezone` returns the same object as `moment`.
  *
  * Scope: this file runs in each test file's module registry before the spec loads, so the specs see
- * the patched instance. A spec that calls `jest.resetModules()` and then re-requires moment gets a
- * fresh, unpatched copy — do the same patch there if one ever needs it.
+ * the patched instances. A spec that calls `jest.resetModules()` and then re-requires one of these
+ * gets a fresh, unpatched copy — repeat the patch there if one ever needs it.
  */
-const moment = require('moment');
+const CALLABLE_COMMONJS_PACKAGES = ['moment', 'randomcolor'];
 
-if (typeof moment === 'function') {
-	if (moment.default === undefined) {
-		moment.default = moment;
+for (const name of CALLABLE_COMMONJS_PACKAGES) {
+	let mod;
+	try {
+		mod = require(name);
+	} catch {
+		continue; // not installed in this checkout: nothing can import it either
 	}
-	if (!moment.__esModule) {
-		Object.defineProperty(moment, '__esModule', { value: true });
+	if (typeof mod !== 'function') {
+		continue;
+	}
+	if (mod.default === undefined) {
+		mod.default = mod;
+	}
+	if (!mod.__esModule) {
+		Object.defineProperty(mod, '__esModule', { value: true });
 	}
 }

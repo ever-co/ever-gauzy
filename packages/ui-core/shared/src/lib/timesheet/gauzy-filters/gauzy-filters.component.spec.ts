@@ -6,7 +6,8 @@ describe('GauzyFiltersComponent', () => {
 	let fixture: ComponentFixture<GauzyFiltersComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			// Not standalone: import its NgModule. (This stub imported `GauzyRangePickerComponent`, a class the file does not export, so it declared `undefined`.)
+			// Not standalone: import its NgModule. (This stub imported `GauzyRangePickerComponent`, a class the file
+			// does not export, so it declared `undefined`.)
 			imports: [GauzyFiltersModule]
 		}).compileComponents();
 	});

@@ -6,7 +6,8 @@ describe('ProjectModuleTableComponent', () => {
 	let fixture: ComponentFixture<ProjectModuleTableComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			// Not standalone (standalone: false), so it cannot be imported directly; import the NgModule that declares it.
+			// Not standalone (standalone: false), so it cannot be imported directly; import the NgModule that declares
+			// it.
 			imports: [ProjectModuleTableModule]
 		}).compileComponents();
 		fixture = TestBed.createComponent(ProjectModuleTableComponent);

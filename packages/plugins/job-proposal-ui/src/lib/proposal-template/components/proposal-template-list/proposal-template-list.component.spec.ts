@@ -7,7 +7,8 @@ describe('ProposalTemplateListComponent', () => {
 	let fixture: ComponentFixture<ProposalTemplateListComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			// Not standalone: import its NgModule. PipesModule provides the Nl2Br/Truncate pipes it injects (the app gets them from its root imports).
+			// Not standalone: import its NgModule. PipesModule provides the Nl2Br/Truncate pipes it injects (the app
+			// gets them from its root imports).
 			imports: [JobProposalTemplateModule, PipesModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();

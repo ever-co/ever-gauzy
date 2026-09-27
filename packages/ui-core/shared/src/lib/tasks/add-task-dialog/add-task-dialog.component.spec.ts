@@ -7,7 +7,8 @@ describe('AddTaskDialogComponent', () => {
 	let fixture: ComponentFixture<AddTaskDialogComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			// Not standalone: import its NgModule. EmployeesService and AuthService are provided by the host feature modules in the app.
+			// Not standalone: import its NgModule. EmployeesService and AuthService are provided by the host feature
+			// modules in the app.
 			imports: [AddTaskDialogModule],
 			providers: [EmployeesService, AuthService],
 			teardown: { destroyAfterEach: false }

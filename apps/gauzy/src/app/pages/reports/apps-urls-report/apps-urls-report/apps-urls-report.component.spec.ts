@@ -24,4 +24,3 @@ describe('AppsUrlsReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
-

@@ -6,7 +6,8 @@ describe('TimesheetViewComponent', () => {
 	let fixture: ComponentFixture<TimesheetViewComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			// Not standalone: import its NgModule. (This stub imported `ViewComponent`; the file exports `TimesheetViewComponent`, so it declared `undefined`.)
+			// Not standalone: import its NgModule. (This stub imported `ViewComponent`; the file exports
+			// `TimesheetViewComponent`, so it declared `undefined`.)
 			imports: [ViewModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();

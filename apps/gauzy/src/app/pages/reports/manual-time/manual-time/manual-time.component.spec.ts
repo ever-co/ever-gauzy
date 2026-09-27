@@ -24,4 +24,3 @@ describe('ManualTimeComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
-

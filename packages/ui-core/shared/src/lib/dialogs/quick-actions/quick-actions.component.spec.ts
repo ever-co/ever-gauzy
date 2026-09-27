@@ -7,7 +7,8 @@ describe('QuickActionsComponent', () => {
 	let fixture: ComponentFixture<QuickActionsComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			// Declared in DialogsModule (not standalone): import it so the template gets that module's scope. The real TimeTrackerService starts a Web Worker, which jsdom lacks; the menu only reads `running`.
+			// Declared in DialogsModule (not standalone): import it so the template gets that module's scope. The real
+			// TimeTrackerService starts a Web Worker, which jsdom lacks; the menu only reads `running`.
 			imports: [DialogsModule],
 			providers: [{ provide: TimeTrackerService, useValue: { running: false } }]
 		}).compileComponents();

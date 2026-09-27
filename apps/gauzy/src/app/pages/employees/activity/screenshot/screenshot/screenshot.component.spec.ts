@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ScreenshotComponent } from './screenshot.component';
 import { ScreenshotModule } from '../screenshot.module';
-import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG, EmployeesService } from '@gauzy/ui-core/core';
 describe('ScreenshotComponent', () => {
 	let component: ScreenshotComponent;
 	let fixture: ComponentFixture<ScreenshotComponent>;
@@ -9,6 +9,8 @@ describe('ScreenshotComponent', () => {
 		await TestBed.configureTestingModule({
 			// Not standalone: import the NgModule that declares it, for the template's real scope.
 			imports: [ScreenshotModule],
+			// Provided by the host feature module in the app (e.g. the employees/reports parents).
+			providers: [EmployeesService],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
