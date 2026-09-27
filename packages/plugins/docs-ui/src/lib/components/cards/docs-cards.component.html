@@ -51,9 +51,9 @@
 			[class.archived]="doc.isArchived"
 			role="button"
 			tabindex="0"
-			(click)="onCardClick(doc)"
-			(dblclick)="onDefaultOpen(doc, $event)"
-			(keydown.enter)="onCardClick(doc)"
+			(click)="onCardClick(doc, $event)"
+			(dblclick)="onCardDoubleClick(doc, $event)"
+			(keydown.enter)="onCardClick(doc, $event)"
 		>
 			<!-- Preview tile. The box is ALWAYS rendered at a fixed height, whether or not a
 			     thumbnail exists: `thumbUrl` only appears once the P1 thumbnail job has run, so
@@ -114,7 +114,6 @@
 					class="docs-card-open docs-card-actions"
 					[nbContextMenu]="menuItemsFor(doc)"
 					[nbContextMenuTag]="menuTag(doc)"
-					(click)="$event.stopPropagation()"
 					[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
 				>
 					<nb-icon icon="more-horizontal-outline"></nb-icon>
