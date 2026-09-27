@@ -16,6 +16,7 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 	public organization: IOrganization;
 	/** Why the installation was refused, as the API explained it — shown instead of closing silently. */
 	public errorMessage: string | null = null;
+	public hasError: boolean = false;
 	/** GitHub redirects here after an installation is edited on GitHub; there is nothing to connect. */
 	public updatedOnGithub: boolean = false;
 	/** A member asked an owner to install the App; nothing is connected until the owner approves. */
@@ -53,14 +54,15 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 				tap(() => (this.organization = this._store.selectedOrganization)),
 				// Use 'tap' operator to perform an asynchronous action
 				tap(
-					// `code` is the OAuth code GitHub issued with the redirect; the API exchanges it to prove
-					// which GitHub user completed the installation (GHSA-4rwq-65wh-45h4).
-					async ({ installation_id, setup_action, state, code, code_binding }: IGithubAppInstallInput) =>
+					// `install_proof` is the API's signed statement that the GitHub user who completed the
+					// installation is entitled to it (GHSA-4rwq-65wh-45h4); `install_check` says why when absent.
+					async ({ installation_id, setup_action, state, install_proof, install_check }: IGithubAppInstallInput) =>
 						await this.verifyGitHubAppAuthorization({
 							installation_id,
 							setup_action,
 							state,
-							...(code ? { code, code_binding } : {})
+							...(install_proof ? { install_proof } : {}),
+							...(install_check ? { install_check } : {})
 						})
 				),
 				// Use 'untilDestroyed' operator to automatically unsubscribe when the component is destroyed
@@ -83,12 +85,12 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 	private async verifyGitHubAppAuthorization(input: IGithubAppInstallInput) {
 		// Do NOT gate on a hydrated organization: the server binds the installation to the tenant/org
 		// recorded against the nonce, so a not-yet-hydrated store must not drop a valid GitHub callback.
-		const { installation_id, setup_action, state, code, code_binding } = input;
+		const { installation_id, setup_action, state, install_proof, install_check } = input;
 
 		// The installation is bound server-side to the tenant/organization recorded against the
 		// single-use `state` nonce minted at initiation, so we forward only GitHub's identifiers plus
 		// the nonce — never a client-supplied tenant/organization (cross-tenant IDOR, GHSA-4rwq-65wh-45h4).
-		// `code` proves which GitHub user completed the installation; the API verifies it.
+		// `install_proof` proves the installing GitHub user is entitled to it; the API verifies it.
 		if (installation_id && setup_action && state) {
 			try {
 				// Call a service method (likely from _githubService) to add the installation app
@@ -96,7 +98,8 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 					installation_id,
 					setup_action,
 					state,
-					...(code ? { code, code_binding } : {})
+					...(install_proof ? { install_proof } : {}),
+					...(install_check ? { install_check } : {})
 				});
 
 				// Simulate a success scenario, possibly updating the UI or performing other actions
@@ -147,8 +150,9 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 
 		// Set isLoading to false to indicate that loading has completed
 		this.isLoading = false;
-		this.errorMessage =
-			typeof message === 'string' && message ? message : 'The GitHub installation could not be connected.';
+		this.hasError = true;
+		// The API's reason when it gave one; the template falls back to a translated generic message.
+		this.errorMessage = typeof message === 'string' && message ? message : null;
 
 		// Dispatch the error event to the parent window
 		window.opener?.dispatchEvent(event);

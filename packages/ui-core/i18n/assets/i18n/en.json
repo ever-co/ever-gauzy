@@ -1619,6 +1619,15 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"INSTALLATION": {
+				"INSTALLING": "Installing. Please wait...",
+				"NOT_CONNECTED": "GitHub was not connected",
+				"DEFAULT_ERROR": "The GitHub installation could not be connected.",
+				"REQUESTED": "Installation requested",
+				"REQUESTED_DESCRIPTION": "An owner of the GitHub account must approve the installation before it can be connected.",
+				"UPDATED": "Your GitHub installation was updated",
+				"CLOSE_WINDOW": "You can close this window."
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",

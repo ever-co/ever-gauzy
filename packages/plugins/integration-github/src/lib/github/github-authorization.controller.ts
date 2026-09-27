@@ -1,16 +1,21 @@
-import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { IGithubIntegrationConfig, Public } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { GithubOAuthStateService } from './github-oauth-state.service';
-import { signGithubInstallCode } from './github-install-code-binding';
+import { signGithubInstallProof } from './github-install-proof';
+import { GithubInstallationOwnershipService } from './github-installation-ownership.service';
+import { GITHUB_INSTALLATION_ID_PATTERN } from './dto/github-app-install.dto';
 
 @Controller('/integration/github')
 export class GitHubAuthorizationController {
+	private readonly logger = new Logger(GitHubAuthorizationController.name);
+
 	constructor(
 		private readonly _config: ConfigService,
-		private readonly _githubOAuthStateService: GithubOAuthStateService
+		private readonly _githubOAuthStateService: GithubOAuthStateService,
+		private readonly _ownership: GithubInstallationOwnershipService
 	) {}
 
 	/**
@@ -58,14 +63,31 @@ export class GitHubAuthorizationController {
 			urlParams.append('installation_id', query.installation_id);
 			urlParams.append('setup_action', query.setup_action);
 			urlParams.append('state', query.state);
-			// The OAuth code proves which GitHub user completed the installation. It is exchanged inside
-			// the authenticated POST /install rather than here, so the proof is tied to the Gauzy session
-			// that binds the installation, not just to a nonce (GHSA-4rwq-65wh-45h4). Codes are single-use
-			// and expire in minutes.
-			if (typeof query.code === 'string' && query.code) {
-				urlParams.append('code', query.code);
-				// Signed with the nonce it arrived with: POST /install accepts the code only in this flow.
-				urlParams.append('code_binding', signGithubInstallCode(query.state, query.code));
+			// Prove that the GitHub user who completed this flow is entitled to the whole installation
+			// (GHSA-4rwq-65wh-45h4). GitHub sends `code` only when the App requests user authorization
+			// during installation. It is exchanged HERE, the moment it arrives, so it is spent and cannot
+			// be replayed from a URL or a log; the browser receives only a signed, short-lived proof bound
+			// to this flow's nonce, and POST /install binds nothing without it. When there is no proof,
+			// `install_check` says why, so the web app can show the right message.
+			const installationId = String(query.installation_id);
+			let installCheck: 'no_code' | 'not_entitled' | 'unverifiable' = 'no_code';
+			let installProof: string | undefined;
+			if (typeof query.code === 'string' && query.code && GITHUB_INSTALLATION_ID_PATTERN.test(installationId)) {
+				try {
+					if (await this._ownership.isEntitledToInstallation(query.code, installationId)) {
+						installProof = signGithubInstallProof(query.state, installationId);
+					} else {
+						installCheck = 'not_entitled';
+					}
+				} catch (error) {
+					installCheck = 'unverifiable';
+					this.logger.error(`GitHub installation ownership check failed: ${(error as Error)?.message}`);
+				}
+			}
+			if (installProof) {
+				urlParams.append('install_proof', installProof);
+			} else {
+				urlParams.append('install_check', installCheck);
 			}
 
 			/**

@@ -157,25 +157,45 @@ export class OctokitService implements OnModuleInit {
 	}
 
 	/**
-	 * How many repositories the App itself can reach in an installation (its installation token's view).
-	 * Used to prove a user is entitled to a whole installation before it is bound (GHSA-4rwq-65wh-45h4).
+	 * The ids of every repository the App itself can reach in an installation (its installation token's
+	 * view). Used to prove a user is entitled to a whole installation before it is bound
+	 * (GHSA-4rwq-65wh-45h4): every id here must be one the user can read.
 	 *
-	 * @throws {Error} If the App is not configured or GitHub cannot be reached — callers fail closed.
+	 * @throws {Error} If the App is not configured, GitHub cannot be reached, or the installation covers
+	 * more than `maxRepositories` — callers fail closed.
 	 */
-	public async getInstallationRepositoryCount(installationId: number): Promise<number> {
+	public async getInstallationRepositoryIds(installationId: number, maxRepositories = 5000): Promise<Set<string>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
 		}
 		const octokit = await this.app.getInstallationOctokit(installationId);
-		const response = await octokit.request('GET /installation/repositories', {
-			per_page: 1,
-			headers: { 'X-GitHub-Api-Version': GITHUB_API_VERSION }
-		});
-		const total = Number((response as any)?.data?.total_count);
-		if (!Number.isFinite(total)) {
-			throw new Error('GitHub did not report the installation repository count');
+		const ids = new Set<string>();
+		const maxPages = Math.ceil(maxRepositories / 100) + 1;
+		for (let page = 1; page <= maxPages; page++) {
+			const response = await octokit.request('GET /installation/repositories', {
+				per_page: 100,
+				page,
+				headers: { 'X-GitHub-Api-Version': GITHUB_API_VERSION }
+			});
+			const data = (response as any)?.data;
+			const repositories: Array<{ id?: number | string }> = Array.isArray(data?.repositories) ? data.repositories : [];
+			for (const repository of repositories) {
+				if (repository?.id !== undefined && repository?.id !== null) {
+					ids.add(String(repository.id));
+				}
+			}
+			const total = Number(data?.total_count);
+			if (!Number.isFinite(total)) {
+				throw new Error('GitHub did not report the installation repository count');
+			}
+			if (total > maxRepositories) {
+				throw new Error(`Installation covers ${total} repositories; at most ${maxRepositories} can be verified`);
+			}
+			if (repositories.length === 0 || ids.size >= total) {
+				return ids;
+			}
 		}
-		return total;
+		throw new Error('Could not read every repository of the installation');
 	}
 
 	/**

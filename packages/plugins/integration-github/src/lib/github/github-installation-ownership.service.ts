@@ -8,6 +8,8 @@ import { OctokitService } from '../probot/octokit.service';
 const GITHUB_API = 'https://api.github.com';
 /** Bound on pagination: 100 per page, so this covers users with up to 1,000 installations. */
 const MAX_PAGES = 10;
+/** Repositories of one installation: 100 per page, up to 5,000 (the App side uses the same bound). */
+const MAX_REPOSITORY_PAGES = 50;
 const REQUEST_TIMEOUT_MS = 10_000;
 const GITHUB_HEADERS = { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' };
 
@@ -27,12 +29,12 @@ interface IUserInstallation {
  * user could not already read:
  *
  * - installation on a personal account: the authorizing user must BE that account;
- * - installation on an organization: the user must have access to every repository the installation
- *   covers (their count under `/user/installations/{id}/repositories` equals the App's own count).
+ * - installation on an organization: the user must be able to read every repository the installation
+ *   covers, compared by repository id against the App's own view.
  *
  * The proof comes from the OAuth `code` GitHub issues when the App has "Request user authorization
- * (OAuth) during installation" enabled. It is exchanged inside the authenticated `POST /install`, so
- * the GitHub user who authorized and the Gauzy session that binds are the same browser.
+ * (OAuth) during installation" enabled. The post-install callback exchanges it the moment it arrives
+ * and, on success, hands the browser a signed proof bound to the flow (see `github-install-proof.ts`).
  */
 @Injectable()
 export class GithubInstallationOwnershipService {
@@ -60,6 +62,11 @@ export class GithubInstallationOwnershipService {
 			);
 		}
 		if (typeof code !== 'string' || !code.trim()) {
+			return false;
+		}
+		// Octokit takes the id as a number: an id JavaScript cannot represent exactly would be checked as
+		// a DIFFERENT installation than the one stored (the DTO allows up to 20 digits).
+		if (!Number.isSafeInteger(Number(installationId)) || String(Number(installationId)) !== installationId) {
 			return false;
 		}
 
@@ -93,29 +100,42 @@ export class GithubInstallationOwnershipService {
 			return me?.id !== undefined && String(me.id) === String(installation.account?.id);
 		}
 
-		// Organization (or enterprise) installation: the user must already reach every repository in it.
-		// The user's repositories are a subset of the App's, so the counts can only differ in the user's
-		// favour when repositories come and go between the two reads. The App's count is therefore taken
-		// on BOTH sides of the user's and the larger one is used: otherwise a member who can create and
-		// delete repositories could count their own throwaway repositories on the user side and delete
-		// them before the App side is read.
-		const appCountBefore = await this._octokit.getInstallationRepositoryCount(Number(installationId));
-		const visibleToUser = await this.get(token, `${GITHUB_API}/user/installations/${installationId}/repositories`, {
-			per_page: 1
-		});
-		const appCountAfter = await this._octokit.getInstallationRepositoryCount(Number(installationId));
-		const userCount = Number(visibleToUser?.total_count);
-		const appCount = Math.max(appCountBefore, appCountAfter);
-		if (!Number.isFinite(userCount) || !Number.isFinite(appCount)) {
-			return false;
-		}
-		if (userCount < appCount) {
+		// Organization (or enterprise) installation: the user must already read EVERY repository in it.
+		// Compared by repository id, not by count: a member who can create and delete repositories could
+		// otherwise balance the counts with throwaway repositories while the ones hidden from them remain.
+		// The user's ids are read first; the App's afterwards, so any repository present when the App
+		// looks must already have been visible to the user.
+		const userRepositoryIds = await this.userRepositoryIds(token, installationId);
+		const appRepositoryIds = await this._octokit.getInstallationRepositoryIds(Number(installationId));
+		const hidden = [...appRepositoryIds].filter((id) => !userRepositoryIds.has(id));
+		if (hidden.length > 0) {
 			this.logger.warn(
-				`GitHub installation ${installationId}: authorizing user reaches ${userCount} of ${appCount} repositories`
+				`GitHub installation ${installationId}: authorizing user cannot read ${hidden.length} of ${appRepositoryIds.size} repositories`
 			);
 			return false;
 		}
 		return true;
+	}
+
+	/** Every repository of the installation the token holder can read, by id (bounded). */
+	private async userRepositoryIds(token: string, installationId: string): Promise<Set<string>> {
+		const ids = new Set<string>();
+		for (let page = 1; page <= MAX_REPOSITORY_PAGES; page++) {
+			const data = await this.get(token, `${GITHUB_API}/user/installations/${installationId}/repositories`, {
+				per_page: 100,
+				page
+			});
+			const repositories: Array<{ id?: number | string }> = Array.isArray(data?.repositories) ? data.repositories : [];
+			for (const repository of repositories) {
+				if (repository?.id !== undefined && repository?.id !== null) {
+					ids.add(String(repository.id));
+				}
+			}
+			if (repositories.length === 0 || ids.size >= Number(data?.total_count ?? 0)) {
+				return ids;
+			}
+		}
+		throw new Error('Too many repositories to verify');
 	}
 
 	/** Walks `GET /user/installations` for the claimed id. */

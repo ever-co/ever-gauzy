@@ -3,27 +3,27 @@
   <nb-card-body>
     @if (isLoading) {
       <div class="flex-col items-center justify-center">
-        <h2 class="">Installing. Please wait...</h2>
+        <h2 class="">{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.INSTALLING' | translate }}</h2>
       </div>
     }
-    @if (errorMessage) {
+    @if (hasError) {
       <div class="flex-col items-center justify-center">
-        <h2 class="">GitHub was not connected</h2>
-        <p>{{ errorMessage }}</p>
-        <p>You can close this window.</p>
+        <h2 class="">{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.NOT_CONNECTED' | translate }}</h2>
+        <p>{{ errorMessage || ('INTEGRATIONS.GITHUB_PAGE.INSTALLATION.DEFAULT_ERROR' | translate) }}</p>
+        <p>{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.CLOSE_WINDOW' | translate }}</p>
       </div>
     }
     @if (requestedOnGithub) {
       <div class="flex-col items-center justify-center">
-        <h2 class="">Installation requested</h2>
-        <p>An owner of the GitHub account must approve the installation before it can be connected.</p>
-        <p>You can close this window.</p>
+        <h2 class="">{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.REQUESTED' | translate }}</h2>
+        <p>{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.REQUESTED_DESCRIPTION' | translate }}</p>
+        <p>{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.CLOSE_WINDOW' | translate }}</p>
       </div>
     }
     @if (updatedOnGithub) {
       <div class="flex-col items-center justify-center">
-        <h2 class="">Your GitHub installation was updated</h2>
-        <p>You can close this window.</p>
+        <h2 class="">{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.UPDATED' | translate }}</h2>
+        <p>{{ 'INTEGRATIONS.GITHUB_PAGE.INSTALLATION.CLOSE_WINDOW' | translate }}</p>
       </div>
     }
   </nb-card-body>
