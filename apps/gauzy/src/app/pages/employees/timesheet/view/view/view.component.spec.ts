@@ -1,16 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ViewComponent } from './view.component';
-describe('ViewComponent', () => {
-	let component: ViewComponent;
-	let fixture: ComponentFixture<ViewComponent>;
+import { TimesheetViewComponent } from './view.component';
+import { ViewModule } from '../view.module';
+describe('TimesheetViewComponent', () => {
+	let component: TimesheetViewComponent;
+	let fixture: ComponentFixture<TimesheetViewComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ViewComponent],
+			// Not standalone: import its NgModule. (This stub imported `ViewComponent`; the file exports `TimesheetViewComponent`, so it declared `undefined`.)
+			imports: [ViewModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 	beforeEach(() => {
-		fixture = TestBed.createComponent(ViewComponent);
+		fixture = TestBed.createComponent(TimesheetViewComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

@@ -181,7 +181,8 @@
         "^production",
         "{workspaceRoot}/jest.preset.js",
         "{workspaceRoot}/jest.resolver.js",
-        "{workspaceRoot}/jest.interop.js"
+        "{workspaceRoot}/jest.interop.js",
+        "{workspaceRoot}/jest.angular-defaults.ts"
       ],
       "options": {
         "passWithNoTests": true

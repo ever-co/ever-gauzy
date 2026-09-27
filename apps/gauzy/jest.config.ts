@@ -4,7 +4,8 @@ export default {
 	preset: '../../jest.preset.js',
 	// Moved here from project.json's deprecated `setupFile` executor option. The target itself pointed
 	// at a `jest.config.js` that does not exist, so none of this app's specs had ever run.
-	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
+	// test-setup starts the zone test env; the root defaults add the app-wide TestBed providers (see file).
+	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', '<rootDir>/../../jest.angular-defaults.ts'],
 	coverageDirectory: '../../coverage/apps/gauzy',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [

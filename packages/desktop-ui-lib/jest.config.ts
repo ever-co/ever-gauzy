@@ -2,7 +2,8 @@
 export default {
 	displayName: 'desktop-ui-lib',
 	preset: '../../jest.preset.js',
-	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
+	// test-setup starts the zone test env; the root defaults add the app-wide TestBed providers (see file).
+	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', '<rootDir>/../../jest.angular-defaults.ts'],
 	coverageDirectory: '../../coverage/packages/desktop-ui-lib',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [

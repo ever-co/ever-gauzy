@@ -2,7 +2,8 @@
 export default {
 	displayName: 'plugin-integration-upwork-ui',
 	preset: '../../../jest.preset.js',
-	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
+	// test-setup starts the zone test env; the root defaults add the app-wide TestBed providers (see file).
+	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', '<rootDir>/../../../jest.angular-defaults.ts'],
 	coverageDirectory: '../../../coverage/packages/plugins/integration-upwork-ui',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [

@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProposalTemplateFormComponent } from './proposal-template-form.component';
+import { JobProposalTemplateModule } from '../../job-proposal-template.module';
 describe('ProposalTemplateFormComponent', () => {
 	let component: ProposalTemplateFormComponent;
 	let fixture: ComponentFixture<ProposalTemplateFormComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [ProposalTemplateFormComponent],
+			// Not standalone: import its NgModule for the template's real scope.
+			imports: [JobProposalTemplateModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});

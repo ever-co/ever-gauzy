@@ -48,6 +48,16 @@ module.exports = {
 	transformIgnorePatterns,
 	// Nx's resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
 	resolver: require.resolve('./jest.resolver.js'),
+	// ngx-daterangepicker-material (ui-core's date-range selector) imports `dayjs/esm` and its plugins
+	// from an `.mjs` bundle. Transforming that ESM tree is not enough: an `.mjs` importer gets Node's
+	// default-import semantics (the whole module object), so `dayjs.extend` came out undefined and
+	// every suite reaching the selector failed to load. The package's CommonJS build is the same code
+	// with `module.exports = dayjs`, which is what those semantics expect. (Jest merges a preset's
+	// `moduleNameMapper` with a project's own.)
+	moduleNameMapper: {
+		'^dayjs/esm$': 'dayjs',
+		'^dayjs/esm/(.*)$': 'dayjs/$1'
+	},
 	// `moment` loads with both `import moment from` and `import * as moment from`, as the bundlers
 	// allow. Jest CONCATENATES a preset's `setupFiles` with a project's own, so no project loses it.
 	setupFiles: [require.resolve('./jest.interop.js')]
