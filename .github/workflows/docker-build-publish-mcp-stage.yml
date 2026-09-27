@@ -23,6 +23,13 @@ concurrency:
   # delays the image that IS wanted by exactly that long.
   group: gauzy-docker-build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+# docker/build-push-action uploads a build record (*.dockerbuild) and a job summary for every build.
+# The record holds every build-arg value in plain text, and on a public repo anyone signed in to
+# GitHub can download it, so neither is produced. (BuildKit `secrets:` are never recorded.)
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+
 jobs:
   gauzy-mcp:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
