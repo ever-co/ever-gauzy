@@ -78,6 +78,8 @@
 						[nbContextMenuTag]="menuTag(node.data)"
 						[nbContextMenuClass]="actionMenuClass"
 						[attr.data-docs-node-menu]="node.data.id"
+						(keydown.enter)="$event.stopPropagation()"
+						(keydown.space)="$event.stopPropagation()"
 						[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
 					>
 						<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>

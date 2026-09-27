@@ -75,7 +75,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	public recents: IRecentEntry[] = [];
 	public favorites$: Observable<{ title: string; link?: string; icon?: unknown }[]>;
 	public readonly kindEnum = DocumentKindEnum;
-	public readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
+	protected readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
 
 	/** Public: the empty-state create buttons are gated on it in the template. */
 	public canCreate = false;
@@ -111,6 +111,11 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 			 * 🛑 The node kebab cannot stop `click` propagation itself: `nbContextMenu`'s
 			 * click trigger listens on `document`, so a stopped click never opens the menu
 			 * (the Shift+F10 path clicks the same button). The node skips it here instead.
+			 *
+			 * The keyboard is the opposite case: the tree handles Enter/Space on `body` and
+			 * calls `preventDefault()` for them, which would cancel the button's own click.
+			 * So the button's template stops Enter/Space propagation — WITHOUT preventing
+			 * the default, which is what opens the menu.
 			 */
 			mouse: {
 				click: (tree: TreeModel, node: TreeNode, event: MouseEvent) => {
