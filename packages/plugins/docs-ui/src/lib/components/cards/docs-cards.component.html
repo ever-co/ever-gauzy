@@ -15,10 +15,13 @@
 		     is what a native button already does — keeping it would fire the handler twice).
 		     The inline rules only undo the user-agent button chrome `.docs-card` does not
 		     already override, so the card renders exactly as before. -->
+		<!-- The wrapper holds the folder card AND its kebab as siblings: the card is a native
+		     <button>, and a <button> may not contain another one, so the kebab sits beside it,
+		     positioned over the card's corner. -->
+		<div class="docs-card-folder-wrap" *ngFor="let folder of folderCards; trackBy: trackById">
 		<button
 			type="button"
 			class="docs-card docs-card-folder"
-			*ngFor="let folder of folderCards; trackBy: trackById"
 			[class.active]="isActive(folder)"
 			[class.archived]="folder.isArchived"
 			style="width: 100%; align-items: stretch; text-align: inherit; font: inherit; color: inherit"
@@ -35,6 +38,21 @@
 				<span>{{ 'DOCS.CARDS.ITEMS_COUNT' | translate : { count: folder.childrenCount ?? 0 } }}</span>
 			</div>
 		</button>
+		<button
+			*ngIf="menuItemsFor(folder).length"
+			nbButton
+			ghost
+			size="tiny"
+			type="button"
+			class="docs-card-folder-actions"
+			[nbContextMenu]="menuItemsFor(folder)"
+			[nbContextMenuTag]="menuTag(folder)"
+			[nbContextMenuClass]="actionMenuClass"
+			[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+		>
+			<nb-icon icon="more-horizontal-outline"></nb-icon>
+		</button>
+		</div>
 
 		<!-- Document cards.
 		     Deliberately still `role="button"` on a div, unlike the folder card above: this card
