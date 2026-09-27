@@ -4995,7 +4995,9 @@
 		"NO_SCREENSHOT": "Нет скриншота",
 		"NO_SCREENSHOTS": "Нет скриншотов",
 		"NO_RECORD_FOUND": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
-		"SCREEN_SELECTED": "Выбрано: {{count}}"
+		"SCREEN_SELECTED": "Выбрано: {{count}}",
+		"NO_TIME_TRACKED": "Время не отслежено",
+		"MINUTES_TRACKED": "Отслежено {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

@@ -4988,7 +4988,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
