@@ -79,7 +79,7 @@ if (environment.SENTRY_DSN) {
 	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
 	} else {
-		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		console.log('Enabling Sentry');
 		initializeSentry();
 	}
 }
