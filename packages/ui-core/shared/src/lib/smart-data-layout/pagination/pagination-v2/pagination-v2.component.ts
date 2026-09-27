@@ -130,6 +130,7 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 			} else {
 				this._source.getPaging().perPage = this._currentPerPage * 1;
 				this._source.refresh();
+				this.perPageChange.emit(this._source.getPaging().perPage);
 			}
 			this._initPages();
 		}
@@ -201,6 +202,8 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	public get changePage(): EventEmitter<{ page: number }> {
 		return this._changePage;
 	}
+
+	@Output() public perPageChange = new EventEmitter<number>();
 
 	ngOnDestroy(): void {}
 }

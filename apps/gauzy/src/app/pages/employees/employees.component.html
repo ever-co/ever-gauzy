@@ -69,7 +69,7 @@
           </div>
           <div class="pagination-container">
             @if (smartTableSource) {
-              <ngx-pagination [source]="smartTableSource"></ngx-pagination>
+              <ngx-pagination [source]="smartTableSource" (perPageChange)="onPageSizeChange($event)"></ngx-pagination>
             }
           </div>
         }
@@ -135,7 +135,7 @@
         spacing="list"
         [disabled]="disabledButton"
         [showLabel]="false"
-        (favoriteToggled)="onEmployeeFavoriteToggled($event)"
+        (favoriteToggled)="onEmployeeFavoriteToggled()"
       ></ngx-favorite-toggle>
     }
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
