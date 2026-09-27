@@ -105,6 +105,17 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		 * is also what stops the page-level shortcut map from seeing these events.
 		 */
 		actionMapping: {
+			/**
+			 * 🛑 The node kebab cannot stop `click` propagation itself: `nbContextMenu`'s
+			 * click trigger listens on `document`, so a stopped click never opens the menu
+			 * (the Shift+F10 path clicks the same button). The node skips it here instead.
+			 */
+			mouse: {
+				click: (tree: TreeModel, node: TreeNode, event: MouseEvent) => {
+					if ((event?.target as HTMLElement | null)?.closest?.('.docs-tree-node-menu')) return;
+					TREE_ACTIONS.TOGGLE_ACTIVE(tree, node, event);
+				}
+			},
 			keys: {
 				[TREE_KEY.F2]: (_tree: TreeModel, node: TreeNode) => void this.runNodeAction('rename', node),
 				// Archive, not delete: `DELETE /documents/:id` answers 409
