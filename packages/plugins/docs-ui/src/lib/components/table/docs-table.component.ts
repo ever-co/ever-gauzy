@@ -291,9 +291,8 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 */
 	onRowDoubleClick(event: MouseEvent): void {
 		this.cancelPendingRowOpen();
-		// Child controls stop `click` propagation but not `dblclick`, so this handler sees bubbled
-		// double clicks from the kebab, the Retry button and the select checkbox. Same guard as the
-		// single-click path, or double-clicking any of them would open the row behind it.
+		// Double clicks bubble here from the kebab, the Retry button and the select checkbox. Same guard
+		// as the single-click path, or double-clicking any of them would open the row behind it.
 		if (this.isControlEvent(event)) return;
 		const index = this.resolveRowIndex(event);
 		if (index === undefined) return;
