@@ -1,6 +1,6 @@
 /**
  * `@gauzy/core` is mocked so this suite stays a unit test: importing it for real pulls the whole entity
- * graph (and ESM-only dependencies this package's jest config does not transform).
+ * graph, which takes minutes to compile.
  */
 jest.mock('../../services/videos.service', () => ({ VideosService: class {} }));
 jest.mock('@gauzy/core', () => ({
