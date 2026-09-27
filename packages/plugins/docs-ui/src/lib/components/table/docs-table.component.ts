@@ -27,8 +27,10 @@ import { DocsRowActionsService } from '../actions/docs-row-actions.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { RowActionsComponent } from './cells/row-actions.component';
 import {
+	DOCS_TABLE_COLUMN_ICONS,
 	DOCS_TABLE_COLUMN_KEYS,
 	DOCS_TABLE_COLUMN_TITLE_KEYS,
+	DOCS_TABLE_NARROW_HIDDEN_COLUMNS,
 	DOCS_TABLE_REQUIRED_COLUMNS,
 	DocsTableColumnKey,
 	DocsTableColumnPreferences,
@@ -99,6 +101,9 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	public readonly selectableColumns: DocsTableColumnKey[] = DOCS_TABLE_COLUMN_KEYS.filter(
 		(key) => !DOCS_TABLE_REQUIRED_COLUMNS.includes(key)
 	);
+	/** Always-on columns, listed locked at the top of the chooser. */
+	public readonly requiredColumns: readonly DocsTableColumnKey[] = DOCS_TABLE_REQUIRED_COLUMNS;
+	public readonly totalColumnCount = DOCS_TABLE_COLUMN_KEYS.length;
 	/** Effective visibility — stored preference over the narrow-viewport defaults. */
 	public columnVisibility: Record<DocsTableColumnKey, boolean> = resolveDocsTableColumns({}, false);
 
@@ -202,6 +207,52 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	toggleColumn(column: DocsTableColumnKey, visible: boolean): void {
 		if (DOCS_TABLE_REQUIRED_COLUMNS.includes(column)) return;
 		this.columnPreferences = { ...this.columnPreferences, [column]: visible };
+		writeDocsTableColumnPreferences(this.columnPreferences);
+		this.resolveColumns();
+		this.buildSettings();
+	}
+
+	columnIcon(column: DocsTableColumnKey): string {
+		return DOCS_TABLE_COLUMN_ICONS[column];
+	}
+
+	get visibleColumnCount(): number {
+		return DOCS_TABLE_COLUMN_KEYS.filter((key) => this.isColumnVisible(key)).length;
+	}
+
+	get allColumnsVisible(): boolean {
+		return this.visibleColumnCount === this.totalColumnCount;
+	}
+
+	/** True once the user toggled anything — only then is there a default to go back to. */
+	get hasColumnPreferences(): boolean {
+		return Object.keys(this.columnPreferences).length > 0;
+	}
+
+	/** Hidden by the `< lg` defaults rather than by the user — the chooser says so. */
+	isColumnAutoHidden(column: DocsTableColumnKey): boolean {
+		return (
+			this.narrowViewport &&
+			DOCS_TABLE_NARROW_HIDDEN_COLUMNS.includes(column) &&
+			typeof this.columnPreferences[column] !== 'boolean'
+		);
+	}
+
+	/** Pins every column on, as explicit preferences so a narrow viewport does not take them back. */
+	showAllColumns(): void {
+		if (this.allColumnsVisible) return;
+		this.columnPreferences = Object.fromEntries(
+			this.selectableColumns.map((key) => [key, true])
+		) as DocsTableColumnPreferences;
+		writeDocsTableColumnPreferences(this.columnPreferences);
+		this.resolveColumns();
+		this.buildSettings();
+	}
+
+	/** Drops every stored choice — visibility falls back to the breakpoint defaults. */
+	resetColumns(): void {
+		if (!this.hasColumnPreferences) return;
+		this.columnPreferences = {};
 		writeDocsTableColumnPreferences(this.columnPreferences);
 		this.resolveColumns();
 		this.buildSettings();
