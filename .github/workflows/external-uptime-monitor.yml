@@ -60,6 +60,12 @@ on:
   # This trigger is also the only way to exercise the workflow pre-merge: `workflow_dispatch`
   # is not available until the file exists on the default branch.
   pull_request:
+    # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts this self-test. Here it
+    # proves the YAML parses and the probes work before the change is merged, and develop is the branch the
+    # merge itself is about - so the rehearsal stays for PRs aimed at other branches, and the scheduled and
+    # manual runs below are untouched.
+    branches-ignore:
+      - develop
     paths:
       - '.github/workflows/external-uptime-monitor.yml'
 

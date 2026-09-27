@@ -2709,7 +2709,10 @@
 		"ADDRESS": "Adresse",
 		"ADDRESS_2": "Adresse 2",
 		"MEMBERS": "Mitglieder",
-		"BUDGET": "Haushalt"
+		"BUDGET": "Haushalt",
+		"PHOTO_HINT": "Klicken oder Bild hierher ziehen, um es hochzuladen",
+		"SEARCH_EMPLOYEES": "Mitarbeiter nach Name oder E-Mail suchen",
+		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Sprachen",
@@ -4969,7 +4972,9 @@
 		"NO_SCREENSHOT": "Kein Screenshot",
 		"NO_SCREENSHOTS": "Keine Screenshots",
 		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus.",
-		"SCREEN_SELECTED": "{{ count }} Bildschirm(e) ausgewählt"
+		"SCREEN_SELECTED": "{{ count }} Bildschirm(e) ausgewählt",
+		"NO_TIME_TRACKED": "Keine Zeit erfasst",
+		"MINUTES_TRACKED": "{{ minutes }} Min. erfasst"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Lass uns deine erste Organisation erstellen",

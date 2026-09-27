@@ -12,6 +12,12 @@ export interface IGithubAppInstallInput extends IGithubAppInstallInputCommon {
 	installation_id?: string;
 	setup_action?: string;
 	state?: string;
+	/** OAuth code GitHub appends to the post-install redirect when user authorization is requested during installation. */
+	code?: string;
+	/** Signed proof, issued by the post-install callback, that this flow may bind this installation. */
+	install_proof?: string;
+	/** Why the post-install callback issued no proof (chooses the refusal message only). */
+	install_check?: 'no_code' | 'not_entitled' | 'unverifiable';
 }
 
 // Input properties for OAuth app installation

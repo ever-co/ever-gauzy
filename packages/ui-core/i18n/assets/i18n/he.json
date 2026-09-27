@@ -2738,7 +2738,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -4985,7 +4988,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",

@@ -2772,7 +2772,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Щракнете или пуснете изображение за качване",
+		"SEARCH_EMPLOYEES": "Търсете служители по име или имейл",
+		"NO_MEMBERS": "Все още няма добавени членове"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -5022,7 +5025,9 @@
 		"NO_SCREENSHOT": "Няма екранна снимка",
 		"NO_SCREENSHOTS": "Няма екранни снимки",
 		"NO_RECORD_FOUND": "Не са намерени записи. Моля, изберете диапазон от дати, служител или проект.",
-		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)"
+		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)",
+		"NO_TIME_TRACKED": "Няма проследено време",
+		"MINUTES_TRACKED": "Проследени {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",

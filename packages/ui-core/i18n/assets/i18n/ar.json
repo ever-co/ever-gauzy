@@ -2698,7 +2698,10 @@
 		"ADDRESS": "عنوان",
 		"ADDRESS_2": "العنوان 2",
 		"MEMBERS": "أعضاء",
-		"BUDGET": "الميزانية"
+		"BUDGET": "الميزانية",
+		"PHOTO_HINT": "انقر أو أفلت صورة لرفعها",
+		"SEARCH_EMPLOYEES": "ابحث عن الموظفين بالاسم أو البريد الإلكتروني",
+		"NO_MEMBERS": "لم تتم إضافة أعضاء بعد"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "اللغات",
@@ -4958,7 +4961,9 @@
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
-		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة",
+		"NO_TIME_TRACKED": "لم يتم تتبع أي وقت",
+		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",

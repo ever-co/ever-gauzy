@@ -1619,6 +1619,15 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"INSTALLATION": {
+				"INSTALLING": "Installing. Please wait...",
+				"NOT_CONNECTED": "GitHub was not connected",
+				"DEFAULT_ERROR": "The GitHub installation could not be connected.",
+				"REQUESTED": "Installation requested",
+				"REQUESTED_DESCRIPTION": "An owner of the GitHub account must approve the installation before it can be connected.",
+				"UPDATED": "Your GitHub installation was updated",
+				"CLOSE_WINDOW": "You can close this window."
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",
@@ -3245,7 +3254,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Click or drop an image to upload",
+		"SEARCH_EMPLOYEES": "Search employees by name or email",
+		"NO_MEMBERS": "No members added yet"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -5576,7 +5588,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected",
+		"NO_TIME_TRACKED": "No time tracked",
+		"MINUTES_TRACKED": "{{ minutes }} min tracked"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

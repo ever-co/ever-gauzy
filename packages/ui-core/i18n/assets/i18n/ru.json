@@ -2744,7 +2744,10 @@
 		"ADDRESS": "Адрес",
 		"ADDRESS_2": "Адрес 2",
 		"MEMBERS": "Члены Комитета",
-		"BUDGET": "Бюджет"
+		"BUDGET": "Бюджет",
+		"PHOTO_HINT": "Нажмите или перетащите изображение для загрузки",
+		"SEARCH_EMPLOYEES": "Ищите сотрудников по имени или email",
+		"NO_MEMBERS": "Участники ещё не добавлены"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
@@ -4992,7 +4995,9 @@
 		"NO_SCREENSHOT": "Нет скриншота",
 		"NO_SCREENSHOTS": "Нет скриншотов",
 		"NO_RECORD_FOUND": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
-		"SCREEN_SELECTED": "Выбрано: {{count}}"
+		"SCREEN_SELECTED": "Выбрано: {{count}}",
+		"NO_TIME_TRACKED": "Время не отслежено",
+		"MINUTES_TRACKED": "Отслежено {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
