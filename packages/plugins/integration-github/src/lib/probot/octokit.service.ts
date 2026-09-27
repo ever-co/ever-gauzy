@@ -157,6 +157,28 @@ export class OctokitService implements OnModuleInit {
 	}
 
 	/**
+	 * How many repositories the App itself can reach in an installation (its installation token's view).
+	 * Used to prove a user is entitled to a whole installation before it is bound (GHSA-4rwq-65wh-45h4).
+	 *
+	 * @throws {Error} If the App is not configured or GitHub cannot be reached — callers fail closed.
+	 */
+	public async getInstallationRepositoryCount(installationId: number): Promise<number> {
+		if (!this.app) {
+			throw new Error('Octokit instance is not available.');
+		}
+		const octokit = await this.app.getInstallationOctokit(installationId);
+		const response = await octokit.request('GET /installation/repositories', {
+			per_page: 1,
+			headers: { 'X-GitHub-Api-Version': GITHUB_API_VERSION }
+		});
+		const total = Number((response as any)?.data?.total_count);
+		if (!Number.isFinite(total)) {
+			throw new Error('GitHub did not report the installation repository count');
+		}
+		return total;
+	}
+
+	/**
 	 * Fetch GitHub repository issues for a given installation, owner, and repository.
 	 *
 	 * @param {number} installationId - The installation ID for the GitHub app.

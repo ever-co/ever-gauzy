@@ -1,6 +1,6 @@
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
@@ -64,4 +64,22 @@ export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	@IsString()
 	@Matches(/^[a-f0-9]{64}$/, { message: 'state must be a valid GitHub installation nonce' })
 	readonly state: string;
+
+	/**
+	 * OAuth code GitHub issues with the post-install redirect when the App has "Request user
+	 * authorization (OAuth) during installation" enabled. It proves which GitHub user completed the
+	 * installation; without it nothing is bound (GHSA-4rwq-65wh-45h4).
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(256)
+	readonly code?: string;
+
+	/** Signature the post-install callback put on (state, code); ties the code to this flow. */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Matches(/^[a-f0-9]{64}$/, { message: 'code_binding must be a valid signature' })
+	readonly code_binding?: string;
 }

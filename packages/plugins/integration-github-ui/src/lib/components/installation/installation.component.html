@@ -6,5 +6,25 @@
         <h2 class="">Installing. Please wait...</h2>
       </div>
     }
+    @if (errorMessage) {
+      <div class="flex-col items-center justify-center">
+        <h2 class="">GitHub was not connected</h2>
+        <p>{{ errorMessage }}</p>
+        <p>You can close this window.</p>
+      </div>
+    }
+    @if (requestedOnGithub) {
+      <div class="flex-col items-center justify-center">
+        <h2 class="">Installation requested</h2>
+        <p>An owner of the GitHub account must approve the installation before it can be connected.</p>
+        <p>You can close this window.</p>
+      </div>
+    }
+    @if (updatedOnGithub) {
+      <div class="flex-col items-center justify-center">
+        <h2 class="">Your GitHub installation was updated</h2>
+        <p>You can close this window.</p>
+      </div>
+    }
   </nb-card-body>
 </nb-card>

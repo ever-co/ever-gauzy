@@ -5,6 +5,9 @@ import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard, Us
 import { GithubService } from './github.service';
 import { GithubOAuthStateService } from './github-oauth-state.service';
 import { GithubAppInstallDTO, GithubInstallStateDTO, GithubOAuthDTO } from './dto';
+import { GithubInstallationOwnershipService } from './github-installation-ownership.service';
+import { isGithubInstallCodeBound } from './github-install-code-binding';
+import { githubInstallationCodeMissingMessage, githubInstallationNotEntitledMessage } from './github-installation-ownership.messages';
 
 @ApiTags('GitHub Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -13,7 +16,8 @@ import { GithubAppInstallDTO, GithubInstallStateDTO, GithubOAuthDTO } from './dt
 export class GitHubController {
 	constructor(
 		private readonly _githubService: GithubService,
-		private readonly _githubOAuthStateService: GithubOAuthStateService
+		private readonly _githubOAuthStateService: GithubOAuthStateService,
+		private readonly _ownership: GithubInstallationOwnershipService
 	) {}
 
 	/**
@@ -80,6 +84,25 @@ export class GitHubController {
 					'GitHub installation state does not belong to the current tenant.',
 					HttpStatus.FORBIDDEN
 				);
+			}
+			// The nonce proves which TENANT started the flow, not which GitHub installation it may bind:
+			// the id in this body can be anyone's. The OAuth code GitHub issued with the redirect proves
+			// which GitHub user completed the installation, and it is checked HERE, in the authenticated
+			// request, so the GitHub user and the Gauzy session binding the result are the same browser
+			// (GHSA-4rwq-65wh-45h4).
+			if (!input.code) {
+				throw new HttpException(githubInstallationCodeMissingMessage(), HttpStatus.FORBIDDEN);
+			}
+			// The code must be the one GitHub returned WITH this flow's nonce — not a code lifted from
+			// someone else's post-install URL and replayed against a nonce of the caller's own tenant.
+			if (!isGithubInstallCodeBound(input.state, input.code, input.code_binding)) {
+				throw new HttpException(
+					'This GitHub authorization does not belong to this installation flow. Please connect GitHub again.',
+					HttpStatus.FORBIDDEN
+				);
+			}
+			if (!(await this._ownership.isEntitledToInstallation(input.code, String(input.installation_id)))) {
+				throw new HttpException(githubInstallationNotEntitledMessage(), HttpStatus.FORBIDDEN);
 			}
 			// Add the GitHub installation using the service, bound to the nonce's tenant/organization.
 			return await this._githubService.addGithubAppInstallation({
