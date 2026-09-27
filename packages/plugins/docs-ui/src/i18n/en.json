@@ -119,6 +119,10 @@
 			"ACTIONS": "Actions"
 		}
 	},
+	"ACTION_MENU": {
+		"OPEN_FOLDER": "Open folder",
+		"OPEN_EDITOR": "Open in editor"
+	},
 	"CARDS": {
 		"ITEMS_COUNT": "{{ count }} items",
 		"FLAT_RESULTS_HINT": "Showing matching documents from all folders",
