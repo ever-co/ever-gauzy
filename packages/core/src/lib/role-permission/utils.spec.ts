@@ -368,9 +368,15 @@ describe('RolePermissionUtils.migrateRolePermissions', () => {
 
 	describe('demo mode', () => {
 		/**
-		 * Demo deployments must never hand anyone the account- and data-deletion permissions, so the
-		 * reload grants every permission EXCEPT those two. This is the case CI used to run by accident
-		 * (through `.env.local`); here it runs on purpose, with its own expected count.
+		 * In demo mode the reload INSERTS every missing permission EXCEPT the account- and data-deletion
+		 * pair. This is the case CI used to run by accident (through `.env.local`); here it runs on
+		 * purpose, with its own expected count.
+		 *
+		 * Scope, stated so nobody reads more into it: the reload only ever adds rows, so it never removes
+		 * a deletion grant a tenant already holds, and these tests start from an empty `role_permission`
+		 * table. Demo tenants are kept free of those grants by the seed (`role-permission.seed.ts`) and
+		 * `RolePermissionService.updateRolesAndPermissions`, both of which skip the same pair in demo mode.
+		 * `PermissionGuard` itself has no demo-mode rule.
 		 */
 		let dataSource: DataSource;
 

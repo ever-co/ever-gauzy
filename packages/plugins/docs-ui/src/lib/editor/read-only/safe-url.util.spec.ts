@@ -17,30 +17,60 @@ const CR = ch(0x0d);
 const NUL = ch(0x00);
 
 /**
+ * Shortest batch of calls the linearity tests time. One call on the smaller input can take well under a
+ * millisecond, where timer noise is a large share of the reading, so calls are timed in batches and the
+ * batch doubled until it runs at least this long. Every reading is then far above the timer's noise.
+ */
+const MIN_BATCH_MS = 50;
+
+/**
+ * Absolute ceiling for ONE rejection of the smaller hostile input. The growth ratio below is the precise
+ * check; this one stops a validator that is linear but uniformly, grossly slow from passing it. The old
+ * tests asserted 100 ms and 200 ms here, and the slowest CI reading was 346 ms (two Jest projects side by
+ * side on a shared runner), so the ceiling sits about 9x above any machine seen so far. Catastrophic
+ * backtracking at these sizes runs for seconds to minutes.
+ */
+const MAX_MS_PER_CALL = 3_000;
+
+/**
+ * Time per call of `isAllowedUrl(value)`, which must reject the value every time: the median of three
+ * batches, each at least `MIN_BATCH_MS` long. Growing the batch also warms the JIT and the regexes before
+ * the three measured batches run.
+ */
+function msPerCall(value: string): number {
+	const timeBatch = (calls: number): number => {
+		let allowed = false;
+		const started = performance.now();
+		for (let i = 0; i < calls; i++) {
+			allowed = isAllowedUrl(value) || allowed;
+		}
+		const elapsed = performance.now() - started;
+		expect(allowed).toBe(false);
+		return elapsed;
+	};
+	let calls = 1;
+	while (timeBatch(calls) < MIN_BATCH_MS) {
+		calls *= 2;
+	}
+	const batches = [timeBatch(calls), timeBatch(calls), timeBatch(calls)].sort((a, b) => a - b);
+	return batches[1] / calls;
+}
+
+/**
  * How much slower `isAllowedUrl` gets when its input grows fourfold: ~4 for linear work, 16 or more
  * for the catastrophic backtracking the linearity tests guard against.
  *
- * Those tests used to assert an absolute wall-clock bound instead (`< 100 ms`, `< 200 ms`). That
- * measured the machine rather than the algorithm: in CI, with two Jest projects running side by side
- * on the shared runner pool, the linear entity case took 346 ms and failed on every run. A ratio
- * of the same code on the same machine moments apart cancels the machine out. Each size is timed
- * several times and the median taken, after a warm-up, so one GC pause cannot decide the result.
+ * Those tests used to assert only an absolute wall-clock bound (`< 100 ms`, `< 200 ms`). That measured
+ * the machine rather than the algorithm: in CI, with two Jest projects running side by side on the shared
+ * runner pool, the linear entity case took 346 ms and failed on every run. A ratio of the same code on the
+ * same machine moments apart cancels the machine out; `MAX_MS_PER_CALL` keeps a generous absolute bound.
+ * Both sizes are timed the same way (`msPerCall`), and the ratio is taken as measured, with no floor.
  */
 function growthFactor(hostileOfLength: (n: number) => string, n: number): number {
-	const median = (value: string): number => {
-		const samples: number[] = [];
-		for (let i = 0; i < 3; i++) {
-			const started = performance.now();
-			expect(isAllowedUrl(value)).toBe(false);
-			samples.push(performance.now() - started);
-		}
-		return samples.sort((a, b) => a - b)[1];
-	};
-	const small = hostileOfLength(n);
-	const large = hostileOfLength(4 * n);
-	median(small); // warm-up: JIT and regex compilation must not be billed to the small input
-	// The floor keeps a sub-millisecond small run from inflating the ratio with timer noise.
-	return median(large) / Math.max(median(small), 1);
+	const small = msPerCall(hostileOfLength(n));
+	const large = msPerCall(hostileOfLength(4 * n));
+	expect(small).toBeLessThan(MAX_MS_PER_CALL);
+	return large / small;
 }
 
 describe('isAllowedUrl', () => {
@@ -125,14 +155,14 @@ describe('isAllowedUrl', () => {
 
 		// Linear is ~4; quadratic would be ~16.
 		expect(growthFactor(hostile, 400_000)).toBeLessThan(10);
-	}, 30_000);
+	}, 60_000);
 
 	it('is linear on a long run of entities', () => {
 		const hostile = (n: number) => `${'&#106;'.repeat(n)}avascript:alert(1)`;
 
 		// Linear is ~4; quadratic would be ~16.
 		expect(growthFactor(hostile, 60_000)).toBeLessThan(10);
-	}, 30_000);
+	}, 60_000);
 });
 
 describe('stripUnsafeUrls', () => {

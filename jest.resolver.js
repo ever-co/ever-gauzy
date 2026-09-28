@@ -20,10 +20,10 @@
  */
 const nxResolver = require('@nx/jest/plugins/resolver');
 
-const ANGULAR_PACKAGE = /^@angular\//;
+const ANGULAR_SCOPE = '@angular/';
 
 module.exports = function resolve(request, options) {
-	if (ANGULAR_PACKAGE.test(request) && options.rootDir && options.basedir !== options.rootDir) {
+	if (request.startsWith(ANGULAR_SCOPE) && options.rootDir && options.basedir !== options.rootDir) {
 		try {
 			return nxResolver(request, { ...options, basedir: options.rootDir });
 		} catch {

@@ -1,4 +1,3 @@
-/* eslint-disable */
 // The `test` target in project.json has always pointed at this file, but it did not exist, so
 // `nx run plugin-integration-activepieces:test` failed before Jest started ("Can't find a root
 // directory while resolving a config file path") and turned the whole Unit Tests run red. The

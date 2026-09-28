@@ -42,7 +42,7 @@ const nxPreset = require('@nx/jest/preset').default;
 //     packages to their real source path (`packages/<pkg>/src/index.ts`), which has no
 //     `node_modules/` segment, so this pattern is never consulted for them.
 const transformIgnorePatterns = [
-	'node_modules/(?!.*\\.mjs$|(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios|@datorama|@ngneat|lodash-es|d3-[a-z-]+|internmap)/)'
+	String.raw`node_modules/(?!.*\.mjs$|(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios|@datorama|@ngneat|lodash-es|d3-[a-z-]+|internmap)/)`
 ];
 
 module.exports = {
