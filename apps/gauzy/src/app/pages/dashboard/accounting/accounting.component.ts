@@ -302,8 +302,10 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 					pointBackgroundColor: color,
 					pointBorderColor: this.palette.surface,
 					borderWidth: 1.5,
-					pointRadius: 0,
-					pointHoverRadius: 4,
+					// A dot on every day, ringed in the surface colour so it stands off the line
+					pointRadius: 3,
+					pointBorderWidth: 1,
+					pointHoverRadius: 5,
 					pointHoverBorderWidth: 2,
 					tension: 0.3,
 					fill: key === 'income' ? 'origin' : false
@@ -361,14 +363,26 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 			scales: {
 				x: {
 					...employeeChartCategoryScale(this.palette),
+					// A vertical line per day, in the value grid's colour, so each point lines up with its date
+					grid: { display: true, color: this.palette.axisLineColor, tickLength: 0 },
 					ticks: {
 						...employeeChartCategoryScale(this.palette).ticks,
 						maxRotation: 0,
 						autoSkipPadding: 16,
-						callback: (_value, index) => this.formatDate(this.chartData?.labels?.[index] as string, 'MMM D')
+						// Full dates, as the original chart showed; autoSkip drops labels that would collide
+						callback: (_value, index) => this.formatDate(this.chartData?.labels?.[index] as string, 'LL')
 					}
 				},
-				y: { ...employeeChartValueScale(this.palette), beginAtZero: true }
+				y: {
+					...employeeChartValueScale(this.palette),
+					beginAtZero: true,
+					ticks: {
+						...employeeChartValueScale(this.palette).ticks,
+						// Full figures with thousands separators (9,000 rather than 9K), as the original chart showed
+						maxTicksLimit: 10,
+						callback: (value: number | string) => Number(value).toLocaleString()
+					}
+				}
 			}
 		} as ChartConfiguration<'line'>['options'];
 	}
