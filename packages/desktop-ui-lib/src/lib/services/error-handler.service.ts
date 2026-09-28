@@ -51,8 +51,12 @@ export function provideGlobalErrorHandler(reportingErrorHandler: ErrorHandler): 
 		provide: ErrorHandler,
 		useFactory: (errorHandlerService: ErrorHandlerService): ErrorHandler => ({
 			handleError: (error: any) => {
-				reportingErrorHandler.handleError(error);
-				errorHandlerService.handleError(error);
+				try {
+					reportingErrorHandler.handleError(error);
+				} finally {
+					// ErrorClientService reads `error.message`, so a nullish value (e.g. `throw null`) must be wrapped
+					errorHandlerService.handleError(error ?? new Error(String(error)));
+				}
 			}
 		}),
 		deps: [ErrorHandlerService]
