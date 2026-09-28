@@ -1756,6 +1756,16 @@
 		"TIME_TRACKING": "时间跟踪",
 		"PROJECT_MANAGEMENT": "项目管理",
 		"EMPLOYEE_STATISTICS": "员工统计",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",
+			"OF_INCOME": "占收入的 {{ value }}%",
+			"MARGIN": "利润率 {{ value }}%",
+			"BREAKDOWN": "按员工统计收入",
+			"NO_DATA": "此期间没有财务活动",
+			"NO_DATA_HINT": "此日期范围内记录的收入和支出将显示在这里。",
+			"NO_EMPLOYEES": "此期间没有员工记录",
+			"SORT_BY": "按 {{ name }} 排序"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "请在上方的菜单中选择一个月份和员工。",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "未经身份验证的用户请插入文本。",
 		"CHARTS": {
