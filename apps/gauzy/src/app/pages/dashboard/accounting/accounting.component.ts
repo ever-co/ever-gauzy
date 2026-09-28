@@ -62,7 +62,7 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 	/** The chart's daily values as text, for the screen-reader table behind the canvas. */
 	public chartTable: { date: string; values: string[] }[] = [];
 
-	public sortKey: SortKey = 'income';
+	public sortKey: SortKey = 'expense';
 	public sortDirection: 'asc' | 'desc' = 'desc';
 	public sortedEmployees: IEmployeeStatisticSum[] = [];
 
@@ -396,6 +396,17 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 			// Names read naturally A→Z, amounts are most useful largest-first
 			this.sortDirection = key === 'name' ? 'asc' : 'desc';
 		}
+		this.sortEmployees();
+	}
+
+	/** The "sort by" select: picks the column, keeping its natural direction; re-picking it changes nothing. */
+	protected setSortKey(key: SortKey): void {
+		if (this.sortKey === key) return;
+		this.sortBy(key);
+	}
+
+	protected toggleSortDirection(): void {
+		this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
 		this.sortEmployees();
 	}
 

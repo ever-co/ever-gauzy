@@ -1764,7 +1764,10 @@
 			"NO_DATA": "Geen financiële activiteit in deze periode",
 			"NO_DATA_HINT": "Inkomsten en uitgaven voor deze periode verschijnen hier.",
 			"NO_EMPLOYEES": "Geen werknemersgegevens voor deze periode",
-			"SORT_BY": "Sorteren op {{ name }}"
+			"SORT_BY": "Sorteren op {{ name }}",
+			"SORT_LABEL": "Sorteren op",
+			"SORT_ASCENDING": "Oplopend",
+			"SORT_DESCENDING": "Aflopend"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Selecteer alstublieft een maand en medewerker uit het bovenstaande menu",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Voer tekst in voor niet-geregistreerde gebruikers.",

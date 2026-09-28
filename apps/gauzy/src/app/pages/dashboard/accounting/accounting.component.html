@@ -130,6 +130,39 @@
 				@if (employeeCount) {
 				<span class="panel-count">{{ employeeCount }}</span>
 				}
+				<!-- Same state as the column headings: either one re-sorts the rows. -->
+				<div class="panel-actions">
+					<span class="sort-label" aria-hidden="true">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate }}</span>
+					<nb-select
+						class="sort-select"
+						size="tiny"
+						[selected]="sortKey"
+						(selectedChange)="setSortKey($event)"
+						[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_LABEL' | translate"
+					>
+						@for (column of columns; track column.key) {
+						<nb-option [value]="column.key">{{ column.label | translate }}</nb-option>
+						}
+					</nb-select>
+					@let directionLabel =
+						(sortDirection === 'asc'
+							? 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_ASCENDING'
+							: 'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_DESCENDING'
+						) | translate;
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						status="basic"
+						type="button"
+						class="sort-direction"
+						[attr.aria-label]="directionLabel"
+						[nbTooltip]="directionLabel"
+						(click)="toggleSortDirection()"
+					>
+						<nb-icon [icon]="sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"></nb-icon>
+					</button>
+				</div>
 			</header>
 
 			<div class="breakdown" role="table" [class.breakdown--with-bonus]="organization?.bonusType">
@@ -149,27 +182,17 @@
 							[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_BY' | translate : { name: (column.label | translate) }"
 							(click)="sortBy(column.key)"
 						>
-							@if (column.key === 'name') {
-								{{ column.label | translate }}
-								<nb-icon
-									class="sort-icon"
-									aria-hidden="true"
-									[icon]="sortKey === column.key && sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"
-								></nb-icon>
-							} @else {
-								<!--
-									Arrow first on the money columns: they are right-aligned, so a trailing
-									arrow (invisible until hover) would hold the label off the figures' edge.
-								-->
-								<nb-icon
-									class="sort-icon"
-									aria-hidden="true"
-									[icon]="sortKey === column.key && sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"
-								></nb-icon>
+							@if (column.key !== 'name') {
 								<!-- Same colour as the series on the chart above, so a column can be matched to its line. -->
 								<span class="series-dot" [style.background-color]="seriesColors[column.key]" aria-hidden="true"></span>
-								{{ column.label | translate }}
 							}
+							{{ column.label | translate }}
+							<!-- Trailing arrow: every column is start-aligned, so it never holds the label off its edge. -->
+							<nb-icon
+								class="sort-icon"
+								aria-hidden="true"
+								[icon]="sortKey === column.key && sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"
+							></nb-icon>
 						</button>
 					</div>
 					}

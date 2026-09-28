@@ -1764,7 +1764,10 @@
 			"NO_DATA": "此期间没有财务活动",
 			"NO_DATA_HINT": "此日期范围内记录的收入和支出将显示在这里。",
 			"NO_EMPLOYEES": "此期间没有员工记录",
-			"SORT_BY": "按 {{ name }} 排序"
+			"SORT_BY": "按 {{ name }} 排序",
+			"SORT_LABEL": "排序方式",
+			"SORT_ASCENDING": "升序",
+			"SORT_DESCENDING": "降序"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "请在上方的菜单中选择一个月份和员工。",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "未经身份验证的用户请插入文本。",

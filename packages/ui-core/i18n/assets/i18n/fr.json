@@ -1765,7 +1765,10 @@
 			"NO_DATA": "Aucune activité financière sur cette période",
 			"NO_DATA_HINT": "Les revenus et dépenses enregistrés sur cette période apparaîtront ici.",
 			"NO_EMPLOYEES": "Aucun enregistrement d’employé pour cette période",
-			"SORT_BY": "Trier par {{ name }}"
+			"SORT_BY": "Trier par {{ name }}",
+			"SORT_LABEL": "Trier par",
+			"SORT_ASCENDING": "Croissant",
+			"SORT_DESCENDING": "Décroissant"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Veuillez sélectionner un mois et un employé dans le menu ci-dessus.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insérer un texte pour les utilisateurs non authentifiés.",

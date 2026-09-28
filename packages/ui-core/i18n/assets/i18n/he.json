@@ -1808,7 +1808,10 @@
 			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
 			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
 			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
-			"SORT_BY": "מיון לפי {{ name }}"
+			"SORT_BY": "מיון לפי {{ name }}",
+			"SORT_LABEL": "מיון לפי",
+			"SORT_ASCENDING": "סדר עולה",
+			"SORT_DESCENDING": "סדר יורד"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",

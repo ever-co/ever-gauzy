@@ -1763,7 +1763,10 @@
 			"NO_DATA": "لا يوجد نشاط مالي في هذه الفترة",
 			"NO_DATA_HINT": "ستظهر هنا الإيرادات والمصروفات المسجلة لهذا النطاق الزمني.",
 			"NO_EMPLOYEES": "لا توجد سجلات للموظفين في هذه الفترة",
-			"SORT_BY": "الترتيب حسب {{ name }}"
+			"SORT_BY": "الترتيب حسب {{ name }}",
+			"SORT_LABEL": "ترتيب حسب",
+			"SORT_ASCENDING": "تصاعدي",
+			"SORT_DESCENDING": "تنازلي"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "يرجى تحديد شهر وموظف من القائمة أعلاه",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "أدخل النص للمستخدمين غير المصادق عليهم",

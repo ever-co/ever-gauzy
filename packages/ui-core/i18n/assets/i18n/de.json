@@ -1764,7 +1764,10 @@
 			"NO_DATA": "Keine finanziellen Aktivitäten in diesem Zeitraum",
 			"NO_DATA_HINT": "Einnahmen und Ausgaben für diesen Zeitraum werden hier angezeigt.",
 			"NO_EMPLOYEES": "Keine Mitarbeiterdaten für diesen Zeitraum",
-			"SORT_BY": "Nach {{ name }} sortieren"
+			"SORT_BY": "Nach {{ name }} sortieren",
+			"SORT_LABEL": "Sortieren nach",
+			"SORT_ASCENDING": "Aufsteigend",
+			"SORT_DESCENDING": "Absteigend"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Bitte wählen Sie einen Monat und Mitarbeiter aus dem oben stehenden Menü aus.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Einfügen Sie Text für nicht authentifizierte Benutzer.",

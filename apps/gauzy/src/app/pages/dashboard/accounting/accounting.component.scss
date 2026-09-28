@@ -177,6 +177,24 @@ $weight-normal: 400; // labels, captions, chips
 	color: var(--gauzy-text-color-1);
 }
 
+.panel-actions {
+	display: flex;
+	align-items: center;
+	gap: $gap-xs;
+	margin-inline-start: auto;
+}
+
+.sort-label {
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+}
+
+.sort-select {
+	min-width: 8.5rem;
+}
+
 .panel-count {
 	display: inline-flex;
 	align-items: center;
@@ -230,15 +248,15 @@ $weight-normal: 400; // labels, captions, chips
 
 /*
  * Columns: rank · employee · the money columns · a chevron gutter. The rank and
- * chevron tracks are fixed so every figure column shares one right edge.
+ * chevron tracks are fixed so every figure column starts on the same line in every row.
  */
 .breakdown {
-	--breakdown-columns: 1.5rem minmax(11rem, 2fr) repeat(3, minmax(7rem, 1fr)) 1rem;
+	--breakdown-columns: 1.5rem minmax(10rem, 1.25fr) repeat(3, minmax(7rem, 1fr)) 1rem;
 
 	overflow-x: auto;
 
 	&--with-bonus {
-		--breakdown-columns: 1.5rem minmax(11rem, 2fr) repeat(4, minmax(7rem, 1fr)) 1rem;
+		--breakdown-columns: 1.5rem minmax(10rem, 1.25fr) repeat(4, minmax(7rem, 1fr)) 1rem;
 	}
 }
 
@@ -305,8 +323,8 @@ $weight-normal: 400; // labels, captions, chips
 	min-width: 0;
 
 	&.is-amount {
-		justify-content: flex-end;
-		text-align: end;
+		justify-content: flex-start;
+		text-align: start;
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
 	}
@@ -334,7 +352,7 @@ $weight-normal: 400; // labels, captions, chips
 /* Income over its share of the organization total. */
 .breakdown-cell.is-income {
 	flex-direction: column;
-	align-items: flex-end;
+	align-items: flex-start;
 	gap: 0.125rem;
 }
 
