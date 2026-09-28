@@ -91,6 +91,28 @@
 						[attr.aria-label]="'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate"
 					></canvas>
 				</div>
+				<!-- The canvas only names itself; this table gives screen readers each day's values. -->
+				<table class="visually-hidden">
+					<caption>{{ 'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate }}</caption>
+					<thead>
+						<tr>
+							<th scope="col">{{ 'SM_TABLE.DATE' | translate }}</th>
+							@for (item of legendItems; track item.label) {
+							<th scope="col">{{ item.label }}</th>
+							}
+						</tr>
+					</thead>
+					<tbody>
+						@for (day of chartTable; track day.date) {
+						<tr>
+							<th scope="row">{{ day.date }}</th>
+							@for (value of day.values; track $index) {
+							<td>{{ value }}</td>
+							}
+						</tr>
+						}
+					</tbody>
+				</table>
 				} @else if (!loading) {
 				<div class="acc-state">
 					<nb-icon icon="activity-outline" aria-hidden="true"></nb-icon>
@@ -177,20 +199,26 @@
 						<span class="amount">
 							{{ row.income || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
 						</span>
-						<!-- Share of the organization's income, so the ranking reads as proportion and not only as order. -->
+						<!--
+							Share of the organization's income, so the ranking reads as proportion and not only as order.
+							The label keeps the signed figure; only the bar is clamped to its track.
+						-->
+						@let share = incomeShare(row);
+						@if (share !== null) {
 						<span
 							class="share"
-							[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.OF_INCOME' | translate : { value: incomeShare(row).toFixed(0) }"
+							[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.OF_INCOME' | translate : { value: share.toFixed(0) }"
 						>
 							<span class="share-track" aria-hidden="true">
 								<span
 									class="share-fill"
-									[style.width.%]="incomeShare(row)"
+									[style.width.%]="shareWidth(share)"
 									[style.background-color]="seriesColors.income"
 								></span>
 							</span>
-							<span class="share-value" aria-hidden="true">{{ incomeShare(row).toFixed(0) }}%</span>
+							<span class="share-value" aria-hidden="true">{{ share.toFixed(0) }}%</span>
 						</span>
+						}
 					</div>
 					<div class="breakdown-cell is-amount is-muted" role="cell">
 						{{ row.expense || 0 | currency : organization?.currency | position : organization?.currencyPosition }}

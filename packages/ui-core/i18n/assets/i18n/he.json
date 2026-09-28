@@ -1801,14 +1801,14 @@
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"ACCOUNTING_VIEW": {
-			"EMPLOYEES_COUNT": "Across {{ count }} employees",
-			"OF_INCOME": "{{ value }}% of income",
-			"MARGIN": "{{ value }}% margin",
-			"BREAKDOWN": "Earnings by employee",
-			"NO_DATA": "No financial activity in this period",
-			"NO_DATA_HINT": "Income and expenses recorded for this date range will show up here.",
-			"NO_EMPLOYEES": "No employee records for this period",
-			"SORT_BY": "Sort by {{ name }}"
+			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
+			"OF_INCOME": "{{ value }}% מההכנסה",
+			"MARGIN": "שולי רווח של {{ value }}%",
+			"BREAKDOWN": "הכנסות לפי עובד",
+			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
+			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
+			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
+			"SORT_BY": "מיון לפי {{ name }}"
 		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",

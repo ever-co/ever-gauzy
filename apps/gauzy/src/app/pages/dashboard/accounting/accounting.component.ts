@@ -59,6 +59,8 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 	public chartOptions: ChartConfiguration<'line'>['options'];
 	public legendItems: IEmployeeChartLegendItem[] = [];
 	public hasChartData = false;
+	/** The chart's daily values as text, for the screen-reader table behind the canvas. */
+	public chartTable: { date: string; values: string[] }[] = [];
 
 	public sortKey: SortKey = 'income';
 	public sortDirection: 'asc' | 'desc' = 'desc';
@@ -163,7 +165,8 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 		// Subscribe to the onLangChange event from translateService
 		this.translateService.onLangChange
 			.pipe(
-				// Perform a side effect: generate charts when the language changes
+				// Regenerate charts when the language changes; `formatDate` reads the new language,
+				// so the axis, tooltip and screen-reader table dates follow it
 				tap(() => this.generateCharts()),
 				// Ensure the subscription is automatically unsubscribed when the component is destroyed
 				untilDestroyed(this)
@@ -193,11 +196,12 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 
 	/**
 	 * `part` as a percentage of total income, or `null` when there is no income to
-	 * compare against (a ratio of zero would read as a real figure).
+	 * compare against (a ratio of zero would read as a real figure). Non-positive income
+	 * is rejected too: a loss divided by negative income would read as a positive margin.
 	 */
 	protected percentOfIncome(part: number): string | null {
 		const income = this.totals.income;
-		if (!income) return null;
+		if (!(income > 0)) return null;
 		const value = (part / income) * 100;
 		if (value === 0) return '0';
 		return Math.abs(value) >= 10 ? value.toFixed(0) : value.toFixed(1);
@@ -280,6 +284,11 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 			label: this.getTranslation(label),
 			color,
 			amount: this.formatCurrency(this.totals[key])
+		}));
+
+		this.chartTable = points.map((point) => ({
+			date: this.formatDate(point.dates, 'LL'),
+			values: series.map(({ key }) => this.formatCurrency(Number(point.statistics?.[key]) || 0))
 		}));
 
 		this.chartData = {
@@ -393,11 +402,21 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 		return columns;
 	}
 
-	/** An employee's share of the organization's income, 0–100, for the bar under their income. */
-	protected incomeShare(row: IEmployeeStatisticSum): number {
+	/**
+	 * An employee's signed share of the organization's income, as a percentage, or `null`
+	 * when total income is not positive. Income accepts negative entries, so a share can be
+	 * below 0, or above 100 when other employees carry negative income.
+	 */
+	protected incomeShare(row: IEmployeeStatisticSum): number | null {
 		const income = this.totals.income;
-		if (!income || !row.income) return 0;
-		return Math.max(0, Math.min(100, (row.income / income) * 100));
+		if (!(income > 0)) return null;
+		if (!row.income) return 0;
+		return (row.income / income) * 100;
+	}
+
+	/** Bar width for a share: the signed figure is for the label, the bar stays inside its track. */
+	protected shareWidth(share: number): number {
+		return Math.max(0, Math.min(100, share));
 	}
 
 	private sortEmployees(): void {
@@ -430,7 +449,11 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 		// and shift every label back a day west of Greenwich.
 		const iso = moment(label, moment.ISO_8601, true);
 		const date = iso.isValid() ? iso : moment(new Date(label));
-		return date.isValid() ? date.format(format) : label;
+		if (!date.isValid()) return label;
+		// Format in the active UI language. Moment's global locale is only set once, from the
+		// default language, and an unknown locale key leaves this instance on that global one.
+		const lang = this.translateService.getCurrentLang();
+		return (lang ? date.locale(lang) : date).format(format);
 	}
 
 	/**

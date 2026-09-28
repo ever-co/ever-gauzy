@@ -136,9 +136,8 @@ $weight-normal: 400; // labels, captions, chips
 	letter-spacing: -0.01em;
 	color: var(--gauzy-text-color-1);
 	font-variant-numeric: tabular-nums;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	// Wrap rather than ellipsis: a narrow tile must still show every digit
+	overflow-wrap: anywhere;
 }
 
 .kpi-meta {
@@ -212,6 +211,19 @@ $weight-normal: 400; // labels, captions, chips
 	position: relative;
 	flex: 1 1 auto;
 	min-height: 0;
+}
+
+/* Screen-reader only: the chart's daily values as a table. */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
 }
 
 /* ── Breakdown table ─────────────────────────────────────────────────────── */
