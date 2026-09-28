@@ -54,7 +54,6 @@ import { TaskSettingsComponent } from './components/task/task-settings/task-sett
 import { ProjectViewComponent } from './components/task/task-settings/project-view/project-view.component';
 import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
-import { TaskViewComponent } from './components/task-view/task-view.component';
 
 @NgModule({
 	declarations: [
@@ -64,8 +63,7 @@ import { TaskViewComponent } from './components/task-view/task-view.component';
 		TaskSettingsComponent,
 		ProjectViewComponent,
 		TasksSprintViewComponent,
-		SprintTaskComponent,
-		TaskViewComponent
+		SprintTaskComponent
 	],
 	imports: [
 		NbTooltipModule,
