@@ -1645,6 +1645,19 @@
 		"TIME_TRACKING": "crwdns3194:0crwdne3194:0",
 		"PROJECT_MANAGEMENT": "crwdns3196:0crwdne3196:0",
 		"EMPLOYEE_STATISTICS": "crwdns194:0crwdne194:0",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "I kin lutic {{ count }}",
+			"OF_INCOME": "{{ value }}% me lim ma odonyo",
+			"MARGIN": "{{ value }}% me magoba",
+			"BREAKDOWN": "Lim ma lutic gunongo",
+			"NO_DATA": "Pe tye tic me lim i kare man",
+			"NO_DATA_HINT": "Lim ma odonyo ki lim ma kiketo ma kicoyo i kare man binen kany.",
+			"NO_EMPLOYEES": "Pe tye lutic ma kicoyo i kare man",
+			"SORT_BY": "Yub ki {{ name }}",
+			"SORT_LABEL": "Yub ki",
+			"SORT_ASCENDING": "Ma medde malo",
+			"SORT_DESCENDING": "Ma dok piny"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "crwdns196:0crwdne196:0",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "crwdns2633:0crwdne2633:0",
 		"CHARTS": {

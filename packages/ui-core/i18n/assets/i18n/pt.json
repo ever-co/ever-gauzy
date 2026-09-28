@@ -1756,6 +1756,19 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"EMPLOYEE_STATISTICS": "Estatísticas dos funcionários",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
+			"OF_INCOME": "{{ value }}% da receita",
+			"MARGIN": "Margem de {{ value }}%",
+			"BREAKDOWN": "Receita por funcionário",
+			"NO_DATA": "Nenhuma atividade financeira neste período",
+			"NO_DATA_HINT": "As receitas e despesas registradas neste período aparecerão aqui.",
+			"NO_EMPLOYEES": "Nenhum registro de funcionário neste período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor, selecione um mês e um funcionário no menu acima.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insira texto para usuários não autenticados.",
 		"CHARTS": {
