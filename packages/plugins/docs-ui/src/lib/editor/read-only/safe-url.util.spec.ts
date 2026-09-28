@@ -1,3 +1,4 @@
+// cspell:ignore avascript msdt - the tail of the entity-encoded "javascript:" payloads below, and the ms-msdt: scheme
 /**
  * The URL-scheme allowlist itself.
  *

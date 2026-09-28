@@ -10,7 +10,7 @@
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		// Same mappings as tsconfig.lib.json. tsconfig.json points `@gauzy/ui-config` at the BUILT
-		// `dist/packages/ui-config`, which a test run does not have, and Nx's Jest resolver falls back
+		// `dist/packages/ui-config`, which a test run does not have, and the Nx Jest resolver falls back
 		// to these paths for workspace packages — so 16 ui-core suites failed with "Cannot find module
 		// '@gauzy/ui-config'" before a single test ran.
 		"baseUrl": "../..",
