@@ -2,8 +2,10 @@ import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { environment as env } from '@gauzy/config';
 import { PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
-import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { ID, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { Cache } from 'cache-manager';
 import { RequestContext } from './../../core/context';
+import { RolePermissionService } from '../../role-permission/role-permission.service';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { TenantPermissionGuard } from './tenant-permission.guard';
 
@@ -21,6 +23,9 @@ jest.mock('../../role-permission/role-permission.service', () => ({ RolePermissi
 const TENANT_ID = '1f3c5a7e-0000-4000-8000-000000000001';
 const OTHER_TENANT_ID = '1f3c5a7e-0000-4000-8000-000000000002';
 const ROLE_ID = '1f3c5a7e-0000-4000-8000-0000000000aa';
+
+/** The one environment switch these tests flip; restored after each test. */
+const superAdminSwitch = env as unknown as { allowSuperAdminRole?: boolean };
 
 class ControllerStub {}
 
@@ -40,17 +45,20 @@ function contextFor(
 	request: RequestShape & { headerTenantId?: string; rawHeaderName?: string },
 	metadata: { handler?: Record<string, unknown>; controller?: Record<string, unknown> } = {}
 ): ExecutionContext {
-	const handler = function handler() {};
+	// A fresh function and class per context, so metadata defined for one test never leaks into another.
+	const handler = function handler(): void {
+		return undefined;
+	};
 	class Controller extends ControllerStub {}
 	for (const [key, value] of Object.entries(metadata.handler ?? {})) Reflect.defineMetadata(key, value, handler);
 	for (const [key, value] of Object.entries(metadata.controller ?? {}))
 		Reflect.defineMetadata(key, value, Controller);
 
-	const headers: Record<string, string> = { ...(request.headers ?? {}) };
-	const rawHeaders: string[] = [...(request.rawHeaders ?? [])];
+	let headers: Record<string, string> = { ...(request.headers ?? {}) };
+	let rawHeaders: string[] = [...(request.rawHeaders ?? [])];
 	if (request.headerTenantId !== undefined) {
-		headers['tenant-id'] = request.headerTenantId;
-		rawHeaders.push(request.rawHeaderName ?? 'tenant-id', request.headerTenantId);
+		headers = { ...headers, 'tenant-id': request.headerTenantId };
+		rawHeaders = [...rawHeaders, request.rawHeaderName ?? 'tenant-id', request.headerTenantId];
 	}
 
 	const httpRequest = {
@@ -69,11 +77,12 @@ function contextFor(
 }
 
 function actAs(options: { tenantId?: string | null; roleId?: string | null; superAdmin?: boolean } = {}) {
+	// `null` stands for "no tenant / no role in the token"; the accessors are typed as returning an ID.
 	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(
-		(options.tenantId === undefined ? TENANT_ID : options.tenantId) as any
+		(options.tenantId === undefined ? TENANT_ID : options.tenantId) as unknown as ID
 	);
 	jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(
-		(options.roleId === undefined ? ROLE_ID : options.roleId) as any
+		(options.roleId === undefined ? ROLE_ID : options.roleId) as unknown as ID
 	);
 	jest.spyOn(RequestContext, 'hasRoles').mockImplementation(
 		(roles: RolesEnum[]) => !!options.superAdmin && roles.includes(RolesEnum.SUPER_ADMIN)
@@ -216,7 +225,7 @@ describe('TenantPermissionGuard', () => {
 	let cacheManager: { get: jest.Mock; set: jest.Mock };
 	let rolePermissionService: { checkRolePermission: jest.Mock };
 	let guard: TenantPermissionGuard;
-	let previousAllowSuperAdmin: unknown;
+	let previousAllowSuperAdmin: boolean | undefined;
 
 	beforeEach(() => {
 		cache = new Map();
@@ -225,12 +234,16 @@ describe('TenantPermissionGuard', () => {
 			set: jest.fn(async (key: string, value: unknown) => void cache.set(key, value))
 		};
 		rolePermissionService = { checkRolePermission: jest.fn() };
-		guard = new TenantPermissionGuard(cacheManager as any, new Reflector(), rolePermissionService as any);
-		previousAllowSuperAdmin = (env as any).allowSuperAdminRole;
+		guard = new TenantPermissionGuard(
+			cacheManager as unknown as Cache,
+			new Reflector(),
+			rolePermissionService as unknown as RolePermissionService
+		);
+		previousAllowSuperAdmin = superAdminSwitch.allowSuperAdminRole;
 	});
 
 	afterEach(() => {
-		(env as any).allowSuperAdminRole = previousAllowSuperAdmin;
+		superAdminSwitch.allowSuperAdminRole = previousAllowSuperAdmin;
 	});
 
 	const withPermissions = (handler?: PermissionsEnum[], controller?: PermissionsEnum[]) => ({
@@ -264,7 +277,7 @@ describe('TenantPermissionGuard', () => {
 	});
 
 	it('denies when the tenant check fails, before permissions are consulted — even for a super admin', async () => {
-		(env as any).allowSuperAdminRole = true;
+		superAdminSwitch.allowSuperAdminRole = true;
 		actAs({ superAdmin: true });
 		const context = contextFor(
 			{ headerTenantId: OTHER_TENANT_ID },
@@ -282,7 +295,7 @@ describe('TenantPermissionGuard', () => {
 
 	describe('super admin', () => {
 		it('skips the permission check while `allowSuperAdminRole` is on', async () => {
-			(env as any).allowSuperAdminRole = true;
+			superAdminSwitch.allowSuperAdminRole = true;
 			actAs({ superAdmin: true });
 			const context = contextFor(
 				{ headerTenantId: TENANT_ID },
@@ -293,7 +306,7 @@ describe('TenantPermissionGuard', () => {
 		});
 
 		it('is checked like any other role while `allowSuperAdminRole` is off', async () => {
-			(env as any).allowSuperAdminRole = false;
+			superAdminSwitch.allowSuperAdminRole = false;
 			actAs({ superAdmin: true });
 			rolePermissionService.checkRolePermission.mockResolvedValue(false);
 			const context = contextFor(
