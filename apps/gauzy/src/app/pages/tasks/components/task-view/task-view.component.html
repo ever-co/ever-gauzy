@@ -1,0 +1,246 @@
+@if (task) {
+	<article class="task-view">
+		<!-- Header: project / key, title, status -->
+		<header class="task-header">
+			<div class="task-crumbs">
+				@if (task.project?.name) {
+					<span class="task-project">
+						@if (task.project.imageUrl) {
+							<img class="task-project-logo" [src]="task.project.imageUrl" alt="" />
+						} @else {
+							<nb-icon class="task-project-icon" icon="folder-outline"></nb-icon>
+						}
+						<span class="task-project-name">{{ task.project.name }}</span>
+					</span>
+					@if (taskNumber) {
+						<nb-icon class="task-crumb-sep" icon="chevron-right-outline"></nb-icon>
+					}
+				}
+				@if (taskNumber) {
+					<span class="task-key">{{ taskNumber | hash }}</span>
+				}
+			</div>
+
+			<h2 class="task-title">{{ task.title }}</h2>
+
+			@if (status) {
+				<span class="task-status" [ngClass]="'tone-' + status.tone" [style.--pill-color]="status.color">
+					{{ status.text }}
+				</span>
+			}
+		</header>
+
+		<!-- Details: collapsible, label / value rows like an issue tracker sidebar -->
+		<section class="task-panel" [class.is-collapsed]="!detailsOpen">
+			<button
+				type="button"
+				class="task-panel-header"
+				(click)="detailsOpen = !detailsOpen"
+				[attr.aria-expanded]="detailsOpen"
+			>
+				<span class="task-panel-title">
+					<nb-icon icon="info-outline"></nb-icon>
+					{{ 'BUTTONS.DETAILS' | translate }}
+				</span>
+				<nb-icon class="task-panel-chevron" icon="chevron-down-outline"></nb-icon>
+			</button>
+
+			@if (detailsOpen) {
+				<!-- People -->
+				<dl class="task-fields">
+					<div class="task-field">
+						<dt><nb-icon icon="people-outline"></nb-icon>{{ 'TASKS_PAGE.TASK_MEMBERS' | translate }}</dt>
+						<dd>
+							@if (assignees.length) {
+								<ul class="task-people">
+									@for (person of assignees; track person.id || person.name) {
+										<li class="task-person-chip" [title]="person.name">
+											<ng-container
+												*ngTemplateOutlet="avatar; context: { $implicit: person }"
+											></ng-container>
+											<span class="task-person-name">{{ person.name }}</span>
+										</li>
+									}
+								</ul>
+							} @else {
+								<span class="task-person">
+									<span class="task-avatar task-avatar-empty"><nb-icon icon="person-outline"></nb-icon></span>
+									<span class="task-empty">{{ 'SM_TABLE.NONE' | translate }}</span>
+								</span>
+							}
+						</dd>
+					</div>
+
+					@if (teams.length) {
+						<div class="task-field">
+							<dt><nb-icon icon="briefcase-outline"></nb-icon>{{ 'TASKS_PAGE.TASK_TEAMS' | translate }}</dt>
+							<dd class="task-wrap">
+								@for (team of teams; track team.name) {
+									<span class="task-tag">
+										{{ team.name }}
+										@if (team.count) {
+											<span class="task-tag-count">{{ team.count }}</span>
+										}
+									</span>
+								}
+							</dd>
+						</div>
+					}
+
+					@if (reporter) {
+						<div class="task-field">
+							<dt><nb-icon icon="edit-2-outline"></nb-icon>{{ 'TASKS_PAGE.TASKS_CREATOR' | translate }}</dt>
+							<dd>
+								<span class="task-person">
+									<ng-container *ngTemplateOutlet="avatar; context: { $implicit: reporter }"></ng-container>
+									<span class="task-person-name">{{ reporter.name }}</span>
+								</span>
+							</dd>
+						</div>
+					}
+				</dl>
+
+				<!-- Planning -->
+				<dl class="task-fields">
+					@if (status) {
+						<div class="task-field">
+							<dt><nb-icon icon="checkmark-circle-2-outline"></nb-icon>{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}</dt>
+							<dd>
+								<span class="task-dot" [ngClass]="'tone-' + status.tone" [style.--pill-color]="status.color"></span>
+								<span class="task-capitalize">{{ status.text }}</span>
+							</dd>
+						</div>
+					}
+
+					<div class="task-field">
+						<dt><nb-icon icon="flag-outline"></nb-icon>{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}</dt>
+						<dd>
+							@if (priority) {
+								<span
+									class="task-inline"
+									[ngClass]="'tone-' + priority.tone"
+									[style.--pill-color]="priority.color"
+								>
+									<nb-icon class="task-inline-icon" [icon]="priority.icon"></nb-icon>
+									<span class="task-capitalize">{{ priority.text }}</span>
+								</span>
+							} @else {
+								<span class="task-empty">{{ 'SM_TABLE.NONE' | translate }}</span>
+							}
+						</dd>
+					</div>
+
+					@if (size) {
+						<div class="task-field">
+							<dt><nb-icon icon="maximize-outline"></nb-icon>{{ 'TASKS_PAGE.TASK_SIZE' | translate }}</dt>
+							<dd><span class="task-capitalize">{{ size.text }}</span></dd>
+						</div>
+					}
+
+					<div class="task-field">
+						<dt><nb-icon icon="calendar-outline"></nb-icon>{{ 'TASKS_PAGE.DUE_DATE' | translate }}</dt>
+						<dd>
+							@if (task.dueDate) {
+								<span class="task-inline" [class.is-overdue]="isOverdue">
+									{{ task.dueDate | dateFormat }}
+									@if (isOverdue) {
+										<nb-icon class="task-inline-icon" icon="alert-circle-outline"></nb-icon>
+									}
+								</span>
+							} @else {
+								<span class="task-empty">{{ 'SM_TABLE.NONE' | translate }}</span>
+							}
+						</dd>
+					</div>
+
+					@if (estimate) {
+						<div class="task-field">
+							<dt><nb-icon icon="clock-outline"></nb-icon>{{ 'TASKS_PAGE.ESTIMATE' | translate }}</dt>
+							<dd>{{ estimate }}</dd>
+						</div>
+					}
+
+					@if (task.organizationSprint?.name) {
+						<div class="task-field">
+							<dt><nb-icon icon="flash-outline"></nb-icon>{{ 'SPRINTS_PAGE.SPRINT' | translate }}</dt>
+							<dd>{{ task.organizationSprint.name }}</dd>
+						</div>
+					}
+
+					@if (task.project?.name) {
+						<div class="task-field">
+							<dt><nb-icon icon="folder-outline"></nb-icon>{{ 'TASKS_PAGE.TASKS_PROJECT' | translate }}</dt>
+							<dd class="task-ellipsis">{{ task.project.name }}</dd>
+						</div>
+					}
+
+					@if (parentNumber) {
+						<div class="task-field">
+							<dt><nb-icon icon="corner-left-up-outline"></nb-icon>{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</dt>
+							<dd class="task-parent">
+								<span class="task-key">{{ parentNumber | hash }}</span>
+								@if (parentTitle) {
+									<span class="task-ellipsis">{{ parentTitle }}</span>
+								}
+							</dd>
+						</div>
+					}
+
+					<div class="task-field">
+						<dt><nb-icon icon="pricetags-outline"></nb-icon>{{ 'SM_TABLE.TAGS' | translate }}</dt>
+						<dd>
+							@if (tagsHost) {
+								<ga-only-tags [rowData]="tagsHost"></ga-only-tags>
+							} @else {
+								<span class="task-empty">{{ 'SM_TABLE.NONE' | translate }}</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			}
+		</section>
+
+		<!-- Description -->
+		<section class="task-section">
+			<h3 class="task-section-title">
+				<nb-icon icon="file-text-outline"></nb-icon>
+				{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}
+			</h3>
+			@if (descriptionHtml) {
+				<div class="task-markdown" [innerHTML]="descriptionHtml"></div>
+			} @else {
+				<p class="task-empty">{{ 'GOALS_PAGE.NO_DESCRIPTION' | translate }}</p>
+			}
+		</section>
+
+		@if (task.createdAt) {
+			<footer class="task-meta">
+				<span>
+					<nb-icon icon="plus-circle-outline"></nb-icon>
+					{{ 'SM_TABLE.CREATED_AT' | translate }} {{ task.createdAt | dateTimeFormat }}
+				</span>
+				@if (task.updatedAt) {
+					<span>
+						<nb-icon icon="refresh-outline"></nb-icon>
+						{{ 'SM_TABLE.LAST_UPDATED' | translate }} {{ task.updatedAt | dateTimeFormat }}
+					</span>
+				}
+			</footer>
+		}
+	</article>
+}
+
+<ng-template #avatar let-person>
+	@if (person.imageUrl && !brokenImages.has(person.imageUrl)) {
+		<img
+			class="task-avatar"
+			[src]="person.imageUrl"
+			[alt]="person.name"
+			(error)="brokenImages.add(person.imageUrl)"
+		/>
+	} @else {
+		<span class="task-avatar task-avatar-initials" [style.--avatar-hue]="person.hue" aria-hidden="true">{{
+			person.initials
+		}}</span>
+	}
+</ng-template>
