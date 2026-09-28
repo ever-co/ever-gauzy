@@ -8,7 +8,7 @@
 		// Matches ui-core / docs-ui / videos-ui. The app default-imports CommonJS packages (e.g.
 		// `import AnnotationPlugin from 'chartjs-plugin-annotation'` in ui-core's line chart), which the
 		// bundler resolves; without interop ts-jest reads an undefined `.default` and Chart.register threw.
-		// The namespace-imported callables (moment, randomcolor) are covered by the root jest.interop.js.
+		// The namespace-imported functions (moment, randomcolor) are covered by the root jest.interop.js.
 		"isolatedModules": true,
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true

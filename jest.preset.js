@@ -48,7 +48,7 @@ const transformIgnorePatterns = [
 module.exports = {
 	...nxPreset,
 	transformIgnorePatterns,
-	// Nx's resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
+	// The Nx resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
 	resolver: require.resolve('./jest.resolver.js'),
 	// ngx-daterangepicker-material (ui-core's date-range selector) imports `dayjs/esm` and its plugins
 	// from an `.mjs` bundle. Transforming that ESM tree is not enough: an `.mjs` importer gets Node's

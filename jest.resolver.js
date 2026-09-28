@@ -1,5 +1,5 @@
 /**
- * Jest resolver for the whole workspace (wired in `jest.preset.js`): Nx's resolver, plus ONE rule —
+ * Jest resolver for the whole workspace (wired in `jest.preset.js`): the Nx resolver, plus ONE rule —
  * every `@angular/*` import inside a Jest project resolves to the SAME copy of Angular.
  *
  * Why: the root `package.json` sets `workspaces.nohoist: ["**\/@angular*\/**"]`, so every workspace
@@ -16,7 +16,7 @@
  *
  * The fix resolves `@angular/*` from the Jest project's `rootDir` whoever asks: the project's own
  * copy when it has one (the one it builds against), otherwise the next copy up the tree (the root
- * one). One project, one Angular. Anything else goes through Nx's resolver unchanged.
+ * one). One project, one Angular. Anything else goes through the Nx resolver unchanged.
  */
 const nxResolver = require('@nx/jest/plugins/resolver');
 
