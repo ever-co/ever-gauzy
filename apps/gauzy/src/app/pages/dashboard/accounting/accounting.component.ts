@@ -7,7 +7,16 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { ChartConfiguration, ChartDataset, ScriptableContext, TooltipItem } from 'chart.js';
+import {
+	ChartConfiguration,
+	ChartDataset,
+	FontSpec,
+	Scale,
+	ScriptableContext,
+	Tick,
+	TooltipItem
+} from 'chart.js';
+import { toFont } from 'chart.js/helpers';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
@@ -83,6 +92,8 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 	 * `gauzy-chart-*` theme tokens so the canvas follows the active theme.
 	 */
 	private palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
+	/** Every how-many dates the x-axis labels, worked out once per layout on the first tick. */
+	private dateLabelStep = 1;
 	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
 	private readonly _currencyPositionPipe = inject(CurrencyPositionPipe);
 	private readonly _currencyPipe = inject(CurrencyPipe);
@@ -368,9 +379,10 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 					ticks: {
 						...employeeChartCategoryScale(this.palette).ticks,
 						maxRotation: 0,
-						autoSkipPadding: 16,
-						// Full dates, as the original chart showed; autoSkip drops labels that would collide
-						callback: (_value, index) => this.formatDate(this.chartData?.labels?.[index] as string, 'LL')
+						// Off: a skipped tick loses its grid line too. Every date keeps its tick and
+						// line, and `dateTick` blanks only the labels that would collide.
+						autoSkip: false,
+						callback: this.dateTickCallback()
 					}
 				},
 				y: {
@@ -380,11 +392,58 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 						...employeeChartValueScale(this.palette).ticks,
 						// Full figures with thousands separators (9,000 rather than 9K), as the original chart showed
 						maxTicksLimit: 10,
-						callback: (value: number | string) => Number(value).toLocaleString()
+						callback: (value: number | string) => this.formatNumber(Number(value))
 					}
 				}
 			}
 		} as ChartConfiguration<'line'>['options'];
+	}
+
+	/**
+	 * The x-axis tick callback. A `function`, not an arrow, because Chart.js passes the
+	 * scale (and so its width) as `this`; the component comes in through the closure.
+	 */
+	private dateTickCallback(): (this: Scale, value: string | number, index: number, ticks: Tick[]) => string {
+		const dateTick = (scale: Scale, index: number, count: number) => this.dateTick(scale, index, count);
+		return function (this: Scale, _value: string | number, index: number, ticks: Tick[]) {
+			return dateTick(this, index, ticks.length);
+		};
+	}
+
+	/**
+	 * The full date for x tick `index`, or '' on dates skipped to keep labels apart. Empty
+	 * string, never null or undefined: Chart.js drops the grid line of a nullish label.
+	 */
+	private dateTick(scale: Scale, index: number, count: number): string {
+		if (index === 0) this.dateLabelStep = this.measureDateLabelStep(scale, count);
+		if (index % this.dateLabelStep !== 0) return '';
+		return this.formatDate(this.chartData?.labels?.[index] as string, 'LL');
+	}
+
+	/** How many dates one label needs: the widest label, plus a gap, against the room per date. */
+	private measureDateLabelStep(scale: Scale, count: number): number {
+		const labels = (this.chartData?.labels || []) as string[];
+		if (!scale.width || count < 2 || !labels.length) return 1;
+
+		const { ctx } = scale;
+		ctx.save();
+		// The shared category scale sets a plain font object; toFont fills the family from the defaults
+		ctx.font = toFont(scale.options.ticks.font as Partial<FontSpec>).string;
+		const widest = Math.max(...labels.map((label) => ctx.measureText(this.formatDate(label, 'LL')).width));
+		ctx.restore();
+
+		const gap = 16;
+		return Math.max(1, Math.ceil(((widest + gap) * count) / scale.width));
+	}
+
+	/** A number with the active UI language's separators (9.000 in German), not the browser's. */
+	private formatNumber(value: number): string {
+		try {
+			return value.toLocaleString(this.translateService.getCurrentLang() || undefined);
+		} catch {
+			// An unrecognised language tag makes Intl throw; fall back to the browser's locale
+			return value.toLocaleString();
+		}
 	}
 
 	/** Sorts the employee table; clicking the active column flips its direction. */

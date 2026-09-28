@@ -159,11 +159,14 @@ $weight-normal: 400; // labels, captions, chips
 	overflow: hidden;
 }
 
+// Wraps on narrow panels: `.panel` clips overflow, so a header that could not wrap
+// would hide the sort controls instead of moving them to a second line.
 .panel-header {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: $gap-sm;
-	padding: 0 $gap-md;
+	gap: $gap-xs $gap-sm;
+	padding: $gap-xs $gap-md;
 	min-height: $panel-header-height;
 	border-bottom: 1px solid var(--gauzy-border-default-color);
 }
@@ -179,8 +182,10 @@ $weight-normal: 400; // labels, captions, chips
 
 .panel-actions {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: $gap-xs;
+	min-width: 0;
 	margin-inline-start: auto;
 }
 
