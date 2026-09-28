@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, ErrorHandler } from '@angular/core';
+import { Injectable, ErrorHandler, Provider } from '@angular/core';
 import { ToastrNotificationService } from './toastr-notification.service';
 import { ErrorClientService } from './error-client.service';
 import { ErrorServerService } from './error-server.service';
@@ -40,4 +40,21 @@ export class ErrorHandlerService implements ErrorHandler {
 		this._toastrNotifierService.error(message);
 		console.error(error);
 	}
+}
+
+/**
+ * Provides the single app-wide ErrorHandler. Angular only keeps the last ErrorHandler provider,
+ * so this forwards each uncaught error to the given reporting handler (e.g. Sentry) and then to ErrorHandlerService.
+ */
+export function provideGlobalErrorHandler(reportingErrorHandler: ErrorHandler): Provider {
+	return {
+		provide: ErrorHandler,
+		useFactory: (errorHandlerService: ErrorHandlerService): ErrorHandler => ({
+			handleError: (error: any) => {
+				reportingErrorHandler.handleError(error);
+				errorHandlerService.handleError(error);
+			}
+		}),
+		deps: [ErrorHandlerService]
+	};
 }

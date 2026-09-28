@@ -1,6 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
-	ErrorHandler,
 	enableProdMode,
 	importProvidersFrom,
 	inject,
@@ -20,7 +19,6 @@ import {
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
-	ErrorHandlerService,
 	GAUZY_ENV,
 	GauzyStorageService,
 	LanguageInterceptor,
@@ -38,6 +36,7 @@ import {
 	TenantInterceptor,
 	TimeoutInterceptor,
 	TokenInterceptor,
+	provideGlobalErrorHandler,
 	providePluginInitializers,
 	providePluginsEffects
 } from '@gauzy/desktop-ui-lib';
@@ -172,20 +171,7 @@ bootstrapApplication(AppComponent, {
 			useClass: ServerErrorInterceptor,
 			multi: true
 		},
-		{
-			provide: ErrorHandler,
-			useFactory: (errorHandlerService: ErrorHandlerService): ErrorHandler => {
-				// Only one ErrorHandler provider can be active: forward to both Sentry (reporting) and the app handler (toast + logging)
-				const sentryErrorHandler = Sentry.createErrorHandler({ showDialog: true, logErrors: false });
-				return {
-					handleError: (error: any) => {
-						sentryErrorHandler.handleError(error);
-						errorHandlerService.handleError(error);
-					}
-				};
-			},
-			deps: [ErrorHandlerService]
-		},
+		provideGlobalErrorHandler(Sentry.createErrorHandler({ showDialog: true, logErrors: false })),
 		{
 			provide: Sentry.TraceService,
 			deps: [Router]
