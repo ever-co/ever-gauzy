@@ -1645,6 +1645,16 @@
 		"TIME_TRACKING": "crwdns3194:0crwdne3194:0",
 		"PROJECT_MANAGEMENT": "crwdns3196:0crwdne3196:0",
 		"EMPLOYEE_STATISTICS": "crwdns194:0crwdne194:0",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Across {{ count }} employees",
+			"OF_INCOME": "{{ value }}% of income",
+			"MARGIN": "{{ value }}% margin",
+			"BREAKDOWN": "Earnings by employee",
+			"NO_DATA": "No financial activity in this period",
+			"NO_DATA_HINT": "Income and expenses recorded for this date range will show up here.",
+			"NO_EMPLOYEES": "No employee records for this period",
+			"SORT_BY": "Sort by {{ name }}"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "crwdns196:0crwdne196:0",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "crwdns2633:0crwdne2633:0",
 		"CHARTS": {
