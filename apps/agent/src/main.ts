@@ -174,13 +174,17 @@ bootstrapApplication(AppComponent, {
 		},
 		{
 			provide: ErrorHandler,
-			useClass: ErrorHandlerService
-		},
-		{
-			provide: ErrorHandler,
-			useValue: Sentry.createErrorHandler({
-				showDialog: true
-			})
+			useFactory: (errorHandlerService: ErrorHandlerService): ErrorHandler => {
+				// Only one ErrorHandler provider can be active: forward to both Sentry (reporting) and the app handler (toast + logging)
+				const sentryErrorHandler = Sentry.createErrorHandler({ showDialog: true, logErrors: false });
+				return {
+					handleError: (error: any) => {
+						sentryErrorHandler.handleError(error);
+						errorHandlerService.handleError(error);
+					}
+				};
+			},
+			deps: [ErrorHandlerService]
 		},
 		{
 			provide: Sentry.TraceService,
