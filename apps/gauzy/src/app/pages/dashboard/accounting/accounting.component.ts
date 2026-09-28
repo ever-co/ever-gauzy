@@ -85,6 +85,8 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 	private palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
 	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
 	private readonly _currencyPositionPipe = inject(CurrencyPositionPipe);
+	private readonly _currencyPipe = inject(CurrencyPipe);
+	private readonly _themeService = inject(NbThemeService);
 
 	constructor(
 		private readonly employeesService: EmployeesService,
@@ -93,8 +95,6 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly toastrService: ToastrService,
-		private readonly themeService: NbThemeService,
-		private readonly currencyPipe: CurrencyPipe,
 		public readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -102,7 +102,7 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 
 	ngOnInit() {
 		this._applyTranslationOnChart();
-		this.themeService
+		this._themeService
 			.getJsTheme()
 			.pipe(
 				// Re-read the palette on a theme switch; the tokens change with the theme class
@@ -462,7 +462,7 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 
 	/** Currency plus the organization's symbol position, matching the template's `currency | position`. */
 	private formatCurrency(value: number): string {
-		const currency = this.currencyPipe.transform(value || 0, this.organization?.currency);
+		const currency = this._currencyPipe.transform(value || 0, this.organization?.currency);
 		if (!currency) return String(value || 0);
 		return this._currencyPositionPipe.transform(currency, this.organization?.currencyPosition || CurrencyPosition.LEFT);
 	}
