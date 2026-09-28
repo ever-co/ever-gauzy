@@ -2259,6 +2259,16 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Across {{ count }} employees",
+			"OF_INCOME": "{{ value }}% of income",
+			"MARGIN": "{{ value }}% margin",
+			"BREAKDOWN": "Earnings by employee",
+			"NO_DATA": "No financial activity in this period",
+			"NO_DATA_HINT": "Income and expenses recorded for this date range will show up here.",
+			"NO_EMPLOYEES": "No employee records for this period",
+			"SORT_BY": "Sort by {{ name }}"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
