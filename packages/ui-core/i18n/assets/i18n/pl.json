@@ -1755,6 +1755,16 @@
 		"TIME_TRACKING": "Śledzenie czasu",
 		"PROJECT_MANAGEMENT": "Zarządzanie projektem",
 		"EMPLOYEE_STATISTICS": "Statystyki pracowników",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Wśród {{ count }} pracowników",
+			"OF_INCOME": "{{ value }}% przychodów",
+			"MARGIN": "Marża {{ value }}%",
+			"BREAKDOWN": "Przychody według pracownika",
+			"NO_DATA": "Brak aktywności finansowej w tym okresie",
+			"NO_DATA_HINT": "Przychody i wydatki zarejestrowane w tym okresie pojawią się tutaj.",
+			"NO_EMPLOYEES": "Brak danych pracowników w tym okresie",
+			"SORT_BY": "Sortuj według {{ name }}"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Proszę wybrać miesiąc oraz pracownika z menu powyżej",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Wprowadź tekst dla nieuwierzytelnionych użytkowników",
 		"CHARTS": {
