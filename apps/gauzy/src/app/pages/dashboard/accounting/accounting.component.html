@@ -1,160 +1,242 @@
-<nb-card class="card">
-  <nb-card-header class="card-header">
-    <div class="body-header">
-      <h4>
-        <ngx-header-title>
-          {{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}
-        </ngx-header-title>
-      </h4>
-    </div>
-    <div class="organization-employee-header">
-      <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-        <nb-card-body>
-          <ga-single-statistic
-            [color]="'var(--gauzy-action-info-text)'"
-            [title]="'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate"
-						[value]="
-							aggregatedEmployeeStatistics?.total?.income || 0
-								| currency : organization?.currency
-								| position : organization?.currencyPosition
-						"
-          ></ga-single-statistic>
-        </nb-card-body>
-      </nb-card>
-      <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-        <nb-card-body>
-          <ga-single-statistic
-            [color]="'var(--gauzy-action-danger-text)'"
-            [title]="'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate"
-						[value]="
-							aggregatedEmployeeStatistics?.total?.expense || 0
-								| currency : organization?.currency
-								| position : organization?.currencyPosition
-						"
-          ></ga-single-statistic>
-        </nb-card-body>
-      </nb-card>
-      <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-        <nb-card-body>
-          <ga-single-statistic
-						[color]="
-							aggregatedEmployeeStatistics?.total?.profit >= 0
-								? 'var(--gauzy-text-color-1)'
-								: 'var(--gauzy-action-danger-text)'
-						"
-            [title]="'DASHBOARD_PAGE.TITLE.PROFIT' | translate"
-						[value]="
-							aggregatedEmployeeStatistics?.total?.profit || 0
-								| currency : organization?.currency
-								| position : organization?.currencyPosition
-						"
-          ></ga-single-statistic>
-        </nb-card-body>
-      </nb-card>
-      @if (organization?.bonusType) {
-        <nb-card [nbSpinner]="isLoading" nbSpinnerStatus="primary">
-          <nb-card-body>
-            <ga-single-statistic
-              [color]="'var(--gauzy-action-success-text)'"
-              [title]="'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate"
-						[value]="
-							aggregatedEmployeeStatistics?.total?.bonus || 0
-								| currency : organization?.currency
-								| position : organization?.currencyPosition
-						"
-              type="highlight"
-            ></ga-single-statistic>
-          </nb-card-body>
-        </nb-card>
-      }
-    </div>
-    <div class="cash-flow-report">
-      <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-        <nb-card-header>
-          {{ 'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate }}
-        </nb-card-header>
-        <nb-card-body class="chart">
-          <ngx-line-chart [data]="charts"></ngx-line-chart>
-        </nb-card-body>
-      </nb-card>
-    </div>
-  </nb-card-header>
-  <nb-card-body class="card-body">
-    <div class="setting-block sub-header">
-      <div class="block-content">
-        <div class="block-info">
-          <div class="row">
-            <div class="col">
-              {{ 'DASHBOARD_PAGE.DEVELOPER.EMPLOYEES' | translate }}
-            </div>
-            <div class="col">
-              {{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}
-            </div>
-            <div class="col">
-              {{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}
-            </div>
-            <div class="col">
-              {{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
-            </div>
-            @if (organization?.bonusType) {
-              <div class="col">
-                {{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="table-scrollable">
-      @for (employeeExpense of aggregatedEmployeeStatistics?.employees; track employeeExpense) {
-        <div class="setting-block">
-          <div class="block-content" (click)="selectEmployee(employeeExpense.employee)">
-            <div class="block-info">
-              <div class="row">
-                <div class="col">
-                  <ngx-avatar
-                    class="report-table"
-                    [name]="employeeExpense?.employee?.user?.name"
-                    [src]="employeeExpense?.employee?.user?.imageUrl"
-                    [id]="employeeExpense?.employee?.id"
-                    [employee]="employeeExpense?.employee"
-                  ></ngx-avatar>
-                </div>
-                <div class="col">
-                  {{
-                  employeeExpense.income || 0
-                  | currency : organization?.currency
-                  | position : organization?.currencyPosition
-                  }}
-                </div>
-                <div class="col">
-                  {{
-                  employeeExpense.expense || 0
-                  | currency : organization?.currency
-                  | position : organization?.currencyPosition
-                  }}
-                </div>
-                <div class="col">
-                  {{
-                  employeeExpense.profit || 0
-                  | currency : organization?.currency
-                  | position : organization?.currencyPosition
-                  }}
-                </div>
-                @if (organization?.bonusType) {
-                  <div class="col">
-                    {{
-                    employeeExpense.bonus || 0
-                    | currency : organization?.currency
-                    | position : organization?.currencyPosition
-                    }}
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  </nb-card-body>
+<nb-card>
+	<nb-card-header class="acc-header">
+		<div class="acc-title-row">
+			<h4>
+				<ngx-header-title>
+					{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}
+				</ngx-header-title>
+			</h4>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body class="acc-body">
+		<!-- KPI row: same tile as the HR dashboard — glyph, label, figure, and one line of context. -->
+		<section class="kpi-row">
+			<div class="kpi" [style.--kpi-accent]="accentFor('income')">
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-up-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate }}</span>
+					<span class="kpi-value">
+						{{ totals.income | currency : organization?.currency | position : organization?.currencyPosition }}
+					</span>
+					<span class="kpi-meta">
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.EMPLOYEES_COUNT' | translate : { count: employeeCount } }}
+					</span>
+				</span>
+			</div>
+
+			<div class="kpi" [style.--kpi-accent]="accentFor('expense')">
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="trending-down-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate }}</span>
+					<span class="kpi-value">
+						{{ totals.expense | currency : organization?.currency | position : organization?.currencyPosition }}
+					</span>
+					@if (percentOfIncome(totals.expense); as percent) {
+					<span class="kpi-meta">
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.OF_INCOME' | translate : { value: percent } }}
+					</span>
+					}
+				</span>
+			</div>
+
+			<div class="kpi" [class.is-negative]="totals.profit < 0" [style.--kpi-accent]="accentFor('profit')">
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="pie-chart-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.PROFIT' | translate }}</span>
+					<span class="kpi-value">
+						{{ totals.profit | currency : organization?.currency | position : organization?.currencyPosition }}
+					</span>
+					@if (percentOfIncome(totals.profit); as percent) {
+					<span class="kpi-meta">
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.MARGIN' | translate : { value: percent } }}
+					</span>
+					}
+				</span>
+			</div>
+
+			@if (organization?.bonusType) {
+			<div class="kpi" [class.is-negative]="totals.bonus < 0" [style.--kpi-accent]="accentFor('bonus')">
+				<span class="kpi-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
+				<span class="kpi-text">
+					<span class="kpi-label">{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}</span>
+					<span class="kpi-value">
+						{{ totals.bonus | currency : organization?.currency | position : organization?.currencyPosition }}
+					</span>
+					@if (percentOfIncome(totals.bonus); as percent) {
+					<span class="kpi-meta">
+						{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.OF_INCOME' | translate : { value: percent } }}
+					</span>
+					}
+				</span>
+			</div>
+			}
+		</section>
+
+		<!-- Cash flow -->
+		<section class="panel panel--chart" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+			<header class="panel-header">
+				<h5 class="panel-title">{{ 'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate }}</h5>
+			</header>
+			<div class="panel-body">
+				@if (hasChartData) {
+				<ga-employee-chart-legend orientation="row" [items]="legendItems"></ga-employee-chart-legend>
+				<div class="chart-wrap">
+					<canvas
+						baseChart
+						type="line"
+						[data]="chartData"
+						[options]="chartOptions"
+						role="img"
+						[attr.aria-label]="'DASHBOARD_PAGE.CHARTS.CASH_FLOW' | translate"
+					></canvas>
+				</div>
+				} @else if (!loading) {
+				<div class="acc-state">
+					<nb-icon icon="activity-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.NO_DATA' | translate }}</p>
+					<p class="state-hint">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.NO_DATA_HINT' | translate }}</p>
+				</div>
+				}
+			</div>
+		</section>
+
+		<!-- Per-employee breakdown; a row opens that employee on the HR dashboard. -->
+		<section class="panel" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+			<header class="panel-header">
+				<h5 class="panel-title">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.BREAKDOWN' | translate }}</h5>
+				@if (employeeCount) {
+				<span class="panel-count">{{ employeeCount }}</span>
+				}
+			</header>
+
+			<div class="breakdown" role="table" [class.breakdown--with-bonus]="organization?.bonusType">
+				<div class="breakdown-row breakdown-row--head" role="row">
+					<div class="breakdown-cell breakdown-rank" role="columnheader" aria-hidden="true">#</div>
+					@for (column of columns; track column.key) {
+					<div
+						class="breakdown-cell"
+						[class.is-amount]="column.key !== 'name'"
+						role="columnheader"
+						[attr.aria-sort]="ariaSort(column.key)"
+					>
+						<button
+							type="button"
+							class="sort"
+							[class.is-active]="sortKey === column.key"
+							[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.SORT_BY' | translate : { name: (column.label | translate) }"
+							(click)="sortBy(column.key)"
+						>
+							@if (column.key === 'name') {
+								{{ column.label | translate }}
+								<nb-icon
+									class="sort-icon"
+									aria-hidden="true"
+									[icon]="sortKey === column.key && sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"
+								></nb-icon>
+							} @else {
+								<!--
+									Arrow first on the money columns: they are right-aligned, so a trailing
+									arrow (invisible until hover) would hold the label off the figures' edge.
+								-->
+								<nb-icon
+									class="sort-icon"
+									aria-hidden="true"
+									[icon]="sortKey === column.key && sortDirection === 'asc' ? 'arrow-upward-outline' : 'arrow-downward-outline'"
+								></nb-icon>
+								<!-- Same colour as the series on the chart above, so a column can be matched to its line. -->
+								<span class="series-dot" [style.background-color]="seriesColors[column.key]" aria-hidden="true"></span>
+								{{ column.label | translate }}
+							}
+						</button>
+					</div>
+					}
+					<div class="breakdown-cell" role="columnheader" aria-hidden="true"></div>
+				</div>
+
+				@for (row of sortedEmployees; track row.employee?.id; let index = $index) {
+				<div
+					class="breakdown-row"
+					role="row"
+					tabindex="0"
+					(click)="selectEmployee($any(row.employee))"
+					(keydown.enter)="selectEmployee($any(row.employee))"
+					(keydown.space)="$event.preventDefault(); selectEmployee($any(row.employee))"
+				>
+					<div class="breakdown-cell breakdown-rank" role="cell">{{ index + 1 }}</div>
+					<div class="breakdown-cell" role="cell">
+						<ngx-avatar
+							class="report-table"
+							[name]="row.employee?.user?.name"
+							[src]="row.employee?.user?.imageUrl"
+							[id]="row.employee?.id"
+							[employee]="row.employee"
+						></ngx-avatar>
+					</div>
+					<div class="breakdown-cell is-amount is-income" role="cell">
+						<span class="amount">
+							{{ row.income || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+						</span>
+						<!-- Share of the organization's income, so the ranking reads as proportion and not only as order. -->
+						<span
+							class="share"
+							[attr.aria-label]="'DASHBOARD_PAGE.ACCOUNTING_VIEW.OF_INCOME' | translate : { value: incomeShare(row).toFixed(0) }"
+						>
+							<span class="share-track" aria-hidden="true">
+								<span
+									class="share-fill"
+									[style.width.%]="incomeShare(row)"
+									[style.background-color]="seriesColors.income"
+								></span>
+							</span>
+							<span class="share-value" aria-hidden="true">{{ incomeShare(row).toFixed(0) }}%</span>
+						</span>
+					</div>
+					<div class="breakdown-cell is-amount is-muted" role="cell">
+						{{ row.expense || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					<div class="breakdown-cell is-amount is-strong" [class.is-negative]="row.profit < 0" role="cell">
+						{{ row.profit || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					@if (organization?.bonusType) {
+					<div class="breakdown-cell is-amount" [class.is-negative]="row.bonus < 0" role="cell">
+						{{ row.bonus || 0 | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					}
+					<div class="breakdown-cell breakdown-affordance" role="cell" aria-hidden="true">
+						<nb-icon icon="chevron-right-outline"></nb-icon>
+					</div>
+				</div>
+				} @empty { @if (!loading) {
+				<div class="acc-state" role="row">
+					<nb-icon icon="people-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title" role="cell">{{ 'DASHBOARD_PAGE.ACCOUNTING_VIEW.NO_EMPLOYEES' | translate }}</p>
+				</div>
+				} }
+
+				@if (sortedEmployees.length) {
+				<!-- Totals: the same figures as the KPI row, set under the columns they sum. -->
+				<div class="breakdown-row breakdown-row--total" role="row">
+					<div class="breakdown-cell breakdown-rank" role="cell"></div>
+					<div class="breakdown-cell" role="cell">{{ 'INVOICES_PAGE.TOTAL' | translate }}</div>
+					<div class="breakdown-cell is-amount" role="cell">
+						{{ totals.income | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					<div class="breakdown-cell is-amount" role="cell">
+						{{ totals.expense | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					<div class="breakdown-cell is-amount" [class.is-negative]="totals.profit < 0" role="cell">
+						{{ totals.profit | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					@if (organization?.bonusType) {
+					<div class="breakdown-cell is-amount" [class.is-negative]="totals.bonus < 0" role="cell">
+						{{ totals.bonus | currency : organization?.currency | position : organization?.currencyPosition }}
+					</div>
+					}
+					<div class="breakdown-cell" role="cell"></div>
+				</div>
+				}
+			</div>
+		</section>
+	</nb-card-body>
 </nb-card>
