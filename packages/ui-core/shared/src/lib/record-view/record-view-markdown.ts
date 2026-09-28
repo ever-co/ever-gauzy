@@ -1,8 +1,10 @@
 /**
- * Turns a task description into display HTML.
+ * Turns a long-text field (a description, notes) into display HTML for the
+ * record view's `markdown` field type.
  *
- * Descriptions arrive in two shapes: HTML written in the rich-text editor, and
- * raw GitHub-flavoured markdown synced from issues / pull requests. Bound as-is
+ * Such text arrives in two shapes: HTML written in the rich-text editor, and raw
+ * GitHub-flavoured markdown (e.g. task descriptions synced from issues / pull
+ * requests). Bound as-is
  * through `[innerHTML]`, the markdown collapsed into one run-on paragraph — no
  * line breaks, headings, lists or code. This renders the common GFM subset.
  *
@@ -51,7 +53,7 @@ const TRIVIAL_TAG = /^<\/?(p|br|div|span)(\s[^>]*)?\/?>$/i;
 const ANY_TAG = /<\/?[a-z][a-z0-9]*(\s[^>]*)?\/?>/gi;
 const MARKDOWN_HINT = /(^|\n)\s{0,3}(#{1,6}\s|[-*+]\s|\d+[.)]\s|>|```)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)/;
 
-export function taskDescriptionToHtml(source: string | null | undefined): string {
+export function richTextToHtml(source: string | null | undefined): string {
 	if (!source || !source.trim()) {
 		return '';
 	}
