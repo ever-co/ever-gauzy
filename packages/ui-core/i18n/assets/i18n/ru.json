@@ -1807,6 +1807,16 @@
 		"TIME_TRACKING": "Время отслеживания",
 		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "По {{ count }} сотрудникам",
+			"OF_INCOME": "{{ value }}% от дохода",
+			"MARGIN": "Маржа {{ value }}%",
+			"BREAKDOWN": "Доход по сотрудникам",
+			"NO_DATA": "Нет финансовой активности за этот период",
+			"NO_DATA_HINT": "Доходы и расходы за этот период появятся здесь.",
+			"NO_EMPLOYEES": "Нет данных о сотрудниках за этот период",
+			"SORT_BY": "Сортировать по {{ name }}"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
 		"CHARTS": {
