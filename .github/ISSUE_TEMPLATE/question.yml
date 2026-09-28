@@ -1,0 +1,32 @@
+name: Question
+description: Ask how to set up, configure or use Gauzy
+title: "[Question] "
+labels: ["type: question :question:"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Optional. Docs, search, or config you have already applied.
+    validations:
+      required: false
+
+  - type: input
+    id: context
+    attributes:
+      label: Setup
+      description: Optional. Deployment type, app version, or relevant config.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        For faster answers, try the [Slack community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU) or [Discord](https://discord.gg/hKQfn4j).
