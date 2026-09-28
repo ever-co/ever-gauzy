@@ -8,6 +8,7 @@ import { Subject } from 'rxjs';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import {
+	CartesianScaleOptions,
 	ChartConfiguration,
 	ChartDataset,
 	FontSpec,
@@ -428,7 +429,9 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 		const { ctx } = scale;
 		ctx.save();
 		// The shared category scale sets a plain font object; toFont fills the family from the defaults
-		ctx.font = toFont(scale.options.ticks.font as Partial<FontSpec>).string;
+		// `Scale` is typed with the core options only; the x-axis is a category (Cartesian) scale
+		const { ticks } = scale.options as CartesianScaleOptions;
+		ctx.font = toFont(ticks.font as Partial<FontSpec>).string;
 		const widest = Math.max(...labels.map((label) => ctx.measureText(this.formatDate(label, 'LL')).width));
 		ctx.restore();
 
