@@ -28,7 +28,6 @@ import {
 	HashNumberPipe,
 	InputFilterComponent,
 	IPaginationBase,
-	IRecordViewSection,
 	NotesWithTagsComponent,
 	OrganizationTeamFilterComponent,
 	PaginationFilterBaseComponent,
@@ -45,8 +44,6 @@ import {
 	ITask,
 	PermissionsEnum,
 	TaskListTypeEnum,
-	TaskPriorityEnum,
-	TaskStatusEnum,
 	IFavorite,
 	BaseEntityEnum
 } from '@gauzy/contracts';
@@ -80,7 +77,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	 * pages (dashboard / me / team) — they share this component and toolbar.
 	 */
 	viewedTask: ITask;
-	viewSections: IRecordViewSection[] = [];
 
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -764,132 +760,11 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			return;
 		}
 
-		this.viewSections = this.buildViewSections(task);
 		this.viewedTask = task;
 	}
 
 	closeView(): void {
 		this.viewedTask = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the grid columns, read vertically, then
-	 * the fields the grid has no room for (priority, size, estimate, sprint,
-	 * description).
-	 */
-	private buildViewSections(task: ITask): IRecordViewSection[] {
-		// `taskNumber` is a server-side virtual column (prefix + number), absent
-		// from ITask — the same shape the grid's valuePrepareFunction reads.
-		const { taskNumber, parent } = task as any;
-		return [
-			{
-				fields: [
-					{ label: 'TASKS_PAGE.TASK_ID', value: this._hashNumberPipe.transform(taskNumber) },
-					{ label: 'TASKS_PAGE.PARENT_TASK', value: this._hashNumberPipe.transform(parent?.taskNumber) },
-					{ label: 'TASKS_PAGE.TASKS_TITLE', key: 'title' },
-					{ label: 'TASKS_PAGE.TASKS_PROJECT', key: 'project.name' },
-					{ label: 'SM_TABLE.CREATED_AT', key: 'createdAt', type: 'datetime' },
-					{ label: 'TASKS_PAGE.TASKS_CREATOR', key: 'createdByUser', type: 'person' }
-				]
-			},
-			{
-				// Both assignment flavours: an empty relation hides its row, so
-				// members-only and teams-only tasks both read right on every page.
-				fields: [
-					{ label: 'TASKS_PAGE.TASK_MEMBERS', key: 'members', type: 'people', wide: true },
-					{ label: 'TASKS_PAGE.TASK_TEAMS', key: 'teams', type: 'teams', wide: true }
-				]
-			},
-			{
-				fields: [
-					{ label: 'TASKS_PAGE.DUE_DATE', key: 'dueDate', type: 'date' },
-					{ label: 'TASKS_PAGE.TASKS_STATUS', type: 'badge', value: this.toStatusBadge(task) },
-					{ label: 'TASKS_PAGE.TASK_PRIORITY', type: 'badge', value: this.toPriorityBadge(task) },
-					{ label: 'TASKS_PAGE.TASK_SIZE', type: 'badge', value: this.toSizeBadge(task) },
-					{ label: 'TASKS_PAGE.ESTIMATE', value: this.formatEstimate(task.estimate) },
-					{ label: 'SPRINTS_PAGE.SPRINT', key: 'organizationSprint.name' }
-				]
-			},
-			{
-				fields: [
-					{ label: 'TASKS_PAGE.TASKS_DESCRIPTION', key: 'description', type: 'html', wide: true },
-					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
-				]
-			}
-		];
-	}
-
-	/**
-	 * Badge values for the drawer, in the `{ text, class }` shape `ga-status-badge`
-	 * renders. Text prefers the named relation the list already loads; the status
-	 * class follows the severity mapping of the grid's `StatusViewComponent`.
-	 */
-	private toStatusBadge(task: ITask): { text: string; class: string } {
-		const raw = task.taskStatus?.name || task.status;
-		if (!raw) {
-			return null;
-		}
-		// A standard status arrives as its enum slug ('in-progress'); a
-		// tenant-defined one is already a display name. De-slug either way —
-		// spaces are a no-op on real names.
-		const text = raw.replace(/-/g, ' ');
-		switch (task.status) {
-			case TaskStatusEnum.COMPLETED:
-				return { text, class: 'success' };
-			case TaskStatusEnum.BLOCKED:
-				return { text, class: 'danger' };
-			case TaskStatusEnum.IN_PROGRESS:
-			case TaskStatusEnum.READY_FOR_REVIEW:
-			case TaskStatusEnum.IN_REVIEW:
-				return { text, class: 'info' };
-			default:
-				// 'basic', matching the grid renderer's default for OPEN and
-				// any unlisted status, so drawer and list read the same.
-				return { text, class: 'basic' };
-		}
-	}
-
-	private toPriorityBadge(task: ITask): { text: string; class: string } {
-		const text = task.taskPriority?.name || task.priority;
-		if (!text) {
-			return null;
-		}
-		switch (task.priority) {
-			case TaskPriorityEnum.URGENT:
-				return { text, class: 'danger' };
-			case TaskPriorityEnum.HIGH:
-				return { text, class: 'warning' };
-			case TaskPriorityEnum.LOW:
-				return { text, class: 'success' };
-			default:
-				return { text, class: 'info' };
-		}
-	}
-
-	private toSizeBadge(task: ITask): { text: string; class: string } {
-		const text = task.taskSize?.name || task.size;
-		// Sizes carry no severity — one neutral class for all of them.
-		return text ? { text, class: 'primary' } : null;
-	}
-
-	/**
-	 * Estimate is stored as seconds (see createTaskDialog); decompose it the way
-	 * the task dialogs do — days / hours / minutes — skipping the zero parts.
-	 */
-	private formatEstimate(estimate: number): string {
-		if (!estimate) {
-			return null;
-		}
-		const days = Math.floor(estimate / (24 * 60 * 60));
-		const hours = Math.floor((estimate % (24 * 60 * 60)) / (60 * 60));
-		const minutes = Math.floor((estimate % (60 * 60)) / 60);
-		return [
-			days ? `${days} ${this.getTranslation('TASKS_PAGE.ESTIMATE_DAYS')}` : null,
-			hours ? `${hours} ${this.getTranslation('TASKS_PAGE.ESTIMATE_HOURS')}` : null,
-			minutes ? `${minutes} ${this.getTranslation('TASKS_PAGE.ESTIMATE_MINUTES')}` : null
-		]
-			.filter(Boolean)
-			.join(' ');
 	}
 
 	isTasksPage() {
