@@ -202,7 +202,8 @@ const ENV_KEYS = [
 	'STRIPE_LIVE_MODE',
 	'DEMO',
 	'BILLING_PRODUCT',
-	'BILLING_SIGNUP_PAYWALL'
+	'BILLING_SIGNUP_PAYWALL',
+	'BILLING_WEBHOOK_LINKING'
 ];
 const savedEnv: Record<string, string | undefined> = {};
 const realFetch = (global as any).fetch;
@@ -215,6 +216,9 @@ beforeEach(() => {
 	delete process.env.DEMO;
 	delete process.env.BILLING_PRODUCT;
 	delete process.env.BILLING_SIGNUP_PAYWALL;
+	// Writing is off by default (see the "BILLING_WEBHOOK_LINKING unset" block). Everywhere else it is
+	// ON, so every "must not link" case proves it writes nothing even when writing is allowed.
+	process.env.BILLING_WEBHOOK_LINKING = 'true';
 });
 
 afterEach(() => {
@@ -335,6 +339,61 @@ describe('StripeWebhookController — foreign events are acknowledged with no DB
 				metadata: {},
 				items: {
 					data: [{ id: 'si_t', price: { id: 'price_t', lookup_key: 'ever_teams_cloud_starter_monthly' } }]
+				}
+			})
+		],
+		[
+			'ever.co Gauzy SELF-HOSTED license session (subscription mode, ever_hosting=selfhosted)',
+			'checkout.session.completed',
+			session({
+				metadata: {
+					ever_product: 'gauzy',
+					ever_hosting: 'selfhosted',
+					ever_tier: 'enterprise',
+					ever_interval: 'annual',
+					ever_lookup_key: 'ever_gauzy_selfhosted_enterprise_annual'
+				}
+			})
+		],
+		[
+			'Gauzy self-hosted license subscription (ever_hosting=selfhosted)',
+			'customer.subscription.created',
+			subscription({
+				status: 'active',
+				metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' },
+				items: {
+					data: [
+						{ id: 'si_s', price: { id: 'price_s', lookup_key: 'ever_gauzy_selfhosted_enterprise_annual' } }
+					]
+				}
+			})
+		],
+		[
+			'Gauzy self-hosted license subscription with no metadata (Dashboard-made) on an ever_gauzy_selfhosted_ price',
+			'customer.subscription.created',
+			subscription({
+				status: 'active',
+				metadata: {},
+				items: {
+					data: [
+						{
+							id: 'si_s',
+							price: { id: 'price_s', lookup_key: 'ever_gauzy_selfhosted_small_business_monthly' }
+						}
+					]
+				}
+			})
+		],
+		[
+			'ever_product=gauzy with no ever_hosting but a self-hosted plan price',
+			'customer.subscription.created',
+			subscription({
+				status: 'active',
+				metadata: { ever_product: 'gauzy' },
+				items: {
+					data: [
+						{ id: 'si_s', price: { id: 'price_s', lookup_key: 'ever_gauzy_selfhosted_enterprise_monthly' } }
+					]
 				}
 			})
 		],
@@ -460,6 +519,21 @@ describe('StripeWebhookController — Gauzy events that must NOT link', () => {
 		expect(h.decisions()).toEqual([expect.objectContaining({ decision: 'not-entitled' })]);
 	});
 
+	it('the customer holds only a Gauzy SELF-HOSTED license subscription → not-entitled', async () => {
+		const h = buildHarness();
+		h.users = [admin()];
+		h.stripe.subscriptions['cus_Buyer0000000001'] = [
+			subscription({
+				status: 'active',
+				metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' },
+				items: { data: [{ price: { lookup_key: 'ever_gauzy_selfhosted_enterprise_annual' } }] }
+			})
+		];
+		await h.controller.handle(signed(event('checkout.session.completed', session())) as any);
+		expect(h.tenantUpdate).not.toHaveBeenCalled();
+		expect(h.decisions()).toEqual([expect.objectContaining({ decision: 'not-entitled' })]);
+	});
+
 	it('Stripe cannot confirm the subscription → stripe-unavailable, nothing written, still 200', async () => {
 		const h = buildHarness();
 		h.users = [admin()];
@@ -516,7 +590,7 @@ describe('StripeWebhookController — the one case that links', () => {
 		expect(h.decisions()[0].decision).toBe('linked');
 	});
 
-	it('a Dashboard-made subscription with no metadata but an ever_gauzy_ price links (email from Stripe)', async () => {
+	it('a Dashboard-made subscription with no metadata but an ever_gauzy_cloud_ price links (email from Stripe)', async () => {
 		const h = buildHarness();
 		h.users = [admin()];
 		const sub = subscription({ metadata: {}, status: 'active' });
@@ -542,6 +616,80 @@ describe('StripeWebhookController — the one case that links', () => {
 			{ stripeCustomerId: 'cus_Buyer0000000001' }
 		);
 		expect(h.decisions()).toEqual([expect.objectContaining({ decision: 'already-linked' })]);
+	});
+});
+
+describe('StripeWebhookController — BILLING_WEBHOOK_LINKING unset (the default): checks run, nothing is written', () => {
+	beforeEach(() => {
+		delete process.env.BILLING_WEBHOOK_LINKING;
+	});
+
+	it('a purchase that passes every check → would-link, 0 tenant writes', async () => {
+		const h = buildHarness();
+		h.users = [admin()];
+		h.stripe.subscriptions['cus_Buyer0000000001'] = [subscription()];
+
+		const result = await h.controller.handle(signed(event('checkout.session.completed', session())) as any);
+
+		expect(result).toEqual({ received: true });
+		expect(h.tenantUpdate).not.toHaveBeenCalled();
+		expect(h.decisions()).toEqual([
+			expect.objectContaining({ decision: 'would-link', tenant: TENANT_ID, customer: 'cus_Buyer0000000001' })
+		]);
+	});
+
+	it('a $0 Starter somebody else started under a verified SUPER_ADMIN address does not bind that tenant', async () => {
+		// gauzy-code-02: nothing in the event tells the owner's purchase from one made in their name.
+		const h = buildHarness();
+		h.users = [admin()];
+		h.stripe.subscriptions['cus_Attacker000001'] = [
+			subscription({ id: 'sub_Attacker000001', customer: 'cus_Attacker000001', status: 'active' })
+		];
+		await h.controller.handle(
+			signed(
+				event(
+					'checkout.session.completed',
+					session({ customer: 'cus_Attacker000001', subscription: 'sub_Attacker000001' })
+				)
+			) as any
+		);
+		expect(h.tenantUpdate).not.toHaveBeenCalled();
+		expect(h.decisions()).toEqual([expect.objectContaining({ decision: 'would-link' })]);
+	});
+
+	it('an existing admin who buys, then registers a NEW account, keeps the OLD tenant unlinked', async () => {
+		// The event lands before the new registration. Writing here would bind the OLD tenant and leave
+		// the new one's Checkout-Session link refused as "claimed"; with writing off, the customer stays
+		// free for onboarding (tenant.service.billing-link.spec covers that side).
+		const h = buildHarness();
+		h.users = [admin({ tenantId: OTHER_TENANT_ID })];
+		h.stripe.subscriptions['cus_Buyer0000000001'] = [subscription()];
+		await h.controller.handle(signed(event('checkout.session.completed', session())) as any);
+		expect(h.tenantUpdate).not.toHaveBeenCalled();
+		expect(h.decisions()).toEqual([expect.objectContaining({ decision: 'would-link', tenant: OTHER_TENANT_ID })]);
+	});
+
+	it.each(['false', '0', 'no', 'off', '', 'enabled', 'TRUE-ish'])(
+		'BILLING_WEBHOOK_LINKING=%p does not enable writing',
+		async (value) => {
+			process.env.BILLING_WEBHOOK_LINKING = value;
+			const h = buildHarness();
+			h.users = [admin()];
+			h.stripe.subscriptions['cus_Buyer0000000001'] = [subscription()];
+			await h.controller.handle(signed(event('checkout.session.completed', session())) as any);
+			expect(h.tenantUpdate).not.toHaveBeenCalled();
+			expect(h.decisions()[0].decision).toBe('would-link');
+		}
+	);
+
+	it.each(['true', '1', 'yes', 'on', ' TRUE '])('BILLING_WEBHOOK_LINKING=%p enables writing', async (value) => {
+		process.env.BILLING_WEBHOOK_LINKING = value;
+		const h = buildHarness();
+		h.users = [admin()];
+		h.stripe.subscriptions['cus_Buyer0000000001'] = [subscription()];
+		await h.controller.handle(signed(event('checkout.session.completed', session())) as any);
+		expect(h.tenantUpdate).toHaveBeenCalledTimes(1);
+		expect(h.decisions()[0].decision).toBe('linked');
 	});
 });
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+	checkoutSessionIsForProduct,
 	isCheckoutSessionId,
 	resolveBillingProduct,
 	resolveSignupPaywall,
@@ -92,11 +93,12 @@ const REQUEST_TIMEOUT_MS = 8000;
  * How old a Checkout Session may be and still prove who bought it.
  *
  * Buyers register a median of one minute after paying (51 minutes at most in the first 62 LIVE
- * purchases). The session id is a bearer credential that sits in the buyer's browser history, so a
- * short window bounds how long a leaked one stays useful. Anyone outside it is linked later by the
- * verified-email path instead.
+ * purchases). The session id is a bearer credential that sits in the buyer's browser history, in the
+ * checkout's completion URL and in anything that records URLs, so a short window bounds how long a
+ * leaked one stays useful. 72 hours still covers a buyer who finishes signing up days later; anyone
+ * outside it is linked later by the verified-email path instead.
  */
-const CHECKOUT_SESSION_MAX_AGE_SECONDS = 14 * 24 * 60 * 60;
+const CHECKOUT_SESSION_MAX_AGE_SECONDS = 72 * 60 * 60;
 
 /** Why a Checkout Session was not accepted as proof of purchase. Logged; never shown to the user. */
 export type CheckoutSessionDeclineReason =
@@ -247,7 +249,24 @@ export class StripeSubscriptionService {
 	 * what the Ever Teams deployment needs. Unset keeps today's behaviour: the paywall is on.
 	 */
 	isSignupPaywallEnabled(): boolean {
-		return this.isBillingEnforced() && resolveSignupPaywall();
+		if (!resolveSignupPaywall()) return false;
+		return this.isBillingEnforced() || this.isProductMisconfigured();
+	}
+
+	/**
+	 * A usable Stripe key is configured on a non-demo deployment, but `BILLING_PRODUCT` is not a
+	 * catalog key, so billing is off (see `secretKey`).
+	 *
+	 * The signup paywall must not fail OPEN on a typo: on app.gauzy.co that would turn a config slip
+	 * into free, unpaid signup. So in this state the paywall stays on and nobody is entitled — signup
+	 * is refused, loudly, until the variable is fixed, which is the same direction
+	 * `BILLING_SIGNUP_PAYWALL` fails in.
+	 */
+	private isProductMisconfigured(): boolean {
+		const key = process.env.STRIPE_SECRET_KEY?.trim();
+		if (!key || process.env.DEMO === 'true') return false;
+		if (LIVE_KEY_PREFIX.test(key) && process.env.STRIPE_LIVE_MODE !== 'true') return false;
+		return resolveBillingProduct().invalid !== undefined;
 	}
 
 	/**
@@ -259,7 +278,18 @@ export class StripeSubscriptionService {
 	 * a bad minute is a far worse failure than briefly admitting someone who slipped past.
 	 */
 	async getEntitlement(email: string): Promise<EntitlementResult> {
-		if (!this.secretKey) return EntitlementResult.ENTITLED; // billing off: nothing to check
+		if (!this.secretKey) {
+			// Billing off: nothing to check — unless it is off only because BILLING_PRODUCT is unusable,
+			// in which case the paywall fails closed (see isProductMisconfigured).
+			if (this.isProductMisconfigured()) {
+				this.logger.error(
+					'Refusing a registration: BILLING_PRODUCT is not a catalog product key, so no subscription can be ' +
+						'confirmed. Fix BILLING_PRODUCT (or set BILLING_SIGNUP_PAYWALL=false) to reopen signup.'
+				);
+				return EntitlementResult.NOT_ENTITLED;
+			}
+			return EntitlementResult.ENTITLED;
+		}
 
 		try {
 			const customerId = await this.findEntitlingCustomerId(email);
@@ -350,7 +380,8 @@ export class StripeSubscriptionService {
 	 *  - it is a session of this deployment's Stripe mode (a `cs_live_` id is never looked up with a
 	 *    test key, or the reverse);
 	 *  - Stripe says it is `complete`, in `subscription` mode, for `metadata.ever_product` = this
-	 *    product — never a payment-mode license, a setup-mode card save or another product;
+	 *    product with no non-cloud `ever_hosting` — never a payment-mode license, a setup-mode card
+	 *    save, a self-hosted license subscription or another product;
 	 *  - the address the buyer gave Stripe equals `email` (case-insensitive), so a session id cannot be
 	 *    replayed onto somebody else's registration;
 	 *  - it is recent (CHECKOUT_SESSION_MAX_AGE_SECONDS) and has a customer;
@@ -388,7 +419,8 @@ export class StripeSubscriptionService {
 		}
 
 		if (session?.status !== 'complete') return { ok: false, reason: 'incomplete' };
-		if (session.mode !== 'subscription' || session.metadata?.ever_product !== product) {
+		// The webhook's predicate: this product, subscription mode, and a hosted (not self-hosted) plan.
+		if (!checkoutSessionIsForProduct(session, product)) {
 			return { ok: false, reason: 'foreign-product' };
 		}
 

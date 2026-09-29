@@ -1,3 +1,4 @@
+// cspell:ignore selfhosted
 /**
  * Which Ever product this deployment bills for, and how to tell whether a Stripe object belongs to it.
  *
@@ -6,6 +7,14 @@
  * signup paywall, the lazy tenant link, the billing pages — therefore sees every product's customers
  * and subscriptions, and must decide for itself which ones are its own. Before this module none of
  * them did: a Teams, Works or Platform subscription counted as a Gauzy one everywhere.
+ *
+ * "This product" means this product's HOSTED plan. ever.co also sells self-hosted licenses of Gauzy
+ * and Teams as recurring subscriptions on the same account (`ever_<product>_selfhosted_*` prices,
+ * `metadata.ever_hosting = 'selfhosted'`). A license is not a cloud plan: counting one as the cloud
+ * subscription would bind the buyer's cloud tenant to their license, show the license as the cloud
+ * plan, and let "Cancel" or "Switch plan" act on it. So a subscription or session whose
+ * `ever_hosting` says anything other than `cloud`, or whose plan price is a non-cloud price of this
+ * product, is never this product's.
  *
  * The rules are deliberately an ALLOWLIST. Ever Works, GitHands and the directory sites never set
  * `metadata.ever_product` (Works pay-as-you-go subscriptions carry only `metadata.kind`), so a denylist keyed
@@ -72,6 +81,40 @@ export function lookupKeyPrefix(product: string): string {
 	return `ever_${product}_`;
 }
 
+/** The only `metadata.ever_hosting` value a hosted deployment counts as its own. */
+export const CLOUD_HOSTING = 'cloud';
+
+/** `ever_<product>_cloud_` — the prefix of that product's hosted plans (the prefix listPlans uses). */
+export function cloudLookupKeyPrefix(product: string): string {
+	return `${lookupKeyPrefix(product)}${CLOUD_HOSTING}_`;
+}
+
+/**
+ * Whether `metadata.ever_hosting` allows the object to be a hosted-plan purchase: absent (objects
+ * made before the checkout stamped it, or in the Dashboard) or exactly `cloud`. `selfhosted` — or
+ * anything else — is not.
+ */
+export function hostingIsCloud(metadata: Record<string, string> | null | undefined): boolean {
+	const hosting = metadata?.ever_hosting;
+	return hosting === undefined || hosting === null || hosting === '' || hosting === CLOUD_HOSTING;
+}
+
+/**
+ * Resolve `BILLING_WEBHOOK_LINKING`: whether the Stripe webhook may WRITE a tenant's billing link.
+ *
+ * Defaults to `false`. The webhook can only match a purchase to a tenant by the address the payer
+ * typed at checkout, and a free Starter can be started under anybody's address, so it cannot tell
+ * the account owner's purchase from somebody else's made in their name. It can also bind an existing
+ * admin's OLD tenant a minute before the same buyer registers the NEW one they just paid for. With
+ * the flag off the webhook still runs every check and logs `would-link`, but writes nothing; links
+ * are made by the buyer's own Checkout Session at onboarding and by an admin opening Settings >
+ * Billing. Only an explicit on value (`true`, `1`, `yes`, `on`) turns writing on.
+ */
+export function resolveWebhookLinking(raw: string | undefined = process.env.BILLING_WEBHOOK_LINKING): boolean {
+	const value = (raw ?? '').trim().toLowerCase();
+	return ['true', '1', 'yes', 'on'].includes(value);
+}
+
 /** The minimal shape of a Stripe Subscription that the product predicate reads. */
 export interface ProductScopedSubscription {
 	metadata?: Record<string, string> | null;
@@ -85,35 +128,53 @@ export interface ProductScopedCheckoutSession {
 }
 
 /**
- * Whether a Subscription belongs to `product`.
+ * Whether a Subscription is a HOSTED (cloud) plan of `product`.
  *
  * `metadata.ever_product` is what the shared checkout stamps on every subscription it creates. The
  * lookup-key branch covers subscriptions made in the Stripe Dashboard or the customer portal, which
  * carry no metadata but still sit on a catalog price. Only the FIRST item is read: it is the plan
  * (add-ons come after it) and it is the item `changePlan` operates on.
+ *
+ * A self-hosted license of the same product is refused on either signal: `ever_hosting` other than
+ * `cloud`, or a plan price of this product that is not an `ever_<product>_cloud_` price.
  */
 export function subscriptionIsForProduct(
 	subscription: ProductScopedSubscription | null | undefined,
 	product: string | null | undefined
 ): boolean {
 	if (!subscription || !product) return false;
-	if (subscription.metadata?.ever_product === product) return true;
+	if (!hostingIsCloud(subscription.metadata)) return false;
 	const lookupKey = subscription.items?.data?.[0]?.price?.lookup_key;
-	return typeof lookupKey === 'string' && lookupKey.startsWith(lookupKeyPrefix(product));
+	const cloudPrefix = cloudLookupKeyPrefix(product);
+	if (
+		typeof lookupKey === 'string' &&
+		lookupKey.startsWith(lookupKeyPrefix(product)) &&
+		!lookupKey.startsWith(cloudPrefix)
+	) {
+		return false;
+	}
+	if (subscription.metadata?.ever_product === product) return true;
+	return typeof lookupKey === 'string' && lookupKey.startsWith(cloudPrefix);
 }
 
 /**
- * Whether a completed Checkout Session is a purchase of `product` that can establish a tenant link.
+ * Whether a completed Checkout Session is a purchase of `product`'s HOSTED plan that can establish a
+ * tenant link.
  *
- * Both halves are required. `mode === 'subscription'` excludes payment-mode sessions (lifetime
- * licenses, Ever Works credit packs) and setup-mode card saves, none of which buys a hosted plan.
+ * All three are required. `mode === 'subscription'` excludes payment-mode sessions (lifetime
+ * licenses, Ever Works credit packs) and setup-mode card saves, none of which buys a hosted plan;
+ * the hosting check excludes self-hosted license subscriptions (`ever_hosting: 'selfhosted'`).
  */
 export function checkoutSessionIsForProduct(
 	session: ProductScopedCheckoutSession | null | undefined,
 	product: string | null | undefined
 ): boolean {
 	if (!session || !product) return false;
-	return session.metadata?.ever_product === product && session.mode === 'subscription';
+	return (
+		session.metadata?.ever_product === product &&
+		session.mode === 'subscription' &&
+		hostingIsCloud(session.metadata)
+	);
 }
 
 /**

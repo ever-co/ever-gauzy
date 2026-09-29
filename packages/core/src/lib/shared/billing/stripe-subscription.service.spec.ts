@@ -1,4 +1,4 @@
-// cspell:ignore payg gauzyx flase
+// cspell:ignore payg gauzyx flase selfhosted
 import { Logger } from '@nestjs/common';
 import { EntitlementResult, StripeSubscriptionService } from './stripe-subscription.service';
 import {
@@ -56,6 +56,16 @@ function teamsSub(overrides: Record<string, any> = {}) {
 		status: 'active',
 		metadata: { ever_product: 'teams' },
 		items: { data: [{ price: { lookup_key: 'ever_teams_cloud_starter_monthly' } }] },
+		...overrides
+	};
+}
+
+function selfHostedSub(overrides: Record<string, any> = {}) {
+	return {
+		id: 'sub_s',
+		status: 'active',
+		metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' },
+		items: { data: [{ price: { lookup_key: 'ever_gauzy_selfhosted_enterprise_annual' } }] },
 		...overrides
 	};
 }
@@ -139,6 +149,29 @@ describe('billing-product predicates', () => {
 		expect(subscriptionIsForProduct(gauzySub(), null)).toBe(false);
 	});
 
+	it("a self-hosted license subscription is never the product's hosted plan", () => {
+		expect(
+			subscriptionIsForProduct(gauzySub({ metadata: { ever_product: 'gauzy', ever_hosting: 'cloud' } }), 'gauzy')
+		).toBe(true);
+		expect(subscriptionIsForProduct(selfHostedSub(), 'gauzy')).toBe(false);
+		// Either signal alone is enough to refuse it.
+		expect(subscriptionIsForProduct(selfHostedSub({ metadata: {} }), 'gauzy')).toBe(false);
+		expect(subscriptionIsForProduct(selfHostedSub({ metadata: { ever_product: 'gauzy' } }), 'gauzy')).toBe(false);
+		expect(
+			subscriptionIsForProduct(
+				gauzySub({ metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' } }),
+				'gauzy'
+			)
+		).toBe(false);
+		// A catalog price of this product that is not a cloud price.
+		expect(
+			subscriptionIsForProduct(
+				{ items: { data: [{ price: { lookup_key: 'ever_gauzy_starter_monthly' } }] } },
+				'gauzy'
+			)
+		).toBe(false);
+	});
+
 	it('a checkout session needs BOTH ever_product and subscription mode', () => {
 		expect(
 			checkoutSessionIsForProduct({ mode: 'subscription', metadata: { ever_product: 'gauzy' } }, 'gauzy')
@@ -153,6 +186,18 @@ describe('billing-product predicates', () => {
 			checkoutSessionIsForProduct({ mode: 'subscription', metadata: { ever_product: 'teams' } }, 'gauzy')
 		).toBe(false);
 		expect(checkoutSessionIsForProduct({ mode: 'subscription', metadata: { kind: 'plan' } }, 'gauzy')).toBe(false);
+		expect(
+			checkoutSessionIsForProduct(
+				{ mode: 'subscription', metadata: { ever_product: 'gauzy', ever_hosting: 'cloud' } },
+				'gauzy'
+			)
+		).toBe(true);
+		expect(
+			checkoutSessionIsForProduct(
+				{ mode: 'subscription', metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' } },
+				'gauzy'
+			)
+		).toBe(false);
 	});
 
 	it('recognizes Checkout Session ids and nothing else', () => {
@@ -193,6 +238,14 @@ describe('StripeSubscriptionService — entitlement counts only this product', (
 		await expect(new StripeSubscriptionService().getEntitlement(EMAIL)).resolves.toBe(EntitlementResult.ENTITLED);
 	});
 
+	it('a Gauzy SELF-HOSTED license subscription does not count, for the paywall or the lazy link', async () => {
+		stubStripe(customersRoute({ cus_s: [selfHostedSub()] }));
+		const service = new StripeSubscriptionService();
+		await expect(service.getEntitlement(EMAIL)).resolves.toBe(EntitlementResult.NOT_ENTITLED);
+		await expect(service.findCustomerIdForEmail(EMAIL)).resolves.toBeNull();
+		await expect(service.customerHasEntitlingSubscription('cus_s', 1000)).resolves.toBe(false);
+	});
+
 	it('a cancelled Gauzy subscription does not count', async () => {
 		stubStripe(customersRoute({ cus_g: [gauzySub({ status: 'canceled' })] }));
 		await expect(new StripeSubscriptionService().getEntitlement(EMAIL)).resolves.toBe(
@@ -213,12 +266,25 @@ describe('StripeSubscriptionService — entitlement counts only this product', (
 });
 
 describe('StripeSubscriptionService — switches', () => {
-	it('an unusable BILLING_PRODUCT disables billing entirely', () => {
+	it('an unusable BILLING_PRODUCT disables billing but keeps the paywall CLOSED (fails closed, not open)', async () => {
 		process.env.BILLING_PRODUCT = 'gauzy teams';
+		stubStripe(() => undefined); // any Stripe call fails the test
 		const service = new StripeSubscriptionService();
 		expect(service.isBillingEnforced()).toBe(false);
-		expect(service.isSignupPaywallEnabled()).toBe(false);
 		expect(service.billingProduct).toBeNull();
+		expect(service.isSignupPaywallEnabled()).toBe(true);
+		await expect(service.getEntitlement(EMAIL)).resolves.toBe(EntitlementResult.NOT_ENTITLED);
+		expect(fetchCalls).toEqual([]);
+		// ...unless the paywall is deliberately off, or there is no usable key at all.
+		process.env.BILLING_SIGNUP_PAYWALL = 'false';
+		expect(new StripeSubscriptionService().isSignupPaywallEnabled()).toBe(false);
+		delete process.env.BILLING_SIGNUP_PAYWALL;
+		process.env.DEMO = 'true';
+		expect(new StripeSubscriptionService().isSignupPaywallEnabled()).toBe(false);
+		await expect(new StripeSubscriptionService().getEntitlement(EMAIL)).resolves.toBe(EntitlementResult.ENTITLED);
+		delete process.env.DEMO;
+		process.env.STRIPE_SECRET_KEY = 'sk_live_fixture_without_opt_in';
+		expect(new StripeSubscriptionService().isSignupPaywallEnabled()).toBe(false);
 	});
 
 	it('BILLING_SIGNUP_PAYWALL=false keeps billing on but turns the paywall off', () => {
@@ -254,10 +320,20 @@ describe('StripeSubscriptionService.verifyCheckoutSession — proven identity', 
 		['payment mode (a license, a credit pack)', { mode: 'payment' }, 'foreign-product'],
 		['setup mode', { mode: 'setup' }, 'foreign-product'],
 		['another product', { metadata: { ever_product: 'teams' } }, 'foreign-product'],
+		[
+			'a Gauzy SELF-HOSTED license purchase',
+			{ metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' }, subscription: selfHostedSub() },
+			'foreign-product'
+		],
+		[
+			'a cloud session whose subscription is a self-hosted license',
+			{ subscription: selfHostedSub() },
+			'not-entitled'
+		],
 		['no ever_product (Ever Works, GitHands)', { metadata: { kind: 'plan' } }, 'foreign-product'],
 		['paid under another address', { customer_details: { email: 'someone.else@example.test' } }, 'email-mismatch'],
 		['no address on the session', { customer_details: null, customer_email: null }, 'email-mismatch'],
-		['older than 14 days', { created: Math.floor(Date.now() / 1000) - 15 * 86400 }, 'expired'],
+		['older than 72 hours', { created: Math.floor(Date.now() / 1000) - 73 * 3600 }, 'expired'],
 		['no customer', { customer: null }, 'no-customer'],
 		['its subscription was cancelled', { subscription: gauzySub({ status: 'canceled' }) }, 'not-entitled'],
 		['its subscription moved to another product', { subscription: teamsSub() }, 'not-entitled']
@@ -265,6 +341,14 @@ describe('StripeSubscriptionService.verifyCheckoutSession — proven identity', 
 		stubStripe(sessionRoute(completeSession(overrides)));
 		const result = await new StripeSubscriptionService().verifyCheckoutSession(SESSION_TEST, EMAIL);
 		expect(result).toEqual({ ok: false, reason });
+	});
+
+	it('still accepts a session 71 hours old', async () => {
+		stubStripe(sessionRoute(completeSession({ created: Math.floor(Date.now() / 1000) - 71 * 3600 })));
+		await expect(new StripeSubscriptionService().verifyCheckoutSession(SESSION_TEST, EMAIL)).resolves.toEqual({
+			ok: true,
+			customerId: 'cus_1'
+		});
 	});
 
 	it('declines without calling Stripe when the id is malformed', async () => {

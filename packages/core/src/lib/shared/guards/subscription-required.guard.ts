@@ -9,6 +9,13 @@ import { EntitlementResult, StripeSubscriptionService } from '../billing/stripe-
 const CHECKOUT_URL = process.env.EVER_CHECKOUT_URL?.trim() || 'https://ever.co/checkout';
 
 /**
+ * Per-request Stripe budget for checking a forwarded Checkout Session. It runs BEFORE the email
+ * lookup, which has its own 10 s deadline, so a slow Stripe must not hold `POST /auth/register` for
+ * both in full. A session that cannot be checked in time falls through to the email lookup.
+ */
+const CHECKOUT_SESSION_BUDGET_MS = 3500;
+
+/**
  * Requires the registering email to hold a Stripe subscription.
  *
  * This exists because signup on the hosted deployments now begins at checkout: the visitor picks a
@@ -75,7 +82,11 @@ export class SubscriptionRequiredGuard implements CanActivate {
 		// does not verify is not an error — the address is simply looked up the ordinary way below.
 		const sessionId: unknown = request.body?.stripeCheckoutSessionId;
 		if (isCheckoutSessionId(sessionId)) {
-			const verification = await this.stripeSubscriptionService.verifyCheckoutSession(sessionId, email);
+			const verification = await this.stripeSubscriptionService.verifyCheckoutSession(
+				sessionId,
+				email,
+				CHECKOUT_SESSION_BUDGET_MS
+			);
 			if (verification.ok === false) {
 				this.logger.log(`Checkout Session not accepted as registration proof (${verification.reason}).`);
 			} else {

@@ -1,3 +1,4 @@
+// cspell:ignore selfhosted
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { BillingService, PaymentMethodRequiredError } from './billing.service';
 import { StripeSubscriptionService } from './stripe-subscription.service';
@@ -54,6 +55,31 @@ function teams(overrides: Record<string, any> = {}) {
 						unit_amount: 0,
 						currency: 'usd',
 						recurring: { interval: 'month' }
+					}
+				}
+			]
+		},
+		...overrides
+	});
+}
+
+/** A Gauzy SELF-HOSTED license ($1,668/yr) — same product key, not the hosted plan. */
+function selfHosted(overrides: Record<string, any> = {}) {
+	return sub({
+		id: 'sub_s',
+		status: 'active',
+		created: 1_900_000_000, // the newest on purpose
+		metadata: { ever_product: 'gauzy', ever_hosting: 'selfhosted' },
+		items: {
+			data: [
+				{
+					id: 'si_s',
+					price: {
+						id: 'price_s',
+						lookup_key: 'ever_gauzy_selfhosted_enterprise_annual',
+						unit_amount: 166800,
+						currency: 'usd',
+						recurring: { interval: 'year' }
 					}
 				}
 			]
@@ -177,6 +203,17 @@ describe('BillingService — reads only this product', () => {
 		await expect(service().isCustomerOfProduct(CUSTOMER)).resolves.toBe(true);
 	});
 
+	it('a Gauzy SELF-HOSTED license is never shown, canceled or counted as the cloud plan', async () => {
+		stubStripe({ subscriptions: [selfHosted(), sub()], prices: {}, customer: {} });
+		await expect(service().getSubscription(CUSTOMER)).resolves.toMatchObject({ id: 'sub_g' });
+
+		stubStripe({ subscriptions: [selfHosted()], prices: {}, customer: {} });
+		await expect(service().getSubscription(CUSTOMER)).resolves.toBeNull();
+		await expect(service().cancelSubscription(CUSTOMER)).rejects.toBeInstanceOf(NotFoundException);
+		expect(posts()).toEqual([]);
+		await expect(service().isCustomerOfProduct(CUSTOMER)).resolves.toBe(false);
+	});
+
 	it('isCustomerOfProduct caches only a positive answer', async () => {
 		const billing = service();
 		stubStripe({ subscriptions: [teams()], prices: {}, customer: {} });
@@ -272,6 +309,30 @@ describe('BillingService.changePlan — product scope', () => {
 			NotFoundException
 		);
 		expect(posts()).toEqual([]);
+	});
+
+	it('never re-prices a self-hosted license: alone it is "no subscription", beside the cloud plan it is skipped', async () => {
+		stubStripe({ subscriptions: [selfHosted()], prices: { [FREE_PRICE.lookup_key]: FREE_PRICE }, customer: {} });
+		await expect(service().changePlan(CUSTOMER, FREE_PRICE.lookup_key, 'gauzy')).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+		expect(posts()).toEqual([]);
+
+		stubStripe({
+			subscriptions: [selfHosted(), sub()],
+			prices: { [FREE_PRICE.lookup_key]: FREE_PRICE },
+			customer: {}
+		});
+		await service().changePlan(CUSTOMER, FREE_PRICE.lookup_key, 'gauzy');
+		expect(posts().map((p) => p.path)).toEqual(['/subscriptions/sub_g']);
+	});
+
+	it('refuses a self-hosted target price without calling Stripe', async () => {
+		stubStripe({ subscriptions: [sub()], prices: {}, customer: {} });
+		await expect(
+			service().changePlan(CUSTOMER, 'ever_gauzy_selfhosted_enterprise_annual', 'gauzy')
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(calls).toEqual([]);
 	});
 
 	it('re-prices the Gauzy subscription, never the Teams one beside it', async () => {

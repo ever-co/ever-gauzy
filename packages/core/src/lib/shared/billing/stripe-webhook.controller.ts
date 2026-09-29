@@ -10,6 +10,7 @@ import {
 	ProductScopedSubscription,
 	checkoutSessionIsForProduct,
 	describeProduct,
+	resolveWebhookLinking,
 	subscriptionIsForProduct
 } from './billing-product';
 import { StripeSubscriptionService, describeError } from './stripe-subscription.service';
@@ -32,6 +33,15 @@ import { StripeSubscriptionService, describeError } from './stripe-subscription.
  * of this deployment's product (`BILLING_PRODUCT`), the matched user is an administrator of the
  * tenant it would link, and the customer holds an entitling subscription to that product. Every
  * linking-type event produces exactly one structured log line saying what was decided and why.
+ *
+ * Even then the tenant is only WRITTEN when `BILLING_WEBHOOK_LINKING` is on, which it is not by
+ * default. All the webhook has to go on is the address typed at checkout, and a free Starter can be
+ * started under anybody's address: a verified admin cannot be told apart from somebody buying in
+ * their name. And for an existing admin who buys and then registers the NEW account the checkout
+ * sends them to, the event lands a minute before that registration and would bind their OLD tenant,
+ * leaving the tenant they paid for impossible to link. With the flag off the decision is logged as
+ * `would-link` and the link is made by the buyer's own Checkout Session at onboarding, or by an
+ * admin opening Settings > Billing.
  */
 @ApiExcludeController()
 @Controller('/billing/webhook')
@@ -244,6 +254,13 @@ export class StripeWebhookController {
 			return;
 		}
 
+		// 5. Every check passed. Writing is a separate, default-off decision (see the class comment): the
+		//    checks above cannot prove the purchase was the account owner's own.
+		if (!resolveWebhookLinking()) {
+			outcome.decision = 'would-link';
+			return;
+		}
+
 		// Only fill a gap; never repoint a tenant that already has a customer. Overwriting that link
 		// from a webhook would let a stray event move a tenant's billing onto another account.
 		const updated = await this.typeOrmTenantRepository.update(
@@ -304,6 +321,7 @@ const STRIPE_BUDGET_MS = 3000;
  * - `claimed`: another tenant already bills through this customer.
  * - `not-entitled`: the customer holds no active/trialing/past_due subscription to this product.
  * - `stripe-unavailable`: that could not be established; nothing was written.
+ * - `would-link`: every check passed, but `BILLING_WEBHOOK_LINKING` is off, so nothing was written.
  * - `already-linked`: the tenant already had a customer; nothing was changed.
  * - `linked`: the tenant was linked.
  * - `error`: an unexpected failure (logged separately, still acknowledged).
@@ -319,6 +337,7 @@ export type LinkDecision =
 	| 'claimed'
 	| 'not-entitled'
 	| 'stripe-unavailable'
+	| 'would-link'
 	| 'already-linked'
 	| 'linked'
 	| 'error';
