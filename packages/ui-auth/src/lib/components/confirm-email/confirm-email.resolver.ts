@@ -44,7 +44,9 @@ export const ConfirmEmailResolver: ResolveFn<Observable<IConfirmEmailOutcome | n
 		catchError((error: HttpErrorResponse) => {
 			const message = error?.error?.message;
 			return of({
-				status: error?.status || HttpStatusCode.BadRequest,
+				// 0 = no HTTP answer at all (offline, DNS, CORS); kept as 0 so the page can say "try again"
+				// rather than "this link is not valid".
+				status: typeof error?.status === 'number' ? error.status : HttpStatusCode.BadRequest,
 				message: typeof message === 'string' ? message : undefined
 			});
 		})

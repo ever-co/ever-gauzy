@@ -7036,6 +7036,7 @@
 		"TOO_MANY_REQUESTS": "Too many requests. Please wait a minute and try again.",
 		"DISMISS": "Dismiss",
 		"GO_TO_DASHBOARD": "Go to dashboard",
-		"GO_TO_LOGIN": "Go to login"
+		"GO_TO_LOGIN": "Go to login",
+		"CONNECTION_ERROR": "We could not reach the server to verify your email. Check your connection and open the link again."
 	}
 }
