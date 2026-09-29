@@ -169,7 +169,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	public onPageSizeChange(itemsPerPage: number): void {
-		this.setPagination({ ...this.getPagination(), activePage: 1, itemsPerPage });
+		this.pagination = { ...this.getPagination(), activePage: 1, itemsPerPage };
+		this.smartTableSource.setPaging(1, itemsPerPage, false);
+		// Updating table settings refreshes the existing source; do not also emit pagination$.
 		this._loadSmartTableSettings();
 		try {
 			localStorage.setItem(this.pageSizeStorageKey, String(itemsPerPage));
@@ -628,10 +630,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param totalItems - Total items returned from the server
 	 */
 	updatePagination(totalItems: number) {
-		this.setPagination({
+		// A response updates the count without requesting the same employees again.
+		this.pagination = {
 			...this.getPagination(),
 			totalItems
-		});
+		};
 	}
 
 	/**

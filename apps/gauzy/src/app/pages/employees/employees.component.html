@@ -69,7 +69,11 @@
           </div>
           <div class="pagination-container">
             @if (smartTableSource) {
-              <ngx-pagination [source]="smartTableSource" (perPageChange)="onPageSizeChange($event)"></ngx-pagination>
+              <ngx-pagination
+                [source]="smartTableSource"
+                [refreshOnPerPageChange]="false"
+                (perPageChange)="onPageSizeChange($event)"
+              ></ngx-pagination>
             }
           </div>
         }
