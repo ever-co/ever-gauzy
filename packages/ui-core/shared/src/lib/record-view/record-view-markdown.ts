@@ -16,17 +16,21 @@
 
 const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
-const LIST_ITEM = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;
-const HEADING = /^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/;
+// Patterns avoid overlapping quantifiers (e.g. `\s+(.*)`), so matching stays linear.
+const LIST_ITEM = /^(\s*)([-*+]|\d{1,9}[.)])\s+(\S.*)?$/;
+const HEADING = /^\s{0,3}(#{1,6})\s+(\S.*)?$/;
 const FENCE = /^\s{0,3}(`{3,}|~{3,})\s*([\w+#.-]*)/;
-const REFERENCE_DEFINITION = /^\s{0,3}\[([^\]]+)\]:\s*(\S+)(?:\s+.*)?$/;
+/** A closing fence: only the fence run, then whitespace. */
+const FENCE_CLOSE = /^\s{0,3}(`+|~+)\s*$/;
+const REFERENCE_DEFINITION = /^\s{0,3}\[([^\]]+)\]:\s*(\S+)(?:\s.*)?$/;
 const DETAILS_OPEN = /^\s*<details\b[^>]*>/i;
 /** GitHub alert syntax: `> [!NOTE]` as the first line of a quote. */
 const ALERT = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*$/i;
 const RULE = /^\s{0,3}([-*_])(\s*\1){2,}\s*$/;
 const QUOTE = /^\s{0,3}>/;
 const SETEXT = /^\s{0,3}(=+|-+)\s*$/;
-const TABLE_DIVIDER = /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+\|?\s*$/;
+/** One cell of a table's divider row: `---`, `:--`, `--:` or `:-:`. */
+const DIVIDER_CELL = /^:?-+:?$/;
 
 /** "EEA & UK Tenant Restrictions: Automatically blocks …" — a short label, then prose. */
 const LABEL_LINE = /^([A-Za-z][^:/`*<>]{1,50}?):\s+(\S.*)$/;
@@ -43,24 +47,35 @@ const BLOCK_TAGS = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol',
  * GFM's HTML-block rule: a line opening with a block-level tag starts raw HTML
  * that runs to the next blank line (Dependabot release notes are all this).
  */
-const HTML_BLOCK = /^\s{0,3}<\/?(p|h[1-6]|ul|ol|li|blockquote|pre|hr|table|thead|tbody|tfoot|tr|th|td|dl|dt|dd|div|section|article|figure)\b/i;
+const HTML_BLOCK_TAGS = new Set([...BLOCK_TAGS, 'div', 'section', 'article', 'figure']);
+/** The name of the tag a line opens with, e.g. `ul` for `  <ul>` or `</ul>`. */
+const LEADING_TAG = /^\s{0,3}<\/?([a-z][a-z0-9]*)\b/i;
 const RAW_TAG = /<(\/?)([a-z][a-z0-9]*)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
-const ATTRIBUTE = /([a-z][\w-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+/** The attributes `rebuildTag` keeps, each matched only as a whole attribute name. */
+const ATTRIBUTES: Record<string, RegExp> = {
+	href: /(?:^|\s)href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i,
+	src: /(?:^|\s)src\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i,
+	alt: /(?:^|\s)alt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
+};
 
-const RICH_TEXT_START = /^<(p|div|h[1-6]|ul|ol|table|blockquote|pre|figure|span|br|strong|em|b|i|a)(\s[^>]*)?\/?>/i;
+/** Tags rich-text editor output opens with. */
+const RICH_TEXT_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'table', 'blockquote', 'pre', 'figure', 'span', 'br', 'strong', 'em', 'b', 'i', 'a']);
+/** The first tag of a string, when the string opens with a complete tag. */
+const OPENING_TAG = /^<([a-z][a-z0-9]*)(?:\s[^>]*)?\/?>/i;
 /** Tags the rich-text editor wraps plain pasted text in — nothing structural. */
 const TRIVIAL_TAG = /^<\/?(p|br|div|span)(\s[^>]*)?\/?>$/i;
 const ANY_TAG = /<\/?[a-z][a-z0-9]*(\s[^>]*)?\/?>/gi;
-const MARKDOWN_HINT = /(^|\n)\s{0,3}(#{1,6}\s|[-*+]\s|\d+[.)]\s|>|```)|\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)/;
+/** Any one of these in editor-unwrapped text means it was really markdown. */
+const MARKDOWN_HINTS = [/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+[.)]\s|>|```)/m, /\*\*[^*]+\*\*/, /`[^`]+`/, /\[[^\]]+\]\([^)]+\)/];
 
 export function richTextToHtml(source: string | null | undefined): string {
-	if (!source || !source.trim()) {
+	if (!source?.trim()) {
 		return '';
 	}
 
 	// Editor output always opens with a block element. Markdown may carry the odd
 	// inline tag (`<b>`, `<img>`, `<details>`) but does not start with one.
-	if (!RICH_TEXT_START.test(source.replace(/<!--[\s\S]*?-->/g, '').trim())) {
+	if (!isRichText(source)) {
 		return markdownToHtml(source);
 	}
 
@@ -74,11 +89,21 @@ export function richTextToHtml(source: string | null | undefined): string {
 				.replace(/<\/(p|div)>\s*/gi, '\n\n')
 				.replace(ANY_TAG, '')
 		);
-		if (MARKDOWN_HINT.test(text)) {
+		if (MARKDOWN_HINTS.some((hint) => hint.test(text))) {
 			return markdownToHtml(text);
 		}
 	}
 	return source;
+}
+
+function isRichText(source: string): boolean {
+	const tag = OPENING_TAG.exec(source.replace(/<!--[\s\S]*?-->/g, '').trim());
+	return !!tag && RICH_TEXT_TAGS.has(tag[1].toLowerCase());
+}
+
+function isHtmlBlockStart(line: string): boolean {
+	const tag = LEADING_TAG.exec(line);
+	return !!tag && HTML_BLOCK_TAGS.has(tag[1].toLowerCase());
 }
 
 /** Link targets from `[label]: url` definitions, for `[text][label]` references in the current render. */
@@ -100,7 +125,7 @@ function removeNonContent(lines: string[]): string[] {
 	let prose: string[] = [];
 	let i = 0;
 	while (i < lines.length) {
-		const fence = lines[i].match(FENCE);
+		const fence = FENCE.exec(lines[i]);
 		if (fence) {
 			out.push(...cleanProse(prose));
 			prose = [];
@@ -115,15 +140,31 @@ function removeNonContent(lines: string[]): string[] {
 
 /** Copies a fenced block, fences included, and returns the index after it. */
 function copyFence(lines: string[], start: number, marker: string, out: string[]): number {
-	out.push(lines[start]);
+	const end = closingFenceIndex(lines, start, marker);
+	out.push(...lines.slice(start, end + 1));
+	return end + 1;
+}
+
+/**
+ * Index of the line that closes the fence opened at `start` — or `lines.length`
+ * when it never closes (the block then runs to the end, as on GitHub).
+ */
+function closingFenceIndex(lines: string[], start: number, marker: string): number {
 	let i = start + 1;
-	while (i < lines.length) {
-		out.push(lines[i]);
-		if (lines[i++].trim().startsWith(marker)) {
-			break;
-		}
+	while (i < lines.length && !isClosingFence(lines[i], marker)) {
+		i++;
 	}
 	return i;
+}
+
+/**
+ * A line closes a fence only if it is nothing but a run of the opener's
+ * character at least as long as the opener — so a ```` ```js ```` line inside a
+ * ```` ``` ```` block is content, not the end of it.
+ */
+function isClosingFence(line: string, marker: string): boolean {
+	const fence = FENCE_CLOSE.exec(line);
+	return !!fence && fence[1][0] === marker[0] && fence[1].length >= marker.length;
 }
 
 function cleanProse(lines: string[]): string[] {
@@ -139,7 +180,7 @@ function cleanProse(lines: string[]): string[] {
 			// `[label]: url` lines are definitions, never content — including the
 			// `[//]: # (comment)` idiom bots use as invisible markers.
 			.filter((line) => {
-				const definition = line.match(REFERENCE_DEFINITION);
+				const definition = REFERENCE_DEFINITION.exec(line);
 				if (definition) {
 					references.set(definition[1].toLowerCase(), definition[2]);
 				}
@@ -198,17 +239,13 @@ function renderBlock(lines: string[], i: number, html: string[]): number {
 }
 
 function renderFenceBlock(lines: string[], i: number, html: string[]): number {
-	const fence = lines[i].match(FENCE);
+	const fence = FENCE.exec(lines[i]);
 	if (!fence) {
 		return NO_MATCH;
 	}
-	const body: string[] = [];
-	let next = i + 1;
-	while (next < lines.length && !lines[next].trim().startsWith(fence[1])) {
-		body.push(lines[next++]);
-	}
-	html.push(renderCodeBlock(body, fence[2]));
-	return next + 1; // past the closing fence
+	const end = closingFenceIndex(lines, i, fence[1]);
+	html.push(renderCodeBlock(lines.slice(i + 1, end), fence[2]));
+	return end + 1; // past the closing fence
 }
 
 function renderDetailsBlock(lines: string[], i: number, html: string[]): number {
@@ -217,7 +254,7 @@ function renderDetailsBlock(lines: string[], i: number, html: string[]): number 
 
 /** Raw block-level HTML runs to the next blank line (GFM's HTML-block rule). */
 function renderHtmlBlock(lines: string[], i: number, html: string[]): number {
-	if (!HTML_BLOCK.test(lines[i])) {
+	if (!isHtmlBlockStart(lines[i])) {
 		return NO_MATCH;
 	}
 	const next = nextBlankLine(lines, i);
@@ -234,13 +271,22 @@ function nextBlankLine(lines: string[], from: number): number {
 }
 
 function renderHeadingBlock(lines: string[], i: number, html: string[]): number {
-	const heading = lines[i].match(HEADING);
+	const heading = HEADING.exec(lines[i]);
 	if (!heading) {
 		return NO_MATCH;
 	}
 	const level = heading[1].length;
-	html.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+	html.push(`<h${level}>${renderInline(stripClosingHashes(heading[2] ?? ''))}</h${level}>`);
 	return i + 1;
+}
+
+/** `## Title ##` — the optional closing run of `#` is not part of the title. */
+function stripClosingHashes(text: string): string {
+	let end = text.trimEnd();
+	while (end.endsWith('#')) {
+		end = end.slice(0, -1);
+	}
+	return end.trimEnd();
 }
 
 function renderRuleBlock(lines: string[], i: number, html: string[]): number {
@@ -261,7 +307,7 @@ function renderQuoteBlock(lines: string[], i: number, html: string[]): number {
 	while (next < lines.length && QUOTE.test(lines[next])) {
 		body.push(lines[next++].replace(/^\s{0,3}>\s?/, ''));
 	}
-	const alert = body[0]?.trim().match(ALERT);
+	const alert = ALERT.exec(body[0]?.trim() ?? '');
 	if (alert) {
 		const kind = alert[1].toLowerCase();
 		const title = kind.charAt(0).toUpperCase() + kind.slice(1);
@@ -325,7 +371,7 @@ function renderParagraph(body: string[], html: string[]): void {
 		lines = lines.slice(1);
 	}
 
-	const labelled = lines.map((line) => line.match(LABEL_LINE));
+	const labelled = lines.map((line) => LABEL_LINE.exec(line));
 	if (lines.length > 1 && labelled.every(Boolean)) {
 		const items = labelled
 			.map((match) => `<li><strong>${renderInline(match[1])}:</strong> ${renderInline(match[2])}</li>`)
@@ -353,17 +399,20 @@ function isTitleLine(line: string): boolean {
  */
 function renderCodeBlock(body: string[], language: string): string {
 	const lang = (language || '').toLowerCase();
-	const code =
-		lang === 'diff'
-			? body
-					.map((line) => {
-						const kind = line.startsWith('+') ? 'md-add' : line.startsWith('-') ? 'md-del' : null;
-						return kind ? `<span class="${kind}">${escapeHtml(line)}</span>` : escapeHtml(line);
-					})
-					.join('\n')
-			: escapeHtml(body.join('\n'));
+	const code = lang === 'diff' ? body.map(renderDiffLine).join('\n') : escapeHtml(body.join('\n'));
 	const header = lang ? `<div class="md-code-lang">${escapeHtml(lang)}</div>` : '';
 	return `<div class="md-code">${header}<pre><code>${code}</code></pre></div>`;
+}
+
+/** A `diff` line, tinted when it adds (`+`) or removes (`-`). */
+function renderDiffLine(line: string): string {
+	let kind: string = null;
+	if (line.startsWith('+')) {
+		kind = 'md-add';
+	} else if (line.startsWith('-')) {
+		kind = 'md-del';
+	}
+	return kind ? `<span class="${kind}">${escapeHtml(line)}</span>` : escapeHtml(line);
 }
 
 /**
@@ -406,7 +455,7 @@ function startsBlock(lines: string[], i: number): boolean {
 	return (
 		FENCE.test(line) ||
 		DETAILS_OPEN.test(line) ||
-		HTML_BLOCK.test(line) ||
+		isHtmlBlockStart(line) ||
 		HEADING.test(line) ||
 		RULE.test(line) ||
 		QUOTE.test(line) ||
@@ -430,11 +479,11 @@ interface ListState {
 /** Returned by a list step when the line at hand ends the list. */
 const LIST_END = -1;
 
-const TASK_MARKER = /^\[( |x|X)\]\s+/;
+const TASK_MARKER = /^\[([ xX])\]\s+/;
 
 /** Renders one list (and, recursively, the lists nested in it). Returns the index after it. */
 function renderList(lines: string[], start: number): [string, number] {
-	const first = lines[start].match(LIST_ITEM);
+	const first = LIST_ITEM.exec(lines[start]);
 	const list: ListState = { indent: first[1].length, ordered: isOrderedMarker(first[2]), items: [] };
 	let i = start;
 	while (i < lines.length) {
@@ -453,7 +502,7 @@ function isOrderedMarker(marker: string): boolean {
 
 /** Consumes the line at `i` into the list; returns where to continue, or `LIST_END`. */
 function listStep(lines: string[], i: number, list: ListState): number {
-	const match = lines[i].match(LIST_ITEM);
+	const match = LIST_ITEM.exec(lines[i]);
 	return match ? listItemStep(lines, i, match, list) : listTextStep(lines, i, list);
 }
 
@@ -462,7 +511,7 @@ function listTextStep(lines: string[], i: number, list: ListState): number {
 	if (!lines[i].trim()) {
 		return itemAfterBlankLines(lines, i, list.indent);
 	}
-	const current = list.items[list.items.length - 1];
+	const current = list.items.at(-1);
 	if (current && !startsBlock(lines, i)) {
 		current.text.push(lines[i].trim());
 		return i + 1;
@@ -476,14 +525,14 @@ function itemAfterBlankLines(lines: string[], i: number, indent: number): number
 	while (next < lines.length && !lines[next].trim()) {
 		next++;
 	}
-	const item = next < lines.length ? lines[next].match(LIST_ITEM) : null;
+	const item = next < lines.length ? LIST_ITEM.exec(lines[next]) : null;
 	return item && item[1].length >= indent ? next : LIST_END;
 }
 
 /** An item line: a sibling, a nested list under the current item, or the end of this list. */
 function listItemStep(lines: string[], i: number, match: RegExpMatchArray, list: ListState): number {
 	const indent = match[1].length;
-	const current = list.items[list.items.length - 1];
+	const current = list.items.at(-1);
 	if (indent < list.indent) {
 		return LIST_END;
 	}
@@ -495,7 +544,7 @@ function listItemStep(lines: string[], i: number, match: RegExpMatchArray, list:
 	if (isOrderedMarker(match[2]) !== list.ordered) {
 		return LIST_END;
 	}
-	list.items.push({ text: [match[3]], children: '' });
+	list.items.push({ text: [match[3] ?? ''], children: '' });
 	return i + 1;
 }
 
@@ -509,7 +558,7 @@ function renderListHtml(list: ListState, firstMarker: string): string {
 /** An item, with a `[ ]` / `[x]` task marker drawn as a checkbox. */
 function renderListItem({ text, children }: ListItem): string {
 	const content = text.map(renderInline).join('<br />');
-	const task = text[0].match(TASK_MARKER);
+	const task = TASK_MARKER.exec(text[0]);
 	if (!task) {
 		return `<li>${content}${children}</li>`;
 	}
@@ -519,7 +568,13 @@ function renderListItem({ text, children }: ListItem): string {
 }
 
 function isTableStart(lines: string[], i: number): boolean {
-	return lines[i].includes('|') && i + 1 < lines.length && TABLE_DIVIDER.test(lines[i + 1]);
+	return lines[i].includes('|') && i + 1 < lines.length && isTableDivider(lines[i + 1]);
+}
+
+/** `---|:--:` — at least two cells, each only dashes with optional alignment colons. */
+function isTableDivider(line: string): boolean {
+	const cells = splitRow(line);
+	return cells.length >= 2 && cells.every((cell) => DIVIDER_CELL.test(cell));
 }
 
 function renderTable(lines: string[], start: number, html: string[]): number {
@@ -531,11 +586,15 @@ function renderTable(lines: string[], start: number, html: string[]): number {
 	}
 
 	const head = header.map((cell) => `<th>${renderInline(cell)}</th>`).join('');
-	const body = rows
-		.map((row) => `<tr>${header.map((_, c) => `<td>${renderInline(row[c] ?? '')}</td>`).join('')}</tr>`)
-		.join('');
+	const body = rows.map((row) => renderTableRow(row, header.length)).join('');
 	html.push(`<div class="md-table"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
 	return i;
+}
+
+/** A body row, padded or cut to the header's column count. */
+function renderTableRow(row: string[], columns: number): string {
+	const cells = Array.from({ length: columns }, (_, c) => `<td>${renderInline(row[c] ?? '')}</td>`);
+	return `<tr>${cells.join('')}</tr>`;
 }
 
 function splitRow(line: string): string[] {
@@ -548,46 +607,57 @@ function splitRow(line: string): string[] {
 }
 
 /**
+ * Brackets an index into `renderInline`'s stash. A private-use character, so
+ * real text never contains it and it is not a control character.
+ */
+const MARK = '';
+const PLACEHOLDER = new RegExp(`${MARK}(\\d+)${MARK}`, 'g');
+/** Non-global twin of `PLACEHOLDER` for `.test()`, which is stateful on a global regex. */
+const HAS_PLACEHOLDER = new RegExp(`${MARK}\\d+${MARK}`);
+const AUTOLINK = new RegExp(`(^|[\\s(])(https?://[^\\s<${MARK}]*[^\\s<${MARK}.,:;!?'")\\]])`, 'g');
+
+/**
  * Inline markup. Code spans and links are swapped out for placeholders first so
  * that emphasis and autolinking never reach inside them.
  */
 function renderInline(text: string): string {
 	const stash: string[] = [];
-	const keep = (html: string) => `\u0000${stash.push(html) - 1}\u0000`;
+	const keep = (html: string) => `${MARK}${stash.push(html) - 1}${MARK}`;
 
 	// Code spans first, on the raw text, so a tag inside backticks stays literal.
 	let out = text.replace(/`([^`]+)`/g, (_, code) => keep(`<code>${escapeHtml(code)}</code>`));
 	out = out.replace(RAW_TAG, (_, closing, name, attrs) => keep(rebuildTag(name.toLowerCase(), !!closing, attrs)));
 	out = escapeHtml(out);
 
-	out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;.*?&quot;)?\)/g, (match, alt, url) => {
+	// Labels exclude `[` as well as `]`, and titles stop at the first `&`, so no
+	// pattern can rescan a run of brackets or text from every start position.
+	out = out.replace(/!\[([^[\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (match, alt, url) => {
 		const href = safeUrl(url);
 		return href ? keep(`<img src="${href}" alt="${alt}" />`) : match;
 	});
 
-	out = out.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;.*?&quot;)?\)/g, (match, label, url) => {
+	out = out.replace(/\[([^[\]]+)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (match, label, url) => {
 		const href = safeUrl(url);
 		return href ? keep(`<a href="${href}" target="_blank" rel="noopener noreferrer">${emphasis(label)}</a>`) : match;
 	});
 
 	// `[text][ref]` / `[text][]` against the definitions collected up front.
-	out = out.replace(/\[([^\]]+)\]\[([^\]]*)\]/g, (match, label, ref) => {
+	out = out.replace(/\[([^[\]]+)\]\[([^[\]]*)\]/g, (match, label, ref) => {
 		const target = references.get((ref || label).toLowerCase());
 		const href = target ? safeUrl(escapeHtml(target)) : null;
 		return href ? keep(`<a href="${href}" target="_blank" rel="noopener noreferrer">${emphasis(label)}</a>`) : match;
 	});
 
 	out = out.replace(
-		/(^|[\s(])(https?:\/\/[^\s<\u0000]*[^\s<\u0000.,:;!?'")\]])/g,
+		AUTOLINK,
 		(_, before, url) => before + keep(`<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
 	);
 
 	out = emphasis(out);
 
 	// Placeholders can nest (a code span inside a link label), so restore until none are left.
-	const placeholder = /\u0000(\d+)\u0000/g;
-	while (placeholder.test(out)) {
-		out = out.replace(placeholder, (_, index) => stash[+index]);
+	while (HAS_PLACEHOLDER.test(out)) {
+		out = out.replace(PLACEHOLDER, (_, index) => stash[+index]);
 	}
 	return out;
 }
@@ -631,13 +701,9 @@ function rebuildTag(name: string, closing: boolean, attrs: string): string {
 	return closing ? `</${name}>` : `<${name}>`;
 }
 
-function readAttribute(attrs: string, wanted: string): string | null {
-	for (const match of attrs.matchAll(ATTRIBUTE)) {
-		if (match[1].toLowerCase() === wanted) {
-			return match[2] ?? match[3] ?? match[4] ?? '';
-		}
-	}
-	return null;
+function readAttribute(attrs: string, wanted: 'href' | 'src' | 'alt'): string | null {
+	const match = ATTRIBUTES[wanted].exec(attrs);
+	return match ? match[1] ?? match[2] ?? match[3] ?? '' : null;
 }
 
 /** Runs on already-escaped text, so `&` in a query string reads `&amp;` — correct inside an attribute. */
@@ -652,10 +718,10 @@ function escapeHtml(text: string): string {
 
 function decodeEntities(text: string): string {
 	return text
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/&amp;/g, '&');
+		.replaceAll('&nbsp;', ' ')
+		.replaceAll('&lt;', '<')
+		.replaceAll('&gt;', '>')
+		.replaceAll('&quot;', '"')
+		.replaceAll('&#39;', "'")
+		.replaceAll('&amp;', '&');
 }
