@@ -121,12 +121,26 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 		if (this.working || this.isCurrentPlan(plan)) return;
 		this.working = true;
 		try {
-			this.subscription = await firstValueFrom(this.billingService.changePlan(plan.lookupKey));
+			this.subscription = await firstValueFrom(
+				this.billingService.changePlan(plan.lookupKey, window.location.href)
+			);
 			this.toastrService.success('SETTINGS_MENU.BILLING_PLAN_CHANGED', { name: plan.productName });
 			// Switching plans issues an invoice, so the list below is now stale.
 			this.invoices = await this.safe(() => firstValueFrom(this.billingService.getInvoices()), this.invoices);
 		} catch (error) {
-			this.errorHandlingService.handleError(error);
+			// An upgrade to a paid plan from one with no card on file: the API refuses it rather than
+			// leave an invoice nobody can pay, and hands back a Stripe portal link to add a card. Send the
+			// admin there; they return to this page and switch again.
+			const body = (error as { status?: number; error?: { code?: string; portalUrl?: string } })?.error;
+			if ((error as { status?: number })?.status === 402 && body?.code === 'payment_method_required') {
+				this.toastrService.info('SETTINGS_MENU.BILLING_PAYMENT_METHOD_REQUIRED', 'TOASTR.TITLE.INFO');
+				if (body.portalUrl) {
+					window.location.href = body.portalUrl;
+					return;
+				}
+			} else {
+				this.errorHandlingService.handleError(error);
+			}
 		} finally {
 			this.working = false;
 		}

@@ -1262,6 +1262,7 @@
 		"BILLING_CURRENT": "Current",
 		"BILLING_SWITCH": "Switch to this plan",
 		"BILLING_PLAN_CHANGED": "Switched to {{ name }}.",
+		"BILLING_PAYMENT_METHOD_REQUIRED": "Add a payment method to switch to a paid plan. Opening the billing portal...",
 		"BILLING_PAYMENT_METHOD": "Payment method",
 		"BILLING_NO_CARD": "No card on file.",
 		"BILLING_INVOICES": "Invoices",
