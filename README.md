@@ -226,7 +226,7 @@ Notes:
 
 -   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
 -   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up -d` command. We already doing it using `include` in our main docker compose files.
--   you can add something like `--env-file .env.something` to the docker-compose `up` command to instruct Docker Compose to use a specific `.env.something` file with your custom settings
+-   API and Web UI settings are read from the service `env_file` (`.env.compose`, or `.env.demo.compose` for the demo), so edit that file to change them. `--env-file .env.something` on the docker-compose `up` command only feeds variables interpolated in the compose files themselves (e.g. ports and host names), not the API / Web UI settings
 
 Together with Gauzy, the Docker Compose commands described above for Production (`docker-compose.yml`) and Build (`docker-compose.build.yml`) will run the following infrastructure components:
 
