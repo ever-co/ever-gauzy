@@ -1258,6 +1258,7 @@
 		"BILLING_CANCELLED": "Your subscription will end at the end of the current period.",
 		"BILLING_RESUMED": "Your subscription will continue.",
 		"BILLING_NO_SUBSCRIPTION": "This account has no subscription yet.",
+		"BILLING_VERIFY_EMAIL_TO_LINK": "Already paid? A subscription is connected to this workspace once you verify your email address. We sent the link to {{ email }}.",
 		"BILLING_AVAILABLE_PLANS": "Available plans",
 		"BILLING_CURRENT": "Current",
 		"BILLING_SWITCH": "Switch to this plan",
@@ -5987,7 +5988,8 @@
 				"PRIVACY_POLICY": "Privacy Policy"
 			},
 			"PASSWORD_MIN_LENGTH": "Password must be at least 4 characters!"
-		}
+		},
+		"CONTINUE_TO_CHECKOUT": "Continue to checkout"
 	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
@@ -7024,5 +7026,16 @@
 		"ERROR": {
 			"LOAD_FAILED": "Failed to load favorites"
 		}
+	},
+	"EMAIL_VERIFICATION": {
+		"NOTICE": "Please verify your email address. We sent a verification link to {{ email }}.",
+		"RESEND": "Resend email",
+		"SENDING": "Sending…",
+		"SENT": "A new verification link is on its way to {{ email }}.",
+		"RESEND_FAILED": "We could not send the email right now. Please try again in a few minutes.",
+		"TOO_MANY_REQUESTS": "Too many requests. Please wait a minute and try again.",
+		"DISMISS": "Dismiss",
+		"GO_TO_DASHBOARD": "Go to dashboard",
+		"GO_TO_LOGIN": "Go to login"
 	}
 }

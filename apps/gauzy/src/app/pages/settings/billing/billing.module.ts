@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from '@gauzy/ui-core/shared';
+import { EmailVerificationNoticeComponent, SharedModule } from '@gauzy/ui-core/shared';
 import { BillingRoutingModule } from './billing-routing.module';
 import { BillingComponent } from './billing.component';
 
@@ -14,7 +14,8 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbSpinnerModule];
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		BillingRoutingModule,
-		SharedModule
+		SharedModule,
+		EmailVerificationNoticeComponent
 	],
 	declarations: [BillingComponent],
 	providers: []

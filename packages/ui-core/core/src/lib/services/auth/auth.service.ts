@@ -28,6 +28,22 @@ export class AuthService {
 		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify`, body);
 	}
 
+	/**
+	 * Whether the signed-in user still has to verify their email. Answers 404 when the deployment
+	 * has email verification switched off.
+	 */
+	getEmailVerificationStatus(): Observable<{ isEmailVerified: boolean }> {
+		return this.http.get<{ isEmailVerified: boolean }>(`${API_PREFIX}/auth/email/verify/status`);
+	}
+
+	/**
+	 * Email the signed-in user a new verification link (rate limited by the API). Sends no
+	 * overrides, so the link opens this app's own confirm-email page.
+	 */
+	resendEmailVerificationLink(): Observable<Object> {
+		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify/resend-link`, {});
+	}
+
 	login(loginInput: IUserLoginInput): Observable<IAuthResponse> {
 		return this.http.post<IAuthResponse>(`${API_PREFIX}/auth/login`, loginInput);
 	}

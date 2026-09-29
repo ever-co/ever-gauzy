@@ -1,4 +1,11 @@
-import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	Logger,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { MoreThanOrEqual } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -20,6 +27,8 @@ import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
+import { describeEmailSendError } from './../email-send/email-send-error';
+import { allowedEmailLinkOrigins, isAllowedEmailLink, isEmailLinkCheckDisabled } from './email-link-origin';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -38,9 +47,9 @@ export class EmailConfirmationService {
 	 * @param user The user to send the verification email to.
 	 * @param integration Configuration for app integration.
 	 */
-	public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig) {
+	public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig): Promise<boolean> {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
-			return;
+			return false;
 		}
 
 		try {
@@ -52,10 +61,15 @@ export class EmailConfirmationService {
 				expiresIn: `${environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME}s`
 			});
 
-			// Override the default config by merging in the provided values.
-			const appIntegration = deepMerge(environment.appIntegrationConfig, integration);
+			// Override the default config by merging in the provided values - except a confirmation
+			// link on a host this deployment does not serve (see email-link-origin.ts).
+			const appIntegration = deepMerge(environment.appIntegrationConfig, this.withTrustedLinks(integration, id));
 
-			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
+			// The address is encoded: a raw `+` (plus addressing) reads back as a space, and the
+			// confirm request then fails e-mail validation, so those users could never verify by link.
+			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${encodeURIComponent(
+				email
+			)}&token=${token}`;
 			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
@@ -67,16 +81,22 @@ export class EmailConfirmationService {
 				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
 
-			// Send email verification link
+			// Send email verification link. Resolves false when the provider did not take the message;
+			// the send itself is logged and recorded in email_sent by EmailService.
 			return await this.emailService.emailVerification(user, verificationLink, verificationCode, appIntegration);
 		} catch (error) {
-			this.logger.error('Error while sending verification email', error?.stack);
+			this.logger.error(
+				`Error while preparing the verification email for user ${user?.id}: ${describeEmailSendError(error)}`
+			);
+			return false;
 		}
 	}
 
 	/**
 	 * Resend confirmation email link
 	 *
+	 * Rate limited by the controller. Reports a send the provider refused as 503, so the caller can
+	 * tell the user to try again instead of promising an email that is not coming.
 	 */
 	public async resendConfirmationLink(config: IAppIntegrationConfig) {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
@@ -87,14 +107,56 @@ export class EmailConfirmationService {
 			if (!!user.emailVerifiedAt) {
 				throw new BadRequestException('Your email is already verified.');
 			}
-			await this.sendEmailVerification(user, config);
+			const sent = await this.sendEmailVerification(user, config);
+			if (!sent) {
+				throw new ServiceUnavailableException(
+					'We could not send the verification email right now. Please try again in a few minutes.'
+				);
+			}
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`
 			});
 		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error?.message);
 		}
+	}
+
+	/**
+	 * Whether the signed-in user has verified their email.
+	 *
+	 * @returns `{ isEmailVerified }` for the current user; false when the user cannot be found.
+	 */
+	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean }> {
+		const user = await this.userService.getIfExists(RequestContext.currentUserId());
+		return { isEmailVerified: !!user?.emailVerifiedAt };
+	}
+
+	/**
+	 * The caller's integration overrides, minus a confirmation link on an origin this deployment does
+	 * not serve. See {@link allowedEmailLinkOrigins} for why.
+	 *
+	 * @param integration The overrides supplied with the request.
+	 * @param userId Only for the log line.
+	 */
+	private withTrustedLinks(integration: IAppIntegrationConfig, userId: string): IAppIntegrationConfig {
+		if (!integration?.appEmailConfirmationUrl || isEmailLinkCheckDisabled()) {
+			return integration;
+		}
+		if (isAllowedEmailLink(integration.appEmailConfirmationUrl, allowedEmailLinkOrigins())) {
+			return integration;
+		}
+
+		this.logger.warn(
+			`Ignoring appEmailConfirmationUrl for user ${userId}: its origin is not one this deployment serves ` +
+				`(add it to EMAIL_LINK_ALLOWED_ORIGINS if it should be).`
+		);
+		return Object.fromEntries(
+			Object.entries(integration).filter(([key]) => key !== 'appEmailConfirmationUrl')
+		) as IAppIntegrationConfig;
 	}
 
 	/**

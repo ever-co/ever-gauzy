@@ -19,6 +19,7 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
 import { AuthService } from './auth.service';
 import { ElectronService } from './electron.service';
+import { readRegisterError } from './register-error';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -204,8 +205,12 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 			}),
 			catchError((err) => {
+				// Show what the API told the person (e.g. "A subscription is required…") instead of the
+				// generic default. The response stays on the result, so the register form can read
+				// `checkoutUrl` from it and offer the way to the checkout.
+				const { messages } = readRegisterError(err);
 				return of(
-					new NbAuthResult(false, err, false, AuthStrategy.config.register.defaultErrors, [
+					new NbAuthResult(false, err, false, messages ?? AuthStrategy.config.register.defaultErrors, [
 						AuthStrategy.config.register.defaultErrors
 					])
 				);

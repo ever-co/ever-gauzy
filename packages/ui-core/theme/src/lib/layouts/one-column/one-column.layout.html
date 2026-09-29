@@ -122,6 +122,10 @@
 
 	<!-- Main content -->
 	<nb-layout-column>
+		<!-- "Verify your email" + Resend, only for a signed-in user the API reports as unverified. -->
+		@if (user()) {
+			<ngx-email-verification-notice></ngx-email-verification-notice>
+		}
 		<ng-content select="router-outlet"></ng-content>
 	</nb-layout-column>
 
