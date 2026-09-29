@@ -21,6 +21,11 @@ import { TypeOrmRequestApprovalRepository } from '../request-approval/repository
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
 
+/**
+ * Columns the time off table can be sorted by. Any other `order` key from the query string is ignored.
+ */
+const SORTABLE_COLUMNS = ['start', 'end', 'requestDate'] as const;
+
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
@@ -179,6 +184,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
 
+		const order = this.parseSortOrder(options?.order);
+		const hasOrder = Object.keys(order).length > 0;
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -228,6 +236,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 						populate: (options.relations || []) as any[],
+						...(hasOrder ? { orderBy: order } : {}),
 						limit: options.take ? options.take : 10,
 						offset: options.skip ? (options.take || 10) * (options.skip - 1) : 0
 					});
@@ -241,6 +250,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						query.setFindOptions({
 							skip: options.skip ? options.take * (options.skip - 1) : 0,
 							take: options.take ? options.take : 10,
+							...(hasOrder ? { order } : {}),
 							...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
 						});
 					}
@@ -356,5 +366,27 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			console.log(error);
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Keeps only the sortable columns with a valid direction from the client-supplied `order`
+	 * (e.g. `order[start]=ASC`), so it can be passed safely to the ORM.
+	 */
+	private parseSortOrder(order: unknown): Record<string, 'ASC' | 'DESC'> {
+		const result: Record<string, 'ASC' | 'DESC'> = {};
+		if (!order || typeof order !== 'object') {
+			return result;
+		}
+		// Iterate the client's keys (not the allowlist) to keep the requested sort precedence
+		for (const [column, value] of Object.entries(order)) {
+			if (!(SORTABLE_COLUMNS as readonly string[]).includes(column)) {
+				continue;
+			}
+			const direction = typeof value === 'string' ? value.toUpperCase() : '';
+			if (direction === 'ASC' || direction === 'DESC') {
+				result[column] = direction;
+			}
+		}
+		return result;
 	}
 }
