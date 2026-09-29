@@ -221,7 +221,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			if (customComponentInstance?.constructor === AllowScreenshotCaptureComponent) {
 				this.disableButton = true;
 				const instance: AllowScreenshotCaptureComponent = customComponentInstance;
-				this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
+				void this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
 				this._grid.clearCustomViewComponent();
 				this.clearItem();
 			}
@@ -330,7 +330,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 *
 	 * @param selectedItem The employee view model to delete.
 	 */
-	async delete(selectedItem?: EmployeeViewModel): Promise<void> {
+	delete(selectedItem?: EmployeeViewModel): void {
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -945,7 +945,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					next: (isAllow: boolean) => {
 						// Clear selected items and update allowScreenshotCapture
 						this.clearItem();
-						this._updateAllowScreenshotCapture(instance.rowData, isAllow);
+						void this._updateAllowScreenshotCapture(instance.rowData, isAllow);
 					},
 					error: (err: any) => {
 						console.warn(err);
@@ -1081,7 +1081,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
-		this.loadFavoriteEmployees();
+		void this.loadFavoriteEmployees();
 	}
 
 	getEmployeeDisplayName(employee: IEmployee): string {

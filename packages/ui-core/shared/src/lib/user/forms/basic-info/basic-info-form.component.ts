@@ -128,7 +128,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit(): void {
-		this.excludeRoles();
+		void this.excludeRoles();
 		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
