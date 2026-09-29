@@ -44,6 +44,8 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 
 	/** Every tenant role as fetched, before `excludes` is applied. */
 	private _allRoles: IRole[] = [];
+	/** Set once `getAll()` has returned; until then no selection can be judged. */
+	private _rolesLoaded = false;
 
 	// ID attribute for the field and for attribute for the label
 	private _id: string;
@@ -140,18 +142,22 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	 */
 	async renderRoles() {
 		this._allRoles = (await this.rolesService.getAll()).items;
+		this._rolesLoaded = true;
 		this.applyExcludes();
 	}
 
 	/**
 	 * Filters the fetched roles by `excludes`, and clears the selection if it
-	 * points at a role that is no longer allowed.
+	 * points at a role that is no longer allowed. The selection is only checked
+	 * once the roles have loaded: before that the list is empty, and every
+	 * preselected role would look disallowed. `renderRoles()` re-runs this after
+	 * loading, so the check still happens then.
 	 */
 	private applyExcludes(): void {
 		this.roles = this._allRoles.filter((role: IRole) => !this.excludes.includes(role.name as RolesEnum));
 		this.roles$ = observableOf(this.roles);
 
-		if (this.roleId && !this.roles.some((role: IRole) => role.id === this.roleId)) {
+		if (this._rolesLoaded && this.roleId && !this.roles.some((role: IRole) => role.id === this.roleId)) {
 			this.roleId = null;
 			this.ctrl.setValue(null);
 			this.role = null;
