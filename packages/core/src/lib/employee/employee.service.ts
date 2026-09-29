@@ -591,10 +591,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						}
 					}
 
-					const mOrder = parseSortOrder(options.order, SORTABLE_COLUMNS);
 					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
 						...(options.relations ? { populate: flatten(options.relations) as any[] } : {}),
-						...(Object.keys(mOrder).length > 0 ? { orderBy: mOrder } : {}),
+						// An empty order (nothing valid requested) leaves the query unsorted, as before
+						orderBy: parseSortOrder(options.order, SORTABLE_COLUMNS),
 						offset: options.skip ? options.take * (options.skip - 1) : 0,
 						limit: options.take || 10
 					});
@@ -608,13 +608,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					query.leftJoin(`${query.alias}.user`, 'user');
 					query.leftJoin(`${query.alias}.tags`, 'tags');
 
-					const order = parseSortOrder(options && options.order, SORTABLE_COLUMNS);
-
 					// Set pagination options and selected table properties/fields
 					query.setFindOptions({
 						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 						take: options && options.take ? options.take : 10,
-						...(Object.keys(order).length > 0 ? { order } : {}),
+						order: parseSortOrder(options?.order, SORTABLE_COLUMNS),
 						select: {
 							// Selected fields for the Employee entity
 							id: true,
