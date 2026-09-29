@@ -66,7 +66,14 @@ const OPENING_TAG = /^<([a-z][a-z0-9]*)(?:\s[^>]*)?\/?>/i;
 const TRIVIAL_TAG = /^<\/?(p|br|div|span)(\s[^>]*)?\/?>$/i;
 const ANY_TAG = /<\/?[a-z][a-z0-9]*(\s[^>]*)?\/?>/gi;
 /** Any one of these in editor-unwrapped text means it was really markdown. */
-const MARKDOWN_HINTS = [/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+[.)]\s|>|```)/m, /\*\*[^*]+\*\*/, /`[^`]+`/, /\[[^\]]+\]\([^)]+\)/];
+const MARKDOWN_HINTS = [
+	/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+[.)]\s|>)/m,
+	// Code fences, backtick or tilde — the same pattern the renderer opens them with.
+	new RegExp(FENCE.source, 'm'),
+	/\*\*[^*]+\*\*/,
+	/`[^`]+`/,
+	/\[[^\]]+\]\([^)]+\)/
+];
 
 export function richTextToHtml(source: string | null | undefined): string {
 	if (!source?.trim()) {
@@ -280,13 +287,19 @@ function renderHeadingBlock(lines: string[], i: number, html: string[]): number 
 	return i + 1;
 }
 
-/** `## Title ##` — the optional closing run of `#` is not part of the title. */
+/**
+ * `## Title ##` — an optional closing run of `#` is not part of the title. It
+ * only counts as one when whitespace precedes it (or it is all there is), so
+ * "Learn C#" keeps its `#`.
+ */
 function stripClosingHashes(text: string): string {
-	let end = text.trimEnd();
-	while (end.endsWith('#')) {
-		end = end.slice(0, -1);
+	const trimmed = text.trimEnd();
+	let cut = trimmed.length;
+	while (cut > 0 && trimmed[cut - 1] === '#') {
+		cut--;
 	}
-	return end.trimEnd();
+	const closesHeading = cut < trimmed.length && (cut === 0 || /\s/.test(trimmed[cut - 1]));
+	return closesHeading ? trimmed.slice(0, cut).trimEnd() : trimmed;
 }
 
 function renderRuleBlock(lines: string[], i: number, html: string[]): number {
@@ -607,13 +620,12 @@ function splitRow(line: string): string[] {
 }
 
 /**
- * Brackets an index into `renderInline`'s stash. A private-use character, so
- * real text never contains it and it is not a control character.
+ * Brackets an index into `renderInline`'s stash. A private-use character (not a
+ * control character); any occurrence in the source is removed before tokens are
+ * made, so source text can never pose as a token.
  */
-const MARK = '';
+const MARK = '\uE000';
 const PLACEHOLDER = new RegExp(`${MARK}(\\d+)${MARK}`, 'g');
-/** Non-global twin of `PLACEHOLDER` for `.test()`, which is stateful on a global regex. */
-const HAS_PLACEHOLDER = new RegExp(`${MARK}\\d+${MARK}`);
 const AUTOLINK = new RegExp(`(^|[\\s(])(https?://[^\\s<${MARK}]*[^\\s<${MARK}.,:;!?'")\\]])`, 'g');
 
 /**
@@ -625,7 +637,9 @@ function renderInline(text: string): string {
 	const keep = (html: string) => `${MARK}${stash.push(html) - 1}${MARK}`;
 
 	// Code spans first, on the raw text, so a tag inside backticks stays literal.
-	let out = text.replace(/`([^`]+)`/g, (_, code) => keep(`<code>${escapeHtml(code)}</code>`));
+	let out = text
+		.replaceAll(MARK, '')
+		.replace(/`([^`]+)`/g, (_, code) => keep(`<code>${escapeHtml(code)}</code>`));
 	out = out.replace(RAW_TAG, (_, closing, name, attrs) => keep(rebuildTag(name.toLowerCase(), !!closing, attrs)));
 	out = escapeHtml(out);
 
@@ -655,11 +669,20 @@ function renderInline(text: string): string {
 
 	out = emphasis(out);
 
-	// Placeholders can nest (a code span inside a link label), so restore until none are left.
-	while (HAS_PLACEHOLDER.test(out)) {
-		out = out.replace(PLACEHOLDER, (_, index) => stash[+index]);
-	}
-	return out;
+	return restorePlaceholders(out, stash, stash.length);
+}
+
+/**
+ * Swaps tokens back for their stashed HTML. Tokens nest (a code span inside a
+ * link label), but an entry can only hold tokens made before it — so each
+ * entry is expanded against a strictly smaller bound, and restoration always
+ * terminates; a token outside the bound is left as-is.
+ */
+function restorePlaceholders(html: string, stash: string[], bound: number): string {
+	return html.replace(PLACEHOLDER, (token, index) => {
+		const n = Number(index);
+		return n < bound ? restorePlaceholders(stash[n], stash, n) : token;
+	});
 }
 
 function emphasis(text: string): string {
