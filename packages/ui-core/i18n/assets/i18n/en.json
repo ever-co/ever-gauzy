@@ -360,6 +360,14 @@
 		"LOADING_MORE": "Loading more..."
 	},
 	"FORM": {
+		"SECTIONS": {
+			"PROFILE": "Profile",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"HIRING": "Hiring",
+			"PHOTO": "Profile photo",
+			"PHOTO_HINT": "Optional. Click the photo to upload a square image of at least 256 × 256 px."
+		},
 		"USERNAME": "Username",
 		"PASSWORD": "Password",
 		"CONFIRM": "Confirm",
@@ -2461,7 +2469,24 @@
 			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
-			"PREVIOUS": "Previous"
+			"PREVIOUS": "Previous",
+			"SUBTITLE": "Create an account and employment record for a new team member.",
+			"PROGRESS": "Progress",
+			"STEP_DETAILS": "Details",
+			"STEP_ADD_MORE": "Add more",
+			"STEP_CONFIRM": "Review",
+			"QUEUED": "{{ count }} queued",
+			"QUEUE_HINT": "Queued employees are created together when you finish.",
+			"READY_TITLE": "Employee ready",
+			"READY_HINT": "Add another employee now, or continue to review everyone before creating them.",
+			"REVIEW_TITLE": "Review employees",
+			"REVIEW_HINT": "These employees will be created in {{ organization }}.",
+			"EMPTY": "No employees to add yet.",
+			"CURRENT_ENTRY": "Current entry",
+			"DISCARD_ENTRY": "Discard entry",
+			"CONTINUE": "Continue",
+			"BACK": "Back",
+			"CREATE_EMPLOYEES": "Create employees ({{ count }})"
 		},
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
