@@ -103,107 +103,167 @@ export function markdownToHtml(source: string): string {
 	return renderBlocks(lines);
 }
 
+/**
+ * A block renderer looks at the line at `i`. If that line starts its kind of
+ * block, it appends the HTML and returns the index after the block; otherwise
+ * it returns `NO_MATCH` and the next renderer is tried.
+ */
+type BlockRenderer = (lines: string[], i: number, html: string[]) => number;
+
+const NO_MATCH = -1;
+
+/** The lone `<br />` spacers GitHub bodies are full of. */
+const SPACER = /^\s*<br\s*\/?>\s*$/i;
+
 function renderBlocks(lines: string[]): string {
 	const html: string[] = [];
 	let i = 0;
-
 	while (i < lines.length) {
-		const line = lines[i];
-
-		// Blank lines, and the lone `<br />` spacers GitHub bodies are full of.
-		if (!line.trim() || /^\s*<br\s*\/?>\s*$/i.test(line)) {
-			i++;
-			continue;
-		}
-
-		const fence = line.match(FENCE);
-		if (fence) {
-			const body: string[] = [];
-			i++;
-			while (i < lines.length && !lines[i].trim().startsWith(fence[1])) {
-				body.push(lines[i++]);
-			}
-			i++; // closing fence
-			html.push(renderCodeBlock(body, fence[2]));
-			continue;
-		}
-
-		if (DETAILS_OPEN.test(line)) {
-			i = renderDetails(lines, i, html);
-			continue;
-		}
-
-		if (HTML_BLOCK.test(line)) {
-			const body: string[] = [];
-			while (i < lines.length && lines[i].trim()) {
-				body.push(lines[i++]);
-			}
-			html.push(renderInline(body.join('\n')));
-			continue;
-		}
-
-		const heading = line.match(HEADING);
-		if (heading) {
-			const level = heading[1].length;
-			html.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
-			i++;
-			continue;
-		}
-
-		if (RULE.test(line)) {
-			html.push('<hr />');
-			i++;
-			continue;
-		}
-
-		if (QUOTE.test(line)) {
-			const body: string[] = [];
-			while (i < lines.length && QUOTE.test(lines[i])) {
-				body.push(lines[i++].replace(/^\s{0,3}>\s?/, ''));
-			}
-			const alert = body[0]?.trim().match(ALERT);
-			if (alert) {
-				const kind = alert[1].toLowerCase();
-				const title = kind.charAt(0).toUpperCase() + kind.slice(1);
-				html.push(
-					`<div class="md-alert md-alert-${kind}"><p class="md-alert-title">${title}</p>${renderBlocks(body.slice(1))}</div>`
-				);
-			} else {
-				html.push(`<blockquote>${renderBlocks(body)}</blockquote>`);
-			}
-			continue;
-		}
-
-		if (isTableStart(lines, i)) {
-			i = renderTable(lines, i, html);
-			continue;
-		}
-
-		if (LIST_ITEM.test(line)) {
-			const [list, next] = renderList(lines, i);
-			html.push(list);
-			i = next;
-			continue;
-		}
-
-		// "Title\n=====" / "Title\n-----"
-		if (i + 1 < lines.length && SETEXT.test(lines[i + 1])) {
-			const level = lines[i + 1].trim().startsWith('=') ? 1 : 2;
-			html.push(`<h${level}>${renderInline(line.trim())}</h${level}>`);
-			i += 2;
-			continue;
-		}
-
-		// Paragraph: runs until a blank line or the start of another block. Single
-		// newlines are kept as line breaks, the way GitHub renders issue bodies.
-		const body: string[] = [];
-		do {
-			body.push(lines[i++].trim());
-		} while (i < lines.length && lines[i].trim() && !startsBlock(lines, i));
-		renderParagraph(body, html);
+		i = isSpacer(lines[i]) ? i + 1 : renderBlock(lines, i, html);
 	}
-
 	return html.join('');
+}
+
+function isSpacer(line: string): boolean {
+	return !line.trim() || SPACER.test(line);
+}
+
+/** Tried in order — the precedence GitHub applies when a line could open several blocks. */
+const BLOCK_RENDERERS: BlockRenderer[] = [
+	renderFenceBlock,
+	renderDetailsBlock,
+	renderHtmlBlock,
+	renderHeadingBlock,
+	renderRuleBlock,
+	renderQuoteBlock,
+	renderTableBlock,
+	renderListBlock,
+	renderSetextBlock
+];
+
+/** Renders the block starting at `i`; a paragraph when nothing more specific matches. */
+function renderBlock(lines: string[], i: number, html: string[]): number {
+	for (const render of BLOCK_RENDERERS) {
+		const next = render(lines, i, html);
+		if (next !== NO_MATCH) {
+			return next;
+		}
+	}
+	return renderParagraphBlock(lines, i, html);
+}
+
+function renderFenceBlock(lines: string[], i: number, html: string[]): number {
+	const fence = lines[i].match(FENCE);
+	if (!fence) {
+		return NO_MATCH;
+	}
+	const body: string[] = [];
+	let next = i + 1;
+	while (next < lines.length && !lines[next].trim().startsWith(fence[1])) {
+		body.push(lines[next++]);
+	}
+	html.push(renderCodeBlock(body, fence[2]));
+	return next + 1; // past the closing fence
+}
+
+function renderDetailsBlock(lines: string[], i: number, html: string[]): number {
+	return DETAILS_OPEN.test(lines[i]) ? renderDetails(lines, i, html) : NO_MATCH;
+}
+
+/** Raw block-level HTML runs to the next blank line (GFM's HTML-block rule). */
+function renderHtmlBlock(lines: string[], i: number, html: string[]): number {
+	if (!HTML_BLOCK.test(lines[i])) {
+		return NO_MATCH;
+	}
+	const next = nextBlankLine(lines, i);
+	html.push(renderInline(lines.slice(i, next).join('\n')));
+	return next;
+}
+
+function nextBlankLine(lines: string[], from: number): number {
+	let next = from;
+	while (next < lines.length && lines[next].trim()) {
+		next++;
+	}
+	return next;
+}
+
+function renderHeadingBlock(lines: string[], i: number, html: string[]): number {
+	const heading = lines[i].match(HEADING);
+	if (!heading) {
+		return NO_MATCH;
+	}
+	const level = heading[1].length;
+	html.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+	return i + 1;
+}
+
+function renderRuleBlock(lines: string[], i: number, html: string[]): number {
+	if (!RULE.test(lines[i])) {
+		return NO_MATCH;
+	}
+	html.push('<hr />');
+	return i + 1;
+}
+
+/** A quote — or, when its first line is `[!NOTE]` & co., an alert panel. */
+function renderQuoteBlock(lines: string[], i: number, html: string[]): number {
+	if (!QUOTE.test(lines[i])) {
+		return NO_MATCH;
+	}
+	const body: string[] = [];
+	let next = i;
+	while (next < lines.length && QUOTE.test(lines[next])) {
+		body.push(lines[next++].replace(/^\s{0,3}>\s?/, ''));
+	}
+	const alert = body[0]?.trim().match(ALERT);
+	if (alert) {
+		const kind = alert[1].toLowerCase();
+		const title = kind.charAt(0).toUpperCase() + kind.slice(1);
+		html.push(
+			`<div class="md-alert md-alert-${kind}"><p class="md-alert-title">${title}</p>${renderBlocks(body.slice(1))}</div>`
+		);
+	} else {
+		html.push(`<blockquote>${renderBlocks(body)}</blockquote>`);
+	}
+	return next;
+}
+
+function renderTableBlock(lines: string[], i: number, html: string[]): number {
+	return isTableStart(lines, i) ? renderTable(lines, i, html) : NO_MATCH;
+}
+
+function renderListBlock(lines: string[], i: number, html: string[]): number {
+	if (!LIST_ITEM.test(lines[i])) {
+		return NO_MATCH;
+	}
+	const [list, next] = renderList(lines, i);
+	html.push(list);
+	return next;
+}
+
+/** "Title\n=====" / "Title\n-----" */
+function renderSetextBlock(lines: string[], i: number, html: string[]): number {
+	if (i + 1 >= lines.length || !SETEXT.test(lines[i + 1])) {
+		return NO_MATCH;
+	}
+	const level = lines[i + 1].trim().startsWith('=') ? 1 : 2;
+	html.push(`<h${level}>${renderInline(lines[i].trim())}</h${level}>`);
+	return i + 2;
+}
+
+/**
+ * Paragraph: runs until a blank line or the start of another block. Single
+ * newlines are kept as line breaks, the way GitHub renders issue bodies.
+ */
+function renderParagraphBlock(lines: string[], i: number, html: string[]): number {
+	const body: string[] = [];
+	let next = i;
+	do {
+		body.push(lines[next++].trim());
+	} while (next < lines.length && lines[next].trim() && !startsBlock(lines, next));
+	renderParagraph(body, html);
+	return next;
 }
 
 /**
