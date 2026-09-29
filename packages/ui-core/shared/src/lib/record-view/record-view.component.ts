@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { ISelectedEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -40,7 +40,8 @@ export class RecordViewComponent implements OnChanges {
 	/** Avatar URLs that failed to load — those people fall back to their initials. */
 	public readonly brokenImages = new Set<string>();
 
-	constructor(private readonly router: Router, private readonly store: Store) {}
+	private readonly router = inject(Router);
+	private readonly store = inject(Store);
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['record'] || changes['sections']) {

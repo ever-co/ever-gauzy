@@ -48,13 +48,7 @@
 		@case ('meta') {
 			<footer class="record-meta">
 				@for (row of section.rows; track $index) {
-					<span class="record-meta-item">
-						@if (row.field.icon) {
-							<nb-icon [icon]="row.field.icon"></nb-icon>
-						}
-						{{ row.field.label | translate }}
-						<ng-container *ngTemplateOutlet="recordValue; context: { $implicit: row }"></ng-container>
-					</span>
+					<ng-container *ngTemplateOutlet="guarded; context: { $implicit: row, view: metaItem }"></ng-container>
 				}
 			</footer>
 		}
@@ -72,15 +66,32 @@
 
 <ng-template #sectionRows let-section>
 	@for (row of section.rows; track $index) {
-		<!-- A row may narrow the record's own guard, never widen it. -->
-		@if (row.field.permission) {
-			<ng-template [ngxPermissionsOnly]="row.field.permission">
-				<ng-container *ngTemplateOutlet="recordRow; context: { $implicit: row }"></ng-container>
-			</ng-template>
-		} @else {
-			<ng-container *ngTemplateOutlet="recordRow; context: { $implicit: row }"></ng-container>
-		}
+		<ng-container *ngTemplateOutlet="guarded; context: { $implicit: row, view: recordRow }"></ng-container>
 	}
+</ng-template>
+
+<!--
+	The one place a row's `permission` is checked — every section variant renders
+	its rows through here. A row may narrow the record's own guard, never widen it.
+-->
+<ng-template #guarded let-row let-view="view">
+	@if (row.field.permission) {
+		<ng-template [ngxPermissionsOnly]="row.field.permission">
+			<ng-container *ngTemplateOutlet="view; context: { $implicit: row }"></ng-container>
+		</ng-template>
+	} @else {
+		<ng-container *ngTemplateOutlet="view; context: { $implicit: row }"></ng-container>
+	}
+</ng-template>
+
+<ng-template #metaItem let-row>
+	<span class="record-meta-item">
+		@if (row.field.icon) {
+			<nb-icon [icon]="row.field.icon"></nb-icon>
+		}
+		{{ row.field.label | translate }}
+		<ng-container *ngTemplateOutlet="recordValue; context: { $implicit: row }"></ng-container>
+	</span>
 </ng-template>
 
 <ng-template #recordRow let-row>
@@ -98,7 +109,7 @@
 				<span>{{ row.field.label | translate }}</span>
 			</dt>
 		}
-		<dd class="record-value" [ngClass]="row.field.tone ? 'tone-text-' + row.field.tone : null">
+		<dd class="record-value" [class]="row.field.tone ? 'tone-text-' + row.field.tone : ''">
 			<ng-container *ngTemplateOutlet="recordValue; context: { $implicit: row }"></ng-container>
 		</dd>
 	</div>
@@ -152,7 +163,7 @@
 			@case ('status') {
 				<span
 					class="record-status"
-					[ngClass]="'tone-' + (row.value.tone || 'basic')"
+					[class]="'tone-' + (row.value.tone || 'basic')"
 					[style.--status-color]="row.value.color"
 				>
 					@if (row.value.icon) {
