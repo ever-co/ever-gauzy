@@ -4,7 +4,7 @@ import { Component, DestroyRef, Input, OnInit, inject, signal } from '@angular/c
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbButtonModule } from '@nebular/theme';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { catchError, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { Subscription, catchError, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { AuthService, Store } from '@gauzy/ui-core/core';
 
@@ -44,6 +44,9 @@ export class EmailVerificationNoticeComponent implements OnInit {
 	readonly email = signal<string | null>(null);
 
 	private dismissed = false;
+	/** The user the notice currently speaks for; a resend answer for anyone else is dropped. */
+	private currentUserId: string | null = null;
+	private resendSubscription: Subscription | null = null;
 
 	private readonly store = inject(Store);
 	private readonly authService = inject(AuthService);
@@ -58,6 +61,11 @@ export class EmailVerificationNoticeComponent implements OnInit {
 				),
 				distinctUntilChanged((a, b) => a?.id === b?.id && a?.unverified === b?.unverified),
 				switchMap((user) => {
+					// Another user signed in: forget the previous user's resend, including one in flight.
+					if ((user?.id ?? null) !== this.currentUserId) {
+						this.currentUserId = user?.id ?? null;
+						this.resetResend();
+					}
 					// Only ask the API when the loaded user says "unverified"; a verified user costs nothing.
 					if (!user?.unverified) {
 						return of(false);
@@ -81,14 +89,22 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		}
 		this.state.set('sending');
 		this.errorMessage.set(null);
-		const askedFor = this.store.user?.id;
+		const askedFor = this.currentUserId;
 
-		this.authService
+		this.resendSubscription = this.authService
 			.resendEmailVerificationLink()
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
-				next: () => this.state.set('sent'),
-				error: (error: HttpErrorResponse) => this.onResendError(error, askedFor)
+				next: () => {
+					if (this.currentUserId === askedFor) {
+						this.state.set('sent');
+					}
+				},
+				error: (error: HttpErrorResponse) => {
+					if (this.currentUserId === askedFor) {
+						this.onResendError(error);
+					}
+				}
 			});
 	}
 
@@ -97,14 +113,21 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		this.visible.set(false);
 	}
 
-	private onResendError(error: HttpErrorResponse, askedFor: string | undefined): void {
+	private resetResend(): void {
+		this.resendSubscription?.unsubscribe();
+		this.resendSubscription = null;
+		this.state.set('idle');
+		this.errorMessage.set(null);
+	}
+
+	/** Only called while the user who asked is still the signed-in one (see `resend`). */
+	private onResendError(error: HttpErrorResponse): void {
 		const apiMessage = typeof error?.error?.message === 'string' ? error.error.message : null;
 
 		// Verified in another tab (or by code) since the page loaded: stop asking.
 		if (error?.status === 400 && apiMessage && /already verified/i.test(apiMessage)) {
-			// Only for the user the resend was asked for, in case someone else signed in meanwhile.
 			const user = this.store.user;
-			if (user && user.id === askedFor) {
+			if (user) {
 				this.store.user = { ...user, isEmailVerified: true };
 			}
 			this.visible.set(false);

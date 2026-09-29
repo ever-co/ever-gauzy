@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { AuthService, Store } from '@gauzy/ui-core/core';
 import { EmailVerificationNoticeComponent } from './email-verification-notice.component';
@@ -97,6 +97,18 @@ describe('EmailVerificationNoticeComponent', () => {
 		component.resend();
 		expect(authService.resendEmailVerificationLink).toHaveBeenCalledTimes(1);
 		expect(component.state()).toBe('sent');
+	});
+
+	it('drops a resend answer that arrives after another user signed in', () => {
+		const pending = new Subject<Object>();
+		const { component, user$ } = setup({ user: UNVERIFIED, resend: () => pending });
+		component.resend();
+		expect(component.state()).toBe('sending');
+
+		user$.next({ id: 'u2', email: 'max@corp.co', isEmailVerified: false } as IUser);
+		pending.next({ status: 200 });
+
+		expect(component.state()).toBe('idle');
 	});
 
 	it('treats "already verified" as done and hides itself', () => {
