@@ -121,8 +121,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	 * Closes the dialog upon successful creation or handles errors.
 	 */
 	async add() {
-		// Check if organization is defined
-		if (!this.organization) {
+		// Require an organization and prevent overlapping requests
+		if (!this.organization || this.loading) {
 			return;
 		}
 
