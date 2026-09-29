@@ -1,0 +1,57 @@
+name: Feature request
+description: Suggest a new feature or an improvement to an existing one
+title: "[FEAT] "
+labels: ["type: enhancement ✨"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that is not possible today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should change? Keep it as short as you like.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it belong?
+      options:
+        - Web app
+        - API / server
+        - Desktop app
+        - Desktop timer
+        - Desktop agent
+        - Mobile app
+        - CLI
+        - MCP server
+        - Developer experience / tooling
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Workarounds you have used, or other products that solve this.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the [existing issues](https://github.com/ever-co/ever-gauzy/issues) and this is not a duplicate
+          required: true
+        - label: I am willing to contribute this feature (a PR is welcome)
+          required: false

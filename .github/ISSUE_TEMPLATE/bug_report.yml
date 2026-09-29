@@ -1,0 +1,90 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+title: "[Bug] "
+labels: ["type: bug :bug:"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please make sure you are on the latest version and
+        that the problem is still reproducible.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it happen?
+      options:
+        - Web app
+        - API / server
+        - Desktop app
+        - Desktop timer
+        - Desktop agent
+        - Mobile app
+        - CLI
+        - MCP server
+        - Deployment / infrastructure
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, what you saw, and what you expected instead.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See error ...
+
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or logs
+      description: Optional, but very helpful.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Demo
+        - Stage
+        - Production
+        - Local development
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Optional. App version, release tag, or git commit SHA.
+    validations:
+      required: false
+
+  - type: input
+    id: platform
+    attributes:
+      label: OS and browser
+      description: "Optional. Example: macOS 15, Chrome."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the [existing issues](https://github.com/ever-co/ever-gauzy/issues) and this is not a duplicate
+          required: true
+        - label: I read the [contributing guidelines](https://github.com/ever-co/ever-gauzy/blob/master/.github/CONTRIBUTING.md)
+          required: true
