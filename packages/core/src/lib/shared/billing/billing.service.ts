@@ -295,29 +295,36 @@ export class BillingService {
 	/**
 	 * Invoice history of THIS deployment's product, newest first.
 	 *
-	 * Invoices are listed per customer, and one customer can also hold another Ever product (the same
-	 * buyer's Teams plan, a one-off license). Those invoices are not this tenant's to see, and would
-	 * also push this product's own invoices off the page, so only invoices raised by one of this
-	 * product's subscriptions are returned. A page of Stripe's maximum size is read so that filtering
-	 * still leaves `limit` rows for a customer with a lot of foreign invoices.
+	 * Invoices used to be listed per customer, and one customer can also hold another Ever product (the
+	 * same buyer's Teams plan, a one-off license). Those invoices are not this tenant's to see, and
+	 * enough of them would push this product's own invoices off the page entirely. So invoices are
+	 * listed per subscription of this product instead — Stripe filters server-side, so there is no
+	 * page of foreign invoices to scan past — then merged newest first.
 	 */
 	async listInvoices(stripeCustomerId: string, limit = 24): Promise<BillingInvoice[]> {
 		const product = this.product;
 		if (!product) return [];
-		const subscriptionIds = new Set(
-			(await this.listProductSubscriptions(stripeCustomerId, product)).map((subscription) => subscription.id)
-		);
-		if (!subscriptionIds.size) return [];
+		const subscriptions = (await this.listProductSubscriptions(stripeCustomerId, product))
+			.sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
+			.slice(0, MAX_SUBSCRIPTIONS_FOR_INVOICES);
+		if (!subscriptions.length) return [];
 
-		const { data } = await this.get<{ data: StripeInvoiceObject[] }>(
-			`/invoices?customer=${encodeURIComponent(stripeCustomerId)}&limit=${INVOICE_SCAN_LIMIT}`
+		const pages = await Promise.all(
+			subscriptions.map((subscription) =>
+				this.get<{ data: StripeInvoiceObject[] }>(
+					`/invoices?subscription=${encodeURIComponent(subscription.id)}&limit=${limit}`
+				)
+			)
 		);
 
-		return (data ?? [])
-			.filter((invoice) => {
-				const subscriptionId = invoiceSubscriptionId(invoice);
-				return subscriptionId !== null && subscriptionIds.has(subscriptionId);
-			})
+		// One invoice belongs to one subscription, so duplicates cannot normally occur; keyed by id anyway.
+		const byId = new Map<string, StripeInvoiceObject>();
+		for (const page of pages) {
+			for (const invoice of page?.data ?? []) byId.set(invoice.id, invoice);
+		}
+
+		return [...byId.values()]
+			.sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
 			.slice(0, limit)
 			.map((invoice) => ({
 				id: invoice.id,
@@ -650,18 +657,12 @@ function planChangeIdempotencyKey(subscription: StripeSubscriptionObject, target
 const PRODUCT_CUSTOMER_CACHE_TTL_MS = 5 * 60 * 1000;
 const PRODUCT_CUSTOMER_CACHE_MAX = 1000;
 
-/** Stripe's largest page: read in full so that filtering out foreign invoices still fills the page. */
-const INVOICE_SCAN_LIMIT = 100;
-
 /**
- * The subscription an invoice was raised by, or null for a one-off invoice. `subscription` on the
- * pinned API version; `parent.subscription_details.subscription` on newer ones.
+ * How many of this product's subscriptions (newest first) contribute to the invoice history. A tenant
+ * normally has one, plus a few after resubscribing; the bound keeps a pathological customer from
+ * fanning out into dozens of Stripe requests on one page load.
  */
-function invoiceSubscriptionId(invoice: StripeInvoiceObject): string | null {
-	const direct = invoice.subscription ?? invoice.parent?.subscription_details?.subscription ?? null;
-	if (!direct) return null;
-	return typeof direct === 'string' ? direct : direct.id ?? null;
-}
+const MAX_SUBSCRIPTIONS_FOR_INVOICES = 10;
 
 /** Statuses that represent a subscription the customer still has. */
 const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete']);
@@ -737,8 +738,6 @@ interface StripeInvoiceObject {
 	created?: number;
 	hosted_invoice_url?: string | null;
 	invoice_pdf?: string | null;
-	subscription?: string | { id?: string } | null;
-	parent?: { subscription_details?: { subscription?: string | { id?: string } | null } | null } | null;
 }
 
 interface StripePaymentMethodObject {

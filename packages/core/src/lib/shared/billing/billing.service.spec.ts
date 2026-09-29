@@ -98,8 +98,12 @@ function stubStripe(state: StripeState) {
 		} else if (method === 'GET' && path.startsWith('/prices?lookup_keys[]=')) {
 			const key = decodeURIComponent(/lookup_keys\[\]=([^&]+)/.exec(path)[1]);
 			body = { data: state.prices[key] ? [state.prices[key]] : [] };
-		} else if (method === 'GET' && path.startsWith(`/invoices?customer=${CUSTOMER}&`)) {
-			body = { data: state.invoices ?? [], has_more: false };
+		} else if (method === 'GET' && path.startsWith('/invoices?subscription=')) {
+			// Stripe filters by subscription server-side; so does this stub.
+			const id = decodeURIComponent(/subscription=([^&]+)/.exec(path)[1]);
+			const limit = Number(/limit=(d+)/.exec(path)?.[1] ?? 10);
+			const own = (state.invoices ?? []).filter((invoice) => invoice.subscription === id);
+			body = { data: own.slice(0, limit), has_more: own.length > limit };
 		} else if (method === 'GET' && path === `/customers/${CUSTOMER}`) {
 			body = { id: CUSTOMER, ...state.customer };
 		} else if (method === 'POST' && path.startsWith('/subscriptions/')) {
@@ -186,34 +190,55 @@ describe('BillingService — reads only this product', () => {
 		expect(calls).toHaveLength(1); // the second "yes" came from the cache
 	});
 
-	it("invoices: only those raised by this product's subscriptions, never another product's or one-offs", async () => {
-		const invoice = (id: string, subscription: any, extra: Record<string, any> = {}) => ({
+	it("invoices: only this product's subscriptions, merged newest first — never another product's or one-offs", async () => {
+		const invoice = (id: string, subscription: string | null, created: number) => ({
 			id,
 			number: id.toUpperCase(),
 			status: 'paid',
 			amount_paid: 100,
 			amount_due: 100,
 			currency: 'usd',
-			created: 1_800_000_000,
-			subscription,
-			...extra
+			created,
+			subscription
 		});
+		// 150 NEWER foreign invoices: a per-customer listing would fill a whole Stripe page with them and
+		// never reach the Gauzy ones. Listing per subscription cannot be crowded out.
+		const foreign = Array.from({ length: 150 }, (_, i) => invoice(`in_teams_${i}`, 'sub_t', 1_900_000_000 + i));
 		stubStripe({
-			subscriptions: [teams(), sub(), sub({ id: 'sub_g_old', status: 'canceled' })],
+			subscriptions: [teams(), sub(), sub({ id: 'sub_g_old', status: 'canceled', created: 1_600_000_000 })],
 			prices: {},
 			customer: {},
 			invoices: [
-				invoice('in_teams', 'sub_t'),
-				invoice('in_gauzy', 'sub_g'),
-				invoice('in_license', null),
-				invoice('in_gauzy_old', { id: 'sub_g_old' }),
-				invoice('in_gauzy_new_api', undefined, {
-					parent: { subscription_details: { subscription: 'sub_g' } }
-				})
+				...foreign,
+				invoice('in_license', null, 1_950_000_000),
+				invoice('in_gauzy_old', 'sub_g_old', 1_600_000_100),
+				invoice('in_gauzy', 'sub_g', 1_700_000_100),
+				invoice('in_gauzy_renewal', 'sub_g', 1_731_536_100)
 			]
 		});
 		const invoices = await service().listInvoices(CUSTOMER);
-		expect(invoices.map((i) => i.id)).toEqual(['in_gauzy', 'in_gauzy_old', 'in_gauzy_new_api']);
+		expect(invoices.map((i) => i.id)).toEqual(['in_gauzy_renewal', 'in_gauzy', 'in_gauzy_old']);
+		// Asked per Gauzy subscription only — the Teams subscription's invoices are never requested.
+		const invoiceCalls = calls.filter((c) => c.path.startsWith('/invoices')).map((c) => c.path);
+		expect(invoiceCalls.sort()).toEqual([
+			'/invoices?subscription=sub_g&limit=24',
+			'/invoices?subscription=sub_g_old&limit=24'
+		]);
+	});
+
+	it('invoices: the page limit applies after merging', async () => {
+		stubStripe({
+			subscriptions: [sub(), sub({ id: 'sub_g_old', status: 'canceled', created: 1_600_000_000 })],
+			prices: {},
+			customer: {},
+			invoices: [
+				{ id: 'in_a', subscription: 'sub_g', created: 3, currency: 'usd' },
+				{ id: 'in_b', subscription: 'sub_g_old', created: 2, currency: 'usd' },
+				{ id: 'in_c', subscription: 'sub_g', created: 1, currency: 'usd' }
+			]
+		});
+		const invoices = await service().listInvoices(CUSTOMER, 2);
+		expect(invoices.map((i) => i.id)).toEqual(['in_a', 'in_b']);
 	});
 
 	it('invoices: a customer with no subscription to this product gets none, and Stripe is not asked for them', async () => {
