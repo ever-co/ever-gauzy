@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { filter, map, Observable, of as observableOf } from 'rxjs';
+import { filter, Observable, of as observableOf } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -36,8 +36,14 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 		return this._excludes;
 	}
 	@Input() set excludes(value: RolesEnum[]) {
-		this._excludes = value;
+		this._excludes = value || [];
+		// The parent can resolve its excludes after the roles have loaded
+		// (e.g. an async permission check), so re-filter what is already shown.
+		this.applyExcludes();
 	}
+
+	/** Every tenant role as fetched, before `excludes` is applied. */
+	private _allRoles: IRole[] = [];
 
 	// ID attribute for the field and for attribute for the label
 	private _id: string;
@@ -122,7 +128,7 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap(() => this.renderRoles()),
+				tap(() => void this.renderRoles()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -133,10 +139,23 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	 * Excludes role if needed
 	 */
 	async renderRoles() {
-		this.roles$ = observableOf((await this.rolesService.getAll()).items).pipe(
-			map((roles: IRole[]) => roles.filter((role: IRole) => !this.excludes.includes(role.name as RolesEnum))),
-			tap((roles: IRole[]) => (this.roles = roles))
-		);
+		this._allRoles = (await this.rolesService.getAll()).items;
+		this.applyExcludes();
+	}
+
+	/**
+	 * Filters the fetched roles by `excludes`, and clears the selection if it
+	 * points at a role that is no longer allowed.
+	 */
+	private applyExcludes(): void {
+		this.roles = this._allRoles.filter((role: IRole) => !this.excludes.includes(role.name as RolesEnum));
+		this.roles$ = observableOf(this.roles);
+
+		if (this.roleId && !this.roles.some((role: IRole) => role.id === this.roleId)) {
+			this.roleId = null;
+			this.ctrl.setValue(null);
+			this.role = null;
+		}
 	}
 
 	/**

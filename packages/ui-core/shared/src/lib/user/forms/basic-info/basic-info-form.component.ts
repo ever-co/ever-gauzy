@@ -147,7 +147,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	async excludeRoles(): Promise<void> {
 		const hasSuperAdminRole = await firstValueFrom(this._authService.hasRole([RolesEnum.SUPER_ADMIN]));
 		if (!hasSuperAdminRole) {
-			this.excludes.push(RolesEnum.SUPER_ADMIN);
+			// A new array, not push(): the role field only sees a changed reference
+			this.excludes = [...this.excludes, RolesEnum.SUPER_ADMIN];
 		}
 	}
 
