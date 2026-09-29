@@ -61,9 +61,10 @@ export class EmailVerificationNoticeComponent implements OnInit {
 				),
 				distinctUntilChanged((a, b) => a?.id === b?.id && a?.unverified === b?.unverified),
 				switchMap((user) => {
-					// Another user signed in: forget the previous user's resend, including one in flight.
+					// Another user signed in: forget the previous user's dismissal and resend (even one in flight).
 					if ((user?.id ?? null) !== this.currentUserId) {
 						this.currentUserId = user?.id ?? null;
+						this.dismissed = false;
 						this.resetResend();
 					}
 					// Only ask the API when the loaded user says "unverified"; a verified user costs nothing.

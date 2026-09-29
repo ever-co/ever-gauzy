@@ -111,6 +111,15 @@ describe('EmailVerificationNoticeComponent', () => {
 		expect(component.state()).toBe('idle');
 	});
 
+	it('keeps a dismissal to the user who dismissed it', () => {
+		const { component, user$ } = setup({ user: UNVERIFIED });
+		component.dismiss();
+		expect(component.visible()).toBe(false);
+
+		user$.next({ id: 'u2', email: 'max@corp.co', isEmailVerified: false } as IUser);
+		expect(component.visible()).toBe(true);
+	});
+
 	it('treats "already verified" as done and hides itself', () => {
 		const { component } = setup({
 			user: UNVERIFIED,
