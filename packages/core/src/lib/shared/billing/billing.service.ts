@@ -7,6 +7,7 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
+import { subscriptionIsForProduct } from './billing-product';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 
 /**
@@ -81,9 +82,27 @@ export interface BillingPaymentMethod {
 
 const STRIPE_API = 'https://api.stripe.com/v1';
 
+/**
+ * Raised by `changePlan` when the target plan costs money and nothing could pay for it.
+ *
+ * The $0 Starter subscriptions sold through the shared checkout collect no card, so swapping one onto
+ * a paid price directly would issue an invoice nobody can pay and leave the subscription `past_due`
+ * — which this platform still treats as a live plan. The controller answers it with 402 and a Stripe
+ * customer-portal link where the admin can add a card, then retry the switch.
+ */
+export class PaymentMethodRequiredError extends Error {
+	constructor() {
+		super('A payment method is required before switching to a paid plan.');
+		this.name = 'PaymentMethodRequiredError';
+	}
+}
+
 @Injectable()
 export class BillingService {
 	private readonly logger = new Logger(BillingService.name);
+
+	/** `<product>:<customer>` -> expiry (ms) of a positive isCustomerOfProduct answer. */
+	private readonly productCustomerCache = new Map<string, number>();
 
 	constructor(private readonly stripeSubscriptionService: StripeSubscriptionService) {}
 
@@ -95,6 +114,39 @@ export class BillingService {
 	/** Which Stripe account this deployment talks to: live, test, or none at all. */
 	get mode(): 'live' | 'test' | 'disabled' {
 		return this.stripeSubscriptionService.mode;
+	}
+
+	/** The Ever product this deployment bills for (`BILLING_PRODUCT`, default `gauzy`). */
+	get product(): string | null {
+		return this.stripeSubscriptionService.billingProduct;
+	}
+
+	/**
+	 * Whether this Stripe customer has EVER subscribed to this deployment's product (any status).
+	 *
+	 * The billing routes resolve the customer from the tenant's stored link. If that link points at a
+	 * customer who only ever bought another Ever product — whether written by an older, product-blind
+	 * version of the linking code or by hand — this is false, and the routes treat the tenant as not
+	 * linked rather than show, cancel, re-price or open a portal on someone else's billing.
+	 */
+	async isCustomerOfProduct(stripeCustomerId: string): Promise<boolean> {
+		const product = this.product;
+		if (!product) return false;
+
+		// Every /billing route asks this before it does anything, so one page load would otherwise walk
+		// the customer's subscription list once per route. Only a positive answer is cached: with
+		// `status=all` it can never turn false again (Stripe cancels subscriptions, it does not delete
+		// them), whereas a negative one must be re-checked the moment the customer subscribes.
+		const cacheKey = `${product}:${stripeCustomerId}`;
+		const cachedUntil = this.productCustomerCache.get(cacheKey);
+		if (cachedUntil && cachedUntil > Date.now()) return true;
+
+		const isCustomer = (await this.listProductSubscriptions(stripeCustomerId, product)).length > 0;
+		if (isCustomer) {
+			if (this.productCustomerCache.size >= PRODUCT_CUSTOMER_CACHE_MAX) this.productCustomerCache.clear();
+			this.productCustomerCache.set(cacheKey, Date.now() + PRODUCT_CUSTOMER_CACHE_TTL_MS);
+		}
+		return isCustomer;
 	}
 
 	/**
@@ -171,6 +223,15 @@ export class BillingService {
 
 		const subscription = await this.requireSubscriptionObject(stripeCustomerId);
 
+		// The CURRENT subscription must be this product's too, not only the target. Otherwise a tenant
+		// linked to a customer who holds a Teams or Works subscription could re-price that subscription
+		// onto a Gauzy price and bill the proration to someone else's card. findCurrentSubscription
+		// already filters on the deployment's product; this says the same for the product the caller
+		// asked about, so the two can never disagree silently.
+		if (!subscriptionIsForProduct(subscription, productKey)) {
+			throw new BadRequestException('The current subscription does not belong to this product.');
+		}
+
 		const { data: prices } = await this.get<{ data: StripePriceObject[] }>(
 			`/prices?lookup_keys[]=${encodeURIComponent(lookupKey)}&active=true&limit=1`
 		);
@@ -185,6 +246,12 @@ export class BillingService {
 		}
 		if (item.price?.id === price.id) {
 			throw new BadRequestException('The subscription is already on that plan.');
+		}
+
+		// A paid target needs something to pay with. Checked here, before anything is changed, because
+		// afterwards the only evidence is an unpaid invoice and a past_due subscription.
+		if (isPaidPrice(price) && !(await this.hasDefaultPaymentMethod(stripeCustomerId, subscription))) {
+			throw new PaymentMethodRequiredError();
 		}
 
 		const updated = await this.post<StripeSubscriptionObject>(
@@ -225,25 +292,53 @@ export class BillingService {
 		return this.toSubscription(updated);
 	}
 
-	/** Invoice history, newest first. */
+	/**
+	 * Invoice history of THIS deployment's product, newest first.
+	 *
+	 * Invoices used to be listed per customer, and one customer can also hold another Ever product (the
+	 * same buyer's Teams plan, a one-off license). Those invoices are not this tenant's to see, and
+	 * enough of them would push this product's own invoices off the page entirely. So invoices are
+	 * listed per subscription of this product instead — Stripe filters server-side, so there is no
+	 * page of foreign invoices to scan past — then merged newest first.
+	 */
 	async listInvoices(stripeCustomerId: string, limit = 24): Promise<BillingInvoice[]> {
-		const { data } = await this.get<{ data: StripeInvoiceObject[] }>(
-			`/invoices?customer=${encodeURIComponent(stripeCustomerId)}&limit=${limit}`
+		const product = this.product;
+		if (!product) return [];
+		const subscriptions = (await this.listProductSubscriptions(stripeCustomerId, product))
+			.sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
+			.slice(0, MAX_SUBSCRIPTIONS_FOR_INVOICES);
+		if (!subscriptions.length) return [];
+
+		const pages = await Promise.all(
+			subscriptions.map((subscription) =>
+				this.get<{ data: StripeInvoiceObject[] }>(
+					`/invoices?subscription=${encodeURIComponent(subscription.id)}&limit=${limit}`
+				)
+			)
 		);
 
-		return (data ?? []).map((invoice) => ({
-			id: invoice.id,
-			number: invoice.number ?? null,
-			status: invoice.status ?? null,
-			amountPaid: invoice.amount_paid ?? 0,
-			// An unpaid or failed invoice has amount_paid = 0, so a table showing only that renders the
-			// row as $0.00 — exactly the invoices someone is looking for when something has gone wrong.
-			amountDue: invoice.amount_due ?? invoice.amount_paid ?? 0,
-			currency: invoice.currency,
-			createdAt: new Date((invoice.created ?? 0) * 1000).toISOString(),
-			hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
-			invoicePdfUrl: invoice.invoice_pdf ?? null
-		}));
+		// One invoice belongs to one subscription, so duplicates cannot normally occur; keyed by id anyway.
+		const byId = new Map<string, StripeInvoiceObject>();
+		for (const page of pages) {
+			for (const invoice of page?.data ?? []) byId.set(invoice.id, invoice);
+		}
+
+		return [...byId.values()]
+			.sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
+			.slice(0, limit)
+			.map((invoice) => ({
+				id: invoice.id,
+				number: invoice.number ?? null,
+				status: invoice.status ?? null,
+				amountPaid: invoice.amount_paid ?? 0,
+				// An unpaid or failed invoice has amount_paid = 0, so a table showing only that renders the
+				// row as $0.00 — exactly the invoices someone is looking for when something has gone wrong.
+				amountDue: invoice.amount_due ?? invoice.amount_paid ?? 0,
+				currency: invoice.currency,
+				createdAt: new Date((invoice.created ?? 0) * 1000).toISOString(),
+				hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+				invoicePdfUrl: invoice.invoice_pdf ?? null
+			}));
 	}
 
 	/**
@@ -302,7 +397,11 @@ export class BillingService {
 			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all`
 		);
 
-		const live = subscriptions.filter((s) => LIVE_STATUSES.has(s.status));
+		// Only this deployment's product. The Stripe account is shared by every Ever product, so one
+		// customer can hold, say, a Teams subscription beside a Gauzy one — and the Gauzy billing page
+		// must neither show that as the Gauzy plan nor cancel or re-price it.
+		const product = this.product;
+		const live = subscriptions.filter((s) => LIVE_STATUSES.has(s.status) && subscriptionIsForProduct(s, product));
 		if (!live.length) return null;
 
 		// Established subscriptions outrank `incomplete` ones before recency is considered. An
@@ -316,6 +415,34 @@ export class BillingService {
 			return rank(a) - rank(b) || (b.created ?? 0) - (a.created ?? 0);
 		});
 		return live[0];
+	}
+
+	/**
+	 * Whether Stripe has a payment method it would charge this subscription's invoices to.
+	 *
+	 * Stripe's own order: the subscription's default, then the customer's invoice default, then the
+	 * customer's legacy default source. A card merely attached to the customer is NOT charged
+	 * automatically, so it does not count. The customer portal's "add payment method" sets the
+	 * customer's invoice default, which is what makes the retry after a 402 succeed.
+	 */
+	private async hasDefaultPaymentMethod(
+		stripeCustomerId: string,
+		subscription: StripeSubscriptionObject
+	): Promise<boolean> {
+		if (subscription.default_payment_method || subscription.default_source) return true;
+		const customer = await this.get<StripeCustomerObject>(`/customers/${encodeURIComponent(stripeCustomerId)}`);
+		return Boolean(customer?.invoice_settings?.default_payment_method || customer?.default_source);
+	}
+
+	/** Every subscription (any status) this customer holds on `product`. */
+	private async listProductSubscriptions(
+		stripeCustomerId: string,
+		product: string
+	): Promise<StripeSubscriptionObject[]> {
+		const subscriptions = await this.listAll<StripeSubscriptionObject>(
+			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all`
+		);
+		return subscriptions.filter((subscription) => subscriptionIsForProduct(subscription, product));
 	}
 
 	private async requireSubscriptionObject(stripeCustomerId: string): Promise<StripeSubscriptionObject> {
@@ -526,8 +653,29 @@ function planChangeIdempotencyKey(subscription: StripeSubscriptionObject, target
 	return ['change', subscription.id, currentPrice, targetPriceId, latestInvoice, String(window)].join(':');
 }
 
+/** How long a positive isCustomerOfProduct answer is reused, and how many are kept. */
+const PRODUCT_CUSTOMER_CACHE_TTL_MS = 5 * 60 * 1000;
+const PRODUCT_CUSTOMER_CACHE_MAX = 1000;
+
+/**
+ * How many of this product's subscriptions (newest first) contribute to the invoice history. A tenant
+ * normally has one, plus a few after resubscribing; the bound keeps a pathological customer from
+ * fanning out into dozens of Stripe requests on one page load.
+ */
+const MAX_SUBSCRIPTIONS_FOR_INVOICES = 10;
+
 /** Statuses that represent a subscription the customer still has. */
 const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete']);
+
+/**
+ * Whether switching to this price would bill anything.
+ *
+ * A price with no `unit_amount` (tiered or metered billing) is treated as paid: it is not free, and
+ * guessing that it is would re-create exactly the unpaid-invoice state the check exists to prevent.
+ */
+function isPaidPrice(price: StripePriceObject): boolean {
+	return typeof price.unit_amount === 'number' ? price.unit_amount > 0 : true;
+}
 
 /** Stripe's recurring interval, or `one_time` for a price with no `recurring` block. */
 function toInterval(price?: StripePriceObject): BillingInterval {
@@ -564,12 +712,20 @@ interface StripeSubscriptionObject {
 	id: string;
 	status: string;
 	created?: number;
+	metadata?: Record<string, string> | null;
+	default_payment_method?: string | { id?: string } | null;
+	default_source?: string | { id?: string } | null;
 	trial_end?: number | null;
 	current_period_end?: number | null;
 	cancel_at_period_end?: boolean;
 	items?: { data?: Array<{ id: string; price?: StripePriceObject }> };
 	/** Advances whenever a proration is actually charged; used to separate repeated plan changes. */
 	latest_invoice?: string | { id?: string } | null;
+}
+
+interface StripeCustomerObject {
+	default_source?: string | { id?: string } | null;
+	invoice_settings?: { default_payment_method?: string | { id?: string } | null } | null;
 }
 
 interface StripeInvoiceObject {

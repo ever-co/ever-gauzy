@@ -38,6 +38,22 @@ jest.mock('@gauzy/scheduler', () => ({
 
 jest.mock('./worker-jobs.module', () => ({ WorkerJobsModule: class WorkerJobsModule {} }));
 
+/**
+ * `worker.constants.ts` reads `WORKER_QUEUE_ENABLED` / `WORKER_SCHEDULER_ENABLED` once, at import
+ * time, and the assertions below are about the worker's DEFAULT wiring. So the variables are cleared
+ * right before the real module is evaluated — otherwise the result depends on whichever `.env` file
+ * was loaded into the test process: Nx loads the committed `.env.local` (which sets both to `false`
+ * for local development) into every task by default, and that alone turned the BullMQ-root test red
+ * in CI. A mock factory is the one place that is guaranteed to run before `./app.module` pulls the
+ * constants in, whatever order the transpiler emits the imports in. Jest gives each test file its
+ * own copy of `process.env`, so this does not leak into other suites.
+ */
+jest.mock('./worker.constants', () => {
+	delete process.env.WORKER_QUEUE_ENABLED;
+	delete process.env.WORKER_SCHEDULER_ENABLED;
+	return jest.requireActual('./worker.constants');
+});
+
 // `@Module()` writes its metadata through `Reflect.defineMetadata`; nothing else in this file
 // pulls the polyfill in, and without it the reads below come back undefined.
 import 'reflect-metadata';

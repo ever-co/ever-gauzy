@@ -1,6 +1,6 @@
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
@@ -64,4 +64,17 @@ export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	@IsString()
 	@Matches(/^[a-f0-9]{64}$/, { message: 'state must be a valid GitHub installation nonce' })
 	readonly state: string;
+
+	/** Signed proof, issued by the post-install callback, that this flow may bind this installation. */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Matches(/^\d{13}\.[a-f0-9]{64}$/, { message: 'install_proof must be a valid installation proof' })
+	readonly install_proof?: string;
+
+	/** Why the callback issued no proof; only chooses the wording of the refusal. */
+	@ApiPropertyOptional({ enum: ['no_code', 'not_entitled', 'unverifiable'] })
+	@IsOptional()
+	@IsIn(['no_code', 'not_entitled', 'unverifiable'])
+	readonly install_check?: 'no_code' | 'not_entitled' | 'unverifiable';
 }

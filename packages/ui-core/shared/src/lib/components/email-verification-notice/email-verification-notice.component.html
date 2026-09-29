@@ -1,0 +1,46 @@
+@if (visible()) {
+	<div class="email-verification-notice" [class.inline]="variant === 'inline'" role="status" aria-live="polite">
+		<p class="notice-text">
+			{{ messageKey | translate: { email: email() } }}
+		</p>
+		<div class="notice-actions">
+			@switch (state()) {
+				@case ('sent') {
+					<span class="notice-feedback success">{{
+						'EMAIL_VERIFICATION.SENT' | translate: { email: email() }
+					}}</span>
+				}
+				@case ('error') {
+					<span class="notice-feedback error">{{ errorMessage() }}</span>
+				}
+			}
+			@if (state() !== 'sent') {
+				<button
+					nbButton
+					size="small"
+					status="warning"
+					type="button"
+					[disabled]="state() === 'sending'"
+					(click)="resend()"
+				>
+					{{
+						(state() === 'sending' ? 'EMAIL_VERIFICATION.SENDING' : 'EMAIL_VERIFICATION.RESEND') | translate
+					}}
+				</button>
+			}
+			@if (variant === 'banner') {
+				<button
+					nbButton
+					size="small"
+					ghost
+					type="button"
+					class="notice-dismiss"
+					[attr.aria-label]="'EMAIL_VERIFICATION.DISMISS' | translate"
+					(click)="dismiss()"
+				>
+					{{ 'EMAIL_VERIFICATION.DISMISS' | translate }}
+				</button>
+			}
+		</div>
+	</div>
+}

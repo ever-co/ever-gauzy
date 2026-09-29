@@ -104,8 +104,15 @@ describe('RichTextToolbarComponent — roving tabindex', () => {
 
 		component.onToolbarKeydown(press(byId('undo'), 'ArrowRight'));
 
-		expect(byId('redo').tabIndex).not.toBe(0);
+		// Read the ATTRIBUTE, not the `tabIndex` property: a <button> reports `tabIndex === 0` by
+		// default whether or not it is disabled (in browsers and in jsdom alike), so the property can
+		// never tell "the ring made this the tab stop" apart from "the ring left it alone". The ring
+		// leaves disabled controls alone on purpose (`ROVING_ITEM_SELECTOR` excludes them), and the
+		// arrow key must land on the next ENABLED control instead.
+		expect(byId('redo').getAttribute('tabindex')).not.toBe('0');
 		expect(document.activeElement).not.toBe(byId('redo'));
+		expect(document.activeElement).toBe(byId('block-format'));
+		expect(byId('block-format').getAttribute('tabindex')).toBe('0');
 	});
 
 	it('jumps to the ends with Home / End and swallows the key so the page does not scroll', () => {

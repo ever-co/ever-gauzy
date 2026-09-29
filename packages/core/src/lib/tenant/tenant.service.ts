@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
 import { ConfigService } from '@gauzy/config';
@@ -19,10 +19,12 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { Tenant } from './tenant.entity';
-import { StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
+import { StripeSubscriptionService, describeError } from '../shared/billing/stripe-subscription.service';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
+	private readonly billingLogger = new Logger('TenantBillingLink');
+
 	constructor(
 		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
 		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
@@ -48,14 +50,13 @@ export class TenantService extends CrudService<Tenant> {
 	public async onboardTenant(entity: ITenantCreateInput, user: IUser): Promise<ITenant> {
 		console.time('On Boarding Tenant');
 
-		// Creates and saves a tenant entity from the given details.
-		const tenant = await this.create(entity);
+		// The Checkout Session id is a one-time proof of purchase, not a tenant attribute: take it out
+		// of the payload so it can never be spread into the entity, and use it below once the creator
+		// holds the tenant's SUPER_ADMIN role.
+		const { stripeCheckoutSessionId, ...tenantInput } = entity;
 
-		// Record which Stripe customer this tenant bills through, if that is already safe to determine.
-		// Usually it is not at this point — the link needs a confirmed email address and the buyer has
-		// only just been sent the confirmation — so this commonly does nothing and the link is made on
-		// their first visit to the billing page instead. See linkStripeCustomer() for why.
-		await this.linkStripeCustomer(tenant, user);
+		// Creates and saves a tenant entity from the given details.
+		const tenant = await this.create(tenantInput);
 
 		// Create Role/Permissions to relative tenants.
 		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));
@@ -101,11 +102,104 @@ export class TenantService extends CrudService<Tenant> {
 				break;
 		}
 
+		// Record which Stripe customer this tenant bills through, if that can be established safely now.
+		// A buyer arriving from the shared checkout brings their Checkout Session, which proves the
+		// purchase outright; anyone else is linked by verified email, which at this moment usually does
+		// nothing (the confirmation mail has only just gone out) and is completed on their first visit to
+		// the billing page instead. Best-effort: never fails the onboarding around it.
+		await this.linkStripeCustomerAtOnboarding(tenant, user, stripeCheckoutSessionId);
+
 		// Create Import Records while migrating for relative tenant.
 		await this.importRecords(entity, tenant, user);
 
 		console.timeEnd('On Boarding Tenant');
 		return tenant;
+	}
+
+	/**
+	 * Link a freshly created tenant to its Stripe customer: from the creator's Checkout Session when
+	 * they brought one, otherwise by verified email. Never throws — onboarding must not fail because a
+	 * payments provider, or a race on the unique link index, had a bad moment.
+	 */
+	async linkStripeCustomerAtOnboarding(
+		tenant: ITenant,
+		user: IUser,
+		stripeCheckoutSessionId?: string
+	): Promise<string | null> {
+		try {
+			if (stripeCheckoutSessionId) {
+				const linked = await this.linkStripeCustomerFromCheckoutSession(tenant, user, stripeCheckoutSessionId);
+				if (linked) return linked;
+			}
+			return await this.linkStripeCustomer(tenant, user);
+		} catch (error) {
+			this.billingLogger.warn(
+				`Could not link tenant ${tenant?.id} to a Stripe customer: ${describeError(error)}`
+			);
+			return null;
+		}
+	}
+
+	/**
+	 * Link a new tenant to the Stripe customer of the Checkout Session its creator completed.
+	 *
+	 * This is the proven-identity path, and the reason a buyer no longer has to confirm their email
+	 * before their tenant is linked. Only the browser that completed the checkout holds the session id,
+	 * and `verifyCheckoutSession` confirms with Stripe that the session is complete, is a subscription
+	 * to this deployment's product, is recent, and was paid under the creator's OWN address. The
+	 * creator has just become this tenant's SUPER_ADMIN, so the link goes to the tenant they own.
+	 *
+	 * Never adopts a customer another tenant already holds. Logs exactly one line with the outcome
+	 * (`session-linked` or the reason it was declined), with ids only.
+	 */
+	async linkStripeCustomerFromCheckoutSession(
+		tenant: ITenant,
+		user: IUser,
+		stripeCheckoutSessionId: string
+	): Promise<string | null> {
+		if (!this.stripeSubscriptionService.isBillingEnforced()) return null;
+		if (!tenant?.id || !user?.email) return null;
+
+		const log = (decision: string, customerId?: string, detail?: string) =>
+			this.billingLogger.log(
+				`stripe-link ${JSON.stringify({
+					source: 'checkout-session',
+					product: this.stripeSubscriptionService.billingProduct,
+					decision,
+					tenant: tenant.id,
+					customer: customerId,
+					detail
+				})}`
+			);
+
+		const verification = await this.stripeSubscriptionService.verifyCheckoutSession(
+			stripeCheckoutSessionId,
+			user.email
+		);
+		if (verification.ok === false) {
+			log('session-declined', undefined, verification.reason);
+			return null;
+		}
+		const { customerId } = verification;
+
+		const claimedBy = await this.typeOrmTenantRepository.findOne({
+			where: { stripeCustomerId: customerId },
+			select: { id: true }
+		});
+		if (claimedBy && claimedBy.id !== tenant.id) {
+			log('claimed', customerId, `held-by:${claimedBy.id}`);
+			return null;
+		}
+		if (tenant.stripeCustomerId && tenant.stripeCustomerId !== customerId) {
+			log('already-linked', customerId);
+			return null;
+		}
+
+		// Through CrudService, for the same multi-ORM reason as linkStripeCustomer below.
+		await this.update(tenant.id, { stripeCustomerId: customerId } as Partial<Tenant>);
+		tenant.stripeCustomerId = customerId;
+		log('session-linked', customerId);
+		return customerId;
 	}
 
 	/**
