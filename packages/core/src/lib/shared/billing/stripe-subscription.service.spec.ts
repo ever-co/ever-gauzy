@@ -1,4 +1,4 @@
-// cspell:ignore payg gauzyx flase selfhosted
+// cspell:ignore payg gauzyx flase selfhosted abcdefghijkl
 import { Logger } from '@nestjs/common';
 import { EntitlementResult, StripeSubscriptionService } from './stripe-subscription.service';
 import {
