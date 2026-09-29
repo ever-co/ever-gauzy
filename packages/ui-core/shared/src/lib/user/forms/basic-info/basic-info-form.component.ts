@@ -165,6 +165,21 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 		return this.form.get('imageUrl') && this.form.get('imageUrl').value;
 	}
 
+	/** True while the pointer is over the avatar uploader. */
+	public avatarHover = false;
+
+	/** An image is set and loaded without error. */
+	get hasAvatar(): boolean {
+		return !!this.showImageMeta && !this.form.get('imageUrl').invalid;
+	}
+
+	/**
+	 * Reports a failed avatar upload.
+	 */
+	handleImageUploadError(error: any): void {
+		this._errorHandlingService.handleError(error);
+	}
+
 	/**
 	 * Registers a user with different roles
 	 *
