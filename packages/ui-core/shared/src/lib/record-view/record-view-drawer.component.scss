@@ -38,10 +38,6 @@ $drawer-z-index: 1043;
   // Wide enough for a label column plus a real value, capped so it never eats
   // the whole canvas on a narrow laptop.
   width: min(26rem, 92vw);
-
-  &.is-wide {
-    width: min(36rem, 94vw);
-  }
   background: nb-theme(background-basic-color-1);
   color: nb-theme(text-basic-color);
   box-shadow: #{$overlay-shadow};
@@ -115,6 +111,8 @@ $drawer-z-index: 1043;
 // The wide panel holds long-form reading content: more breathing room, with
 // header and body on the same 1.5rem side edge.
 .record-drawer.is-wide {
+  width: min(36rem, 94vw);
+
   .record-drawer-header {
     align-items: center;
     padding: 0.875rem 1.5rem;
