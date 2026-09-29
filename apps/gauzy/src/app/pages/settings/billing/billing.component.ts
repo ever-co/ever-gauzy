@@ -133,11 +133,14 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 			// admin there; they return to this page and switch again.
 			const body = (error as { status?: number; error?: { code?: string; portalUrl?: string } })?.error;
 			if ((error as { status?: number })?.status === 402 && body?.code === 'payment_method_required') {
-				this.toastrService.info('SETTINGS_MENU.BILLING_PAYMENT_METHOD_REQUIRED', 'TOASTR.TITLE.INFO');
+				// The API still answers 402 when Stripe could not open a portal session, just without the
+				// link — then say so, and point at the page's own "manage billing" action instead.
 				if (body.portalUrl) {
+					this.toastrService.info('SETTINGS_MENU.BILLING_PAYMENT_METHOD_REQUIRED', 'TOASTR.TITLE.INFO');
 					window.location.href = body.portalUrl;
 					return;
 				}
+				this.toastrService.warning('SETTINGS_MENU.BILLING_PAYMENT_METHOD_REQUIRED_NO_PORTAL');
 			} else {
 				this.errorHandlingService.handleError(error);
 			}

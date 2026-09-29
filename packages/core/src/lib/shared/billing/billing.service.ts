@@ -101,6 +101,9 @@ export class PaymentMethodRequiredError extends Error {
 export class BillingService {
 	private readonly logger = new Logger(BillingService.name);
 
+	/** `<product>:<customer>` -> expiry (ms) of a positive isCustomerOfProduct answer. */
+	private readonly productCustomerCache = new Map<string, number>();
+
 	constructor(private readonly stripeSubscriptionService: StripeSubscriptionService) {}
 
 	/** Mirrors the subscription service's switch, so the controller only has to ask one object. */
@@ -129,10 +132,21 @@ export class BillingService {
 	async isCustomerOfProduct(stripeCustomerId: string): Promise<boolean> {
 		const product = this.product;
 		if (!product) return false;
-		const subscriptions = await this.listAll<StripeSubscriptionObject>(
-			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all`
-		);
-		return subscriptions.some((subscription) => subscriptionIsForProduct(subscription, product));
+
+		// Every /billing route asks this before it does anything, so one page load would otherwise walk
+		// the customer's subscription list once per route. Only a positive answer is cached: with
+		// `status=all` it can never turn false again (Stripe cancels subscriptions, it does not delete
+		// them), whereas a negative one must be re-checked the moment the customer subscribes.
+		const cacheKey = `${product}:${stripeCustomerId}`;
+		const cachedUntil = this.productCustomerCache.get(cacheKey);
+		if (cachedUntil && cachedUntil > Date.now()) return true;
+
+		const isCustomer = (await this.listProductSubscriptions(stripeCustomerId, product)).length > 0;
+		if (isCustomer) {
+			if (this.productCustomerCache.size >= PRODUCT_CUSTOMER_CACHE_MAX) this.productCustomerCache.clear();
+			this.productCustomerCache.set(cacheKey, Date.now() + PRODUCT_CUSTOMER_CACHE_TTL_MS);
+		}
+		return isCustomer;
 	}
 
 	/**
@@ -278,25 +292,46 @@ export class BillingService {
 		return this.toSubscription(updated);
 	}
 
-	/** Invoice history, newest first. */
+	/**
+	 * Invoice history of THIS deployment's product, newest first.
+	 *
+	 * Invoices are listed per customer, and one customer can also hold another Ever product (the same
+	 * buyer's Teams plan, a one-off license). Those invoices are not this tenant's to see, and would
+	 * also push this product's own invoices off the page, so only invoices raised by one of this
+	 * product's subscriptions are returned. A page of Stripe's maximum size is read so that filtering
+	 * still leaves `limit` rows for a customer with a lot of foreign invoices.
+	 */
 	async listInvoices(stripeCustomerId: string, limit = 24): Promise<BillingInvoice[]> {
+		const product = this.product;
+		if (!product) return [];
+		const subscriptionIds = new Set(
+			(await this.listProductSubscriptions(stripeCustomerId, product)).map((subscription) => subscription.id)
+		);
+		if (!subscriptionIds.size) return [];
+
 		const { data } = await this.get<{ data: StripeInvoiceObject[] }>(
-			`/invoices?customer=${encodeURIComponent(stripeCustomerId)}&limit=${limit}`
+			`/invoices?customer=${encodeURIComponent(stripeCustomerId)}&limit=${INVOICE_SCAN_LIMIT}`
 		);
 
-		return (data ?? []).map((invoice) => ({
-			id: invoice.id,
-			number: invoice.number ?? null,
-			status: invoice.status ?? null,
-			amountPaid: invoice.amount_paid ?? 0,
-			// An unpaid or failed invoice has amount_paid = 0, so a table showing only that renders the
-			// row as $0.00 — exactly the invoices someone is looking for when something has gone wrong.
-			amountDue: invoice.amount_due ?? invoice.amount_paid ?? 0,
-			currency: invoice.currency,
-			createdAt: new Date((invoice.created ?? 0) * 1000).toISOString(),
-			hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
-			invoicePdfUrl: invoice.invoice_pdf ?? null
-		}));
+		return (data ?? [])
+			.filter((invoice) => {
+				const subscriptionId = invoiceSubscriptionId(invoice);
+				return subscriptionId !== null && subscriptionIds.has(subscriptionId);
+			})
+			.slice(0, limit)
+			.map((invoice) => ({
+				id: invoice.id,
+				number: invoice.number ?? null,
+				status: invoice.status ?? null,
+				amountPaid: invoice.amount_paid ?? 0,
+				// An unpaid or failed invoice has amount_paid = 0, so a table showing only that renders the
+				// row as $0.00 — exactly the invoices someone is looking for when something has gone wrong.
+				amountDue: invoice.amount_due ?? invoice.amount_paid ?? 0,
+				currency: invoice.currency,
+				createdAt: new Date((invoice.created ?? 0) * 1000).toISOString(),
+				hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+				invoicePdfUrl: invoice.invoice_pdf ?? null
+			}));
 	}
 
 	/**
@@ -390,6 +425,17 @@ export class BillingService {
 		if (subscription.default_payment_method || subscription.default_source) return true;
 		const customer = await this.get<StripeCustomerObject>(`/customers/${encodeURIComponent(stripeCustomerId)}`);
 		return Boolean(customer?.invoice_settings?.default_payment_method || customer?.default_source);
+	}
+
+	/** Every subscription (any status) this customer holds on `product`. */
+	private async listProductSubscriptions(
+		stripeCustomerId: string,
+		product: string
+	): Promise<StripeSubscriptionObject[]> {
+		const subscriptions = await this.listAll<StripeSubscriptionObject>(
+			`/subscriptions?customer=${encodeURIComponent(stripeCustomerId)}&status=all`
+		);
+		return subscriptions.filter((subscription) => subscriptionIsForProduct(subscription, product));
 	}
 
 	private async requireSubscriptionObject(stripeCustomerId: string): Promise<StripeSubscriptionObject> {
@@ -600,6 +646,23 @@ function planChangeIdempotencyKey(subscription: StripeSubscriptionObject, target
 	return ['change', subscription.id, currentPrice, targetPriceId, latestInvoice, String(window)].join(':');
 }
 
+/** How long a positive isCustomerOfProduct answer is reused, and how many are kept. */
+const PRODUCT_CUSTOMER_CACHE_TTL_MS = 5 * 60 * 1000;
+const PRODUCT_CUSTOMER_CACHE_MAX = 1000;
+
+/** Stripe's largest page: read in full so that filtering out foreign invoices still fills the page. */
+const INVOICE_SCAN_LIMIT = 100;
+
+/**
+ * The subscription an invoice was raised by, or null for a one-off invoice. `subscription` on the
+ * pinned API version; `parent.subscription_details.subscription` on newer ones.
+ */
+function invoiceSubscriptionId(invoice: StripeInvoiceObject): string | null {
+	const direct = invoice.subscription ?? invoice.parent?.subscription_details?.subscription ?? null;
+	if (!direct) return null;
+	return typeof direct === 'string' ? direct : direct.id ?? null;
+}
+
 /** Statuses that represent a subscription the customer still has. */
 const LIVE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete']);
 
@@ -674,6 +737,8 @@ interface StripeInvoiceObject {
 	created?: number;
 	hosted_invoice_url?: string | null;
 	invoice_pdf?: string | null;
+	subscription?: string | { id?: string } | null;
+	parent?: { subscription_details?: { subscription?: string | { id?: string } | null } | null } | null;
 }
 
 interface StripePaymentMethodObject {

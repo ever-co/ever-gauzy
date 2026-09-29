@@ -81,6 +81,7 @@ interface StripeState {
 	subscriptions: any[];
 	prices: Record<string, any>;
 	customer: Record<string, any>;
+	invoices?: any[];
 }
 
 let calls: Array<{ method: string; path: string; body?: string }> = [];
@@ -97,6 +98,8 @@ function stubStripe(state: StripeState) {
 		} else if (method === 'GET' && path.startsWith('/prices?lookup_keys[]=')) {
 			const key = decodeURIComponent(/lookup_keys\[\]=([^&]+)/.exec(path)[1]);
 			body = { data: state.prices[key] ? [state.prices[key]] : [] };
+		} else if (method === 'GET' && path.startsWith(`/invoices?customer=${CUSTOMER}&`)) {
+			body = { data: state.invoices ?? [], has_more: false };
 		} else if (method === 'GET' && path === `/customers/${CUSTOMER}`) {
 			body = { id: CUSTOMER, ...state.customer };
 		} else if (method === 'POST' && path.startsWith('/subscriptions/')) {
@@ -168,6 +171,60 @@ describe('BillingService — reads only this product', () => {
 		await expect(service().isCustomerOfProduct(CUSTOMER)).resolves.toBe(false);
 		stubStripe({ subscriptions: [teams(), sub({ status: 'canceled' })], prices: {}, customer: {} });
 		await expect(service().isCustomerOfProduct(CUSTOMER)).resolves.toBe(true);
+	});
+
+	it('isCustomerOfProduct caches only a positive answer', async () => {
+		const billing = service();
+		stubStripe({ subscriptions: [teams()], prices: {}, customer: {} });
+		await expect(billing.isCustomerOfProduct(CUSTOMER)).resolves.toBe(false);
+		await expect(billing.isCustomerOfProduct(CUSTOMER)).resolves.toBe(false);
+		expect(calls).toHaveLength(2); // a "no" is re-checked every time
+
+		stubStripe({ subscriptions: [sub()], prices: {}, customer: {} });
+		await expect(billing.isCustomerOfProduct(CUSTOMER)).resolves.toBe(true);
+		await expect(billing.isCustomerOfProduct(CUSTOMER)).resolves.toBe(true);
+		expect(calls).toHaveLength(1); // the second "yes" came from the cache
+	});
+
+	it("invoices: only those raised by this product's subscriptions, never another product's or one-offs", async () => {
+		const invoice = (id: string, subscription: any, extra: Record<string, any> = {}) => ({
+			id,
+			number: id.toUpperCase(),
+			status: 'paid',
+			amount_paid: 100,
+			amount_due: 100,
+			currency: 'usd',
+			created: 1_800_000_000,
+			subscription,
+			...extra
+		});
+		stubStripe({
+			subscriptions: [teams(), sub(), sub({ id: 'sub_g_old', status: 'canceled' })],
+			prices: {},
+			customer: {},
+			invoices: [
+				invoice('in_teams', 'sub_t'),
+				invoice('in_gauzy', 'sub_g'),
+				invoice('in_license', null),
+				invoice('in_gauzy_old', { id: 'sub_g_old' }),
+				invoice('in_gauzy_new_api', undefined, {
+					parent: { subscription_details: { subscription: 'sub_g' } }
+				})
+			]
+		});
+		const invoices = await service().listInvoices(CUSTOMER);
+		expect(invoices.map((i) => i.id)).toEqual(['in_gauzy', 'in_gauzy_old', 'in_gauzy_new_api']);
+	});
+
+	it('invoices: a customer with no subscription to this product gets none, and Stripe is not asked for them', async () => {
+		stubStripe({
+			subscriptions: [teams()],
+			prices: {},
+			customer: {},
+			invoices: [{ id: 'in_teams', subscription: 'sub_t' }]
+		});
+		await expect(service().listInvoices(CUSTOMER)).resolves.toEqual([]);
+		expect(calls.some((c) => c.path.startsWith('/invoices'))).toBe(false);
 	});
 });
 
