@@ -3,9 +3,17 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { IsNull } from 'typeorm';
 import { Public } from '@gauzy/common';
+import { RolesEnum } from '@gauzy/contracts';
 import { TypeOrmTenantRepository } from '../../tenant/repository/type-orm-tenant.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
-import { StripeSubscriptionService } from './stripe-subscription.service';
+import {
+	ProductScopedSubscription,
+	checkoutSessionIsForProduct,
+	describeProduct,
+	resolveWebhookLinking,
+	subscriptionIsForProduct
+} from './billing-product';
+import { StripeSubscriptionService, describeError } from './stripe-subscription.service';
 
 /**
  * Stripe webhook receiver.
@@ -18,6 +26,22 @@ import { StripeSubscriptionService } from './stripe-subscription.service';
  * Unsigned or unverifiable payloads are rejected. A webhook endpoint that trusts its body is an
  * unauthenticated write into the billing state of every tenant, so the signature check is not
  * optional and there is no bypass for local development.
+ *
+ * The endpoint is registered on a Stripe account that EVERY Ever product sells through, so most of
+ * what arrives here is somebody else's: Teams, Platform, Rec, Works and directory-site purchases,
+ * lifetime licenses, card saves, GitHands. Nothing is linked unless the event is provably a purchase
+ * of this deployment's product (`BILLING_PRODUCT`), the matched user is an administrator of the
+ * tenant it would link, and the customer holds an entitling subscription to that product. Every
+ * linking-type event produces exactly one structured log line saying what was decided and why.
+ *
+ * Even then the tenant is only WRITTEN when `BILLING_WEBHOOK_LINKING` is on, which it is not by
+ * default. All the webhook has to go on is the address typed at checkout, and a free Starter can be
+ * started under anybody's address: a verified admin cannot be told apart from somebody buying in
+ * their name. And for an existing admin who buys and then registers the NEW account the checkout
+ * sends them to, the event lands a minute before that registration and would bind their OLD tenant,
+ * leaving the tenant they paid for impossible to link. With the flag off the decision is logged as
+ * `would-link` and the link is made by the buyer's own Checkout Session at onboarding, or by an
+ * admin opening Settings > Billing.
  */
 @ApiExcludeController()
 @Controller('/billing/webhook')
@@ -58,6 +82,9 @@ export class StripeWebhookController {
 		} catch {
 			throw new ForbiddenException('Malformed webhook payload.');
 		}
+		if (!event || typeof event !== 'object') {
+			throw new ForbiddenException('Malformed webhook payload.');
+		}
 
 		// Always 200 once the signature is good — which means the handler's own failures must be
 		// swallowed here, not propagated. Stripe retries on any non-2xx, so a bug in apply() would
@@ -66,18 +93,15 @@ export class StripeWebhookController {
 		try {
 			await this.apply(event);
 		} catch (error) {
-			this.logger.error(
-				`Failed to apply Stripe webhook ${event.type}; acknowledging anyway. ${
-					error instanceof Error ? error.message : error
-				}`
-			);
+			this.logger.error(`Failed to apply Stripe webhook ${event.type}; acknowledging anyway. ${describeError(error)}`);
 		}
 
 		return { received: true };
 	}
 
 	/**
-	 * React to the handful of events that can change which customer a tenant bills through.
+	 * React to the handful of events that can change which customer a tenant bills through, and log
+	 * exactly one decision line for each of them.
 	 *
 	 * Everything else — status transitions, invoice payments — is read live by the billing pages, so
 	 * mirroring it into our database would only create a second copy to keep in sync.
@@ -86,51 +110,109 @@ export class StripeWebhookController {
 		if (!LINKING_EVENTS.has(event.type)) return;
 
 		const object = event.data?.object ?? {};
+		const outcome: LinkOutcome = { decision: 'error' };
+		try {
+			await this.decide(event.type, object, outcome);
+		} catch (error) {
+			outcome.decision = 'error';
+			outcome.detail = describeError(error).slice(0, 200);
+			throw error;
+		} finally {
+			this.logOutcome(event, object, outcome);
+		}
+	}
+
+	/**
+	 * Work out whether this event may link a tenant, and link it if so. Records the decision on
+	 * `outcome` as it goes, so the caller can log it whatever path is taken — including a throw.
+	 */
+	private async decide(type: string, object: StripeEventObject, outcome: LinkOutcome): Promise<void> {
+		const product = this.stripeSubscriptionService.billingProduct;
+
+		// 1. Product allowlist, before ANY database or Stripe access. This endpoint receives every Ever
+		//    product's events, and an allowlist is the only safe shape: Ever Works, GitHands and the
+		//    directory sites never set `ever_product`, so a denylist of known products would let them
+		//    all through.
+		const ours =
+			type === 'checkout.session.completed'
+				? checkoutSessionIsForProduct(object, product)
+				: subscriptionIsForProduct(object as ProductScopedSubscription, product);
+		if (!ours) {
+			outcome.decision = 'skipped-foreign';
+			return;
+		}
+
 		// `customer` is an id string normally, but an expanded object when the event was created with
 		// expansion — take the id either way rather than silently ignoring the expanded form.
-		const customerId =
-			typeof object.customer === 'string' ? object.customer : object.customer?.id;
-		if (!customerId) return;
+		const customerId = typeof object.customer === 'string' ? object.customer : object.customer?.id;
+		outcome.customerId = customerId;
+		if (!customerId) {
+			outcome.decision = 'no-customer';
+			return;
+		}
 
 		// Only `checkout.session.completed` carries the address inline. A Subscription object has no
 		// email field at all, so reading it off the event alone would make `customer.subscription.created`
 		// a permanent no-op — precisely the portal- and Dashboard-created subscriptions this receiver
-		// exists to catch. Fall back to asking Stripe, which costs one request on that path only.
+		// exists to catch. Fall back to asking Stripe, on a short budget so the acknowledgement is not
+		// held up by a slow Stripe.
 		const email =
 			object.customer_email ??
 			object.customer_details?.email ??
-			(await this.stripeSubscriptionService.getCustomerEmail(customerId));
+			(await this.stripeSubscriptionService.getCustomerEmail(customerId, STRIPE_BUDGET_MS));
+		if (!email) {
+			outcome.decision = 'no-email';
+			return;
+		}
 
-		if (!email) return;
-
-		// Tenant has no `users` relation, so the tenant is reached through the user that owns the
-		// email rather than by joining from the other side.
+		// 2. Who owns this address. Tenant has no `users` relation, so the tenant is reached through the
+		//    user rather than by joining from the other side.
+		//
 		// Deliberately not `.catch(() => null)`: a transient database error would then be
 		// indistinguishable from "nobody has this address", and the event would be acknowledged as
 		// handled when nothing happened. Letting it throw sends it to the handler above, which logs
 		// it — and the event can still be replayed from the Stripe dashboard.
-		const users = await this.typeOrmUserRepository
+		const users: MatchedUser[] = await this.typeOrmUserRepository
 			.createQueryBuilder('user')
-			.select(['user.id', 'user.tenantId', 'user.emailVerifiedAt'])
+			.leftJoin('user.role', 'role')
+			.select(['user.id', 'user.tenantId', 'user.emailVerifiedAt', 'role.id', 'role.name'])
 			.where('LOWER(user.email) = LOWER(:email)', { email: email.toLowerCase() })
 			.andWhere('user.tenantId IS NOT NULL')
 			.limit(2)
 			.getMany();
 
+		if (!users.length) {
+			// The normal case for a new buyer: the event arrives a minute before they register. Their
+			// tenant is linked at onboarding from the Checkout Session instead.
+			outcome.decision = 'no-user';
+			return;
+		}
+
 		// One address can exist in more than one tenant. Picking arbitrarily would attach a Stripe
 		// customer to whichever row the database happened to return first, so this declines instead
 		// and leaves the link to be made deliberately.
-		if (users.length !== 1) {
-			if (users.length > 1) {
-				this.logger.warn(
-					`Stripe ${event.type} matched ${users.length} tenants for one address; not linking automatically.`
-				);
-			}
+		if (users.length > 1) {
+			outcome.decision = 'multi';
 			return;
 		}
 
 		const user = users[0];
-		if (!user?.tenantId) return;
+		outcome.tenantId = user?.tenantId ?? undefined;
+		if (!user?.tenantId) {
+			outcome.decision = 'no-user';
+			return;
+		}
+
+		// 3. Only the tenant's administrators may bind it to a billing account. Accepting an invite
+		//    verifies the invitee's address automatically, so without this an employee's, manager's or
+		//    client contact's PERSONAL purchase — or a free Starter anyone can start under their
+		//    address — would bind their EMPLOYER's tenant to that person's Stripe customer, and the
+		//    employer's admins could then read, cancel and re-price it. The other two writers of this
+		//    column (onboarding and the /billing lazy link) are admin-only already.
+		if (!ADMIN_ROLES.has(user.role?.name ?? '')) {
+			outcome.decision = 'non-admin';
+			return;
+		}
 
 		// The address in this event is whatever the payer typed at checkout, and email is not unique in
 		// this platform, so matching on it alone would let someone who registered under a paying
@@ -139,24 +221,43 @@ export class StripeWebhookController {
 		// can type a victim's address but cannot read their mail. An unverified match is left alone; the
 		// link is made later, once the address is confirmed.
 		if (!user.emailVerifiedAt) {
-			this.logger.log(`Stripe ${event.type} matched an unverified address; not linking automatically.`);
+			outcome.decision = 'unverified';
 			return;
 		}
 
 		// Never adopt a Stripe customer that another tenant already bills through. The write below
 		// guards the *target* tenant from being repointed, but says nothing about the customer: two
 		// tenants could end up sharing one billing account, and whichever opened /billing would be
-		// looking at the other's invoices, card and subscription. The onboarding path has refused
-		// this since it was written; the webhook reaches the same column and had no equivalent.
+		// looking at the other's invoices, card and subscription.
 		const claimedBy = await this.typeOrmTenantRepository.findOne({
 			where: { stripeCustomerId: customerId },
 			select: { id: true }
 		});
 		if (claimedBy && claimedBy.id !== user.tenantId) {
-			this.logger.warn(
-				`Stripe ${event.type} would link tenant ${user.tenantId} to a customer already held by ` +
-					`tenant ${claimedBy.id}; declining.`
-			);
+			outcome.decision = 'claimed';
+			outcome.detail = `held-by:${claimedBy.id}`;
+			return;
+		}
+
+		// 4. Only a customer that actually holds an entitling subscription to this product. The event
+		//    says a subscription was bought; this says it is still alive and still on our price.
+		let entitled: boolean;
+		try {
+			entitled = await this.stripeSubscriptionService.customerHasEntitlingSubscription(customerId, STRIPE_BUDGET_MS);
+		} catch (error) {
+			outcome.decision = 'stripe-unavailable';
+			outcome.detail = describeError(error).slice(0, 200);
+			return;
+		}
+		if (!entitled) {
+			outcome.decision = 'not-entitled';
+			return;
+		}
+
+		// 5. Every check passed. Writing is a separate, default-off decision (see the class comment): the
+		//    checks above cannot prove the purchase was the account owner's own.
+		if (!resolveWebhookLinking()) {
+			outcome.decision = 'would-link';
 			return;
 		}
 
@@ -166,15 +267,94 @@ export class StripeWebhookController {
 			{ id: user.tenantId, stripeCustomerId: IsNull() },
 			{ stripeCustomerId: customerId }
 		);
+		outcome.decision = updated?.affected ? 'linked' : 'already-linked';
+	}
 
-		if (updated.affected) {
-			this.logger.log(`Linked tenant ${user.tenantId} to Stripe customer ${customerId} from ${event.type}.`);
+	/**
+	 * One line per linking-type event. Ids only — never the email address the decision was made on.
+	 * Without this, "correctly ignored" and "never processed" look the same in the logs.
+	 */
+	private logOutcome(event: StripeEvent, object: StripeEventObject, outcome: LinkOutcome): void {
+		const line = JSON.stringify({
+			event: typeof event.id === 'string' ? event.id : undefined,
+			type: event.type,
+			product: this.stripeSubscriptionService.billingProduct,
+			eventProduct: describeProduct(object),
+			decision: outcome.decision,
+			tenant: outcome.tenantId,
+			customer: outcome.customerId,
+			detail: outcome.detail
+		});
+		const message = `stripe-webhook ${line}`;
+		if (WARN_DECISIONS.has(outcome.decision)) {
+			this.logger.warn(message);
+		} else {
+			this.logger.log(message);
 		}
 	}
 }
 
 /** Events that can establish a tenant's billing customer for the first time. */
 const LINKING_EVENTS = new Set(['checkout.session.completed', 'customer.subscription.created']);
+
+/** Roles that may bind a tenant to a billing account — the same set the /billing routes allow. */
+const ADMIN_ROLES = new Set<string>([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
+
+/** Outcomes that deserve an operator's attention rather than being routine. */
+const WARN_DECISIONS = new Set<LinkDecision>(['multi', 'claimed', 'stripe-unavailable', 'error']);
+
+/**
+ * Budget for each Stripe call made while Stripe is waiting for our acknowledgement. Short, so a slow
+ * Stripe cannot push the response past Stripe's own delivery timeout and turn into a retry.
+ */
+const STRIPE_BUDGET_MS = 3000;
+
+/**
+ * What happened to one linking-type event.
+ *
+ * - `skipped-foreign`: another product's event (or payment/setup mode) — no DB or Stripe access.
+ * - `no-customer` / `no-email`: nothing to match on.
+ * - `no-user`: nobody has the address yet (the normal buy-then-register case).
+ * - `multi`: the address exists in more than one tenant.
+ * - `non-admin`: the one match is not SUPER_ADMIN/ADMIN of their tenant.
+ * - `unverified`: the one match has not confirmed the address.
+ * - `claimed`: another tenant already bills through this customer.
+ * - `not-entitled`: the customer holds no active/trialing/past_due subscription to this product.
+ * - `stripe-unavailable`: that could not be established; nothing was written.
+ * - `would-link`: every check passed, but `BILLING_WEBHOOK_LINKING` is off, so nothing was written.
+ * - `already-linked`: the tenant already had a customer; nothing was changed.
+ * - `linked`: the tenant was linked.
+ * - `error`: an unexpected failure (logged separately, still acknowledged).
+ */
+export type LinkDecision =
+	| 'skipped-foreign'
+	| 'no-customer'
+	| 'no-email'
+	| 'no-user'
+	| 'multi'
+	| 'non-admin'
+	| 'unverified'
+	| 'claimed'
+	| 'not-entitled'
+	| 'stripe-unavailable'
+	| 'would-link'
+	| 'already-linked'
+	| 'linked'
+	| 'error';
+
+interface LinkOutcome {
+	decision: LinkDecision;
+	tenantId?: string;
+	customerId?: string;
+	detail?: string;
+}
+
+interface MatchedUser {
+	id?: string;
+	tenantId?: string | null;
+	emailVerifiedAt?: Date | null;
+	role?: { id?: string; name?: string } | null;
+}
 
 /**
  * Verify Stripe's `Stripe-Signature` header.
@@ -213,13 +393,19 @@ interface RawBodyRequest {
 	rawBody?: Buffer;
 }
 
+interface StripeEventObject {
+	mode?: string | null;
+	metadata?: Record<string, string> | null;
+	customer?: string | { id?: string } | null;
+	customer_email?: string | null;
+	customer_details?: { email?: string | null } | null;
+	items?: ProductScopedSubscription['items'];
+}
+
 interface StripeEvent {
+	id?: string;
 	type: string;
 	data?: {
-		object?: {
-			customer?: string | { id?: string };
-			customer_email?: string;
-			customer_details?: { email?: string };
-		};
+		object?: StripeEventObject;
 	};
 }
