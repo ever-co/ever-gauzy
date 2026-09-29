@@ -86,21 +86,66 @@ let references = new Map<string, string>();
 
 export function markdownToHtml(source: string): string {
 	references = new Map();
-	const lines = source
-		.replace(/\r\n?/g, '\n')
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '')
-		.split('\n')
-		// `[label]: url` lines are definitions, never content — including the
-		// `[//]: # (comment)` idiom bots use as invisible markers.
-		.filter((line) => {
-			const definition = line.match(REFERENCE_DEFINITION);
-			if (definition) {
-				references.set(definition[1].toLowerCase(), definition[2]);
-			}
-			return !definition;
-		});
-	return renderBlocks(lines);
+	return renderBlocks(removeNonContent(source.replace(/\r\n?/g, '\n').split('\n')));
+}
+
+/**
+ * Drops what is never shown — HTML comments, `<script>` / `<style>` blocks and
+ * `[label]: url` definitions — from the prose only. Fenced code is copied
+ * through untouched: a `<script>` or `<!-- -->` inside a code example is
+ * content, and `renderCodeBlock` escapes it.
+ */
+function removeNonContent(lines: string[]): string[] {
+	const out: string[] = [];
+	let prose: string[] = [];
+	let i = 0;
+	while (i < lines.length) {
+		const fence = lines[i].match(FENCE);
+		if (fence) {
+			out.push(...cleanProse(prose));
+			prose = [];
+			i = copyFence(lines, i, fence[1], out);
+		} else {
+			prose.push(lines[i++]);
+		}
+	}
+	out.push(...cleanProse(prose));
+	return out;
+}
+
+/** Copies a fenced block, fences included, and returns the index after it. */
+function copyFence(lines: string[], start: number, marker: string, out: string[]): number {
+	out.push(lines[start]);
+	let i = start + 1;
+	while (i < lines.length) {
+		out.push(lines[i]);
+		if (lines[i++].trim().startsWith(marker)) {
+			break;
+		}
+	}
+	return i;
+}
+
+function cleanProse(lines: string[]): string[] {
+	if (!lines.length) {
+		return [];
+	}
+	return (
+		lines
+			.join('\n')
+			.replace(/<!--[\s\S]*?-->/g, '')
+			.replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '')
+			.split('\n')
+			// `[label]: url` lines are definitions, never content — including the
+			// `[//]: # (comment)` idiom bots use as invisible markers.
+			.filter((line) => {
+				const definition = line.match(REFERENCE_DEFINITION);
+				if (definition) {
+					references.set(definition[1].toLowerCase(), definition[2]);
+				}
+				return !definition;
+			})
+	);
 }
 
 /**
@@ -375,73 +420,102 @@ interface ListItem {
 	children: string;
 }
 
+/** One list being parsed: its marker indent, its kind, and the items read so far. */
+interface ListState {
+	indent: number;
+	ordered: boolean;
+	items: ListItem[];
+}
+
+/** Returned by a list step when the line at hand ends the list. */
+const LIST_END = -1;
+
+const TASK_MARKER = /^\[( |x|X)\]\s+/;
+
 /** Renders one list (and, recursively, the lists nested in it). Returns the index after it. */
 function renderList(lines: string[], start: number): [string, number] {
 	const first = lines[start].match(LIST_ITEM);
-	const indent = first[1].length;
-	const ordered = /\d/.test(first[2]);
-	const items: ListItem[] = [];
+	const list: ListState = { indent: first[1].length, ordered: isOrderedMarker(first[2]), items: [] };
 	let i = start;
-
 	while (i < lines.length) {
-		const line = lines[i];
-		const match = line.match(LIST_ITEM);
-		const current = items[items.length - 1];
-
-		if (!match) {
-			if (!line.trim()) {
-				// A blank line only ends the list if what follows is not another item of it.
-				let j = i + 1;
-				while (j < lines.length && !lines[j].trim()) j++;
-				const next = j < lines.length ? lines[j].match(LIST_ITEM) : null;
-				if (next && next[1].length >= indent) {
-					i = j;
-					continue;
-				}
-				break;
-			}
-			// Lazy continuation of the current item's text.
-			if (current && !startsBlock(lines, i)) {
-				current.text.push(line.trim());
-				i++;
-				continue;
-			}
+		const next = listStep(lines, i, list);
+		if (next === LIST_END) {
 			break;
 		}
-
-		if (match[1].length < indent) {
-			break;
-		}
-		if (match[1].length > indent && current) {
-			const [nested, next] = renderList(lines, i);
-			current.children += nested;
-			i = next;
-			continue;
-		}
-		if (/\d/.test(match[2]) !== ordered) {
-			break;
-		}
-
-		items.push({ text: [match[3]], children: '' });
-		i++;
+		i = next;
 	}
+	return [renderListHtml(list, first[2]), i];
+}
 
-	const tag = ordered ? 'ol' : 'ul';
-	const startNumber = ordered ? parseInt(first[2], 10) : 1;
-	const open = ordered && startNumber !== 1 ? `<ol start="${startNumber}">` : `<${tag}>`;
-	const body = items
-		.map(({ text, children }) => {
-			let content = text.map(renderInline).join('<br />');
-			const task = text[0].match(/^\[( |x|X)\]\s+/);
-			if (task) {
-				const checked = task[1] !== ' ';
-				content = `<span class="md-check${checked ? ' is-checked' : ''}">${checked ? '&#10003;' : ''}</span>${content.replace(/^\[( |x|X)\]\s+/, '')}`;
-			}
-			return `<li${task ? ' class="md-task"' : ''}>${content}${children}</li>`;
-		})
-		.join('');
+function isOrderedMarker(marker: string): boolean {
+	return /\d/.test(marker);
+}
 
-	return [`${open}${body}</${tag}>`, i];
+/** Consumes the line at `i` into the list; returns where to continue, or `LIST_END`. */
+function listStep(lines: string[], i: number, list: ListState): number {
+	const match = lines[i].match(LIST_ITEM);
+	return match ? listItemStep(lines, i, match, list) : listTextStep(lines, i, list);
+}
+
+/** A line that is not an item: a blank line, or lazy continuation text of the current item. */
+function listTextStep(lines: string[], i: number, list: ListState): number {
+	if (!lines[i].trim()) {
+		return itemAfterBlankLines(lines, i, list.indent);
+	}
+	const current = list.items[list.items.length - 1];
+	if (current && !startsBlock(lines, i)) {
+		current.text.push(lines[i].trim());
+		return i + 1;
+	}
+	return LIST_END;
+}
+
+/** A blank line only ends the list if what follows is not another item of it. */
+function itemAfterBlankLines(lines: string[], i: number, indent: number): number {
+	let next = i + 1;
+	while (next < lines.length && !lines[next].trim()) {
+		next++;
+	}
+	const item = next < lines.length ? lines[next].match(LIST_ITEM) : null;
+	return item && item[1].length >= indent ? next : LIST_END;
+}
+
+/** An item line: a sibling, a nested list under the current item, or the end of this list. */
+function listItemStep(lines: string[], i: number, match: RegExpMatchArray, list: ListState): number {
+	const indent = match[1].length;
+	const current = list.items[list.items.length - 1];
+	if (indent < list.indent) {
+		return LIST_END;
+	}
+	if (indent > list.indent && current) {
+		const [nested, next] = renderList(lines, i);
+		current.children += nested;
+		return next;
+	}
+	if (isOrderedMarker(match[2]) !== list.ordered) {
+		return LIST_END;
+	}
+	list.items.push({ text: [match[3]], children: '' });
+	return i + 1;
+}
+
+function renderListHtml(list: ListState, firstMarker: string): string {
+	const tag = list.ordered ? 'ol' : 'ul';
+	const startNumber = list.ordered ? Number.parseInt(firstMarker, 10) : 1;
+	const open = list.ordered && startNumber !== 1 ? `<ol start="${startNumber}">` : `<${tag}>`;
+	return `${open}${list.items.map(renderListItem).join('')}</${tag}>`;
+}
+
+/** An item, with a `[ ]` / `[x]` task marker drawn as a checkbox. */
+function renderListItem({ text, children }: ListItem): string {
+	const content = text.map(renderInline).join('<br />');
+	const task = text[0].match(TASK_MARKER);
+	if (!task) {
+		return `<li>${content}${children}</li>`;
+	}
+	const checked = task[1] !== ' ';
+	const box = `<span class="md-check${checked ? ' is-checked' : ''}">${checked ? '&#10003;' : ''}</span>`;
+	return `<li class="md-task">${box}${content.replace(TASK_MARKER, '')}${children}</li>`;
 }
 
 function isTableStart(lines: string[], i: number): boolean {
