@@ -377,8 +377,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		if (!order || typeof order !== 'object') {
 			return result;
 		}
-		for (const column of SORTABLE_COLUMNS) {
-			const value = (order as Record<string, unknown>)[column];
+		// Iterate the client's keys (not the allowlist) to keep the requested sort precedence
+		for (const [column, value] of Object.entries(order)) {
+			if (!(SORTABLE_COLUMNS as readonly string[]).includes(column)) {
+				continue;
+			}
 			const direction = typeof value === 'string' ? value.toUpperCase() : '';
 			if (direction === 'ASC' || direction === 'DESC') {
 				result[column] = direction;
