@@ -933,6 +933,32 @@ export function parseTypeORMFindToMikroOrm<T>(options: LegacyFindManyOptions<any
 }
 
 /**
+ * Keeps only the allowed columns with an ASC/DESC direction from a client-supplied `order`
+ * (e.g. `order[start]=ASC`), so it can be passed safely to TypeORM `order` or MikroORM `orderBy`.
+ * The client's key order is preserved, so multi-column sort precedence is kept.
+ *
+ * @param order The raw `order` query value
+ * @param sortableColumns The columns the caller allows sorting on
+ * @returns The sanitized order map (empty when nothing valid was requested)
+ */
+export function parseSortOrder(order: unknown, sortableColumns: readonly string[]): Record<string, 'ASC' | 'DESC'> {
+	const result: Record<string, 'ASC' | 'DESC'> = {};
+	if (!order || typeof order !== 'object') {
+		return result;
+	}
+	for (const [column, value] of Object.entries(order)) {
+		if (!sortableColumns.includes(column)) {
+			continue;
+		}
+		const direction = typeof value === 'string' ? value.toUpperCase() : '';
+		if (direction === 'ASC' || direction === 'DESC') {
+			result[column] = direction;
+		}
+	}
+	return result;
+}
+
+/**
  * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
  * @param order TypeORM 'order' option
  * @returns Parsed MikroORM 'orderBy' option

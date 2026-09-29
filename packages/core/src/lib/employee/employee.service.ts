@@ -16,12 +16,17 @@ import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
-import { flatten, getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
+import { flatten, getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
+
+/**
+ * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
+ */
+const SORTABLE_COLUMNS = ['averageIncome', 'averageExpenses', 'averageBonus', 'isTrackingEnabled'] as const;
 
 @FavoriteService(BaseEntityEnum.Employee)
 @Injectable()
@@ -538,6 +543,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
 
+		const order = parseSortOrder(options?.order, SORTABLE_COLUMNS);
+		const hasOrder = Object.keys(order).length > 0;
+
 		try {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();
@@ -588,6 +596,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
 						...(options?.relations ? { populate: flatten(options.relations) as any[] } : {}),
+						...(hasOrder ? { orderBy: order } : {}),
 						offset: options?.skip ? options.take * (options.skip - 1) : 0,
 						limit: options?.take || 10
 					});
@@ -605,6 +614,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					query.setFindOptions({
 						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 						take: options && options.take ? options.take : 10,
+						...(hasOrder ? { order } : {}),
 						select: {
 							// Selected fields for the Employee entity
 							id: true,

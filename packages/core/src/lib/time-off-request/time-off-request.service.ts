@@ -15,7 +15,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
+import { MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -184,7 +184,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
 
-		const order = this.parseSortOrder(options?.order);
+		const order = parseSortOrder(options?.order, SORTABLE_COLUMNS);
 		const hasOrder = Object.keys(order).length > 0;
 
 		try {
@@ -366,27 +366,5 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			console.log(error);
 			throw new BadRequestException(error);
 		}
-	}
-
-	/**
-	 * Keeps only the sortable columns with a valid direction from the client-supplied `order`
-	 * (e.g. `order[start]=ASC`), so it can be passed safely to the ORM.
-	 */
-	private parseSortOrder(order: unknown): Record<string, 'ASC' | 'DESC'> {
-		const result: Record<string, 'ASC' | 'DESC'> = {};
-		if (!order || typeof order !== 'object') {
-			return result;
-		}
-		// Iterate the client's keys (not the allowlist) to keep the requested sort precedence
-		for (const [column, value] of Object.entries(order)) {
-			if (!(SORTABLE_COLUMNS as readonly string[]).includes(column)) {
-				continue;
-			}
-			const direction = typeof value === 'string' ? value.toUpperCase() : '';
-			if (direction === 'ASC' || direction === 'DESC') {
-				result[column] = direction;
-			}
-		}
-		return result;
 	}
 }
