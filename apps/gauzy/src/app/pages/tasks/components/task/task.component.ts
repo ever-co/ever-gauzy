@@ -785,9 +785,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		// `taskNumber` is a server-side virtual column (prefix + number), absent
 		// from ITask — the same shape the grid's valuePrepareFunction reads.
 		const { parent } = task as any;
-		const finished = [TaskStatusEnum.COMPLETED, TaskStatusEnum.DONE, TaskStatusEnum.CANCELLED];
 		const isOverdue =
-			!!task.dueDate && !finished.includes(task.status) && new Date(task.dueDate).getTime() < Date.now();
+			!!task.dueDate && !TaskComponent.isFinished(task) && new Date(task.dueDate).getTime() < Date.now();
 		const parentLabel = parent?.taskNumber
 			? [this._hashNumberPipe.transform(parent.taskNumber), parent.title].filter(Boolean).join('  ')
 			: null;
@@ -855,6 +854,21 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				]
 			}
 		];
+	}
+
+	/**
+	 * Whether the task is in a terminal state, so a past due date is no longer a
+	 * problem. A tenant status carries its own `isDone` flag; otherwise either the
+	 * enum value or the status row's name may say it, in any casing ("Done",
+	 * "Completed", "cancelled").
+	 */
+	private static isFinished(task: ITask): boolean {
+		if (task.taskStatus?.isDone) {
+			return true;
+		}
+		const finished = new Set<string>([TaskStatusEnum.COMPLETED, TaskStatusEnum.DONE, TaskStatusEnum.CANCELLED]);
+		const normalize = (value?: string) => value?.trim().toLowerCase().replace(/\s+/g, '-');
+		return [task.status, task.taskStatus?.name].some((value) => finished.has(normalize(value)));
 	}
 
 	/**
