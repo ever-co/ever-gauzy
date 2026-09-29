@@ -189,7 +189,9 @@ function cleanProse(lines: string[]): string[] {
 			.filter((line) => {
 				const definition = REFERENCE_DEFINITION.exec(line);
 				if (definition) {
-					references.set(definition[1].toLowerCase(), definition[2]);
+					// The URL bypasses `renderInline`'s source clean-up, so it gets the
+					// same guard here: no placeholder mark may come from the source.
+					references.set(definition[1].toLowerCase(), definition[2].replaceAll(MARK, ''));
 				}
 				return !definition;
 			})
@@ -669,20 +671,25 @@ function renderInline(text: string): string {
 
 	out = emphasis(out);
 
-	return restorePlaceholders(out, stash, stash.length);
+	return restorePlaceholders(out, stash);
 }
 
 /**
  * Swaps tokens back for their stashed HTML. Tokens nest (a code span inside a
- * link label), but an entry can only hold tokens made before it — so each
- * entry is expanded against a strictly smaller bound, and restoration always
- * terminates; a token outside the bound is left as-is.
+ * link label), but an entry can only hold tokens made before it. So entries are
+ * resolved once each, in order, against the already-resolved earlier ones: a
+ * single linear pass that always terminates, with no entry ever expanded twice.
+ * A token that does not point strictly backwards is left as-is.
  */
-function restorePlaceholders(html: string, stash: string[], bound: number): string {
-	return html.replace(PLACEHOLDER, (token, index) => {
-		const n = Number(index);
-		return n < bound ? restorePlaceholders(stash[n], stash, n) : token;
-	});
+function restorePlaceholders(html: string, stash: string[]): string {
+	const resolved: string[] = [];
+	const resolve = (text: string, bound: number) =>
+		text.replace(PLACEHOLDER, (token, index) => {
+			const n = Number(index);
+			return n < bound ? resolved[n] : token;
+		});
+	stash.forEach((entry, n) => resolved.push(resolve(entry, n)));
+	return resolve(html, stash.length);
 }
 
 function emphasis(text: string): string {
