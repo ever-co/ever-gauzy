@@ -73,6 +73,12 @@
 
 				<ng-template #noSubscription>
 					<p class="muted">{{ 'SETTINGS_MENU.BILLING_NO_SUBSCRIPTION' | translate }}</p>
+					<!-- A subscription bought at checkout is connected only once the address is verified, so
+					     "no subscription" alone misleads a buyer who has just paid. Shown only while unverified. -->
+					<ngx-email-verification-notice
+						variant="inline"
+						messageKey="SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK"
+					></ngx-email-verification-notice>
 				</ng-template>
 			</section>
 

@@ -1756,6 +1756,19 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"EMPLOYEE_STATISTICS": "Estatísticas dos funcionários",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
+			"OF_INCOME": "{{ value }}% da receita",
+			"MARGIN": "Margem de {{ value }}%",
+			"BREAKDOWN": "Receita por funcionário",
+			"NO_DATA": "Nenhuma atividade financeira neste período",
+			"NO_DATA_HINT": "As receitas e despesas registradas neste período aparecerão aqui.",
+			"NO_EMPLOYEES": "Nenhum registro de funcionário neste período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor, selecione um mês e um funcionário no menu acima.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insira texto para usuários não autenticados.",
 		"CHARTS": {
@@ -2713,7 +2726,10 @@
 		"ADDRESS": "Endereço",
 		"ADDRESS_2": "Endereço 2",
 		"MEMBERS": "Membros",
-		"BUDGET": "Orçamento"
+		"BUDGET": "Orçamento",
+		"PHOTO_HINT": "Clique ou solte uma imagem para enviar",
+		"SEARCH_EMPLOYEES": "Pesquise funcionários por nome ou e-mail",
+		"NO_MEMBERS": "Nenhum membro adicionado ainda"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas",
@@ -4973,7 +4989,9 @@
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
-		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)",
+		"NO_TIME_TRACKED": "Nenhum tempo registrado",
+		"MINUTES_TRACKED": "{{ minutes }} min registrados"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",

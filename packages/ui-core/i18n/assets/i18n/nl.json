@@ -1756,6 +1756,19 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"PROJECT_MANAGEMENT": "Projectmanagement",
 		"EMPLOYEE_STATISTICS": "Werknemersstatistieken",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
+			"OF_INCOME": "{{ value }}% van de inkomsten",
+			"MARGIN": "{{ value }}% marge",
+			"BREAKDOWN": "Inkomsten per werknemer",
+			"NO_DATA": "Geen financiële activiteit in deze periode",
+			"NO_DATA_HINT": "Inkomsten en uitgaven voor deze periode verschijnen hier.",
+			"NO_EMPLOYEES": "Geen werknemersgegevens voor deze periode",
+			"SORT_BY": "Sorteren op {{ name }}",
+			"SORT_LABEL": "Sorteren op",
+			"SORT_ASCENDING": "Oplopend",
+			"SORT_DESCENDING": "Aflopend"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Selecteer alstublieft een maand en medewerker uit het bovenstaande menu",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Voer tekst in voor niet-geregistreerde gebruikers.",
 		"CHARTS": {
@@ -2713,7 +2726,10 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres 2",
 		"MEMBERS": "Leden",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden",
+		"SEARCH_EMPLOYEES": "Zoek medewerkers op naam of e-mail",
+		"NO_MEMBERS": "Nog geen leden toegevoegd"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",
@@ -4973,7 +4989,9 @@
 		"NO_SCREENSHOT": "Geen schermafbeelding",
 		"NO_SCREENSHOTS": "Geen screenshots",
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",
-		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd"
+		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd",
+		"NO_TIME_TRACKED": "Geen tijd bijgehouden",
+		"MINUTES_TRACKED": "{{ minutes }} min bijgehouden"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",

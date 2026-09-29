@@ -1,6 +1,5 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {
-	ErrorHandler,
 	enableProdMode,
 	importProvidersFrom,
 	inject,
@@ -20,7 +19,6 @@ import {
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
-	ErrorHandlerService,
 	GAUZY_ENV,
 	GauzyStorageService,
 	LanguageInterceptor,
@@ -38,6 +36,7 @@ import {
 	TenantInterceptor,
 	TimeoutInterceptor,
 	TokenInterceptor,
+	provideGlobalErrorHandler,
 	providePluginInitializers,
 	providePluginsEffects
 } from '@gauzy/desktop-ui-lib';
@@ -79,7 +78,7 @@ if (environment.SENTRY_DSN) {
 	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
 	} else {
-		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		console.log('Enabling Sentry');
 		initializeSentry();
 	}
 }
@@ -172,16 +171,7 @@ bootstrapApplication(AppComponent, {
 			useClass: ServerErrorInterceptor,
 			multi: true
 		},
-		{
-			provide: ErrorHandler,
-			useClass: ErrorHandlerService
-		},
-		{
-			provide: ErrorHandler,
-			useValue: Sentry.createErrorHandler({
-				showDialog: true
-			})
-		},
+		provideGlobalErrorHandler(Sentry.createErrorHandler({ showDialog: true, logErrors: false })),
 		{
 			provide: Sentry.TraceService,
 			deps: [Router]

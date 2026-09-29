@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import {
 	NbAccordionModule,
 	NbPopoverDirective,
@@ -19,6 +19,7 @@ import { JitsuService } from '../../../../../services/analytics/jitsu.service';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum } from '../../../../../services/analytics/event.type';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
+import { isSameMenuItem } from '../../menu-item.utils';
 
 /** Tag of the Nebular sidebar this menu renders into (see one-column.layout.html). */
 const MENU_SIDEBAR_TAG = 'menu-sidebar';
@@ -249,6 +250,18 @@ export class MenuItemComponent implements OnInit {
 			// This emits the 'selectedChange' event with the 'item' as the data
 			this.selectedChange.emit(this.item);
 		}
+
+		this.checkUrl(this._router.url);
+		this._router.events
+			.pipe(
+				filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+				untilDestroyed(this)
+			)
+			.subscribe((event) => this.checkUrl(event.urlAfterRedirects));
+	}
+
+	public isSelectedChild(child: IMenuItem): boolean {
+		return isSameMenuItem(child, this.selectedChildren);
 	}
 
 	/**
@@ -450,5 +463,17 @@ export class MenuItemComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private checkUrl(url: string): void {
+		if (this.selected || this.hasChildren || !this.item?.link) {
+			return;
+		}
+		const pathOnly = url.split(/[?#]/)[0];
+		const { link, pathMatch } = this.item;
+		const matches = pathOnly === link || (pathMatch === 'prefix' && pathOnly.startsWith(`${link}/`));
+		if (matches) {
+			this.selectedChange.emit(this.item);
+		}
 	}
 }

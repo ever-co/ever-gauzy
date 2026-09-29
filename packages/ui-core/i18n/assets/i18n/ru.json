@@ -1807,6 +1807,19 @@
 		"TIME_TRACKING": "Время отслеживания",
 		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "По {{ count }} сотрудникам",
+			"OF_INCOME": "{{ value }}% от дохода",
+			"MARGIN": "Маржа {{ value }}%",
+			"BREAKDOWN": "Доход по сотрудникам",
+			"NO_DATA": "Нет финансовой активности за этот период",
+			"NO_DATA_HINT": "Доходы и расходы за этот период появятся здесь.",
+			"NO_EMPLOYEES": "Нет данных о сотрудниках за этот период",
+			"SORT_BY": "Сортировать по {{ name }}",
+			"SORT_LABEL": "Сортировать по",
+			"SORT_ASCENDING": "По возрастанию",
+			"SORT_DESCENDING": "По убыванию"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
 		"CHARTS": {
@@ -2744,7 +2757,10 @@
 		"ADDRESS": "Адрес",
 		"ADDRESS_2": "Адрес 2",
 		"MEMBERS": "Члены Комитета",
-		"BUDGET": "Бюджет"
+		"BUDGET": "Бюджет",
+		"PHOTO_HINT": "Нажмите или перетащите изображение для загрузки",
+		"SEARCH_EMPLOYEES": "Ищите сотрудников по имени или email",
+		"NO_MEMBERS": "Участники ещё не добавлены"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
@@ -4992,7 +5008,9 @@
 		"NO_SCREENSHOT": "Нет скриншота",
 		"NO_SCREENSHOTS": "Нет скриншотов",
 		"NO_RECORD_FOUND": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
-		"SCREEN_SELECTED": "Выбрано: {{count}}"
+		"SCREEN_SELECTED": "Выбрано: {{count}}",
+		"NO_TIME_TRACKED": "Время не отслежено",
+		"MINUTES_TRACKED": "Отслежено {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

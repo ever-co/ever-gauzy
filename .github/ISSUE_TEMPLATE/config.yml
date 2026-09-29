@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.gauzy.co
+    about: Setup guides and documentation.
+  - name: Gauzy Discord
+    url: https://discord.gg/hKQfn4j
+    about: Chat with the open-source community.
+  - name: Gauzy Slack community
+    url: https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU
+    about: Setup, configuration and "how do I?" help.

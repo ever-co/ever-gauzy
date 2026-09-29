@@ -1758,6 +1758,19 @@
 		"TIME_TRACKING": "Seguimiento del tiempo",
 		"PROJECT_MANAGEMENT": "Gestión de Proyectos",
 		"EMPLOYEE_STATISTICS": "Estadísticas de empleados",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} empleados",
+			"OF_INCOME": "{{ value }}% de los ingresos",
+			"MARGIN": "{{ value }}% de margen",
+			"BREAKDOWN": "Ingresos por empleado",
+			"NO_DATA": "No hay actividad financiera en este período",
+			"NO_DATA_HINT": "Los ingresos y gastos registrados en este rango de fechas aparecerán aquí.",
+			"NO_EMPLOYEES": "No hay registros de empleados para este período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Ascendente",
+			"SORT_DESCENDING": "Descendente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor seleccione un mes y empleado del menú de arriba.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insertar texto para usuarios no autenticados",
 		"CHARTS": {
@@ -2715,7 +2728,10 @@
 		"ADDRESS": "Dirección",
 		"ADDRESS_2": "Dirección 2",
 		"MEMBERS": "Miembros",
-		"BUDGET": "Presupuesto"
+		"BUDGET": "Presupuesto",
+		"PHOTO_HINT": "Haz clic o suelta una imagen para subirla",
+		"SEARCH_EMPLOYEES": "Busca empleados por nombre o correo",
+		"NO_MEMBERS": "Aún no se han añadido miembros"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas.",
@@ -4968,14 +4984,16 @@
 		"TIME_AND_ACTIVITIES": "Tiempo y actividades",
 		"VIEW_SCREEN": "Ver pantalla",
 		"VIEW_INFO": "Ver Información",
-		"MINUTES": "Acta",
+		"MINUTES": "Minutos",
 		"NO_EMPLOYEES_SELECTED": "Por favor seleccione Empleado",
 		"DELETE_CONFIRM": "¿Estás seguro/a de que deseas eliminar estas capturas de pantalla y actividades?",
 		"VISITED_DATES": "Fechas visitadas",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Capturas de pantalla",
 		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto.",
-		"SCREEN_SELECTED": "{{ count }} Pantalla(s) seleccionada(s)"
+		"SCREEN_SELECTED": "{{ count }} Pantalla(s) seleccionada(s)",
+		"NO_TIME_TRACKED": "Sin tiempo registrado",
+		"MINUTES_TRACKED": "{{ minutes }} min registrados"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos a crear tu primera organización",

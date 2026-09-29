@@ -1258,10 +1258,13 @@
 		"BILLING_CANCELLED": "Your subscription will end at the end of the current period.",
 		"BILLING_RESUMED": "Your subscription will continue.",
 		"BILLING_NO_SUBSCRIPTION": "This account has no subscription yet.",
+		"BILLING_VERIFY_EMAIL_TO_LINK": "Already paid? A subscription is connected to this workspace once you verify your email address. We sent the link to {{ email }}.",
 		"BILLING_AVAILABLE_PLANS": "Available plans",
 		"BILLING_CURRENT": "Current",
 		"BILLING_SWITCH": "Switch to this plan",
 		"BILLING_PLAN_CHANGED": "Switched to {{ name }}.",
+		"BILLING_PAYMENT_METHOD_REQUIRED": "Add a payment method to switch to a paid plan. Opening the billing portal...",
+		"BILLING_PAYMENT_METHOD_REQUIRED_NO_PORTAL": "Add a payment method to switch to a paid plan. Open the billing portal from this page to add one, then switch again.",
 		"BILLING_PAYMENT_METHOD": "Payment method",
 		"BILLING_NO_CARD": "No card on file.",
 		"BILLING_INVOICES": "Invoices",
@@ -1619,6 +1622,15 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"INSTALLATION": {
+				"INSTALLING": "Installing. Please wait...",
+				"NOT_CONNECTED": "GitHub was not connected",
+				"DEFAULT_ERROR": "The GitHub installation could not be connected.",
+				"REQUESTED": "Installation requested",
+				"REQUESTED_DESCRIPTION": "An owner of the GitHub account must approve the installation before it can be connected.",
+				"UPDATED": "Your GitHub installation was updated",
+				"CLOSE_WINDOW": "You can close this window."
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",
@@ -2250,6 +2262,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Across {{ count }} employees",
+			"OF_INCOME": "{{ value }}% of income",
+			"MARGIN": "{{ value }}% margin",
+			"BREAKDOWN": "Earnings by employee",
+			"NO_DATA": "No financial activity in this period",
+			"NO_DATA_HINT": "Income and expenses recorded for this date range will show up here.",
+			"NO_EMPLOYEES": "No employee records for this period",
+			"SORT_BY": "Sort by {{ name }}",
+			"SORT_LABEL": "Sort by",
+			"SORT_ASCENDING": "Ascending",
+			"SORT_DESCENDING": "Descending"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -3245,7 +3270,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Click or drop an image to upload",
+		"SEARCH_EMPLOYEES": "Search employees by name or email",
+		"NO_MEMBERS": "No members added yet"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -5576,7 +5604,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected",
+		"NO_TIME_TRACKED": "No time tracked",
+		"MINUTES_TRACKED": "{{ minutes }} min tracked"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -5960,7 +5990,8 @@
 				"PRIVACY_POLICY": "Privacy Policy"
 			},
 			"PASSWORD_MIN_LENGTH": "Password must be at least 4 characters!"
-		}
+		},
+		"CONTINUE_TO_CHECKOUT": "Continue to checkout"
 	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
@@ -6997,5 +7028,17 @@
 		"ERROR": {
 			"LOAD_FAILED": "Failed to load favorites"
 		}
+	},
+	"EMAIL_VERIFICATION": {
+		"NOTICE": "Please verify your email address. We sent a verification link to {{ email }}.",
+		"RESEND": "Resend email",
+		"SENDING": "Sending…",
+		"SENT": "A new verification link is on its way to {{ email }}.",
+		"RESEND_FAILED": "We could not send the email right now. Please try again in a few minutes.",
+		"TOO_MANY_REQUESTS": "Too many requests. Please wait a minute and try again.",
+		"DISMISS": "Dismiss",
+		"GO_TO_DASHBOARD": "Go to dashboard",
+		"GO_TO_LOGIN": "Go to login",
+		"CONNECTION_ERROR": "We could not reach the server to verify your email. Check your connection and open the link again."
 	}
 }

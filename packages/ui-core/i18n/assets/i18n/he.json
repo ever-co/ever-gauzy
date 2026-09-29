@@ -1800,6 +1800,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
+			"OF_INCOME": "{{ value }}% מההכנסה",
+			"MARGIN": "שולי רווח של {{ value }}%",
+			"BREAKDOWN": "הכנסות לפי עובד",
+			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
+			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
+			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
+			"SORT_BY": "מיון לפי {{ name }}",
+			"SORT_LABEL": "מיון לפי",
+			"SORT_ASCENDING": "סדר עולה",
+			"SORT_DESCENDING": "סדר יורד"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -2738,7 +2751,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -4985,7 +5001,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",

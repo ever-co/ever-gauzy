@@ -1756,6 +1756,19 @@
 		"TIME_TRACKING": "时间跟踪",
 		"PROJECT_MANAGEMENT": "项目管理",
 		"EMPLOYEE_STATISTICS": "员工统计",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",
+			"OF_INCOME": "占收入的 {{ value }}%",
+			"MARGIN": "利润率 {{ value }}%",
+			"BREAKDOWN": "按员工统计收入",
+			"NO_DATA": "此期间没有财务活动",
+			"NO_DATA_HINT": "此日期范围内记录的收入和支出将显示在这里。",
+			"NO_EMPLOYEES": "此期间没有员工记录",
+			"SORT_BY": "按 {{ name }} 排序",
+			"SORT_LABEL": "排序方式",
+			"SORT_ASCENDING": "升序",
+			"SORT_DESCENDING": "降序"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "请在上方的菜单中选择一个月份和员工。",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "未经身份验证的用户请插入文本。",
 		"CHARTS": {
@@ -2713,7 +2726,10 @@
 		"ADDRESS": "地址",
 		"ADDRESS_2": "地址2",
 		"MEMBERS": "成员",
-		"BUDGET": "预算"
+		"BUDGET": "预算",
+		"PHOTO_HINT": "点击或拖放图片以上传",
+		"SEARCH_EMPLOYEES": "按姓名或邮箱搜索员工",
+		"NO_MEMBERS": "尚未添加成员"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",
@@ -4973,7 +4989,9 @@
 		"NO_SCREENSHOT": "没有屏幕截图",
 		"NO_SCREENSHOTS": "不允许截屏",
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
-		"SCREEN_SELECTED": "{{ count }} 屏幕已选择"
+		"SCREEN_SELECTED": "{{ count }} 屏幕已选择",
+		"NO_TIME_TRACKED": "未记录时间",
+		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",

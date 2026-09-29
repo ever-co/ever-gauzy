@@ -24,6 +24,9 @@ export class DesktopUpdater {
 	private _gauzyWindow: BrowserWindow;
 	private _config: IUpdaterConfig;
 	private _automaticUpdate: AutomaticUpdate;
+	private _answeredVersions = new Set<string>();
+	/** The update dialog now showing on the gauzy window, if any: only one is shown at a time. */
+	private _openDialog: Promise<any> = null;
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
@@ -129,32 +132,45 @@ export class DesktopUpdater {
 		});
 
 		ipcMain.on('automatic_update_setting', (event, args) => {
-			const { isEnabled, automaticUpdateDelay } = args;
-			isEnabled ? (this._automaticUpdate.delay = automaticUpdateDelay) : this._automaticUpdate.stop();
+			// The settings page sends the delay as `delay`; `automaticUpdateDelay` is still accepted.
+			const { isEnabled, delay, automaticUpdateDelay } = args ?? {};
+			isEnabled ? (this._automaticUpdate.delay = delay ?? automaticUpdateDelay) : this._automaticUpdate.stop();
 		});
 	}
 
 	private _updaterProcess(): void {
-		autoUpdater.once('update-available', async (info: UpdateInfo) => {
+		// Every check looks up the newest release again, so offer each new version once: not a
+		// version already answered in this run, and not while an update dialog (this one or the
+		// install prompt) is still showing; the next check offers it again.
+		autoUpdater.on('update-available', async (info: UpdateInfo) => {
 			const setting = LocalStore.getStore('appSetting');
 			if (setting && !setting.automaticUpdate) return;
-			const dialog = new DialogConfirmUpgradeDownload(
-				new DesktopDialog(
-					process.env.DESCRIPTION,
-					TranslateService.instant('TIMER_TRACKER.DIALOG.UPDATE_READY'),
-					this._gauzyWindow
-				)
-			);
-			dialog.options = {
-				...dialog.options,
-				detail: TranslateService.instant('TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE', {
-					next: info.version,
-					current: app.getVersion()
-				})
-			};
-			const button = await dialog.show();
-			if (button?.response === 0) {
-				this._updateContext.update();
+			if (this._openDialog || this._answeredVersions.has(info.version)) return;
+			try {
+				const dialog = new DialogConfirmUpgradeDownload(
+					new DesktopDialog(
+						process.env.DESCRIPTION,
+						TranslateService.instant('TIMER_TRACKER.DIALOG.UPDATE_READY'),
+						this._gauzyWindow
+					)
+				);
+				dialog.options = {
+					...dialog.options,
+					detail: TranslateService.instant('TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE', {
+						next: info.version,
+						current: app.getVersion()
+					})
+				};
+				this._openDialog = dialog.show();
+				const button = await this._openDialog;
+				this._answeredVersions.add(info.version);
+				if (button?.response === 0) {
+					this._updateContext.update();
+				}
+			} catch (e) {
+				console.log('Error on showing the update dialog:', e);
+			} finally {
+				this._openDialog = null;
 			}
 		});
 
@@ -164,6 +180,8 @@ export class DesktopUpdater {
 				type: 'update_downloaded'
 			});
 			if (setting && !setting.automaticUpdate) return;
+			// Wait until an open "new version" dialog is answered instead of opening on top of it.
+			while (this._openDialog) await this._openDialog.catch(() => undefined);
 			const dialog = new DialogConfirmInstallDownload(
 				new DesktopDialog(
 					process.env.DESCRIPTION,
@@ -174,7 +192,15 @@ export class DesktopUpdater {
 			dialog.options.detail = TranslateService.instant('TIMER_TRACKER.DIALOG.HAS_BEEN_DOWNLOADED', {
 				version: event.version
 			});
-			const button = await dialog.show();
+			let button: any;
+			try {
+				this._openDialog = dialog.show();
+				button = await this._openDialog;
+			} catch (e) {
+				console.log('Error on showing the install dialog:', e);
+			} finally {
+				this._openDialog = null;
+			}
 			if (button?.response === 0) {
 				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: '_logout_quit_install_'
