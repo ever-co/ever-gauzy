@@ -101,7 +101,7 @@ function stubStripe(state: StripeState) {
 		} else if (method === 'GET' && path.startsWith('/invoices?subscription=')) {
 			// Stripe filters by subscription server-side; so does this stub.
 			const id = decodeURIComponent(/subscription=([^&]+)/.exec(path)[1]);
-			const limit = Number(/limit=(d+)/.exec(path)?.[1] ?? 10);
+			const limit = Number(/limit=(\d+)/.exec(path)?.[1] ?? 10);
 			const own = (state.invoices ?? []).filter((invoice) => invoice.subscription === id);
 			body = { data: own.slice(0, limit), has_more: own.length > limit };
 		} else if (method === 'GET' && path === `/customers/${CUSTOMER}`) {
@@ -239,6 +239,10 @@ describe('BillingService — reads only this product', () => {
 		});
 		const invoices = await service().listInvoices(CUSTOMER, 2);
 		expect(invoices.map((i) => i.id)).toEqual(['in_a', 'in_b']);
+		// Each subscription is asked for no more than the page needs.
+		expect(calls.filter((c) => c.path.startsWith('/invoices')).every((c) => c.path.endsWith('&limit=2'))).toBe(
+			true
+		);
 	});
 
 	it('invoices: a customer with no subscription to this product gets none, and Stripe is not asked for them', async () => {
