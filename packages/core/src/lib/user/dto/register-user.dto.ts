@@ -7,11 +7,14 @@ import {
 	IsNotEmpty,
 	IsNotEmptyObject,
 	IsOptional,
+	IsString,
 	IsUUID,
+	Matches,
 	MinLength,
 	ValidateNested
 } from 'class-validator';
 import { IUserRegistrationInput } from '@gauzy/contracts';
+import { CHECKOUT_SESSION_ID_PATTERN } from './../../shared/billing/billing-product';
 import { Match } from './../../shared/validators';
 import { TermsAcceptanceClaimDTO } from './../../terms-acceptance/dto';
 import { CreateUserDTO } from './create-user.dto';
@@ -78,4 +81,21 @@ export class RegisterUserDTO implements IUserRegistrationInput {
 	@ValidateNested({ each: true })
 	@Type(() => TermsAcceptanceClaimDTO)
 	readonly terms?: TermsAcceptanceClaimDTO[];
+
+	/**
+	 * The Stripe Checkout Session the registrant just completed on the shared ever.co checkout, which
+	 * forwards it to the register form as `checkout_session`.
+	 *
+	 * Optional, so every existing client keeps working unchanged (and an older API simply strips it,
+	 * because this route whitelists). When present it is read by `SubscriptionRequiredGuard` as proof of
+	 * purchase, and the web app carries the same id into tenant onboarding, where the new tenant is
+	 * linked to the session's Stripe customer. Shape-checked here; everything that matters — that the
+	 * session is complete, for this product, and was paid under this very address — is checked against
+	 * Stripe server-side.
+	 */
+	@ApiPropertyOptional({ type: () => String, description: 'Stripe Checkout Session id (cs_live_... / cs_test_...)' })
+	@IsOptional()
+	@IsString()
+	@Matches(CHECKOUT_SESSION_ID_PATTERN, { message: 'stripeCheckoutSessionId is not a Stripe Checkout Session id.' })
+	readonly stripeCheckoutSessionId?: string;
 }

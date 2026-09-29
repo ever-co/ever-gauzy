@@ -18,6 +18,7 @@ import { Store } from '../store/store.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
 import { AuthService } from './auth.service';
+import { isCheckoutSessionId } from './checkout-session';
 import { ElectronService } from './electron.service';
 import { readRegisterError } from './register-error';
 
@@ -153,6 +154,7 @@ export class AuthStrategy extends NbAuthStrategy {
 			tags,
 			terms,
 			termsDocuments,
+			stripeCheckoutSessionId,
 			preferredLanguage = LanguagesEnum.ENGLISH
 		} = data;
 		if (password !== confirmPassword) {
@@ -190,7 +192,10 @@ export class AuthStrategy extends NbAuthStrategy {
 			},
 			password,
 			confirmPassword,
-			terms: termsClaims
+			terms: termsClaims,
+			// The buyer's completed Stripe Checkout Session, when they came from the shared checkout.
+			// Only a well-formed id is sent; the API verifies it with Stripe.
+			...(isCheckoutSessionId(stripeCheckoutSessionId) ? { stripeCheckoutSessionId } : {})
 		};
 		return this.authService.register(register).pipe(
 			switchMap((res: IUser | any) => {

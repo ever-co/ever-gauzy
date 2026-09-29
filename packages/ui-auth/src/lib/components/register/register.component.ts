@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { patterns } from '@gauzy/constants';
 import { ITermsAcceptanceDocument } from '@gauzy/contracts';
-import { AuthService, readRegisterError } from '@gauzy/ui-core/core';
+import { AuthService, readRegisterError, isCheckoutSessionId, rememberCheckoutSession } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -104,10 +104,19 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 			 * The name is a prefill and stays editable. Stripe collects one full name, which is the
 			 * shape this form wants, but it knows nothing of the length limits configured here, so the
 			 * buyer has to be able to correct it.
+			 *
+			 * `checkout_session` is the buyer's completed Stripe Checkout Session. It goes to the API with
+			 * the registration (proof of purchase for the signup paywall) and is remembered for tenant
+			 * onboarding, where the API links the new tenant to the buyer's Stripe customer after checking
+			 * the session with Stripe. Anything not shaped like a session id is ignored.
 			 */
-			tap(({ email, name }: Params) => {
+			tap(({ email, name, checkout_session }: Params) => {
 				if (email) this.user.email = email;
 				if (name) this.user.fullName = name;
+				if (isCheckoutSessionId(checkout_session)) {
+					this.user.stripeCheckoutSessionId = checkout_session;
+					rememberCheckoutSession(checkout_session);
+				}
 			}),
 
 			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
