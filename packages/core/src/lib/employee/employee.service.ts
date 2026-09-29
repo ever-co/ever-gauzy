@@ -543,7 +543,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
 
-		const order = parseSortOrder(options?.order, SORTABLE_COLUMNS);
+		const order = parseSortOrder(options.order, SORTABLE_COLUMNS);
 		const hasOrder = Object.keys(order).length > 0;
 
 		try {
@@ -595,10 +595,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					}
 
 					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
-						...(options?.relations ? { populate: flatten(options.relations) as any[] } : {}),
+						...(options.relations ? { populate: flatten(options.relations) as any[] } : {}),
 						...(hasOrder ? { orderBy: order } : {}),
-						offset: options?.skip ? options.take * (options.skip - 1) : 0,
-						limit: options?.take || 10
+						offset: options.skip ? options.take * (options.skip - 1) : 0,
+						limit: options.take || 10
 					});
 					return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
