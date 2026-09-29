@@ -378,7 +378,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			return result;
 		}
 		for (const column of SORTABLE_COLUMNS) {
-			const direction = String((order as Record<string, unknown>)[column] ?? '').toUpperCase();
+			const value = (order as Record<string, unknown>)[column];
+			const direction = typeof value === 'string' ? value.toUpperCase() : '';
 			if (direction === 'ASC' || direction === 'DESC') {
 				result[column] = direction;
 			}
