@@ -196,12 +196,15 @@ export class RecordViewComponent implements OnChanges {
 		};
 	}
 
-	/** A stable hue per name, so the same person always gets the same colour. */
+	/**
+	 * A stable hue per name, so the same person always gets the same colour.
+	 * Reducing mod 360 at every step keeps the running value small and exact.
+	 */
 	private static hueOf(name: string): number {
-		let hash = 0;
-		for (let i = 0; i < name.length; i++) {
-			hash = (hash * 31 + name.charCodeAt(i)) | 0;
+		let hue = 0;
+		for (const char of name) {
+			hue = (hue * 31 + char.codePointAt(0)) % 360;
 		}
-		return Math.abs(hash) % 360;
+		return hue;
 	}
 }
