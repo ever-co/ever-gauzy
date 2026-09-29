@@ -118,6 +118,32 @@
 			background-color: nb-theme(color-primary-default);
 		}
 	}
+
+	// Narrow dialogs: the three labels plus connectors no longer fit, and the
+	// card clips overflow. Keep every step's number, but name only the current
+	// step (ellipsized if it still does not fit).
+	@media (max-width: 479.98px) {
+		gap: 0.5rem;
+
+		.step:not(.active) .name {
+			display: none;
+		}
+
+		.step.active {
+			flex-shrink: 1;
+			min-width: 0;
+
+			.name {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+		}
+
+		.connector {
+			min-width: 0.5rem;
+		}
+	}
 }
 
 // Body — scrolls on its own so header and footer stay visible

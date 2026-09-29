@@ -19,7 +19,7 @@
 		</div>
 
 		<!-- nb-card only projects header/body/footer into their slots, so the step bar lives in the header -->
-		<nav class="steps" aria-label="Progress">
+		<nav class="steps" [attr.aria-label]="'EMPLOYEES_PAGE.ADD_EMPLOYEES.PROGRESS' | translate">
 			@for (step of steps; track step; let i = $index) {
 				<div
 					class="step"

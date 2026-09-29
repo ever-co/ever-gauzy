@@ -166,17 +166,17 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	}
 
 	/** True while the pointer is over the avatar uploader. */
-	public avatarHover = false;
+	protected avatarHover = false;
 
 	/** An image is set and loaded without error. */
-	get hasAvatar(): boolean {
+	protected get hasAvatar(): boolean {
 		return !!this.showImageMeta && !this.form.get('imageUrl').invalid;
 	}
 
 	/**
 	 * Reports a failed avatar upload.
 	 */
-	handleImageUploadError(error: any): void {
+	protected handleImageUploadError(error: any): void {
 		this._errorHandlingService.handleError(error);
 	}
 
