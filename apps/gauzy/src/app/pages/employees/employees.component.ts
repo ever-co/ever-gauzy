@@ -704,7 +704,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.FULL_NAME'),
 				type: 'custom',
 				class: 'align-row',
-				width: '20%',
+				// Names are short chips; the spare width goes to Status / Screen Capture.
+				width: '15%',
 				isFilterable: true,
 				renderComponent: PictureNameTagsComponent,
 				componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
@@ -724,8 +725,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.EMAIL'),
 				type: 'text',
 				class: 'align-row',
-				// Two points to the number columns below.
-				width: '18%',
+				width: '15%',
 				isFilterable: true,
 				filter: {
 					type: 'custom',
@@ -808,8 +808,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				order: 6,
 				title: () => this.getTranslation('SM_TABLE.TAGS'),
 				type: 'custom',
-				// Three points to the number columns above.
-				width: '17%',
+				width: '16%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
@@ -834,7 +833,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.STATUS'),
 				type: 'custom',
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: "Active" and "Not Started" stacked on two lines.
+				width: '10%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
@@ -923,7 +923,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			title: () => this.getTranslation('SM_TABLE.SCREEN_CAPTURE'), // The title of the column
 			type: 'custom', // The type of the column
 			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
+			width: '10%', // Was 5%: the "Screen Capture" heading wrapped and the toggle + label were squeezed
 			isFilterable: true, // Indicates whether the column is filterable
 			isSortable: false,
 			hide: allowScreenshotCapture === false,
