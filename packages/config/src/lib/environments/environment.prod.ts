@@ -9,7 +9,7 @@ dotenv.config({ quiet: true });
 
 import { FileStorageProviderEnum, isKnownDefaultSecret } from '@gauzy/contracts';
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
-import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt } from './environment.helper';
+import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt, resolveAppLink } from './environment.helper';
 import { resolveSocialAuthClients } from './social-auth.helper';
 import { resolveSecret } from './secret-resolver';
 
@@ -354,7 +354,7 @@ export const environment: IEnvironment = {
 		appName: process.env.APP_NAME || 'Gauzy',
 		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
-		appLink: process.env.APP_LINK || 'https://app.gauzy.co/',
+		appLink: resolveAppLink('https://app.gauzy.co/'),
 		appEmailConfirmationUrl:
 			process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
