@@ -137,6 +137,11 @@ export interface ProductScopedCheckoutSession {
  *
  * A self-hosted license of the same product is refused on either signal: `ever_hosting` other than
  * `cloud`, or a plan price of this product that is not an `ever_<product>_cloud_` price.
+ *
+ * When the plan sits on a catalog price (`ever_<any>_...`), the price decides and the metadata may
+ * only agree with it. Stripe updates a subscription's price and its metadata independently, so a
+ * Teams price under `ever_product: 'gauzy'` metadata (or the reverse) is not this product's plan.
+ * The metadata alone decides only when the plan has no catalog lookup key.
  */
 export function subscriptionIsForProduct(
 	subscription: ProductScopedSubscription | null | undefined,
@@ -145,36 +150,40 @@ export function subscriptionIsForProduct(
 	if (!subscription || !product) return false;
 	if (!hostingIsCloud(subscription.metadata)) return false;
 	const lookupKey = subscription.items?.data?.[0]?.price?.lookup_key;
-	const cloudPrefix = cloudLookupKeyPrefix(product);
-	if (
-		typeof lookupKey === 'string' &&
-		lookupKey.startsWith(lookupKeyPrefix(product)) &&
-		!lookupKey.startsWith(cloudPrefix)
-	) {
-		return false;
+	const metadataProduct = subscription.metadata?.ever_product;
+	if (typeof lookupKey === 'string' && CATALOG_LOOKUP_KEY.test(lookupKey)) {
+		return lookupKey.startsWith(cloudLookupKeyPrefix(product)) && (!metadataProduct || metadataProduct === product);
 	}
-	if (subscription.metadata?.ever_product === product) return true;
-	return typeof lookupKey === 'string' && lookupKey.startsWith(cloudPrefix);
+	return metadataProduct === product;
 }
+
+/** Any catalog lookup key: `ever_<product>_<hosting>_...`. */
+const CATALOG_LOOKUP_KEY = /^ever_[a-z0-9]+_/;
 
 /**
  * Whether a completed Checkout Session is a purchase of `product`'s HOSTED plan that can establish a
  * tenant link.
  *
- * All three are required. `mode === 'subscription'` excludes payment-mode sessions (lifetime
- * licenses, Ever Works credit packs) and setup-mode card saves, none of which buys a hosted plan;
- * the hosting check excludes self-hosted license subscriptions (`ever_hosting: 'selfhosted'`).
+ * All are required. `mode === 'subscription'` excludes payment-mode sessions (lifetime licenses,
+ * Ever Works credit packs) and setup-mode card saves, none of which buys a hosted plan; the hosting
+ * check excludes self-hosted license subscriptions (`ever_hosting: 'selfhosted'`); and a
+ * `metadata.ever_lookup_key`, which the shared checkout stamps on every session, must be one of this
+ * product's cloud prices when it is present.
  */
 export function checkoutSessionIsForProduct(
 	session: ProductScopedCheckoutSession | null | undefined,
 	product: string | null | undefined
 ): boolean {
 	if (!session || !product) return false;
-	return (
-		session.metadata?.ever_product === product &&
-		session.mode === 'subscription' &&
-		hostingIsCloud(session.metadata)
-	);
+	if (
+		session.metadata?.ever_product !== product ||
+		session.mode !== 'subscription' ||
+		!hostingIsCloud(session.metadata)
+	) {
+		return false;
+	}
+	const lookupKey = session.metadata?.ever_lookup_key;
+	return !lookupKey || lookupKey.startsWith(cloudLookupKeyPrefix(product));
 }
 
 /**

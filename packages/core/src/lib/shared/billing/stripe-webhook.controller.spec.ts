@@ -398,6 +398,28 @@ describe('StripeWebhookController — foreign events are acknowledged with no DB
 			})
 		],
 		[
+			'Gauzy-stamped session whose lookup key is a self-hosted price',
+			'checkout.session.completed',
+			session({
+				metadata: {
+					ever_product: 'gauzy',
+					ever_hosting: 'cloud',
+					ever_lookup_key: 'ever_gauzy_selfhosted_enterprise_annual'
+				}
+			})
+		],
+		[
+			'ever_product=gauzy metadata on a Teams price',
+			'customer.subscription.created',
+			subscription({
+				status: 'active',
+				metadata: { ever_product: 'gauzy' },
+				items: {
+					data: [{ id: 'si_t', price: { id: 'price_t', lookup_key: 'ever_teams_cloud_starter_monthly' } }]
+				}
+			})
+		],
+		[
 			'subscription with neither metadata nor a lookup key',
 			'customer.subscription.created',
 			subscription({

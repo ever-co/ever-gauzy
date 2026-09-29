@@ -163,6 +163,15 @@ describe('billing-product predicates', () => {
 				'gauzy'
 			)
 		).toBe(false);
+		// The price decides when it is a catalog price; metadata may only agree with it.
+		expect(
+			subscriptionIsForProduct(teamsSub({ metadata: { ever_product: 'gauzy', ever_hosting: 'cloud' } }), 'gauzy')
+		).toBe(false);
+		expect(subscriptionIsForProduct(gauzySub({ metadata: { ever_product: 'teams' } }), 'gauzy')).toBe(false);
+		// Metadata alone decides only when there is no catalog price.
+		expect(
+			subscriptionIsForProduct(gauzySub({ items: { data: [{ price: { lookup_key: null } }] } }), 'gauzy')
+		).toBe(true);
 		// A catalog price of this product that is not a cloud price.
 		expect(
 			subscriptionIsForProduct(
@@ -198,6 +207,14 @@ describe('billing-product predicates', () => {
 				'gauzy'
 			)
 		).toBe(false);
+		// A stamped lookup key must be one of this product's cloud prices.
+		const withKey = (ever_lookup_key: string) => ({
+			mode: 'subscription',
+			metadata: { ever_product: 'gauzy', ever_hosting: 'cloud', ever_lookup_key }
+		});
+		expect(checkoutSessionIsForProduct(withKey('ever_gauzy_cloud_starter_annual'), 'gauzy')).toBe(true);
+		expect(checkoutSessionIsForProduct(withKey('ever_gauzy_selfhosted_enterprise_annual'), 'gauzy')).toBe(false);
+		expect(checkoutSessionIsForProduct(withKey('ever_teams_cloud_starter_monthly'), 'gauzy')).toBe(false);
 	});
 
 	it('recognizes Checkout Session ids and nothing else', () => {
