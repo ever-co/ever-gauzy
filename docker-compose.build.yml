@@ -17,6 +17,7 @@ services:
       args:
         NODE_ENV: ${NODE_ENV:-production}
     environment:
+      NODE_ENV: ${NODE_ENV:-production}
       DB_HOST: db
 
     env_file:
