@@ -543,9 +543,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
 
-		const order = parseSortOrder(options.order, SORTABLE_COLUMNS);
-		const hasOrder = Object.keys(order).length > 0;
-
 		try {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();
@@ -594,9 +591,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						}
 					}
 
+					const mOrder = parseSortOrder(options.order, SORTABLE_COLUMNS);
 					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
 						...(options.relations ? { populate: flatten(options.relations) as any[] } : {}),
-						...(hasOrder ? { orderBy: order } : {}),
+						...(Object.keys(mOrder).length > 0 ? { orderBy: mOrder } : {}),
 						offset: options.skip ? options.take * (options.skip - 1) : 0,
 						limit: options.take || 10
 					});
@@ -610,11 +608,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					query.leftJoin(`${query.alias}.user`, 'user');
 					query.leftJoin(`${query.alias}.tags`, 'tags');
 
+					const order = parseSortOrder(options && options.order, SORTABLE_COLUMNS);
+
 					// Set pagination options and selected table properties/fields
 					query.setFindOptions({
 						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 						take: options && options.take ? options.take : 10,
-						...(hasOrder ? { order } : {}),
+						...(Object.keys(order).length > 0 ? { order } : {}),
 						select: {
 							// Selected fields for the Employee entity
 							id: true,
