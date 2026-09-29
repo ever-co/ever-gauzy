@@ -82,7 +82,9 @@ export class ConfirmEmailComponent extends TranslationBaseComponent implements O
 	 * link for one account opened while signed in as another must not mark the wrong one verified.
 	 */
 	private markSignedInUserVerified() {
-		if (!this.store.user) {
+		// The status answers for whoever was signed in when it was asked; apply it only to that user.
+		const askedFor = this.store.user?.id;
+		if (!askedFor) {
 			return;
 		}
 		this.authService
@@ -91,7 +93,11 @@ export class ConfirmEmailComponent extends TranslationBaseComponent implements O
 			.subscribe({
 				next: ({ isEmailVerified }) => {
 					const user = this.store.user;
-					if (user && typeof isEmailVerified === 'boolean' && user.isEmailVerified !== isEmailVerified) {
+					if (
+						user?.id === askedFor &&
+						typeof isEmailVerified === 'boolean' &&
+						user.isEmailVerified !== isEmailVerified
+					) {
 						this.store.user = { ...user, isEmailVerified };
 					}
 				},

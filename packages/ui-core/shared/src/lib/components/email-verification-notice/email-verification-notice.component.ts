@@ -81,13 +81,14 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		}
 		this.state.set('sending');
 		this.errorMessage.set(null);
+		const askedFor = this.store.user?.id;
 
 		this.authService
 			.resendEmailVerificationLink()
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: () => this.state.set('sent'),
-				error: (error: HttpErrorResponse) => this.onResendError(error)
+				error: (error: HttpErrorResponse) => this.onResendError(error, askedFor)
 			});
 	}
 
@@ -96,13 +97,14 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		this.visible.set(false);
 	}
 
-	private onResendError(error: HttpErrorResponse): void {
+	private onResendError(error: HttpErrorResponse, askedFor: string | undefined): void {
 		const apiMessage = typeof error?.error?.message === 'string' ? error.error.message : null;
 
 		// Verified in another tab (or by code) since the page loaded: stop asking.
 		if (error?.status === 400 && apiMessage && /already verified/i.test(apiMessage)) {
+			// Only for the user the resend was asked for, in case someone else signed in meanwhile.
 			const user = this.store.user;
-			if (user) {
+			if (user && user.id === askedFor) {
 				this.store.user = { ...user, isEmailVerified: true };
 			}
 			this.visible.set(false);
