@@ -211,7 +211,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						if (isNotEmpty(status)) where.status = status;
 						if (isNotEmpty(isHoliday) && isNotEmpty(Boolean(JSON.parse(isHoliday))))
 							where.isHoliday = false;
-						if (isNotEmpty(includeArchived)) where.isArchived = Boolean(JSON.parse(includeArchived));
+						// "Include archived" unchecked hides archived requests; checked shows all of them (no filter)
+						if (isNotEmpty(includeArchived) && !JSON.parse(includeArchived)) where.isArchived = false;
 
 						let sd = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
 						let ed = moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
@@ -325,10 +326,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {
 								qb.andWhere({ isHoliday: false });
 							}
-							if (isNotEmpty(where.includeArchived)) {
-								qb.andWhere({
-									isArchived: Boolean(JSON.parse(where.includeArchived))
-								});
+							// "Include archived" unchecked hides archived requests; checked shows all of them (no filter)
+							if (isNotEmpty(where.includeArchived) && !JSON.parse(where.includeArchived)) {
+								qb.andWhere({ isArchived: false });
 							}
 							if (isNotEmpty(where.status)) {
 								qb.andWhere({
