@@ -1,30 +1,47 @@
-<nb-card style="height: 450px" class="main">
-	<nb-card-header class="d-flex">
-		<h4 style="width: 400px">
-			{{ 'POP_UPS.SELECT_TIMEZONE' | translate }}
-		</h4>
+<nb-card class="timezone-dialog">
+	<nb-card-header class="dialog-header">
+		<div class="heading">
+			<h5 class="title">{{ 'POP_UPS.SELECT_TIMEZONE' | translate }}</h5>
+			<p class="subtitle">{{ 'POP_UPS.SELECT_TIMEZONE_HINT' | translate }}</p>
+		</div>
+		<button type="button" class="close" nbButton ghost size="small" status="basic" (click)="close()">
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
 	</nb-card-header>
-	<nb-card-body class="body">
+	<nb-card-body class="dialog-body">
+		<label class="label" for="timezone">{{ 'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate }}</label>
 		<ng-select
-			[(items)]="listOfZones"
+			labelForId="timezone"
+			class="timezone-select"
+			[items]="listOfZones"
 			[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate"
 			[(ngModel)]="selectedTimezone"
 			[searchable]="true"
+			[searchFn]="searchZone"
+			[clearable]="false"
 			appendTo="body"
 		>
-			<ng-template ng-option-tmp let-item="item" let-index="index">
-				{{ getTimeWithOffset(item) }}
+			<ng-template ng-option-tmp let-item="item">
+				<div class="zone-option">
+					<span class="zone-city">{{ getCity(item) }}</span>
+					<span class="zone-region">{{ getRegion(item) }}</span>
+					<span class="zone-offset">{{ getOffset(item) }}</span>
+				</div>
 			</ng-template>
 			<ng-template ng-label-tmp let-item="item">
-				{{ getTimeWithOffset(item) }}
+				<div class="zone-option">
+					<span class="zone-city">{{ getCity(item) }}</span>
+					<span class="zone-region">{{ getRegion(item) }}</span>
+					<span class="zone-offset">{{ getOffset(item) }}</span>
+				</div>
 			</ng-template>
 		</ng-select>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button (click)="close()" status="danger" class="mr-3" nbButton type="button">
+	<nb-card-footer class="dialog-footer">
+		<button type="button" nbButton ghost status="basic" size="small" (click)="close()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="select()" status="success" nbButton type="button">
+		<button type="button" nbButton status="primary" size="small" [disabled]="!selectedTimezone" (click)="select()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
