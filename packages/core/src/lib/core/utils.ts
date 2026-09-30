@@ -959,6 +959,23 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
 }
 
 /**
+ * Splits a free-text search into keywords.
+ *
+ * Splits on any whitespace and drops empty entries: with `split(' ')`, a trailing or repeated space
+ * yields an empty keyword, which becomes a `LIKE '%%'` condition matching every row. The value is
+ * stringified first because the query DTO JSON-parses filters (a search for `123` arrives as a number).
+ *
+ * @param text The search text
+ * @returns The non-empty keywords
+ */
+export function splitKeywords(text: unknown): string[] {
+	return String(text ?? '')
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+}
+
+/**
  * Whether the configured MikroORM driver is PostgreSQL.
  *
  * The MikroORM settings live in `dbMikroOrmConnectionOptions`, where `driver` is the driver class
