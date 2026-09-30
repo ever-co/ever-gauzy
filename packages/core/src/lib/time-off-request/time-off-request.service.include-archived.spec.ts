@@ -15,7 +15,12 @@ describe('TimeOffRequestService.pagination "Include Archived"', () => {
 
 	let restore: () => void;
 
-	const where = (includeArchived: string) => ({ organizationId: tenantA.organizationId, includeArchived });
+	const where = (includeArchived: unknown) => ({ organizationId: tenantA.organizationId, includeArchived });
+
+	// The query DTO JSON-parses `where` values, so the service normally receives booleans; strings are
+	// covered too for direct callers.
+	const unchecked = [false, 'false'];
+	const checked = [true, 'true'];
 
 	beforeEach(() => {
 		({ restore } = asTenantUser(tenantA));
@@ -51,13 +56,13 @@ describe('TimeOffRequestService.pagination "Include Archived"', () => {
 			);
 		});
 
-		it('hides archived requests when unchecked', async () => {
-			await service.pagination({ where: where('false') });
+		it.each(unchecked)('hides archived requests when unchecked (%p)', async (value) => {
+			await service.pagination({ where: where(value) });
 			expect(qb.andWhere).toHaveBeenCalledWith({ isArchived: false });
 		});
 
-		it('adds no archived filter when checked', async () => {
-			await service.pagination({ where: where('true') });
+		it.each([...checked, undefined])('adds no archived filter when checked or not sent (%p)', async (value) => {
+			await service.pagination({ where: where(value) });
 			expect(qb.andWhere).not.toHaveBeenCalledWith({ isArchived: false });
 			expect(qb.andWhere).not.toHaveBeenCalledWith({ isArchived: true });
 		});
@@ -80,13 +85,13 @@ describe('TimeOffRequestService.pagination "Include Archived"', () => {
 			);
 		});
 
-		it('hides archived requests when unchecked', async () => {
-			await service.pagination({ where: where('false') });
+		it.each(unchecked)('hides archived requests when unchecked (%p)', async (value) => {
+			await service.pagination({ where: where(value) });
 			expect(findAndCount.mock.calls[0][0].isArchived).toBe(false);
 		});
 
-		it('adds no archived filter when checked', async () => {
-			await service.pagination({ where: where('true') });
+		it.each([...checked, undefined])('adds no archived filter when checked or not sent (%p)', async (value) => {
+			await service.pagination({ where: where(value) });
 			expect(findAndCount.mock.calls[0][0]).not.toHaveProperty('isArchived');
 		});
 	});
