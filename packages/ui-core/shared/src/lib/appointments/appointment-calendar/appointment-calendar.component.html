@@ -20,8 +20,17 @@
 			<div class="timezone-info">
 				<span class="timezone-label">{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}</span>
 				<strong>{{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }}</strong>
-				<button type="button" class="timezone-change" (click)="selectTimezone()">
-					{{ 'PUBLIC_APPOINTMENTS.CHANGE' | translate }}
+				<button
+					type="button"
+					class="timezone-change"
+					nbButton
+					outline
+					status="basic"
+					size="small"
+					(click)="selectTimezone()"
+				>
+					<nb-icon icon="globe-2-outline"></nb-icon>
+					{{ 'PUBLIC_APPOINTMENTS.CHANGE_TIMEZONE' | translate }}
 				</button>
 			</div>
 			<button

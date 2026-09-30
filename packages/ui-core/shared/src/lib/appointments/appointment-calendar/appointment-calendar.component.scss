@@ -33,16 +33,8 @@
   }
 
   .timezone-change {
-    padding: 0;
-    font: inherit;
-    color: var(--link-text-color);
-    background: none;
-    border: none;
-    cursor: pointer;
-
-    &:hover {
-      text-decoration: underline;
-    }
+    margin-left: 0.25rem;
+    text-transform: none;
   }
 }
 
@@ -61,7 +53,8 @@
   }
   [nbButton].appearance-outline.status-info,
   [nbButton].appearance-outline.status-warning,
-  [nbButton].appearance-outline.status-primary {
+  [nbButton].appearance-outline.status-primary,
+  [nbButton].appearance-outline.status-basic {
     border-width: 0;
     box-shadow: var(--gauzy-shadow);
   }

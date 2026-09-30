@@ -5712,6 +5712,7 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "Change",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"SELECT_EMPLOYEE_HINT": "Choose who you want to meet, then pick a time that suits you.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
