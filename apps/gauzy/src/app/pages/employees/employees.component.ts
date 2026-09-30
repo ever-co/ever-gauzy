@@ -63,6 +63,7 @@ import {
 	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+	private readonly pageSizeStorageKey = 'employeesPageSize';
 	public dataTableId: PageDataTablePageId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
@@ -113,6 +114,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	ngOnInit() {
+		try {
+			const savedPageSize = Number(localStorage.getItem(this.pageSizeStorageKey));
+			if (Number.isSafeInteger(savedPageSize) && savedPageSize > 0) {
+				this.setPagination({ ...this.getPagination(), itemsPerPage: savedPageSize });
+			}
+		} catch {
+			// Keep the default when browser storage is unavailable.
+		}
 		this._registerDataTableColumns();
 		this._loadSmartTableSettings();
 		this._subscribeToQueryParams();
@@ -153,6 +162,22 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	protected refreshPagination(): void {
+		this.setPagination({ ...this.getPagination(), activePage: 1 });
+	}
+
+	public onPageSizeChange(itemsPerPage: number): void {
+		this.pagination = { ...this.getPagination(), activePage: 1, itemsPerPage };
+		this.smartTableSource.setPaging(1, itemsPerPage, false);
+		// Updating table settings refreshes the existing source; do not also emit pagination$.
+		this._loadSmartTableSettings();
+		try {
+			localStorage.setItem(this.pageSizeStorageKey, String(itemsPerPage));
+		} catch {
+			// The selected size still works for this visit.
+		}
 	}
 
 	ngAfterViewInit(): void {
@@ -221,7 +246,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			if (customComponentInstance?.constructor === AllowScreenshotCaptureComponent) {
 				this.disableButton = true;
 				const instance: AllowScreenshotCaptureComponent = customComponentInstance;
-				this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
+				void this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
 				this._grid.clearCustomViewComponent();
 				this.clearItem();
 			}
@@ -330,7 +355,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 *
 	 * @param selectedItem The employee view model to delete.
 	 */
-	async delete(selectedItem?: EmployeeViewModel): Promise<void> {
+	delete(selectedItem?: EmployeeViewModel): void {
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -605,10 +630,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param totalItems - Total items returned from the server
 	 */
 	updatePagination(totalItems: number) {
-		this.setPagination({
+		// A response updates the count without requesting the same employees again.
+		this.pagination = {
 			...this.getPagination(),
 			totalItems
-		});
+		};
 	}
 
 	/**
@@ -704,7 +730,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.FULL_NAME'),
 				type: 'custom',
 				class: 'align-row',
-				width: '20%',
+				// Names are short chips; the spare width goes to Status / Screen Capture.
+				width: '15%',
 				isFilterable: true,
 				renderComponent: PictureNameTagsComponent,
 				componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
@@ -724,8 +751,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.EMAIL'),
 				type: 'text',
 				class: 'align-row',
-				// Two points to the number columns below.
-				width: '18%',
+				width: '15%',
 				isFilterable: true,
 				filter: {
 					type: 'custom',
@@ -808,8 +834,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				order: 6,
 				title: () => this.getTranslation('SM_TABLE.TAGS'),
 				type: 'custom',
-				// Three points to the number columns above.
-				width: '17%',
+				width: '16%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
@@ -834,7 +859,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.STATUS'),
 				type: 'custom',
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: "Active" and "Not Started" stacked on two lines.
+				width: '10%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
@@ -923,7 +949,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			title: () => this.getTranslation('SM_TABLE.SCREEN_CAPTURE'), // The title of the column
 			type: 'custom', // The type of the column
 			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
+			width: '10%', // Was 5%: the "Screen Capture" heading wrapped and the toggle + label were squeezed
 			isFilterable: true, // Indicates whether the column is filterable
 			isSortable: false,
 			hide: allowScreenshotCapture === false,
@@ -945,7 +971,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					next: (isAllow: boolean) => {
 						// Clear selected items and update allowScreenshotCapture
 						this.clearItem();
-						this._updateAllowScreenshotCapture(instance.rowData, isAllow);
+						void this._updateAllowScreenshotCapture(instance.rowData, isAllow);
 					},
 					error: (err: any) => {
 						console.warn(err);
@@ -1079,9 +1105,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	/**
 	 * Handle employee favorite toggle event from the new component
 	 */
-	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
-		this.loadFavoriteEmployees();
+		void this.loadFavoriteEmployees();
 	}
 
 	getEmployeeDisplayName(employee: IEmployee): string {

@@ -25,7 +25,17 @@ nb-card {
   // stacked onto the row's own gap to give 36px on one side of the toggle and
   // 20px on the other.
   .custom-toggle {
+    // A flex box, not a block: `nb-toggle` is inline, so inside a block it sat
+    // on the text baseline with the line's descender space under it, which put
+    // the switch and "Show Deleted" ~5px above the buttons' centre.
+    display: flex;
+    align-items: center;
+    height: 1.75rem;
+
     ::ng-deep {
+      nb-toggle label {
+        margin: 0;
+      }
       nb-toggle.status-danger .toggle.checked {
         background-color: rgba(245, 109, 88, 1);
         border-color: rgba(245, 109, 88, 1);

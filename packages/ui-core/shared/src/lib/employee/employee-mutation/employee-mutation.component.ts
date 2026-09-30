@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
-import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
+import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { IEmployee, IUser, IEmployeeCreateInput, CrudActionEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -30,6 +30,13 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	form: UntypedFormGroup;
 	public employees: IEmployeeCreateInput[] = [];
 	public organization: IOrganization;
+
+	/** Labels of the custom step indicator, in stepper order. */
+	protected readonly steps: string[] = [
+		'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_DETAILS',
+		'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_ADD_MORE',
+		'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_CONFIRM'
+	];
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<EmployeeMutationComponent>,
@@ -147,16 +154,45 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			// Handle errors using error handler service
 			this.errorHandler.handleError(error);
 		} finally {
-			this.loading = false; // Set loading state to false regardless of success or failure
+			// Set loading state to false regardless of success or failure, so it resets on failure too,
+      // or the spinner stays up and "Create" stays disabled
+      this.loading = false;
 		}
 	}
 
 	/**
-	 * Removed one employee in the array of employees.
-	 * @param tag
+	 * Removes one queued employee.
+	 *
+	 * @param index Position of the employee in the queue.
 	 */
-	onEmployeeRemove(tag: NbTagComponent): void {
-		this.employees = this.employees.filter((t: IEmployeeCreateInput) => t.user.email !== tag.text);
+	protected removeEmployee(index: number): void {
+		this.employees = this.employees.filter((_, i: number) => i !== index);
+	}
+
+	/**
+	 * The employee currently entered in the form, or null when the form is not valid.
+	 * `add()` includes it in the bulk request, so the review lists it too.
+	 */
+	protected get draftEmployee(): Pick<IUser, 'firstName' | 'lastName' | 'email' | 'imageUrl'> | null {
+		if (!this.form?.valid) return null;
+		const { firstName, lastName, email, imageUrl } = this.form.getRawValue();
+		return { firstName, lastName, email, imageUrl };
+	}
+
+	/** Total employees that "Finish" will create. */
+	protected get pendingCount(): number {
+		return this.employees.length + (this.draftEmployee ? 1 : 0);
+	}
+
+	/**
+	 * Initials for the avatar fallback of an employee row.
+	 */
+	protected initials(user: Pick<IUser, 'firstName' | 'lastName' | 'email'>): string {
+		const letters = [user?.firstName, user?.lastName]
+			.filter(Boolean)
+			.map((part: string) => part.trim().charAt(0))
+			.join('');
+		return (letters || user?.email?.charAt(0) || '?').toUpperCase();
 	}
 
 	/**

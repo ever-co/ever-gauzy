@@ -1,144 +1,198 @@
-<nb-card
-  [nbSpinner]="loading"
-  nbSpinnerStatus="primary"
-  nbSpinnerSize="large"
-  >
-  <nb-card-header class="d-flex flex-column">
-    <span class="cancel"
-      ><i class="fas fa-times" (click)="closeDialog()"></i
-    ></span>
-    <h5 class="title">
-      {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEE' | translate }}
-    </h5>
-  </nb-card-header>
-  <nb-card-body>
-    <nb-stepper
-      [linear]="linear"
-      orientation="horizontal"
-      disableStepNavigation
-      #stepper
-      >
-      <nb-step [label]="step1">
-        <ng-template #step1>
-          {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_1' | translate }}
-        </ng-template>
-        @if (employees.length > 0) {
-          <div class="row">
-            <div class="col m-2 p-0">
-              <nb-tag-list (tagRemove)="onEmployeeRemove($event)">
-                @for (employee of employees; track employee) {
-                  <nb-tag
-                    removable
-                    [text]="employee?.user?.email"
-                  ></nb-tag>
-                }
-              </nb-tag-list>
-            </div>
-          </div>
-        }
-        <ga-user-basic-info-form
-          #userBasicInfo
-          [isShowRole]="false"
-          [isEmployee]="true"
-        ></ga-user-basic-info-form>
-        <div class="text-left">
-          @if (employees.length) {
-            <button
-              class="mr-2"
-              status="basic"
-              outline
-              (click)="nextStep()"
-              size="small"
-              nbButton
-              >
-              {{ 'BUTTONS.CANCEL' | translate }}
-            </button>
-          }
-          <button
-            status="basic"
-            [disabled]="userBasicInfo.form.invalid"
-            outline
-            class="green"
-            nbButton
-            size="small"
-            nbStepperNext
-            >
-            {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.NEXT' | translate }}
-          </button>
-        </div>
-      </nb-step>
-      <nb-step [label]="step2">
-        <ng-template #step2>
-          {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_2' | translate }}
-        </ng-template>
-        <div class="text-left">
-          <button
-            status="basic"
-            size="small"
-            class="gray"
-            outline
-            nbButton
-            nbStepperPrevious
-            >
-            {{
-            'EMPLOYEES_PAGE.ADD_EMPLOYEES.PREVIOUS' | translate
-            }}
-          </button>
-          <button
-            nbButton
-            status="success"
-            size="small"
-            class="mr-3 ml-3"
-            (click)="addEmployee()"
-            >
-            {{
-            'EMPLOYEES_PAGE.ADD_EMPLOYEES.ADD_ANOTHER_EMPLOYEE'
-            | translate
-            }}
-          </button>
-          <button
-            status="basic"
-            class="green"
-            size="small"
-            outline
-            nbButton
-            nbStepperNext
-            >
-            {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.NEXT' | translate }}
-          </button>
-        </div>
-      </nb-step>
-      <nb-step [label]="step3">
-        <ng-template #step3>
-          {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_3' | translate }}
-        </ng-template>
-        <div class="text-left">
-          <button
-            class="gray"
-            status="basic"
-            outline
-            size="small"
-            nbButton
-            nbStepperPrevious
-            >
-            {{
-            'EMPLOYEES_PAGE.ADD_EMPLOYEES.PREVIOUS' | translate
-            }}
-          </button>
-          <button
-            size="small"
-            status="success"
-            class="mr-3 ml-3"
-            (click)="add()"
-            nbButton
-            >
-            {{
-            'EMPLOYEES_PAGE.ADD_EMPLOYEES.FINISHED_ADDING'
-            | translate
-            }}
-          </button>
-        </div>
-      </nb-step>
-    </nb-stepper>
-  </nb-card-body>
+<nb-card class="employee-dialog" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="dialog-header">
+		<div class="header-row">
+			<div class="heading">
+				<h5 class="title">{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEE' | translate }}</h5>
+				<p class="subtitle">{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.SUBTITLE' | translate }}</p>
+			</div>
+			<button
+				type="button"
+				class="close"
+				nbButton
+				ghost
+				size="small"
+				[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+				(click)="closeDialog()"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+
+		<!-- nb-card only projects header/body/footer into their slots, so the step bar lives in the header -->
+		<nav class="steps" [attr.aria-label]="'EMPLOYEES_PAGE.ADD_EMPLOYEES.PROGRESS' | translate">
+			@for (step of steps; track step; let i = $index) {
+				<div
+					class="step"
+					[class.active]="stepper.selectedIndex === i"
+					[class.done]="stepper.selectedIndex > i"
+					[attr.aria-current]="stepper.selectedIndex === i ? 'step' : null"
+				>
+					<span class="index">
+						@if (stepper.selectedIndex > i) {
+							<nb-icon icon="checkmark-outline"></nb-icon>
+						} @else {
+							{{ i + 1 }}
+						}
+					</span>
+					<span class="name">{{ step | translate }}</span>
+				</div>
+				@if (i < steps.length - 1) {
+					<span class="connector" [class.done]="stepper.selectedIndex > i"></span>
+				}
+			}
+		</nav>
+	</nb-card-header>
+
+	<nb-card-body class="dialog-body">
+		<nb-stepper class="stepper" [linear]="linear" orientation="horizontal" disableStepNavigation #stepper>
+			<!-- Step 1: employee details -->
+			<nb-step>
+				@if (employees.length > 0) {
+					<div class="queue-note">
+						<nb-icon icon="people-outline"></nb-icon>
+						<span>
+							<strong>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.QUEUED' | translate: { count: employees.length } }}</strong>
+							· {{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.QUEUE_HINT' | translate }}
+						</span>
+					</div>
+				}
+				<ga-user-basic-info-form #userBasicInfo [isShowRole]="false" [isEmployee]="true"></ga-user-basic-info-form>
+			</nb-step>
+
+			<!-- Step 2: add another or continue -->
+			<nb-step>
+				<div class="panel-heading">
+					<h6>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.READY_TITLE' | translate }}</h6>
+					<p>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.READY_HINT' | translate }}</p>
+				</div>
+				<ng-container *ngTemplateOutlet="employeeList"></ng-container>
+			</nb-step>
+
+			<!-- Step 3: review and create -->
+			<nb-step>
+				<div class="panel-heading">
+					<h6>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.REVIEW_TITLE' | translate }}</h6>
+					<p>
+						{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.REVIEW_HINT' | translate: { organization: organization?.name } }}
+					</p>
+				</div>
+				<ng-container *ngTemplateOutlet="employeeList"></ng-container>
+			</nb-step>
+		</nb-stepper>
+	</nb-card-body>
+
+	<nb-card-footer class="dialog-footer">
+		@switch (stepper.selectedIndex) {
+			@case (0) {
+				@if (employees.length) {
+					<button type="button" nbButton ghost status="basic" size="small" (click)="nextStep()">
+						{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.DISCARD_ENTRY' | translate }}
+					</button>
+				}
+				<span class="spacer"></span>
+				<button type="button" nbButton ghost status="basic" size="small" (click)="closeDialog()">
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					type="button"
+					nbButton
+					status="primary"
+					size="small"
+					[disabled]="userBasicInfo?.form?.invalid"
+					(click)="stepper.next()"
+				>
+					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.CONTINUE' | translate }}
+					<nb-icon icon="arrow-forward-outline"></nb-icon>
+				</button>
+			}
+			@case (1) {
+				<button type="button" nbButton ghost status="basic" size="small" (click)="stepper.previous()">
+					<nb-icon icon="arrow-back-outline"></nb-icon>
+					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.BACK' | translate }}
+				</button>
+				<span class="spacer"></span>
+				<button type="button" nbButton outline status="basic" size="small" (click)="addEmployee()">
+					<nb-icon icon="person-add-outline"></nb-icon>
+					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.ADD_ANOTHER_EMPLOYEE' | translate }}
+				</button>
+				<button type="button" nbButton status="primary" size="small" (click)="stepper.next()">
+					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.CONTINUE' | translate }}
+					<nb-icon icon="arrow-forward-outline"></nb-icon>
+				</button>
+			}
+			@case (2) {
+				<button type="button" nbButton ghost status="basic" size="small" (click)="stepper.previous()">
+					<nb-icon icon="arrow-back-outline"></nb-icon>
+					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.BACK' | translate }}
+				</button>
+				<span class="spacer"></span>
+				<button
+					type="button"
+					nbButton
+					status="primary"
+					size="small"
+					[disabled]="loading || pendingCount === 0"
+					(click)="add()"
+				>
+					<nb-icon icon="checkmark-outline"></nb-icon>
+					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.CREATE_EMPLOYEES' | translate: { count: pendingCount } }}
+				</button>
+			}
+		}
+	</nb-card-footer>
 </nb-card>
+
+<!-- Employees that will be created: the current entry plus the queue -->
+<ng-template #employeeList>
+	@if (pendingCount === 0) {
+		<div class="empty">
+			<nb-icon icon="people-outline"></nb-icon>
+			<span>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.EMPTY' | translate }}</span>
+		</div>
+	} @else {
+		<ul class="employee-list">
+			@if (draftEmployee; as draft) {
+				<li class="employee-row">
+					<ng-container *ngTemplateOutlet="avatar; context: { $implicit: draft }"></ng-container>
+					<div class="identity">
+						<span class="name">{{ draft.firstName }} {{ draft.lastName }}</span>
+						<span class="email">{{ draft.email }}</span>
+					</div>
+					<span class="badge">{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.CURRENT_ENTRY' | translate }}</span>
+				</li>
+			}
+			@for (employee of employees; track $index; let i = $index) {
+				<li class="employee-row">
+					<ng-container *ngTemplateOutlet="avatar; context: { $implicit: employee.user }"></ng-container>
+					<div class="identity">
+						<span class="name">{{ employee.user?.firstName }} {{ employee.user?.lastName }}</span>
+						<span class="email">{{ employee.user?.email }}</span>
+					</div>
+					<button
+						type="button"
+						nbButton
+						ghost
+						size="tiny"
+						status="basic"
+						class="remove"
+						[title]="'BUTTONS.REMOVE' | translate"
+						[attr.aria-label]="'BUTTONS.REMOVE' | translate"
+						(click)="removeEmployee(i)"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+				</li>
+			}
+		</ul>
+	}
+</ng-template>
+
+<ng-template #avatar let-user>
+	<span class="avatar">
+		@if (user?.imageUrl) {
+			<img [src]="user.imageUrl" alt="" />
+		} @else {
+			{{ initials(user) }}
+		}
+	</span>
+</ng-template>
