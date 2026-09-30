@@ -4,15 +4,46 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.block-info {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 11px;
-  letter-spacing: 0em;
-  text-align: left;
-  margin: 1rem 0;
+// Time zone sits with the actions, before the buttons
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.timezone-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+  white-space: nowrap;
+
+  strong {
+    font-weight: 500;
+    color: var(--text-basic-color);
+  }
+
+  .timezone-change {
+    padding: 0;
+    font: inherit;
+    color: var(--link-text-color);
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 :host {
@@ -21,7 +52,8 @@
     background-color: var(--gauzy-card-2);
   }
   nb-card-body {
-    height: calc(100vh - 16.5rem) !important;
+    // The time zone line moved into the title row, handing its ~2.5rem back to the body
+    height: calc(100vh - 14rem) !important;
   }
   .calendar-container {
     height: 100%;
@@ -32,5 +64,160 @@
   [nbButton].appearance-outline.status-primary {
     border-width: 0;
     box-shadow: var(--gauzy-shadow);
+  }
+}
+
+// ── Toolbar: title on the left, navigation + view switch on the right ───────
+// Selectors mirror the global `full-calendar()` mixin in _gauzy-overrides.scss,
+// prefixed with the container so these win without `!important`.
+:host .calendar-container ::ng-deep full-calendar {
+  div.fc-header-toolbar {
+    margin: 0 0 0.75rem;
+    padding: 0 0 0.75rem;
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+
+    .fc-toolbar-chunk {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      h2.fc-toolbar-title {
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1rem;
+        color: var(--text-basic-color);
+      }
+
+      // Previous / next: quiet square icon buttons
+      .fc-prev-button,
+      .fc-next-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        margin: 0;
+        padding: 0;
+        font-size: 0.75rem;
+        color: var(--text-basic-color);
+        background-color: transparent;
+        border: none;
+        border-radius: var(--gauzy-radius-sm);
+        box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+        span {
+          padding: 0;
+        }
+
+        &:hover {
+          background-color: var(--gauzy-hover-tint);
+        }
+      }
+
+      // `prev,next` render as one bootstrap group; space them like the rest
+      .btn-group:has(.fc-prev-button, .fc-next-button) {
+        gap: 0.25rem;
+        padding: 0;
+        box-shadow: none;
+      }
+
+      // Month / Week: segmented control
+      .btn-group:has(.fc-dayGridMonth-button) {
+        gap: 0.125rem;
+        padding: 0.125rem;
+        border-radius: var(--gauzy-radius-sm);
+        box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+        .fc-dayGridMonth-button,
+        .fc-timeGridWeek-button {
+          margin: 0;
+          padding: 0.375rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+          line-height: 1rem;
+          text-transform: none;
+          color: var(--text-hint-color);
+          background-color: transparent;
+          border: none;
+          border-radius: var(--gauzy-radius-sm);
+          box-shadow: none;
+
+          &:hover {
+            color: var(--text-basic-color);
+            background-color: var(--gauzy-hover-tint);
+          }
+
+          &.active {
+            color: var(--color-primary-default);
+            background-color: var(--color-primary-transparent-100);
+          }
+        }
+      }
+    }
+  }
+
+  .btn:focus,
+  .btn-primary:focus {
+    box-shadow: 0 0 0 0.125rem var(--color-primary-transparent-200) !important;
+  }
+
+  // ── 12px is the largest text in the card body ─────────────────────────────
+  .fc {
+    font-size: 0.75rem;
+  }
+
+  .fc-col-header-cell-cushion,
+  .fc-daygrid-day-number,
+  .fc-daygrid-more-link,
+  .fc-event,
+  .fc-event-main,
+  .fc-event-time,
+  .fc-event-title {
+    font-size: 0.75rem;
+  }
+
+  // ── Time axis (left column): a quiet rail, not a stack of boxes ─────────
+  // The global mixin paints every axis cell (including the empty half-hour
+  // rows) with a tinted, rounded box and centres full-colour text in it.
+  .fc .fc-timegrid-slot-label,
+  .fc .fc-timegrid-axis,
+  .fc .fc-timegrid-axis-frame {
+    background: transparent;
+    border: none;
+  }
+
+  // Each label sits centred on its hour's lane, right-aligned against the grid
+  .fc .fc-timegrid-slot-label {
+    vertical-align: middle;
+  }
+
+  .fc .fc-timegrid-axis-frame {
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .fc .fc-timegrid-slot-label-cushion,
+  .fc .fc-timegrid-axis-cushion {
+    padding: 0 0.625rem 0 0;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--text-hint-color);
+  }
+
+  // ── Day headers: same tint, over an opaque base so they are not see-through
+  // No vertical border-spacing on the header table: its 4px strip above the
+  // cells let the scrolled grid show through once the header row sticks.
+  // (`!important` because the global mixin sets the spacing with it.)
+  table table.fc-col-header {
+    border-spacing: 4px 0 !important;
+  }
+
+  table table th.fc-col-header-cell {
+    background:
+      linear-gradient(var(--gauzy-sidebar-background-3), var(--gauzy-sidebar-background-3)),
+      var(--card-background-color);
   }
 }
