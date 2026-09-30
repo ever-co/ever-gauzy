@@ -959,6 +959,25 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
 }
 
 /**
+ * Builds a case-insensitive "contains" condition for a MikroORM filter.
+ *
+ * MikroORM emits `$ilike` verbatim as `ILIKE`, which only PostgreSQL supports; MySQL and SQLite
+ * reject it. Their `LIKE` is already case-insensitive (default collations / ASCII text), so it is
+ * used there instead.
+ *
+ * @param value The text to search for
+ * @param postgres Whether the current database is PostgreSQL (resolved from the config by default)
+ * @returns `{ $ilike: '%value%' }` on PostgreSQL, `{ $like: '%value%' }` otherwise
+ */
+export function mikroOrmContains(
+	value: string,
+	postgres: boolean = isDatabaseType(DatabaseTypeEnum.postgres)
+): { $ilike: string } | { $like: string } {
+	const pattern = `%${value}%`;
+	return postgres ? { $ilike: pattern } : { $like: pattern };
+}
+
+/**
  * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
  * @param order TypeORM 'order' option
  * @returns Parsed MikroORM 'orderBy' option

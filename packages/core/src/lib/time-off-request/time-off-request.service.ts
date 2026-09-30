@@ -15,7 +15,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -223,24 +223,26 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
 						if (isNotEmpty(user) && isNotEmpty(user.name)) {
-							const keywords: string[] = user.name.split(' ');
+							// Split on any whitespace and drop empty keywords: an empty one would match every name
+							const keywords: string[] = user.name.trim().split(/\s+/).filter(Boolean);
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
-								userFilters.push({ employees: { user: { firstName: { $ilike: `%${keyword}%` } } } });
-								userFilters.push({ employees: { user: { lastName: { $ilike: `%${keyword}%` } } } });
+								userFilters.push({ employees: { user: { firstName: mikroOrmContains(keyword) } } });
+								userFilters.push({ employees: { user: { lastName: mikroOrmContains(keyword) } } });
 							});
-							if (where.$or) {
+							// Only whitespace typed: no keyword, nothing to filter on
+							if (userFilters.length > 0 && where.$or) {
 								where.$and = [{ $or: where.$or }, { $or: userFilters }];
 								delete where.$or;
-							} else {
+							} else if (userFilters.length > 0) {
 								where.$or = userFilters;
 							}
 						}
 						if (isNotEmpty(description)) {
-							where.description = { $ilike: `%${description}%` };
+							where.description = mikroOrmContains(description);
 						}
 						if (isNotEmpty(policy) && isNotEmpty(policy.name)) {
-							where.policy = { name: { $ilike: `%${policy.name}%` } };
+							where.policy = { name: mikroOrmContains(policy.name) };
 						}
 					}
 

@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
 import { CrudService } from '../core/crud/crud.service';
-import { MultiORMEnum } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum } from '../core/utils';
 import { TimeOffRequestService } from './time-off-request.service';
 import { asTenantUser, createCrossTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 
@@ -43,12 +43,12 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 
 	it('filters by description', async () => {
 		await paginate({ description: 'vacation' });
-		expect(lastWhere().description).toEqual({ $ilike: '%vacation%' });
+		expect(lastWhere().description).toEqual(mikroOrmContains('vacation'));
 	});
 
 	it('filters by policy name', async () => {
 		await paginate({ policy: { name: 'Sick' } });
-		expect(lastWhere().policy).toEqual({ name: { $ilike: '%Sick%' } });
+		expect(lastWhere().policy).toEqual({ name: mikroOrmContains('Sick') });
 	});
 
 	it('filters by employee name keywords, combined with the date range', async () => {
@@ -67,11 +67,26 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 		]);
 		// Second half: any keyword matches the employee's first or last name
 		expect(where.$and[1].$or).toEqual([
-			{ employees: { user: { firstName: { $ilike: '%Ada%' } } } },
-			{ employees: { user: { lastName: { $ilike: '%Ada%' } } } },
-			{ employees: { user: { firstName: { $ilike: '%Love%' } } } },
-			{ employees: { user: { lastName: { $ilike: '%Love%' } } } }
+			{ employees: { user: { firstName: mikroOrmContains('Ada') } } },
+			{ employees: { user: { lastName: mikroOrmContains('Ada') } } },
+			{ employees: { user: { firstName: mikroOrmContains('Love') } } },
+			{ employees: { user: { lastName: mikroOrmContains('Love') } } }
 		]);
+	});
+
+	it('ignores repeated and surrounding spaces in the employee name', async () => {
+		await paginate({ user: { name: '  Ada   Love ' } });
+		expect(lastWhere().$and[1].$or).toEqual([
+			{ employees: { user: { firstName: mikroOrmContains('Ada') } } },
+			{ employees: { user: { lastName: mikroOrmContains('Ada') } } },
+			{ employees: { user: { firstName: mikroOrmContains('Love') } } },
+			{ employees: { user: { lastName: mikroOrmContains('Love') } } }
+		]);
+	});
+
+	it('adds no name filter when only spaces are typed', async () => {
+		await paginate({ user: { name: '   ' } });
+		expect(lastWhere().$and).toBeUndefined();
 	});
 
 	it('adds no text filter when none is requested', async () => {
