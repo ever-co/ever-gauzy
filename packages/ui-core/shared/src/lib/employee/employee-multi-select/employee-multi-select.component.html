@@ -16,8 +16,8 @@
       <nb-option class="employee-option" [value]="employee.id">
         <!-- Initials come from a CSS attribute so nb-select's label (the option's textContent) stays just the name -->
         <span class="employee-avatar" [attr.data-initials]="getInitials(employee)" aria-hidden="true">
-          @if (employee.user?.imageUrl && !brokenImages.has(employee.id)) {
-            <img [src]="employee.user.imageUrl" alt="" loading="lazy" (error)="brokenImages.add(employee.id)" />
+          @if (employee.user?.imageUrl && !brokenImages.has(employee.user.imageUrl)) {
+            <img [src]="employee.user.imageUrl" alt="" loading="lazy" (error)="brokenImages.add(employee.user.imageUrl)" />
           }
         </span>
         <span class="employee-name" [title]="employee.user?.name">{{ employee.user?.name }}</span>

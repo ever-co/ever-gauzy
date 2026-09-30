@@ -25,7 +25,10 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	loaded: boolean;
 	preSelected: string[] | string;
 
-	/** Employees whose image failed to load; their option falls back to initials. */
+	/**
+	 * Image URLs that failed to load; those options fall back to initials. Keyed by
+	 * URL, not employee, so a new photo URL for the same employee is tried again.
+	 */
 	protected readonly brokenImages = new Set<string>();
 
 	@Input()
