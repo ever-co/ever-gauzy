@@ -52,10 +52,20 @@ describe('TimeOffRequestService.pagination MikroORM text filters', () => {
 	});
 
 	it('filters by employee name keywords, combined with the date range', async () => {
-		await paginate({ user: { name: 'Ada Love' } });
+		await paginate({
+			user: { name: 'Ada Love' },
+			startDate: '2026-09-01 00:00:00',
+			endDate: '2026-09-30 23:59:59'
+		});
 		const where = lastWhere();
 		expect(where.$or).toBeUndefined();
 		expect(where.$and).toHaveLength(2);
+		// First half: the time off overlaps the requested window (start or end inside it)
+		expect(where.$and[0].$or).toEqual([
+			{ start: { $gte: '2026-09-01 00:00:00', $lte: '2026-09-30 23:59:59' } },
+			{ end: { $gte: '2026-09-01 00:00:00', $lte: '2026-09-30 23:59:59' } }
+		]);
+		// Second half: any keyword matches the employee's first or last name
 		expect(where.$and[1].$or).toEqual([
 			{ employees: { user: { firstName: { $ilike: '%Ada%' } } } },
 			{ employees: { user: { lastName: { $ilike: '%Ada%' } } } },
