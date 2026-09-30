@@ -15,10 +15,11 @@
         </div>
 
         <div class="form-group">
-          <label class="label">{{ 'APPOINTMENTS_PAGE.EMPLOYEE' | translate }}</label>
+          <span class="label">{{ 'APPOINTMENTS_PAGE.EMPLOYEE' | translate }}</span>
           <ga-employee-selector
             #employeeSelector
             class="employees"
+            [ariaLabel]="'APPOINTMENTS_PAGE.EMPLOYEE' | translate"
             [skipGlobalChange]="true"
             [addTag]="false"
           ></ga-employee-selector>
@@ -33,6 +34,7 @@
         fullWidth
         status="primary"
         size="small"
+        [disabled]="!organization"
         (click)="bookPublicEmployeeAppointment()"
       >
         {{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENT' | translate }}
