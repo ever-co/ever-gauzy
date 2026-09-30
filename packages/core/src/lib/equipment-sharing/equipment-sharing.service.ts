@@ -14,11 +14,16 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, parseSortOrder } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
 import { assertReferencesAreInScope, IReferenceScope } from './reference-scope.helper';
+
+/**
+ * Columns the equipment sharing table can be sorted by. Any other `order` key from the query string is ignored.
+ */
+const SORTABLE_COLUMNS = ['shareRequestDay', 'shareStartDay', 'shareEndDay'] as const;
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
@@ -289,6 +294,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 			const take = filter?.take ?? 10; // Default pagination limit is 10
 			const skip = filter?.skip ? take * (filter.skip - 1) : 0; // Calculate the offset based on the skip value
+			const order = parseSortOrder(filter?.order, SORTABLE_COLUMNS); // Requested sort, sortable columns only
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -309,6 +315,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 							'employees',
 							'teams'
 						] as any[],
+						orderBy: order,
 						limit: take,
 						offset: skip
 					});
@@ -374,6 +381,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 							}
 						})
 					);
+
+					for (const [column, direction] of Object.entries(order)) {
+						query.addOrderBy(`${query.alias}.${column}`, direction);
+					}
 
 					const [items, total] = await query.skip(skip).take(take).getManyAndCount();
 					return { items, total };
