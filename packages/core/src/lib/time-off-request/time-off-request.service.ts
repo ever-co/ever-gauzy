@@ -15,7 +15,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -194,8 +194,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					const where: any = { tenantId };
 
 					if (isNotEmpty(options?.where)) {
-						const { organizationId, employeeIds, isHoliday, includeArchived, status, startDate, endDate } =
-							options.where;
+						const {
+							organizationId,
+							employeeIds,
+							isHoliday,
+							includeArchived,
+							status,
+							startDate,
+							endDate,
+							user,
+							description,
+							policy
+						} = options.where;
 						if (isNotEmpty(organizationId)) where.organizationId = organizationId;
 						if (isNotEmpty(employeeIds)) where.employees = { id: { $in: employeeIds } };
 						if (isNotEmpty(status)) where.status = status;
@@ -211,26 +221,30 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						}
 						where.$or = [{ start: { $gte: sd, $lte: ed } }, { end: { $gte: sd, $lte: ed } }];
 
-						// Text search filters matching TypeORM branch
-						if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
-							const keywords: string[] = where.user.name.split(' ');
+						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
+						if (isNotEmpty(user) && isNotEmpty(user.name)) {
+							// Split on any whitespace and drop empty keywords: an empty one would match every name
+							const keywords: string[] = user.name.trim().split(/\s+/).filter(Boolean);
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
-								userFilters.push({ employees: { user: { firstName: { $ilike: `%${keyword}%` } } } });
-								userFilters.push({ employees: { user: { lastName: { $ilike: `%${keyword}%` } } } });
+								userFilters.push(
+									{ employees: { user: { firstName: mikroOrmContains(keyword) } } },
+									{ employees: { user: { lastName: mikroOrmContains(keyword) } } }
+								);
 							});
-							if (where.$or) {
+							// Only whitespace typed: no keyword, nothing to filter on
+							if (userFilters.length > 0 && where.$or) {
 								where.$and = [{ $or: where.$or }, { $or: userFilters }];
 								delete where.$or;
-							} else {
+							} else if (userFilters.length > 0) {
 								where.$or = userFilters;
 							}
 						}
-						if (isNotEmpty(where.description)) {
-							where.description = { $ilike: `%${where.description}%` };
+						if (isNotEmpty(description)) {
+							where.description = mikroOrmContains(description);
 						}
-						if (isNotEmpty(where.policy) && isNotEmpty(where.policy.name)) {
-							where.policy = { name: { $ilike: `%${where.policy.name}%` } };
+						if (isNotEmpty(policy) && isNotEmpty(policy.name)) {
+							where.policy = { name: mikroOrmContains(policy.name) };
 						}
 					}
 
