@@ -194,8 +194,18 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					const where: any = { tenantId };
 
 					if (isNotEmpty(options?.where)) {
-						const { organizationId, employeeIds, isHoliday, includeArchived, status, startDate, endDate } =
-							options.where;
+						const {
+							organizationId,
+							employeeIds,
+							isHoliday,
+							includeArchived,
+							status,
+							startDate,
+							endDate,
+							user,
+							description,
+							policy
+						} = options.where;
 						if (isNotEmpty(organizationId)) where.organizationId = organizationId;
 						if (isNotEmpty(employeeIds)) where.employees = { id: { $in: employeeIds } };
 						if (isNotEmpty(status)) where.status = status;
@@ -211,9 +221,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						}
 						where.$or = [{ start: { $gte: sd, $lte: ed } }, { end: { $gte: sd, $lte: ed } }];
 
-						// Text search filters matching TypeORM branch
-						if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
-							const keywords: string[] = where.user.name.split(' ');
+						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
+						if (isNotEmpty(user) && isNotEmpty(user.name)) {
+							const keywords: string[] = user.name.split(' ');
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
 								userFilters.push({ employees: { user: { firstName: { $ilike: `%${keyword}%` } } } });
@@ -226,11 +236,11 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 								where.$or = userFilters;
 							}
 						}
-						if (isNotEmpty(where.description)) {
-							where.description = { $ilike: `%${where.description}%` };
+						if (isNotEmpty(description)) {
+							where.description = { $ilike: `%${description}%` };
 						}
-						if (isNotEmpty(where.policy) && isNotEmpty(where.policy.name)) {
-							where.policy = { name: { $ilike: `%${where.policy.name}%` } };
+						if (isNotEmpty(policy) && isNotEmpty(policy.name)) {
+							where.policy = { name: { $ilike: `%${policy.name}%` } };
 						}
 					}
 
