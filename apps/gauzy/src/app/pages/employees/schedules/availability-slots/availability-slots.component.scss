@@ -38,6 +38,27 @@
   .time-range ::ng-deep ga-timer-picker {
     text-transform: lowercase;
     @include ng-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+
+    // Dark filled input like the other forms (ng-select otherwise falls back to
+    // its own white container)
+    .ng-select .ng-select-container {
+      background-color: var(--gauzy-sidebar-background-4) !important;
+      color: var(--text-basic-color);
+    }
+
+    .ng-select .ng-select-container .ng-value-container .ng-placeholder {
+      color: var(--text-hint-color);
+    }
+
+    .ng-select .ng-select-container .ng-value,
+    .ng-select .ng-select-container .ng-input > input {
+      color: var(--text-basic-color) !important;
+    }
+
+    .ng-select .ng-clear-wrapper,
+    .ng-select .ng-arrow-wrapper {
+      color: var(--text-hint-color);
+    }
   }
 }
 :host .custom-calendar {
