@@ -123,9 +123,10 @@
 								@if (form.get('breakTime').value) {
 									<div class="option-fields">
 										<div class="form-group">
-											<label class="label">{{ 'APPOINTMENTS_PAGE.BREAK_START' | translate }}</label>
+											<span class="label">{{ 'APPOINTMENTS_PAGE.BREAK_START' | translate }}</span>
 											<ga-timer-picker
 												name="break_start_time"
+												[ariaLabel]="'APPOINTMENTS_PAGE.BREAK_START' | translate"
 												[min]="form.get('selectedRange').value.start"
 												[max]="form.get('selectedRange').value.end"
 												formControlName="breakStartTime"

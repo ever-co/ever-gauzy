@@ -4,7 +4,16 @@
 			<h5 class="title">{{ 'POP_UPS.SELECT_TIMEZONE' | translate }}</h5>
 			<p class="subtitle">{{ 'POP_UPS.SELECT_TIMEZONE_HINT' | translate }}</p>
 		</div>
-		<button type="button" class="close" nbButton ghost size="small" status="basic" (click)="close()">
+		<button
+			type="button"
+			class="close"
+			nbButton
+			ghost
+			size="small"
+			status="basic"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="close()"
+		>
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>
 	</nb-card-header>
