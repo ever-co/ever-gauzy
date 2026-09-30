@@ -227,8 +227,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							const keywords: string[] = user.name.trim().split(/\s+/).filter(Boolean);
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
-								userFilters.push({ employees: { user: { firstName: mikroOrmContains(keyword) } } });
-								userFilters.push({ employees: { user: { lastName: mikroOrmContains(keyword) } } });
+								userFilters.push(
+									{ employees: { user: { firstName: mikroOrmContains(keyword) } } },
+									{ employees: { user: { lastName: mikroOrmContains(keyword) } } }
+								);
 							});
 							// Only whitespace typed: no keyword, nothing to filter on
 							if (userFilters.length > 0 && where.$or) {
