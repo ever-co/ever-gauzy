@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,
@@ -595,6 +596,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						...(options.relations ? { populate: flatten(options.relations) as any[] } : {}),
 						// An empty order (nothing valid requested) leaves the query unsorted, as before
 						orderBy: parseSortOrder(options.order, SORTABLE_COLUMNS),
+						// "Include deleted": turn off the soft-delete filter, as `withDeleted` does in the TypeORM branch
+						...(options.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {}),
 						offset: options.skip ? options.take * (options.skip - 1) : 0,
 						limit: options.take || 10
 					});
