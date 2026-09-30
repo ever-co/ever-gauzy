@@ -3,6 +3,7 @@
 }
 @if (loaded) {
   <nb-select
+    class="employee-select"
     [formControl]="select"
     [multiple]="multiple"
     (selectedChange)="onMembersSelected($event)"
@@ -11,14 +12,15 @@
     [(selected)]="preSelected"
     [placeholder]="placeholder | translate"
     >
-    @for (employee of employees; track employee) {
-      <nb-option [value]="employee.id">
-        <ngx-avatar
-          size="sm"
-          [src]="employee.user?.imageUrl"
-          [name]="employee.user?.name"
-          [isOption]="true"
-        ></ngx-avatar>
+    @for (employee of employees; track employee.id) {
+      <nb-option class="employee-option" [value]="employee.id">
+        <!-- Initials come from a CSS attribute so nb-select's label (the option's textContent) stays just the name -->
+        <span class="employee-avatar" [attr.data-initials]="getInitials(employee)" aria-hidden="true">
+          @if (employee.user?.imageUrl && !brokenImages.has(employee.id)) {
+            <img [src]="employee.user.imageUrl" alt="" loading="lazy" (error)="brokenImages.add(employee.id)" />
+          }
+        </span>
+        <span class="employee-name" [title]="employee.user?.name">{{ employee.user?.name }}</span>
       </nb-option>
     }
   </nb-select>
