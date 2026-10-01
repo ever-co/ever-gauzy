@@ -114,6 +114,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 					const serialized = await Promise.all(items.map(async (item: any) => {
 						const s = this.serialize(item);
+						// Same field the TypeORM branch selects; the tags page shows it in its Type column
+						s.tagTypeName = s.tagType?.type ?? null;
 						if (s.icon) s.fullIconUrl = await store.getProviderInstance().url(s.icon);
 						return s;
 					}));
@@ -171,57 +173,74 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					query.select(`${query.alias}.*`);
 
 					query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
-					// Add the select statement for counting, and cast it to integer
-					query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
-					query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
-					query.addSelect(p(`CAST(COUNT("employeeLevel"."id") AS INTEGER)`), `employee_level_counter`);
-					query.addSelect(p(`CAST(COUNT("equipment"."id") AS INTEGER)`), `equipment_counter`);
-					query.addSelect(p(`CAST(COUNT("eventType"."id") AS INTEGER)`), `event_type_counter`);
-					query.addSelect(p(`CAST(COUNT("expense"."id") AS INTEGER)`), `expense_counter`);
-					query.addSelect(p(`CAST(COUNT("income"."id") AS INTEGER)`), `income_counter`);
-					query.addSelect(p(`CAST(COUNT("integration"."id") AS INTEGER)`), `integration_counter`);
-					query.addSelect(p(`CAST(COUNT("invoice"."id") AS INTEGER)`), `invoice_counter`);
-					query.addSelect(p(`CAST(COUNT("merchant"."id") AS INTEGER)`), `merchant_counter`);
-					query.addSelect(p(`CAST(COUNT("organization"."id") AS INTEGER)`), `organization_counter`);
+					// Add the select statement for counting, and cast it to integer. DISTINCT is required: the
+					// relations are all LEFT JOINed at once, so each count would otherwise be multiplied by the
+					// matches of every other relation (2 employees + 3 tasks counted 6 + 6).
+					query.addSelect(p(`CAST(COUNT(DISTINCT "candidate"."id") AS INTEGER)`), `candidate_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "employee"."id") AS INTEGER)`), `employee_counter`);
 					query.addSelect(
-						p(`CAST(COUNT("organizationContact"."id") AS INTEGER)`),
+						p(`CAST(COUNT(DISTINCT "employeeLevel"."id") AS INTEGER)`),
+						`employee_level_counter`
+					);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "equipment"."id") AS INTEGER)`), `equipment_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "eventType"."id") AS INTEGER)`), `event_type_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "expense"."id") AS INTEGER)`), `expense_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "income"."id") AS INTEGER)`), `income_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "integration"."id") AS INTEGER)`), `integration_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "invoice"."id") AS INTEGER)`), `invoice_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "merchant"."id") AS INTEGER)`), `merchant_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "organization"."id") AS INTEGER)`), `organization_counter`);
+					query.addSelect(
+						p(`CAST(COUNT(DISTINCT "organizationContact"."id") AS INTEGER)`),
 						`organization_contact_counter`
 					);
 					query.addSelect(
-						p(`CAST(COUNT("organizationDepartment"."id") AS INTEGER)`),
+						p(`CAST(COUNT(DISTINCT "organizationDepartment"."id") AS INTEGER)`),
 						`organization_department_counter`
 					);
 					query.addSelect(
-						p(`CAST(COUNT("organizationEmploymentType"."id") AS INTEGER)`),
+						p(`CAST(COUNT(DISTINCT "organizationEmploymentType"."id") AS INTEGER)`),
 						`organization_employment_type_counter`
 					);
-					query.addSelect(p(`CAST(COUNT("expenseCategory"."id") AS INTEGER)`), `expense_category_counter`);
 					query.addSelect(
-						p(`CAST(COUNT("organizationPosition"."id") AS INTEGER)`),
+						p(`CAST(COUNT(DISTINCT "expenseCategory"."id") AS INTEGER)`),
+						`expense_category_counter`
+					);
+					query.addSelect(
+						p(`CAST(COUNT(DISTINCT "organizationPosition"."id") AS INTEGER)`),
 						`organization_position_counter`
 					);
 					query.addSelect(
-						p(`CAST(COUNT("organizationProject"."id") AS INTEGER)`),
+						p(`CAST(COUNT(DISTINCT "organizationProject"."id") AS INTEGER)`),
 						`organization_project_counter`
 					);
-					query.addSelect(p(`CAST(COUNT("organizationTeam"."id") AS INTEGER)`), `organization_team_counter`);
 					query.addSelect(
-						p(`CAST(COUNT("organizationVendor"."id") AS INTEGER)`),
+						p(`CAST(COUNT(DISTINCT "organizationTeam"."id") AS INTEGER)`),
+						`organization_team_counter`
+					);
+					query.addSelect(
+						p(`CAST(COUNT(DISTINCT "organizationVendor"."id") AS INTEGER)`),
 						`organization_vendor_counter`
 					);
-					query.addSelect(p(`CAST(COUNT("payment"."id") AS INTEGER)`), `payment_counter`);
-					query.addSelect(p(`CAST(COUNT("product"."id") AS INTEGER)`), `product_counter`);
-					query.addSelect(p(`CAST(COUNT("requestApproval"."id") AS INTEGER)`), `request_approval_counter`);
-					query.addSelect(p(`CAST(COUNT("task"."id") AS INTEGER)`), `task_counter`);
-					query.addSelect(p(`CAST(COUNT("user"."id") AS INTEGER)`), `user_counter`);
-					query.addSelect(p(`CAST(COUNT("warehouse"."id") AS INTEGER)`), `warehouse_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "payment"."id") AS INTEGER)`), `payment_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "product"."id") AS INTEGER)`), `product_counter`);
+					query.addSelect(
+						p(`CAST(COUNT(DISTINCT "requestApproval"."id") AS INTEGER)`),
+						`request_approval_counter`
+					);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "task"."id") AS INTEGER)`), `task_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "user"."id") AS INTEGER)`), `user_counter`);
+					query.addSelect(p(`CAST(COUNT(DISTINCT "warehouse"."id") AS INTEGER)`), `warehouse_counter`);
 
 					// Custom Entity Fields: Add select statements for each custom field if they exist
 					if (customFields.length > 0) {
 						customFields.forEach((field) => {
 							if (field.relationType === 'many-to-many') {
 								const selectionAliasName = `${field.name}_counter`;
-								query.addSelect(`CAST(COUNT(${field.name}.id) AS INTEGER)`, selectionAliasName);
+								query.addSelect(
+									`CAST(COUNT(DISTINCT ${field.name}.id) AS INTEGER)`,
+									selectionAliasName
+								);
 							}
 						});
 					}
