@@ -47,6 +47,7 @@ import {
 	RegionsEnum,
 	WeekDaysEnum,
 	IOrganizationTaskSetting,
+	AgentExitLogoutField,
 	isEEAOrUKRegion
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
@@ -85,6 +86,18 @@ export class EditOrganizationOtherSettingsComponent
 			country: this.organization.contact?.country
 		});
 	}
+
+	/**
+	 * A restriction this organization already had while already in EEA/UK: shown as stored, so an
+	 * unrelated save does not silently lift it (it is reported for deliberate review instead).
+	 */
+	private keepExistingAgentRestriction = (field: AgentExitLogoutField): boolean =>
+		this.organization?.[field] === false &&
+		isEEAOrUKRegion({
+			regionCode: this.organization.regionCode,
+			timeZone: this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
 
 	public acknowledgeAgentExitLogoutRestriction: boolean = false;
 
@@ -375,7 +388,7 @@ export class EditOrganizationOtherSettingsComponent
 			.pipe(
 				tap((value: IOrganization['regionCode']) => {
 					this.regionCode = value;
-					applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
+					applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
 				}),
 				untilDestroyed(this)
 			)
@@ -384,7 +397,7 @@ export class EditOrganizationOtherSettingsComponent
 		const timeZone = <FormControl>this.form.get('timeZone');
 		timeZone.valueChanges
 			.pipe(
-				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK)),
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -880,7 +893,7 @@ export class EditOrganizationOtherSettingsComponent
 			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
 		});
 
-		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
+		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
 
 		this.form.updateValueAndValidity();
 

@@ -1,20 +1,33 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
 	BaseEntityEnum,
 	checkAgentExitLogoutRestrictionChange,
 	ID,
 	IOrganization,
-	IOrganizationUpdateInput
+	IOrganizationUpdateInput,
+	isEEAOrUKLocation
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
-import { recordAgentRestrictionAcknowledgement } from '../../../activity-log/agent-restriction-acknowledgement';
+import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { EmployeeService } from '../../../employee/employee.service';
+import {
+	liftEmployeeAgentRestrictions,
+	recordAgentRestrictionAcknowledgement
+} from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
 export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUpdateCommand> {
-	constructor(private readonly organizationService: OrganizationService, private readonly eventBus: EventBus) {}
+	private readonly logger = new Logger(OrganizationUpdateHandler.name);
+
+	constructor(
+		private readonly organizationService: OrganizationService,
+		private readonly activityLogService: ActivityLogService,
+		private readonly moduleRef: ModuleRef
+	) {}
 
 	/**
 	 * Executes the organization update operation.
@@ -54,8 +67,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			country: organization.contact?.country
 		};
 		const location = {
-			regionCode: changes.regionCode !== undefined ? changes.regionCode : previousLocation.regionCode,
-			timeZone: changes.timeZone !== undefined ? changes.timeZone : previousLocation.timeZone,
+			regionCode: changes.regionCode ?? previousLocation.regionCode,
+			timeZone: changes.timeZone ?? previousLocation.timeZone,
 			country: changes.country || previousLocation.country
 		};
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
@@ -68,6 +81,18 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			throw new BadRequestException(restrictionError);
 		}
 		input = changes;
+
+		// Written and awaited before the save: no restriction without its recorded acknowledgement.
+		if (newRestrictions.length > 0) {
+			await recordAgentRestrictionAcknowledgement(this.activityLogService, {
+				entity: BaseEntityEnum.Organization,
+				entityId: id,
+				entityName: organization.name,
+				organizationId: id,
+				tenantId: organization.tenantId,
+				restricted: newRestrictions
+			});
+		}
 
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
@@ -96,15 +121,18 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
 
-		if (newRestrictions.length > 0) {
-			recordAgentRestrictionAcknowledgement(this.eventBus, {
-				entity: BaseEntityEnum.Organization,
-				entityId: id,
-				entityName: organization.name,
-				organizationId: id,
-				tenantId: organization.tenantId,
-				restricted: newRestrictions
-			});
+		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.
+		if (!isEEAOrUKLocation(previousLocation) && isEEAOrUKLocation(location)) {
+			try {
+				await liftEmployeeAgentRestrictions(
+					this.moduleRef.get(EmployeeService, { strict: false }),
+					this.activityLogService,
+					{ tenantId: organization.tenantId, organizationId: id },
+					`organization ${id} moved into the EEA/UK`
+				);
+			} catch (error) {
+				this.logger.error(`Could not lift agent exit/logout restrictions for organization ${id}: ${error?.message}`);
+			}
 		}
 
 		// Return the updated organization entity

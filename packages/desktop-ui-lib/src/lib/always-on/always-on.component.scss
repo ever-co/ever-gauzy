@@ -100,6 +100,9 @@ button {
 	gap: 4px;
 	padding: 2px 4px;
 	cursor: default;
+	// The always-on window is a fixed 270px; the full text is in the tooltip.
+	min-width: 0;
+	flex-shrink: 1;
 
 	.pulse-dot {
 		width: 8px;
@@ -118,6 +121,9 @@ button {
 		font-size: 10px;
 		color: var(--gauzy-text-color-2);
 		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 110px;
 	}
 }
 

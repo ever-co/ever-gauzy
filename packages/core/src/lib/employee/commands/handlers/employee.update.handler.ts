@@ -6,15 +6,22 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
-import { recordAgentRestrictionAcknowledgement } from './../../../activity-log/agent-restriction-acknowledgement';
+import { ActivityLogService } from './../../../activity-log/activity-log.service';
+import {
+	employeeAgentRestrictionLocations,
+	recordAgentRestrictionAcknowledgement
+} from './../../agent-exit-logout-restriction';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
-	constructor(private readonly _employeeService: EmployeeService, private readonly _eventBus: EventBus) {}
+	constructor(
+		private readonly _employeeService: EmployeeService,
+		private readonly _activityLogService: ActivityLogService
+	) {}
 
 	/**
 	 * Handles the execution of the `EmployeeUpdateCommand`.
@@ -46,15 +53,9 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
 			relations: { organization: { contact: true }, user: true, contact: true }
 		});
-		const previousLocation = {
-			regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
-			timeZone: employee?.user?.timeZone || employee?.organization?.timeZone,
-			country: employee?.contact?.country || employee?.organization?.contact?.country
-		};
-		const location = {
-			...previousLocation,
-			country: input.contact?.country || previousLocation.country
-		};
+		// The worker's own location and their organization's: EEA/UK if either is.
+		const previousLocation = employeeAgentRestrictionLocations(employee);
+		const location = employeeAgentRestrictionLocations(employee, input.contact);
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
 			input,
 			employee,
@@ -69,27 +70,26 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const changes: IEmployeeUpdateInput = { ...input };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
 
+		// Written and awaited before the save: no restriction without its recorded acknowledgement.
+		if (newRestrictions.length > 0) {
+			await recordAgentRestrictionAcknowledgement(this._activityLogService, {
+				entity: BaseEntityEnum.Employee,
+				entityId: id,
+				entityName: employee?.user?.name || employee?.fullName || id,
+				organizationId: employee?.organizationId,
+				tenantId: employee?.tenantId,
+				restricted: newRestrictions
+			});
+		}
+
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			const updated = await this._employeeService.create({
+			return await this._employeeService.create({
 				...changes,
 				upworkId: changes.upworkId || null,
 				linkedInId: changes.linkedInId || null,
 				id
 			});
-
-			if (newRestrictions.length > 0) {
-				recordAgentRestrictionAcknowledgement(this._eventBus, {
-					entity: BaseEntityEnum.Employee,
-					entityId: id,
-					entityName: employee?.user?.name || employee?.fullName || id,
-					organizationId: employee?.organizationId,
-					tenantId: employee?.tenantId,
-					restricted: newRestrictions
-				});
-			}
-
-			return updated;
 		} catch (error) {
 			// Handle any errors during the update process
 			if (error instanceof BadRequestException || error instanceof ForbiddenException) {

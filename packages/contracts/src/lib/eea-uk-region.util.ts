@@ -23,11 +23,6 @@ export const EEA_UK_COUNTRY_NAMES: ReadonlySet<string> = new Set([
 	'iceland', 'liechtenstein', 'norway', 'united kingdom', 'uk', 'great britain', 'england', 'scotland', 'wales'
 ]);
 
-const EEA_LANGUAGE_LOCALES: ReadonlySet<string> = new Set([
-	'bg', 'de', 'fr', 'es', 'it', 'nl', 'pl', 'ro', 'hu', 'cs', 'sk', 'sl',
-	'hr', 'da', 'fi', 'sv', 'et', 'lv', 'lt', 'ga', 'mt', 'el'
-]);
-
 export const EEA_UK_TIMEZONES: ReadonlySet<string> = new Set([
 	// Austria
 	'europe/vienna',
@@ -91,9 +86,10 @@ export const EEA_UK_TIMEZONES: ReadonlySet<string> = new Set([
 	'europe/oslo',
 	// UK
 	'europe/london', 'europe/belfast', 'gb', 'gb-eire',
-	// EU dependencies / Microstates with EEA ties
-	'europe/andorra', 'europe/monaco', 'europe/san_marino', 'europe/vatican',
-	'europe/gibraltar', 'europe/guernsey', 'europe/isle_of_man', 'europe/jersey', 'europe/mariehamn'
+	// Åland Islands (Finland)
+	'europe/mariehamn'
+	// Deliberately NOT included: Andorra, Monaco, San Marino, Vatican, Gibraltar, Guernsey,
+	// Isle of Man and Jersey are neither in the EEA nor part of the UK.
 ]);
 
 /**
@@ -122,6 +118,9 @@ export interface IAgentExitLogoutRestrictionInput extends IAgentExitLogoutSettin
 export const EEA_UK_AGENT_RESTRICTION_ERR_MSG =
 	'Workers in the EEA or UK must always be able to exit and log out of the desktop agent, so allowAgentAppExit and allowLogoutFromAgentApp cannot be turned off here.';
 
+export const AGENT_RESTRICTION_ON_CREATE_ERR_MSG =
+	'allowAgentAppExit and allowLogoutFromAgentApp cannot be turned off when creating a record; create it first, then restrict it with an explicit acknowledgement.';
+
 export const ACKNOWLEDGEMENT_REQUIRED_ERR_MSG =
 	'Turning off allowAgentAppExit or allowLogoutFromAgentApp requires an explicit acknowledgement of the legal risk (acknowledgeAgentExitLogoutRestriction: true), which is recorded against your account.';
 
@@ -136,24 +135,24 @@ function checkCountryName(country?: string): boolean {
 	return EEA_UK_COUNTRY_CODES.has(normCountry.toUpperCase()) || EEA_UK_COUNTRY_NAMES.has(normCountry);
 }
 
+/**
+ * `regionCode` is a display locale (`RegionsEnum`), not a location. Only two forms say where
+ * someone is: a region-qualified locale (`en-GB`, `de_DE`), and the `RegionsEnum` keys, whose
+ * labels name a country (`BG` = "Bulgarian (Bulgaria)"). A bare language such as `fr` or `de`
+ * does not, even though it happens to look like a country code.
+ */
+const REGIONS_ENUM_COUNTRY: Readonly<Record<string, string>> = { EN: 'US', BG: 'BG', HE: 'IL', RU: 'RU' };
+
 function checkRegionCode(regionCode?: string): boolean {
 	if (!regionCode) return false;
 	const trimmedRegion = regionCode.trim();
-	const upperRegion = trimmedRegion.toUpperCase();
-
-	if (EEA_UK_COUNTRY_CODES.has(upperRegion)) {
-		return true;
-	}
 
 	if (trimmedRegion.includes('-') || trimmedRegion.includes('_')) {
-		const parts = trimmedRegion.split(/[-_]/);
-		const codePart = (parts[parts.length - 1] || '').toUpperCase();
-		if (EEA_UK_COUNTRY_CODES.has(codePart)) {
-			return true;
-		}
+		const codePart = (trimmedRegion.split(/[-_]/).at(-1) ?? '').toUpperCase();
+		return EEA_UK_COUNTRY_CODES.has(codePart);
 	}
 
-	return EEA_LANGUAGE_LOCALES.has(trimmedRegion.toLowerCase());
+	return EEA_UK_COUNTRY_CODES.has(REGIONS_ENUM_COUNTRY[trimmedRegion.toUpperCase()] ?? '');
 }
 
 function checkTimeZone(timeZone?: string): boolean {
@@ -179,6 +178,15 @@ export function isEEAOrUKRegion(params?: IAgentRestrictionLocation): boolean {
 		checkRegionCode(params.regionCode) ||
 		checkTimeZone(params.timeZone)
 	);
+}
+
+/**
+ * Whether any of the given locations is in the EEA/UK. An employee has two — their own (contact,
+ * user time zone) and their organization's — and one location must not be able to mask the other.
+ */
+export function isEEAOrUKLocation(location?: IAgentRestrictionLocation | IAgentRestrictionLocation[]): boolean {
+	const locations = Array.isArray(location) ? location : [location];
+	return locations.some((loc) => isEEAOrUKRegion(loc));
 }
 
 /**
@@ -214,26 +222,24 @@ export interface IAgentExitLogoutRestrictionCheck {
  *
  * @param input the incoming update
  * @param persisted the entity as currently stored
- * @param location the entity's location after this update
- * @param previousLocation the entity's location before this update
+ * @param location the entity's location(s) after this update
+ * @param previousLocation the entity's location(s) before this update
  */
 export function checkAgentExitLogoutRestrictionChange(
 	input: IAgentExitLogoutRestrictionInput,
 	persisted: IAgentExitLogoutSettings | null | undefined,
-	location: IAgentRestrictionLocation,
-	previousLocation?: IAgentRestrictionLocation
+	location: IAgentRestrictionLocation | IAgentRestrictionLocation[],
+	previousLocation?: IAgentRestrictionLocation | IAgentRestrictionLocation[]
 ): IAgentExitLogoutRestrictionCheck {
 	const newRestrictions = getNewAgentExitLogoutRestrictions(input, persisted);
-	const isEEAOrUK = isEEAOrUKRegion(location);
+	const isEEAOrUK = isEEAOrUKLocation(location);
 
 	if (isEEAOrUK) {
 		if (newRestrictions.length > 0) {
 			return { error: EEA_UK_AGENT_RESTRICTION_ERR_MSG, newRestrictions: [] };
 		}
-		const movingIntoEEAOrUK = !!previousLocation && !isEEAOrUKRegion(previousLocation);
-		const stillRestricted = AGENT_EXIT_LOGOUT_FIELDS.some(
-			(field) => (input[field] !== undefined ? input[field] : persisted?.[field]) === false
-		);
+		const movingIntoEEAOrUK = !!previousLocation && !isEEAOrUKLocation(previousLocation);
+		const stillRestricted = AGENT_EXIT_LOGOUT_FIELDS.some((field) => (input[field] ?? persisted?.[field]) === false);
 		if (movingIntoEEAOrUK && stillRestricted) {
 			return { error: EEA_UK_AGENT_RESTRICTION_ERR_MSG, newRestrictions: [] };
 		}

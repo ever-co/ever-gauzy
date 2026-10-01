@@ -13,17 +13,16 @@
 								<span class="current-session">{{ (counter$ | async)?.current }}</span>
 								<span class="today-time">Today {{ (counter$ | async)?.today }}</span>
 							</div>
-							<div
+							<output
 								class="monitoring-badge"
 								[class.active]="running"
-								role="status"
 								[attr.aria-label]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
 								[nbTooltip]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
 								nbTooltipPlacement="bottom"
 							>
 								<span class="pulse-dot" [class.recording]="running"></span>
 								<span class="monitoring-text">{{ running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate) }}</span>
-							</div>
+							</output>
 							<div class="status" [class.offline]="isOffline$ | async"></div>
 							<button
 								nbButton

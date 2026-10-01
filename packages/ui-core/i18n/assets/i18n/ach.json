@@ -2340,7 +2340,7 @@
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Yub golo pwail ki Agent App",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Yub jami me golo pwail ki Agent App. Ka pe, jami me golo pwail bi gengo i Agent App.",
 				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "EEA / UK worker protection active",
-				"EEA_UK_COMPLIANCE_NOTICE_BODY": "For organizations and workers in the EEA or UK, workers can always exit and log out of the desktop agent. Capture a worker cannot interrupt is hard to justify under GDPR and ECHR Art. 8, so these restrictions are not available here.",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "For organizations and workers in the EEA or UK, workers can always exit and log out of the desktop agent. A capture that a worker cannot interrupt is hard to justify under GDPR and ECHR Art. 8, so these restrictions are not available here.",
 				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirm restricting agent exit or logout",
 				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "With this restriction the worker cannot stop the desktop agent from capturing them. Confirm that you have assessed this as lawful and proportionate for this workforce and that you accept responsibility for it. Your confirmation is recorded against your account.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tii lok me Keyboard kede Mouse",

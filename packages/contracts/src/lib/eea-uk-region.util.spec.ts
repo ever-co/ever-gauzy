@@ -1,5 +1,6 @@
 import {
 	isEEAOrUKRegion,
+	isEEAOrUKLocation,
 	checkAgentExitLogoutRestrictionChange,
 	getNewAgentExitLogoutRestrictions,
 	EEA_UK_AGENT_RESTRICTION_ERR_MSG,
@@ -42,6 +43,12 @@ describe('isEEAOrUKRegion', () => {
 		expect(isEEAOrUKRegion({ regionCode: 'en-US' })).toBe(false);
 	});
 
+	it('does not treat a bare display language as a location', () => {
+		expect(isEEAOrUKRegion({ regionCode: 'fr' })).toBe(false);
+		expect(isEEAOrUKRegion({ regionCode: 'es' })).toBe(false);
+		expect(isEEAOrUKRegion({ regionCode: 'he' })).toBe(false);
+	});
+
 	it('should identify EEA/UK by timeZone', () => {
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/London' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Berlin' })).toBe(true);
@@ -51,6 +58,10 @@ describe('isEEAOrUKRegion', () => {
 		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Azores' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Indian/Reunion' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Zurich' })).toBe(false);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Monaco' })).toBe(false);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Andorra' })).toBe(false);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Jersey' })).toBe(false);
+		expect(isEEAOrUKRegion({ timeZone: 'Europe/Gibraltar' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Kyiv' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Belgrade' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'America/New_York' })).toBe(false);
@@ -130,5 +141,23 @@ describe('checkAgentExitLogoutRestrictionChange', () => {
 	it('rejects moving a restricted entity into EEA/UK unless the restriction is lifted in the same change', () => {
 		expect(checkAgentExitLogoutRestrictionChange({}, RESTRICTED, DE, US).error).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
 		expect(checkAgentExitLogoutRestrictionChange({ ...ALLOWED }, RESTRICTED, DE, US).error).toBeNull();
+	});
+});
+
+describe('isEEAOrUKLocation', () => {
+	it('is EEA/UK when any of several locations is, so one cannot mask another', () => {
+		expect(isEEAOrUKLocation([{ country: 'US' }, { country: 'DE' }])).toBe(true);
+		expect(isEEAOrUKLocation([{ country: 'US' }, { timeZone: 'America/Chicago' }])).toBe(false);
+		expect(isEEAOrUKLocation(undefined)).toBe(false);
+	});
+
+	it('applies to the restriction check', () => {
+		expect(
+			checkAgentExitLogoutRestrictionChange(
+				{ allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true },
+				ALLOWED,
+				[{ country: 'US' }, { country: 'FR' }]
+			).error
+		).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
 	});
 });

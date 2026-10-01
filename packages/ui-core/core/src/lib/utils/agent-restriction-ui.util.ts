@@ -6,13 +6,26 @@ import { AGENT_EXIT_LOGOUT_FIELDS, AgentExitLogoutField } from '@gauzy/contracts
 /**
  * Issue #9873: in EEA/UK the worker must always be able to exit and log out of the desktop agent,
  * so both toggles are forced on and locked. Outside EEA/UK they are editable again.
+ *
+ * One exception mirrors the server: a restriction that ALREADY exists on a record that was ALREADY
+ * in EEA/UK is shown as it is, so an unrelated save does not silently lift it. It stays editable so
+ * the admin can lift it deliberately, and cannot be re-added once lifted (the server rejects that).
+ *
+ * @param keepExisting whether a field holds such a pre-existing EEA/UK restriction
  */
-export function applyEEAUKFormRestrictions(form: FormGroup, isEEAOrUK: boolean): void {
+export function applyEEAUKFormRestrictions(
+	form: FormGroup,
+	isEEAOrUK: boolean,
+	keepExisting: (field: AgentExitLogoutField) => boolean = () => false
+): void {
 	for (const field of AGENT_EXIT_LOGOUT_FIELDS) {
 		const control = form.get(field);
 		if (!control) continue;
 
-		if (isEEAOrUK) {
+		if (isEEAOrUK && keepExisting(field) && control.value === false) {
+			// Not lifted yet: leave it showing, and editable so it can be lifted.
+			control.enable({ emitEvent: false });
+		} else if (isEEAOrUK) {
 			control.setValue(true, { emitEvent: false });
 			control.disable({ emitEvent: false });
 		} else {

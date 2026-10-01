@@ -20,6 +20,14 @@ export function translate(key: string, fallback: string, params?: Record<string,
 	const text = TranslateService.instant(key, params);
 	return text && text !== key ? text : fallback;
 }
+
+/** What the agent captures while tracking, as shown to the worker in the tray (issue #9873). */
+export const MONITORING_CAPTURES = {
+	time: { key: 'TIMER_TRACKER.MONITORING_CAPTURE_TIME', fallback: 'time and active applications' },
+	screenshots: { key: 'TIMER_TRACKER.MONITORING_CAPTURE_SCREENSHOTS', fallback: 'screenshots' },
+	input: { key: 'TIMER_TRACKER.MONITORING_CAPTURE_INPUT', fallback: 'keyboard and mouse activity' }
+} as const;
+export type MonitoringCapture = keyof typeof MONITORING_CAPTURES;
 const mainEvent = MainEvent.getInstance();
 
 class TrayMenu {
@@ -36,7 +44,7 @@ class TrayMenu {
 	private useCommonMenu: boolean;
 	private siteUrls: ISiteUrl;
 	private status = 'Startup';
-	private monitoring: { active: boolean; captures: string[] } = { active: false, captures: [] };
+	private monitoring: { active: boolean; captures: MonitoringCapture[] } = { active: false, captures: [] };
 	static instance: TrayMenu;
 	constructor(trayIconPath: string, useCommonMenu: boolean, siteUrls: ISiteUrl) {
 		if (!TrayMenu.instance) {
@@ -231,22 +239,24 @@ ${this.monitoringText()}`);
 	 * @param active whether tracking is running
 	 * @param captures human-readable list of what is being captured while it runs
 	 */
-	public updateMonitoring(active: boolean, captures: string[]) {
+	public updateMonitoring(active: boolean, captures: MonitoringCapture[]) {
 		this.monitoring = { active, captures };
+		const label = this.monitoringText();
 		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === 'monitoring_status');
-		if (menuIdx !== -1) {
-			this.TrayMenuList[menuIdx].label = this.monitoringText();
+		if (menuIdx !== -1 && this.TrayMenuList[menuIdx].label !== label) {
+			this.TrayMenuList[menuIdx].label = label;
+			this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 		}
-		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
 		this.updateToolTip();
 	}
 
+	/** Localized at render time, so a language change (which rebuilds the menu) is reflected. */
 	private monitoringText(): string {
 		const { active, captures } = this.monitoring;
 		if (!active) {
 			return translate('TIMER_TRACKER.MONITORING_TRAY_PAUSED', 'Monitoring paused: nothing is being captured');
 		}
-		const list = captures.join(', ');
+		const list = captures.map((capture) => translate(MONITORING_CAPTURES[capture].key, MONITORING_CAPTURES[capture].fallback)).join(', ');
 		return translate('TIMER_TRACKER.MONITORING_TRAY_ACTIVE', `Monitoring active, capturing: ${list}`, {
 			captures: list
 		});
@@ -272,6 +282,7 @@ ${this.monitoringText()}`);
 
 	public updateTryMenu() {
 		this.setMenuList([]);
+		this.updateToolTip();
 	}
 
 	build() {

@@ -15,7 +15,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { DEFAULT_TIME_FORMATS } from '@gauzy/constants';
-import { IEmployee, isEEAOrUKRegion } from '@gauzy/contracts';
+import { AgentExitLogoutField, IEmployee, isEEAOrUKLocation } from '@gauzy/contracts';
 import { EmployeeStore, applyEEAUKFormRestrictions, bindAgentRestrictionListeners } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -30,20 +30,36 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 	public acknowledgeAgentExitLogoutRestriction: boolean = false;
 
+	/**
+	 * The worker's own location and their organization's: EEA/UK if either is (same rule as the
+	 * server). The time zone being edited in this form wins over the stored one.
+	 */
 	public get isEEAOrUK(): boolean {
 		if (!this.selectedEmployee) return false;
 		const userTz = this.selectedEmployee.user?.timeZone;
 		const formTz = this.form?.get('timeZone')?.value;
-		const activeTz =
-			userTz ||
-			(formTz && formTz !== moment.tz.guess() ? formTz : undefined) ||
-			this.selectedEmployee.organization?.timeZone;
-		return isEEAOrUKRegion({
-			regionCode: this.selectedEmployee.organization?.regionCode || this.selectedEmployee.contact?.regionCode,
-			timeZone: activeTz,
-			country: this.selectedEmployee.contact?.country || this.selectedEmployee.organization?.contact?.country
-		});
+		if (userTz) {
+			return this._isEEAOrUK(formTz || userTz);
+		}
+		// Without a stored time zone the form falls back to the browser's guess, which is the
+		// admin's location, not the worker's: only count it once it has been changed.
+		return this._isEEAOrUK(formTz && formTz !== moment.tz.guess() ? formTz : undefined);
 	}
+
+	private _isEEAOrUK(timeZone: string | undefined): boolean {
+		const { contact, organization } = this.selectedEmployee;
+		return isEEAOrUKLocation([
+			{ country: contact?.country, regionCode: contact?.regionCode, timeZone },
+			{ country: organization?.contact?.country, regionCode: organization?.regionCode, timeZone: organization?.timeZone }
+		]);
+	}
+
+	/**
+	 * A restriction this worker already had while already in EEA/UK: shown as stored, so an
+	 * unrelated save does not silently lift it (it is reported for deliberate review instead).
+	 */
+	private keepExistingAgentRestriction = (field: AgentExitLogoutField): boolean =>
+		this.selectedEmployee?.[field] === false && this._isEEAOrUK(this.selectedEmployee.user?.timeZone);
 
 	/**
 	 * Nebular Accordion Main Component
@@ -159,7 +175,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		// Reapply EEA/UK form restrictions when the timezone changes
 		this.form.get('timeZone')?.valueChanges
 			.pipe(
-				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK)),
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -204,7 +220,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackAllDisplays: trackAllDisplays ?? true
 		});
 
-		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
+		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
 
 		this.form.updateValueAndValidity();
 	}

@@ -1,4 +1,4 @@
-import TrayMenu, { translate } from "../tray";
+import TrayMenu, { MonitoringCapture } from "../tray";
 import { getTrayIcon, getAppSetting } from '../util';
 import { environment } from '../../environments/environment';
 import { TEventArgs } from './event-types';
@@ -57,12 +57,12 @@ export class TrayNotify {
 	 */
 	private updateTrayMonitoring() {
 		const appSetting = getAppSetting();
-		const captures = [translate('TIMER_TRACKER.MONITORING_CAPTURE_TIME', 'time and active applications')];
+		const captures: MonitoringCapture[] = ['time'];
 		if (appSetting?.allowScreenshotCapture) {
-			captures.push(translate('TIMER_TRACKER.MONITORING_CAPTURE_SCREENSHOTS', 'screenshots'));
+			captures.push('screenshots');
 		}
 		if (appSetting?.kbMouseTracking) {
-			captures.push(translate('TIMER_TRACKER.MONITORING_CAPTURE_INPUT', 'keyboard and mouse activity'));
+			captures.push('input');
 		}
 		this.trayMenu.updateMonitoring(this.running, captures);
 	}

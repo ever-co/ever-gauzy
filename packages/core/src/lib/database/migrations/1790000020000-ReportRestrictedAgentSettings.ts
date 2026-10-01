@@ -102,7 +102,8 @@ export class ReportRestrictedAgentSettings1790000020000 implements MigrationInte
 		}
 	}
 
-	public async down(): Promise<void> {
+	public down(): Promise<void> {
 		console.log(chalk.yellow(`${this.name}: report only, nothing to revert.`));
+		return Promise.resolve();
 	}
 }
