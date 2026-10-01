@@ -1,64 +1,265 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
-.candidate-image {
-  width: 70px;
-  height: 70px;
+// Same shell as the add-employee dialog: header with step bar, a body that
+// scrolls on its own, and a fixed footer holding the step's actions.
+.interview-dialog {
+  width: 720px;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 4rem);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--gauzy-card-1);
+  border: none;
   border-radius: nb-theme(border-radius);
-  object-fit: cover;
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  overflow: hidden;
 }
 
-.candidate-image-small {
-  max-width: 35px;
-  max-height: 35px;
-  border-radius: 13px;
-  margin-right: 4px;
-  margin-left: 4px;
-}
-
-.button-container {
-  justify-content: space-between;
-  flex-direction: row;
+// Header
+.dialog-header {
   display: flex;
-}
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 0;
+  border-bottom: 1px solid var(--gauzy-border-default-color);
 
-.summary {
-  min-width: 45rem;
-}
-
-.employee-name {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.title-icon {
-  color: #8f9bb3 !important;
-  font-size: 16px;
-}
-
-.stepper {
-  max-height: 46rem;
-}
-
-.btn {
-  width: 6rem;
-}
-
-:host {
-  nb-card {
-    background-color: nb-theme(gauzy-card-1);
+  .header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
   }
-  ::ng-deep {
-    ngx-timer-range-picker input.form-control {
-      background: nb-theme(input-basic-background-color) !important;
+
+  .identity {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .candidate-avatar {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  }
+
+  .heading {
+    min-width: 0;
+  }
+
+  .dialog-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5rem;
+    color: nb-theme(text-basic-color);
+  }
+
+  .dialog-subtitle {
+    margin: 0.125rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: nb-theme(text-hint-color);
+  }
+
+  .close {
+    margin: -0.25rem -0.5rem 0 0;
+    color: nb-theme(text-hint-color);
+  }
+
+  // The dialog focuses this button on open; keep the ring for keyboard users only
+  .close:focus:not(:focus-visible) {
+    box-shadow: none;
+    background-color: transparent;
+  }
+}
+
+// Unfilled accent icon next to the title, as on the dashboards
+.title-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--gauzy-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+  nb-icon {
+    font-size: 1.125rem;
+    color: var(--color-primary-default);
+  }
+}
+
+// Step indicator
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--gauzy-border-default-color);
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: nb-theme(text-hint-color);
+  }
+
+  .index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+    nb-icon {
+      font-size: 0.875rem;
+    }
+  }
+
+  .step.active {
+    color: nb-theme(text-basic-color);
+    font-weight: 500;
+
+    .index {
+      color: nb-theme(text-control-color);
+      background-color: nb-theme(color-primary-default);
+      box-shadow: none;
+    }
+  }
+
+  .step.done .index {
+    color: nb-theme(color-primary-default);
+    box-shadow: inset 0 0 0 1px nb-theme(color-primary-default);
+  }
+
+  .connector {
+    flex: 1;
+    height: 1px;
+    min-width: 1rem;
+    background-color: var(--gauzy-border-default-color);
+
+    &.done {
+      background-color: nb-theme(color-primary-default);
+    }
+  }
+
+  // Narrow dialogs: keep every number, name only the current step
+  @media (max-width: 479.98px) {
+    gap: 0.5rem;
+
+    .step:not(.active) .name {
+      display: none;
     }
   }
 }
-.sub-title {
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 13px;
-  letter-spacing: 0em;
+
+// Body — scrolls on its own so header and footer stay visible
+.dialog-body {
+  flex: 1;
+  min-height: 0;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  background-color: transparent;
+
+  .label {
+    display: block;
+    margin-bottom: 0.375rem;
+  }
+}
+
+// Step 1 on a two-column grid so it fits without scrolling. The form component's
+// own wrappers use `display: contents`, which makes its fields grid items here,
+// next to the candidate field that lives in this template.
+.interview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 1rem 1.25rem;
+
+  ::ng-deep {
+    ga-candidate-interview-form,
+    ga-candidate-interview-form > form.form {
+      display: contents;
+    }
+
+    .form-group {
+      margin: 0;
+    }
+
+    // Full-width rows: title (unless the candidate shares its row), date and
+    // times, location and note
+    .title-row,
+    .range-picker,
+    .location-field,
+    .note-field {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // Candidate on the left, title on the right
+  &.with-candidate ::ng-deep .title-row {
+    grid-column: auto;
+  }
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// The custom indicator above replaces Nebular's step header
+.stepper ::ng-deep {
+  .header {
+    display: none !important;
+  }
+
+  .step-content {
+    padding: 0 !important;
+  }
+}
+
+// "Create criterions": the two add cards side by side under the checklist
+.add-criterion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// Footer
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  border-top: 1px solid var(--gauzy-border-default-color);
+
+  .spacer {
+    flex: 1;
+  }
+
+  [nbButton] {
+    text-transform: none;
+  }
+}
+
+:host ::ng-deep ngx-timer-range-picker input.form-control {
+  background: nb-theme(input-basic-background-color) !important;
 }
