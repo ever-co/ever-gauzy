@@ -83,14 +83,23 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		langCode?: LanguagesEnum,
 		relations?: string[],
 		findInput?: IProductFindInput,
-		options = { page: 1, limit: 10 }
+		options: { page?: number | string; limit?: number | string } = {}
 	): Promise<IPagination<Product | IProductTranslated>> {
-		const { items, total } = await this.findAll({
+		const findOptions = {
 			relations: relations,
 			where: {
 				...findInput
 			}
-		} as FindManyOptions<Product>);
+		} as FindManyOptions<Product>;
+
+		// Paginate when a page or a page size is requested (`paginate` treats `skip` as a 1-based page);
+		// without either, keep returning the whole list as before.
+		const page = Number(options.page);
+		const limit = Number(options.limit);
+		const { items, total } =
+			page > 0 || limit > 0
+				? await this.paginate({ ...findOptions, skip: page > 0 ? page : 1, take: limit > 0 ? limit : 10 })
+				: await this.findAll(findOptions);
 		return await this.mapTranslatedProducts(items as any, langCode).then((items) => {
 			return { items, total };
 		});
