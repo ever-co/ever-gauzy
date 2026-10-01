@@ -1,97 +1,84 @@
-<nb-card class="add-criterion-card mb-0">
-  <nb-card-header>
-    <h6>
-      {{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}
-    </h6>
-    <div class="row m-0 mt-2">
-      @if (form) {
-        <form class="col-12 pl-0" [formGroup]="form">
-          <div formArrayName="qualities">
-            @for (
-              quality of qualities?.controls; track
-              quality; let i = $index) {
-              <div
-                >
-                <div [formGroupName]="i">
-                  <input
-                    formControlName="name"
-                    class="col-12"
-                    nbInput
-                    type="text"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.ADD_CANDIDATE_QUALITY'
-										| translate
-								}}"
-                    fullWidth
-                    />
-                  </div>
-                </div>
-              }
-            </div>
-          </form>
-        }
-      </div>
-      <div class="row m-0 mt-3">
-        <span class="col-2 pl-1 pr-0"
-          ><button
-          class="w-100"
-          (click)="cancel()"
-          nbButton
-          outline
-          status="basic"
-          >
-          {{ 'BUTTONS.CANCEL' | translate }}
-        </button></span
-        >
-        <span class="col-2 pl-2 pr-1"
-          ><button
-          class="w-100"
-          nbButton
-          status="success"
-          (click)="save()"
-          >
-          {{ 'BUTTONS.SAVE' | translate }}
-        </button></span
-        >
-      </div>
-    </nb-card-header>
+<section class="criterion-card">
+	<header class="criterion-header">
+		<span class="criterion-icon"><nb-icon icon="person-outline"></nb-icon></span>
+		<h6 class="criterion-title">{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}</h6>
+		<span class="criterion-count">{{ personalQualitiesList?.length || 0 }}</span>
+	</header>
 
-    @if (existedQualNames?.length > 0) {
-      <nb-card-body class="existedNames">
-        <span>{{
-          'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate
-        }}</span>
-        <div class="existedNames-card">
-          @for (name of existedQualNames; track name) {
-            <div class="existedName">
-              {{ name }}
-            </div>
-          }
-        </div>
-      </nb-card-body>
-    }
+	@if (form) {
+		<form class="criterion-form" [formGroup]="form">
+			<div formArrayName="qualities">
+				@for (quality of qualities?.controls; track quality; let i = $index) {
+					<div [formGroupName]="i">
+						<input
+							formControlName="name"
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'FORM.PLACEHOLDERS.ADD_CANDIDATE_QUALITY' | translate }}"
+						/>
+					</div>
+				}
+			</div>
+		</form>
+	}
 
-    <nb-card-body class="qualities">
-      @for (quality of personalQualitiesList; track quality; let i = $index) {
-        <div
-          class="qualities-card"
-          >
-          <div class="quality">
-            <p class="quality-text">{{ quality.name }}</p>
-            <div class="quality-buttons">
-              <nb-icon
-                class="quality-buttons-icons pl-1"
-                icon="edit"
-                (click)="edit(i, quality.id)"
-                ></nb-icon
-                ><nb-icon
-                class="quality-buttons-icons pl-1"
-                icon="close"
-                (click)="remove(quality)"
-              ></nb-icon>
-            </div>
-          </div>
-        </div>
-      }
-    </nb-card-body>
-  </nb-card>
+	<div class="criterion-actions">
+			<button type="button" nbButton ghost status="basic" size="small" (click)="cancel()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		<button type="button" nbButton status="primary" size="small" (click)="save()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+
+	@if (existedQualNames?.length > 0) {
+		<div class="existed">
+			<span class="existed-title">{{ 'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate }}</span>
+			<div class="existed-names">
+				@for (name of existedQualNames; track name) {
+					<span class="existed-name">{{ name }}</span>
+				}
+			</div>
+		</div>
+	}
+
+	@if (personalQualitiesList?.length > 0) {
+		<ul class="criterion-list">
+			@for (quality of personalQualitiesList; track quality; let i = $index) {
+				<li class="criterion-item">
+					<span class="criterion-name">{{ quality.name }}</span>
+					<span class="criterion-item-actions">
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							[attr.aria-label]="'BUTTONS.EDIT' | translate"
+							(click)="edit(i, quality.id)"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							[attr.aria-label]="'BUTTONS.DELETE' | translate"
+							(click)="remove(quality)"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</span>
+				</li>
+			}
+		</ul>
+	} @else {
+		<div class="criterion-empty">
+			<nb-icon icon="person-outline"></nb-icon>
+			<p>{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER' | translate }}</p>
+		</div>
+	}
+</section>

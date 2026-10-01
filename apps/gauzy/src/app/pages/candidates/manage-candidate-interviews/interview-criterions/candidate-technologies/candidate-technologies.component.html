@@ -1,96 +1,84 @@
-<nb-card class="add-criterion-card mb-0">
-  <nb-card-header>
-    <h6>
-      {{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
-    </h6>
-    <div class="row m-0 mt-2">
-      @if (form) {
-        <form class="col-12 pl-0" [formGroup]="form">
-          <div formArrayName="technologies">
-            @for (
-              technology of technologies?.controls; track
-              technology; let i = $index) {
-              <div
-                >
-                <div [formGroupName]="i">
-                  <input
-                    formControlName="name"
-                    class="col-12"
-                    nbInput
-                    type="text"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.ADD_TECHNOLOGY'
-										| translate
-								}}"
-                    fullWidth
-                    />
-                  </div>
-                </div>
-              }
-            </div>
-          </form>
-        }
-      </div>
-      <div class="row m-0 mt-3">
-        <span class="col-2 pl-1 pr-0"
-          ><button
-          class="w-100"
-          (click)="cancel()"
-          nbButton
-          outline
-          status="basic"
-          >
-          {{ 'BUTTONS.CANCEL' | translate }}
-        </button></span
-        >
-        <span class="col-2 pl-2 pr-1"
-          ><button
-          class="w-100"
-          nbButton
-          status="success"
-          (click)="save()"
-          >
-          {{ 'BUTTONS.SAVE' | translate }}
-        </button></span
-        >
-      </div>
-      </nb-card-header
-      >
-      @if (existedTechNames?.length > 0) {
-        <nb-card-body class="existedNames">
-          <span>{{
-            'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate
-          }}</span>
-          <div class="existedNames-card">
-            @for (name of existedTechNames; track name) {
-              <div class="existedName">
-                {{ name }}
-              </div>
-            }
-          </div>
-        </nb-card-body>
-      }
-      <nb-card-body class="technologies">
-        @for (technology of technologiesList; track technology; let i = $index) {
-          <div
-            class="technologies-card"
-            >
-            <div class="technology">
-              <p class="technology-text">{{ technology.name }}</p>
-              <div class="technology-buttons">
-                <nb-icon
-                  class="technology-buttons-icons pl-1"
-                  icon="edit"
-                  (click)="edit(i, technology.id)"
-                  ></nb-icon
-                  ><nb-icon
-                  class="technology-buttons-icons pl-1"
-                  icon="close"
-                  (click)="remove(technology)"
-                ></nb-icon>
-              </div>
-            </div>
-          </div>
-        }
-      </nb-card-body>
-    </nb-card>
+<section class="criterion-card">
+	<header class="criterion-header">
+		<span class="criterion-icon"><nb-icon icon="code-outline"></nb-icon></span>
+		<h6 class="criterion-title">{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}</h6>
+		<span class="criterion-count">{{ technologiesList?.length || 0 }}</span>
+	</header>
+
+	@if (form) {
+		<form class="criterion-form" [formGroup]="form">
+			<div formArrayName="technologies">
+				@for (technology of technologies?.controls; track technology; let i = $index) {
+					<div [formGroupName]="i">
+						<input
+							formControlName="name"
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'FORM.PLACEHOLDERS.ADD_TECHNOLOGY' | translate }}"
+						/>
+					</div>
+				}
+			</div>
+		</form>
+	}
+
+	<div class="criterion-actions">
+			<button type="button" nbButton ghost status="basic" size="small" (click)="cancel()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		<button type="button" nbButton status="primary" size="small" (click)="save()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+
+	@if (existedTechNames?.length > 0) {
+		<div class="existed">
+			<span class="existed-title">{{ 'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate }}</span>
+			<div class="existed-names">
+				@for (name of existedTechNames; track name) {
+					<span class="existed-name">{{ name }}</span>
+				}
+			</div>
+		</div>
+	}
+
+	@if (technologiesList?.length > 0) {
+		<ul class="criterion-list">
+			@for (technology of technologiesList; track technology; let i = $index) {
+				<li class="criterion-item">
+					<span class="criterion-name">{{ technology.name }}</span>
+					<span class="criterion-item-actions">
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							[attr.aria-label]="'BUTTONS.EDIT' | translate"
+							(click)="edit(i, technology.id)"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							[attr.aria-label]="'BUTTONS.DELETE' | translate"
+							(click)="remove(technology)"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</span>
+				</li>
+			}
+		</ul>
+	} @else {
+		<div class="criterion-empty">
+			<nb-icon icon="code-outline"></nb-icon>
+			<p>{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_PLACEHOLDER' | translate }}</p>
+		</div>
+	}
+</section>
