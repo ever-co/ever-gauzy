@@ -10,6 +10,7 @@ import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane-ui';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async-ui';
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
+import { AuthZitadelUiPlugin } from '@gauzy/plugin-auth-zitadel-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -98,6 +99,10 @@ export const uiPluginConfig: PluginUiConfig = {
 
 		// AI Chat — enabled in all builds; visibility is gated at runtime by the
 		// AI_CHAT_ACCESS permission and the backend configuration (/api/ai-chat/config).
-		AiChatReactUiPlugin
+		AiChatReactUiPlugin,
+
+		// Ever ID sign-in pages and Settings > Connected identities. Nothing of it is visible unless
+		// the web app has ZITADEL_AUTH_LINK set and the API reports Ever ID sign-in as enabled.
+		AuthZitadelUiPlugin
 	]
 };
