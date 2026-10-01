@@ -1,7 +1,7 @@
 import {
 	isEEAOrUKRegion,
-	validateAgentExitLogoutRestriction,
-	validateAndUpdateAgentRestrictions,
+	checkAgentExitLogoutRestrictionChange,
+	getNewAgentExitLogoutRestrictions,
 	EEA_UK_AGENT_RESTRICTION_ERR_MSG,
 	ACKNOWLEDGEMENT_REQUIRED_ERR_MSG
 } from './eea-uk-region.util';
@@ -49,6 +49,7 @@ describe('isEEAOrUKRegion', () => {
 		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Canary' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Madeira' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Atlantic/Azores' })).toBe(true);
+		expect(isEEAOrUKRegion({ timeZone: 'Indian/Reunion' })).toBe(true);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Zurich' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Kyiv' })).toBe(false);
 		expect(isEEAOrUKRegion({ timeZone: 'Europe/Belgrade' })).toBe(false);
@@ -62,61 +63,72 @@ describe('isEEAOrUKRegion', () => {
 	});
 });
 
-describe('validateAgentExitLogoutRestriction', () => {
-	it('should return null when exit and logout are allowed', () => {
-		const result = validateAgentExitLogoutRestriction(
-			{ allowAgentAppExit: true, allowLogoutFromAgentApp: true },
-			{ countryCode: 'DE' }
-		);
-		expect(result).toBeNull();
+const DE = { countryCode: 'DE' };
+const US = { countryCode: 'US' };
+const ALLOWED = { allowAgentAppExit: true, allowLogoutFromAgentApp: true };
+const RESTRICTED = { allowAgentAppExit: false, allowLogoutFromAgentApp: false };
+
+describe('getNewAgentExitLogoutRestrictions', () => {
+	it('lists only the settings that go from allowed to denied', () => {
+		expect(getNewAgentExitLogoutRestrictions({ allowAgentAppExit: false }, ALLOWED)).toEqual(['allowAgentAppExit']);
+		expect(getNewAgentExitLogoutRestrictions({ allowAgentAppExit: false, allowLogoutFromAgentApp: true }, undefined)).toEqual([
+			'allowAgentAppExit'
+		]);
 	});
 
-	it('should return EEA/UK error message when restricting in EEA/UK region', () => {
-		const result = validateAgentExitLogoutRestriction(
-			{ allowAgentAppExit: false },
-			{ countryCode: 'DE' }
-		);
-		expect(result).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
-	});
-
-	it('should return acknowledgement error message when non-EEA/UK without acknowledgement', () => {
-		const result = validateAgentExitLogoutRestriction(
-			{ allowAgentAppExit: false },
-			{ countryCode: 'US' }
-		);
-		expect(result).toBe(ACKNOWLEDGEMENT_REQUIRED_ERR_MSG);
-	});
-
-	it('should return null when non-EEA/UK with acknowledgement', () => {
-		const result = validateAgentExitLogoutRestriction(
-			{ allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true },
-			{ countryCode: 'US' }
-		);
-		expect(result).toBeNull();
+	it('does not treat an existing restriction that is echoed back as new', () => {
+		expect(getNewAgentExitLogoutRestrictions(RESTRICTED, RESTRICTED)).toEqual([]);
+		expect(getNewAgentExitLogoutRestrictions({}, RESTRICTED)).toEqual([]);
 	});
 });
 
-describe('validateAndUpdateAgentRestrictions', () => {
-	it('should auto-reset restrictions to true when transitioning to EEA/UK without explicit restriction input', () => {
-		const input: { allowAgentAppExit?: boolean; allowLogoutFromAgentApp?: boolean } = {};
-		const persisted = { allowAgentAppExit: false, allowLogoutFromAgentApp: false };
-		const result = validateAndUpdateAgentRestrictions(input, persisted, { countryCode: 'DE' });
-		expect(result).toBeNull();
-		expect(input.allowAgentAppExit).toBe(true);
-		expect(input.allowLogoutFromAgentApp).toBe(true);
+describe('checkAgentExitLogoutRestrictionChange', () => {
+	it('allows changes that do not restrict anything, anywhere', () => {
+		expect(checkAgentExitLogoutRestrictionChange(ALLOWED, RESTRICTED, DE)).toEqual({ error: null, newRestrictions: [] });
+		expect(checkAgentExitLogoutRestrictionChange({}, ALLOWED, US)).toEqual({ error: null, newRestrictions: [] });
 	});
 
-	it('should return EEA error if user explicitly sets restriction to false in EEA/UK region', () => {
-		const input = { allowAgentAppExit: false };
-		const persisted = { allowAgentAppExit: true };
-		const result = validateAndUpdateAgentRestrictions(input, persisted, { countryCode: 'DE' });
-		expect(result).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+	it('rejects newly restricting exit or logout in EEA/UK, even with an acknowledgement', () => {
+		expect(checkAgentExitLogoutRestrictionChange({ allowAgentAppExit: false }, ALLOWED, DE).error).toBe(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+		expect(
+			checkAgentExitLogoutRestrictionChange(
+				{ allowLogoutFromAgentApp: false, acknowledgeAgentExitLogoutRestriction: true },
+				ALLOWED,
+				DE
+			).error
+		).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
 	});
 
-	it('should return acknowledgement error when non-EEA without acknowledgement', () => {
-		const input = { allowAgentAppExit: false };
-		const persisted = { allowAgentAppExit: true };
-		const result = validateAndUpdateAgentRestrictions(input, persisted, { countryCode: 'US' });
-		expect(result).toBe(ACKNOWLEDGEMENT_REQUIRED_ERR_MSG);
+	it('requires an acknowledgement to newly restrict outside EEA/UK, and reports what it covers', () => {
+		expect(checkAgentExitLogoutRestrictionChange({ allowAgentAppExit: false }, ALLOWED, US).error).toBe(
+			ACKNOWLEDGEMENT_REQUIRED_ERR_MSG
+		);
+		expect(
+			checkAgentExitLogoutRestrictionChange(
+				{ allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true },
+				ALLOWED,
+				US
+			)
+		).toEqual({ error: null, newRestrictions: ['allowAgentAppExit'] });
+	});
+
+	it('does not block or rewrite unrelated updates to an entity that is already restricted', () => {
+		// Outside EEA/UK: no fresh acknowledgement needed to save something else.
+		expect(checkAgentExitLogoutRestrictionChange({}, RESTRICTED, US)).toEqual({ error: null, newRestrictions: [] });
+		expect(checkAgentExitLogoutRestrictionChange({ ...RESTRICTED }, RESTRICTED, US)).toEqual({
+			error: null,
+			newRestrictions: []
+		});
+		// In EEA/UK: an existing restriction is reported for review, not silently migrated.
+		const input: Record<string, unknown> = {};
+		expect(checkAgentExitLogoutRestrictionChange(input, RESTRICTED, DE)).toEqual({ error: null, newRestrictions: [] });
+		expect(input).toEqual({});
+	});
+
+	it('rejects moving a restricted entity into EEA/UK unless the restriction is lifted in the same change', () => {
+		expect(checkAgentExitLogoutRestrictionChange({}, RESTRICTED, DE, US).error).toBe(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+		expect(checkAgentExitLogoutRestrictionChange({ ...ALLOWED }, RESTRICTED, DE, US).error).toBeNull();
 	});
 });

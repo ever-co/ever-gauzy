@@ -112,17 +112,18 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._alwaysOnService.checkTimerStatus$
-			.pipe(
-				tap(() => {
-					this.checkAndRunTimer();
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.checkAndRunTimer();
-
 		if (this.isExpandMode) {
+			// `timer_status` is only answered by the agent, whose widget opens in expand mode; asking
+			// for it from the compact desktop-timer widget would leave `loading` stuck on.
+			this._alwaysOnService.checkTimerStatus$
+				.pipe(
+					tap(() => {
+						this.checkAndRunTimer();
+					}),
+					untilDestroyed(this)
+				)
+				.subscribe();
+			this.checkAndRunTimer();
 			this.renderer.setStyle(document.body, 'background-color', 'transparent');
 			this.renderer.setStyle(document.body, 'overflow', 'hidden');
 			this.isRounded = true;

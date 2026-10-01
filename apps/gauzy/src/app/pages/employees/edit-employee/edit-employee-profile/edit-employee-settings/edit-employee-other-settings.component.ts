@@ -72,6 +72,15 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	/**
 	 * Reveal a settings section from the rail.
 	 *
+	 * The rail used to call `toggle()` on the accordion item and stop there, which
+	 * had two consequences. Clicking the section you were already reading closed it
+	 * — leaving the rail with nothing marked active while its fields were still the
+	 * ones on screen — and, because the sections are one scrolling column, opening
+	 * anything below the fold moved nothing into view, so the lower entries looked
+	 * inert. This is an index into the page, so it opens rather than toggles, and
+	 * brings the section it opened with it. Same behaviour as the organization
+	 * settings rail (`edit-organization-other-settings.component.ts`).
+	 *
 	 * @param item the accordion section the rail entry points at
 	 */
 	openSection(item: NbAccordionItemComponent): void {
@@ -81,6 +90,8 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		if (!item.expanded) {
 			item.open();
 		}
+		// The two `ViewChildren` queries walk the same template in the same order, so
+		// an item's position in one is its element's position in the other.
 		const index = this.accordionItems?.toArray().indexOf(item) ?? -1;
 		if (index < 0) {
 			return;
@@ -139,6 +150,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		bindAgentRestrictionListeners(
 			this.form,
 			() => this.isEEAOrUK,
+			(field) => this.selectedEmployee?.[field],
 			this.translateService,
 			untilDestroyed(this),
 			() => (this.acknowledgeAgentExitLogoutRestriction = true)
@@ -177,23 +189,20 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			trackKeyboardMouseActivity,
 			trackAllDisplays
 		} = employee;
-		this.form.patchValue(
-			{
-				timeZone: user?.timeZone ?? moment.tz.guess(),
-				timeFormat: user?.timeFormat,
-				upworkId,
-				linkedInId,
-				allowManualTime,
-				allowDeleteTime,
-				allowModifyTime,
-				allowScreenshotCapture,
-				allowAgentAppExit: allowAgentAppExit ?? true,
-				allowLogoutFromAgentApp: allowLogoutFromAgentApp ?? true,
-				trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
-				trackAllDisplays: trackAllDisplays ?? true
-			},
-			{ emitEvent: false }
-		);
+		this.form.patchValue({
+			timeZone: user?.timeZone ?? moment.tz.guess(),
+			timeFormat: user?.timeFormat,
+			upworkId,
+			linkedInId,
+			allowManualTime,
+			allowDeleteTime,
+			allowModifyTime,
+			allowScreenshotCapture,
+			allowAgentAppExit: allowAgentAppExit ?? true,
+			allowLogoutFromAgentApp: allowLogoutFromAgentApp ?? true,
+			trackKeyboardMouseActivity: trackKeyboardMouseActivity ?? false,
+			trackAllDisplays: trackAllDisplays ?? true
+		});
 
 		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
 

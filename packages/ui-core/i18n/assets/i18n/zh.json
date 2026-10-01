@@ -2456,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "允许员工退出代理应用程序。禁用时，代理应用中的退出选项将被阻止。",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "允许从代理应用中注销",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "允许员工从代理应用程序注销。禁用时，代理应用中的注销选项将被阻止。",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "欧洲经济区 / 英国员工保护已启用",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "对于欧洲经济区或英国的组织和员工，员工始终可以退出并注销桌面代理。员工无法中断的采集很难依据 GDPR 和《欧洲人权公约》第 8 条证明其正当性，因此此处不提供这些限制。",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "确认限制退出或注销代理",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "启用此限制后，员工无法阻止桌面代理对其进行采集。请确认您已评估此做法对这些员工合法且适度，并愿意为此承担责任。您的确认将记录在您的账户下。",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "跟踪键盘和鼠标活动",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "启用完整的键盘和鼠标活动跟踪，包括在所有桌面应用和代理中的按键和精确鼠标移动。",
 				"TRACK_ALL_DISPLAYS": "跟踪所有显示器",
@@ -4463,6 +4467,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "监控已启用：正在记录时间和活动",
+		"MONITORING_IDLE": "代理空闲",
+		"MONITORING_TRAY_ACTIVE": "监控已启用，正在记录：{{captures}}",
+		"MONITORING_TRAY_PAUSED": "监控已暂停：未记录任何内容",
+		"MONITORING_CAPTURE_TIME": "时间和活动应用程序",
+		"MONITORING_CAPTURE_SCREENSHOTS": "屏幕截图",
+		"MONITORING_CAPTURE_INPUT": "键盘和鼠标活动",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "选择客户",
 			"SELECT_PROJECT": "选择项目",

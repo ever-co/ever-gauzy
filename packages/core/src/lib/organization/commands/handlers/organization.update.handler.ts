@@ -1,15 +1,20 @@
-import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ID, IOrganization, IOrganizationUpdateInput, validateAndUpdateAgentRestrictions } from '@gauzy/contracts';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import {
+	BaseEntityEnum,
+	checkAgentExitLogoutRestrictionChange,
+	ID,
+	IOrganization,
+	IOrganizationUpdateInput
+} from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
+import { recordAgentRestrictionAcknowledgement } from '../../../activity-log/agent-restriction-acknowledgement';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
 export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUpdateCommand> {
-	private readonly logger = new Logger(OrganizationUpdateHandler.name);
-
-	constructor(private readonly organizationService: OrganizationService) {}
+	constructor(private readonly organizationService: OrganizationService, private readonly eventBus: EventBus) {}
 
 	/**
 	 * Executes the organization update operation.
@@ -38,26 +43,31 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			throw new NotFoundException(`Organization with ID ${id} not found.`);
 		}
 
-		const effectiveLocation = {
-			regionCode: input.regionCode !== undefined ? input.regionCode : organization.regionCode,
-			timeZone: input.timeZone !== undefined ? input.timeZone : organization.timeZone,
+		// Issue #9873: EEA/UK organizations may not stop workers exiting or logging out of the agent;
+		// elsewhere doing so requires an explicit acknowledgement, recorded against the admin.
+		// The acknowledgement is a request flag, not an organization column.
+		const changes: IOrganizationUpdateInput = { ...input };
+		delete changes.acknowledgeAgentExitLogoutRestriction;
+		const previousLocation = {
+			regionCode: organization.regionCode,
+			timeZone: organization.timeZone,
 			country: organization.contact?.country
 		};
-
-		const errorMsg = validateAndUpdateAgentRestrictions(input, organization, effectiveLocation);
-		if (errorMsg) {
-			throw new BadRequestException(errorMsg);
+		const location = {
+			regionCode: changes.regionCode !== undefined ? changes.regionCode : previousLocation.regionCode,
+			timeZone: changes.timeZone !== undefined ? changes.timeZone : previousLocation.timeZone,
+			country: changes.country || previousLocation.country
+		};
+		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
+			input,
+			organization,
+			location,
+			previousLocation
+		);
+		if (restrictionError) {
+			throw new BadRequestException(restrictionError);
 		}
-
-		if (
-			(input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) &&
-			input.acknowledgeAgentExitLogoutRestriction
-		) {
-			const currentUserId = RequestContext.currentUserId();
-			this.logger.log(
-				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Organization ID: ${id} at ${new Date().toISOString()}`
-			);
-		}
+		input = changes;
 
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
@@ -85,6 +95,17 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
+
+		if (newRestrictions.length > 0) {
+			recordAgentRestrictionAcknowledgement(this.eventBus, {
+				entity: BaseEntityEnum.Organization,
+				entityId: id,
+				entityName: organization.name,
+				organizationId: id,
+				tenantId: organization.tenantId,
+				restricted: newRestrictions
+			});
+		}
 
 		// Return the updated organization entity
 		return await this.organizationService.findOneByIdString(id);

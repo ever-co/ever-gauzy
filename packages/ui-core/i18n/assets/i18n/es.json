@@ -2458,6 +2458,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Permite al empleado salir de la aplicación del Agente. Cuando esté deshabilitado, la opción de salida estará bloqueada en la aplicación del Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Permitir cerrar sesión de la aplicación del Agente",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permite al empleado cerrar sesión de la aplicación del Agente. Cuando esté deshabilitado, la opción de cierre de sesión estará bloqueada en la aplicación del Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Protección de trabajadores del EEE / Reino Unido activa",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "En organizaciones y para trabajadores del EEE o del Reino Unido, los trabajadores siempre pueden salir y cerrar sesión del agente de escritorio. Una captura que el trabajador no puede interrumpir es difícil de justificar según el RGPD y el art. 8 del CEDH, por lo que estas restricciones no están disponibles aquí.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirmar la restricción de salida o cierre de sesión del agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Con esta restricción, el trabajador no puede impedir que el agente de escritorio lo capture. Confirme que ha evaluado que es lícito y proporcionado para esta plantilla y que asume la responsabilidad. Su confirmación queda registrada en su cuenta.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Rastrear actividad de teclado y ratón",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Habilitar el seguimiento completo de la actividad del teclado y ratón, incluyendo pulsaciones de teclas y movimientos exactos del ratón en todas las aplicaciones de escritorio y de la aplicación del Agente.",
 				"TRACK_ALL_DISPLAYS": "Rastrear todas las pantallas",
@@ -4465,6 +4469,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Supervisión activa: se registran el tiempo y la actividad",
+		"MONITORING_IDLE": "Agente inactivo",
+		"MONITORING_TRAY_ACTIVE": "Supervisión activa, se registra: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Supervisión en pausa: no se registra nada",
+		"MONITORING_CAPTURE_TIME": "tiempo y aplicaciones activas",
+		"MONITORING_CAPTURE_SCREENSHOTS": "capturas de pantalla",
+		"MONITORING_CAPTURE_INPUT": "actividad de teclado y ratón",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Seleccionar cliente",
 			"SELECT_PROJECT": "Seleccionar proyecto",

@@ -91,12 +91,6 @@ button {
 	&.offline {
 		background: var(--color-danger-default);
 	}
-
-	&.recording {
-		background: var(--color-danger-default);
-		box-shadow: 0 0 6px var(--color-danger-default);
-		animation: pulse-ring 1.5s infinite;
-	}
 }
 
 .monitoring-badge {
@@ -105,7 +99,7 @@ button {
 	justify-content: center;
 	gap: 4px;
 	padding: 2px 4px;
-	cursor: pointer;
+	cursor: default;
 
 	.pulse-dot {
 		width: 8px;
@@ -128,7 +122,6 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.status.recording,
 	.monitoring-badge .pulse-dot.recording {
 		animation: none;
 	}

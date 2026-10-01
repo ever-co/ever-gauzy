@@ -1,4 +1,4 @@
-import TrayMenu from "../tray";
+import TrayMenu, { translate } from "../tray";
 import { getTrayIcon, getAppSetting } from '../util';
 import { environment } from '../../environments/environment';
 import { TEventArgs } from './event-types';
@@ -6,6 +6,7 @@ import { TEventArgs } from './event-types';
 export class TrayNotify {
 	private static instance: TrayNotify;
 	private trayMenu: TrayMenu;
+	private running = false;
 
 	constructor() {
 		this.trayMenu = TrayMenu.getInstance(
@@ -41,9 +42,28 @@ export class TrayNotify {
 			const canExit: boolean = !!appSetting?.allowAgentAppExit;
 			this.trayMenu.updateExitVisibility(canExit);
 		}
+		// Capture settings may have changed with the same update.
+		this.updateTrayMonitoring();
 	}
 
 	public updateTrayTimerStatus(running: boolean) {
+		this.running = running;
 		this.trayMenu.updateTimerMenu(running);
+		this.updateTrayMonitoring();
+	}
+
+	/**
+	 * Issue #9873: tell the worker, in the always-present tray, what the agent captures while it runs.
+	 */
+	private updateTrayMonitoring() {
+		const appSetting = getAppSetting();
+		const captures = [translate('TIMER_TRACKER.MONITORING_CAPTURE_TIME', 'time and active applications')];
+		if (appSetting?.allowScreenshotCapture) {
+			captures.push(translate('TIMER_TRACKER.MONITORING_CAPTURE_SCREENSHOTS', 'screenshots'));
+		}
+		if (appSetting?.kbMouseTracking) {
+			captures.push(translate('TIMER_TRACKER.MONITORING_CAPTURE_INPUT', 'keyboard and mouse activity'));
+		}
+		this.trayMenu.updateMonitoring(this.running, captures);
 	}
 }

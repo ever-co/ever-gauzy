@@ -55,6 +55,7 @@ import {
 	OrganizationEditStore,
 	OrganizationTaskSettingService,
 	OrganizationsService,
+	Store,
 	ToastrService,
 	applyEEAUKFormRestrictions,
 	bindAgentRestrictionListeners
@@ -477,6 +478,7 @@ export class EditOrganizationOtherSettingsComponent
 		bindAgentRestrictionListeners(
 			this.form,
 			() => this.isEEAOrUK,
+			(field) => this.organization?.[field],
 			this.translateService,
 			untilDestroyed(this),
 			() => (this.acknowledgeAgentExitLogoutRestriction = true)
@@ -536,8 +538,14 @@ export class EditOrganizationOtherSettingsComponent
 		const { id: organizationId, name } = this.organization;
 
 		try {
+			// `form.value` leaves out disabled controls, which is what keeps e.g. a disabled
+			// `bonusPercentage` from being saved as null. The agent exit/logout toggles are the
+			// exception: in EEA/UK they are disabled AND forced on, and that value must be sent.
+			const { allowAgentAppExit, allowLogoutFromAgentApp } = this.form.getRawValue();
 			const organization: IOrganization = await this._organizationService.update(organizationId, {
-				...this.form.getRawValue(),
+				...this.form.value,
+				allowAgentAppExit,
+				allowLogoutFromAgentApp,
 				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
 			});
 			this.acknowledgeAgentExitLogoutRestriction = false;
@@ -866,14 +874,11 @@ export class EditOrganizationOtherSettingsComponent
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 
-		this.form.patchValue(
-			{
-				...this.organization, // This will patch all matching form controls
-				fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
-				fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
-			},
-			{ emitEvent: false }
-		);
+		this.form.patchValue({
+			...this.organization, // This will patch all matching form controls
+			fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
+			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
+		});
 
 		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK);
 

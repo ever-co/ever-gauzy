@@ -11,6 +11,15 @@ type ISiteUrl = {
 	helpSiteUrl: string;
 };
 const appWindow = AppWindow.getInstance(path.join(__dirname, '..'));
+
+/**
+ * The main-process TranslateService answers the key itself when the preferred language lacks it,
+ * so fall back to English text rather than showing a raw key to the worker.
+ */
+export function translate(key: string, fallback: string, params?: Record<string, string>): string {
+	const text = TranslateService.instant(key, params);
+	return text && text !== key ? text : fallback;
+}
 const mainEvent = MainEvent.getInstance();
 
 class TrayMenu {
@@ -26,6 +35,8 @@ class TrayMenu {
 	private tray: Tray | null = null;
 	private useCommonMenu: boolean;
 	private siteUrls: ISiteUrl;
+	private status = 'Startup';
+	private monitoring: { active: boolean; captures: string[] } = { active: false, captures: [] };
 	static instance: TrayMenu;
 	constructor(trayIconPath: string, useCommonMenu: boolean, siteUrls: ISiteUrl) {
 		if (!TrayMenu.instance) {
@@ -52,6 +63,15 @@ class TrayMenu {
 
 	getCommonMenu(siteUrls: ISiteUrl): MenuItemConstructorOptions[] {
 		return [
+			{
+				// Issue #9873: always tell the monitored worker whether they are being captured, and how.
+				id: 'monitoring_status',
+				label: this.monitoringText(),
+				enabled: false
+			},
+			{
+				type: 'separator'
+			},
 			{
 				id: 'tray_log',
 				label: TranslateService.instant('MENU.DASHBOARD'),
@@ -176,7 +196,8 @@ class TrayMenu {
 		this.tray.setTitle('State: Startup', {
 			fontType: 'monospacedDigit'
 		});
-		this.tray.setToolTip('Agent is starting up');
+		this.tray.setToolTip(`Agent is starting up
+${this.monitoringText()}`);
 	}
 
 	public updateStatus(menuId: 'keyboard_mouse' | 'network' | 'afk', checked: boolean = false) {
@@ -196,10 +217,44 @@ class TrayMenu {
 	}
 
 	public updateTitle(status: 'Working' | 'Error' | 'Startup' | 'Network error' | 'Afk' | 'Idle') {
+		this.status = status;
 		if (this.tray) {
 			this.tray.setTitle(`Status: ${status}`);
-			this.tray.setToolTip(`Agent is ${status}`);
+			this.updateToolTip();
 		}
+	}
+
+	/**
+	 * Keeps the tray's monitoring disclosure current (issue #9873). The tray icon is present for as
+	 * long as the agent runs and cannot be dismissed, so this is the indicator the worker can always see.
+	 *
+	 * @param active whether tracking is running
+	 * @param captures human-readable list of what is being captured while it runs
+	 */
+	public updateMonitoring(active: boolean, captures: string[]) {
+		this.monitoring = { active, captures };
+		const menuIdx = this.TrayMenuList.findIndex((menu) => menu.id === 'monitoring_status');
+		if (menuIdx !== -1) {
+			this.TrayMenuList[menuIdx].label = this.monitoringText();
+		}
+		this.tray?.setContextMenu(Menu.buildFromTemplate(this.TrayMenuList));
+		this.updateToolTip();
+	}
+
+	private monitoringText(): string {
+		const { active, captures } = this.monitoring;
+		if (!active) {
+			return translate('TIMER_TRACKER.MONITORING_TRAY_PAUSED', 'Monitoring paused: nothing is being captured');
+		}
+		const list = captures.join(', ');
+		return translate('TIMER_TRACKER.MONITORING_TRAY_ACTIVE', `Monitoring active, capturing: ${list}`, {
+			captures: list
+		});
+	}
+
+	private updateToolTip() {
+		this.tray?.setToolTip(`Agent is ${this.status}
+${this.monitoringText()}`);
 	}
 
 	public updateTimerMenu(isStarted: boolean) {

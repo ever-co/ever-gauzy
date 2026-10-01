@@ -82,15 +82,7 @@
 					{{ (counter$ | async)?.today }}
 				</div>
 			</div>
-			<div
-				class="status"
-				[class.offline]="isOffline$ | async"
-				[class.recording]="running"
-				role="status"
-				[attr.aria-label]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
-				[nbTooltip]="running ? ('TIMER_TRACKER.MONITORING_ACTIVE' | translate) : ('TIMER_TRACKER.MONITORING_IDLE' | translate)"
-				nbTooltipPlacement="bottom"
-			></div>
+			<div class="status" [class.offline]="isOffline$ | async"></div>
 		</div>
 		}
 	</nb-layout-column>

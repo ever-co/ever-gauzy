@@ -2456,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Consenti al dipendente di uscire dall'applicazione Agente. Quando disabilitato, l'opzione di uscita sarà bloccata nell'app Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Consenti logout dall'app Agent",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Consenti al dipendente di disconnettersi dall'applicazione Agente. Quando disabilitato, l'opzione di logout sarà bloccata nell'app Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Protezione dei lavoratori SEE / Regno Unito attiva",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Per organizzazioni e lavoratori nel SEE o nel Regno Unito, i lavoratori possono sempre uscire e disconnettersi dall'agente desktop. Una registrazione che il lavoratore non può interrompere è difficile da giustificare ai sensi del GDPR e dell'art. 8 CEDU, quindi queste restrizioni non sono disponibili qui.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Conferma la limitazione di uscita o disconnessione dall'agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Con questa limitazione il lavoratore non può impedire all'agente desktop di registrarlo. Conferma di aver valutato questa misura come lecita e proporzionata per questi lavoratori e di assumertene la responsabilità. La conferma viene registrata sul tuo account.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Traccia Attività Tastiera e Mouse",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Abilita il tracciamento completo dell'attività di tastiera e mouse, inclusi i tasti premuti e i movimenti esatti del mouse in tutte le app desktop e agente.",
 				"TRACK_ALL_DISPLAYS": "Traccia tutti i display",
@@ -4463,6 +4467,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoraggio attivo: vengono registrati tempo e attività",
+		"MONITORING_IDLE": "Agente inattivo",
+		"MONITORING_TRAY_ACTIVE": "Monitoraggio attivo, registrazione di: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitoraggio in pausa: non viene registrato nulla",
+		"MONITORING_CAPTURE_TIME": "tempo e applicazioni attive",
+		"MONITORING_CAPTURE_SCREENSHOTS": "screenshot",
+		"MONITORING_CAPTURE_INPUT": "attività di tastiera e mouse",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Seleziona cliente",
 			"SELECT_PROJECT": "Seleziona progetto",

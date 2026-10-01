@@ -1,15 +1,20 @@
-import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
-import { IEmployee, validateAndUpdateAgentRestrictions, PermissionsEnum } from '@gauzy/contracts';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+	BaseEntityEnum,
+	checkAgentExitLogoutRestrictionChange,
+	IEmployee,
+	IEmployeeUpdateInput,
+	PermissionsEnum
+} from '@gauzy/contracts';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
+import { recordAgentRestrictionAcknowledgement } from './../../../activity-log/agent-restriction-acknowledgement';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
-	private readonly logger = new Logger(EmployeeUpdateHandler.name);
-
-	constructor(private readonly _employeeService: EmployeeService) {}
+	constructor(private readonly _employeeService: EmployeeService, private readonly _eventBus: EventBus) {}
 
 	/**
 	 * Handles the execution of the `EmployeeUpdateCommand`.
@@ -36,39 +41,55 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			}
 		}
 
+		// Issue #9873: in EEA/UK a worker must always be able to exit and log out of the agent;
+		// elsewhere restricting either requires an explicit acknowledgement, recorded against the admin.
 		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
 			relations: { organization: { contact: true }, user: true, contact: true }
 		});
-
-		const effectiveLocation = {
+		const previousLocation = {
 			regionCode: employee?.organization?.regionCode || employee?.contact?.regionCode,
-			timeZone: input.user?.timeZone || employee?.user?.timeZone || employee?.organization?.timeZone,
+			timeZone: employee?.user?.timeZone || employee?.organization?.timeZone,
 			country: employee?.contact?.country || employee?.organization?.contact?.country
 		};
-
-		const errorMsg = validateAndUpdateAgentRestrictions(input, employee, effectiveLocation);
-		if (errorMsg) {
-			throw new BadRequestException(errorMsg);
+		const location = {
+			...previousLocation,
+			country: input.contact?.country || previousLocation.country
+		};
+		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
+			input,
+			employee,
+			location,
+			previousLocation
+		);
+		if (restrictionError) {
+			throw new BadRequestException(restrictionError);
 		}
 
-		if (
-			(input.allowAgentAppExit === false || input.allowLogoutFromAgentApp === false) &&
-			input.acknowledgeAgentExitLogoutRestriction
-		) {
-			const currentUserId = RequestContext.currentUserId();
-			this.logger.log(
-				`[AGENT_RESTRICTION_ACKNOWLEDGEMENT] Admin User ${currentUserId} explicitly acknowledged legal/compliance risk for setting exit/logout restriction on Employee ID: ${id} at ${new Date().toISOString()}`
-			);
-		}
+		// The acknowledgement is a request flag, not an employee column.
+		const changes: IEmployeeUpdateInput = { ...input };
+		delete changes.acknowledgeAgentExitLogoutRestriction;
 
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			return await this._employeeService.create({
-				...input,
-				upworkId: input.upworkId || null,
-				linkedInId: input.linkedInId || null,
+			const updated = await this._employeeService.create({
+				...changes,
+				upworkId: changes.upworkId || null,
+				linkedInId: changes.linkedInId || null,
 				id
 			});
+
+			if (newRestrictions.length > 0) {
+				recordAgentRestrictionAcknowledgement(this._eventBus, {
+					entity: BaseEntityEnum.Employee,
+					entityId: id,
+					entityName: employee?.user?.name || employee?.fullName || id,
+					organizationId: employee?.organizationId,
+					tenantId: employee?.tenantId,
+					restricted: newRestrictions
+				});
+			}
+
+			return updated;
 		} catch (error) {
 			// Handle any errors during the update process
 			if (error instanceof BadRequestException || error instanceof ForbiddenException) {

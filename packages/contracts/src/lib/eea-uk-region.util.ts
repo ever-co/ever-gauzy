@@ -47,8 +47,8 @@ export const EEA_UK_TIMEZONES: ReadonlySet<string> = new Set([
 	'europe/tallinn',
 	// Finland
 	'europe/helsinki',
-	// France
-	'europe/paris',
+	// France (incl. EU outermost regions)
+	'europe/paris', 'indian/reunion', 'indian/mayotte', 'america/martinique', 'america/guadeloupe', 'america/cayenne', 'america/marigot',
 	// Germany
 	'europe/berlin', 'europe/busingen',
 	// Greece
@@ -96,11 +96,34 @@ export const EEA_UK_TIMEZONES: ReadonlySet<string> = new Set([
 	'europe/gibraltar', 'europe/guernsey', 'europe/isle_of_man', 'europe/jersey', 'europe/mariehamn'
 ]);
 
+/**
+ * Where a worker (or the organization employing them) is, as far as Gauzy knows it.
+ */
+export interface IAgentRestrictionLocation {
+	regionCode?: string;
+	countryCode?: string;
+	country?: string;
+	timeZone?: string;
+}
+
+/**
+ * The two settings that, set to `false`, stop a monitored worker quitting or logging out of the desktop agent.
+ */
+export const AGENT_EXIT_LOGOUT_FIELDS = ['allowAgentAppExit', 'allowLogoutFromAgentApp'] as const;
+export type AgentExitLogoutField = (typeof AGENT_EXIT_LOGOUT_FIELDS)[number];
+
+export type IAgentExitLogoutSettings = Partial<Record<AgentExitLogoutField, boolean>>;
+
+export interface IAgentExitLogoutRestrictionInput extends IAgentExitLogoutSettings {
+	/** The admin explicitly accepted the legal risk of restricting exit/logout for this change. */
+	acknowledgeAgentExitLogoutRestriction?: boolean;
+}
+
 export const EEA_UK_AGENT_RESTRICTION_ERR_MSG =
-	'In accordance with EEA/UK privacy regulations (GDPR / ECHR Art 8), desktop agent exit and logout restrictions cannot be enabled for workers in EEA/UK tenants.';
+	'Workers in the EEA or UK must always be able to exit and log out of the desktop agent, so allowAgentAppExit and allowLogoutFromAgentApp cannot be turned off here.';
 
 export const ACKNOWLEDGEMENT_REQUIRED_ERR_MSG =
-	'An explicit recorded acknowledgement of legal and proportionality risks is required before restricting agent app exit or logout.';
+	'Turning off allowAgentAppExit or allowLogoutFromAgentApp requires an explicit acknowledgement of the legal risk (acknowledgeAgentExitLogoutRestriction: true), which is recorded against your account.';
 
 function checkCountryCode(countryCode?: string): boolean {
 	if (!countryCode) return false;
@@ -124,7 +147,7 @@ function checkRegionCode(regionCode?: string): boolean {
 
 	if (trimmedRegion.includes('-') || trimmedRegion.includes('_')) {
 		const parts = trimmedRegion.split(/[-_]/);
-		const codePart = parts.at(-1)?.toUpperCase() ?? '';
+		const codePart = (parts[parts.length - 1] || '').toUpperCase();
 		if (EEA_UK_COUNTRY_CODES.has(codePart)) {
 			return true;
 		}
@@ -145,12 +168,7 @@ function checkTimeZone(timeZone?: string): boolean {
  * @param params Object containing optional regionCode, countryCode, country, or timeZone.
  * @returns boolean true if the location corresponds to EEA or UK, false otherwise.
  */
-export function isEEAOrUKRegion(params?: {
-	regionCode?: string;
-	countryCode?: string;
-	country?: string;
-	timeZone?: string;
-}): boolean {
+export function isEEAOrUKRegion(params?: IAgentRestrictionLocation): boolean {
 	if (!params) {
 		return false;
 	}
@@ -164,88 +182,67 @@ export function isEEAOrUKRegion(params?: {
 }
 
 /**
- * Validates agent exit and logout restriction rules for EEA/UK region compliance and required acknowledgements.
- * Returns an error message if validation fails, or null if valid.
+ * The exit/logout settings this change turns from allowed into denied.
+ *
+ * A setting that is already denied and stays denied is NOT a new restriction: re-saving an entity
+ * (or any unrelated update that echoes its current values back) must not require a fresh
+ * acknowledgement, and must not silently lift a restriction an admin has to review deliberately.
  */
-export function validateAgentExitLogoutRestriction(
-	input: {
-		allowAgentAppExit?: boolean;
-		allowLogoutFromAgentApp?: boolean;
-		acknowledgeAgentExitLogoutRestriction?: boolean;
-	},
-	location: {
-		regionCode?: string;
-		countryCode?: string;
-		country?: string;
-		timeZone?: string;
-	}
-): string | null {
-	const isRestrictingExit = input.allowAgentAppExit === false;
-	const isRestrictingLogout = input.allowLogoutFromAgentApp === false;
+export function getNewAgentExitLogoutRestrictions(
+	input: IAgentExitLogoutSettings,
+	persisted?: IAgentExitLogoutSettings | null
+): AgentExitLogoutField[] {
+	return AGENT_EXIT_LOGOUT_FIELDS.filter((field) => input[field] === false && persisted?.[field] !== false);
+}
 
-	if (!isRestrictingExit && !isRestrictingLogout) {
-		return null;
-	}
-
-	if (isEEAOrUKRegion(location)) {
-		return EEA_UK_AGENT_RESTRICTION_ERR_MSG;
-	}
-
-	if (!input.acknowledgeAgentExitLogoutRestriction) {
-		return ACKNOWLEDGEMENT_REQUIRED_ERR_MSG;
-	}
-
-	return null;
+export interface IAgentExitLogoutRestrictionCheck {
+	/** Why the change must be rejected, or `null` when it may proceed. */
+	error: string | null;
+	/** The settings this change newly restricts (non-empty only when an acknowledgement was given). */
+	newRestrictions: AgentExitLogoutField[];
 }
 
 /**
- * Validates merged effective restriction settings against target location.
- * If transitioning to an EEA/UK location without explicit restriction payload fields, auto-resets exit and logout settings to true.
- * Returns error string if validation fails, or null if valid.
+ * Server-side rule for issue #9873, applied to every organization / employee update.
+ *
+ * - In EEA/UK, a change may not newly deny exit or logout, and may not move an entity INTO EEA/UK
+ *   while a restriction remains in force (lift it in the same request instead).
+ * - Elsewhere, newly denying exit or logout requires `acknowledgeAgentExitLogoutRestriction: true`,
+ *   which the caller records against the acting admin.
+ * - Restrictions that already exist are left untouched; they are reported for deliberate review
+ *   (see the `ReportRestrictedAgentSettings` migration) rather than changed by an unrelated save.
+ *
+ * @param input the incoming update
+ * @param persisted the entity as currently stored
+ * @param location the entity's location after this update
+ * @param previousLocation the entity's location before this update
  */
-export function validateAndUpdateAgentRestrictions(
-	input: {
-		allowAgentAppExit?: boolean;
-		allowLogoutFromAgentApp?: boolean;
-		acknowledgeAgentExitLogoutRestriction?: boolean;
-	},
-	persisted: {
-		allowAgentAppExit?: boolean;
-		allowLogoutFromAgentApp?: boolean;
-	} | undefined | null,
-	location: {
-		regionCode?: string;
-		countryCode?: string;
-		country?: string;
-		timeZone?: string;
-	}
-): string | null {
-	const effectiveAllowExit =
-		input.allowAgentAppExit !== undefined ? input.allowAgentAppExit : persisted?.allowAgentAppExit;
-	const effectiveAllowLogout =
-		input.allowLogoutFromAgentApp !== undefined ? input.allowLogoutFromAgentApp : persisted?.allowLogoutFromAgentApp;
+export function checkAgentExitLogoutRestrictionChange(
+	input: IAgentExitLogoutRestrictionInput,
+	persisted: IAgentExitLogoutSettings | null | undefined,
+	location: IAgentRestrictionLocation,
+	previousLocation?: IAgentRestrictionLocation
+): IAgentExitLogoutRestrictionCheck {
+	const newRestrictions = getNewAgentExitLogoutRestrictions(input, persisted);
+	const isEEAOrUK = isEEAOrUKRegion(location);
 
-	const errorMsg = validateAgentExitLogoutRestriction(
-		{
-			allowAgentAppExit: effectiveAllowExit,
-			allowLogoutFromAgentApp: effectiveAllowLogout,
-			acknowledgeAgentExitLogoutRestriction: input.acknowledgeAgentExitLogoutRestriction
-		},
-		location
-	);
-
-	if (errorMsg) {
-		if (
-			isEEAOrUKRegion(location) &&
-			input.allowAgentAppExit === undefined &&
-			input.allowLogoutFromAgentApp === undefined
-		) {
-			input.allowAgentAppExit = true;
-			input.allowLogoutFromAgentApp = true;
-			return null;
+	if (isEEAOrUK) {
+		if (newRestrictions.length > 0) {
+			return { error: EEA_UK_AGENT_RESTRICTION_ERR_MSG, newRestrictions: [] };
 		}
-		return errorMsg;
+		const movingIntoEEAOrUK = !!previousLocation && !isEEAOrUKRegion(previousLocation);
+		const stillRestricted = AGENT_EXIT_LOGOUT_FIELDS.some(
+			(field) => (input[field] !== undefined ? input[field] : persisted?.[field]) === false
+		);
+		if (movingIntoEEAOrUK && stillRestricted) {
+			return { error: EEA_UK_AGENT_RESTRICTION_ERR_MSG, newRestrictions: [] };
+		}
+		return { error: null, newRestrictions: [] };
 	}
 
-	return null;
+	if (newRestrictions.length > 0 && input.acknowledgeAgentExitLogoutRestriction !== true) {
+		return { error: ACKNOWLEDGEMENT_REQUIRED_ERR_MSG, newRestrictions: [] };
+	}
+
+	return { error: null, newRestrictions };
 }
