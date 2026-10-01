@@ -962,8 +962,9 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
  * Splits a free-text search into keywords.
  *
  * Splits on any whitespace and drops empty entries: with `split(' ')`, a trailing or repeated space
- * yields an empty keyword, which becomes a `LIKE '%%'` condition matching every row. The value is
- * stringified first because the query DTO may hand over a non-string (it converts `where` leaves).
+ * yields an empty keyword, which becomes a `LIKE '%%'` condition matching every row. Strings, numbers
+ * and booleans are stringified (the query DTO may hand over a non-string `where` leaf); any other value,
+ * such as an object, yields no keyword rather than a "[object Object]" search.
  *
  * @param text The search text
  * @returns The non-empty keywords
