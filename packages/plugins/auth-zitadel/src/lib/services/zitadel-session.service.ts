@@ -63,7 +63,8 @@ const BIND_RETRY_DELAYS_MS = [1000, 5000];
 @Injectable()
 export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, ZitadelTokenBinder {
 	private readonly logger = new Logger(ZitadelSessionService.name);
-	private timers: NodeJS.Timeout[] = [];
+	/** Every pending timer (pruning, binding retries, revocation follow-ups), cleared on shutdown. */
+	private readonly timers = new Set<NodeJS.Timeout>();
 
 	constructor(
 		@InjectRepository(ZitadelSession) private readonly sessions: Repository<ZitadelSession>,
@@ -74,11 +75,10 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 
 	onModuleInit(): void {
 		const prune = () => this.prune().catch((error) => this.logger.warn(`Pruning failed: ${error?.message ?? error}`));
-		const first = setTimeout(prune, FIRST_PRUNE_DELAY_MS);
+		this.later(prune, FIRST_PRUNE_DELAY_MS);
 		const daily = setInterval(prune, PRUNE_INTERVAL_MS);
-		first.unref();
 		daily.unref();
-		this.timers = [first, daily];
+		this.timers.add(daily);
 		ZitadelTokenBinding.register(this);
 	}
 
@@ -87,7 +87,7 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 		for (const timer of this.timers) {
 			clearTimeout(timer);
 		}
-		this.timers = [];
+		this.timers.clear();
 	}
 
 	/**
@@ -130,13 +130,13 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 			if (!marker?.sessionId) {
 				return;
 			}
-			// Bound once: of two sign-ins racing for the same marker, only one gets the record.
+			// Bound once: the first refresh token after the hand-off gets the record, any later one (or a
+			// sign-in racing for the same marker) finds it taken. The marker itself is left to expire, so a
+			// newer hand-off's marker is never removed by mistake.
 			const result = await this.sessions.update({ id: marker.sessionId, refreshTokenId: IsNull() }, { refreshTokenId: token.id });
 			if (!result?.affected) {
 				return;
 			}
-			// The user's next sign-in, and only that one, belongs to the hand-off.
-			await this.store.delete(BIND_MARKER, markerKey);
 			const row = await this.sessions.findOne({ where: { id: marker.sessionId } });
 			if (row?.isActive === false) {
 				// The identity provider already ended this session: the sign-in must not outlive it.
@@ -145,7 +145,7 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 		} catch (error) {
 			// The marker is still there: try again shortly instead of losing the binding.
 			if (attempt < BIND_RETRY_DELAYS_MS.length) {
-				setTimeout(() => void this.bindRefreshToken(token, attempt + 1), BIND_RETRY_DELAYS_MS[attempt]).unref();
+				this.later(() => this.bindRefreshToken(token, attempt + 1), BIND_RETRY_DELAYS_MS[attempt]);
 			} else {
 				this.logger.error(`Could not bind an Ever ID session to its sign-in: ${error?.message ?? error}`);
 			}
@@ -168,9 +168,9 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 		}
 	}
 
-	/** Whether a logout token id was already accepted (a replay). */
-	async isLogoutJtiKnown(jti: string): Promise<boolean> {
-		return !!(await this.logoutJtis.findOne({ where: { jti }, select: { id: true } }));
+	/** Releases a logout token id reserved for a logout that failed, so the provider can send it again. */
+	async releaseLogoutJti(jti: string): Promise<void> {
+		await this.logoutJtis.delete({ jti });
 	}
 
 	/**
@@ -271,7 +271,17 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 			void run();
 		}
 		for (const delay of FOLLOW_UP_DELAYS_MS) {
-			setTimeout(() => void run(), delay).unref();
+			this.later(run, delay);
 		}
+	}
+
+	/** Runs `task` once after `delay`, unless the plugin stops first. */
+	private later(task: () => unknown, delay: number): void {
+		const timer = setTimeout(() => {
+			this.timers.delete(timer);
+			void task();
+		}, delay);
+		timer.unref();
+		this.timers.add(timer);
 	}
 }

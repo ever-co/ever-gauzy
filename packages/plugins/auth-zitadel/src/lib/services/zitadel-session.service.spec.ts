@@ -157,11 +157,25 @@ describe('ZitadelSessionService', () => {
 		expect(tokens.rows.find((row) => row.id === other.id)?.status).toBe('ACTIVE');
 	});
 
-	it('remembers a logout token id once', async () => {
-		expect(await service.isLogoutJtiKnown('jti-1')).toBe(false);
+	it('reserves a logout token id once, and releases it on request', async () => {
 		expect(await service.rememberLogoutJti('jti-1')).toBe(true);
 		expect(await service.rememberLogoutJti('jti-1')).toBe(false);
-		expect(await service.isLogoutJtiKnown('jti-1')).toBe(true);
+		await service.releaseLogoutJti('jti-1');
+		expect(await service.rememberLogoutJti('jti-1')).toBe(true);
+	});
+
+	it('never lets a sign-in take a record another sign-in already bound', async () => {
+		await service.record('sid-1', [{ id: 'user-1' }]);
+		const first = issueRefreshToken('user-1');
+		await service.bindRefreshToken({ ...first });
+		await service.bindRefreshToken({ ...issueRefreshToken('user-1') });
+		expect(sessions.rows[0]['refreshTokenId']).toBe(first.id);
+
+		// A newer hand-off of the same user is bound to the next sign-in.
+		await service.record('sid-2', [{ id: 'user-1' }]);
+		const second = issueRefreshToken('user-1');
+		await service.bindRefreshToken({ ...second });
+		expect(sessions.rows[1]['refreshTokenId']).toBe(second.id);
 	});
 
 	it('records a sign-in without a session id, so a subject-only logout still ends it', async () => {

@@ -257,8 +257,8 @@ export class InMemorySessions {
 	failNextEnd = false;
 	readonly endedUsers: string[] = [];
 
-	async isLogoutJtiKnown(jti: string): Promise<boolean> {
-		return this.seenJtis.has(jti);
+	async releaseLogoutJti(jti: string): Promise<void> {
+		this.seenJtis.delete(jti);
 	}
 
 	async endSessions(sid: string): Promise<number> {
