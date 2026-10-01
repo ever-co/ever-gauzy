@@ -174,7 +174,9 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 								.where('organizationProjectId', projectId);
 						})
 						.andWhere('kba.organizationId', organizationId)
-						.andWhere('kba.tenantId', tenantId);
+						.andWhere('kba.tenantId', tenantId)
+						// Raw knex bypasses MikroORM's soft-delete filter; TypeORM's query builder excludes these
+						.whereNull('kba.deletedAt');
 
 					// Apply additional where filters
 					if (isNotEmpty(where)) {
