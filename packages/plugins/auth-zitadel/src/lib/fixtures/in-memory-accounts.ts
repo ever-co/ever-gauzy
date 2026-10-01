@@ -161,21 +161,21 @@ export class FakeGauzyAuth implements GauzyAuthPort {
 	readonly registered: ZitadelRegistrationInput[] = [];
 	/** The code the fake accepts. */
 	code = 'ABC123';
-	/** Like Gauzy, a code works only after it was sent, and only once. */
-	private codeOutstanding = false;
+	/** Like Gauzy, a code works only for the address it was sent to, only after it was sent, and once. */
+	private readonly outstanding = new Set<string>();
 
 	constructor(private readonly accounts: InMemoryAccounts) {}
 
 	async sendWorkspaceSigninCode(input: { email: string }): Promise<void> {
 		this.sentCodes.push(input.email);
-		this.codeOutstanding = true;
+		this.outstanding.add(input.email);
 	}
 
 	async signinWorkspacesByMagicCode(payload: { email: string; code: string }): Promise<IUserSigninWorkspaceResponse> {
-		if (!this.codeOutstanding || payload.code !== this.code) {
+		if (!this.outstanding.has(payload.email) || payload.code !== this.code) {
 			throw new UnauthorizedException();
 		}
-		this.codeOutstanding = false;
+		this.outstanding.delete(payload.email);
 		const users = this.accounts.users.filter((user) => user.email === payload.email && user.isActive !== false);
 		return {
 			workspaces: users.map((user) => ({ token: 'gauzy-workspace-token', user: toUser(user) })),
@@ -240,10 +240,8 @@ export class InMemorySessions {
 	readonly ended: string[] = [];
 
 	async record(sid: string | undefined, users: Array<{ id: string }>): Promise<void> {
-		if (sid) {
-			for (const user of users) {
-				this.recorded.push({ sid, userId: user.id });
-			}
+		for (const user of users) {
+			this.recorded.push({ sid: sid ?? '', userId: user.id });
 		}
 	}
 
@@ -259,8 +257,8 @@ export class InMemorySessions {
 	failNextEnd = false;
 	readonly endedUsers: string[] = [];
 
-	async forgetLogoutJti(jti: string): Promise<void> {
-		this.seenJtis.delete(jti);
+	async isLogoutJtiKnown(jti: string): Promise<boolean> {
+		return this.seenJtis.has(jti);
 	}
 
 	async endSessions(sid: string): Promise<number> {
@@ -270,6 +268,9 @@ export class InMemorySessions {
 	}
 
 	async endSessionsOfUsers(userIds: string[]): Promise<number> {
+		if (!userIds.length) {
+			return 0;
+		}
 		this.throwIfFailing();
 		this.endedUsers.push(...userIds);
 		return this.remove((row) => userIds.includes(row.userId));

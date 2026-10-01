@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, LessThan, Repository } from 'typeorm';
+import { In, IsNull, LessThan, Not, Repository } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import { Token } from '@gauzy/core';
@@ -36,8 +36,14 @@ const DEFAULT_SESSION_RETENTION_S = 7 * 24 * 60 * 60;
 /** Longest refresh-token rotation chain followed when a session ends. */
 const MAX_ROTATION_DEPTH = 1000;
 
-/** Retries for revoking a token whose row may not be committed yet, milliseconds. */
-const LATE_REVOCATION_DELAYS_MS = [1000, 5000, 15000];
+/**
+ * Follow-up passes of a revocation, milliseconds: a token row may not be committed yet, and a refresh
+ * running at the same moment may still add a rotated successor.
+ */
+const FOLLOW_UP_DELAYS_MS = [1000, 5000, 15000];
+
+/** Retries of a binding that failed on a transient error, milliseconds. */
+const BIND_RETRY_DELAYS_MS = [1000, 5000];
 
 /**
  * Remembers the Gauzy sessions opened through Ever ID and ends exactly those on a back-channel logout.
@@ -89,12 +95,19 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 	 */
 	async record(sid: string | undefined, users: Array<{ id?: ID; tenantId?: ID | null }>): Promise<void> {
 		const signedIn = users.filter((user) => !!user.id);
-		if (!sid || !signedIn.length) {
+		if (!signedIn.length) {
 			return;
 		}
+		// Recorded without a session id too: a logout token naming only the subject still finds it.
 		const rows = await this.sessions.save(
 			signedIn.map((user) =>
-				this.sessions.create({ sid, userId: user.id, tenantId: user.tenantId ?? null, accessTokenId: null, refreshTokenId: null })
+				this.sessions.create({
+					sid: sid ?? '',
+					userId: user.id,
+					tenantId: user.tenantId ?? null,
+					accessTokenId: null,
+					refreshTokenId: null
+				})
 			)
 		);
 		for (const row of rows) {
@@ -107,23 +120,35 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 	 * {@link SESSION_BIND_WINDOW_MS}) to a refresh token the platform just issued. A rotated token
 	 * belongs to the chain of its predecessor and is not bound itself.
 	 */
-	async bindRefreshToken(token: IssuedPlatformToken): Promise<void> {
+	async bindRefreshToken(token: IssuedPlatformToken, attempt = 0): Promise<void> {
 		if (!token?.id || !token.userId || token.tokenType !== PLATFORM_REFRESH_TOKEN_TYPE || token.rotatedFromTokenId) {
 			return;
 		}
-		// Taken once: the user's next sign-in, and only that one, belongs to the hand-off.
-		const marker = await this.store.take<{ sessionId: ID }>(BIND_MARKER, this.markerKey(token.userId));
-		if (!marker?.sessionId) {
-			return;
-		}
-		const result = await this.sessions.update({ id: marker.sessionId, refreshTokenId: IsNull() }, { refreshTokenId: token.id });
-		if (!result?.affected) {
-			return;
-		}
-		const row = await this.sessions.findOne({ where: { id: marker.sessionId } });
-		if (row?.isActive === false) {
-			// The identity provider already ended this session: the sign-in must not outlive it.
-			this.revokeLate(token.id);
+		try {
+			const markerKey = this.markerKey(token.userId);
+			const marker = await this.store.get<{ sessionId: ID }>(BIND_MARKER, markerKey);
+			if (!marker?.sessionId) {
+				return;
+			}
+			// Bound once: of two sign-ins racing for the same marker, only one gets the record.
+			const result = await this.sessions.update({ id: marker.sessionId, refreshTokenId: IsNull() }, { refreshTokenId: token.id });
+			if (!result?.affected) {
+				return;
+			}
+			// The user's next sign-in, and only that one, belongs to the hand-off.
+			await this.store.delete(BIND_MARKER, markerKey);
+			const row = await this.sessions.findOne({ where: { id: marker.sessionId } });
+			if (row?.isActive === false) {
+				// The identity provider already ended this session: the sign-in must not outlive it.
+				this.revokeWithFollowUps([token.id]);
+			}
+		} catch (error) {
+			// The marker is still there: try again shortly instead of losing the binding.
+			if (attempt < BIND_RETRY_DELAYS_MS.length) {
+				setTimeout(() => void this.bindRefreshToken(token, attempt + 1), BIND_RETRY_DELAYS_MS[attempt]).unref();
+			} else {
+				this.logger.error(`Could not bind an Ever ID session to its sign-in: ${error?.message ?? error}`);
+			}
 		}
 	}
 
@@ -143,9 +168,9 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 		}
 	}
 
-	/** Forgets a logout token id, so the identity provider can retry a logout that failed. */
-	async forgetLogoutJti(jti: string): Promise<void> {
-		await this.logoutJtis.delete({ jti });
+	/** Whether a logout token id was already accepted (a replay). */
+	async isLogoutJtiKnown(jti: string): Promise<boolean> {
+		return !!(await this.logoutJtis.findOne({ where: { jti }, select: { id: true } }));
 	}
 
 	/**
@@ -192,13 +217,21 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 	private async endRows(rows: ZitadelSession[]): Promise<number> {
 		const bound = rows.filter((row) => !!row.refreshTokenId);
 		const pending = rows.filter((row) => !row.refreshTokenId && row.isActive !== false);
-		const revoked = await this.revokeChains(bound.map((row) => row.refreshTokenId));
+		const boundTokens = bound.map((row) => row.refreshTokenId);
+		if (pending.length) {
+			const pendingIds = pending.map((row) => row.id);
+			// Kept, marked as ended: the refresh token their sign-in still produces is revoked on arrival.
+			await this.sessions.update({ id: In(pendingIds) }, { isActive: false, archivedAt: new Date() });
+			// A sign-in may have bound one of them in the meantime, before it could see the mark.
+			const boundMeanwhile = await this.sessions.find({ where: { id: In(pendingIds), refreshTokenId: Not(IsNull()) } });
+			boundTokens.push(...boundMeanwhile.map((row) => row.refreshTokenId));
+		}
+		const revoked = await this.revokeChains(boundTokens);
+		if (boundTokens.length) {
+			this.revokeWithFollowUps(boundTokens, false);
+		}
 		if (bound.length) {
 			await this.sessions.delete({ id: In(bound.map((row) => row.id)) });
-		}
-		if (pending.length) {
-			// Kept, marked as ended: the refresh token their sign-in still produces is revoked on arrival.
-			await this.sessions.update({ id: In(pending.map((row) => row.id)) }, { isActive: false, archivedAt: new Date() });
 		}
 		return revoked;
 	}
@@ -225,16 +258,20 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 	}
 
 	/**
-	 * Revokes a token that was issued after its session ended. The token row may not be committed yet
-	 * when the binding runs, so the revocation is tried again a few times.
+	 * Revokes token chains now (unless `now` is false) and again a few times shortly after: a token row
+	 * may not be committed yet, and a refresh running at the same moment may still add a successor that
+	 * the first walk could not see.
 	 */
-	private revokeLate(tokenId: ID, attempt = 0): void {
-		this.revokeChains([tokenId])
-			.then((revoked) => {
-				if (!revoked && attempt < LATE_REVOCATION_DELAYS_MS.length) {
-					setTimeout(() => this.revokeLate(tokenId, attempt + 1), LATE_REVOCATION_DELAYS_MS[attempt]).unref();
-				}
-			})
-			.catch((error) => this.logger.error(`Could not end a session that Ever ID had signed out: ${error?.message ?? error}`));
+	private revokeWithFollowUps(rootIds: ID[], now = true): void {
+		const run = () =>
+			this.revokeChains(rootIds).catch((error) =>
+				this.logger.error(`Could not end a session that Ever ID had signed out: ${error?.message ?? error}`)
+			);
+		if (now) {
+			void run();
+		}
+		for (const delay of FOLLOW_UP_DELAYS_MS) {
+			setTimeout(() => void run(), delay).unref();
+		}
 	}
 }

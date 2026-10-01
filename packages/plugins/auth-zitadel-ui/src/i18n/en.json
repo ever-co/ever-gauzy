@@ -43,6 +43,7 @@
 		"CONFIRM": "Create a Gauzy workspace with this Ever ID",
 		"CREATE": "Create workspace",
 		"CANCEL": "Cancel",
+		"RETRY": "Try again",
 		"SUBSCRIPTION_REQUIRED": "A subscription is needed before the workspace can be created.",
 		"CONTINUE_TO_CHECKOUT": "Continue to checkout",
 		"AFTER_CHECKOUT": "Use {{ email }} at checkout. Afterwards, come back and choose Sign in with Ever ID to finish creating your workspace."

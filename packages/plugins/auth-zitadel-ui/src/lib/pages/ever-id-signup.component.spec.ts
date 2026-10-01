@@ -83,6 +83,12 @@ describe('EverIdSignupComponent', () => {
 		expect(component.termsUnavailable).toBe(true);
 		component.submit();
 		expect(api.signup).not.toHaveBeenCalled();
+
+		// The person can load them again without reloading the page.
+		terms.getRequiredTermsDocuments.mockReturnValue(of([]));
+		component.loadTerms();
+		expect(component.termsUnavailable).toBe(false);
+		expect(component.canSubmit()).toBe(true);
 	});
 
 	it('signs in once even when the workspace is also chosen by hand', () => {

@@ -181,9 +181,10 @@ export class ConnectedIdentitiesComponent implements OnInit {
 		} else {
 			this.selectedSiblings.delete(userId);
 		}
-		// A new selection needs a new code.
+		// A new selection needs a new code; a message about the old one no longer applies.
 		this.codeRequired = false;
 		this.code = '';
+		this.error = null;
 	}
 
 	confirmLink(): void {
@@ -196,6 +197,7 @@ export class ConnectedIdentitiesComponent implements OnInit {
 					this.busy = false;
 					if (result.code_required) {
 						this.codeRequired = true;
+						this.error = null;
 					} else {
 						this.finishLink('AUTH_ZITADEL.SETTINGS.LINKED');
 					}

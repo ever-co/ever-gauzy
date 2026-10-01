@@ -50,13 +50,16 @@ export function withoutEmail(url: string | undefined): string {
 	}
 	try {
 		const parsed = new URL(url);
-		parsed.searchParams.delete('email');
-		for (const [key, value] of [...parsed.searchParams]) {
-			const tail = value.indexOf('?email=');
-			if (tail >= 0) {
-				parsed.searchParams.set(key, value.slice(0, tail));
+		// Rebuilt entry by entry, so repeated parameters keep every value.
+		const kept = new URLSearchParams();
+		for (const [key, value] of parsed.searchParams) {
+			if (key === 'email') {
+				continue;
 			}
+			const tail = value.indexOf('?email=');
+			kept.append(key, tail >= 0 ? value.slice(0, tail) : value);
 		}
+		parsed.search = kept.toString();
 		const result = parsed.toString();
 		return /@|%40/i.test(result) ? `${parsed.origin}${parsed.pathname}` : result;
 	} catch {

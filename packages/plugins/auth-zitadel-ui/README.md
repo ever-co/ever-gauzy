@@ -32,9 +32,11 @@ The Settings entry stays hidden unless the web app has `ZITADEL_AUTH_LINK`
 set and the API reports Ever ID sign-in as enabled
 (`GET /api/auth/zitadel/config`); the Ever ID button on the login and
 register pages lives in `@gauzy/ui-auth` and follows the same rule. The
-sign-in pages are only reached from an Ever ID sign-in; opened directly
-without a key they show the expiry message. Settings > Connected identities,
-opened directly while Ever ID sign-in is off, says that it is not enabled.
+sign-in pages are only reached from an Ever ID sign-in: opened directly
+without a key, the hand-off page reports a failed sign-in and the
+confirmation and sign-up pages show the expiry message. Settings > Connected
+identities, opened directly while Ever ID sign-in is off, says that it is not
+enabled.
 
 ## Build and test
 

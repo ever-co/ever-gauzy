@@ -70,6 +70,9 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 						</nb-checkbox>
 						@if (termsUnavailable) {
 							<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.try_again' | translate }}</nb-alert>
+							<button nbButton ghost fullWidth type="button" (click)="loadTerms()">
+								{{ 'AUTH_ZITADEL.SIGNUP.RETRY' | translate }}
+							</button>
 						}
 						@if (failed) {
 							<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.sign_in_failed' | translate }}</nb-alert>
@@ -145,6 +148,12 @@ export class EverIdSignupComponent implements OnInit {
 					this.cdr.markForCheck();
 				}
 			});
+		this.loadTerms();
+	}
+
+	/** Loads the documents Gauzy currently requires (again, after a failure). */
+	loadTerms(): void {
+		this.termsUnavailable = false;
 		this.authService
 			.getRequiredTermsDocuments(this.translate.currentLang)
 			.pipe(takeUntilDestroyed(this.destroyRef))

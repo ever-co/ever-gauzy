@@ -8,11 +8,11 @@ import { unverifiedIssuer } from './zitadel-token-signin.service';
 /**
  * Handles OpenID Connect back-channel logout requests.
  *
- * A token that fails validation or repeats a `jti` answers 400 and changes nothing. A token naming a
- * session (`sid`) ends the Gauzy sessions opened through that session; a token naming only a subject
- * ends every Gauzy session opened through Ever ID by the accounts linked to that subject. The answer
- * is 200 only once the sessions are ended; when ending them fails, the `jti` is forgotten and the
- * answer is 503, so the identity provider can send the same logout again.
+ * A token that fails validation or repeats an accepted `jti` answers 400 and changes nothing. A token
+ * naming a session (`sid`) ends the Gauzy sessions opened through that session; a token naming only a
+ * subject ends every Gauzy session opened through Ever ID by the accounts linked to that subject.
+ * The `jti` is remembered only once the sessions are ended, so when ending them fails the answer is
+ * 503 and the identity provider can send the same logout again (ending sessions twice is harmless).
  */
 @Injectable()
 export class ZitadelBackchannelService {
@@ -38,7 +38,7 @@ export class ZitadelBackchannelService {
 			this.logger.warn(`Back-channel logout refused: ${isOidcError(error) ? error.code : 'invalid token'}`);
 			throw new BadRequestException();
 		}
-		if (!(await this.sessions.rememberLogoutJti(token.jti))) {
+		if (await this.sessions.isLogoutJtiKnown(token.jti)) {
 			this.logger.warn('Back-channel logout refused: replayed token.');
 			throw new BadRequestException();
 		}
@@ -52,8 +52,12 @@ export class ZitadelBackchannelService {
 			}
 		} catch (error) {
 			this.logger.error(`Back-channel logout could not end the sessions: ${error?.message ?? error}`);
-			await this.sessions.forgetLogoutJti(token.jti).catch(() => undefined);
 			throw new ServiceUnavailableException();
 		}
+		// The logout succeeded. A concurrent copy of the same token may have been remembered first, and a
+		// failure to remember it only weakens replay protection for this harmless operation.
+		await this.sessions.rememberLogoutJti(token.jti).catch((error) => {
+			this.logger.warn(`Back-channel logout token id not remembered: ${error?.message ?? error}`);
+		});
 	}
 }

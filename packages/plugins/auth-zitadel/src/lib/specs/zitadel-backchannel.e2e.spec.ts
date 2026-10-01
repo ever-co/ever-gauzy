@@ -61,7 +61,7 @@ describe('Back-channel logout (HTTP, against a mock OpenID Provider)', () => {
 		expect(t.sessions.recorded).toEqual([]);
 	});
 
-	it('answers 503 when the sessions cannot be ended, and accepts the same logout again', async () => {
+	it('answers 503 when the sessions cannot be ended, and accepts the same logout again (remembered only after success)', async () => {
 		t.sessions.failNextEnd = true;
 		expect((await post(logoutClaims())).status).toBe(503);
 		expect((await post(logoutClaims())).status).toBe(200);

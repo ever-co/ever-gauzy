@@ -8,26 +8,28 @@ import { ZitadelStoreService } from './zitadel-store.service';
 
 type Row = Record<string, any>;
 
-/** Matches a row against a TypeORM `where` object, for the operators the session service uses. */
-function matches(row: Row, where: Row): boolean {
-	return Object.entries(where).every(([key, expected]) => {
-		const actual = row[key];
-		if (expected instanceof FindOperator) {
-			switch (expected.type) {
-				case 'in':
-					return (expected.value as unknown[]).includes(actual);
-				case 'isNull':
-					return actual === null || actual === undefined;
-				case 'moreThanOrEqual':
-					return actual >= expected.value;
-				case 'lessThan':
-					return actual < expected.value;
-				default:
-					throw new Error(`Operator ${expected.type} is not supported by the fake repository`);
-			}
-		}
+/** Matches one column value, for the TypeORM operators the session service uses. */
+function matchesValue(actual: unknown, expected: unknown): boolean {
+	if (!(expected instanceof FindOperator)) {
 		return actual === expected;
-	});
+	}
+	switch (expected.type) {
+		case 'in':
+			return (expected.value as unknown[]).includes(actual);
+		case 'isNull':
+			return actual === null || actual === undefined;
+		case 'not':
+			return !matchesValue(actual, expected.child ?? expected.value);
+		case 'lessThan':
+			return (actual as number) < (expected.value as number);
+		default:
+			throw new Error(`Operator ${expected.type} is not supported by the fake repository`);
+	}
+}
+
+/** Matches a row against a TypeORM `where` object. */
+function matches(row: Row, where: Row): boolean {
+	return Object.entries(where).every(([key, expected]) => matchesValue(row[key], expected));
 }
 
 /** The slice of a TypeORM repository the session service uses, in memory. */
@@ -155,11 +157,49 @@ describe('ZitadelSessionService', () => {
 		expect(tokens.rows.find((row) => row.id === other.id)?.status).toBe('ACTIVE');
 	});
 
-	it('remembers a logout token id once, and forgets it on request', async () => {
+	it('remembers a logout token id once', async () => {
+		expect(await service.isLogoutJtiKnown('jti-1')).toBe(false);
 		expect(await service.rememberLogoutJti('jti-1')).toBe(true);
 		expect(await service.rememberLogoutJti('jti-1')).toBe(false);
-		await service.forgetLogoutJti('jti-1');
-		expect(await service.rememberLogoutJti('jti-1')).toBe(true);
+		expect(await service.isLogoutJtiKnown('jti-1')).toBe(true);
+	});
+
+	it('records a sign-in without a session id, so a subject-only logout still ends it', async () => {
+		await service.record(undefined, [{ id: 'user-1' }]);
+		const token = issueRefreshToken('user-1');
+		await service.bindRefreshToken({ ...token });
+		await service.endSessionsOfUsers(['user-1']);
+		expect(tokens.rows.find((row) => row.id === token.id)?.status).toBe('REVOKED');
+	});
+
+	it('also revokes a sign-in that bound its record while the logout was marking it ended', async () => {
+		await service.record('sid-1', [{ id: 'user-1' }]);
+		const token = issueRefreshToken('user-1');
+		// The binding lands between the logout reading the record (unbound) and marking it ended.
+		const update = sessions.update.bind(sessions);
+		jest.spyOn(sessions, 'update').mockImplementation(async (where: Row, patch: Row) => {
+			if (patch['isActive'] === false) {
+				await service.bindRefreshToken({ ...token });
+			}
+			return update(where, patch);
+		});
+		await service.endSessions('sid-1');
+		expect(tokens.rows.find((row) => row.id === token.id)?.status).toBe('REVOKED');
+	});
+
+	it('keeps the binding marker when binding fails, and binds on the retry', async () => {
+		jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] });
+		try {
+			await service.record('sid-1', [{ id: 'user-1' }]);
+			const token = issueRefreshToken('user-1');
+			jest.spyOn(sessions, 'update').mockRejectedValueOnce(new Error('database unavailable'));
+			await service.bindRefreshToken({ ...token });
+			expect(sessions.rows[0]['refreshTokenId']).toBeNull();
+			await jest.advanceTimersByTimeAsync(1000);
+			expect(sessions.rows[0]['refreshTokenId']).toBe(token.id);
+		} finally {
+			jest.useRealTimers();
+		}
 	});
 
 	it('receives fresh refresh tokens through the entity subscriber once the plugin started', async () => {

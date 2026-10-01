@@ -28,6 +28,9 @@ describe('Ever ID plugin helpers', () => {
 			'https://ever.example.test/checkout?plan=gauzy'
 		);
 		expect(withoutEmail('https://ever.example.test/checkout?ref=a@b.test')).toBe('https://ever.example.test/checkout');
+		expect(withoutEmail('https://ever.example.test/checkout?item=a&item=b?email=a%40b.test')).toBe(
+			'https://ever.example.test/checkout?item=a&item=b'
+		);
 		expect(withoutEmail('not a url')).toBe('');
 		expect(withoutEmail(undefined)).toBe('');
 	});

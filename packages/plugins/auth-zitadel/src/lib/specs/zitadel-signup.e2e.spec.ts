@@ -85,18 +85,27 @@ describe('Ever Cloud confirmed sign-up (HTTP, against a mock OpenID Provider)', 
 		});
 
 		it('requires every document Gauzy currently requires before creating anything', async () => {
-			const document = { documentId: 'terms', version: '2', sha256: 'a'.repeat(64), locale: 'en' };
-			t.terms.required = [{ ...document, url: '/legal/terms', title: 'Terms', effectiveDate: '2026-01-01' } as never];
+			const terms = { documentId: 'terms', version: '2', sha256: 'a'.repeat(64), locale: 'en' };
+			const privacy = { documentId: 'privacy', version: '1', sha256: 'b'.repeat(64), locale: 'en' };
+			t.terms.required = [terms, privacy].map((document) => ({ ...document, url: '/legal', title: document.documentId }) as never);
 			const landing = await signIn('new-person', { email: 'new.person@example.test' });
 			const handoff = hashParam(landing, 'handoff');
 
 			const without = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true });
 			expect(without.status).toBe(400);
+			const onlyOne = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true, terms: [terms] });
+			expect(onlyOne.status).toBe(400);
+			const olderVersion = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, {
+				handoff,
+				confirm: true,
+				terms: [{ ...terms, version: '1' }, privacy]
+			});
+			expect(olderVersion.status).toBe(400);
 			expect(t.gauzyAuth.registered).toHaveLength(0);
 
-			const accepted = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true, terms: [document] });
+			const accepted = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true, terms: [terms, privacy] });
 			expect(accepted.status).toBe(200);
-			expect(t.gauzyAuth.registered).toEqual([expect.objectContaining({ terms: [document] })]);
+			expect(t.gauzyAuth.registered).toEqual([expect.objectContaining({ terms: [terms, privacy] })]);
 		});
 
 		it('keeps a confirmed sign-up resumable when a step fails, and never registers twice', async () => {
