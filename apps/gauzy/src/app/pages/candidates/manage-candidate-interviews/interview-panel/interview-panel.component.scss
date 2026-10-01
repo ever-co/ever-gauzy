@@ -10,6 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 1rem;
 
   .btn {
     display: flex;
@@ -20,7 +21,44 @@
 }
 
 .select {
-  width: 18rem;
+  width: 15rem;
+}
+
+// Compact filter row: 32px select, 12px labels, 16px checkboxes
+:host .card-header {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+
+  // The checkbox group is a `.btn` (a legacy class name), so Bootstrap gives it
+  // button padding and margin that made the row 46px tall around a 32px select
+  .header .btn {
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  ::ng-deep .header {
+    nb-select .select-button {
+      min-height: 2rem !important;
+      height: 2rem;
+      padding-top: 0;
+      padding-bottom: 0;
+      // `!important`: the empty state carries `.placeholder`, whose font rule is more specific
+      font-size: 0.75rem !important;
+    }
+
+    nb-checkbox {
+      .text {
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .custom-checkbox {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+  }
 }
 .btn {
   margin: 0.2rem;
