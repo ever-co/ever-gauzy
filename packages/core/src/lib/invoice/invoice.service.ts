@@ -40,8 +40,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+				// Raw knex bypasses the soft-delete filter that TypeORM's query builder applies
 				const result = await knex('invoice')
 					.where('isEstimate', false)
+					.whereNull('deletedAt')
 					.count('id as count')
 					.sum('totalValue as amount')
 					.first();
