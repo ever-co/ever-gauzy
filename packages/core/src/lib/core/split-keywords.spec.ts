@@ -23,4 +23,8 @@ describe('splitKeywords', () => {
 	it('accepts a non-string value without throwing', () => {
 		expect(splitKeywords(123)).toEqual(['123']);
 	});
+
+	it('returns no keyword for an object instead of searching "[object Object]"', () => {
+		expect(splitKeywords({ name: 'Ada' })).toEqual([]);
+	});
 });

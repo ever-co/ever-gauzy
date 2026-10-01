@@ -969,7 +969,10 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
  * @returns The non-empty keywords
  */
 export function splitKeywords(text: unknown): string[] {
-	return String(text ?? '')
+	if (typeof text !== 'string' && typeof text !== 'number' && typeof text !== 'boolean') {
+		return [];
+	}
+	return String(text)
 		.trim()
 		.split(/\s+/)
 		.filter(Boolean);
