@@ -1261,7 +1261,12 @@
 		"reimplementation",
 		"strategized",
 		"unwindowed",
-		"internmap"
+		"internmap",
+		"zitadel",
+		"backchannel",
+		"resourceowner",
+		"jtis",
+		"reauth"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
