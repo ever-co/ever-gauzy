@@ -366,8 +366,22 @@
                       </form>
                       @if (shouldLoadTable) {
                         <div class="items">
+                          <div class="mb-2">
+                            <button
+                              type="button"
+                              nbButton
+                              status="success"
+                              size="small"
+                              [disabled]="loading || itemsTable.grid?.createFormShown"
+                              (click)="itemsTable.grid.showCreateForm()"
+                            >
+                              <nb-icon icon="plus-outline"></nb-icon>
+                              {{ 'BUTTONS.ADD' | translate }}
+                            </button>
+                          </div>
                           <div class="table-scroll-container custom-table">
                             <angular2-smart-table
+                              #itemsTable
                               [class.ga-table-loading]="loading"
                               class="table"
                               style="cursor: pointer"
