@@ -193,6 +193,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		const order = parseSortOrder(options?.order, SORTABLE_COLUMNS);
 		const hasOrder = Object.keys(order).length > 0;
 
+		// "Include Archived" unchecked hides archived requests; checked (or not sent) adds no filter.
+		// The query DTO JSON-parses `where` values, so the flag arrives as a boolean (or a string when called directly).
+		const hideArchived = [false, 'false'].includes(options?.where?.includeArchived);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -204,7 +208,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							organizationId,
 							employeeIds,
 							isHoliday,
-							includeArchived,
 							status,
 							startDate,
 							endDate,
@@ -217,7 +220,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						if (isNotEmpty(status)) where.status = status;
 						if (isNotEmpty(isHoliday) && isNotEmpty(Boolean(JSON.parse(isHoliday))))
 							where.isHoliday = false;
-						if (isNotEmpty(includeArchived)) where.isArchived = Boolean(JSON.parse(includeArchived));
+						if (hideArchived) where.isArchived = false;
 
 						let sd = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
 						let ed = moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
@@ -330,10 +333,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {
 								qb.andWhere({ isHoliday: false });
 							}
-							if (isNotEmpty(where.includeArchived)) {
-								qb.andWhere({
-									isArchived: Boolean(JSON.parse(where.includeArchived))
-								});
+							if (hideArchived) {
+								qb.andWhere({ isArchived: false });
 							}
 							if (isNotEmpty(where.status)) {
 								qb.andWhere({
