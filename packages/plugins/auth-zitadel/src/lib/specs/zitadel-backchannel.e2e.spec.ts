@@ -54,9 +54,23 @@ describe('Back-channel logout (HTTP, against a mock OpenID Provider)', () => {
 		expect(t.sessions.ended).toEqual(['session-1']);
 	});
 
+	it('ends every Ever ID session of the linked accounts for a token naming only the subject', async () => {
+		const response = await post(logoutClaims({ sid: undefined }));
+		expect(response.status).toBe(200);
+		expect(t.sessions.ended).toEqual([]);
+		expect(t.sessions.recorded).toEqual([]);
+	});
+
+	it('answers 503 when the sessions cannot be ended, and accepts the same logout again', async () => {
+		t.sessions.failNextEnd = true;
+		expect((await post(logoutClaims())).status).toBe(503);
+		expect((await post(logoutClaims())).status).toBe(200);
+		expect(t.sessions.ended).toEqual(['session-1']);
+	});
+
 	it.each([
 		['older than 300 s', { iat: Math.floor(Date.now() / 1000) - 301 }],
-		['without a session id', { sid: undefined }],
+		['without a session id or subject', { sid: undefined, sub: undefined }],
 		['with a nonce', { nonce: 'n' }],
 		['without the logout event', { events: {} }],
 		['for another client', { aud: 'teams-web' }]

@@ -23,9 +23,17 @@ function nonEmptyString(value: unknown): string | undefined {
 	return typeof value === 'string' && value ? value : undefined;
 }
 
-/** True for an `events` claim (a JSON object) that contains the back-channel logout event. */
+/** True for a JSON object (not `null`, not an array). */
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+	return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * True for an `events` claim that is a JSON object whose back-channel logout member is itself a JSON
+ * object (section 2.4; usually the empty object).
+ */
 function isBackchannelLogoutEvents(value: unknown): value is Record<string, unknown> {
-	return !!value && typeof value === 'object' && !Array.isArray(value) && BACKCHANNEL_LOGOUT_EVENT in value;
+	return isJsonObject(value) && Object.hasOwn(value, BACKCHANNEL_LOGOUT_EVENT) && isJsonObject(value[BACKCHANNEL_LOGOUT_EVENT]);
 }
 
 /** Maps a verification failure of `jose` to the library's error codes. */
@@ -119,10 +127,9 @@ export class OidcLogoutTokenService {
 	}
 
 	/** A logout token must be recent: at most 300 s old, and not from the future. */
-	private checkIssuedAt(value: unknown): number {
+	private checkIssuedAt(iat: unknown): number {
 		const now = this.nowSeconds();
-		const iat = Number(value);
-		if (!Number.isFinite(iat) || now - iat > OIDC_LOGOUT_TOKEN_MAX_AGE_SECONDS) {
+		if (typeof iat !== 'number' || !Number.isFinite(iat) || now - iat > OIDC_LOGOUT_TOKEN_MAX_AGE_SECONDS) {
 			throw new OidcError('expired', 'Logout token is too old');
 		}
 		if (iat > now + FUTURE_TOLERANCE_SECONDS) {

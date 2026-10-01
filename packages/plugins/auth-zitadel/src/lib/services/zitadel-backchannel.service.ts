@@ -1,18 +1,18 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { OidcLogoutTokenService, isOidcError } from '@gauzy/auth';
+import { ZitadelAccountService } from './zitadel-account.service';
 import { ZitadelConfigService } from './zitadel-config.service';
 import { ZitadelSessionService } from './zitadel-session.service';
 import { unverifiedIssuer } from './zitadel-token-signin.service';
 
-/** The revocation work gets this long before the handler answers anyway, milliseconds. */
-const REVOCATION_BUDGET_MS = 4000;
-
 /**
  * Handles OpenID Connect back-channel logout requests.
  *
- * A token that fails validation, names no session (`sid`) or repeats a `jti` answers 400 and changes
- * nothing. A valid one answers 200 within a few seconds: revocation failures are logged, never
- * returned, as the specification asks.
+ * A token that fails validation or repeats a `jti` answers 400 and changes nothing. A token naming a
+ * session (`sid`) ends the Gauzy sessions opened through that session; a token naming only a subject
+ * ends every Gauzy session opened through Ever ID by the accounts linked to that subject. The answer
+ * is 200 only once the sessions are ended; when ending them fails, the `jti` is forgotten and the
+ * answer is 503, so the identity provider can send the same logout again.
  */
 @Injectable()
 export class ZitadelBackchannelService {
@@ -21,7 +21,8 @@ export class ZitadelBackchannelService {
 	constructor(
 		private readonly config: ZitadelConfigService,
 		private readonly logoutTokens: OidcLogoutTokenService,
-		private readonly sessions: ZitadelSessionService
+		private readonly sessions: ZitadelSessionService,
+		private readonly accounts: ZitadelAccountService
 	) {}
 
 	async handle(logoutToken: string): Promise<void> {
@@ -30,37 +31,29 @@ export class ZitadelBackchannelService {
 			throw new BadRequestException();
 		}
 
-		let sid: string | undefined;
-		let jti: string;
+		let token: Awaited<ReturnType<OidcLogoutTokenService['validate']>>;
 		try {
-			const token = await this.logoutTokens.validate(issuer, logoutToken);
-			sid = token.sid;
-			jti = token.jti;
+			token = await this.logoutTokens.validate(issuer, logoutToken);
 		} catch (error) {
 			this.logger.warn(`Back-channel logout refused: ${isOidcError(error) ? error.code : 'invalid token'}`);
 			throw new BadRequestException();
 		}
-		if (!sid) {
-			throw new BadRequestException();
-		}
-		if (!(await this.sessions.rememberLogoutJti(jti))) {
+		if (!(await this.sessions.rememberLogoutJti(token.jti))) {
 			this.logger.warn('Back-channel logout refused: replayed token.');
 			throw new BadRequestException();
 		}
 
-		let timer: NodeJS.Timeout;
-		const budget = new Promise<void>((resolve) => {
-			timer = setTimeout(resolve, REVOCATION_BUDGET_MS);
-		});
 		try {
-			await Promise.race([
-				this.sessions.endSessions(sid).catch((error) => {
-					this.logger.error(`Back-channel logout could not end every session: ${error?.message ?? error}`);
-				}),
-				budget
-			]);
-		} finally {
-			clearTimeout(timer);
+			if (token.sid) {
+				await this.sessions.endSessions(token.sid);
+			} else {
+				const users = await this.accounts.findLinkedUsers(token.issuer, token.subject);
+				await this.sessions.endSessionsOfUsers(users.map((user) => user.id));
+			}
+		} catch (error) {
+			this.logger.error(`Back-channel logout could not end the sessions: ${error?.message ?? error}`);
+			await this.sessions.forgetLogoutJti(token.jti).catch(() => undefined);
+			throw new ServiceUnavailableException();
 		}
 	}
 }

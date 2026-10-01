@@ -4,6 +4,7 @@ import {
 	OIDC_DISCOVERY_MAX_STALE_MS,
 	OIDC_DISCOVERY_TTL_MS,
 	OidcDiscoveryService,
+	isAcceptableIssuer,
 	isSameOrigin,
 	stripTrailingSlashes
 } from './oidc-discovery.service';
@@ -81,6 +82,13 @@ describe('OidcDiscoveryService', () => {
 		http.on(DISCOVERY_URL, { status: 500, data: {} });
 		await expect(discovery.get(ISSUER)).rejects.toMatchObject({ code: 'discovery_failed' });
 	});
+
+	it('never contacts a remote issuer over plain http', async () => {
+		const insecure = 'http://issuer.example.test';
+		await expect(discovery.get(insecure)).rejects.toMatchObject({ code: 'discovery_failed' });
+		await expect(discovery.get(insecure, discoveryDocumentFor(insecure))).rejects.toMatchObject({ code: 'discovery_failed' });
+		expect(http.requests).toHaveLength(0);
+	});
 });
 
 describe('URL helpers', () => {
@@ -90,6 +98,16 @@ describe('URL helpers', () => {
 		expect(isSameOrigin('http://issuer.example.test/token', ISSUER)).toBe(false);
 		expect(isSameOrigin('not a url', ISSUER)).toBe(false);
 		expect(isSameOrigin(undefined, ISSUER)).toBe(false);
+	});
+
+	it('accepts https issuers, and http only on the local machine', () => {
+		expect(isAcceptableIssuer('https://issuer.example.test')).toBe(true);
+		expect(isAcceptableIssuer('http://localhost:8080')).toBe(true);
+		expect(isAcceptableIssuer('http://127.0.0.1:4810')).toBe(true);
+		expect(isAcceptableIssuer('http://[::1]:4810')).toBe(true);
+		expect(isAcceptableIssuer('http://keycloak.internal:8080/realms/x')).toBe(false);
+		expect(isAcceptableIssuer('ftp://issuer.example.test')).toBe(false);
+		expect(isAcceptableIssuer('not a url')).toBe(false);
 	});
 
 	it('strips trailing slashes', () => {

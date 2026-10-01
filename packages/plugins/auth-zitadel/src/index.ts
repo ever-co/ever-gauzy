@@ -1,7 +1,14 @@
 /**
  * Public API Surface of @gauzy/plugin-auth-zitadel
  */
-export * from './lib/auth-zitadel.config';
+export {
+	ZITADEL_ENABLED_ENV,
+	isEverHost,
+	isZitadelEnabled,
+	parseZitadelSettings,
+	readStrictBoolean
+} from './lib/auth-zitadel.config';
+export type { AuthZitadelSettings, ZitadelIssuerRefusal, ZitadelLinkMode } from './lib/auth-zitadel.config';
 export * from './lib/auth-zitadel.plugin';
 export * from './lib/auth-zitadel.module';
 export * from './lib/entities';

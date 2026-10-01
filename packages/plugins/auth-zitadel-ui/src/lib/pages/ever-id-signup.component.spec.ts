@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '@gauzy/ui-core/core';
 import { AuthZitadelUiService } from '../services/auth-zitadel-ui.service';
 import { EverIdSignInService } from '../services/ever-id-sign-in.service';
@@ -12,6 +12,7 @@ describe('EverIdSignupComponent', () => {
 		signup: jest.fn()
 	};
 	const signIn = { signIn: jest.fn(() => of({})) };
+	const terms = { getRequiredTermsDocuments: jest.fn() };
 
 	function create(handoff = 'k'.repeat(43)) {
 		TestBed.configureTestingModule({
@@ -19,7 +20,7 @@ describe('EverIdSignupComponent', () => {
 			providers: [
 				{ provide: AuthZitadelUiService, useValue: api },
 				{ provide: EverIdSignInService, useValue: signIn },
-				{ provide: AuthService, useValue: { getRequiredTermsDocuments: () => of([{ documentId: 'tos:gauzy', version: '1', sha256: 'a'.repeat(64), locale: 'en' }]) } },
+				{ provide: AuthService, useValue: terms },
 				{ provide: ActivatedRoute, useValue: { snapshot: { queryParams: { handoff } } } }
 			]
 		});
@@ -31,6 +32,7 @@ describe('EverIdSignupComponent', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		api.signupDetails.mockReturnValue(of({ email: 'new.person@example.test', firstName: 'New', lastName: 'Person' }));
+		terms.getRequiredTermsDocuments.mockReturnValue(of([{ documentId: 'tos:gauzy', version: '1', sha256: 'a'.repeat(64), locale: 'en' }]));
 	});
 
 	it('prefills the verified details fetched with the one-time key', () => {
@@ -70,6 +72,29 @@ describe('EverIdSignupComponent', () => {
 		component.submit();
 		expect(component.checkoutUrl).toBe('https://checkout.example.test/');
 		expect(signIn.signIn).not.toHaveBeenCalled();
+	});
+
+	it('creates nothing while the required documents are unknown', () => {
+		terms.getRequiredTermsDocuments.mockReturnValue(throwError(() => ({ status: 500 })));
+		const component = create();
+		component.confirmed = true;
+		component.termsAccepted = true;
+		expect(component.canSubmit()).toBe(false);
+		expect(component.termsUnavailable).toBe(true);
+		component.submit();
+		expect(api.signup).not.toHaveBeenCalled();
+	});
+
+	it('signs in once even when the workspace is also chosen by hand', () => {
+		api.signup.mockReturnValue(of({ workspaces: [{ token: 't', user: { id: 'u' } }], total_workspaces: 1, confirmed_email: 'p@example.test', show_popup: false, redirect: '/pages/tasks' }));
+		signIn.signIn.mockReturnValue(new Subject<never>() as never);
+		const component = create();
+		component.confirmed = true;
+		component.termsAccepted = true;
+		component.submit();
+		component.signIn({ token: 't', user: { id: 'u' } } as never);
+		expect(signIn.signIn).toHaveBeenCalledTimes(1);
+		expect(signIn.signIn).toHaveBeenCalledWith('p@example.test', expect.anything(), '/pages/tasks');
 	});
 
 	it('treats a used key as expired', () => {

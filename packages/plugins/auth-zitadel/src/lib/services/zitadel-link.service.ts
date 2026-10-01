@@ -102,7 +102,12 @@ export class ZitadelLinkService {
 			return this.settingsUrl('error=email_unverified');
 		}
 		const now = Math.floor(Date.now() / 1000);
-		if (!idToken.authTime || now - idToken.authTime > LINK_MAX_AUTH_AGE_SECONDS + LINK_AUTH_AGE_SKEW_SECONDS) {
+		const authTime = idToken.authTime;
+		const fresh =
+			!!authTime &&
+			authTime <= now + LINK_AUTH_AGE_SKEW_SECONDS &&
+			now - authTime <= LINK_MAX_AUTH_AGE_SECONDS + LINK_AUTH_AGE_SKEW_SECONDS;
+		if (!fresh) {
 			return this.settingsUrl('error=reauth_required');
 		}
 		const user = await this.accounts.findActiveUser(userId);

@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { OidcIssuerConfig } from '@gauzy/auth';
 import { AUTH_ZITADEL_SETTINGS } from '../auth-zitadel.tokens';
-import { AuthZitadelSettings, ZitadelLinkMode, isEverHost } from '../auth-zitadel.config';
+import { AuthZitadelSettings, ZitadelLinkMode, isEverHost, issuerProblem, stripTrailingSlashes } from '../auth-zitadel.config';
 import { EVER_CONNECT_CONFIG, EverConnectConfigPort } from '../ports/ever-connect-config.port';
 
 /** The answer of `GET /api/auth/zitadel/config`. */
@@ -48,11 +48,15 @@ export class ZitadelConfigService {
 
 		if ((!issuers.length || !clientId || !clientSecret) && this.everConnect && settings.everConnectEnabled) {
 			const fromConnect = await this.safe(() => this.everConnect.getEverIdLoginConfig(), null);
-			if (fromConnect) {
-				const allowed = settings.isCloud || !isEverHost(fromConnect.issuer) || (await this.connectAllowsEverIssuer());
-				if (!issuers.length && allowed) {
-					issuers = [fromConnect.issuer];
-				}
+			const connectIssuer = fromConnect?.issuer ? stripTrailingSlashes(fromConnect.issuer) : '';
+			// The connected instance's issuer passes the same checks as one from the environment, and
+			// its client is used for that issuer only, never for another one.
+			const usable =
+				!!connectIssuer &&
+				!issuerProblem(connectIssuer) &&
+				(settings.isCloud || !isEverHost(connectIssuer) || (await this.connectAllowsEverIssuer()));
+			if (usable && (!issuers.length || issuers.includes(connectIssuer))) {
+				issuers = [connectIssuer];
 				clientId = clientId || fromConnect.clientId;
 				clientSecret = clientSecret || fromConnect.clientSecret;
 			}

@@ -60,7 +60,18 @@ describe('Explicit linking from Settings (HTTP, against a mock OpenID Provider)'
 
 		const stale = await link({ auth_time: now - 361 });
 		expect(stale).toBe(`${TEST_CLIENT_BASE_URL}/#/pages/settings/connected-identities?error=reauth_required`);
+
+		// An authentication time in the future (beyond the clock skew) does not count as fresh either.
+		const future = await link({ auth_time: now + 3600 });
+		expect(future).toBe(`${TEST_CLIENT_BASE_URL}/#/pages/settings/connected-identities?error=reauth_required`);
 		expect(t.accounts.links).toHaveLength(0);
+	});
+
+	it('does not offer a same-address account stored with a different letter case', async () => {
+		t.accounts.addUser({ email: 'Me@Example.test', tenantName: 'Mixed case' });
+		const key = hashParam(await link(), 'linked');
+		const preview = await (await browser.post(`${t.baseUrl}/api/auth/zitadel/link/preview`, { key })).json();
+		expect(preview.siblings).toEqual([]);
 	});
 
 	it('links a ticked same-address account only with Gauzy\'s one-time code, and never an unverified one', async () => {

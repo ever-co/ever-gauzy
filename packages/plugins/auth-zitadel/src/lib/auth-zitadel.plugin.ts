@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { AuthZitadelModule } from './auth-zitadel.module';
 import { ZITADEL_ENTITIES } from './entities';
+import { ZitadelTokenSubscriber } from './subscribers/zitadel-token.subscriber';
 
 /**
  * Ever ID as an additional sign-in method.
@@ -12,7 +13,9 @@ import { ZITADEL_ENTITIES } from './entities';
  */
 @Plugin({
 	imports: [AuthZitadelModule],
-	entities: [...ZITADEL_ENTITIES]
+	entities: [...ZITADEL_ENTITIES],
+	// Binds each Ever ID session to the refresh token of its sign-in (see ZitadelSessionService).
+	subscribers: [ZitadelTokenSubscriber]
 })
 export class AuthZitadelPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	private readonly logger = new Logger(AuthZitadelPlugin.name);

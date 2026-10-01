@@ -15,8 +15,8 @@ export type ZitadelLinkMethod = (typeof ZITADEL_LINK_METHODS)[number];
  * several rows here. A row is written only after the person proved control of both sides
  * (`linkMethod`); an e-mail match alone never creates one.
  */
+// Also serves every lookup by (issuer, subject), through its leading columns.
 @ColumnIndex('IDX_zitadel_account_issuer_subject_user', ['issuer', 'subject', 'userId'], { unique: true })
-@ColumnIndex('IDX_zitadel_account_issuer_subject', ['issuer', 'subject'])
 @MultiORMEntity('zitadel_account')
 export class ZitadelAccount extends TenantBaseEntity {
 	/** Exact issuer identifier of the identity. */

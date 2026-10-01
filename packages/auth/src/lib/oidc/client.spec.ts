@@ -159,4 +159,10 @@ describe('OidcClientService.verifyAccessToken', () => {
 			code: 'audience_rejected'
 		});
 	});
+
+	it('never lets a client claim stand in for the audience (a token for another resource)', async () => {
+		await expect(
+			client.verifyAccessToken(config, await token({ aud: ['other-resource'], azp: 'teams-web', client_id: 'teams-web' }), ['teams-web'])
+		).rejects.toMatchObject({ code: 'audience_rejected' });
+	});
 });

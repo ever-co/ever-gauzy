@@ -61,6 +61,7 @@ const KNOWN_ERRORS = new Set(['email_unverified', 'reauth_required', 'link_faile
 									fullWidth
 									name="code"
 									autocomplete="one-time-code"
+									[attr.aria-label]="'AUTH_ZITADEL.CONFIRM.CODE' | translate"
 									[placeholder]="'AUTH_ZITADEL.CONFIRM.CODE' | translate"
 									[(ngModel)]="code"
 									maxlength="64"
@@ -180,7 +181,9 @@ export class ConnectedIdentitiesComponent implements OnInit {
 		} else {
 			this.selectedSiblings.delete(userId);
 		}
+		// A new selection needs a new code.
 		this.codeRequired = false;
+		this.code = '';
 	}
 
 	confirmLink(): void {
@@ -200,13 +203,16 @@ export class ConnectedIdentitiesComponent implements OnInit {
 				},
 				error: (failure) => {
 					this.busy = false;
-					if (failure?.status === 409) {
+					this.notice = null;
+					if (failure?.status === 401) {
+						this.error = 'wrong_code';
+					} else if (failure?.status === 409) {
 						this.error = 'link_failed';
 					} else if (failure?.status === 410) {
 						this.error = 'expired';
 						this.preview = null;
 					} else {
-						this.error = 'sign_in_failed';
+						this.error = 'try_again';
 					}
 					this.cdr.markForCheck();
 				}
@@ -225,7 +231,9 @@ export class ConnectedIdentitiesComponent implements OnInit {
 			.subscribe({
 				next: () => {
 					this.busy = false;
+					this.error = null;
 					this.notice = 'AUTH_ZITADEL.SETTINGS.DISCONNECTED';
+					this.cdr.markForCheck();
 					this.loadIdentities();
 				},
 				error: (failure) => {
@@ -269,13 +277,16 @@ export class ConnectedIdentitiesComponent implements OnInit {
 		this.codeRequired = false;
 		this.code = '';
 		this.selectedSiblings.clear();
+		this.error = null;
 		this.notice = notice;
+		this.cdr.markForCheck();
 		this.router.navigate([], { relativeTo: this.route, queryParams: {} });
 		this.loadIdentities();
 	}
 
 	private fail(code: string): void {
 		this.busy = false;
+		this.notice = null;
 		this.error = code;
 		this.cdr.markForCheck();
 	}

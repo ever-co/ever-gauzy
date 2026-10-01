@@ -31,7 +31,8 @@ export const OIDC_CLOCK_TOLERANCE_SECONDS = 60;
  * @returns The `Authorization` header value.
  */
 export function basicClientCredential(clientId: string, clientSecret: string): string {
-	const encode = (value: string) => encodeURIComponent(value).replaceAll('%20', '+');
+	// `application/x-www-form-urlencoded`, exactly as a form serializer writes it (`!'()~` included).
+	const encode = (value: string) => new URLSearchParams({ v: value }).toString().slice(2);
 	const credential = Buffer.from(`${encode(clientId)}:${encode(clientSecret)}`).toString('base64');
 	return `Basic ${credential}`;
 }
@@ -202,8 +203,8 @@ export class OidcClientService {
 	/**
 	 * Verifies a JWT access token issued by the same issuer (no userinfo round trip).
 	 *
-	 * The audience check accepts the token when `aud` contains, or `azp` / `client_id` equals, one of
-	 * `audiences`.
+	 * The audience check accepts the token only when `aud` contains one of `audiences`; an `azp` or
+	 * `client_id` claim, when present, must be one of them too.
 	 *
 	 * @param config - Issuer settings.
 	 * @param token - The compact JWS.
@@ -212,12 +213,13 @@ export class OidcClientService {
 	 */
 	async verifyAccessToken(config: OidcIssuerConfig, token: string, audiences: string[]): Promise<JWTPayload> {
 		const payload = await this.verifyJwt(config, token, undefined);
-		const aud = audienceList(payload);
-		const parties = [stringClaim(payload, 'azp'), stringClaim(payload, 'client_id')].filter(Boolean) as string[];
-		const accepted = aud.some((value) => audiences.includes(value)) || parties.some((value) => audiences.includes(value));
-		if (!accepted) {
+		// The token must be meant for an accepted audience. A client claim (`azp`, `client_id`) never
+		// stands in for `aud`: a token minted for another resource is refused even when an accepted
+		// client requested it.
+		if (!audienceList(payload).some((value) => audiences.includes(value))) {
 			throw new OidcError('audience_rejected', 'Access token audience is not accepted');
 		}
+		const parties = [stringClaim(payload, 'azp'), stringClaim(payload, 'client_id')].filter(Boolean) as string[];
 		if (parties.length && !parties.every((value) => audiences.includes(value))) {
 			throw new OidcError('audience_rejected', 'Access token authorized party is not accepted');
 		}

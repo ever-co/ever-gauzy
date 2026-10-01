@@ -35,10 +35,14 @@ export class ZitadelSubscriptionGateService {
 }
 
 /**
- * Removes the `email` query parameter from a checkout URL.
+ * Removes the e-mail address from a checkout URL.
+ *
+ * Gauzy appends `?email=...` to the configured checkout URL as text, so when that URL already has a
+ * query the address ends up inside another parameter's value; that tail is cut as well. Should an
+ * address still appear anywhere, the whole query is dropped.
  *
  * @param url - The checkout URL.
- * @returns The URL without the parameter (or an empty string for an unusable value).
+ * @returns The URL without the address (or an empty string for an unusable value).
  */
 export function withoutEmail(url: string | undefined): string {
 	if (!url) {
@@ -47,7 +51,14 @@ export function withoutEmail(url: string | undefined): string {
 	try {
 		const parsed = new URL(url);
 		parsed.searchParams.delete('email');
-		return parsed.toString();
+		for (const [key, value] of [...parsed.searchParams]) {
+			const tail = value.indexOf('?email=');
+			if (tail >= 0) {
+				parsed.searchParams.set(key, value.slice(0, tail));
+			}
+		}
+		const result = parsed.toString();
+		return /@|%40/i.test(result) ? `${parsed.origin}${parsed.pathname}` : result;
 	} catch {
 		return '';
 	}

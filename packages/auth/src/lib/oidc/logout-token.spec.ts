@@ -67,6 +67,17 @@ describe('OidcLogoutTokenService', () => {
 		expect(await code({ events: { 'http://example.test/other': {} } })).toBe('token_invalid');
 	});
 
+	it('refuses an event member that is not a JSON object', async () => {
+		expect(await code({ events: { [BACKCHANNEL_LOGOUT_EVENT]: null } })).toBe('token_invalid');
+		expect(await code({ events: { [BACKCHANNEL_LOGOUT_EVENT]: 'yes' } })).toBe('token_invalid');
+		expect(await code({ events: { [BACKCHANNEL_LOGOUT_EVENT]: [] } })).toBe('token_invalid');
+		expect(await code({ events: [BACKCHANNEL_LOGOUT_EVENT] })).toBe('token_invalid');
+	});
+
+	it('accepts a subject-only token (no session id)', async () => {
+		expect(await code({ sid: undefined })).toBeUndefined();
+	});
+
 	it('refuses a token that carries a nonce', async () => {
 		expect(await code({ nonce: 'n' })).toBe('token_invalid');
 	});

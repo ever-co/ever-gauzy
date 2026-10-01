@@ -15,7 +15,9 @@ import { AuthZitadelSettings, parseZitadelSettings } from '../auth-zitadel.confi
 import { AUTH_ZITADEL_SETTINGS } from '../auth-zitadel.tokens';
 import { ZitadelConfiguredGuard } from '../guards/zitadel-configured.guard';
 import { EVER_CONNECT_CONFIG, EverConnectConfigPort } from '../ports/ever-connect-config.port';
+import { ITermsAcceptanceDocument } from '@gauzy/contracts';
 import { GAUZY_AUTH } from '../ports/gauzy-auth.port';
+import { TERMS_DOCUMENTS, TermsDocumentsPort } from '../ports/terms-documents.port';
 import { ZitadelAccountService } from '../services/zitadel-account.service';
 import { ZitadelBackchannelService } from '../services/zitadel-backchannel.service';
 import { ZitadelClaimsService } from '../services/zitadel-claims.service';
@@ -46,8 +48,18 @@ export interface ZitadelTestApp {
 	gate: FakeSubscriptionGate;
 	sessions: InMemorySessions;
 	cache: InMemoryCache;
+	terms: FakeTermsDocuments;
 	published: unknown[];
 	close(): Promise<void>;
+}
+
+/** Gauzy's required legal documents, settable per test (none by default). */
+export class FakeTermsDocuments implements TermsDocumentsPort {
+	required: ITermsAcceptanceDocument[] = [];
+
+	getRequiredDocuments(): ITermsAcceptanceDocument[] {
+		return this.required;
+	}
 }
 
 export interface ZitadelTestAppOptions {
@@ -76,8 +88,29 @@ export async function createZitadelTestApp(options: ZitadelTestAppOptions = {}):
 	const clientSecret = randomBytes(16).toString('hex');
 	const issuer = new MockOidcIssuer(TEST_CLIENT_ID, clientSecret);
 	await issuer.start();
+	try {
+		// A port found free can be taken by another test worker before the app binds it: try again.
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await startApp(issuer, clientSecret, await freePort(), options);
+			} catch (error) {
+				if ((error as { code?: string })?.code !== 'EADDRINUSE' || attempt >= 5) {
+					throw error;
+				}
+			}
+		}
+	} catch (error) {
+		await issuer.stop();
+		throw error;
+	}
+}
 
-	const port = await freePort();
+async function startApp(
+	issuer: MockOidcIssuer,
+	clientSecret: string,
+	port: number,
+	options: ZitadelTestAppOptions
+): Promise<ZitadelTestApp> {
 	const baseUrl = `http://127.0.0.1:${port}`;
 	const settings = parseZitadelSettings({
 		ZITADEL_ISSUERS: options.issuers ? options.issuers(issuer) : issuer.issuer,
@@ -94,6 +127,7 @@ export async function createZitadelTestApp(options: ZitadelTestAppOptions = {}):
 	const gate = new FakeSubscriptionGate();
 	const sessions = new InMemorySessions();
 	const cache = new InMemoryCache();
+	const terms = new FakeTermsDocuments();
 	const published: unknown[] = [];
 
 	const moduleRef = await Test.createTestingModule({
@@ -107,6 +141,7 @@ export async function createZitadelTestApp(options: ZitadelTestAppOptions = {}):
 			{ provide: ZitadelSessionService, useValue: sessions },
 			{ provide: ZitadelSubscriptionGateService, useValue: gate },
 			{ provide: GAUZY_AUTH, useValue: gauzyAuth },
+			{ provide: TERMS_DOCUMENTS, useValue: terms },
 			{ provide: EventBus, useValue: { publish: async (event: unknown) => published.push(event) } },
 			...(options.everConnect ? [{ provide: EVER_CONNECT_CONFIG, useValue: options.everConnect }] : []),
 			ZitadelConfigService,
@@ -126,7 +161,12 @@ export async function createZitadelTestApp(options: ZitadelTestAppOptions = {}):
 
 	const app = moduleRef.createNestApplication({ logger: false });
 	app.setGlobalPrefix('api');
-	await app.listen(port, '127.0.0.1');
+	try {
+		await app.listen(port, '127.0.0.1');
+	} catch (error) {
+		await app.close().catch(() => undefined);
+		throw error;
+	}
 
 	return {
 		app,
@@ -138,6 +178,7 @@ export async function createZitadelTestApp(options: ZitadelTestAppOptions = {}):
 		gate,
 		sessions,
 		cache,
+		terms,
 		published,
 		async close() {
 			await app.close();
@@ -206,13 +247,12 @@ export class TestBrowser {
 		const response = await fetch(url, { ...init, headers, redirect: 'manual' });
 		const setCookies = response.headers.getSetCookie?.() ?? [];
 		for (const setCookie of setCookies) {
-			const [pair] = setCookie.split(';');
-			const [name, value] = pair.split('=');
+			const [name, value] = splitPair(setCookie.split(';')[0]);
 			const jar = new Map(
 				(this.cookies.get(origin) ?? '')
 					.split('; ')
 					.filter(Boolean)
-					.map((entry) => entry.split('=') as [string, string])
+					.map((entry) => splitPair(entry))
 			);
 			if (!value || /Max-Age=0|Expires=Thu, 01 Jan 1970/i.test(setCookie)) {
 				jar.delete(name);
@@ -227,6 +267,12 @@ export class TestBrowser {
 		}
 		return response;
 	}
+}
+
+/** Splits `name=value` at the first `=` (a value may contain `=` itself). */
+function splitPair(pair: string): [string, string] {
+	const separator = pair.indexOf('=');
+	return separator < 0 ? [pair.trim(), ''] : [pair.slice(0, separator).trim(), pair.slice(separator + 1)];
 }
 
 /** Reads the `handoff` (or another) parameter from a web app hash-route URL. */

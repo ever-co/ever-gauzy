@@ -109,14 +109,15 @@ export function isEverHost(issuer: string): boolean {
  * Whether a URL may be used as an issuer: https, or http on a loopback host (local development and
  * tests only). No query, fragment or credentials.
  */
-function issuerProblem(issuer: string): ZitadelIssuerRefusal | null {
+export function issuerProblem(issuer: string): ZitadelIssuerRefusal | null {
 	let url: URL;
 	try {
 		url = new URL(issuer);
 	} catch {
 		return 'invalid_url';
 	}
-	if (url.search || url.hash || url.username || url.password) {
+	// `?` and `#` count even when empty: discovery appends its path to the issuer as text.
+	if (issuer.includes('?') || issuer.includes('#') || url.username || url.password) {
 		return 'invalid_url';
 	}
 	if (url.protocol === 'https:') {
@@ -128,7 +129,7 @@ function issuerProblem(issuer: string): ZitadelIssuerRefusal | null {
 	return url.protocol === 'http:' ? 'insecure_url' : 'invalid_url';
 }
 
-function stripTrailingSlashes(value: string): string {
+export function stripTrailingSlashes(value: string): string {
 	let end = value.length;
 	while (end > 0 && value.charAt(end - 1) === '/') {
 		end--;
@@ -259,6 +260,6 @@ export function parseZitadelSettings(env: Env, warn: (message: string) => void =
 		everConnectEnabled,
 		apiBaseUrl,
 		clientBaseUrl,
-		secureCookies: apiBaseUrl.startsWith('https://')
+		secureCookies: /^https:\/\//i.test(apiBaseUrl)
 	};
 }

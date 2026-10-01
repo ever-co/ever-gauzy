@@ -12,6 +12,7 @@ import type { JWK, JWTPayload } from 'jose';
 type Route = (url: URL, request: IncomingMessage, response: ServerResponse) => Promise<void> | void;
 
 interface Grant {
+	clientId: string;
 	redirectUri: string;
 	nonce: string;
 	challenge: string;
@@ -101,6 +102,7 @@ export class MockKeycloakRealm {
 		const params = url.searchParams;
 		const code = randomUUID();
 		this.grants.set(code, {
+			clientId: params.get('client_id') ?? '',
 			redirectUri: params.get('redirect_uri') ?? '',
 			nonce: params.get('nonce') ?? '',
 			challenge: params.get('code_challenge') ?? '',
@@ -121,7 +123,7 @@ export class MockKeycloakRealm {
 		const grant = this.grants.get(form.get('code') ?? '');
 		this.grants.delete(form.get('code') ?? '');
 		const proof = createHash('sha256').update(form.get('code_verifier') ?? '').digest('base64url');
-		if (!grant || grant.challenge !== proof || grant.redirectUri !== form.get('redirect_uri')) {
+		if (!grant || grant.clientId !== this.clientId || grant.challenge !== proof || grant.redirectUri !== form.get('redirect_uri')) {
 			return send(response, 400, { error: 'invalid_grant' });
 		}
 		const jose = await import('jose');

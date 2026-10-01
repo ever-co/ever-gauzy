@@ -158,13 +158,17 @@ export class AuthZitadelController {
 		return result.response;
 	}
 
-	/** Sign-in with a token another first-party client obtained from Ever ID. */
+	/**
+	 * Sign-in with a token another first-party client obtained from Ever ID. Such a client's server
+	 * signs many people in from one address, so the per-address limit is higher than on the browser
+	 * routes; every request still needs a token signed by the issuer.
+	 */
 	@Public()
 	@UseGuards(ZitadelConfiguredGuard)
 	@Post('/token')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	@Throttle({ default: { limit: 5, ttl: 60000 } })
+	@Throttle({ default: { limit: 120, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	token(@Body() body: TokenSigninDTO) {
 		return this.tokens.signIn(body);

@@ -1,13 +1,24 @@
 import { Logger, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OidcModule } from '@gauzy/auth';
-import { AuthModule, AuthService, EventBusModule, SocialAccount, SubscriptionRequiredGuard, Token, User } from '@gauzy/core';
+import {
+	AuthModule,
+	AuthService,
+	EventBusModule,
+	SocialAccount,
+	SubscriptionRequiredGuard,
+	TermsAcceptanceModule,
+	TermsAcceptanceService,
+	Token,
+	User
+} from '@gauzy/core';
 import { AuthZitadelController } from './auth-zitadel.controller';
 import { parseZitadelSettings } from './auth-zitadel.config';
 import { AUTH_ZITADEL_SETTINGS } from './auth-zitadel.tokens';
 import { ZITADEL_ENTITIES } from './entities';
 import { ZitadelConfiguredGuard } from './guards/zitadel-configured.guard';
 import { GAUZY_AUTH } from './ports/gauzy-auth.port';
+import { TERMS_DOCUMENTS } from './ports/terms-documents.port';
 import { ZitadelAccountService } from './services/zitadel-account.service';
 import { ZitadelBackchannelService } from './services/zitadel-backchannel.service';
 import { ZitadelClaimsService } from './services/zitadel-claims.service';
@@ -60,11 +71,18 @@ export const AUTH_ZITADEL_SERVICES = [
  * the subscription gate, so those rules stay Gauzy's own.
  */
 @Module({
-	imports: [OidcModule, TypeOrmModule.forFeature([...ZITADEL_ENTITIES, User, SocialAccount, Token]), AuthModule, EventBusModule],
+	imports: [
+		OidcModule,
+		TypeOrmModule.forFeature([...ZITADEL_ENTITIES, User, SocialAccount, Token]),
+		AuthModule,
+		TermsAcceptanceModule,
+		EventBusModule
+	],
 	controllers: [AuthZitadelController],
 	providers: [
 		settingsProvider,
 		{ provide: GAUZY_AUTH, useExisting: AuthService },
+		{ provide: TERMS_DOCUMENTS, useExisting: TermsAcceptanceService },
 		SubscriptionRequiredGuard,
 		...AUTH_ZITADEL_SERVICES
 	]

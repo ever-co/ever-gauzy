@@ -2,6 +2,7 @@ import { BadRequestException, GoneException, Inject, Injectable, Logger, NotFoun
 import { OidcValidatedIdToken } from '@gauzy/auth';
 import { ITermsAcceptanceClaim, LanguagesEnum } from '@gauzy/contracts';
 import { GAUZY_AUTH, GauzyAuthPort } from '../ports/gauzy-auth.port';
+import { TERMS_DOCUMENTS, TermsDocumentsPort } from '../ports/terms-documents.port';
 import { ZitadelAccountService, ZitadelIdentity } from './zitadel-account.service';
 import { ZitadelClaimHints } from './zitadel-claims.service';
 import { ZitadelConfigService } from './zitadel-config.service';
@@ -27,6 +28,8 @@ export interface ZitadelSignupOffer {
 	/** Set when a confirmed sign-up is waiting for a subscription. */
 	status?: 'subscription_required';
 	checkoutUrl?: string;
+	/** A web app path to open after signing up (validated when the sign-in started). */
+	redirect?: string;
 }
 
 /**
@@ -42,6 +45,9 @@ export interface ZitadelPendingSignup {
 	terms?: ITermsAcceptanceClaim[];
 	locale: LanguagesEnum;
 	confirmedAt: number;
+	redirect?: string;
+	/** Set once Gauzy created the account, so a resumed sign-up links it and never registers twice. */
+	userId?: string;
 }
 
 /** What the confirmation page sends. */
@@ -86,7 +92,8 @@ export class ZitadelSignupService {
 		private readonly store: ZitadelStoreService,
 		private readonly gate: ZitadelSubscriptionGateService,
 		private readonly events: ZitadelEventsService,
-		@Inject(GAUZY_AUTH) private readonly gauzyAuth: GauzyAuthPort
+		@Inject(GAUZY_AUTH) private readonly gauzyAuth: GauzyAuthPort,
+		@Inject(TERMS_DOCUMENTS) private readonly termsDocuments: TermsDocumentsPort
 	) {}
 
 	/**
@@ -96,7 +103,8 @@ export class ZitadelSignupService {
 	async offer(
 		identity: ZitadelIdentity,
 		idToken: OidcValidatedIdToken,
-		hints: ZitadelClaimHints
+		hints: ZitadelClaimHints,
+		redirect?: string
 	): Promise<{ type: 'workspaces'; response: ZitadelSigninWorkspaceResponse } | { type: 'signup'; key: string }> {
 		const pending = await this.store.get<ZitadelPendingSignup>('pending-signup', this.pendingKey(identity));
 		if (pending) {
@@ -110,7 +118,8 @@ export class ZitadelSignupService {
 			firstName: idToken.givenName,
 			lastName: idToken.familyName,
 			sid: idToken.sid,
-			hints
+			hints,
+			redirect
 		};
 		await this.store.put('signup', key, offer, this.config.settings.confirmTtlSeconds);
 		return { type: 'signup', key };
@@ -143,6 +152,8 @@ export class ZitadelSignupService {
 		if (body?.confirm !== true) {
 			throw new BadRequestException('The sign-up must be confirmed.');
 		}
+		const terms = Array.isArray(body.terms) ? body.terms : [];
+		this.assertRequiredTermsAccepted(terms, locale);
 		const offer = await this.store.take<ZitadelSignupOffer>('signup', key);
 		if (!offer) {
 			throw new GoneException();
@@ -152,9 +163,10 @@ export class ZitadelSignupService {
 			email: offer.email,
 			firstName: cleanName(body.firstName) ?? cleanName(offer.firstName),
 			lastName: cleanName(body.lastName) ?? cleanName(offer.lastName),
-			terms: Array.isArray(body.terms) ? body.terms : undefined,
+			terms: terms.length ? terms : undefined,
 			locale,
-			confirmedAt: Date.now()
+			confirmedAt: Date.now(),
+			redirect: offer.redirect
 		};
 		await this.store.put('pending-signup', this.pendingKey(offer.identity), pending, this.config.settings.confirmTtlSeconds);
 		return this.attempt(pending, offer.sid, offer.hints);
@@ -184,34 +196,62 @@ export class ZitadelSignupService {
 				sid,
 				hints,
 				status: 'subscription_required',
-				checkoutUrl: check.checkoutUrl
+				checkoutUrl: check.checkoutUrl,
+				redirect: pending.redirect
 			};
 			await this.store.put('signup', key, offer, this.config.settings.confirmTtlSeconds);
 			return { type: 'subscription_required', key, checkoutUrl: check.checkoutUrl };
 		}
 
-		// Single use: claim the confirmed sign-up before creating anything.
+		// Claimed (single use) while the account is created and linked. Should any step fail, the record
+		// goes back, so the next Ever ID sign-in resumes where this one stopped; once the account exists
+		// it is only linked, never registered a second time.
 		const claimed = await this.store.take<ZitadelPendingSignup>('pending-signup', pendingKey);
 		if (!claimed) {
 			throw new GoneException();
 		}
-
-		const created = await this.gauzyAuth.register(
-			{
-				user: { email: claimed.email, firstName: claimed.firstName, lastName: claimed.lastName },
-				terms: claimed.terms
-			},
-			claimed.locale
-		);
-		await this.accounts.markEmailVerified(created.id);
-		const user = await this.accounts.findActiveUser(created.id);
-		if (!user) {
-			throw new GoneException();
+		let userId = claimed.userId;
+		try {
+			if (!userId) {
+				const created = await this.gauzyAuth.register(
+					{
+						user: { email: claimed.email, firstName: claimed.firstName, lastName: claimed.lastName },
+						terms: claimed.terms
+					},
+					claimed.locale
+				);
+				userId = created.id;
+				await this.accounts.markEmailVerified(userId);
+				this.logger.log('A workspace owner was created through the confirmed Ever ID sign-up.');
+			}
+			const user = await this.accounts.findActiveUser(userId);
+			if (!user) {
+				throw new GoneException();
+			}
+			await this.accounts.link([user], claimed.identity, 'signup');
+			await this.events.linked([user], claimed.identity, 'signup');
+			const response = await this.workspaces.signIn([user], claimed.identity, hints, sid);
+			return { type: 'workspaces', response: claimed.redirect ? { ...response, redirect: claimed.redirect } : response };
+		} catch (error) {
+			await this.store.put('pending-signup', pendingKey, { ...claimed, userId }, this.config.settings.confirmTtlSeconds);
+			throw error;
 		}
-		await this.accounts.link([user], claimed.identity, 'signup');
-		await this.events.linked([user], claimed.identity, 'signup');
-		this.logger.log('A workspace owner was created through the confirmed Ever ID sign-up.');
-		return { type: 'workspaces', response: await this.workspaces.signIn([user], claimed.identity, hints, sid) };
+	}
+
+	/**
+	 * Every document Gauzy currently requires must be accepted, as the register form requires; the
+	 * claims themselves are checked against the published text by Gauzy's register path.
+	 *
+	 * @throws BadRequestException when a required document is missing.
+	 */
+	private assertRequiredTermsAccepted(terms: ITermsAcceptanceClaim[], locale: LanguagesEnum): void {
+		const required = this.termsDocuments.getRequiredDocuments(locale);
+		const missing = required.filter(
+			(document) => !terms.some((claim) => claim.documentId === document.documentId && claim.version === document.version)
+		);
+		if (missing.length) {
+			throw new BadRequestException('The required terms must be accepted.');
+		}
 	}
 
 	private pendingKey(identity: ZitadelIdentity): string {

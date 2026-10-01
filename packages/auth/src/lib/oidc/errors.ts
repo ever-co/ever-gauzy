@@ -20,8 +20,9 @@ export type OidcErrorCode =
 /**
  * The only error type the OIDC library throws on purpose.
  *
- * The message is meant for logs. It never contains a token, a code, a secret or an e-mail address,
- * so callers may log it as is; what they return to a browser should be derived from `code` only.
+ * The message is meant for logs. The library's own messages never contain a token, a code, a
+ * secret or an e-mail address; code that creates an `OidcError` must keep it that way. What callers
+ * return to a browser should be derived from `code` only.
  */
 export class OidcError extends Error {
 	constructor(public readonly code: OidcErrorCode, message?: string) {

@@ -46,6 +46,25 @@ export function isSameOrigin(url: unknown, issuer: string): boolean {
 	}
 }
 
+/** Hosts on which an `http` issuer is accepted: the local machine only (development). */
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/**
+ * Whether an issuer identifier may be used: `https`, or `http` on the local machine only. Client
+ * credentials and tokens are never sent to a remote issuer without TLS.
+ *
+ * @param issuer - The issuer identifier.
+ * @returns `true` when the scheme and host are acceptable.
+ */
+export function isAcceptableIssuer(issuer: string): boolean {
+	try {
+		const url = new URL(issuer);
+		return url.protocol === 'https:' || (url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname));
+	} catch {
+		return false;
+	}
+}
+
 /**
  * Fetches and caches OpenID Provider metadata (OpenID Connect Discovery 1.0).
  *
@@ -70,6 +89,9 @@ export class OidcDiscoveryService {
 	 * @throws OidcError `discovery_failed` when no valid document is available.
 	 */
 	async get(issuer: string, preloaded?: OidcDiscoveryDocument): Promise<OidcDiscoveryDocument> {
+		if (!isAcceptableIssuer(issuer)) {
+			throw new OidcError('discovery_failed', `Issuer ${issuer} must use https (http only on the local machine)`);
+		}
 		if (preloaded) {
 			return this.validate(issuer, preloaded);
 		}

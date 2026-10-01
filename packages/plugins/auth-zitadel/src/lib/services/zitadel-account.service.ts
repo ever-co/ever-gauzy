@@ -72,7 +72,9 @@ export class ZitadelAccountService {
 	async findSiblings(user: Pick<User, 'id' | 'email'>, identity: ZitadelIdentity): Promise<User[]> {
 		const rows = await this.findVerifiedUsersByEmail(user.email);
 		const linked = new Set((await this.findLinkedUsers(identity.issuer, identity.subject)).map((row) => row.id));
-		return rows.filter((row) => row.id !== user.id && !linked.has(row.id));
+		// Only accounts stored with exactly the same address: Gauzy's one-time code, which proves them,
+		// is matched against the stored address as written.
+		return rows.filter((row) => row.id !== user.id && row.email === user.email && !linked.has(row.id));
 	}
 
 	/**
@@ -183,7 +185,11 @@ export class ZitadelAccountService {
 		if (user.emailVerifiedAt && flagFeatures.FEATURE_MAGIC_LOGIN) {
 			return true;
 		}
-		return (await this.socialAccounts.count({ where: { userId, providerAccountId: Not(IsNull()) } })) > 0;
+		// Only links Gauzy still accepts for sign-in count.
+		const activeSocialLinks = await this.socialAccounts.count({
+			where: { userId, isActive: true, isArchived: false, providerAccountId: Not(IsNull()) }
+		});
+		return activeSocialLinks > 0;
 	}
 
 	/** Marks a freshly registered user's e-mail as verified (the identity provider verified it). */

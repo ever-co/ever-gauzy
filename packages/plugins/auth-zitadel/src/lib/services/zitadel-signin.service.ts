@@ -1,4 +1,4 @@
-import { GoneException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { GoneException, HttpException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { OidcValidatedIdToken } from '@gauzy/auth';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { User } from '@gauzy/core';
@@ -23,6 +23,8 @@ export type ZitadelHandoffRecord =
 export interface ZitadelConfirmRecord {
 	identity: ZitadelIdentity;
 	email: string;
+	/** A web app path to open after the confirmation (validated when the sign-in started). */
+	redirect?: string;
 	rowIds: string[];
 	sid?: string;
 	hints: ZitadelClaimHints;
@@ -70,7 +72,7 @@ export class ZitadelSigninService {
 	 * @param channel - `browser` for the callback (stores records for the next page), `token` for the
 	 *   server-to-server token route.
 	 */
-	async decide(idToken: OidcValidatedIdToken, channel: 'browser' | 'token'): Promise<ZitadelSigninOutcome> {
+	async decide(idToken: OidcValidatedIdToken, channel: 'browser' | 'token', redirect?: string): Promise<ZitadelSigninOutcome> {
 		if (!idToken.emailVerified || !idToken.email) {
 			return { type: 'email_unverified' };
 		}
@@ -101,6 +103,7 @@ export class ZitadelSigninService {
 					rowIds: sameAddress.map((row) => row.id),
 					sid: idToken.sid,
 					hints,
+					redirect,
 					attempts: 0
 				};
 				await this.store.put('confirm', key, record, settings.confirmTtlSeconds);
@@ -109,7 +112,7 @@ export class ZitadelSigninService {
 		}
 
 		if (settings.signupEnabled) {
-			return this.signup.offer(identity, idToken, hints);
+			return this.signup.offer(identity, idToken, hints, redirect);
 		}
 
 		if (channel === 'token') {
@@ -156,9 +159,10 @@ export class ZitadelSigninService {
 	 * @throws GoneException for an unknown key or after five wrong codes; UnauthorizedException for a wrong code.
 	 */
 	async confirm(key: string, code: string): Promise<ZitadelSigninWorkspaceResponse> {
-		const record = await this.store.get<ZitadelConfirmRecord>('confirm', key);
+		// Taken (claimed atomically) for the duration of the check, so concurrent tries cannot share an
+		// attempt; a failed try puts the record back with the attempt counted.
+		const record = await this.store.take<ZitadelConfirmRecord>('confirm', key);
 		if (!record || record.attempts >= MAX_CONFIRM_ATTEMPTS) {
-			await this.store.delete('confirm', key);
 			throw new GoneException();
 		}
 
@@ -166,17 +170,19 @@ export class ZitadelSigninService {
 		try {
 			const result = await this.gauzyAuth.signinWorkspacesByMagicCode({ email: record.email, code: String(code ?? '') }, false);
 			proved = result.workspaces.map((workspace) => workspace.user?.id).filter(Boolean);
-		} catch {
-			record.attempts += 1;
+		} catch (error) {
+			// Gauzy's own rate limit is not a wrong guess: it is passed on and costs no attempt.
+			const throttled = error instanceof HttpException && error.getStatus() === HttpStatus.TOO_MANY_REQUESTS;
+			if (!throttled) {
+				record.attempts += 1;
+			}
 			if (record.attempts >= MAX_CONFIRM_ATTEMPTS) {
-				await this.store.delete('confirm', key);
 				throw new GoneException();
 			}
 			await this.store.put('confirm', key, record, this.config.settings.confirmTtlSeconds);
-			throw new UnauthorizedException();
+			throw throttled ? error : new UnauthorizedException();
 		}
 
-		await this.store.delete('confirm', key);
 		const rowIds = new Set(record.rowIds);
 		const users: User[] = [];
 		for (const id of proved.filter((userId) => rowIds.has(userId))) {
@@ -187,7 +193,8 @@ export class ZitadelSigninService {
 		}
 		await this.accounts.link(users, record.identity, 'confirmed');
 		await this.events.linked(users, record.identity, 'confirmed');
-		return this.signInLinked(users, record.identity, record.hints, record.sid);
+		const response = await this.signInLinked(users, record.identity, record.hints, record.sid);
+		return record.redirect ? { ...response, redirect: record.redirect } : response;
 	}
 
 	private locale(user?: User): LanguagesEnum {

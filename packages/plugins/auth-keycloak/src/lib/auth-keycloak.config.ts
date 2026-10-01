@@ -37,20 +37,42 @@ export function readStrictBoolean(value: string | undefined, name: string, fallb
 	return fallback;
 }
 
-/**
- * Whether a Keycloak client id and secret are present (and not the sample placeholder).
- *
- * @param env - Environment variables.
- * @returns `true` when both are set.
- */
-export function isKeycloakConfigured(env: Env = process.env): boolean {
-	const clientId = env['KEYCLOAK_CLIENT_ID']?.trim();
-	const clientSecret = env['KEYCLOAK_CLIENT_SECRET']?.trim();
-	return !!clientId && !!clientSecret && clientId !== PLACEHOLDER && clientSecret !== PLACEHOLDER;
+/** The auth server URL Gauzy's configuration falls back to when `KEYCLOAK_AUTH_SERVER_URL` is unset. */
+const SAMPLE_AUTH_SERVER_URL = 'https://keycloak.example.com/auth';
+
+/** True for a missing value or the sample placeholder of the client id and secret. */
+export function isMissingOrPlaceholder(value: string | undefined): boolean {
+	const trimmed = value?.trim();
+	return !trimmed || trimmed === PLACEHOLDER;
+}
+
+/** True for a missing auth server URL or the sample one (with or without trailing slashes). */
+export function isMissingOrSampleAuthServerUrl(value: string | undefined): boolean {
+	let url = value?.trim() ?? '';
+	while (url.endsWith('/')) {
+		url = url.slice(0, -1);
+	}
+	return !url || url === SAMPLE_AUTH_SERVER_URL;
 }
 
 /**
- * Whether the Keycloak plugin is loaded: `KEYCLOAK_ENABLED=true` and a client id and secret.
+ * Whether Keycloak sign-in is fully configured: a client id and secret (not the sample placeholder),
+ * a realm and a real auth server URL.
+ *
+ * @param env - Environment variables.
+ * @returns `true` when all four are set.
+ */
+export function isKeycloakConfigured(env: Env = process.env): boolean {
+	return (
+		!isMissingOrPlaceholder(env['KEYCLOAK_CLIENT_ID']) &&
+		!isMissingOrPlaceholder(env['KEYCLOAK_CLIENT_SECRET']) &&
+		!!env['KEYCLOAK_REALM']?.trim() &&
+		!isMissingOrSampleAuthServerUrl(env['KEYCLOAK_AUTH_SERVER_URL'])
+	);
+}
+
+/**
+ * Whether the Keycloak plugin is loaded: `KEYCLOAK_ENABLED=true` and Keycloak fully configured.
  *
  * Read once, when the API assembles its plugin list. With the switch unset the plugin is not loaded
  * at all: no route, no button, no outbound request, whatever the other `KEYCLOAK_*` values say.

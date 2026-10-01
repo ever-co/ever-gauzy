@@ -137,6 +137,8 @@ export class MockOidcIssuer {
 				codeChallenge: query.get('code_challenge') ?? '',
 				claims: this.nextClaims
 			});
+			// The claims belong to this authorization only; a later one starts from the defaults.
+			this.nextClaims = {};
 			target.searchParams.set('code', code);
 		}
 		res.statusCode = 302;
@@ -154,7 +156,7 @@ export class MockOidcIssuer {
 		this.codes.delete(body.get('code') ?? '');
 		const verifier = body.get('code_verifier') ?? '';
 		const challenge = createHash('sha256').update(verifier).digest('base64url');
-		if (!pending || pending.redirectUri !== body.get('redirect_uri') || pending.codeChallenge !== challenge) {
+		if (!pending || pending.clientId !== this.clientId || pending.redirectUri !== body.get('redirect_uri') || pending.codeChallenge !== challenge) {
 			return this.json(res, 400, { error: 'invalid_grant' });
 		}
 		const subject = String(pending.claims.sub ?? 'person-1');

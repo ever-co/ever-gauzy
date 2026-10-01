@@ -26,7 +26,7 @@ It creates `zitadel_account`, `zitadel_organization`, `zitadel_session` and
 - Creates new, empty tables and their indexes only. Reads and changes no
   existing table, and runs no statement per tenant or per row, so its run
   time does not depend on the size of the database.
-- Every statement is `IF NOT EXISTS`: running `up` twice is harmless.
+- Every DDL statement is `IF NOT EXISTS`: running `up` twice is harmless.
 - Postgres, MySQL and SQLite branches; `down` drops the four tables (and
   with them their indexes and constraints).
 - Postgres: a transaction-scoped advisory lock makes two API processes that
@@ -34,6 +34,9 @@ It creates `zitadel_account`, `zitadel_organization`, `zitadel_session` and
   finds everything in place. The foreign keys to `user`, `tenant` and
   `organization` take a brief lock on those tables; `lock_timeout` is 10 s,
   and a boot that times out simply retries on the next start.
+- `zitadel_account` and `zitadel_session` reference `user` with
+  `ON DELETE CASCADE`: deleting a Gauzy user deletes that user's Ever ID
+  links and session records with it.
 - The tables exist whether or not the plugin is enabled; they stay empty
   until it is.
 

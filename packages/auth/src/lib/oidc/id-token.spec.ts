@@ -72,7 +72,12 @@ describe('OidcClientService.validateIdToken', () => {
 			await client.validateIdToken(config, token, { nonce });
 			return undefined;
 		} catch (error) {
-			return (error as { code?: OidcErrorCode }).code;
+			const code = (error as { code?: OidcErrorCode }).code;
+			if (code === undefined) {
+				// Not a validation outcome (a broken test setup, say): fail loudly instead of passing.
+				throw error;
+			}
+			return code;
 		}
 	}
 

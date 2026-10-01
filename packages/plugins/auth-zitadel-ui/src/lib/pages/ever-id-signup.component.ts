@@ -68,6 +68,9 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 						<nb-checkbox name="confirm" [(ngModel)]="confirmed" class="confirm">
 							{{ 'AUTH_ZITADEL.SIGNUP.CONFIRM' | translate }}
 						</nb-checkbox>
+						@if (termsUnavailable) {
+							<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.try_again' | translate }}</nb-alert>
+						}
 						@if (failed) {
 							<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.sign_in_failed' | translate }}</nb-alert>
 						}
@@ -110,6 +113,9 @@ export class EverIdSignupComponent implements OnInit {
 	firstName = '';
 	lastName = '';
 	termsAccepted = false;
+	/** The required documents arrived (possibly none); until then nothing can be submitted. */
+	termsLoaded = false;
+	termsUnavailable = false;
 	confirmed = false;
 	checkoutUrl: string | null = null;
 	expired = false;
@@ -145,15 +151,23 @@ export class EverIdSignupComponent implements OnInit {
 			.subscribe({
 				next: (documents) => {
 					this.termsDocuments = documents ?? [];
+					this.termsLoaded = true;
 					this.cdr.markForCheck();
 				},
-				error: () => undefined
+				error: () => {
+					// Without the list the page cannot show what must be accepted: no account is created.
+					this.termsUnavailable = true;
+					this.cdr.markForCheck();
+				}
 			});
 	}
 
-	/** The button stays disabled until the person confirms (and accepts the terms, when there are any). */
+	/**
+	 * The button stays disabled until the required documents are known and the person confirms (and
+	 * accepts the documents, when there are any).
+	 */
 	canSubmit(): boolean {
-		return this.confirmed && (!this.termsDocuments.length || this.termsAccepted) && !this.busy;
+		return this.termsLoaded && this.confirmed && (!this.termsDocuments.length || this.termsAccepted) && !this.busy;
 	}
 
 	submit(): void {
@@ -197,12 +211,13 @@ export class EverIdSignupComponent implements OnInit {
 	}
 
 	signIn(workspace: IWorkspaceResponse): void {
-		if (!this.response) {
+		// Also reached automatically for a single workspace: never send a second sign-in.
+		if (!this.response || this.busy) {
 			return;
 		}
 		this.busy = true;
 		this.signInService
-			.signIn(this.response.confirmed_email, workspace)
+			.signIn(this.response.confirmed_email, workspace, this.response.redirect)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				error: () => {

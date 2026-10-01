@@ -24,6 +24,9 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 			@if (expired) {
 				<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.expired' | translate }}</nb-alert>
 				<a nbButton status="primary" routerLink="/auth/login">{{ 'AUTH_ZITADEL.BACK_TO_LOGIN' | translate }}</a>
+			} @else if (response && !response.workspaces.length) {
+				<nb-alert status="warning" role="alert">{{ 'AUTH_ZITADEL.CONFIRM.NO_WORKSPACE' | translate }}</nb-alert>
+				<a nbButton status="primary" routerLink="/auth/login">{{ 'AUTH_ZITADEL.BACK_TO_LOGIN' | translate }}</a>
 			} @else if (response) {
 				<ngx-ever-id-workspaces [response]="response" [busy]="busy" (selected)="signIn($event)"></ngx-ever-id-workspaces>
 			} @else {
@@ -31,12 +34,16 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 				@if (wrongCode) {
 					<nb-alert status="warning" role="alert">{{ 'AUTH_ZITADEL.CONFIRM.WRONG_CODE' | translate }}</nb-alert>
 				}
+				@if (failed) {
+					<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.try_again' | translate }}</nb-alert>
+				}
 				<form (ngSubmit)="submit()" class="code-form">
 					<input
 						nbInput
 						fullWidth
 						name="code"
 						autocomplete="one-time-code"
+						[attr.aria-label]="'AUTH_ZITADEL.CONFIRM.CODE' | translate"
 						[placeholder]="'AUTH_ZITADEL.CONFIRM.CODE' | translate"
 						[(ngModel)]="code"
 						required
@@ -69,6 +76,7 @@ export class EverIdConfirmComponent implements OnInit {
 	code = '';
 	busy = false;
 	wrongCode = false;
+	failed = false;
 	expired = false;
 	response: EverIdWorkspaceResponse | null = null;
 	private handoff = '';
@@ -84,6 +92,7 @@ export class EverIdConfirmComponent implements OnInit {
 		}
 		this.busy = true;
 		this.wrongCode = false;
+		this.failed = false;
 		this.api
 			.confirm(this.handoff, this.code.trim())
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -100,8 +109,11 @@ export class EverIdConfirmComponent implements OnInit {
 					this.busy = false;
 					if (failure?.status === 410) {
 						this.expired = true;
-					} else {
+					} else if (failure?.status === 401) {
 						this.wrongCode = true;
+					} else {
+						// A server or network problem: the code may well be right, so it can be tried again.
+						this.failed = true;
 					}
 					this.cdr.markForCheck();
 				}
@@ -109,7 +121,8 @@ export class EverIdConfirmComponent implements OnInit {
 	}
 
 	signIn(workspace: IWorkspaceResponse): void {
-		if (!this.response) {
+		// Also reached automatically for a single workspace: never send a second sign-in.
+		if (!this.response || this.busy) {
 			return;
 		}
 		this.busy = true;

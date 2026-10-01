@@ -77,7 +77,9 @@ export class InMemoryAccounts {
 
 	async findSiblings(user: Pick<User, 'id' | 'email'>, identity: ZitadelIdentity): Promise<User[]> {
 		const linked = new Set((await this.findLinkedUsers(identity.issuer, identity.subject)).map((row) => row.id));
-		return (await this.findVerifiedUsersByEmail(user.email)).filter((row) => row.id !== user.id && !linked.has(row.id));
+		return (await this.findVerifiedUsersByEmail(user.email)).filter(
+			(row) => row.id !== user.id && row.email === user.email && !linked.has(row.id)
+		);
 	}
 
 	async findActiveUser(userId: string): Promise<User | null> {
@@ -159,17 +161,21 @@ export class FakeGauzyAuth implements GauzyAuthPort {
 	readonly registered: ZitadelRegistrationInput[] = [];
 	/** The code the fake accepts. */
 	code = 'ABC123';
+	/** Like Gauzy, a code works only after it was sent, and only once. */
+	private codeOutstanding = false;
 
 	constructor(private readonly accounts: InMemoryAccounts) {}
 
 	async sendWorkspaceSigninCode(input: { email: string }): Promise<void> {
 		this.sentCodes.push(input.email);
+		this.codeOutstanding = true;
 	}
 
 	async signinWorkspacesByMagicCode(payload: { email: string; code: string }): Promise<IUserSigninWorkspaceResponse> {
-		if (payload.code !== this.code) {
+		if (!this.codeOutstanding || payload.code !== this.code) {
 			throw new UnauthorizedException();
 		}
+		this.codeOutstanding = false;
 		const users = this.accounts.users.filter((user) => user.email === payload.email && user.isActive !== false);
 		return {
 			workspaces: users.map((user) => ({ token: 'gauzy-workspace-token', user: toUser(user) })),
@@ -249,14 +255,40 @@ export class InMemorySessions {
 		return true;
 	}
 
+	/** Makes the next end-of-session call fail (as a database error would). */
+	failNextEnd = false;
+	readonly endedUsers: string[] = [];
+
+	async forgetLogoutJti(jti: string): Promise<void> {
+		this.seenJtis.delete(jti);
+	}
+
 	async endSessions(sid: string): Promise<number> {
+		this.throwIfFailing();
 		this.ended.push(sid);
+		return this.remove((row) => row.sid === sid);
+	}
+
+	async endSessionsOfUsers(userIds: string[]): Promise<number> {
+		this.throwIfFailing();
+		this.endedUsers.push(...userIds);
+		return this.remove((row) => userIds.includes(row.userId));
+	}
+
+	private remove(match: (row: { sid: string; userId: string }) => boolean): number {
 		const before = this.recorded.length;
 		for (let i = this.recorded.length - 1; i >= 0; i--) {
-			if (this.recorded[i].sid === sid) {
+			if (match(this.recorded[i])) {
 				this.recorded.splice(i, 1);
 			}
 		}
 		return before - this.recorded.length;
+	}
+
+	private throwIfFailing(): void {
+		if (this.failNextEnd) {
+			this.failNextEnd = false;
+			throw new Error('database unavailable');
+		}
 	}
 }

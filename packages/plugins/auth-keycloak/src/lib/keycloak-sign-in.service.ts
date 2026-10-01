@@ -10,15 +10,13 @@ import {
 	isOidcError
 } from '@gauzy/auth';
 import { environment } from '@gauzy/config';
+import { isMissingOrPlaceholder, isMissingOrSampleAuthServerUrl } from './auth-keycloak.config';
 
 /** Cookie that carries the Keycloak sign-in transaction between the start and the callback. */
 export const KEYCLOAK_TRANSACTION_COOKIE = 'gauzy_keycloak_txn';
 
 /** Scopes requested from Keycloak: the e-mail and its verification state come from the ID token. */
 export const KEYCLOAK_SCOPES = ['openid', 'email', 'profile'];
-
-/** The value `registerAs('keycloak')` falls back to when `KEYCLOAK_AUTH_SERVER_URL` is unset. */
-const SAMPLE_AUTH_SERVER_URL = 'https://keycloak.example.com/auth';
 
 /** Drops trailing slashes without a regular expression. */
 function stripTrailingSlashes(value: string): string {
@@ -147,7 +145,7 @@ export class KeycloakSignInService {
 		const authServerURL = this.configService.get<string>('keycloak.authServerURL')?.trim();
 		const callbackURL = this.configService.get<string>('keycloak.callbackURL')?.trim();
 
-		if (!clientId || !clientSecret || !realm || !authServerURL || authServerURL === SAMPLE_AUTH_SERVER_URL) {
+		if (isMissingOrPlaceholder(clientId) || isMissingOrPlaceholder(clientSecret) || !realm || isMissingOrSampleAuthServerUrl(authServerURL)) {
 			return null;
 		}
 		return {

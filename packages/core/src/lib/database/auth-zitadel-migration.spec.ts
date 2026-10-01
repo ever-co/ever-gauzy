@@ -119,9 +119,12 @@ describe.each(targets)('AuthZitadel migration on $name', ({ name: dialect, url }
 		const statements = await run('up');
 		for (const statement of statements) {
 			expect(statement).toMatch(/^(SET LOCAL lock_timeout|SELECT pg_advisory_xact_lock|CREATE (UNIQUE )?INDEX IF NOT EXISTS|CREATE TABLE IF NOT EXISTS)/);
-			// `ON DELETE CASCADE` / `ON UPDATE NO ACTION` are foreign key actions, not statements.
-			const withoutForeignKeyActions = statement.replace(/\bON (DELETE|UPDATE) (CASCADE|NO ACTION|SET NULL|SET DEFAULT|RESTRICT)\b/gi, '');
-			expect(withoutForeignKeyActions).not.toMatch(/\b(INSERT|UPDATE|DELETE|ALTER|DROP)\b/i);
+			// `ON DELETE CASCADE` / `ON UPDATE NO ACTION` are foreign key actions and MySQL's
+			// `ON UPDATE CURRENT_TIMESTAMP(6)` is a column default, not statements.
+			const withoutColumnClauses = statement
+				.replace(/\bON (DELETE|UPDATE) (CASCADE|NO ACTION|SET NULL|SET DEFAULT|RESTRICT)\b/gi, '')
+				.replace(/\bON UPDATE CURRENT_TIMESTAMP(\(\d+\))?/gi, '');
+			expect(withoutColumnClauses).not.toMatch(/\b(INSERT|UPDATE|DELETE|ALTER|DROP)\b/i);
 			if (/^CREATE (UNIQUE )?INDEX/.test(statement)) {
 				expect(statement).toMatch(/ ON ["`]zitadel_/);
 			}
@@ -143,5 +146,38 @@ describe.each(targets)('AuthZitadel migration on $name', ({ name: dialect, url }
 		await runner.release();
 		const populated = await run('up');
 		expect(populated).toEqual(empty);
+	});
+
+	it("removes a person's links and sessions when the Gauzy user is deleted", async () => {
+		const q = (name: string) => quote(dialect, name);
+		const userId = '00000000-0000-4000-9000-000000000001';
+		const otherUserId = '00000000-0000-4000-9000-000000000002';
+		const runner = dataSource.createQueryRunner();
+		try {
+			for (const id of [userId, otherUserId]) {
+				await runner.query(`INSERT INTO ${q('user')} (${q('id')}) VALUES ('${id}')`);
+				await runner.query(
+					`INSERT INTO ${q('zitadel_account')} (${q('id')}, ${q('issuer')}, ${q('subject')}, ${q('userId')}, ${q('linkMethod')}, ${q('linkedAt')}) ` +
+						`VALUES ('${id.replace('9000', 'a000')}', 'https://issuer.example.test', 'subject-${id.slice(-1)}', '${id}', 'explicit', '2026-01-01 00:00:00')`
+				);
+				await runner.query(
+					`INSERT INTO ${q('zitadel_session')} (${q('id')}, ${q('sid')}, ${q('userId')}) VALUES ('${id.replace('9000', 'b000')}', 'sid-1', '${id}')`
+				);
+			}
+
+			await runner.query(`DELETE FROM ${q('user')} WHERE ${q('id')} = '${userId}'`);
+
+			const remaining = async (table: string) =>
+				(await runner.query(`SELECT ${q('userId')} AS ${q('userId')} FROM ${q(table)}`)).map(
+					(row: Record<string, string>) => row['userId']
+				);
+			expect(await remaining('zitadel_account')).toEqual([otherUserId]);
+			expect(await remaining('zitadel_session')).toEqual([otherUserId]);
+		} finally {
+			for (const table of ['zitadel_session', 'zitadel_account', 'user']) {
+				await runner.query(`DELETE FROM ${q(table)}`);
+			}
+			await runner.release();
+		}
 	});
 });

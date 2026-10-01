@@ -28,10 +28,13 @@ The web app side of Ever ID sign-in (`@gauzy/plugin-auth-zitadel`).
 The pages only receive opaque one-time keys and error codes in their URLs;
 names and e-mail addresses are fetched from the API with those keys.
 
-Nothing of this plugin is visible unless the web app has `ZITADEL_AUTH_LINK`
+The Settings entry stays hidden unless the web app has `ZITADEL_AUTH_LINK`
 set and the API reports Ever ID sign-in as enabled
-(`GET /api/auth/zitadel/config`). The Ever ID button on the login and
-register pages lives in `@gauzy/ui-auth` and follows the same rule.
+(`GET /api/auth/zitadel/config`); the Ever ID button on the login and
+register pages lives in `@gauzy/ui-auth` and follows the same rule. The
+sign-in pages are only reached from an Ever ID sign-in; opened directly
+without a key they show the expiry message. Settings > Connected identities,
+opened directly while Ever ID sign-in is off, says that it is not enabled.
 
 ## Build and test
 

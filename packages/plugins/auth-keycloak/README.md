@@ -29,7 +29,8 @@ The plugin is loaded only when all of these are set on the API:
 - `KEYCLOAK_AUTH_SERVER_URL`: the Keycloak base URL (for example
   `https://id.example.com` or `.../auth`).
 - `KEYCLOAK_REALM`: the realm. The issuer is
-  `<KEYCLOAK_AUTH_SERVER_URL>/realms/<KEYCLOAK_REALM>`.
+  `<KEYCLOAK_AUTH_SERVER_URL>/realms/<KEYCLOAK_REALM>` and must use https
+  (http only on the local machine).
 - `KEYCLOAK_CALLBACK_URL` (optional): defaults to
   `<API_BASE_URL>/api/auth/keycloak/callback`.
 

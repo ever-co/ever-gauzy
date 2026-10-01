@@ -237,14 +237,16 @@ export class OidcTransactionService {
 	 */
 	private consume(state: string): boolean {
 		const now = this.now();
+		// Entries expire in insertion order (one fixed lifetime), so pruning stops at the first live one.
+		// A live entry is never evicted: that would let its transaction be completed a second time.
 		for (const [digest, expiresAt] of this.consumed) {
-			if (expiresAt > now && this.consumed.size < MAX_CONSUMED_STATES) {
+			if (expiresAt > now) {
 				break;
 			}
 			this.consumed.delete(digest);
 		}
 		const digest = createHash('sha256').update(state).digest('base64url');
-		if (this.consumed.has(digest)) {
+		if (this.consumed.has(digest) || this.consumed.size >= MAX_CONSUMED_STATES) {
 			return false;
 		}
 		this.consumed.set(digest, now + OIDC_TRANSACTION_TTL_MS);

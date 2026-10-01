@@ -109,13 +109,12 @@ export class OidcJwksService {
 			throw new OidcError('token_invalid', `Signature algorithm ${String(selector.alg)} is not accepted`);
 		}
 
-		const startedAt = this.now();
-		let keySet = await this.getKeySet(issuer, false, discoveryDocument);
-		let jwk = selectKey(keySet.keys, selector);
+		const first = await this.getKeySet(issuer, false, discoveryDocument);
+		let jwk = selectKey(first.keySet.keys, selector);
 
 		if (!jwk) {
 			const now = this.now();
-			if (keySet.fetchedAt >= startedAt) {
+			if (first.fresh) {
 				// The set was fetched by this very call; fetching it again cannot help.
 				this.lastForcedRefetch.set(issuer, now);
 				throw new OidcError('token_invalid', 'No matching signing key');
@@ -125,8 +124,8 @@ export class OidcJwksService {
 				throw new OidcError('token_invalid', 'No matching signing key (refetch cooldown active)');
 			}
 			this.lastForcedRefetch.set(issuer, now);
-			keySet = await this.getKeySet(issuer, true, discoveryDocument);
-			jwk = selectKey(keySet.keys, selector);
+			const reloaded = await this.getKeySet(issuer, true, discoveryDocument);
+			jwk = selectKey(reloaded.keySet.keys, selector);
 		}
 
 		if (!jwk) {
@@ -148,15 +147,19 @@ export class OidcJwksService {
 		return Date.now();
 	}
 
+	/**
+	 * Returns the key set of `issuer`, and whether this call obtained it from the issuer (itself, or by
+	 * joining a fetch already in flight) rather than from the cache.
+	 */
 	private async getKeySet(
 		issuer: string,
 		force: boolean,
 		discoveryDocument?: OidcDiscoveryDocument
-	): Promise<CachedKeySet> {
+	): Promise<{ keySet: CachedKeySet; fresh: boolean }> {
 		const cached = this.cache.get(issuer);
 		const now = this.now();
 		if (!force && cached && now - cached.fetchedAt < OIDC_JWKS_TTL_MS) {
-			return cached;
+			return { keySet: cached, fresh: false };
 		}
 
 		let pending = this.inFlight.get(issuer);
@@ -166,11 +169,11 @@ export class OidcJwksService {
 		}
 
 		try {
-			return await pending;
+			return { keySet: await pending, fresh: true };
 		} catch (error) {
 			if (cached && now - cached.fetchedAt < OIDC_JWKS_MAX_STALE_MS) {
 				this.logger.warn(`Serving a cached key set for ${issuer}: the refresh failed.`);
-				return cached;
+				return { keySet: cached, fresh: false };
 			}
 			if (error instanceof OidcError && error.code === 'discovery_failed') {
 				throw new OidcError('jwks_unavailable', error.message);

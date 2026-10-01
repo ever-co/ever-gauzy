@@ -55,7 +55,12 @@ function loadPlugins(env: Record<string, string | undefined>): unknown[] {
 }
 
 describe('API plugin list: optional sign-in plugins', () => {
-	const keycloakConfigured = { KEYCLOAK_CLIENT_ID: 'gauzy', KEYCLOAK_CLIENT_SECRET: 'a-real-secret' };
+	const keycloakConfigured = {
+		KEYCLOAK_CLIENT_ID: 'gauzy',
+		KEYCLOAK_CLIENT_SECRET: 'a-real-secret',
+		KEYCLOAK_REALM: 'gauzy',
+		KEYCLOAK_AUTH_SERVER_URL: 'https://id.example.test'
+	};
 
 	it.each([
 		['both off (defaults)', {}, false, false],
@@ -63,7 +68,8 @@ describe('API plugin list: optional sign-in plugins', () => {
 		['Keycloak on', { KEYCLOAK_ENABLED: 'true', ...keycloakConfigured }, false, true],
 		['both on', { ZITADEL_ENABLED: 'true', KEYCLOAK_ENABLED: 'true', ...keycloakConfigured }, true, true],
 		['Keycloak configured but not switched on', { ...keycloakConfigured }, false, false],
-		['Keycloak switched on with the sample placeholders', { KEYCLOAK_ENABLED: 'true', KEYCLOAK_CLIENT_ID: 'XXXXXXX', KEYCLOAK_CLIENT_SECRET: 'XXXXXXX' }, false, false],
+		['Keycloak switched on with the sample placeholders', { ...keycloakConfigured, KEYCLOAK_ENABLED: 'true', KEYCLOAK_CLIENT_ID: 'XXXXXXX', KEYCLOAK_CLIENT_SECRET: 'XXXXXXX' }, false, false],
+		['Keycloak switched on without a realm', { ...keycloakConfigured, KEYCLOAK_ENABLED: 'true', KEYCLOAK_REALM: '' }, false, false],
 		['ZITADEL_ENABLED=TRUE', { ZITADEL_ENABLED: 'TRUE' }, false, false],
 		['ZITADEL_ENABLED=1', { ZITADEL_ENABLED: '1' }, false, false],
 		['ZITADEL_ENABLED=yes', { ZITADEL_ENABLED: 'yes' }, false, false],

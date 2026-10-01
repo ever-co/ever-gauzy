@@ -86,7 +86,8 @@ All under `/api/auth/zitadel`:
 - `POST /signup/details`, `POST /signup` (anyone): the Ever Cloud sign-up
   confirmation page and the confirmation itself.
 - `POST /token` (first-party apps): exchanges an Ever ID token of an allowed
-  client for the workspace list.
+  client for the workspace list. An access token is accepted only when its
+  `aud` names an allowed client; up to 120 requests a minute per address.
 - `POST /link`, `GET /link/start`, `POST /link/preview`,
   `POST /link/confirm` (signed-in user): connect an Ever ID from Settings.
 - `DELETE /link/:id`, `GET /identities` (signed-in user): disconnect or list
@@ -124,15 +125,23 @@ answers 404 and no outbound request is made.
 - **Organization rules.** Optional hints in the ID token can remove a
   workspace from a sign-in (for example an organization that requires its
   company sign-in); they never grant access.
-- **Back-channel logout.** Sessions opened through an Ever ID session end
-  when the identity provider reports that session ended; a logout token is
-  accepted once and only while fresh.
+- **Back-channel logout.** Each Gauzy session opened through Ever ID is bound
+  to the refresh token of its sign-in. When the identity provider reports
+  that session ended (or, for a token naming only a subject, every session
+  of that person), that refresh token and the ones rotated from it are
+  revoked, so the session cannot be renewed; sessions opened some other way
+  keep working. Access tokens already issued stay valid until they expire
+  (`JWT_TOKEN_EXPIRATION_TIME`), because Gauzy checks them by signature. A
+  logout token is accepted once and only while fresh; when the sessions
+  cannot be ended the answer is 503, so the identity provider can retry.
 
 ## Outbound requests
 
-Only the configured issuer's discovery document, key set and token endpoint,
-and only while someone signs in (the documents are cached). None while the
-plugin is off or unconfigured, and none at start.
+Only the configured issuer's discovery document, key set and token endpoint:
+discovery and token requests while someone signs in, and the key set also to
+check a back-channel logout token or a first-party token (all cached). None
+while the plugin is off or unconfigured, and none at start. Issuers must use
+https (http only on the local machine).
 
 ## Data
 
@@ -143,7 +152,8 @@ Four tables, created by the core migration listed in `MIGRATIONS.md`:
 - `zitadel_session`: sessions opened through Ever ID;
 - `zitadel_logout_jti`: the logout token replay cache.
 
-Ever ID tokens are never stored.
+Ever ID tokens are never stored. Deleting a Gauzy user deletes that user's
+links and session records with it (foreign keys with `ON DELETE CASCADE`).
 
 ## Turning it off
 

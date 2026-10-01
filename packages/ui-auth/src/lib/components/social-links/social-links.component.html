@@ -1,6 +1,6 @@
 @if (signInProviders$ | async; as signInProviders) {
 	@if (signInProviders.length > 0) {
-		<div class="sign-in-providers" aria-label="Sign-in methods">
+		<div class="sign-in-providers" role="group" aria-label="Sign-in methods">
 			@for (provider of signInProviders; track provider.id) {
 				<a
 					nbButton

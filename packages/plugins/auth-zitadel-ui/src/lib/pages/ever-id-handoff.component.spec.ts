@@ -55,6 +55,11 @@ describe('EverIdHandoffComponent', () => {
 		expect(api.redeemHandoff).not.toHaveBeenCalled();
 	});
 
+	it('turns an unknown error code from the URL into the generic one', () => {
+		expect(create({ error: '<script>alert(1)</script>' }).error).toBe('sign_in_failed');
+		expect(api.redeemHandoff).not.toHaveBeenCalled();
+	});
+
 	it('opens only paths inside the web app after signing in', () => {
 		expect(safeAppPath('/pages/dashboard')).toBe('/pages/dashboard');
 		expect(safeAppPath('//evil.example.test')).toBe('/');

@@ -84,6 +84,39 @@ describe('Ever Cloud confirmed sign-up (HTTP, against a mock OpenID Provider)', 
 			expect(t.gauzyAuth.registered).toHaveLength(1);
 		});
 
+		it('requires every document Gauzy currently requires before creating anything', async () => {
+			const document = { documentId: 'terms', version: '2', sha256: 'a'.repeat(64), locale: 'en' };
+			t.terms.required = [{ ...document, url: '/legal/terms', title: 'Terms', effectiveDate: '2026-01-01' } as never];
+			const landing = await signIn('new-person', { email: 'new.person@example.test' });
+			const handoff = hashParam(landing, 'handoff');
+
+			const without = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true });
+			expect(without.status).toBe(400);
+			expect(t.gauzyAuth.registered).toHaveLength(0);
+
+			const accepted = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true, terms: [document] });
+			expect(accepted.status).toBe(200);
+			expect(t.gauzyAuth.registered).toEqual([expect.objectContaining({ terms: [document] })]);
+		});
+
+		it('keeps a confirmed sign-up resumable when a step fails, and never registers twice', async () => {
+			const landing = await signIn('new-person', { email: 'new.person@example.test' });
+			const failOnce = jest.spyOn(t.accounts, 'link').mockRejectedValueOnce(new Error('database unavailable'));
+
+			const failed = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: hashParam(landing, 'handoff'), confirm: true });
+			expect(failed.status).toBe(500);
+			expect(t.gauzyAuth.registered).toHaveLength(1);
+			expect(t.accounts.links).toHaveLength(0);
+			failOnce.mockRestore();
+
+			// The next Ever ID sign-in finishes the sign-up with the account that already exists.
+			const back = await signIn('new-person', { email: 'new.person@example.test' });
+			expect(back).toMatch(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?handoff=`);
+			expect(t.gauzyAuth.registered).toHaveLength(1);
+			expect(t.accounts.users).toHaveLength(1);
+			expect(t.accounts.links).toEqual([expect.objectContaining({ linkMethod: 'signup', userId: t.accounts.users[0].id })]);
+		});
+
 		it('answers signup_required on the token route for a person new to Gauzy', async () => {
 			const idToken = await t.issuer.sign(t.issuer.idTokenClaims('teams-person', { aud: 'teams-web', azp: 'teams-web' }));
 			const response = await browser.post(`${t.baseUrl}/api/auth/zitadel/token`, { id_token: idToken });

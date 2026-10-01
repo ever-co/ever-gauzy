@@ -71,6 +71,18 @@ describe('Token route for first-party clients (HTTP, against a mock OpenID Provi
 		const foreign = await t.issuer.sign({ iss: t.issuer.issuer, sub: 'teams-user', aud: ['teams-web'], client_id: 'inst-99', iat: now, exp: now + 300 });
 		expect((await post({ access_token: foreign })).status).toBe(401);
 
+		// A token minted for another resource does not open Gauzy, even when an allowed client asked for it.
+		const otherResource = await t.issuer.sign({
+			iss: t.issuer.issuer,
+			sub: 'teams-user',
+			aud: ['other-resource'],
+			azp: 'teams-web',
+			client_id: 'teams-web',
+			iat: now,
+			exp: now + 300
+		});
+		expect((await post({ access_token: otherResource })).status).toBe(401);
+
 		expect(t.issuer.requests.some((request) => request.path.includes('userinfo'))).toBe(false);
 	});
 
