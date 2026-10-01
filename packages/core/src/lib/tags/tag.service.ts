@@ -148,7 +148,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 					const serialized = await Promise.all(items.map(async (item: any) => {
-						const s = this.serialize(item);
+						// `tagTypeName` is not a Tag column: the TypeORM branch adds it as a raw select alias
+						const s: Tag & { tagTypeName?: string | null } = this.serialize(item);
 						// Same field the TypeORM branch selects; the tags page shows it in its Type column
 						s.tagTypeName = s.tagType?.type ?? null;
 						if (s.icon) s.fullIconUrl = await store.getProviderInstance().url(s.icon);
