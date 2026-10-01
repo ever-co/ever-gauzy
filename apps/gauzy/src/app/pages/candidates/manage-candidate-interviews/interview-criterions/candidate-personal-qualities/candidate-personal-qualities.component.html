@@ -1,84 +1,14 @@
-<section class="criterion-card">
-	<header class="criterion-header">
-		<span class="criterion-icon"><nb-icon icon="person-outline"></nb-icon></span>
-		<h6 class="criterion-title">{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}</h6>
-		<span class="criterion-count">{{ personalQualitiesList?.length || 0 }}</span>
-	</header>
-
-	@if (form) {
-		<form class="criterion-form" [formGroup]="form">
-			<div formArrayName="qualities">
-				@for (quality of qualities?.controls; track quality; let i = $index) {
-					<div [formGroupName]="i">
-						<input
-							formControlName="name"
-							nbInput
-							type="text"
-							fullWidth
-							placeholder="{{ 'FORM.PLACEHOLDERS.ADD_CANDIDATE_QUALITY' | translate }}"
-						/>
-					</div>
-				}
-			</div>
-		</form>
-	}
-
-	<div class="criterion-actions">
-			<button type="button" nbButton ghost status="basic" size="small" (click)="cancel()">
-				{{ 'BUTTONS.CANCEL' | translate }}
-			</button>
-		<button type="button" nbButton status="primary" size="small" (click)="save()">
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</div>
-
-	@if (existedQualNames?.length > 0) {
-		<div class="existed">
-			<span class="existed-title">{{ 'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate }}</span>
-			<div class="existed-names">
-				@for (name of existedQualNames; track name) {
-					<span class="existed-name">{{ name }}</span>
-				}
-			</div>
-		</div>
-	}
-
-	@if (personalQualitiesList?.length > 0) {
-		<ul class="criterion-list">
-			@for (quality of personalQualitiesList; track quality; let i = $index) {
-				<li class="criterion-item">
-					<span class="criterion-name">{{ quality.name }}</span>
-					<span class="criterion-item-actions">
-						<button
-							type="button"
-							nbButton
-							ghost
-							size="tiny"
-							status="basic"
-							[attr.aria-label]="'BUTTONS.EDIT' | translate"
-							(click)="edit(i, quality.id)"
-						>
-							<nb-icon icon="edit-outline"></nb-icon>
-						</button>
-						<button
-							type="button"
-							nbButton
-							ghost
-							size="tiny"
-							status="basic"
-							[attr.aria-label]="'BUTTONS.DELETE' | translate"
-							(click)="remove(quality)"
-						>
-							<nb-icon icon="trash-2-outline"></nb-icon>
-						</button>
-					</span>
-				</li>
-			}
-		</ul>
-	} @else {
-		<div class="criterion-empty">
-			<nb-icon icon="person-outline"></nb-icon>
-			<p>{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER' | translate }}</p>
-		</div>
-	}
-</section>
+<ga-candidate-criterion-card
+	icon="person-outline"
+	heading="CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES"
+	placeholder="FORM.PLACEHOLDERS.ADD_CANDIDATE_QUALITY"
+	emptyText="CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES_PLACEHOLDER"
+	[group]="form ? qualities?.at(0) : null"
+	[items]="personalQualitiesList"
+	[existedNames]="existedQualNames"
+	[showCancel]="true"
+	(cancel)="cancel()"
+	(save)="save()"
+	(editItem)="edit($event.index, $event.id)"
+	(removeItem)="remove($event)"
+></ga-candidate-criterion-card>

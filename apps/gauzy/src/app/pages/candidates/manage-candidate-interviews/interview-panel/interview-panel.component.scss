@@ -3,27 +3,6 @@
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-:host .card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  width: 100%;
-  border: none;
-  padding: 0;
-  overflow: unset;
-  background-color: var(--gauzy-card-2);
-
-  &-filter {
-    padding-bottom: 1.5rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-}
-
 .card-header {
   background: unset;
 }
@@ -89,11 +68,29 @@
 }
 
 :host .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+  overflow: unset;
+  background-color: var(--gauzy-card-2);
   // Same height as the Criterions tab (`.add-criterion` in interview-criterions):
   // the table fills the space under the filters and scrolls inside it, instead of
   // stopping at the default card body height with empty space below.
   height: calc(100vh - 16.5rem);
   min-height: 0;
+
+  &-filter {
+    padding-bottom: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
   .card-body.interview-panel {
     flex: 1 1 auto;

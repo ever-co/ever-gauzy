@@ -1,0 +1,81 @@
+<section class="criterion-card">
+	<header class="criterion-header">
+		<span class="criterion-icon"><nb-icon [icon]="icon"></nb-icon></span>
+		<h6 class="criterion-title">{{ heading | translate }}</h6>
+		<span class="criterion-count">{{ items?.length || 0 }}</span>
+	</header>
+
+	@if (group) {
+		<form class="criterion-form" [formGroup]="formGroup">
+			<input
+				formControlName="name"
+				nbInput
+				type="text"
+				fullWidth
+				[placeholder]="placeholder | translate"
+				[attr.aria-label]="placeholder | translate"
+			/>
+		</form>
+	}
+
+	<div class="criterion-actions">
+		@if (showCancel) {
+			<button type="button" nbButton ghost status="basic" size="small" (click)="cancel.emit()">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		}
+		<button type="button" nbButton status="primary" size="small" (click)="save.emit()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+
+	@if (existedNames?.length > 0) {
+		<div class="existed">
+			<span class="existed-title">{{ 'CANDIDATES_PAGE.CRITERIONS.ALREADY_EXISTED' | translate }}</span>
+			<div class="existed-names">
+				@for (name of existedNames; track name) {
+					<span class="existed-name">{{ name }}</span>
+				}
+			</div>
+		</div>
+	}
+
+	@if (items?.length > 0) {
+		<ul class="criterion-list">
+			@for (item of items; track item; let i = $index) {
+				<li class="criterion-item">
+					<span class="criterion-name">{{ item.name }}</span>
+					<span class="criterion-item-actions">
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							[attr.aria-label]="'BUTTONS.EDIT' | translate"
+							(click)="editItem.emit({ index: i, id: item.id })"
+						>
+							<nb-icon icon="edit-outline"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							ghost
+							size="tiny"
+							status="basic"
+							[attr.aria-label]="'BUTTONS.DELETE' | translate"
+							(click)="removeItem.emit(item)"
+						>
+							<nb-icon icon="trash-2-outline"></nb-icon>
+						</button>
+					</span>
+				</li>
+			}
+		</ul>
+	} @else {
+		<div class="criterion-empty">
+			<nb-icon [icon]="icon"></nb-icon>
+			<p>{{ emptyText | translate }}</p>
+		</div>
+	}
+</section>
