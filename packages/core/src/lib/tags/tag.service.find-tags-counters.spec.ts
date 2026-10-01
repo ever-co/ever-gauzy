@@ -6,6 +6,15 @@ import { MultiORMEnum } from '../core/utils';
 import { TAG_USAGE_COUNTERS, TagService } from './tag.service';
 import { asTenantUser, createCrossTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 
+// `@gauzy/config` re-exports `getConfig` with `export *`, which compiles to a non-configurable getter, so
+// `jest.spyOn(config, 'getConfig')` throws "Cannot redefine property". Mock the module instead; each test
+// swaps the return value and `afterEach` puts the real implementation back.
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+	return { ...actual, getConfig: jest.fn(actual.getConfig) };
+});
+const actualGetConfig = jest.requireActual<typeof config>('@gauzy/config').getConfig;
+
 /**
  * `findTags` LEFT JOINs every tagged relation at once, so each usage counter must be a
  * `COUNT(DISTINCT ...)`: a plain COUNT multiplies it by the matches of every other relation
@@ -33,8 +42,8 @@ describe('TagService.findTags usage counters (TypeORM)', () => {
 	};
 	const selections = () => new Map((query.addSelect as jest.Mock).mock.calls.map(([sql, alias]) => [alias, sql]));
 	const withTagCustomFields = (fields: object[]) => {
-		const original = config.getConfig();
-		jest.spyOn(config, 'getConfig').mockReturnValue({
+		const original = actualGetConfig();
+		jest.mocked(config.getConfig).mockReturnValue({
 			...original,
 			customFields: { ...original.customFields, Tag: fields }
 		} as unknown as ReturnType<typeof config.getConfig>);
@@ -58,6 +67,7 @@ describe('TagService.findTags usage counters (TypeORM)', () => {
 	afterEach(() => {
 		restore();
 		jest.restoreAllMocks();
+		jest.mocked(config.getConfig).mockImplementation(actualGetConfig);
 	});
 
 	it('joins every tagged relation and counts each one once, under its own counter', async () => {
