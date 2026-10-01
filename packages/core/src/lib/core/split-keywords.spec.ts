@@ -20,7 +20,7 @@ describe('splitKeywords', () => {
 		expect(splitKeywords(value)).toEqual([]);
 	});
 
-	it('accepts a number, which the query DTO produces for a numeric search', () => {
+	it('accepts a non-string value without throwing', () => {
 		expect(splitKeywords(123)).toEqual(['123']);
 	});
 });

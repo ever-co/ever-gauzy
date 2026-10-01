@@ -963,7 +963,7 @@ export function parseSortOrder(order: unknown, sortableColumns: readonly string[
  *
  * Splits on any whitespace and drops empty entries: with `split(' ')`, a trailing or repeated space
  * yields an empty keyword, which becomes a `LIKE '%%'` condition matching every row. The value is
- * stringified first because the query DTO JSON-parses filters (a search for `123` arrives as a number).
+ * stringified first because the query DTO may hand over a non-string (it converts `where` leaves).
  *
  * @param text The search text
  * @returns The non-empty keywords
