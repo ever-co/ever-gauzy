@@ -26,9 +26,13 @@
 }
 
 :host {
+  // Sits inside the Interviews page card, which already paints --gauzy-card-2:
+  // a second translucent layer here made the calendar a different colour from
+  // Employees → Appointments
   nb-card,
+  nb-card-header,
   nb-card-body {
-    background-color: var(--gauzy-card-2);
+    background-color: transparent;
   }
   nb-card-body {
     @include nb-ltr(padding, 0.75rem 0.5rem 0.75rem 0.75rem !important);

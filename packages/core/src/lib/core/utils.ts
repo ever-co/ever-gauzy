@@ -933,6 +933,83 @@ export function parseTypeORMFindToMikroOrm<T>(options: LegacyFindManyOptions<any
 }
 
 /**
+ * Keeps only the allowed columns with an ASC/DESC direction from a client-supplied `order`
+ * (e.g. `order[start]=ASC`), so it can be passed safely to TypeORM `order` or MikroORM `orderBy`.
+ * The client's key order is preserved, so multi-column sort precedence is kept.
+ *
+ * @param order The raw `order` query value
+ * @param sortableColumns The columns the caller allows sorting on
+ * @returns The sanitized order map (empty when nothing valid was requested)
+ */
+export function parseSortOrder(order: unknown, sortableColumns: readonly string[]): Record<string, 'ASC' | 'DESC'> {
+	const result: Record<string, 'ASC' | 'DESC'> = {};
+	if (!order || typeof order !== 'object') {
+		return result;
+	}
+	for (const [column, value] of Object.entries(order)) {
+		if (!sortableColumns.includes(column)) {
+			continue;
+		}
+		const direction = typeof value === 'string' ? value.toUpperCase() : '';
+		if (direction === 'ASC' || direction === 'DESC') {
+			result[column] = direction;
+		}
+	}
+	return result;
+}
+
+/**
+ * Splits a free-text search into keywords.
+ *
+ * Splits on any whitespace and drops empty entries: with `split(' ')`, a trailing or repeated space
+ * yields an empty keyword, which becomes a `LIKE '%%'` condition matching every row. Strings, numbers
+ * and booleans are stringified (the query DTO may hand over a non-string `where` leaf); any other value,
+ * such as an object, yields no keyword rather than a "[object Object]" search.
+ *
+ * @param text The search text
+ * @returns The non-empty keywords
+ */
+export function splitKeywords(text: unknown): string[] {
+	if (typeof text !== 'string' && typeof text !== 'number' && typeof text !== 'boolean') {
+		return [];
+	}
+	return String(text)
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+}
+
+/**
+ * Whether the configured MikroORM driver is PostgreSQL.
+ *
+ * The MikroORM settings live in `dbMikroOrmConnectionOptions`, where `driver` is the driver class
+ * (e.g. `driver: PostgreSqlDriver`), so both the class and an instance are recognized. Anything but
+ * MySQL / SQLite is treated as PostgreSQL, the same fallback as `getDBType()`.
+ *
+ * @param driver The configured MikroORM driver (read from the config by default)
+ */
+export function isMikroOrmPostgres(driver: unknown = getConfig().dbMikroOrmConnectionOptions?.driver): boolean {
+	const isDriver = (type: abstract new (...args: never[]) => unknown) => driver === type || driver instanceof type;
+	return !isDriver(MySqlDriver) && !isDriver(BetterSqliteDriver);
+}
+
+/**
+ * Builds a case-insensitive "contains" condition for a MikroORM filter.
+ *
+ * MikroORM emits `$ilike` verbatim as `ILIKE`, which only PostgreSQL supports; MySQL and SQLite
+ * reject it. Their `LIKE` is already case-insensitive (default collations / ASCII text), so it is
+ * used there instead.
+ *
+ * @param value The text to search for
+ * @param postgres Whether the MikroORM database is PostgreSQL (resolved from the config by default)
+ * @returns `{ $ilike: '%value%' }` on PostgreSQL, `{ $like: '%value%' }` otherwise
+ */
+export function mikroOrmContains(value: string, postgres: boolean = isMikroOrmPostgres()): { $ilike: string } | { $like: string } {
+	const pattern = `%${value}%`;
+	return postgres ? { $ilike: pattern } : { $like: pattern };
+}
+
+/**
  * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
  * @param order TypeORM 'order' option
  * @returns Parsed MikroORM 'orderBy' option

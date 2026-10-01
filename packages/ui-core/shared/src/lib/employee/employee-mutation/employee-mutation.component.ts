@@ -128,8 +128,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	 * Closes the dialog upon successful creation or handles errors.
 	 */
 	async add() {
-		// Check if organization is defined
-		if (!this.organization) {
+		// Require an organization and prevent overlapping requests
+		if (!this.organization || this.loading) {
 			return;
 		}
 
@@ -154,8 +154,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			// Handle errors using error handler service
 			this.errorHandler.handleError(error);
 		} finally {
-			// Reset on failure too, or the spinner stays up and "Create" stays disabled
-			this.loading = false;
+			// Set loading state to false regardless of success or failure, so it resets on failure too,
+      // or the spinner stays up and "Create" stays disabled
+      this.loading = false;
 		}
 	}
 

@@ -4,15 +4,38 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.block-info {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 11px;
-  letter-spacing: 0em;
-  text-align: left;
-  margin: 1rem 0;
+// Time zone sits with the actions, before the buttons
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.timezone-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--text-hint-color);
+  white-space: nowrap;
+
+  strong {
+    font-weight: 500;
+    color: var(--text-basic-color);
+  }
+
+  .timezone-change {
+    margin-left: 0.25rem;
+    text-transform: none;
+  }
 }
 
 :host {
@@ -21,7 +44,8 @@
     background-color: var(--gauzy-card-2);
   }
   nb-card-body {
-    height: calc(100vh - 16.5rem) !important;
+    // The time zone line moved into the title row, handing its ~2.5rem back to the body
+    height: calc(100vh - 14rem) !important;
   }
   .calendar-container {
     height: 100%;
@@ -29,8 +53,13 @@
   }
   [nbButton].appearance-outline.status-info,
   [nbButton].appearance-outline.status-warning,
-  [nbButton].appearance-outline.status-primary {
+  [nbButton].appearance-outline.status-primary,
+  [nbButton].appearance-outline.status-basic {
     border-width: 0;
     box-shadow: var(--gauzy-shadow);
   }
 }
+
+// The calendar itself (toolbar, grid, events, month view) is styled globally by
+// the `full-calendar()` mixin in gauzy/_gauzy-overrides.scss, shared by every
+// FullCalendar in the app.

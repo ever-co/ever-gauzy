@@ -1,0 +1,111 @@
+@use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as *;
+
+:host {
+	display: block;
+
+	// Same filled select and label as every other Gauzy dialog
+	@include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+}
+
+.timezone-dialog {
+	width: 440px;
+	max-width: calc(100vw - 2rem);
+	margin: 0;
+	background-color: var(--gauzy-card-1);
+	border: none;
+	border-radius: nb-theme(border-radius);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+// Header
+.dialog-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1.25rem 1.5rem 1rem;
+	background-color: transparent;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
+
+	.title {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 500;
+		line-height: 1.5rem;
+		color: nb-theme(text-basic-color);
+	}
+
+	.subtitle {
+		margin: 0.125rem 0 0;
+		font-size: 0.75rem;
+		font-weight: 400;
+		line-height: 1rem;
+		color: nb-theme(text-hint-color);
+	}
+
+	.close {
+		margin: -0.25rem -0.5rem 0 0;
+		color: nb-theme(text-hint-color);
+	}
+}
+
+// Body
+.dialog-body {
+	padding: 1.25rem 1.5rem 1.5rem;
+	overflow: visible;
+	background-color: transparent;
+
+	.label {
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+}
+
+// City, region and offset on one row — used by both the options and the value.
+// The options render in the body-appended panel but are declared in this
+// template, so these scoped rules still reach them.
+.zone-option {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	min-width: 0;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+
+	.zone-city {
+		flex-shrink: 0;
+		color: var(--text-basic-color);
+	}
+
+	.zone-region {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		font-size: 0.75rem;
+		color: var(--text-hint-color);
+	}
+
+	.zone-offset {
+		flex-shrink: 0;
+		font-size: 0.75rem;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-hint-color);
+	}
+}
+
+// Footer
+.dialog-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+	background-color: transparent;
+	border-top: 1px solid var(--gauzy-border-default-color);
+
+	[nbButton] {
+		text-transform: none;
+	}
+}

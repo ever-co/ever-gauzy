@@ -63,6 +63,7 @@ import {
 	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+	private readonly pageSizeStorageKey = 'employeesPageSize';
 	public dataTableId: PageDataTablePageId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
@@ -113,6 +114,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	ngOnInit() {
+		try {
+			const savedPageSize = Number(localStorage.getItem(this.pageSizeStorageKey));
+			if (Number.isSafeInteger(savedPageSize) && savedPageSize > 0) {
+				this.setPagination({ ...this.getPagination(), itemsPerPage: savedPageSize });
+			}
+		} catch {
+			// Keep the default when browser storage is unavailable.
+		}
 		this._registerDataTableColumns();
 		this._loadSmartTableSettings();
 		this._subscribeToQueryParams();
@@ -153,6 +162,22 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	protected refreshPagination(): void {
+		this.setPagination({ ...this.getPagination(), activePage: 1 });
+	}
+
+	public onPageSizeChange(itemsPerPage: number): void {
+		this.pagination = { ...this.getPagination(), activePage: 1, itemsPerPage };
+		this.smartTableSource.setPaging(1, itemsPerPage, false);
+		// Updating table settings refreshes the existing source; do not also emit pagination$.
+		this._loadSmartTableSettings();
+		try {
+			localStorage.setItem(this.pageSizeStorageKey, String(itemsPerPage));
+		} catch {
+			// The selected size still works for this visit.
+		}
 	}
 
 	ngAfterViewInit(): void {
@@ -605,10 +630,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param totalItems - Total items returned from the server
 	 */
 	updatePagination(totalItems: number) {
-		this.setPagination({
+		// A response updates the count without requesting the same employees again.
+		this.pagination = {
 			...this.getPagination(),
 			totalItems
-		});
+		};
 	}
 
 	/**
@@ -1079,7 +1105,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	/**
 	 * Handle employee favorite toggle event from the new component
 	 */
-	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
 		void this.loadFavoriteEmployees();
 	}

@@ -25,6 +25,12 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	loaded: boolean;
 	preSelected: string[] | string;
 
+	/**
+	 * Image URLs that failed to load; those options fall back to initials. Keyed by
+	 * URL, not employee, so a new photo URL for the same employee is tried again.
+	 */
+	protected readonly brokenImages = new Set<string>();
+
 	@Input()
 	public set reset(value: boolean | null) {
 		if (value) {
@@ -178,6 +184,16 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			true
 		);
 		this.employees = items;
+	}
+
+	/** Up to two initials from the employee's name, shown when there is no usable image. */
+	protected getInitials(employee: IEmployee): string {
+		const name = (employee.user?.name || '').trim();
+		return name
+			.split(/\s+/)
+			.slice(0, 2)
+			.map((part) => part.charAt(0).toUpperCase())
+			.join('');
 	}
 
 	ngOnDestroy(): void {}
