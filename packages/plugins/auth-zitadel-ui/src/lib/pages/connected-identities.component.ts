@@ -8,7 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthZitadelUiService, EverIdIdentity, EverIdLinkPreview } from '../services/auth-zitadel-ui.service';
 
 /** Error codes the API puts in the URL of this page (never anything personal). */
-const KNOWN_ERRORS = ['email_unverified', 'reauth_required', 'link_failed', 'sign_in_failed', 'cancelled', 'expired'];
+const KNOWN_ERRORS = new Set(['email_unverified', 'reauth_required', 'link_failed', 'sign_in_failed', 'cancelled', 'expired']);
 
 /**
  * Settings > Connected identities: the signed-in person connects an Ever ID to this account (after a
@@ -154,7 +154,7 @@ export class ConnectedIdentitiesComponent implements OnInit {
 					return;
 				}
 				if (error) {
-					this.error = KNOWN_ERRORS.includes(error) ? error : 'link_failed';
+					this.error = KNOWN_ERRORS.has(error) ? error : 'link_failed';
 				}
 				if (linked) {
 					this.loadPreview(linked);

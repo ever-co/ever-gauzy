@@ -9,7 +9,7 @@ import { AuthZitadelUiService, EverIdWorkspaceResponse } from '../services/auth-
 import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 
 /** Error codes the API puts in the URL (never anything personal). */
-const KNOWN_ERRORS = ['email_unverified', 'sign_in_failed', 'cancelled', 'expired'];
+const KNOWN_ERRORS = new Set(['email_unverified', 'sign_in_failed', 'cancelled', 'expired']);
 
 /**
  * `#/auth/ever-id?handoff=…`: redeems the one-time key of an Ever ID sign-in, then signs in to the
@@ -93,7 +93,7 @@ export class EverIdHandoffComponent implements OnInit {
 	}
 
 	private fail(code: string): void {
-		this.error = KNOWN_ERRORS.includes(code) ? code : 'sign_in_failed';
+		this.error = KNOWN_ERRORS.has(code) ? code : 'sign_in_failed';
 		this.cdr.markForCheck();
 	}
 }

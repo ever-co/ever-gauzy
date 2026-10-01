@@ -156,6 +156,64 @@ function boundedInt(env: Env, name: string, fallback: number, min: number, max: 
 	return value;
 }
 
+type IssuerSettings = Pick<AuthZitadelSettings, 'issuers' | 'refusedIssuers' | 'everIssuersAwaitingConnect'>;
+
+/** Reads `ZITADEL_ISSUERS`: at most three valid issuers; an Ever host only on Ever Cloud. */
+function parseIssuers(env: Env, isCloud: boolean, warn: (message: string) => void): IssuerSettings {
+	const result: IssuerSettings = { issuers: [], refusedIssuers: [], everIssuersAwaitingConnect: [] };
+	for (const raw of list(env['ZITADEL_ISSUERS'])) {
+		const issuer = stripTrailingSlashes(raw);
+		const problem = issuerProblem(issuer);
+		if (problem) {
+			result.refusedIssuers.push({ issuer, reason: problem });
+			warn(`ZITADEL_ISSUERS: ${issuer} is not accepted (${problem}).`);
+		} else if (result.issuers.length + result.everIssuersAwaitingConnect.length >= MAX_ISSUERS) {
+			result.refusedIssuers.push({ issuer, reason: 'too_many' });
+			warn(`ZITADEL_ISSUERS: at most ${MAX_ISSUERS} issuers are used; ${issuer} is ignored.`);
+		} else if (!isCloud && isEverHost(issuer)) {
+			// On a non-cloud install an Ever issuer is only ever enabled through Ever Connect.
+			result.everIssuersAwaitingConnect.push(issuer);
+		} else if (!result.issuers.includes(issuer)) {
+			result.issuers.push(issuer);
+		}
+	}
+	if (result.everIssuersAwaitingConnect.length) {
+		warn(
+			`ZITADEL_ISSUERS: ${result.everIssuersAwaitingConnect.join(', ')} can only be enabled through Ever Connect on this install; not used.`
+		);
+	}
+	return result;
+}
+
+/** Reads `ZITADEL_LINK_MODE`: `confirmed` only on Ever Cloud, `explicit` otherwise. */
+function parseLinkMode(env: Env, isCloud: boolean, warn: (message: string) => void): ZitadelLinkMode {
+	const requested = env['ZITADEL_LINK_MODE'] || 'explicit';
+	if (requested === 'confirmed') {
+		if (isCloud) {
+			return 'confirmed';
+		}
+		warn('ZITADEL_LINK_MODE=confirmed is only available on Ever Cloud; using explicit.');
+	} else if (requested !== 'explicit') {
+		warn('ZITADEL_LINK_MODE must be "explicit" or "confirmed"; using explicit.');
+	}
+	return 'explicit';
+}
+
+/** Reads `ZITADEL_SCOPES`: always `openid`, never an organization-scoped login scope. */
+function parseScopes(env: Env, warn: (message: string) => void): string[] {
+	const projectId = env['EVER_PLATFORM_PROJECT_ID']?.trim();
+	const defaultScopes = ['openid', 'profile', 'email', 'urn:zitadel:iam:user:resourceowner'];
+	if (projectId) {
+		defaultScopes.push(`urn:zitadel:iam:org:project:id:${projectId}:aud`);
+	}
+	let scopes = env['ZITADEL_SCOPES'] ? list(env['ZITADEL_SCOPES'], ' ') : defaultScopes;
+	if (scopes.some((scope) => scope.startsWith(ORG_SCOPE_PREFIX))) {
+		warn('ZITADEL_SCOPES: organization-scoped login scopes are never requested; removed.');
+		scopes = scopes.filter((scope) => !scope.startsWith(ORG_SCOPE_PREFIX));
+	}
+	return scopes.includes('openid') ? scopes : ['openid', ...scopes];
+}
+
 /**
  * Parses the plugin settings from the environment. Pure: everything it needs comes in through `env`,
  * and every problem is reported through `warn` (never with a secret in it).
@@ -169,49 +227,8 @@ export function parseZitadelSettings(env: Env, warn: (message: string) => void =
 	const clientBaseUrl = stripTrailingSlashes(env['CLIENT_BASE_URL'] || 'http://localhost:4200');
 	const isCloud = env['EVER_INSTALL_SOURCE'] === 'cloud';
 	const everConnectEnabled = readStrictBoolean(env, 'EVER_CONNECT_ENABLED', false, warn);
-
-	const issuers: string[] = [];
-	const refusedIssuers: AuthZitadelSettings['refusedIssuers'] = [];
-	const everIssuersAwaitingConnect: string[] = [];
-	for (const raw of list(env['ZITADEL_ISSUERS'])) {
-		const issuer = stripTrailingSlashes(raw);
-		const problem = issuerProblem(issuer);
-		if (problem) {
-			refusedIssuers.push({ issuer, reason: problem });
-			warn(`ZITADEL_ISSUERS: ${issuer} is not accepted (${problem}).`);
-			continue;
-		}
-		if (issuers.length + everIssuersAwaitingConnect.length >= MAX_ISSUERS) {
-			refusedIssuers.push({ issuer, reason: 'too_many' });
-			warn(`ZITADEL_ISSUERS: at most ${MAX_ISSUERS} issuers are used; ${issuer} is ignored.`);
-			continue;
-		}
-		if (!isCloud && isEverHost(issuer)) {
-			// On a non-cloud install an Ever issuer is only ever enabled through Ever Connect.
-			everIssuersAwaitingConnect.push(issuer);
-			continue;
-		}
-		if (!issuers.includes(issuer)) {
-			issuers.push(issuer);
-		}
-	}
-	if (everIssuersAwaitingConnect.length) {
-		warn(
-			`ZITADEL_ISSUERS: ${everIssuersAwaitingConnect.join(', ')} can only be enabled through Ever Connect on this install; not used.`
-		);
-	}
-
-	const requestedLinkMode = env['ZITADEL_LINK_MODE'] || 'explicit';
-	let linkMode: ZitadelLinkMode = 'explicit';
-	if (requestedLinkMode === 'confirmed') {
-		if (isCloud) {
-			linkMode = 'confirmed';
-		} else {
-			warn('ZITADEL_LINK_MODE=confirmed is only available on Ever Cloud; using explicit.');
-		}
-	} else if (requestedLinkMode !== 'explicit') {
-		warn('ZITADEL_LINK_MODE must be "explicit" or "confirmed"; using explicit.');
-	}
+	const { issuers, refusedIssuers, everIssuersAwaitingConnect } = parseIssuers(env, isCloud, warn);
+	const linkMode = parseLinkMode(env, isCloud, warn);
 
 	const signupRequested = readStrictBoolean(env, 'ZITADEL_SIGNUP_ENABLED', false, warn);
 	if (signupRequested && !isCloud) {
@@ -222,19 +239,7 @@ export function parseZitadelSettings(env: Env, warn: (message: string) => void =
 		warn('ZITADEL_JIT_PROVISIONING: accounts are never created without the person confirming; ignored.');
 	}
 
-	const projectId = env['EVER_PLATFORM_PROJECT_ID']?.trim();
-	const defaultScopes = ['openid', 'profile', 'email', 'urn:zitadel:iam:user:resourceowner'];
-	if (projectId) {
-		defaultScopes.push(`urn:zitadel:iam:org:project:id:${projectId}:aud`);
-	}
-	let scopes = env['ZITADEL_SCOPES'] ? list(env['ZITADEL_SCOPES'], ' ') : defaultScopes;
-	if (scopes.some((scope) => scope.startsWith(ORG_SCOPE_PREFIX))) {
-		warn('ZITADEL_SCOPES: organization-scoped login scopes are never requested; removed.');
-		scopes = scopes.filter((scope) => !scope.startsWith(ORG_SCOPE_PREFIX));
-	}
-	if (!scopes.includes('openid')) {
-		scopes = ['openid', ...scopes];
-	}
+	const scopes = parseScopes(env, warn);
 
 	return {
 		issuers,

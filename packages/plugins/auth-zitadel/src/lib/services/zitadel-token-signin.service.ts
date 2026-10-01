@@ -101,7 +101,8 @@ export class ZitadelTokenSigninService {
 			this.logger.debug(`Token route refused an access token: ${isOidcError(error) ? error.code : 'error'}`);
 			throw new UnauthorizedException();
 		}
-		const identity = { issuer: issuer.issuer, subject: String(payload['sub']) };
+		// `sub` is a required, verified claim of the access token.
+		const identity = { issuer: issuer.issuer, subject: payload.sub as string };
 		const linked = await this.accounts.findLinkedUsers(identity.issuer, identity.subject);
 		if (!linked.length) {
 			throw new UnauthorizedException({ code: 'id_token_required' });

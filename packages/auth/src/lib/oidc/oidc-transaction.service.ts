@@ -80,6 +80,12 @@ export function constantTimeEquals(a: string, b: string): boolean {
 	return left.length === right.length && timingSafeEqual(left, right);
 }
 
+/** A claim of the signed transaction as text (the transaction only ever stores strings there). */
+function textClaim(claims: Record<string, unknown>, name: string): string {
+	const value = claims[name];
+	return typeof value === 'string' ? value : '';
+}
+
 /**
  * Keeps `state`, `nonce` and the PKCE verifier of an authorization request in a signed cookie.
  *
@@ -189,7 +195,7 @@ export class OidcTransactionService {
 			throw new OidcError('state_mismatch', 'Transaction expired');
 		}
 
-		const expected = String(claims['st'] ?? '');
+		const expected = textClaim(claims, 'st');
 		if (!constantTimeEquals(expected, state)) {
 			throw new OidcError('state_mismatch', 'State does not match');
 		}
@@ -200,11 +206,11 @@ export class OidcTransactionService {
 
 		const payload = claims['pl'];
 		return {
-			issuer: String(claims['iss'] ?? ''),
+			issuer: textClaim(claims, 'iss'),
 			state: expected,
-			nonce: String(claims['nn'] ?? ''),
-			codeVerifier: String(claims['cv'] ?? ''),
-			mode: String(claims['md'] ?? ''),
+			nonce: textClaim(claims, 'nn'),
+			codeVerifier: textClaim(claims, 'cv'),
+			mode: textClaim(claims, 'md'),
 			payload: payload && typeof payload === 'object' ? (payload as Record<string, string>) : undefined,
 			createdAt
 		};

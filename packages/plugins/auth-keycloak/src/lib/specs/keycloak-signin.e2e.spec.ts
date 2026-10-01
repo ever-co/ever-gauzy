@@ -6,7 +6,7 @@ import { Test } from '@nestjs/testing';
 import { OidcModule } from '@gauzy/auth';
 import { environment } from '@gauzy/config';
 import { AuthKeycloakController } from '../auth-keycloak.controller';
-import { MockOidcIssuer } from '../fixtures/mock-oidc-issuer';
+import { MockKeycloakRealm } from '../fixtures/mock-keycloak-realm';
 import { KeycloakSignInService } from '../keycloak-sign-in.service';
 import { SOCIAL_SIGN_IN, SocialSignInPort } from '../social-sign-in.port';
 
@@ -48,7 +48,7 @@ class FakeSocialSignIn implements SocialSignInPort {
 }
 
 describe('Keycloak sign-in (HTTP, against a mock Keycloak realm)', () => {
-	let issuer: MockOidcIssuer;
+	let realm: MockKeycloakRealm;
 	let app: INestApplication;
 	let baseUrl: string;
 	let social: FakeSocialSignIn;
@@ -77,7 +77,7 @@ describe('Keycloak sign-in (HTTP, against a mock Keycloak realm)', () => {
 			'keycloak.clientId': CLIENT_ID,
 			'keycloak.clientSecret': clientSecret,
 			'keycloak.realm': REALM,
-			'keycloak.authServerURL': issuer.issuer.slice(0, issuer.issuer.length - `/realms/${REALM}`.length),
+			'keycloak.authServerURL': realm.issuer.slice(0, realm.issuer.length - `/realms/${REALM}`.length),
 			'keycloak.callbackURL': `${baseUrl}/api/auth/keycloak/callback`,
 			...overrides
 		};
@@ -86,15 +86,15 @@ describe('Keycloak sign-in (HTTP, against a mock Keycloak realm)', () => {
 	beforeEach(async () => {
 		cookie = '';
 		clientSecret = randomBytes(16).toString('hex');
-		issuer = new MockOidcIssuer(CLIENT_ID, clientSecret, `/realms/${REALM}`);
-		await issuer.start();
+		realm = new MockKeycloakRealm(REALM, CLIENT_ID, clientSecret);
+		await realm.start();
 		baseUrl = `http://127.0.0.1:${await freePort()}`;
 		await start(realmSettings());
 	});
 
 	afterEach(async () => {
 		await app?.close();
-		await issuer?.stop();
+		await realm?.stop();
 	});
 
 	async function get(url: string): Promise<Response> {
@@ -108,7 +108,7 @@ describe('Keycloak sign-in (HTTP, against a mock Keycloak realm)', () => {
 
 	/** Start → realm → callback; returns where the callback sends the browser. */
 	async function signIn(claims: Record<string, unknown>): Promise<string> {
-		issuer.nextClaims = claims;
+		realm.nextClaims = claims;
 		const startResponse = await get(`${baseUrl}/api/auth/keycloak`);
 		const authorize = await fetch(startResponse.headers.get('location'), { redirect: 'manual' });
 		const callback = await get(authorize.headers.get('location'));
@@ -126,7 +126,7 @@ describe('Keycloak sign-in (HTTP, against a mock Keycloak realm)', () => {
 		const response = await get(`${baseUrl}/api/auth/keycloak`);
 		expect(response.status).toBe(302);
 		const location = new URL(response.headers.get('location'));
-		expect(location.pathname).toBe(`/realms/${REALM}/oauth/v2/authorize`);
+		expect(location.pathname).toBe(`/realms/${REALM}/protocol/openid-connect/auth`);
 		expect(location.searchParams.get('client_id')).toBe(CLIENT_ID);
 		expect(location.searchParams.get('code_challenge_method')).toBe('S256');
 		expect(location.searchParams.get('state')).toBeTruthy();
@@ -169,7 +169,7 @@ describe('Keycloak sign-in (HTTP, against a mock Keycloak realm)', () => {
 		await start(realmSettings({ 'keycloak.realm': '' }));
 		expect(await (await get(`${baseUrl}/api/auth/keycloak/config`)).json()).toEqual({ enabled: false, reason: 'unconfigured' });
 		expect((await get(`${baseUrl}/api/auth/keycloak`)).status).toBe(404);
-		expect(issuer.requests).toHaveLength(0);
+		expect(realm.requests).toHaveLength(0);
 	});
 
 	it('treats the sample auth server URL as not configured', async () => {

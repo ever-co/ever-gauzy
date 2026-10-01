@@ -53,7 +53,7 @@ export class AuthZitadel1790000018000 implements MigrationInterface {
 				await this.mysqlUpQueryRunner(queryRunner);
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 		}
 	}
 
@@ -79,7 +79,7 @@ export class AuthZitadel1790000018000 implements MigrationInterface {
 				}
 				break;
 			default:
-				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+				throw new Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 		}
 	}
 

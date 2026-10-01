@@ -31,8 +31,22 @@ export const OIDC_CLOCK_TOLERANCE_SECONDS = 60;
  * @returns The `Authorization` header value.
  */
 export function basicClientCredential(clientId: string, clientSecret: string): string {
-	const encode = (value: string) => encodeURIComponent(value).replace(/%20/g, '+');
-	return `Basic ${Buffer.from(`${encode(clientId)}:${encode(clientSecret)}`).toString('base64')}`;
+	const encode = (value: string) => encodeURIComponent(value).replaceAll('%20', '+');
+	const credential = Buffer.from(`${encode(clientId)}:${encode(clientSecret)}`).toString('base64');
+	return `Basic ${credential}`;
+}
+
+/**
+ * Reads the `aud` claim as a list (it may be a single string).
+ *
+ * @param payload - Verified token payload.
+ * @returns The audiences, possibly empty.
+ */
+function audienceList(payload: JWTPayload): string[] {
+	if (Array.isArray(payload.aud)) {
+		return payload.aud;
+	}
+	return payload.aud ? [payload.aud] : [];
 }
 
 /**
@@ -198,7 +212,7 @@ export class OidcClientService {
 	 */
 	async verifyAccessToken(config: OidcIssuerConfig, token: string, audiences: string[]): Promise<JWTPayload> {
 		const payload = await this.verifyJwt(config, token, undefined);
-		const aud = Array.isArray(payload.aud) ? payload.aud : payload.aud ? [payload.aud] : [];
+		const aud = audienceList(payload);
 		const parties = [stringClaim(payload, 'azp'), stringClaim(payload, 'client_id')].filter(Boolean) as string[];
 		const accepted = aud.some((value) => audiences.includes(value)) || parties.some((value) => audiences.includes(value));
 		if (!accepted) {
@@ -272,7 +286,7 @@ export class OidcClientService {
 	}
 
 	private assertAuthorizedParty(payload: JWTPayload, audiences: string[]): void {
-		const aud = Array.isArray(payload.aud) ? payload.aud : payload.aud ? [payload.aud] : [];
+		const aud = audienceList(payload);
 		const azp = stringClaim(payload, 'azp');
 		if (aud.length > 1 && !azp) {
 			throw new OidcError('audience_rejected', 'A token for several audiences must name its authorized party');
@@ -283,7 +297,7 @@ export class OidcClientService {
 	}
 
 	private normalise(payload: JWTPayload): OidcValidatedIdToken {
-		const aud = Array.isArray(payload.aud) ? payload.aud : payload.aud ? [payload.aud] : [];
+		const aud = audienceList(payload);
 		const authTime = Number(payload['auth_time']);
 		return {
 			issuer: String(payload.iss),

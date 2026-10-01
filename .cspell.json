@@ -1266,7 +1266,8 @@
 		"backchannel",
 		"resourceowner",
 		"jtis",
-		"reauth"
+		"reauth",
+		"NOSONAR"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
