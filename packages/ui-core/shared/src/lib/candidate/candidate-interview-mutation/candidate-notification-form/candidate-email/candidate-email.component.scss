@@ -1,23 +1,36 @@
 @use 'themes' as *;
 
+// One hairline panel: recipients, subject line, then the editor
 .email-wrap {
-  max-width: 45rem;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: var(--gauzy-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  overflow: hidden;
 }
 
 .info-block {
-  border-top: 1px #d1d1d1 solid;
-  border-left: 1px #d1d1d1 solid;
-  border-right: 1px #d1d1d1 solid;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: nb-theme(text-hint-color);
+  background-color: transparent;
+  border-bottom: 1px solid var(--gauzy-border-default-color);
 }
 
+// Recipient address as a small pill
 :host .email {
-  border: 1px #d1d1d1 solid;
-  @include nb-ltr(margin-left, 15px);
-  @include nb-rtl(margin-right, 15px);
-  border-radius: 5px;
+  display: inline-block;
+  padding: 0 0.5rem;
+  @include nb-ltr(margin-left, 0.5rem);
+  @include nb-rtl(margin-right, 0.5rem);
+  color: nb-theme(text-basic-color);
+  border-radius: var(--gauzy-radius-sm);
+  background-color: var(--gauzy-hover-tint);
 }
 
 :host .editor {
-  @include nb-ltr(padding, 0 2px 0 0);
-  @include nb-rtl(padding, 0 0px 0 2px);
+  padding: 0;
+  background-color: transparent;
 }
