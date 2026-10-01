@@ -209,6 +209,122 @@
     }
   }
 
+  // One control size for every field of the step, whichever component draws it:
+  // 38px tall, 13px regular text and a 12px inset, so placeholders line up
+  ::ng-deep {
+    > .form-group > .label,
+    .form-group > .label,
+    ga-employee-multi-select > .label {
+      display: block;
+      margin: 0 0 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1rem;
+    }
+
+    input[nbInput],
+    ngx-timer-range-picker .input,
+    ngx-timer-range-picker .input input,
+    ngx-timer-range-picker .ng-select .ng-select-container,
+    nb-select.employee-select .select-button {
+      height: 2.375rem;
+      min-height: 2.375rem;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      line-height: 1.25rem;
+    }
+
+    input[nbInput],
+    ngx-timer-range-picker .input input,
+    nb-select.employee-select .select-button {
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-inline-start: 0.75rem;
+    }
+
+    // Nebular's outline select sets its own wider inset with a stronger selector
+    nb-select.employee-select .select-button {
+      padding-inline-start: 0.75rem !important;
+    }
+
+    input::placeholder,
+    nb-select.employee-select .select-button.placeholder,
+    ngx-timer-range-picker .ng-placeholder {
+      font-weight: 400;
+    }
+
+    // The global ng-select rule pins its own inset with `!important`
+    ngx-timer-range-picker .ng-select .ng-select-container .ng-value-container {
+      padding-inline-start: 0.75rem !important;
+    }
+
+    ngx-timer-range-picker .input .icon {
+      font-size: 1rem;
+    }
+
+    // Candidate search with "Show rejected" beside it, centred on the input
+    ga-candidate-select .container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0;
+
+      input[nbInput] {
+        flex: 1;
+        min-width: 0;
+      }
+
+      nb-checkbox {
+        flex-shrink: 0;
+
+        .label {
+          margin: 0;
+        }
+
+        .custom-checkbox {
+          width: 1rem;
+          height: 1rem;
+        }
+
+        .text {
+          padding-inline-start: 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 400;
+          line-height: 1rem;
+        }
+      }
+    }
+
+    // Interview type: label and radios on one line, as tall as a control
+    .type-row {
+      gap: 0.75rem;
+      min-height: 2.375rem;
+
+      .label {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1rem;
+      }
+
+      .radio-group {
+        gap: 0.75rem;
+      }
+
+      nb-radio label {
+        margin: 0;
+        padding: 0;
+      }
+
+      nb-radio .text {
+        padding-inline-start: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 400;
+        line-height: 1rem;
+      }
+    }
+  }
+
   // Candidate on the left, title on the right
   &.with-candidate ::ng-deep .title-row {
     grid-column: auto;
