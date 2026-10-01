@@ -76,7 +76,9 @@
   border: none;
   padding: 0;
   overflow: unset;
-  background-color: var(--gauzy-card-2);
+  // The Interviews page card already paints --gauzy-card-2; a second layer here
+  // made this tab a different colour from the calendar tab
+  background-color: transparent;
   // Same height as the Criterions tab (`.add-criterion` in interview-criterions):
   // the table fills the space under the filters and scrolls inside it, instead of
   // stopping at the default card body height with empty space below.
