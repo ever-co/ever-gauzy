@@ -30,7 +30,7 @@ import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { RequestContext } from '../core/context';
-import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -259,7 +259,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
+					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name);
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -381,7 +381,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					}
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
+					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name);
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -505,7 +505,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(options?.projectId)) mikroWhere.projectId = options.projectId;
 					if (isNotEmpty(options?.status)) mikroWhere.status = options.status;
-					if (isNotEmpty(options?.name)) mikroWhere.name = { $ilike: `%${options.name}%` };
+					if (isNotEmpty(options?.name)) mikroWhere.name = mikroOrmContains(options.name);
 					if (isNotEmpty(options?.organizationSprintId))
 						mikroWhere.organizationSprints = { id: options.organizationSprintId };
 					if (isNotEmpty(options?.organizationTeamId)) mikroWhere.teams = { id: options.organizationTeamId };

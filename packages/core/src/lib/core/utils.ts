@@ -989,6 +989,23 @@ export function mikroOrmContains(value: string, postgres: boolean = isMikroOrmPo
 }
 
 /**
+ * Builds a case-insensitive LIKE condition for a MikroORM filter from a ready-made pattern
+ * (e.g. `abc%` for "starts with", or an exact name without wildcards).
+ *
+ * Like `mikroOrmContains`, it uses `$ilike` on PostgreSQL only (MikroORM emits it verbatim as `ILIKE`)
+ * and `$like` on MySQL / SQLite, whose LIKE is already case-insensitive.
+ *
+ * @param pattern The LIKE pattern
+ * @param postgres Whether the MikroORM database is PostgreSQL (resolved from the config by default)
+ */
+export function mikroOrmILike(
+	pattern: string,
+	postgres: boolean = isMikroOrmPostgres()
+): { $ilike: string } | { $like: string } {
+	return postgres ? { $ilike: pattern } : { $like: pattern };
+}
+
+/**
  * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
  * @param order TypeORM 'order' option
  * @returns Parsed MikroORM 'orderBy' option

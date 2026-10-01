@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ILike, Not } from 'typeorm';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { RequestContext } from '../../../core/context';
-import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
+import { MultiORM, MultiORMEnum, getORMType, mikroOrmILike } from '../../../core/utils';
 import { TypeOrmExpenseCategoryRepository } from '../../../expense-categories/repository/type-orm-expense-category.repository';
 import { MikroOrmExpenseCategoryRepository } from '../../../expense-categories/repository/mikro-orm-expense-category.repository';
 
@@ -50,9 +50,15 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
+					// MikroORM has its own operators: TypeORM's `Not()` above is not understood here (the query
+					// threw and the catch below let every update through), and `$ilike` is PostgreSQL-only.
 					return !(await this.mikroOrmExpenseCategoryRepository.findOneOrFail({
-						...queryConditions,
-						name: { $ilike: normalizedName }
+						organizationId,
+						tenantId,
+						name: mikroOrmILike(normalizedName),
+						...(args.targetName === 'UpdateExpenseCategoryDTO' && object.id
+							? { id: { $ne: object.id } }
+							: {})
 					}));
 				case MultiORMEnum.TypeORM:
 					return !(await this.typeOrmExpenseCategoryRepository.findOneByOrFail({
