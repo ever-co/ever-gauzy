@@ -1,5 +1,13 @@
 @use '@shared/reusable' as *;
 
+.sign-in-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
 .links {
   margin-top: 0;
   font-size: 13px;

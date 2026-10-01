@@ -1,3 +1,24 @@
+@if (signInProviders$ | async; as signInProviders) {
+	@if (signInProviders.length > 0) {
+		<div class="sign-in-providers" aria-label="Sign-in methods">
+			@for (provider of signInProviders; track provider.id) {
+				<a
+					nbButton
+					fullWidth
+					size="small"
+					[status]="provider.prominent ? 'primary' : 'basic'"
+					[outline]="!provider.prominent"
+					[attr.href]="provider.url"
+					[attr.data-provider]="provider.id"
+					class="sign-in-provider"
+				>
+					{{ provider.titleKey | translate }}
+				</a>
+			}
+		</div>
+	}
+}
+
 @if (socialLinks$ | async; as socialLinks) {
 	@if (socialLinks.length > 0) {
 		<div class="links" aria-label="Social SignIn">

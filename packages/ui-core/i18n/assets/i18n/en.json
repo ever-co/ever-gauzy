@@ -6025,6 +6025,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Or Sign In with",
+		"SIGN_IN_WITH_EVER_ID": "Sign in with Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Sign in with Keycloak",
 		"FORGOT_EMAIL_TITLE": "Forgot Email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Log in with a magic code.",

@@ -5336,6 +5336,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Heeft u geen account?",
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
+		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Inloggen met een magische code",

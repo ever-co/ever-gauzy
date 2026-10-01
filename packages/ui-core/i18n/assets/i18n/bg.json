@@ -5364,6 +5364,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Нямате акаунт?",
 		"FORGOT_PASSWORD_TITLE": "Забравена парола?",
 		"OR_SIGN_IN_WITH": "Или влезте с",
+		"SIGN_IN_WITH_EVER_ID": "Вход с Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Вход с Keycloak",
 		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магически код",
