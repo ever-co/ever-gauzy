@@ -71,9 +71,9 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 		center: string;
 		right: string;
 	} = {
-		left: 'next',
-		center: 'title',
-		right: 'dayGridMonth,timeGridWeek'
+		left: 'title',
+		center: '',
+		right: 'next dayGridMonth,timeGridWeek'
 	};
 
 	/**
@@ -361,7 +361,9 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 		const currentEnd = this.calendarComponent.getApi().view.currentEnd;
 		const hideDays = moment().isBetween(currentStart, currentEnd, 'day', '[]') ? this.hiddenDays : [];
 		this.calendarComponent.getApi().setOption('hiddenDays', hideDays);
-		this.headerToolbarOptions.left = moment(currentStart).isSameOrBefore(moment(), 'day') ? 'next' : 'prev,next';
+		// Past weeks cannot be booked, so "previous" only appears once the user has moved forward
+		const navigation = moment(currentStart).isSameOrBefore(moment(), 'day') ? 'next' : 'prev,next';
+		this.headerToolbarOptions.right = `${navigation} dayGridMonth,timeGridWeek`;
 		this.calendarComponent.getApi().setOption('headerToolbar', this.headerToolbarOptions);
 	}
 

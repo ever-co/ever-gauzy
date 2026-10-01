@@ -4,7 +4,7 @@ import { ICandidateCreateInput, BaseEntityEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { flatten, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from './../core/utils';
+import { flatten, MultiORMEnum, parseFindOptionsRelations, parseSortOrder, splitKeywords } from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
@@ -76,7 +76,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 						if (isNotEmpty(where.user)) {
 							const userFilter: any[] = [];
 							if (isNotEmpty(where.user.name)) {
-								const keywords: string[] = where.user.name.split(' ');
+								const keywords: string[] = splitKeywords(where.user.name);
 								for (const keyword of keywords) {
 									userFilter.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
 									userFilter.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
@@ -161,7 +161,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 								new Brackets((web: WhereExpressionBuilder) => {
 									if (isNotEmpty(where.user)) {
 										if (isNotEmpty(where.user.name)) {
-											const keywords: string[] = where.user.name.split(' ');
+											const keywords: string[] = splitKeywords(where.user.name);
 											keywords.forEach((keyword: string, index: number) => {
 												web.orWhere(
 													p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`),

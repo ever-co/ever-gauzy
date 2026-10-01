@@ -15,7 +15,13 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -187,6 +193,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		const order = parseSortOrder(options?.order, SORTABLE_COLUMNS);
 		const hasOrder = Object.keys(order).length > 0;
 
+		// "Include Archived" unchecked hides archived requests; checked (or not sent) adds no filter.
+		// The query DTO JSON-parses `where` values, so the flag arrives as a boolean (or a string when called directly).
+		const hideArchived = [false, 'false'].includes(options?.where?.includeArchived);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -198,7 +208,6 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							organizationId,
 							employeeIds,
 							isHoliday,
-							includeArchived,
 							status,
 							startDate,
 							endDate,
@@ -211,7 +220,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 						if (isNotEmpty(status)) where.status = status;
 						if (isNotEmpty(isHoliday) && isNotEmpty(Boolean(JSON.parse(isHoliday))))
 							where.isHoliday = false;
-						if (isNotEmpty(includeArchived)) where.isArchived = Boolean(JSON.parse(includeArchived));
+						if (hideArchived) where.isArchived = false;
 
 						let sd = moment().startOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
 						let ed = moment().endOf('month').utc().format('YYYY-MM-DD HH:mm:ss');
@@ -223,8 +232,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
 						if (isNotEmpty(user) && isNotEmpty(user.name)) {
-							// Split on any whitespace and drop empty keywords: an empty one would match every name
-							const keywords: string[] = user.name.trim().split(/\s+/).filter(Boolean);
+							const keywords: string[] = splitKeywords(user.name);
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
 								userFilters.push(
@@ -325,10 +333,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {
 								qb.andWhere({ isHoliday: false });
 							}
-							if (isNotEmpty(where.includeArchived)) {
-								qb.andWhere({
-									isArchived: Boolean(JSON.parse(where.includeArchived))
-								});
+							if (hideArchived) {
+								qb.andWhere({ isArchived: false });
 							}
 							if (isNotEmpty(where.status)) {
 								qb.andWhere({
@@ -338,7 +344,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							qb.andWhere(
 								new Brackets((web: WhereExpressionBuilder) => {
 									if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
-										const keywords: string[] = where.user.name.split(' ');
+										const keywords: string[] = splitKeywords(where.user.name);
 										keywords.forEach((keyword: string, index: number) => {
 											web.orWhere(p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`), {
 												[`keyword_${index}`]: `%${keyword}%`

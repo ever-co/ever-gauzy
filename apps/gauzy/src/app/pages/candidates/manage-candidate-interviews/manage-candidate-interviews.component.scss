@@ -6,7 +6,10 @@
   }
 }
 :host {
+  // Same page surface as Employees → Appointments
   nb-card {
+    background-color: var(--gauzy-card-2);
+
     nb-card-body {
       overflow: unset;
       height: 100%;
