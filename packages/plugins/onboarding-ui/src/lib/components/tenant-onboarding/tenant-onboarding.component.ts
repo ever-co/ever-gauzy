@@ -10,7 +10,9 @@ import {
 	OrganizationsService,
 	Store,
 	TenantService,
-	UsersService
+	UsersService,
+	clearRememberedCheckoutSession,
+	readRememberedCheckoutSession
 } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
@@ -57,7 +59,15 @@ export class TenantOnboardingComponent implements OnInit, OnDestroy {
 		this.loading = true;
 
 		try {
-			const tenant = await this._tenantService.create({ name: organization.name });
+			// A buyer who came from the shared checkout brought their Stripe Checkout Session through the
+			// register form. Sending it here lets the API link the new tenant to their Stripe customer
+			// straight away (after verifying it with Stripe) instead of waiting for a confirmed email.
+			const stripeCheckoutSessionId = readRememberedCheckoutSession();
+			const tenant = await this._tenantService.create({
+				name: organization.name,
+				...(stripeCheckoutSessionId ? { stripeCheckoutSessionId } : {})
+			});
+			clearRememberedCheckoutSession();
 			this.user = await this._usersService.getMe(['tenant']);
 			this._store.user = this.user;
 

@@ -2,12 +2,12 @@ import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
-import { NB_AUTH_OPTIONS, NbAuthOptions, NbAuthService, NbRegisterComponent } from '@nebular/auth';
+import { NB_AUTH_OPTIONS, NbAuthOptions, NbAuthResult, NbAuthService, NbRegisterComponent } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { patterns } from '@gauzy/constants';
 import { ITermsAcceptanceDocument } from '@gauzy/contracts';
-import { AuthService } from '@gauzy/ui-core/core';
+import { AuthService, readRegisterError, isCheckoutSessionId, rememberCheckoutSession } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +34,12 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 
 	/** True when the required documents could not be loaded — see `ngOnInit`. */
 	public termsUnavailable: boolean = false;
+
+	/**
+	 * Where to buy a subscription, when the API refused the sign-up for want of one (403 from the
+	 * subscription gate). Shown as a button under the API's own message; null otherwise.
+	 */
+	public checkoutUrl: string | null = null;
 
 	constructor(
 		public readonly translate: TranslateService,
@@ -98,14 +104,51 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 			 * The name is a prefill and stays editable. Stripe collects one full name, which is the
 			 * shape this form wants, but it knows nothing of the length limits configured here, so the
 			 * buyer has to be able to correct it.
+			 *
+			 * `checkout_session` is the buyer's completed Stripe Checkout Session. It goes to the API with
+			 * the registration (proof of purchase for the signup paywall) and is remembered for tenant
+			 * onboarding, where the API links the new tenant to the buyer's Stripe customer after checking
+			 * the session with Stripe. Anything not shaped like a session id is ignored.
 			 */
-			tap(({ email, name }: Params) => {
+			tap(({ email, name, checkout_session }: Params) => {
 				if (email) this.user.email = email;
 				if (name) this.user.fullName = name;
+				if (isCheckoutSessionId(checkout_session)) {
+					this.user.stripeCheckoutSessionId = checkout_session;
+					rememberCheckoutSession(checkout_session);
+				}
 			}),
 
 			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
 			untilDestroyed(this)
 		);
+	}
+
+	/**
+	 * Nebular's `register()`, plus one thing it cannot do: keep the `checkoutUrl` of a refused
+	 * sign-up. The strategy already turns the API's message into the error text; the URL has to be
+	 * read here, from the response the result carries.
+	 */
+	override register(): void {
+		this.errors = this.messages = [];
+		this.checkoutUrl = null;
+		this.submitted = true;
+		this.nbAuthService
+			.register(this.strategy, this.user)
+			.pipe(untilDestroyed(this))
+			.subscribe((result: NbAuthResult) => {
+				this.submitted = false;
+				if (result.isSuccess()) {
+					this.messages = result.getMessages();
+				} else {
+					this.errors = result.getErrors();
+					this.checkoutUrl = readRegisterError(result.getResponse()).checkoutUrl;
+				}
+				const redirect = result.getRedirect();
+				if (redirect) {
+					setTimeout(() => this.router.navigateByUrl(redirect), this.redirectDelay);
+				}
+				this.cdr.detectChanges();
+			});
 	}
 }

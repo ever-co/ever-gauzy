@@ -815,6 +815,7 @@
 		"SKILLS": "المهارات",
 		"PRIVACY": "الخصوصية",
 		"SELECT_TIMEZONE": "اختر المنطقة الزمنية",
+		"SELECT_TIMEZONE_HINT": "تُعرض أوقات المواعيد بهذه المنطقة الزمنية.",
 		"SHOW_AVERAGE_BONUS": "عرض المكافأة المتوسطة",
 		"SHOW_AVERAGE_INCOME": "عرض الدخل المتوسط",
 		"SHOW_PAYPERIOD": "عرض فترة الدفع",
@@ -1755,6 +1756,19 @@
 		"TIME_TRACKING": "تتبع الوقت",
 		"PROJECT_MANAGEMENT": "إدارة المشاريع",
 		"EMPLOYEE_STATISTICS": "إحصاءات الموظفين",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "عبر {{ count }} موظفين",
+			"OF_INCOME": "{{ value }}% من الإيرادات",
+			"MARGIN": "هامش {{ value }}%",
+			"BREAKDOWN": "الأرباح حسب الموظف",
+			"NO_DATA": "لا يوجد نشاط مالي في هذه الفترة",
+			"NO_DATA_HINT": "ستظهر هنا الإيرادات والمصروفات المسجلة لهذا النطاق الزمني.",
+			"NO_EMPLOYEES": "لا توجد سجلات للموظفين في هذه الفترة",
+			"SORT_BY": "الترتيب حسب {{ name }}",
+			"SORT_LABEL": "ترتيب حسب",
+			"SORT_ASCENDING": "تصاعدي",
+			"SORT_DESCENDING": "تنازلي"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "يرجى تحديد شهر وموظف من القائمة أعلاه",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "أدخل النص للمستخدمين غير المصادق عليهم",
 		"CHARTS": {
@@ -2698,7 +2712,10 @@
 		"ADDRESS": "عنوان",
 		"ADDRESS_2": "العنوان 2",
 		"MEMBERS": "أعضاء",
-		"BUDGET": "الميزانية"
+		"BUDGET": "الميزانية",
+		"PHOTO_HINT": "انقر أو أفلت صورة لرفعها",
+		"SEARCH_EMPLOYEES": "ابحث عن الموظفين بالاسم أو البريد الإلكتروني",
+		"NO_MEMBERS": "لم تتم إضافة أعضاء بعد"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "اللغات",
@@ -4958,7 +4975,9 @@
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
-		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة",
+		"NO_TIME_TRACKED": "لم يتم تتبع أي وقت",
+		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
@@ -4984,6 +5003,16 @@
 		"BUFFER_AT_START": "التخزين المؤقت في البداية",
 		"BUFFER_AT_END": "المخزون في النهاية",
 		"BREAK_TIME": "وقت الراحة",
+		"DETAILS": "التفاصيل",
+		"PARTICIPANTS": "المشاركون",
+		"FORM_HINT": "حدّد موضوع الاجتماع وموعده ومن سينضم إليه.",
+		"DETAILS_HINT": "جدول الأعمال والمكان والملاحظات التي تظهر لكل المدعوين.",
+		"SCHEDULE": "الجدول الزمني",
+		"SCHEDULE_HINT": "اختر التاريخ والفترة الزمنية، مع وقت احتياطي واستراحة اختياريين.",
+		"BUFFER_TIME_HINT": "اترك وقتًا فارغًا قبل الاجتماع أو بعده.",
+		"BREAK_TIME_HINT": "أوقف الاجتماع لاستراحة قصيرة.",
+		"BREAK_START": "تبدأ الاستراحة في",
+		"PARTICIPANTS_HINT": "الأشخاص الذين يتلقون الدعوة.",
 		"ARE_YOU_SURE": "هل أنت متأكد؟ هذا الإجراء لا يمكن عكسه."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5028,7 +5057,9 @@
 		"CANCEL": "إلغاء الموعد",
 		"TIMEZONE": "منطقة زمنية الخاصة بك:",
 		"CHANGE": "(تغيير)",
+		"CHANGE_TIMEZONE": "تغيير",
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
+		"SELECT_EMPLOYEE_HINT": "اختر الشخص الذي تريد مقابلته، ثم اختر وقتًا يناسبك.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
 		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث",

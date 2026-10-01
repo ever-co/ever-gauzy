@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { NbMenuItem } from '@nebular/theme';
 import { IDocument } from '@gauzy/contracts';
+import { DOCS_ACTION_MENU_CLASS } from '../../actions/docs-action-menu';
 
 /**
  * Actions column renderer (`01-ux-spec.md` §4.1, column 9): a kebab opening the
@@ -11,6 +12,10 @@ import { IDocument } from '@gauzy/contracts';
  * shared `buildDocsActionMenu()`, and clicks come back through the table's own
  * `NbMenuService` subscription (one subscription for the page, keyed by the tag
  * prefix, rather than one per rendered row).
+ *
+ * 🛑 The button must NOT stop `click` propagation: `nbContextMenu`'s click trigger
+ * listens on `document`, so a stopped click never opens the menu. The table's
+ * row-open handler already ignores clicks that come from a `button`.
  */
 @Component({
 	selector: 'gz-docs-row-actions',
@@ -24,7 +29,7 @@ import { IDocument } from '@gauzy/contracts';
 			class="docs-row-actions"
 			[nbContextMenu]="menuItems"
 			[nbContextMenuTag]="tag"
-			(click)="$event.stopPropagation()"
+			[nbContextMenuClass]="menuClass"
 			[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
 		>
 			<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
@@ -45,4 +50,6 @@ export class RowActionsComponent {
 	@Input() menuItems: NbMenuItem[] = [];
 	/** `<prefix><documentId>` — the table resolves the row from it. */
 	@Input() tag = '';
+
+	protected readonly menuClass = DOCS_ACTION_MENU_CLASS;
 }

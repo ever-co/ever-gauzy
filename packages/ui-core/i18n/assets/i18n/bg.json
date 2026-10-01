@@ -845,6 +845,7 @@
 		"SKILLS": "Умения",
 		"PRIVACY": "Приватност",
 		"SELECT_TIMEZONE": "Изберете часовата зона",
+		"SELECT_TIMEZONE_HINT": "Часовете на срещите се показват в тази часова зона.",
 		"SHOW_AVERAGE_BONUS": "Покажи среден бонус",
 		"SHOW_AVERAGE_INCOME": "Покажи среден доход",
 		"SHOW_PAYPERIOD": "Покажи период на плащане",
@@ -1834,6 +1835,19 @@
 		"TIME_TRACKING": "Проследяване на времето",
 		"PROJECT_MANAGEMENT": "Управление на проекти",
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "За {{ count }} служители",
+			"OF_INCOME": "{{ value }}% от приходите",
+			"MARGIN": "{{ value }}% марж",
+			"BREAKDOWN": "Приходи по служител",
+			"NO_DATA": "Няма финансова активност за този период",
+			"NO_DATA_HINT": "Приходите и разходите за този период ще се показват тук.",
+			"NO_EMPLOYEES": "Няма записи за служители за този период",
+			"SORT_BY": "Сортиране по {{ name }}",
+			"SORT_LABEL": "Сортиране по",
+			"SORT_ASCENDING": "Възходящо",
+			"SORT_DESCENDING": "Низходящо"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
 		"CHARTS": {
@@ -2772,7 +2786,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Щракнете или пуснете изображение за качване",
+		"SEARCH_EMPLOYEES": "Търсете служители по име или имейл",
+		"NO_MEMBERS": "Все още няма добавени членове"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -5022,7 +5039,9 @@
 		"NO_SCREENSHOT": "Няма екранна снимка",
 		"NO_SCREENSHOTS": "Няма екранни снимки",
 		"NO_RECORD_FOUND": "Не са намерени записи. Моля, изберете диапазон от дати, служител или проект.",
-		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)"
+		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)",
+		"NO_TIME_TRACKED": "Няма проследено време",
+		"MINUTES_TRACKED": "Проследени {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",
@@ -5048,6 +5067,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "Подробности",
+		"PARTICIPANTS": "Участници",
+		"FORM_HINT": "Задайте темата на срещата, кога ще се проведе и кой ще участва.",
+		"DETAILS_HINT": "Дневен ред, място и бележки, видими за всички поканени.",
+		"SCHEDULE": "График",
+		"SCHEDULE_HINT": "Изберете дата и час, с незадължителен буфер и почивка.",
+		"BUFFER_TIME_HINT": "Оставете свободно време преди или след срещата.",
+		"BREAK_TIME_HINT": "Прекъснете срещата за кратка почивка.",
+		"BREAK_START": "Почивката започва в",
+		"PARTICIPANTS_HINT": "Хората, които получават поканата.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5092,7 +5121,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "Промяна",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "Изберете с кого искате да се срещнете, след това изберете удобен за вас час.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",

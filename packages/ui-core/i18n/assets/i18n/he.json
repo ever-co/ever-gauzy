@@ -820,6 +820,7 @@
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Select Timezone",
+		"SELECT_TIMEZONE_HINT": "זמני הפגישות מוצגים באזור זמן זה.",
 		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
 		"SHOW_AVERAGE_INCOME": "Show Average Income",
 		"SHOW_PAYPERIOD": "Show Pay Period",
@@ -1800,6 +1801,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
+			"OF_INCOME": "{{ value }}% מההכנסה",
+			"MARGIN": "שולי רווח של {{ value }}%",
+			"BREAKDOWN": "הכנסות לפי עובד",
+			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
+			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
+			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
+			"SORT_BY": "מיון לפי {{ name }}",
+			"SORT_LABEL": "מיון לפי",
+			"SORT_ASCENDING": "סדר עולה",
+			"SORT_DESCENDING": "סדר יורד"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -2738,7 +2752,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -4985,7 +5002,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
@@ -5011,6 +5030,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "פרטים",
+		"PARTICIPANTS": "משתתפים",
+		"FORM_HINT": "הגדירו את נושא הפגישה, מתי היא מתקיימת ומי משתתף.",
+		"DETAILS_HINT": "סדר יום, מקום והערות שמוצגים לכל המוזמנים.",
+		"SCHEDULE": "לוח זמנים",
+		"SCHEDULE_HINT": "בחרו תאריך וחלון זמן, עם זמן חיץ והפסקה אופציונליים.",
+		"BUFFER_TIME_HINT": "השאירו זמן פנוי לפני הפגישה או אחריה.",
+		"BREAK_TIME_HINT": "עצרו את הפגישה להפסקה קצרה.",
+		"BREAK_START": "ההפסקה מתחילה ב-",
+		"PARTICIPANTS_HINT": "האנשים שמקבלים את ההזמנה.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5055,7 +5084,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "שינוי",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "בחרו את מי תרצו לפגוש, ואז בחרו שעה שנוחה לכם.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",

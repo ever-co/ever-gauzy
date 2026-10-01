@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { IsNull } from 'typeorm';
 import * as Handlebars from 'handlebars';
 import { IEmailTemplate, IVerifySMTPTransport, LanguagesEnum } from '@gauzy/contracts';
@@ -10,8 +10,17 @@ import { TypeOrmEmailTemplateRepository } from './../email-template/repository/t
 import { TypeOrmCustomSmtpRepository } from './../custom-smtp/repository/type-orm-custom-smtp.repository';
 import { toTemplateSource } from './../email-template/compile-mjml';
 
+/**
+ * The languages to try, in order, without repeating one.
+ */
+function uniqueLanguages(...languages: string[]): string[] {
+	return languages.filter((language, index) => !!language && languages.indexOf(language) === index);
+}
+
 @Injectable()
 export class EmailTemplateRenderService {
+	private readonly logger = new Logger(EmailTemplateRenderService.name);
+
 	constructor(
 		private typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
 		private typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository
@@ -64,29 +73,23 @@ export class EmailTemplateRenderService {
 		try {
 			view = view.replace('\\', '/');
 
-			let emailTemplate: IEmailTemplate;
+			const requestedLanguage: string = locals.locale || LanguagesEnum.ENGLISH;
 
-			// Find email template customized for the given organization
-			const query = new Object({
-				name: view,
-				languageCode: locals.locale || LanguagesEnum.ENGLISH
-			});
-
-			if (!!isValidSmtp) {
-				// Same NULL handling as the SMTP lookup above: a missing organization / tenant selects
-				// the tenant-wide / global row, never "any organization's" template.
-				query['organizationId'] = isEmpty(locals.organizationId) ? IsNull() : locals.organizationId;
-				query['tenantId'] = isEmpty(locals.tenantId) ? IsNull() : locals.tenantId;
-
-				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
-			}
-
-			// If no email template found for the organization, use the default template
-			if (!emailTemplate) {
-				query['organizationId'] = IsNull();
-				query['tenantId'] = IsNull();
-
-				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
+			// The recipient's language first, then English. Most templates ship in only a handful of
+			// languages (email-verification: en, bg, he, ru), and a locale without one used to render
+			// '' for every part — so a Spanish, Portuguese or Chinese user got no verification email at
+			// all. English is the language every template is seeded in.
+			let emailTemplate: IEmailTemplate | null = null;
+			for (const languageCode of uniqueLanguages(requestedLanguage, LanguagesEnum.ENGLISH)) {
+				emailTemplate = await this.findTemplate(view, languageCode, locals, isValidSmtp);
+				if (emailTemplate) {
+					if (languageCode !== requestedLanguage) {
+						this.logger.warn(
+							`Email template "${view}" has no "${requestedLanguage}" version; rendering "${languageCode}" instead.`
+						);
+					}
+					break;
+				}
 			}
 
 			if (!emailTemplate) {
@@ -103,4 +106,42 @@ export class EmailTemplateRenderService {
 			throw new InternalServerErrorException(error);
 		}
 	};
+
+	/**
+	 * One template in one language: the organization's / tenant's own copy when its SMTP is valid,
+	 * otherwise (or when it has none) the global default.
+	 *
+	 * @param view The template view, e.g. `email-verification/html`.
+	 * @param languageCode The language to look up.
+	 * @param locals The render locals (read for `organizationId` / `tenantId`).
+	 * @param isValidSmtp Whether the tenant's custom SMTP verified, which is what enables its templates.
+	 */
+	private async findTemplate(
+		view: string,
+		languageCode: string,
+		locals: any,
+		isValidSmtp: boolean
+	): Promise<IEmailTemplate | null> {
+		if (isValidSmtp) {
+			// Same NULL handling as the SMTP lookup in render(): a missing organization / tenant selects
+			// the tenant-wide / global row, never "any organization's" template.
+			const custom = await this.typeOrmEmailTemplateRepository.findOneBy({
+				name: view,
+				languageCode: languageCode as LanguagesEnum,
+				organizationId: isEmpty(locals.organizationId) ? IsNull() : locals.organizationId,
+				tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
+			});
+			if (custom) {
+				return custom;
+			}
+		}
+
+		// The default template.
+		return await this.typeOrmEmailTemplateRepository.findOneBy({
+			name: view,
+			languageCode: languageCode as LanguagesEnum,
+			organizationId: IsNull(),
+			tenantId: IsNull()
+		});
+	}
 }

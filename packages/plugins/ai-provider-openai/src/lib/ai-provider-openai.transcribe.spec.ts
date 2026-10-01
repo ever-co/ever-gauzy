@@ -147,7 +147,13 @@ describe('openAiProviderDefinition.transcribe', () => {
 	it('treats silence as an empty transcript rather than an error', async () => {
 		// A recording with nothing in it is a valid answer: the user pressed the mic and said nothing.
 		// Throwing here would surface as a failed dictation and send them looking at their API key.
-		capture({});
+		//
+		// Silence is what OpenAI actually sends for it: a `text` field holding an empty string. The
+		// fixture used to be `{}` — a body with NO `text` at all — which the shared helper
+		// deliberately rejects as a malformed response ("never as an empty transcript", pinned in
+		// ai-chat's openai-compatible-transcribe.spec.ts), so this case contradicted that contract
+		// and failed on every run.
+		capture({ text: '' });
 		await expect(transcribe()).resolves.toBe('');
 	});
 

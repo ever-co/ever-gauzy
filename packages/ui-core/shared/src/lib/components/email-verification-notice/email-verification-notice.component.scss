@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.email-verification-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-warning-default);
+  border-radius: 0.5rem;
+  background: var(--color-warning-transparent-300, var(--background-basic-color-2));
+  color: var(--text-basic-color);
+
+  &.inline {
+    margin: 0.5rem 0 0;
+  }
+}
+
+.notice-text {
+  margin: 0;
+  flex: 1 1 18rem;
+}
+
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notice-feedback {
+  font-size: 0.875rem;
+
+  &.error {
+    color: var(--color-danger-default, var(--text-basic-color));
+  }
+}

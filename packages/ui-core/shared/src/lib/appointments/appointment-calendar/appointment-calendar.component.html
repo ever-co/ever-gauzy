@@ -16,9 +16,24 @@
 		<h4>
 			<ngx-header-title>{{ 'MENU.APPOINTMENTS' | translate }}</ngx-header-title>
 		</h4>
-		<div class="float-right">
+		<div class="header-actions">
+			<div class="timezone-info">
+				<span class="timezone-label">{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}</span>
+				<strong>{{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }}</strong>
+				<button
+					type="button"
+					class="timezone-change"
+					nbButton
+					outline
+					status="basic"
+					size="small"
+					(click)="selectTimezone()"
+				>
+					<nb-icon icon="globe-2-outline"></nb-icon>
+					{{ 'PUBLIC_APPOINTMENTS.CHANGE_TIMEZONE' | translate }}
+				</button>
+			</div>
 			<button
-				class=""
 				status="info"
 				size="small"
 				outline
@@ -30,7 +45,6 @@
 			</button>
 			<ng-template ngxPermissionsOnly="EVENT_TYPES_VIEW">
 				<button
-					class="mr-2 ml-2"
 					status="warning"
 					size="small"
 					outline
@@ -42,7 +56,6 @@
 				</button>
 			</ng-template>
 			<button
-				class=""
 				status="primary"
 				size="small"
 				outline
@@ -53,14 +66,5 @@
 				{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
 			</button>
 		</div>
-	</div>
-	<div class="block-info">
-		{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}
-		<!--  -->
-		<strong> {{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }} </strong>
-		<!--  -->
-		<a style="cursor: pointer; color: var(--link-text-color)" (click)="selectTimezone()">
-			{{ 'PUBLIC_APPOINTMENTS.CHANGE' | translate }}
-		</a>
 	</div>
 </ng-template>

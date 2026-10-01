@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { IsNull } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -26,6 +26,7 @@ import { environment as env } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
+import { describeEmailSendError } from './email-send-error';
 import { Organization, EmailHistory } from './../core/entities/internal';
 import { TypeOrmEmailHistoryRepository } from './../email-history/repository/type-orm-email-history.repository';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
@@ -33,8 +34,19 @@ import { TypeOrmOrganizationRepository } from './../organization/repository/type
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
+/**
+ * Headers for emails that carry a sign-in or verification secret in a link.
+ *
+ * Postmark rewrites every link for click tracking when the server has TrackLinks on (ours: HtmlAndText),
+ * and stores the original URL - token, address and all - as the click's OriginalLink. `X-PM-TrackLinks:
+ * None` turns that off for one message. Other providers ignore the header.
+ */
+const NO_LINK_TRACKING_HEADERS = { 'X-PM-TrackLinks': 'None' };
+
 @Injectable()
 export class EmailService {
+	private readonly logger = new Logger(EmailService.name);
+
 	constructor(
 		readonly typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
 		readonly typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
@@ -101,7 +113,9 @@ export class EmailService {
 
 				body.message = sendResult.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending payment receipt ${invoiceNumber}: %s`, error?.message);
+				this.logger.error(
+					`Payment receipt ${invoiceNumber} could not be sent: ${describeEmailSendError(error)}`
+				);
 				throw new BadRequestException(
 					`Error while sending payment receipt ${invoiceNumber}: ${error?.message}`
 				);
@@ -173,7 +187,9 @@ export class EmailService {
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending email invoice ${invoiceNumber}: %s`, error?.message);
+				this.logger.error(
+					`Invoice / estimate email ${invoiceNumber} could not be sent: ${describeEmailSendError(error)}`
+				);
 				throw new BadRequestException(`Error while sending email invoice ${invoiceNumber}: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
@@ -242,7 +258,9 @@ export class EmailService {
 				const send = await instance.send(sendOptions);
 				body.message = send.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending invite organization contact: %s`, error?.message);
+				this.logger.error(
+					`Organization contact invitation could not be sent: ${describeEmailSendError(error)}`
+				);
 				throw new BadRequestException(`Error while sending invite organization contact: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
@@ -297,7 +315,7 @@ export class EmailService {
 				const send = await instance.send(sendOptions);
 				body.message = send.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending invite user: %s`, error);
+				this.logger.error(`User invitation could not be sent: ${describeEmailSendError(error)}`);
 				throw new BadRequestException(`Error while sending invite user: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
@@ -353,7 +371,7 @@ export class EmailService {
 				const send = await instance.send(sendOptions);
 				body.message = send.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending invite team: %s`, error);
+				this.logger.error(`Team invitation could not be sent: ${describeEmailSendError(error)}`);
 				throw new BadRequestException(`Error while sending invite team: ${error?.message}`);
 			} finally {
 				await this.createEmailRecord(body);
@@ -407,7 +425,7 @@ export class EmailService {
 				const send = await instance.send(sendOptions);
 				body.message = send.originalMessage;
 			} catch (error) {
-				console.error('Error while sending invite employee email:', error);
+				this.logger.error(`Employee invitation could not be sent: ${describeEmailSendError(error)}`);
 				throw new BadRequestException(`Error while sending invite employee email: ${error?.message}`);
 			} finally {
 				// Create the email record regardless of success or failure.
@@ -460,7 +478,7 @@ export class EmailService {
 				const send = await instance.send(sendOptions);
 				body.message = send.originalMessage;
 			} catch (error) {
-				console.error('Error while sending acceptance invitation email:', error);
+				this.logger.error(`Invitation acceptance email could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				// Log or persist the email record.
 				await this.createEmailRecord(body);
@@ -525,30 +543,43 @@ export class EmailService {
 
 					body['message'] = send.originalMessage;
 				} catch (error) {
-					console.log('Error while get email instance during welcome user', error);
+					this.logger.error(`Welcome email could not be sent: ${describeEmailSendError(error)}`);
 				} finally {
 					await this.createEmailRecord(body);
 				}
 			}
 		} catch (error) {
-			console.log('Error while sending welcome user', error);
+			this.logger.error(`Welcome email could not be prepared: ${describeEmailSendError(error)}`);
 		}
 	}
 
 	/**
-	 * Send confirmation email link
+	 * Send the email-verification link and code.
 	 *
-	 * @param user
-	 * @param verificationLink
+	 * Every attempt is now recorded in `email_sent` with `status` SENT or FAILED, and a failure is
+	 * logged with the provider's error code and message (addresses masked) - until now a failed
+	 * verification send left no row and only an unlabelled `console.error`, so a provider-side outage
+	 * was invisible. The recorded row deliberately keeps the subject only: the body carries a live
+	 * verification link and code, and `email_sent` content is readable (and re-sendable) from the
+	 * tenant's email history.
+	 *
+	 * @param user The user to verify.
+	 * @param verificationLink The link carrying the verification token.
+	 * @param verificationCode The alternative code.
+	 * @param integration Branding / link overrides for the template.
+	 * @returns true when the provider accepted the message, false when it was not sent.
 	 */
 	async emailVerification(
 		user: IUser,
 		verificationLink: string,
 		verificationCode: string,
 		integration: IAppIntegrationConfig
-	) {
+	): Promise<boolean> {
 		const { email, firstName, lastName, preferredLanguage } = user;
 		const name = [firstName, lastName].filter(Boolean).join(' ') || email;
+		// The template lookup falls back to English when the locale has no template; the record
+		// needs a concrete language too, or its template lookup matches whichever row comes first.
+		const languageCode = (preferredLanguage as LanguagesEnum) || LanguagesEnum.ENGLISH;
 
 		/**
 		 * Email template email options
@@ -556,7 +587,8 @@ export class EmailService {
 		const sendOptions = {
 			template: EmailTemplateEnum.EMAIL_VERIFICATION,
 			message: {
-				to: `${email}`
+				to: `${email}`,
+				headers: NO_LINK_TRACKING_HEADERS
 			},
 			locals: {
 				name,
@@ -564,26 +596,40 @@ export class EmailService {
 				verificationLink,
 				verificationCode,
 				...integration,
-				locale: preferredLanguage,
+				locale: languageCode,
 				host: env.clientBaseUrl
 			}
 		};
-		const body = {
-			templateName: sendOptions.template,
-			email: sendOptions.message.to,
-			languageCode: sendOptions.locals.locale,
-			message: ''
-		};
-		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
-		if (!match) {
-			try {
-				const instance = await this.emailSendService.getInstance();
-				const send = await instance.send(sendOptions);
 
-				body['message'] = send.originalMessage;
-			} catch (error) {
-				console.error(error);
-			}
+		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
+			this.logger.warn(`Verification email for user ${user.id} not sent: the recipient domain is blocked.`);
+			return false;
+		}
+
+		let subject: string | undefined;
+		let status = EmailStatusEnum.FAILED;
+		try {
+			const instance = await this.emailSendService.getInstance();
+			const send = await instance.send(sendOptions);
+
+			subject = send?.originalMessage?.subject;
+			status = EmailStatusEnum.SENT;
+			return true;
+		} catch (error) {
+			this.logger.error(
+				`Verification email for user ${user.id} could not be sent: ${describeEmailSendError(error)}`
+			);
+			return false;
+		} finally {
+			await this.createEmailRecord({
+				templateName: sendOptions.template,
+				email,
+				languageCode,
+				// Subject only - see the method comment.
+				message: { subject },
+				user,
+				status
+			});
 		}
 	}
 
@@ -613,7 +659,7 @@ export class EmailService {
 		// Prepare email sending options
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_RESET,
-			message: { to: email },
+			message: { to: email, headers: NO_LINK_TRACKING_HEADERS },
 			locals: {
 				...integration,
 				userName: name,
@@ -644,7 +690,7 @@ export class EmailService {
 			// Record the original message
 			body.message = send.originalMessage;
 		} catch (error) {
-			console.error('Failed to send password reset email:', error);
+			this.logger.error(`Password reset email could not be sent: ${describeEmailSendError(error)}`);
 		} finally {
 			// Create an email record
 			await this.createEmailRecord(body);
@@ -678,7 +724,7 @@ export class EmailService {
 		// Prepare email sending options
 		const sendOptions = {
 			template: EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET,
-			message: { to: email },
+			message: { to: email, headers: NO_LINK_TRACKING_HEADERS },
 			locals: {
 				...integration,
 				locale: languageCode,
@@ -708,7 +754,7 @@ export class EmailService {
 			// Record the original message
 			body.message = send.originalMessage;
 		} catch (error) {
-			console.error('Failed to send multi-tenant password reset email:', error);
+			this.logger.error(`Multi-tenant password reset email could not be sent: ${describeEmailSendError(error)}`);
 		} finally {
 			await this.createEmailRecord(body);
 		}
@@ -757,7 +803,7 @@ export class EmailService {
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.error(error);
+				this.logger.error(`Appointment email could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -807,7 +853,7 @@ export class EmailService {
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.error(error);
+				this.logger.error(`Timesheet action email could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -858,7 +904,7 @@ export class EmailService {
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.error(error);
+				this.logger.error(`Timesheet submission email could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -893,7 +939,8 @@ export class EmailService {
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
-				to: `${email}`
+				to: `${email}`,
+				headers: NO_LINK_TRACKING_HEADERS
 			},
 			locals: {
 				locale,
@@ -926,7 +973,7 @@ export class EmailService {
 				// Update the body with the original message
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.error(error);
+				this.logger.error(`Magic login code email could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -975,7 +1022,7 @@ export class EmailService {
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log('Error while sending password less authentication code: %s', error);
+				this.logger.error(`Email reset code could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -1031,7 +1078,7 @@ export class EmailService {
 
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.error(error);
+				this.logger.error(`Team join request email could not be sent: ${describeEmailSendError(error)}`);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -1088,7 +1135,7 @@ export class EmailService {
 
 				body.message = sendResult.originalMessage;
 			} catch (error) {
-				console.log(`Error while sending rejection email to ${candidateName}: %s`, error?.message);
+				this.logger.error(`Candidate rejection email could not be sent: ${describeEmailSendError(error)}`);
 				throw new BadRequestException(
 					`Error while sending rejection email to ${candidateName}: ${error?.message}`
 				);
@@ -1158,7 +1205,7 @@ export class EmailService {
 			emailHistory.status = EmailStatusEnum.SENT;
 			return await this.typeOrmEmailHistoryRepository.save(emailHistory);
 		} catch (error) {
-			console.error(`Error while re-sending mail: ${error?.message}`);
+			this.logger.error(`Email history ${id} could not be re-sent: ${describeEmailSendError(error)}`);
 
 			// Update the email history status to FAILED and save.
 			emailHistory.status = EmailStatusEnum.FAILED;
@@ -1170,9 +1217,20 @@ export class EmailService {
 	}
 
 	/**
+	 * Record an attempted send in `email_sent`.
 	 *
-	 * @param createEmailOptions
-	 * @returns
+	 * `status` is taken from the caller when given. Otherwise it is inferred: every sender in this
+	 * service stores the provider's `originalMessage` (an object) on success only and leaves the
+	 * initial `''` on failure, so an object means SENT and anything else FAILED. Rows written before
+	 * this change have a NULL status.
+	 *
+	 * The template lookup falls back to English, matching the renderer: a locale with no template of
+	 * its own is sent in English, and `emailTemplateId` is NOT NULL, so without the fallback the row
+	 * could not be saved at all.
+	 *
+	 * Never throws. It runs in the senders' `finally` blocks, where an exception would replace the
+	 * send's own outcome - a delivered email reported as a 500, or the real send error hidden behind
+	 * a bookkeeping one.
 	 */
 	private async createEmailRecord(createEmailOptions: {
 		templateName: string;
@@ -1181,24 +1239,44 @@ export class EmailService {
 		message: any;
 		organization?: IOrganization;
 		user?: IUser;
-	}): Promise<IEmailHistory> {
-		const emailEntity = new EmailHistory();
+		status?: EmailStatusEnum;
+	}): Promise<IEmailHistory | null> {
 		const { templateName: template, email, languageCode, message, organization, user } = createEmailOptions;
-		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
-		const emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy({
-			name: template + '/html',
-			languageCode
-		});
-		emailEntity.name = message.subject;
-		emailEntity.email = email;
-		emailEntity.content = message.html;
-		emailEntity.emailTemplate = emailTemplate;
-		emailEntity.tenantId = tenantId;
-		emailEntity.organizationId = organization ? organization.id : null;
-		if (user) {
-			emailEntity.user = user;
+		try {
+			const emailEntity = new EmailHistory();
+			const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
+			const status =
+				createEmailOptions.status ??
+				(message && typeof message === 'object' ? EmailStatusEnum.SENT : EmailStatusEnum.FAILED);
+
+			let emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy({
+				name: template + '/html',
+				languageCode: languageCode || LanguagesEnum.ENGLISH
+			});
+			if (!emailTemplate && languageCode !== LanguagesEnum.ENGLISH) {
+				emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy({
+					name: template + '/html',
+					languageCode: LanguagesEnum.ENGLISH
+				});
+			}
+
+			emailEntity.name = message?.subject;
+			emailEntity.email = email;
+			emailEntity.content = message?.html;
+			emailEntity.status = status;
+			emailEntity.emailTemplate = emailTemplate;
+			emailEntity.tenantId = tenantId;
+			emailEntity.organizationId = organization ? organization.id : null;
+			if (user) {
+				emailEntity.user = user;
+			}
+			return await this.typeOrmEmailHistoryRepository.save(emailEntity);
+		} catch (error) {
+			this.logger.error(
+				`Could not record the "${template}" email in email_sent: ${describeEmailSendError(error)}`
+			);
+			return null;
 		}
-		return await this.typeOrmEmailHistoryRepository.save(emailEntity);
 	}
 
 	// tested e-mail send functionality

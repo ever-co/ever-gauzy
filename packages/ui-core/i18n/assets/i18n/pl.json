@@ -815,6 +815,7 @@
 		"SKILLS": "Umiejętności",
 		"PRIVACY": "Prywatność",
 		"SELECT_TIMEZONE": "Wybierz strefę czasową",
+		"SELECT_TIMEZONE_HINT": "Godziny spotkań są wyświetlane w tej strefie czasowej.",
 		"SHOW_AVERAGE_BONUS": "Pokaż średnią premię",
 		"SHOW_AVERAGE_INCOME": "Pokaż średni dochód",
 		"SHOW_PAYPERIOD": "Pokaż okres płatności",
@@ -1755,6 +1756,19 @@
 		"TIME_TRACKING": "Śledzenie czasu",
 		"PROJECT_MANAGEMENT": "Zarządzanie projektem",
 		"EMPLOYEE_STATISTICS": "Statystyki pracowników",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Wśród {{ count }} pracowników",
+			"OF_INCOME": "{{ value }}% przychodów",
+			"MARGIN": "Marża {{ value }}%",
+			"BREAKDOWN": "Przychody według pracownika",
+			"NO_DATA": "Brak aktywności finansowej w tym okresie",
+			"NO_DATA_HINT": "Przychody i wydatki zarejestrowane w tym okresie pojawią się tutaj.",
+			"NO_EMPLOYEES": "Brak danych pracowników w tym okresie",
+			"SORT_BY": "Sortuj według {{ name }}",
+			"SORT_LABEL": "Sortuj według",
+			"SORT_ASCENDING": "Rosnąco",
+			"SORT_DESCENDING": "Malejąco"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Proszę wybrać miesiąc oraz pracownika z menu powyżej",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Wprowadź tekst dla nieuwierzytelnionych użytkowników",
 		"CHARTS": {
@@ -2712,7 +2726,10 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres drugiego miejsca pobytu",
 		"MEMBERS": "Członkowie",
-		"BUDGET": "Budżet"
+		"BUDGET": "Budżet",
+		"PHOTO_HINT": "Kliknij lub upuść obraz, aby go przesłać",
+		"SEARCH_EMPLOYEES": "Szukaj pracowników po imieniu lub e-mailu",
+		"NO_MEMBERS": "Nie dodano jeszcze członków"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Języki",
@@ -4972,7 +4989,9 @@
 		"NO_SCREENSHOT": "Brak zrzutu ekranu",
 		"NO_SCREENSHOTS": "Brak zrzutów ekranu",
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres dat, pracownika lub projekt",
-		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}"
+		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}",
+		"NO_TIME_TRACKED": "Brak zarejestrowanego czasu",
+		"MINUTES_TRACKED": "Zarejestrowano {{ minutes }} min"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -4998,6 +5017,16 @@
 		"BUFFER_AT_START": "Bufor na początku",
 		"BUFFER_AT_END": "Bufor na końcu",
 		"BREAK_TIME": "Przerwa",
+		"DETAILS": "Szczegóły",
+		"PARTICIPANTS": "Uczestnicy",
+		"FORM_HINT": "Określ temat spotkania, jego termin i uczestników.",
+		"DETAILS_HINT": "Agenda, miejsce i notatki widoczne dla wszystkich zaproszonych.",
+		"SCHEDULE": "Harmonogram",
+		"SCHEDULE_HINT": "Wybierz datę i przedział czasu, z opcjonalnym buforem i przerwą.",
+		"BUFFER_TIME_HINT": "Zostaw wolny czas przed spotkaniem lub po nim.",
+		"BREAK_TIME_HINT": "Przerwij spotkanie na krótką przerwę.",
+		"BREAK_START": "Przerwa zaczyna się o",
+		"PARTICIPANTS_HINT": "Osoby, które otrzymują zaproszenie.",
 		"ARE_YOU_SURE": "Jesteś pewien? Ta czynność jest nieodwracalna"
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5042,7 +5071,9 @@
 		"CANCEL": "Anuluj wizytę",
 		"TIMEZONE": "Twój strefa czasowa:",
 		"CHANGE": "(Zmieniać)",
+		"CHANGE_TIMEZONE": "Zmień",
 		"SELECT_EMPLOYEE_ERROR": "Proszę wybrać pracownika",
+		"SELECT_EMPLOYEE_HINT": "Wybierz, z kim chcesz się spotkać, a potem dogodną godzinę.",
 		"EXPIRED_OR_CANCELLED": "To spotkanie wygasło lub zostało anulowane",
 		"EMAIL_SENT": "E-mail został wysłany do organizatora oraz wszystkich uczestników tego spotkania",
 		"NO_ACTIVE_EVENT_TYPES": "Nie ma aktywnych typów wydarzeń",

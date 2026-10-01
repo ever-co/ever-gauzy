@@ -30,6 +30,10 @@ $placeholder-opacity: 0.35;
 .gallery-inner {
 	display: grid;
 	grid-template-rows: auto minmax(0, 1fr) auto;
+	// The column is held to the viewport. Left `auto`, it grew to the filmstrip's
+	// full width (88 thumbnails on the Screenshots page), which pushed the
+	// screenshot, the next button and the header actions off-screen.
+	grid-template-columns: minmax(0, 1fr);
 	height: 100%;
 	// Mostly black, with a blur on the page that shows through, so the page stays
 	// a hint behind the viewer and never competes with the screenshot or controls.

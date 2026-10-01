@@ -816,6 +816,7 @@
 		"SKILLS": "Vaardigheden",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Selecteer tijdzone",
+		"SELECT_TIMEZONE_HINT": "Afspraaktijden worden in deze tijdzone weergegeven.",
 		"SHOW_AVERAGE_BONUS": "Toon het gemiddelde bonus",
 		"SHOW_AVERAGE_INCOME": "Toon het gemiddelde inkomen",
 		"SHOW_PAYPERIOD": "Toon loonperiode",
@@ -1756,6 +1757,19 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"PROJECT_MANAGEMENT": "Projectmanagement",
 		"EMPLOYEE_STATISTICS": "Werknemersstatistieken",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
+			"OF_INCOME": "{{ value }}% van de inkomsten",
+			"MARGIN": "{{ value }}% marge",
+			"BREAKDOWN": "Inkomsten per werknemer",
+			"NO_DATA": "Geen financiële activiteit in deze periode",
+			"NO_DATA_HINT": "Inkomsten en uitgaven voor deze periode verschijnen hier.",
+			"NO_EMPLOYEES": "Geen werknemersgegevens voor deze periode",
+			"SORT_BY": "Sorteren op {{ name }}",
+			"SORT_LABEL": "Sorteren op",
+			"SORT_ASCENDING": "Oplopend",
+			"SORT_DESCENDING": "Aflopend"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Selecteer alstublieft een maand en medewerker uit het bovenstaande menu",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Voer tekst in voor niet-geregistreerde gebruikers.",
 		"CHARTS": {
@@ -2713,7 +2727,10 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres 2",
 		"MEMBERS": "Leden",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden",
+		"SEARCH_EMPLOYEES": "Zoek medewerkers op naam of e-mail",
+		"NO_MEMBERS": "Nog geen leden toegevoegd"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",
@@ -4973,7 +4990,9 @@
 		"NO_SCREENSHOT": "Geen schermafbeelding",
 		"NO_SCREENSHOTS": "Geen screenshots",
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",
-		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd"
+		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd",
+		"NO_TIME_TRACKED": "Geen tijd bijgehouden",
+		"MINUTES_TRACKED": "{{ minutes }} min bijgehouden"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",
@@ -4999,6 +5018,16 @@
 		"BUFFER_AT_START": "Buffer aan het begin",
 		"BUFFER_AT_END": "Buffer aan het einde",
 		"BREAK_TIME": "Pauzetijd",
+		"DETAILS": "Details",
+		"PARTICIPANTS": "Deelnemers",
+		"FORM_HINT": "Geef aan waar de vergadering over gaat, wanneer die is en wie meedoet.",
+		"DETAILS_HINT": "Agenda, locatie en notities die alle genodigden zien.",
+		"SCHEDULE": "Planning",
+		"SCHEDULE_HINT": "Kies de datum en het tijdslot, met optionele buffer en pauze.",
+		"BUFFER_TIME_HINT": "Houd vrije tijd vóór of na de vergadering.",
+		"BREAK_TIME_HINT": "Onderbreek de vergadering voor een korte pauze.",
+		"BREAK_START": "Pauze begint om",
+		"PARTICIPANTS_HINT": "Mensen die de uitnodiging ontvangen.",
 		"ARE_YOU_SURE": "Weet je het zeker? Deze actie is onomkeerbaar."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5043,7 +5072,9 @@
 		"CANCEL": "Afspraak annuleren",
 		"TIMEZONE": "Jouw tijdzone:",
 		"CHANGE": "(Wijzigen)",
+		"CHANGE_TIMEZONE": "Wijzigen",
 		"SELECT_EMPLOYEE_ERROR": "Selecteer alstublieft een medewerker.",
+		"SELECT_EMPLOYEE_HINT": "Kies met wie je wilt afspreken en daarna een tijd die jou uitkomt.",
 		"EXPIRED_OR_CANCELLED": "Deze afspraak is verlopen of geannuleerd.",
 		"EMAIL_SENT": "Er is een e-mail verzonden naar de gastheer en naar alle deelnemers voor deze vergadering.",
 		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen.",

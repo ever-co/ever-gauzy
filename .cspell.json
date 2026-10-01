@@ -1260,7 +1260,8 @@
 		"toplevel",
 		"reimplementation",
 		"strategized",
-		"unwindowed"
+		"unwindowed",
+		"internmap"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

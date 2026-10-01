@@ -816,6 +816,7 @@
 		"SKILLS": "Habilidades",
 		"PRIVACY": "Privacidade",
 		"SELECT_TIMEZONE": "Selecionar Fuso Horário",
+		"SELECT_TIMEZONE_HINT": "Os horários dos compromissos são exibidos neste fuso horário.",
 		"SHOW_AVERAGE_BONUS": "Mostrar Bônus Médio",
 		"SHOW_AVERAGE_INCOME": "Mostrar Renda Média",
 		"SHOW_PAYPERIOD": "Mostrar Período de Pagamento",
@@ -1756,6 +1757,19 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"EMPLOYEE_STATISTICS": "Estatísticas dos funcionários",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
+			"OF_INCOME": "{{ value }}% da receita",
+			"MARGIN": "Margem de {{ value }}%",
+			"BREAKDOWN": "Receita por funcionário",
+			"NO_DATA": "Nenhuma atividade financeira neste período",
+			"NO_DATA_HINT": "As receitas e despesas registradas neste período aparecerão aqui.",
+			"NO_EMPLOYEES": "Nenhum registro de funcionário neste período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor, selecione um mês e um funcionário no menu acima.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insira texto para usuários não autenticados.",
 		"CHARTS": {
@@ -2713,7 +2727,10 @@
 		"ADDRESS": "Endereço",
 		"ADDRESS_2": "Endereço 2",
 		"MEMBERS": "Membros",
-		"BUDGET": "Orçamento"
+		"BUDGET": "Orçamento",
+		"PHOTO_HINT": "Clique ou solte uma imagem para enviar",
+		"SEARCH_EMPLOYEES": "Pesquise funcionários por nome ou e-mail",
+		"NO_MEMBERS": "Nenhum membro adicionado ainda"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas",
@@ -4973,7 +4990,9 @@
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
-		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)",
+		"NO_TIME_TRACKED": "Nenhum tempo registrado",
+		"MINUTES_TRACKED": "{{ minutes }} min registrados"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",
@@ -4999,6 +5018,16 @@
 		"BUFFER_AT_START": "Buffer no Início",
 		"BUFFER_AT_END": "Buffer no final",
 		"BREAK_TIME": "Hora do intervalo",
+		"DETAILS": "Detalhes",
+		"PARTICIPANTS": "Participantes",
+		"FORM_HINT": "Defina o assunto da reunião, quando ela acontece e quem participa.",
+		"DETAILS_HINT": "Pauta, local e notas visíveis para todos os convidados.",
+		"SCHEDULE": "Agenda",
+		"SCHEDULE_HINT": "Escolha a data e o horário, com intervalo de folga e pausa opcionais.",
+		"BUFFER_TIME_HINT": "Reserve tempo livre antes ou depois da reunião.",
+		"BREAK_TIME_HINT": "Pause a reunião para um breve intervalo.",
+		"BREAK_START": "A pausa começa às",
+		"PARTICIPANTS_HINT": "Pessoas que recebem o convite.",
 		"ARE_YOU_SURE": "Você tem certeza? Essa ação é irreversível."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5043,7 +5072,9 @@
 		"CANCEL": "Cancelar Agendamento",
 		"TIMEZONE": "Sua zona horária:",
 		"CHANGE": "Mudança",
+		"CHANGE_TIMEZONE": "Alterar",
 		"SELECT_EMPLOYEE_ERROR": "Por favor, selecione um funcionário.",
+		"SELECT_EMPLOYEE_HINT": "Escolha com quem você quer se reunir e depois um horário que funcione para você.",
 		"EXPIRED_OR_CANCELLED": "**Esta consulta expirou ou foi cancelada.",
 		"EMAIL_SENT": "**Um e-mail foi enviado para o anfitrião, bem como para todos os participantes desta reunião.",
 		"NO_ACTIVE_EVENT_TYPES": "Não há tipos de eventos ativos.",
