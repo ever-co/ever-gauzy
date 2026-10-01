@@ -15,7 +15,13 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from '../core/utils';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from '../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -223,8 +229,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 						// Text search filters matching TypeORM branch (read from the client filter, not the query being built)
 						if (isNotEmpty(user) && isNotEmpty(user.name)) {
-							// Split on any whitespace and drop empty keywords: an empty one would match every name
-							const keywords: string[] = user.name.trim().split(/\s+/).filter(Boolean);
+							const keywords: string[] = splitKeywords(user.name);
 							const userFilters: any[] = [];
 							keywords.forEach((keyword: string) => {
 								userFilters.push(
@@ -338,7 +343,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							qb.andWhere(
 								new Brackets((web: WhereExpressionBuilder) => {
 									if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
-										const keywords: string[] = where.user.name.split(' ');
+										const keywords: string[] = splitKeywords(where.user.name);
 										keywords.forEach((keyword: string, index: number) => {
 											web.orWhere(p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`), {
 												[`keyword_${index}`]: `%${keyword}%`

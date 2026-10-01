@@ -16,7 +16,14 @@ import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
-import { flatten, getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations, parseSortOrder } from './../core/utils';
+import {
+	flatten,
+	getDateRangeFormat,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
@@ -573,14 +580,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						if (isNotEmpty(mWhere.user)) {
 							const userOr: any[] = [];
 							if (isNotEmpty(mWhere.user.name)) {
-								const keywords: string[] = mWhere.user.name.split(' ');
+								const keywords: string[] = splitKeywords(mWhere.user.name);
 								keywords.forEach((keyword: string) => {
 									userOr.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
 									userOr.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
 								});
 							}
 							if (isNotEmpty(mWhere.user.email)) {
-								const keywords: string[] = mWhere.user.email.split(' ');
+								const keywords: string[] = splitKeywords(mWhere.user.email);
 								keywords.forEach((keyword: string) => {
 									userOr.push({ user: { email: { $ilike: `%${keyword}%` } } });
 								});
@@ -694,7 +701,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 									const { user } = where;
 									if (isNotEmpty(user)) {
 										if (isNotEmpty(user.name)) {
-											const keywords: string[] = user.name.split(' ');
+											const keywords: string[] = splitKeywords(user.name);
 											keywords.forEach((keyword: string, index: number) => {
 												web.orWhere(
 													p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`),
@@ -711,7 +718,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 											});
 										}
 										if (isNotEmpty(user.email)) {
-											const keywords: string[] = user.email.split(' ');
+											const keywords: string[] = splitKeywords(user.email);
 											keywords.forEach((keyword: string, index: number) => {
 												web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
 													[`email_${index}`]: `%${keyword}%`
