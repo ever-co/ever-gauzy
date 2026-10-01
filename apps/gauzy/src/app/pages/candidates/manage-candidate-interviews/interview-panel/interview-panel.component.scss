@@ -12,7 +12,9 @@
   border: none;
   padding: 0;
   overflow: unset;
-  background-color: var(--gauzy-card-2);
+  // The Interviews page card already paints --gauzy-card-2; a second layer here
+  // made this tab a different colour from the calendar tab
+  background-color: transparent;
 
   &-filter {
     padding-bottom: 1.5rem;
