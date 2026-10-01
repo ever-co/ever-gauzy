@@ -1,36 +1,72 @@
 @use 'themes' as *;
 
-// One hairline panel: recipients, subject line, then the editor
+// One composer panel: recipients, subject line, then the editor. The panel owns
+// the frame and the focus ring, so the editor inside drops its own.
 .email-wrap {
   margin: 0;
-  background-color: transparent;
+  background-color: var(--background-basic-color-1);
   border: none;
-  border-radius: var(--gauzy-radius-sm);
+  border-radius: nb-theme(border-radius);
   box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
   overflow: hidden;
+  transition: box-shadow 0.15s ease-in-out;
+
+  &:focus-within {
+    box-shadow:
+      inset 0 0 0 1px nb-theme(color-primary-default),
+      0 0 0 3px color-mix(in srgb, nb-theme(color-primary-default) 18%, transparent);
+  }
 }
 
 .info-block {
-  padding: 0.625rem 0.75rem;
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
   line-height: 1.25rem;
-  color: nb-theme(text-hint-color);
   background-color: transparent;
   border-bottom: 1px solid var(--gauzy-border-default-color);
 }
 
+.info-label {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: nb-theme(text-hint-color);
+}
+
+.recipient-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
 // Recipient address as a small pill
-:host .email {
-  display: inline-block;
+.email {
   padding: 0 0.5rem;
-  @include nb-ltr(margin-left, 0.5rem);
-  @include nb-rtl(margin-right, 0.5rem);
+  font-size: 0.75rem;
+  line-height: 1.375rem;
   color: nb-theme(text-basic-color);
-  border-radius: var(--gauzy-radius-sm);
+  border-radius: 999px;
   background-color: var(--gauzy-hover-tint);
+}
+
+// The subject line reads as the email's title
+.subject {
+  font-weight: 500;
+  color: nb-theme(text-basic-color);
 }
 
 :host .editor {
   padding: 0;
   background-color: transparent;
+
+  ::ng-deep ga-rich-text-editor .rich-text-editor {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
 }
