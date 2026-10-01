@@ -4,29 +4,43 @@ import { NbDialogRef } from '@nebular/theme';
 @Component({
     selector: 'ga-archive-confirmation',
     template: `
-		<nb-card>
-			<nb-card-header class="d-flex flex-column">
-				<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
-				<h6 class="title">{{ 'FORM.CONFIRM' | translate }}</h6>
+		<nb-card class="confirm-dialog">
+			<nb-card-header class="dialog-header">
+				<div class="heading">
+					<span class="title-badge"><nb-icon icon="archive-outline"></nb-icon></span>
+					<h5 class="dialog-title">{{ 'FORM.CONFIRM' | translate }}</h5>
+				</div>
+				<button
+					type="button"
+					class="close"
+					nbButton
+					ghost
+					size="small"
+					status="basic"
+					[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+					(click)="close()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
 			</nb-card-header>
-			<nb-card-body>
-				<span>
+			<nb-card-body class="dialog-body">
+				<p class="message">
 					{{ 'FORM.ARCHIVE_CONFIRMATION.SURE' | translate }}
-					{{ recordType }}
+					<strong>{{ recordType }}</strong>
 					{{ 'FORM.DELETE_CONFIRMATION.RECORD' | translate }}?
-				</span>
+				</p>
 			</nb-card-body>
-			<nb-card-footer>
-				<button (click)="close()" status="basic" outline nbButton>
+			<nb-card-footer class="dialog-footer">
+				<button type="button" nbButton ghost status="basic" size="small" (click)="close()">
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
-				<button (click)="archive()" class="mr-3 ml-3" status="danger" nbButton>
+				<button type="button" nbButton status="danger" size="small" (click)="archive()">
 					{{ 'BUTTONS.OK' | translate }}
 				</button>
 			</nb-card-footer>
 		</nb-card>
 	`,
-    styleUrls: ['../delete-confirmation/delete-confirmation.component.scss'],
+    styleUrls: ['./archive-confirmation.component.scss'],
     standalone: false
 })
 export class ArchiveConfirmationComponent {
