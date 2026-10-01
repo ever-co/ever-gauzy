@@ -1,25 +1,58 @@
 import '../core/entities/internal';
 
+import * as config from '@gauzy/config';
 import { CrudService } from '../core/crud/crud.service';
 import { MultiORMEnum } from '../core/utils';
-import { TagService } from './tag.service';
+import { TAG_USAGE_COUNTERS, TagService } from './tag.service';
 import { asTenantUser, createCrossTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 
 /**
  * `findTags` LEFT JOINs every tagged relation at once, so each usage counter must be a
  * `COUNT(DISTINCT ...)`: a plain COUNT multiplies it by the matches of every other relation
  * (a tag on 2 employees and 3 tasks used to report 6 employees and 6 tasks).
+ *
+ * The query builder is a recorder: it checks which joins and selections are built, not the SQL a
+ * database would run. The WHERE callback (tenant / organization filtering) is not executed here.
  */
 describe('TagService.findTags usage counters (TypeORM)', () => {
 	const { tenantA } = createCrossTenantFixture();
+	// Quotes differ per database (`"x"` on PostgreSQL / SQLite, backticks on MySQL)
+	const countOf = (alias: string) => new RegExp(`COUNT\\(DISTINCT [\`"]?${alias}[\`"]?\\.[\`"]?id[\`"]?\\)`);
 
 	let restore: () => void;
-	let addSelect: jest.Mock;
+	let query: Record<string, jest.Mock | string>;
+
+	const findTags = async () => {
+		const service = new TagService(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{ metadata: { tableName: 'tag' }, createQueryBuilder: jest.fn().mockReturnValue(query) } as any,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			{} as any
+		);
+		await service.findTags({ tenantId: tenantA.tenantId, organizationId: tenantA.organizationId });
+	};
+	const selections = () => new Map((query.addSelect as jest.Mock).mock.calls.map(([sql, alias]) => [alias, sql]));
+	const withTagCustomFields = (fields: object[]) => {
+		const original = config.getConfig();
+		jest.spyOn(config, 'getConfig').mockReturnValue({
+			...original,
+			customFields: { ...original.customFields, Tag: fields }
+		} as unknown as ReturnType<typeof config.getConfig>);
+	};
 
 	beforeEach(() => {
 		({ restore } = asTenantUser(tenantA));
 		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
-		addSelect = jest.fn();
+		query = {
+			alias: 'tag',
+			setFindOptions: jest.fn(),
+			leftJoin: jest.fn(),
+			select: jest.fn(),
+			addSelect: jest.fn(),
+			addGroupBy: jest.fn(),
+			where: jest.fn(),
+			getRawMany: jest.fn().mockResolvedValue([])
+		};
 	});
 
 	afterEach(() => {
@@ -27,30 +60,26 @@ describe('TagService.findTags usage counters (TypeORM)', () => {
 		jest.restoreAllMocks();
 	});
 
-	it('counts each relation with COUNT(DISTINCT ...)', async () => {
-		const query = {
-			alias: 'tag',
-			setFindOptions: jest.fn(),
-			leftJoin: jest.fn(),
-			select: jest.fn(),
-			addSelect,
-			addGroupBy: jest.fn(),
-			where: jest.fn(),
-			getRawMany: jest.fn().mockResolvedValue([])
-		};
-		const service = new TagService(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'tag' }, createQueryBuilder: jest.fn().mockReturnValue(query) } as any,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{} as any
-		);
+	it('joins every tagged relation and counts each one once, under its own counter', async () => {
+		withTagCustomFields([]);
+		await findTags();
 
-		await service.findTags({ tenantId: tenantA.tenantId, organizationId: tenantA.organizationId });
-
-		const counters = addSelect.mock.calls.filter(([, alias]) => String(alias).endsWith('_counter'));
-		expect(counters.length).toBeGreaterThan(0);
-		for (const [selection, alias] of counters) {
-			expect({ alias, selection }).toEqual({ alias, selection: expect.stringContaining('COUNT(DISTINCT ') });
+		const selected = selections();
+		for (const [relation, alias, counter] of TAG_USAGE_COUNTERS) {
+			expect(query.leftJoin).toHaveBeenCalledWith(`tag.${relation}`, alias);
+			expect(selected.get(counter)).toMatch(countOf(alias));
 		}
+		// No other counter than the expected ones
+		const counters = [...selected.keys()].filter((alias) => String(alias).endsWith('_counter'));
+		expect(counters.sort()).toEqual(TAG_USAGE_COUNTERS.map(([, , counter]) => counter).sort());
+	});
+
+	it('counts many-to-many custom fields with COUNT(DISTINCT ...) too', async () => {
+		withTagCustomFields([{ name: 'labels', type: 'relation', relationType: 'many-to-many' }]);
+
+		await findTags();
+
+		expect(query.leftJoin).toHaveBeenCalledWith('tag.customFields.labels', 'labels');
+		expect(selections().get('labels_counter')).toMatch(countOf('labels'));
 	});
 });
