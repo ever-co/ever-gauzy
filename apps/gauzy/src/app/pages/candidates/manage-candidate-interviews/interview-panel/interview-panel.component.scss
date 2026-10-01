@@ -88,6 +88,26 @@
   height: 100%;
 }
 
+:host .card {
+  // Same height as the Criterions tab (`.add-criterion` in interview-criterions):
+  // the table fills the space under the filters and scrolls inside it, instead of
+  // stopping at the default card body height with empty space below.
+  height: calc(100vh - 16.5rem);
+  min-height: 0;
+
+  .card-body.interview-panel {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .table-scroll-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
 :host .interview-panel {
   @include nb-ltr(padding-right, 0.5rem !important);
   @include nb-rtl(padding-left, 0.5rem !important);
