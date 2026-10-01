@@ -189,3 +189,8 @@ export { TagTypeModule, TagTypeService } from './lib/tag-type';
 export { AutomationLabelSyncCommand, RelationalTagDTO, Taggable, TagModule, TagService } from './lib/tags';
 export * from './lib/token';
 export * from './lib/auth/purpose-token';
+// The authentication module and service as DI tokens, for sign-in plugins that hand a verified
+// identity to Gauzy's own e-mail code, register path and social sign-in instead of re-implementing
+// them (the Keycloak and Ever ID sign-in plugins).
+export { AuthModule } from './lib/auth/auth.module';
+export { AuthService } from './lib/auth/auth.service';
