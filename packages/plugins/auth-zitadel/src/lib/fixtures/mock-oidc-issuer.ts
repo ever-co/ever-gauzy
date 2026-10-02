@@ -150,7 +150,8 @@ export class MockOidcIssuer {
 		const body = new URLSearchParams(await this.readBody(req));
 		// `client_secret_basic` form-encodes id and secret before joining them (RFC 6749, section 2.3.1).
 		const formEncode = (value: string) => new URLSearchParams({ v: value }).toString().slice(2);
-		const expected = `Basic ${Buffer.from(`${formEncode(this.clientId)}:${formEncode(this.clientSecret)}`).toString('base64')}`;
+		const credential = Buffer.from(`${formEncode(this.clientId)}:${formEncode(this.clientSecret)}`).toString('base64');
+		const expected = `Basic ${credential}`;
 		if (req.headers['authorization'] !== expected) {
 			return this.json(res, 401, { error: 'invalid_client' });
 		}

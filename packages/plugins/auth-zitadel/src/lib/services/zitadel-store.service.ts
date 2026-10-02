@@ -56,8 +56,6 @@ const CLAIM_TTL_MS = 10 * 60 * 1000;
  */
 export const HOLD_TTL_MS = 30 * 1000;
 
-/** What {@link ZitadelStoreService.hold} hands out: the proof that ends that hold, and only it. */
-export type ZitadelHold = string;
 
 /**
  * Short-lived server-side records: one-time hand-off keys, pending confirmations and pending
@@ -74,7 +72,7 @@ export type ZitadelHold = string;
 @Injectable()
 export class ZitadelStoreService {
 	private readonly claimed = new Map<string, number>();
-	private readonly holds = new Map<string, { owner: ZitadelHold; expiresAt: number }>();
+	private readonly holds = new Map<string, { owner: string; expiresAt: number }>();
 	private readonly counters = new Map<string, { count: number; resetAt: number }>();
 
 	constructor(
@@ -163,7 +161,7 @@ export class ZitadelStoreService {
 	 * replace `take()`, which alone makes a key single-use; it tells a concurrent attempt that the key
 	 * is busy rather than used up, and lets one attempt at a time work on a pending record.
 	 */
-	async hold(namespace: string, key: string): Promise<ZitadelHold | null> {
+	async hold(namespace: string, key: string): Promise<string | null> {
 		const owner = randomBytes(16).toString('base64url');
 		if (!this.isKey(key)) {
 			// Nothing to hold: a malformed key is never looked up.
@@ -185,7 +183,7 @@ export class ZitadelStoreService {
 	 * Ends a hold taken with {@link hold}, only while it is still that hold: one that outlived its
 	 * lifetime and was taken by another attempt meanwhile stays with that attempt.
 	 */
-	async release(namespace: string, key: string, hold: ZitadelHold): Promise<void> {
+	async release(namespace: string, key: string, hold: string): Promise<void> {
 		if (!this.isKey(key)) {
 			return;
 		}

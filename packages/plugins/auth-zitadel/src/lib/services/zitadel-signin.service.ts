@@ -1,7 +1,7 @@
 import { GoneException, HttpException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { OidcValidatedIdToken } from '@gauzy/auth';
 import { IAppIntegrationConfig } from '@gauzy/common';
-import { ID, LanguagesEnum } from '@gauzy/contracts';
+import { ID, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gauzy/contracts';
 import { User } from '@gauzy/core';
 import { handoffBusy } from '../http/zitadel-retry';
 import { GAUZY_AUTH, GauzyAuthPort } from '../ports/gauzy-auth.port';
@@ -15,6 +15,18 @@ import { ZitadelSigninWorkspaceResponse, ZitadelTeamList, ZitadelWorkspaceServic
 
 /** Wrong one-time codes accepted for one pending confirmation before it is discarded. */
 export const MAX_CONFIRM_ATTEMPTS = 5;
+
+/** The team list Gauzy returned for each workspace of a code check (`current_teams`), by user id. */
+function teamListsByUser(checked: IUserSigninWorkspaceResponse): Map<ID, ZitadelTeamList> {
+	const teams = new Map<ID, ZitadelTeamList>();
+	for (const workspace of checked.workspaces) {
+		const list = (workspace as { current_teams?: unknown }).current_teams;
+		if (workspace.user?.id && Array.isArray(list)) {
+			teams.set(workspace.user.id, list);
+		}
+	}
+	return teams;
+}
 
 /** Where a sign-in came from: the browser callback, or another first-party app's server (token route). */
 export type ZitadelSigninChannel = 'browser' | 'token';
@@ -226,35 +238,17 @@ export class ZitadelSigninService {
 		// For the token route, Gauzy's own code check also returns each workspace's team list (as its
 		// e-mail code sign-in does for the same client), so no extra lookup is made here.
 		const includeTeams = record.channel === 'token';
-		let proved: string[];
-		const teams = new Map<ID, ZitadelTeamList>();
+		let checked: IUserSigninWorkspaceResponse;
 		try {
-			const result = await this.gauzyAuth.signinWorkspacesByMagicCode({ email: record.email, code: String(code ?? '') }, includeTeams);
-			proved = result.workspaces.map((workspace) => workspace.user?.id).filter(Boolean);
-			if (includeTeams) {
-				for (const workspace of result.workspaces) {
-					const list = (workspace as { current_teams?: unknown }).current_teams;
-					if (workspace.user?.id && Array.isArray(list)) {
-						teams.set(workspace.user.id, list);
-					}
-				}
-			}
+			checked = await this.gauzyAuth.signinWorkspacesByMagicCode({ email: record.email, code: String(code ?? '') }, includeTeams);
 		} catch (error) {
-			// Gauzy's own rate limit is not a wrong guess: it is passed on and costs no attempt.
-			const throttled = error instanceof HttpException && error.getStatus() === HttpStatus.TOO_MANY_REQUESTS;
-			if (!throttled) {
-				record.attempts += 1;
-			}
-			if (record.attempts >= MAX_CONFIRM_ATTEMPTS) {
-				throw new GoneException();
-			}
-			await this.store.put('confirm', key, record, this.config.settings.confirmTtlSeconds);
-			throw throttled ? error : new UnauthorizedException();
+			throw await this.failedCodeCheck(key, record, error);
 		}
 
 		const rowIds = new Set(record.rowIds);
+		const proved = checked.workspaces.map((workspace) => workspace.user?.id).filter((userId) => rowIds.has(userId));
 		const users: User[] = [];
-		for (const id of proved.filter((userId) => rowIds.has(userId))) {
+		for (const id of proved) {
 			const user = await this.accounts.findActiveUser(id);
 			if (user) {
 				users.push(user);
@@ -262,8 +256,25 @@ export class ZitadelSigninService {
 		}
 		await this.accounts.link(users, record.identity, 'confirmed');
 		await this.events.linked(users, record.identity, 'confirmed');
-		const response = await this.signInLinked(users, record.identity, record.hints, record.sid, includeTeams ? teams : undefined);
+		const teams = includeTeams ? teamListsByUser(checked) : undefined;
+		const response = await this.signInLinked(users, record.identity, record.hints, record.sid, teams);
 		return record.redirect ? { ...response, redirect: record.redirect } : response;
+	}
+
+	/**
+	 * Counts a failed code check (Gauzy's own rate limit is not a wrong guess: it is passed on and costs
+	 * no attempt), puts the record back unless the attempts are used up, and returns what to answer.
+	 */
+	private async failedCodeCheck(key: string, record: ZitadelConfirmRecord, error: unknown): Promise<HttpException> {
+		const throttled = error instanceof HttpException && error.getStatus() === HttpStatus.TOO_MANY_REQUESTS;
+		if (!throttled) {
+			record.attempts += 1;
+		}
+		if (record.attempts >= MAX_CONFIRM_ATTEMPTS) {
+			return new GoneException();
+		}
+		await this.store.put('confirm', key, record, this.config.settings.confirmTtlSeconds);
+		return throttled ? (error as HttpException) : new UnauthorizedException();
 	}
 
 	private locale(user?: User): LanguagesEnum {
