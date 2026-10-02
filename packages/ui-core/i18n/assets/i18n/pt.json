@@ -5360,6 +5360,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Não tem uma conta?",
 		"FORGOT_PASSWORD_TITLE": "Esqueceu a senha?",
 		"OR_SIGN_IN_WITH": "Ou faça login com",
+		"SIGN_IN_WITH_EVER_ID": "Entrar com Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Entrar com Keycloak",
 		"FORGOT_EMAIL_TITLE": "Esqueceu o e-mail?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Entrar com um código mágico",

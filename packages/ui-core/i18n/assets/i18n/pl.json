@@ -5359,6 +5359,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Nie masz konta?",
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",
 		"OR_SIGN_IN_WITH": "Albo zaloguj się korzystając z",
+		"SIGN_IN_WITH_EVER_ID": "Zaloguj się przez Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Zaloguj się przez Keycloak",
 		"FORGOT_EMAIL_TITLE": "Zapomniałeś e-maila?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Zaloguj się za pomocą magicznego kodu",

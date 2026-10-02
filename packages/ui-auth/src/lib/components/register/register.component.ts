@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, inject, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
@@ -7,6 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { patterns } from '@gauzy/constants';
 import { ITermsAcceptanceDocument } from '@gauzy/contracts';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { AuthService, readRegisterError, isCheckoutSessionId, rememberCheckoutSession } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -40,6 +42,8 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 	 * subscription gate). Shown as a button under the API's own message; null otherwise.
 	 */
 	public checkoutUrl: string | null = null;
+
+	private readonly http = inject(HttpClient);
 
 	constructor(
 		public readonly translate: TranslateService,
@@ -110,12 +114,15 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 			 * onboarding, where the API links the new tenant to the buyer's Stripe customer after checking
 			 * the session with Stripe. Anything not shaped like a session id is ignored.
 			 */
-			tap(({ email, name, checkout_session }: Params) => {
+			tap(({ email, name, checkout_session, ever_id, handoff }: Params) => {
 				if (email) this.user.email = email;
 				if (name) this.user.fullName = name;
 				if (isCheckoutSessionId(checkout_session)) {
 					this.user.stripeCheckoutSessionId = checkout_session;
 					rememberCheckoutSession(checkout_session);
+				}
+				if (ever_id === '1' && typeof handoff === 'string' && handoff) {
+					this.prefillFromEverId(handoff);
 				}
 			}),
 
@@ -150,5 +157,35 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 				}
 				this.cdr.detectChanges();
 			});
+	}
+
+	/**
+	 * Prefills the form after an Ever ID sign-in found no Gauzy account. The verified name and e-mail
+	 * are fetched with the one-time key from the URL (the URL itself carries nothing personal). When the
+	 * Ever ID sign-in plugin is not enabled the request simply fails and the form stays empty.
+	 *
+	 * @param handoff - The one-time key.
+	 */
+	private prefillFromEverId(handoff: string): void {
+		this.http
+			.post<{ kind?: string; prefill?: { email?: string; firstName?: string; lastName?: string } }>(
+				`${API_PREFIX}/auth/zitadel/handoff`,
+				{ handoff }
+			)
+			.pipe(
+				tap((record) => {
+					if (record?.kind !== 'register' || !record.prefill) {
+						return;
+					}
+					const { email, firstName, lastName } = record.prefill;
+					if (email && !this.user.email) this.user.email = email;
+					const fullName = [firstName, lastName].filter(Boolean).join(' ');
+					if (fullName && !this.user.fullName) this.user.fullName = fullName;
+					this.cdr.detectChanges();
+				}),
+				catchError(() => of(null)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

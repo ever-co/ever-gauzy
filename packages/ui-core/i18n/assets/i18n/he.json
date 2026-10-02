@@ -5351,6 +5351,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
+		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",
