@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { AiChatWindowComponent } from './ai-chat-window.component';
 
 /**
@@ -17,11 +19,22 @@ export const AI_CHAT_WINDOW_PATH = 'window';
  * registry location is a child of `/pages`, which renders the `PagesComponent`
  * shell (nav menu sidebar + header + footer), and the detached window has to
  * show the chat and nothing else.
+ *
+ * The root route only carries `AuthGuard`, so the window itself checks
+ * `AI_CHAT_ACCESS` — the same permission the playground and every chat endpoint
+ * require — instead of rendering a chat whose every request 403s.
  */
 export const AI_CHAT_WINDOW_ROUTES: Routes = [
 	{
 		path: AI_CHAT_WINDOW_PATH,
-		component: AiChatWindowComponent
+		component: AiChatWindowComponent,
+		canActivate: [PermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.AI_CHAT_ACCESS],
+				redirectTo: '/pages/dashboard'
+			}
+		}
 	},
 	{
 		path: '',
