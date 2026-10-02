@@ -1,3 +1,5 @@
+import { PrimaryKey } from '@mikro-orm/core';
+import { PrimaryColumn } from 'typeorm';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/core';
 
 /**
@@ -11,7 +13,9 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
 @ColumnIndex('IDX_ever_stats_report_created_at', ['createdAt'])
 @MultiORMEntity('ever_stats_report')
 export class EverStatsReport {
-	@MultiORMColumn({ primary: true, type: 'varchar', length: 36 })
+	// Both ORMs get the primary key whichever one is active (Gauzy initializes both).
+	@PrimaryKey({ type: 'varchar', length: 36 })
+	@PrimaryColumn({ type: 'varchar', length: 36 })
 	id: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 7 })

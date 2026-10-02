@@ -1,3 +1,5 @@
+import { PrimaryKey } from '@mikro-orm/core';
+import { PrimaryColumn } from 'typeorm';
 import { MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/core';
 
 /**
@@ -19,7 +21,10 @@ import { MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/core';
 @SkipExport()
 @MultiORMEntity('ever_instance')
 export class EverInstance {
-	@MultiORMColumn({ primary: true, type: 'varchar', length: 16 })
+	// Both ORMs get the primary key whichever one is active, as Gauzy's base entity does: Gauzy
+	// initializes both and each one refuses an entity without a primary key.
+	@PrimaryKey({ type: 'varchar', length: 16 })
+	@PrimaryColumn({ type: 'varchar', length: 16 })
 	id: string;
 
 	@MultiORMColumn({ type: 'varchar', length: 36 })
