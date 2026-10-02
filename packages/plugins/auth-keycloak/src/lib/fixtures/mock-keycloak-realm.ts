@@ -69,9 +69,10 @@ export class MockKeycloakRealm {
 			const prefix = `/realms/${this.realm}`;
 			this.requests.push(url.pathname);
 			const route = url.pathname.startsWith(prefix) ? this.routes[url.pathname.slice(prefix.length)] : undefined;
-			Promise.resolve(route ? route(url, request, response) : send(response, 404, { error: 'not_found' })).catch(() =>
-				send(response, 500)
-			);
+			// Run inside the chain, so a route that throws synchronously (a malformed redirect_uri) answers 500.
+			Promise.resolve()
+				.then(() => (route ? route(url, request, response) : send(response, 404, { error: 'not_found' })))
+				.catch(() => send(response, 500));
 		});
 		await new Promise<void>((resolve) => this.server.listen(0, '127.0.0.1', resolve));
 		this.issuer = `http://127.0.0.1:${(this.server.address() as AddressInfo).port}/realms/${this.realm}`;
@@ -115,7 +116,9 @@ export class MockKeycloakRealm {
 	}
 
 	private async exchange(request: IncomingMessage, response: ServerResponse): Promise<void> {
-		const credential = Buffer.from(`${encodeURIComponent(this.clientId)}:${encodeURIComponent(this.clientSecret)}`);
+		// `client_secret_basic` form-encodes id and secret before joining them (RFC 6749, section 2.3.1).
+		const formEncode = (value: string) => new URLSearchParams({ v: value }).toString().slice(2);
+		const credential = Buffer.from(`${formEncode(this.clientId)}:${formEncode(this.clientSecret)}`);
 		if (request.headers.authorization !== `Basic ${credential.toString('base64')}`) {
 			return send(response, 401, { error: 'unauthorized_client' });
 		}

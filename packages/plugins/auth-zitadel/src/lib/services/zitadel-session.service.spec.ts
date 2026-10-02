@@ -216,6 +216,29 @@ describe('ZitadelSessionService', () => {
 		}
 	});
 
+	it('schedules no retry once the plugin stopped, also for a binding that fails afterwards', async () => {
+		jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] });
+		try {
+			await service.record('sid-1', [{ id: 'user-1' }]);
+			const token = issueRefreshToken('user-1');
+			let failUpdate: (error: Error) => void = () => undefined;
+			jest.spyOn(sessions, 'update').mockImplementationOnce(
+				() => new Promise((_resolve, reject) => (failUpdate = reject))
+			);
+			const binding = service.bindRefreshToken({ ...token });
+			await new Promise((resolve) => setImmediate(resolve));
+			// The plugin stops while the binding still waits for the database, which then fails.
+			service.onModuleDestroy();
+			failUpdate(new Error('database unavailable'));
+			await binding;
+			expect(jest.getTimerCount()).toBe(0);
+			await jest.advanceTimersByTimeAsync(10_000);
+			expect(sessions.rows[0]['refreshTokenId']).toBeNull();
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
 	it('receives fresh refresh tokens through the entity subscriber once the plugin started', async () => {
 		const subscriber = new ZitadelTokenSubscriber();
 		const bind = jest.spyOn(service, 'bindRefreshToken').mockResolvedValue(undefined);

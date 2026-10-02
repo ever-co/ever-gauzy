@@ -148,6 +148,30 @@ describe.each(targets)('AuthZitadel migration on $name', ({ name: dialect, url }
 		expect(populated).toEqual(empty);
 	});
 
+	it('accepts a logout token id once, also when two copies arrive at the same moment', async () => {
+		// Back-channel logout reserves the token id by inserting it; the unique index decides a race.
+		const q = (name: string) => quote(dialect, name);
+		const insert = (runner: QueryRunner, id: string) =>
+			runner.query(
+				`INSERT INTO ${q('zitadel_logout_jti')} (${q('id')}, ${q('jti')}, ${q('expiresAt')}) VALUES ('${id}', 'jti-race', '2026-01-01 00:10:00')`
+			);
+		const first = dataSource.createQueryRunner();
+		const second = dataSource.createQueryRunner();
+		try {
+			const results = await Promise.allSettled([
+				insert(first, '00000000-0000-4000-9000-0000000000c1'),
+				insert(second, '00000000-0000-4000-9000-0000000000c2')
+			]);
+			expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected']);
+			const rows = await first.query(`SELECT ${q('jti')} AS ${q('jti')} FROM ${q('zitadel_logout_jti')}`);
+			expect(rows).toEqual([{ jti: 'jti-race' }]);
+		} finally {
+			await first.query(`DELETE FROM ${q('zitadel_logout_jti')}`);
+			await first.release();
+			await second.release();
+		}
+	});
+
 	it("removes a person's links and sessions when the Gauzy user is deleted", async () => {
 		const q = (name: string) => quote(dialect, name);
 		const userId = '00000000-0000-4000-9000-000000000001';

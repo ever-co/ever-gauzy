@@ -148,7 +148,9 @@ export class MockOidcIssuer {
 
 	private async token(req: IncomingMessage, res: ServerResponse): Promise<void> {
 		const body = new URLSearchParams(await this.readBody(req));
-		const expected = `Basic ${Buffer.from(`${encodeURIComponent(this.clientId)}:${encodeURIComponent(this.clientSecret)}`).toString('base64')}`;
+		// `client_secret_basic` form-encodes id and secret before joining them (RFC 6749, section 2.3.1).
+		const formEncode = (value: string) => new URLSearchParams({ v: value }).toString().slice(2);
+		const expected = `Basic ${Buffer.from(`${formEncode(this.clientId)}:${formEncode(this.clientSecret)}`).toString('base64')}`;
 		if (req.headers['authorization'] !== expected) {
 			return this.json(res, 401, { error: 'invalid_client' });
 		}

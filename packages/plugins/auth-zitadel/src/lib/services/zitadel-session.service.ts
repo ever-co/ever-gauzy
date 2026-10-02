@@ -65,6 +65,8 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 	private readonly logger = new Logger(ZitadelSessionService.name);
 	/** Every pending timer (pruning, binding retries, revocation follow-ups), cleared on shutdown. */
 	private readonly timers = new Set<NodeJS.Timeout>();
+	/** Set when the plugin stops: no timer is started, and none that is due runs, after that. */
+	private stopped = false;
 
 	constructor(
 		@InjectRepository(ZitadelSession) private readonly sessions: Repository<ZitadelSession>,
@@ -83,6 +85,8 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 	}
 
 	onModuleDestroy(): void {
+		// First, so a binding or revocation still awaiting the database cannot schedule a retry afterwards.
+		this.stopped = true;
 		ZitadelTokenBinding.register(null);
 		for (const timer of this.timers) {
 			clearTimeout(timer);
@@ -277,9 +281,14 @@ export class ZitadelSessionService implements OnModuleInit, OnModuleDestroy, Zit
 
 	/** Runs `task` once after `delay`, unless the plugin stops first. */
 	private later(task: () => unknown, delay: number): void {
+		if (this.stopped) {
+			return;
+		}
 		const timer = setTimeout(() => {
 			this.timers.delete(timer);
-			void task();
+			if (!this.stopped) {
+				void task();
+			}
 		}, delay);
 		timer.unref();
 		this.timers.add(timer);

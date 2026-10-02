@@ -24,8 +24,8 @@ The plugin is loaded only when all of these are set on the API:
 
 - `KEYCLOAK_ENABLED`: `true` loads the plugin. Anything else (or unset)
   leaves it out entirely.
-- `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`: the confidential client of
-  your realm.
+- `KEYCLOAK_CLIENT_ID`: the confidential client of your realm.
+- `KEYCLOAK_CLIENT_SECRET`: its secret.
 - `KEYCLOAK_AUTH_SERVER_URL`: the Keycloak base URL (for example
   `https://id.example.com` or `.../auth`).
 - `KEYCLOAK_REALM`: the realm. The issuer is
