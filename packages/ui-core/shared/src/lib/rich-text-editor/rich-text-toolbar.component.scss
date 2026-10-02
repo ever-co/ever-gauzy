@@ -1,5 +1,17 @@
+// Toolbar chrome: one quiet row on the editor's own surface. 28px icon buttons
+// that only tint on hover, an accent tint for the active marks, short dividers,
+// and borderless dropdowns. The fallbacks keep it working in the Electron apps,
+// which do not load the Gauzy custom properties.
+
 :host {
   display: block;
+
+  --rte-button-size: 1.75rem;
+  --rte-icon-size: 1rem;
+  --rte-hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+  --rte-hover: var(--gauzy-hover-tint, var(--background-basic-color-3));
+  --rte-active: color-mix(in srgb, var(--color-primary-default) 16%, transparent);
+  --rte-radius: 0.375rem;
 }
 
 .rich-text-toolbar {
@@ -7,14 +19,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem 0.125rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--background-basic-color-2);
-  border-bottom: 1px solid var(--border-basic-color-3);
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
-
-  &--table-ops {
-    border-radius: 0;
-  }
+  padding: 0.375rem 0.5rem;
+  background: transparent;
+  border-bottom: 1px solid var(--rte-hairline);
 }
 
 .rich-text-toolbar__group {
@@ -28,77 +35,114 @@
 
   &--select {
     flex: 0 0 auto;
-    nb-select {
-      width: 6rem;
-    }
   }
 
-  > button[nbButton].size-small.appearance-ghost {
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-    i.fas {
-      font-size: 0.8125rem;
-      line-height: 1;
-      width: 0.875rem;
-      text-align: center;
-    }
+  // `!important` on the state colours: Nebular's ghost button paints its hover,
+  // focus and disabled backgrounds from theme selectors that outrank this sheet
+  > button[nbButton] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--rte-button-size);
+    min-width: var(--rte-button-size);
+    height: var(--rte-button-size);
+    padding: 0 !important;
+    color: var(--text-hint-color) !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: var(--rte-radius);
+    box-shadow: none !important;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease;
 
     nb-icon {
-      width: 0.875rem;
-      height: 0.875rem;
-      font-size: 0.8125rem;
+      width: var(--rte-icon-size);
+      height: var(--rte-icon-size);
+      margin: 0 !important;
+      font-size: var(--rte-icon-size);
+      // Tabler outlines read heavy at 16px; a lighter stroke matches the app's icons
+      --ng-icon__stroke-width: 1.75;
+    }
+
+    &:hover:not([disabled]) {
+      color: var(--text-basic-color) !important;
+      background-color: var(--rte-hover) !important;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default);
+      outline-offset: 1px;
+    }
+
+    &[disabled] {
+      opacity: 0.35;
+    }
+
+    &.status-danger:hover:not([disabled]) {
+      color: var(--color-danger-default) !important;
     }
   }
 }
 
-.rich-text-toolbar__button--active {
-  background-color: var(--color-primary-transparent-200) !important;
-  color: var(--color-primary-default);
+.rich-text-toolbar__group > button[nbButton].rich-text-toolbar__button--active {
+  color: var(--color-primary-default) !important;
+  background-color: var(--rte-active) !important;
 }
 
 .rich-text-toolbar__divider {
-  width: 1px;
   flex: 0 0 auto;
-  align-self: stretch;
-  margin: 0.25rem 0.125rem;
-  background: var(--border-basic-color-3);
+  width: 1px;
+  height: 1rem;
+  margin: 0 0.25rem;
+  background: var(--rte-hairline);
 }
 
 .rich-text-toolbar__popover {
   position: absolute;
-  top: calc(100% + 0.25rem);
+  top: calc(100% + 0.375rem);
   left: 0;
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
   padding: 0.5rem;
   background: var(--background-basic-color-1);
-  border: 1px solid var(--border-basic-color-3);
+  border: 1px solid var(--rte-hairline);
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 
   input[nbInput] {
     min-width: 14rem;
   }
 
+  [nbButton] {
+    text-transform: none;
+  }
+
   &--swatches {
     display: grid;
-    grid-template-columns: repeat(6, 1.5rem);
-    gap: 0.25rem;
+    grid-template-columns: repeat(6, 1.25rem);
+    gap: 0.375rem;
   }
 }
 
 .rich-text-toolbar__swatch {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
   padding: 0;
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: 0.25rem;
+  border: 1px solid var(--rte-hairline);
+  border-radius: 50%;
   cursor: pointer;
+  transition: transform 0.12s ease;
 
   &:hover {
+    transform: scale(1.15);
+  }
+
+  &:focus-visible {
     outline: 2px solid var(--color-primary-default);
+    outline-offset: 2px;
   }
 
   &--reset {
@@ -109,38 +153,56 @@
     color: var(--text-hint-color);
 
     nb-icon {
-      font-size: 0.875rem;
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
     }
   }
 }
 
-.rich-text-toolbar__icon--rotated {
-  transform: rotate(90deg);
+// Block format and font: borderless text dropdowns, like the buttons around them
+:host .rich-text-toolbar__group--select nb-select {
+  width: auto;
+  max-width: none;
 }
 
 :host .rich-text-toolbar__group--select nb-select ::ng-deep .select-button {
-  min-width: 0;
+  min-width: 6.5rem;
   min-height: 0 !important;
-  height: 1.875rem;
+  height: var(--rte-button-size);
   padding-block: 0;
   padding-inline-start: 0.5rem;
   padding-inline-end: 1.5rem;
   font-size: 0.75rem;
+  font-weight: 500;
   line-height: 1;
-  background-color: var(--background-basic-color-1) !important;
+  color: var(--text-basic-color);
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: var(--rte-radius);
+  box-shadow: none !important;
+
+  &:hover {
+    background-color: var(--rte-hover) !important;
+  }
+
   &.placeholder {
     font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-hint-color);
   }
 
   nb-icon {
-    font-size: 0.875rem;
+    right: 0.375rem;
     width: 0.875rem;
     height: 0.875rem;
+    font-size: 0.875rem;
+    color: var(--text-hint-color);
   }
 }
 
 :host .rich-text-toolbar__popover input[nbInput] {
   min-height: 0 !important;
-  height: 1.875rem;
+  height: var(--rte-button-size);
   font-size: 0.75rem;
 }

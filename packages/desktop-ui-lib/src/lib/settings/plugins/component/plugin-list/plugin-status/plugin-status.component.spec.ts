@@ -9,6 +9,8 @@ describe('PluginStatusComponent', () => {
 		}).compileComponents();
 		fixture = TestBed.createComponent(PluginStatusComponent);
 		component = fixture.componentInstance;
+		// A smart-table cell renderer: the table sets `rowData` before the first render.
+		component.rowData = { isActivate: true };
 		fixture.detectChanges();
 	});
 	it('should create', () => {

@@ -940,8 +940,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				});
 			}
 
-			// Apply filters for isDraft, setting null if not a boolean
-			if (where.isDraft !== undefined && !isBoolean(where.isDraft)) {
+			// Apply filters for isDraft, setting null if not a boolean. The query DTO only converts "true" /
+			// "false", so keep accepting the "1" / "0" encodings API clients may send.
+			const isDraft: unknown = where.isDraft; // typed as boolean, but the wire value may be '1' / '0'
+			if (isDraft === '1' || isDraft === '0') {
+				options.where.isDraft = isDraft === '1';
+			} else if (isDraft !== undefined && !isBoolean(isDraft)) {
 				options.where.isDraft = IsNull();
 			}
 

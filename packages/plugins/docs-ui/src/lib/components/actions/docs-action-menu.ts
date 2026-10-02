@@ -1,4 +1,4 @@
-import { NbMenuItem } from '@nebular/theme';
+import { NbIconConfig, NbMenuItem } from '@nebular/theme';
 import { DocumentKindEnum, DocumentKnowledgeStatusEnum, ID, IDocument } from '@gauzy/contracts';
 
 /**
@@ -92,16 +92,45 @@ function isContainer(kind: DocumentKindEnum): boolean {
 }
 
 /**
+ * `nbContextMenuClass` for every surface that renders this menu — the styles live
+ * globally in `docs-shell.component.scss`, because the menu renders in the CDK
+ * overlay, outside every docs component.
+ */
+export const DOCS_ACTION_MENU_CLASS = 'gz-docs-action-menu';
+
+/**
+ * A divider between two sections. Nebular renders a `group` item as an inert
+ * `li.menu-group` with no click handler, so it never reaches `onItemClick`; it
+ * carries no `data.action`, which {@link docsActionOf} reads as "not an action".
+ */
+function divider(): NbMenuItem {
+	return { title: '', group: true };
+}
+
+/**
  * Builds the permission-filtered action menu for one document.
  *
- * Order follows the spec table top-to-bottom, with the destructive items last.
+ * Order follows the spec table top-to-bottom, in sections (open · create ·
+ * organize · share · AI · destructive) separated by dividers, with the
+ * destructive items last. Every item carries an icon; Delete is `danger`.
  * The action id travels on `data.action`; read it back with {@link docsActionOf}
  * rather than matching on the (translated) title.
  */
 export function buildDocsActionMenu(target: IDocsActionTarget, context: IDocsActionMenuContext): NbMenuItem[] {
 	const { permissions, translate, surface } = context;
-	const items: NbMenuItem[] = [];
-	const push = (action: DocsActionId, key: string) => items.push({ title: translate(key), data: { action } });
+	const sections: NbMenuItem[][] = [];
+	const section = (): NbMenuItem[] => {
+		const items: NbMenuItem[] = [];
+		sections.push(items);
+		return items;
+	};
+	const item = (action: DocsActionId, key: string, icon: string | NbIconConfig, shortcut?: string): NbMenuItem => ({
+		title: translate(key),
+		icon,
+		data: { action },
+		// Tree-only: these keys are bound on the focused tree node, nowhere else.
+		...(shortcut && surface === 'tree' ? { badge: { text: shortcut, status: 'basic' } } : {})
+	});
 
 	const container = isContainer(target.kind);
 	const archived = !!target.isArchived;
@@ -109,72 +138,103 @@ export function buildDocsActionMenu(target: IDocsActionTarget, context: IDocsAct
 	// resolved it keeps the previous item set.
 	const mutable = context.canMutate !== false;
 
-	// ─── Open ────────────────────────────────────────────────────
-	push('open', 'DOCS.TREE.OPEN');
+	// ─── Open ───────────────────────────────────────────────────────
+	const open = section();
 	if (surface === 'row') {
-		push('details', 'DOCS.PREVIEW.OPEN_DETAILS');
-		if (target.kind === DocumentKindEnum.FILE) push('preview', 'DOCS.PREVIEW.TITLE');
+		// A content view opens a FILE in the preview modal, so "Open" and "Preview" were the
+		// same item twice. Folders and pages get a label that says where they go.
+		if (target.kind === DocumentKindEnum.FILE) {
+			open.push(item('preview', 'DOCS.PREVIEW.TITLE', 'eye-outline'));
+		} else if (target.kind === DocumentKindEnum.FOLDER) {
+			open.push(item('open', 'DOCS.ACTION_MENU.OPEN_FOLDER', 'folder-outline'));
+		} else {
+			open.push(item('open', 'DOCS.ACTION_MENU.OPEN_EDITOR', 'external-link-outline'));
+		}
+		open.push(item('details', 'DOCS.PREVIEW.OPEN_DETAILS', 'info-outline'));
+	} else {
+		open.push(item('open', 'DOCS.TREE.OPEN', 'external-link-outline'));
 	}
 
-	// ─── Create inside ───────────────────────────────────────────
+	// ─── Create inside ──────────────────────────────────────────────
 	// Only containers can take children, and an archived node is out of the
 	// working set — creating into it would produce an invisible document.
+	const create = section();
 	if (permissions.create && container && !archived) {
-		push('new-page', 'DOCS.TREE.NEW_PAGE');
-		push('new-folder', 'DOCS.TREE.NEW_FOLDER');
-		push('upload-here', 'DOCS.TREE.UPLOAD_HERE');
+		create.push(item('new-page', 'DOCS.TREE.NEW_PAGE', 'file-add-outline'));
+		create.push(item('new-folder', 'DOCS.TREE.NEW_FOLDER', 'folder-add-outline'));
+		create.push(item('upload-here', 'DOCS.TREE.UPLOAD_HERE', 'cloud-upload-outline'));
 	}
 
-	// ─── Edit / relocate ─────────────────────────────────────────
+	// ─── Organize ───────────────────────────────────────────────────
 	// `mutable` is the ownership half: `01-ux-spec.md` §3.5 offers these to a DOCS_UPDATE
 	// holder, but §1.8 scopes edit and tree ops to **own** documents for everyone below ADMIN.
+	const organize = section();
 	if (permissions.update && mutable && !archived) {
-		push('rename', 'DOCS.TREE.RENAME');
-		push('move', 'DOCS.TREE.MOVE');
+		organize.push(item('rename', 'DOCS.TREE.RENAME', 'edit-2-outline', 'F2'));
+		organize.push(item('move', 'DOCS.TREE.MOVE', 'move-outline'));
 	}
 
 	// Duplicating WRITES a new node: `POST /documents/:id/duplicate` is
 	// `@Permissions(DOCS_CREATE)` (document-tree.controller.ts), so gating it on
 	// DOCS_UPDATE offers the action to users the backend answers with a 403.
 	if (permissions.create && !archived) {
-		push('duplicate', 'DOCS.TREE.DUPLICATE');
-		// The deep copy is the `{ deep: true }` body the endpoint has always
-		// accepted and no UI ever sent (`01-ux-spec.md` §3.5, "with children option").
-		if (container) push('duplicate-deep', 'DOCS.TREE.DUPLICATE_WITH_CHILDREN');
-	}
-
-	// ─── Read-only affordances (DOCS_READ, which every viewer holds) ──
-	items.push({
-		title: translate(context.isFavorite ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'BUTTONS.ADD_TO_FAVORITES'),
-		data: { action: 'favorite' as DocsActionId }
-	});
-	push('copy-link', 'DOCS.TREE.COPY_LINK');
-	if (target.kind === DocumentKindEnum.FILE) push('download', 'DOCS.PREVIEW.DOWNLOAD');
-	if (target.kind === DocumentKindEnum.PAGE) push('export-markdown', 'DOCS.EXPORT.MARKDOWN');
-
-	// ─── AI knowledge (FOLDER has no body to index) ──────────────
-	if (permissions.aiImport && target.kind !== DocumentKindEnum.FOLDER) {
-		if (KNOWLEDGE_INCLUDED_STATUSES.has(target.knowledgeStatus as DocumentKnowledgeStatusEnum)) {
-			push('knowledge-exclude', 'DOCS.BULK.KNOWLEDGE_EXCLUDE');
-		} else {
-			push('knowledge-import', 'DOCS.BULK.KNOWLEDGE_IMPORT');
+		organize.push(item('duplicate', 'DOCS.TREE.DUPLICATE', 'copy-outline'));
+		// The deep copy is the `{ deep: true }` body the endpoint has always accepted
+		// (`01-ux-spec.md` §3.5, "with children option"). A container the list projection
+		// reports as EMPTY has no subtree, so it would be the same copy under a longer name;
+		// `undefined` (the tree carries no count) keeps the item.
+		if (container && target.childrenCount !== 0) {
+			organize.push(item('duplicate-deep', 'DOCS.TREE.DUPLICATE_WITH_CHILDREN', 'layers-outline'));
 		}
 	}
 
-	// ─── Destructive, last ───────────────────────────────────────
+	// ─── Share / export (DOCS_READ, which every viewer holds) ───────
+	const share = section();
+	share.push(
+		item(
+			'favorite',
+			context.isFavorite ? 'BUTTONS.REMOVE_FROM_FAVORITES' : 'BUTTONS.ADD_TO_FAVORITES',
+			context.isFavorite ? { icon: 'star', status: 'warning' } : 'star-outline'
+		)
+	);
+	share.push(item('copy-link', 'DOCS.TREE.COPY_LINK', 'link-2-outline'));
+	if (target.kind === DocumentKindEnum.FILE) share.push(item('download', 'DOCS.PREVIEW.DOWNLOAD', 'download-outline'));
+	if (target.kind === DocumentKindEnum.PAGE) {
+		share.push(item('export-markdown', 'DOCS.EXPORT.MARKDOWN', 'file-text-outline'));
+	}
+
+	// ─── AI knowledge (FOLDER has no body to index) ─────────────────
+	const knowledge = section();
+	if (permissions.aiImport && target.kind !== DocumentKindEnum.FOLDER) {
+		if (KNOWLEDGE_INCLUDED_STATUSES.has(target.knowledgeStatus as DocumentKnowledgeStatusEnum)) {
+			knowledge.push(item('knowledge-exclude', 'DOCS.BULK.KNOWLEDGE_EXCLUDE', 'slash-outline'));
+		} else {
+			knowledge.push(item('knowledge-import', 'DOCS.BULK.KNOWLEDGE_IMPORT', 'bulb-outline'));
+		}
+	}
+
+	// ─── Destructive, last ──────────────────────────────────────────
 	// Archive/unarchive and delete are both **own**-scoped below ADMIN (§1.8), so they carry
 	// the ownership half too.
+	const destructive = section();
 	if (permissions.update && mutable) {
-		push(archived ? 'restore' : 'archive', archived ? 'DOCS.TREE.RESTORE' : 'DOCS.TREE.ARCHIVE');
+		destructive.push(
+			archived
+				? item('restore', 'DOCS.TREE.RESTORE', 'undo-outline')
+				: item('archive', 'DOCS.TREE.ARCHIVE', 'archive-outline', 'Del')
+		);
 	}
 	// Archive-first rule: `DELETE /documents/:id` answers 409
 	// `DOCS_DELETE_REQUIRES_ARCHIVE` for anything still live, so the item is
 	// offered only where it can succeed.
 	if (permissions.delete && mutable && archived) {
-		push('delete', 'DOCS.TREE.DELETE');
+		destructive.push(item('delete', 'DOCS.TREE.DELETE', { icon: 'trash-2-outline', status: 'danger' }));
 	}
 
-	return items;
+	// Dividers only BETWEEN non-empty sections — never leading, trailing or doubled.
+	return sections
+		.filter((items) => items.length > 0)
+		.flatMap((items, index) => (index === 0 ? items : [divider(), ...items]));
 }
 
 /**
@@ -216,6 +276,8 @@ export function docsActionMenuSignature(target: IDocsActionTarget, context: IDoc
 		String(target.id),
 		target.kind,
 		target.isArchived ? '1' : '0',
+		// An empty container drops "Duplicate with children".
+		target.childrenCount === 0 ? '1' : '0',
 		target.knowledgeStatus ?? '',
 		context.isFavorite ? '1' : '0',
 		context.canMutate === false ? '0' : '1',

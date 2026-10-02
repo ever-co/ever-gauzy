@@ -3,27 +3,6 @@
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-:host .card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  width: 100%;
-  border: none;
-  padding: 0;
-  overflow: unset;
-  background-color: var(--gauzy-card-2);
-
-  &-filter {
-    padding-bottom: 1.5rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-}
-
 .card-header {
   background: unset;
 }
@@ -31,6 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 1rem;
 
   .btn {
     display: flex;
@@ -41,7 +21,44 @@
 }
 
 .select {
-  width: 18rem;
+  width: 15rem;
+}
+
+// Compact filter row: 32px select, 12px labels, 16px checkboxes
+:host .card-header {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+
+  // The checkbox group is a `.btn` (a legacy class name), so Bootstrap gives it
+  // button padding and margin that made the row 46px tall around a 32px select
+  .header .btn {
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  ::ng-deep .header {
+    nb-select .select-button {
+      min-height: 2rem !important;
+      height: 2rem;
+      padding-top: 0;
+      padding-bottom: 0;
+      // `!important`: the empty state carries `.placeholder`, whose font rule is more specific
+      font-size: 0.75rem !important;
+    }
+
+    nb-checkbox {
+      .text {
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .custom-checkbox {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+  }
 }
 .btn {
   margin: 0.2rem;
@@ -86,6 +103,46 @@
 
 .no-data-found {
   height: 100%;
+}
+
+:host .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+  overflow: unset;
+  // The Interviews page card already paints --gauzy-card-2; a second layer here
+  // made this tab a different colour from the calendar tab
+  background-color: transparent;
+  // Same height as the Criterions tab (`.add-criterion` in interview-criterions):
+  // the table fills the space under the filters and scrolls inside it, instead of
+  // stopping at the default card body height with empty space below.
+  height: calc(100vh - 16.5rem);
+  min-height: 0;
+
+  &-filter {
+    padding-bottom: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .card-body.interview-panel {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .table-scroll-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
 }
 
 :host .interview-panel {

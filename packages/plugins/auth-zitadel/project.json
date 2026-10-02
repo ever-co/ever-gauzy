@@ -1,0 +1,44 @@
+{
+	"name": "plugin-auth-zitadel",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/auth-zitadel/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+		}
+	},
+	"tags": ["type:plugin"],
+	"implicitDependencies": ["auth", "common", "config", "contracts", "core", "plugin"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/auth-zitadel",
+				"tsConfig": "packages/plugins/auth-zitadel/tsconfig.lib.json",
+				"packageJson": "packages/plugins/auth-zitadel/package.json",
+				"main": "packages/plugins/auth-zitadel/src/index.ts",
+				"assets": ["packages/plugins/auth-zitadel/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/auth-zitadel/jest.config.ts"
+			}
+		}
+	}
+}

@@ -19,91 +19,85 @@
 	min-width: 0;
 }
 
-// The state box. A bare `<input type="checkbox">` is the one control on the row
-// the theme never reached — and worse, the app-wide `input` rule in
-// `text-inputs-overrides` treats it as a text field, so it was handed a text
-// field's `min-height`, radius, fill and inset ring: a tall soft-cornered box
-// next to a 1.25rem line of text. Strip the control chrome off it and let it be
-// a checkbox.
-//
-// `accent-color` is the single property that repaints a NATIVE checkbox, and it
-// resolves the same brand colour `nb-checkbox` is drawn in, so a checked tag row
-// matches a checked box anywhere else in the app.
-//
-// `pointer-events: none` because the row, not the box, is the click target:
-// ng-select selects on the row's own click, and the box is bound one-way
-// (`[ngModel]`), so a click that landed on it used to flip it and then have the
-// change detection flip it back.
-.tag-option-check {
+// The state box. Drawn rather than a native `<input type="checkbox">`: the
+// native box renders as a bright white square on the dark themes, and the
+// app-wide `input` rules kept treating it as a text field. The row, not the
+// box, is the click target (ng-select selects on the row's own click).
+.tag-check {
 	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	width: 0.875rem;
 	height: 0.875rem;
-	min-height: 0;
-	margin: 0;
-	padding: 0;
-	border-radius: unset;
-	box-shadow: none;
-	background-color: transparent;
-	accent-color: nb-theme(color-primary-default);
-	pointer-events: none;
+	border-radius: 0.25rem;
+	box-shadow: inset 0 0 0 1px nb-theme(border-basic-color-5);
+	transition:
+		background-color 0.12s ease-in-out,
+		box-shadow 0.12s ease-in-out;
+
+	nb-icon {
+		font-size: 0.75rem;
+		width: 0.75rem;
+		height: 0.75rem;
+		color: nb-theme(text-control-color);
+	}
+
+	&--on {
+		background-color: nb-theme(color-primary-default);
+		box-shadow: none;
+	}
 }
 
-// The tag's colour in a dropdown row.
-//
-// `:not(.tag-label)` because the selected CHIP in the trigger carries this class
-// too, and that one is a text pill, not a swatch — the two used to share a
-// `width: 1rem; height: 1rem` box that only the chip's `display: unset` (which
-// computes to `inline`, where width and height do not apply) kept from taking
-// effect. The split says which of the two each rule is for.
-//
-// A dot rather than the 16px square with 10px of margin on either side it was:
-// against the row's 1.25rem line box that square read as a second control, and
-// the margins pushed the tag name a third of the way across the row.
-.tag-color:not(.tag-label) {
-	position: unset;
+// The tag's colour: a dot with a soft halo in the same colour, so saturated
+// and pale tags (white "Verified", grey "Urgent") read with equal weight on
+// either theme. `--tag-color` is set per row from the tag's own colour.
+.tag-dot {
 	flex: none;
-	display: inline-block;
 	width: 0.5rem;
 	height: 0.5rem;
-	margin: 0;
-	padding: 0;
+	margin: 0 0.125rem;
 	border-radius: 50%;
-	// The colours these dots carry are user-chosen, so a pale tag has to stay
-	// visible on a pale panel. Same hairline the overlay surfaces are drawn with.
-	box-shadow: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+	background-color: var(--tag-color);
+	box-shadow:
+		0 0 0 3px color-mix(in srgb, var(--tag-color) 22%, transparent),
+		inset 0 0 0 1px rgba(126, 126, 143, 0.35);
 }
 
 // ── A selected tag, in the trigger ───────────────────────────────────────────
-// A filled pill in the tag's own colour, with the text colour computed against
-// it (`backgroundContrast` in the component) so a pale tag is readable.
-//
-// It relied on `display: unset` to escape the swatch box above; now that the
-// swatch is scoped away from it, it can declare its own box. `inline-block` and
-// not `inline-flex`: the text is a child text node of `nb-badge`, and
-// `text-overflow` only engages in a block container.
+// A tinted label rather than a solid fill. Tag colours are user-chosen and
+// fully saturated (pure red, yellow, black), so solid pills with white/black
+// text clashed with each other and with the dark surface. Every chip now has
+// the same weight: a light wash of the tag colour, a hairline ring in it, and
+// text mixed from the tag colour toward the theme's text colour — lighter on
+// dark themes, darker on light ones — so yellow and black stay readable on
+// either.
 .tag-label {
 	position: unset;
+	// `inline-block`, not flex: the name is a bare text node of `nb-badge`, and
+	// `text-overflow` only engages in a block container.
 	display: inline-block;
 	max-width: 100%;
 	margin: 0;
 	padding: 0.125rem 0.5rem;
-	// NO `border-radius` on purpose, where there used to be a `2rem` stadium. This
-	// is an `nb-badge`, and so is the tag chip a smart-table row renders
-	// (`notes-with-tags`, which overrides everything about the chip EXCEPT its
-	// corner). Leaving it alone is what makes a tag look the same in the field you
-	// pick it in as in the table it ends up in — both resolve `badge-border-radius`.
+	// Same `badge-border-radius` as the tag chips in smart-table rows.
 	font-size: nb-theme(text-caption-font-size);
-	font-weight: 600;
+	font-weight: 500;
 	line-height: 1rem;
 	letter-spacing: 0em;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	vertical-align: middle;
-	// The chip removes the tag on click (`(click)="clear(item)"`), which nothing
-	// on it said. It is the only affordance in the trigger that is not the
-	// trigger itself.
+	color: color-mix(in srgb, var(--tag-color) 55%, nb-theme(text-basic-color)) !important;
+	background-color: color-mix(in srgb, var(--tag-color) 14%, transparent) !important;
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tag-color) 40%, transparent);
+	// The chip removes the tag on click (`(click)="clear(item)"`).
 	cursor: pointer;
+
+	&:hover {
+		background-color: color-mix(in srgb, var(--tag-color) 24%, transparent) !important;
+	}
 }
 
 // The "+N" chip at the end of the row: the tags that did not fit. Neutral, so it

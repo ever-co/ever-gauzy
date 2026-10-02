@@ -182,8 +182,7 @@
 		"test": {
 			"executor": "@nx/jest:jest",
 			"options": {
-				"jestConfig": "apps/gauzy/jest.config.js",
-				"setupFile": "apps/gauzy/src/test-setup.ts",
+				"jestConfig": "apps/gauzy/jest.config.ts",
 				"tsConfig": "apps/gauzy/tsconfig.spec.json"
 			}
 		},

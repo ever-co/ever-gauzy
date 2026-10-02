@@ -118,6 +118,10 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
+
+	/** The tag type's name for the tags page's Type column (filled by TagService.findTags). */
+	@VirtualMultiOrmColumn()
+	tagTypeName?: string | null;
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

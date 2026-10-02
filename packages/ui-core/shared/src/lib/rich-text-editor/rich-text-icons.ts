@@ -1,0 +1,82 @@
+import {
+	tablerAlignCenter,
+	tablerAlignJustified,
+	tablerAlignLeft,
+	tablerAlignRight,
+	tablerArrowBackUp,
+	tablerArrowForwardUp,
+	tablerBlockquote,
+	tablerBold,
+	tablerClearFormatting,
+	tablerCode,
+	tablerColumnInsertLeft,
+	tablerColumnInsertRight,
+	tablerColumnRemove,
+	tablerHeading,
+	tablerHighlight,
+	tablerItalic,
+	tablerLink,
+	tablerList,
+	tablerListCheck,
+	tablerListNumbers,
+	tablerPhoto,
+	tablerRowInsertBottom,
+	tablerRowInsertTop,
+	tablerRowRemove,
+	tablerSeparatorHorizontal,
+	tablerSourceCode,
+	tablerStrikethrough,
+	tablerSubscript,
+	tablerSuperscript,
+	tablerTable,
+	tablerTextColor,
+	tablerTrash,
+	tablerUnderline,
+	tablerX
+} from '@ng-icons/tabler-icons';
+
+/** Name of the Nebular SVG pack the editor toolbar draws its icons from. */
+export const RICH_TEXT_ICON_PACK = 'rich-text';
+
+/**
+ * One outline icon family for the whole toolbar. The toolbar used to mix solid
+ * Font Awesome glyphs with outline Tabler ones, and two of its Eva names
+ * (`corner-up-left/right-outline`) have no entry in the app's Eva-to-Tabler map,
+ * so undo and redo rendered as empty buttons.
+ */
+export const RICH_TEXT_ICONS: Record<string, string> = {
+	undo: tablerArrowBackUp,
+	redo: tablerArrowForwardUp,
+	bold: tablerBold,
+	italic: tablerItalic,
+	underline: tablerUnderline,
+	strike: tablerStrikethrough,
+	code: tablerCode,
+	'code-block': tablerSourceCode,
+	subscript: tablerSubscript,
+	superscript: tablerSuperscript,
+	'text-color': tablerTextColor,
+	highlight: tablerHighlight,
+	'align-left': tablerAlignLeft,
+	'align-center': tablerAlignCenter,
+	'align-right': tablerAlignRight,
+	'align-justify': tablerAlignJustified,
+	'bullet-list': tablerList,
+	'ordered-list': tablerListNumbers,
+	'task-list': tablerListCheck,
+	blockquote: tablerBlockquote,
+	'horizontal-rule': tablerSeparatorHorizontal,
+	link: tablerLink,
+	image: tablerPhoto,
+	table: tablerTable,
+	'clear-format': tablerClearFormatting,
+	close: tablerX,
+	'row-add-above': tablerRowInsertTop,
+	'row-add-below': tablerRowInsertBottom,
+	'row-delete': tablerRowRemove,
+	'col-add-left': tablerColumnInsertLeft,
+	'col-add-right': tablerColumnInsertRight,
+	'col-delete': tablerColumnRemove,
+	'header-row': tablerHeading,
+	'table-delete': tablerTrash
+};

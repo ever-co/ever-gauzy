@@ -1,16 +1,22 @@
 @use 'themes' as *;
 
+// Technology stack and personal qualities side by side; stacked when narrow
 .add-criterion {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
   background-color: var(--gauzy-card-2);
   padding: 1rem;
   border-radius: nb-theme(border-radius);
   height: calc(100vh - 16.5rem);
   overflow-y: auto;
+
+  @media (max-width: 991.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   &-card {
-    width: 49.5%;
+    min-width: 0;
   }
 }
