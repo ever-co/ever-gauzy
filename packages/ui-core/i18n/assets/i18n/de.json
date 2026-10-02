@@ -2456,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Mitarbeiter dürfen die Agent-Anwendung beenden. Wenn deaktiviert, wird die Beenden-Option in der Agent-App blockiert.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Abmeldung von der Agent-App erlauben",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Mitarbeiter dürfen sich von der Agent-Anwendung abmelden. Wenn deaktiviert, wird die Abmelde-Option in der Agent-App blockiert.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Schutz für Beschäftigte im EWR / Vereinigten Königreich aktiv",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Für Organisationen und Beschäftigte im EWR oder im Vereinigten Königreich können Beschäftigte den Desktop-Agenten jederzeit beenden und sich abmelden. Eine Erfassung, die Beschäftigte nicht unterbrechen können, ist nach DSGVO und Art. 8 EMRK kaum zu rechtfertigen, daher sind diese Einschränkungen hier nicht verfügbar.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Einschränkung von Beenden oder Abmelden bestätigen",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Mit dieser Einschränkung kann die beschäftigte Person die Erfassung durch den Desktop-Agenten nicht stoppen. Bestätigen Sie, dass Sie dies für diese Belegschaft als rechtmäßig und verhältnismäßig bewertet haben und die Verantwortung dafür übernehmen. Ihre Bestätigung wird Ihrem Konto zugeordnet gespeichert.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tastatur- und Mausaktivität verfolgen",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Vollständige Verfolgung der Tastatur- und Mausaktivität aktivieren, einschließlich Tastenanschläge und exakte Mausbewegungen in allen Desktop-Apps und Agent.",
 				"TRACK_ALL_DISPLAYS": "Alle Bildschirme verfolgen",
@@ -4459,6 +4463,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Überwachung aktiv: Zeit und Aktivität werden erfasst",
+		"MONITORING_IDLE": "Agent inaktiv",
+		"MONITORING_TRAY_ACTIVE": "Überwachung aktiv, erfasst wird: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Überwachung pausiert: Es wird nichts erfasst",
+		"MONITORING_CAPTURE_TIME": "Zeit und aktive Anwendungen",
+		"MONITORING_CAPTURE_SCREENSHOTS": "Screenshots",
+		"MONITORING_CAPTURE_INPUT": "Tastatur- und Mausaktivität",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Kunde auswählen",
 			"SELECT_PROJECT": "Projekt auswählen",

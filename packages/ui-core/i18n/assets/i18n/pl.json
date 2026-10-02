@@ -2455,6 +2455,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Zezwól pracownikowi na wyjście z aplikacji agenta. Gdy wyłączone, opcja wyjścia zostanie zablokowana w aplikacji Agenta.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Zezwól na wylogowanie z aplikacji agenta",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Zezwól pracownikowi na wylogowanie z aplikacji agenta. Gdy wyłączone, opcja wylogowania zostanie zablokowana w aplikacji Agenta.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Ochrona pracowników z EOG / Wielkiej Brytanii aktywna",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "W organizacjach i dla pracowników z EOG lub Wielkiej Brytanii pracownicy zawsze mogą zamknąć agenta pulpitu i się z niego wylogować. Rejestrowania, którego pracownik nie może przerwać, trudno bronić na gruncie RODO i art. 8 EKPC, dlatego te ograniczenia nie są tu dostępne.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Potwierdź ograniczenie zamykania lub wylogowania z agenta",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Przy tym ograniczeniu pracownik nie może zatrzymać rejestrowania przez agenta pulpitu. Potwierdź, że oceniono to jako zgodne z prawem i proporcjonalne dla tych pracowników oraz że przyjmujesz za to odpowiedzialność. Twoje potwierdzenie zostanie zapisane na Twoim koncie.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Śledź aktywność klawiatury i myszy",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Włącz pełne śledzenie aktywności klawiatury i myszy, w tym naciśnięcia klawiszy i dokładne ruchy myszy we wszystkich aplikacjach desktopowych i agencie.",
 				"TRACK_ALL_DISPLAYS": "Śledź wszystkie ekrany",
@@ -4462,6 +4466,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitorowanie aktywne: rejestrowany jest czas i aktywność",
+		"MONITORING_IDLE": "Agent bezczynny",
+		"MONITORING_TRAY_ACTIVE": "Monitorowanie aktywne, rejestrowane: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitorowanie wstrzymane: nic nie jest rejestrowane",
+		"MONITORING_CAPTURE_TIME": "czas i aktywne aplikacje",
+		"MONITORING_CAPTURE_SCREENSHOTS": "zrzuty ekranu",
+		"MONITORING_CAPTURE_INPUT": "aktywność klawiatury i myszy",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Wybierz klienta",
 			"SELECT_PROJECT": "Wybierz projekt",

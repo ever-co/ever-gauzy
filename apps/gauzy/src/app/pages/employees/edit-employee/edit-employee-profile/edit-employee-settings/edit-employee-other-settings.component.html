@@ -210,6 +210,13 @@
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
 						<div class="settings__fields">
+							@if (isEEAOrUK) {
+								<div class="alert alert-info border border-info rounded p-3 mb-3">
+									<nb-icon icon="info-outline" status="info" class="mr-2"></nb-icon>
+									<strong>{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.EEA_UK_COMPLIANCE_NOTICE_TITLE' | translate }}</strong>
+									<span class="d-block text-muted small mt-1">{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.EEA_UK_COMPLIANCE_NOTICE_BODY' | translate }}</span>
+								</div>
+							}
 							<div class="settings__toggle">
 								<nb-toggle formControlName="allowAgentAppExit" status="primary" labelPosition="start">
 									{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT' | translate }}
