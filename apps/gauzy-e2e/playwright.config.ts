@@ -20,15 +20,19 @@ const baseURL = process.env.E2E_BASE_URL || 'http://localhost:4200';
 // such option, so `nx e2e gauzy-e2e` hit an empty :4200. Playwright's own `webServer` restores that,
 // and also starts the API the suite logs in against. Only when no E2E_BASE_URL is given: CI starts
 // both servers itself (API on :3001) and points the suite at them. `reuseExistingServer` keeps a dev's
-// already-running `yarn start` in use. The first API start migrates and seeds a fresh database, and
-// the Angular dev build is slow, hence the long timeouts.
+// already-running `yarn start` in use — note the suite then writes to THAT API's database (it creates
+// records and changes account-wide settings), so point it at a disposable one. The first API start
+// migrates and seeds a fresh database, and the Angular dev build is slow, hence the long timeouts.
 const repoRoot = '../..';
 const webServer = process.env.E2E_BASE_URL
 	? undefined
 	: [
 			{
 				command: 'yarn start:api',
-				url: `http://localhost:${process.env.API_PORT || 3000}/api/health/live`,
+				// Fixed at :3000, NOT `API_PORT`: the web dev server's proxy (apps/gauzy/proxy.conf.json)
+				// always targets :3000, so an API on another port would pass this check while every
+				// browser request missed it. A non-default API_PORT now fails here, at startup.
+				url: 'http://localhost:3000/api/health/live',
 				cwd: repoRoot,
 				reuseExistingServer: true,
 				timeout: 20 * 60_000
