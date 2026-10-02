@@ -372,10 +372,10 @@
                               nbButton
                               status="success"
                               size="small"
-                              [disabled]="loading || itemsTable.grid?.createFormShown"
+                              [disabled]="loading || !!itemsTable.grid?.createFormShown"
                               (click)="itemsTable.grid.showCreateForm()"
                             >
-                              <nb-icon icon="plus-outline"></nb-icon>
+                              <nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
                               {{ 'BUTTONS.ADD' | translate }}
                             </button>
                           </div>
