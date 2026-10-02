@@ -3764,7 +3764,15 @@
 		"ERROR_KEY_REJECTED": "The AI provider rejected its API key. Update it on the AI Providers settings page.",
 		"ERROR_KEY_REJECTED_ASK_ADMIN": "The AI provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
 		"ERROR_RATE_LIMITED": "The AI provider is rate limiting requests.",
-		"RECORDING": "Recording"
+		"RECORDING": "Recording",
+		"PREVIEW": "Preview",
+		"PREVIEW_PAGE": "Page",
+		"PREVIEW_NEW_TAB": "Open in a new tab",
+		"PREVIEW_CLOSE": "Close preview",
+		"PREVIEW_UNAVAILABLE": "No preview is available for this file.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Open in Documents",
+		"ATTACH_UPLOADING": "Uploading…",
+		"ATTACH_DOCUMENT": "Document"
 	},
 	"HEADER_TITLE": {
 		"FOR": "для",
