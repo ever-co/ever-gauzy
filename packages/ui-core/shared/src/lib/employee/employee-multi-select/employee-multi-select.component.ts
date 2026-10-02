@@ -50,6 +50,14 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	public set allEmployees(value: IEmployee[]) {
 		this._allEmployees = value;
 		this.employees = this._allEmployees;
+
+		// A consumer that supplies its own list needs no date range to fetch working
+		// employees, so show the select now instead of waiting for `selectedDateRange$`,
+		// which never emits on pages that turn the date selector off (Interviews).
+		if (value?.length && !this.loaded) {
+			this.select.setValue(this.preSelected);
+			this.loaded = true;
+		}
 	}
 
 	@Input()
