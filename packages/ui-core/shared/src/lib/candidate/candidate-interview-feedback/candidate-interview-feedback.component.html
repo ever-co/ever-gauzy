@@ -51,15 +51,11 @@
 								@if (interviewers?.length > 1) {
 									<span class="count">({{ statusHire }}/{{ interviewers?.length }})</span>
 								}
-								<nb-icon
-									icon="checkmark-circle-2-outline"
-									class="decision-icon hire"
-									[class.disabled]="isRejected"
-								></nb-icon>
+								<i class="fas fa-thumbs-up decision-icon hire" [class.disabled]="isRejected"></i>
 							</nb-radio>
 							<nb-radio [value]="'REJECTED'">
 								{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT' | translate }}
-								<nb-icon icon="close-circle-outline" class="decision-icon reject"></nb-icon>
+								<i class="fas fa-thumbs-down decision-icon reject"></i>
 							</nb-radio>
 						</nb-radio-group>
 					</div>
