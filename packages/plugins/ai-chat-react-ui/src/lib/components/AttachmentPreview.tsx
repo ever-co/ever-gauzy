@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { chatTheme } from '../chat-theme';
 import { MarkdownContent } from './MarkdownContent';
 import type { IStagedAttachment } from './attachment-preamble';
@@ -17,6 +17,12 @@ export interface AttachmentPreviewProps {
 	apiBaseUrl: string;
 	/** Auth + tenant headers (the panel builds these for every call). */
 	headers: () => Record<string, string>;
+	/**
+	 * The selected organization (and tenant), sent as query params on the document read. The
+	 * endpoint scopes by them; without them it falls back to the token's last organization, which
+	 * is missing or stale after the user switches organizations — and the document then 404s.
+	 */
+	scope?: () => { organizationId?: string; tenantId?: string };
 	/** Open the attachment in the Documents page — offered when it has a `documentId`. */
 	onOpenInDocuments?: (attachment: IPreviewableAttachment) => void;
 	onClose: () => void;
@@ -29,7 +35,8 @@ const MAX_TEXT_BYTES = 512 * 1024;
 
 type PreviewView =
 	| { type: 'loading' }
-	| { type: 'image' | 'pdf' | 'video' | 'audio'; url: string }
+	// `blob` is kept for "Open in a new tab", which needs a URL of its own (see that handler).
+	| { type: 'image' | 'pdf' | 'video' | 'audio'; url: string; blob: Blob }
 	| { type: 'text'; text: string }
 	| { type: 'markdown'; text: string }
 	| { type: 'info' };
@@ -106,6 +113,7 @@ export function AttachmentPreview({
 	attachment,
 	apiBaseUrl,
 	headers,
+	scope,
 	onOpenInDocuments,
 	onClose,
 	translate
@@ -114,9 +122,49 @@ export function AttachmentPreview({
 	const [view, setView] = useState<PreviewView>({ type: 'loading' });
 	const [meta, setMeta] = useState<{ mime: string; size?: number }>({ mime: attachment.file?.type ?? '' });
 	const closeRef = useRef<HTMLButtonElement>(null);
+	const dialogRef = useRef<HTMLDivElement>(null);
 
-	// Focus the close button, so Escape and Tab work from the moment the preview opens.
-	useEffect(() => closeRef.current?.focus(), []);
+	// Focus the close button, so Escape and Tab work from the moment the preview opens — and hand
+	// focus back to whatever opened it (the attachment card) when it closes.
+	useEffect(() => {
+		const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		closeRef.current?.focus();
+		return () => {
+			if (opener?.isConnected) opener.focus();
+		};
+	}, []);
+
+	/** The dialog's focusable controls, in tab order (hidden ones excluded). */
+	const focusableInDialog = (): HTMLElement[] => {
+		const dialog = dialogRef.current;
+		if (!dialog) return [];
+		return Array.from(
+			dialog.querySelectorAll<HTMLElement>(
+				'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, audio[controls], video[controls], [tabindex]:not([tabindex="-1"])'
+			)
+		).filter((element) => element.getClientRects().length > 0);
+	};
+
+	/** Keep Tab / Shift+Tab inside the dialog: it is modal, so focus must not reach the chat behind. */
+	const trapFocus = (event: KeyboardEvent<HTMLDivElement>) => {
+		const dialog = dialogRef.current;
+		if (!dialog) return;
+		const focusable = focusableInDialog();
+		if (!focusable.length) {
+			event.preventDefault();
+			return;
+		}
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+		const active = document.activeElement;
+		if (event.shiftKey && (active === first || !dialog.contains(active))) {
+			event.preventDefault();
+			last.focus();
+		} else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+			event.preventDefault();
+			first.focus();
+		}
+	};
 
 	useEffect(() => {
 		let objectUrl: string | null = null;
@@ -134,7 +182,7 @@ export function AttachmentPreview({
 				setMeta({ mime: file.type, size: file.size });
 				const viewer = viewerFor(file.type, file.name || name);
 				if (viewer === 'image' || viewer === 'pdf' || viewer === 'video' || viewer === 'audio') {
-					return { type: viewer, url: asObjectUrl(file) };
+					return { type: viewer, url: asObjectUrl(file), blob: file };
 				}
 				if (viewer === 'text' && file.size <= MAX_TEXT_BYTES) {
 					const text = await file.text();
@@ -147,7 +195,18 @@ export function AttachmentPreview({
 			if (!documentId) return { type: 'info' };
 
 			const base = `${apiBaseUrl}/api/plugins/docs/documents/${encodeURIComponent(documentId)}`;
-			const response = await fetch(base, { headers: headers(), signal: abort.signal });
+			// The selected organization rides on the read, as the Documents page sends it; only
+			// present values are sent, never the string "undefined". `/raw` and `/extracted-text`
+			// take no scope parameter on the server, so they are left as they are.
+			const query = new URLSearchParams();
+			const { organizationId, tenantId } = scope?.() ?? {};
+			if (organizationId) query.set('organizationId', organizationId);
+			if (tenantId) query.set('tenantId', tenantId);
+			const search = query.toString();
+			const response = await fetch(search ? `${base}?${search}` : base, {
+				headers: headers(),
+				signal: abort.signal
+			});
 			if (!response.ok) return { type: 'info' };
 			const document = (await response.json()) as IDocumentSlice;
 			setMeta({ mime: document.mimeType ?? file?.type ?? '', size: document.fileSize ?? file?.size });
@@ -161,7 +220,8 @@ export function AttachmentPreview({
 			if (viewer === 'image' || viewer === 'pdf' || viewer === 'video' || viewer === 'audio') {
 				const raw = await fetch(`${base}/raw`, { headers: headers(), signal: abort.signal });
 				if (!raw.ok) return { type: 'info' };
-				return { type: viewer, url: asObjectUrl(await raw.blob()) };
+				const blob = await raw.blob();
+				return { type: viewer, url: asObjectUrl(blob), blob };
 			}
 			if (viewer === 'text' || viewer === 'extracted') {
 				const extracted = await fetch(`${base}/extracted-text`, { headers: headers(), signal: abort.signal });
@@ -188,7 +248,7 @@ export function AttachmentPreview({
 			abort.abort();
 			if (objectUrl) URL.revokeObjectURL(objectUrl);
 		};
-	}, [attachment, apiBaseUrl, headers]);
+	}, [attachment, apiBaseUrl, headers, scope]);
 
 	const typeLabel = (meta.mime.split('/').pop() || extensionOf(attachment.name) || '').toUpperCase();
 	const details = [attachment.kind === 'PAGE' ? t('AI_ASSISTANT.PREVIEW_PAGE', 'Page') : typeLabel, formatBytes(meta.size)]
@@ -264,6 +324,9 @@ export function AttachmentPreview({
 		flexDirection: 'column'
 	};
 
+	/** Zero-size, out of the layout: a focus guard is only ever a stop on the way back around. */
+	const focusGuardStyle: CSSProperties = { position: 'absolute', width: 0, height: 0, overflow: 'hidden', outline: 'none' };
+
 	const centredStyle: CSSProperties = {
 		margin: 'auto',
 		textAlign: 'center',
@@ -272,7 +335,16 @@ export function AttachmentPreview({
 		lineHeight: 1.6
 	};
 
-	const mediaUrl = view.type === 'image' || view.type === 'pdf' || view.type === 'video' || view.type === 'audio' ? view.url : null;
+	/**
+	 * "Open in a new tab" gets an object URL of its OWN, from the same blob, and it is never revoked
+	 * here. The preview's URL is revoked when the preview closes, and a reload in the new tab would
+	 * then fail against it; a timed revoke only delays that failure. A blob URL lives as long as the
+	 * document that created it, so this one is released when the app itself unloads.
+	 */
+	const openPdfInNewTab = () => {
+		if (view.type !== 'pdf') return;
+		window.open(URL.createObjectURL(view.blob), '_blank', 'noopener');
+	};
 
 	return (
 		<div
@@ -286,10 +358,17 @@ export function AttachmentPreview({
 					event.preventDefault();
 					event.stopPropagation();
 					onClose();
+				} else if (event.key === 'Tab') {
+					trapFocus(event);
 				}
 			}}
 		>
+		{/* Focus guards. Key presses inside the embedded PDF never reach this document, so Tab
+		    out of the frame cannot be trapped by the key handler; landing on a guard sends focus
+		    back around the dialog instead of on to the chat behind it. */}
+		<span tabIndex={0} aria-hidden="true" style={focusGuardStyle} onFocus={() => focusableInDialog().pop()?.focus()} />
 		<div
+			ref={dialogRef}
 			style={dialogStyle}
 			role="dialog"
 			aria-modal="true"
@@ -321,14 +400,14 @@ export function AttachmentPreview({
 					)}
 				</span>
 
-				{view.type === 'pdf' && mediaUrl && (
+				{view.type === 'pdf' && (
 					<button
 						type="button"
 						className="gz-ai-chat-head-btn"
 						style={iconButtonStyle}
 						title={t('AI_ASSISTANT.PREVIEW_NEW_TAB', 'Open in a new tab')}
 						aria-label={t('AI_ASSISTANT.PREVIEW_NEW_TAB', 'Open in a new tab')}
-						onClick={() => window.open(mediaUrl, '_blank', 'noopener')}
+						onClick={openPdfInNewTab}
 					>
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
 							<path d="M15 3h6v6" />
@@ -457,6 +536,7 @@ export function AttachmentPreview({
 				)}
 			</div>
 		</div>
+		<span tabIndex={0} aria-hidden="true" style={focusGuardStyle} onFocus={() => focusableInDialog()[0]?.focus()} />
 		</div>
 	);
 }
