@@ -207,11 +207,9 @@
     .note-field {
       grid-column: 1 / -1;
     }
-  }
 
-  // One control size for every field of the step, whichever component draws it:
-  // 38px tall, 13px regular text and a 12px inset, so placeholders line up
-  ::ng-deep {
+    // One control size for every field of the step, whichever component draws it:
+    // 38px tall, 13px regular text and a 12px inset, so placeholders line up
     > .form-group > .label,
     .form-group > .label,
     ga-employee-multi-select > .label {
@@ -322,6 +320,17 @@
         font-weight: 400;
         line-height: 1rem;
       }
+    }
+  }
+
+  // The candidate fieldset without the browser's border and inset
+  .candidate-field {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+
+    > legend.label {
+      padding: 0;
     }
   }
 

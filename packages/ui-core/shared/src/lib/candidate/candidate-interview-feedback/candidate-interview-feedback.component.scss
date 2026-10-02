@@ -175,14 +175,17 @@
     border-top: 1px solid var(--gauzy-border-default-color);
   }
 
+  // Long names wrap beside the stars instead of being cut off
   .criterion-name {
     min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
     font-size: 0.75rem;
     font-weight: 500;
     color: nb-theme(text-basic-color);
+  }
+
+  ga-star-rating-input {
+    flex-shrink: 0;
   }
 }
 

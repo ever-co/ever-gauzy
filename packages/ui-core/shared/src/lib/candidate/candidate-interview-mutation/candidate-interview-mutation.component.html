@@ -59,14 +59,14 @@
 			<nb-step>
 				<div class="interview-grid" [class.with-candidate]="isCalendar">
 					@if (isCalendar) {
-						<div class="form-group candidate-field" role="group" aria-labelledby="interview-candidate-label">
-							<span class="label" id="interview-candidate-label">{{ 'FORM.LABELS.CANDIDATE' | translate }}</span>
+						<fieldset class="form-group candidate-field">
+							<legend class="label">{{ 'FORM.LABELS.CANDIDATE' | translate }}</legend>
 							<ga-candidate-select
 								[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate"
 								(selectedChange)="onCandidateSelected($event)"
 								[selectedCandidateId]="selectedCandidateId"
 							></ga-candidate-select>
-						</div>
+						</fieldset>
 					}
 					<ga-candidate-interview-form
 						[interviews]="interviews"

@@ -27,10 +27,10 @@ export class CandidateCriterionCardComponent {
 	@Input() existedNames: string[] = [];
 	@Input() showCancel = false;
 
-	@Output() save = new EventEmitter<void>();
-	@Output() cancel = new EventEmitter<void>();
-	@Output() editItem = new EventEmitter<{ index: number; id: string }>();
-	@Output() removeItem = new EventEmitter<ICandidateCriterionCardItem>();
+	@Output() readonly save = new EventEmitter<void>();
+	@Output() readonly cancelEdit = new EventEmitter<void>();
+	@Output() readonly editItem = new EventEmitter<{ index: number; id: string }>();
+	@Output() readonly removeItem = new EventEmitter<ICandidateCriterionCardItem>();
 
 	get formGroup(): UntypedFormGroup {
 		return this.group as UntypedFormGroup;

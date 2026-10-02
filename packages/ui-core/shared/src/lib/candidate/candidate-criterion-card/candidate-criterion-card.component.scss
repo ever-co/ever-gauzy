@@ -119,11 +119,10 @@
   border-radius: var(--gauzy-radius-sm);
   background-color: var(--gauzy-hover-tint);
 
+  // Long names wrap so similar ones stay distinguishable before edit or delete
   .criterion-name {
     min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1rem;

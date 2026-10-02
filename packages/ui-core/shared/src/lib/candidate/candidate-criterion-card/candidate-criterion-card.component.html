@@ -20,7 +20,7 @@
 
 	<div class="criterion-actions">
 		@if (showCancel) {
-			<button type="button" nbButton ghost status="basic" size="small" (click)="cancel.emit()">
+			<button type="button" nbButton ghost status="basic" size="small" (click)="cancelEdit.emit()">
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 		}

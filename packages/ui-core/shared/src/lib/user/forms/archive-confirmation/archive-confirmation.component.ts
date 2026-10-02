@@ -40,7 +40,7 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-footer>
 		</nb-card>
 	`,
-    styleUrls: ['./archive-confirmation.component.scss'],
+    styleUrl: './archive-confirmation.component.scss',
     standalone: false
 })
 export class ArchiveConfirmationComponent {
