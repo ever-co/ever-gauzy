@@ -213,11 +213,16 @@ export class EverStatsCollector {
 		where?: string
 	): Promise<{ count: number; byCurrency: Array<{ currency: string; total: unknown }> }> {
 		const q = (name: string) => quote(d, name);
+		// MySQL compares text case-insensitively by default, so `EUR` and `eur` would fall into one group
+		// (and the whole group could be left out as `eur`). Grouping by the exact bytes keeps them apart,
+		// as on Postgres and SQLite.
+		const currency = d === 'mysql' ? `MIN(${q('currency')})` : q('currency');
+		const groupBy = d === 'mysql' ? `HEX(${q('currency')})` : q('currency');
 		const { rows } = await runSql<{ currency: unknown; n: unknown; total: unknown }>(
 			this.dataSource,
-			`SELECT ${q('currency')} AS ${q('currency')}, COUNT(*) AS ${q('n')}, SUM(${q(amountColumn)}) AS ${q('total')} FROM ${q(table)} ` +
+			`SELECT ${currency} AS ${q('currency')}, COUNT(*) AS ${q('n')}, SUM(${q(amountColumn)}) AS ${q('total')} FROM ${q(table)} ` +
 				`WHERE ${q('deletedAt')} IS NULL AND ${q(dateColumn)} >= ${placeholder(d, 1)} AND ${q(dateColumn)} < ${placeholder(d, 2)}` +
-				`${where ? ` AND ${where}` : ''} GROUP BY ${q('currency')}`,
+				`${where ? ` AND ${where}` : ''} GROUP BY ${groupBy}`,
 			[sqlTimestamp(period.start), sqlTimestamp(period.end)]
 		);
 		return {

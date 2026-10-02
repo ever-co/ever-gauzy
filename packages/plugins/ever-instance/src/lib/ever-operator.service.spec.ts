@@ -7,6 +7,9 @@ import { createCoreTables, dropTables, everInstanceMigration, openTestDataSource
 
 const TABLES = ['ever_instance', 'user', 'role', 'tenant'];
 
+// Creating and dropping tables on a real Postgres or MySQL takes longer than the default 5 s.
+jest.setTimeout(120_000);
+
 describe.each(TEST_TARGETS)('EverOperatorService on $name', (target) => {
 	let dataSource: DataSource;
 	const t = (name: string) => q(target.name, name);

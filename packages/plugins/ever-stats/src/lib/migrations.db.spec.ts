@@ -40,6 +40,9 @@ async function tableNames(runner: QueryRunner, dialect: TestDialect): Promise<st
 	return rows.map((row) => row['name'] ?? row['NAME']).filter((name) => TABLES.includes(name)).sort();
 }
 
+// Creating and dropping tables on a real Postgres or MySQL takes longer than the default 5 s.
+jest.setTimeout(120_000);
+
 describe.each(TEST_TARGETS)('EverInstance and EverStatsReport migrations on $name', (target) => {
 	let dataSource: DataSource;
 	let logger: RecordingLogger;

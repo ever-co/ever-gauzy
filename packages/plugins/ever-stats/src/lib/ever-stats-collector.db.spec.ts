@@ -15,6 +15,9 @@ const seed = (value: string) => {
 	return value;
 };
 
+// Creating and dropping tables on a real Postgres or MySQL takes longer than the default 5 s.
+jest.setTimeout(120_000);
+
 describe.each(TEST_TARGETS)('EverStatsCollector on $name', (target) => {
 	let dataSource: DataSource;
 	const d = target.name;

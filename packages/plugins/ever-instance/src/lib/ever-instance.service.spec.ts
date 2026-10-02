@@ -7,6 +7,9 @@ import { dropTables, everInstanceMigration, openTestDataSource, q, TEST_TARGETS 
 
 const ENV = { JWT_SECRET: 'a-strong-jwt-secret-for-tests' };
 
+// Creating and dropping tables on a real Postgres or MySQL takes longer than the default 5 s.
+jest.setTimeout(120_000);
+
 describe.each(TEST_TARGETS)('EverInstanceService on $name', (target) => {
 	let dataSource: DataSource;
 
@@ -83,8 +86,8 @@ describe.each(TEST_TARGETS)('EverInstanceService on $name', (target) => {
 		const signerAfter = await service({ ...ENV, ENCRYPTION_KEY: 'now-set' }).statsSigner();
 		const bytes = Buffer.from('x');
 		expect(signerAfter.sign(bytes).equals(signerBefore.sign(bytes))).toBe(true);
-		const rows = await dataSource.query(`SELECT ${q(target.name, 'statsPrivateKeyEncrypted')} AS blob FROM ${q(target.name, 'ever_instance')}`);
-		expect(storedKeySource(rows[0].blob)).toBe('k');
+		const rows = await dataSource.query(`SELECT ${q(target.name, 'statsPrivateKeyEncrypted')} AS wrapped_key FROM ${q(target.name, 'ever_instance')}`);
+		expect(storedKeySource(rows[0].wrapped_key)).toBe('k');
 	});
 
 	it('toggles the statistics, emits one event and writes one audit line with the actor', async () => {
