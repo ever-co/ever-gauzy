@@ -33,7 +33,10 @@ import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { DocsAttachPicker } from './DocsAttachPicker';
+import { AttachmentPreview, type IPreviewableAttachment } from './AttachmentPreview';
+import { AttachmentCard } from './AttachmentCard';
 import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
+import { useChatTooltips } from '../use-chat-tooltips';
 import { chatTheme } from '../chat-theme';
 import { chatMarkdownCss } from '../chat-markdown-css';
 
@@ -122,9 +125,20 @@ export function AiChatPanel() {
 	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
 	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
 	// Documents is asynchronous, so no id exists yet when the upload returns).
-	const [attachments, setAttachments] = useState<IStagedAttachment[]>([]);
+	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
+	const [attachments, setAttachments] = useState<IPreviewableAttachment[]>([]);
+	/** The attachment open in the preview overlay, if any. */
+	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
+	/**
+	 * Files uploaded this session, keyed by document id (or name, without Documents) — so a chip on
+	 * a SENT message can still preview from memory. Cleared with the panel; history reloads fall
+	 * back to the Documents copy.
+	 */
+	const sentFilesRef = useRef(new Map<string, File>());
 	const [showAttachPicker, setShowAttachPicker] = useState(false);
 	const [isAttaching, setIsAttaching] = useState(false);
+	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
+	const [uploadingName, setUploadingName] = useState<string | null>(null);
 	const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
 	// Docking / maximize state comes straight from the Angular
@@ -136,6 +150,8 @@ export function AiChatPanel() {
 	// dock, maximize, resize or collapse there, so those controls are dropped.
 	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
 	const rootRef = useRef<HTMLDivElement>(null);
+	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
+	useChatTooltips(rootRef);
 
 	const authHeaders = useCallback(
 		(): Record<string, string> => ({
@@ -443,6 +459,9 @@ export function AiChatPanel() {
 			// what lets it actually open what the user attached. Cleared on send — an attachment
 			// belongs to the message it was attached to, not to the conversation.
 			const preamble = buildAttachmentPreamble(attachments);
+			for (const attachment of attachments) {
+				if (attachment.file) sentFilesRef.current.set(attachment.documentId ?? attachment.name, attachment.file);
+			}
 			setAttachments([]);
 			void sendMessage({ text: preamble ? `${preamble}\n\n${text}` : text });
 		},
@@ -455,6 +474,7 @@ export function AiChatPanel() {
 		conversationIdRef.current = newConversationId();
 		setActiveConversationId(conversationIdRef.current);
 		setShowHistory(false);
+		setPreviewAttachment(null);
 	}, [stop, setMessages]);
 
 	const handleApprovalResponse = useCallback(
@@ -503,6 +523,7 @@ export function AiChatPanel() {
 	const handleAttachFile = useCallback(
 		async (file: File): Promise<void> => {
 			setIsAttaching(true);
+			setUploadingName(file.name);
 			setAttachmentError(null);
 			try {
 				const docsForm = new FormData();
@@ -528,7 +549,8 @@ export function AiChatPanel() {
 							{
 								documentId: document.id,
 								name: document.name || file.name,
-								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {}),
+								file
 							}
 						]);
 						return;
@@ -580,11 +602,12 @@ export function AiChatPanel() {
 					throw new Error(detail || `Attachment failed (HTTP ${response.status})`);
 				}
 				const saved = (await response.json()) as { name?: string };
-				setAttachments((current) => [...current, { name: saved?.name || file.name }]);
+				setAttachments((current) => [...current, { name: saved?.name || file.name, file }]);
 			} catch (attachError) {
 				setAttachmentError(attachError instanceof Error ? attachError.message : String(attachError));
 			} finally {
 				setIsAttaching(false);
+				setUploadingName(null);
 			}
 		},
 		[authHeaders, attachScope]
@@ -604,6 +627,40 @@ export function AiChatPanel() {
 		]);
 		setShowAttachPicker(false);
 	}, []);
+
+	/**
+	 * Preview an attachment chip — staged or on a sent message. A sent chip is rebuilt from the
+	 * message text, so it gets back the `File` uploaded this session when there is one.
+	 */
+	const handlePreviewAttachment = useCallback((attachment: IStagedAttachment | IPreviewableAttachment) => {
+		const file =
+			'file' in attachment && attachment.file
+				? attachment.file
+				: sentFilesRef.current.get(attachment.documentId ?? attachment.name);
+		setShowAttachPicker(false);
+		setPreviewAttachment({ ...attachment, ...(file ? { file } : {}) });
+	}, []);
+
+	/** The `File` uploaded this session for a sent attachment card, for its thumbnail and size. */
+	const resolveAttachmentFile = useCallback(
+		(attachment: IStagedAttachment) => sentFilesRef.current.get(attachment.documentId ?? attachment.name),
+		[]
+	);
+
+	/** "Open in Documents" from the preview — the same deep link the attachment chips use. */
+	const handleOpenAttachmentInDocuments = useCallback(
+		(attachment: IStagedAttachment) => {
+			if (!attachment.documentId) return;
+			setPreviewAttachment(null);
+			handleOpenCitation({
+				url:
+					attachment.kind === 'PAGE'
+						? `/pages/documents/page/${attachment.documentId}`
+						: `/pages/documents?id=${attachment.documentId}`
+			});
+		},
+		[handleOpenCitation]
+	);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
@@ -815,6 +872,31 @@ export function AiChatPanel() {
 					outline: 2px solid rgba(51, 102, 255, 0.6);
 					outline-offset: 2px;
 					border-radius: 4px;
+				}
+
+				/* Attachment cards. The card opens the preview; the corner ✕ shows on hover or
+				   keyboard focus, and always on touch screens, which have no hover. */
+				.gz-ai-chat-attachment-card {
+					transition: border-color ${chatTheme.transitionSpeed} ease, background-color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-attachment-card:hover {
+					border-color: ${chatTheme.inputFocusBorder} !important;
+					background-color: color-mix(in srgb, currentColor 7%, transparent) !important;
+				}
+				.gz-ai-chat-attachment-card:focus-visible,
+				.gz-ai-chat-attachment-remove:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				.gz-ai-chat-attachment-remove {
+					opacity: 0;
+					transition: opacity ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-attachment:hover .gz-ai-chat-attachment-remove,
+				.gz-ai-chat-attachment:focus-within .gz-ai-chat-attachment-remove { opacity: 1; }
+				.gz-ai-chat-attachment-remove:hover { color: inherit !important; }
+				@media (hover: none) {
+					.gz-ai-chat-attachment-remove { opacity: 1; }
 				}
 
 				/* Attachment chips on a user message. */
@@ -1180,12 +1262,25 @@ export function AiChatPanel() {
 						onClose={() => setShowAttachPicker(false)}
 					/>
 				)}
+				{/* Attachment preview overlay — same slot as the picker, above the conversation. */}
+				{previewAttachment && (
+					<AttachmentPreview
+						attachment={previewAttachment}
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						translate={t}
+						onOpenInDocuments={handleOpenAttachmentInDocuments}
+						onClose={() => setPreviewAttachment(null)}
+					/>
+				)}
 				{hasMessages ? (
 					<ChatMessageList
 						messages={messages}
 						status={status}
 						onApprovalResponse={handleApprovalResponse}
 						onOpenCitation={handleOpenCitation}
+						onPreviewAttachment={handlePreviewAttachment}
+						resolveAttachmentFile={resolveAttachmentFile}
 						translate={t}
 					/>
 				) : (
@@ -1260,74 +1355,18 @@ export function AiChatPanel() {
 				{/* Input area. Escape closes the docked panel; in the detached window
 				    it must do nothing — collapse() persists the docked state for the
 				    next page load, and there is no panel here to close. */}
-				{/* Staged attachments — removable until the message is sent. */}
-				{(attachments.length > 0 || attachmentError) && (
+				{/* An attachment that failed — the staged cards themselves live inside the composer. */}
+				{attachmentError && (
 					<div
+						role="alert"
 						style={{
-							display: 'flex',
-							flexWrap: 'wrap',
-							alignItems: 'center',
-							gap: 5,
-							padding: '10px 12px 0'
+							padding: '8px 12px 0',
+							color: chatTheme.red,
+							fontSize: chatTheme.fontSizeSmall,
+							lineHeight: 1.5
 						}}
 					>
-						{attachments.map((attachment, index) => (
-							<span
-								key={`${attachment.documentId ?? attachment.name}-${index}`}
-								style={{
-									display: 'inline-flex',
-									alignItems: 'center',
-									gap: 5,
-									maxWidth: '100%',
-									padding: '4px 9px',
-									borderRadius: 999,
-									border: `1px solid ${chatTheme.border}`,
-									backgroundColor: chatTheme.surface,
-									color: chatTheme.textPrimary,
-									fontSize: chatTheme.fontSizeMessage,
-									fontWeight: chatTheme.fontWeightMedium,
-									lineHeight: 1.5
-								}}
-							>
-								<span aria-hidden="true">📎</span>
-								<span
-									style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-									title={attachment.name}
-								>
-									{attachment.name}
-								</span>
-								<button
-									type="button"
-									onClick={() =>
-										setAttachments((current) =>
-											current.filter((_entry, entryIndex) => entryIndex !== index)
-										)
-									}
-									aria-label={`${t('AI_ASSISTANT.ATTACH_REMOVE', 'Remove attachment')}: ${attachment.name}`}
-									style={{
-										background: 'none',
-										border: 'none',
-										color: chatTheme.textSecondary,
-										cursor: 'pointer',
-										padding: 0,
-										lineHeight: 1
-									}}
-								>
-									×
-								</button>
-							</span>
-						))}
-						{attachmentError && (
-							<span
-								style={{
-									color: chatTheme.red,
-									fontSize: chatTheme.fontSizeSmall,
-									lineHeight: 1.5
-								}}
-							>
-								{attachmentError}
-							</span>
-						)}
+						{attachmentError}
 					</div>
 				)}
 
@@ -1347,6 +1386,36 @@ export function AiChatPanel() {
 						setShowAttachPicker(true);
 					}}
 					isAttaching={isAttaching}
+					attachmentsSlot={
+						attachments.length > 0 || uploadingName ? (
+							<div
+								style={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: 8,
+									// Room for the corner ✕, which sits outside each card.
+									padding: '6px 6px 4px 2px'
+								}}
+							>
+								{attachments.map((attachment, index) => (
+									<AttachmentCard
+										key={`${attachment.documentId ?? attachment.name}-${index}`}
+										attachment={attachment}
+										translate={t}
+										onOpen={() => handlePreviewAttachment(attachment)}
+										onRemove={() =>
+											setAttachments((current) =>
+												current.filter((_entry, entryIndex) => entryIndex !== index)
+											)
+										}
+									/>
+								))}
+								{uploadingName && (
+									<AttachmentCard attachment={{ name: uploadingName }} pending translate={t} />
+								)}
+							</div>
+						) : null
+					}
 					composingFor={activeConversationId}
 				/>
 			</div>

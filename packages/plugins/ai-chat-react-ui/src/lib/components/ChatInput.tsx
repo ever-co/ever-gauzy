@@ -1,4 +1,4 @@
-import { type CSSProperties, type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { chatTheme } from '../chat-theme';
 import { type ChatTranslate, passthroughChatTranslate } from '../use-chat-translate';
 
@@ -103,6 +103,11 @@ export interface ChatInputProps {
 	onAttachFromDocuments?: () => void;
 	/** True while an attachment upload is in flight (both attach controls are disabled). */
 	isAttaching?: boolean;
+	/**
+	 * The staged attachments, rendered INSIDE the composer above the field — where Claude puts
+	 * them — so they read as part of the message they will be sent with.
+	 */
+	attachmentsSlot?: ReactNode;
 	/**
 	 * Identifies what the input is composing FOR — the active conversation.
 	 *
@@ -272,6 +277,7 @@ export function ChatInput({
 	onAttachFile,
 	onAttachFromDocuments,
 	isAttaching = false,
+	attachmentsSlot,
 	composingFor
 }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -893,6 +899,8 @@ export function ChatInput({
 						}}
 					/>
 				)}
+
+				{attachmentsSlot}
 
 				<textarea
 					ref={textareaRef}
