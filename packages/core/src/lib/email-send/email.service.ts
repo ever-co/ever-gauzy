@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { IsNull } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -24,6 +24,7 @@ import {
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
+import { allowedEmailBaseUrl, warnRejectedEmailLink, withAllowedEmailLinks } from '../auth/email-link-origin';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
 import { Organization, EmailHistory } from './../core/entities/internal';
@@ -35,12 +36,36 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
 @Injectable()
 export class EmailService {
+	private readonly logger = new Logger(EmailService.name);
+
 	constructor(
 		readonly typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
 		readonly typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
 		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 		readonly emailSendService: EmailSendService
 	) {}
+
+	/**
+	 * The base URL an email's links are built on: the caller's origin (the request's `Origin` header
+	 * or an `originalUrl`) when this deployment serves it, otherwise `CLIENT_BASE_URL`.
+	 * See `auth/email-link-origin.ts`.
+	 *
+	 * @param originUrl The origin the caller supplied, if any.
+	 */
+	private emailBaseUrl(originUrl?: string): string {
+		return allowedEmailBaseUrl(originUrl, env.clientBaseUrl);
+	}
+
+	/**
+	 * `integration` with every link (`appLink`, `companyLink`, ...) on an origin this deployment does
+	 * not serve replaced by the configured one. See `auth/email-link-origin.ts`.
+	 *
+	 * @param integration The integration values for a template.
+	 * @param template Only for the log line.
+	 */
+	private withAllowedLinks<T>(integration: T, template: string): T {
+		return withAllowedEmailLinks(integration, warnRejectedEmailLink(this.logger, `the "${template}" email`));
+	}
 
 	/**
 	 *
@@ -65,7 +90,7 @@ export class EmailService {
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId, name: organizationName } = organization;
-		const clientBaseUrl = originUrl || env.clientBaseUrl;
+		const clientBaseUrl = this.emailBaseUrl(originUrl);
 
 		const sendOptions = {
 			template: EmailTemplateEnum.PAYMENT_RECEIPT,
@@ -136,7 +161,7 @@ export class EmailService {
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
-		const baseUrl = origin || env.clientBaseUrl;
+		const baseUrl = this.emailBaseUrl(origin);
 		const sendOptions = {
 			template: isEstimate ? EmailTemplateEnum.EMAIL_ESTIMATE : EmailTemplateEnum.EMAIL_INVOICE,
 			message: {
@@ -200,7 +225,7 @@ export class EmailService {
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<void> {
-		const baseUrl = originUrl || env.clientBaseUrl;
+		const baseUrl = this.emailBaseUrl(originUrl);
 		const { id: organizationId, tenantId = RequestContext.currentTenantId() } = organization;
 		const { primaryEmail } = organizationContact;
 
@@ -273,7 +298,7 @@ export class EmailService {
 				organizationId,
 				tenantId,
 				generatedUrl: registerUrl,
-				host: originUrl || env.clientBaseUrl
+				host: this.emailBaseUrl(originUrl)
 			}
 		};
 
@@ -329,7 +354,7 @@ export class EmailService {
 				teams,
 				inviteLink,
 				locale: languageCode,
-				host: originUrl || env.clientBaseUrl
+				host: this.emailBaseUrl(originUrl)
 			}
 		};
 
@@ -383,7 +408,7 @@ export class EmailService {
 				organizationId,
 				tenantId,
 				generatedUrl: registerUrl,
-				host: originUrl ?? env.clientBaseUrl
+				host: this.emailBaseUrl(originUrl)
 			}
 		};
 
@@ -434,7 +459,7 @@ export class EmailService {
 				to: email
 			},
 			locals: {
-				host: originUrl ?? env.clientBaseUrl,
+				host: this.emailBaseUrl(originUrl),
 				locale: languageCode,
 				organizationName: organization.name,
 				employeeName: employee.user.firstName
@@ -491,8 +516,12 @@ export class EmailService {
 		}
 		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 
-		// Override the default config by merging in the provided values.
-		const appIntegration = deepMerge(env.appIntegrationConfig, integration);
+		// Override the default config by merging in the provided values - except links on an origin
+		// this deployment does not serve, which keep the configured value.
+		const appIntegration = deepMerge(
+			env.appIntegrationConfig,
+			this.withAllowedLinks(integration, EmailTemplateEnum.WELCOME_USER)
+		);
 
 		const sendOptions = {
 			template: EmailTemplateEnum.WELCOME_USER,
@@ -502,7 +531,7 @@ export class EmailService {
 			locals: {
 				locale: languageCode,
 				email: user.email,
-				host: originUrl || env.clientBaseUrl,
+				host: this.emailBaseUrl(originUrl),
 				organizationId: organizationId || IsNull(),
 				tenantId,
 				...appIntegration
@@ -620,7 +649,7 @@ export class EmailService {
 				tenantName: tenant?.name, // Tenant is optional
 				locale: languageCode,
 				generatedUrl: resetLink,
-				host: originUrl || env.clientBaseUrl
+				host: this.emailBaseUrl(originUrl)
 			}
 		};
 
@@ -682,7 +711,7 @@ export class EmailService {
 			locals: {
 				...integration,
 				locale: languageCode,
-				host: originUrl || env.clientBaseUrl,
+				host: this.emailBaseUrl(originUrl),
 				items
 			}
 		};
@@ -737,7 +766,7 @@ export class EmailService {
 			locals: {
 				locale: languageCode,
 				email: email,
-				host: originUrl || env.clientBaseUrl,
+				host: this.emailBaseUrl(originUrl),
 				organizationId: organizationId || IsNull(),
 				tenantId: tenantId || IsNull()
 			}
@@ -900,7 +929,7 @@ export class EmailService {
 				email,
 				magicCode,
 				magicLink,
-				...integration
+				...this.withAllowedLinks(integration, EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION)
 			}
 		};
 
@@ -1013,7 +1042,7 @@ export class EmailService {
 				host: env.clientBaseUrl,
 				...organizationTeam,
 				...organizationTeamJoinRequest,
-				...integration
+				...this.withAllowedLinks(integration, EmailTemplateEnum.ORGANIZATION_TEAM_JOIN_REQUEST)
 			}
 		};
 		const body = {
@@ -1055,7 +1084,7 @@ export class EmailService {
 	) {
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId, name: organizationName } = organization;
-		const clientBaseUrl = originUrl || env.clientBaseUrl;
+		const clientBaseUrl = this.emailBaseUrl(originUrl);
 
 		const sendOptions = {
 			template: EmailTemplateEnum.REJECT_CANDIDATE,
