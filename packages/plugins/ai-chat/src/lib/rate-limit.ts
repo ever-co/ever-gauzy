@@ -99,27 +99,32 @@ export const rateLimitRetryAfter = (error: unknown): number | undefined => {
 export const buildRateLimitEnvelope = (envelope: IAiChatRateLimitEnvelope): string => JSON.stringify(envelope);
 
 /**
- * Did the provider reject its credential (HTTP 401/403)?
+ * Is this the AI SDK's provider HTTP error (`APICallError`)?
  *
- * Same shapes as {@link isRateLimitError}, with one deliberate omission: `status` is NOT read. This
- * mask also runs over tool-output errors, and a Nest `HttpException` thrown by a contributed tool
- * (a `ForbiddenException` on a document the user may not read) carries `status: 403` — that is the
- * USER's permission, not the provider's key, and must not send them to the AI Providers page.
- * Provider errors (`APICallError`) carry `statusCode`. A top-level `code` is not read either: an MCP
- * transport error carries the MCP server's HTTP status there, which is not an AI provider's key.
- * The in-stream form (`{ error: { code: 401 } }`) is matched by its nested shape instead.
+ * Checked structurally — the SDK's `AI_APICallError` name plus the request URL every such error
+ * carries — not with `instanceof`, because provider packages bundle their own copy of
+ * `@ai-sdk/provider`. This is what separates a provider's 401/403 from anything else in the chain.
+ */
+const isProviderCallError = (candidate: unknown): boolean => {
+	const e = candidate as { name?: unknown; url?: unknown };
+	return e?.name === 'AI_APICallError' && typeof e.url === 'string';
+};
+
+/**
+ * Did the AI provider reject its credential (HTTP 401/403)?
+ *
+ * Only a PROVIDER's own HTTP error counts ({@link isProviderCallError}, possibly wrapped in the
+ * SDK's `RetryError` or a `cause`). This mask also runs over tool errors, and the SDK hands it a
+ * tool's raw thrown value: a contributed tool can throw `{ statusCode: 403 }`, a Nest
+ * `ForbiddenException` (`status: 403`), an `{ error: { code: 403 } }` body or an MCP transport error
+ * (`code: 401`) — all of them the USER's permission or another server's answer, never the AI
+ * provider's key, and none may send the user to the AI Providers page. They keep the generic error.
  */
 export const isKeyRejectedError = (error: unknown): boolean => {
 	for (const candidate of unwrap(error)) {
-		const e = candidate as {
-			statusCode?: unknown;
-			error?: { code?: unknown };
-			data?: { error?: { code?: unknown } };
-		};
-		for (const value of [e.statusCode, e.error?.code, e.data?.error?.code]) {
-			const status = Number(value);
-			if (status === 401 || status === 403) return true;
-		}
+		if (!isProviderCallError(candidate)) continue;
+		const status = Number((candidate as { statusCode?: unknown }).statusCode);
+		if (status === 401 || status === 403) return true;
 	}
 	return false;
 };
