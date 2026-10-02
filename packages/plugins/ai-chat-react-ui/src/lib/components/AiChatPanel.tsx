@@ -130,11 +130,17 @@ export function AiChatPanel() {
 	/** The attachment open in the preview overlay, if any. */
 	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
 	/**
-	 * Files uploaded this session, keyed by document id (or name, without Documents) — so a chip on
-	 * a SENT message can still preview from memory. Cleared with the panel; history reloads fall
-	 * back to the Documents copy.
+	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
+	 * attachment, in order — so a card on a SENT message can still preview from memory. Cleared with
+	 * the panel; history reloads fall back to the Documents copy.
 	 */
-	const sentFilesRef = useRef(new Map<string, File>());
+	const sentFilesRef = useRef(new Map<string, (File | undefined)[]>());
+	/**
+	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
+	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
+	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
+	 */
+	const pendingSentFilesRef = useRef<{ text: string; files: (File | undefined)[] } | null>(null);
 	const [showAttachPicker, setShowAttachPicker] = useState(false);
 	const [isAttaching, setIsAttaching] = useState(false);
 	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
@@ -459,11 +465,14 @@ export function AiChatPanel() {
 			// what lets it actually open what the user attached. Cleared on send — an attachment
 			// belongs to the message it was attached to, not to the conversation.
 			const preamble = buildAttachmentPreamble(attachments);
-			for (const attachment of attachments) {
-				if (attachment.file) sentFilesRef.current.set(attachment.documentId ?? attachment.name, attachment.file);
+			const messageText = preamble ? `${preamble}\n\n${text}` : text;
+			// In attachment order — the same order the preamble lists them, so a card's index on the
+			// sent message finds its own file.
+			if (attachments.some((attachment) => attachment.file)) {
+				pendingSentFilesRef.current = { text: messageText, files: attachments.map((attachment) => attachment.file) };
 			}
 			setAttachments([]);
-			void sendMessage({ text: preamble ? `${preamble}\n\n${text}` : text });
+			void sendMessage({ text: messageText });
 		},
 		[attachments, input, isBusy, sendMessage]
 	);
@@ -632,18 +641,32 @@ export function AiChatPanel() {
 	 * Preview an attachment chip — staged or on a sent message. A sent chip is rebuilt from the
 	 * message text, so it gets back the `File` uploaded this session when there is one.
 	 */
-	const handlePreviewAttachment = useCallback((attachment: IStagedAttachment | IPreviewableAttachment) => {
-		const file =
-			'file' in attachment && attachment.file
-				? attachment.file
-				: sentFilesRef.current.get(attachment.documentId ?? attachment.name);
+	const handlePreviewAttachment = useCallback((attachment: IPreviewableAttachment) => {
 		setShowAttachPicker(false);
-		setPreviewAttachment({ ...attachment, ...(file ? { file } : {}) });
+		setPreviewAttachment(attachment);
 	}, []);
 
-	/** The `File` uploaded this session for a sent attachment card, for its thumbnail and size. */
+	// Bind the files of the message just sent to its id, once the message appears. Matched by its
+	// exact text, newest first, so a rate-limit notice or an assistant reply landing in between
+	// cannot claim them.
+	useEffect(() => {
+		const pending = pendingSentFilesRef.current;
+		if (!pending) return;
+		for (let index = messages.length - 1; index >= 0; index--) {
+			const message = messages[index];
+			if (message.role !== 'user') continue;
+			const firstText = message.parts.find((part) => part.type === 'text') as { text?: string } | undefined;
+			if (firstText?.text === pending.text) {
+				sentFilesRef.current.set(message.id, pending.files);
+				pendingSentFilesRef.current = null;
+				return;
+			}
+		}
+	}, [messages]);
+
+	/** The `File` uploaded this session for card `index` of a sent message (thumbnail, size, preview). */
 	const resolveAttachmentFile = useCallback(
-		(attachment: IStagedAttachment) => sentFilesRef.current.get(attachment.documentId ?? attachment.name),
+		(messageId: string, index: number) => sentFilesRef.current.get(messageId)?.[index],
 		[]
 	);
 
@@ -1275,6 +1298,7 @@ export function AiChatPanel() {
 						attachment={previewAttachment}
 						apiBaseUrl={environment.API_BASE_URL}
 						headers={authHeaders}
+						scope={attachScope}
 						translate={t}
 						onOpenInDocuments={handleOpenAttachmentInDocuments}
 						onClose={() => setPreviewAttachment(null)}

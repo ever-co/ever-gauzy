@@ -10,6 +10,7 @@ import {
 } from './DocsCitationChips';
 import { parseAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
 import { AttachmentCard } from './AttachmentCard';
+import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
 /**
@@ -32,9 +33,9 @@ function UserAttachmentChips({
 	attachments: IStagedAttachment[];
 	onOpen?: (citation: IDocsCitation) => void;
 	/** When supplied, every card opens the preview (which itself links on to Documents). */
-	onPreview?: (attachment: IStagedAttachment) => void;
-	/** The `File` uploaded this session for an attachment, for its thumbnail and size. */
-	resolveFile?: (attachment: IStagedAttachment) => File | undefined;
+	onPreview?: (attachment: IPreviewableAttachment) => void;
+	/** The `File` uploaded this session for the card at `index` (thumbnail, size, preview). */
+	resolveFile?: (index: number) => File | undefined;
 	translate?: (key: string, fallback: string) => string;
 }) {
 	const openInDocuments = (attachment: IStagedAttachment) =>
@@ -51,15 +52,17 @@ function UserAttachmentChips({
 	return (
 		<span style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 }}>
 			{attachments.map((attachment, chipIndex) => {
-				const file = resolveFile?.(attachment);
+				// By position in THIS message — never by name, which two different files can share.
+				const file = resolveFile?.(chipIndex);
+				const withFile: IPreviewableAttachment = file ? { ...attachment, file } : attachment;
 				return (
 					<AttachmentCard
 						key={`${attachment.documentId ?? attachment.name}-${chipIndex}`}
-						attachment={file ? { ...attachment, file } : attachment}
+						attachment={withFile}
 						translate={translate}
 						onOpen={
 							onPreview
-								? () => onPreview(attachment)
+								? () => onPreview(withFile)
 								: attachment.documentId && onOpen
 									? () => openInDocuments(attachment)
 									: undefined
@@ -88,9 +91,9 @@ export interface ChatMessageItemProps {
 	/** Open a document citation chip (router navigation supplied by the panel). */
 	onOpenCitation?: (citation: IDocsCitation) => void;
 	/** Preview an attachment chip on a user message (the panel's preview overlay). */
-	onPreviewAttachment?: (attachment: IStagedAttachment) => void;
-	/** The `File` uploaded this session for an attachment card (thumbnail and size). */
-	resolveAttachmentFile?: (attachment: IStagedAttachment) => File | undefined;
+	onPreviewAttachment?: (attachment: IPreviewableAttachment) => void;
+	/** The `File` uploaded this session for card `index` of message `messageId` (thumbnail, size). */
+	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
 }
@@ -167,7 +170,9 @@ export function ChatMessageItem({
 									attachments={attachmentView.attachments}
 									{...(onOpenCitation ? { onOpen: onOpenCitation } : {})}
 									{...(onPreviewAttachment ? { onPreview: onPreviewAttachment } : {})}
-									{...(resolveAttachmentFile ? { resolveFile: resolveAttachmentFile } : {})}
+									{...(resolveAttachmentFile
+									? { resolveFile: (chipIndex: number) => resolveAttachmentFile(message.id, chipIndex) }
+									: {})}
 									{...(translate ? { translate } : {})}
 								/>
 								{attachmentView.text ? (

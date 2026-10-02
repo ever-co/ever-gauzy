@@ -2,7 +2,7 @@ import { useRef, useEffect, type CSSProperties } from 'react';
 import type { UIMessage } from 'ai';
 import { ChatMessageItem } from './ChatMessageItem';
 import type { IDocsCitation } from './DocsCitationChips';
-import type { IStagedAttachment } from './attachment-preamble';
+import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatMessageListProps {
@@ -14,9 +14,9 @@ export interface ChatMessageListProps {
 	/** Open a document citation chip (router navigation supplied by the panel). */
 	onOpenCitation?: (citation: IDocsCitation) => void;
 	/** Preview an attachment chip on a user message (the panel's preview overlay). */
-	onPreviewAttachment?: (attachment: IStagedAttachment) => void;
-	/** The `File` uploaded this session for an attachment card (thumbnail and size). */
-	resolveAttachmentFile?: (attachment: IStagedAttachment) => File | undefined;
+	onPreviewAttachment?: (attachment: IPreviewableAttachment) => void;
+	/** The `File` uploaded this session for card `index` of message `messageId` (thumbnail, size). */
+	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
 }
