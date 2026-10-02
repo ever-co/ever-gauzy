@@ -701,12 +701,12 @@ export function ChatInput({
 	};
 
 	/** The quiet leading-edge tools: attach, library, dictate. */
-	const toolButtonStyle = (active = false, enabled = true): CSSProperties => ({
+	const toolButtonStyle = (enabled = true): CSSProperties => ({
 		width: TOOL_SIZE,
 		height: TOOL_SIZE,
 		borderRadius: 6,
-		backgroundColor: active ? chatTheme.redSoft : 'transparent',
-		color: active ? chatTheme.red : chatTheme.textMuted,
+		backgroundColor: 'transparent',
+		color: chatTheme.textMuted,
 		border: 'none',
 		cursor: enabled ? 'pointer' : 'not-allowed',
 		display: 'flex',
@@ -1051,7 +1051,7 @@ export function ChatInput({
 							? { onClick: () => fileInputRef.current?.click() }
 							: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
 						className="gz-ai-chat-tool-btn"
-						style={toolButtonStyle(false, Boolean(onAttachFile) && !isAttaching)}
+						style={toolButtonStyle(Boolean(onAttachFile) && !isAttaching)}
 						title={
 							onAttachFile
 								? t('AI_ASSISTANT.ATTACH', 'Attach a file')
@@ -1083,7 +1083,7 @@ export function ChatInput({
 							? { onClick: () => onAttachFromDocuments() }
 							: { 'aria-disabled': true as const, onClick: (e: { preventDefault: () => void }) => e.preventDefault() })}
 						className="gz-ai-chat-tool-btn"
-						style={toolButtonStyle(false, Boolean(onAttachFromDocuments) && !isAttaching)}
+						style={toolButtonStyle(Boolean(onAttachFromDocuments) && !isAttaching)}
 						title={
 							onAttachFromDocuments
 								? t('AI_ASSISTANT.ATTACH_FROM_DOCUMENTS', 'Attach from Documents')
@@ -1112,25 +1112,19 @@ export function ChatInput({
 						</svg>
 					</button>
 
+					{/* Only ever rendered while NOT recording — a take replaces this whole row with the
+					    recorder, whose ✓ / ✕ finish or cancel it — so the mic only starts a take. The
+					    take's start and end are announced by the composer's status region. */}
 					{onTranscribe && (
 						<button
 							type="button"
-							onClick={isRecording ? finishDictation : startDictation}
+							onClick={startDictation}
 							disabled={isTranscribing}
 							className="gz-ai-chat-tool-btn"
 							// Not dimmed while transcribing: the spinner it shows then is the progress signal.
-							style={{ ...toolButtonStyle(isRecording), cursor: isTranscribing ? 'default' : 'pointer' }}
-							title={
-								isRecording
-									? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
-									: t('AI_ASSISTANT.DICTATE', 'Dictate a message')
-							}
-							aria-label={
-								isRecording
-									? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
-									: t('AI_ASSISTANT.DICTATE', 'Dictate a message')
-							}
-							aria-pressed={isRecording}
+							style={{ ...toolButtonStyle(), cursor: isTranscribing ? 'default' : 'pointer' }}
+							title={t('AI_ASSISTANT.DICTATE', 'Dictate a message')}
+							aria-label={t('AI_ASSISTANT.DICTATE', 'Dictate a message')}
 						>
 							{isTranscribing ? (
 								<span
