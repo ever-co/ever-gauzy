@@ -197,3 +197,7 @@ export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
 export { TermsAcceptanceModule } from './lib/terms-acceptance/terms-acceptance.module';
 export { TermsAcceptanceService } from './lib/terms-acceptance/terms-acceptance.service';
+// The instance-wide counters of `GET /api/stats/global`, for the anonymous usage statistics plugin,
+// which reads the same counters outside any request (instance-wide, never per tenant).
+export { StatsModule } from './lib/stats/stats.module';
+export { StatsService } from './lib/stats/stats.service';

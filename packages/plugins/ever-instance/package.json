@@ -1,0 +1,55 @@
+{
+	"name": "@gauzy/plugin-ever-instance",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform library: the identity of this installation (one row) and its statistics key, encrypted at rest",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy",
+		"directory": "packages/plugins/ever-instance"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"license": "AGPL-3.0",
+	"private": true,
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"scripts": {
+		"lib:build": "yarn nx build plugin-ever-instance",
+		"lib:build:prod": "yarn nx build plugin-ever-instance",
+		"lib:watch": "yarn nx build plugin-ever-instance --watch"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^11.1.26"
+	},
+	"dependencies": {
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"rxjs": "^7.8.2",
+		"tslib": "^2.6.2",
+		"typeorm": "^1.0.0"
+	},
+	"devDependencies": {
+		"@types/jest": "30.0.0",
+		"@types/node": "^24.10.0",
+		"typescript": "^5.9.3"
+	},
+	"keywords": [
+		"gauzy",
+		"ever-platform",
+		"instance",
+		"plugin"
+	],
+	"engines": {
+		"node": ">=22",
+		"yarn": ">=1.22"
+	},
+	"sideEffects": false
+}
