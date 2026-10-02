@@ -8,11 +8,12 @@ import { join } from 'node:path';
  */
 const PLUGINS_SOURCE = readFileSync(join(__dirname, 'plugins.ts'), 'utf8');
 const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.\/)[^']+)'/g), (match) => match[1]).filter(
-	(name) => name !== '@gauzy/plugin-auth-zitadel' && name !== '@gauzy/plugin-auth-keycloak'
+	(name) => name !== '@gauzy/plugin-auth-zitadel' && name !== '@gauzy/plugin-auth-keycloak' && name !== '@gauzy/plugin-ever-stats'
 );
 
 class AuthZitadelPlugin {}
 class AuthKeycloakPlugin {}
+class EverStatsPlugin {}
 
 /** A stand-in plugin class; `init()` mimics the configurable plugins. */
 function stubPluginClass() {
@@ -44,6 +45,10 @@ function loadPlugins(env: Record<string, string | undefined>): unknown[] {
 			jest.doMock('@gauzy/plugin-auth-keycloak', () => ({
 				AuthKeycloakPlugin,
 				isKeycloakEnabled: jest.requireActual('../../../packages/plugins/auth-keycloak/src/lib/auth-keycloak.config').isKeycloakEnabled
+			}));
+			jest.doMock('@gauzy/plugin-ever-stats', () => ({
+				EverStatsPlugin,
+				isEverStatsEnabled: jest.requireActual('../../../packages/plugins/ever-stats/src/lib/ever-stats-enabled').isEverStatsEnabled
 			}));
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			plugins = require('./plugins').plugins;
@@ -78,5 +83,24 @@ describe('API plugin list: optional sign-in plugins', () => {
 		const plugins = loadPlugins({ ZITADEL_ENABLED: undefined, KEYCLOAK_ENABLED: undefined, ...env });
 		expect(plugins.includes(AuthZitadelPlugin)).toBe(zitadel);
 		expect(plugins.includes(AuthKeycloakPlugin)).toBe(keycloak);
+	});
+});
+
+describe('API plugin list: anonymous usage statistics', () => {
+	it.each([
+		['unset (the default)', undefined, true, 0],
+		['true', 'true', true, 0],
+		['false', 'false', false, 0],
+		['TRUE', 'TRUE', true, 1],
+		['1', '1', true, 1]
+	])('EVER_STATS_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ EVER_STATS_ENABLED: value });
+			expect(plugins.includes(EverStatsPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('EVER_STATS_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
 	});
 });

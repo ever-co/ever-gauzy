@@ -11,6 +11,7 @@ import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async
 import { DashboardTimeTrackReactUiPlugin } from '@gauzy/plugin-dashboard-time-track-react-ui';
 import { AiChatReactUiPlugin } from '@gauzy/plugin-ai-chat-react-ui';
 import { AuthZitadelUiPlugin } from '@gauzy/plugin-auth-zitadel-ui';
+import { EverStatsUiPlugin } from '@gauzy/plugin-ever-stats-ui';
 import { DashboardTimeTrackAngularUiPlugin } from '@gauzy/plugin-dashboard-time-track-angular-ui';
 import { DayOfWeek, PluginUiConfig } from '@gauzy/plugin-ui';
 import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
@@ -103,6 +104,10 @@ export const uiPluginConfig: PluginUiConfig = {
 
 		// Ever ID sign-in pages and Settings > Connected identities. Nothing of it is visible unless
 		// the web app has ZITADEL_AUTH_LINK set and the API reports Ever ID sign-in as enabled.
-		AuthZitadelUiPlugin
+		AuthZitadelUiPlugin,
+
+		// Settings > Anonymous usage statistics: the controls for the operator of the installation,
+		// "Managed by the instance operator" for everyone else.
+		EverStatsUiPlugin
 	]
 };

@@ -1,0 +1,17 @@
+{
+	"$comment": "Every endpoint of this module that answers without an Ever Platform credential, and every request Ever Platform makes to an installation through it. routes-manifest.spec.ts compares it with the registered routes; UPDATE_ROUTES_MANIFEST=1 rewrites it.",
+	"version": 1,
+	"product": "gauzy",
+	"module": "ever-stats",
+	"public_endpoints": [
+		{
+			"method": "GET",
+			"path": "/api/ever-stats/state",
+			"auth": "none",
+			"mounted_when": "EVER_STATS_SERVES contains teams",
+			"answers": "{\"enabled\": true|false}",
+			"purpose": "The paired Ever Teams web app reads it before sending its own version-only report, and sends nothing when it is false."
+		}
+	],
+	"platform_requests": []
+}

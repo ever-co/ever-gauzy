@@ -415,6 +415,8 @@ const getEnvApi = () => {
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
 		...addsConfig,
+		// The embedded server reports its anonymous usage statistics as a desktop installation.
+		EVER_INSTALL_SOURCE: 'desktop',
 		...desktopSecretsToEnv(secret)
 	};
 };

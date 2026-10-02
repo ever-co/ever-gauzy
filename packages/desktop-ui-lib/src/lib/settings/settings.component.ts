@@ -377,6 +377,23 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			]
 		},
 		{
+			title: 'Anonymous usage statistics',
+			fields: [
+				{
+					// `false` switches the anonymous usage statistics off (applies on the next start).
+					name: 'EVER_STATS_ENABLED',
+					field: 'EVER_STATS_ENABLED',
+					value: ''
+				},
+				{
+					// Two-letter country to declare in the reports (empty: undeclared).
+					name: 'EVER_STATS_COUNTRY',
+					field: 'EVER_STATS_COUNTRY',
+					value: ''
+				}
+			]
+		},
+		{
 			title: 'Other',
 			fields: [
 				{

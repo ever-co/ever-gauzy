@@ -402,6 +402,8 @@ const getEnvApi = () => {
 		DEBUG: 'true',
 		API_PORT: String(config.port),
 		...addsConfig,
+		// The embedded server reports its anonymous usage statistics as a desktop installation.
+		EVER_INSTALL_SOURCE: 'desktop',
 		...desktopSecretsToEnv(secret)
 	};
 };

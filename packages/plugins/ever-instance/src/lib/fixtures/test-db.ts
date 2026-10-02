@@ -22,14 +22,27 @@ export function everInstanceMigration(): { up(runner: unknown): Promise<void>; d
 	return new EverInstance1790000021000();
 }
 
+/** Postgres runs in a schema of its own, so the suites never touch tables another test left behind. */
+const PG_SCHEMA = 'ever_stats_test';
+
 export async function openTestDataSource(target: { name: TestDialect; url?: string }): Promise<DataSource> {
-	const dataSource = new DataSource(
-		target.name === 'better-sqlite3'
-			? { type: 'better-sqlite3', database: ':memory:' }
-			: ({ type: target.name, url: target.url } as never)
-	);
-	await dataSource.initialize();
-	return dataSource;
+	if (target.name === 'better-sqlite3') {
+		const sqlite = new DataSource({ type: 'better-sqlite3', database: ':memory:' });
+		await sqlite.initialize();
+		return sqlite;
+	}
+	if (target.name === 'postgres') {
+		const setup = new DataSource({ type: 'postgres', url: target.url } as never);
+		await setup.initialize();
+		await setup.query(`CREATE SCHEMA IF NOT EXISTS "${PG_SCHEMA}"`);
+		await setup.destroy();
+		const pg = new DataSource({ type: 'postgres', url: target.url, schema: PG_SCHEMA, extra: { options: `-c search_path=${PG_SCHEMA}` } } as never);
+		await pg.initialize();
+		return pg;
+	}
+	const other = new DataSource({ type: target.name, url: target.url } as never);
+	await other.initialize();
+	return other;
 }
 
 export function q(dialect: TestDialect, name: string): string {

@@ -3,7 +3,7 @@ module.exports = {
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
-		'^.+\.[tj]s$': [
+		'^.+\\.[tj]s$': [
 			'ts-jest',
 			{
 				tsconfig: '<rootDir>/tsconfig.spec.json',
