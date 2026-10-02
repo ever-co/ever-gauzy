@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { chatTheme } from '../chat-theme';
 import { type ChatTranslate, passthroughChatTranslate } from '../use-chat-translate';
-import {
-	GAUZY_LOGO_EVER,
-	GAUZY_LOGO_EVER_GROUP_TRANSFORM,
-	GAUZY_LOGO_GROUP_TRANSFORM,
-	GAUZY_LOGO_REGISTERED,
-	GAUZY_LOGO_TEXT_TRANSFORM
-} from '../gauzy-logo-paths';
+import { AssistantRobot } from './AssistantRobot';
 
 export interface ChatWelcomeProps {
 	/** `t(key, fallback)` from the panel — see `useChatTranslate`. */
@@ -17,9 +11,6 @@ export interface ChatWelcomeProps {
 /** The AI accent: the chat's blue into the user bubble's violet. */
 const AI_FROM = '#3366ff';
 const AI_TO = '#8b5cf6';
-
-/** A four-point sparkle centred on 12,12 in a 24-unit box — the conventional "AI" glyph. */
-const SPARKLE_PATH = 'M12,3 C12.8,9 15,11.2 21,12 C15,12.8 12.8,15 12,21 C11.2,15 9,12.8 3,12 C9,11.2 11.2,9 12,3 Z';
 
 /**
  * One round of the demo, as line widths (px) — no words, just the shape of a conversation. Rounds
@@ -55,7 +46,7 @@ const welcomeCss = `
 		40% { transform: translateY(-2px); opacity: 1; }
 	}
 	@keyframes gzWelcomeLine { from { transform: scaleX(0); } to { transform: none; } }
-	.gz-ai-welcome-logo { animation: gzWelcomeFade 0.6s ease both; }
+	.gz-ai-welcome-robot { animation: gzWelcomeFade 0.6s ease both; }
 	.gz-ai-welcome-copy { animation: gzWelcomeFade 0.6s ease 0.2s both; }
 	.gz-ai-welcome-bubble {
 		transform-origin: bottom center;
@@ -72,7 +63,7 @@ const welcomeCss = `
 	.gz-ai-welcome-paused .gz-ai-welcome-line,
 	.gz-ai-welcome-paused .gz-ai-welcome-bubble { animation-play-state: paused; }
 	@media (prefers-reduced-motion: reduce) {
-		.gz-ai-welcome-logo,
+		.gz-ai-welcome-robot,
 		.gz-ai-welcome-copy,
 		.gz-ai-welcome-bubble,
 		.gz-ai-welcome-dot,
@@ -114,44 +105,7 @@ function useIsVisible(ref: { current: HTMLElement | null }): boolean {
 	return inView && pageVisible;
 }
 
-/** The Ever Gauzy wordmark, drawn from the logo file's own vectors in the current text colour. */
-function GauzyWordmark({ width }: { width: number }) {
-	return (
-		<svg
-			viewBox="0 0 128.104 25"
-			width={width}
-			height={(width * 25) / 128.104}
-			role="img"
-			aria-label="Ever Gauzy"
-			style={{ display: 'block', overflow: 'visible' }}
-		>
-			<defs>
-				{/* The logo's own typeface — the same import the logo file carries. */}
-				<style>{`@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@1,300&display=swap');`}</style>
-			</defs>
-			<g transform={GAUZY_LOGO_GROUP_TRANSFORM} fill="currentColor">
-				<g transform={GAUZY_LOGO_EVER_GROUP_TRANSFORM}>
-					<path d={GAUZY_LOGO_REGISTERED.d} transform={GAUZY_LOGO_REGISTERED.transform} />
-					<path d={GAUZY_LOGO_EVER.d} transform={GAUZY_LOGO_EVER.transform} />
-				</g>
-				<text
-					transform={GAUZY_LOGO_TEXT_TRANSFORM}
-					fontFamily="'Fira Sans', sans-serif"
-					fontSize={21}
-					fontWeight={300}
-					fontStyle="italic"
-					letterSpacing="-0.035em"
-				>
-					<tspan x={0} y={0}>
-						gauzy
-					</tspan>
-				</text>
-			</g>
-		</svg>
-	);
-}
-
-/** The assistant's avatar in the demo: the AI sparkle on the blue-to-violet accent. */
+/** The assistant's avatar in the demo: the robot glyph (as in the panel header) on the AI accent. */
 function AssistantAvatar() {
 	return (
 		<span
@@ -167,8 +121,21 @@ function AssistantAvatar() {
 				color: '#ffffff'
 			}}
 		>
-			<svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-				<path d={SPARKLE_PATH} />
+			<svg
+				width="10"
+				height="10"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="2.4"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M12 8V4H8" />
+				<rect width="16" height="12" x="4" y="8" rx="2" />
+				<path d="M15 13v2" />
+				<path d="M9 13v2" />
 			</svg>
 		</span>
 	);
@@ -195,7 +162,7 @@ function Line({ width, color, delay, animated }: { width: number; color: string;
 /**
  * ChatWelcome
  *
- * Empty-state view of a new conversation: the Ever Gauzy wordmark, then a small looping sketch of a
+ * Empty-state view of a new conversation: the animated assistant robot, then a small looping sketch of a
  * conversation — no words, only its shape. A question bubble pops in on the user's side, the
  * assistant shows typing dots, then its reply bubble writes itself line by line before the round
  * fades and the next begins. It uses the chat's own bubble colours and corners, so it previews what
@@ -280,8 +247,8 @@ export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWel
 		<div ref={rootRef} style={containerStyle} className={visible ? undefined : 'gz-ai-welcome-paused'}>
 			<style>{welcomeCss}</style>
 
-			<div className="gz-ai-welcome-logo" style={{ color: chatTheme.textPrimary }}>
-				<GauzyWordmark width={112} />
+			<div className="gz-ai-welcome-robot">
+				<AssistantRobot size={92} talking={!reducedMotion && (phase === 'typing' || phase === 'answer')} />
 			</div>
 
 			{/* The demo. Fixed at the height of its LONGEST round (a two-line question over a four-line
