@@ -863,6 +863,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
 				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
 
+				// Raw knex bypasses MikroORM's soft-delete filter; TypeORM's query builder excludes deleted rows
 				// Step 1: Get distinct project IDs that match the filters
 				let projectQuery = knex('organization_project')
 					.innerJoin('time_log', 'organization_project.id', 'time_log.projectId')
@@ -876,6 +877,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					.andWhere('time_log.organizationId', organizationId)
 					.andWhere('time_log.startedAt', '>=', start)
 					.andWhere('time_log.startedAt', '<', end)
+					.whereNull('organization_project.deletedAt')
+					.whereNull('employee.deletedAt')
+					.whereNull('time_log.deletedAt')
 					.groupBy('organization_project.id');
 
 				if (isNotEmpty(employeeIds)) {
@@ -897,7 +901,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Step 2: Get project details
 				const projectRows = await knex('organization_project')
 					.select('id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount')
-					.whereIn('id', matchedProjectIds);
+					.whereIn('id', matchedProjectIds)
+					.whereNull('deletedAt');
 
 				// Step 3: Get timeLogs with employee data for these projects
 				let timeLogQuery = knex('time_log')
@@ -913,7 +918,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					.andWhere('time_log.organizationId', organizationId)
 					.andWhere('time_log.startedAt', '>=', start)
 					.andWhere('time_log.startedAt', '<', end)
-					.whereIn('time_log.projectId', matchedProjectIds);
+					.whereIn('time_log.projectId', matchedProjectIds)
+					.whereNull('time_log.deletedAt')
+					.whereNull('employee.deletedAt');
 
 				if (isNotEmpty(employeeIds)) {
 					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
@@ -1079,6 +1086,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
 				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
 
+				// Raw knex bypasses MikroORM's soft-delete filter; TypeORM's query builder excludes deleted rows
 				// Step 1: Get distinct contact IDs that match the filters
 				let contactQuery = knex('organization_contact')
 					.innerJoin('time_log', 'organization_contact.id', 'time_log.organizationContactId')
@@ -1092,6 +1100,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					.andWhere('time_log.organizationId', organizationId)
 					.andWhere('time_log.startedAt', '>=', start)
 					.andWhere('time_log.startedAt', '<', end)
+					.whereNull('organization_contact.deletedAt')
+					.whereNull('employee.deletedAt')
+					.whereNull('time_log.deletedAt')
 					.groupBy('organization_contact.id');
 
 				if (isNotEmpty(employeeIds)) {
@@ -1113,7 +1124,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				// Step 2: Get contact details
 				const contactRows = await knex('organization_contact')
 					.select('id', 'name', 'budget', 'budgetType')
-					.whereIn('id', matchedContactIds);
+					.whereIn('id', matchedContactIds)
+					.whereNull('deletedAt');
 
 				// Step 3: Get timeLogs with employee data for these contacts
 				let timeLogQuery = knex('time_log')
@@ -1129,7 +1141,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					.andWhere('time_log.organizationId', organizationId)
 					.andWhere('time_log.startedAt', '>=', start)
 					.andWhere('time_log.startedAt', '<', end)
-					.whereIn('time_log.organizationContactId', matchedContactIds);
+					.whereIn('time_log.organizationContactId', matchedContactIds)
+					.whereNull('time_log.deletedAt')
+					.whereNull('employee.deletedAt');
 
 				if (isNotEmpty(employeeIds)) {
 					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
