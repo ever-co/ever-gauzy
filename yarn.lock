@@ -963,10 +963,10 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/router@21.0.7":
-  version "21.0.7"
-  resolved "https://registry.yarnpkg.com/@angular/router/-/router-21.0.7.tgz#1ce26292ed24ee9ea7fce4b23189c07f5e36a2ca"
-  integrity sha512-MBmryTBCkyc4EjfI0NWfNNTS6Dcx/yQ77hOdDrqLMdbtOtbbD9BnUXd1qRcs73s0D5Stjk1IH49D66JMKn9Xew==
+"@angular/router@21.2.24":
+  version "21.2.24"
+  resolved "https://registry.yarnpkg.com/@angular/router/-/router-21.2.24.tgz#f7d0b9794338e39649a928c6bf53566da8a7d35d"
+  integrity sha512-E72AvyTRGv5rDa/SlfSztThJ+9SemjnblzB9jTb8LJOFPo7u4GlfytvRE8DnxwmTfnlZcA6Sr10zlSDnL4pmyw==
   dependencies:
     tslib "^2.3.0"
 
