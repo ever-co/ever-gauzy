@@ -72,9 +72,25 @@ const welcomeCss = `
 	}
 `;
 
-/** True when the user asked the OS for less motion — the demo then shows one finished round. */
-function prefersReducedMotion(): boolean {
-	return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+/**
+ * Does the user ask the OS for less motion? Live: the setting can change while the welcome is
+ * open, and the demo's JavaScript timeline must stop then too — the CSS media query alone only
+ * stops the CSS animations.
+ */
+function usePrefersReducedMotion(): boolean {
+	const [reduced, setReduced] = useState(
+		() => typeof window !== 'undefined' && !!window.matchMedia?.(REDUCED_MOTION_QUERY).matches
+	);
+	useEffect(() => {
+		if (typeof window === 'undefined' || !window.matchMedia) return;
+		const query = window.matchMedia(REDUCED_MOTION_QUERY);
+		const onChange = () => setReduced(query.matches);
+		query.addEventListener('change', onChange);
+		return () => query.removeEventListener('change', onChange);
+	}, []);
+	return reduced;
 }
 
 /**
@@ -170,13 +186,19 @@ function Line({ width, color, delay, animated }: { width: number; color: string;
  * with reduced motion one finished exchange is shown still.
  */
 export function ChatWelcome({ translate: t = passthroughChatTranslate }: ChatWelcomeProps) {
-	const [reducedMotion] = useState(prefersReducedMotion);
+	const reducedMotion = usePrefersReducedMotion();
 	const [round, setRound] = useState(0);
 	const [phase, setPhase] = useState<DemoPhase>(reducedMotion ? 'hold' : 'ask');
 	const rootRef = useRef<HTMLDivElement>(null);
 	const visible = useIsVisible(rootRef);
 
 	const demo = ROUNDS[round % ROUNDS.length];
+
+	// Turned on mid-round: settle on the finished exchange of the current round and stay there.
+	// Turned off again: the timeline below simply resumes from it.
+	useEffect(() => {
+		if (reducedMotion) setPhase('hold');
+	}, [reducedMotion]);
 
 	// The round's timeline: one timer at a time, and none at all while the welcome is not on screen
 	// or the user prefers reduced motion (which stops at one finished exchange).
