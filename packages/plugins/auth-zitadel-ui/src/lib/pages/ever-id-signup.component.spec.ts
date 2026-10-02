@@ -141,6 +141,26 @@ describe('EverIdSignupComponent', () => {
 		}
 	});
 
+	it('keeps the page recoverable when the key stays busy longer than the automatic tries', () => {
+		jest.useFakeTimers();
+		try {
+			const busy = throwError(() => ({ status: 409, error: { code: 'handoff_busy', retryAfter: 2 } }));
+			api.signupDetails.mockReturnValue(busy);
+			const component = create();
+			jest.advanceTimersByTime(3 * 2000);
+			expect(api.signupDetails).toHaveBeenCalledTimes(4);
+			expect(component.expired).toBe(false);
+			expect(component.detailsBusy).toBe(true);
+
+			api.signupDetails.mockReturnValue(of({ email: 'new.person@example.test', terms: [] }));
+			component.retryDetails();
+			expect(component.detailsBusy).toBe(false);
+			expect(component.details.email).toBe('new.person@example.test');
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
 	it('lets the person submit again after a busy or throttled answer', () => {
 		api.signup.mockReturnValueOnce(throwError(() => ({ status: 409, error: { code: 'handoff_busy', retryAfter: 2 } })));
 		const component = create();

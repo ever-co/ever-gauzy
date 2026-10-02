@@ -95,6 +95,11 @@ function retryDelayMs(failure: { error?: { retryAfter?: unknown } } | null | und
 						<a nbButton ghost fullWidth routerLink="/auth/login">{{ 'AUTH_ZITADEL.SIGNUP.CANCEL' | translate }}</a>
 					</form>
 				}
+			} @else if (detailsBusy) {
+				<nb-alert status="warning" role="alert">{{ 'AUTH_ZITADEL.ERRORS.busy' | translate }}</nb-alert>
+				<button nbButton status="primary" fullWidth type="button" (click)="retryDetails()">
+					{{ 'AUTH_ZITADEL.SIGNUP.RETRY' | translate }}
+				</button>
 			} @else {
 				<p>{{ 'AUTH_ZITADEL.HANDOFF.SIGNING_IN' | translate }}</p>
 			}
@@ -137,6 +142,8 @@ export class EverIdSignupComponent implements OnInit {
 	failed = false;
 	/** Another attempt was using the key: the person may simply submit again. */
 	retryLater = false;
+	/** The details could not be read yet because another attempt kept the key busy. */
+	detailsBusy = false;
 	busy = false;
 	private handoff = '';
 	private detailsRetries = 0;
@@ -172,17 +179,29 @@ export class EverIdSignupComponent implements OnInit {
 					this.cdr.markForCheck();
 				},
 				error: (failure) => {
-					// 409: another attempt (another tab) is using the key right now; ask again shortly.
-					if (failure?.status === 409 && this.detailsRetries < MAX_DETAILS_RETRIES) {
-						this.detailsRetries++;
-						const timer = setTimeout(() => this.loadDetails(), retryDelayMs(failure));
-						this.destroyRef.onDestroy(() => clearTimeout(timer));
-						return;
+					// 409: another attempt (another tab) is using the key right now; ask again shortly, and
+					// after a few tries let the person ask again: the key is still valid.
+					if (failure?.status === 409) {
+						if (this.detailsRetries < MAX_DETAILS_RETRIES) {
+							this.detailsRetries++;
+							const timer = setTimeout(() => this.loadDetails(), retryDelayMs(failure));
+							this.destroyRef.onDestroy(() => clearTimeout(timer));
+							return;
+						}
+						this.detailsBusy = true;
+					} else {
+						this.expired = true;
 					}
-					this.expired = true;
 					this.cdr.markForCheck();
 				}
 			});
+	}
+
+	/** Reads the details again after the automatic tries met a busy key. */
+	retryDetails(): void {
+		this.detailsBusy = false;
+		this.detailsRetries = 0;
+		this.loadDetails();
 	}
 
 	/** Loads the documents Gauzy currently requires (again, after a failure). */

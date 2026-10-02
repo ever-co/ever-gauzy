@@ -43,8 +43,8 @@ function brandingText(value: unknown): string | undefined {
 	if (typeof value !== 'string') {
 		return undefined;
 	}
-	// Control characters (line breaks included) never belong in a name or a signature line.
-	const text = value.replace(/\p{Cc}+/gu, ' ').trim();
+	// Control characters and line or paragraph separators never belong in a name or a signature line.
+	const text = value.replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, ' ').trim();
 	return text ? text.slice(0, MAX_BRANDING_TEXT) : undefined;
 }
 

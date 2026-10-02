@@ -212,9 +212,10 @@ describe('Ever ID sign-in (HTTP, against a mock OpenID Provider)', () => {
 		it('answers 409 handoff_busy while the key is held, without spending an attempt', async () => {
 			t.accounts.addUser({ email: 'person-j@example.test' });
 			const handoff = hashParam(await signIn('person-j', { email: 'person-j@example.test' }), 'handoff');
-			expect(await t.store.hold('confirm', handoff)).toBe(true);
+			const hold = await t.store.hold('confirm', handoff);
+			expect(hold).toBeTruthy();
 			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: 'WRONG1' })).status).toBe(409);
-			await t.store.release('confirm', handoff);
+			await t.store.release('confirm', handoff, hold);
 			expect(await t.store.get('confirm', handoff)).toEqual(expect.objectContaining({ attempts: 0 }));
 		});
 

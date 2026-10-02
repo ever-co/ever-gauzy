@@ -203,13 +203,14 @@ export class ZitadelSigninService {
 	 *   a wrong code.
 	 */
 	async confirm(key: string, code: string): Promise<ZitadelSigninWorkspaceResponse> {
-		if (!(await this.store.hold('confirm', key))) {
+		const hold = await this.store.hold('confirm', key);
+		if (!hold) {
 			throw handoffBusy();
 		}
 		try {
 			return await this.confirmHeld(key, code);
 		} finally {
-			await this.store.release('confirm', key);
+			await this.store.release('confirm', key, hold);
 		}
 	}
 

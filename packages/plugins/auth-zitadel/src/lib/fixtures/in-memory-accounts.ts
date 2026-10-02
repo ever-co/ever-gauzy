@@ -10,6 +10,7 @@ import { ZitadelAccount, ZitadelLinkMethod } from '../entities/zitadel-account.e
 import { ZitadelOrganization } from '../entities/zitadel-organization.entity';
 import { GauzyAuthPort, ZitadelRegistrationInput } from '../ports/gauzy-auth.port';
 import { ZitadelIdentity } from '../services/zitadel-account.service';
+import { RELEASE_HOLD_SCRIPT } from '../services/zitadel-store.service';
 import { ZitadelSubscriptionCheck } from '../services/zitadel-subscription-gate.service';
 
 export interface TestUser {
@@ -303,6 +304,40 @@ export class FakeRedis {
 			return -2;
 		}
 		return entry.expiresAt === null ? -1 : Math.max(0, entry.expiresAt - Date.now());
+	}
+
+	/** `MULTI` ... `EXEC` with the commands the store queues, run one after the other. */
+	multi() {
+		const queued: Array<() => Promise<unknown>> = [];
+		const chain = {
+			incr: (key: string) => {
+				queued.push(() => this.incr(key));
+				return chain;
+			},
+			pTTL: (key: string) => {
+				queued.push(() => this.pTTL(key));
+				return chain;
+			},
+			exec: async () => {
+				this.calls.push('multi');
+				const results: unknown[] = [];
+				for (const command of queued) {
+					results.push(await command());
+				}
+				return results;
+			}
+		};
+		return chain;
+	}
+
+	/** Runs the store's one script: delete a key only while it holds the given value. */
+	async eval(script: string, options: { keys: string[]; arguments: string[] }): Promise<number> {
+		this.calls.push('eval');
+		if (script !== RELEASE_HOLD_SCRIPT) {
+			throw new Error('FakeRedis runs only the hold release script');
+		}
+		const [key] = options.keys;
+		return this.entry(key)?.value === options.arguments[0] ? Number(this.data.delete(key)) : 0;
 	}
 
 	/** Test hook: drops the expiry of a key, as a replica stopping between counting and setting the expiry would leave it. */

@@ -88,13 +88,20 @@ All under `/api/auth/zitadel`:
 - `POST /signup/details`, `POST /signup` (anyone): the Ever Cloud sign-up
   confirmation page and the confirmation itself. The details list the legal
   documents to accept (in the `language` header's language, as `/signup`
-  checks them), each with an absolute link to the web app's page for it.
+  checks them), each with an absolute URL: the web app's page for it, or
+  the document's own address when Gauzy publishes one.
 - `POST /token` (first-party apps): exchanges an Ever ID token of an allowed
   client for the workspace list. An access token is accepted only when its
   `aud` names an allowed client. The app may add its `appName`, `appLogo`,
   `appSignature`, `appLink`, `companyName` and `companyLink` (links https
   only) for Gauzy's one-time code e-mail; a link carrying the code is never
   taken from a request.
+- `POST /link`, `GET /link/start`, `POST /link/preview`,
+  `POST /link/confirm` (signed-in user): connect an Ever ID from Settings.
+- `DELETE /link/:id`, `GET /identities` (signed-in user): disconnect or list
+  this account's Ever IDs.
+- `POST /backchannel-logout` (the issuer): OpenID Connect back-channel
+  logout.
 
 `/token`, `/confirm`, `/signup/details` and `/signup` accept up to 120
 requests a minute per address: another first-party app's server makes them
@@ -104,12 +111,6 @@ over a limit the answer is 429 (with `Retry-After`). While another attempt
 uses the same key (a code check or a sign-up still running) they answer 409
 `{"code": "handoff_busy", "retryAfter": 2}` with `Retry-After`: the key is
 still valid. A used-up or expired key answers 410.
-- `POST /link`, `GET /link/start`, `POST /link/preview`,
-  `POST /link/confirm` (signed-in user): connect an Ever ID from Settings.
-- `DELETE /link/:id`, `GET /identities` (signed-in user): disconnect or list
-  this account's Ever IDs.
-- `POST /backchannel-logout` (the issuer): OpenID Connect back-channel
-  logout.
 
 While the plugin is loaded but not configured, every route except `/config`
 answers 404 and no outbound request is made.
@@ -122,8 +123,9 @@ answers 404 and no outbound request is made.
   the unchanged `POST /api/auth/signin.workspace`. No token, e-mail address
   or other personal data is ever put in a URL. Gauzy's own access and
   refresh tokens are issued exactly as for the e-mail code sign-in. The
-  workspace tokens in the list are valid for 15 minutes (the window in which
-  the sign-in is bound to its Ever ID session, see back-channel logout).
+  workspace tokens in the list are valid for 15 minutes, or less when
+  `JWT_TOKEN_EXPIRATION_TIME` is shorter (the window in which the sign-in
+  is bound to its Ever ID session, see back-channel logout).
 - **Team lists.** When a link is confirmed with Gauzy's code for another
   first-party app (`/confirm` with a key from `/token`), each workspace
   carries the team list Gauzy's own code check returns (`current_teams`), as

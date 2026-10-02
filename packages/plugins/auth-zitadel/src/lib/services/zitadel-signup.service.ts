@@ -232,7 +232,8 @@ export class ZitadelSignupService {
 		}
 		const terms = Array.isArray(body.terms) ? body.terms : [];
 		this.assertRequiredTermsAccepted(terms, locale);
-		if (!(await this.store.hold('signup', key))) {
+		const keyHold = await this.store.hold('signup', key);
+		if (!keyHold) {
 			throw handoffBusy();
 		}
 		try {
@@ -241,7 +242,8 @@ export class ZitadelSignupService {
 				throw new GoneException();
 			}
 			const pendingKey = this.pendingKey(offer.identity);
-			if (!(await this.store.hold('pending-signup', pendingKey))) {
+			const identityHold = await this.store.hold('pending-signup', pendingKey);
+			if (!identityHold) {
 				// Another attempt is finishing this identity's sign-up: this key stays usable.
 				await this.store.put('signup', key, offer, this.config.settings.confirmTtlSeconds);
 				throw handoffBusy();
@@ -266,22 +268,23 @@ export class ZitadelSignupService {
 				await this.store.put('pending-signup', pendingKey, pending, this.config.settings.confirmTtlSeconds);
 				return await this.attempt(pending, offer.sid, offer.hints);
 			} finally {
-				await this.store.release('pending-signup', pendingKey);
+				await this.store.release('pending-signup', pendingKey, identityHold);
 			}
 		} finally {
-			await this.store.release('signup', key);
+			await this.store.release('signup', key, keyHold);
 		}
 	}
 
 	/** Runs `task` while this attempt holds the identity's pending sign-up. */
 	private async withIdentityHeld<T>(pendingKey: string, task: () => Promise<T>): Promise<T> {
-		if (!(await this.store.hold('pending-signup', pendingKey))) {
+		const hold = await this.store.hold('pending-signup', pendingKey);
+		if (!hold) {
 			throw handoffBusy();
 		}
 		try {
 			return await task();
 		} finally {
-			await this.store.release('pending-signup', pendingKey);
+			await this.store.release('pending-signup', pendingKey, hold);
 		}
 	}
 

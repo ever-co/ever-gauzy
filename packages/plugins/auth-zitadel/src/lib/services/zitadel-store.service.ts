@@ -10,6 +10,13 @@ export interface ZitadelCache {
 	del(key: string): Promise<unknown>;
 }
 
+/** A Redis transaction (`MULTI` ... `EXEC`) with the commands the store queues. */
+export interface ZitadelRedisMulti {
+	incr(key: string): ZitadelRedisMulti;
+	pTTL(key: string): ZitadelRedisMulti;
+	exec(): Promise<unknown[] | null>;
+}
+
 /** Minimal shape of the optional Redis client. */
 export interface ZitadelRedis {
 	get(key: string): Promise<string | null>;
@@ -18,10 +25,17 @@ export interface ZitadelRedis {
 	getDel(key: string): Promise<string | null>;
 	del(key: string): Promise<unknown>;
 	exists(key: string): Promise<number>;
-	incr(key: string): Promise<number>;
 	pExpire(key: string, milliseconds: number): Promise<unknown>;
-	pTTL(key: string): Promise<number>;
+	multi(): ZitadelRedisMulti;
+	eval(script: string, options: { keys: string[]; arguments: string[] }): Promise<unknown>;
 }
+
+/**
+ * Ends a hold only while it is still the caller's: a hold that outlived its lifetime may belong to
+ * another attempt by now, and that one is never ended by mistake.
+ */
+export const RELEASE_HOLD_SCRIPT =
+	"if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
 
 /** The outcome of counting one use of a key ({@link ZitadelStoreService.hit}). */
 export interface ZitadelRateResult {
@@ -37,9 +51,13 @@ const CLAIM_TTL_MS = 10 * 60 * 1000;
 
 /**
  * Longest time one attempt may hold a key. An attempt releases it as soon as it is done; this only
- * bounds how long a key reads as busy when an attempt never finishes (a crashed replica).
+ * bounds how long a key reads as busy when an attempt never finishes (a crashed replica). It is far
+ * above what a code check or Gauzy's register path takes.
  */
 export const HOLD_TTL_MS = 30 * 1000;
+
+/** What {@link ZitadelStoreService.hold} hands out: the proof that ends that hold, and only it. */
+export type ZitadelHold = string;
 
 /**
  * Short-lived server-side records: one-time hand-off keys, pending confirmations and pending
@@ -56,7 +74,7 @@ export const HOLD_TTL_MS = 30 * 1000;
 @Injectable()
 export class ZitadelStoreService {
 	private readonly claimed = new Map<string, number>();
-	private readonly holds = new Map<string, number>();
+	private readonly holds = new Map<string, { owner: ZitadelHold; expiresAt: number }>();
 	private readonly counters = new Map<string, { count: number; resetAt: number }>();
 
 	constructor(
@@ -140,37 +158,42 @@ export class ZitadelStoreService {
 	}
 
 	/**
-	 * Marks a key as held by the current attempt, for at most {@link HOLD_TTL_MS}. Returns `false`
-	 * when another attempt holds it. Every successful hold must be ended with {@link release}. The
-	 * hold does not replace `take()`, which alone makes a key single-use; it only tells a concurrent
-	 * attempt that the key is busy rather than used up.
+	 * Marks a key as held by the current attempt, for at most {@link HOLD_TTL_MS}. Returns the hold
+	 * (end it with {@link release}), or `null` when another attempt holds the key. The hold does not
+	 * replace `take()`, which alone makes a key single-use; it tells a concurrent attempt that the key
+	 * is busy rather than used up, and lets one attempt at a time work on a pending record.
 	 */
-	async hold(namespace: string, key: string): Promise<boolean> {
+	async hold(namespace: string, key: string): Promise<ZitadelHold | null> {
+		const owner = randomBytes(16).toString('base64url');
 		if (!this.isKey(key)) {
 			// Nothing to hold: a malformed key is never looked up.
-			return true;
+			return owner;
 		}
 		const name = this.holdName(namespace, key);
 		if (this.redis) {
-			return (await this.redis.set(name, '1', { PX: HOLD_TTL_MS, NX: true })) === 'OK';
+			return (await this.redis.set(name, owner, { PX: HOLD_TTL_MS, NX: true })) === 'OK' ? owner : null;
 		}
 		// Checked and set synchronously, so two concurrent calls cannot both hold the key.
 		if (this.isHeldInMemory(name)) {
-			return false;
+			return null;
 		}
-		this.holds.set(name, Date.now() + HOLD_TTL_MS);
-		return true;
+		this.holds.set(name, { owner, expiresAt: Date.now() + HOLD_TTL_MS });
+		return owner;
 	}
 
-	/** Ends a hold taken with {@link hold}. */
-	async release(namespace: string, key: string): Promise<void> {
+	/**
+	 * Ends a hold taken with {@link hold}, only while it is still that hold: one that outlived its
+	 * lifetime and was taken by another attempt meanwhile stays with that attempt.
+	 */
+	async release(namespace: string, key: string, hold: ZitadelHold): Promise<void> {
 		if (!this.isKey(key)) {
 			return;
 		}
 		const name = this.holdName(namespace, key);
 		if (this.redis) {
-			await this.redis.del(name);
-		} else {
+			// Compared and deleted in one step.
+			await this.redis.eval(RELEASE_HOLD_SCRIPT, { keys: [name], arguments: [hold] });
+		} else if (this.holds.get(name)?.owner === hold) {
 			this.holds.delete(name);
 		}
 	}
@@ -192,18 +215,18 @@ export class ZitadelStoreService {
 	async hit(bucket: string, key: string, limit: number, windowMs: number): Promise<ZitadelRateResult> {
 		const name = `${PREFIX}rate:${bucket}:${createHash('sha256').update(key).digest('base64url')}`;
 		if (this.redis) {
-			const count = await this.redis.incr(name);
-			if (count === 1) {
+			const results = await this.redis.multi().incr(name).pTTL(name).exec();
+			const count = Number(results?.[0] ?? 0);
+			let remainingMs = Number(results?.[1] ?? -1);
+			// -1: a new window (or one that lost its expiry when a replica stopped before setting it);
+			// -2: the key ended between the two commands. Either way the window is (re)armed, so a
+			// counter never outlives it.
+			if (!Number.isFinite(remainingMs) || remainingMs < 0) {
 				await this.redis.pExpire(name, windowMs);
+				remainingMs = windowMs;
 			}
 			if (count <= limit) {
 				return { allowed: true, retryAfterSeconds: 0 };
-			}
-			let remainingMs = await this.redis.pTTL(name);
-			if (remainingMs < 0) {
-				// The window lost its expiry (a replica stopped between the two commands): start it again.
-				await this.redis.pExpire(name, windowMs);
-				remainingMs = windowMs;
 			}
 			return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil(remainingMs / 1000)) };
 		}
@@ -249,11 +272,11 @@ export class ZitadelStoreService {
 	}
 
 	private isHeldInMemory(name: string): boolean {
-		const expiresAt = this.holds.get(name);
-		if (expiresAt === undefined) {
+		const hold = this.holds.get(name);
+		if (!hold) {
 			return false;
 		}
-		if (expiresAt <= Date.now()) {
+		if (hold.expiresAt <= Date.now()) {
 			this.holds.delete(name);
 			return false;
 		}

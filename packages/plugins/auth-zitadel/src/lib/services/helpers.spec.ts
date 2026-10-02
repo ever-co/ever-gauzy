@@ -161,7 +161,7 @@ describe('Ever ID plugin helpers', () => {
 			emailBranding({
 				appName: '  Ever Teams\r\nBcc: x@example.test ',
 				appLogo: 'https://teams.example.test/logo.png',
-				appSignature: 'The Ever Teams team',
+				appSignature: 'The Ever\u2028Teams\u2029team',
 				appLink: 'http://teams.example.test',
 				companyName: 'Ever',
 				companyLink: 'https://someone@ever.example.test',
