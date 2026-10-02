@@ -121,6 +121,120 @@ function formatElapsed(seconds: number): string {
 }
 
 /**
+ * Bars in the live level meter — the newest level enters on the right. Enough to span the widest
+ * docked panel; on a narrower one the oldest bars are simply clipped on the left.
+ */
+const LEVEL_BARS = 64;
+/** How often the meter samples the microphone. Slower than a frame, so the bars read as speech. */
+const LEVEL_SAMPLE_MS = 70;
+
+/**
+ * Live microphone level meter for the recording strip.
+ *
+ * Reads the take's own stream through an `AnalyserNode` and scrolls a short history of loudness
+ * across the bars, so the user can see the microphone is actually hearing them. Bars are moved by
+ * writing `transform` directly: a React render per sample would re-render the whole composer 14
+ * times a second. Without Web Audio (or if it fails) the bars simply rest at their floor.
+ */
+function LevelMeter({ stream, color }: { stream: MediaStream | null; color: string }) {
+	const barsRef = useRef<(HTMLSpanElement | null)[]>([]);
+
+	useEffect(() => {
+		if (!stream || typeof window === 'undefined') return;
+		const AudioContextCtor =
+			window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+		if (!AudioContextCtor) return;
+
+		let context: AudioContext | undefined;
+		let source: MediaStreamAudioSourceNode;
+		let analyser: AnalyserNode;
+		try {
+			context = new AudioContextCtor();
+			source = context.createMediaStreamSource(stream);
+			analyser = context.createAnalyser();
+			analyser.fftSize = 512;
+			source.connect(analyser);
+		} catch {
+			// Do not leave a half-built context holding audio resources.
+			void context?.close().catch(() => undefined);
+			return;
+		}
+		const liveContext = context;
+		// Created after the permission prompt resolved, so some browsers start it suspended.
+		void liveContext.resume().catch(() => undefined);
+
+		const samples = new Uint8Array(analyser.fftSize);
+		const levels = new Array<number>(LEVEL_BARS).fill(0);
+		let frame = 0;
+		let last = 0;
+		const tick = (now: number) => {
+			frame = requestAnimationFrame(tick);
+			if (now - last < LEVEL_SAMPLE_MS) return;
+			last = now;
+			analyser.getByteTimeDomainData(samples);
+			let sum = 0;
+			for (let i = 0; i < samples.length; i++) {
+				const centred = (samples[i] - 128) / 128;
+				sum += centred * centred;
+			}
+			// RMS of normal speech sits around 0.05–0.2; scale it so a spoken word fills the bar.
+			const level = Math.min(1, Math.sqrt(sum / samples.length) * 5);
+			levels.shift();
+			levels.push(level);
+			for (let i = 0; i < LEVEL_BARS; i++) {
+				const bar = barsRef.current[i];
+				if (bar) bar.style.transform = `scaleY(${0.18 + levels[i] * 0.82})`;
+			}
+		};
+		frame = requestAnimationFrame(tick);
+
+		return () => {
+			cancelAnimationFrame(frame);
+			try {
+				source.disconnect();
+			} catch {
+				// Already disconnected.
+			}
+			void liveContext.close().catch(() => undefined);
+		};
+	}, [stream]);
+
+	return (
+		<span
+			aria-hidden="true"
+			style={{
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'flex-end',
+				gap: 2,
+				height: 16,
+				flex: 1,
+				minWidth: 0,
+				overflow: 'hidden'
+			}}
+		>
+			{Array.from({ length: LEVEL_BARS }, (_, index) => (
+				<span
+					key={index}
+					ref={(element) => {
+						barsRef.current[index] = element;
+					}}
+					style={{
+						width: 2,
+						height: '100%',
+						flexShrink: 0,
+						borderRadius: 1,
+						backgroundColor: color,
+						transform: 'scaleY(0.18)',
+						transition: `transform ${LEVEL_SAMPLE_MS}ms linear`
+					}}
+				/>
+			))}
+		</span>
+	);
+}
+
+/**
  * The recorder container format.
  *
  * Chrome and Firefox produce WebM/Opus; Safari has no WebM encoder and produces MP4/AAC. Asking for
@@ -168,6 +282,8 @@ export function ChatInput({
 	const [dictation, setDictation] = useState<DictationState>('idle');
 	const [elapsed, setElapsed] = useState(0);
 	const [autoSend, setAutoSend] = useState(false);
+	/** The take's microphone stream, for the level meter. Null whenever no take holds the mic. */
+	const [liveStream, setLiveStream] = useState<MediaStream | null>(null);
 	const [dictationError, setDictationError] = useState<DictationErrorView | null>(null);
 	/** Latest settings opener, for the recorder's callbacks (attached once, at take start). */
 	const onOpenAiSettingsRef = useRef(onOpenAiSettings);
@@ -299,6 +415,7 @@ export function ChatInput({
 	const releaseRecorder = useCallback(() => {
 		recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
 		recorderRef.current = null;
+		setLiveStream(null);
 	}, []);
 
 	// A panel unmounted mid-take (sidebar collapsed, route change) must not hold the microphone, and
@@ -391,6 +508,7 @@ export function ChatInput({
 			// closed mid-recording loses everything buffered.
 			recorder.start(1000);
 			setElapsed(0);
+			setLiveStream(stream);
 			setDictation('recording');
 		} catch (error: unknown) {
 			releaseRecorder();
@@ -594,87 +712,92 @@ export function ChatInput({
 		outline: 'none'
 	});
 
-	const recordingPanelStyle: CSSProperties = {
+	/**
+	 * The action row while recording: the take replaces the tools IN the composer — a waveform
+	 * across the row, the timer, then Cancel and Done as round buttons at the trailing edge.
+	 */
+	const recordingRowStyle: CSSProperties = {
 		display: 'flex',
 		alignItems: 'center',
-		gap: 10,
-		marginBottom: 8,
-		padding: '7px 10px',
-		borderRadius: chatTheme.inputRadius,
-		border: `1px solid ${chatTheme.inputBorder}`,
-		backgroundColor: chatTheme.inputBg,
+		gap: 8,
+		minWidth: 0,
+		minHeight: SEND_SIZE,
+		paddingLeft: 2,
 		fontSize: chatTheme.fontSizeSmall,
-		lineHeight: 1.5,
+		lineHeight: 1,
 		color: chatTheme.inputText
 	};
 
-	const panelButtonStyle = (primary: boolean): CSSProperties => ({
-		border: `1px solid ${primary ? chatTheme.accent : chatTheme.inputBorder}`,
-		backgroundColor: 'transparent',
-		color: primary ? chatTheme.accent : chatTheme.inputText,
-		borderRadius: chatTheme.controlRadius,
-		padding: '4px 11px',
-		fontSize: chatTheme.fontSizeSmall,
-		fontWeight: chatTheme.fontWeightMedium,
-		fontFamily: chatTheme.fontFamily,
-		lineHeight: 1.5,
+	/** Round Cancel / Done, the same diameter as Send so the trailing edge does not jump. */
+	const roundButtonStyle = (filled: boolean): CSSProperties => ({
+		width: SEND_SIZE,
+		height: SEND_SIZE,
+		flexShrink: 0,
+		borderRadius: '50%',
+		border: filled ? 'none' : `1px solid ${chatTheme.inputBorder}`,
+		backgroundColor: filled ? chatTheme.accent : 'transparent',
+		color: filled ? '#ffffff' : chatTheme.textSecondary,
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: 0,
 		cursor: 'pointer',
 		outline: 'none'
 	});
+
+	/** Announced to screen readers when a take starts and ends — never the ticking timer. */
+	const visuallyHiddenStyle: CSSProperties = {
+		position: 'absolute',
+		width: 1,
+		height: 1,
+		margin: -1,
+		padding: 0,
+		overflow: 'hidden',
+		clip: 'rect(0 0 0 0)',
+		whiteSpace: 'nowrap',
+		border: 0
+	};
+
+	/** Auto-send as a switch: a bare checkbox picked up the host theme's form styles. */
+	const switchTrackStyle: CSSProperties = {
+		position: 'relative',
+		width: 22,
+		height: 12,
+		flexShrink: 0,
+		borderRadius: 6,
+		backgroundColor: autoSend ? chatTheme.accent : 'color-mix(in srgb, currentColor 22%, transparent)',
+		transition: `background-color ${chatTheme.transitionSpeed} ease`
+	};
+
+	const switchKnobStyle: CSSProperties = {
+		position: 'absolute',
+		top: 2,
+		left: 2,
+		width: 8,
+		height: 8,
+		borderRadius: '50%',
+		backgroundColor: '#ffffff',
+		transform: autoSend ? 'translateX(10px)' : 'none',
+		transition: `transform ${chatTheme.transitionSpeed} ease`
+	};
 
 	const isRecording = dictation === 'recording';
 	const isTranscribing = dictation === 'transcribing';
 
 	return (
 		<div ref={containerRef} style={containerStyle}>
-			{/* Recording controls sit ABOVE the input, so starting a take never displaces the
-			    message the user may already have typed. */}
-			{/* NOT a live region. `role="status"` is implicitly `aria-atomic`, so a timer ticking inside
-			    it re-announces the entire panel — controls and all — once per second for the length of
-			    the take. The state change is announced once, by the mic button's `aria-pressed`. */}
-			{(isRecording || isTranscribing) && (
-				<div style={recordingPanelStyle}>
-					<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-						<span
-							aria-hidden="true"
-							style={{
-								width: 8,
-								height: 8,
-								borderRadius: '50%',
-								backgroundColor: isRecording ? chatTheme.red : chatTheme.textMuted,
-								display: 'inline-block'
-							}}
-						/>
-						{isRecording ? formatElapsed(elapsed) : t('AI_ASSISTANT.TRANSCRIBING', 'Transcribing…')}
-					</span>
-
-					{isRecording && (
-						<>
-							<span aria-hidden="true" style={{ opacity: 0.4 }}>
-								|
-							</span>
-							<label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-								<input
-									type="checkbox"
-									checked={autoSend}
-									onChange={(e) => setAutoSend(e.target.checked)}
-									style={{ margin: 0, cursor: 'pointer' }}
-								/>
-								{t('AI_ASSISTANT.AUTO_SEND', 'Auto-send')}
-							</label>
-
-							<span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 6 }}>
-								<button type="button" onClick={cancelDictation} style={panelButtonStyle(false)}>
-									{t('AI_ASSISTANT.CANCEL', 'Cancel')}
-								</button>
-								<button type="button" onClick={finishDictation} style={panelButtonStyle(true)}>
-									{t('AI_ASSISTANT.DONE', 'Done')}
-								</button>
-							</span>
-						</>
-					)}
-				</div>
-			)}
+			{/* Recording happens IN the composer's action row (below), so starting a take never
+			    displaces the message the user may already have typed. */}
+			{/* The one live region: it changes only when a take starts or stops, so it is announced
+			    once. The timer is deliberately outside it — a ticking clock inside a live region
+			    re-announces every second for the length of the take. */}
+			<span role="status" style={visuallyHiddenStyle}>
+				{isRecording
+					? t('AI_ASSISTANT.RECORDING', 'Recording')
+					: isTranscribing
+						? t('AI_ASSISTANT.TRANSCRIBING', 'Transcribing…')
+						: ''}
+			</span>
 
 			{dictationError && (
 				<div
@@ -785,8 +908,134 @@ export function ChatInput({
 					aria-label={t('AI_ASSISTANT.PLACEHOLDER', 'Type a message…')}
 				/>
 
-				{/* Action row. Small on purpose: attach, library and dictation are occasional,
-				    the message above them is the subject of this panel. */}
+				{/* While a take is recording, the action row BECOMES the recorder: waveform, timer,
+				    auto-send, then Cancel and Done. The tools come back the moment the take ends.
+				    Escape anywhere in the row abandons the take, as it does from the field. */}
+				{isRecording ? (
+					<div
+						role="group"
+						aria-label={t('AI_ASSISTANT.RECORDING', 'Recording')}
+						style={recordingRowStyle}
+						onKeyDown={(event) => {
+							if (event.key === 'Escape') {
+								event.preventDefault();
+								cancelDictation();
+							}
+						}}
+					>
+						<LevelMeter stream={liveStream} color={chatTheme.textSecondary} />
+
+						<span
+							style={{
+								flexShrink: 0,
+								minWidth: 28,
+								textAlign: 'right',
+								color: chatTheme.textSecondary,
+								fontVariantNumeric: 'tabular-nums'
+							}}
+						>
+							{formatElapsed(elapsed)}
+						</span>
+
+						<button
+							type="button"
+							role="switch"
+							aria-checked={autoSend}
+							onClick={() => setAutoSend((current) => !current)}
+							className="gz-ai-chat-rec-switch"
+							title={t('AI_ASSISTANT.AUTO_SEND', 'Auto-send')}
+							style={{
+								display: 'inline-flex',
+								alignItems: 'center',
+								gap: 6,
+								flexShrink: 0,
+								height: 24,
+								padding: '0 5px',
+								border: 'none',
+								borderRadius: 6,
+								backgroundColor: 'transparent',
+								color: chatTheme.textSecondary,
+								fontSize: chatTheme.fontSizeSmall,
+								fontFamily: chatTheme.fontFamily,
+								lineHeight: 1,
+								cursor: 'pointer',
+								outline: 'none'
+							}}
+						>
+							<span aria-hidden="true" style={switchTrackStyle}>
+								<span style={switchKnobStyle} />
+							</span>
+							<span className="gz-ai-chat-rec-switch-label">{t('AI_ASSISTANT.AUTO_SEND', 'Auto-send')}</span>
+						</button>
+
+						<button
+							type="button"
+							onClick={cancelDictation}
+							className="gz-ai-chat-rec-cancel"
+							style={roundButtonStyle(false)}
+							title={t('AI_ASSISTANT.CANCEL', 'Cancel')}
+							aria-label={t('AI_ASSISTANT.CANCEL', 'Cancel')}
+						>
+							<svg
+								width="12"
+								height="12"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2.4"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								aria-hidden="true"
+							>
+								<path d="M18 6 6 18" />
+								<path d="m6 6 12 12" />
+							</svg>
+						</button>
+
+						<button
+							type="button"
+							onClick={finishDictation}
+							// Focus lands here when the take starts — the mic button that had it is gone.
+							autoFocus
+							className="gz-ai-chat-rec-done"
+							style={roundButtonStyle(true)}
+							title={t('AI_ASSISTANT.DONE', 'Done')}
+							aria-label={t('AI_ASSISTANT.DONE', 'Done')}
+						>
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2.6"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								aria-hidden="true"
+							>
+								<path d="M20 6 9 17l-5-5" />
+							</svg>
+						</button>
+
+						{/* A reply still streaming keeps its Stop control during a take. */}
+						{isBusy && (
+							<button
+								type="button"
+								onClick={onStop}
+								className="gz-ai-chat-send-btn"
+								style={{ ...buttonStyle, marginLeft: 0 }}
+								title={t('AI_ASSISTANT.STOP', 'Stop generating')}
+								aria-label={t('AI_ASSISTANT.STOP', 'Stop generating')}
+							>
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+									<rect x="6" y="6" width="12" height="12" rx="2" />
+								</svg>
+							</button>
+						)}
+					</div>
+				) : (
+				/* Action row. Small on purpose: attach, library and dictation are occasional,
+				   the message above them is the subject of this panel. */
 				<div style={toolRowStyle}>
 					<button
 						type="button"
@@ -861,7 +1110,8 @@ export function ChatInput({
 							onClick={isRecording ? finishDictation : startDictation}
 							disabled={isTranscribing}
 							className="gz-ai-chat-tool-btn"
-							style={toolButtonStyle(isRecording, !isTranscribing)}
+							// Not dimmed while transcribing: the spinner it shows then is the progress signal.
+							style={{ ...toolButtonStyle(isRecording), cursor: isTranscribing ? 'default' : 'pointer' }}
 							title={
 								isRecording
 									? t('AI_ASSISTANT.STOP_DICTATION', 'Stop dictation')
@@ -874,21 +1124,50 @@ export function ChatInput({
 							}
 							aria-pressed={isRecording}
 						>
-							<svg
-								width="14"
-								height="14"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-								<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-								<line x1="12" y1="19" x2="12" y2="23" />
-							</svg>
+							{isTranscribing ? (
+								<span
+									aria-hidden="true"
+									className="gz-ai-chat-rec-spinner"
+									style={{
+										width: 12,
+										height: 12,
+										boxSizing: 'border-box',
+										borderRadius: '50%',
+										border: `1.5px solid ${chatTheme.border}`,
+										borderTopColor: chatTheme.accent,
+										display: 'inline-block'
+									}}
+								/>
+							) : (
+								<svg
+									width="14"
+									height="14"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+									<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+									<line x1="12" y1="19" x2="12" y2="23" />
+								</svg>
+							)}
 						</button>
+					)}
+					{isTranscribing && (
+						<span
+							aria-hidden="true"
+							style={{
+								marginLeft: 4,
+								fontSize: chatTheme.fontSizeSmall,
+								color: chatTheme.textSecondary,
+								whiteSpace: 'nowrap'
+							}}
+						>
+							{t('AI_ASSISTANT.TRANSCRIBING', 'Transcribing…')}
+						</span>
 					)}
 
 					{isBusy ? (
@@ -929,6 +1208,7 @@ export function ChatInput({
 						</button>
 					)}
 				</div>
+				)}
 			</form>
 		</div>
 	);
