@@ -7,17 +7,25 @@
  * `"An error occurred."` unless an `onError` mapper is supplied. Widening that mask generally would
  * leak provider internals to the browser, so only classified rate limits get a structured envelope
  * and everything else keeps the generic string.
+ *
+ * A rejected provider key (401/403) is the one other failure classified here: like a rate limit, the
+ * user can only act on it if they are told which provider to fix.
  */
 
-import { AI_CHAT_RATE_LIMIT_CODE, IAiChatRateLimitEnvelope } from '@gauzy/contracts';
+import {
+	AI_CHAT_KEY_REJECTED_CODE,
+	AI_CHAT_RATE_LIMIT_CODE,
+	IAiChatKeyRejectedEnvelope,
+	IAiChatRateLimitEnvelope
+} from '@gauzy/contracts';
 
 /**
  * Re-exported for backend callers. The definitions live in @gauzy/contracts because the browser
  * needs the same runtime constant, and it must not import this plugin (that would pull NestJS into
  * the web bundle).
  */
-export { AI_CHAT_RATE_LIMIT_CODE as RATE_LIMIT_CODE };
-export type { IAiChatRateLimitEnvelope };
+export { AI_CHAT_RATE_LIMIT_CODE as RATE_LIMIT_CODE, AI_CHAT_KEY_REJECTED_CODE as KEY_REJECTED_CODE };
+export type { IAiChatRateLimitEnvelope, IAiChatKeyRejectedEnvelope };
 
 /** Unwrap the wrappers an error can arrive in before it is inspected. */
 const unwrap = (error: unknown): unknown[] => {
@@ -89,3 +97,32 @@ export const rateLimitRetryAfter = (error: unknown): number | undefined => {
  * parses it back out.
  */
 export const buildRateLimitEnvelope = (envelope: IAiChatRateLimitEnvelope): string => JSON.stringify(envelope);
+
+/**
+ * Did the provider reject its credential (HTTP 401/403)?
+ *
+ * Same shapes as {@link isRateLimitError}, with one deliberate omission: `status` is NOT read. This
+ * mask also runs over tool-output errors, and a Nest `HttpException` thrown by a contributed tool
+ * (a `ForbiddenException` on a document the user may not read) carries `status: 403` — that is the
+ * USER's permission, not the provider's key, and must not send them to the AI Providers page.
+ * Provider errors (`APICallError`) carry `statusCode`. A top-level `code` is not read either: an MCP
+ * transport error carries the MCP server's HTTP status there, which is not an AI provider's key.
+ * The in-stream form (`{ error: { code: 401 } }`) is matched by its nested shape instead.
+ */
+export const isKeyRejectedError = (error: unknown): boolean => {
+	for (const candidate of unwrap(error)) {
+		const e = candidate as {
+			statusCode?: unknown;
+			error?: { code?: unknown };
+			data?: { error?: { code?: unknown } };
+		};
+		for (const value of [e.statusCode, e.error?.code, e.data?.error?.code]) {
+			const status = Number(value);
+			if (status === 401 || status === 403) return true;
+		}
+	}
+	return false;
+};
+
+/** Build the JSON string handed to the stream's error channel for a rejected key. */
+export const buildKeyRejectedEnvelope = (envelope: IAiChatKeyRejectedEnvelope): string => JSON.stringify(envelope);
