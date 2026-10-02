@@ -20,6 +20,7 @@ import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
+import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -52,10 +53,15 @@ export class EmailConfirmationService {
 				expiresIn: `${environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME}s`
 			});
 
-			// Override the default config by merging in the provided values.
-			const appIntegration = deepMerge(environment.appIntegrationConfig, integration);
+			// Override the default config by merging in the provided values - except a confirmation
+			// link on a host this deployment does not serve (see email-link-origin.ts).
+			const appIntegration = deepMerge(environment.appIntegrationConfig, this.withTrustedLinks(integration, id));
 
-			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
+			// The address is encoded: a raw `+` (plus addressing) reads back as a space, and the
+			// confirm request then fails e-mail validation, so those users could never verify by link.
+			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${encodeURIComponent(
+				email
+			)}&token=${token}`;
 			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
@@ -95,6 +101,21 @@ export class EmailConfirmationService {
 		} catch (error) {
 			throw new BadRequestException(error?.message);
 		}
+	}
+
+	/**
+	 * The caller's integration overrides, minus any link (above all the confirmation link, which
+	 * carries the verification token) on an origin this deployment does not serve: such a link is
+	 * replaced by the configured one. See {@link withAllowedEmailLinks} for why.
+	 *
+	 * @param integration The overrides supplied with the request.
+	 * @param userId Only for the log line.
+	 */
+	private withTrustedLinks(integration: IAppIntegrationConfig, userId: string): IAppIntegrationConfig {
+		return withAllowedEmailLinks(
+			integration,
+			warnRejectedEmailLink(this.logger, `the verification email of user ${userId}`)
+		);
 	}
 
 	/**
