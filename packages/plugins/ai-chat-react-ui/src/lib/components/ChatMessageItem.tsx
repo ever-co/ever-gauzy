@@ -88,6 +88,14 @@ function UserAttachmentChips({
 	);
 }
 
+/**
+ * True when a text part has nothing to show — empty, whitespace, or zero-width characters only.
+ * Shared with the playground's message renderer.
+ */
+export function isBlankText(text: string | undefined): boolean {
+	return !text || !text.replace(/[\s​-‍⁠﻿]/g, '');
+}
+
 export interface ChatMessageItemProps {
 	message: UIMessage;
 	/** True while this (assistant) message is still streaming. */
@@ -150,7 +158,9 @@ export function ChatMessageItem({
 		<div>
 			{message.parts.map((part, index) => {
 				if (part.type === 'text') {
-					if (!part.text) return null;
+					// Models often open a step with a whitespace-only text part (a bare "\n") right
+					// before a tool call; rendered, it is an empty bubble above the tool card.
+					if (isBlankText(part.text)) return null;
 					// A user message that carries attachments starts with the preamble the panel
 					// composed. The MODEL needs that text (it is what makes `docs_read` actionable
 					// and keeps the attachment context alive across turns); the READER does not —
