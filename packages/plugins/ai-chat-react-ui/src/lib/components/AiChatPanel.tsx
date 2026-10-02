@@ -16,8 +16,10 @@ import {
 import { useInjector } from '@gauzy/ui-react';
 import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
 import {
+	AI_CHAT_KEY_REJECTED_CODE,
 	AI_CHAT_RATE_LIMIT_CODE,
 	AI_CHAT_SETTINGS_PATH,
+	AiChatErrorCode,
 	PermissionsEnum,
 	type IAiChatRateLimitEnvelope,
 	type IAiSpeechErrorBody
@@ -44,6 +46,40 @@ interface IDocsUploadResponseSlice {
 	results?: { document?: { id?: string; name?: string; kind?: string } }[];
 	rejected?: { fileName?: string; message?: string }[];
 	message?: string;
+}
+
+/**
+ * What the error bar renders for a failed turn: a translated line, and — when the fix lives on the
+ * AI Providers page — where to send the user.
+ */
+interface ChatErrorView {
+	message: string;
+	/** Present when the problem is fixed on the AI Providers settings page. */
+	settingsPath?: string;
+	/** The provider at fault, when known — its configure view opens directly (`?provider=`). */
+	providerId?: string;
+}
+
+/**
+ * The structured slice of a failed turn, when the server sent one.
+ *
+ * Both channels arrive as `error.message`: a refused request carries the HTTP body (`DefaultChatTransport`
+ * throws `new Error(await response.text())`), a mid-stream failure carries the error-text envelope.
+ * Anything that does not parse is a plain failure.
+ */
+function parseChatError(error: Error | undefined): { code?: string; providerId?: string; settingsPath?: string } {
+	if (!error?.message) return {};
+	try {
+		const parsed = JSON.parse(error.message);
+		if (!parsed || typeof parsed !== 'object') return {};
+		return {
+			code: typeof parsed.code === 'string' ? parsed.code : undefined,
+			providerId: typeof parsed.providerId === 'string' ? parsed.providerId : undefined,
+			settingsPath: typeof parsed.settingsPath === 'string' ? parsed.settingsPath : undefined
+		};
+	} catch {
+		return {};
+	}
 }
 
 /**
@@ -184,17 +220,18 @@ export function AiChatPanel() {
 	);
 
 	/**
-	 * Open the AI Providers settings page from a dictation error, when this user may.
+	 * Open the AI Providers settings page from a dictation or chat error, when this user may.
 	 *
 	 * Passed to the input as `onOpenAiSettings` ONLY when the user holds `AI_CHAT_SETTINGS` — the
 	 * input then shows an "Open AI Providers" action; without it, the message tells the user to ask
 	 * an administrator instead of offering a link that would bounce them to the settings index.
+	 * With a `providerId`, that provider's configure view opens rather than the list.
 	 */
 	const openAiSettings = useCallback(
-		(settingsPath?: string) => {
+		(settingsPath?: string, providerId?: string) => {
 			void injector
 				.get(AgentPageBridgeService)
-				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH)
+				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH, providerId ? { provider: providerId } : undefined)
 				.catch(() => undefined);
 		},
 		[injector]
@@ -323,6 +360,67 @@ export function AiChatPanel() {
 			.openPage('/pages/settings/ai', { provider: envelope.providerId })
 			.catch(() => undefined);
 	};
+
+	/**
+	 * The error bar's content for the current failure.
+	 *
+	 * A failure whose fix lives on the AI Providers page says so with a link — straight to the
+	 * provider at fault when the server named one — rather than "Something went wrong." A user
+	 * without `AI_CHAT_SETTINGS` gets the "ask an administrator" wording instead, since the link
+	 * would only bounce them to the settings index.
+	 */
+	const errorView = useMemo((): ChatErrorView | null => {
+		if (!error) return null;
+		const { code, providerId, settingsPath: sentPath } = parseChatError(error);
+		const settingsPath = sentPath || AI_CHAT_SETTINGS_PATH;
+		const canOpen = canOpenAiSettings();
+		const actionable = (key: string, fallback: string, askAdminKey: string, askAdminFallback: string) =>
+			canOpen
+				? { message: t(key, fallback), settingsPath, providerId }
+				: { message: t(askAdminKey, askAdminFallback) };
+
+		switch (code) {
+			case AiChatErrorCode.NOT_CONFIGURED:
+				return actionable(
+					'AI_ASSISTANT.ERROR_NOT_CONFIGURED',
+					'AI chat needs a configured provider. Add one on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_NOT_CONFIGURED_ASK_ADMIN',
+					'AI chat needs a configured provider — ask an administrator to add one in Settings → AI Providers.'
+				);
+			case AiChatErrorCode.PROVIDER_UNAVAILABLE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_PROVIDER_UNAVAILABLE',
+					'The selected AI provider cannot answer right now. Check it on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN',
+					'The selected AI provider cannot answer right now — ask an administrator to check Settings → AI Providers.'
+				);
+			case AiChatErrorCode.MODEL_UNAVAILABLE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_MODEL_UNAVAILABLE',
+					'This model is not available with the current API key. Choose another one on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_MODEL_UNAVAILABLE_ASK_ADMIN',
+					'This model is not available with the current API key — ask an administrator to check Settings → AI Providers.'
+				);
+			case AI_CHAT_KEY_REJECTED_CODE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_KEY_REJECTED',
+					'The AI provider rejected its API key. Update it on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_KEY_REJECTED_ASK_ADMIN',
+					'The AI provider rejected its API key — ask an administrator to update it in Settings → AI Providers.'
+				);
+			case AI_CHAT_RATE_LIMIT_CODE:
+				// The full explanation is already in the thread (see handleStreamErrorRef); the bar
+				// only names the problem and carries the link.
+				return actionable(
+					'AI_ASSISTANT.ERROR_RATE_LIMITED',
+					'The AI provider is rate limiting requests.',
+					'AI_ASSISTANT.ERROR_RATE_LIMITED',
+					'The AI provider is rate limiting requests.'
+				);
+			default:
+				return { message: t('AI_ASSISTANT.ERROR', 'Something went wrong.') };
+		}
+	}, [error, t, canOpenAiSettings]);
 
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;
@@ -1064,8 +1162,9 @@ export function AiChatPanel() {
 				)}
 
 				{/* Error bar */}
-				{error && (
+				{errorView && (
 					<div
+						role="alert"
 						style={{
 							padding: '8px 12px',
 							backgroundColor: 'rgba(255, 61, 113, 0.12)',
@@ -1074,16 +1173,43 @@ export function AiChatPanel() {
 							lineHeight: 1.5,
 							borderTop: `1px solid ${chatTheme.border}`,
 							display: 'flex',
-							alignItems: 'center',
+							alignItems: 'flex-start',
 							gap: 7
 						}}
 					>
 						<span>⚠</span>
-						<span>{t('AI_ASSISTANT.ERROR', 'Something went wrong.')}</span>
+						<span style={{ flex: 1 }}>
+							{errorView.message}
+							{/* The fix lives on the AI Providers page: link to it — to the provider at
+							    fault when known — rather than naming a page the user then has to find. */}
+							{errorView.settingsPath && (
+								<>
+									{' '}
+									<button
+										type="button"
+										onClick={() => openAiSettings(errorView.settingsPath, errorView.providerId)}
+										style={{
+											background: 'none',
+											border: 'none',
+											color: chatTheme.accent,
+											cursor: 'pointer',
+											textDecoration: 'underline',
+											fontSize: chatTheme.fontSizeSmall,
+											fontWeight: chatTheme.fontWeightMedium,
+											fontFamily: 'inherit',
+											padding: 0
+										}}
+									>
+										{t('AI_ASSISTANT.OPEN_AI_SETTINGS', 'Open AI Providers')}
+									</button>
+								</>
+							)}
+						</span>
 						<button
 							type="button"
 							onClick={() => regenerate()}
 							style={{
+								flexShrink: 0,
 								background: 'none',
 								border: 'none',
 								color: chatTheme.accent,
