@@ -1,4 +1,10 @@
-import { isRateLimitError, rateLimitRetryAfter, buildRateLimitEnvelope, RATE_LIMIT_CODE } from './rate-limit';
+import {
+	isKeyRejectedError,
+	isRateLimitError,
+	rateLimitRetryAfter,
+	buildRateLimitEnvelope,
+	RATE_LIMIT_CODE
+} from './rate-limit';
 
 /**
  * A 429 arrives in three genuinely different shapes, and the free tier depends on recognizing all of
@@ -67,6 +73,30 @@ describe('rate-limit classification', () => {
 		it('returns undefined when the header is absent or not a number', () => {
 			expect(rateLimitRetryAfter({ statusCode: 429 })).toBeUndefined();
 			expect(rateLimitRetryAfter({ responseHeaders: { 'retry-after': 'soon' } })).toBeUndefined();
+		});
+	});
+
+	describe('isKeyRejectedError', () => {
+		it('detects a provider 401/403, including one wrapped in a RetryError', () => {
+			expect(isKeyRejectedError({ statusCode: 401 })).toBe(true);
+			expect(isKeyRejectedError({ name: 'RetryError', lastError: { statusCode: 403 } })).toBe(true);
+			expect(isKeyRejectedError({ error: { code: 401, message: 'No auth credentials found' } })).toBe(true);
+		});
+
+		it('does NOT classify a Nest HttpException from a tool (`status`, not `statusCode`)', () => {
+			// A ForbiddenException is the user's permission, not the provider's key.
+			expect(isKeyRejectedError({ status: 403, message: 'Forbidden' })).toBe(false);
+		});
+
+		it('does NOT classify an MCP transport error (top-level `code` is the MCP server status)', () => {
+			expect(isKeyRejectedError({ name: 'StreamableHTTPError', code: 401 })).toBe(false);
+		});
+
+		it('does NOT classify other failures', () => {
+			expect(isKeyRejectedError({ statusCode: 429 })).toBe(false);
+			expect(isKeyRejectedError({ code: 'ECONNREFUSED' })).toBe(false);
+			expect(isKeyRejectedError(new Error('boom'))).toBe(false);
+			expect(isKeyRejectedError(null)).toBe(false);
 		});
 	});
 
