@@ -1016,8 +1016,15 @@ export function AiChatPanel() {
 					strokeLinecap="round"
 					strokeLinejoin="round"
 					style={{ flexShrink: 0 }}
+					aria-hidden="true"
 				>
-					<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+					{/* The robot — the same glyph as the sidebar's AI assistant launcher. */}
+					<path d="M12 8V4H8" />
+					<rect width="16" height="12" x="4" y="8" rx="2" />
+					<path d="M2 14h2" />
+					<path d="M20 14h2" />
+					<path d="M15 13v2" />
+					<path d="M9 13v2" />
 				</svg>
 				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
