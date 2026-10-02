@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { MODULE_VERSION, STATS_SCHEMA_ID } from './ever-stats.constants';
-import { EverStatsConfig } from './ever-stats-config';
+import type { EverStatsConfig } from './ever-stats-config';
 import { CollectedStats, StatsPeriod } from './ever-stats-collector.service';
 import { STATS_SCHEMA } from './schema/stats-schema';
 import { checkStatsBytes, redactStatsPath, StatsFieldError } from './vendor/stats-checks';

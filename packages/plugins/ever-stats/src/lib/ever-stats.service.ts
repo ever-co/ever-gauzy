@@ -1,17 +1,11 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, Optional } from '@nestjs/common';
 import { EverInstanceService } from '@gauzy/plugin-ever-instance';
 import { MAX_STATS_REPORT_BYTES, STATS_SCHEMA_URL, STATS_SEND_NOW_INTERVAL_MS } from './ever-stats.constants';
-import { EverStatsConfig } from './ever-stats-config';
+import type { EverStatsConfig } from './ever-stats-config';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';
 import { EverStatsCollector, statsPeriod } from './ever-stats-collector.service';
-import {
-	EVER_STATS_CLOCK,
-	EVER_STATS_CONFIG,
-	EVER_STATS_RELEASE,
-	EverStatsScheduler,
-	SlotResult,
-	StatsClock
-} from './ever-stats-scheduler.service';
+import { EVER_STATS_CLOCK, EVER_STATS_CONFIG, EVER_STATS_RELEASE, EverStatsScheduler } from './ever-stats-scheduler.service';
+import type { SlotResult, StatsClock } from './ever-stats-scheduler.service';
 import { EverStatsStore, StoredStatsReport } from './ever-stats.store';
 
 /** `GET /ever-stats/status`. */

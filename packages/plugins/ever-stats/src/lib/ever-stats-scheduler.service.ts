@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/c
 import { randomUUID } from 'node:crypto';
 import { EverInstanceKeyError, EverInstanceRecord, EverInstanceService } from '@gauzy/plugin-ever-instance';
 import { STATS_LEASE_MS, STATS_REPORTS_KEPT, STATS_RETRY_DELAYS_S, MODULE_VERSION } from './ever-stats.constants';
-import { EverStatsConfig } from './ever-stats-config';
+import type { EverStatsConfig } from './ever-stats-config';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';
 import { EverStatsCollector, statsPeriod, StatsPeriod } from './ever-stats-collector.service';
 import { EverStatsSender, StatsSendOutcome } from './ever-stats-sender.service';
