@@ -158,27 +158,45 @@ export class InMemoryAccounts {
 /** Gauzy's e-mail code and register path, recorded instead of performed. */
 export class FakeGauzyAuth implements GauzyAuthPort {
 	readonly sentCodes: string[] = [];
+	/** Everything each code request carried besides the address (the requesting app's branding). */
+	readonly sentInputs: Array<Record<string, unknown>> = [];
 	readonly registered: ZitadelRegistrationInput[] = [];
+	/** The `includeTeams` flag of every code check. */
+	readonly teamRequests: boolean[] = [];
 	/** The code the fake accepts. */
 	code = 'ABC123';
+	/** Awaited at the start of the next code check / registration (to hold a test attempt in flight). */
+	beforeCheck: (() => Promise<void>) | null = null;
+	beforeRegister: (() => Promise<void>) | null = null;
 	/** Like Gauzy, a code works only for the address it was sent to, only after it was sent, and once. */
 	private readonly outstanding = new Set<string>();
 
 	constructor(private readonly accounts: InMemoryAccounts) {}
 
-	async sendWorkspaceSigninCode(input: { email: string }): Promise<void> {
-		this.sentCodes.push(input.email);
-		this.outstanding.add(input.email);
+	async sendWorkspaceSigninCode(input: { email: string } & Record<string, unknown>): Promise<void> {
+		const { email, ...rest } = input;
+		this.sentCodes.push(email);
+		this.sentInputs.push(rest);
+		this.outstanding.add(email);
 	}
 
-	async signinWorkspacesByMagicCode(payload: { email: string; code: string }): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesByMagicCode(payload: { email: string; code: string }, includeTeams: boolean): Promise<IUserSigninWorkspaceResponse> {
+		const pause = this.beforeCheck;
+		this.beforeCheck = null;
+		await pause?.();
+		this.teamRequests.push(includeTeams);
 		if (!this.outstanding.has(payload.email) || payload.code !== this.code) {
 			throw new UnauthorizedException();
 		}
 		this.outstanding.delete(payload.email);
 		const users = this.accounts.users.filter((user) => user.email === payload.email && user.isActive !== false);
 		return {
-			workspaces: users.map((user) => ({ token: 'gauzy-workspace-token', user: toUser(user) })),
+			workspaces: users.map((user) => ({
+				token: 'gauzy-workspace-token',
+				user: toUser(user),
+				// Gauzy adds each workspace's teams when asked to (as `current_teams`).
+				...(includeTeams ? { current_teams: [{ team_id: `team-of-${user.id}`, team_name: 'Team' }] } : {})
+			})),
 			confirmed_email: payload.email,
 			show_popup: users.length > 1,
 			total_workspaces: users.length
@@ -186,10 +204,118 @@ export class FakeGauzyAuth implements GauzyAuthPort {
 	}
 
 	async register(input: ZitadelRegistrationInput): Promise<{ id: string; tenantId: string | null }> {
+		const pause = this.beforeRegister;
+		this.beforeRegister = null;
+		await pause?.();
 		this.registered.push(input);
 		// Gauzy's register path creates a user without a tenant; the tenant comes from onboarding.
 		const user = this.accounts.addUser({ email: input.user.email, tenantId: null, emailVerifiedAt: null });
 		return { id: user.id, tenantId: null };
+	}
+}
+
+/**
+ * A pause a test releases by hand: `wait` is awaited inside the code under test, `release` lets it go
+ * on, `reached` resolves once the code under test is waiting.
+ */
+export function manualPause(): { wait: () => Promise<void>; release: () => void; reached: Promise<void> } {
+	let release: () => void = () => undefined;
+	let markReached: () => void = () => undefined;
+	const gate = new Promise<void>((resolve) => (release = resolve));
+	const reached = new Promise<void>((resolve) => (markReached = resolve));
+	return {
+		wait: () => {
+			markReached();
+			return gate;
+		},
+		release,
+		reached
+	};
+}
+
+/** The parts of a Redis client the store uses, in memory, honouring expiries. */
+export class FakeRedis {
+	private readonly data = new Map<string, { value: string; expiresAt: number | null }>();
+	readonly calls: string[] = [];
+
+	private entry(key: string) {
+		const entry = this.data.get(key);
+		if (entry && entry.expiresAt !== null && entry.expiresAt <= Date.now()) {
+			this.data.delete(key);
+			return undefined;
+		}
+		return entry;
+	}
+
+	async get(key: string): Promise<string | null> {
+		this.calls.push('get');
+		return this.entry(key)?.value ?? null;
+	}
+
+	async set(key: string, value: string, options: { PX: number; NX?: true }): Promise<string | null> {
+		this.calls.push(options.NX ? 'set-nx' : 'set');
+		if (options.NX && this.entry(key)) {
+			return null;
+		}
+		this.data.set(key, { value, expiresAt: Date.now() + options.PX });
+		return 'OK';
+	}
+
+	async getDel(key: string): Promise<string | null> {
+		this.calls.push('getDel');
+		const value = this.entry(key)?.value ?? null;
+		this.data.delete(key);
+		return value;
+	}
+
+	async del(key: string): Promise<number> {
+		this.calls.push('del');
+		return this.data.delete(key) ? 1 : 0;
+	}
+
+	async exists(key: string): Promise<number> {
+		this.calls.push('exists');
+		return this.entry(key) ? 1 : 0;
+	}
+
+	async incr(key: string): Promise<number> {
+		this.calls.push('incr');
+		const entry = this.entry(key);
+		const value = String(Number(entry?.value ?? '0') + 1);
+		this.data.set(key, { value, expiresAt: entry?.expiresAt ?? null });
+		return Number(value);
+	}
+
+	async pExpire(key: string, milliseconds: number): Promise<boolean> {
+		this.calls.push('pExpire');
+		const entry = this.entry(key);
+		if (!entry) {
+			return false;
+		}
+		entry.expiresAt = Date.now() + milliseconds;
+		return true;
+	}
+
+	async pTTL(key: string): Promise<number> {
+		this.calls.push('pTTL');
+		const entry = this.entry(key);
+		if (!entry) {
+			return -2;
+		}
+		return entry.expiresAt === null ? -1 : Math.max(0, entry.expiresAt - Date.now());
+	}
+
+	/** Test hook: drops the expiry of a key, as a replica stopping between counting and setting the expiry would leave it. */
+	dropExpiry(match: (key: string) => boolean): void {
+		for (const [key, entry] of this.data) {
+			if (match(key)) {
+				entry.expiresAt = null;
+			}
+		}
+	}
+
+	keys(): string[] {
+		return [...this.data.keys()].filter((key) => this.entry(key));
 	}
 }
 

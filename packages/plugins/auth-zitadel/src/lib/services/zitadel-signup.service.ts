@@ -1,6 +1,7 @@
 import { BadRequestException, GoneException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { OidcValidatedIdToken } from '@gauzy/auth';
-import { ITermsAcceptanceClaim, LanguagesEnum } from '@gauzy/contracts';
+import { ITermsAcceptanceClaim, ITermsAcceptanceDocument, LanguagesEnum } from '@gauzy/contracts';
+import { handoffBusy } from '../http/zitadel-retry';
 import { GAUZY_AUTH, GauzyAuthPort } from '../ports/gauzy-auth.port';
 import { TERMS_DOCUMENTS, TermsDocumentsPort } from '../ports/terms-documents.port';
 import { ZitadelAccountService, ZitadelIdentity } from './zitadel-account.service';
@@ -13,6 +14,9 @@ import { ZitadelSigninWorkspaceResponse, ZitadelWorkspaceService } from './zitad
 
 /** Longest accepted first or last name. */
 const MAX_NAME_LENGTH = 100;
+
+/** The web app's page for a legal document, when it is not named after the document. */
+const LEGAL_PAGES: Record<string, string> = { tos: 'terms' };
 
 /**
  * The record behind `#/auth/ever-id/signup?handoff=…`: what the confirmation page shows. It holds the
@@ -70,6 +74,34 @@ export interface ZitadelSignupDetails {
 	lastName?: string;
 	status?: 'subscription_required';
 	checkoutUrl?: string;
+	/**
+	 * The legal documents the sign-up must accept (the ones `POST /signup` checks), each with an
+	 * absolute link to the web app's page for it, so a client on another origin can link it too.
+	 */
+	terms: ITermsAcceptanceDocument[];
+}
+
+/**
+ * Turns a document link into an absolute URL of the web app (which uses hash routes): `/legal/tos`
+ * becomes `<CLIENT_BASE_URL>/#/legal/terms`. An absolute http(s) link is kept as it is.
+ *
+ * @param url - The document's link as Gauzy publishes it.
+ * @param clientBaseUrl - The web app's base URL (no trailing slash).
+ * @returns The absolute URL, or `undefined` when there is no usable link.
+ */
+export function absoluteDocumentUrl(url: string | undefined, clientBaseUrl: string): string | undefined {
+	if (!url) {
+		return undefined;
+	}
+	if (/^https?:\/\//i.test(url)) {
+		return url;
+	}
+	if (!url.startsWith('/') || url.startsWith('//')) {
+		return undefined;
+	}
+	const legal = /^\/legal\/([A-Za-z0-9_-]+)$/.exec(url);
+	const path = legal ? `/legal/${LEGAL_PAGES[legal[1]] ?? legal[1]}` : url;
+	return `${clientBaseUrl}/#${path}`;
 }
 
 /**
@@ -80,6 +112,9 @@ export interface ZitadelSignupDetails {
  * subscription the confirmed sign-up waits (server-side, keyed to the identity) while the person goes
  * through checkout, and finishes when they sign in with Ever ID again. Silent account creation does
  * not exist.
+ *
+ * One attempt at a time per key and per Ever ID: a second one meanwhile answers 409 `handoff_busy`
+ * (and leaves its key valid), so two tabs can never register two accounts.
  */
 @Injectable()
 export class ZitadelSignupService {
@@ -99,6 +134,8 @@ export class ZitadelSignupService {
 	/**
 	 * Called for a verified identity without a link: resumes a confirmed sign-up waiting for this
 	 * identity, or offers the confirmation page.
+	 *
+	 * @throws 409 `handoff_busy` while another attempt finishes this identity's sign-up.
 	 */
 	async offer(
 		identity: ZitadelIdentity,
@@ -106,9 +143,10 @@ export class ZitadelSignupService {
 		hints: ZitadelClaimHints,
 		redirect?: string
 	): Promise<{ type: 'workspaces'; response: ZitadelSigninWorkspaceResponse } | { type: 'signup'; key: string }> {
-		const pending = await this.store.get<ZitadelPendingSignup>('pending-signup', this.pendingKey(identity));
+		const pendingKey = this.pendingKey(identity);
+		const pending = await this.store.get<ZitadelPendingSignup>('pending-signup', pendingKey);
 		if (pending) {
-			const result = await this.attempt(pending, idToken.sid, hints);
+			const result = await this.withIdentityHeld(pendingKey, () => this.attempt(pending, idToken.sid, hints));
 			return result.type === 'workspaces' ? result : { type: 'signup', key: result.key };
 		}
 		const key = this.store.newKey();
@@ -125,19 +163,58 @@ export class ZitadelSignupService {
 		return { type: 'signup', key };
 	}
 
-	/** What the confirmation page shows (the key stays valid). */
-	async details(key: string): Promise<ZitadelSignupDetails> {
+	/**
+	 * Finishes a confirmed sign-up whose account Gauzy already created but that a failed step left
+	 * unlinked: links that account and signs in, without a new confirmation or code (the person
+	 * confirmed this sign-up with this Ever ID, and the account is the one it created). Returns `null`
+	 * when there is no such sign-up; one whose account no longer exists or is inactive is dropped.
+	 *
+	 * @throws 409 `handoff_busy` while another attempt finishes this identity's sign-up.
+	 */
+	async finishCreatedAccount(
+		identity: ZitadelIdentity,
+		sid: string | undefined,
+		hints: ZitadelClaimHints
+	): Promise<{ type: 'workspaces'; response: ZitadelSigninWorkspaceResponse } | null> {
+		const pendingKey = this.pendingKey(identity);
+		const pending = await this.store.get<ZitadelPendingSignup>('pending-signup', pendingKey);
+		if (!pending?.userId) {
+			return null;
+		}
+		if (!(await this.accounts.findActiveUser(pending.userId))) {
+			await this.store.delete('pending-signup', pendingKey);
+			return null;
+		}
+		const result = await this.withIdentityHeld(pendingKey, () => this.attempt(pending, sid, hints));
+		return result.type === 'workspaces' ? result : null;
+	}
+
+	/**
+	 * What the confirmation page shows (the key stays valid), including the documents to accept.
+	 *
+	 * @throws 409 `handoff_busy` while a sign-up with this key is running; GoneException for an
+	 *   unknown, expired or used key.
+	 */
+	async details(key: string, locale: LanguagesEnum = LanguagesEnum.ENGLISH): Promise<ZitadelSignupDetails> {
 		this.assertEnabled();
 		const offer = await this.store.get<ZitadelSignupOffer>('signup', key);
 		if (!offer) {
+			if (await this.store.isHeld('signup', key)) {
+				throw handoffBusy();
+			}
 			throw new GoneException();
 		}
+		const clientBaseUrl = this.config.settings.clientBaseUrl;
 		return {
 			email: offer.email,
 			firstName: offer.firstName,
 			lastName: offer.lastName,
 			status: offer.status,
-			checkoutUrl: offer.checkoutUrl
+			checkoutUrl: offer.checkoutUrl,
+			terms: this.termsDocuments.getRequiredDocuments(locale).map((document) => ({
+				...document,
+				url: absoluteDocumentUrl(document.url, clientBaseUrl)
+			}))
 		};
 	}
 
@@ -145,7 +222,8 @@ export class ZitadelSignupService {
 	 * The person confirmed. Records the confirmed sign-up and runs Gauzy's register path.
 	 *
 	 * @throws NotFoundException when the sign-up path is off; BadRequestException without the
-	 *   confirmation; GoneException for an unknown, expired or used key.
+	 *   confirmation; 409 `handoff_busy` while another attempt uses this key or finishes this
+	 *   identity's sign-up (the key stays valid); GoneException for an unknown, expired or used key.
 	 */
 	async confirm(key: string, body: ZitadelSignupConfirmation, locale: LanguagesEnum): Promise<ZitadelSignupResult> {
 		this.assertEnabled();
@@ -154,26 +232,62 @@ export class ZitadelSignupService {
 		}
 		const terms = Array.isArray(body.terms) ? body.terms : [];
 		this.assertRequiredTermsAccepted(terms, locale);
-		const offer = await this.store.take<ZitadelSignupOffer>('signup', key);
-		if (!offer) {
-			throw new GoneException();
+		if (!(await this.store.hold('signup', key))) {
+			throw handoffBusy();
 		}
-		const pending: ZitadelPendingSignup = {
-			identity: offer.identity,
-			email: offer.email,
-			firstName: cleanName(body.firstName) ?? cleanName(offer.firstName),
-			lastName: cleanName(body.lastName) ?? cleanName(offer.lastName),
-			terms: terms.length ? terms : undefined,
-			locale,
-			confirmedAt: Date.now(),
-			redirect: offer.redirect
-		};
-		await this.store.put('pending-signup', this.pendingKey(offer.identity), pending, this.config.settings.confirmTtlSeconds);
-		return this.attempt(pending, offer.sid, offer.hints);
+		try {
+			const offer = await this.store.take<ZitadelSignupOffer>('signup', key);
+			if (!offer) {
+				throw new GoneException();
+			}
+			const pendingKey = this.pendingKey(offer.identity);
+			if (!(await this.store.hold('pending-signup', pendingKey))) {
+				// Another attempt is finishing this identity's sign-up: this key stays usable.
+				await this.store.put('signup', key, offer, this.config.settings.confirmTtlSeconds);
+				throw handoffBusy();
+			}
+			try {
+				// A sign-up confirmed earlier may have created the account already: it is kept (while it is
+				// active), never made twice.
+				const earlier = await this.store.get<ZitadelPendingSignup>('pending-signup', pendingKey);
+				const createdUserId =
+					earlier?.userId && (await this.accounts.findActiveUser(earlier.userId)) ? earlier.userId : undefined;
+				const pending: ZitadelPendingSignup = {
+					identity: offer.identity,
+					email: offer.email,
+					firstName: cleanName(body.firstName) ?? cleanName(offer.firstName),
+					lastName: cleanName(body.lastName) ?? cleanName(offer.lastName),
+					terms: terms.length ? terms : undefined,
+					locale,
+					confirmedAt: Date.now(),
+					redirect: offer.redirect,
+					userId: createdUserId
+				};
+				await this.store.put('pending-signup', pendingKey, pending, this.config.settings.confirmTtlSeconds);
+				return await this.attempt(pending, offer.sid, offer.hints);
+			} finally {
+				await this.store.release('pending-signup', pendingKey);
+			}
+		} finally {
+			await this.store.release('signup', key);
+		}
+	}
+
+	/** Runs `task` while this attempt holds the identity's pending sign-up. */
+	private async withIdentityHeld<T>(pendingKey: string, task: () => Promise<T>): Promise<T> {
+		if (!(await this.store.hold('pending-signup', pendingKey))) {
+			throw handoffBusy();
+		}
+		try {
+			return await task();
+		} finally {
+			await this.store.release('pending-signup', pendingKey);
+		}
 	}
 
 	/**
 	 * Tries to finish a confirmed sign-up: the subscription gate first, then Gauzy's register path.
+	 * Called while the identity's pending sign-up is held.
 	 */
 	private async attempt(pending: ZitadelPendingSignup, sid: string | undefined, hints: ZitadelClaimHints): Promise<ZitadelSignupResult> {
 		const pendingKey = this.pendingKey(pending.identity);
@@ -185,22 +299,25 @@ export class ZitadelSignupService {
 			return { type: 'workspaces', response: await this.workspaces.signIn(linked, pending.identity, hints, sid) };
 		}
 
-		const check = await this.gate.check(pending.email);
-		if (check.allowed === false) {
-			const key = this.store.newKey();
-			const offer: ZitadelSignupOffer = {
-				identity: pending.identity,
-				email: pending.email,
-				firstName: pending.firstName,
-				lastName: pending.lastName,
-				sid,
-				hints,
-				status: 'subscription_required',
-				checkoutUrl: check.checkoutUrl,
-				redirect: pending.redirect
-			};
-			await this.store.put('signup', key, offer, this.config.settings.confirmTtlSeconds);
-			return { type: 'subscription_required', key, checkoutUrl: check.checkoutUrl };
+		// The gate guards creating an account; once Gauzy created it, only the link is left to write.
+		if (!pending.userId) {
+			const check = await this.gate.check(pending.email);
+			if (check.allowed === false) {
+				const key = this.store.newKey();
+				const offer: ZitadelSignupOffer = {
+					identity: pending.identity,
+					email: pending.email,
+					firstName: pending.firstName,
+					lastName: pending.lastName,
+					sid,
+					hints,
+					status: 'subscription_required',
+					checkoutUrl: check.checkoutUrl,
+					redirect: pending.redirect
+				};
+				await this.store.put('signup', key, offer, this.config.settings.confirmTtlSeconds);
+				return { type: 'subscription_required', key, checkoutUrl: check.checkoutUrl };
+			}
 		}
 
 		// Claimed (single use) while the account is created and linked. Should any step fail, the record

@@ -139,7 +139,7 @@ export class ZitadelFlowService {
 				return this.links.callback(transaction.payload?.['userId'] as ID, idToken);
 			}
 			const redirect = transaction.payload?.['redirect'];
-			const outcome = await this.signin.decide(idToken, 'browser', redirect);
+			const outcome = await this.signin.decide(idToken, 'browser', { redirect });
 			return this.outcomeUrl(outcome, redirect);
 		} catch (error) {
 			this.logger.warn(`Ever ID callback failed: ${isOidcError(error) ? error.code : 'unexpected error'}`);

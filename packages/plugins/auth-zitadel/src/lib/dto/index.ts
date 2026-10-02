@@ -83,6 +83,9 @@ export class SignupDTO extends HandoffDTO {
 	readonly terms?: SignupTermsClaimDTO[];
 }
 
+/** Longest accepted value of a branding field (the plugin keeps shorter ones, see the token route). */
+const MAX_BRANDING_LENGTH = 2048;
+
 export class TokenSigninDTO {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -95,6 +98,42 @@ export class TokenSigninDTO {
 	@IsString()
 	@MaxLength(16_384)
 	readonly access_token?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: "The calling app's name, for Gauzy's one-time code e-mail" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(MAX_BRANDING_LENGTH)
+	readonly appName?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: "The calling app's logo (https), for the code e-mail" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(MAX_BRANDING_LENGTH)
+	readonly appLogo?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: "The calling app's signature line, for the code e-mail" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(MAX_BRANDING_LENGTH)
+	readonly appSignature?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: "The calling app's address (https), for the code e-mail" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(MAX_BRANDING_LENGTH)
+	readonly appLink?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: "The calling app's company name, for the code e-mail" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(MAX_BRANDING_LENGTH)
+	readonly companyName?: string;
+
+	@ApiPropertyOptional({ type: () => String, description: "The calling app's company address (https), for the code e-mail" })
+	@IsOptional()
+	@IsString()
+	@MaxLength(MAX_BRANDING_LENGTH)
+	readonly companyLink?: string;
 }
 
 export class LinkPreviewDTO {

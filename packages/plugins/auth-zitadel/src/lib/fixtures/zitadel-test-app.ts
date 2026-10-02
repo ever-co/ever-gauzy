@@ -14,6 +14,8 @@ import { AuthZitadelController } from '../auth-zitadel.controller';
 import { AuthZitadelSettings, parseZitadelSettings } from '../auth-zitadel.config';
 import { AUTH_ZITADEL_SETTINGS } from '../auth-zitadel.tokens';
 import { ZitadelConfiguredGuard } from '../guards/zitadel-configured.guard';
+import { ZitadelHandoffThrottleGuard } from '../guards/zitadel-handoff-throttle.guard';
+import { ZitadelRetryAfterInterceptor } from '../http/zitadel-retry';
 import { EVER_CONNECT_CONFIG, EverConnectConfigPort } from '../ports/ever-connect-config.port';
 import { ITermsAcceptanceDocument } from '@gauzy/contracts';
 import { GAUZY_AUTH } from '../ports/gauzy-auth.port';
@@ -49,6 +51,8 @@ export interface ZitadelTestApp {
 	sessions: InMemorySessions;
 	cache: InMemoryCache;
 	terms: FakeTermsDocuments;
+	/** The plugin's one-time store (to hold a key as a concurrent attempt would). */
+	store: ZitadelStoreService;
 	published: unknown[];
 	close(): Promise<void>;
 }
@@ -56,8 +60,11 @@ export interface ZitadelTestApp {
 /** Gauzy's required legal documents, settable per test (none by default). */
 export class FakeTermsDocuments implements TermsDocumentsPort {
 	required: ITermsAcceptanceDocument[] = [];
+	/** The locale of every request. */
+	readonly locales: Array<string | undefined> = [];
 
-	getRequiredDocuments(): ITermsAcceptanceDocument[] {
+	getRequiredDocuments(locale?: string): ITermsAcceptanceDocument[] {
+		this.locales.push(locale);
 		return this.required;
 	}
 }
@@ -155,7 +162,9 @@ async function startApp(
 			ZitadelFlowService,
 			ZitadelTokenSigninService,
 			ZitadelBackchannelService,
-			ZitadelConfiguredGuard
+			ZitadelConfiguredGuard,
+			ZitadelHandoffThrottleGuard,
+			ZitadelRetryAfterInterceptor
 		]
 	}).compile();
 
@@ -179,6 +188,7 @@ async function startApp(
 		sessions,
 		cache,
 		terms,
+		store: moduleRef.get(ZitadelStoreService),
 		published,
 		async close() {
 			await app.close();

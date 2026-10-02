@@ -10,6 +10,15 @@ import { EverIdWorkspacesComponent } from '../components/ever-id-workspaces.comp
 import { AuthZitadelUiService, EverIdSignupDetails, EverIdWorkspaceResponse } from '../services/auth-zitadel-ui.service';
 import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 
+/** How often the details are asked for again while another attempt uses the key. */
+const MAX_DETAILS_RETRIES = 3;
+
+/** The wait the API asked for (`retryAfter`, seconds), as milliseconds; two seconds by default. */
+function retryDelayMs(failure: { error?: { retryAfter?: unknown } } | null | undefined): number {
+	const seconds = Number(failure?.error?.retryAfter);
+	return Number.isFinite(seconds) && seconds > 0 && seconds <= 30 ? seconds * 1000 : 2000;
+}
+
 /**
  * `#/auth/ever-id/signup?handoff=…` (Ever Cloud only): "Create a Gauzy workspace with this Ever ID".
  *
@@ -77,6 +86,9 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 						@if (failed) {
 							<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.sign_in_failed' | translate }}</nb-alert>
 						}
+						@if (retryLater) {
+							<nb-alert status="warning" role="alert">{{ 'AUTH_ZITADEL.ERRORS.busy' | translate }}</nb-alert>
+						}
 						<button nbButton status="primary" fullWidth type="submit" class="create" [disabled]="!canSubmit()">
 							{{ 'AUTH_ZITADEL.SIGNUP.CREATE' | translate }}
 						</button>
@@ -123,8 +135,11 @@ export class EverIdSignupComponent implements OnInit {
 	checkoutUrl: string | null = null;
 	expired = false;
 	failed = false;
+	/** Another attempt was using the key: the person may simply submit again. */
+	retryLater = false;
 	busy = false;
 	private handoff = '';
+	private detailsRetries = 0;
 
 	ngOnInit(): void {
 		this.handoff = this.route.snapshot.queryParams['handoff'] ?? '';
@@ -132,6 +147,11 @@ export class EverIdSignupComponent implements OnInit {
 			this.expired = true;
 			return;
 		}
+		this.loadDetails();
+	}
+
+	/** Reads the verified details and the documents to accept with the one-time key (it stays valid). */
+	private loadDetails(): void {
 		this.api
 			.signupDetails(this.handoff)
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -141,14 +161,28 @@ export class EverIdSignupComponent implements OnInit {
 					this.firstName = details.firstName ?? '';
 					this.lastName = details.lastName ?? '';
 					this.checkoutUrl = details.status === 'subscription_required' ? details.checkoutUrl || null : null;
+					if (Array.isArray(details.terms)) {
+						// The API lists the documents itself, with links that open the web app's own pages.
+						this.termsDocuments = details.terms;
+						this.termsLoaded = true;
+						this.termsUnavailable = false;
+					} else {
+						this.loadTerms();
+					}
 					this.cdr.markForCheck();
 				},
-				error: () => {
+				error: (failure) => {
+					// 409: another attempt (another tab) is using the key right now; ask again shortly.
+					if (failure?.status === 409 && this.detailsRetries < MAX_DETAILS_RETRIES) {
+						this.detailsRetries++;
+						const timer = setTimeout(() => this.loadDetails(), retryDelayMs(failure));
+						this.destroyRef.onDestroy(() => clearTimeout(timer));
+						return;
+					}
 					this.expired = true;
 					this.cdr.markForCheck();
 				}
 			});
-		this.loadTerms();
 	}
 
 	/** Loads the documents Gauzy currently requires (again, after a failure). */
@@ -185,6 +219,7 @@ export class EverIdSignupComponent implements OnInit {
 		}
 		this.busy = true;
 		this.failed = false;
+		this.retryLater = false;
 		this.api
 			.signup({
 				handoff: this.handoff,
@@ -211,6 +246,9 @@ export class EverIdSignupComponent implements OnInit {
 						this.checkoutUrl = failure.error.checkoutUrl;
 					} else if (failure?.status === 410) {
 						this.expired = true;
+					} else if (failure?.status === 409 || failure?.status === 429) {
+						// The key is still valid: another attempt was using it, or it was tried too often just now.
+						this.retryLater = true;
 					} else {
 						this.failed = true;
 					}

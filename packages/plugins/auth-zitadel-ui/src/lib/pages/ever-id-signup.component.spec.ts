@@ -31,6 +31,8 @@ describe('EverIdSignupComponent', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		api.signupDetails.mockReset();
+		api.signup.mockReset();
 		api.signupDetails.mockReturnValue(of({ email: 'new.person@example.test', firstName: 'New', lastName: 'Person' }));
 		terms.getRequiredTermsDocuments.mockReturnValue(of([{ documentId: 'tos:gauzy', version: '1', sha256: 'a'.repeat(64), locale: 'en' }]));
 	});
@@ -101,6 +103,53 @@ describe('EverIdSignupComponent', () => {
 		component.signIn({ token: 't', user: { id: 'u' } } as never);
 		expect(signIn.signIn).toHaveBeenCalledTimes(1);
 		expect(signIn.signIn).toHaveBeenCalledWith('p@example.test', expect.anything(), '/pages/tasks');
+	});
+
+	it('uses the documents the API lists with the details, with their absolute links', () => {
+		const document = {
+			documentId: 'tos:gauzy',
+			version: '1',
+			sha256: 'a'.repeat(64),
+			locale: 'en',
+			title: 'Terms of Service',
+			url: 'https://app.example.test/#/legal/terms'
+		};
+		api.signupDetails.mockReturnValue(of({ email: 'new.person@example.test', terms: [document] }));
+		const component = create();
+		expect(terms.getRequiredTermsDocuments).not.toHaveBeenCalled();
+		expect(component.termsDocuments).toEqual([document]);
+		component.confirmed = true;
+		expect(component.canSubmit()).toBe(false);
+		component.termsAccepted = true;
+		expect(component.canSubmit()).toBe(true);
+	});
+
+	it('asks for the details again while another attempt uses the key', () => {
+		jest.useFakeTimers();
+		try {
+			api.signupDetails
+				.mockReturnValueOnce(throwError(() => ({ status: 409, error: { code: 'handoff_busy', retryAfter: 2 } })))
+				.mockReturnValueOnce(of({ email: 'new.person@example.test', terms: [] }));
+			const component = create();
+			expect(component.expired).toBe(false);
+			expect(component.details).toBeNull();
+			jest.advanceTimersByTime(2000);
+			expect(api.signupDetails).toHaveBeenCalledTimes(2);
+			expect(component.details.email).toBe('new.person@example.test');
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	it('lets the person submit again after a busy or throttled answer', () => {
+		api.signup.mockReturnValueOnce(throwError(() => ({ status: 409, error: { code: 'handoff_busy', retryAfter: 2 } })));
+		const component = create();
+		component.confirmed = true;
+		component.termsAccepted = true;
+		component.submit();
+		expect(component.retryLater).toBe(true);
+		expect(component.expired).toBe(false);
+		expect(component.canSubmit()).toBe(true);
 	});
 
 	it('treats a used key as expired', () => {

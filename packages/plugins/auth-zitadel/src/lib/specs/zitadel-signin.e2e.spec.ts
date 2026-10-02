@@ -1,4 +1,5 @@
 import { TokenPurposeEnum, verifyPurposeToken } from '@gauzy/core';
+import { manualPause } from '../fixtures/in-memory-accounts';
 import { TEST_CLIENT_BASE_URL, TestBrowser, ZitadelTestApp, createZitadelTestApp, hashParam } from '../fixtures/zitadel-test-app';
 
 // The first use of `jose` (an ES module that ts-jest compiles on load) and key generation can take
@@ -174,13 +175,58 @@ describe('Ever ID sign-in (HTTP, against a mock OpenID Provider)', () => {
 			const landing = await signIn('person-f', { email: 'person-f@example.test' });
 			const handoff = hashParam(landing, 'handoff');
 			const statuses: number[] = [];
-			for (let attempt = 0; attempt < 6; attempt++) {
+			for (let attempt = 0; attempt < 5; attempt++) {
 				statuses.push((await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: `BAD${attempt}` })).status);
 			}
-			expect(statuses).toEqual([401, 401, 401, 401, 410, 410]);
+			expect(statuses).toEqual([401, 401, 401, 401, 410]);
+			expect(await t.store.get('confirm', handoff)).toBeNull();
+			// A sixth try within the minute is refused by the per-key limit before anything is looked up.
 			const late = await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: t.gauzyAuth.code });
-			expect(late.status).toBe(410);
+			expect(late.status).toBe(429);
 			expect(t.accounts.links).toHaveLength(0);
+		});
+
+		it('answers 409 handoff_busy while another attempt checks a code for the key, and keeps the key valid', async () => {
+			const user = t.accounts.addUser({ email: 'person-i@example.test' });
+			const handoff = hashParam(await signIn('person-i', { email: 'person-i@example.test' }), 'handoff');
+			const pause = manualPause();
+			t.gauzyAuth.beforeCheck = pause.wait;
+
+			const first = browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: 'WRONG1' });
+			await pause.reached;
+			const busy = await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: t.gauzyAuth.code });
+			expect(busy.status).toBe(409);
+			expect(busy.headers.get('retry-after')).toBe('2');
+			expect(await busy.json()).toEqual(expect.objectContaining({ code: 'handoff_busy', retryAfter: 2 }));
+			pause.release();
+			expect((await first).status).toBe(401);
+
+			// The busy answer cost no attempt and the key still works.
+			const right = await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: t.gauzyAuth.code });
+			expect(right.status).toBe(200);
+			expect(t.accounts.links).toEqual([expect.objectContaining({ userId: user.id, linkMethod: 'confirmed' })]);
+			// Used up now: 410, not 409.
+			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: t.gauzyAuth.code })).status).toBe(410);
+		});
+
+		it('answers 409 handoff_busy while the key is held, without spending an attempt', async () => {
+			t.accounts.addUser({ email: 'person-j@example.test' });
+			const handoff = hashParam(await signIn('person-j', { email: 'person-j@example.test' }), 'handoff');
+			expect(await t.store.hold('confirm', handoff)).toBe(true);
+			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: 'WRONG1' })).status).toBe(409);
+			await t.store.release('confirm', handoff);
+			expect(await t.store.get('confirm', handoff)).toEqual(expect.objectContaining({ attempts: 0 }));
+		});
+
+		it('keeps the browser answers without team lists', async () => {
+			t.accounts.addUser({ email: 'person-k@example.test' });
+			const handoff = hashParam(await signIn('person-k', { email: 'person-k@example.test' }), 'handoff');
+			const right = await browser.post(`${t.baseUrl}/api/auth/zitadel/confirm`, { handoff, code: t.gauzyAuth.code });
+			expect(right.status).toBe(200);
+			const response = await right.json();
+			expect(response.workspaces[0].current_teams).toBeUndefined();
+			expect(t.gauzyAuth.teamRequests).toEqual([false]);
+			expect(t.gauzyAuth.sentInputs).toEqual([{}]);
 		});
 
 		it('never offers an unverified account for a confirmed link', async () => {

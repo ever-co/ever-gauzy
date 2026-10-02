@@ -17,6 +17,8 @@ import { parseZitadelSettings } from './auth-zitadel.config';
 import { AUTH_ZITADEL_SETTINGS } from './auth-zitadel.tokens';
 import { ZITADEL_ENTITIES } from './entities';
 import { ZitadelConfiguredGuard } from './guards/zitadel-configured.guard';
+import { ZitadelHandoffThrottleGuard } from './guards/zitadel-handoff-throttle.guard';
+import { ZitadelRetryAfterInterceptor } from './http/zitadel-retry';
 import { GAUZY_AUTH } from './ports/gauzy-auth.port';
 import { TERMS_DOCUMENTS } from './ports/terms-documents.port';
 import { ZitadelAccountService } from './services/zitadel-account.service';
@@ -62,7 +64,9 @@ export const AUTH_ZITADEL_SERVICES = [
 	ZitadelFlowService,
 	ZitadelTokenSigninService,
 	ZitadelBackchannelService,
-	ZitadelConfiguredGuard
+	ZitadelConfiguredGuard,
+	ZitadelHandoffThrottleGuard,
+	ZitadelRetryAfterInterceptor
 ];
 
 /**

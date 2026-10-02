@@ -9,7 +9,8 @@
 		"link_failed": "Ever ID could not be connected to this account.",
 		"last_signin_method": "This is the only way left to sign in to this account, so it cannot be disconnected.",
 		"wrong_code": "That code is not correct. Check the e-mail and try again.",
-		"try_again": "Something went wrong. Please try again."
+		"try_again": "Something went wrong. Please try again.",
+		"busy": "This step is still being processed. Wait a moment, then try again."
 	},
 	"HANDOFF": {
 		"TITLE": "Sign in with Ever ID",

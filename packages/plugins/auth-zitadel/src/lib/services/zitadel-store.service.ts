@@ -13,9 +13,21 @@ export interface ZitadelCache {
 /** Minimal shape of the optional Redis client. */
 export interface ZitadelRedis {
 	get(key: string): Promise<string | null>;
-	set(key: string, value: string, options: { PX: number }): Promise<unknown>;
+	/** Answers `OK` when the value was written (with `NX`, only when the key did not exist). */
+	set(key: string, value: string, options: { PX: number; NX?: true }): Promise<unknown>;
 	getDel(key: string): Promise<string | null>;
 	del(key: string): Promise<unknown>;
+	exists(key: string): Promise<number>;
+	incr(key: string): Promise<number>;
+	pExpire(key: string, milliseconds: number): Promise<unknown>;
+	pTTL(key: string): Promise<number>;
+}
+
+/** The outcome of counting one use of a key ({@link ZitadelStoreService.hit}). */
+export interface ZitadelRateResult {
+	allowed: boolean;
+	/** When refused: seconds until the window ends. */
+	retryAfterSeconds: number;
 }
 
 const PREFIX = 'zitadel:';
@@ -24,16 +36,28 @@ const PREFIX = 'zitadel:';
 const CLAIM_TTL_MS = 10 * 60 * 1000;
 
 /**
+ * Longest time one attempt may hold a key. An attempt releases it as soon as it is done; this only
+ * bounds how long a key reads as busy when an attempt never finishes (a crashed replica).
+ */
+export const HOLD_TTL_MS = 30 * 1000;
+
+/**
  * Short-lived server-side records: one-time hand-off keys, pending confirmations and pending
  * sign-ups. Nothing personal ever travels in a URL; the browser only carries an opaque random key.
  *
  * With Redis configured, `take()` is an atomic GETDEL, so a key works once across all API replicas
  * (multi-replica deployments must configure Redis). Without Redis the platform's in-memory cache is
  * used and a synchronous in-process claim makes `take()` single-use within the process.
+ *
+ * An attempt that may put a record back (a wrong code, a failed step) first holds its key
+ * ({@link hold}), so a second attempt with the same key meanwhile learns that the key is busy rather
+ * than used up. The store also counts the uses of a key per time window ({@link hit}).
  */
 @Injectable()
 export class ZitadelStoreService {
 	private readonly claimed = new Map<string, number>();
+	private readonly holds = new Map<string, number>();
+	private readonly counters = new Map<string, { count: number; resetAt: number }>();
 
 	constructor(
 		@Inject(CACHE_MANAGER) private readonly cache: ZitadelCache,
@@ -115,8 +139,97 @@ export class ZitadelStoreService {
 		}
 	}
 
+	/**
+	 * Marks a key as held by the current attempt, for at most {@link HOLD_TTL_MS}. Returns `false`
+	 * when another attempt holds it. Every successful hold must be ended with {@link release}. The
+	 * hold does not replace `take()`, which alone makes a key single-use; it only tells a concurrent
+	 * attempt that the key is busy rather than used up.
+	 */
+	async hold(namespace: string, key: string): Promise<boolean> {
+		if (!this.isKey(key)) {
+			// Nothing to hold: a malformed key is never looked up.
+			return true;
+		}
+		const name = this.holdName(namespace, key);
+		if (this.redis) {
+			return (await this.redis.set(name, '1', { PX: HOLD_TTL_MS, NX: true })) === 'OK';
+		}
+		// Checked and set synchronously, so two concurrent calls cannot both hold the key.
+		if (this.isHeldInMemory(name)) {
+			return false;
+		}
+		this.holds.set(name, Date.now() + HOLD_TTL_MS);
+		return true;
+	}
+
+	/** Ends a hold taken with {@link hold}. */
+	async release(namespace: string, key: string): Promise<void> {
+		if (!this.isKey(key)) {
+			return;
+		}
+		const name = this.holdName(namespace, key);
+		if (this.redis) {
+			await this.redis.del(name);
+		} else {
+			this.holds.delete(name);
+		}
+	}
+
+	/** Whether an attempt holds the key right now. */
+	async isHeld(namespace: string, key: string): Promise<boolean> {
+		if (!this.isKey(key)) {
+			return false;
+		}
+		const name = this.holdName(namespace, key);
+		return this.redis ? (await this.redis.exists(name)) > 0 : this.isHeldInMemory(name);
+	}
+
+	/**
+	 * Counts one use of `key` in a fixed window of `windowMs` and tells whether it is within `limit`.
+	 * Counters are kept under a digest of the key, never the key itself; in Redis when configured
+	 * (shared by every replica), in process memory otherwise.
+	 */
+	async hit(bucket: string, key: string, limit: number, windowMs: number): Promise<ZitadelRateResult> {
+		const name = `${PREFIX}rate:${bucket}:${createHash('sha256').update(key).digest('base64url')}`;
+		if (this.redis) {
+			const count = await this.redis.incr(name);
+			if (count === 1) {
+				await this.redis.pExpire(name, windowMs);
+			}
+			if (count <= limit) {
+				return { allowed: true, retryAfterSeconds: 0 };
+			}
+			let remainingMs = await this.redis.pTTL(name);
+			if (remainingMs < 0) {
+				// The window lost its expiry (a replica stopped between the two commands): start it again.
+				await this.redis.pExpire(name, windowMs);
+				remainingMs = windowMs;
+			}
+			return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil(remainingMs / 1000)) };
+		}
+
+		const now = Date.now();
+		this.pruneCounters(now);
+		let counter = this.counters.get(name);
+		if (!counter || counter.resetAt <= now) {
+			counter = { count: 0, resetAt: now + windowMs };
+			// Re-inserted, so the map stays ordered by the end of each window (see pruneCounters).
+			this.counters.delete(name);
+			this.counters.set(name, counter);
+		}
+		counter.count += 1;
+		if (counter.count <= limit) {
+			return { allowed: true, retryAfterSeconds: 0 };
+		}
+		return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((counter.resetAt - now) / 1000)) };
+	}
+
 	private name(namespace: string, key: string): string {
 		return `${PREFIX}${namespace}:${key}`;
+	}
+
+	private holdName(namespace: string, key: string): string {
+		return `${PREFIX}hold:${namespace}:${key}`;
 	}
 
 	/** Keys are base64url text of a bounded length; anything else is never looked up. */
@@ -133,6 +246,28 @@ export class ZitadelStoreService {
 			this.claimed.delete(claimedName);
 		}
 		return this.claimed.has(name);
+	}
+
+	private isHeldInMemory(name: string): boolean {
+		const expiresAt = this.holds.get(name);
+		if (expiresAt === undefined) {
+			return false;
+		}
+		if (expiresAt <= Date.now()) {
+			this.holds.delete(name);
+			return false;
+		}
+		return true;
+	}
+
+	/** Drops expired windows (oldest first; windows of one route share a length). */
+	private pruneCounters(now: number): void {
+		for (const [name, counter] of this.counters) {
+			if (counter.resetAt > now) {
+				break;
+			}
+			this.counters.delete(name);
+		}
 	}
 
 	private parse<T>(text: string | null | undefined): T | null {

@@ -1,7 +1,9 @@
 import { GoneException, HttpException, HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { OidcValidatedIdToken } from '@gauzy/auth';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { ID, LanguagesEnum } from '@gauzy/contracts';
 import { User } from '@gauzy/core';
+import { handoffBusy } from '../http/zitadel-retry';
 import { GAUZY_AUTH, GauzyAuthPort } from '../ports/gauzy-auth.port';
 import { ZitadelAccountService, ZitadelIdentity } from './zitadel-account.service';
 import { ZitadelClaimHints, ZitadelClaimsService } from './zitadel-claims.service';
@@ -9,10 +11,29 @@ import { ZitadelConfigService } from './zitadel-config.service';
 import { ZitadelEventsService } from './zitadel-events.service';
 import { ZitadelSignupService } from './zitadel-signup.service';
 import { ZitadelStoreService } from './zitadel-store.service';
-import { ZitadelSigninWorkspaceResponse, ZitadelWorkspaceService } from './zitadel-workspace.service';
+import { ZitadelSigninWorkspaceResponse, ZitadelTeamList, ZitadelWorkspaceService } from './zitadel-workspace.service';
 
 /** Wrong one-time codes accepted for one pending confirmation before it is discarded. */
 export const MAX_CONFIRM_ATTEMPTS = 5;
+
+/** Where a sign-in came from: the browser callback, or another first-party app's server (token route). */
+export type ZitadelSigninChannel = 'browser' | 'token';
+
+/**
+ * How the requesting first-party app presents itself in Gauzy's one-time code e-mail. Only display
+ * fields: a link that would carry the code is never taken from a request.
+ */
+export type ZitadelEmailBranding = Partial<
+	Pick<IAppIntegrationConfig, 'appName' | 'appLogo' | 'appSignature' | 'appLink' | 'companyName' | 'companyLink'>
+>;
+
+/** Options of {@link ZitadelSigninService.decide}. */
+export interface ZitadelDecideOptions {
+	/** A web app path to open after signing in (browser channel, validated when the sign-in started). */
+	redirect?: string;
+	/** Branding of the requesting app for Gauzy's one-time code e-mail (token channel). */
+	branding?: ZitadelEmailBranding;
+}
 
 /** A one-time record behind `#/auth/ever-id?handoff=…` or the register page prefill. */
 export type ZitadelHandoffRecord =
@@ -29,6 +50,8 @@ export interface ZitadelConfirmRecord {
 	sid?: string;
 	hints: ZitadelClaimHints;
 	attempts: number;
+	/** The token route's answers carry each workspace's team list (absent: browser, or an older record). */
+	channel?: ZitadelSigninChannel;
 }
 
 /** What a verified sign-in leads to. */
@@ -44,6 +67,8 @@ export type ZitadelSigninOutcome =
  * Decides what an Ever ID sign-in leads to, once the token is verified.
  *
  * 1. The identity is linked: sign in to those workspaces (minus the ones an organization rule blocks).
+ *    A confirmed sign-up whose account Gauzy already created (and that a failed step left unlinked)
+ *    is finished here as well.
  * 2. No link, `confirmed` mode (Ever Cloud) and active users own the verified e-mail: Gauzy sends its
  *    own one-time e-mail code; the link is written only after the code is entered.
  * 3. No link, Ever Cloud with the sign-up path on: the person may create a workspace, after an
@@ -71,11 +96,13 @@ export class ZitadelSigninService {
 	 * @param idToken - The verified token.
 	 * @param channel - `browser` for the callback (stores records for the next page), `token` for the
 	 *   server-to-server token route.
+	 * @param options - The browser's return path, the requesting app's e-mail branding.
 	 */
-	async decide(idToken: OidcValidatedIdToken, channel: 'browser' | 'token', redirect?: string): Promise<ZitadelSigninOutcome> {
+	async decide(idToken: OidcValidatedIdToken, channel: ZitadelSigninChannel, options: ZitadelDecideOptions = {}): Promise<ZitadelSigninOutcome> {
 		if (!idToken.emailVerified || !idToken.email) {
 			return { type: 'email_unverified' };
 		}
+		const { redirect } = options;
 		const hints = this.claims.resolve(idToken.claims);
 		const identity: ZitadelIdentity = {
 			issuer: idToken.issuer,
@@ -90,12 +117,20 @@ export class ZitadelSigninService {
 			return { type: 'workspaces', response: await this.signInLinked(linked, identity, hints, idToken.sid) };
 		}
 
+		if (settings.signupEnabled) {
+			// The account of a confirmed sign-up exists already: finish it (link and sign in), no code.
+			const finished = await this.signup.finishCreatedAccount(identity, idToken.sid, hints);
+			if (finished) {
+				return finished;
+			}
+		}
+
 		if (settings.linkMode === 'confirmed') {
 			const rows = await this.accounts.findVerifiedUsersByEmail(identity.email);
 			if (rows.length) {
 				const email = rows[0].email;
 				const sameAddress = rows.filter((row) => row.email === email);
-				await this.gauzyAuth.sendWorkspaceSigninCode({ email }, this.locale(sameAddress[0]));
+				await this.gauzyAuth.sendWorkspaceSigninCode({ ...options.branding, email }, this.locale(sameAddress[0]));
 				const key = this.store.newKey();
 				const record: ZitadelConfirmRecord = {
 					identity,
@@ -104,7 +139,8 @@ export class ZitadelSigninService {
 					sid: idToken.sid,
 					hints,
 					redirect,
-					attempts: 0
+					attempts: 0,
+					channel
 				};
 				await this.store.put('confirm', key, record, settings.confirmTtlSeconds);
 				return { type: 'confirm', key };
@@ -128,8 +164,14 @@ export class ZitadelSigninService {
 	}
 
 	/** Signs linked users in (see {@link ZitadelWorkspaceService.signIn}). */
-	signInLinked(users: User[], identity: ZitadelIdentity, hints: ZitadelClaimHints, sid?: string): Promise<ZitadelSigninWorkspaceResponse> {
-		return this.workspaces.signIn(users, identity, hints, sid);
+	signInLinked(
+		users: User[],
+		identity: ZitadelIdentity,
+		hints: ZitadelClaimHints,
+		sid?: string,
+		teams?: Map<ID, ZitadelTeamList>
+	): Promise<ZitadelSigninWorkspaceResponse> {
+		return this.workspaces.signIn(users, identity, hints, sid, teams);
 	}
 
 	/** Stores a workspace response under a new one-time key. */
@@ -156,9 +198,23 @@ export class ZitadelSigninService {
 	/**
 	 * Completes a confirmed link with Gauzy's one-time e-mail code.
 	 *
-	 * @throws GoneException for an unknown key or after five wrong codes; UnauthorizedException for a wrong code.
+	 * @throws 409 `handoff_busy` while another attempt checks a code for this key (the key stays
+	 *   valid); GoneException for an unknown key or after five wrong codes; UnauthorizedException for
+	 *   a wrong code.
 	 */
 	async confirm(key: string, code: string): Promise<ZitadelSigninWorkspaceResponse> {
+		if (!(await this.store.hold('confirm', key))) {
+			throw handoffBusy();
+		}
+		try {
+			return await this.confirmHeld(key, code);
+		} finally {
+			await this.store.release('confirm', key);
+		}
+	}
+
+	/** {@link confirm} while this attempt holds the key. */
+	private async confirmHeld(key: string, code: string): Promise<ZitadelSigninWorkspaceResponse> {
 		// Taken (claimed atomically) for the duration of the check, so concurrent tries cannot share an
 		// attempt; a failed try puts the record back with the attempt counted.
 		const record = await this.store.take<ZitadelConfirmRecord>('confirm', key);
@@ -166,10 +222,22 @@ export class ZitadelSigninService {
 			throw new GoneException();
 		}
 
+		// For the token route, Gauzy's own code check also returns each workspace's team list (as its
+		// e-mail code sign-in does for the same client), so no extra lookup is made here.
+		const includeTeams = record.channel === 'token';
 		let proved: string[];
+		const teams = new Map<ID, ZitadelTeamList>();
 		try {
-			const result = await this.gauzyAuth.signinWorkspacesByMagicCode({ email: record.email, code: String(code ?? '') }, false);
+			const result = await this.gauzyAuth.signinWorkspacesByMagicCode({ email: record.email, code: String(code ?? '') }, includeTeams);
 			proved = result.workspaces.map((workspace) => workspace.user?.id).filter(Boolean);
+			if (includeTeams) {
+				for (const workspace of result.workspaces) {
+					const list = (workspace as { current_teams?: unknown }).current_teams;
+					if (workspace.user?.id && Array.isArray(list)) {
+						teams.set(workspace.user.id, list);
+					}
+				}
+			}
 		} catch (error) {
 			// Gauzy's own rate limit is not a wrong guess: it is passed on and costs no attempt.
 			const throttled = error instanceof HttpException && error.getStatus() === HttpStatus.TOO_MANY_REQUESTS;
@@ -193,7 +261,7 @@ export class ZitadelSigninService {
 		}
 		await this.accounts.link(users, record.identity, 'confirmed');
 		await this.events.linked(users, record.identity, 'confirmed');
-		const response = await this.signInLinked(users, record.identity, record.hints, record.sid);
+		const response = await this.signInLinked(users, record.identity, record.hints, record.sid, includeTeams ? teams : undefined);
 		return record.redirect ? { ...response, redirect: record.redirect } : response;
 	}
 

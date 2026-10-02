@@ -121,6 +121,7 @@ const OIDC_TYPES = [
 	'OidcIssuerConfig',
 	'OidcKeySelector',
 	'OidcLogoutToken',
+	'OidcLogoutTokenValidationOptions',
 	'OidcModuleOptions',
 	'OidcSigningAlgorithm',
 	'OidcTransaction',

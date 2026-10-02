@@ -1,12 +1,16 @@
+import { environment } from '@gauzy/config';
+import { TokenPurposeEnum, verifyPurposeToken } from '@gauzy/core';
 import type { User } from '@gauzy/core';
 import { ZitadelClaimsService } from './zitadel-claims.service';
 import { safeRedirect } from './zitadel-flow.service';
 import { maskSubject } from './zitadel-link.service';
+import { SESSION_BIND_WINDOW_MS } from './zitadel-session.service';
 import { ZitadelStoreService } from './zitadel-store.service';
+import { absoluteDocumentUrl } from './zitadel-signup.service';
 import { withoutEmail } from './zitadel-subscription-gate.service';
-import { unverifiedIssuer } from './zitadel-token-signin.service';
-import { ZitadelWorkspaceService } from './zitadel-workspace.service';
-import { InMemoryCache } from '../fixtures/in-memory-accounts';
+import { emailBranding, unverifiedIssuer } from './zitadel-token-signin.service';
+import { ZitadelWorkspaceService, workspaceTokenTtlSeconds } from './zitadel-workspace.service';
+import { FakeRedis, InMemoryCache } from '../fixtures/in-memory-accounts';
 
 describe('Ever ID plugin helpers', () => {
 	it('accepts only web app paths as the post-sign-in redirect', () => {
@@ -70,23 +74,13 @@ describe('Ever ID plugin helpers', () => {
 		});
 
 		it('uses Redis GETDEL when Redis is configured', async () => {
-			const data = new Map<string, string>();
-			const redis = {
-				get: async (k: string) => data.get(k) ?? null,
-				set: async (k: string, v: string) => void data.set(k, v),
-				getDel: jest.fn(async (k: string) => {
-					const v = data.get(k) ?? null;
-					data.delete(k);
-					return v;
-				}),
-				del: async (k: string) => void data.delete(k)
-			};
+			const redis = new FakeRedis();
 			const store = new ZitadelStoreService(new InMemoryCache(), redis);
 			const key = store.newKey();
 			await store.put('handoff', key, { value: 2 }, 60);
 			expect(await store.take('handoff', key)).toEqual({ value: 2 });
 			expect(await store.take('handoff', key)).toBeNull();
-			expect(redis.getDel).toHaveBeenCalledTimes(2);
+			expect(redis.calls.filter((call) => call === 'getDel')).toHaveLength(2);
 		});
 
 		it('never looks up a malformed key', async () => {
@@ -123,5 +117,64 @@ describe('Ever ID plugin helpers', () => {
 			expect.objectContaining({ id: 'user-1', email: 'person@example.test', tenant: { id: 'tenant-1', name: 'Acme', logo: '' } })
 		);
 		expect(confirmed_email).toBe('person@example.test');
+		expect('current_teams' in workspaces[0]).toBe(false);
+	});
+
+	it('adds a team list only to the workspaces Gauzy returned one for', () => {
+		const service = new ZitadelWorkspaceService(null as never, null as never);
+		const users = ['user-1', 'user-2'].map(
+			(id) => ({ id, email: 'person@example.test', tenantId: `tenant-${id}`, tenant: { id: `tenant-${id}`, name: id } }) as unknown as User
+		);
+		const teams = new Map([['user-1', [{ team_id: 'team-1', team_name: 'One' }]]]);
+		const { workspaces } = service.workspaces(users, teams);
+		expect(workspaces[0].current_teams).toEqual([{ team_id: 'team-1', team_name: 'One' }]);
+		expect('current_teams' in workspaces[1]).toBe(false);
+	});
+
+	it('hands out workspace tokens that live only as long as the session binding window', () => {
+		// 15 minutes (shorter only when Gauzy's own access tokens are shorter), not the 24 h default.
+		expect(workspaceTokenTtlSeconds()).toBe(Math.min(SESSION_BIND_WINDOW_MS / 1000, Number(environment.JWT_TOKEN_EXPIRATION_TIME)));
+		const service = new ZitadelWorkspaceService(null as never, null as never);
+		const user = { id: 'user-1', email: 'person@example.test', tenantId: 'tenant-1', tenant: { id: 'tenant-1' } } as unknown as User;
+		const [workspace] = service.workspaces([user]).workspaces;
+		const payload = verifyPurposeToken<{ userId: string }>(workspace.token, TokenPurposeEnum.WORKSPACE_SIGNIN, {
+			requiredClaims: ['userId', 'email']
+		});
+		expect(payload.exp - payload.iat).toBe(workspaceTokenTtlSeconds());
+		expect(payload.exp - payload.iat).toBeLessThanOrEqual(SESSION_BIND_WINDOW_MS / 1000);
+	});
+
+	it('links legal documents to the web app with absolute URLs', () => {
+		const client = 'https://app.example.test';
+		expect(absoluteDocumentUrl('/legal/tos', client)).toBe('https://app.example.test/#/legal/terms');
+		expect(absoluteDocumentUrl('/legal/privacy', client)).toBe('https://app.example.test/#/legal/privacy');
+		expect(absoluteDocumentUrl('/legal/cookies', client)).toBe('https://app.example.test/#/legal/cookies');
+		expect(absoluteDocumentUrl('/pages/help', client)).toBe('https://app.example.test/#/pages/help');
+		expect(absoluteDocumentUrl('https://legal.example.test/tos', client)).toBe('https://legal.example.test/tos');
+		expect(absoluteDocumentUrl('//evil.example.test/tos', client)).toBeUndefined();
+		expect(absoluteDocumentUrl('javascript:alert(1)', client)).toBeUndefined();
+		expect(absoluteDocumentUrl(undefined, client)).toBeUndefined();
+	});
+
+	it('takes only display fields, as plain text and https links, for the code e-mail', () => {
+		expect(
+			emailBranding({
+				appName: '  Ever Teams\r\nBcc: x@example.test ',
+				appLogo: 'https://teams.example.test/logo.png',
+				appSignature: 'The Ever Teams team',
+				appLink: 'http://teams.example.test',
+				companyName: 'Ever',
+				companyLink: 'https://someone@ever.example.test',
+				appMagicSignUrl: 'https://evil.example.test/steal'
+			} as never)
+		).toEqual({
+			appName: 'Ever Teams Bcc: x@example.test',
+			appLogo: 'https://teams.example.test/logo.png',
+			appSignature: 'The Ever Teams team',
+			companyName: 'Ever'
+		});
+		expect(emailBranding({ appName: '   ', appLogo: 'not a url' })).toEqual({});
+		expect(emailBranding(undefined)).toEqual({});
+		expect(emailBranding({ appName: 'x'.repeat(400) }).appName).toHaveLength(255);
 	});
 });

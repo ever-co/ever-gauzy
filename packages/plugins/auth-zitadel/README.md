@@ -36,7 +36,9 @@ Settings on the API (defaults in brackets):
 - `ZITADEL_CALLBACK_URL` (`<API_BASE_URL>/api/auth/zitadel/callback`):
   register this redirect URI at the issuer; sign-in and linking both use it.
 - `ZITADEL_ALLOWED_AUDIENCES`: client ids of other first-party apps whose
-  tokens `POST /api/auth/zitadel/token` accepts.
+  tokens `POST /api/auth/zitadel/token` accepts, and whose back-channel
+  logout tokens `POST /api/auth/zitadel/backchannel-logout` accepts when
+  their server forwards them.
 - `ZITADEL_LINK_MODE` (`explicit`): `explicit` connects accounts only from
   Settings. `confirmed` (Ever Cloud only) also connects at sign-in, after
   Gauzy's one-time e-mail code.
@@ -84,10 +86,24 @@ All under `/api/auth/zitadel`:
 - `POST /confirm` (anyone): `confirmed` mode only; completes a link with
   Gauzy's one-time e-mail code (five tries).
 - `POST /signup/details`, `POST /signup` (anyone): the Ever Cloud sign-up
-  confirmation page and the confirmation itself.
+  confirmation page and the confirmation itself. The details list the legal
+  documents to accept (in the `language` header's language, as `/signup`
+  checks them), each with an absolute link to the web app's page for it.
 - `POST /token` (first-party apps): exchanges an Ever ID token of an allowed
   client for the workspace list. An access token is accepted only when its
-  `aud` names an allowed client; up to 120 requests a minute per address.
+  `aud` names an allowed client. The app may add its `appName`, `appLogo`,
+  `appSignature`, `appLink`, `companyName` and `companyLink` (links https
+  only) for Gauzy's one-time code e-mail; a link carrying the code is never
+  taken from a request.
+
+`/token`, `/confirm`, `/signup/details` and `/signup` accept up to 120
+requests a minute per address: another first-party app's server makes them
+for everyone signing in through it. `/confirm`, `/signup/details` and
+`/signup` also limit each one-time key, to 5, 10 and 5 requests a minute;
+over a limit the answer is 429 (with `Retry-After`). While another attempt
+uses the same key (a code check or a sign-up still running) they answer 409
+`{"code": "handoff_busy", "retryAfter": 2}` with `Retry-After`: the key is
+still valid. A used-up or expired key answers 410.
 - `POST /link`, `GET /link/start`, `POST /link/preview`,
   `POST /link/confirm` (signed-in user): connect an Ever ID from Settings.
 - `DELETE /link/:id`, `GET /identities` (signed-in user): disconnect or list
@@ -105,7 +121,14 @@ answers 404 and no outbound request is made.
   key. The web app redeems it for the workspace list and signs in through
   the unchanged `POST /api/auth/signin.workspace`. No token, e-mail address
   or other personal data is ever put in a URL. Gauzy's own access and
-  refresh tokens are issued exactly as for the e-mail code sign-in.
+  refresh tokens are issued exactly as for the e-mail code sign-in. The
+  workspace tokens in the list are valid for 15 minutes (the window in which
+  the sign-in is bound to its Ever ID session, see back-channel logout).
+- **Team lists.** When a link is confirmed with Gauzy's code for another
+  first-party app (`/confirm` with a key from `/token`), each workspace
+  carries the team list Gauzy's own code check returns (`current_teams`), as
+  Gauzy's e-mail code sign-in does for that app. The other answers carry
+  none: the plugin makes no team lookups of its own.
 - **No silent linking, no silent accounts.** An e-mail match alone never
   connects an Ever ID to an account and never creates one. A person without
   a link is sent to Gauzy's register page (prefilled), or, in `confirmed`
@@ -121,7 +144,12 @@ answers 404 and no outbound request is made.
   runs behind its own subscription check. Without a subscription the
   confirmed sign-up waits on the server (keyed to the Ever ID, for
   `ZITADEL_CONFIRM_TTL_S`) while the person goes through checkout, and
-  finishes the next time they sign in with Ever ID.
+  finishes the next time they sign in with Ever ID. A sign-up whose account
+  was created but not linked (a step failed) also finishes then, without a
+  new code. One sign-up runs at a time per Ever ID, so two tabs never create
+  two accounts. The account starts without a workspace (tenant), as with
+  Gauzy's register page: its workspace token signs in to it, and the app
+  then sets the workspace up.
 - **Organization rules.** Optional hints in the ID token can remove a
   workspace from a sign-in (for example an organization that requires its
   company sign-in); they never grant access.
@@ -134,6 +162,9 @@ answers 404 and no outbound request is made.
   (`JWT_TOKEN_EXPIRATION_TIME`), because Gauzy checks them by signature. A
   logout token is accepted once and only while fresh; when the sessions
   cannot be ended the answer is 503, so the identity provider can retry.
+  Another first-party app listed in `ZITADEL_ALLOWED_AUDIENCES` may forward
+  the logout token it received (it names that app as its audience); it
+  passes exactly the same checks and ends the same sessions.
 
 ## Outbound requests
 

@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, shareReplay } from 'rxjs/operators';
-import { ITermsAcceptanceClaim, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
+import { ITermsAcceptanceClaim, ITermsAcceptanceDocument, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const BASE = `${API_PREFIX}/auth/zitadel`;
@@ -40,6 +40,8 @@ export interface EverIdSignupDetails {
 	lastName?: string;
 	status?: 'subscription_required';
 	checkoutUrl?: string;
+	/** The documents the sign-up must accept, with absolute links to the web app's pages. */
+	terms?: ITermsAcceptanceDocument[];
 }
 
 /** A linked identity in Settings. */

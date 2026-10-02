@@ -16,7 +16,8 @@ import {
 	Req,
 	Res,
 	UnauthorizedException,
-	UseGuards
+	UseGuards,
+	UseInterceptors
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -34,6 +35,8 @@ import {
 	TokenSigninDTO
 } from './dto';
 import { ZitadelConfiguredGuard } from './guards/zitadel-configured.guard';
+import { HandoffKeyThrottle, ZitadelHandoffThrottleGuard } from './guards/zitadel-handoff-throttle.guard';
+import { ZitadelRetryAfterInterceptor } from './http/zitadel-retry';
 import { ZitadelBackchannelService } from './services/zitadel-backchannel.service';
 import { ZitadelConfigService, ZitadelPublicConfig } from './services/zitadel-config.service';
 import { ZitadelFlowService } from './services/zitadel-flow.service';
@@ -54,12 +57,24 @@ function language(value: string | undefined): LanguagesEnum {
 	return Object.values(LanguagesEnum).includes(value as LanguagesEnum) ? (value as LanguagesEnum) : LanguagesEnum.ENGLISH;
 }
 
+/** One minute, in milliseconds (the window of every limit below). */
+const MINUTE_MS = 60_000;
+
+/**
+ * Per-address limit of the routes another first-party app's server calls on behalf of many people
+ * (everyone signing in through that app shares the server's address). Each request still needs a
+ * live one-time key, which only a verified Ever ID sign-in produces, and each key has its own,
+ * stricter limit ({@link HandoffKeyThrottle}).
+ */
+const SHARED_ADDRESS_LIMIT = { default: { limit: 120, ttl: MINUTE_MS } };
+
 /**
  * Ever ID sign-in routes, under `/api/auth/zitadel`. They exist only while the plugin is loaded
  * (`ZITADEL_ENABLED=true`); every existing `/api/auth/*` route is untouched.
  */
 @ApiTags('Ever ID sign-in')
 @Controller('/auth/zitadel')
+@UseInterceptors(ZitadelRetryAfterInterceptor)
 export class AuthZitadelController {
 	constructor(
 		private readonly config: ZitadelConfigService,
@@ -115,37 +130,46 @@ export class AuthZitadelController {
 		return this.signin.redeemHandoff(body.handoff);
 	}
 
-	/** Completes a confirmed link with Gauzy's one-time e-mail code. */
+	/**
+	 * Completes a confirmed link with Gauzy's one-time e-mail code. 409 `handoff_busy` while another
+	 * attempt checks a code for the same key; 410 once the key is used up or expired.
+	 */
 	@Public()
-	@UseGuards(ZitadelConfiguredGuard)
+	@UseGuards(ZitadelConfiguredGuard, ZitadelHandoffThrottleGuard)
 	@Post('/confirm')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	@Throttle({ default: { limit: 5, ttl: 60000 } })
+	@Throttle(SHARED_ADDRESS_LIMIT)
+	@HandoffKeyThrottle('confirm', { limit: 5, ttl: MINUTE_MS })
 	@UseValidationPipe({ whitelist: true })
 	confirm(@Body() body: ConfirmDTO) {
 		return this.signin.confirm(body.handoff, body.code);
 	}
 
-	/** The details the sign-up confirmation page shows (the key stays valid). */
+	/**
+	 * The details the sign-up confirmation page shows, with the documents to accept (the key stays
+	 * valid). The documents follow the `language` header, as on `POST /signup`.
+	 */
 	@Public()
-	@UseGuards(ZitadelConfiguredGuard)
+	@UseGuards(ZitadelConfiguredGuard, ZitadelHandoffThrottleGuard)
 	@Post('/signup/details')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	@Throttle({ default: { limit: 10, ttl: 60000 } })
+	@Throttle(SHARED_ADDRESS_LIMIT)
+	@HandoffKeyThrottle('signup-details', { limit: 10, ttl: MINUTE_MS })
 	@UseValidationPipe({ whitelist: true })
-	signupDetails(@Body() body: HandoffDTO) {
-		return this.signup.details(body.handoff);
+	signupDetails(@Body() body: HandoffDTO, @Headers('language') lang?: string) {
+		return this.signup.details(body.handoff, language(lang));
 	}
 
 	/** The person confirmed creating a workspace with this Ever ID. */
 	@Public()
-	@UseGuards(ZitadelConfiguredGuard)
+	@UseGuards(ZitadelConfiguredGuard, ZitadelHandoffThrottleGuard)
 	@Post('/signup')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	@Throttle({ default: { limit: 3, ttl: 60000 } })
+	@Throttle(SHARED_ADDRESS_LIMIT)
+	@HandoffKeyThrottle('signup', { limit: 5, ttl: MINUTE_MS })
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async signupConfirm(@Body() body: SignupDTO, @Headers('language') lang?: string) {
 		const result = await this.signup.confirm(body.handoff, body, language(lang));
@@ -168,7 +192,7 @@ export class AuthZitadelController {
 	@Post('/token')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
-	@Throttle({ default: { limit: 120, ttl: 60000 } })
+	@Throttle(SHARED_ADDRESS_LIMIT)
 	@UseValidationPipe({ whitelist: true })
 	token(@Body() body: TokenSigninDTO) {
 		return this.tokens.signIn(body);

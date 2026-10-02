@@ -37,6 +37,9 @@ import { EverIdSignInService } from '../services/ever-id-sign-in.service';
 				@if (failed) {
 					<nb-alert status="danger" role="alert">{{ 'AUTH_ZITADEL.ERRORS.try_again' | translate }}</nb-alert>
 				}
+				@if (retryLater) {
+					<nb-alert status="warning" role="alert">{{ 'AUTH_ZITADEL.ERRORS.busy' | translate }}</nb-alert>
+				}
 				<form (ngSubmit)="submit()" class="code-form">
 					<input
 						nbInput
@@ -77,6 +80,8 @@ export class EverIdConfirmComponent implements OnInit {
 	busy = false;
 	wrongCode = false;
 	failed = false;
+	/** Another attempt was checking a code for this step, or it was tried too often just now. */
+	retryLater = false;
 	expired = false;
 	response: EverIdWorkspaceResponse | null = null;
 	private handoff = '';
@@ -93,6 +98,7 @@ export class EverIdConfirmComponent implements OnInit {
 		this.busy = true;
 		this.wrongCode = false;
 		this.failed = false;
+		this.retryLater = false;
 		this.api
 			.confirm(this.handoff, this.code.trim())
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -111,6 +117,9 @@ export class EverIdConfirmComponent implements OnInit {
 						this.expired = true;
 					} else if (failure?.status === 401) {
 						this.wrongCode = true;
+					} else if (failure?.status === 409 || failure?.status === 429) {
+						// The step is still valid: the same code can be entered again in a moment.
+						this.retryLater = true;
 					} else {
 						// A server or network problem: the code may well be right, so it can be tried again.
 						this.failed = true;

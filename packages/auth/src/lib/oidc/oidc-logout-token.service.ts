@@ -3,7 +3,7 @@ import type { JWTVerifyGetKey } from 'jose';
 import { OidcError } from './errors';
 import { loadJose } from './jose-loader';
 import { OidcJwksService } from './oidc-jwks.service';
-import { OIDC_SIGNING_ALGORITHMS, OidcIssuerConfig, OidcLogoutToken } from './oidc.types';
+import { OIDC_SIGNING_ALGORITHMS, OidcIssuerConfig, OidcLogoutToken, OidcLogoutTokenValidationOptions } from './oidc.types';
 
 /**
  * The event a back-channel logout token must carry (Back-Channel Logout 1.0, section 2.4). It is an
@@ -54,10 +54,11 @@ function toLogoutTokenError(error: unknown): OidcError {
 /**
  * Validates back-channel logout tokens (OpenID Connect Back-Channel Logout 1.0, section 2.6).
  *
- * Checks: signature with the issuer's keys; `iss`; `aud` contains the client id; `iat` present and
- * not older than 300 s; `jti` present; the `events` claim contains the back-channel logout event;
- * `sub` or `sid` present; no `nonce`. Replay protection (remembering `jti`) is the caller's job,
- * because only the caller has durable storage.
+ * Checks: signature with the issuer's keys; `iss`; `aud` contains the client id (or, when the caller
+ * lists them, one of the accepted audiences); `iat` present and not older than 300 s; `jti` present;
+ * the `events` claim contains the back-channel logout event; `sub` or `sid` present; no `nonce`.
+ * Replay protection (remembering `jti`) is the caller's job, because only the caller has durable
+ * storage.
  */
 @Injectable()
 export class OidcLogoutTokenService {
@@ -68,14 +69,20 @@ export class OidcLogoutTokenService {
 	 *
 	 * @param config - Issuer and client settings.
 	 * @param logoutToken - The compact JWS posted by the issuer.
+	 * @param options - Accepted audiences (the client id alone by default).
 	 * @returns The verified token.
 	 * @throws OidcError `token_invalid`, `expired`, `issuer_rejected` or `audience_rejected`.
 	 */
-	async validate(config: OidcIssuerConfig, logoutToken: string): Promise<OidcLogoutToken> {
+	async validate(
+		config: OidcIssuerConfig,
+		logoutToken: string,
+		options: OidcLogoutTokenValidationOptions = {}
+	): Promise<OidcLogoutToken> {
 		if (!logoutToken || typeof logoutToken !== 'string') {
 			throw new OidcError('token_invalid', 'Missing logout token');
 		}
-		const payload = await this.verifySignature(config, logoutToken);
+		const audiences = options.audiences?.filter(Boolean) ?? [];
+		const payload = await this.verifySignature(config, logoutToken, audiences.length ? audiences : [config.clientId]);
 		const iat = this.checkIssuedAt(payload['iat']);
 
 		const jti = nonEmptyString(payload['jti']);
@@ -107,14 +114,19 @@ export class OidcLogoutTokenService {
 	}
 
 	/** Verifies the signature, issuer and audience against the issuer's published keys. */
-	private async verifySignature(config: OidcIssuerConfig, logoutToken: string): Promise<Record<string, unknown>> {
+	private async verifySignature(
+		config: OidcIssuerConfig,
+		logoutToken: string,
+		audiences: string[]
+	): Promise<Record<string, unknown>> {
 		const jose = await loadJose();
 		const getKey: JWTVerifyGetKey = (header) =>
 			this.jwks.getKey(config.issuer, { alg: header.alg, kid: header.kid }, config.discoveryDocument);
 		try {
 			const verified = await jose.jwtVerify(logoutToken, getKey, {
 				issuer: config.issuer,
-				audience: config.clientId,
+				// `aud` must contain at least one of these.
+				audience: audiences,
 				algorithms: [...OIDC_SIGNING_ALGORITHMS],
 				currentDate: new Date(this.nowSeconds() * 1000),
 				clockTolerance: FUTURE_TOLERANCE_SECONDS,

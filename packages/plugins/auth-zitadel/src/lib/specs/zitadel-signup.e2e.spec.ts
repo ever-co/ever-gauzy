@@ -1,3 +1,4 @@
+import { manualPause } from '../fixtures/in-memory-accounts';
 import { TEST_CLIENT_BASE_URL, TestBrowser, ZitadelTestApp, createZitadelTestApp, hashParam } from '../fixtures/zitadel-test-app';
 
 // The first use of `jose` (an ES module that ts-jest compiles on load) and key generation can take
@@ -29,7 +30,7 @@ describe('Ever Cloud confirmed sign-up (HTTP, against a mock OpenID Provider)', 
 			const handoff = hashParam(landing, 'handoff');
 
 			const details = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup/details`, { handoff });
-			expect(await details.json()).toEqual({ email: 'new.person@example.test', firstName: 'New', lastName: 'Person' });
+			expect(await details.json()).toEqual({ email: 'new.person@example.test', firstName: 'New', lastName: 'Person', terms: [] });
 
 			const unconfirmed = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: false });
 			expect(unconfirmed.status).toBe(400);
@@ -134,6 +135,154 @@ describe('Ever Cloud confirmed sign-up (HTTP, against a mock OpenID Provider)', 
 			expect(body.code).toBe('signup_required');
 			expect(body.handoff).toBeTruthy();
 			expect(t.accounts.users).toHaveLength(0);
+		});
+
+		it('lists the documents to accept with absolute links to the web app, in the requested language', async () => {
+			const document = (documentId: string, url: string) => ({
+				documentId,
+				version: '1.0.2',
+				sha256: 'c'.repeat(64),
+				locale: 'en',
+				title: documentId,
+				url,
+				effectiveDate: '2026-08-02'
+			});
+			t.terms.required = [document('tos:gauzy', '/legal/tos'), document('privacy:gauzy', '/legal/privacy')];
+			const landing = await signIn('new-person', { email: 'new.person@example.test' });
+
+			const details = await browser.post(
+				`${t.baseUrl}/api/auth/zitadel/signup/details`,
+				{ handoff: hashParam(landing, 'handoff') },
+				{ language: 'fr' }
+			);
+			expect(details.status).toBe(200);
+			const { terms } = await details.json();
+			expect(terms).toEqual([
+				{ ...document('tos:gauzy', ''), url: `${TEST_CLIENT_BASE_URL}/#/legal/terms` },
+				{ ...document('privacy:gauzy', ''), url: `${TEST_CLIENT_BASE_URL}/#/legal/privacy` }
+			]);
+			expect(t.terms.locales).toEqual(['fr']);
+		});
+
+		it('answers 409 handoff_busy while a sign-up with the key runs, then 410 once it is used', async () => {
+			const landing = await signIn('new-person', { email: 'new.person@example.test' });
+			const handoff = hashParam(landing, 'handoff');
+			const pause = manualPause();
+			t.gauzyAuth.beforeRegister = pause.wait;
+
+			const first = browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true });
+			await pause.reached;
+			const details = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup/details`, { handoff });
+			expect(details.status).toBe(409);
+			expect(details.headers.get('retry-after')).toBe('2');
+			expect(await details.json()).toEqual(expect.objectContaining({ code: 'handoff_busy', retryAfter: 2 }));
+			const second = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true });
+			expect(second.status).toBe(409);
+			expect((await second.json()).code).toBe('handoff_busy');
+
+			pause.release();
+			expect((await first).status).toBe(200);
+			expect(t.gauzyAuth.registered).toHaveLength(1);
+			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: true })).status).toBe(410);
+			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/signup/details`, { handoff })).status).toBe(410);
+		});
+
+		it('never registers twice when two keys of one Ever ID are confirmed at the same time', async () => {
+			const keyA = hashParam(await signIn('new-person', { email: 'new.person@example.test' }), 'handoff');
+			const keyB = hashParam(await signIn('new-person', { email: 'new.person@example.test' }), 'handoff');
+			expect(keyA).not.toBe(keyB);
+			const pause = manualPause();
+			t.gauzyAuth.beforeRegister = pause.wait;
+
+			const first = browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: keyA, confirm: true });
+			await pause.reached;
+			const busy = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: keyB, confirm: true });
+			expect(busy.status).toBe(409);
+			pause.release();
+			expect((await first).status).toBe(200);
+
+			// The other key stayed valid; the sign-up is done, so it only signs in.
+			const later = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: keyB, confirm: true });
+			expect(later.status).toBe(200);
+			expect((await later.json()).total_workspaces).toBe(1);
+			expect(t.gauzyAuth.registered).toHaveLength(1);
+			expect(t.accounts.users).toHaveLength(1);
+			expect(t.accounts.links).toHaveLength(1);
+		});
+
+		it('keeps the account an earlier attempt created when the sign-up is confirmed again with another key', async () => {
+			const keyA = hashParam(await signIn('new-person', { email: 'new.person@example.test' }), 'handoff');
+			const keyB = hashParam(await signIn('new-person', { email: 'new.person@example.test' }), 'handoff');
+			const failOnce = jest.spyOn(t.accounts, 'link').mockRejectedValueOnce(new Error('database unavailable'));
+			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: keyA, confirm: true })).status).toBe(500);
+			failOnce.mockRestore();
+
+			const again = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: keyB, confirm: true });
+			expect(again.status).toBe(200);
+			expect(t.gauzyAuth.registered).toHaveLength(1);
+			expect(t.accounts.users).toHaveLength(1);
+			expect(t.accounts.links).toEqual([expect.objectContaining({ linkMethod: 'signup', userId: t.accounts.users[0].id })]);
+		});
+
+		it('limits the uses of one key per minute, without touching other keys', async () => {
+			const handoff = hashParam(await signIn('new-person', { email: 'new.person@example.test' }), 'handoff');
+			const statuses: number[] = [];
+			for (let i = 0; i < 11; i++) {
+				statuses.push((await browser.post(`${t.baseUrl}/api/auth/zitadel/signup/details`, { handoff })).status);
+			}
+			expect(statuses).toEqual([...new Array(10).fill(200), 429]);
+			const refused = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup/details`, { handoff });
+			expect(refused.status).toBe(429);
+			expect(Number(refused.headers.get('retry-after'))).toBeGreaterThan(0);
+			expect(await refused.json()).toEqual(expect.objectContaining({ code: 'handoff_throttled' }));
+
+			const unconfirmed: number[] = [];
+			for (let i = 0; i < 6; i++) {
+				unconfirmed.push((await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff, confirm: false })).status);
+			}
+			expect(unconfirmed).toEqual([400, 400, 400, 400, 400, 429]);
+
+			const other = hashParam(await signIn('other-person', { email: 'other.person@example.test' }), 'handoff');
+			expect((await browser.post(`${t.baseUrl}/api/auth/zitadel/signup/details`, { handoff: other })).status).toBe(200);
+			expect(t.gauzyAuth.registered).toHaveLength(0);
+		});
+	});
+
+	describe('with confirmed links and the sign-up path on (Ever Cloud)', () => {
+		beforeEach(async () => {
+			t = await createZitadelTestApp({
+				env: { EVER_INSTALL_SOURCE: 'cloud', ZITADEL_SIGNUP_ENABLED: 'true', ZITADEL_LINK_MODE: 'confirmed' }
+			});
+			browser = new TestBrowser();
+		});
+
+		it('finishes a sign-up whose account exists at the next sign-in, without sending a code', async () => {
+			const landing = await signIn('new-person', { email: 'new.person@example.test' });
+			const failOnce = jest.spyOn(t.accounts, 'link').mockRejectedValueOnce(new Error('database unavailable'));
+			const failed = await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: hashParam(landing, 'handoff'), confirm: true });
+			expect(failed.status).toBe(500);
+			failOnce.mockRestore();
+			expect(t.accounts.users).toHaveLength(1);
+			expect(t.accounts.users[0].emailVerifiedAt).toBeInstanceOf(Date);
+
+			// The account's verified address matches, but it is the account this sign-up created: no code.
+			const back = await signIn('new-person', { email: 'new.person@example.test' });
+			expect(back).toMatch(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?handoff=`);
+			expect(t.gauzyAuth.sentCodes).toEqual([]);
+			expect(t.gauzyAuth.registered).toHaveLength(1);
+			expect(t.accounts.links).toEqual([expect.objectContaining({ linkMethod: 'signup', userId: t.accounts.users[0].id })]);
+		});
+
+		it('drops a pending sign-up whose account is gone and decides as usual', async () => {
+			const landing = await signIn('new-person', { email: 'new.person@example.test' });
+			const failOnce = jest.spyOn(t.accounts, 'link').mockRejectedValueOnce(new Error('database unavailable'));
+			await browser.post(`${t.baseUrl}/api/auth/zitadel/signup`, { handoff: hashParam(landing, 'handoff'), confirm: true });
+			failOnce.mockRestore();
+			t.accounts.users[0].isActive = false;
+
+			const back = await signIn('new-person', { email: 'new.person@example.test' });
+			expect(back).toMatch(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id/signup?handoff=`);
+			expect(t.accounts.links).toHaveLength(0);
 		});
 	});
 

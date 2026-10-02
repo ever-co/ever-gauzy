@@ -8,6 +8,11 @@ import { unverifiedIssuer } from './zitadel-token-signin.service';
 /**
  * Handles OpenID Connect back-channel logout requests.
  *
+ * The token is issued either to this product's own client or to another first-party client listed in
+ * `ZITADEL_ALLOWED_AUDIENCES`, whose server forwards the logout it received (the identity provider
+ * ends one session for every client signed in with it). Either way the same checks apply: the
+ * issuer's signature, the issuer itself, the logout event, freshness and a single use of its `jti`.
+ *
  * A token that fails validation or repeats a `jti` answers 400 and changes nothing. A token naming a
  * session (`sid`) ends the Gauzy sessions opened through that session; a token naming only a subject
  * ends every Gauzy session opened through Ever ID by the accounts linked to that subject. The `jti`
@@ -32,9 +37,10 @@ export class ZitadelBackchannelService {
 			throw new BadRequestException();
 		}
 
+		const audiences = [...new Set([issuer.clientId, ...this.config.settings.allowedAudiences])];
 		let token: Awaited<ReturnType<OidcLogoutTokenService['validate']>>;
 		try {
-			token = await this.logoutTokens.validate(issuer, logoutToken);
+			token = await this.logoutTokens.validate(issuer, logoutToken, { audiences });
 		} catch (error) {
 			this.logger.warn(`Back-channel logout refused: ${isOidcError(error) ? error.code : 'invalid token'}`);
 			throw new BadRequestException();

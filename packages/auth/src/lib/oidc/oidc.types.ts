@@ -129,6 +129,16 @@ export interface OidcIdTokenValidationOptions {
 	maxIatSkewSeconds?: number;
 }
 
+/** Options of {@link OidcLogoutTokenService.validate}. */
+export interface OidcLogoutTokenValidationOptions {
+	/**
+	 * Audiences accepted for this call. Defaults to the issuer config's `clientId` only: a logout
+	 * token issued to another client (for example one that another first-party client forwards) is
+	 * accepted only when the caller lists that client here. Every other check stays the same.
+	 */
+	audiences?: string[];
+}
+
 /** A verified back-channel logout token (OpenID Connect Back-Channel Logout 1.0). */
 export interface OidcLogoutToken {
 	issuer: string;
