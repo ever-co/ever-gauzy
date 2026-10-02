@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import {
@@ -42,6 +42,12 @@ import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import {
+	allowedEmailLink,
+	emailLinkOrigin,
+	warnRejectedEmailLink,
+	withAllowedEmailLinks
+} from '../auth/email-link-origin';
+import {
 	MultiORMEnum,
 	freshTimestamp,
 	getArrayIntersection,
@@ -74,6 +80,8 @@ import { inviteClaimWhere, inviteRejectWhere, inviteReleaseWhere } from '../shar
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
+	private readonly logger = new Logger(InviteService.name);
+
 	constructor(
 		readonly typeOrmInviteRepository: TypeOrmInviteRepository,
 		readonly mikroOrmInviteRepository: MikroOrmInviteRepository,
@@ -169,9 +177,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			appliedDate,
 			invitationExpirationPeriod,
 			fullName,
-			callbackUrl,
 			queryParams
 		} = input;
+
+		// The invitation link carries the invite code / token; a callback on an origin this
+		// deployment does not serve is dropped and the default accept link is used instead.
+		const callbackUrl = this.allowedCallbackUrl(input.callbackUrl);
 
 		/**
 		 * Fetch organization-related data in parallel.
@@ -404,6 +415,29 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	/**
+	 * The caller's `callbackUrl` when its origin is one this deployment serves (see
+	 * `auth/email-link-origin.ts`), otherwise undefined, so that the invitation uses the default
+	 * accept link. The invitation email is a genuine one and its link carries the invite code or token,
+	 * so it may only lead to one of the deployment's own front ends.
+	 *
+	 * @param callbackUrl The callback the caller asked for, if any.
+	 */
+	private allowedCallbackUrl(callbackUrl?: string): string | undefined {
+		if (!callbackUrl) {
+			return undefined;
+		}
+		const allowed = allowedEmailLink(callbackUrl);
+		if (!allowed) {
+			warnRejectedEmailLink(this.logger, 'the invitation email (the default accept link is used)')(
+				'callbackUrl',
+				emailLinkOrigin(callbackUrl)
+			);
+			return undefined;
+		}
+		return allowed;
+	}
+
+	/**
 	 * Generates the register URL for accepting invites.
 	 * @param origin - The base URL.
 	 * @param email - The email of the invitee.
@@ -452,7 +486,9 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 	async resendEmail(input: IInviteResendInput, languageCode: LanguagesEnum) {
 		const originUrl = this.configService.get('clientBaseUrl') as string;
-		const { inviteId, inviteType, callbackUrl } = input;
+		const { inviteId, inviteType } = input;
+		// Same rule as createBulk: only a callback on an origin this deployment serves.
+		const callbackUrl = this.allowedCallbackUrl(input.callbackUrl);
 
 		// Retrieve the invite
 		const invite: IInvite = await this.findOneByIdString(inviteId, {
@@ -1378,8 +1414,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			}
 		}
 
-		// Extract integration information
-		let integration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName']);
+		// Extract integration information. A link on an origin this deployment does not serve is
+		// replaced by the configured one (see auth/email-link-origin.ts).
+		const integration = withAllowedEmailLinks(
+			pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName']),
+			warnRejectedEmailLink(this.logger, 'the welcome email')
+		);
 
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 		return user;

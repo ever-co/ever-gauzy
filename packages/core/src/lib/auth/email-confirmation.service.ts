@@ -28,7 +28,7 @@ import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
 import { describeEmailSendError } from './../email-send/email-send-error';
-import { allowedEmailLinkOrigins, isAllowedEmailLink, isEmailLinkCheckDisabled } from './email-link-origin';
+import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -136,27 +136,18 @@ export class EmailConfirmationService {
 	}
 
 	/**
-	 * The caller's integration overrides, minus a confirmation link on an origin this deployment does
-	 * not serve. See {@link allowedEmailLinkOrigins} for why.
+	 * The caller's integration overrides, minus any link (above all the confirmation link, which
+	 * carries the verification token) on an origin this deployment does not serve: such a link is
+	 * replaced by the configured one. See {@link withAllowedEmailLinks} for why.
 	 *
 	 * @param integration The overrides supplied with the request.
 	 * @param userId Only for the log line.
 	 */
 	private withTrustedLinks(integration: IAppIntegrationConfig, userId: string): IAppIntegrationConfig {
-		if (!integration?.appEmailConfirmationUrl || isEmailLinkCheckDisabled()) {
-			return integration;
-		}
-		if (isAllowedEmailLink(integration.appEmailConfirmationUrl, allowedEmailLinkOrigins())) {
-			return integration;
-		}
-
-		this.logger.warn(
-			`Ignoring appEmailConfirmationUrl for user ${userId}: its origin is not one this deployment serves ` +
-				`(add it to EMAIL_LINK_ALLOWED_ORIGINS if it should be).`
+		return withAllowedEmailLinks(
+			integration,
+			warnRejectedEmailLink(this.logger, `the verification email of user ${userId}`)
 		);
-		return Object.fromEntries(
-			Object.entries(integration).filter(([key]) => key !== 'appEmailConfirmationUrl')
-		) as IAppIntegrationConfig;
 	}
 
 	/**

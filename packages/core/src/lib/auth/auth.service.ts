@@ -87,6 +87,7 @@ import { TypeOrmPasswordResetRepository } from './../password-reset/repository/t
 import { MikroOrmPasswordResetRepository } from './../password-reset/repository/mikro-orm-password-reset.repository';
 import { RoleService } from './../role/role.service';
 import { EmailConfirmationService } from './email-confirmation.service';
+import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 import { SocialAccountService } from './social-account/social-account.service';
 import {
 	IVerifiedSocialIdentity,
@@ -1529,16 +1530,20 @@ export class AuthService extends SocialAuthService {
 			);
 		}
 
-		// Extract integration information
-		let integration = pick(input, [
-			'appName',
-			'appLogo',
-			'appSignature',
-			'appLink',
-			'appEmailConfirmationUrl',
-			'companyLink',
-			'companyName'
-		]);
+		// Extract integration information. A link on an origin this deployment does not serve is
+		// replaced by the configured one (see email-link-origin.ts).
+		const integration = withAllowedEmailLinks(
+			pick(input, [
+				'appName',
+				'appLogo',
+				'appSignature',
+				'appLink',
+				'appEmailConfirmationUrl',
+				'companyLink',
+				'companyName'
+			]),
+			warnRejectedEmailLink(this.logger, 'the registration emails')
+		);
 
 		// 8. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
@@ -2095,13 +2100,21 @@ export class AuthService extends SocialAuthService {
 					'appMagicSignUrl'
 				]);
 
-				// Override the default config by merging in the provided values.
-				const integration = deepMerge(environment.appIntegrationConfig, appIntegration);
+				// Override the default config by merging in the provided values - except a link on an
+				// origin this deployment does not serve: the email carries the sign-in code, so its link
+				// may only lead to one of the deployment's own front ends. Such a link is replaced by the
+				// configured one; the response to the caller does not change (see email-link-origin.ts).
+				const integration = deepMerge(
+					environment.appIntegrationConfig,
+					withAllowedEmailLinks(appIntegration, warnRejectedEmailLink(this.logger, 'the sign-in code email'))
+				);
 
 				let magicLink: string;
 
 				if (integration.appMagicSignUrl) {
-					magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
+					magicLink = `${integration.appMagicSignUrl}?email=${encodeURIComponent(
+						email
+					)}&code=${encodeURIComponent(magicCode)}`;
 				}
 
 				// Do NOT log the magic link — contains sensitive code
