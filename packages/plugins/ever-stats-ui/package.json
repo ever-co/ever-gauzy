@@ -28,7 +28,6 @@
 		"@angular/core": "21.0.7"
 	},
 	"dependencies": {
-		"@angular/forms": "21.0.7",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/plugin-ui": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",

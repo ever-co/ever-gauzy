@@ -1,3 +1,4 @@
+// cspell:ignore sqljs
 import { DataSource } from 'typeorm';
 
 /**

@@ -74,9 +74,10 @@ describe('Anonymous usage statistics routes', () => {
 	});
 
 	const call = (method: string, path: string, user: string | null, body?: unknown) => {
-		let req = (request(app.getHttpServer()) as any)[method](path);
+		const agent = request(app.getHttpServer()) as unknown as Record<string, (path: string) => request.Test>;
+		let req = agent[method](path);
 		if (user) req = req.set('x-test-user', user);
-		return body === undefined ? req : req.send(body);
+		return body === undefined ? req : req.send(body as object);
 	};
 
 	it.each(ROUTES)('%s %s: 200 for the operator, never cached', async (method, path, body) => {

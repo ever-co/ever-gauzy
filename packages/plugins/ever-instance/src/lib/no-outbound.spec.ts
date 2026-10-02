@@ -26,7 +26,7 @@ export function sourceFiles(root: string): string[] {
 	return out;
 }
 
-export function offences(files: Array<{ path: string; text: string }>): string[] {
+export function violations(files: Array<{ path: string; text: string }>): string[] {
 	return files.flatMap(({ path, text }) => FORBIDDEN.filter(([, re]) => re.test(text)).map(([name]) => `${path}: ${name}`));
 }
 
@@ -34,12 +34,12 @@ describe('ever-instance makes no outbound request', () => {
 	it('has no HTTP client, fetch or socket in its sources', () => {
 		const files = sourceFiles(join(__dirname, '..')).map((path) => ({ path, text: readFileSync(path, 'utf8') }));
 		expect(files.length).toBeGreaterThan(5);
-		expect(offences(files)).toEqual([]);
+		expect(violations(files)).toEqual([]);
 	});
 
 	it('would catch a planted call (control)', () => {
-		expect(offences([{ path: 'planted.ts', text: "const r = await fetch('https://example.test');" }])).toHaveLength(1);
-		expect(offences([{ path: 'planted.ts', text: "import { HttpService } from '@nestjs/axios';" }])).toHaveLength(1);
-		expect(offences([{ path: 'planted.ts', text: "import * as https from 'node:https';" }])).toHaveLength(1);
+		expect(violations([{ path: 'planted.ts', text: "const r = await fetch('https://example.test');" }])).toHaveLength(1);
+		expect(violations([{ path: 'planted.ts', text: "import { HttpService } from '@nestjs/axios';" }])).toHaveLength(1);
+		expect(violations([{ path: 'planted.ts', text: "import * as https from 'node:https';" }])).toHaveLength(1);
 	});
 });

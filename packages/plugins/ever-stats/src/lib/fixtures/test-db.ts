@@ -18,9 +18,7 @@ const MIGRATIONS = join(__dirname, '../../../../../core/src/lib/database/migrati
 
 /** The two core migrations of the plugin, in order. */
 export function statsMigrations(): Array<{ name: string; up(runner: unknown): Promise<void>; down(runner: unknown): Promise<void> }> {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const { EverInstance1790000021000 } = require(join(MIGRATIONS, '1790000021000-EverInstance'));
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const { EverStatsReport1790000021100 } = require(join(MIGRATIONS, '1790000021100-EverStatsReport'));
 	return [new EverInstance1790000021000(), new EverStatsReport1790000021100()];
 }

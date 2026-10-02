@@ -17,7 +17,6 @@ export const TEST_TARGETS: Array<{ name: TestDialect; url?: string }> = [
 
 /** The core migration that creates `ever_instance` (core holds the migrations of plugins for now). */
 export function everInstanceMigration(): { up(runner: unknown): Promise<void>; down(runner: unknown): Promise<void> } {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const { EverInstance1790000021000 } = require(join(__dirname, '../../../../../core/src/lib/database/migrations/1790000021000-EverInstance'));
 	return new EverInstance1790000021000();
 }

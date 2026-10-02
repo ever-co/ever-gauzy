@@ -18,7 +18,7 @@ import { isKnownDefaultSecret } from '@gauzy/contracts';
  *
  * 1. `ENCRYPTION_KEY` (the variable Gauzy's encryption service reads), when it is set;
  * 2. `JWT_SECRET`, when it is set (any value, a published default included: the statistics key
- *    authorises nothing but anonymous reports, and the settings page warns about it);
+ *    authorizes nothing but anonymous reports, and the settings page warns about it);
  * 3. a fixed value, when neither is set (development only: production refuses to start without
  *    `JWT_SECRET`); the settings page warns about it.
  *

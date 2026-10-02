@@ -92,7 +92,7 @@ describe.each(TEST_TARGETS)('EverInstanceService on $name', (target) => {
 		const seen: EverInstanceEvent[] = [];
 		events.events$.subscribe((event) => seen.push(event));
 		const svc = service(ENV, events);
-		const log = jest.spyOn((svc as any).logger, 'log').mockImplementation(() => undefined);
+		const log = jest.spyOn((svc as unknown as { logger: { log: (message: string) => void } }).logger, 'log').mockImplementation(() => undefined);
 		await svc.ensure();
 		expect((await svc.setStatsEnabledUi(false, 'user-1')).statsEnabledUi).toBe(false);
 		await svc.setStatsEnabledUi(false, 'user-1');

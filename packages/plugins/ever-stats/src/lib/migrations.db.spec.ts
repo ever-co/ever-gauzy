@@ -13,11 +13,21 @@ class RecordingLogger implements Logger {
 	logQuery(query: string) {
 		this.queries.push(query);
 	}
-	logQueryError() {}
-	logQuerySlow() {}
-	logSchemaBuild() {}
-	logMigration() {}
-	log() {}
+	logQueryError() {
+		/* only queries are recorded */
+	}
+	logQuerySlow() {
+		/* only queries are recorded */
+	}
+	logSchemaBuild() {
+		/* only queries are recorded */
+	}
+	logMigration() {
+		/* only queries are recorded */
+	}
+	log() {
+		/* only queries are recorded */
+	}
 }
 
 async function tableNames(runner: QueryRunner, dialect: TestDialect): Promise<string[]> {

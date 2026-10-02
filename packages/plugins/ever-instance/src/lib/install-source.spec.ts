@@ -19,7 +19,7 @@ describe('parseInstallSource', () => {
 		expect(parseInstallSource({ EVER_INSTALL_SOURCE: value })).toBe(value);
 	});
 
-	it.each([['partner:A'], ['partner:a'], ['partner:ACME'], ['partner:acme corp'], ['partner:' + 'a'.repeat(33)], ['Cloud'], ['onprem'], ['https://acme.example']])(
+	it.each([['partner:A'], ['partner:a'], ['partner:ACME'], ['partner:acme corp'], ['partner:' + 'a'.repeat(33)], ['Cloud'], ['private-cloud'], ['https://acme.example']])(
 		'maps %s to self-hosted with exactly one log line that does not repeat the value',
 		(value) => {
 			const warn = jest.fn();

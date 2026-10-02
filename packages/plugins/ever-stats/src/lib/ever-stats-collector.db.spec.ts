@@ -1,3 +1,4 @@
+// cspell:disable -- the canary seeds made-up names, companies and addresses on purpose.
 import { randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';

@@ -76,7 +76,8 @@ describe('EverStatsBuilder', () => {
 		const { report, text, bytes } = result.built as NonNullable<typeof result.built>;
 		expect(bytes.toString('utf8')).toBe(text);
 		expect(JSON.parse(text)).toEqual(report);
-		const strip = ({ report_id, sent_at, instance_id, version, module_version, ...rest }: Record<string, unknown>) => rest;
+		const strip = (doc: Record<string, unknown>) =>
+			Object.fromEntries(Object.entries(doc).filter(([key]) => !['report_id', 'sent_at', 'instance_id', 'version', 'module_version'].includes(key)));
 		expect(strip(report)).toEqual(strip(golden));
 		expect(report['report_id']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 		expect(report['sent_at']).toBe('2026-10-03');
