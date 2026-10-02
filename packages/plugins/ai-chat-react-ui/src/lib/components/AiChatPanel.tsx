@@ -848,6 +848,37 @@ export function AiChatPanel() {
 				.gz-ai-chat-send-btn:active:not(:disabled) { transform: scale(0.96); }
 				.gz-ai-chat-send-btn:disabled { cursor: default; }
 
+				/* Dictation, in the composer's action row: round Cancel / Done at the trailing edge,
+				   a turning ring on the mic while the take is transcribed. */
+				@keyframes gzRecSpin { to { transform: rotate(360deg); } }
+				.gz-ai-chat-rec-spinner { animation: gzRecSpin 0.8s linear infinite; }
+				.gz-ai-chat-rec-switch { transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-rec-switch:hover { background-color: color-mix(in srgb, currentColor 8%, transparent) !important; color: inherit !important; }
+				.gz-ai-chat-rec-cancel {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-rec-cancel:hover {
+					background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-rec-done { transition: filter ${chatTheme.transitionSpeed} ease, transform ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-rec-done:hover { filter: brightness(1.1); transform: scale(1.05); }
+				.gz-ai-chat-rec-done:active { transform: scale(0.96); }
+				.gz-ai-chat-rec-switch:focus-visible,
+				.gz-ai-chat-rec-cancel:focus-visible,
+				.gz-ai-chat-rec-done:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				@media (prefers-reduced-motion: reduce) {
+					.gz-ai-chat-rec-spinner { animation-duration: 2s; }
+					.gz-ai-chat-rec-done:hover, .gz-ai-chat-rec-done:active { transform: none; }
+				}
+				/* A narrow panel keeps the switch but drops its label; the title still names it. */
+				@container (max-width: 340px) {
+					.gz-ai-chat-rec-switch .gz-ai-chat-rec-switch-label { display: none; }
+				}
+
 				/* Panel header controls. Inline styles cannot express :hover, so these
 				   buttons gave no feedback at all and read as decoration. */
 				.gz-ai-chat-head-btn:hover {
