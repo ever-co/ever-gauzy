@@ -41,6 +41,7 @@ function createRequest(method: string, url: string, body: unknown, contentType?:
 			'organization-id': '0b9c7f43-55a0-4a8e-8f43-0d2d39a3e1a5',
 			'user-agent': 'jest',
 			authorization: 'Bearer not-a-real-token',
+			cookie: 'session=not-a-real-session',
 			...(contentType ? { 'content-type': contentType } : {})
 		},
 		body
@@ -87,6 +88,9 @@ describe('ApiCallLogMiddleware', () => {
 
 		expect(entity.requestBody).toEqual({});
 		expect(entity.requestBody).not.toBeNull();
+		// Credentials in the headers of these now-logged calls are not stored either.
+		expect(entity.requestHeaders.authorization).toBe('[REDACTED]');
+		expect(entity.requestHeaders.cookie).toBe('[REDACTED]');
 	});
 
 	it('keeps a parsed JSON body and still redacts its sensitive fields', async () => {

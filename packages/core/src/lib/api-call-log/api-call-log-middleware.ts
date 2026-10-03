@@ -70,7 +70,12 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 		// interceptor) and body-less calls such as DELETE /timesheet/time-slot. Express 4 always set it
 		// to `{}`. The `requestBody` column is NOT NULL, so without the fallback every such call failed
 		// to be logged ("null value in column requestBody ... violates not-null constraint").
-		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'Authorization', 'token']);
+		const requestHeaders = this.redactSensitiveData(req.headers, [
+			'authorization',
+			'Authorization',
+			'token',
+			'cookie'
+		]);
 		const requestBody = this.redactSensitiveData(req.body ?? {}, ['password', 'hash', 'token']);
 
 		// Capture the original end method of the response object to log the response body
