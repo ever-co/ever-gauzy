@@ -13,7 +13,6 @@ import {
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from '../core/decorators/entity';
-import { IsEmployeeBelongsToOrganization } from '../shared/validators';
 import { MikroOrmDashboardRepository } from './repository/mikro-orm-dashboard.repository';
 
 @MultiORMEntity('dashboard', { mikroOrmRepository: () => MikroOrmDashboardRepository })
@@ -79,7 +78,6 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@ApiPropertyOptional({ type: () => Employee })
 	@IsOptional()
 	@IsObject()
-	@IsEmployeeBelongsToOrganization()
 	@MultiORMManyToOne(() => Employee, {
 		nullable: true, // Indicates if relation column value can be nullable or not.
 		onDelete: 'CASCADE' // Database cascade action on delete.
@@ -93,7 +91,6 @@ export class Dashboard extends TenantOrganizationBaseEntity implements IDashboar
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@IsEmployeeBelongsToOrganization()
 	@RelationId((dashboard: Dashboard) => dashboard.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
