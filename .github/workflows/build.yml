@@ -275,8 +275,11 @@ jobs:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     services:
+      # Both service images come from the Amazon ECR Public mirror of the Docker official images
+      # (byte-identical: the Postgres digest is the one pinned before), not from Docker Hub, whose
+      # anonymous pull limit the shared runners hit (429 on develop, 2026-10-03).
       postgres:
-        image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+        image: public.ecr.aws/docker/library/postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
         env:
           POSTGRES_USER: migration_test
           POSTGRES_PASSWORD: migration_test
@@ -290,7 +293,7 @@ jobs:
       # MySQL for the database suites of the anonymous usage statistics plugins, which run on all
       # three engines Gauzy supports (SQLite in memory, Postgres and MySQL here).
       mysql:
-        image: mysql:8.4
+        image: public.ecr.aws/docker/library/mysql:8.4@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242
         env:
           MYSQL_ROOT_PASSWORD: migration_test
           MYSQL_DATABASE: migration_test
