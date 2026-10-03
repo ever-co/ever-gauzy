@@ -305,11 +305,12 @@ export class EverStatsScheduler implements OnModuleDestroy {
 					result.reports.push({ period: period.label, final, status: 'rejected', httpStatus: null, error: built.error });
 					continue;
 				}
-				// The last moment the operator's switch is read: switched off while the report was being
-				// prepared, it is not sent.
-				if (!(await this.instance.get())?.statsEnabledUi) {
+				// The last moment both switches are read: switched off (in Settings or by
+				// EVER_STATS_ENABLED=false) while the report was being prepared, it is not sent.
+				const envOff = !isEverStatsEnabled(this.env);
+				if (envOff || !(await this.instance.get())?.statsEnabledUi) {
 					await this.store.updateReport(row.id, { status: 'rejected', lastError: 'switched_off' });
-					return { skipped: 'ui', reports: result.reports };
+					return { skipped: envOff ? 'env' : 'ui', reports: result.reports };
 				}
 				const outcome = await this.sender.send(apiUrl, built.built.bytes, signer, release.version);
 				const update = this.rowUpdate(outcome);

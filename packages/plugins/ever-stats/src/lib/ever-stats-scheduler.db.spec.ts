@@ -298,6 +298,21 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		expect(await store.latest()).toEqual([expect.objectContaining({ status: 'rejected', lastError: 'switched_off', sentAt: null })]);
 	});
 
+	it('sends nothing when EVER_STATS_ENABLED=false is read while the counts are read', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const env: Record<string, string | undefined> = {};
+		class EnvOffWhileCollecting extends EverStatsCollector {
+			override async collect(...args: Parameters<EverStatsCollector['collect']>) {
+				env['EVER_STATS_ENABLED'] = 'false';
+				return super.collect(...args);
+			}
+		}
+		const { scheduler } = setup(clock, calls, [], { env, collector: new EnvOffWhileCollecting(dataSource, {}) });
+		expect((await scheduler.runSlot('send_now')).skipped).toBe('env');
+		expect(calls).toHaveLength(0);
+	});
+
 	it('What is sent: simultaneous and repeated requests within a minute share one collection', async () => {
 		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
 		const collector = new EverStatsCollector(dataSource, {});
