@@ -14,7 +14,17 @@ jest.mock('../password-hash/password-hash.service', () => ({ PasswordHashService
 jest.mock('./../core/crud', () => ({ TenantAwareCrudService: class TenantAwareCrudService {} }));
 
 import 'reflect-metadata';
-import { Column, DataSource, Entity, EntityManager, EntitySubscriberInterface, PrimaryColumn, Repository, UpdateEvent } from 'typeorm';
+import {
+	Column,
+	DataSource,
+	Entity,
+	EntityManager,
+	EntitySubscriberInterface,
+	EventSubscriber,
+	PrimaryColumn,
+	Repository,
+	UpdateEvent
+} from 'typeorm';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import {
 	Entity as MikroEntity,
@@ -65,6 +75,7 @@ class FixtureUser {
  * request (a confirmation e-mail being prepared, a confirmation completing) can land.
  */
 let concurrentWrite: ((manager: EntityManager) => Promise<unknown>) | undefined;
+@EventSubscriber()
 class ConcurrentWriteSubscriber implements EntitySubscriberInterface<FixtureUser> {
 	listenTo() {
 		return FixtureUser;
@@ -221,7 +232,7 @@ describe('UserService.updateProfile — changing the e-mail address resets its c
 		const plantCodeForPreviousAddress = (id: string) => async (manager: EntityManager) =>
 			manager.update(FixtureUser, { id }, { code: 'OLDADDR1', codeExpireAt: CODE_EXPIRY, emailToken: 'old-token' });
 
-		it('CONTROL: a code stored between save()'s read and its UPDATE survives a plain save', async () => {
+		it('CONTROL: a code stored between the read and the UPDATE of save() survives a plain save', async () => {
 			await seedUnconfirmed(SELF);
 			concurrentWrite = plantCodeForPreviousAddress(SELF);
 
