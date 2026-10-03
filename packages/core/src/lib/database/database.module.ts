@@ -7,6 +7,7 @@ import { MySqlDriver } from '@mikro-orm/mysql';
 import { KnexModule } from 'nest-knexjs';
 import { ConfigModule, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
+import { MigrationLockingDataSource } from './migration-run-lock';
 
 /**
  * Resolves the MikroORM driver class based on the DB_TYPE environment variable.
@@ -57,6 +58,9 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || BetterSqliteDri
 				const dbConnectionOptions = configService.getConfigValue('dbConnectionOptions');
 				return dbConnectionOptions;
 			},
+			// `migrationsRun` runs the pending migrations inside `initialize()`; this data source makes two
+			// processes booting against one Postgres database run them one after the other (see the class).
+			dataSourceFactory: async (options) => new MigrationLockingDataSource(options),
 			imports: [ConfigModule],
 			inject: [ConfigService]
 		}),
