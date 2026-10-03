@@ -6,6 +6,17 @@ import { CURRENCY_CODE, MAX_SAFE_AMOUNT, toMinorUnits } from './currency-exponen
 /** Injection token: Gauzy's module switches (`FEATURE_*` → boolean). */
 export const STATS_FEATURE_FLAGS = 'EVER_STATS_FEATURE_FLAGS';
 
+/**
+ * The collection took longer than 120 s. `pending` settles when its queries end (a statement timeout
+ * stops them on Postgres), so the caller can hold off another scan until then.
+ */
+export class StatsCollectionTimeout extends Error {
+	constructor(readonly pending: Promise<unknown>) {
+		super('collection_timeout');
+		this.name = 'StatsCollectionTimeout';
+	}
+}
+
 /** A calendar month in UTC. */
 export interface StatsPeriod {
 	/** `YYYY-MM`. */
@@ -118,13 +129,14 @@ export class EverStatsCollector {
 	 * collection fails or takes over 120 s.
 	 */
 	async collect(period: StatsPeriod, now: Date = new Date()): Promise<CollectedStats> {
+		const work = this.withQuery((query) => this.collectNow(query, period, now));
 		let timer: NodeJS.Timeout | undefined;
 		const timeout = new Promise<never>((_, reject) => {
-			timer = setTimeout(() => reject(new Error('collection_timeout')), COLLECTION_TIMEOUT_MS);
+			timer = setTimeout(() => reject(new StatsCollectionTimeout(work)), COLLECTION_TIMEOUT_MS);
 			timer.unref?.();
 		});
 		try {
-			return await Promise.race([this.withQuery((query) => this.collectNow(query, period, now)), timeout]);
+			return await Promise.race([work, timeout]);
 		} finally {
 			clearTimeout(timer);
 		}
@@ -218,8 +230,9 @@ export class EverStatsCollector {
 
 	/** The rows of `table` that are not deleted (and match `where`), all tenants together. */
 	private async countRows(query: Query, d: SqlDialect, table: string, where?: string, parameters: unknown[] = []): Promise<number> {
+		const condition = where ? ' AND ' + where : '';
 		const rows = await query<{ n: unknown }>(
-			`SELECT COUNT(*) AS ${quote(d, 'n')} FROM ${quote(d, table)} WHERE ${quote(d, 'deletedAt')} IS NULL${where ? ` AND ${where}` : ''}`,
+			`SELECT COUNT(*) AS ${quote(d, 'n')} FROM ${quote(d, table)} WHERE ${quote(d, 'deletedAt')} IS NULL${condition}`,
 			parameters
 		);
 		return count(rows[0]?.n);

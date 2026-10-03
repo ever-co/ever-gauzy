@@ -11,7 +11,7 @@ import { STATS_LEASE_MS, STATS_REFUSAL_PARK_MS, STATS_REPORTS_KEPT, STATS_RETRY_
 import type { EverStatsConfig } from './ever-stats-config';
 import { isEverStatsEnabled } from './ever-stats-enabled';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';
-import { EverStatsCollector, statsPeriod, StatsPeriod } from './ever-stats-collector.service';
+import { EverStatsCollector, StatsCollectionTimeout, statsPeriod, StatsPeriod } from './ever-stats-collector.service';
 import { EverStatsSender, StatsSendOutcome } from './ever-stats-sender.service';
 import { EverStatsStore, StatsReportStatus, StoredStatsReport } from './ever-stats.store';
 
@@ -278,14 +278,16 @@ export class EverStatsScheduler implements OnModuleDestroy {
 				try {
 					collected = await this.collector.collect(period, at);
 				} catch (error) {
-					this.logger.warn(`The anonymous usage statistics could not be collected (${(error as Error)?.message === 'collection_timeout' ? 'timeout' : 'database error'}); no report in this slot.`);
+					const timedOut = error instanceof StatsCollectionTimeout;
+					this.logger.warn(`The anonymous usage statistics could not be collected (${timedOut ? 'timeout' : 'database error'}); no report in this slot.`);
+					if (timedOut) {
+						// Keep the lease while the abandoned queries still run (at most until it expires), so
+						// no other process starts the same scan alongside them.
+						await this.settleWithinLease(error.pending, now);
+					}
 					return { skipped: 'collection_failed', reports: result.reports };
 				}
 				const built = this.builder.build({ identity, config: this.config, release, period, final, collected, now: at });
-				// The operator may have switched the statistics off while the counts were read.
-				if (!(await this.instance.get())?.statsEnabledUi) {
-					return { skipped: 'ui', reports: result.reports };
-				}
 				const row: StoredStatsReport = {
 					id: randomUUID(),
 					period: period.label,
@@ -303,6 +305,12 @@ export class EverStatsScheduler implements OnModuleDestroy {
 					result.reports.push({ period: period.label, final, status: 'rejected', httpStatus: null, error: built.error });
 					continue;
 				}
+				// The last moment the operator's switch is read: switched off while the report was being
+				// prepared, it is not sent.
+				if (!(await this.instance.get())?.statsEnabledUi) {
+					await this.store.updateReport(row.id, { status: 'rejected', lastError: 'switched_off' });
+					return { skipped: 'ui', reports: result.reports };
+				}
 				const outcome = await this.sender.send(apiUrl, built.built.bytes, signer, release.version);
 				const update = this.rowUpdate(outcome);
 				await this.store.updateReport(row.id, update);
@@ -318,6 +326,24 @@ export class EverStatsScheduler implements OnModuleDestroy {
 			signer?.dispose();
 			await this.store.releaseLease(this.holder, this.clock.now()).catch(() => undefined);
 			await this.store.prune(STATS_REPORTS_KEPT).catch(() => undefined);
+		}
+	}
+
+	/** Waits for `pending` to settle, but not past the end of the lease taken at `leasedAt`. */
+	private async settleWithinLease(pending: Promise<unknown>, leasedAt: number): Promise<void> {
+		const remaining = leasedAt + STATS_LEASE_MS - this.clock.now() - 1000;
+		if (remaining <= 0) {
+			return;
+		}
+		let timer: NodeJS.Timeout | undefined;
+		const leaseEnd = new Promise<void>((resolve) => {
+			timer = setTimeout(resolve, remaining);
+			timer.unref?.();
+		});
+		try {
+			await Promise.race([pending.then(() => undefined, () => undefined), leaseEnd]);
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 

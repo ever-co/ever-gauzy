@@ -286,7 +286,7 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U migration_test -d migration_test"
           --health-interval 5s --health-timeout 5s --health-retries 12
-      # cspell:words mysqladmin umigration pmigration
+      # cspell:words mysqladmin umigration pmigration corepack
       # MySQL for the database suites of the anonymous usage statistics plugins, which run on all
       # three engines Gauzy supports (SQLite in memory, Postgres and MySQL here).
       mysql:
@@ -390,17 +390,17 @@ jobs:
         # every call: on, one report accepted and no other call; EVER_STATS_ENABLED=false and
         # switched off in Settings, no call at all (Send now 409); a control without the mock that
         # must not pass. The mock runs from the pinned checkout, moved out of the workspace so Nx
-        # never sees it, with its two dependencies at the versions its own image uses.
+        # never sees it, with its dependencies installed from the SDK's own lockfile (by the package
+        # manager the SDK pins, through corepack, without changing this job's yarn).
         env:
           EVER_STATS_MOCK_PLATFORM_URL: http://127.0.0.1:18080
           EVER_STATS_MOCK_PLATFORM_REQUIRED: 'true'
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
         run: |
           mv .ever-connect-sdk "$RUNNER_TEMP/ever-connect-sdk"
-          cd "$RUNNER_TEMP/ever-connect-sdk/tools/mock-platform"
-          mv package.json package.json.sdk
-          printf '{"name":"ever-mock-platform-deps","private":true,"type":"module","dependencies":{"ajv":"8.20.0","ajv-formats":"3.0.1"}}\n' > package.json
-          npm install --omit=dev --no-audit --no-fund --ignore-scripts --no-package-lock
-          mv package.json.sdk package.json
+          cd "$RUNNER_TEMP/ever-connect-sdk"
+          corepack pnpm install --frozen-lockfile --prod --filter ./tools/mock-platform
+          cd tools/mock-platform
           node bin/ever-mock-platform.mjs --port 18080 > "$RUNNER_TEMP/mock-platform.log" 2>&1 &
           cd "$GITHUB_WORKSPACE"
           for i in $(seq 1 60); do

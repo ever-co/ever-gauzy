@@ -72,7 +72,7 @@ const iso = (ms: number | null): string | null => (ms ? new Date(ms).toISOString
 @Injectable()
 export class EverStatsService {
 	private lastSendNowAt = 0;
-	private lastPreview: { at: number; instanceId: string; preview: EverStatsPreview } | null = null;
+	private lastPreview: { at: number; instanceId: string; preview: Promise<EverStatsPreview> } | null = null;
 	/** The lease holder of this process's *Reset instance identity*. */
 	private readonly resetHolder = `reset:${randomUUID()}`;
 
@@ -101,13 +101,7 @@ export class EverStatsService {
 		const recent = await this.store.latest();
 		const last = recent[0] ?? null;
 		const accepted = recent.some((row) => row.status === 'sent' && row.payload !== null && this.instanceOf(row.payload) === identity.instanceId);
-		const reason: EverStatsStopReason | null = !identity.statsEnabledUi
-			? 'ui'
-			: !this.config.apiUrl
-				? 'config'
-				: !(await this.instance.statsKeyReadable())
-					? 'key_unreadable'
-					: null;
+		const reason = await this.stopReason(identity);
 		return {
 			enabled: identity.statsEnabledUi,
 			reason,
@@ -124,6 +118,20 @@ export class EverStatsService {
 			key_warning: this.instance.keyWarning(identity.statsKeySource),
 			schema_url: STATS_SCHEMA_URL
 		};
+	}
+
+	/** Why nothing is sent now, or `null` while reports go out. */
+	private async stopReason(identity: EverInstanceRecord): Promise<EverStatsStopReason | null> {
+		if (!identity.statsEnabledUi) {
+			return 'ui';
+		}
+		if (!this.config.apiUrl) {
+			return 'config';
+		}
+		if (!(await this.instance.statsKeyReadable())) {
+			return 'key_unreadable';
+		}
+		return null;
 	}
 
 	/**
@@ -159,17 +167,24 @@ export class EverStatsService {
 	/**
 	 * Builds the report of the current month as it would be sent now. Nothing is stored or sent.
 	 * Within a minute of the previous one (in this process, for the same identity) the previous one is
-	 * shown again, so repeated clicks do not repeat the collection on a large database.
+	 * shown again, and requests that arrive while one is being built share it, so clicks do not
+	 * multiply the collection on a large database. A failed build is not kept.
 	 */
 	async preview(): Promise<EverStatsPreview> {
 		const identity = await this.instance.ensure();
 		const nowMs = this.now();
-		if (this.lastPreview && this.lastPreview.instanceId === identity.instanceId && nowMs - this.lastPreview.at < STATS_PREVIEW_INTERVAL_MS) {
-			return this.lastPreview.preview;
+		const cached = this.lastPreview;
+		if (cached?.instanceId === identity.instanceId && nowMs - cached.at < STATS_PREVIEW_INTERVAL_MS) {
+			return cached.preview;
 		}
-		const preview = await this.buildPreview(identity, nowMs);
-		this.lastPreview = { at: nowMs, instanceId: identity.instanceId, preview };
-		return preview;
+		const entry = { at: nowMs, instanceId: identity.instanceId, preview: this.buildPreview(identity, nowMs) };
+		this.lastPreview = entry;
+		entry.preview.catch(() => {
+			if (this.lastPreview === entry) {
+				this.lastPreview = null;
+			}
+		});
+		return entry.preview;
 	}
 
 	private async buildPreview(identity: EverInstanceRecord, nowMs: number): Promise<EverStatsPreview> {

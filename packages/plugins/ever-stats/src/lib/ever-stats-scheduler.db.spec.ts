@@ -291,10 +291,26 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 				return super.collect(...args);
 			}
 		}
-		const { scheduler } = setup(clock, calls, [], { collector: new SwitchedOffWhileCollecting(dataSource, {}) });
+		const { scheduler, store } = setup(clock, calls, [], { collector: new SwitchedOffWhileCollecting(dataSource, {}) });
 		expect((await scheduler.runSlot('send_now')).skipped).toBe('ui');
 		expect(calls).toHaveLength(0);
-		expect(await reportRows()).toBe(0);
+		// The report that was being prepared is kept as not sent, never as sent.
+		expect(await store.latest()).toEqual([expect.objectContaining({ status: 'rejected', lastError: 'switched_off', sentAt: null })]);
+	});
+
+	it('What is sent: simultaneous and repeated requests within a minute share one collection', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const collector = new EverStatsCollector(dataSource, {});
+		const collect = jest.spyOn(collector, 'collect');
+		const { service } = setup(clock, [], [], { collector });
+		const [a, b] = await Promise.all([service.preview(), service.preview()]);
+		expect(a.payload).toBe(b.payload);
+		clock.at += 30_000;
+		await service.preview();
+		expect(collect).toHaveBeenCalledTimes(1);
+		clock.at += 31_000;
+		await service.preview();
+		expect(collect).toHaveBeenCalledTimes(2);
 	});
 
 	it('marks 409 key_mismatch for a reset and sends nothing more for that identity', async () => {

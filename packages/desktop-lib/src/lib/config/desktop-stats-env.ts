@@ -14,6 +14,18 @@
  * @param additional - The user's additional settings (`LocalStore.getAdditionalConfig()`).
  * @param version - The release of the desktop app (`app.getVersion()`).
  */
+/**
+ * Applies {@link desktopStatsEnv} to `target` (the process environment of an integrated server): a
+ * switch the user cleared in the settings is removed, so a value from an earlier start does not stay.
+ */
+export function applyDesktopStatsEnv(target: Record<string, string | undefined>, additional: object | null | undefined, version: string): void {
+	const env = desktopStatsEnv(additional, version);
+	if (!('EVER_STATS_ENABLED' in env) && additional && 'EVER_STATS_ENABLED' in additional) {
+		delete target['EVER_STATS_ENABLED'];
+	}
+	Object.assign(target, env);
+}
+
 export function desktopStatsEnv(additional: object | null | undefined, version: string): Record<string, string> {
 	const env: Record<string, string> = { EVER_INSTALL_SOURCE: 'desktop' };
 	if (typeof version === 'string' && version.trim()) {

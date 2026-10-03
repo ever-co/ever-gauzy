@@ -55,7 +55,7 @@ function isLocalHost(hostname: string): boolean {
 	const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
 	if (host === 'localhost' || host.endsWith('.localhost') || host === '::1') return true;
 	if (PRIVATE_V4.some((re) => re.test(host))) return true;
-	return /^[a-z0-9-]+$/.test(host) && !/^[0-9]+$/.test(host) && !NOT_LOCAL_NAMES.has(host);
+	return /^[a-z\d-]+$/.test(host) && !/^\d+$/.test(host) && !NOT_LOCAL_NAMES.has(host);
 }
 
 /** Whether `apiUrl` points at a local service (a mock or a mirror on this host, a private address or a container). */

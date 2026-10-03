@@ -37,8 +37,8 @@ const suite = MOCK ? describe : describe.skip;
 jest.setTimeout(120_000);
 
 if (REQUIRED && !MOCK) {
-	it('the mock platform is required here (EVER_STATS_MOCK_PLATFORM_REQUIRED=true) but EVER_STATS_MOCK_PLATFORM_URL is not set', () => {
-		throw new Error('EVER_STATS_MOCK_PLATFORM_URL is not set');
+	it('the mock platform is required here (EVER_STATS_MOCK_PLATFORM_REQUIRED=true), so EVER_STATS_MOCK_PLATFORM_URL must be set', () => {
+		expect(MOCK).toBeDefined();
 	});
 }
 

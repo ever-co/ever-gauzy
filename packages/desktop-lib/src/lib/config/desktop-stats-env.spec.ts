@@ -1,4 +1,4 @@
-import { desktopStatsEnv } from './desktop-stats-env';
+import { applyDesktopStatsEnv, desktopStatsEnv } from './desktop-stats-env';
 
 describe('desktopStatsEnv', () => {
 	it('always declares a desktop installation and its release', () => {
@@ -20,6 +20,18 @@ describe('desktopStatsEnv', () => {
 		['maybe', 'maybe']
 	])('turns the switch "%s" typed in the settings into "%s"', (typed, sent) => {
 		expect(desktopStatsEnv({ EVER_STATS_ENABLED: typed }, '1.0.0')['EVER_STATS_ENABLED']).toBe(sent);
+	});
+
+	it('removes a switch the user cleared, so an earlier false does not stay (in-process restart)', () => {
+		const env: Record<string, string | undefined> = { EVER_STATS_ENABLED: 'false', OTHER: 'x' };
+		applyDesktopStatsEnv(env, { EVER_STATS_ENABLED: '' }, '1.0.0');
+		expect(env).toEqual({ OTHER: 'x', EVER_INSTALL_SOURCE: 'desktop', GAUZY_APP_VERSION: '1.0.0' });
+		// A switch the settings do not mention at all is left as the launch environment set it.
+		const launched: Record<string, string | undefined> = { EVER_STATS_ENABLED: 'false' };
+		applyDesktopStatsEnv(launched, {}, '1.0.0');
+		expect(launched['EVER_STATS_ENABLED']).toBe('false');
+		applyDesktopStatsEnv(launched, { EVER_STATS_ENABLED: 'on' }, '1.0.0');
+		expect(launched['EVER_STATS_ENABLED']).toBe('true');
 	});
 
 	it('leaves an empty switch to the default', () => {
