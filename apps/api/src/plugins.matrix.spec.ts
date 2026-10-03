@@ -110,7 +110,7 @@ describe('API plugin list: anonymous usage statistics', () => {
 describe('API boot order: the settings files are read before the plugin list is built', () => {
 	it('preload-env is the first import of main.ts', () => {
 		const main = readFileSync(join(__dirname, 'main.ts'), 'utf8');
-		const firstImport = main.split(/\r?\n/).find((line) => /^import/.test(line));
+		const firstImport = main.split(/\r?\n/).find((line) => /^import\b/.test(line));
 		expect(firstImport).toBe("import './preload-env';");
 		expect(main).not.toMatch(/loadEnv\(\)/);
 	});
