@@ -4,7 +4,7 @@ import { getConfig } from '@gauzy/config';
 import { isObject } from '@gauzy/utils';
 import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { Screenshot } from './screenshot.entity';
-import { FileStorage } from './../../core/file-storage';
+import { FileStorage } from './../../core/file-storage/file-storage';
 import { getORMType, isSqliteDB, MultiORM, MultiORMEnum } from './../../core/utils';
 import {
 	MikroOrmEntityManager,

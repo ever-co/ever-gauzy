@@ -50,7 +50,6 @@ const BLOCK_TAGS = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol',
 const HTML_BLOCK_TAGS = new Set([...BLOCK_TAGS, 'div', 'section', 'article', 'figure']);
 /** The name of the tag a line opens with, e.g. `ul` for `  <ul>` or `</ul>`. */
 const LEADING_TAG = /^\s{0,3}<\/?([a-z][a-z0-9]*)\b/i;
-const RAW_TAG = /<(\/?)([a-z][a-z0-9]*)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
 /** The attributes `rebuildTag` keeps, each matched only as a whole attribute name. */
 const ATTRIBUTES: Record<string, RegExp> = {
 	href: /(?:^|\s)href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i,
@@ -64,7 +63,6 @@ const RICH_TEXT_TAGS = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
 const OPENING_TAG = /^<([a-z][a-z0-9]*)(?:\s[^>]*)?\/?>/i;
 /** Tags the rich-text editor wraps plain pasted text in — nothing structural. */
 const TRIVIAL_TAG = /^<\/?(p|br|div|span)(\s[^>]*)?\/?>$/i;
-const ANY_TAG = /<\/?[a-z][a-z0-9]*(\s[^>]*)?\/?>/gi;
 /** Any one of these in editor-unwrapped text means it was really markdown. */
 const MARKDOWN_HINTS = [
 	/^\s{0,3}(#{1,6}\s|[-*+]\s|\d+[.)]\s|>)/m,
@@ -88,14 +86,11 @@ export function richTextToHtml(source: string | null | undefined): string {
 
 	// Markdown that went through the editor comes back as `<p>` / `<br>` around
 	// the raw syntax. Unwrap it and render it; real rich text is left alone.
-	const tags = source.match(ANY_TAG) || [];
-	if (tags.every((tag) => TRIVIAL_TAG.test(tag))) {
-		const text = decodeEntities(
-			source
-				.replace(/<br\s*\/?>/gi, '\n')
-				.replace(/<\/(p|div)>\s*/gi, '\n\n')
-				.replace(ANY_TAG, '')
-		);
+	if (findTags(source).every(([start, end]) => TRIVIAL_TAG.test(source.slice(start, end)))) {
+		// Never emitted as HTML: this text is only ever handed to `markdownToHtml`,
+		// which escapes all of it before adding markup of its own.
+		const unwrapped = source.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div)>\s*/gi, '\n\n');
+		const text = decodeEntities(removeRanges(unwrapped, findTags(unwrapped)));
 		if (MARKDOWN_HINTS.some((hint) => hint.test(text))) {
 			return markdownToHtml(text);
 		}
@@ -104,8 +99,204 @@ export function richTextToHtml(source: string | null | undefined): string {
 }
 
 function isRichText(source: string): boolean {
-	const tag = OPENING_TAG.exec(source.replace(/<!--[\s\S]*?-->/g, '').trim());
+	const tag = OPENING_TAG.exec(removeComments(source).trim());
 	return !!tag && RICH_TEXT_TAGS.has(tag[1].toLowerCase());
+}
+
+/*
+ * Linear scanners for the three things this file finds in raw text: tags, HTML
+ * comments and `<script>` / `<style>` blocks. Each returns exactly what the
+ * equivalent global regex did (`/<\/?[a-z][a-z0-9]*(\s[^>]*)?\/?>/gi`,
+ * `/<!--[\s\S]*?-->/g`, `/<(script|style)\b[\s\S]*?<\/\1\s*>/gi`), but in one
+ * forward pass: those regexes rescanned the rest of the text from every opener
+ * that never closes, which is quadratic on input such as `'<a '.repeat(n)`.
+ * None of them sanitizes anything — everything they leave behind is escaped by
+ * the renderer — they only drop what is never displayed.
+ */
+
+/** `[start, end)` of every tag in `text`. */
+function findTags(text: string): Array<[number, number]> {
+	const tags: Array<[number, number]> = [];
+	let at = text.indexOf('<');
+	while (at !== -1) {
+		const end = tagEnd(text, at);
+		if (end === -1) {
+			at = text.indexOf('<', at + 1);
+		} else if (end === Infinity) {
+			break; // an attribute run with no `>` after it: no later tag can close either
+		} else {
+			tags.push([at, end]);
+			at = text.indexOf('<', end);
+		}
+	}
+	return tags;
+}
+
+/**
+ * The end of the tag opening at `at`: -1 when `at` does not start one, and
+ * `Infinity` when it would but no `>` follows anywhere in the text.
+ */
+function tagEnd(text: string, at: number): number {
+	let k = at + 1;
+	if (text[k] === '/') {
+		k++;
+	}
+	if (!/[a-z]/i.test(text.charAt(k))) {
+		return -1;
+	}
+	while (/[a-z0-9]/i.test(text.charAt(k))) {
+		k++;
+	}
+	if (text[k] === '>') {
+		return k + 1;
+	}
+	if (text[k] === '/' && text[k + 1] === '>') {
+		return k + 2;
+	}
+	if (/\s/.test(text.charAt(k))) {
+		const close = text.indexOf('>', k);
+		return close === -1 ? Infinity : close + 1;
+	}
+	return -1;
+}
+
+/** `text` without the given sorted, non-overlapping `[start, end)` ranges. */
+function removeRanges(text: string, ranges: Array<[number, number]>): string {
+	let out = '';
+	let from = 0;
+	for (const [start, end] of ranges) {
+		out += text.slice(from, start);
+		from = end;
+	}
+	return out + text.slice(from);
+}
+
+/** Drops every complete `<!-- … -->`. An unclosed `<!--` stays, as text. */
+function removeComments(text: string): string {
+	const ranges: Array<[number, number]> = [];
+	let open = text.indexOf('<!--');
+	while (open !== -1) {
+		const close = text.indexOf('-->', open + 4);
+		if (close === -1) {
+			break; // no later comment can close either
+		}
+		ranges.push([open, close + 3]);
+		open = text.indexOf('<!--', close + 3);
+	}
+	return removeRanges(text, ranges);
+}
+
+/** Drops every complete `<script>` / `<style>` block. An unclosed one stays, as text. */
+function removeScriptAndStyle(text: string): string {
+	// ASCII-only lower-casing keeps every index aligned with `text`.
+	const lower = text.replace(/[A-Z]+/g, (run) => run.toLowerCase());
+	const ranges: Array<[number, number]> = [];
+	const unclosed = new Set<string>();
+	let at = lower.indexOf('<');
+	while (at !== -1) {
+		const name = ['script', 'style'].find((tag) => lower.startsWith(tag, at + 1));
+		let end = -1;
+		if (name && !unclosed.has(name) && !/\w/.test(lower.charAt(at + 1 + name.length))) {
+			end = closingTagEnd(lower, name, at + 1 + name.length);
+			if (end === -1) {
+				// Once one opener has no closer after it, no later opener of that tag has one.
+				unclosed.add(name);
+			}
+		}
+		if (end === -1) {
+			at = lower.indexOf('<', at + 1);
+		} else {
+			ranges.push([at, end]);
+			at = lower.indexOf('<', end);
+		}
+	}
+	return removeRanges(text, ranges);
+}
+
+/** The end of the first `</name\s*>` at or after `from` in lower-cased text, or -1. */
+function closingTagEnd(lower: string, name: string, from: number): number {
+	const tag = `</${name}`;
+	for (let at = lower.indexOf(tag, from); at !== -1; at = lower.indexOf(tag, at + tag.length)) {
+		let k = at + tag.length;
+		while (/\s/.test(lower.charAt(k))) {
+			k++;
+		}
+		if (lower[k] === '>') {
+			return k + 1;
+		}
+	}
+	return -1;
+}
+
+/**
+ * Replaces every inline tag `renderInline` rebuilds: what
+ * `/<(\/?)([a-z][a-z0-9]*)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi` matched — a name,
+ * then attributes whose quoted values may hold `>`, up to the closing `>`. That
+ * attribute grammar is deterministic, so each start has exactly one parse; the
+ * outcome reached from each unquoted position is memoized, so no position is
+ * walked twice (the regex re-walked the rest of the text from every `<a `).
+ */
+function replaceRawTags(text: string, replace: (closing: boolean, name: string, attrs: string) => string): string {
+	// For an unquoted attribute position: -2 not yet known, -1 no `>` reachable, else the index of the `>`.
+	let ends: Int32Array | null = null;
+	const attributesEnd = (from: number): number => {
+		const memo = (ends ??= new Int32Array(text.length + 1).fill(-2));
+		const path: number[] = [];
+		let k = from;
+		let result = -1;
+		while (k <= text.length) {
+			if (memo[k] !== -2) {
+				result = memo[k];
+				break;
+			}
+			path.push(k);
+			const char = text.charAt(k);
+			if (char === '>') {
+				result = k;
+				break;
+			}
+			if (char === '"' || char === "'") {
+				const close = text.indexOf(char, k + 1);
+				if (close === -1) {
+					break;
+				}
+				k = close + 1;
+			} else if (k === text.length) {
+				break;
+			} else {
+				k++;
+			}
+		}
+		for (const position of path) {
+			memo[position] = result;
+		}
+		return result;
+	};
+
+	let out = '';
+	let from = 0;
+	let at = text.indexOf('<');
+	while (at !== -1) {
+		const closing = text[at + 1] === '/';
+		const nameStart = at + (closing ? 2 : 1);
+		let nameEnd = nameStart;
+		if (/[a-z]/i.test(text.charAt(nameStart))) {
+			nameEnd++;
+			while (/[a-z0-9]/i.test(text.charAt(nameEnd))) {
+				nameEnd++;
+			}
+		}
+		// `\b` after the name: the next character may not be `_`, the one word character the name stopped at.
+		const end = nameEnd > nameStart && text[nameEnd] !== '_' ? attributesEnd(nameEnd) : -1;
+		if (end === -1) {
+			at = text.indexOf('<', at + 1);
+			continue;
+		}
+		out += text.slice(from, at) + replace(closing, text.slice(nameStart, nameEnd), text.slice(nameEnd, end));
+		from = end + 1;
+		at = text.indexOf('<', from);
+	}
+	return out + text.slice(from);
 }
 
 function isHtmlBlockStart(line: string): boolean {
@@ -179,10 +370,7 @@ function cleanProse(lines: string[]): string[] {
 		return [];
 	}
 	return (
-		lines
-			.join('\n')
-			.replace(/<!--[\s\S]*?-->/g, '')
-			.replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '')
+		removeScriptAndStyle(removeComments(lines.join('\n')))
 			.split('\n')
 			// `[label]: url` lines are definitions, never content — including the
 			// `[//]: # (comment)` idiom bots use as invisible markers.
@@ -642,7 +830,7 @@ function renderInline(text: string): string {
 	let out = text
 		.replaceAll(MARK, '')
 		.replace(/`([^`]+)`/g, (_, code) => keep(`<code>${escapeHtml(code)}</code>`));
-	out = out.replace(RAW_TAG, (_, closing, name, attrs) => keep(rebuildTag(name.toLowerCase(), !!closing, attrs)));
+	out = replaceRawTags(out, (closing, name, attrs) => keep(rebuildTag(name.toLowerCase(), closing, attrs)));
 	out = escapeHtml(out);
 
 	// Labels exclude `[` as well as `]`, and titles stop at the first `&`, so no
