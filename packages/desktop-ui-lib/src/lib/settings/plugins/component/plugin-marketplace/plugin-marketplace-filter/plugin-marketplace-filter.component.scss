@@ -1,12 +1,28 @@
+// The host sits between `.filter-panel` (a column of definite height) and the
+// panel. As a flex column capped at that height it lets the panel shrink to fit
+// and scroll its sections, instead of growing past the bottom of the column.
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+
 .marketplace-filter {
   background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
-  overflow: visible;
-  transition: all 0.3s ease;
+  border: 1px solid var(--border-basic-color-2);
+  border-radius: var(--border-radius);
   position: relative;
-  // No `--gauzy-shadow`: it is a 1px ring on the dark canvas and this panel
-  // already draws a 1px `--border-basic-color-3` border — one hairline, not two.
+  // The panel is the frame and the clip: a column whose header is a fixed row
+  // and whose sections scroll beneath it, never past its rounded edge. It used
+  // to be `overflow: visible` inside a scrolling `.filter-panel`, with a sticky
+  // header — so scrolling carried the panel's top border and corners away while
+  // the header stayed put, and the top of the panel read as cut open.
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 
   &.collapsed {
     .filter-content {
@@ -36,14 +52,7 @@
     background: var(--gauzy-card-1);
     border-bottom: 1px solid var(--border-basic-color-2);
     padding: 12px 16px;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background-clip: padding-box;
-    // The panel's own top corners are rounded but this sticky header paints a
-    // square fill over them, which read as a clipped top edge. Round it to the
-    // panel's inner radius (outer radius less the 1px border).
-    border-radius: calc(var(--border-radius) - 1px) calc(var(--border-radius) - 1px) 0 0;
+    flex: 0 0 auto;
 
     .header-content {
       display: flex;
@@ -101,9 +110,13 @@
     }
   }
 
-  // Filter Content — parent .filter-panel handles scrolling
+  // The scrolling part of the panel: everything below the header.
   .filter-content {
-    border-radius: var(--border-radius);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
   }
 
   .filter-form {
