@@ -63,9 +63,15 @@ export class ApiCallLogMiddleware implements NestMiddleware {
 			this.logger.error('Failed to decode JWT token or retrieve user ID', error.stack);
 		}
 
-		// Redact sensitive data from request headers and body
+		// Redact sensitive data from request headers and body.
+		//
+		// Express 5 (body-parser 2) leaves `req.body` undefined when no body parser consumed the request:
+		// multipart uploads such as POST /timesheet/screenshot (multer only runs later, inside the route
+		// interceptor) and body-less calls such as DELETE /timesheet/time-slot. Express 4 always set it
+		// to `{}`. The `requestBody` column is NOT NULL, so without the fallback every such call failed
+		// to be logged ("null value in column requestBody ... violates not-null constraint").
 		const requestHeaders = this.redactSensitiveData(req.headers, ['authorization', 'Authorization', 'token']);
-		const requestBody = this.redactSensitiveData(req.body, ['password', 'hash', 'token']);
+		const requestBody = this.redactSensitiveData(req.body ?? {}, ['password', 'hash', 'token']);
 
 		// Capture the original end method of the response object to log the response body
 		const originalEnd = res.end;
