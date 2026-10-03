@@ -1,5 +1,6 @@
 import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
+import { getMetadataStorage, validate } from 'class-validator';
+import { EmployeeBelongsToOrganizationConstraint } from '../../shared/validators/constraints/employee-belongs-to-organization.constraint';
 import { CreateDashboardDTO } from './create-dashboard.dto';
 import { UpdateDashboardDTO } from './update-dashboard.dto';
 
@@ -11,7 +12,9 @@ import { UpdateDashboardDTO } from './update-dashboard.dto';
  * any `employee` value.
  *
  * No organization is named (`sentTo` satisfies `TenantOrganizationBaseDTO`), so the membership check
- * itself passes without a lookup and these payloads need no database.
+ * itself passes without a lookup and these payloads need no database. That the check is attached at
+ * all is asserted on the validation metadata; its behaviour (matching and mismatching employees and
+ * organizations) is covered against the constraint in `organization-membership-fail-open.spec.ts`.
  */
 describe.each([
 	['CreateDashboardDTO', CreateDashboardDTO],
@@ -23,6 +26,15 @@ describe.each([
 		);
 		return Object.keys(errors.find((error) => error.property === property)?.constraints ?? {});
 	};
+
+	it('checks organization membership on both employee fields, once each', () => {
+		const checked = getMetadataStorage()
+			.getTargetValidationMetadatas(dto, '', true, false)
+			.filter((metadata) => metadata.constraintCls === EmployeeBelongsToOrganizationConstraint)
+			.map((metadata) => metadata.propertyName)
+			.sort();
+		expect(checked).toEqual(['employee', 'employeeId']);
+	});
 
 	it('rejects an employeeId that is not a UUID', async () => {
 		expect(await failedRules({ employeeId: 'not-a-uuid' }, 'employeeId')).toEqual(['isUuid']);
