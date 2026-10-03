@@ -322,7 +322,7 @@
         color: var(--gauzy-text-color-1);
       }
 
-      // The direction in effect: a tint, as on the price category chips.
+      // The direction in effect: a primary tint, quieter than a solid fill.
       // Marked with `is-active` rather than `status`, which `nb-button-group`
       // overwrites on first render — so descending never showed as selected.
       &.is-active {
@@ -961,13 +961,6 @@
 
       &:hover {
         background: var(--gauzy-hover-tint);
-      }
-
-      // The category whose price range is in effect.
-      &.is-active {
-        background: var(--color-primary-transparent-default);
-        border-color: var(--color-primary-default);
-        color: var(--color-primary-default);
       }
     }
   }
