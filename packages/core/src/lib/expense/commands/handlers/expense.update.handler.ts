@@ -18,11 +18,15 @@ export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateComman
 	public async execute(command: ExpenseUpdateCommand): Promise<IExpense> {
 		let { id, entity } = command;
 		try {
-			await this.expenseService.findOneByIdString(id);
+			const existing = await this.expenseService.findOneByIdString(id);
 			const expense = await this.expenseService.create({ ...entity, id });
+
+			// The update DTO does not accept `employeeId` (it is whitelisted out), so the saved partial has none:
+			// take the employee from the stored expense to refresh that employee's average.
+			const employeeId = expense.employeeId ?? existing.employeeId;
+
 			let averageExpense = 0;
-			if (isNotEmpty(expense.employeeId)) {
-				const { employeeId } = expense;
+			if (isNotEmpty(employeeId)) {
 				const statistic = await this.employeeStatisticsService.getStatisticsByEmployeeId(employeeId);
 				averageExpense = this.expenseService.countStatistic(statistic.expenseStatistics);
 				await this.employeeService.create({

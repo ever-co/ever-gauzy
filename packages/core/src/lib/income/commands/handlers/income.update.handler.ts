@@ -18,14 +18,17 @@ export class IncomeUpdateHandler implements ICommandHandler<IncomeUpdateCommand>
 	public async execute(command: IncomeUpdateCommand): Promise<IIncome> {
 		const { id, entity } = command;
 		try {
-			await this.incomeService.findOneByIdString(id);
+			const existing = await this.incomeService.findOneByIdString(id);
 			const income = await this.incomeService.create({ ...entity, id });
+
+			// The update DTO does not accept `employeeId` (it is whitelisted out), so the saved partial has none:
+			// take the employee from the stored income to refresh that employee's averages.
+			const employeeId = income.employeeId ?? existing.employeeId;
 
 			let averageIncome = 0;
 			let averageBonus = 0;
-			if (isNotEmpty(income.employeeId)) {
-				const { employeeId } = income;
-				const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(income.employeeId);
+			if (isNotEmpty(employeeId)) {
+				const stat = await this.employeeStatisticsService.getStatisticsByEmployeeId(employeeId);
 				averageIncome = this.incomeService.countStatistic(stat.incomeStatistics);
 				averageBonus = this.incomeService.countStatistic(stat.bonusStatistics);
 				await this.employeeService.create({
