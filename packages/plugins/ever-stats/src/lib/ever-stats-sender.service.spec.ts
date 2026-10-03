@@ -1,3 +1,4 @@
+// cspell:ignore abcdefghijk
 import { createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import { AddressInfo, Socket } from 'node:net';
