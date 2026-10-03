@@ -241,7 +241,7 @@ export class EditOrganizationOtherSettingsComponent
 	private accordionItemElements: QueryList<ElementRef<HTMLElement>>;
 
 	/**
-	 * Whether the section at this position is the one currently open.
+	 * Whether the section at this position is open.
 	 *
 	 * @param index position in `settingsSections`
 	 */
@@ -250,24 +250,18 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	/**
-	 * Reveal a settings section from the aside.
-	 *
-	 * The aside used to call `toggle()` on the accordion item and stop there, which
-	 * had two consequences. Clicking the section you were already reading closed it,
-	 * and — because the accordion is a single scrolling column roughly two thousand
-	 * lines long — opening anything below the fold moved nothing into view, so the
-	 * lower entries looked inert. This is an index into the page, so it opens rather
-	 * than toggles, and brings the section it opened with it.
+	 * Toggle a settings section from the aside and bring it into view when opened.
 	 *
 	 * @param index position in `settingsSections`
 	 */
-	openSection(index: number): void {
+	toggleSection(index: number): void {
 		const item = this.accordionItems?.get(index);
 		if (!item) {
 			return;
 		}
+		item.toggle();
 		if (!item.expanded) {
-			item.open();
+			return;
 		}
 		setTimeout(() => {
 			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
