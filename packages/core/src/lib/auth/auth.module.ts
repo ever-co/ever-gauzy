@@ -27,6 +27,7 @@ import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
+import { EventHandlers } from './events/handlers';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { LoginAttemptModule } from './login-attempt.module';
@@ -94,7 +95,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		LoginAttemptModule
 	],
 	controllers: [AuthController, EmailVerificationController],
-	providers: [...providers, ...CommandHandlers, ...strategies],
+	providers: [...providers, ...CommandHandlers, ...EventHandlers, ...strategies],
 	exports: [...providers]
 })
 export class AuthModule {}
