@@ -2,6 +2,7 @@ import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { EverStatsSigner } from '@gauzy/plugin-ever-instance';
 import {
 	MAX_STATS_REPORT_BYTES,
+	MAX_STATS_RESPONSE_BYTES,
 	MODULE_VERSION,
 	STATS_HEADERS,
 	STATS_REPORTS_PATH,
@@ -20,8 +21,8 @@ export const STATS_FETCH = 'EVER_STATS_FETCH';
  * - `retry` (429, 5xx, no answer, timeout): try again at +1 h, +4 h, +12 h, then the next day.
  * - `reset_identity` (409 `key_mismatch`): the id is pinned to another key; nothing more is sent for
  *   this id until the operator resets the identity.
- * - `dropped` (400, 413, 415, 422): refused for good; nothing more is sent until the module is
- *   upgraded (a new `module_version`) or the identity is reset.
+ * - `dropped` (400, 413, 415, 422): refused; nothing more is sent for this module version, Gauzy
+ *   release and identity (for at most 7 days after a 400, 413 or 415).
  * - `later` (404 while the platform does not take reports, a redirect, any other answer): the next day.
  */
 export type StatsSendOutcome =
@@ -30,6 +31,39 @@ export type StatsSendOutcome =
 	| { kind: 'reset_identity'; status: 409; error: string }
 	| { kind: 'dropped'; status: number; error: string }
 	| { kind: 'later'; status: number; error: string };
+
+/**
+ * The answer body as text, read up to `MAX_STATS_RESPONSE_BYTES`; `null` when it is longer (the rest
+ * is not read) or unreadable. A hostile or broken endpoint cannot make the API buffer more.
+ */
+export async function readCappedBody(response: Response, cap = MAX_STATS_RESPONSE_BYTES): Promise<string | null> {
+	const declared = Number(response.headers.get('content-length'));
+	if (Number.isFinite(declared) && declared > cap) {
+		await response.body?.cancel().catch(() => undefined);
+		return null;
+	}
+	if (!response.body) {
+		return '';
+	}
+	const reader = response.body.getReader();
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	try {
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			total += value.byteLength;
+			if (total > cap) {
+				await reader.cancel().catch(() => undefined);
+				return null;
+			}
+			chunks.push(value);
+		}
+	} catch {
+		return null;
+	}
+	return Buffer.concat(chunks).toString('utf8');
+}
 
 /** The answer's problem code and first field, never a value. */
 function problemSummary(status: number, body: unknown): string {
@@ -90,7 +124,7 @@ export class EverStatsSender {
 		}
 		let body: unknown = null;
 		try {
-			const text = await response.text();
+			const text = await readCappedBody(response);
 			body = text ? JSON.parse(text) : null;
 		} catch {
 			body = null;

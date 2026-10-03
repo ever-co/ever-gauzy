@@ -8,13 +8,16 @@ const BASE = `${API_PREFIX}/ever-stats`;
 /** `GET /api/ever-stats/status` (operator only; 404 for everyone else). */
 export interface EverStatsStatus {
 	enabled: boolean;
-	reason: 'ui' | null;
+	/** Why nothing is sent: switched off here, an unusable `EVER_STATS_API_URL`, or an unreadable key. */
+	reason: 'ui' | 'config' | 'key_unreadable' | null;
 	install_source: string;
-	instance_id: string;
+	/** Set once Ever Platform accepted a report under it. */
+	instance_id: string | null;
 	key_id: string;
 	serves: string[];
 	country: string;
-	api_url: string;
+	/** `null` when the configured address cannot be used (nothing is sent). */
+	api_url: string | null;
 	next_send_at: string | null;
 	last_attempt: { status: string; http_status: number | null; period: string; at: string | null; error: string | null } | null;
 	key_warning: 'encryption_key_unset' | 'jwt_secret_default' | 'no_secret' | null;
@@ -46,8 +49,12 @@ export interface EverStatsSendResult {
 	reports: Array<{ period: string; final: boolean; status: string; httpStatus: number | null; error: string | null }>;
 }
 
-/** The published schema, shown to everyone who is not the operator. */
-export const EVER_STATS_SCHEMA_URL = 'https://api.ever.co/v1/stats/schema';
+/**
+ * The published schema, shown to everyone who is not the operator: the file in the public Ever
+ * Platform SDK repository, at the commit the API's copy was taken from.
+ */
+export const EVER_STATS_SCHEMA_URL =
+	'https://github.com/ever-co/ever-connect-sdk/blob/2fd74dad9357a18471292f38012a5f5e4e6d2938/contracts/schemas/ever.stats.v1.json';
 
 /** The operator routes of the anonymous usage statistics. */
 @Injectable({ providedIn: 'root' })

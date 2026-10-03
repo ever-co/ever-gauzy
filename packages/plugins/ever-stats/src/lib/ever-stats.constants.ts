@@ -42,5 +42,22 @@ export const STATS_SEND_NOW_INTERVAL_MS = 10 * 60 * 1000;
 /** The sending lease lasts 15 minutes. */
 export const STATS_LEASE_MS = 15 * 60 * 1000;
 
-/** The published schema, for operators and reviewers. */
-export const STATS_SCHEMA_URL = 'https://api.ever.co/v1/stats/schema';
+/**
+ * The published schema, for operators and reviewers: the file in the public Ever Platform SDK
+ * repository, at the commit this plugin's copy (`src/lib/schema/`) was taken from.
+ */
+export const STATS_SCHEMA_URL =
+	'https://github.com/ever-co/ever-connect-sdk/blob/2fd74dad9357a18471292f38012a5f5e4e6d2938/contracts/schemas/ever.stats.v1.json';
+
+/** The largest answer body read from Ever Platform; a longer one is not read further. */
+export const MAX_STATS_RESPONSE_BYTES = 64 * 1024;
+
+/**
+ * How long a report refused as malformed (`400`, `413`, `415`) keeps the module from sending, unless
+ * the module, the Gauzy release or the identity changes first. A schema refusal (`422`) or another
+ * key for the id (`409 key_mismatch`) keeps it until one of those changes.
+ */
+export const STATS_REFUSAL_PARK_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** "What is sent" builds the report at most once a minute per API process; within it the last one is shown again. */
+export const STATS_PREVIEW_INTERVAL_MS = 60 * 1000;

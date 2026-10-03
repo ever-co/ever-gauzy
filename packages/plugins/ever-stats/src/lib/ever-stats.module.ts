@@ -1,15 +1,12 @@
-import { DynamicModule, Injectable, Logger, Module, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
-import { MikroORM, RequestContext as MikroOrmRequestContext } from '@mikro-orm/core';
-import { ClsServiceManager } from 'nestjs-cls';
+import { DynamicModule, Inject, Injectable, Logger, Module, OnApplicationBootstrap, OnModuleDestroy, Optional } from '@nestjs/common';
 import { gauzyToggleFeatures } from '@gauzy/config';
-import { getORMType, MultiORMEnum, StatsModule, StatsService } from '@gauzy/core';
 import { EverInstanceModule, EverInstanceService, EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { readEverStatsConfig } from './ever-stats-config';
+import { isEverStatsEnabled } from './ever-stats-enabled';
 import { EverStatsBuilder } from './ever-stats-builder.service';
-import { EverStatsCollector, IsolatedRun, STATS_FEATURE_FLAGS, STATS_GLOBAL_COUNTERS, STATS_ISOLATED_RUN } from './ever-stats-collector.service';
+import { EverStatsCollector, STATS_FEATURE_FLAGS } from './ever-stats-collector.service';
 import { EverStatsController } from './ever-stats.controller';
-import { EVER_STATS_CONFIG, EverStatsScheduler } from './ever-stats-scheduler.service';
+import { EVER_STATS_CONFIG, EVER_STATS_ENV, EverStatsScheduler } from './ever-stats-scheduler.service';
 import { EverStatsSender } from './ever-stats-sender.service';
 import { EverStatsService } from './ever-stats.service';
 import { EverStatsStateController } from './ever-stats-state.controller';
@@ -17,40 +14,31 @@ import { EverStatsStore } from './ever-stats.store';
 import { EverStatsOperatorGuard } from './guards/ever-stats-operator.guard';
 
 /**
- * Runs `work` outside any HTTP request, so Gauzy's counters are instance-wide (inside a request they
- * would be scoped to the caller's tenant), and inside a MikroORM context when Gauzy runs on MikroORM.
+ * Creates the identity, pins the operator and starts the daily schedule once the API is up.
+ *
+ * It reads `EVER_STATS_ENABLED` again first: when the module was loaded although the switch says
+ * `false` (a settings file read after the plugin list was built), it creates nothing and starts
+ * nothing, and every route answers 404.
  */
-function isolatedRun(moduleRef: ModuleRef): IsolatedRun {
-	return async <T>(work: () => Promise<T>): Promise<T> => {
-		let cls: ReturnType<typeof ClsServiceManager.getClsService> | null = null;
-		try {
-			cls = ClsServiceManager.getClsService();
-		} catch {
-			cls = null;
-		}
-		const run = (): Promise<T> => {
-			if (getORMType() === MultiORMEnum.MikroORM) {
-				const orm = moduleRef.get(MikroORM, { strict: false });
-				return MikroOrmRequestContext.create(orm.em, work) as Promise<T>;
-			}
-			return work();
-		};
-		return cls?.isActive() ? cls.exit(run) : run();
-	};
-}
-
-/** Creates the identity, pins the operator and starts the daily schedule once the API is up. */
 @Injectable()
 export class EverStatsLifecycle implements OnApplicationBootstrap, OnModuleDestroy {
 	private readonly logger = new Logger('EverStats');
+	private readonly env: Record<string, string | undefined>;
 
 	constructor(
 		private readonly instance: EverInstanceService,
 		private readonly operator: EverOperatorService,
-		private readonly scheduler: EverStatsScheduler
-	) {}
+		private readonly scheduler: EverStatsScheduler,
+		@Optional() @Inject(EVER_STATS_ENV) env?: Record<string, string | undefined>
+	) {
+		this.env = env ?? process.env;
+	}
 
 	async onApplicationBootstrap(): Promise<void> {
+		if (!isEverStatsEnabled(this.env)) {
+			this.logger.log('Anonymous usage statistics are off (EVER_STATS_ENABLED=false): nothing is created, scheduled or sent.');
+			return;
+		}
 		try {
 			await this.instance.ensure();
 			await this.operator.pinFirstSuperAdmin();
@@ -69,7 +57,9 @@ export class EverStatsLifecycle implements OnApplicationBootstrap, OnModuleDestr
 
 /**
  * The anonymous usage statistics module. `register()` reads the environment once: the state route
- * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`.
+ * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`. The
+ * module keeps `env` and reads `EVER_STATS_ENABLED` from it again at run time (see
+ * {@link EverStatsLifecycle}).
  */
 @Module({})
 export class EverStatsModule {
@@ -78,13 +68,12 @@ export class EverStatsModule {
 		const config = readEverStatsConfig(env, (message) => logger.warn(message));
 		return {
 			module: EverStatsModule,
-			imports: [EverInstanceModule, StatsModule],
+			imports: [EverInstanceModule],
 			controllers: [EverStatsController, ...(config.serves.includes('teams') ? [EverStatsStateController] : [])],
 			providers: [
 				{ provide: EVER_STATS_CONFIG, useValue: config },
-				{ provide: STATS_GLOBAL_COUNTERS, useExisting: StatsService },
+				{ provide: EVER_STATS_ENV, useValue: env },
 				{ provide: STATS_FEATURE_FLAGS, useValue: gauzyToggleFeatures },
-				{ provide: STATS_ISOLATED_RUN, useFactory: isolatedRun, inject: [ModuleRef] },
 				EverStatsStore,
 				EverStatsCollector,
 				EverStatsBuilder,

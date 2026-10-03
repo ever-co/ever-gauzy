@@ -31,6 +31,7 @@ import {
 	DesktopUpdater,
 	DialogErrorHandler,
 	desktopSecretsToEnv,
+	applyDesktopStatsEnv,
 	ensureDesktopSecrets,
 	ErrorEventManager,
 	ErrorReport,
@@ -404,6 +405,11 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 		console.log('Setting additional environment variables...', process.env.API_BASE_URL);
 
 		setEnvAdditional();
+
+		// The integrated server reports its anonymous usage statistics as a desktop installation of
+		// this release (after the additional settings, so they cannot change it), and the statistics
+		// switch typed in the settings is normalised.
+		applyDesktopStatsEnv(process.env, LocalStore.getAdditionalConfig(), app.getVersion());
 
 		try {
 			console.log('Starting local server...', path.join(__dirname, 'api/main.js'));

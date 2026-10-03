@@ -100,7 +100,7 @@ export async function createCoreTables(dataSource: DataSource, d: TestDialect): 
 		tenant: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('createdAt')} ${ts} NULL, ${t('deletedAt')} ${ts} NULL`,
 		organization: `${common}, ${t('name')} ${text}, ${t('taxId')} ${text}, ${t('website')} ${text}`,
 		role: `${t('id')} ${id} PRIMARY KEY, ${t('name')} ${text}, ${t('tenantId')} ${id} NULL`,
-		user: `${common}, ${t('email')} ${text}, ${t('firstName')} ${text}, ${t('lastName')} ${text}, ${t('roleId')} ${id} NULL, ${t('lastLoginAt')} ${ts} NULL`,
+		user: `${common}, ${t('email')} ${text}, ${t('firstName')} ${text}, ${t('lastName')} ${text}, ${t('roleId')} ${id} NULL, ${t('lastLoginAt')} ${ts} NULL, ${t('emailVerifiedAt')} ${ts} NULL`,
 		employee: `${common}, ${t('userId')} ${id} NULL`,
 		organization_team: `${common}, ${t('name')} ${text}`,
 		task: `${common}, ${t('title')} ${text}`,
@@ -124,26 +124,4 @@ export async function insert(dataSource: DataSource, d: TestDialect, table: stri
 		`INSERT INTO ${q(d, table)} (${columns.map((c) => q(d, c)).join(', ')}) VALUES (${marks})`,
 		Object.values(values).map((v) => (typeof v === 'boolean' && d !== 'postgres' ? (v ? 1 : 0) : v))
 	);
-}
-
-/**
- * Gauzy's `StatsService.getGlobalStats()` over the test tables: plain counts of rows that are not
- * deleted, outside any tenant (what the real service returns when no request is active).
- */
-export function globalStatsOver(dataSource: DataSource, d: TestDialect) {
-	const n = async (table: string, where = '') =>
-		Number((await dataSource.query(`SELECT COUNT(*) AS n FROM ${q(d, table)} WHERE ${q(d, 'deletedAt')} IS NULL${where}`))[0].n);
-	return {
-		getGlobalStats: async () => ({
-			tenants: await n('tenant'),
-			organizations: await n('organization'),
-			employees: await n('employee'),
-			teams: await n('organization_team'),
-			tasks: await n('task'),
-			users: {
-				count: await n('user'),
-				lastMonthActiveUsers: await n('user', ` AND ${q(d, 'lastLoginAt')} IS NOT NULL`)
-			}
-		})
-	};
 }

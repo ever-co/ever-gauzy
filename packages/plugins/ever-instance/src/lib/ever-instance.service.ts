@@ -43,7 +43,26 @@ export interface EverStatsSigner {
 	readonly keyId: string;
 	/** The 64-byte Ed25519 signature of exactly `bytes`. */
 	sign(bytes: Uint8Array): Buffer;
+	/** Overwrites the private key held by this signer; it cannot sign afterwards. */
+	dispose(): void;
 }
+
+/** The statistics identity a signer must belong to (see {@link EverInstanceService.statsSigner}). */
+export interface ExpectedStatsIdentity {
+	instanceId: string;
+	statsKeyId: string;
+}
+
+/** The identity changed (a reset by another request or process) between two reads. */
+export class EverInstanceIdentityChangedError extends Error {
+	constructor() {
+		super('The identity of this installation changed while a report was being prepared.');
+		this.name = 'EverInstanceIdentityChangedError';
+	}
+}
+
+/** The order of protection of a stored key: the fixed value, then JWT_SECRET, then ENCRYPTION_KEY. */
+const SOURCE_RANK: Readonly<Record<KeyMaterialSource, number>> = Object.freeze({ n: 0, j: 1, k: 2 });
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -77,9 +96,9 @@ export class EverInstanceService {
 	}
 
 	/**
-	 * Returns the identity of this installation, creating it on first call. When the stored key is
-	 * protected by `JWT_SECRET` (or nothing) and `ENCRYPTION_KEY` has since been set, it is stored
-	 * again under `ENCRYPTION_KEY`.
+	 * Returns the identity of this installation, creating it on first call. When a stronger secret
+	 * than the one the stored key is protected by has since been set (`JWT_SECRET` over the fixed
+	 * value, `ENCRYPTION_KEY` over both), the key is stored again under it.
 	 */
 	async ensure(): Promise<EverInstanceRecord> {
 		const existing = await this.readRow();
@@ -119,11 +138,18 @@ export class EverInstanceService {
 	/**
 	 * A signer over the statistics key. Throws {@link EverInstanceKeyError} when the stored key cannot
 	 * be read with the secrets of this process (it then fails closed: nothing can be signed).
+	 *
+	 * With `expected`, the key is read only when the stored identity is still that one; otherwise it
+	 * throws {@link EverInstanceIdentityChangedError}, so a report built for one identity is never
+	 * signed with the key of the next one (a *Reset instance identity* in between).
 	 */
-	async statsSigner(): Promise<EverStatsSigner> {
+	async statsSigner(expected?: ExpectedStatsIdentity): Promise<EverStatsSigner> {
 		const row = await this.readRow();
 		if (!row) {
 			throw new Error('The identity of this installation does not exist yet.');
+		}
+		if (expected && (String(row['instanceId']) !== expected.instanceId || String(row['statsKeyId']) !== expected.statsKeyId)) {
+			throw new EverInstanceIdentityChangedError();
 		}
 		const privateKeyDer = unwrapKey(String(row['statsPrivateKeyEncrypted']), 'stats', this.env);
 		const publicKey = String(row['statsPublicKey']);
@@ -131,16 +157,39 @@ export class EverInstanceService {
 		const signer: EverStatsSigner = {
 			publicKey,
 			keyId,
-			sign: (bytes: Uint8Array) => signBytes(privateKeyDer, bytes)
+			sign: (bytes: Uint8Array) => signBytes(privateKeyDer, bytes),
+			dispose: () => {
+				privateKeyDer.fill(0);
+			}
 		};
 		// Neither JSON nor inspection shows more than the public key.
 		Object.defineProperty(signer, 'toJSON', { value: () => ({ publicKey, keyId }), enumerable: false });
 		return signer;
 	}
 
-	/** The warning the settings page shows while the stored keys are not protected by `ENCRYPTION_KEY`. */
-	keyWarning(): KeyWarning | null {
-		return keyWarning(this.env);
+	/** Whether the stored statistics key can be read with the secrets of this process. */
+	async statsKeyReadable(): Promise<boolean> {
+		const row = await this.readRow();
+		if (!row) {
+			return false;
+		}
+		try {
+			unwrapKey(String(row['statsPrivateKeyEncrypted']), 'stats', this.env).fill(0);
+			return true;
+		} catch (error) {
+			if (error instanceof EverInstanceKeyError) {
+				return false;
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * The warning the settings page shows while the stored key is not protected by `ENCRYPTION_KEY`,
+	 * built from how it is stored (`stored`, see {@link EverInstanceRecord.statsKeySource}).
+	 */
+	keyWarning(stored?: KeyMaterialSource | null): KeyWarning | null {
+		return keyWarning(this.env, stored);
 	}
 
 	/** The operator switches the anonymous statistics on or off. */
@@ -198,6 +247,25 @@ export class EverInstanceService {
 		return (await this.get())?.operatorUserId ?? null;
 	}
 
+	/**
+	 * Replaces a pinned operator who can no longer be one (deleted, deactivated or no longer a super
+	 * admin) by `next`, only while `stale` is still the pinned one (compare and set), and writes one
+	 * audit line with both user ids. Returns the operator pinned afterwards.
+	 */
+	async repinOperator(stale: string, next: string | null): Promise<string | null> {
+		await this.ensure();
+		const d = this.dialect;
+		const { affected } = await runSql(
+			this.dataSource,
+			`UPDATE ${quote(d, TABLE)} SET ${this.col('operatorUserId')} = ${ph(d, 1)}, ${this.col('updatedAt')} = ${ph(d, 2)} WHERE ${this.col('id')} = ${ph(d, 3)} AND ${this.col('operatorUserId')} = ${ph(d, 4)}`,
+			[next, Date.now(), EVER_INSTANCE_ROW_ID, stale]
+		);
+		if (affected === 1) {
+			this.audit({ action: 'operator.repin', actor_id: null, from: stale, to: next });
+		}
+		return (await this.get())?.operatorUserId ?? null;
+	}
+
 	private initialInstanceId(): string {
 		const fixed = this.env['EVER_INSTANCE_ID']?.trim().toLowerCase();
 		if (fixed) {
@@ -209,12 +277,15 @@ export class EverInstanceService {
 		return randomUUID();
 	}
 
-	/** Stores the key again under `ENCRYPTION_KEY` once it is set (only when the old secret still reads it). */
+	/**
+	 * Stores the key again under a stronger secret once one is set (the fixed value → `JWT_SECRET` →
+	 * `ENCRYPTION_KEY`), only when the old secret still reads it.
+	 */
 	private async protectWithPreferredSource(row: Record<string, unknown>): Promise<void> {
 		const blob = String(row['statsPrivateKeyEncrypted'] ?? '');
 		const current = storedKeySource(blob);
 		const preferred = preferredKeySource(this.env);
-		if (!current || current === preferred || preferred !== 'k') {
+		if (!current || SOURCE_RANK[preferred] <= SOURCE_RANK[current]) {
 			return;
 		}
 		let plain: Buffer;
@@ -234,7 +305,7 @@ export class EverInstanceService {
 			`UPDATE ${quote(d, TABLE)} SET ${this.col('statsPrivateKeyEncrypted')} = ${ph(d, 1)}, ${this.col('updatedAt')} = ${ph(d, 2)} WHERE ${this.col('id')} = ${ph(d, 3)} AND ${this.col('statsPrivateKeyEncrypted')} = ${ph(d, 4)}`,
 			[rewrapped, Date.now(), EVER_INSTANCE_ROW_ID, blob]
 		);
-		this.logger.log('The statistics key of this installation is now protected by ENCRYPTION_KEY.');
+		this.logger.log(`The statistics key of this installation is now protected by ${preferred === 'k' ? 'ENCRYPTION_KEY' : 'JWT_SECRET'}.`);
 	}
 
 	private async readRow(): Promise<Record<string, unknown> | null> {

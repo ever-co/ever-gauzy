@@ -41,6 +41,7 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 						<section data-test="managed">
 							<h3>{{ 'EVER_STATS.MANAGED' | translate }}</h3>
 							<p>{{ 'EVER_STATS.MANAGED_DESCRIPTION' | translate }}</p>
+							<p class="hint" data-test="managed-operators">{{ 'EVER_STATS.MANAGED_OPERATORS' | translate }}</p>
 							<a [href]="schemaUrl" target="_blank" rel="noopener noreferrer">{{ 'EVER_STATS.SCHEMA_LINK' | translate }}</a>
 						</section>
 					}
@@ -49,6 +50,9 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 					}
 					@case ('operator') {
 						<section data-test="operator">
+							@if (status?.reason === 'config' || status?.reason === 'key_unreadable') {
+								<nb-alert status="danger" role="alert" data-test="reason">{{ 'EVER_STATS.REASON.' + status.reason | translate }}</nb-alert>
+							}
 							@if (status?.key_warning) {
 								<nb-alert status="warning" data-test="key-warning">{{ 'EVER_STATS.KEY_WARNING.' + status.key_warning | translate }}</nb-alert>
 							}
@@ -85,10 +89,16 @@ export type UsageStatisticsView = 'loading' | 'operator' | 'managed' | 'error';
 								<dt>{{ 'EVER_STATS.COUNTRY' | translate }}</dt>
 								<dd>{{ status?.country === 'ZZ' ? ('EVER_STATS.COUNTRY_UNDECLARED' | translate) : status?.country }}</dd>
 								<dt>{{ 'EVER_STATS.DESTINATION' | translate }}</dt>
-								<dd><code>{{ status?.api_url }}/v1/stats/reports</code></dd>
+								<dd data-test="destination">
+									@if (status?.api_url) {
+										<code>{{ status.api_url }}/v1/stats/reports</code>
+									} @else {
+										—
+									}
+								</dd>
 							</dl>
 							<div class="actions">
-								<button nbButton status="primary" type="button" data-test="send-now" [disabled]="busy || !status?.enabled" (click)="sendNow()">
+								<button nbButton status="primary" type="button" data-test="send-now" [disabled]="busy || !status?.enabled || !!status?.reason" (click)="sendNow()">
 									{{ 'EVER_STATS.SEND_NOW' | translate }}
 								</button>
 								<a [href]="schemaUrl" target="_blank" rel="noopener noreferrer">{{ 'EVER_STATS.SCHEMA_LINK' | translate }}</a>

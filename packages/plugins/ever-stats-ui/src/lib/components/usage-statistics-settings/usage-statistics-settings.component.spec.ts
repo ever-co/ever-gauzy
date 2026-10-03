@@ -16,7 +16,7 @@ const STATUS: EverStatsStatus = {
 	next_send_at: '2026-10-03T12:00:00.000Z',
 	last_attempt: null,
 	key_warning: 'encryption_key_unset',
-	schema_url: 'https://api.ever.co/v1/stats/schema'
+	schema_url: 'https://github.com/ever-co/ever-connect-sdk/blob/2fd74dad9357a18471292f38012a5f5e4e6d2938/contracts/schemas/ever.stats.v1.json'
 };
 const PAYLOAD = '{"schema":"ever.stats.v1","counts":{"tenants":1}}';
 
@@ -63,11 +63,22 @@ describe('UsageStatisticsSettingsComponent', () => {
 		const { component, find, el } = render();
 		expect(component.view).toBe('managed');
 		expect(find('managed')).not.toBeNull();
-		expect(find('managed')?.querySelector('a')?.getAttribute('href')).toBe('https://api.ever.co/v1/stats/schema');
+		expect(find('managed')?.querySelector('a')?.getAttribute('href')).toBe('https://github.com/ever-co/ever-connect-sdk/blob/2fd74dad9357a18471292f38012a5f5e4e6d2938/contracts/schemas/ever.stats.v1.json');
+		expect(find('managed-operators')).not.toBeNull();
 		expect(find('operator')).toBeNull();
 		expect(el.querySelector('pre')).toBeNull();
 		expect(api.last).not.toHaveBeenCalled();
 		expect(api.preview).not.toHaveBeenCalled();
+	});
+
+	it.each([['config'], ['key_unreadable']])('says why nothing is sent (%s) and disables Send now', (reason) => {
+		api.status.mockReturnValue(of({ ...STATUS, reason, api_url: reason === 'config' ? null : STATUS.api_url }));
+		const { find } = render();
+		expect(find('reason')).not.toBeNull();
+		expect((find('send-now') as HTMLButtonElement).disabled).toBe(true);
+		if (reason === 'config') {
+			expect(find('destination')?.textContent).not.toContain('/v1/stats/reports');
+		}
 	});
 
 	it('shows an error for any other failure', () => {
