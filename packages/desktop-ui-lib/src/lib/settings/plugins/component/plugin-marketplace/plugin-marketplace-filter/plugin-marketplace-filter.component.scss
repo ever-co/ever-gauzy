@@ -285,20 +285,49 @@
       flex: 1;
     }
 
+    // The direction as one segmented control, framed like the select beside
+    // it — same 32px height, hairline and radius — rather than two separately
+    // bordered buttons, one of them a solid purple block.
     nb-button-group {
-      max-height: 32px;
+      display: inline-flex;
       flex-shrink: 0;
+      gap: 2px;
+      height: 32px;
+      padding: 2px;
+      border: 1px solid var(--border-basic-color-4);
+      border-radius: var(--border-radius);
+      box-shadow: none;
+      box-sizing: border-box;
     }
 
-    // Nebular's `basic` filled button is near-white on the dark themes; draw
-    // the unselected sort direction as an outlined secondary button instead.
-    button[nbButton].appearance-filled.status-basic {
+    nb-button-group button[nbButton].appearance-filled {
+      width: 30px;
+      min-width: 0;
+      height: 26px;
+      padding: 0;
+      justify-content: center;
+      border: none;
+      border-radius: calc(var(--border-radius) - 3px);
       background-color: transparent;
-      border-color: var(--border-basic-color-4);
-      color: var(--gauzy-text-color-1);
+      color: var(--text-hint-color);
+      box-shadow: none;
+
+      nb-icon {
+        font-size: 16px;
+        margin: 0;
+      }
 
       &:hover {
         background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
+      }
+
+      // The direction in effect: a tint, as on the price category chips.
+      // Marked with `is-active` rather than `status`, which `nb-button-group`
+      // overwrites on first render — so descending never showed as selected.
+      &.is-active {
+        background-color: var(--color-primary-transparent-default);
+        color: var(--color-primary-default);
       }
     }
   }

@@ -163,6 +163,16 @@
       }
     }
 
+    // The selected view. `nb-button-group` overwrites each button's `status`
+    // once when it first renders, so the button bound to `primary` came up
+    // `basic` and the current view was not marked until it was clicked. The
+    // `is-active` class is bound alongside and the group leaves it alone.
+    .view-toggle button[nbButton].appearance-filled.is-active {
+      background-color: var(--color-primary-default);
+      border-color: var(--color-primary-default);
+      color: var(--text-control-color);
+    }
+
     .view-toggle {
       border-radius: var(--border-radius);
       overflow: hidden;
