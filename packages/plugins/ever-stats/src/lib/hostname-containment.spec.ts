@@ -3,10 +3,18 @@ import { join } from 'node:path';
 
 /**
  * The Ever Platform host and the variable that points the statistics at it appear only in the
- * statistics packages, the environment sample and documentation: no other code of Gauzy can reach
- * the statistics endpoint.
+ * statistics packages, the environment sample, documentation and the egress audit's inputs (which
+ * point a module loaded by mistake at a sealed test address): no other code of Gauzy can reach the
+ * statistics endpoint.
  */
-const ALLOWED = [/^packages\/plugins\/ever-stats(-ui)?\//, /^packages\/plugins\/ever-instance\//, /^\.env\.sample$/, /(^|\/)README\.md$/, /\.md$/];
+const ALLOWED = [
+	/^packages\/plugins\/ever-stats(-ui)?\//,
+	/^packages\/plugins\/ever-instance\//,
+	/^tools\/egress-audit\//,
+	/^\.env\.sample$/,
+	/(^|\/)README\.md$/,
+	/\.md$/
+];
 
 export function outside(paths: string[]): string[] {
 	return paths.filter((path) => !ALLOWED.some((re) => re.test(path)));
@@ -33,5 +41,6 @@ describe('the statistics endpoint is reachable only from the statistics module',
 
 	it('would catch a planted use (control)', () => {
 		expect(outside(['packages/core/src/lib/stats/stats.service.ts'])).toEqual(['packages/core/src/lib/stats/stats.service.ts']);
+		expect(outside(['tools/egress-audit/adapter.mjs', 'tools/other/x.mjs'])).toEqual(['tools/other/x.mjs']);
 	});
 });
