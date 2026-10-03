@@ -945,6 +945,13 @@
       &:hover {
         background: var(--gauzy-hover-tint);
       }
+
+      // The category whose price range is in effect.
+      &.is-active {
+        background: var(--color-primary-transparent-default);
+        border-color: var(--color-primary-default);
+        color: var(--color-primary-default);
+      }
     }
   }
 }

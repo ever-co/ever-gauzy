@@ -615,24 +615,32 @@ export class PluginMarketplaceFilterComponent implements OnInit, OnChanges, OnDe
 
 	public selectPriceCategory(category: PluginPriceCategory): void {
 		// Update price range based on selected category
-		let priceRange = { min: 0, max: 1000 };
+		this.filterForm.patchValue({ priceRange: this.getPriceCategoryRange(category) });
+	}
 
+	/**
+	 * Whether the current price range is exactly the one this category sets, so
+	 * the template can show which category chip is in effect.
+	 */
+	public isPriceCategorySelected(category: PluginPriceCategory): boolean {
+		const current = this.filterForm.get('priceRange')?.value;
+		const range = this.getPriceCategoryRange(category);
+		return Number(current?.min) === range.min && Number(current?.max) === range.max;
+	}
+
+	private getPriceCategoryRange(category: PluginPriceCategory): { min: number; max: number } {
 		switch (category) {
 			case PluginPriceCategory.FREE:
-				priceRange = { min: 0, max: 0 };
-				break;
+				return { min: 0, max: 0 };
 			case PluginPriceCategory.FREEMIUM:
-				priceRange = { min: 0, max: 50 };
-				break;
+				return { min: 0, max: 50 };
 			case PluginPriceCategory.PAID:
-				priceRange = { min: 1, max: 500 };
-				break;
+				return { min: 1, max: 500 };
 			case PluginPriceCategory.ENTERPRISE:
-				priceRange = { min: 100, max: 1000 };
-				break;
+				return { min: 100, max: 1000 };
+			default:
+				return { min: 0, max: 1000 };
 		}
-
-		this.filterForm.patchValue({ priceRange });
 	}
 
 	public trackByCount(index: number, count: number): number {

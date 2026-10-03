@@ -368,6 +368,8 @@
                           size="small"
                           class="price-category-btn"
                           [status]="'basic'"
+                          [class.is-active]="isPriceCategorySelected(category)"
+                          [attr.aria-pressed]="isPriceCategorySelected(category)"
                           (click)="selectPriceCategory(category)">
                           {{ category | titlecase }}
                         </button>
