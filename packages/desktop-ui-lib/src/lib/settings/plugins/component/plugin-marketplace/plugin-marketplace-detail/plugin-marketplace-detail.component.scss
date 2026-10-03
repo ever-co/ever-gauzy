@@ -1,41 +1,38 @@
-/* Enhanced Plugin Card Styles */
+// Plugin card
+//
+// Set on the same type scale as the report pages (Reports > Manual Time Edits
+// and the other row tables in `report-table.scss`): a 14px / 600 title, 12px
+// body text in the hint colour, 11px / 600 labels and 12px badges. Surfaces
+// are flat — one hairline per edge, no gradients, glows or hover lifts — so a
+// card reads as part of the same app as the pages around it.
 .plugin-card {
   background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
-  padding: 24px;
+  border: 1px solid var(--border-basic-color-2);
+  border-radius: var(--border-radius);
+  padding: 16px;
   margin-bottom: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s ease;
   position: relative;
   overflow: hidden;
-  // No `--gauzy-shadow`: it is a 1px ring on the dark canvas and this card
-  // already draws a 1px `--border-basic-color-3` border, so the two stacked into
-  // a doubled edge. The border is the hairline; the states below add the depth.
+  font-size: 12px;
+  line-height: 16px;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-    border-color: var(--color-primary-default);
+    border-color: var(--border-basic-color-4);
   }
 
   &.featured {
     border-color: var(--color-warning-default);
-    background: linear-gradient(135deg, var(--gauzy-card-1) 0%, rgba(255, 193, 7, 0.08) 100%);
 
     &::before {
       content: '⭐';
       position: absolute;
-      top: 16px;
-      right: 16px;
-      font-size: 24px;
+      top: 12px;
+      right: 12px;
+      font-size: 14px;
+      line-height: 1;
       z-index: 1;
-      filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.3));
     }
-  }
-
-  &.verified {
-    border-left: 4px solid var(--color-success-default);
-    box-shadow: -4px 0 12px rgba(0, 214, 143, 0.1);
   }
 
   // List view compact layout - Optimized for 336px x 214px
@@ -44,47 +41,40 @@
     flex-direction: column;
     height: 100%;
     min-height: 214px;
-    padding: 16px;
-    gap: 12px;
+    padding: 12px 16px;
+    gap: 8px;
     position: relative;
 
     .plugin-header {
       margin-bottom: 0;
       flex-direction: column;
       align-items: flex-start;
-      gap: 8px;
+      gap: 6px;
 
       .plugin-title-section {
         width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
         margin-bottom: 0;
 
         .plugin-name {
-          font-size: 16px;
+          font-size: 13px;
+          line-height: 18px;
           margin-bottom: 0;
           width: 100%;
           justify-content: space-between;
 
           .security-badges {
             margin-left: auto;
-            .security-badge {
-              padding: 2px 6px;
-              font-size: 10px;
-            }
           }
         }
 
         .plugin-meta {
           font-size: 11px;
+          line-height: 14px;
           gap: 8px;
           margin-top: 0;
-
-          .plugin-version {
-            padding: 2px 6px;
-            font-size: 10px;
-          }
         }
       }
 
@@ -92,16 +82,8 @@
         width: 100%;
         flex-direction: row;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         margin-left: 0;
-
-        .status-badge,
-        .type-badge,
-        .free-badge {
-          padding: 2px 6px;
-          font-size: 10px;
-          height: 20px;
-        }
       }
     }
 
@@ -111,14 +93,8 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       white-space: normal;
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--gauzy-text-color-2);
       margin-bottom: 0;
       flex-grow: 1;
-      padding: 0;
-      background: transparent;
-      border: none;
 
       ::ng-deep a.read-more-link {
         display: none;
@@ -128,21 +104,14 @@
     .plugin-tags {
       display: block;
       margin-top: auto;
+      margin-bottom: 0;
 
       .tags-container {
         flex-wrap: nowrap;
         overflow: hidden;
         mask-image: linear-gradient(to right, black 85%, transparent 100%);
-        gap: 4px;
-
-        .tag-badge {
-          font-size: 10px;
-          padding: 2px 8px;
-          height: 20px;
-        }
 
         .more-tags {
-          font-size: 10px;
           display: none;
         }
       }
@@ -155,9 +124,8 @@
     }
 
     .plugin-actions {
-      margin-top: 4px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-basic-color-3);
+      margin-top: 0;
+      padding-top: 8px;
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -174,7 +142,6 @@
           width: 28px;
           height: 28px;
           min-width: 28px;
-          border-radius: 50%;
 
           nb-icon {
             font-size: 14px;
@@ -196,15 +163,14 @@
           }
 
           .toggle-wrapper {
-            padding: 0;
             width: 100%;
             justify-content: flex-start;
-            padding: 4px 8px;
+            padding: 2px 8px;
             gap: 8px;
 
+            // No `transform: scale()` here: it shrank the label inside the
+            // toggle along with the switch, to ~8px.
             nb-toggle {
-              transform: scale(0.75);
-              transform-origin: left center;
               margin: 0;
             }
 
@@ -218,11 +184,6 @@
         }
       }
     }
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
   }
 
   // Grid view - enhanced layout
@@ -230,7 +191,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 380px;
+    min-height: 300px;
 
     .plugin-header {
       flex-shrink: 0;
@@ -257,12 +218,14 @@
 }
 
 /* Plugin Header Section */
+// Reads top-down: name, then who/what version, then its status badges — rather
+// than a stack of badges pinned to the right edge beside the name.
 .plugin-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  gap: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 12px;
+  gap: 8px;
 }
 
 .plugin-title-section {
@@ -271,14 +234,15 @@
 }
 
 .plugin-name {
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 20px;
   color: var(--gauzy-text-color-1);
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   transition: color 0.2s ease;
 
   &:hover {
@@ -286,35 +250,29 @@
   }
 }
 
+// `nb-badge` renders only its `text` input and never projects the icon placed
+// inside it, so these badges have no visible content: what used to show was an
+// empty filled pill. Draw them as a small status dot instead; the tooltip still
+// names the state.
 .security-badges {
   display: flex;
-  gap: 6px;
-  margin-left: 10px;
+  align-items: center;
+  gap: 4px;
 
   .security-badge {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: calc(var(--border-radius) * 2);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all 0.2s ease;
+    position: relative !important;
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 50%;
 
     &.verified {
-      background: linear-gradient(135deg, var(--color-success-default) 0%, var(--color-success-600) 100%);
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 214, 143, 0.3);
+      background: var(--color-success-default);
     }
 
     &.signed {
-      background: linear-gradient(135deg, var(--color-info-default) 0%, var(--color-info-600) 100%);
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 149, 255, 0.3);
-    }
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background: var(--color-info-default);
     }
   }
 }
@@ -322,29 +280,23 @@
 .plugin-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--gauzy-text-color-2);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-hint-color);
 
   .plugin-version {
-    background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-    color: white;
-    padding: 4px 12px;
-    border-radius: calc(var(--border-radius) * 2);
+    color: var(--gauzy-text-color-1);
     font-weight: 600;
-    font-size: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  }
-
-  .plugin-author {
-    font-style: italic;
+    font-variant-numeric: tabular-nums;
   }
 
   .download-count {
     display: flex;
     align-items: center;
     gap: 4px;
+    font-variant-numeric: tabular-nums;
 
     nb-icon {
       font-size: 14px;
@@ -354,144 +306,113 @@
 
 .plugin-status-section {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
 }
 
+// The report badge: 12px / 600 on a 2px x 6px box — not uppercase, no shadow.
 .status-badge,
 .type-badge,
-.free-badge {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 6px 12px;
-  white-space: nowrap;
-  border-radius: calc(var(--border-radius) * 2);
+.free-badge,
+.category-badge,
+.tag-badge {
+  font-size: 11px;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  line-height: 14px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  border-radius: var(--border-radius);
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: none;
 }
 
-.free-badge {
-  background: linear-gradient(135deg, var(--color-success-default) 0%, var(--color-success-600) 100%) !important;
-  color: white !important;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 3px 8px rgba(0, 214, 143, 0.3) !important;
+// The neutral badges get the tag's hairline outline, so they read as badges
+// rather than loose text beside the coloured ones.
+.type-badge,
+.status-badge.status-basic {
+  background: transparent;
+  border: 1px solid var(--border-basic-color-4);
+  color: var(--gauzy-text-color-1);
+}
 
-  &::before {
-    content: '✓';
-    font-size: 13px;
-    font-weight: 700;
+// The coloured ones are a soft tint of their status with the text in the full
+// colour — quieter than a solid fill, and still legible on both canvases.
+@each $status in (primary, success, info, warning, danger) {
+  .status-badge.status-#{$status},
+  .free-badge.status-#{$status},
+  .category-badge.status-#{$status} {
+    background: var(--color-#{$status}-transparent-default);
+    border: 1px solid transparent;
+    color: var(--color-#{$status}-default);
   }
 }
 
 /* Plugin Description */
 .plugin-description {
-  margin-bottom: 20px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--gauzy-text-color-1);
-  padding: 16px;
-  background: var(--gauzy-card-2);
-  border-radius: var(--border-radius);
-  border-left: 3px solid var(--color-primary-default);
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-hint-color);
 }
 
 /* Plugin Categories */
 .plugin-categories {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: var(--gauzy-card-2);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-basic-color-3);
+  gap: 6px;
+  margin-bottom: 8px;
 
   .category-icon {
-    color: var(--color-primary-default);
-    font-size: 18px;
+    font-size: 14px;
     flex-shrink: 0;
-  }
-
-  .category-badge {
-    font-size: 12px;
-    background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-    color: white;
-    padding: 6px 14px;
-    border-radius: calc(var(--border-radius) * 2);
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
 }
 
 /* Plugin Tags */
 .plugin-tags {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--gauzy-card-2);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-basic-color-3);
+  margin-bottom: 12px;
 
   .tags-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
     align-items: center;
   }
 
   .tag-badge {
-    font-size: 11px;
-    padding: 6px 12px;
-    border-radius: calc(var(--border-radius) * 1.5);
-    background: var(--gauzy-card-1);
+    font-weight: 500;
+    background: transparent;
     border: 1px solid var(--border-basic-color-4);
     color: var(--gauzy-text-color-1);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    font-weight: 500;
-
-    &:hover {
-      background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-      color: white;
-      border-color: var(--color-primary-default);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
 
     &.featured {
-      background: linear-gradient(135deg, var(--color-warning-default) 0%, var(--color-warning-600) 100%);
-      color: white;
-      font-weight: 600;
-      border: none;
-      box-shadow: 0 2px 6px rgba(255, 170, 0, 0.3);
+      border-color: var(--color-warning-default);
+      color: var(--color-warning-default);
     }
   }
 
   .more-tags {
     font-size: 11px;
-    color: var(--gauzy-text-color-2);
-    font-style: italic;
-    font-weight: 500;
+    line-height: 14px;
+    color: var(--text-hint-color);
   }
 }
 
 /* Plugin Subscription */
 .plugin-subscription {
-  margin-bottom: 20px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, var(--gauzy-card-2) 0%, var(--gauzy-card-1) 100%);
-  border-radius: calc(var(--border-radius) * 1.2);
-  border: 1px solid var(--border-basic-color-3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-basic-color-2);
 
   .subscription-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
@@ -500,115 +421,80 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 16px;
     font-weight: 600;
     color: var(--gauzy-text-color-1);
 
     div.first {
-      gap: 0.5rem;
+      gap: 6px;
     }
 
     nb-icon {
       color: var(--color-primary-default);
-      font-size: 18px;
-    }
-
-    .price {
-      color: var(--color-success-default);
-      font-weight: 700;
-      margin-left: 10px;
       font-size: 16px;
     }
 
+    .price {
+      color: var(--gauzy-text-color-1);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
     .billing-period {
-      color: var(--gauzy-text-color-2);
-      font-size: 13px;
-      font-weight: 500;
+      color: var(--text-hint-color);
+      font-weight: 400;
     }
   }
 
   .subscription-status {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
   }
 
   .status-badge,
   .trial-badge,
   .expiring-badge {
     font-size: 11px;
-    padding: 6px 12px;
-    border-radius: calc(var(--border-radius) * 2);
+    line-height: 14px;
+    padding: 2px 6px;
+    border-radius: var(--border-radius);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 
     nb-icon {
-      font-size: 14px;
+      font-size: 12px;
     }
-  }
-
-  .status-badge {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .trial-badge {
-    background: linear-gradient(135deg, var(--color-warning-default) 0%, var(--color-warning-600) 100%);
-    color: white;
-    box-shadow: 0 2px 6px rgba(255, 170, 0, 0.3);
-  }
-
-  .expiring-badge {
-    background: linear-gradient(135deg, var(--color-danger-default) 0%, var(--color-danger-600) 100%);
-    color: white;
-    box-shadow: 0 2px 6px rgba(255, 61, 113, 0.3);
   }
 }
 
 /* Plugin Metrics */
 .plugin-metrics {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 24px;
+  gap: 4px 16px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
-  padding: 16px;
-  background: var(--gauzy-card-2);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-basic-color-3);
 
   .metric-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--gauzy-text-color-2);
-    padding: 8px 12px;
-    background: var(--gauzy-card-1);
-    border-radius: calc(var(--border-radius) * 0.8);
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+    gap: 4px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--text-hint-color);
 
     nb-icon {
-      color: var(--color-primary-default);
-      font-size: 16px;
+      color: var(--text-hint-color);
+      font-size: 14px;
       flex-shrink: 0;
-    }
-
-    .metric-label {
-      font-weight: 600;
-      color: var(--gauzy-text-color-2);
     }
 
     .metric-value {
       color: var(--gauzy-text-color-1);
-      font-weight: 500;
+      font-variant-numeric: tabular-nums;
     }
   }
 }
@@ -618,67 +504,38 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
-  padding-top: 20px;
-  margin-top: 20px;
-  border-top: 2px solid var(--border-basic-color-3);
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-basic-color-2);
 }
 
 .action-buttons {
   display: flex;
-  gap: 10px;
+  gap: 4px;
   flex-wrap: wrap;
 
   .action-btn {
-    min-width: 40px;
-    height: 40px;
-    border-radius: calc(var(--border-radius) * 3);
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: var(--border-radius);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid var(--border-basic-color-4);
-    background: var(--gauzy-card-1);
+    transition: background-color 0.2s ease;
 
     &:disabled {
       opacity: 0.4;
       cursor: not-allowed;
     }
 
-    &.settings-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-      color: white;
-      border-color: var(--color-primary-default);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    &.users-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--color-info-default) 0%, var(--color-info-600) 100%);
-      color: white;
-      border-color: var(--color-info-default);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 149, 255, 0.3);
-    }
-
-    &.edit-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--color-warning-default) 0%, var(--color-warning-600) 100%);
-      color: white;
-      border-color: var(--color-warning-default);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 170, 0, 0.3);
-    }
-
-    &.more-btn:hover:not(:disabled) {
-      background: var(--gauzy-card-2);
-      color: var(--gauzy-text-color-1);
-      border-color: var(--border-basic-color-3);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    &:hover:not(:disabled) {
+      background: var(--gauzy-hover-tint);
     }
 
     nb-icon {
-      font-size: 18px;
+      font-size: 16px;
     }
   }
 }
@@ -686,18 +543,18 @@
 .installation-control {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 
   .progress-indicator {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: var(--primary-color);
-    font-size: 13px;
-    font-weight: 500;
+    gap: 6px;
+    color: var(--text-hint-color);
+    font-size: 12px;
+    line-height: 16px;
 
     nb-icon {
-      font-size: 16px;
+      font-size: 14px;
       animation: spin 1s linear infinite;
     }
 
@@ -709,79 +566,47 @@
   .installation-wrapper {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
     flex-wrap: wrap;
 
+    // Status text with a coloured icon, as in the report rows — no filled pill.
     .free-plugin,
     .subscription-required {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: calc(var(--border-radius) * 2);
+      gap: 4px;
       font-size: 12px;
-      font-weight: 600;
+      line-height: 16px;
+      font-weight: 500;
       white-space: nowrap;
-      transition: all 0.2s ease;
+      color: var(--text-hint-color);
 
       .free-icon,
       .subscription-icon {
-        font-size: 16px;
+        font-size: 14px;
       }
     }
 
-    .free-plugin {
-      background: linear-gradient(135deg, rgba(0, 214, 143, 0.15) 0%, rgba(0, 214, 143, 0.08) 100%);
+    .free-plugin .free-icon {
       color: var(--color-success-default);
-      border: 1px solid rgba(0, 214, 143, 0.4);
-      box-shadow: 0 2px 6px rgba(0, 214, 143, 0.2);
-
-      .free-icon {
-        color: var(--color-success-default);
-      }
-
-      &:hover {
-        background: linear-gradient(135deg, rgba(0, 214, 143, 0.2) 0%, rgba(0, 214, 143, 0.1) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0, 214, 143, 0.3);
-      }
     }
 
-    .subscription-required {
-      background: linear-gradient(135deg, rgba(255, 170, 0, 0.15) 0%, rgba(255, 170, 0, 0.08) 100%);
+    .subscription-required .subscription-icon {
       color: var(--color-warning-default);
-      border: 1px solid rgba(255, 170, 0, 0.4);
-      box-shadow: 0 2px 6px rgba(255, 170, 0, 0.2);
-
-      .subscription-icon {
-        color: var(--color-warning-default);
-      }
-
-      &:hover {
-        background: linear-gradient(135deg, rgba(255, 170, 0, 0.2) 0%, rgba(255, 170, 0, 0.1) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(255, 170, 0, 0.3);
-      }
     }
 
     .toggle-wrapper {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background: var(--gauzy-card-2);
-      border-radius: calc(var(--border-radius) * 2);
-      border: 1px solid var(--border-basic-color-4);
-      transition: all 0.2s ease;
-
-      &:hover {
-        background: var(--gauzy-card-1);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      }
+      gap: 8px;
+      padding: 4px 8px;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-basic-color-2);
 
       .toggle-label {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 12px;
+        line-height: 16px;
+        font-weight: 500;
         color: var(--gauzy-text-color-1);
         white-space: nowrap;
       }
@@ -881,7 +706,7 @@
         align-items: stretch;
         gap: 8px;
         padding-top: 12px;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid var(--border-basic-color-2);
         margin-top: 12px;
 
         .action-buttons {
@@ -904,7 +729,7 @@
 
     &.grid-view {
       .plugin-name {
-        font-size: 16px;
+        font-size: 14px;
       }
 
       .plugin-meta {
