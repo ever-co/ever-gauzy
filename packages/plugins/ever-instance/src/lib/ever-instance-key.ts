@@ -19,8 +19,12 @@ import { isKnownDefaultSecret } from '@gauzy/contracts';
  * 1. `ENCRYPTION_KEY` (the variable Gauzy's encryption service reads), when it is set;
  * 2. `JWT_SECRET`, when it is set (any value, a published default included: the statistics key
  *    authorizes nothing but anonymous reports, and the settings page warns about it);
- * 3. a fixed value, when neither is set (development only: production refuses to start without
+ * 3. a fixed value from this public source, when neither is set (development, `DEMO=true` and
+ *    `ALLOW_INSECURE_JWT_SECRET=true`; any other production start refuses to run without
  *    `JWT_SECRET`); the settings page warns about it.
+ *
+ * A key stored under the fixed value is stored again under `JWT_SECRET` or `ENCRYPTION_KEY` once one
+ * of them is set, and one stored under `JWT_SECRET` again under `ENCRYPTION_KEY`.
  *
  * Gauzy's own encryption service is deliberately not used: when `ENCRYPTION_KEY` is unset it makes
  * a random key per process, so a key stored with it could not be read after a restart.
@@ -60,10 +64,17 @@ export function preferredKeySource(env: Env = process.env): KeyMaterialSource {
 	return 'n';
 }
 
-/** The settings page warning for the current environment, or `null` when `ENCRYPTION_KEY` is set. */
-export function keyWarning(env: Env = process.env): KeyWarning | null {
-	if (set(env['ENCRYPTION_KEY'])) return null;
-	if (!set(env['JWT_SECRET'])) return 'no_secret';
+/**
+ * The settings page warning, or `null` when the key is protected by `ENCRYPTION_KEY`.
+ *
+ * It describes how the key IS stored (`stored`, the source recorded with it), not how the next one
+ * would be: a key stored under the fixed value stays there until it is stored again, whatever the
+ * environment says now. Without a stored key it describes the environment.
+ */
+export function keyWarning(env: Env = process.env, stored?: KeyMaterialSource | null): KeyWarning | null {
+	const source = stored ?? preferredKeySource(env);
+	if (source === 'k') return null;
+	if (source === 'n') return 'no_secret';
 	return isKnownDefaultSecret(env['JWT_SECRET']) ? 'jwt_secret_default' : 'encryption_key_unset';
 }
 

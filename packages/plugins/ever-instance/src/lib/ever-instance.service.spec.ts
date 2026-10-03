@@ -1,7 +1,7 @@
 import { createPublicKey, verify } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EverInstanceEvent, EverInstanceEvents } from './ever-instance.events';
-import { EverInstanceService } from './ever-instance.service';
+import { EverInstanceIdentityChangedError, EverInstanceService } from './ever-instance.service';
 import { EverInstanceKeyError, storedKeySource } from './ever-instance-key';
 import { dropTables, everInstanceMigration, openTestDataSource, q, TEST_TARGETS } from './fixtures/test-db';
 
@@ -88,6 +88,32 @@ describe.each(TEST_TARGETS)('EverInstanceService on $name', (target) => {
 		expect(signerAfter.sign(bytes).equals(signerBefore.sign(bytes))).toBe(true);
 		const rows = await dataSource.query(`SELECT ${q(target.name, 'statsPrivateKeyEncrypted')} AS wrapped_key FROM ${q(target.name, 'ever_instance')}`);
 		expect(storedKeySource(rows[0].wrapped_key)).toBe('k');
+	});
+
+	it('stores a key made without any secret again under JWT_SECRET once it is set, and warns from the stored source', async () => {
+		const before = await service({}).ensure();
+		expect(before.statsKeySource).toBe('n');
+		expect(service(ENV).keyWarning(before.statsKeySource)).toBe('no_secret');
+		const after = await service(ENV).ensure();
+		expect(after.statsKeySource).toBe('j');
+		expect(after.statsPublicKey).toBe(before.statsPublicKey);
+		expect(service(ENV).keyWarning(after.statsKeySource)).toBe('encryption_key_unset');
+		// Never back to a weaker secret.
+		expect((await service({}).ensure()).statsKeySource).toBe('j');
+	});
+
+	it('tells whether the stored key is readable, and refuses to sign for an identity that changed', async () => {
+		const identity = await service().ensure();
+		expect(await service().statsKeyReadable()).toBe(true);
+		expect(await service({ JWT_SECRET: 'rotated' }).statsKeyReadable()).toBe(false);
+		const signer = await service().statsSigner({ instanceId: identity.instanceId, statsKeyId: identity.statsKeyId });
+		await service().resetIdentity('user-1');
+		await expect(service().statsSigner({ instanceId: identity.instanceId, statsKeyId: identity.statsKeyId })).rejects.toBeInstanceOf(
+			EverInstanceIdentityChangedError
+		);
+		// A disposed signer no longer holds the key.
+		signer.dispose();
+		expect(() => signer.sign(Buffer.from('x'))).toThrow();
 	});
 
 	it('toggles the statistics, emits one event and writes one audit line with the actor', async () => {
