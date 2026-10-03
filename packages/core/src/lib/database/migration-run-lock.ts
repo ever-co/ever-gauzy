@@ -19,27 +19,59 @@ export function usesMigrationRunLock(options: { readonly type?: string }): boole
  * Runs `run` while holding the migration-run advisory lock, on the connection that holds it.
  *
  * Session-level rather than transaction-level: with `migrationsTransactionMode: 'each'` every migration
- * commits on its own, and the lock has to outlast all of them. It is released explicitly, and Postgres
- * releases it anyway when the session ends (a failed `initialize()` destroys the pool, and the pool
- * closes idle connections), so a crash mid-run cannot leave other processes waiting forever.
+ * commits on its own, and the lock has to outlast all of them. Postgres also releases it when the
+ * session ends, so a process that dies mid-run cannot leave the others waiting. If the explicit unlock
+ * fails, the session is discarded rather than returned to the pool, where it would keep the lock.
  */
 export async function withMigrationRunLock<T>(
 	dataSource: Pick<DataSource, 'createQueryRunner'>,
 	run: (queryRunner: QueryRunner) => Promise<T>
 ): Promise<T> {
 	const queryRunner = dataSource.createQueryRunner();
+	let lockMayBeHeld = false;
 	try {
 		await queryRunner.connect();
 		await queryRunner.query('SELECT pg_advisory_lock($1, $2)', [...MIGRATION_RUN_LOCK_KEYS]);
+		lockMayBeHeld = true;
 		try {
 			return await run(queryRunner);
 		} finally {
-			// Never let a failed unlock hide the run's own error: the session end releases the lock regardless.
-			await queryRunner
-				.query('SELECT pg_advisory_unlock($1, $2)', [...MIGRATION_RUN_LOCK_KEYS])
-				.catch(() => undefined);
+			// A failed unlock must not hide the run's own error; the session is discarded below instead.
+			lockMayBeHeld = !(await unlock(queryRunner));
 		}
 	} finally {
+		await (lockMayBeHeld ? discardSession(queryRunner) : queryRunner.release());
+	}
+}
+
+/** Releases the lock, after rolling back anything a failed migration left open; false if that failed. */
+async function unlock(queryRunner: QueryRunner): Promise<boolean> {
+	try {
+		if (queryRunner.isTransactionActive) {
+			await queryRunner.rollbackTransaction();
+		}
+		await queryRunner.query('SELECT pg_advisory_unlock($1, $2)', [...MIGRATION_RUN_LOCK_KEYS]);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Ends the session instead of pooling it. TypeORM's Postgres query runner releases with an error
+ * through `releasePostgresConnection`, which makes pg-pool destroy the client rather than reuse it;
+ * should that internal ever go away, this falls back to a plain release (the pool's idle timeout then
+ * ends the session).
+ */
+async function discardSession(queryRunner: QueryRunner): Promise<void> {
+	const releaseWithError = (queryRunner as unknown as { releasePostgresConnection?: (error: Error) => Promise<void> })
+		.releasePostgresConnection;
+	if (typeof releaseWithError === 'function') {
+		await releaseWithError.call(
+			queryRunner,
+			new Error('Discarding the session: the migration run lock may still be held.')
+		);
+	} else {
 		await queryRunner.release();
 	}
 }

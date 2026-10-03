@@ -109,20 +109,61 @@ describe('migration run lock', () => {
 			expect(log.slice(-2)).toEqual(['SELECT pg_advisory_unlock($1, $2)', 'release']);
 		});
 
-		it('keeps the run result when the unlock itself fails', async () => {
+		/** A query runner whose unlock fails, shaped like TypeORM's Postgres one. */
+		const failingUnlock = (withReleaseWithError = true) => {
 			const queryRunner = {
 				connect: jest.fn(async () => undefined),
 				release: jest.fn(async () => undefined),
 				query: jest.fn(async (sql: string) => {
-					if (sql.includes('unlock')) throw new Error('connection lost');
+					if (sql.includes('unlock')) throw new Error('unlock failed');
 					return [];
 				})
-			} as unknown as QueryRunner;
+			};
+			return withReleaseWithError
+				? { ...queryRunner, releasePostgresConnection: jest.fn(async (_error: Error) => undefined) }
+				: queryRunner;
+		};
+
+		it('keeps the run result when the unlock fails, and discards the session instead of pooling it', async () => {
+			const queryRunner = failingUnlock();
 
 			await expect(
-				withMigrationRunLock({ createQueryRunner: () => queryRunner }, async () => 'done')
+				withMigrationRunLock(
+					{ createQueryRunner: () => queryRunner as unknown as QueryRunner },
+					async () => 'done'
+				)
 			).resolves.toBe('done');
+
+			// Pooled, the session would keep the lock and make every other process wait.
+			expect(queryRunner.releasePostgresConnection).toHaveBeenCalledWith(expect.any(Error));
+			expect(queryRunner.release).not.toHaveBeenCalled();
+		});
+
+		it('falls back to a plain release when the query runner cannot be discarded', async () => {
+			const queryRunner = failingUnlock(false);
+
+			await withMigrationRunLock(
+				{ createQueryRunner: () => queryRunner as unknown as QueryRunner },
+				async () => 'done'
+			);
+
 			expect(queryRunner.release).toHaveBeenCalled();
+		});
+
+		it('rolls back a transaction a failed migration left open before unlocking', async () => {
+			const log: string[] = [];
+			const queryRunner = Object.assign(new FakePostgres().session(log), {
+				isTransactionActive: true,
+				rollbackTransaction: async () => void log.push('rollback')
+			});
+
+			await expect(
+				withMigrationRunLock({ createQueryRunner: () => queryRunner }, async () => {
+					throw new Error('migration failed');
+				})
+			).rejects.toThrow('migration failed');
+
+			expect(log.slice(-3)).toEqual(['rollback', 'SELECT pg_advisory_unlock($1, $2)', 'release']);
 		});
 
 		it('records each migration once when two processes boot against one database at the same time', async () => {
