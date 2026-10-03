@@ -174,14 +174,19 @@
   }
 
   // A small label in the corner of the well instead of a grey sheet over the
-  // logo.
+  // logo. It may wrap, and is held inside the well's padding: the well clips its
+  // overflow, and a longer translation (Polish: "Niedługo będzie dostępne") would
+  // otherwise run off the edge of a narrow card and be cut.
   .coming-soon-overlay {
     position: absolute;
     top: 6px;
     right: 6px;
+    left: 6px;
     display: flex;
+    justify-content: flex-end;
 
     span {
+      max-width: 100%;
       font-size: 10px;
       font-weight: 600;
       line-height: 14px;
@@ -189,7 +194,9 @@
       border-radius: calc(var(--border-radius) * 0.5);
       background: var(--color-basic-800);
       color: var(--color-basic-100);
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: right;
     }
   }
 }

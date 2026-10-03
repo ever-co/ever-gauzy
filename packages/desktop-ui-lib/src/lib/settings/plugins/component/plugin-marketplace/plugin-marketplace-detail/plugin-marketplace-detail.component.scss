@@ -252,8 +252,9 @@
 
 // `nb-badge` renders only its `text` input and never projects the icon placed
 // inside it, so these badges have no visible content: what used to show was an
-// empty filled pill. Draw them as a small status dot instead; the tooltip still
-// names the state.
+// empty filled pill. Draw them as a small status dot instead. The template gives
+// each dot `role="img"` and its translated state as `aria-label`, so screen
+// readers announce it; the tooltip still names it on hover.
 .security-badges {
   display: flex;
   align-items: center;
