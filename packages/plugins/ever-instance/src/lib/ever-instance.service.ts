@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { createPrivateKey, randomUUID, sign as edSign } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EVER_INSTANCE_ROW_ID, EVER_INSTANCE_TABLE as TABLE } from './ever-instance.constants';
 import {
+	connectKeyMaterialProblem,
+	ConnectKeyMaterialProblem,
 	EverInstanceKeyError,
 	generateEd25519KeyPair,
 	keyIdOf,
@@ -51,6 +53,36 @@ export interface EverStatsSigner {
 export interface ExpectedStatsIdentity {
 	instanceId: string;
 	statsKeyId: string;
+}
+
+/** The Ever Platform connect key as other modules see it: its public part only. */
+export interface EverConnectKeyRecord {
+	/** Base64url, 43 characters (`public_jwk.x`). */
+	publicKey: string;
+	/** Base64url of the first 8 bytes of SHA-256 over the public key, 11 characters. */
+	keyId: string;
+}
+
+/**
+ * Signs with the Ever Platform connect key (the shape the Ever Platform SDK's client takes). The
+ * private key itself is never exposed; JSON and inspection show the key id only.
+ */
+export interface EverConnectSigner {
+	readonly kid: string;
+	/** The raw 32-byte public key. */
+	readonly publicKeyRaw: Uint8Array;
+	sign(bytes: Uint8Array): Promise<Uint8Array>;
+}
+
+/**
+ * The connect key cannot be stored safely with the secrets of this process: neither
+ * `ENCRYPTION_KEY` nor a `JWT_SECRET` other than a published default is set.
+ */
+export class EverConnectKeyMaterialError extends Error {
+	constructor(readonly code: ConnectKeyMaterialProblem) {
+		super('Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) before connecting this installation to Ever Platform.');
+		this.name = 'EverConnectKeyMaterialError';
+	}
 }
 
 /** The identity changed (a reset by another request or process) between two reads. */
@@ -184,6 +216,103 @@ export class EverInstanceService {
 		}
 	}
 
+	/** The public part of the Ever Platform connect key, or `null` before one was made. */
+	async connectKey(): Promise<EverConnectKeyRecord | null> {
+		const row = await this.readRow();
+		if (!row?.['connectPublicKey'] || !row['connectPrivateKeyEncrypted']) {
+			return null;
+		}
+		return { publicKey: String(row['connectPublicKey']), keyId: String(row['connectKeyId']) };
+	}
+
+	/**
+	 * The Ever Platform connect key, made on first use: a second Ed25519 key pair, separate from the
+	 * statistics key, so resetting the statistics identity never touches the connection and the
+	 * connection never signs a statistics report. Refuses ({@link EverConnectKeyMaterialError})
+	 * unless `ENCRYPTION_KEY` or a `JWT_SECRET` other than a published default is set. Safe when
+	 * several processes call it at once: only the first write is kept (compare and set on an empty key).
+	 */
+	async ensureConnectKey(): Promise<EverConnectKeyRecord> {
+		const problem = connectKeyMaterialProblem(this.env);
+		if (problem) {
+			throw new EverConnectKeyMaterialError(problem);
+		}
+		await this.ensure();
+		const existing = await this.connectKey();
+		if (existing) {
+			return existing;
+		}
+		const { publicKey, privateKeyDer } = generateEd25519KeyPair();
+		const wrapped = wrapKey(privateKeyDer, 'connect', this.env);
+		privateKeyDer.fill(0);
+		const d = this.dialect;
+		await runSql(
+			this.dataSource,
+			`UPDATE ${quote(d, TABLE)} SET ${this.col('connectPublicKey')} = ${ph(d, 1)}, ${this.col('connectPrivateKeyEncrypted')} = ${ph(d, 2)}, ${this.col('connectKeyId')} = ${ph(d, 3)}, ${this.col('updatedAt')} = ${ph(d, 4)} ` +
+				`WHERE ${this.col('id')} = ${ph(d, 5)} AND ${this.col('connectPublicKey')} IS NULL`,
+			[publicKey, wrapped, keyIdOf(publicKey), Date.now(), EVER_INSTANCE_ROW_ID]
+		);
+		const stored = await this.connectKey();
+		if (!stored) {
+			throw new Error('The connect key of this installation could not be stored.');
+		}
+		return stored;
+	}
+
+	/**
+	 * A signer over the connect key, or `null` when there is none. Throws
+	 * {@link EverInstanceKeyError} when the stored key cannot be read with the secrets of this
+	 * process (it fails closed: nothing can be signed).
+	 */
+	async connectSigner(): Promise<EverConnectSigner | null> {
+		const row = await this.readRow();
+		if (!row?.['connectPrivateKeyEncrypted'] || !row['connectPublicKey']) {
+			return null;
+		}
+		const der = unwrapKey(String(row['connectPrivateKeyEncrypted']), 'connect', this.env);
+		const privateKey = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+		der.fill(0);
+		const kid = String(row['connectKeyId']);
+		const signer: EverConnectSigner = {
+			kid,
+			publicKeyRaw: new Uint8Array(Buffer.from(String(row['connectPublicKey']), 'base64url')),
+			sign: async (bytes: Uint8Array) => new Uint8Array(edSign(null, bytes, privateKey))
+		};
+		// Neither JSON nor inspection shows more than the key id.
+		Object.defineProperty(signer, 'toJSON', { value: () => ({ kid }), enumerable: false });
+		Object.defineProperty(signer, 'toString', { value: () => `EverConnectSigner(${kid})`, enumerable: false });
+		return signer;
+	}
+
+	/**
+	 * Forgets the connect key. Ever Platform never accepts a revoked key again, so after a revocation
+	 * the next connect makes a new one. The statistics key is not touched.
+	 */
+	async dropConnectKey(): Promise<void> {
+		const d = this.dialect;
+		await runSql(
+			this.dataSource,
+			`UPDATE ${quote(d, TABLE)} SET ${this.col('connectPublicKey')} = NULL, ${this.col('connectPrivateKeyEncrypted')} = NULL, ${this.col('connectKeyId')} = NULL, ${this.col('updatedAt')} = ${ph(d, 1)} WHERE ${this.col('id')} = ${ph(d, 2)}`,
+			[Date.now(), EVER_INSTANCE_ROW_ID]
+		);
+	}
+
+	/** Ever Platform's key manifest as last fetched (it is verified again whenever it is read), and when. */
+	async jwksCache(): Promise<{ json: string | null; fetchedAt: number | null }> {
+		const row = await this.readRow();
+		return { json: row?.['jwksCache'] ? String(row['jwksCache']) : null, fetchedAt: toNumber(row?.['jwksFetchedAt']) };
+	}
+
+	/** Stores Ever Platform's key manifest (`null` forgets it). */
+	async setJwksCache(json: string | null): Promise<void> {
+		const d = this.dialect;
+		await runSql(
+			this.dataSource,
+			`UPDATE ${quote(d, TABLE)} SET ${this.col('jwksCache')} = ${ph(d, 1)}, ${this.col('jwksFetchedAt')} = ${ph(d, 2)}, ${this.col('updatedAt')} = ${ph(d, 3)} WHERE ${this.col('id')} = ${ph(d, 4)}`,
+			[json, json === null ? null : Date.now(), Date.now(), EVER_INSTANCE_ROW_ID]
+		);
+	}
+
 	/**
 	 * The warning the settings page shows while the stored key is not protected by `ENCRYPTION_KEY`,
 	 * built from how it is stored (`stored`, see {@link EverInstanceRecord.statsKeySource}).
@@ -282,7 +411,14 @@ export class EverInstanceService {
 	 * `ENCRYPTION_KEY`), only when the old secret still reads it.
 	 */
 	private async protectWithPreferredSource(row: Record<string, unknown>): Promise<void> {
-		const blob = String(row['statsPrivateKeyEncrypted'] ?? '');
+		await this.protectAgain(row, 'statsPrivateKeyEncrypted', 'stats');
+		if (row['connectPrivateKeyEncrypted']) {
+			await this.protectAgain(row, 'connectPrivateKeyEncrypted', 'connect');
+		}
+	}
+
+	private async protectAgain(row: Record<string, unknown>, column: string, purpose: 'stats' | 'connect'): Promise<void> {
+		const blob = String(row[column] ?? '');
 		const current = storedKeySource(blob);
 		const preferred = preferredKeySource(this.env);
 		if (!current || SOURCE_RANK[preferred] <= SOURCE_RANK[current]) {
@@ -290,22 +426,24 @@ export class EverInstanceService {
 		}
 		let plain: Buffer;
 		try {
-			plain = unwrapKey(blob, 'stats', this.env);
+			plain = unwrapKey(blob, purpose, this.env);
 		} catch (error) {
 			if (error instanceof EverInstanceKeyError) {
 				return;
 			}
 			throw error;
 		}
-		const rewrapped = wrapKey(plain, 'stats', this.env);
+		const rewrapped = wrapKey(plain, purpose, this.env);
 		plain.fill(0);
 		const d = this.dialect;
 		await runSql(
 			this.dataSource,
-			`UPDATE ${quote(d, TABLE)} SET ${this.col('statsPrivateKeyEncrypted')} = ${ph(d, 1)}, ${this.col('updatedAt')} = ${ph(d, 2)} WHERE ${this.col('id')} = ${ph(d, 3)} AND ${this.col('statsPrivateKeyEncrypted')} = ${ph(d, 4)}`,
+			`UPDATE ${quote(d, TABLE)} SET ${this.col(column)} = ${ph(d, 1)}, ${this.col('updatedAt')} = ${ph(d, 2)} WHERE ${this.col('id')} = ${ph(d, 3)} AND ${this.col(column)} = ${ph(d, 4)}`,
 			[rewrapped, Date.now(), EVER_INSTANCE_ROW_ID, blob]
 		);
-		this.logger.log(`The statistics key of this installation is now protected by ${preferred === 'k' ? 'ENCRYPTION_KEY' : 'JWT_SECRET'}.`);
+		this.logger.log(
+			`The ${purpose === 'stats' ? 'statistics' : 'Ever Platform connect'} key of this installation is now protected by ${preferred === 'k' ? 'ENCRYPTION_KEY' : 'JWT_SECRET'}.`
+		);
 	}
 
 	private async readRow(): Promise<Record<string, unknown> | null> {

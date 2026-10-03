@@ -10,6 +10,8 @@ import { join } from 'node:path';
 const ALLOWED = [
 	/^packages\/plugins\/ever-stats(-ui)?\//,
 	/^packages\/plugins\/ever-instance\//,
+	// The Ever Platform connection, which has its own address setting (`EVER_PLATFORM_API_URL`).
+	/^packages\/plugins\/ever-connect(-ui)?\//,
 	/^tools\/egress-audit\//,
 	/^\.env\.sample$/,
 	/(^|\/)README\.md$/,

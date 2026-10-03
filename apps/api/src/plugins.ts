@@ -20,6 +20,7 @@ import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cp
 import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-connect';
 import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
@@ -69,6 +70,11 @@ export const plugins = [
 	// record). On unless EVER_STATS_ENABLED=false; when off it is not loaded at all (no route, no timer,
 	// no outbound request). Any other value keeps it on and is logged once.
 	...(isEverStatsEnabled(process.env, (message) => console.warn(message)) ? [EverStatsPlugin] : []),
+
+	// Ever Platform connection (connect code, organization links, consented integrations). Off unless
+	// EVER_CONNECT_ENABLED=true; when off it is not loaded at all (no route, no timer, no outbound
+	// request). Any other value keeps it off and is logged once.
+	...(isEverConnectEnabled(process.env, (message) => console.warn(message)) ? [EverConnectPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({
