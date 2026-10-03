@@ -18,6 +18,20 @@ describe('LastPayloadViewerComponent', () => {
 		expect(el.querySelector('[data-test="sent-at"]')).not.toBeNull();
 	});
 
+	it('shows the exact stored bytes, unchanged, on request', () => {
+		TestBed.configureTestingModule({ imports: [LastPayloadViewerComponent] });
+		const fixture = TestBed.createComponent(LastPayloadViewerComponent);
+		Object.assign(fixture.componentInstance, { payload: '{"a":{"b":1}}', bytes: 13 });
+		fixture.detectChanges();
+		const el = fixture.nativeElement as HTMLElement;
+		(el.querySelector('[data-test="raw-toggle"]') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		expect(el.querySelector('[data-test="payload"]')?.textContent).toBe('{"a":{"b":1}}');
+		(el.querySelector('[data-test="raw-toggle"]') as HTMLButtonElement).click();
+		fixture.detectChanges();
+		expect(el.querySelector('[data-test="payload"]')?.textContent).toContain('"b": 1');
+	});
+
 	it('shows text that is not JSON as it is', () => {
 		const el = render({ payload: 'not json', bytes: 8 });
 		expect(el.querySelector('[data-test="payload"]')?.textContent).toBe('not json');
