@@ -1,5 +1,6 @@
 import '../../../core/entities/internal';
 
+import { Logger } from '@nestjs/common';
 import { ExpenseUpdateCommand } from '../expense.update.command';
 import { ExpenseUpdateHandler } from './expense.update.handler';
 
@@ -8,16 +9,16 @@ import { ExpenseUpdateHandler } from './expense.update.handler';
  * partial carries none. The employee's average must still be refreshed, from the stored expense.
  */
 describe('ExpenseUpdateHandler', () => {
-	it("refreshes the stored expense's employee average when the request has no employeeId", async () => {
+	const saved = { id: 'x-1', amount: 250 };
+
+	const setup = (statistics: () => Promise<unknown>) => {
 		const expenseService = {
 			findOneByIdString: jest.fn().mockResolvedValue({ id: 'x-1', employeeId: 'e-1' }),
-			create: jest.fn().mockResolvedValue({ id: 'x-1', amount: 250 }),
+			create: jest.fn().mockResolvedValue(saved),
 			countStatistic: jest.fn().mockReturnValue(125)
 		};
 		const employeeService = { create: jest.fn() };
-		const employeeStatisticsService = {
-			getStatisticsByEmployeeId: jest.fn().mockResolvedValue({ expenseStatistics: [] })
-		};
+		const employeeStatisticsService = { getStatisticsByEmployeeId: jest.fn(statistics) };
 		const handler = new ExpenseUpdateHandler(
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			expenseService as any,
@@ -26,11 +27,30 @@ describe('ExpenseUpdateHandler', () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			employeeStatisticsService as any
 		);
-
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		await handler.execute(new ExpenseUpdateCommand('x-1', { amount: 250 } as any));
+		const execute = () => handler.execute(new ExpenseUpdateCommand('x-1', { amount: 250 } as any));
+		return { execute, employeeService, employeeStatisticsService };
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it("refreshes the stored expense's employee average without an employeeId in the request", async () => {
+		const statistics = { expenseStatistics: [] };
+		const { execute, employeeService, employeeStatisticsService } = setup(() => Promise.resolve(statistics));
+
+		await expect(execute()).resolves.toBe(saved);
 
 		expect(employeeStatisticsService.getStatisticsByEmployeeId).toHaveBeenCalledWith('e-1');
 		expect(employeeService.create).toHaveBeenCalledWith({ id: 'e-1', averageExpenses: 125 });
+	});
+
+	it('reports the saved update as successful when the refresh fails', async () => {
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		const { execute, employeeService } = setup(() => Promise.reject(new Error('Employee not found')));
+
+		await expect(execute()).resolves.toBe(saved);
+
+		expect(employeeService.create).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('e-1'));
 	});
 });

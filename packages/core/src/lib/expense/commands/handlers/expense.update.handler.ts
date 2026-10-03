@@ -1,7 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isNotEmpty } from '@gauzy/utils';
-import { IExpense } from '@gauzy/contracts';
+import { ID, IExpense } from '@gauzy/contracts';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { EmployeeStatisticsService } from '../../../employee-statistics';
@@ -9,6 +9,8 @@ import { ExpenseUpdateCommand } from '../expense.update.command';
 
 @CommandHandler(ExpenseUpdateCommand)
 export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateCommand> {
+	private readonly logger = new Logger(ExpenseUpdateHandler.name);
+
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
@@ -25,18 +27,28 @@ export class ExpenseUpdateHandler implements ICommandHandler<ExpenseUpdateComman
 			// take the employee from the stored expense to refresh that employee's average.
 			const employeeId = expense.employeeId ?? existing.employeeId;
 
-			let averageExpense = 0;
 			if (isNotEmpty(employeeId)) {
-				const statistic = await this.employeeStatisticsService.getStatisticsByEmployeeId(employeeId);
-				averageExpense = this.expenseService.countStatistic(statistic.expenseStatistics);
-				await this.employeeService.create({
-					id: employeeId,
-					averageExpenses: averageExpense
-				});
+				await this.refreshAverageExpenses(employeeId);
 			}
 			return expense;
 		} catch (error) {
 			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * The expense is already saved at this point: a failed refresh (e.g. the expense still points to a
+	 * soft-deleted employee) is logged instead of reporting the saved update as failed.
+	 */
+	private async refreshAverageExpenses(employeeId: ID): Promise<void> {
+		try {
+			const statistic = await this.employeeStatisticsService.getStatisticsByEmployeeId(employeeId);
+			await this.employeeService.create({
+				id: employeeId,
+				averageExpenses: this.expenseService.countStatistic(statistic.expenseStatistics)
+			});
+		} catch (error) {
+			this.logger.warn(`Average expenses of employee ${employeeId} not refreshed: ${error?.message ?? error}`);
 		}
 	}
 }
