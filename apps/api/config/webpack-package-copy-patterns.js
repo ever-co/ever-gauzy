@@ -45,6 +45,7 @@ const SKIP_PACKAGES = new Set([
 	'integration-activepieces-ui',
 	'plugin-integration-ever-async-ui',
 	'plugin-auth-zitadel-ui',
+	'plugin-ever-stats-ui',
 	'docs-ui',
 	'dashboard-time-track-angular-ui',
 	'dashboard-time-track-react-ui'

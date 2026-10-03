@@ -1,0 +1,55 @@
+{
+	"name": "plugin-ever-stats",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/ever-stats/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"currentVersionResolver": "git-tag",
+			"preserveLocalDependencyProtocols": false,
+			"manifestRootsToUpdate": ["dist/{projectRoot}"]
+		}
+	},
+	"tags": ["type:plugin"],
+	"implicitDependencies": ["common", "config", "contracts", "core", "plugin", "plugin-ever-instance"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/ever-stats",
+				"tsConfig": "packages/plugins/ever-stats/tsconfig.lib.json",
+				"packageJson": "packages/plugins/ever-stats/package.json",
+				"main": "packages/plugins/ever-stats/src/index.ts",
+				"assets": ["packages/plugins/ever-stats/*.md", "packages/plugins/ever-stats/ever-connect.routes.json"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/ever-stats/jest.config.ts"
+			}
+		},
+		"test-integration": {
+			"executor": "nx:run-commands",
+			"cache": false,
+			"options": {
+				"commands": [
+					"node node_modules/jest/bin/jest.js -c packages/plugins/ever-stats/jest.config.ts --runInBand --testPathPatterns db.spec",
+					"node node_modules/jest/bin/jest.js -c packages/plugins/ever-instance/jest.config.ts --runInBand --testPathPatterns service.spec"
+				],
+				"parallel": false
+			}
+		}
+	}
+}
