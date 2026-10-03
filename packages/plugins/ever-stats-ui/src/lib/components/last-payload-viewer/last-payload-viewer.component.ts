@@ -4,7 +4,8 @@ import { TranslateModule } from '@ngx-translate/core';
 
 /**
  * Shows a report: pretty-printed for reading, with the size and, for a sent report, when it was sent
- * and the HTTP status. The text shown is parsed from the exact stored bytes; the byte count is theirs.
+ * and the HTTP status. The formatted text is parsed from the exact stored bytes; the byte count is
+ * theirs, and *Show the exact bytes* shows them unchanged (to copy them and check the signature).
  */
 @Component({
 	selector: 'ngx-ever-stats-payload-viewer',
@@ -23,7 +24,10 @@ import { TranslateModule } from '@ngx-translate/core';
 				<dd data-test="http-status">{{ httpStatus }}</dd>
 			}
 		</dl>
-		<pre data-test="payload">{{ pretty }}</pre>
+		<pre data-test="payload">{{ raw ? payload : pretty }}</pre>
+		<button type="button" class="toggle" data-test="raw-toggle" (click)="raw = !raw">
+			{{ (raw ? 'EVER_STATS.SHOW_FORMATTED' : 'EVER_STATS.SHOW_RAW') | translate }}
+		</button>
 	`,
 	styles: [
 		`
@@ -42,6 +46,14 @@ import { TranslateModule } from '@ngx-translate/core';
 				font-size: 12px;
 				white-space: pre;
 			}
+			.toggle {
+				background: none;
+				border: none;
+				padding: 0;
+				cursor: pointer;
+				text-decoration: underline;
+				color: inherit;
+			}
 		`
 	]
 })
@@ -50,6 +62,8 @@ export class LastPayloadViewerComponent {
 	@Input() bytes = 0;
 	@Input() sentAt: string | null = null;
 	@Input() httpStatus: number | null = null;
+	/** Whether the stored bytes are shown unchanged instead of formatted. */
+	raw = false;
 
 	get pretty(): string {
 		try {

@@ -1,15 +1,28 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { EverInstanceKeyError, EverInstanceRecord, EverInstanceService } from '@gauzy/plugin-ever-instance';
-import { STATS_LEASE_MS, STATS_REPORTS_KEPT, STATS_RETRY_DELAYS_S, MODULE_VERSION } from './ever-stats.constants';
+import {
+	EverInstanceIdentityChangedError,
+	EverInstanceKeyError,
+	EverInstanceRecord,
+	EverInstanceService,
+	EverStatsSigner
+} from '@gauzy/plugin-ever-instance';
+import { STATS_LEASE_MS, STATS_REFUSAL_PARK_MS, STATS_REPORTS_KEPT, STATS_RETRY_DELAYS_S, MODULE_VERSION } from './ever-stats.constants';
 import type { EverStatsConfig } from './ever-stats-config';
+import { isEverStatsEnabled } from './ever-stats-enabled';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';
-import { EverStatsCollector, statsPeriod, StatsPeriod } from './ever-stats-collector.service';
+import { EverStatsCollector, StatsCollectionTimeout, statsPeriod, StatsPeriod } from './ever-stats-collector.service';
 import { EverStatsSender, StatsSendOutcome } from './ever-stats-sender.service';
 import { EverStatsStore, StatsReportStatus, StoredStatsReport } from './ever-stats.store';
 
 /** Injection token: the settings read at boot. */
 export const EVER_STATS_CONFIG = 'EVER_STATS_CONFIG';
+
+/**
+ * Injection token: the environment the module re-reads at run time (default `process.env`), so
+ * `EVER_STATS_ENABLED=false` switches it off even when it was loaded before that value was read.
+ */
+export const EVER_STATS_ENV = 'EVER_STATS_ENV';
 
 /** Injection token: the clock and the random source (tests pass their own). */
 export const EVER_STATS_CLOCK = 'EVER_STATS_CLOCK';
@@ -24,7 +37,17 @@ const SYSTEM_CLOCK: StatsClock = { now: () => Date.now(), random: () => Math.ran
 export const EVER_STATS_RELEASE = 'EVER_STATS_RELEASE';
 
 /** Why a slot sent nothing. */
-export type SlotSkip = 'ui' | 'lease' | 'already_sent' | 'retry_pending' | 'blocked' | 'key_unreadable' | 'collection_failed';
+export type SlotSkip =
+	| 'env'
+	| 'config'
+	| 'ui'
+	| 'lease'
+	| 'already_sent'
+	| 'retry_pending'
+	| 'blocked'
+	| 'key_unreadable'
+	| 'identity_changed'
+	| 'collection_failed';
 
 /** What one slot did. */
 export interface SlotResult {
@@ -45,9 +68,11 @@ const OVERDUE_DELAY_MS = 10 * 60 * 1000;
  * - Nothing is sent while the operator switched the statistics off (`statsEnabledUi`).
  * - Several API processes on one database: a compare-and-set lease lets one send; the others skip the
  *   day once it is sent.
- * - Failed sends (429, 5xx, no answer) are retried at +1 h, +4 h, +12 h, then the next day. A report
- *   Ever Platform refused (422 and alike, or 409 `key_mismatch`) is not sent again until the module
- *   version or the identity changes.
+ * - Failed sends (429, 5xx, no answer) are retried at +1 h, +4 h, +12 h, then the next day. After a
+ *   report Ever Platform refused (422, or 409 `key_mismatch`) nothing is sent until the module
+ *   version, the Gauzy release or the identity changes; after 400, 413 or 415, also at most 7 days.
+ * - Nothing is sent, and no lease, key or count is read, while `EVER_STATS_ENABLED=false` (re-read at
+ *   run time) or while `EVER_STATS_API_URL` is set to an address that cannot be used.
  *
  * `EVER_STATS_SEND_INTERVAL_S` shortens the day for tests; every delay above scales with it.
  */
@@ -55,6 +80,7 @@ const OVERDUE_DELAY_MS = 10 * 60 * 1000;
 export class EverStatsScheduler implements OnModuleDestroy {
 	private readonly logger = new Logger('EverStats');
 	private readonly clock: StatsClock;
+	private readonly env: Record<string, string | undefined>;
 	private readonly holder = randomUUID();
 	private timer: NodeJS.Timeout | null = null;
 	private nextAt: number | null = null;
@@ -70,9 +96,11 @@ export class EverStatsScheduler implements OnModuleDestroy {
 		private readonly builder: EverStatsBuilder,
 		private readonly sender: EverStatsSender,
 		@Optional() @Inject(EVER_STATS_CLOCK) clock?: StatsClock,
-		@Optional() @Inject(EVER_STATS_RELEASE) private readonly releaseRaw?: string
+		@Optional() @Inject(EVER_STATS_RELEASE) private readonly releaseRaw?: string,
+		@Optional() @Inject(EVER_STATS_ENV) env?: Record<string, string | undefined>
 	) {
 		this.clock = clock ?? SYSTEM_CLOCK;
+		this.env = env ?? process.env;
 	}
 
 	private get intervalMs(): number {
@@ -193,6 +221,13 @@ export class EverStatsScheduler implements OnModuleDestroy {
 	}
 
 	private async slot(trigger: 'schedule' | 'send_now'): Promise<SlotResult> {
+		if (!isEverStatsEnabled(this.env)) {
+			return { skipped: 'env', reports: [] };
+		}
+		if (!this.config.apiUrl) {
+			return { skipped: 'config', reports: [] };
+		}
+		const apiUrl = this.config.apiUrl;
 		const identity = await this.instance.ensure();
 		if (!identity.statsEnabledUi) {
 			return { skipped: 'ui', reports: [] };
@@ -201,6 +236,7 @@ export class EverStatsScheduler implements OnModuleDestroy {
 		if (!(await this.store.acquireLease(this.holder, now, STATS_LEASE_MS))) {
 			return { skipped: 'lease', reports: [] };
 		}
+		let signer: EverStatsSigner | null = null;
 		try {
 			const lease = await this.store.readLease();
 			const recent = await this.store.latest(STATS_REPORTS_KEPT);
@@ -212,16 +248,20 @@ export class EverStatsScheduler implements OnModuleDestroy {
 			if (trigger === 'schedule' && !retrying && now < this.retryPendingUntil(recent)) {
 				return { skipped: 'retry_pending', reports: [] };
 			}
-			if (this.blocked(recent, identity.instanceId)) {
+			const release = parseReleaseVersion(this.releaseRaw ?? process.env['GAUZY_APP_VERSION']);
+			if (this.blocked(recent, identity.instanceId, release.version, now)) {
 				return { skipped: 'blocked', reports: [] };
 			}
-			let signer;
 			try {
-				signer = await this.instance.statsSigner();
+				// Only the key of the identity the report is built for: a reset in between is refused.
+				signer = await this.instance.statsSigner({ instanceId: identity.instanceId, statsKeyId: identity.statsKeyId });
 			} catch (error) {
 				if (error instanceof EverInstanceKeyError) {
 					this.logger.warn('The statistics key of this installation cannot be read with the current secrets; nothing is sent. Reset the instance identity in Settings to make a new one.');
 					return { skipped: 'key_unreadable', reports: [] };
+				}
+				if (error instanceof EverInstanceIdentityChangedError) {
+					return { skipped: 'identity_changed', reports: [] };
 				}
 				throw error;
 			}
@@ -232,14 +272,19 @@ export class EverStatsScheduler implements OnModuleDestroy {
 				due.push({ period: previous, final: true });
 			}
 			due.push({ period: statsPeriod(at), final: false });
-			const release = parseReleaseVersion(this.releaseRaw ?? process.env['GAUZY_APP_VERSION']);
 			const result: SlotResult = { reports: [] };
 			for (const { period, final } of due) {
 				let collected;
 				try {
-					collected = await this.collector.collect(period);
+					collected = await this.collector.collect(period, at);
 				} catch (error) {
-					this.logger.warn(`The anonymous usage statistics could not be collected (${(error as Error)?.message === 'collection_timeout' ? 'timeout' : 'database error'}); no report in this slot.`);
+					const timedOut = error instanceof StatsCollectionTimeout;
+					this.logger.warn(`The anonymous usage statistics could not be collected (${timedOut ? 'timeout' : 'database error'}); no report in this slot.`);
+					if (timedOut) {
+						// Keep the lease while the abandoned queries still run (at most until it expires), so
+						// no other process starts the same scan alongside them.
+						await this.settleWithinLease(error.pending, now);
+					}
 					return { skipped: 'collection_failed', reports: result.reports };
 				}
 				const built = this.builder.build({ identity, config: this.config, release, period, final, collected, now: at });
@@ -260,7 +305,14 @@ export class EverStatsScheduler implements OnModuleDestroy {
 					result.reports.push({ period: period.label, final, status: 'rejected', httpStatus: null, error: built.error });
 					continue;
 				}
-				const outcome = await this.sender.send(this.config.apiUrl, built.built.bytes, signer, release.version);
+				// The last moment both switches are read: switched off (in Settings or by
+				// EVER_STATS_ENABLED=false) while the report was being prepared, it is not sent.
+				const envOff = !isEverStatsEnabled(this.env);
+				if (envOff || !(await this.instance.get())?.statsEnabledUi) {
+					await this.store.updateReport(row.id, { status: 'rejected', lastError: 'switched_off' });
+					return { skipped: envOff ? 'env' : 'ui', reports: result.reports };
+				}
+				const outcome = await this.sender.send(apiUrl, built.built.bytes, signer, release.version);
 				const update = this.rowUpdate(outcome);
 				await this.store.updateReport(row.id, update);
 				if (outcome.kind === 'accepted') {
@@ -272,8 +324,27 @@ export class EverStatsScheduler implements OnModuleDestroy {
 			}
 			return result;
 		} finally {
+			signer?.dispose();
 			await this.store.releaseLease(this.holder, this.clock.now()).catch(() => undefined);
 			await this.store.prune(STATS_REPORTS_KEPT).catch(() => undefined);
+		}
+	}
+
+	/** Waits for `pending` to settle, but not past the end of the lease taken at `leasedAt`. */
+	private async settleWithinLease(pending: Promise<unknown>, leasedAt: number): Promise<void> {
+		const remaining = leasedAt + STATS_LEASE_MS - this.clock.now() - 1000;
+		if (remaining <= 0) {
+			return;
+		}
+		let timer: NodeJS.Timeout | undefined;
+		const leaseEnd = new Promise<void>((resolve) => {
+			timer = setTimeout(resolve, remaining);
+			timer.unref?.();
+		});
+		try {
+			await Promise.race([pending.then(() => undefined, () => undefined), leaseEnd]);
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 
@@ -309,14 +380,24 @@ export class EverStatsScheduler implements OnModuleDestroy {
 		return this.slotStart(last.sentAt) + this.intervalMs;
 	}
 
-	/** A report Ever Platform refused for good, for this module version and this identity. */
-	private blocked(recent: StoredStatsReport[], instanceId: string): boolean {
+	/**
+	 * Whether the last refusal of Ever Platform still holds: it was for this module version, this
+	 * Gauzy release (`version`) and this identity, and, unless it was a 422 or a 409, it is less than
+	 * 7 days old. Any of these changing lets the next report go out.
+	 */
+	private blocked(recent: StoredStatsReport[], instanceId: string, version: string, now: number): boolean {
 		const last = recent.find((r) => r.status === 'sent' || (r.status === 'rejected' && /^(dropped|reset_identity):/.test(r.lastError ?? '')));
 		if (!last || last.status === 'sent') {
 			return false;
 		}
 		const payload = this.parse(last.payload);
-		return payload?.['module_version'] === MODULE_VERSION && payload?.['instance_id'] === instanceId;
+		if (payload?.['module_version'] !== MODULE_VERSION || payload?.['instance_id'] !== instanceId || payload?.['version'] !== version) {
+			return false;
+		}
+		if (last.httpStatus === 422 || last.httpStatus === 409) {
+			return true;
+		}
+		return now - (last.sentAt ?? last.createdAt) < this.scaled(STATS_REFUSAL_PARK_MS);
 	}
 
 	/** Whether the closed report of `period` was accepted for this identity. */

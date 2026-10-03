@@ -103,4 +103,14 @@ describe('statistics key at rest', () => {
 		expect(keyWarning({ JWT_SECRET: 'secretKey' })).toBe('jwt_secret_default');
 		expect(keyWarning({})).toBe('no_secret');
 	});
+
+	it('warns from how the key IS stored, not from the environment alone', () => {
+		// A key stored under the fixed value stays unprotected even after JWT_SECRET appears.
+		expect(keyWarning(ENV_J, 'n')).toBe('no_secret');
+		expect(keyWarning(ENV_K, 'n')).toBe('no_secret');
+		expect(keyWarning(ENV_K, 'j')).toBe('encryption_key_unset');
+		expect(keyWarning({ JWT_SECRET: 'secretKey', ENCRYPTION_KEY: 'k' }, 'j')).toBe('jwt_secret_default');
+		expect(keyWarning({}, 'k')).toBeNull();
+		expect(keyWarning(ENV_J, null)).toBe('encryption_key_unset');
+	});
 });

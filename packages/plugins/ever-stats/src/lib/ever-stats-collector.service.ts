@@ -1,29 +1,21 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { boolLiteral, dialectOf, placeholder, quote, runSql, SqlDialect, toNumber } from '@gauzy/plugin-ever-instance';
 import { CURRENCY_CODE, MAX_SAFE_AMOUNT, toMinorUnits } from './currency-exponent';
 
-/** The instance-wide counters of Gauzy's `StatsService.getGlobalStats()` this plugin reads. */
-export interface GlobalStatsSource {
-	getGlobalStats(): Promise<{
-		tenants: number;
-		organizations: number;
-		employees: number;
-		teams: number;
-		tasks: number;
-		users: { count: number; lastMonthActiveUsers: number };
-	}>;
-}
-
-/** Injection token: Gauzy's `StatsService`. */
-export const STATS_GLOBAL_COUNTERS = 'EVER_STATS_GLOBAL_COUNTERS';
-
 /** Injection token: Gauzy's module switches (`FEATURE_*` → boolean). */
 export const STATS_FEATURE_FLAGS = 'EVER_STATS_FEATURE_FLAGS';
 
-/** Injection token: runs a function outside any request, so every count is instance-wide. */
-export const STATS_ISOLATED_RUN = 'EVER_STATS_ISOLATED_RUN';
-export type IsolatedRun = <T>(work: () => Promise<T>) => Promise<T>;
+/**
+ * The collection took longer than 120 s. `pending` settles when its queries end (a statement timeout
+ * stops them on Postgres), so the caller can hold off another scan until then.
+ */
+export class StatsCollectionTimeout extends Error {
+	constructor(readonly pending: Promise<unknown>) {
+		super('collection_timeout');
+		this.name = 'StatsCollectionTimeout';
+	}
+}
 
 /** A calendar month in UTC. */
 export interface StatsPeriod {
@@ -78,6 +70,16 @@ const MAX_COUNT = 1_000_000_000;
 const MAX_CURRENCIES = 20;
 /** The whole collection may take this long. */
 const COLLECTION_TIMEOUT_MS = 120_000;
+/** On Postgres, one statement of the collection may take this long. */
+const STATEMENT_TIMEOUT_MS = 30_000;
+
+/** Injection token (tests): the Postgres statement timeout of the collection, in milliseconds. */
+export const STATS_STATEMENT_TIMEOUT_MS = 'EVER_STATS_STATEMENT_TIMEOUT_MS';
+/** "Active" users signed in within this many days before the collection. */
+const ACTIVE_USER_DAYS = 30;
+
+/** Runs one read of the collection and returns its rows. */
+type Query = <T = Record<string, unknown>>(sql: string, parameters?: unknown[]) => Promise<T[]>;
 
 /** The calendar month (UTC) that contains `at`, or the one before it. */
 export function statsPeriod(at: Date, monthsBack = 0): StatsPeriod {
@@ -100,33 +102,72 @@ const count = (value: unknown): number => {
 /**
  * Builds the counts, module switches and monthly totals of a report.
  *
- * Every number is instance-wide (all tenants together, never one tenant's): the counters come from
- * Gauzy's `StatsService.getGlobalStats()` and a few `COUNT(*)` and `SUM()` queries, all run outside
- * any request. Amounts are per currency, in integer minor units, for one UTC month. Nothing that
- * names or identifies a person, a company or a record is read.
+ * Every number is instance-wide (all tenants together, never one tenant's): each is one `COUNT(*)`
+ * or `SUM()` over a whole table, read with the plugin's own SQL through the database connection, so
+ * no request context or tenant filter of Gauzy's services can narrow it, wherever the collection
+ * runs (the daily timer, or an operator's request for *What is sent* or *Send now*). Amounts are per
+ * currency, in integer minor units, for one UTC month. Nothing that names or identifies a person, a
+ * company or a record is read. On Postgres every statement runs under a 30 s statement timeout, in
+ * one transaction.
  */
 @Injectable()
 export class EverStatsCollector {
 	private readonly logger = new Logger('EverStats');
 
+	private readonly statementTimeoutMs: number;
+
 	constructor(
-		@Inject(STATS_GLOBAL_COUNTERS) private readonly globalStats: GlobalStatsSource,
 		private readonly dataSource: DataSource,
 		@Inject(STATS_FEATURE_FLAGS) private readonly featureFlags: Record<string, boolean>,
-		@Inject(STATS_ISOLATED_RUN) private readonly isolated: IsolatedRun
-	) {}
+		@Optional() @Inject(STATS_STATEMENT_TIMEOUT_MS) statementTimeoutMs?: number
+	) {
+		this.statementTimeoutMs = Number.isInteger(statementTimeoutMs) && (statementTimeoutMs as number) > 0 ? (statementTimeoutMs as number) : STATEMENT_TIMEOUT_MS;
+	}
 
-	/** Collects everything for `period`. Throws when the collection fails or takes over 120 s. */
-	async collect(period: StatsPeriod): Promise<CollectedStats> {
+	/**
+	 * Collects everything for `period`; "active" users are counted back from `now`. Throws when the
+	 * collection fails or takes over 120 s.
+	 */
+	async collect(period: StatsPeriod, now: Date = new Date()): Promise<CollectedStats> {
+		const work = this.withQuery((query) => this.collectNow(query, period, now));
 		let timer: NodeJS.Timeout | undefined;
 		const timeout = new Promise<never>((_, reject) => {
-			timer = setTimeout(() => reject(new Error('collection_timeout')), COLLECTION_TIMEOUT_MS);
+			timer = setTimeout(() => reject(new StatsCollectionTimeout(work)), COLLECTION_TIMEOUT_MS);
 			timer.unref?.();
 		});
 		try {
-			return await Promise.race([this.isolated(() => this.collectNow(period)), timeout]);
+			return await Promise.race([work, timeout]);
 		} finally {
 			clearTimeout(timer);
+		}
+	}
+
+	/**
+	 * Runs `work` with a query function. On Postgres: one connection, one transaction, and a statement
+	 * timeout, so a slow query on a large database is stopped by the database itself.
+	 */
+	private async withQuery<T>(work: (query: Query) => Promise<T>): Promise<T> {
+		if (dialectOf(this.dataSource) !== 'postgres') {
+			return work(async <R>(sql: string, parameters: unknown[] = []) => (await runSql<R>(this.dataSource, sql, parameters)).rows);
+		}
+		const runner = this.dataSource.createQueryRunner();
+		try {
+			await runner.connect();
+			await runner.startTransaction();
+			await runner.query(`SET LOCAL statement_timeout = ${this.statementTimeoutMs}`);
+			const result = await work(async <R>(sql: string, parameters: unknown[] = []) => {
+				const answer = await runner.query(sql, parameters, true);
+				return (Array.isArray(answer?.records) ? answer.records : []) as R[];
+			});
+			await runner.commitTransaction();
+			return result;
+		} catch (error) {
+			if (runner.isTransactionActive) {
+				await runner.rollbackTransaction().catch(() => undefined);
+			}
+			throw error;
+		} finally {
+			await runner.release();
 		}
 	}
 
@@ -142,32 +183,40 @@ export class EverStatsCollector {
 		return out;
 	}
 
-	private async collectNow(period: StatsPeriod): Promise<CollectedStats> {
+	private async collectNow(query: Query, period: StatsPeriod, now: Date): Promise<CollectedStats> {
 		const d = dialectOf(this.dataSource);
-		const global = await this.globalStats.getGlobalStats();
-		const [employeesActive, projects, contacts, integrations, invoices, payments, minutes] = await Promise.all([
-			this.countRows(d, 'employee', `${quote(d, 'isActive')} = ${boolLiteral(d, true)} AND (${quote(d, 'isArchived')} IS NULL OR ${quote(d, 'isArchived')} = ${boolLiteral(d, false)})`),
-			this.countRows(d, 'organization_project'),
-			this.countRows(d, 'organization_contact'),
-			this.integrationsInUse(d),
-			this.amounts(d, 'invoice', 'totalValue', 'invoiceDate', period, `(${quote(d, 'isEstimate')} IS NULL OR ${quote(d, 'isEstimate')} = ${boolLiteral(d, false)})`),
-			this.amounts(d, 'payment', 'amount', 'paymentDate', period),
-			this.trackedMinutes(d, period)
-		]);
+		const activeSince = new Date(now.getTime() - ACTIVE_USER_DAYS * 86_400_000);
+		const counts = {
+			tenants: await this.countRows(query, d, 'tenant'),
+			organizations: await this.countRows(query, d, 'organization'),
+			users: await this.countRows(query, d, 'user'),
+			users_active_30d: await this.countRows(query, d, 'user', `${quote(d, 'lastLoginAt')} > ${placeholder(d, 1)}`, [sqlTimestamp(activeSince)]),
+			employees: await this.countRows(query, d, 'employee'),
+			employees_active: await this.countRows(
+				query,
+				d,
+				'employee',
+				`${quote(d, 'isActive')} = ${boolLiteral(d, true)} AND (${quote(d, 'isArchived')} IS NULL OR ${quote(d, 'isArchived')} = ${boolLiteral(d, false)})`
+			),
+			teams: await this.countRows(query, d, 'organization_team'),
+			projects: await this.countRows(query, d, 'organization_project'),
+			tasks: await this.countRows(query, d, 'task'),
+			contacts: await this.countRows(query, d, 'organization_contact'),
+			integrations_in_use: await this.integrationsInUse(query, d)
+		};
+		const invoices = await this.amounts(
+			query,
+			d,
+			'invoice',
+			'totalValue',
+			'invoiceDate',
+			period,
+			`(${quote(d, 'isEstimate')} IS NULL OR ${quote(d, 'isEstimate')} = ${boolLiteral(d, false)})`
+		);
+		const payments = await this.amounts(query, d, 'payment', 'amount', 'paymentDate', period);
+		const minutes = await this.trackedMinutes(query, d, period);
 		return {
-			counts: {
-				tenants: count(global.tenants),
-				organizations: count(global.organizations),
-				users: count(global.users?.count),
-				users_active_30d: count(global.users?.lastMonthActiveUsers),
-				employees: count(global.employees),
-				employees_active: employeesActive,
-				teams: count(global.teams),
-				projects,
-				tasks: count(global.tasks),
-				contacts,
-				integrations_in_use: integrations
-			},
+			counts,
 			features: this.features(),
 			aggregates: {
 				invoiced_minor: this.currencyMap(invoices.byCurrency, false),
@@ -179,19 +228,20 @@ export class EverStatsCollector {
 		};
 	}
 
-	private async countRows(d: SqlDialect, table: string, where?: string): Promise<number> {
-		const { rows } = await runSql<{ n: unknown }>(
-			this.dataSource,
-			`SELECT COUNT(*) AS ${quote(d, 'n')} FROM ${quote(d, table)} WHERE ${quote(d, 'deletedAt')} IS NULL${where ? ` AND ${where}` : ''}`
+	/** The rows of `table` that are not deleted (and match `where`), all tenants together. */
+	private async countRows(query: Query, d: SqlDialect, table: string, where?: string, parameters: unknown[] = []): Promise<number> {
+		const condition = where ? ' AND ' + where : '';
+		const rows = await query<{ n: unknown }>(
+			`SELECT COUNT(*) AS ${quote(d, 'n')} FROM ${quote(d, table)} WHERE ${quote(d, 'deletedAt')} IS NULL${condition}`,
+			parameters
 		);
 		return count(rows[0]?.n);
 	}
 
 	/** Per integration, the number of tenants that have it active. */
-	private async integrationsInUse(d: SqlDialect): Promise<Record<string, number>> {
+	private async integrationsInUse(query: Query, d: SqlDialect): Promise<Record<string, number>> {
 		const q = (name: string) => quote(d, name);
-		const { rows } = await runSql<{ name: unknown; n: unknown }>(
-			this.dataSource,
+		const rows = await query<{ name: unknown; n: unknown }>(
 			`SELECT ${q('name')} AS ${q('name')}, COUNT(DISTINCT ${q('tenantId')}) AS ${q('n')} FROM ${q('integration_tenant')} ` +
 				`WHERE ${q('deletedAt')} IS NULL AND ${q('isActive')} = ${boolLiteral(d, true)} GROUP BY ${q('name')}`
 		);
@@ -205,6 +255,7 @@ export class EverStatsCollector {
 
 	/** The number of rows in the period, and their total per currency (raw decimals as the database returns them). */
 	private async amounts(
+		query: Query,
 		d: SqlDialect,
 		table: string,
 		amountColumn: string,
@@ -218,8 +269,7 @@ export class EverStatsCollector {
 		// as on Postgres and SQLite.
 		const currency = d === 'mysql' ? `MIN(${q('currency')})` : q('currency');
 		const groupBy = d === 'mysql' ? `HEX(${q('currency')})` : q('currency');
-		const { rows } = await runSql<{ currency: unknown; n: unknown; total: unknown }>(
-			this.dataSource,
+		const rows = await query<{ currency: unknown; n: unknown; total: unknown }>(
 			`SELECT ${currency} AS ${q('currency')}, COUNT(*) AS ${q('n')}, SUM(${q(amountColumn)}) AS ${q('total')} FROM ${q(table)} ` +
 				`WHERE ${q('deletedAt')} IS NULL AND ${q(dateColumn)} >= ${placeholder(d, 1)} AND ${q(dateColumn)} < ${placeholder(d, 2)}` +
 				`${where ? ` AND ${where}` : ''} GROUP BY ${groupBy}`,
@@ -290,7 +340,7 @@ export class EverStatsCollector {
 	}
 
 	/** Minutes of time logs that started in the period and are stopped. */
-	private async trackedMinutes(d: SqlDialect, period: StatsPeriod): Promise<number> {
+	private async trackedMinutes(query: Query, d: SqlDialect, period: StatsPeriod): Promise<number> {
 		const q = (name: string) => quote(d, name);
 		const seconds =
 			d === 'postgres'
@@ -298,8 +348,7 @@ export class EverStatsCollector {
 				: d === 'mysql'
 					? `TIMESTAMPDIFF(SECOND, ${q('startedAt')}, ${q('stoppedAt')})`
 					: `(julianday(${q('stoppedAt')}) - julianday(${q('startedAt')})) * 86400`;
-		const { rows } = await runSql<{ s: unknown }>(
-			this.dataSource,
+		const rows = await query<{ s: unknown }>(
 			`SELECT COALESCE(SUM(${seconds}), 0) AS ${q('s')} FROM ${q('time_log')} WHERE ${q('deletedAt')} IS NULL AND ${q('stoppedAt')} IS NOT NULL ` +
 				`AND ${q('stoppedAt')} > ${q('startedAt')} AND ${q('startedAt')} >= ${placeholder(d, 1)} AND ${q('startedAt')} < ${placeholder(d, 2)}`,
 			[sqlTimestamp(period.start), sqlTimestamp(period.end)]

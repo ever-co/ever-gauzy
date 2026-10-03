@@ -112,7 +112,7 @@ export class EverStatsStore {
 		const { affected } = await runSql(
 			this.dataSource,
 			`UPDATE ${this.c(LEASE)} SET ${this.c('leasedBy')} = ${this.p(1)}, ${this.c('leaseUntil')} = ${this.p(2)} ` +
-				`WHERE ${this.c('id')} = ${this.p(3)} AND (${this.c('leaseUntil')} IS NULL OR ${this.c('leaseUntil')} < ${this.p(4)} OR ${this.c('leasedBy')} = ${this.p(5)})`,
+				`WHERE ${this.c('id')} = ${this.p(3)} AND (${this.c('leaseUntil')} IS NULL OR ${this.c('leaseUntil')} <= ${this.p(4)} OR ${this.c('leasedBy')} = ${this.p(5)})`,
 			[holder, now + ms, LEASE_ID, now, holder]
 		);
 		return affected === 1;
