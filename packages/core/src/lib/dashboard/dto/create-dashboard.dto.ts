@@ -1,4 +1,5 @@
 import { IntersectionType, OmitType } from '@nestjs/swagger';
+import { IsObject, IsOptional, IsUUID } from 'class-validator';
 import { ID, IDashboardCreateInput, IEmployee } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { IsEmployeeBelongsToOrganization } from '../../shared/validators';
@@ -20,11 +21,19 @@ export class CreateDashboardDTO
 	 * injects the employee repositories, which load every entity, so an entity carrying it closes a
 	 * CommonJS cycle — anything that loaded `shared/validators` first saw the barrel half-initialised
 	 * ("IsEmployeeBelongsToOrganization is not a function"). `UpdateDashboardDTO` inherits it through
-	 * `PartialType`; the entity keeps its `@IsOptional()`/`@IsObject()`/`@IsUUID()` rules.
+	 * `PartialType`.
+	 *
+	 * The entity's own rules are repeated here on purpose: class-validator drops an inherited rule when
+	 * the subclass declares one of the same kind on the same property, and `@IsObject()` / `@IsUUID()`
+	 * are the same kind (custom validation) as the membership check.
 	 */
+	@IsOptional()
+	@IsObject()
 	@IsEmployeeBelongsToOrganization()
 	employee?: IEmployee;
 
+	@IsOptional()
+	@IsUUID()
 	@IsEmployeeBelongsToOrganization()
 	employeeId?: ID;
 }
