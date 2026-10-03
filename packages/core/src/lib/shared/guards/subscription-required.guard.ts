@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Logger } from '@nestjs/common';
-import { isCheckoutSessionId } from '../billing/billing-product';
+import { DEFAULT_BILLING_PRODUCT, isCheckoutSessionId, resolveBillingProduct } from '../billing/billing-product';
 import { EntitlementResult, StripeSubscriptionService } from '../billing/stripe-subscription.service';
 
 /**
@@ -14,6 +14,24 @@ const CHECKOUT_URL = process.env.EVER_CHECKOUT_URL?.trim() || 'https://ever.co/c
  * both in full. A session that cannot be checked in time falls through to the email lookup.
  */
 const CHECKOUT_SESSION_BUDGET_MS = 3500;
+
+/**
+ * The checkout link handed to someone the paywall turned away: this product's free Cloud Starter, with
+ * their email prefilled. The shared checkout needs product, hosting, tier and period to resolve a plan;
+ * a bare `?email=` used to answer 400 "Missing product" — a dead end for a person who wanted to buy.
+ * After checkout, the completion page brings them back to register with their Checkout Session.
+ */
+export function paywallCheckoutUrl(email: string, base: string = CHECKOUT_URL): string {
+	const product = resolveBillingProduct().product ?? DEFAULT_BILLING_PRODUCT;
+	const params = new URLSearchParams({
+		product,
+		hosting: 'cloud',
+		tier: 'starter',
+		period: 'annual',
+		email: email.trim()
+	});
+	return `${base}?${params.toString()}`;
+}
 
 /**
  * Requires the registering email to hold a Stripe subscription.
@@ -103,7 +121,7 @@ export class SubscriptionRequiredGuard implements CanActivate {
 				message:
 					'A subscription is required before you can create an account. ' +
 					'Choose a plan to start your free trial, then finish signing up.',
-				checkoutUrl: `${CHECKOUT_URL}?email=${encodeURIComponent(email.trim())}`
+				checkoutUrl: paywallCheckoutUrl(email)
 			});
 		}
 
