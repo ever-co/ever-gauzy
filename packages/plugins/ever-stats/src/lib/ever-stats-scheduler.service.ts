@@ -24,7 +24,7 @@ const SYSTEM_CLOCK: StatsClock = { now: () => Date.now(), random: () => Math.ran
 export const EVER_STATS_RELEASE = 'EVER_STATS_RELEASE';
 
 /** Why a slot sent nothing. */
-export type SlotSkip = 'ui' | 'lease' | 'already_sent' | 'blocked' | 'key_unreadable' | 'collection_failed';
+export type SlotSkip = 'ui' | 'lease' | 'already_sent' | 'retry_pending' | 'blocked' | 'key_unreadable' | 'collection_failed';
 
 /** What one slot did. */
 export interface SlotResult {
@@ -208,6 +208,10 @@ export class EverStatsScheduler implements OnModuleDestroy {
 			if (trigger === 'schedule' && !retrying && lease.lastSentAt !== null && this.slotStart(lease.lastSentAt) === this.slotStart(now)) {
 				return { skipped: 'already_sent', reports: [] };
 			}
+			// A failed send waits for its retry time on every API process, not only on the one that sent it.
+			if (trigger === 'schedule' && !retrying && now < this.retryPendingUntil(recent)) {
+				return { skipped: 'retry_pending', reports: [] };
+			}
 			if (this.blocked(recent, identity.instanceId)) {
 				return { skipped: 'blocked', reports: [] };
 			}
@@ -287,6 +291,22 @@ export class EverStatsScheduler implements OnModuleDestroy {
 			default:
 				return { status: 'failed', httpStatus: outcome.status, lastError: `later:${outcome.error}`.slice(0, 255), sentAt };
 		}
+	}
+
+	/**
+	 * Until when the last failed send makes every process wait: its retry time (+1 h, +4 h, +12 h, then a
+	 * day, by attempt) after a 429, 5xx or no answer; the next slot after any other failure.
+	 */
+	retryPendingUntil(recent: StoredStatsReport[]): number {
+		const last = recent[0];
+		if (!last || last.status !== 'failed' || last.sentAt === null) {
+			return 0;
+		}
+		if (last.lastError?.startsWith('retry:')) {
+			const delay = STATS_RETRY_DELAYS_S[Math.min(Math.max(last.attempts - 1, 0), STATS_RETRY_DELAYS_S.length - 1)] * 1000;
+			return last.sentAt + this.scaled(delay);
+		}
+		return this.slotStart(last.sentAt) + this.intervalMs;
 	}
 
 	/** A report Ever Platform refused for good, for this module version and this identity. */

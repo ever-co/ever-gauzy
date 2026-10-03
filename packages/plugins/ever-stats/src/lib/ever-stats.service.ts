@@ -98,10 +98,14 @@ export class EverStatsService {
 		};
 	}
 
-	/** The last report that went out (accepted or not), or `null` when none did. */
+	/**
+	 * The last report of the current identity that went out (accepted or not), or `null` when none
+	 * did. After *Reset instance identity* the reports of the previous identity are not shown.
+	 */
 	async last(): Promise<EverStatsLastPayload | null> {
+		const { instanceId } = await this.instance.ensure();
 		const rows: StoredStatsReport[] = await this.store.latest();
-		const sent = rows.find((row) => row.sentAt !== null && row.payload !== null);
+		const sent = rows.find((row) => row.sentAt !== null && row.payload !== null && this.instanceOf(row.payload) === instanceId);
 		if (!sent) {
 			return null;
 		}
@@ -113,6 +117,15 @@ export class EverStatsService {
 			status: sent.status,
 			period: sent.period
 		};
+	}
+
+	private instanceOf(payload: string): string | null {
+		try {
+			const id = (JSON.parse(payload) as { instance_id?: unknown }).instance_id;
+			return typeof id === 'string' ? id : null;
+		} catch {
+			return null;
+		}
 	}
 
 	/** Builds the report of the current month as it would be sent now. Nothing is stored or sent. */
@@ -144,7 +157,10 @@ export class EverStatsService {
 			throw new ConflictException('The anonymous usage statistics are switched off.');
 		}
 		const now = this.now();
-		if (now - this.lastSendNowAt < STATS_SEND_NOW_INTERVAL_MS) {
+		// The newest stored report counts too, so the limit holds across API processes.
+		const newest = (await this.store.latest(1))[0];
+		const lastSend = Math.max(this.lastSendNowAt, newest?.createdAt ?? 0);
+		if (now - lastSend < STATS_SEND_NOW_INTERVAL_MS) {
 			throw new HttpException('Send now can be used once every 10 minutes.', HttpStatus.TOO_MANY_REQUESTS);
 		}
 		this.lastSendNowAt = now;

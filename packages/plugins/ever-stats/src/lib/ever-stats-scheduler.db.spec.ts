@@ -7,6 +7,7 @@ import { EverStatsConfig } from './ever-stats-config';
 import { EverStatsScheduler, StatsClock } from './ever-stats-scheduler.service';
 import { EverStatsSender } from './ever-stats-sender.service';
 import { EverStatsStore } from './ever-stats.store';
+import { EverStatsService } from './ever-stats.service';
 import { CORE_TABLES, createCoreTables, dropTables, globalStatsOver, migrateUp, openTestDataSource, PLUGIN_TABLES, q, TEST_TARGETS } from './fixtures/test-db';
 
 const ENV = { JWT_SECRET: 'a-strong-jwt-secret-for-tests' };
@@ -169,6 +170,37 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		expect((await scheduler.runSlot('send_now')).reports[0].status).toBe('sent');
 		const rows = await store.latest();
 		expect(rows[0].status).toBe('sent');
+	});
+
+	it('a failed send makes every API process wait for its retry time, not only the one that sent', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const a = setup(clock, calls, [503]);
+		const b = setup(clock, calls);
+		expect((await a.scheduler.runSlot('schedule')).reports[0]).toMatchObject({ status: 'failed', httpStatus: 503 });
+		clock.at += 30 * 60_000;
+		expect((await b.scheduler.runSlot('schedule')).skipped).toBe('retry_pending');
+		clock.at += 31 * 60_000;
+		expect((await b.scheduler.runSlot('schedule')).reports[0]).toMatchObject({ status: 'sent' });
+		expect(calls).toHaveLength(2);
+	});
+
+	it('Send now waits 10 minutes after the newest report, whichever process sent it; the last payload is the current identity one', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const a = setup(clock, calls);
+		const b = setup(clock, calls);
+		const service = (s: ReturnType<typeof setup>) =>
+			new EverStatsService(CONFIG, s.instance, s.store, s.scheduler, undefined as never, undefined as never, clock, 'v111.47.0');
+		await service(a).sendNow();
+		clock.at += 5 * 60_000;
+		await expect(service(b).sendNow()).rejects.toThrow('once every 10 minutes');
+		clock.at += 6 * 60_000;
+		await service(b).sendNow();
+		expect(calls).toHaveLength(2);
+		expect((await service(a).last())?.http_status).toBe(202);
+		await a.instance.resetIdentity('operator');
+		expect(await service(a).last()).toBeNull();
 	});
 
 	it('marks 409 key_mismatch for a reset and sends nothing more for that identity', async () => {
