@@ -71,7 +71,7 @@ export class EmailTemplateRenderService {
 		}
 
 		try {
-			view = view.replace('\\', '/');
+			view = view.replaceAll('\\', '/');
 
 			const requestedLanguage: string = locals.locale || LanguagesEnum.ENGLISH;
 
