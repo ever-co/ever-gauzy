@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IIntegration } from '@gauzy/contracts';
 import { IntegrationGetCommand } from './../integration.get.command';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
-import { MultiORM, MultiORMEnum, getORMType } from './../../../core/utils';
+import { MultiORM, MultiORMEnum, getORMType, mikroOrmILike } from './../../../core/utils';
 import { TypeOrmIntegrationRepository } from '../../repository/type-orm-integration.repository';
 import { MikroOrmIntegrationRepository } from '../../repository/mikro-orm-integration.repository';
 
@@ -31,7 +31,7 @@ export class IntegrationGetHandler implements ICommandHandler<IntegrationGetComm
 				};
 
 				if (searchQuery) {
-					where.name = { $ilike: `${searchQuery.toLowerCase()}%` };
+					where.name = mikroOrmILike(`${searchQuery.toLowerCase()}%`);
 				}
 
 				if (filter === 'true' || filter === 'false') {
