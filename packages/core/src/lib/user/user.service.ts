@@ -223,30 +223,28 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * Marked email as verified for user
 	 *
 	 * @param id
+	 * @param email The address the confirmation was issued for. When given, the write only applies
+	 * while the account still holds that address, so a confirmation that completes just after the user
+	 * moved to another address is not recorded for the new one.
 	 * @returns
 	 */
-	public async markEmailAsVerified(id: ID) {
+	public async markEmailAsVerified(id: ID, email?: string) {
+		const where = email === undefined ? { id } : { id, email };
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroOrmRepository.nativeUpdate(
-					{ id },
-					{
-						emailVerifiedAt: freshTimestamp(),
-						emailToken: null,
-						code: null,
-						codeExpireAt: null
-					}
-				);
+				return await this.mikroOrmRepository.nativeUpdate(where, {
+					emailVerifiedAt: freshTimestamp(),
+					emailToken: null,
+					code: null,
+					codeExpireAt: null
+				});
 			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.update(
-					{ id },
-					{
-						emailVerifiedAt: freshTimestamp(),
-						emailToken: null,
-						code: null,
-						codeExpireAt: null
-					}
-				);
+				return await this.typeOrmRepository.update(where, {
+					emailVerifiedAt: freshTimestamp(),
+					emailToken: null,
+					code: null,
+					codeExpireAt: null
+				});
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -558,8 +556,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// A new address starts unconfirmed: the stored confirmation (and any pending link or code)
-			// belongs to the previous mailbox. Written in the same save, so there is no window in which
-			// the new address carries the old confirmation.
+			// belongs to the previous mailbox, so it is cleared in the same save.
 			const emailChanged = isEmailAddressChange(user.email, entity.email);
 			if (emailChanged) {
 				Object.assign(entity, UNCONFIRMED_EMAIL_STATE);
@@ -567,6 +564,14 @@ export class UserService extends TenantAwareCrudService<User> {
 
 			// Save the updated user entity
 			await this.save(entity);
+
+			if (emailChanged) {
+				// TypeORM's `save` only writes the columns that differ from the row it read just before,
+				// so a link/code or confirmation stored for the previous address between that read and
+				// the write (a confirmation e-mail still being prepared, a confirmation completing) would
+				// survive next to the new address. This UPDATE always runs, once the new address is stored.
+				await this.resetEmailConfirmation(id as ID);
+			}
 
 			await this.liftAgentRestrictionsOnMoveIntoEEAOrUK(user, entity);
 
@@ -583,6 +588,54 @@ export class UserService extends TenantAwareCrudService<User> {
 			return updated;
 		} catch (error) {
 			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Clears a user's e-mail confirmation together with any pending confirmation link or code.
+	 * Unlike `save`, always issues the UPDATE for every listed column.
+	 */
+	private async resetEmailConfirmation(id: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.nativeUpdate({ id }, { ...UNCONFIRMED_EMAIL_STATE });
+				return;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmRepository.update({ id }, { ...UNCONFIRMED_EMAIL_STATE });
+				return;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Stores a newly issued confirmation link and code — only while the account still holds the
+	 * address they are being sent to.
+	 *
+	 * The code endpoint matches a stored code against the account's CURRENT address. Written by id
+	 * alone, a code prepared for an address the user has just left would land next to the new address
+	 * and confirm it without anyone receiving mail there.
+	 *
+	 * Goes straight to the repositories for the same reason as {@link claimEmailVerificationCode}:
+	 * registration sends this from a public request, where `update()` with object criteria throws.
+	 *
+	 * @returns whether the link and code were stored (false: the account no longer holds `email`).
+	 */
+	async storeEmailVerificationCode(
+		id: ID,
+		email: string,
+		values: { emailToken: string; code: string; codeExpireAt: Date }
+	): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmUserRepository.nativeUpdate({ id, email } as any, values as any)) > 0;
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update({ id, email }, values);
+				// The WHERE clause is the guarantee; the count only decides whether the e-mail goes out.
+				return affected !== 0;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
 		}
 	}
 
