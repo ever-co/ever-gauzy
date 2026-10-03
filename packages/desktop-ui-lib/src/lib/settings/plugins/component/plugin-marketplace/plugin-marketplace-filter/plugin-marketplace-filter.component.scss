@@ -88,12 +88,28 @@
           color: var(--gauzy-text-color-1);
         }
 
+        // The active-filter count sits beside the title as a small chip. It was
+        // positioned absolutely inside a zero-size wrapper, which left the
+        // number hanging below the word "Filters".
         .active-filters-badge {
-          position: relative;
-          margin-left: 0.25rem;
+          display: inline-flex;
+          align-items: center;
 
           nb-badge {
-            position: absolute !important;
+            position: static !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: var(--color-primary-transparent-default);
+            color: var(--color-primary-default);
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
           }
         }
       }
@@ -106,6 +122,14 @@
 
       button {
         border-radius: var(--border-radius);
+      }
+
+      // Nebular paints a disabled ghost button with a filled grey box; with no
+      // filters set, "Clear" should simply read as unavailable text.
+      button[nbButton].appearance-ghost[disabled],
+      button[nbButton].appearance-ghost[aria-disabled='true'] {
+        background-color: transparent;
+        border-color: transparent;
       }
     }
   }
