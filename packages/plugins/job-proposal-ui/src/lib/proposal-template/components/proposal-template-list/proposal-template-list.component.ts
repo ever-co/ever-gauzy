@@ -354,14 +354,7 @@ export class ProposalTemplateListComponent
 		}
 	}
 
-	deleteProposalTemplate(selectedItem?: IEmployeeProposalTemplate): void {
-		if (selectedItem) {
-			this.selectProposalTemplate({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-
+	deleteProposalTemplate(): void {
 		const dialogRef = this._dialogService.open(DeleteConfirmationComponent, {
 			context: { recordType: 'Proposal' }
 		});

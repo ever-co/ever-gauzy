@@ -5,6 +5,10 @@
 	{{ 'ONBOARDING.FIRST_ORGANIZATION' | translate }}
 </div>
 
+<!-- Registering signs people in straight away; this is the first page they see, so say here that a
+     verification email is on its way (with a Resend), not only later on the dashboard. -->
+<ngx-email-verification-notice class="verification-notice"></ngx-email-verification-notice>
+
 <ga-organizations-step-form
 	class="step-form"
 	[loading]="loading"

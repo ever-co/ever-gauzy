@@ -816,6 +816,7 @@
 		"SKILLS": "技能",
 		"PRIVACY": "隐私",
 		"SELECT_TIMEZONE": "选择时区",
+		"SELECT_TIMEZONE_HINT": "预约时间以此时区显示。",
 		"SHOW_AVERAGE_BONUS": "显示平均奖金",
 		"SHOW_AVERAGE_INCOME": "显示平均收入",
 		"SHOW_PAYPERIOD": "显示支付周期",
@@ -1756,6 +1757,19 @@
 		"TIME_TRACKING": "时间跟踪",
 		"PROJECT_MANAGEMENT": "项目管理",
 		"EMPLOYEE_STATISTICS": "员工统计",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",
+			"OF_INCOME": "占收入的 {{ value }}%",
+			"MARGIN": "利润率 {{ value }}%",
+			"BREAKDOWN": "按员工统计收入",
+			"NO_DATA": "此期间没有财务活动",
+			"NO_DATA_HINT": "此日期范围内记录的收入和支出将显示在这里。",
+			"NO_EMPLOYEES": "此期间没有员工记录",
+			"SORT_BY": "按 {{ name }} 排序",
+			"SORT_LABEL": "排序方式",
+			"SORT_ASCENDING": "升序",
+			"SORT_DESCENDING": "降序"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "请在上方的菜单中选择一个月份和员工。",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "未经身份验证的用户请插入文本。",
 		"CHARTS": {
@@ -2442,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "允许员工退出代理应用程序。禁用时，代理应用中的退出选项将被阻止。",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "允许从代理应用中注销",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "允许员工从代理应用程序注销。禁用时，代理应用中的注销选项将被阻止。",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "欧洲经济区 / 英国员工保护已启用",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "对于欧洲经济区或英国的组织和员工，员工始终可以退出并注销桌面代理。员工无法中断的采集很难依据 GDPR 和《欧洲人权公约》第 8 条证明其正当性，因此此处不提供这些限制。",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "确认限制退出或注销代理",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "启用此限制后，员工无法阻止桌面代理对其进行采集。请确认您已评估此做法对这些员工合法且适度，并愿意为此承担责任。您的确认将记录在您的账户下。",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "跟踪键盘和鼠标活动",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "启用完整的键盘和鼠标活动跟踪，包括在所有桌面应用和代理中的按键和精确鼠标移动。",
 				"TRACK_ALL_DISPLAYS": "跟踪所有显示器",
@@ -2713,7 +2731,10 @@
 		"ADDRESS": "地址",
 		"ADDRESS_2": "地址2",
 		"MEMBERS": "成员",
-		"BUDGET": "预算"
+		"BUDGET": "预算",
+		"PHOTO_HINT": "点击或拖放图片以上传",
+		"SEARCH_EMPLOYEES": "按姓名或邮箱搜索员工",
+		"NO_MEMBERS": "尚未添加成员"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",
@@ -4446,6 +4467,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "监控已启用：正在记录时间和活动",
+		"MONITORING_IDLE": "代理空闲",
+		"MONITORING_TRAY_ACTIVE": "监控已启用，正在记录：{{captures}}",
+		"MONITORING_TRAY_PAUSED": "监控已暂停：未记录任何内容",
+		"MONITORING_CAPTURE_TIME": "时间和活动应用程序",
+		"MONITORING_CAPTURE_SCREENSHOTS": "屏幕截图",
+		"MONITORING_CAPTURE_INPUT": "键盘和鼠标活动",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "选择客户",
 			"SELECT_PROJECT": "选择项目",
@@ -4558,7 +4586,7 @@
 			"SELECT_DEFAULT_CDN": "选择更新的默认 CDN 服务器",
 			"TOGGLE_UPDATE_LOCALLY": "切换以本地方式更新",
 			"LOCAL_SERVER": "本地服务器",
-			"LOCAL_SERVER_NOTE": "所选择的目录应该明确包含 <strong>latest.yml</strong> 和/或 <strong>latest-mac.yml</strong> 清单，以进行更新验证。",
+			"LOCAL_SERVER_NOTE": "所选目录必须包含适用于您系统的更新清单（Windows：<strong>latest-x64.yml</strong> 或 <strong>latest-arm64.yml</strong>；Linux：<strong>latest-x64-linux.yml</strong> 或 <strong>latest-arm64-linux-arm64.yml</strong>；macOS：<strong>latest-mac.yml</strong>）以及其中列出的更新文件，以进行更新验证。",
 			"OTHER_SETTINGS": "其他设置",
 			"ALLOW_PRERELEASE_VERSIONS": "允许预发布版本",
 			"CHECK_UPDATE_APP_VERSION": "检查并更新您的应用版本",
@@ -4973,7 +5001,9 @@
 		"NO_SCREENSHOT": "没有屏幕截图",
 		"NO_SCREENSHOTS": "不允许截屏",
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。",
-		"SCREEN_SELECTED": "{{ count }} 屏幕已选择"
+		"SCREEN_SELECTED": "{{ count }} 屏幕已选择",
+		"NO_TIME_TRACKED": "未记录时间",
+		"MINUTES_TRACKED": "已记录 {{ minutes }} 分钟"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
@@ -4999,6 +5029,16 @@
 		"BUFFER_AT_START": "开始的缓冲",
 		"BUFFER_AT_END": "末端缓冲区",
 		"BREAK_TIME": "休息时间",
+		"DETAILS": "详情",
+		"PARTICIPANTS": "参与者",
+		"FORM_HINT": "设置会议主题、时间和参与者。",
+		"DETAILS_HINT": "所有受邀者都能看到的议程、地点和备注。",
+		"SCHEDULE": "日程",
+		"SCHEDULE_HINT": "选择日期和时间段，可选缓冲时间和休息时间。",
+		"BUFFER_TIME_HINT": "在会议前后预留空闲时间。",
+		"BREAK_TIME_HINT": "会议中安排短暂休息。",
+		"BREAK_START": "休息开始时间",
+		"PARTICIPANTS_HINT": "收到邀请的人员。",
 		"ARE_YOU_SURE": "你确定吗？这个行为是不可逆的。"
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5043,7 +5083,9 @@
 		"CANCEL": "取消预约",
 		"TIMEZONE": "您的时区：",
 		"CHANGE": "转变",
+		"CHANGE_TIMEZONE": "更改",
 		"SELECT_EMPLOYEE_ERROR": "请选择一个员工。",
+		"SELECT_EMPLOYEE_HINT": "选择您想见的人，然后选择适合您的时间。",
 		"EXPIRED_OR_CANCELLED": "该约会已过期或已取消。",
 		"EMAIL_SENT": "已经向主持人和所有参会人员发送了一封电子邮件。",
 		"NO_ACTIVE_EVENT_TYPES": "没有活动类型。",
@@ -5318,6 +5360,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "没有账号吗？",
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",
 		"OR_SIGN_IN_WITH": "或用以下方式登录",
+		"SIGN_IN_WITH_EVER_ID": "使用 Ever ID 登录",
+		"SIGN_IN_WITH_KEYCLOAK": "使用 Keycloak 登录",
 		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
 		"LOGIN_MAGIC": {
 			"TITLE": "使用魔法代码登录",

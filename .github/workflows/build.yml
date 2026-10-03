@@ -32,6 +32,11 @@ name: Build
 
 on:
   pull_request:
+    # Off by owner decision (2026-09-21): a pull request INTO develop does not start this workflow. The cost
+    # belonged to every commit on the branch being merged, and the run belongs to the merge - the push
+    # trigger below runs it when code lands on develop. PRs aimed at other branches still run it.
+    branches-ignore:
+      - develop
   push:
     branches:
       - develop
@@ -108,6 +113,9 @@ jobs:
 
       - name: Test native rebuild setup
         run: yarn test:postinstall
+
+      - name: Test release update-channel guard
+        run: yarn test:publish-channel
 
       - name: Restore node_modules archive
         id: cache

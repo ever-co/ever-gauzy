@@ -79,6 +79,13 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
+	/** Labels of the custom step indicator, in stepper order. */
+	protected readonly steps: string[] = [
+		'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW',
+		'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS',
+		'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EMAIL_NOTIFICATION'
+	];
+
 	@ViewChild('candidateCriterionsForm')
 	candidateCriterionsForm: CandidateCriterionsFormComponent;
 

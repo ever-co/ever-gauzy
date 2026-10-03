@@ -46,7 +46,9 @@ import {
 	IOrganization,
 	RegionsEnum,
 	WeekDaysEnum,
-	IOrganizationTaskSetting
+	IOrganizationTaskSetting,
+	AgentExitLogoutField,
+	isEEAOrUKRegion
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import {
@@ -55,7 +57,9 @@ import {
 	OrganizationTaskSettingService,
 	OrganizationsService,
 	Store,
-	ToastrService
+	ToastrService,
+	applyEEAUKFormRestrictions,
+	bindAgentRestrictionListeners
 } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
@@ -73,6 +77,29 @@ export class EditOrganizationOtherSettingsComponent
 	public get isTrackInactivity(): boolean {
 		return this.form.get('allowTrackInactivity').value;
 	}
+
+	public get isEEAOrUK(): boolean {
+		if (!this.organization) return false;
+		return isEEAOrUKRegion({
+			regionCode: this.form.get('regionCode')?.value || this.organization.regionCode,
+			timeZone: this.form.get('timeZone')?.value || this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
+	}
+
+	/**
+	 * A restriction this organization already had while already in EEA/UK: shown as stored, so an
+	 * unrelated save does not silently lift it (it is reported for deliberate review instead).
+	 */
+	private keepExistingAgentRestriction = (field: AgentExitLogoutField): boolean =>
+		this.organization?.[field] === false &&
+		isEEAOrUKRegion({
+			regionCode: this.organization.regionCode,
+			timeZone: this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
+
+	public acknowledgeAgentExitLogoutRestriction: boolean = false;
 
 	public organization: IOrganization;
 	public organizationTaskSetting: IOrganizationTaskSetting;
@@ -359,7 +386,18 @@ export class EditOrganizationOtherSettingsComponent
 		const regionCode = <FormControl>this.form.get('regionCode');
 		regionCode.valueChanges
 			.pipe(
-				tap((value: IOrganization['regionCode']) => (this.regionCode = value)),
+				tap((value: IOrganization['regionCode']) => {
+					this.regionCode = value;
+					applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const timeZone = <FormControl>this.form.get('timeZone');
+		timeZone.valueChanges
+			.pipe(
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -449,6 +487,15 @@ export class EditOrganizationOtherSettingsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		bindAgentRestrictionListeners(
+			this.form,
+			() => this.isEEAOrUK,
+			(field) => this.organization?.[field],
+			this.translateService,
+			untilDestroyed(this),
+			() => (this.acknowledgeAgentExitLogoutRestriction = true)
+		);
 	}
 
 	/**
@@ -504,7 +551,17 @@ export class EditOrganizationOtherSettingsComponent
 		const { id: organizationId, name } = this.organization;
 
 		try {
-			const organization: IOrganization = await this._organizationService.update(organizationId, this.form.value);
+			// `form.value` leaves out disabled controls, which is what keeps e.g. a disabled
+			// `bonusPercentage` from being saved as null. The agent exit/logout toggles are the
+			// exception: in EEA/UK they are disabled AND forced on, and that value must be sent.
+			const { allowAgentAppExit, allowLogoutFromAgentApp } = this.form.getRawValue();
+			const organization: IOrganization = await this._organizationService.update(organizationId, {
+				...this.form.value,
+				allowAgentAppExit,
+				allowLogoutFromAgentApp,
+				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
+			});
+			this.acknowledgeAgentExitLogoutRestriction = false;
 
 			// Update the organization in the store
 			this._organizationEditStore.organizationAction = {
@@ -826,6 +883,7 @@ export class EditOrganizationOtherSettingsComponent
 		if (!this.organization) {
 			return;
 		}
+		this.acknowledgeAgentExitLogoutRestriction = false;
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 
@@ -834,6 +892,9 @@ export class EditOrganizationOtherSettingsComponent
 			fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
 			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
 		});
+
+		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
+
 		this.form.updateValueAndValidity();
 
 		const {

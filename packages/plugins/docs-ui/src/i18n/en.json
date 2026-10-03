@@ -101,6 +101,11 @@
 	"TABLE": {
 		"NO_DATA": "No documents found",
 		"COLUMN_CHOOSER": "Columns",
+		"COLUMNS_SHOWN": "{{ visible }} of {{ total }} shown",
+		"COLUMN_ALWAYS_SHOWN": "Always shown",
+		"COLUMN_AUTO_HIDDEN": "Auto-hidden on small screens",
+		"COLUMNS_SHOW_ALL": "Show all",
+		"COLUMNS_RESET": "Reset to default",
 		"SELECTED_COUNT": "{{ count }} selected",
 		"COLUMNS": {
 			"NAME": "Name",
@@ -113,6 +118,10 @@
 			"UPDATED": "Updated",
 			"ACTIONS": "Actions"
 		}
+	},
+	"ACTION_MENU": {
+		"OPEN_FOLDER": "Open folder",
+		"OPEN_EDITOR": "Open in editor"
 	},
 	"CARDS": {
 		"ITEMS_COUNT": "{{ count }} items",

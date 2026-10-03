@@ -341,3 +341,81 @@ nb-select {
 :host ::ng-deep {
     @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
 }
+
+// ── Layout opt-ins ──────────────────────────────────────────────────────────
+//
+// Backing styles for the `fullWidth` / `compact` inputs, which reflect onto the
+// host as `.full-width` / `.compact`. See the inputs' own doc comment for what
+// each is for; what matters here is that these are the component's own boxes,
+// so a host asks for the layout it needs instead of reaching in with
+// `::ng-deep` — this is the styling API that comment points at.
+//
+// Nothing below is reachable without the class, so every existing consumer of
+// this component renders exactly as it did.
+
+:host(.full-width) {
+    // The host is an inline element by default, so it would shrink-fit its own
+    // contents even once the boxes inside it are told to span.
+    display: block;
+    width: 100%;
+
+    // The two `.col-auto` levels between the host and the control row. Their
+    // 15px gutters go with them: the strip is flush with whatever the host has
+    // put it in, and the host owns the padding from there out.
+    .main-wrapper {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+
+        > .col-auto {
+            width: 100%;
+            max-width: 100%;
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+
+    .filter-item-list {
+        // A safety net, not the intent: with the cap gone there is room for the
+        // controls on one line at any normal width, and this only engages if
+        // something genuinely takes the space away. It beats `report.scss`'s
+        // global `nowrap !important`, which would run them off the trailing
+        // edge instead.
+        flex-wrap: wrap !important;
+        // Still anchored to the trailing edge, now that the row spans its
+        // container rather than hugging its contents.
+        justify-content: flex-end;
+        row-gap: 0.5rem;
+        // The row carries bootstrap's `.align-items-end`, which is `!important`.
+        // Every control is the same height, so bottom alignment only ever
+        // mattered because of the stray bottom margins zeroed below — and with
+        // those gone, centring is what keeps them on one optical line whatever
+        // height a control turns out to be.
+        align-items: center !important;
+    }
+
+    // Projected content does not pick up the 5px below, so a control a host
+    // passes through `<ng-content>` sat 5px higher than the ones beside it.
+    // Zeroing ours is what puts every item in the row on the same box.
+    .single-filter-wrapper {
+        margin-bottom: 0;
+    }
+}
+
+:host(.compact) {
+    // 220px down to 185px: the select below plus the 15px gutter that separates
+    // one filter from the next.
+    .filter-item-list .filter-item {
+        min-width: 185px;
+    }
+
+    // 205px down to 170px. The floor is the longest label a filter has to hold
+    // — "Activity Level" is ~95px at this size, and the trigger spends another
+    // ~53px on its own padding and chevron, so ~150px is where text would start
+    // to truncate. 170px keeps a margin over that for longer translations.
+    .filter-item-list .filter-item nb-select {
+        min-width: 0;
+        width: 170px;
+    }
+}

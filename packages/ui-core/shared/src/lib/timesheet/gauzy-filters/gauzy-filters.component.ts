@@ -1,8 +1,10 @@
 import {
 	AfterViewInit,
+	booleanAttribute,
 	ChangeDetectorRef,
 	Component,
 	EventEmitter,
+	HostBinding,
 	Input,
 	OnDestroy,
 	OnInit,
@@ -36,6 +38,36 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
 	@Input() hasTimeZoneFilter = true;
+
+	/**
+	 * Layout opt-ins for the filter strip.
+	 *
+	 * Every box this component renders is a bootstrap `.col-auto`, i.e.
+	 * `flex: 0 0 auto`, so the strip is shrink-to-fit at every level: a host that
+	 * gives it a wide container still gets a strip the width of its own controls.
+	 * These flags exist so a host can change that WITHOUT reaching into this
+	 * template - the boxes involved are private to this component, and
+	 * `::ng-deep` is the only other way to touch them.
+	 *
+	 * `fullWidth` lets the strip span its container, keeps the controls against
+	 * the trailing edge, and lets them wrap to a second line instead of
+	 * overflowing. Use it where the host has room for the controls on one line
+	 * and the shrink-to-fit cap is what is denying it to them.
+	 *
+	 * `compact` narrows each filter column, for a host fitting more controls onto
+	 * that line than this component renders on its own - one projecting an extra
+	 * control through `<ng-content>`, for instance.
+	 *
+	 * Both are reflected onto the host element, which is what the stylesheet keys
+	 * off.
+	 */
+	@HostBinding('class.full-width')
+	@Input({ transform: booleanAttribute })
+	fullWidth: boolean = false;
+
+	@HostBinding('class.compact')
+	@Input({ transform: booleanAttribute })
+	compact: boolean = false;
 
 	public hasFilterApplies: boolean;
 	public activityLevel = ActivityLevel;

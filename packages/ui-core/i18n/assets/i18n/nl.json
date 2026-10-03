@@ -816,6 +816,7 @@
 		"SKILLS": "Vaardigheden",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Selecteer tijdzone",
+		"SELECT_TIMEZONE_HINT": "Afspraaktijden worden in deze tijdzone weergegeven.",
 		"SHOW_AVERAGE_BONUS": "Toon het gemiddelde bonus",
 		"SHOW_AVERAGE_INCOME": "Toon het gemiddelde inkomen",
 		"SHOW_PAYPERIOD": "Toon loonperiode",
@@ -1756,6 +1757,19 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"PROJECT_MANAGEMENT": "Projectmanagement",
 		"EMPLOYEE_STATISTICS": "Werknemersstatistieken",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
+			"OF_INCOME": "{{ value }}% van de inkomsten",
+			"MARGIN": "{{ value }}% marge",
+			"BREAKDOWN": "Inkomsten per werknemer",
+			"NO_DATA": "Geen financiële activiteit in deze periode",
+			"NO_DATA_HINT": "Inkomsten en uitgaven voor deze periode verschijnen hier.",
+			"NO_EMPLOYEES": "Geen werknemersgegevens voor deze periode",
+			"SORT_BY": "Sorteren op {{ name }}",
+			"SORT_LABEL": "Sorteren op",
+			"SORT_ASCENDING": "Oplopend",
+			"SORT_DESCENDING": "Aflopend"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Selecteer alstublieft een maand en medewerker uit het bovenstaande menu",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Voer tekst in voor niet-geregistreerde gebruikers.",
 		"CHARTS": {
@@ -2442,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Werknemer toestaan de Agent applicatie af te sluiten. Wanneer uitgeschakeld, wordt de afsluitoptie geblokkeerd in de Agent app.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Uitloggen uit de Agent-app toestaan",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Werknemer toestaan uit te loggen van de Agent applicatie. Wanneer uitgeschakeld, wordt de uitlogoptie geblokkeerd in de Agent app.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Bescherming voor werknemers in de EER / het VK actief",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Voor organisaties en werknemers in de EER of het VK kunnen werknemers de desktopagent altijd afsluiten en zich afmelden. Vastlegging die een werknemer niet kan onderbreken is onder de AVG en art. 8 EVRM moeilijk te rechtvaardigen, daarom zijn deze beperkingen hier niet beschikbaar.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Beperking van afsluiten of afmelden bevestigen",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Met deze beperking kan de werknemer niet voorkomen dat de desktopagent hem vastlegt. Bevestig dat u dit voor deze werknemers als rechtmatig en proportioneel hebt beoordeeld en dat u er de verantwoordelijkheid voor neemt. Uw bevestiging wordt op uw account vastgelegd.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Toetsenbord- en muisactiviteit volgen",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Volledige tracking van toetsenbord- en muisactiviteit inschakelen, inclusief toetsaanslagen en exacte muisbewegingen in alle desktop apps en agent.",
 				"TRACK_ALL_DISPLAYS": "Alle schermen volgen",
@@ -2713,7 +2731,10 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres 2",
 		"MEMBERS": "Leden",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden",
+		"SEARCH_EMPLOYEES": "Zoek medewerkers op naam of e-mail",
+		"NO_MEMBERS": "Nog geen leden toegevoegd"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",
@@ -4446,6 +4467,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoring actief: tijd en activiteit worden vastgelegd",
+		"MONITORING_IDLE": "Agent inactief",
+		"MONITORING_TRAY_ACTIVE": "Monitoring actief, vastgelegd wordt: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitoring gepauzeerd: er wordt niets vastgelegd",
+		"MONITORING_CAPTURE_TIME": "tijd en actieve applicaties",
+		"MONITORING_CAPTURE_SCREENSHOTS": "schermafbeeldingen",
+		"MONITORING_CAPTURE_INPUT": "toetsenbord- en muisactiviteit",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Selecteer klant",
 			"SELECT_PROJECT": "Selecteer project",
@@ -4558,7 +4586,7 @@
 			"SELECT_DEFAULT_CDN": "Selecteer de standaard CDN-server voor update",
 			"TOGGLE_UPDATE_LOCALLY": "Schakel om lokaal bij te werken",
 			"LOCAL_SERVER": "Lokale server",
-			"LOCAL_SERVER_NOTE": "De geselecteerde map moet zeker het <strong>latest.yml</strong>- en/of <strong>latest-mac.yml</strong>-manifest bevatten om de updatevalidatie mogelijk te maken.",
+			"LOCAL_SERVER_NOTE": "De geselecteerde map moet het updatemanifest voor uw systeem (Windows: <strong>latest-x64.yml</strong> of <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> of <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) en de daarin vermelde updatebestanden bevatten om de updatevalidatie mogelijk te maken.",
 			"OTHER_SETTINGS": "Andere instellingen",
 			"ALLOW_PRERELEASE_VERSIONS": "Sta voorlopige versies toe",
 			"CHECK_UPDATE_APP_VERSION": "Controleer en update uw app-versie",
@@ -4973,7 +5001,9 @@
 		"NO_SCREENSHOT": "Geen schermafbeelding",
 		"NO_SCREENSHOTS": "Geen screenshots",
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project.",
-		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd"
+		"SCREEN_SELECTED": "{{ count }} Scherm(en) geselecteerd",
+		"NO_TIME_TRACKED": "Geen tijd bijgehouden",
+		"MINUTES_TRACKED": "{{ minutes }} min bijgehouden"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",
@@ -4999,6 +5029,16 @@
 		"BUFFER_AT_START": "Buffer aan het begin",
 		"BUFFER_AT_END": "Buffer aan het einde",
 		"BREAK_TIME": "Pauzetijd",
+		"DETAILS": "Details",
+		"PARTICIPANTS": "Deelnemers",
+		"FORM_HINT": "Geef aan waar de vergadering over gaat, wanneer die is en wie meedoet.",
+		"DETAILS_HINT": "Agenda, locatie en notities die alle genodigden zien.",
+		"SCHEDULE": "Planning",
+		"SCHEDULE_HINT": "Kies de datum en het tijdslot, met optionele buffer en pauze.",
+		"BUFFER_TIME_HINT": "Houd vrije tijd vóór of na de vergadering.",
+		"BREAK_TIME_HINT": "Onderbreek de vergadering voor een korte pauze.",
+		"BREAK_START": "Pauze begint om",
+		"PARTICIPANTS_HINT": "Mensen die de uitnodiging ontvangen.",
 		"ARE_YOU_SURE": "Weet je het zeker? Deze actie is onomkeerbaar."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5043,7 +5083,9 @@
 		"CANCEL": "Afspraak annuleren",
 		"TIMEZONE": "Jouw tijdzone:",
 		"CHANGE": "(Wijzigen)",
+		"CHANGE_TIMEZONE": "Wijzigen",
 		"SELECT_EMPLOYEE_ERROR": "Selecteer alstublieft een medewerker.",
+		"SELECT_EMPLOYEE_HINT": "Kies met wie je wilt afspreken en daarna een tijd die jou uitkomt.",
 		"EXPIRED_OR_CANCELLED": "Deze afspraak is verlopen of geannuleerd.",
 		"EMAIL_SENT": "Er is een e-mail verzonden naar de gastheer en naar alle deelnemers voor deze vergadering.",
 		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen.",
@@ -5318,6 +5360,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Heeft u geen account?",
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
+		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Inloggen met een magische code",

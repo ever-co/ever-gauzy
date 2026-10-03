@@ -249,7 +249,10 @@ jobs:
           NX_DAEMON: false
 
       - name: Build Server App
-        run: 'yarn build:gauzy-server:linux:release:gh:x64:isolated'
+        # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
+        # electron-builder default). yarn appends these flags to the script's last command, the
+        # electron-builder call. Override snap.publish only: a -c.publish override lands in the GitHub entry.
+        run: 'yarn build:gauzy-server:linux:release:gh:x64:isolated -c.snap.publish.provider=snapStore -c.snap.publish.channels=edge'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -546,7 +549,10 @@ jobs:
           NX_DAEMON: false
 
       - name: Build Server App
-        run: 'yarn build:gauzy-server:linux:release:gh:arm64:isolated'
+        # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
+        # electron-builder default). yarn appends these flags to the script's last command, the
+        # electron-builder call. Override snap.publish only: a -c.publish override lands in the GitHub entry.
+        run: 'yarn build:gauzy-server:linux:release:gh:arm64:isolated -c.snap.publish.provider=snapStore -c.snap.publish.channels=edge'
         env:
           USE_HARD_LINKS: false
           USE_SYSTEM_FPM: true

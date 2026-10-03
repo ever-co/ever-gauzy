@@ -1,6 +1,8 @@
 import { environment } from '@gauzy/config';
 
 import { AiChatPlugin } from '@gauzy/plugin-ai-chat';
+import { AuthKeycloakPlugin, isKeycloakEnabled } from '@gauzy/plugin-auth-keycloak';
+import { AuthZitadelPlugin, isZitadelEnabled } from '@gauzy/plugin-auth-zitadel';
 import { AiProviderAnthropicPlugin } from '@gauzy/plugin-ai-provider-anthropic';
 import { AiProviderOpenAiPlugin } from '@gauzy/plugin-ai-provider-openai';
 import { AiProviderOpenRouterPlugin } from '@gauzy/plugin-ai-provider-openrouter';
@@ -53,6 +55,14 @@ export const plugins = [
 
 	// Includes the PostHogPlugin based on the presence of PostHog configuration.
 	...(posthog?.posthogEnabled && posthog?.posthogKey ? [PosthogPlugin] : []),
+
+	// Ever ID as an additional sign-in method. Off unless ZITADEL_ENABLED=true; when off it is not
+	// loaded at all (no route, no timer, no outbound request).
+	...(isZitadelEnabled() ? [AuthZitadelPlugin] : []),
+
+	// Keycloak as an additional sign-in method. Off unless KEYCLOAK_ENABLED=true and a Keycloak client
+	// id and secret are set; when off it is not loaded at all.
+	...(isKeycloakEnabled() ? [AuthKeycloakPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

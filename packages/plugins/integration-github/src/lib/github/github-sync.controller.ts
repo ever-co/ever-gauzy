@@ -15,8 +15,9 @@ import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
 import { GithubSyncService } from './github-sync.service';
 import { ProcessGithubIssueSyncDTO } from './dto';
+import { GithubIntegrationTenantGuard } from './github-integration-tenant.guard';
 
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, GithubIntegrationTenantGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/github/:integrationId')
 export class GitHubSyncController {

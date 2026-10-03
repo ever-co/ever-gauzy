@@ -51,6 +51,18 @@ export const DOCS_TABLE_COLUMN_TITLE_KEYS: Record<DocsTableColumnKey, string> = 
 	updatedAt: 'DOCS.TABLE.COLUMNS.UPDATED'
 };
 
+/** Eva icon per column — the column chooser's row lead. */
+export const DOCS_TABLE_COLUMN_ICONS: Record<DocsTableColumnKey, string> = {
+	name: 'file-text-outline',
+	categories: 'grid-outline',
+	tags: 'pricetags-outline',
+	status: 'activity-outline',
+	knowledge: 'bulb-outline',
+	source: 'log-in-outline',
+	fileSize: 'hard-drive-outline',
+	updatedAt: 'clock-outline'
+};
+
 /** Name is the row's identity (and the only cell that opens it) — never hideable. */
 export const DOCS_TABLE_REQUIRED_COLUMNS: readonly DocsTableColumnKey[] = ['name'];
 

@@ -1,4 +1,11 @@
-import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	Logger,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { MoreThanOrEqual } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -20,6 +27,7 @@ import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
+import { describeEmailSendError } from './../email-send/email-send-error';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 
 @Injectable()
@@ -39,9 +47,9 @@ export class EmailConfirmationService {
 	 * @param user The user to send the verification email to.
 	 * @param integration Configuration for app integration.
 	 */
-	public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig) {
+	public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig): Promise<boolean> {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
-			return;
+			return false;
 		}
 
 		try {
@@ -73,16 +81,22 @@ export class EmailConfirmationService {
 				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
 
-			// Send email verification link
+			// Send email verification link. Resolves false when the provider did not take the message;
+			// the send itself is logged and recorded in email_sent by EmailService.
 			return await this.emailService.emailVerification(user, verificationLink, verificationCode, appIntegration);
 		} catch (error) {
-			this.logger.error('Error while sending verification email', error?.stack);
+			this.logger.error(
+				`Error while preparing the verification email for user ${user?.id}: ${describeEmailSendError(error)}`
+			);
+			return false;
 		}
 	}
 
 	/**
 	 * Resend confirmation email link
 	 *
+	 * Rate limited by the controller. Reports a send the provider refused as 503, so the caller can
+	 * tell the user to try again instead of promising an email that is not coming.
 	 */
 	public async resendConfirmationLink(config: IAppIntegrationConfig) {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
@@ -93,14 +107,32 @@ export class EmailConfirmationService {
 			if (!!user.emailVerifiedAt) {
 				throw new BadRequestException('Your email is already verified.');
 			}
-			await this.sendEmailVerification(user, config);
+			const sent = await this.sendEmailVerification(user, config);
+			if (!sent) {
+				throw new ServiceUnavailableException(
+					'We could not send the verification email right now. Please try again in a few minutes.'
+				);
+			}
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`
 			});
 		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error?.message);
 		}
+	}
+
+	/**
+	 * Whether the signed-in user has verified their email.
+	 *
+	 * @returns `{ isEmailVerified }` for the current user; false when the user cannot be found.
+	 */
+	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean }> {
+		const user = await this.userService.getIfExists(RequestContext.currentUserId());
+		return { isEmailVerified: !!user?.emailVerifiedAt };
 	}
 
 	/**

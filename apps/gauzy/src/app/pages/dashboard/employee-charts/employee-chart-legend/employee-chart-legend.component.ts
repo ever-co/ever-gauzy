@@ -73,11 +73,17 @@ export interface IEmployeeChartLegendItem {
 				column-gap: 1rem;
 			}
 
+			/*
+			 * font-size: inherit, because the global li rule sets --list-item-font-size
+			 * (14px), which would override the 11px the list declares above.
+			 */
 			.legend-item {
 				display: flex;
 				align-items: center;
 				gap: 0.5rem;
 				min-width: 0;
+				font-size: inherit;
+				line-height: inherit;
 			}
 
 			.legend-swatch {

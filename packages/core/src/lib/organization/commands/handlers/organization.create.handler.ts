@@ -7,6 +7,7 @@ import { UserOrganizationService } from '../../../user-organization/user-organiz
 import { OrganizationService } from '../../organization.service';
 import { ContactService } from '../../../contact/contact.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
+import { assertNoAgentRestrictionOnCreate } from '../../../employee/agent-exit-logout-restriction';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 import { RequestContext } from '../../../core/context';
 import { Organization } from './../../../core/entities/internal';
@@ -38,6 +39,9 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 	 * @returns A promise that resolves to an instance of IOrganization, representing the newly created organization.
 	 */
 	public async execute(command: OrganizationCreateCommand): Promise<IOrganization> {
+		// Issue #9873: exit/logout can only be restricted on an existing organization, with an acknowledgement.
+		// Checked before the `try` below, which turns every error into a generic one.
+		assertNoAgentRestrictionOnCreate(command.input);
 		try {
 			const { input } = command;
 			const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;

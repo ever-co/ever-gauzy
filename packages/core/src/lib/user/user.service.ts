@@ -6,7 +6,9 @@ import {
 	BadRequestException,
 	ForbiddenException,
 	Injectable,
+	Logger,
 	NotFoundException,
+	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
 import {
@@ -30,6 +32,7 @@ import {
 	IUser,
 	IUserUiPreferences,
 	IUserUiPreferencesUpdateInput,
+	isEEAOrUKRegion,
 	LanguagesEnum,
 	PermissionsEnum,
 	RolesEnum,
@@ -42,6 +45,8 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
+import { liftEmployeeAgentRestrictions } from '../employee/agent-exit-logout-restriction';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
@@ -92,7 +97,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _taskService: TaskService,
-		private readonly _passwordHashService: PasswordHashService
+		private readonly _passwordHashService: PasswordHashService,
+		// Optional: seeders and other contexts load UserModule without the global activity log module.
+		@Optional() private readonly _activityLogService?: ActivityLogService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -549,6 +556,8 @@ export class UserService extends TenantAwareCrudService<User> {
 			// Save the updated user entity
 			await this.save(entity);
 
+			await this.liftAgentRestrictionsOnMoveIntoEEAOrUK(user, entity);
+
 			// Return the updated user
 			return await this.findOneByWhereOptions({
 				id: id as string,
@@ -556,6 +565,33 @@ export class UserService extends TenantAwareCrudService<User> {
 			});
 		} catch (error) {
 			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Issue #9873: a worker whose time zone moves into the EEA/UK must be able to exit and log out of
+	 * the desktop agent, so lift (and record) any restriction on their employee records. Never fails
+	 * the profile update itself.
+	 */
+	private async liftAgentRestrictionsOnMoveIntoEEAOrUK(previous: IUser, entity: User): Promise<void> {
+		const timeZone = entity?.timeZone;
+		if (!previous?.id || !timeZone || timeZone === previous.timeZone || !this._activityLogService) {
+			return;
+		}
+		if (!isEEAOrUKRegion({ timeZone }) || isEEAOrUKRegion({ timeZone: previous.timeZone })) {
+			return;
+		}
+		try {
+			await liftEmployeeAgentRestrictions(
+				this._employeeService,
+				this._activityLogService,
+				{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
+				`the worker's time zone moved into the EEA/UK (${timeZone})`
+			);
+		} catch (error) {
+			new Logger(UserService.name).error(
+				`Could not lift agent exit/logout restrictions for user ${previous.id}: ${error?.message}`
+			);
 		}
 	}
 

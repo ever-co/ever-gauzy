@@ -1,4 +1,5 @@
 import { DataSource, EntitySchema, QueryRunner } from 'typeorm';
+import { environment } from '@gauzy/config';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { RolePermissionUtils } from './utils';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
@@ -70,8 +71,40 @@ const SEEDED_ROLES: RolesEnum[] = [
 const TENANT_COUNT = 3;
 const EXPECTED_ROLE_COUNT = TENANT_COUNT * SEEDED_ROLES.length;
 
-/** Every permission the migration considers — the same list the production code walks. */
+/**
+ * Every permission the migration considers outside demo mode — the same list the production code
+ * walks. The suites below pin `environment.demo` to `false` so this holds whatever the process
+ * environment says; the demo-mode list is covered by its own suite at the end of the file.
+ */
 const ALL_PERMISSIONS = Object.values(PermissionsEnum);
+
+/**
+ * What `getPermissions()` leaves out in demo mode. Kept in step with `utils.ts` on purpose: if the
+ * production list changes, the demo-mode suite below fails instead of silently asserting a stale set.
+ */
+const DEMO_EXCLUDED_PERMISSIONS: PermissionsEnum[] = [
+	PermissionsEnum.ACCESS_DELETE_ACCOUNT,
+	PermissionsEnum.ACCESS_DELETE_ALL_DATA
+];
+
+/**
+ * `environment.demo` is read from `process.env.DEMO` once, when `@gauzy/config` loads — so without
+ * pinning it, the expected row counts here depend on whichever `.env` file happened to be loaded
+ * into the test process. Nx loads the committed `.env.local` (DEMO=true) into every task by default,
+ * which is why this suite failed in CI with 5016 rows (24 roles x 209) against 5064 (24 x 211) while
+ * passing on a machine without that file. Assigned directly rather than with `jest.replaceProperty`
+ * because the tests below call `jest.restoreAllMocks()`, which would un-pin it half-way through.
+ */
+let savedEnvironmentDemo: boolean;
+
+beforeAll(() => {
+	savedEnvironmentDemo = environment.demo;
+	environment.demo = false;
+});
+
+afterAll(() => {
+	environment.demo = savedEnvironmentDemo;
+});
 
 interface Recorded {
 	sql: string;
@@ -81,8 +114,11 @@ interface Recorded {
 /**
  * Build an in-memory database seeded with tenants and roles, and record every statement the
  * migration issues so the test can assert on round-trip COUNT, not only on the final rows.
+ *
+ * `uniqueIndex` adds the (tenantId, roleId, permission) unique index that
+ * `AddRolePermissionUniqueIndex1790000017000` creates on real databases.
  */
-async function createSeededDataSource(): Promise<{
+async function createSeededDataSource({ uniqueIndex = false } = {}): Promise<{
 	dataSource: DataSource;
 	queryRunner: QueryRunner;
 	recorded: Recorded[];
@@ -96,6 +132,12 @@ async function createSeededDataSource(): Promise<{
 	});
 
 	await dataSource.initialize();
+
+	if (uniqueIndex) {
+		await dataSource.manager.query(
+			`CREATE UNIQUE INDEX "IDX_role_permission_unique" ON "role_permission" ("tenantId", "roleId", "permission")`
+		);
+	}
 
 	for (let t = 0; t < TENANT_COUNT; t++) {
 		const tenantId = `tenant-${t}`;
@@ -269,6 +311,114 @@ describe('RolePermissionUtils.migrateRolePermissions', () => {
 
 			jest.restoreAllMocks();
 			await dataSource.destroy();
+		});
+	});
+
+	describe('two processes reloading at the same time', () => {
+		/**
+		 * The race that filled production with duplicates: another process inserts a role's missing
+		 * permissions after this one has read them as missing. With the unique index in place the
+		 * second insert must skip those rows. Failing instead is worse than it looks: the reload
+		 * migrations catch the error and move on, so every tenant after this one would silently miss
+		 * its new permissions.
+		 */
+		it('skips rows the other process inserted first, and leaves them as they were', async () => {
+			const { dataSource, queryRunner } = await createSeededDataSource({ uniqueIndex: true });
+
+			// The other process gets there first.
+			await RolePermissionUtils.migrateRolePermissions(queryRunner);
+
+			const roleId = `tenant-0-${RolesEnum.EMPLOYEE}`;
+			const defaults = DEFAULT_ROLE_PERMISSIONS.find((entry) => entry.role === RolesEnum.EMPLOYEE);
+			const enabledByDefault = (defaults?.defaultEnabledPermissions ?? [])[0] as string;
+			await dataSource.manager.query(
+				`UPDATE "role_permission" SET "enabled" = 0 WHERE "roleId" = ? AND "permission" = ?`,
+				[roleId, enabledByDefault]
+			);
+
+			// CONTROL: the fixture enforces the index, so a plain duplicate insert is refused. Without
+			// this, the pass below could come from a table that accepts duplicates.
+			await expect(
+				dataSource.manager.query(
+					`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled") VALUES (?, ?, ?, ?, ?)`,
+					['duplicate-probe', 'tenant-0', roleId, enabledByDefault, 1]
+				)
+			).rejects.toThrow(/UNIQUE constraint failed/);
+
+			// This process read before the other one inserted, so it still sees every permission missing.
+			jest.spyOn(RolePermissionUtils as any, 'getExistingPermissions').mockResolvedValue(new Set<string>());
+
+			await expect(RolePermissionUtils.migrateRolePermissions(queryRunner)).resolves.toBeUndefined();
+
+			const [{ total }] = await dataSource.manager.query(`SELECT COUNT(*) AS total FROM "role_permission"`);
+			expect(Number(total)).toBe(EXPECTED_ROLE_COUNT * ALL_PERMISSIONS.length);
+
+			// The existing row was skipped, not overwritten: the operator's change survives.
+			const rows = await dataSource.manager.query(
+				`SELECT "enabled" FROM "role_permission" WHERE "roleId" = ? AND "permission" = ?`,
+				[roleId, enabledByDefault]
+			);
+			expect(rows).toHaveLength(1);
+			expect(Number(rows[0].enabled)).toBe(0);
+
+			jest.restoreAllMocks();
+			await dataSource.destroy();
+		});
+	});
+
+	describe('demo mode', () => {
+		/**
+		 * In demo mode the reload INSERTS every missing permission EXCEPT the account- and data-deletion
+		 * pair. This is the case CI used to run by accident (through `.env.local`); here it runs on
+		 * purpose, with its own expected count.
+		 *
+		 * Scope, stated so nobody reads more into it: the reload only ever adds rows, so it never removes
+		 * a deletion grant a tenant already holds, and these tests start from an empty `role_permission`
+		 * table. Demo tenants are kept free of those grants by the seed (`role-permission.seed.ts`) and
+		 * `RolePermissionService.updateRolesAndPermissions`, both of which skip the same pair in demo mode.
+		 * `PermissionGuard` itself has no demo-mode rule.
+		 */
+		let dataSource: DataSource;
+
+		beforeAll(async () => {
+			environment.demo = true;
+			const built = await createSeededDataSource();
+			dataSource = built.dataSource;
+			await RolePermissionUtils.migrateRolePermissions(built.queryRunner);
+		});
+
+		afterAll(async () => {
+			environment.demo = false;
+			jest.restoreAllMocks();
+			await dataSource.destroy();
+		});
+
+		it('grants every role all permissions except the two deletion permissions', async () => {
+			// 211 permissions today, so 209 per role.
+			const expectedPerRole = ALL_PERMISSIONS.length - DEMO_EXCLUDED_PERMISSIONS.length;
+
+			// CONTROL: the exclusion list must actually name permissions that exist, or the count
+			// below would equal the non-demo count and prove nothing.
+			for (const permission of DEMO_EXCLUDED_PERMISSIONS) {
+				expect(ALL_PERMISSIONS).toContain(permission);
+			}
+
+			const perRole: Array<{ roleId: string; total: number }> = await dataSource.manager.query(
+				`SELECT "roleId", COUNT(*) AS total FROM "role_permission" GROUP BY "roleId"`
+			);
+			expect(perRole).toHaveLength(EXPECTED_ROLE_COUNT);
+			for (const { total } of perRole) {
+				expect(Number(total)).toBe(expectedPerRole);
+			}
+		});
+
+		it('never grants the deletion permissions to any role', async () => {
+			const placeholders = DEMO_EXCLUDED_PERMISSIONS.map(() => '?').join(', ');
+			const [{ total }] = await dataSource.manager.query(
+				`SELECT COUNT(*) AS total FROM "role_permission" WHERE "permission" IN (${placeholders})`,
+				DEMO_EXCLUDED_PERMISSIONS
+			);
+			expect(Number(total)).toBe(0);
 		});
 	});
 });

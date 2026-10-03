@@ -71,7 +71,7 @@
 					[item]="subItem"
 					[parent]="item"
 					[collapse]="state"
-					[selected]="subItem === selectedChildren && selected"
+					[selected]="selected && isSelectedChild(subItem)"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
 			</div>
@@ -98,7 +98,7 @@
 				[collapse]="true"
 				[tooltipDisabled]="true"
 				[trackActiveRoute]="false"
-				[selected]="subItem === selectedChildren && selected"
+				[selected]="selected && isSelectedChild(subItem)"
 				(focusItemChange)="focusOn($event)"
 			></ga-children-menu-item>
 			}

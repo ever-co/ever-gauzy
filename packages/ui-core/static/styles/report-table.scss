@@ -1,0 +1,482 @@
+@use 'var' as *;
+
+// ═══ Report tables ══════════════════════════════════════════════════════════
+//
+// The shared chrome for the row-table reports — Apps & URLs, Weekly limits,
+// Daily limits, Project budgets, Client budgets. All five are built from the
+// same skeleton, which `report.scss` supplies the bones of:
+//
+//   .card                        one group, or the whole table
+//     nb-card-header.card-title  the group label, where there is one
+//     nb-card-body
+//       .columns-header
+//         .table-inner-wrapper > .responsive-table-row × n
+//       .cart-body.project-row / .client-row
+//         .table-row / .table-row-custom > .activity-row
+//           .table-inner-wrapper > .responsive-table-row × n
+//
+// Each page used to restyle that skeleton on its own, and the five had drifted
+// apart: different row heights, different type sizes, different numbers of
+// nested panels. What they share is here; what stays in a page's own sheet is
+// its column widths and anything genuinely particular to it.
+//
+// ── Panels ──
+// The skeleton nests two or three levels of wrapper per row, and every level
+// used to paint its OWN `gauzy-card-1` panel with its own 10px of padding above
+// and below — `.table-row` also carried a hard `height: 86px`. Three or four
+// edges of one colour inside each other is three or four edges the eye has to
+// resolve before it reaches a number, and the stacked padding left ~40px of
+// dead space between one row and the next.
+//
+// Here the surface is drawn ONCE, by the card. Everything inside it is
+// transparent and the structure is carried by hairlines.
+//
+// ── Hairlines ──
+// One weight, used in three places: the card's own edge, under the column
+// labels, and between two rows. `border-basic-color-2` is two steps down the
+// app's border ramp from where these lines started —
+//
+//   border-basic-color-2  dark: rgba(255, 255, 255, 0.08)   light: #edf1f7
+//   border-basic-color-4  dark: rgba(255, 255, 255, 0.12)   light: #e4e9f2
+//
+// — because a table is mostly lines, and at 0.12 white the grid read louder
+// than the data in it.
+//
+// They are BORDERS, not `box-shadow` rings. The ring is the app's usual idiom
+// (it costs no layout box, so nothing reflows) but it cannot be used here: a
+// ring paints 1px OUTSIDE the border box, these cards sit flush against the
+// left edge of `.report-container`, and that container is `overflow: auto` —
+// so the left-hand edge of every ring fell outside the scroll box and was
+// clipped away. Measured on the running app: container content box starts at
+// x=286, card at x=286, ring at x=285. The right-hand edge survived because the
+// container has 8px of padding on that side, which is why the cards looked like
+// they had three sides. Borders paint inside the box and cannot be clipped.
+
+$report-cell-font-size: 12px;
+$report-header-font-size: 11px;
+$report-row-gutter: 16px;
+$report-column-gap: 12px;
+
+// Air above and below a row's contents.
+//
+// This is real padding rather than more `min-height`, because the two behave
+// differently on the rows that matter: `min-height` is a floor a tall cell
+// simply ignores, so a two-line project chip sat flush against the hairline
+// above it while a one-line row looked fine. Padding is added to whatever the
+// cell turns out to be, so every row keeps the same air whatever is in it.
+//
+// The `min-height` each report passes is the row's FINISHED height, padding
+// included — `box-sizing: border-box` is on, so the two are not additive.
+$report-row-padding-y: 0.5rem;
+
+// The width of the amount in the Budget cell on the two budget reports.
+//
+// It is shared because three things have to agree on it: the amount, the bar
+// that starts where the amount ends, and the column's own heading, which has to
+// sit over the amount rather than over the bar. Sized for the longest value
+// either report produces — `122:00:00 Hours`, about 100px at 12px — with room
+// left for a longer currency code than `BGN`.
+$report-budget-amount-width: 140px;
+
+// One column of a report table.
+//
+// Every column is sized from the ROW rather than from what is in it, so the
+// header and the body land on one grid. `flex-basis` is a percentage or a fixed
+// px everywhere except the one column given `$basis: auto`, which takes the
+// remainder via `flex: 1 1 0` — that resolves identically above and below,
+// whatever text happens to be in it. A content-based basis would not, and the
+// header would drift off its column as soon as one cell ran long.
+//
+// The widths these replace were plain `width` values, which a flex item ignores
+// once it has a basis, and which summed to more than 100% on three of the five
+// tables — so the columns were being shrunk by a different amount on each page.
+@mixin report-column($basis, $min: 0, $max: none) {
+	@if $basis == auto {
+		flex: 1 1 0;
+	} @else {
+		flex: 0 0 $basis;
+	}
+	min-width: $min;
+	max-width: $max;
+}
+
+// Colours for an `ng-select` standing in a report page header.
+//
+// `ng-select-overrides()` in `gauzy/_gauzy-overrides.scss` gives these controls
+// their size, padding and radius but sets no colour at all, so they keep the
+// library's own theme: a WHITE trigger. On the dark themes that put near-white
+// text on a white pill — measured rgb(255, 255, 255) behind rgb(250, 250, 250)
+// on the Payments and Expense headers, i.e. a selected currency that could not
+// be read at all, while the `nb-select`s beside them sat correctly on
+// rgb(18, 18, 20).
+//
+// `!important` on the background is not decoration: the note on that mixin
+// explains that `@ng-select/ng-select/themes/default.theme.css` is listed after
+// `styles.scss` in the app's `styles` array and the library's component styles
+// are injected later still, so they win every specificity tie. This overrides
+// that one declaration.
+//
+// Include it inside a `:host ::ng-deep` block so it stays on the page that asks
+// for it — the dropdown panel is appended to `body` and deliberately out of
+// reach here, rather than restyled app-wide from a single report's stylesheet.
+@mixin report-filter-select() {
+	.ng-select .ng-select-container {
+		background-color: nb-theme(gauzy-card-1) !important;
+		color: nb-theme(text-basic-color);
+	}
+
+	.ng-select .ng-select-container .ng-value-container .ng-placeholder {
+		color: nb-theme(text-hint-color);
+	}
+
+	.ng-select .ng-select-container .ng-value-container .ng-value,
+	.ng-select .ng-select-container .ng-value-container .ng-value-label {
+		color: nb-theme(text-basic-color);
+	}
+
+	.ng-select .ng-arrow-wrapper .ng-arrow,
+	.ng-select .ng-clear-wrapper {
+		color: nb-theme(text-hint-color);
+	}
+}
+
+@mixin report-table($row-min-height: 36px) {
+	// ── Card ────────────────────────────────────────────────────────────────
+
+	:host .card {
+		margin-bottom: 0;
+		// Clips the first and last row's hover fill to the card's own radius.
+		overflow: hidden;
+		border: 1px solid nb-theme(border-basic-color-2);
+		border-radius: nb-theme(border-radius);
+		background-color: nb-theme(gauzy-card-1);
+		// Outranks Nebular's own `nb-card { box-shadow: var(--card-shadow) }`,
+		// which would otherwise draw a second, softer edge outside this one.
+		box-shadow: none;
+
+		// These cards are flex items — of `.weekly-logs` on the budget reports and
+		// on Apps & URLs, of `.table` on the limit reports — and `overflow: hidden`
+		// above changes their automatic minimum size from `min-content` to ZERO.
+		// Without this they are free to shrink below their own rows, and on Apps &
+		// URLs they did: with four date groups inside a `.weekly-logs` of definite
+		// height, every card was squeezed to about a third of its content and the
+		// rest was cut off by the very `overflow: hidden` that allowed it.
+		// `flex-shrink: 0` puts the height back under the content's control and
+		// lets `.report-container` scroll, which is what it is `overflow: auto` for.
+		flex: 0 0 auto;
+	}
+
+	// The group label — a date, an employee chip or a project chip. `report.scss`
+	// gives every `nb-card-header` on a report page 20px of padding, which is the
+	// PAGE card's step; this one heads a row of ~36px and needs the tighter one.
+	//
+	// Two element names because two of these reports build a group from an
+	// accordion rather than a card — Time & Activity and the manual time edits —
+	// and both spell the group with the same `.card` / `.card-title` classes.
+	:host .card nb-card-header.card-title,
+	:host .card nb-accordion-item-header.card-title {
+		padding: 12px $report-row-gutter 10px;
+		// A tinted strip, so the group label reads as a band ACROSS the table
+		// rather than as a first line of content sharing the rows' surface.
+		//
+		// Not `gauzy-card-2`, which the row hover already uses — a header painted
+		// the same as a hovered row would look like one. `background-basic-color-2`
+		// is a step off the card in both themes without being a third colour:
+		// rgba(24, 24, 27, 1) on the dark card's rgba(18, 18, 20, 1), and #f7f9fc
+		// on the light card's white.
+		background-color: nb-theme(background-basic-color-2);
+		font-size: 13px;
+		font-weight: 600;
+		line-height: 18px;
+		color: nb-theme(text-basic-color);
+	}
+
+	// Transparent, so the card paints one surface from its header down to its
+	// last row. `report.scss` fills this with `gauzy-card-2`, which on the dark
+	// themes is a LIGHTER wash than `gauzy-card-1` — that is what made the body
+	// read as a second panel sitting inside the card.
+	//
+	// Three inherited rules to undo besides the fill:
+	//   * `.card-scroll nb-card nb-card-body { height: 100% }` in
+	//     `_overrides.scss` is written for the ONE card a page hangs off and
+	//     reaches these nested bodies as a descendant;
+	//   * the `overflow: hidden` it comes with zeroes this body's automatic
+	//     minimum size too, so it can be shrunk by its card exactly as the card
+	//     could be shrunk by its container;
+	//   * `.budget-container`'s `padding-bottom: 6px !important`, which can only
+	//     be answered in kind.
+	:host .card nb-card-body,
+	:host .card nb-accordion-item-body .item-body {
+		flex: 0 0 auto;
+		height: auto;
+		padding: 0;
+		overflow: visible;
+		border-radius: 0;
+		background-color: transparent;
+		// Nebular sets `font-size` on the card body from `card-text-font-size`
+		// (14px), which lands BELOW `:host` in the cascade — so setting the table's
+		// type size on the host alone never reached a single cell.
+		font-size: $report-cell-font-size;
+		line-height: 16px;
+
+		&.budget-container {
+			padding-bottom: 0 !important;
+		}
+	}
+
+	// `report.scss` paints the accordion body with `gauzy-sidebar-background-2`,
+	// a different surface again from the card it sits in, so an expanded group
+	// read as a panel inside a panel exactly as the nested row wrappers used to.
+	:host .card nb-accordion-item-body {
+		background-color: transparent;
+		border-radius: 0;
+	}
+
+	// ── Column header ───────────────────────────────────────────────────────
+
+	// Was a filled `gauzy-card-2` bar with an 8px radius floating inside the card
+	// — a third panel, for five words of label. A rule underneath does the same
+	// work without adding a surface.
+	.columns-header {
+		margin-bottom: 0;
+		padding: 0;
+		border-bottom: 1px solid nb-theme(border-basic-color-2);
+		border-radius: 0;
+		background-color: transparent;
+		font-size: $report-header-font-size;
+		font-weight: 600;
+		line-height: 14px;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: nb-theme(text-hint-color);
+
+		.table-inner-wrapper {
+			min-height: 32px;
+		}
+	}
+
+	// ── Rows ────────────────────────────────────────────────────────────────
+
+	// The group wrappers. All three levels were panels; none of them is now.
+	.project-row,
+	.client-row,
+	.table-row,
+	.table-row-custom {
+		margin-bottom: 0;
+		padding: 0;
+		border-radius: 0;
+		background-color: transparent;
+	}
+
+	// `.table-row` also carried `height: 86px` — a hard height for a row holding
+	// one line of text, which is most of where these tables' emptiness came from.
+	.table-row {
+		height: auto;
+		min-height: $row-min-height;
+	}
+
+	// One rule BETWEEN rows, and never after the last one, so a card does not end
+	// on a hairline it already draws for itself with its border.
+	//
+	// The three selectors are the same idea at whichever level a page happens to
+	// repeat: `.project-row`/`.client-row` per row on the budget reports, and per
+	// GROUP on Apps & URLs; `.table-row` per row on the limit reports.
+	.project-row + .project-row,
+	.client-row + .client-row,
+	.table-row + .table-row {
+		border-top: 1px solid nb-theme(border-basic-color-2);
+	}
+
+	.table-inner-wrapper {
+		min-height: $row-min-height;
+		padding: $report-row-padding-y $report-row-gutter;
+		gap: $report-column-gap;
+		// `report.scss` sets `space-between`, which hands every column an equal
+		// share of whatever width is left over. On the tables whose columns are
+		// all fixed that pushed the last one hard against the right edge and blew
+		// the gaps between the rest out to ~95px, so a row read as a handful of
+		// scattered values rather than as a set of columns.
+		//
+		// Packed from the start instead: the gap between two columns is always
+		// `$report-column-gap`, and any slack is left at the END of the row. The
+		// header and the body are laid out by the same rule, so they stay on one
+		// grid either way.
+		justify-content: flex-start;
+	}
+
+	// An empty GROUP — a date card on the limit reports with nobody on it.
+	//
+	// Deliberately not `ngx-no-data-message`: that is the WHOLE report's empty
+	// state and draws a 48px icon at `height: 100%`, so one per date card would
+	// be several times louder than the data it is standing in for, and a week of
+	// quiet days would fill the page with chart icons.
+	//
+	// This reads as the card's own content area instead — the rule the column
+	// header would have drawn, the gutter a row would have used, and the muted
+	// colour the column labels use. It was a bare `.ml-3` div before: a bootstrap
+	// left margin and nothing else, so once the card body's padding went it sat
+	// hard against the date above it with no vertical space at all.
+	.report-empty-group {
+		display: flex;
+		align-items: center;
+		min-height: $row-min-height;
+		padding: $report-row-padding-y $report-row-gutter;
+		border-top: 1px solid nb-theme(border-basic-color-2);
+		font-size: $report-cell-font-size;
+		line-height: 16px;
+		color: nb-theme(text-hint-color);
+	}
+
+	// The only hover surface in the table, and it is per-ROW. Where a page merges
+	// a cell down a group — the employee and project cells on Apps & URLs —
+	// lighting the whole group would highlight cells that belong to every row in
+	// it at once.
+	.table-row:hover > .table-inner-wrapper,
+	.activity-row:hover > .table-inner-wrapper {
+		background-color: nb-theme(gauzy-card-2);
+	}
+
+	// ── Cells ───────────────────────────────────────────────────────────────
+
+	// `report.scss` hangs a 10px trailing margin off every one of these, which
+	// also applied to the LAST column and so stopped it short of the card's own
+	// right edge. The wrapper's `gap` replaces it.
+	:host .responsive-table-row {
+		@include nb-ltr(margin-right, 0);
+		@include nb-rtl(margin-left, 0);
+		min-width: 0;
+		font-size: $report-cell-font-size;
+		line-height: 16px;
+	}
+
+	// `report.scss` nudges the avatar chip down 5px, which reads as centred only
+	// in the taller rows that rule was written for.
+	.avatar-wrapper-outer {
+		padding-top: 0;
+		max-width: 100%;
+	}
+
+	// The project chip carries the same 5px nudge, for the same reason.
+	:host ::ng-deep ga-project-column-view .single-project-template {
+		padding-top: 0;
+	}
+
+	// The activity badge. `report.scss` sets it at 14px, which was the row's own
+	// size — but with the table at 12 it became the single largest piece of text
+	// in the row, so a percentage outranked the employee it belonged to. Same
+	// size as the figures beside it now, with enough padding to still read as a
+	// pill rather than as a coloured word.
+	:host nb-badge {
+		padding: 2px 6px;
+		font-size: $report-cell-font-size;
+		font-weight: 600;
+		line-height: 16px;
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: 'tnum' 1;
+	}
+
+	// Lining figures for every numeric cell, so a column of durations, hours and
+	// currency lines up on the digit rather than on the glyph widths of whatever
+	// font happens to be loaded.
+	.duration-span,
+	.currency-span,
+	.day-col {
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: 'tnum' 1;
+	}
+
+	// ── Progress ────────────────────────────────────────────────────────────
+	//
+	// `ngx-progress-status` is shared with the desktop recap views, so none of
+	// this is changed at the source. The selector is deliberately long enough to
+	// outrank that component's own `:host-context(.report-progress)` rules,
+	// including the `!important` sitting on the bar's height.
+
+	:host ::ng-deep .responsive-table-row .responsive-table-content ngx-progress-status.report-progress {
+		width: 100%;
+
+		.wrapper {
+			width: 100%;
+			align-items: center;
+			gap: 10px;
+		}
+
+		// Right-aligned and in lining figures: percentages are read down the
+		// column, and left-aligned they staggered by a digit between `4.26%` and
+		// `0.48%`.
+		//
+		// 54px and `nowrap`, because the widest value here is not the `4.26%` the
+		// Apps & URLs report happens to produce: the limit and budget reports run
+		// to `104.57%`, and at the 44px this started as the `%` was wrapping onto
+		// a second line on about half the rows of both.
+		.percentage-col {
+			flex: 0 0 auto;
+			width: 54px;
+			margin: 0;
+			white-space: nowrap;
+			text-align: right;
+			font-size: $report-cell-font-size;
+			line-height: 16px;
+			font-variant-numeric: tabular-nums;
+			font-feature-settings: 'tnum' 1;
+			color: nb-theme(text-hint-color);
+		}
+
+		// Was a hard `75%` of the cell, which left a ragged strip of unused track
+		// at the end of every row. The bar takes whatever the percentage does not.
+		.progress-col {
+			flex: 1 1 auto;
+			width: auto;
+			align-items: center;
+		}
+
+		nb-progress-bar {
+			width: 100%;
+		}
+
+		// 10px down to 4px. At the old height the bar was the heaviest object on a
+		// row of 12px text, and read as the subject of the table rather than as a
+		// scale for the number beside it.
+		// The track is the one thing here NOT drawn in the hairline colour. It is a
+		// control rather than a rule — it has to show how much of the bar is
+		// unfilled — and at `border-basic-color-2` it came out as #f7f9fc on the
+		// light themes, which against a white card is invisible: every bar looked
+		// like a floating green stub with no scale behind it.
+		.progress-container {
+			height: 4px !important;
+			border-radius: 999px;
+			background-color: nb-theme(border-basic-color-4);
+		}
+
+		// A 4px bar rounded to a pill loses its own ends below about 1%: 0.48% of
+		// a 300px track is 1.4px, and the radius eats all of it. The floor keeps
+		// the smallest values on screen as a mark rather than as nothing at all.
+		.progress-value {
+			min-width: 4px;
+			border-radius: 999px;
+		}
+	}
+
+	// ── Narrow ──────────────────────────────────────────────────────────────
+	//
+	// Below `lg`, `report.scss`'s `mobile-table-styles` turns each row into a
+	// stack of label/value pairs. The column widths are stated as `flex-basis`,
+	// which that mixin's `width: 100% !important` cannot undo on a flex item, so
+	// they are handed back explicitly here.
+
+	@include respond(lg) {
+		.responsive-table-row {
+			flex: 1 1 auto;
+		}
+
+		.table-inner-wrapper {
+			gap: 0;
+			padding-left: 10px;
+			padding-right: 10px;
+		}
+
+		.main-column-responsive {
+			background-color: nb-theme(background-basic-color-3);
+		}
+	}
+}

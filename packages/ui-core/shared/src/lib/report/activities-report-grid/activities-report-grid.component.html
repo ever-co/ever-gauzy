@@ -1,25 +1,34 @@
-<div class="group-by-wrapper">
-	<div class="label">
-		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+@if (showGroupBy) {
+	<div class="group-by-wrapper">
+		<div class="label">
+			{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+		</div>
+		<div>
+			<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
+				<nb-option value="date">
+					{{ 'REPORT_PAGE.DATE' | translate }}
+				</nb-option>
+				<nb-option value="employee">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</nb-option>
+				<nb-option value="project">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</nb-option>
+			</nb-select>
+		</div>
 	</div>
-	<div>
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
-			<nb-option value="date">
-				{{ 'REPORT_PAGE.DATE' | translate }}
-			</nb-option>
-			<nb-option value="employee">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</nb-option>
-			<nb-option value="project">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</nb-option>
-		</nb-select>
-	</div>
-</div>
+}
 <div class="weekly-logs row-table" [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 	<ng-template #columnsHeader>
+		<!--
+			`font-weight-bold align-items-center` used to sit on the wrapper. Both
+			were redundant with the stylesheet — `.table-inner-wrapper` already
+			centres its items — and the bootstrap utility carries `!important`,
+			which pinned the column labels at 700 and made the 600 they are set in
+			unreachable from SCSS.
+		-->
 		<div class="columns-header">
-			<div class="table-inner-wrapper font-weight-bold align-items-center">
+			<div class="table-inner-wrapper">
 				@if (groupBy != 'date') {
 					<div class="responsive-table-row employee-column">
 						{{ 'REPORT_PAGE.DATE' | translate }}

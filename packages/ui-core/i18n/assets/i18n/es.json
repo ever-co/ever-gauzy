@@ -818,6 +818,7 @@
 		"SKILLS": "Habilidades.",
 		"PRIVACY": "Privacidad",
 		"SELECT_TIMEZONE": "Seleccionar zona horaria",
+		"SELECT_TIMEZONE_HINT": "Los horarios de las citas se muestran en esta zona horaria.",
 		"SHOW_AVERAGE_BONUS": "Mostrar Bono Promedio",
 		"SHOW_AVERAGE_INCOME": "Mostrar Ingreso Promedio",
 		"SHOW_PAYPERIOD": "Mostrar período de pago",
@@ -1758,6 +1759,19 @@
 		"TIME_TRACKING": "Seguimiento del tiempo",
 		"PROJECT_MANAGEMENT": "Gestión de Proyectos",
 		"EMPLOYEE_STATISTICS": "Estadísticas de empleados",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} empleados",
+			"OF_INCOME": "{{ value }}% de los ingresos",
+			"MARGIN": "{{ value }}% de margen",
+			"BREAKDOWN": "Ingresos por empleado",
+			"NO_DATA": "No hay actividad financiera en este período",
+			"NO_DATA_HINT": "Los ingresos y gastos registrados en este rango de fechas aparecerán aquí.",
+			"NO_EMPLOYEES": "No hay registros de empleados para este período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Ascendente",
+			"SORT_DESCENDING": "Descendente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor seleccione un mes y empleado del menú de arriba.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insertar texto para usuarios no autenticados",
 		"CHARTS": {
@@ -2444,6 +2458,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Permite al empleado salir de la aplicación del Agente. Cuando esté deshabilitado, la opción de salida estará bloqueada en la aplicación del Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Permitir cerrar sesión de la aplicación del Agente",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permite al empleado cerrar sesión de la aplicación del Agente. Cuando esté deshabilitado, la opción de cierre de sesión estará bloqueada en la aplicación del Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Protección de trabajadores del EEE / Reino Unido activa",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "En organizaciones y para trabajadores del EEE o del Reino Unido, los trabajadores siempre pueden salir y cerrar sesión del agente de escritorio. Una captura que el trabajador no puede interrumpir es difícil de justificar según el RGPD y el art. 8 del CEDH, por lo que estas restricciones no están disponibles aquí.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirmar la restricción de salida o cierre de sesión del agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Con esta restricción, el trabajador no puede impedir que el agente de escritorio lo capture. Confirme que ha evaluado que es lícito y proporcionado para esta plantilla y que asume la responsabilidad. Su confirmación queda registrada en su cuenta.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Rastrear actividad de teclado y ratón",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Habilitar el seguimiento completo de la actividad del teclado y ratón, incluyendo pulsaciones de teclas y movimientos exactos del ratón en todas las aplicaciones de escritorio y de la aplicación del Agente.",
 				"TRACK_ALL_DISPLAYS": "Rastrear todas las pantallas",
@@ -2715,7 +2733,10 @@
 		"ADDRESS": "Dirección",
 		"ADDRESS_2": "Dirección 2",
 		"MEMBERS": "Miembros",
-		"BUDGET": "Presupuesto"
+		"BUDGET": "Presupuesto",
+		"PHOTO_HINT": "Haz clic o suelta una imagen para subirla",
+		"SEARCH_EMPLOYEES": "Busca empleados por nombre o correo",
+		"NO_MEMBERS": "Aún no se han añadido miembros"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas.",
@@ -4448,6 +4469,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Supervisión activa: se registran el tiempo y la actividad",
+		"MONITORING_IDLE": "Agente inactivo",
+		"MONITORING_TRAY_ACTIVE": "Supervisión activa, se registra: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Supervisión en pausa: no se registra nada",
+		"MONITORING_CAPTURE_TIME": "tiempo y aplicaciones activas",
+		"MONITORING_CAPTURE_SCREENSHOTS": "capturas de pantalla",
+		"MONITORING_CAPTURE_INPUT": "actividad de teclado y ratón",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Seleccionar cliente",
 			"SELECT_PROJECT": "Seleccionar proyecto",
@@ -4560,7 +4588,7 @@
 			"SELECT_DEFAULT_CDN": "Seleccionar servidor CDN predeterminado para la actualización",
 			"TOGGLE_UPDATE_LOCALLY": "Cambiar a actualizar localmente",
 			"LOCAL_SERVER": "Servidor local",
-			"LOCAL_SERVER_NOTE": "El directorio seleccionado debe contener definitivamente el manifiesto <strong>latest.yml</strong> y/o <strong>latest-mac.yml</strong> para poder realizar la validación de la actualización.",
+			"LOCAL_SERVER_NOTE": "El directorio seleccionado debe contener el manifiesto de actualización de su sistema (Windows: <strong>latest-x64.yml</strong> o <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> o <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) y los archivos de actualización que figuran en él, para poder realizar la validación de la actualización.",
 			"OTHER_SETTINGS": "Otros ajustes",
 			"ALLOW_PRERELEASE_VERSIONS": "Permitir versiones preliminares.",
 			"CHECK_UPDATE_APP_VERSION": "Verifique y actualice la versión de su aplicación.",
@@ -4968,14 +4996,16 @@
 		"TIME_AND_ACTIVITIES": "Tiempo y actividades",
 		"VIEW_SCREEN": "Ver pantalla",
 		"VIEW_INFO": "Ver Información",
-		"MINUTES": "Acta",
+		"MINUTES": "Minutos",
 		"NO_EMPLOYEES_SELECTED": "Por favor seleccione Empleado",
 		"DELETE_CONFIRM": "¿Estás seguro/a de que deseas eliminar estas capturas de pantalla y actividades?",
 		"VISITED_DATES": "Fechas visitadas",
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Capturas de pantalla",
 		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto.",
-		"SCREEN_SELECTED": "{{ count }} Pantalla(s) seleccionada(s)"
+		"SCREEN_SELECTED": "{{ count }} Pantalla(s) seleccionada(s)",
+		"NO_TIME_TRACKED": "Sin tiempo registrado",
+		"MINUTES_TRACKED": "{{ minutes }} min registrados"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos a crear tu primera organización",
@@ -5001,6 +5031,16 @@
 		"BUFFER_AT_START": "Buffer al inicio",
 		"BUFFER_AT_END": "Buffer al final",
 		"BREAK_TIME": "Tiempo de descanso",
+		"DETAILS": "Detalles",
+		"PARTICIPANTS": "Participantes",
+		"FORM_HINT": "Indica de qué trata la reunión, cuándo es y quién asiste.",
+		"DETAILS_HINT": "Agenda, lugar y notas visibles para todos los invitados.",
+		"SCHEDULE": "Horario",
+		"SCHEDULE_HINT": "Elige la fecha y la franja horaria, con margen y pausa opcionales.",
+		"BUFFER_TIME_HINT": "Reserva tiempo libre antes o después de la reunión.",
+		"BREAK_TIME_HINT": "Pausa la reunión para un breve descanso.",
+		"BREAK_START": "La pausa empieza a las",
+		"PARTICIPANTS_HINT": "Personas que reciben la invitación.",
 		"ARE_YOU_SURE": "¿Estás seguro? Esta acción es irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5045,7 +5085,9 @@
 		"CANCEL": "Cancelar cita",
 		"TIMEZONE": "Tu zona horaria:",
 		"CHANGE": "Cambiar",
+		"CHANGE_TIMEZONE": "Cambiar",
 		"SELECT_EMPLOYEE_ERROR": "Por favor, seleccione un empleado.",
+		"SELECT_EMPLOYEE_HINT": "Elige con quién quieres reunirte y luego una hora que te convenga.",
 		"EXPIRED_OR_CANCELLED": "Esta cita ha expirado o ha sido cancelada.",
 		"EMAIL_SENT": "Se ha enviado un correo electrónico al anfitrión, así como a todos los participantes de esta reunión.",
 		"NO_ACTIVE_EVENT_TYPES": "No hay tipos de eventos activos.",
@@ -5320,6 +5362,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "¿No tienes una cuenta?",
 		"FORGOT_PASSWORD_TITLE": "¿Olvidaste tu contraseña?",
 		"OR_SIGN_IN_WITH": "O inicie sesión con",
+		"SIGN_IN_WITH_EVER_ID": "Iniciar sesión con Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Iniciar sesión con Keycloak",
 		"FORGOT_EMAIL_TITLE": "¿Olvidó su correo electrónico?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Iniciar sesión con un código mágico",

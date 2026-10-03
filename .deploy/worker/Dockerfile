@@ -73,6 +73,8 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
+COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -187,6 +189,8 @@ COPY --chown=node:node packages/plugins/integration-make-com/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
 COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
+COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -380,6 +384,8 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
     if [ -d /mnt/packages/plugins/integration-ever-async/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-async/node_modules ./node_modules/@gauzy/plugin-integration-ever-async/; fi && \
+    if [ -d /mnt/packages/plugins/auth-keycloak/node_modules ]; then cp -r /mnt/packages/plugins/auth-keycloak/node_modules ./node_modules/@gauzy/plugin-auth-keycloak/; fi && \
+    if [ -d /mnt/packages/plugins/auth-zitadel/node_modules ]; then cp -r /mnt/packages/plugins/auth-zitadel/node_modules ./node_modules/@gauzy/plugin-auth-zitadel/; fi && \
     cp -r /mnt/packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
     cp -r /mnt/packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
     cp -r /mnt/packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \

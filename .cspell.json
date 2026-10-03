@@ -1260,7 +1260,14 @@
 		"toplevel",
 		"reimplementation",
 		"strategized",
-		"unwindowed"
+		"unwindowed",
+		"internmap",
+		"zitadel",
+		"backchannel",
+		"resourceowner",
+		"jtis",
+		"reauth",
+		"NOSONAR"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

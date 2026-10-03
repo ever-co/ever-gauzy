@@ -176,13 +176,39 @@
 
 <!-- Read-only View. The projected content is gated here (not inside the drawer)
      so the record renderer is built fresh for each task that is opened. -->
-<ngx-record-view-drawer
-	[open]="!!viewedTask"
-	[heading]="viewHeadingKey"
-	[subtitle]="viewedTask?.title"
-	(closed)="closeView()"
->
+<ngx-record-view-drawer [open]="!!viewedTask" [heading]="viewHeadingKey" [wide]="true" (closed)="closeView()">
 	@if (viewedTask) {
-		<ngx-record-view [record]="viewedTask" [sections]="viewSections"></ngx-record-view>
+		<ngx-record-view
+			[record]="viewedTask"
+			[sections]="viewSections"
+			[placeholder]="'SM_TABLE.NONE' | translate"
+		>
+			<!-- Issue-style header: project / key, title, status. -->
+			<header recordViewHeader class="task-view-header">
+				<div class="task-view-crumbs">
+					@if (viewedTask.project?.name) {
+						<span class="task-view-project">
+							@if (viewedTask.project.imageUrl) {
+								<img [src]="viewedTask.project.imageUrl" alt="" />
+							} @else {
+								<nb-icon icon="folder-outline"></nb-icon>
+							}
+							<span class="task-view-project-name">{{ viewedTask.project.name }}</span>
+						</span>
+						<nb-icon class="task-view-sep" icon="chevron-right-outline"></nb-icon>
+					}
+					<span class="task-view-key">{{ $any(viewedTask).taskNumber | hash }}</span>
+				</div>
+				<h2 class="task-view-title">{{ viewedTask.title }}</h2>
+				@if (viewStatus) {
+					<span
+						class="task-view-status"
+						[class]="'tone-' + viewStatus.tone"
+						[style.--status-color]="viewStatus.color"
+						>{{ viewStatus.text }}</span
+					>
+				}
+			</header>
+		</ngx-record-view>
 	}
 </ngx-record-view-drawer>

@@ -181,3 +181,98 @@
 		}
 	}
 }
+
+// ─── Row / node actions menu (`DOCS_ACTION_MENU_CLASS`) ─────────────
+// The kebab menus of the tree, the table and the cards render in the CDK overlay,
+// outside every docs component, so this block is deliberately global (`::ng-deep`
+// with no `:host`). It lives here because the shell wraps every Documents route,
+// so the rules are loaded whichever surface opens the menu.
+::ng-deep .cdk-overlay-pane.gz-docs-action-menu {
+	nb-context-menu {
+		min-width: 14rem;
+		max-width: 18rem;
+		padding: 0.25rem;
+		border-radius: 0.5rem;
+		box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.28);
+
+		.arrow {
+			display: none;
+		}
+	}
+
+	nb-menu .menu-item {
+		border: 0;
+	}
+
+	nb-menu .menu-item a {
+		gap: 0.625rem;
+		padding: 0.375rem 0.625rem;
+		border-radius: 0.375rem;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		line-height: 1.25rem;
+		color: var(--text-basic-color);
+		cursor: pointer;
+		transition: background-color 0.12s ease;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--background-basic-color-2);
+			color: var(--text-basic-color);
+		}
+
+		.menu-icon {
+			width: 1rem;
+			height: 1rem;
+			margin: 0;
+			font-size: 1rem;
+			color: var(--text-hint-color);
+		}
+
+		&:hover .menu-icon:not([class*='status-']) {
+			color: var(--text-basic-color);
+		}
+
+		// Keyboard hint (tree only: F2, Del) — a quiet key cap, not a status pill.
+		nb-badge {
+			padding: 0.0625rem 0.3125rem;
+			border: 1px solid var(--border-basic-color-4);
+			border-radius: 0.25rem;
+			background: transparent;
+			color: var(--text-hint-color);
+			font-size: 0.625rem;
+			font-weight: 600;
+			line-height: 1rem;
+		}
+	}
+
+	// Destructive item (Delete): the icon carries `status: 'danger'`; the label follows it.
+	nb-menu .menu-item a:has(nb-icon.status-danger) {
+		.menu-title {
+			color: var(--text-danger-color);
+		}
+
+		&:hover {
+			background: rgba(255, 61, 113, 0.1);
+		}
+	}
+
+	// Section divider: an empty `group` item.
+	nb-menu li.menu-item.menu-group {
+		height: 1px;
+		margin: 0.25rem 0.375rem;
+		padding: 0;
+		overflow: hidden;
+		background: var(--border-basic-color-3);
+
+		> span {
+			display: none;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	::ng-deep .cdk-overlay-pane.gz-docs-action-menu nb-menu .menu-item a {
+		transition: none;
+	}
+}

@@ -820,6 +820,7 @@
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Select Timezone",
+		"SELECT_TIMEZONE_HINT": "זמני הפגישות מוצגים באזור זמן זה.",
 		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
 		"SHOW_AVERAGE_INCOME": "Show Average Income",
 		"SHOW_PAYPERIOD": "Show Pay Period",
@@ -1800,6 +1801,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
+			"OF_INCOME": "{{ value }}% מההכנסה",
+			"MARGIN": "שולי רווח של {{ value }}%",
+			"BREAKDOWN": "הכנסות לפי עובד",
+			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
+			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
+			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
+			"SORT_BY": "מיון לפי {{ name }}",
+			"SORT_LABEL": "מיון לפי",
+			"SORT_ASCENDING": "סדר עולה",
+			"SORT_DESCENDING": "סדר יורד"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -2482,6 +2496,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "אפשר לעובד לצאת מאפליקציית הסוכן. כאשר מושבת, אפשרות היציאה תיחסם באפליקציית הסוכן.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "אפשר התנתקות מאפליקציית הסוכן",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "אפשר לעובד להתנתק מאפליקציית הסוכן. כאשר מושבת, אפשרות ההתנתקות תיחסם באפליקציית הסוכן.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "הגנת עובדים באזור הכלכלי האירופי / בבריטניה פעילה",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "עבור ארגונים ועובדים באזור הכלכלי האירופי או בבריטניה, עובדים יכולים תמיד לצאת מסוכן שולחן העבודה ולהתנתק ממנו. קשה להצדיק תיעוד שהעובד אינו יכול להפסיק לפי GDPR וסעיף 8 לאמנה האירופית לזכויות אדם, ולכן הגבלות אלה אינן זמינות כאן.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "אישור הגבלת יציאה או התנתקות מהסוכן",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "עם הגבלה זו העובד אינו יכול לעצור את התיעוד על ידי סוכן שולחן העבודה. אשרו שבדקתם שהדבר חוקי ומידתי עבור עובדים אלה ושאתם נוטלים עליו אחריות. האישור שלכם נרשם בחשבון שלכם.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "עקוב אחר פעילות המקלדת והעכבר",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "הפעל מעקב מלא אחר פעילות מקלדת ועכבר, כולל לחיצות מקשים ותנועות עכבר מדויקות בכל אפליקציות שולחן העבודה והסוכן.",
 				"TRACK_ALL_DISPLAYS": "עקוב אחר כל המסכים",
@@ -2738,7 +2756,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -4459,6 +4480,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "הניטור פעיל: מתועדים זמן ופעילות",
+		"MONITORING_IDLE": "הסוכן במצב המתנה",
+		"MONITORING_TRAY_ACTIVE": "הניטור פעיל, מתועד: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "הניטור מושהה: שום דבר אינו מתועד",
+		"MONITORING_CAPTURE_TIME": "זמן ויישומים פעילים",
+		"MONITORING_CAPTURE_SCREENSHOTS": "צילומי מסך",
+		"MONITORING_CAPTURE_INPUT": "פעילות מקלדת ועכבר",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "בחר לקוח",
 			"SELECT_PROJECT": "בחר פרויקט",
@@ -4570,7 +4598,7 @@
 			"SELECT_DEFAULT_CDN": "בחירת שרת CDN בררת מחדל לעדכון",
 			"TOGGLE_UPDATE_LOCALLY": "החלפה לתהליך עדכון מקומי",
 			"LOCAL_SERVER": "שרת מקומי",
-			"LOCAL_SERVER_NOTE": "הספרייה שנבחרה צריכה להכיל לפחות את המדף <strong>latest.yml</strong> ו/או <strong>latest-mac.yml</strong> כדי לבצע אימות עדכונים",
+			"LOCAL_SERVER_NOTE": "הספרייה שנבחרה חייבת להכיל את קובץ המניפסט של העדכון עבור המערכת שלך (Windows: <strong>latest-x64.yml</strong> או <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> או <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) ואת קובצי העדכון המפורטים בו, כדי לבצע אימות עדכונים",
 			"OTHER_SETTINGS": "הגדרות נוספות",
 			"ALLOW_PRERELEASE_VERSIONS": "אפשר גרסאות גרסה חשמלית",
 			"CHECK_UPDATE_APP_VERSION": "בדיקת ועדכון גרסת האפליקציה",
@@ -4985,7 +5013,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
@@ -5011,6 +5041,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "פרטים",
+		"PARTICIPANTS": "משתתפים",
+		"FORM_HINT": "הגדירו את נושא הפגישה, מתי היא מתקיימת ומי משתתף.",
+		"DETAILS_HINT": "סדר יום, מקום והערות שמוצגים לכל המוזמנים.",
+		"SCHEDULE": "לוח זמנים",
+		"SCHEDULE_HINT": "בחרו תאריך וחלון זמן, עם זמן חיץ והפסקה אופציונליים.",
+		"BUFFER_TIME_HINT": "השאירו זמן פנוי לפני הפגישה או אחריה.",
+		"BREAK_TIME_HINT": "עצרו את הפגישה להפסקה קצרה.",
+		"BREAK_START": "ההפסקה מתחילה ב-",
+		"PARTICIPANTS_HINT": "האנשים שמקבלים את ההזמנה.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5055,7 +5095,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "שינוי",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "בחרו את מי תרצו לפגוש, ואז בחרו שעה שנוחה לכם.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
@@ -5309,6 +5351,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
+		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",

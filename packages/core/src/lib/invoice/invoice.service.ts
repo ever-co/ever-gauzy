@@ -40,8 +40,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+				// Raw knex bypasses the soft-delete filter that TypeORM's query builder applies
 				const result = await knex('invoice')
 					.where('isEstimate', false)
+					.whereNull('deletedAt')
 					.count('id as count')
 					.sum('totalValue as amount')
 					.first();
@@ -310,6 +312,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					id: In(where.toContact)
 				};
 			}
+			// The end bounds below cover their whole last second: the add/edit forms save dates with
+			// `endOf('day')` (23:59:59.999), which a `HH:mm:ss` bound of 23:59:59 would exclude.
 			if ('invoiceDate' in where) {
 				const { invoiceDate } = where;
 				const { startDate, endDate } = invoiceDate;
@@ -317,7 +321,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (startDate && endDate) {
 					filter.where.invoiceDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(endDate).endOf('second').format('YYYY-MM-DD HH:mm:ss.SSS')
 					);
 				} else {
 					filter.where.invoiceDate = Between(
@@ -333,7 +337,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (startDate && endDate) {
 					filter.where.dueDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(endDate).endOf('second').format('YYYY-MM-DD HH:mm:ss.SSS')
 					);
 				} else {
 					filter.where.dueDate = Between(

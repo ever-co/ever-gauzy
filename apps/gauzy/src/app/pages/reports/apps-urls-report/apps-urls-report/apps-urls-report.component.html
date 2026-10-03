@@ -9,13 +9,49 @@
         </h4>
       </div>
     </div>
-    <div class="row">
-      <div class="col-auto ml-auto">
+    <!--
+      Classed so the stylesheet can widen this row specifically. Bootstrap's
+      `.col-auto` is shrink-to-fit, and with `ngx-gauzy-filters` nesting another
+      `.row > .col-auto` inside it the filter strip ended up capped at 972px no
+      matter how wide the card was - which is why the fifth control wrapped on a
+      1570px-wide card with room to spare. The `.col-auto` below is this page's
+      and is widened in this page's stylesheet; the host element and the boxes
+      under it are what the filters component's `fullWidth` input is for.
+    -->
+    <div class="row filters-row">
+      <div class="col-auto ml-auto filters-col">
+        <!--
+          Group By is projected INTO the filters component rather than rendered
+          by the grid. `ngx-gauzy-filters` puts its `<ng-content>` first inside
+          its own `.filter-item-list`, so this lands as the first control on the
+          filter line - ahead of the time zone, Source, Activity Level and Log
+          Type - instead of on a second line of its own beneath them.
+
+          `compact` goes with it: the line has to hold this control on top of
+          the ones the filters component renders on its own.
+        -->
         <ngx-gauzy-filters
+          fullWidth
+          compact
           [filters]="filters"
           [saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
           (filtersChange)="filtersChange($event)"
-        ></ngx-gauzy-filters>
+        >
+          <div class="col-auto single-filter-wrapper group-by-filter">
+            <span class="group-by-label">{{ 'REPORT_PAGE.GROUP_BY' | translate }}</span>
+            <nb-select [(ngModel)]="groupBy" optionsListClass="nb-options">
+              <nb-option value="date">
+                {{ 'REPORT_PAGE.DATE' | translate }}
+              </nb-option>
+              <nb-option value="employee">
+                {{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+              </nb-option>
+              <nb-option value="project">
+                {{ 'REPORT_PAGE.PROJECT' | translate }}
+              </nb-option>
+            </nb-select>
+          </div>
+        </ngx-gauzy-filters>
       </div>
     </div>
   </nb-card-header>
@@ -23,6 +59,8 @@
     <div class="report-container">
       <ga-activities-report-grid
         [filters]="filters"
+        [groupBy]="groupBy"
+        [showGroupBy]="false"
       ></ga-activities-report-grid>
     </div>
   </nb-card-body>
