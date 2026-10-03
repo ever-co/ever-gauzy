@@ -811,6 +811,12 @@
 
 // Focus states
 .marketplace-filter {
+  // Nebular draws its button focus ring on `:focus`, so a mouse click left a
+  // glow around the chip or arrow that was clicked. Keep it for keyboard focus.
+  button[nbButton]:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+
   // `:focus-visible`, so the ring shows for keyboard focus only — on `:focus`
   // every mouse click on a section header left a purple line under it.
   button:focus-visible,
@@ -842,6 +848,17 @@
   [aria-expanded='false'] + .section-content {
     display: none;
   }
+}
+
+// ── Search suggestions ──────────────────────────────────────────────────────
+//
+// `NbAutocompleteModule` is not in this component's `imports`, so `<nb-autocomplete>`
+// is an unknown element and its `nb-option`s render INLINE, as loose text under
+// the search box that pushes the rest of the panel down. Hidden here so the
+// search field behaves exactly as it did; showing them as a dropdown would mean
+// wiring the autocomplete up, which is a behaviour change.
+.marketplace-filter nb-autocomplete {
+  display: none;
 }
 
 // ── Form controls ───────────────────────────────────────────────────────────
