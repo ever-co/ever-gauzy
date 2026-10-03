@@ -286,6 +286,7 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U migration_test -d migration_test"
           --health-interval 5s --health-timeout 5s --health-retries 12
+      # cspell:words mysqladmin umigration pmigration
       # MySQL for the database suites of the anonymous usage statistics plugins, which run on all
       # three engines Gauzy supports (SQLite in memory, Postgres and MySQL here).
       mysql:

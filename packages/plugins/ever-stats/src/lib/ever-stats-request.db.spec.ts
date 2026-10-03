@@ -1,3 +1,4 @@
+// cspell:ignore oskar kowalczyk
 import { Global, INestApplication, Module } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { randomUUID } from 'node:crypto';
