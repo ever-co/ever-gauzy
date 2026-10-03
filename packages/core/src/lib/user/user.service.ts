@@ -22,6 +22,7 @@ import {
 	DeleteResult,
 	MoreThan
 } from 'typeorm';
+import { EventBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import {
@@ -53,6 +54,8 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
+import { isEmailAddressChange, UNCONFIRMED_EMAIL_STATE } from './email-change.util';
+import { UserEmailChangedEvent } from './events/user-email-changed.event';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import {
 	assertRoleAssignmentAllowed,
@@ -99,7 +102,8 @@ export class UserService extends TenantAwareCrudService<User> {
 		private readonly _taskService: TaskService,
 		private readonly _passwordHashService: PasswordHashService,
 		// Optional: seeders and other contexts load UserModule without the global activity log module.
-		@Optional() private readonly _activityLogService?: ActivityLogService
+		@Optional() private readonly _activityLogService?: ActivityLogService,
+		@Optional() private readonly _eventBus?: EventBus
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -553,18 +557,50 @@ export class UserService extends TenantAwareCrudService<User> {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
 			}
 
+			// A new address starts unconfirmed: the stored confirmation (and any pending link or code)
+			// belongs to the previous mailbox. Written in the same save, so there is no window in which
+			// the new address carries the old confirmation.
+			const emailChanged = isEmailAddressChange(user.email, entity.email);
+			if (emailChanged) {
+				Object.assign(entity, UNCONFIRMED_EMAIL_STATE);
+			}
+
 			// Save the updated user entity
 			await this.save(entity);
 
 			await this.liftAgentRestrictionsOnMoveIntoEEAOrUK(user, entity);
 
 			// Return the updated user
-			return await this.findOneByWhereOptions({
+			const updated = await this.findOneByWhereOptions({
 				id: id as string,
 				tenantId: RequestContext.currentTenantId()
 			});
+
+			if (emailChanged) {
+				this.publishEmailChanged(updated);
+			}
+
+			return updated;
 		} catch (error) {
 			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Asks for the confirmation e-mail of a user's new address (see {@link UserEmailChangedEvent}).
+	 * Never fails the profile update itself: the address is already saved as unconfirmed, and the user
+	 * can request the e-mail again from the verification notice.
+	 */
+	private publishEmailChanged(user: IUser): void {
+		if (!user?.id || !this._eventBus) {
+			return;
+		}
+		try {
+			this._eventBus.publish(new UserEmailChangedEvent(user));
+		} catch (error) {
+			new Logger(UserService.name).error(
+				`Could not request the confirmation e-mail for user ${user.id}: ${error?.message}`
+			);
 		}
 	}
 
