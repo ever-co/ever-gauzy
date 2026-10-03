@@ -7,6 +7,7 @@ jest.mock('./repository/mikro-orm-user.repository', () => ({
 }));
 jest.mock('../employee/employee.service', () => ({ EmployeeService: class EmployeeService {} }));
 jest.mock('../tasks/task.service', () => ({ TaskService: class TaskService {} }));
+jest.mock('../activity-log/activity-log.service', () => ({ ActivityLogService: class ActivityLogService {} }));
 jest.mock('./../core/crud', () => ({ TenantAwareCrudService: class TenantAwareCrudService {} }));
 
 import { PasswordHashService } from '../password-hash/password-hash.service';
