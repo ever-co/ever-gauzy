@@ -2,13 +2,13 @@
 import { createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import { AddressInfo, Socket } from 'node:net';
-import { EverStatsSender } from './ever-stats-sender.service';
+import { EverStatsSender, readCappedBody } from './ever-stats-sender.service';
 
 /** A statistics signer over a throwaway key, as `EverInstanceService.statsSigner()` returns it. */
 function testSigner() {
 	const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 	const x = publicKey.export({ format: 'jwk' }).x as string;
-	return { publicKey: x, keyId: 'abcdefghijk', sign: (bytes: Uint8Array) => sign(null, bytes, privateKey) };
+	return { publicKey: x, keyId: 'abcdefghijk', sign: (bytes: Uint8Array) => sign(null, bytes, privateKey), dispose: () => undefined };
 }
 
 interface Seen {
@@ -105,6 +105,29 @@ describe('EverStatsSender', () => {
 		reply = (req) => req.socket.destroy();
 		const outcome = await new EverStatsSender().send(base, Buffer.from('{}'), testSigner(), '1.0.0');
 		expect(outcome).toEqual({ kind: 'retry', status: null, error: 'connection_error', retryAfterS: 0 });
+	});
+
+	it('reads at most 64 KiB of an answer, whatever the endpoint streams', async () => {
+		reply = (_req, res) => {
+			res.writeHead(422, { 'content-type': 'application/json' });
+			// About 1 MiB without a content-length: the reader must stop on its own.
+			for (let i = 0; i < 64; i += 1) res.write(Buffer.alloc(16 * 1024, 32));
+			res.end('{"code":"schema_violation"}');
+		};
+		const outcome = await new EverStatsSender().send(base, Buffer.from('{}'), testSigner(), '1.0.0');
+		expect(outcome).toEqual({ kind: 'dropped', status: 422, error: 'http_422' });
+
+		let pulled = 0;
+		const endless = new ReadableStream<Uint8Array>({
+			pull(controller) {
+				pulled += 1;
+				controller.enqueue(new Uint8Array(16 * 1024));
+			}
+		});
+		expect(await readCappedBody(new Response(endless))).toBeNull();
+		expect(pulled).toBeLessThan(10);
+		expect(await readCappedBody(new Response('x'.repeat(10), { headers: { 'content-length': String(10 * 1024 * 1024) } }))).toBeNull();
+		expect(await readCappedBody(new Response('{"code":"ok"}'))).toBe('{"code":"ok"}');
 	});
 
 	it('never sends more than 16 KiB', async () => {

@@ -1,6 +1,13 @@
 import { ConflictException, HttpException, HttpStatus, Inject, Injectable, Optional } from '@nestjs/common';
-import { EverInstanceService } from '@gauzy/plugin-ever-instance';
-import { MAX_STATS_REPORT_BYTES, STATS_SCHEMA_URL, STATS_SEND_NOW_INTERVAL_MS } from './ever-stats.constants';
+import { randomUUID } from 'node:crypto';
+import { EverInstanceRecord, EverInstanceService } from '@gauzy/plugin-ever-instance';
+import {
+	MAX_STATS_REPORT_BYTES,
+	STATS_LEASE_MS,
+	STATS_PREVIEW_INTERVAL_MS,
+	STATS_SCHEMA_URL,
+	STATS_SEND_NOW_INTERVAL_MS
+} from './ever-stats.constants';
 import type { EverStatsConfig } from './ever-stats-config';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';
 import { EverStatsCollector, statsPeriod } from './ever-stats-collector.service';
@@ -8,17 +15,26 @@ import { EVER_STATS_CLOCK, EVER_STATS_CONFIG, EVER_STATS_RELEASE, EverStatsSched
 import type { SlotResult, StatsClock } from './ever-stats-scheduler.service';
 import { EverStatsStore, StoredStatsReport } from './ever-stats.store';
 
+/**
+ * Why nothing is sent: `ui` (switched off in Settings), `config` (`EVER_STATS_API_URL` is set to an
+ * address that cannot be used), `key_unreadable` (the stored statistics key cannot be read with the
+ * current `ENCRYPTION_KEY`/`JWT_SECRET`; *Reset instance identity* makes a new one).
+ */
+export type EverStatsStopReason = 'ui' | 'config' | 'key_unreadable';
+
 /** `GET /ever-stats/status`. */
 export interface EverStatsStatus {
 	enabled: boolean;
-	/** Why nothing is sent: `ui` when the operator switched it off. */
-	reason: 'ui' | null;
+	/** Why nothing is sent, or `null` while reports go out. */
+	reason: EverStatsStopReason | null;
 	install_source: string;
-	instance_id: string;
+	/** The anonymous id, once Ever Platform accepted a report under it (`null` before). */
+	instance_id: string | null;
 	key_id: string;
 	serves: string[];
 	country: string;
-	api_url: string;
+	/** Where reports go, or `null` when the configured address cannot be used. */
+	api_url: string | null;
 	next_send_at: string | null;
 	last_attempt: {
 		status: string;
@@ -56,6 +72,9 @@ const iso = (ms: number | null): string | null => (ms ? new Date(ms).toISOString
 @Injectable()
 export class EverStatsService {
 	private lastSendNowAt = 0;
+	private lastPreview: { at: number; instanceId: string; preview: EverStatsPreview } | null = null;
+	/** The lease holder of this process's *Reset instance identity*. */
+	private readonly resetHolder = `reset:${randomUUID()}`;
 
 	constructor(
 		@Inject(EVER_STATS_CONFIG) private readonly config: EverStatsConfig,
@@ -79,21 +98,30 @@ export class EverStatsService {
 
 	async status(): Promise<EverStatsStatus> {
 		const identity = await this.instance.ensure();
-		const last = (await this.store.latest(1))[0] ?? null;
+		const recent = await this.store.latest();
+		const last = recent[0] ?? null;
+		const accepted = recent.some((row) => row.status === 'sent' && row.payload !== null && this.instanceOf(row.payload) === identity.instanceId);
+		const reason: EverStatsStopReason | null = !identity.statsEnabledUi
+			? 'ui'
+			: !this.config.apiUrl
+				? 'config'
+				: !(await this.instance.statsKeyReadable())
+					? 'key_unreadable'
+					: null;
 		return {
 			enabled: identity.statsEnabledUi,
-			reason: identity.statsEnabledUi ? null : 'ui',
+			reason,
 			install_source: this.config.installSource,
-			instance_id: identity.instanceId,
+			instance_id: accepted ? identity.instanceId : null,
 			key_id: identity.statsKeyId,
 			serves: [...this.config.serves],
 			country: this.config.country,
 			api_url: this.config.apiUrl,
-			next_send_at: identity.statsEnabledUi ? iso(this.scheduler.nextSendAt()) : null,
+			next_send_at: reason === null ? iso(this.scheduler.nextSendAt()) : null,
 			last_attempt: last
 				? { status: last.status, http_status: last.httpStatus, period: last.period, at: iso(last.sentAt ?? last.createdAt), error: last.lastError }
 				: null,
-			key_warning: this.instance.keyWarning(),
+			key_warning: this.instance.keyWarning(identity.statsKeySource),
 			schema_url: STATS_SCHEMA_URL
 		};
 	}
@@ -128,12 +156,26 @@ export class EverStatsService {
 		}
 	}
 
-	/** Builds the report of the current month as it would be sent now. Nothing is stored or sent. */
+	/**
+	 * Builds the report of the current month as it would be sent now. Nothing is stored or sent.
+	 * Within a minute of the previous one (in this process, for the same identity) the previous one is
+	 * shown again, so repeated clicks do not repeat the collection on a large database.
+	 */
 	async preview(): Promise<EverStatsPreview> {
 		const identity = await this.instance.ensure();
-		const at = new Date(this.now());
+		const nowMs = this.now();
+		if (this.lastPreview && this.lastPreview.instanceId === identity.instanceId && nowMs - this.lastPreview.at < STATS_PREVIEW_INTERVAL_MS) {
+			return this.lastPreview.preview;
+		}
+		const preview = await this.buildPreview(identity, nowMs);
+		this.lastPreview = { at: nowMs, instanceId: identity.instanceId, preview };
+		return preview;
+	}
+
+	private async buildPreview(identity: EverInstanceRecord, nowMs: number): Promise<EverStatsPreview> {
+		const at = new Date(nowMs);
 		const period = statsPeriod(at);
-		const collected = await this.collector.collect(period);
+		const collected = await this.collector.collect(period, at);
 		const release = parseReleaseVersion(this.releaseRaw ?? process.env['GAUZY_APP_VERSION']);
 		const built = this.builder.build({ identity, config: this.config, release, period, final: false, collected, now: at });
 		const text = built.text;
@@ -148,6 +190,7 @@ export class EverStatsService {
 
 	async setEnabled(enabled: boolean, actorId: string | null): Promise<EverStatsStatus> {
 		await this.instance.setStatsEnabledUi(enabled, actorId);
+		this.lastPreview = null;
 		return this.status();
 	}
 
@@ -167,8 +210,21 @@ export class EverStatsService {
 		return this.scheduler.runSlot('send_now');
 	}
 
+	/**
+	 * New statistics id and key. Runs under the sending lease, so it never lands between the
+	 * collection and the send of a report on any API process: 409 while a report is being sent.
+	 */
 	async resetIdentity(actorId: string | null): Promise<EverStatsStatus> {
-		await this.instance.resetIdentity(actorId);
+		const now = this.now();
+		if (!(await this.store.acquireLease(this.resetHolder, now, STATS_LEASE_MS))) {
+			throw new ConflictException({ statusCode: HttpStatus.CONFLICT, code: 'send_in_progress', message: 'A report is being sent; try again in a minute.' });
+		}
+		try {
+			await this.instance.resetIdentity(actorId);
+		} finally {
+			await this.store.releaseLease(this.resetHolder, this.now()).catch(() => undefined);
+		}
+		this.lastPreview = null;
 		return this.status();
 	}
 }

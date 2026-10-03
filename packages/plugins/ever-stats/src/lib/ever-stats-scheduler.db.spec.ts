@@ -8,7 +8,7 @@ import { EverStatsScheduler, StatsClock } from './ever-stats-scheduler.service';
 import { EverStatsSender } from './ever-stats-sender.service';
 import { EverStatsStore } from './ever-stats.store';
 import { EverStatsService } from './ever-stats.service';
-import { CORE_TABLES, createCoreTables, dropTables, globalStatsOver, migrateUp, openTestDataSource, PLUGIN_TABLES, q, TEST_TARGETS } from './fixtures/test-db';
+import { CORE_TABLES, createCoreTables, dropTables, migrateUp, openTestDataSource, PLUGIN_TABLES, q, TEST_TARGETS } from './fixtures/test-db';
 
 const ENV = { JWT_SECRET: 'a-strong-jwt-secret-for-tests' };
 const DAY = 86_400_000;
@@ -20,10 +20,14 @@ interface Call {
 	body: Buffer;
 }
 
-/** A `fetch` that records each request and answers with the next status of `statuses` (202 when empty). */
-function recordingFetch(calls: Call[], statuses: Array<number | 'reset'> = []) {
+/**
+ * A `fetch` that records each request and answers with the next status of `statuses` (202 when
+ * empty). `during` runs while a request is in flight (the slot holds the lease then).
+ */
+function recordingFetch(calls: Call[], statuses: Array<number | 'reset'> = [], during?: () => Promise<void>) {
 	return (async (url: string, init: RequestInit) => {
 		calls.push({ url, headers: init.headers as Record<string, string>, body: Buffer.from(init.body as Buffer) });
+		await during?.();
 		const next = statuses.shift() ?? 202;
 		if (next === 'reset') throw Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } });
 		const body = next === 202 ? { accepted: true } : next === 409 ? { code: 'key_mismatch' } : { code: 'schema_violation', errors: [{ path: '/counts', code: 'type' }] };
@@ -63,13 +67,24 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		await migrateUp(dataSource);
 	});
 
-	function setup(clock: FakeClock, calls: Call[], statuses: Array<number | 'reset'> = [], config = CONFIG) {
+	interface SetupOptions {
+		config?: EverStatsConfig;
+		env?: Record<string, string | undefined>;
+		release?: string;
+		during?: () => Promise<void>;
+		collector?: EverStatsCollector;
+	}
+
+	function setup(clock: FakeClock, calls: Call[], statuses: Array<number | 'reset'> = [], options: SetupOptions | EverStatsConfig = {}) {
+		const opts: SetupOptions = 'apiUrl' in options ? { config: options as EverStatsConfig } : (options as SetupOptions);
 		const instance = new EverInstanceService(dataSource, new EverInstanceEvents(), ENV);
 		const store = new EverStatsStore(dataSource);
-		const collector = new EverStatsCollector(globalStatsOver(dataSource, d), dataSource, { FEATURE_INVOICE: true }, (work) => work());
-		const sender = new EverStatsSender(recordingFetch(calls, statuses));
-		const scheduler = new EverStatsScheduler(config, instance, store, collector, new EverStatsBuilder(), sender, clock, 'v111.47.0');
-		return { instance, store, scheduler };
+		const collector = opts.collector ?? new EverStatsCollector(dataSource, { FEATURE_INVOICE: true });
+		const sender = new EverStatsSender(recordingFetch(calls, statuses, opts.during));
+		const config = opts.config ?? CONFIG;
+		const scheduler = new EverStatsScheduler(config, instance, store, collector, new EverStatsBuilder(), sender, clock, opts.release ?? 'v111.47.0', opts.env ?? {});
+		const service = new EverStatsService(config, instance, store, scheduler, collector, new EverStatsBuilder(), clock, opts.release ?? 'v111.47.0');
+		return { instance, store, scheduler, service };
 	}
 
 	const reportRows = async () => Number((await dataSource.query(`SELECT COUNT(*) AS n FROM ${q(d, 'ever_stats_report')}`))[0].n);
@@ -92,6 +107,27 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		const report = JSON.parse(row.payload as string);
 		expect(report).toMatchObject({ instance_id: identity.instanceId, version: '111.47.0', channel: 'stable', period: '2026-10', final: false, sent_at: '2026-10-15' });
 		expect((await store.readLease()).lastSentAt).toBe(clock.at);
+	});
+
+	it('makes no request, reads no key and stores nothing with EVER_STATS_ENABLED=false at run time', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const { scheduler } = setup(clock, calls, [], { env: { EVER_STATS_ENABLED: 'false' } });
+		for (let i = 0; i < 3; i += 1) {
+			expect((await scheduler.runSlot('send_now')).skipped).toBe('env');
+			clock.at += DAY;
+		}
+		expect(calls).toHaveLength(0);
+		expect(await reportRows()).toBe(0);
+	});
+
+	it('sends nothing at all when the configured address cannot be used (never another address)', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const { scheduler, service } = setup(clock, calls, [], { config: { ...CONFIG, apiUrl: null } });
+		expect((await scheduler.runSlot('send_now')).skipped).toBe('config');
+		expect(calls).toHaveLength(0);
+		expect(await service.status()).toMatchObject({ enabled: true, reason: 'config', api_url: null, next_send_at: null });
 	});
 
 	it('makes no request at all over three slots while the operator switch is off', async () => {
@@ -190,8 +226,7 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		const calls: Call[] = [];
 		const a = setup(clock, calls);
 		const b = setup(clock, calls);
-		const service = (s: ReturnType<typeof setup>) =>
-			new EverStatsService(CONFIG, s.instance, s.store, s.scheduler, undefined as never, undefined as never, clock, 'v111.47.0');
+		const service = (s: ReturnType<typeof setup>) => s.service;
 		await service(a).sendNow();
 		clock.at += 5 * 60_000;
 		await expect(service(b).sendNow()).rejects.toThrow('once every 10 minutes');
@@ -201,6 +236,65 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		expect((await service(a).last())?.http_status).toBe(202);
 		await a.instance.resetIdentity('operator');
 		expect(await service(a).last()).toBeNull();
+	});
+
+	it('a 400, 413 or 415 parks the module for at most 7 days; a 422 until the Gauzy release changes', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const { scheduler } = setup(clock, calls, [400, 422]);
+		expect((await scheduler.runSlot('send_now')).reports[0]).toMatchObject({ status: 'rejected', httpStatus: 400 });
+		clock.at += 6 * DAY;
+		expect((await scheduler.runSlot('send_now')).skipped).toBe('blocked');
+		clock.at += DAY + 60_000;
+		expect((await scheduler.runSlot('send_now')).reports[0]).toMatchObject({ status: 'rejected', httpStatus: 422 });
+		clock.at += 30 * DAY;
+		expect((await scheduler.runSlot('send_now')).skipped).toBe('blocked');
+		expect(calls).toHaveLength(2);
+		// The next Gauzy release sends again, without a change of the module's own version.
+		const upgraded = setup(clock, calls, [], { release: 'v111.48.0' });
+		expect((await upgraded.scheduler.runSlot('send_now')).reports[0]).toMatchObject({ status: 'sent', httpStatus: 202 });
+	});
+
+	it('Reset instance identity waits for a send in progress: 409, and the report and its key belong to one identity', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		let resetDuringSend: Promise<unknown> = Promise.resolve();
+		const holder: { service?: EverStatsService } = {};
+		const s = setup(clock, calls, [], {
+			during: async () => {
+				resetDuringSend = holder.service!.resetIdentity('operator').then(
+					() => 'reset',
+					(error: { status?: number; response?: { code?: string } }) => `${error.status}:${error.response?.code}`
+				);
+				await resetDuringSend;
+			}
+		});
+		holder.service = s.service;
+		const before = await s.instance.ensure();
+		expect((await s.scheduler.runSlot('send_now')).reports[0].status).toBe('sent');
+		expect(await resetDuringSend).toBe('409:send_in_progress');
+		expect(JSON.parse(calls[0].body.toString('utf8')).instance_id).toBe(before.instanceId);
+		expect(calls[0].headers['Ever-Stats-Key']).toBe(before.statsPublicKey);
+		// Once the send is over, the reset goes through.
+		const after = await s.service.resetIdentity('operator');
+		expect(after.instance_id).toBeNull();
+		expect((await s.instance.get())?.instanceId).not.toBe(before.instanceId);
+	});
+
+	it('sends nothing when the operator switches the statistics off while the counts are read', async () => {
+		const clock = new FakeClock(Date.UTC(2026, 9, 15, 10));
+		const calls: Call[] = [];
+		const instance = new EverInstanceService(dataSource, new EverInstanceEvents(), ENV);
+		class SwitchedOffWhileCollecting extends EverStatsCollector {
+			override async collect(...args: Parameters<EverStatsCollector['collect']>) {
+				await instance.setStatsEnabledUi(false, 'operator');
+				return super.collect(...args);
+			}
+		}
+		const { scheduler } = setup(clock, calls, [], { collector: new SwitchedOffWhileCollecting(dataSource, {}) });
+		expect((await scheduler.runSlot('send_now')).skipped).toBe('ui');
+		expect(calls).toHaveLength(0);
+		expect(await reportRows()).toBe(0);
 	});
 
 	it('marks 409 key_mismatch for a reset and sends nothing more for that identity', async () => {

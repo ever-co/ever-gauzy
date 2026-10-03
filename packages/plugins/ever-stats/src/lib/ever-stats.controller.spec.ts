@@ -5,6 +5,7 @@ import { RoleGuard } from '@gauzy/core';
 import { EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { EverStatsController } from './ever-stats.controller';
 import { EverStatsModule } from './ever-stats.module';
+import { EVER_STATS_ENV } from './ever-stats-scheduler.service';
 import { EverStatsService } from './ever-stats.service';
 import { EverStatsStateController } from './ever-stats-state.controller';
 import { EverStatsOperatorGuard } from './guards/ever-stats-operator.guard';
@@ -45,6 +46,8 @@ describe('Anonymous usage statistics routes', () => {
 			controllers,
 			providers: [
 				{ provide: EverStatsService, useValue: stats },
+				// The statistics are on, whatever the environment of the test run says.
+				{ provide: EVER_STATS_ENV, useValue: {} },
 				EverStatsOperatorGuard,
 				{
 					provide: EverOperatorService,

@@ -38,7 +38,7 @@ describe('readEverStatsConfig', () => {
 	});
 
 	it('takes EVER_STATS_API_URL, else EVER_PLATFORM_API_URL', () => {
-		expect(readEverStatsConfig({ EVER_PLATFORM_API_URL: 'https://api-stage.ever.co/' }).apiUrl).toBe('https://api-stage.ever.co');
+		expect(readEverStatsConfig({ EVER_PLATFORM_API_URL: 'https://stats.example.test/' }).apiUrl).toBe('https://stats.example.test');
 		expect(readEverStatsConfig({ EVER_PLATFORM_API_URL: 'https://a.example', EVER_STATS_API_URL: 'https://b.example' }).apiUrl).toBe('https://b.example');
 	});
 
@@ -55,14 +55,20 @@ describe('readEverStatsConfig', () => {
 		expect(warn).not.toHaveBeenCalled();
 	});
 
-	it.each([['http://api.ever.co'], ['http://8.8.8.8'], ['https://user:pw@api.ever.co'], ['https://api.ever.co/?x=1'], ['ftp://api.ever.co'], ['not a url']])(
-		'refuses %s and keeps the default, with one log line',
-		(raw) => {
-			const warn = jest.fn();
-			expect(readEverStatsConfig({ EVER_STATS_API_URL: raw }, warn).apiUrl).toBe('https://api.ever.co');
-			expect(warn).toHaveBeenCalledTimes(1);
-		}
-	);
+	it.each([
+		['http://stats.corp.example'],
+		['http://8.8.8.8'],
+		['http://metadata'],
+		['https://user:pw@stats.example.test'],
+		['https://stats.example.test/?x=1'],
+		['ftp://stats.example.test'],
+		['not a url']
+	])('refuses %s: nothing is sent (never another address), with one log line that does not repeat the value', (raw) => {
+		const warn = jest.fn();
+		expect(readEverStatsConfig({ EVER_STATS_API_URL: raw }, warn).apiUrl).toBeNull();
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(String(warn.mock.calls[0][0])).not.toContain(raw);
+	});
 
 	it('takes a declared country, never anything else', () => {
 		expect(readEverStatsConfig({ EVER_STATS_COUNTRY: 'de' }).country).toBe('DE');
@@ -82,10 +88,17 @@ describe('readEverStatsConfig', () => {
 		expect(servesTeams({})).toBe(false);
 	});
 
-	it('reads the interval override', () => {
-		expect(readEverStatsConfig({ EVER_STATS_SEND_INTERVAL_S: '5' }).intervalS).toBe(5);
-		expect(readEverStatsConfig({ EVER_STATS_SEND_INTERVAL_S: '0' }).intervalS).toBe(86400);
-		expect(readEverStatsConfig({ EVER_STATS_SEND_INTERVAL_S: '1.5' }).intervalS).toBe(86400);
+	it('reads the interval override; below an hour only towards a local destination or in tests', () => {
+		const local = { EVER_STATS_API_URL: 'http://mock-platform:8080' };
+		expect(readEverStatsConfig({ ...local, EVER_STATS_SEND_INTERVAL_S: '5' }).intervalS).toBe(5);
+		expect(readEverStatsConfig({ NODE_ENV: 'test', EVER_STATS_SEND_INTERVAL_S: '5' }).intervalS).toBe(5);
+		expect(readEverStatsConfig({ EVER_STATS_SEND_INTERVAL_S: '3600' }).intervalS).toBe(3600);
+		const warn = jest.fn();
+		expect(readEverStatsConfig({ EVER_STATS_SEND_INTERVAL_S: '5' }, warn).intervalS).toBe(86400);
+		expect(readEverStatsConfig({ EVER_STATS_API_URL: 'https://stats.example.test', EVER_STATS_SEND_INTERVAL_S: '60' }, warn).intervalS).toBe(86400);
+		expect(warn).toHaveBeenCalledTimes(2);
+		expect(readEverStatsConfig({ ...local, EVER_STATS_SEND_INTERVAL_S: '0' }).intervalS).toBe(86400);
+		expect(readEverStatsConfig({ ...local, EVER_STATS_SEND_INTERVAL_S: '1.5' }).intervalS).toBe(86400);
 	});
 
 	it('sends module_version equal to the package version', () => {

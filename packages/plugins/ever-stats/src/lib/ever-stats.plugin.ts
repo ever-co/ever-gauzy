@@ -4,7 +4,8 @@ import { EverStatsModule } from './ever-stats.module';
 
 /**
  * Anonymous usage statistics: one signed report a day to Ever Platform with counts, module switches
- * and monthly totals per currency, never a name, an address or a record (schema `ever.stats.v1`).
+ * and monthly totals per currency, never a name, an address or an amount per record (schema
+ * `ever.stats.v1`; on a small installation a month's total can equal a single invoice).
  *
  * On by default. `EVER_STATS_ENABLED=false` leaves it out of the API entirely (no route, no timer, no
  * request); the operator's switch in Settings keeps it loaded and sends nothing.
