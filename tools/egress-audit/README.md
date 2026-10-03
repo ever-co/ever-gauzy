@@ -48,8 +48,8 @@ which `build-api` runs on every develop push.
 
 ## Running it
 
-`.github/workflows/egress-audit.yml` runs it on a GitHub-hosted runner after the demo images of a
-develop push are published, and on demand (`gh workflow run egress-audit.yml -f image=<image>`).
+`.github/workflows/egress-audit.yml` runs it on a GitHub-hosted runner every day on the newest
+published develop API image, and on demand (`gh workflow run egress-audit.yml -f image=<image>`).
 Locally, with Docker and the SDK checked out at the pinned commit:
 
 ```sh

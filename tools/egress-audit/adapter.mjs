@@ -25,7 +25,7 @@ const OFF_MODES = new Set(['off', 'off_env_file']);
  * service. (A public address would hold it to one report a day.)
  */
 const LOADED_BY_MISTAKE_WOULD_SHOW = {
-	EVER_STATS_API_URL: 'http://ever-audit-sink:8080',
+	EVER_STATS_API_URL: 'https://ever-audit-sink',
 	EVER_STATS_SERVES: 'gauzy,teams'
 };
 

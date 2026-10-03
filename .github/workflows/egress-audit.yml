@@ -20,13 +20,11 @@ name: Egress audit
 # The harness is the public Ever Platform SDK's egress audit, checked out at a pinned commit
 # (EVER_CONNECT_SDK_SHA below); nothing of it is copied into this repository.
 #
-# Runs after the demo images of a develop push are published (the API image of that commit), and
-# on demand with any API image.
+# Runs every day on the newest published develop API image (the demo image), and on demand with
+# any API image. The configuration comes from the default branch; no code of a pull request runs.
 on:
-  workflow_run:
-    workflows: ['Build and Publish Docker Images Demo']
-    branches: [develop]
-    types: [completed]
+  schedule:
+    - cron: '30 6 * * *'
   workflow_dispatch:
     inputs:
       image:
@@ -51,7 +49,6 @@ env:
 jobs:
   egress-audit:
     name: egress-audit
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     # GitHub-hosted on purpose: the capture needs Docker with NET_RAW and NET_ADMIN.
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -64,7 +61,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
 
       - name: Checkout the egress audit harness (pinned commit)
@@ -91,16 +87,12 @@ jobs:
       - name: Pull the API image
         env:
           IMAGE: ${{ github.event.inputs.image || 'ghcr.io/ever-co/gauzy-api-demo:latest' }}
-          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
         run: |
           docker pull "$IMAGE"
           docker pull postgres:18-alpine
           echo "GAUZY_API_IMAGE=$IMAGE" >> "$GITHUB_ENV"
           commit=$(docker image inspect "$IMAGE" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^GAUZY_APP_COMMIT=//p')
-          echo "The image was built from commit ${commit:-<unknown>}."
-          if [ -n "$EXPECTED_COMMIT" ] && [ "$commit" != "$EXPECTED_COMMIT" ]; then
-            echo "::warning::the image was built from ${commit:-<unknown>}, not from $EXPECTED_COMMIT (a newer push replaced it); auditing the newer image"
-          fi
+          echo "The image was built from commit ${commit:-<unknown>}." | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Write the API .env.local files of the modes, and a secret for this run
         run: |
