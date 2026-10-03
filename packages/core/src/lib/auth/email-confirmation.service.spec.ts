@@ -16,7 +16,7 @@ import { EmailConfirmationService } from './email-confirmation.service';
 
 const USER = { id: 'user-1', email: 'jane+gauzy@corp.co', emailVerifiedAt: null } as unknown as IUser;
 
-function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUser } = {}) {
+function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUser; stored?: boolean } = {}) {
 	const emailService = {
 		emailVerification: jest.fn(async () => {
 			if (options.sendThrows) throw new Error('boom');
@@ -24,7 +24,8 @@ function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUs
 		})
 	};
 	const userService = {
-		update: jest.fn(async () => undefined),
+		storeEmailVerificationCode: jest.fn(async () => options.stored ?? true),
+		markEmailAsVerified: jest.fn(async () => ({ affected: 1 })),
 		getIfExists: jest.fn(async () => options.user ?? USER)
 	};
 	const featureService = { isFeatureEnabled: jest.fn(async () => true) };
@@ -99,6 +100,35 @@ describe('EmailConfirmationService', () => {
 		it('reports false (and does not throw) when the send path throws', async () => {
 			const { service } = makeService({ sendThrows: true });
 			await expect(service.sendEmailVerification(USER, {})).resolves.toBe(false);
+		});
+
+		it('stores the link and code bound to the address the message is sent to', async () => {
+			const { service, userService } = makeService();
+
+			await service.sendEmailVerification(USER, {});
+
+			expect(userService.storeEmailVerificationCode).toHaveBeenCalledWith(
+				USER.id,
+				USER.email,
+				expect.objectContaining({ emailToken: 'hashed', code: expect.any(String), codeExpireAt: expect.any(Date) })
+			);
+		});
+
+		it('sends nothing when the account no longer holds that address', async () => {
+			const { service, emailService } = makeService({ stored: false });
+
+			await expect(service.sendEmailVerification(USER, {})).resolves.toBe(false);
+			expect(emailService.emailVerification).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('confirmEmail', () => {
+		it('records the confirmation only for the address that was confirmed', async () => {
+			const { service, userService } = makeService();
+
+			await service.confirmEmail(USER);
+
+			expect(userService.markEmailAsVerified).toHaveBeenCalledWith(USER.id, USER.email);
 		});
 	});
 
