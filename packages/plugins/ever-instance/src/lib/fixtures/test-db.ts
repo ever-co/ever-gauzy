@@ -53,7 +53,9 @@ export async function createCoreTables(dataSource: DataSource, dialect: TestDial
 	const ts = dialect === 'postgres' ? 'timestamp' : dialect === 'mysql' ? 'datetime(6)' : 'datetime';
 	const id = dialect === 'mysql' ? 'varchar(64)' : 'varchar';
 	const bool = dialect === 'postgres' ? 'boolean' : 'tinyint';
-	await dataSource.query(`CREATE TABLE IF NOT EXISTS ${q(dialect, 'tenant')} (${q(dialect, 'id')} ${id} PRIMARY KEY, ${q(dialect, 'name')} varchar(255), ${q(dialect, 'deletedAt')} ${ts} NULL)`);
+	await dataSource.query(
+		`CREATE TABLE IF NOT EXISTS ${q(dialect, 'tenant')} (${q(dialect, 'id')} ${id} PRIMARY KEY, ${q(dialect, 'name')} varchar(255), ${q(dialect, 'createdAt')} ${ts} NULL, ${q(dialect, 'deletedAt')} ${ts} NULL)`
+	);
 	await dataSource.query(`CREATE TABLE IF NOT EXISTS ${q(dialect, 'role')} (${q(dialect, 'id')} ${id} PRIMARY KEY, ${q(dialect, 'name')} varchar(64), ${q(dialect, 'tenantId')} varchar(64))`);
 	await dataSource.query(
 		`CREATE TABLE IF NOT EXISTS ${q(dialect, 'user')} (${q(dialect, 'id')} ${id} PRIMARY KEY, ${q(dialect, 'email')} varchar(255), ${q(dialect, 'roleId')} varchar(64), ${q(dialect, 'tenantId')} varchar(64), ` +

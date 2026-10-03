@@ -97,7 +97,7 @@ The last 12 reports are kept in the `ever_stats_report` table, with their exact 
 | `EVER_STATS_SERVES` | `gauzy` | `gauzy,teams` when an Ever Teams web app uses this API: the report says so, and `GET /api/ever-stats/state` exists (see below). |
 | `EVER_INSTALL_SOURCE` | `self-hosted` | `self-hosted`, `cloud`, `desktop`, `ever.sh`, `works_app` or `partner:<slug>`, where `<slug>` is the id of a published partner template (Ever Platform counts any other slug as `partner:other`). The Gauzy desktop apps (Gauzy Desktop with its local server, Gauzy Server, Gauzy API Server) set `desktop` and their release version for their embedded API. |
 | `EVER_OPERATOR_USER_IDS` | unset | The operators of the installation, by Gauzy user id (comma separated); see below. |
-| `EVER_OPERATOR_EMAILS` | unset | The operators of the installation, by confirmed e-mail address (comma separated); see below. |
+| `EVER_OPERATOR_EMAILS` | unset | The operators of the installation, by the address of their account in the first tenant (comma separated); see below. |
 | `EVER_STATS_SEND_INTERVAL_S` | `86400` | Tests only: shortens the day (every delay scales with it). Below `3600` only with a local `EVER_STATS_API_URL`. |
 
 ## Who can see the settings
@@ -105,7 +105,7 @@ The last 12 reports are kept in the `ever_stats_report` table, with their exact 
 The report covers every tenant of the installation, so only its **operator** can see it or change it. The operator is a super admin (now: not deleted, active, not archived) who is:
 
 - listed by user id in `EVER_OPERATOR_USER_IDS` (recommended on an installation with several tenants); or
-- listed by address in `EVER_OPERATOR_EMAILS`. In Gauzy an address is not unique (one person can hold accounts in several tenants) and is not proven at registration, so a listed address names **one account only: the first account ever created with it**, and only once that account has confirmed the address. An account registered later with the same address, in any tenant, is never the operator; deleting or deactivating the first account does not pass the address on. When that first account is not yours, use `EVER_OPERATOR_USER_IDS`; or
+- listed by address in `EVER_OPERATOR_EMAILS`. In Gauzy an address is not unique (one person can hold accounts in several tenants), and it is proven neither at registration nor when a user changes it, so a listed address names **one account only: the account of the installation's first tenant (the one created at setup) that holds it**, when it is the only account of that tenant holding it and has confirmed an address. An account of any other tenant is never the operator, however old it is or whatever address it changes to; if a second account of the first tenant takes the address, nobody is designated by it until one of them changes it. When your account is not in the first tenant, use `EVER_OPERATOR_USER_IDS`; or
 - when neither list is set and the installation has a single tenant: that tenant's first super admin, remembered once (and replaced by the next super admin when that user is deleted, deactivated or no longer a super admin).
 
 With more than one tenant and no list, nobody is the operator until you set one. On an installation declared as Ever's cloud (`EVER_INSTALL_SOURCE=cloud`) nobody is. Every other signed-in user gets 404 from the statistics routes (a request without a session gets the API's usual 401), and the settings page says "Managed by the instance operator", with how an operator takes the page over and a link to the published schema, never the payload.

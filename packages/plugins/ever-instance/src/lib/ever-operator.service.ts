@@ -14,6 +14,7 @@ export interface EverOperatorCandidate {
 /** A user as the operator check reads it from the database. */
 interface StoredUser {
 	id: string;
+	tenantId: string | null;
 	email: string | null;
 	emailVerified: boolean;
 	usable: boolean;
@@ -24,15 +25,16 @@ interface StoredUser {
  * Who operates this installation.
  *
  * In Gauzy a super admin is an administrator of one tenant, anyone can register a tenant, and an
- * e-mail address is neither unique nor proven at registration. So neither "super admin" nor "has
- * this address" identifies the person who runs the server. The operator is a super admin (now, in the
- * database: not deleted, active, not archived) who is also:
+ * e-mail address is neither unique, nor proven at registration, nor proven again when a user changes
+ * it. So neither "super admin" nor "has this address" identifies the person who runs the server. The
+ * operator is a super admin (now, in the database: not deleted, active, not archived) who is also:
  *
  * - listed by user id in `EVER_OPERATOR_USER_IDS` (comma separated); or
  * - listed by address in `EVER_OPERATOR_EMAILS` (comma separated, case-insensitive), where an address
- *   names one account only: the first account ever created with it (deleted ones included), and only
- *   once that account has confirmed the address. An account registered later with the same address,
- *   in any tenant, is never the operator; or
+ *   names one account only: the account of the installation's first tenant (the one created at
+ *   setup) that holds it, when it is the only account of that tenant holding it (deleted ones
+ *   included) and has confirmed an address. An account of any other tenant, whenever it registered or
+ *   changed its address, is never the operator; or
  * - when neither list is set and the installation has exactly one tenant: that tenant's first super
  *   admin, pinned in `ever_instance.operatorUserId` (and pinned again when the pinned user is deleted,
  *   deactivated or no longer a super admin).
@@ -102,23 +104,31 @@ export class EverOperatorService {
 	}
 
 	/**
-	 * A listed address names the first account ever created with it, and only once that account has
-	 * confirmed it.
+	 * A listed address names the account of the installation's first tenant that holds it: only when
+	 * the caller is in that tenant, is the only account of it holding the address, and has confirmed an
+	 * address. Nobody else can become the first tenant (it is the oldest one, deleted included), so no
+	 * registration and no change of address in another tenant can claim the operator.
 	 */
 	private async designatedByEmail(stored: StoredUser, emails: string[]): Promise<boolean> {
 		const address = stored.email?.trim().toLowerCase();
-		if (!address || !emails.includes(address) || !stored.emailVerified) {
+		if (!address || !emails.includes(address) || !stored.emailVerified || !stored.tenantId) {
 			return false;
 		}
 		const d = dialectOf(this.dataSource);
 		const q = (name: string) => quote(d, name);
-		const { rows } = await runSql<{ id: unknown }>(
+		const first = await runSql<{ id: unknown }>(
 			this.dataSource,
-			`SELECT ${q('id')} AS ${q('id')} FROM ${q('user')} WHERE LOWER(${q('email')}) = ${placeholder(d, 1)} ` +
-				`ORDER BY ${q('createdAt')} ASC, ${q('id')} ASC LIMIT 1`,
-			[address]
+			`SELECT ${q('id')} AS ${q('id')} FROM ${q('tenant')} ORDER BY ${q('createdAt')} ASC, ${q('id')} ASC LIMIT 1`
 		);
-		return rows[0]?.id !== undefined && String(rows[0].id) === stored.id;
+		if (first.rows[0]?.id === undefined || String(first.rows[0].id) !== stored.tenantId) {
+			return false;
+		}
+		const holders = await runSql<{ n: unknown }>(
+			this.dataSource,
+			`SELECT COUNT(*) AS ${q('n')} FROM ${q('user')} WHERE ${q('tenantId')} = ${placeholder(d, 1)} AND LOWER(${q('email')}) = ${placeholder(d, 2)}`,
+			[stored.tenantId, address]
+		);
+		return toNumber(holders.rows[0]?.n) === 1;
 	}
 
 	/**
@@ -181,7 +191,7 @@ export class EverOperatorService {
 		const q = (name: string) => quote(d, name);
 		const { rows } = await runSql<Record<string, unknown>>(
 			this.dataSource,
-			`SELECT u.${q('id')} AS ${q('id')}, u.${q('email')} AS ${q('email')}, u.${q('emailVerifiedAt')} AS ${q('emailVerifiedAt')}, ` +
+			`SELECT u.${q('id')} AS ${q('id')}, u.${q('tenantId')} AS ${q('tenantId')}, u.${q('email')} AS ${q('email')}, u.${q('emailVerifiedAt')} AS ${q('emailVerifiedAt')}, ` +
 				`CASE WHEN ${this.usableUser(d, 'u')} THEN 1 ELSE 0 END AS ${q('usable')}, r.${q('name')} AS ${q('roleName')} ` +
 				`FROM ${q('user')} u LEFT JOIN ${q('role')} r ON r.${q('id')} = u.${q('roleId')} WHERE u.${q('id')} = ${placeholder(d, 1)}`,
 			[id]
@@ -192,6 +202,7 @@ export class EverOperatorService {
 		}
 		return {
 			id: String(row['id']),
+			tenantId: row['tenantId'] ? String(row['tenantId']) : null,
 			email: typeof row['email'] === 'string' ? row['email'] : null,
 			emailVerified: row['emailVerifiedAt'] !== null && row['emailVerifiedAt'] !== undefined,
 			usable: toBool(row['usable']),

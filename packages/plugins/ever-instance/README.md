@@ -33,7 +33,7 @@ The stored value records which one was used. When a stronger one is set later (`
 `EverOperatorService.isOperator(user, role)`: a super admin, as the database holds the user now (not deleted, active, not archived), who is:
 
 - listed in `EVER_OPERATOR_USER_IDS` (Gauzy user ids, comma separated); or
-- listed in `EVER_OPERATOR_EMAILS` (comma separated, case-insensitive). Gauzy addresses are neither unique nor proven at registration, so an address names one account only: the first account ever created with it (deleted ones included), and only once that account has confirmed the address. Anyone who registers the same address later, in a tenant of their own, is not the operator; or
+- listed in `EVER_OPERATOR_EMAILS` (comma separated, case-insensitive). Gauzy addresses are neither unique nor proven at registration or when changed, so an address names one account only: the account of the installation's first tenant (the oldest, deleted ones included) that holds it, when it is the only account of that tenant holding it (deleted ones included) and has confirmed an address. Nobody in another tenant can claim it, by registering or by changing an address; or
 - when neither list is set and the installation has exactly one tenant, its first super admin, pinned in `operatorUserId`. A pinned user who is deleted, deactivated, archived or no longer a super admin is replaced by the next super admin (compare and set, one audit line with both user ids).
 
 With more than one tenant and no list, nobody. With `EVER_INSTALL_SOURCE=cloud`, nobody.
@@ -50,7 +50,7 @@ Makes a new `instanceId` and a new statistics key, and increases `resetCount`. T
 |---|---|
 | `ENCRYPTION_KEY`, `JWT_SECRET` | Protect the stored key (read only). |
 | `EVER_OPERATOR_USER_IDS` | The operators of the installation, by user id. |
-| `EVER_OPERATOR_EMAILS` | The operators of the installation, by confirmed address (the first account with it). |
+| `EVER_OPERATOR_EMAILS` | The operators of the installation, by the address of their account in the first tenant. |
 | `EVER_INSTALL_SOURCE` | How the installation is deployed. |
 | `EVER_INSTANCE_ID` | Fixtures only: the id of a new identity (a UUID v4); ignored once an identity exists. |
 

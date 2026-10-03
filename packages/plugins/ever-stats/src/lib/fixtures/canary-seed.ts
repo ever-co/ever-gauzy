@@ -31,8 +31,8 @@ export async function seedCanaryDatabase(dataSource: DataSource, d: TestDialect)
 	const add = (table: string, values: Record<string, unknown>) => insert(dataSource, d, table, { id: randomUUID(), ...values });
 	const acme = randomUUID();
 	const zephyr = randomUUID();
-	await insert(dataSource, d, 'tenant', { id: acme, name: seed('Acme Robotics GmbH') });
-	await insert(dataSource, d, 'tenant', { id: zephyr, name: seed('Zephyr Consulting LLC') });
+	await insert(dataSource, d, 'tenant', { id: acme, name: seed('Acme Robotics GmbH'), createdAt: '2025-12-01 00:00:00' });
+	await insert(dataSource, d, 'tenant', { id: zephyr, name: seed('Zephyr Consulting LLC'), createdAt: '2026-02-01 00:00:00' });
 	await add('organization', { tenantId: acme, name: seed('Acme Robotics Berlin'), taxId: seed('DE811907980'), website: seed('https://acme-robotics.example') });
 	await add('organization', { tenantId: acme, name: seed('Acme Robotics Lyon'), taxId: seed('FR40303265045'), website: seed('https://acme.example/lyon') });
 	await add('organization', { tenantId: zephyr, name: seed('Zephyr Advisory'), taxId: seed('GB980780684'), website: seed('zephyr-advisory.example') });

@@ -5,7 +5,7 @@
 	"SCHEMA_LINK": "Read the published schema",
 	"MANAGED": "Managed by the instance operator",
 	"MANAGED_DESCRIPTION": "The report covers the whole installation, so only the person who operates this installation can see it or change it here. It contains counts and totals only, as described by the published schema.",
-	"MANAGED_OPERATORS": "If you operate this installation: list your user id in EVER_OPERATOR_USER_IDS (or your confirmed address in EVER_OPERATOR_EMAILS) to manage the statistics here, or set EVER_STATS_ENABLED=false to switch them off.",
+	"MANAGED_OPERATORS": "If you operate this installation: list your user id in EVER_OPERATOR_USER_IDS (or, for an account of the first tenant, its address in EVER_OPERATOR_EMAILS) to manage the statistics here, or set EVER_STATS_ENABLED=false to switch them off.",
 	"ERROR": "The settings could not be loaded. Please try again.",
 	"ENABLED": "Send anonymous usage statistics",
 	"STATE": {

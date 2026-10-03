@@ -44,9 +44,13 @@ describe.each(TEST_TARGETS)('EverOperatorService on $name', (target) => {
 		return { instance, operator: new EverOperatorService(dataSource, instance, env) };
 	}
 
+	/** Tenants are created one minute apart, in the order of the calls. */
+	let tenants = 0;
 	async function tenant(): Promise<string> {
 		const id = randomUUID();
-		await dataSource.query(`INSERT INTO ${t('tenant')} (${t('id')}, ${t('name')}) VALUES ('${id}', 'Acme')`);
+		tenants += 1;
+		const createdAt = `2025-01-01 00:${String(tenants).padStart(2, '0')}:00`;
+		await dataSource.query(`INSERT INTO ${t('tenant')} (${t('id')}, ${t('name')}, ${t('createdAt')}) VALUES ('${id}', 'Acme', '${createdAt}')`);
 		return id;
 	}
 
@@ -126,7 +130,7 @@ describe.each(TEST_TARGETS)('EverOperatorService on $name', (target) => {
 		expect(await operator.isOperator(stranger, 'SUPER_ADMIN')).toBe(false);
 	});
 
-	it('with EVER_OPERATOR_EMAILS: the first account with a listed, confirmed address, case-insensitive, on any number of tenants', async () => {
+	it('with EVER_OPERATOR_EMAILS: the account of the first tenant with a listed, confirmed address, case-insensitive, on any number of tenants', async () => {
 		const a = await user(await tenant(), 'SUPER_ADMIN', 'ops@acme.test', '2026-01-01 00:00:00');
 		const b = await user(await tenant(), 'SUPER_ADMIN', 'someone@other.test', '2026-01-01 00:00:00');
 		const { instance, operator } = services({ EVER_OPERATOR_EMAILS: ' OPS@acme.test , second@acme.test' });
@@ -139,20 +143,37 @@ describe.each(TEST_TARGETS)('EverOperatorService on $name', (target) => {
 		expect(await operator.isOperator({ id: b.id, email: 'ops@acme.test' }, 'SUPER_ADMIN')).toBe(false);
 	});
 
-	it('takeover: a later account in another tenant with the listed address is never the operator, confirmed or not', async () => {
+	it('takeover: an account of another tenant with the listed address is never the operator, confirmed or not, older or newer', async () => {
 		const operatorAccount = await user(await tenant(), 'SUPER_ADMIN', 'ops@acme.test', '2026-01-01 00:00:00');
 		const strangerTenant = await tenant();
 		const unconfirmed = await user(strangerTenant, 'SUPER_ADMIN', 'OPS@acme.test', '2026-05-01 00:00:00', { verified: false });
 		const confirmed = await user(strangerTenant, 'SUPER_ADMIN', 'ops@acme.test', '2026-05-02 00:00:00');
+		// An account created BEFORE the operator's, confirmed for another address, that changed its
+		// address to the listed one (Gauzy keeps the confirmation and the creation date).
+		const older = await user(await tenant(), 'SUPER_ADMIN', 'ops@acme.test', '2025-06-01 00:00:00');
 		const { instance, operator } = services({ EVER_OPERATOR_EMAILS: 'ops@acme.test' });
 		await instance.ensure();
 		expect(await operator.isOperator(unconfirmed, 'SUPER_ADMIN')).toBe(false);
 		expect(await operator.isOperator(confirmed, 'SUPER_ADMIN')).toBe(false);
+		expect(await operator.isOperator(older, 'SUPER_ADMIN')).toBe(false);
 		expect(await operator.isOperator(operatorAccount, 'SUPER_ADMIN')).toBe(true);
-		// Deleting or deactivating the first account never hands the address to a later one.
+		// Deleting or deactivating the operator's account never hands the address to another one.
 		await set(operatorAccount.id, 'deletedAt', `'2026-06-01 00:00:00'`);
 		expect(await operator.isOperator(operatorAccount, 'SUPER_ADMIN')).toBe(false);
 		expect(await operator.isOperator(confirmed, 'SUPER_ADMIN')).toBe(false);
+		expect(await operator.isOperator(older, 'SUPER_ADMIN')).toBe(false);
+	});
+
+	it('a second account of the first tenant taking the listed address leaves nobody designated by it (fail closed)', async () => {
+		const first = await tenant();
+		const operatorAccount = await user(first, 'SUPER_ADMIN', 'ops@acme.test', '2026-01-01 00:00:00');
+		const coAdmin = await user(first, 'SUPER_ADMIN', 'co-admin@acme.test', '2025-06-01 00:00:00');
+		const { instance, operator } = services({ EVER_OPERATOR_EMAILS: 'ops@acme.test' });
+		await instance.ensure();
+		expect(await operator.isOperator(operatorAccount, 'SUPER_ADMIN')).toBe(true);
+		await set(coAdmin.id, 'email', `'ops@acme.test'`);
+		expect(await operator.isOperator(coAdmin, 'SUPER_ADMIN')).toBe(false);
+		expect(await operator.isOperator(operatorAccount, 'SUPER_ADMIN')).toBe(false);
 	});
 
 	it('a listed address counts only once its first account has confirmed it', async () => {
