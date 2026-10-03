@@ -111,7 +111,12 @@ describe('migration run lock', () => {
 
 		/** A query runner whose unlock fails, shaped like TypeORM's Postgres one. */
 		const failingUnlock = (withReleaseWithError = true) => {
-			const queryRunner = {
+			const queryRunner: {
+				connect: jest.Mock;
+				release: jest.Mock;
+				query: jest.Mock;
+				releasePostgresConnection?: jest.Mock;
+			} = {
 				connect: jest.fn(async () => undefined),
 				release: jest.fn(async () => undefined),
 				query: jest.fn(async (sql: string) => {
@@ -119,9 +124,10 @@ describe('migration run lock', () => {
 					return [];
 				})
 			};
-			return withReleaseWithError
-				? { ...queryRunner, releasePostgresConnection: jest.fn(async (_error: Error) => undefined) }
-				: queryRunner;
+			if (withReleaseWithError) {
+				queryRunner.releasePostgresConnection = jest.fn(async () => undefined);
+			}
+			return queryRunner;
 		};
 
 		it('keeps the run result when the unlock fails, and discards the session instead of pooling it', async () => {

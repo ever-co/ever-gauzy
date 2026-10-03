@@ -1,4 +1,4 @@
-import { plainToInstance } from 'class-transformer';
+import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { getMetadataStorage, validate } from 'class-validator';
 import { EmployeeBelongsToOrganizationConstraint } from '../../shared/validators/constraints/employee-belongs-to-organization.constraint';
 import { CreateDashboardDTO } from './create-dashboard.dto';
@@ -22,7 +22,11 @@ describe.each([
 ])('%s employee rules', (_name, dto) => {
 	const failedRules = async (body: object, property: string): Promise<string[]> => {
 		const errors = await validate(
-			plainToInstance(dto, { name: 'Dashboard', sentTo: 'recipient', ...body }) as object
+			plainToInstance(dto as ClassConstructor<object>, {
+				name: 'Dashboard',
+				sentTo: 'recipient',
+				...body
+			}) as object
 		);
 		return Object.keys(errors.find((error) => error.property === property)?.constraints ?? {});
 	};
