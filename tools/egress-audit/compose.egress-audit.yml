@@ -1,0 +1,56 @@
+# cspell:words DOTENV
+# Egress audit only (see README.md): the Gauzy API from the image under test, with its database.
+#
+# - GAUZY_API_IMAGE: the image under test (the workflow pulls it first); never pulled here.
+# - GAUZY_AUDIT_SECRET: a random value the workflow makes per run (never committed); the production
+#   image refuses to start without its token and session secrets, and to seed with known passwords.
+# - GAUZY_AUDIT_DOTENV: the API's .env.local of the mode (empty, or EVER_STATS_ENABLED=false for
+#   `off_env_file`), mounted in the API's working directory.
+# - PostgreSQL (throw-away, on the sealed networks): the migrations of a new database run far faster
+#   than on SQLite.
+# - Publishes no port: everything runs on the audit's sealed networks.
+services:
+    api:
+        image: ${GAUZY_API_IMAGE:?set GAUZY_API_IMAGE to the API image under test}
+        pull_policy: never
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            NODE_ENV: production
+            DEMO: 'false'
+            JWT_SECRET: ${GAUZY_AUDIT_SECRET:?set GAUZY_AUDIT_SECRET to a random value}-jwt
+            JWT_REFRESH_TOKEN_SECRET: ${GAUZY_AUDIT_SECRET}-refresh
+            JWT_VERIFICATION_TOKEN_SECRET: ${GAUZY_AUDIT_SECRET}-verification
+            EXPRESS_SESSION_SECRET: ${GAUZY_AUDIT_SECRET}-session
+            # The first start seeds the default accounts, which production refuses with known passwords.
+            DEMO_SUPER_ADMIN_PASSWORD: ${GAUZY_AUDIT_SECRET}-super-admin
+            DEMO_ADMIN_PASSWORD: ${GAUZY_AUDIT_SECRET}-admin
+            DEMO_EMPLOYEE_PASSWORD: ${GAUZY_AUDIT_SECRET}-employee
+            API_HOST: 0.0.0.0
+            API_PORT: '3000'
+            API_BASE_URL: http://api:3000
+            CLIENT_BASE_URL: http://localhost:4200
+            DB_TYPE: postgres
+            DB_HOST: db
+            DB_PORT: '5432'
+            DB_NAME: gauzy
+            DB_USER: gauzy
+            DB_PASS: ${GAUZY_AUDIT_SECRET}-db
+            DB_SSL_MODE: 'false'
+            REDIS_ENABLED: 'false'
+            THROTTLE_ENABLED: 'false'
+        volumes:
+            - ${GAUZY_AUDIT_DOTENV:?set GAUZY_AUDIT_DOTENV to the API .env.local file of this run}:/srv/gauzy/.env.local:ro
+
+    db:
+        image: postgres:18-alpine
+        environment:
+            POSTGRES_DB: gauzy
+            POSTGRES_USER: gauzy
+            POSTGRES_PASSWORD: ${GAUZY_AUDIT_SECRET}-db
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U gauzy -d gauzy']
+            interval: 5s
+            timeout: 5s
+            retries: 24
