@@ -108,7 +108,7 @@ function isRichText(source: string): boolean {
  * comments and `<script>` / `<style>` blocks. Each returns exactly what the
  * equivalent global regex did (`/<\/?[a-z][a-z0-9]*(\s[^>]*)?\/?>/gi`,
  * `/<!--[\s\S]*?-->/g`, `/<(script|style)\b[\s\S]*?<\/\1\s*>/gi`), but in one
- * forward pass: those regexes rescanned the rest of the text from every opener
+ * forward pass: those regexes scanned the rest of the text again from every opener
  * that never closes, which is quadratic on input such as `'<a '.repeat(n)`.
  * None of them sanitizes anything — everything they leave behind is escaped by
  * the renderer — they only drop what is never displayed.

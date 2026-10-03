@@ -49,7 +49,7 @@ describe('record view markdown', () => {
 	});
 
 	/*
-	 * Each input made the old global regexes rescan the rest of the text from every opener that never
+	 * Each input made the old global regexes scan the rest of the text again from every opener that never
 	 * closes: `'<a '` repeated 20,000 times took about 9 s in `richTextToHtml` and 4 s in
 	 * `markdownToHtml`. The scanners are linear; the bound is generous so a busy runner cannot flake it.
 	 */

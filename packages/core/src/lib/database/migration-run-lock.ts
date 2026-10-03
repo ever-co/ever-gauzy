@@ -2,7 +2,7 @@ import { DataSource, Migration, MigrationExecutor, QueryRunner } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
- * The Postgres advisory lock held around a whole migration run: ASCII `gauz` / `migr`. The two-key
+ * The Postgres advisory lock held around a whole migration run (two fixed 32-bit keys). The two-key
  * form is a key space of its own in Postgres, so it can never collide with the single-key locks that
  * individual migrations take on their own timestamps (e.g. `1790000021000`).
  */
@@ -83,7 +83,7 @@ async function discardSession(queryRunner: QueryRunner): Promise<void> {
  * migrations when they boot (`migrationsRun`). TypeORM reads the executed migrations, runs the missing
  * ones and records each — and nothing stopped the second process from reading that list before the
  * first had written to it. Each migration then ran twice (harmlessly: they are idempotent, and the
- * newer ones serialise their own statements with an advisory lock) and was RECORDED twice, two rows
+ * newer ones serialize their own statements with an advisory lock) and was RECORDED twice, two rows
  * per migration in `migrations`. Holding one lock around the whole run makes the second process wait,
  * then read a list that already holds the first one's rows: it finds nothing pending.
  *
