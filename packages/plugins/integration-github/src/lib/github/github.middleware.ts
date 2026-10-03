@@ -13,7 +13,7 @@ import { arrayToObject, isNotEmpty } from '@gauzy/utils';
 function forLog(value: unknown): string {
 	return String(value ?? '')
 		.replace(/[\r\n]+/g, ' ')
-		.replace(/[\u0000-\u001f\u007f]/g, '')
+		.replace(/\p{Cc}/gu, '')
 		.slice(0, 200);
 }
 
