@@ -58,7 +58,7 @@ function isLocalHost(hostname: string): boolean {
 	return /^[a-z0-9-]+$/.test(host) && !/^[0-9]+$/.test(host) && !NOT_LOCAL_NAMES.has(host);
 }
 
-/** Whether `apiUrl` points at a local service (a mock or a mirror on this host or network). */
+/** Whether `apiUrl` points at a local service (a mock or a mirror on this host, a private address or a container). */
 function isLocalDestination(apiUrl: string | null): boolean {
 	if (!apiUrl) return false;
 	try {

@@ -55,7 +55,7 @@ The statistics key is made at first start, stored encrypted in the database (wit
 
 Every number covers the whole installation, all tenants together. Every installation, whatever its size, sends the same fields.
 
-**Never included:** names of people or companies, e-mail addresses, postal addresses, tax or registration numbers, invoice numbers, document contents, per-record amounts, free text, URLs, host names, IP addresses or precise locations.
+**Never included:** names of people or companies, e-mail addresses, postal addresses, tax or registration numbers, invoice numbers, document contents, amounts per record, free text, URLs, host names, IP addresses or precise locations.
 
 An example, from the published fixtures (`src/lib/schema/fixtures/valid/gauzy.json`; this module sends its own `module_version`, `0.1.0`):
 

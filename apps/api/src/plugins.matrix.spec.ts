@@ -128,7 +128,6 @@ describe('API boot order: the settings files are read before the plugin list is 
 			}
 			process.chdir(dir);
 			return loadPlugins({ EVER_STATS_ENABLED: undefined }, () => {
-				// eslint-disable-next-line @typescript-eslint/no-var-requires
 				require('./preload-env');
 			});
 		} finally {

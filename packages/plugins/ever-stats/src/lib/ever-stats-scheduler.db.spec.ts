@@ -262,7 +262,7 @@ describe.each(TEST_TARGETS)('EverStatsScheduler on $name', (target) => {
 		const holder: { service?: EverStatsService } = {};
 		const s = setup(clock, calls, [], {
 			during: async () => {
-				resetDuringSend = holder.service!.resetIdentity('operator').then(
+				resetDuringSend = (holder.service as EverStatsService).resetIdentity('operator').then(
 					() => 'reset',
 					(error: { status?: number; response?: { code?: string } }) => `${error.status}:${error.response?.code}`
 				);
