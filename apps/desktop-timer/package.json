@@ -40,7 +40,7 @@
 		"@angular/core": "21.0.7",
 		"@angular/forms": "21.0.7",
 		"@angular/material": "21.0.6",
-		"@angular/router": "21.0.7",
+		"@angular/router": "21.2.24",
 		"@datorama/akita": "^8.0.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
