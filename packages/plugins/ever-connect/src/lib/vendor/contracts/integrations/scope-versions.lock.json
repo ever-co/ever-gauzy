@@ -1,0 +1,57 @@
+{
+  "description": "sha256 of each integration scope with its scope_version (tools/split-integrations.mjs)",
+  "integrations": {
+    "instance_url": {
+      "scope_version": 1,
+      "scope_sha256": "4d49f2e6b58f02e7476680daad357fba6a3f0af18e7c1e393e8707d7ca120cf3"
+    },
+    "stats_link": {
+      "scope_version": 1,
+      "scope_sha256": "390773fb3fbffb6d5b48d2d6f220a2a0a827fd6ff01cbd66cd3186062eabe437"
+    },
+    "ever_id_login": {
+      "scope_version": 1,
+      "scope_sha256": "210842e6907fe9d071074098ac8a9b81143a3031995cc00ecff5a9d882dd30bd"
+    },
+    "counterparty_lookup": {
+      "scope_version": 1,
+      "scope_sha256": "67ad3983e9ac1f6cafdeee3aacf8b6ecad95bc72d878cd92f7711031bcfc88ce"
+    },
+    "counterparty_discoverable": {
+      "scope_version": 1,
+      "scope_sha256": "170ea9ef4df68381e0b94f81b83154e0a67b7d3b7a59269b09462c22f1171c9f"
+    },
+    "profile_import": {
+      "scope_version": 1,
+      "scope_sha256": "23cc377dc8172f610704e18908a826c45d03a1096fa43f0c907d842568f6d582"
+    },
+    "usage_reporting": {
+      "scope_version": 1,
+      "scope_sha256": "b4c8eb301eca01068617b749162548324275e8ee6d3bd82e68cf8809eadcde2f"
+    },
+    "app_sync": {
+      "scope_version": 1,
+      "scope_sha256": "12e10672c4e3d16a1440c5c9483e91cc1db31793f231601456b198f83f887000"
+    },
+    "billing_link": {
+      "scope_version": 1,
+      "scope_sha256": "0107fb9b931fa1d27104091bc1de04f6a2485252e9cdb65b84913560dbc927c8"
+    },
+    "webhooks": {
+      "scope_version": 1,
+      "scope_sha256": "f96fa2e6fd604320f3649e8d9200b270927cc32ff9af6c78b2ca7b66e08c3bc7"
+    },
+    "managed_operations": {
+      "scope_version": 1,
+      "scope_sha256": "4c09674f3374371a30cb96298e1fda97277ba2ad13ca05accbe2362938a1db93"
+    },
+    "provider_access": {
+      "scope_version": 1,
+      "scope_sha256": "8f7f959b0ba746bd27f97426aad84e7e5bf7571293a40fc115d86af16dbce23a"
+    },
+    "marketplace_installs": {
+      "scope_version": 1,
+      "scope_sha256": "467cea708e8881aa2a03feaeb6dedf08a7960c2b583c3f321628f0aaf399b3e6"
+    }
+  }
+}
