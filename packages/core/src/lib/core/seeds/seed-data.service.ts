@@ -12,6 +12,7 @@ import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { IEmployee, IOrganization, IOrganizationProject, IRole, ITenant, IUser } from '@gauzy/contracts';
 import { validateSeedCredentials } from '../../bootstrap/validate-secrets';
+import { MigrationLockingDataSource } from '../../database/migration-run-lock';
 import { getPluginModules, hasLifecycleMethod, PluginLifecycleMethods } from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
@@ -1681,7 +1682,8 @@ export class SeedDataService {
 					...dbConnectionOptions,
 					...this.overrideDbConfig
 				};
-				const dataSource = new DataSource({
+				// Locking: with `migrationsRun` it runs the pending migrations, possibly while a server boots.
+				const dataSource = new MigrationLockingDataSource({
 					...options
 				} as DataSourceOptions);
 

@@ -20,6 +20,7 @@ import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cp
 import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
@@ -63,6 +64,11 @@ export const plugins = [
 	// Keycloak as an additional sign-in method. Off unless KEYCLOAK_ENABLED=true and a Keycloak client
 	// id and secret are set; when off it is not loaded at all.
 	...(isKeycloakEnabled() ? [AuthKeycloakPlugin] : []),
+
+	// Anonymous usage statistics (one signed report a day: counts and monthly totals, never a name or a
+	// record). On unless EVER_STATS_ENABLED=false; when off it is not loaded at all (no route, no timer,
+	// no outbound request). Any other value keeps it on and is logged once.
+	...(isEverStatsEnabled(process.env, (message) => console.warn(message)) ? [EverStatsPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({

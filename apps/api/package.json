@@ -49,6 +49,8 @@
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-auth-keycloak": "^0.1.0",
 		"@gauzy/plugin-auth-zitadel": "^0.1.0",
+		"@gauzy/plugin-ever-instance": "^0.1.0",
+		"@gauzy/plugin-ever-stats": "^0.1.0",
 		"@gauzy/plugin-integration-ever-async": "^0.1.0",
 		"@gauzy/plugin-integration-github": "^0.1.0",
 		"@gauzy/plugin-integration-hubstaff": "^0.1.0",

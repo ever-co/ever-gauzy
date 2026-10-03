@@ -1,0 +1,53 @@
+{
+  "schema": "ever.stats.v1",
+  "report_id": "9f1c1d4a-7b2e-4f0a-9d3c-2a6b1e5f8c01",
+  "instance_id": "3d2b1a0c-5e4f-4a6b-8c7d-9e0f1a2b3c4d",
+  "sent_at": "2026-10-03",
+  "module_version": "1.0.0",
+  "product": "gauzy",
+  "instance_kind": "backend",
+  "serves": [
+    "gauzy",
+    "teams"
+  ],
+  "version": "https://acme.example/1.0",
+  "channel": "stable",
+  "install_source": "self-hosted",
+  "country": "ZZ",
+  "period": "2026-09",
+  "final": true,
+  "counts": {
+    "tenants": 3,
+    "organizations": 4,
+    "users": 41,
+    "users_active_30d": 30,
+    "employees": 27,
+    "employees_active": 25,
+    "teams": 6,
+    "projects": 18,
+    "tasks": 912,
+    "contacts": 57,
+    "integrations_in_use": {
+      "github": 1,
+      "ever_connect": 0
+    }
+  },
+  "features": {
+    "time_tracking": true,
+    "invoice": true,
+    "payment": true,
+    "open_stats": false
+  },
+  "aggregates": {
+    "invoiced_minor": {
+      "EUR": 18230055,
+      "USD": 950000
+    },
+    "invoices": 214,
+    "payments_minor": {
+      "EUR": 17500000
+    },
+    "payments": 190,
+    "hours_tracked_min": 259140
+  }
+}

@@ -8,6 +8,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { registerPluginConfig } from '../bootstrap';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
+import { MigrationLockingDataSource } from './migration-run-lock';
 import { isDatabaseType, isSqliteDB } from './../core/utils';
 
 /**
@@ -213,7 +214,8 @@ export async function initializeDatabaseConnection(config: Partial<ApplicationPl
 		throw new Error('❌ Missing database connection options in plugin config.');
 	}
 
-	const dataSource = new DataSource({
+	// Locking, so a CLI run and a booting server never run the same migrations side by side.
+	const dataSource = new MigrationLockingDataSource({
 		...dbConnectionOptions,
 		subscribers: [],
 		synchronize: false,

@@ -2,49 +2,6 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 @use 'gauzy/_gauzy-table-hub' as ga-hub;
 
-// ── The "add row" button ─────────────────────────────────────────────────────
-// The library puts the create trigger in the filter row's action cell, and it
-// was a saturated green slab: 36px around a 28px glyph, twice the height of the
-// filter fields beside it and the loudest thing on a form whose subject is the
-// figures below it.
-//
-// It is the same icon button as the row actions below — at the grid's one
-// control height, so the whole widget row lines up — and it carries the success
-// accent because adding a line is what it does.
-//
-// The glyph is sized on the `<i>`: `_overrides.scss` pins every smart-table
-// action anchor to `font-size: 1.75rem !important`, which the icon only INHERITS,
-// and any direct declaration beats an inherited value without an `!important` of
-// its own.
-:host ::ng-deep angular2-smart-table th.angular2-smart-actions-title a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--gauzy-table-control-height, 1.75rem);
-  height: var(--gauzy-table-control-height, 1.75rem);
-  padding: 0;
-  border-radius: var(--gauzy-radius-sm, 0.375rem);
-  background-color: nb-theme(color-success-transparent-200);
-  box-shadow: $action-hairline;
-  color: nb-theme(color-success-default);
-  line-height: 1;
-  transition: background-color 0.15s ease, color 0.15s ease;
-
-  i {
-    font-size: 0.875rem;
-    line-height: 1;
-  }
-
-  &:hover {
-    background-color: nb-theme(color-success-transparent-300);
-  }
-
-  &:focus-visible {
-    outline: 2px solid nb-theme(color-primary-default);
-    outline-offset: 1px;
-  }
-}
-
 // `transform: scale(0.6)` shrank the anchor's PAINT but not its box, so each
 // action kept a full-size hit area and its glyph came out blurred and off-centre.
 // Sized as a real 1.5rem icon button instead — and the Font Awesome `<i>` inside
@@ -647,9 +604,8 @@ nb-card-footer {
 // `--gauzy-table-control-height` is the same decision for the widgets: this grid
 // is edited in place, so it runs at the 1.75rem the rest of the app’s tables use
 // rather than the 1.5rem `density-tokens()` picks for read-only list rows. Every
-// control in the block — the add button at the top of this file, the filter
-// fields and the inline editors below — is sized from it, so the grid has ONE
-// control height.
+// control in the block — the filter fields and the inline editors below — is
+// sized from it, so the grid has ONE control height.
 //
 // After the `list-page()` include above, not before: that mixin sets the same
 // tokens on `:host`, so an earlier block of equal specificity loses to it.
@@ -697,7 +653,7 @@ nb-card-footer {
 
 // ── The inline row editors ──────────────────────────────────────────────────
 // What a cell turns into while its row is being edited, and the same fields in
-// the add row the button at the top of this file opens.
+// the add row the toolbar button opens.
 //
 // They were sized by this page's own `dialog()` include — 2.375rem, the metric of
 // the FORM above the grid — inside cells whose text is 0.6875rem: an editing row

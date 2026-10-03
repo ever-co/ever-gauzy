@@ -38,6 +38,20 @@ export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 /** Maximum agent steps (model turns incl. tool calls) per user message. */
 const MAX_STEPS = 12;
 
+/**
+ * The operator's master switch: `GAUZY_AI_CHAT_ENABLED=false` turns the whole feature off.
+ *
+ * Read per call rather than once at import so a test (or a config reload) sees the current value.
+ * It must gate every path that reaches a model provider, not only `/config`: the UI hides itself
+ * when `/config` says so, but a stale client or a hand-crafted POST would otherwise still start a
+ * paid stream on a server whose operator switched the feature off.
+ */
+export const isAiChatGloballyDisabled = (): boolean =>
+	process.env.GAUZY_AI_CHAT_ENABLED?.trim().toLowerCase() === 'false';
+
+/** Message of the 503 every provider-reaching route answers while the master switch is off. */
+const GLOBALLY_DISABLED_MESSAGE = 'AI chat is disabled on this server (GAUZY_AI_CHAT_ENABLED=false).';
+
 export interface IStreamChatArgs {
 	/** UI messages from the `useChat` client. */
 	messages: UIMessage[];
@@ -81,6 +95,9 @@ export class AiChatService {
 	 * stream into the HTTP response.
 	 */
 	async streamChat(args: IStreamChatArgs): Promise<void> {
+		if (isAiChatGloballyDisabled()) {
+			throw new ServiceUnavailableException(GLOBALLY_DISABLED_MESSAGE);
+		}
 		if (!Array.isArray(args.messages) || args.messages.length === 0) {
 			throw new BadRequestException('messages must be a non-empty array of UI messages.');
 		}
@@ -328,7 +345,7 @@ export class AiChatService {
 			});
 		}
 
-		const globallyDisabled = process.env.GAUZY_AI_CHAT_ENABLED === 'false';
+		const globallyDisabled = isAiChatGloballyDisabled();
 		const configured = providers.filter((provider) => provider.configured);
 		const defaults = await this.resolveDefaultProvider(configured.map((p) => p.id));
 		const voiceDefault = await this.resolveVoiceDefault(speechReady);
@@ -613,6 +630,10 @@ export class AiChatService {
 	 * @returns The transcript, which may legitimately be empty for silence.
 	 */
 	async transcribe(audio: Buffer, mimeType: string, options?: { language?: string }): Promise<string> {
+		// Dictation sends the audio to a paid speech provider, so the master switch holds here too.
+		if (isAiChatGloballyDisabled()) {
+			throw new ServiceUnavailableException(GLOBALLY_DISABLED_MESSAGE);
+		}
 		if (!audio?.length) {
 			throw new BadRequestException('No audio was uploaded.');
 		}

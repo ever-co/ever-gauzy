@@ -1267,11 +1267,18 @@
 		"resourceowner",
 		"jtis",
 		"reauth",
-		"NOSONAR"
+		"NOSONAR",
+		"HKDF",
+		"tcpdump",
+		"Setext",
+		"capitalised",
+		"rescan"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
 		".all-contributorsrc",
+		"packages/plugins/ever-stats/src/lib/schema/**",
+		"packages/plugins/ever-stats/src/lib/vendor/**",
 		".github/CONTRIBUTORS.md",
 		".deploy/*",
 		".git/*",

@@ -20,6 +20,8 @@ const nxPreset = require('@nx/jest/preset').default;
 //   lodash-es                        -> Angular UI code, and angular2-smart-table's .mjs bundle
 //   d3-*, internmap                  -> @swimlane/ngx-charts (desktop-ui-lib's recap module, which the
 //                                       desktop apps' shells load through the library's entry point)
+//   jose                             -> the shared OpenID Connect library in `@gauzy/auth` (the auth,
+//                                       auth-keycloak and auth-zitadel suites)
 // plus every `.mjs` file: Angular and its ecosystem ship ESM-only `fesm2022/*.mjs` bundles, which the
 // Angular projects compile with jest-preset-angular. A Node project only pays for that alternative
 // when one of its specs actually reaches an `.mjs` file, which would otherwise fail to load anyway.
@@ -42,7 +44,7 @@ const nxPreset = require('@nx/jest/preset').default;
 //     packages to their real source path (`packages/<pkg>/src/index.ts`), which has no
 //     `node_modules/` segment, so this pattern is never consulted for them.
 const transformIgnorePatterns = [
-	String.raw`node_modules/(?!.*\.mjs$|(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios|@datorama|@ngneat|lodash-es|d3-[a-z-]+|internmap)/)`
+	String.raw`node_modules/(?!.*\.mjs$|(?:.*/)?(sanitize-html|htmlparser2|domelementtype|domhandler|domutils|dom-serializer|entities|nanoid|parse-srcset|uuid|camelcase|@faker-js|@nestjs/axios|@datorama|@ngneat|lodash-es|d3-[a-z-]+|internmap|jose)/)`
 ];
 
 module.exports = {

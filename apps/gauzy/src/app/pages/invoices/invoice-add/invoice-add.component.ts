@@ -224,6 +224,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			actions: { add: false, edit: true, delete: true },
 			// The old '<i class="nb-*">' markup relied on Nebular's long-removed icon
 			// font, so every row action rendered as a bare colored dot. FontAwesome is
 			// loaded globally; native `title` (not nbTooltip) because these strings are
@@ -231,7 +232,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			// (`far`), so the row actions read like the eva outline icons the rest of
 			// the app uses rather than the heavier solid glyphs.
 			add: {
-				addButtonContent: `<i class="far fa-square-plus" aria-hidden="true" title="${this.getTranslation('BUTTONS.ADD')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.ADD')}</span>`,
 				createButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
 				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmCreate: true
