@@ -2,6 +2,11 @@
 	display: block;
 }
 
+// Type scale: the one the report pages (Reports > Manual Time Edits) and the
+// plugin marketplace use — a 16px / 600 page title, 13px / 600 group and notice
+// titles, 11px / 600 uppercase labels in the hint colour, 12px body and hints in
+// the hint colour (not dimmed with `opacity`), and 11px badges that are neither
+// uppercase nor pill-shaped. Surfaces are flat: one hairline, no lift or glow.
 .ai-chat-settings {
 	.page-header {
 		display: flex;
@@ -51,20 +56,20 @@
 	.capability-chip {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.2rem;
-		font-size: 0.6875rem;
+		gap: 4px;
+		font-size: 11px;
 		font-weight: 600;
-		letter-spacing: 0.02em;
-		padding: 0.125rem 0.5rem;
-		border-radius: 1rem;
+		line-height: 14px;
+		padding: 2px 6px;
+		border-radius: var(--border-radius);
 		background: var(--color-basic-transparent-200);
 		color: var(--text-hint-color);
 		white-space: nowrap;
 
 		nb-icon {
-			font-size: 0.8125rem;
-			width: 0.8125rem;
-			height: 0.8125rem;
+			font-size: 12px;
+			width: 12px;
+			height: 12px;
 		}
 
 		&.speech {
@@ -132,19 +137,42 @@
 		// Full text colour, not the hint colour: these initials are the only
 		// thing identifying the provider in this tile, so they must stay legible.
 		color: var(--text-basic-color);
-		font-weight: 700;
-		font-size: 0.8125rem;
+		font-weight: 600;
+		font-size: 13px;
 		letter-spacing: 0.02em;
 
 		&.large {
-			font-size: 1.125rem;
+			font-size: 18px;
 		}
 	}
 
-	// Render nb-badge inline (its default is absolute positioning).
+	// Render nb-badge inline (its default is absolute positioning), and on the
+	// report badge scale: 11px / 600, a soft tint of its status with the text in
+	// the full colour — not Nebular's 10px bold white-on-solid-orange pill.
 	.static-badge {
 		position: static;
+		display: inline-flex;
+		align-items: center;
+		padding: 2px 6px;
+		border-radius: var(--border-radius);
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 14px;
 		white-space: nowrap;
+		text-transform: none;
+	}
+
+	@each $status in (primary, success, info, warning, danger) {
+		.static-badge.status-#{$status} {
+			background: var(--color-#{$status}-transparent-default);
+			color: var(--color-#{$status}-default);
+		}
+	}
+
+	.static-badge.status-basic {
+		background: transparent;
+		border: 1px solid var(--border-basic-color-4);
+		color: var(--text-basic-color);
 	}
 
 	// ── Chat availability notice ──────────────────────────────────────
@@ -174,14 +202,17 @@
 			min-width: 0;
 		}
 
+		// A notice title is a group header (13px / 600); its hint is body text.
 		.notice-title {
-			font-size: 0.875rem;
+			font-size: 13px;
 			font-weight: 600;
+			line-height: 18px;
 			color: var(--text-basic-color);
 		}
 
 		.notice-hint {
-			font-size: 0.75rem;
+			font-size: 12px;
+			line-height: 16px;
 			color: var(--text-hint-color);
 		}
 
@@ -223,6 +254,9 @@
 		min-height: 22rem;
 		justify-content: center;
 		text-align: center;
+		font-size: 12px;
+		line-height: 18px;
+		color: var(--text-hint-color);
 
 		p {
 			margin: 0;
@@ -232,8 +266,8 @@
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			width: 3.5rem;
-			height: 3.5rem;
+			width: 3rem;
+			height: 3rem;
 			margin-bottom: 0.5rem;
 			border-radius: 50%;
 			// Neutral translucent disc: darkens a light card and lightens a dark
@@ -241,22 +275,25 @@
 			background: var(--color-basic-transparent-200);
 
 			nb-icon {
-				font-size: 1.75rem;
-				width: 1.75rem;
-				height: 1.75rem;
+				font-size: 1.5rem;
+				width: 1.5rem;
+				height: 1.5rem;
 				color: var(--text-hint-color);
 			}
 		}
 
 		.empty-title {
 			margin: 0;
-			font-size: 1rem;
+			font-size: 14px;
 			font-weight: 600;
+			line-height: 20px;
 			color: var(--text-basic-color);
 		}
 
 		.empty-hint {
 			max-width: 26rem;
+			font-size: 12px;
+			line-height: 18px;
 			color: var(--text-hint-color);
 		}
 
@@ -273,9 +310,9 @@
 
 		.empty-providers {
 			margin-top: 0.75rem;
-			font-size: 0.75rem;
+			font-size: 11px;
+			line-height: 14px;
 			color: var(--text-hint-color);
-			opacity: 0.75;
 		}
 	}
 
@@ -316,20 +353,21 @@
 
 		.speech-model {
 			font-family: var(--font-family-mono, monospace);
-			font-size: 0.75rem;
-			opacity: 0.8;
+			font-size: 11px;
+			color: var(--text-hint-color);
 			word-break: break-all;
 		}
 
+		// A neutral outlined badge beside the tinted "Voice default" one.
 		.fallback-chip {
 			margin-left: 0.5rem;
-			font-size: 0.6875rem;
+			font-size: 11px;
 			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-			padding: 0.125rem 0.5rem;
-			border-radius: 1rem;
-			background: var(--color-basic-transparent-200);
+			line-height: 14px;
+			padding: 1px 6px;
+			border-radius: var(--border-radius);
+			border: 1px solid var(--border-basic-color-4);
+			background: transparent;
 			color: var(--text-hint-color);
 		}
 
@@ -362,13 +400,15 @@
 			}
 
 			.notice-title {
-				font-size: 0.875rem;
+				font-size: 13px;
 				font-weight: 600;
+				line-height: 18px;
 				color: var(--text-basic-color);
 			}
 
 			.notice-hint {
-				font-size: 0.75rem;
+				font-size: 12px;
+				line-height: 16px;
 				color: var(--text-hint-color);
 			}
 
@@ -380,6 +420,8 @@
 	}
 
 	// ── LIST view ─────────────────────────────────────────────────────
+	// Drawn like the report row tables: 11px uppercase column labels, 12px cells,
+	// one hairline between rows.
 	.provider-rows {
 		display: flex;
 		flex-direction: column;
@@ -395,15 +437,22 @@
 			grid-template-columns: minmax(14rem, 1.4fr) minmax(9rem, 1fr) minmax(7rem, 0.7fr) auto;
 			gap: 1rem;
 			align-items: center;
-			padding: 0.75rem 0.5rem;
+			padding: 8px;
+			font-size: 12px;
+			line-height: 16px;
 		}
 
 		.row-head {
-			font-size: 0.75rem;
+			padding-top: 6px;
+			padding-bottom: 6px;
+			border-top: 1px solid var(--border-basic-color-2);
+			font-size: 11px;
+			font-weight: 600;
+			line-height: 14px;
 			text-transform: uppercase;
 			letter-spacing: 0.04em;
-			opacity: 0.6;
-			border-bottom: 1px solid var(--color-basic-transparent-300);
+			color: var(--text-hint-color);
+			border-bottom: 1px solid var(--border-basic-color-2);
 		}
 
 		.row {
@@ -418,17 +467,19 @@
 			display: inline-flex;
 			align-items: center;
 			gap: 0.75rem;
-			font-weight: 600;
+			font-size: 13px;
+			font-weight: 500;
+			color: var(--text-basic-color);
 		}
 
+		// The report badge: 11px / 600 on a 2px x 6px box — not uppercase.
 		.default-chip {
 			margin-left: 0.5rem;
-			font-size: 0.6875rem;
-			font-weight: 700;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-			padding: 0.125rem 0.5rem;
-			border-radius: 1rem;
+			font-size: 11px;
+			font-weight: 600;
+			line-height: 14px;
+			padding: 2px 6px;
+			border-radius: var(--border-radius);
 			// Theme tokens (not hardcoded hex) so every theme resolves an
 			// accessible pair; the dark override below lightens the foreground.
 			background: var(--color-success-transparent-200);
@@ -436,8 +487,9 @@
 		}
 
 		.env-note {
-			font-size: 0.75rem;
-			opacity: 0.6;
+			font-size: 11px;
+			line-height: 14px;
+			color: var(--text-hint-color);
 		}
 
 		.actions-col {
@@ -541,9 +593,9 @@
 	.platform-notice {
 		margin: 0.5rem 0 0;
 		max-width: 42rem;
-		font-size: 0.75rem;
-		line-height: 1.4;
-		opacity: 0.85;
+		font-size: 12px;
+		line-height: 18px;
+		color: var(--text-hint-color);
 	}
 
 	.connect-box {
@@ -554,8 +606,9 @@
 		margin-bottom: 1.25rem;
 
 		.hint {
-			font-size: 0.75rem;
-			opacity: 0.7;
+			font-size: 12px;
+			line-height: 16px;
+			color: var(--text-hint-color);
 		}
 
 		.divider {
@@ -564,16 +617,18 @@
 			align-items: center;
 			gap: 0.75rem;
 			margin-top: 0.75rem;
-			font-size: 0.75rem;
+			font-size: 11px;
+			font-weight: 600;
+			line-height: 14px;
 			text-transform: uppercase;
-			letter-spacing: 0.05em;
-			opacity: 0.6;
+			letter-spacing: 0.04em;
+			color: var(--text-hint-color);
 
 			&::before,
 			&::after {
 				content: '';
 				flex: 1;
-				border-top: 1px solid var(--color-basic-transparent-300);
+				border-top: 1px solid var(--border-basic-color-2);
 			}
 		}
 	}
@@ -585,16 +640,27 @@
 	.form-group {
 		margin-bottom: 1rem;
 
+		// The form label, as in the marketplace filter: 11px / 600, uppercase,
+		// in the hint colour.
 		.label {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
 			gap: 0.5rem;
-			margin-bottom: 0.25rem;
+			margin-bottom: 6px;
+			font-size: 11px;
+			font-weight: 600;
+			line-height: 14px;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			color: var(--text-hint-color);
 		}
 
 		.get-key {
-			font-size: 0.75rem;
+			font-size: 12px;
+			font-weight: 500;
+			text-transform: none;
+			letter-spacing: normal;
 			text-decoration: none;
 
 			&:hover {
@@ -604,15 +670,17 @@
 
 		.hint {
 			display: block;
-			margin-top: 0.25rem;
-			font-size: 0.75rem;
-			opacity: 0.7;
+			margin-top: 4px;
+			font-size: 12px;
+			line-height: 16px;
+			color: var(--text-hint-color);
 		}
 
 		.error {
 			display: block;
-			margin-top: 0.25rem;
-			font-size: 0.75rem;
+			margin-top: 4px;
+			font-size: 12px;
+			line-height: 16px;
 			color: var(--color-danger-default);
 		}
 
@@ -632,9 +700,9 @@
 
 			.model-id {
 				display: block;
-				font-size: 0.6875rem;
+				font-size: 11px;
 				font-family: var(--font-family-mono, monospace);
-				opacity: 0.6;
+				color: var(--text-hint-color);
 			}
 		}
 
@@ -657,6 +725,12 @@
 				display: inline-flex;
 				align-items: center;
 				gap: 0.375rem;
+
+				nb-icon {
+					font-size: 14px;
+					width: 14px;
+					height: 14px;
+				}
 			}
 
 			.voice-default-toggle {
