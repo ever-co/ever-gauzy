@@ -873,6 +873,15 @@
 		padding-bottom: 0.5rem;
 	}
 
+	// The provider form opens its model pickers' dropdowns inside this panel, so nothing between
+	// the picker and the page's own scroll area may clip what overflows: not `.panel`'s
+	// `overflow: hidden`, and not the card body's `overflow: auto` (Nebular's), which cut a long
+	// model list off at the bottom of the card. The layout column around the card still scrolls.
+	.panel.config-panel,
+	.page-card__body--config {
+		overflow: visible;
+	}
+
 	.config-title {
 		display: flex;
 		flex-wrap: wrap;

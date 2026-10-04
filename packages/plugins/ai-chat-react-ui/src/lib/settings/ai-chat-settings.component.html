@@ -127,9 +127,9 @@
 			@if (configuredProviders().length) {
 				<section class="panel" aria-labelledby="ai-chat-providers-title">
 					<header class="panel__header">
-						<h6 class="panel__title" id="ai-chat-providers-title">
+						<h5 class="panel__title" id="ai-chat-providers-title">
 							{{ 'AI_CHAT_UI.SETTINGS.LIST.TITLE' | translate }}
-						</h6>
+						</h5>
 					</header>
 				<div class="provider-rows">
 					<div class="row-head">
@@ -224,10 +224,10 @@
 			@if (!loading() && (configuredProviders().length || voiceProviders().length)) {
 				<section class="panel voice-section" aria-labelledby="ai-chat-voice-title">
 					<header class="panel__header">
-						<h6 class="panel__title" id="ai-chat-voice-title">
+						<h5 class="panel__title" id="ai-chat-voice-title">
 							<nb-icon icon="mic-outline"></nb-icon>
 							{{ 'AI_CHAT_UI.SETTINGS.VOICE.TITLE' | translate }}
-						</h6>
+						</h5>
 						<p class="panel__description">{{ 'AI_CHAT_UI.SETTINGS.VOICE.DESCRIPTION' | translate }}</p>
 					</header>
 
@@ -433,7 +433,7 @@
 				</div>
 			</div>
 		</nb-card-header>
-		<nb-card-body class="page-card__body">
+		<nb-card-body class="page-card__body page-card__body--config">
 			<section class="panel config-panel">
 				<header class="panel__header config-header">
 					<div class="config-title">

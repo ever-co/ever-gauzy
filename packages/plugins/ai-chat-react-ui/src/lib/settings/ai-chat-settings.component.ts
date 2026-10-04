@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterStateSnapshot } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -29,8 +29,8 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin, of } from 'rxjs';
-import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
+import { EMPTY, Observable, forkJoin, of } from 'rxjs';
+import { catchError, filter, finalize, map, switchMap, tap } from 'rxjs/operators';
 import {
 	IAiChatModel,
 	IAiChatModelCatalogue,
@@ -1185,6 +1185,9 @@ export class AiChatSettingsComponent implements OnInit {
 					// The very first provider turns the chat on — the list view the
 					// user lands on must already say so.
 					this.refreshChatAvailability();
+					// What was just saved is no longer "unsaved": clear it before navigating, or the
+					// leave guard would ask to discard the very edits that were stored.
+					this.markSaved(provider);
 					// Navigates: without the `takeUntilDestroyed(this.destroyRef)` above, a save that
 					// resolves after the user left would yank them back to this page.
 					this.showList();
@@ -1343,32 +1346,61 @@ export class AiChatSettingsComponent implements OnInit {
 	}
 
 	/**
-	 * Leaves the config view — for Back and Cancel — asking first when there are unsaved edits.
-	 * Discarding rebuilds the forms from the saved credentials, so the edits do not reappear the
-	 * next time this provider is opened.
+	 * Leaves the config view — for Back and Cancel. It only navigates: the unsaved-changes check is
+	 * the route's `canDeactivate` guard ({@link canLeave}), which also covers every OTHER way out —
+	 * a sidebar link, another provider, the browser's back button — so there is one prompt, never two.
 	 */
 	leaveConfigure(provider: IAiChatProvider, destination: 'back' | 'list'): void {
-		const go = () => (destination === 'list' ? this.showList() : this.backFromConfigure(provider));
-		if (!this.hasUnsavedChanges()) {
-			go();
-			return;
+		if (destination === 'list') {
+			this.showList();
+		} else {
+			this.backFromConfigure(provider);
 		}
-		this.dialogService
+	}
+
+	/**
+	 * The `canDeactivate` check, for every navigation away from the config view: out of the page
+	 * entirely, or — the route runs its guards on query-param changes too — to the list, the catalog
+	 * or another provider. Asks before unsaved edits are dropped; discarding rebuilds the forms from
+	 * the saved credentials so the edits do not reappear next time. A navigation that keeps the same
+	 * provider open (the Connect callback stripping `?code=`, say) is not leaving, so it passes.
+	 */
+	canLeave(nextState?: RouterStateSnapshot): boolean | Observable<boolean> {
+		if (!this.hasUnsavedChanges()) {
+			return true;
+		}
+		const providerId = this.selectedProviderId();
+		const nextProviderId = nextState?.root.queryParamMap.get('provider');
+		const stillOnThisPage = !!nextState && nextState.url.split('?')[0] === this.router.url.split('?')[0];
+		if (stillOnThisPage && nextProviderId === providerId) {
+			return true;
+		}
+		return this.dialogService
 			.open(ConfirmComponent, {
 				context: {
 					data: {
 						title: this.translateService.instant('AI_CHAT_UI.SETTINGS.UNSAVED.TITLE'),
 						message: this.translateService.instant('AI_CHAT_UI.SETTINGS.UNSAVED.MESSAGE', {
-							provider: provider.label
+							provider: this.selectedProvider()?.label ?? providerId
 						})
 					}
 				}
 			})
-			.onClose.pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
-			.subscribe(() => {
-				this.buildForms();
-				go();
-			});
+			.onClose.pipe(
+				map(Boolean),
+				tap((discard) => {
+					if (discard) {
+						this.buildForms();
+					}
+				})
+			);
+	}
+
+	/** Marks a provider's form as saved: nothing in it is unsaved any more. */
+	private markSaved(provider: IAiChatProvider): void {
+		this.forms.get(provider.id)?.markAsPristine();
+		this.savedDefaultProviderId = this.defaultProviderControl.value;
+		this.savedVoiceDefaultProviderId = this.voiceDefaultControl.value;
 	}
 
 	/** Cancel: back to the list for a provider that is already set up, else back to the catalog. */
