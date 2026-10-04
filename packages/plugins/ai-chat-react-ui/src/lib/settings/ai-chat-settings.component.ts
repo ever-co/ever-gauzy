@@ -453,11 +453,18 @@ export class AiChatSettingsComponent implements OnInit {
 		this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const providerId = params.get('provider');
 			if (providerId) {
+				// Read BEFORE updating the signals: did this navigation open a different form?
+				const opensAnotherForm = this.view() !== 'config' || this.selectedProviderId() !== providerId;
 				this.selectedProviderId.set(providerId);
 				this.view.set('config');
 				// The two exclusive "default" controls are page-wide: an UNSAVED toggle made in one
-				// provider's config must not leak into the next one's — start from what is saved.
-				this.syncExclusiveControls();
+				// provider's config must not leak into the next one's — start from what is saved. Only
+				// when the form actually changes, though: a query-param change that keeps the same
+				// provider open (the Connect callback stripping `?code=`, which the leave guard lets
+				// through) must not quietly reset defaults the user has picked but not yet saved.
+				if (opensAnotherForm) {
+					this.syncExclusiveControls();
+				}
 				// Only this view needs the catalogue, and only for this one provider.
 				this.loadModels(providerId);
 			} else if (params.get('add') !== null) {
