@@ -19,13 +19,13 @@ function withMikroOrmDriver(driver: unknown) {
  * become `{}`, which MikroORM treats as no condition, so the filter silently matched every row.
  */
 describe('processFindOperator', () => {
+	afterEach(() => jest.restoreAllMocks());
+
 	it('translates the comparison operators', () => {
 		expect(processFindOperator(LessThanOrEqual(10))).toEqual({ $lte: 10 });
 		expect(processFindOperator(LessThan(10))).toEqual({ $lt: 10 });
 		expect(processFindOperator(MoreThan(10))).toEqual({ $gt: 10 });
 	});
-
-	afterEach(() => jest.restoreAllMocks());
 
 	it('translates LIKE patterns', () => {
 		expect(processFindOperator(Like('%Ada%'))).toEqual({ $like: '%Ada%' });
