@@ -35,6 +35,7 @@
 			"API_KEY": "API key",
 			"API_KEY_PLACEHOLDER": "Enter API key",
 			"API_KEY_KEEP": "Leave blank to keep the current key.",
+			"KEY_SECURITY": "Your key is encrypted at rest and is never shown again after you save it — only its last characters.",
 			"API_KEY_REQUIRED": "API key is required.",
 			"SHOW_KEY": "Show API key",
 			"HIDE_KEY": "Hide API key",
@@ -72,6 +73,7 @@
 			"VOICE_ONLY_NOTICE": "This provider transcribes speech for dictation only — it has no chat models. Choose another provider for chat."
 		},
 		"ACTIONS": {
+			"CANCEL": "Cancel",
 			"SAVE": "Save",
 			"DELETE": "Delete",
 			"ADD_PROVIDER": "Add AI Provider",

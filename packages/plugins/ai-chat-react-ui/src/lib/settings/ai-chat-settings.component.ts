@@ -1371,6 +1371,11 @@ export class AiChatSettingsComponent implements OnInit {
 			});
 	}
 
+	/** Cancel: back to the list for a provider that is already set up, else back to the catalog. */
+	cancelConfigure(provider: IAiChatProvider): void {
+		this.leaveConfigure(provider, this.getCredential(provider.id) || provider.configured ? 'list' : 'back');
+	}
+
 	/** Closing or reloading the tab with unsaved edits: let the browser ask. */
 	@HostListener('window:beforeunload', ['$event'])
 	onBeforeUnload(event: BeforeUnloadEvent): void {

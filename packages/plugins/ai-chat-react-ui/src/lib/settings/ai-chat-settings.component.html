@@ -546,6 +546,12 @@
 						@if (form.controls.apiKey.touched && form.controls.apiKey.hasError('required')) {
 							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_REQUIRED' | translate }}</span>
 						}
+						@if (provider.requiresApiKey !== false) {
+							<span class="security-note">
+								<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.KEY_SECURITY' | translate }}
+							</span>
+						}
 					</div>
 
 					<div class="form-group">
@@ -729,6 +735,9 @@
 							nbSpinnerStatus="control"
 						>
 							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.SAVE' | translate }}
+						</button>
+						<button nbButton outline status="basic" type="button" class="form-cancel" (click)="cancelConfigure(provider)">
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.CANCEL' | translate }}
 						</button>
 						@if (getCredential(provider.id)) {
 							<button

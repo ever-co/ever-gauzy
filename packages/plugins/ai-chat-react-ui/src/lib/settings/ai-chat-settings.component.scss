@@ -1155,5 +1155,44 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+
+		// Delete sits apart from Save / Cancel, at the far end of the row.
+		button[status='danger'] {
+			margin-left: auto;
+		}
+	}
+
+	// Cancel: a neutral secondary button at the form's button size, beside the
+	// primary Save — not Nebular's near-white basic fill.
+	.form-cancel[nbButton] {
+		background-color: transparent;
+		border-color: var(--border-basic-color-4);
+		color: var(--gauzy-text-color-2);
+
+		&:hover {
+			background-color: var(--gauzy-hover-tint);
+			color: var(--gauzy-text-color-1);
+		}
+	}
+
+	// "Your key is encrypted…" under the API key field: a quiet reassurance with
+	// a lock, in the hint colour like the other field notes.
+	.security-note {
+		display: flex;
+		align-items: flex-start;
+		gap: 6px;
+		margin-top: 6px;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--text-hint-color);
+
+		nb-icon {
+			flex: 0 0 auto;
+			font-size: 14px;
+			width: 14px;
+			height: 14px;
+			margin-top: 1px;
+			color: var(--color-success-default);
+		}
 	}
 }
