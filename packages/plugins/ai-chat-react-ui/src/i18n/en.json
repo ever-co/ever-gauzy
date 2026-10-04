@@ -104,6 +104,7 @@
 			"CONNECT_SESSION_EXPIRED": "The Connect session has expired or was started in another tab. Please click Connect again."
 		},
 		"LIST": {
+			"TITLE": "Chat providers",
 			"EMPTY": "Connect a provider to enable the AI chat and assistant features.",
 			"NAME": "Provider",
 			"SOURCE": "Credential",

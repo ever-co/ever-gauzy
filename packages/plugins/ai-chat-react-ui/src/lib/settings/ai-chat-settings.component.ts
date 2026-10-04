@@ -39,7 +39,7 @@ import {
 	IAiProviderCredentialUpdateInput
 } from '@gauzy/contracts';
 import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
-import { ConfirmComponent } from '@gauzy/ui-core/shared';
+import { ComponentsModule, ConfirmComponent } from '@gauzy/ui-core/shared';
 import { AiChatAvailabilityService } from '../ai-chat-availability.service';
 import { AiChatSettingsService } from './ai-chat-settings.service';
 import { IProviderLogo, PROVIDER_LOGOS } from './provider-logos';
@@ -152,6 +152,9 @@ type CatalogFilter = 'all' | 'voice';
 		NbSpinnerModule,
 		NbToggleModule,
 		NbTooltipModule,
+		// `ngx-header-title`: the page title with the organization qualifier and the
+		// breadcrumb trail, as on every other page.
+		ComponentsModule,
 		// The model list runs to hundreds of entries on the routing providers, so the picker has to be
 		// searchable — nb-select is not.
 		NgSelectModule
