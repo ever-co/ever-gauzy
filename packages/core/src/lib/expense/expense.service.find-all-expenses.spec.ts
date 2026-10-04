@@ -20,4 +20,18 @@ describe('ExpenseService.findAllExpenses month range', () => {
 		expect(start.getHours()).toBe(0);
 		expect(end.getHours()).toBe(23);
 	});
+
+	it('keeps the whole-month range alongside the filter the API passes', async () => {
+		const findAll = jest.fn().mockResolvedValue({ items: [], total: 0 });
+		const filter = { where: { organizationId: 'org-1' }, relations: ['category'] };
+
+		await ExpenseService.prototype.findAllExpenses.call({ findAll }, filter, '2026-09-15');
+
+		const { where, relations } = findAll.mock.calls[0][0];
+		const [start, end] = where.valueDate.value as Date[];
+		expect(start).toEqual(moment('2026-09-15').startOf('month').toDate());
+		expect(end).toEqual(moment('2026-09-15').endOf('month').toDate());
+		expect(where.organizationId).toBe('org-1');
+		expect(relations).toEqual(['category']);
+	});
 });
