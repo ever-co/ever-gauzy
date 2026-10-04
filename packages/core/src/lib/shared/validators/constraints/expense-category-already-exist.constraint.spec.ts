@@ -17,7 +17,11 @@ function loadConstraint(orm: 'typeorm' | 'mikro-orm') {
 			constraint: require('./expense-category-already-exist.constraint')
 		};
 	});
-	process.env.DB_ORM = previous;
+	if (previous === undefined) {
+		delete process.env.DB_ORM;
+	} else {
+		process.env.DB_ORM = previous;
+	}
 	jest.spyOn(modules.context.RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
 	return modules.constraint.ExpenseCategoryAlreadyExistConstraint;
 }
@@ -37,6 +41,16 @@ describe('ExpenseCategoryAlreadyExistConstraint', () => {
 			await expect(constraint.validate('travel', args({ organizationId: 'org-1' }))).resolves.toBe(false);
 		});
 
+		it('compares names in code, so accented names match regardless of the database collation', async () => {
+			const find = jest.fn().mockResolvedValue([{ id: 'c-1', name: 'École' }]);
+			const Constraint = loadConstraint('mikro-orm');
+			const constraint = new Constraint({}, { find });
+
+			await expect(constraint.validate('école', args({ organizationId: 'org-1' }))).resolves.toBe(false);
+			// The lookup is scoped to the organization, not filtered by name
+			expect(find).toHaveBeenCalledWith({ organizationId: 'org-1', tenantId: 'tenant-1' });
+		});
+
 		it('accepts a name whose LIKE wildcards only match a different name', async () => {
 			// "Food_100%" as a LIKE pattern matches "FoodX100Y"; that is not a duplicate
 			const find = jest.fn().mockResolvedValue([{ id: 'c-1', name: 'FoodX100Y' }]);
@@ -51,11 +65,10 @@ describe('ExpenseCategoryAlreadyExistConstraint', () => {
 			const Constraint = loadConstraint('mikro-orm');
 			const constraint = new Constraint({}, { find });
 
-			await constraint.validate('Travel', args({ organizationId: 'org-1', id: 'c-1' }, 'UpdateExpenseCategoryDTO'));
+			const update = args({ organizationId: 'org-1', id: 'c-1' }, 'UpdateExpenseCategoryDTO');
+			await constraint.validate('Travel', update);
 
-			expect(find).toHaveBeenCalledWith(
-				expect.objectContaining({ organizationId: 'org-1', tenantId: 'tenant-1', id: { $ne: 'c-1' } })
-			);
+			expect(find).toHaveBeenCalledWith({ organizationId: 'org-1', tenantId: 'tenant-1', id: { $ne: 'c-1' } });
 		});
 	});
 
@@ -68,6 +81,21 @@ describe('ExpenseCategoryAlreadyExistConstraint', () => {
 
 			const wildcard = new Constraint({ findBy: jest.fn().mockResolvedValue([{ name: 'FoodX100Y' }]) }, {});
 			await expect(wildcard.validate('Food_100%', args({ organizationId: 'org-1' }))).resolves.toBe(true);
+		});
+
+		it('excludes the category being updated', async () => {
+			const findBy = jest.fn().mockResolvedValue([]);
+			const Constraint = loadConstraint('typeorm');
+			const constraint = new Constraint({ findBy }, {});
+
+			const update = args({ organizationId: 'org-1', id: 'c-1' }, 'UpdateExpenseCategoryDTO');
+			await constraint.validate('Travel', update);
+
+			const [where] = findBy.mock.calls[0];
+			expect(where).toMatchObject({ organizationId: 'org-1', tenantId: 'tenant-1' });
+			expect(where).not.toHaveProperty('name');
+			expect(where.id.type).toBe('not');
+			expect(where.id.value).toBe('c-1');
 		});
 	});
 });

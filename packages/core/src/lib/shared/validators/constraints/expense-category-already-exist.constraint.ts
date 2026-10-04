@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ILike, Not } from 'typeorm';
+import { Not } from 'typeorm';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { RequestContext } from '../../../core/context';
-import { MultiORM, MultiORMEnum, getORMType, mikroOrmILike } from '../../../core/utils';
+import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
 import { TypeOrmExpenseCategoryRepository } from '../../../expense-categories/repository/type-orm-expense-category.repository';
 import { MikroOrmExpenseCategoryRepository } from '../../../expense-categories/repository/mikro-orm-expense-category.repository';
 
@@ -41,37 +41,30 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 
 			// Convert the name to lowercase for case-insensitive comparison
 			const normalizedName = name.toLowerCase();
+			const isUpdate = args.targetName === 'UpdateExpenseCategoryDTO' && !!object.id;
 
-			const queryConditions = { name: normalizedName, organizationId, tenantId };
-
-			if (args.targetName === 'UpdateExpenseCategoryDTO' && object.id) {
-				queryConditions['id'] = Not(object.id); // Exclude current category from the check
-			}
-
-			// LIKE treats `%` / `_` in the name as wildcards, so the query only narrows the candidates (a name
-			// always matches its own pattern); the exact, case-insensitive comparison is done on the results.
+			// Load the organization's categories and compare names here rather than with a LIKE query:
+			// LIKE treats `%` / `_` (and `\` on PostgreSQL) as pattern characters, its case folding depends on
+			// the database (SQLite only folds ASCII), and `$ilike` is PostgreSQL-only in MikroORM.
 			const isSameName = (category: { name?: string }) => category.name?.toLowerCase() === normalizedName;
 
 			switch (ormType) {
 				case MultiORMEnum.MikroORM: {
-					// MikroORM has its own operators: TypeORM's `Not()` above is not understood here (the query
-					// threw and the catch below let every update through), and `$ilike` is PostgreSQL-only.
-					const candidates = await this.mikroOrmExpenseCategoryRepository.find({
+					// MikroORM operators (`$ne`), not TypeORM's `Not()`, which MikroORM does not understand
+					const categories = await this.mikroOrmExpenseCategoryRepository.find({
 						organizationId,
 						tenantId,
-						name: mikroOrmILike(normalizedName),
-						...(args.targetName === 'UpdateExpenseCategoryDTO' && object.id
-							? { id: { $ne: object.id } }
-							: {})
+						...(isUpdate ? { id: { $ne: object.id } } : {})
 					});
-					return !candidates.some(isSameName);
+					return !categories.some(isSameName);
 				}
 				case MultiORMEnum.TypeORM: {
-					const candidates = await this.typeOrmExpenseCategoryRepository.findBy({
-						...queryConditions,
-						name: ILike(normalizedName)
+					const categories = await this.typeOrmExpenseCategoryRepository.findBy({
+						organizationId,
+						tenantId,
+						...(isUpdate ? { id: Not(object.id) } : {})
 					});
-					return !candidates.some(isSameName);
+					return !categories.some(isSameName);
 				}
 				default:
 					throw new Error(`Not implemented for ${ormType}`);
