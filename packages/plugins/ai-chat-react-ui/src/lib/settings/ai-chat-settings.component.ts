@@ -108,6 +108,9 @@ interface ProviderCredentialForm {
 /** Which providers the catalog view offers: everything, or only the ones that can transcribe. */
 type CatalogFilter = 'all' | 'voice';
 
+/** The capability chips above the full catalog: narrow it to one kind of provider. */
+export type CapabilityFilter = 'all' | 'chat' | 'speech' | 'local';
+
 /**
  * AiChatSettingsComponent
  *
@@ -255,6 +258,34 @@ export class AiChatSettingsComponent implements OnInit {
 	readonly catalogProviders = computed<IAiChatProvider[]>(() =>
 		this.catalogFilter() === 'voice' ? this.speechCapableProviders() : this.providers()
 	);
+
+	/** The capability chip selected above the full catalog. Reset whenever the catalog opens. */
+	readonly capabilityFilter = signal<CapabilityFilter>('all');
+
+	/** The chips, in display order, with the label key each one shows. */
+	readonly capabilityFilters: ReadonlyArray<{ id: CapabilityFilter; labelKey: string }> = [
+		{ id: 'all', labelKey: 'AI_CHAT_UI.SETTINGS.CATALOG.FILTER_ALL' },
+		{ id: 'chat', labelKey: 'AI_CHAT_UI.SETTINGS.BADGE.CHAT' },
+		{ id: 'speech', labelKey: 'AI_CHAT_UI.SETTINGS.BADGE.SPEECH' },
+		{ id: 'local', labelKey: 'AI_CHAT_UI.SETTINGS.BADGE.LOCAL' }
+	];
+
+	/** How many catalog providers each chip would show — rendered beside its label. */
+	readonly capabilityCounts = computed<Record<CapabilityFilter, number>>(() => {
+		const providers = this.catalogProviders();
+		return {
+			all: providers.length,
+			chat: providers.filter((provider) => this.matchesCapability(provider, 'chat')).length,
+			speech: providers.filter((provider) => this.matchesCapability(provider, 'speech')).length,
+			local: providers.filter((provider) => this.matchesCapability(provider, 'local')).length
+		};
+	});
+
+	/** The catalog cards actually rendered: the catalog narrowed by the selected chip. */
+	readonly visibleCatalogProviders = computed<IAiChatProvider[]>(() => {
+		const selected = this.capabilityFilter();
+		return this.catalogProviders().filter((provider) => this.matchesCapability(provider, selected));
+	});
 
 	/**
 	 * Tenant credentials indexed by provider id (API keys masked).
@@ -423,6 +454,7 @@ export class AiChatSettingsComponent implements OnInit {
 			} else if (params.get('add') !== null) {
 				this.view.set('catalog');
 				this.catalogFilter.set(params.get('add') === 'voice' ? 'voice' : 'all');
+				this.capabilityFilter.set('all');
 			} else {
 				this.view.set('list');
 			}
@@ -1262,6 +1294,25 @@ export class AiChatSettingsComponent implements OnInit {
 		this.defaultProviderControl.setValue(defaultCredential?.providerId ?? null, { emitEvent: false });
 		const voiceDefaultCredential = credentials.find((credential) => credential.isVoiceDefault);
 		this.voiceDefaultControl.setValue(voiceDefaultCredential?.providerId ?? null, { emitEvent: false });
+	}
+
+	// ── Catalog filter ─────────────────────────────────────────────────
+
+	setCapabilityFilter(capability: CapabilityFilter): void {
+		this.capabilityFilter.set(capability);
+	}
+
+	private matchesCapability(provider: IAiChatProvider, capability: CapabilityFilter): boolean {
+		switch (capability) {
+			case 'chat':
+				return provider.chatCapable !== false;
+			case 'speech':
+				return !!provider.speechCapable;
+			case 'local':
+				return !!provider.local;
+			default:
+				return true;
+		}
 	}
 
 	/**

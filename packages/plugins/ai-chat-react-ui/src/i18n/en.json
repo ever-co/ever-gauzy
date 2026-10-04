@@ -116,6 +116,7 @@
 			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok · Groq · Mistral · LocalAI · OpenAI-compatible — voice: Deepgram · ElevenLabs · Speaches · whisper.cpp"
 		},
 		"CATALOG": {
+			"FILTER_ALL": "All",
 			"TITLE": "Add AI Provider",
 			"DESCRIPTION": "Choose a provider to connect or configure with your own API key.",
 			"VOICE_TITLE": "Add AI Voice Provider",

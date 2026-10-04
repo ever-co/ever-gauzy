@@ -355,8 +355,25 @@
 					}}
 				</p>
 			}
+			<!-- Narrow the full catalog to one kind of provider. The voice catalog is already narrowed. -->
+			@if (catalogFilter() === 'all' && catalogProviders().length) {
+				<div class="capability-filters" role="group" [attr.aria-label]="'AI_CHAT_UI.SETTINGS.CATALOG.TITLE' | translate">
+					@for (option of capabilityFilters; track option.id) {
+						<button
+							type="button"
+							class="capability-filter"
+							[class.is-active]="capabilityFilter() === option.id"
+							[attr.aria-pressed]="capabilityFilter() === option.id"
+							(click)="setCapabilityFilter(option.id)"
+						>
+							{{ option.labelKey | translate }}
+							<span class="count">{{ capabilityCounts()[option.id] }}</span>
+						</button>
+					}
+				</div>
+			}
 			<div class="catalog-grid">
-				@for (provider of catalogProviders(); track provider.id) {
+				@for (provider of visibleCatalogProviders(); track provider.id) {
 					<button type="button" class="catalog-card" (click)="showConfigure(provider.id)">
 						<ng-container
 							[ngTemplateOutlet]="providerTile"
