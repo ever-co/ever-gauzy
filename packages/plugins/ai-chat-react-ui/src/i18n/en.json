@@ -89,6 +89,10 @@
 			"EMPTY_HINT": "Add a provider that supports speech-to-text: OpenAI, Groq, Mistral, Deepgram, ElevenLabs — or a local server (Speaches, LocalAI, whisper.cpp) that needs no API key.",
 			"ADD": "Add a voice provider"
 		},
+		"UNSAVED": {
+			"TITLE": "Discard changes?",
+			"MESSAGE": "You have unsaved changes to {{provider}}. Leave without saving them?"
+		},
 		"DELETE_CONFIRM": {
 			"TITLE": "Delete credential",
 			"MESSAGE": "Delete the {{provider}} API credential for this tenant? AI chat may stop working for this provider."

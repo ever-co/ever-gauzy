@@ -3,6 +3,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	DestroyRef,
+	HostListener,
 	OnInit,
 	inject,
 	signal,
@@ -306,6 +307,14 @@ export class AiChatSettingsComponent implements OnInit {
 	 * "no pin" — dictation then walks the speech-capable providers in order.
 	 */
 	readonly voiceDefaultControl = new FormControl<string | null>(null);
+
+	/**
+	 * What the two exclusive controls held when last synced from the SAVED credentials. They are
+	 * set programmatically (`setValue` never marks a control dirty), so unsaved changes to them are
+	 * detected by comparing against this snapshot instead of `dirty`.
+	 */
+	private savedDefaultProviderId: string | null = null;
+	private savedVoiceDefaultProviderId: string | null = null;
 
 	private readonly fb = inject(FormBuilder);
 	private readonly store = inject(Store);
@@ -1294,6 +1303,8 @@ export class AiChatSettingsComponent implements OnInit {
 		this.defaultProviderControl.setValue(defaultCredential?.providerId ?? null, { emitEvent: false });
 		const voiceDefaultCredential = credentials.find((credential) => credential.isVoiceDefault);
 		this.voiceDefaultControl.setValue(voiceDefaultCredential?.providerId ?? null, { emitEvent: false });
+		this.savedDefaultProviderId = this.defaultProviderControl.value;
+		this.savedVoiceDefaultProviderId = this.voiceDefaultControl.value;
 	}
 
 	// ── Catalog filter ─────────────────────────────────────────────────
@@ -1312,6 +1323,61 @@ export class AiChatSettingsComponent implements OnInit {
 				return !!provider.local;
 			default:
 				return true;
+		}
+	}
+
+	// ── Unsaved changes ────────────────────────────────────────────────
+
+	/** Whether the config view holds edits that have not been saved. */
+	hasUnsavedChanges(): boolean {
+		if (this.view() !== 'config') {
+			return false;
+		}
+		const providerId = this.selectedProviderId();
+		const form = providerId ? this.forms.get(providerId) : undefined;
+		return (
+			!!form?.dirty ||
+			this.defaultProviderControl.value !== this.savedDefaultProviderId ||
+			this.voiceDefaultControl.value !== this.savedVoiceDefaultProviderId
+		);
+	}
+
+	/**
+	 * Leaves the config view — for Back and Cancel — asking first when there are unsaved edits.
+	 * Discarding rebuilds the forms from the saved credentials, so the edits do not reappear the
+	 * next time this provider is opened.
+	 */
+	leaveConfigure(provider: IAiChatProvider, destination: 'back' | 'list'): void {
+		const go = () => (destination === 'list' ? this.showList() : this.backFromConfigure(provider));
+		if (!this.hasUnsavedChanges()) {
+			go();
+			return;
+		}
+		this.dialogService
+			.open(ConfirmComponent, {
+				context: {
+					data: {
+						title: this.translateService.instant('AI_CHAT_UI.SETTINGS.UNSAVED.TITLE'),
+						message: this.translateService.instant('AI_CHAT_UI.SETTINGS.UNSAVED.MESSAGE', {
+							provider: provider.label
+						})
+					}
+				}
+			})
+			.onClose.pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+			.subscribe(() => {
+				this.buildForms();
+				go();
+			});
+	}
+
+	/** Closing or reloading the tab with unsaved edits: let the browser ask. */
+	@HostListener('window:beforeunload', ['$event'])
+	onBeforeUnload(event: BeforeUnloadEvent): void {
+		if (this.hasUnsavedChanges()) {
+			event.preventDefault();
+			// Legacy browsers only show the prompt when a return value is set.
+			event.returnValue = '';
 		}
 	}
 
