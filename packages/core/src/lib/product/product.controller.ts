@@ -66,7 +66,7 @@ export class ProductController extends CrudController<Product> {
 	): Promise<IPagination<Product | IProductTranslated>> {
 		const { relations = [], findInput = null } = data;
 		// The web app's data source sends the page size as `take`; `_limit` is kept for other API clients
-		return this.productService.findAllProducts(langCode, relations, findInput, { page, limit: take ?? limit });
+		return this.productService.findAllProducts(langCode, relations, findInput, { page, limit: take || limit });
 	}
 
 	/**
