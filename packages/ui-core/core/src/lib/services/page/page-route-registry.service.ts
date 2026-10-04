@@ -242,6 +242,20 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 				route.canMatch = config.canMatch;
 			}
 
+			// `canDeactivate` is how a page with a form keeps unsaved edits from being dropped by a
+			// navigation away (a sidebar link, another settings page). Same rule as above: attached
+			// only when present, so redirect routes stay guard-free.
+			if (config.canDeactivate?.length) {
+				route.canDeactivate = config.canDeactivate;
+			}
+
+			// When guards run. A page that switches views through its query params (one route, several
+			// screens) needs its `canDeactivate` to run on those changes too, which is
+			// `paramsOrQueryParamsChange`; Angular's default only re-runs guards on path params.
+			if (config.runGuardsAndResolvers) {
+				route.runGuardsAndResolvers = config.runGuardsAndResolvers;
+			}
+
 			// Copy the route's navigation target. `loadComponent` matters: dropping it
 			// produces a route with NO target, and Angular then throws NG04014 while
 			// RECOGNIZING the parent lazy config — which kills every navigation into the
