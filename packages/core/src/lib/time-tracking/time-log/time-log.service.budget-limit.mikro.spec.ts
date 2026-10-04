@@ -56,7 +56,9 @@ describe('TimeLogService budget reports exclude soft-deleted rows (MikroORM)', (
 		const { knex, queries } = createKnex(answers);
 		const self = {
 			ormType: MultiORMEnum.MikroORM,
-			mikroOrmTimeLogRepository: { getKnex: () => knex }
+			mikroOrmTimeLogRepository: { getKnex: () => knex },
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			getMikroOrmBudgetTargets: (TimeLogService.prototype as any).getMikroOrmBudgetTargets
 		};
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result = (TimeLogService.prototype[method] as any).call(self, request);
@@ -67,9 +69,9 @@ describe('TimeLogService budget reports exclude soft-deleted rows (MikroORM)', (
 		const { result, queries } = run('getProjectBudgetLimit', [
 			[{ id: 'p-1' }],
 			[{ id: 'p-1', name: 'Site', budget: 10, budgetType: 'hours' }],
-			[{ ...timeLogRow, projectId: 'p-1' }]
+			[{ ...timeLogRow, targetId: 'p-1' }]
 		]);
-		await expect(result).resolves.toHaveLength(1);
+		await expect(result).resolves.toEqual([expect.objectContaining({ budget: 10, spent: 1 })]);
 
 		expect(queries.map(({ table }) => table)).toEqual(['organization_project', 'organization_project', 'time_log']);
 		expect(queries[0].whereNull).toEqual(
@@ -83,7 +85,7 @@ describe('TimeLogService budget reports exclude soft-deleted rows (MikroORM)', (
 		const { result, queries } = run('getClientBudgetLimit', [
 			[{ id: 'c-1' }],
 			[{ id: 'c-1', name: 'Acme', budget: 10, budgetType: 'hours' }],
-			[{ ...timeLogRow, organizationContactId: 'c-1' }]
+			[{ ...timeLogRow, targetId: 'c-1' }]
 		]);
 		await expect(result).resolves.toHaveLength(1);
 

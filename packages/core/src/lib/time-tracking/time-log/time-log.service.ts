@@ -860,90 +860,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
-				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
-
-				// Raw knex bypasses MikroORM's soft-delete filter; TypeORM's query builder excludes deleted rows
-				// Step 1: Get distinct project IDs that match the filters
-				let projectQuery = knex('organization_project')
-					.innerJoin('time_log', 'organization_project.id', 'time_log.projectId')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select('organization_project.id as id')
-					.where('organization_project.tenantId', tenantId)
-					.andWhere('organization_project.organizationId', organizationId)
-					.andWhere('employee.tenantId', tenantId)
-					.andWhere('employee.organizationId', organizationId)
-					.andWhere('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.whereNull('organization_project.deletedAt')
-					.whereNull('employee.deletedAt')
-					.whereNull('time_log.deletedAt')
-					.groupBy('organization_project.id');
-
-				if (isNotEmpty(employeeIds)) {
-					projectQuery = projectQuery.whereIn('employee.id', employeeIds);
-					projectQuery = projectQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					projectQuery = projectQuery.whereIn('time_log.projectId', projectIds);
-				}
-
-				const matchedProjects = await projectQuery;
-				const matchedProjectIds = matchedProjects.map((r: any) => r.id);
-
-				if (matchedProjectIds.length === 0) {
-					organizationProjects = [];
-					break;
-				}
-
-				// Step 2: Get project details
-				const projectRows = await knex('organization_project')
-					.select('id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount')
-					.whereIn('id', matchedProjectIds)
-					.whereNull('deletedAt');
-
-				// Step 3: Get timeLogs with employee data for these projects
-				let timeLogQuery = knex('time_log')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select(
-						'time_log.id as id',
-						'time_log.duration as duration',
-						'time_log.projectId as projectId',
-						'time_log.employeeId as employeeId',
-						'employee.billRateValue as employee_billRateValue'
-					)
-					.where('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.whereIn('time_log.projectId', matchedProjectIds)
-					.whereNull('time_log.deletedAt')
-					.whereNull('employee.deletedAt');
-
-				if (isNotEmpty(employeeIds)) {
-					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-
-				const timeLogRows = await timeLogQuery;
-
-				// Step 4: Group timeLogs by projectId and attach to projects
-				const timeLogsByProject: Record<string, any[]> = {};
-				for (const row of timeLogRows) {
-					const pid = row.projectId;
-					if (!timeLogsByProject[pid]) timeLogsByProject[pid] = [];
-					timeLogsByProject[pid].push({
-						id: row.id,
-						duration: row.duration,
-						employee: { billRateValue: row.employee_billRateValue }
-					});
-				}
-
-				organizationProjects = projectRows.map((proj: any) => ({
-					...proj,
-					timeLogs: timeLogsByProject[proj.id] || []
-				}));
+				organizationProjects = await this.getMikroOrmBudgetTargets(
+					{
+						table: 'organization_project',
+						timeLogKey: 'projectId',
+						columns: ['id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount']
+					},
+					{ tenantId, organizationId, employeeIds, projectIds, startDate, endDate }
+				);
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -1071,6 +995,89 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * MikroORM side of the project / client budget reports: the budget targets (projects or contacts) that
+	 * have time logged in the range, each with those time logs and the employee bill rate.
+	 *
+	 * Raw knex bypasses MikroORM's soft-delete filter, so every table read excludes soft-deleted rows itself,
+	 * as TypeORM's query builder does in the other branch.
+	 */
+	private async getMikroOrmBudgetTargets(
+		target: { table: string; timeLogKey: string; columns: string[] },
+		filters: {
+			tenantId: string;
+			organizationId: string;
+			employeeIds: string[];
+			projectIds: string[];
+			startDate: Date | string;
+			endDate: Date | string;
+		}
+	): Promise<any[]> {
+		const { table, timeLogKey, columns } = target;
+		const { tenantId, organizationId, employeeIds, projectIds, startDate, endDate } = filters;
+		const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
+		const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
+
+		// Time logs of the tenant / organization in the range, from non-deleted employees
+		const scopeTimeLogs = (query: any) => {
+			query = query
+				.where('time_log.tenantId', tenantId)
+				.andWhere('time_log.organizationId', organizationId)
+				.andWhere('time_log.startedAt', '>=', start)
+				.andWhere('time_log.startedAt', '<', end)
+				.whereNull('time_log.deletedAt')
+				.whereNull('employee.deletedAt');
+			if (isNotEmpty(employeeIds)) query = query.whereIn('time_log.employeeId', employeeIds);
+			if (isNotEmpty(projectIds)) query = query.whereIn('time_log.projectId', projectIds);
+			return query;
+		};
+
+		// Step 1: Distinct targets with matching time logs
+		const matched = await scopeTimeLogs(
+			knex(table)
+				.innerJoin('time_log', `${table}.id`, `time_log.${timeLogKey}`)
+				.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+				.select(`${table}.id as id`)
+				.andWhere(`${table}.tenantId`, tenantId)
+				.andWhere(`${table}.organizationId`, organizationId)
+				.andWhere('employee.tenantId', tenantId)
+				.andWhere('employee.organizationId', organizationId)
+				.whereNull(`${table}.deletedAt`)
+				.groupBy(`${table}.id`)
+		);
+		const matchedIds = matched.map((row: any) => row.id);
+		if (matchedIds.length === 0) {
+			return [];
+		}
+
+		// Step 2: Target details
+		const rows = await knex(table).select(...columns).whereIn('id', matchedIds).whereNull('deletedAt');
+
+		// Step 3: Their time logs with the employee bill rate
+		const timeLogRows = await scopeTimeLogs(
+			knex('time_log')
+				.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+				.select(
+					'time_log.id as id',
+					'time_log.duration as duration',
+					`time_log.${timeLogKey} as targetId`,
+					'employee.billRateValue as employee_billRateValue'
+				)
+				.whereIn(`time_log.${timeLogKey}`, matchedIds)
+		);
+
+		// Step 4: Attach the time logs to their target
+		const timeLogsByTarget: Record<string, any[]> = {};
+		for (const row of timeLogRows) {
+			(timeLogsByTarget[row.targetId] ??= []).push({
+				id: row.id,
+				duration: row.duration,
+				employee: { billRateValue: row.employee_billRateValue }
+			});
+		}
+		return rows.map((row: any) => ({ ...row, timeLogs: timeLogsByTarget[row.id] || [] }));
+	}
+
+	/**
 	 * Calculate client budget limit report for a given organization contact.
 	 * @param organizationContact The organization contact for which to calculate the budget limit report.
 	 * @returns The client budget limit report.
@@ -1083,93 +1090,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
-				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
-
-				// Raw knex bypasses MikroORM's soft-delete filter; TypeORM's query builder excludes deleted rows
-				// Step 1: Get distinct contact IDs that match the filters
-				let contactQuery = knex('organization_contact')
-					.innerJoin('time_log', 'organization_contact.id', 'time_log.organizationContactId')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select('organization_contact.id as id')
-					.where('organization_contact.tenantId', tenantId)
-					.andWhere('organization_contact.organizationId', organizationId)
-					.andWhere('employee.tenantId', tenantId)
-					.andWhere('employee.organizationId', organizationId)
-					.andWhere('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.whereNull('organization_contact.deletedAt')
-					.whereNull('employee.deletedAt')
-					.whereNull('time_log.deletedAt')
-					.groupBy('organization_contact.id');
-
-				if (isNotEmpty(employeeIds)) {
-					contactQuery = contactQuery.whereIn('employee.id', employeeIds);
-					contactQuery = contactQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					contactQuery = contactQuery.whereIn('time_log.projectId', projectIds);
-				}
-
-				const matchedContacts = await contactQuery;
-				const matchedContactIds = matchedContacts.map((r: any) => r.id);
-
-				if (matchedContactIds.length === 0) {
-					organizationContacts = [];
-					break;
-				}
-
-				// Step 2: Get contact details
-				const contactRows = await knex('organization_contact')
-					.select('id', 'name', 'budget', 'budgetType')
-					.whereIn('id', matchedContactIds)
-					.whereNull('deletedAt');
-
-				// Step 3: Get timeLogs with employee data for these contacts
-				let timeLogQuery = knex('time_log')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select(
-						'time_log.id as id',
-						'time_log.duration as duration',
-						'time_log.organizationContactId as organizationContactId',
-						'time_log.employeeId as employeeId',
-						'employee.billRateValue as employee_billRateValue'
-					)
-					.where('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.whereIn('time_log.organizationContactId', matchedContactIds)
-					.whereNull('time_log.deletedAt')
-					.whereNull('employee.deletedAt');
-
-				if (isNotEmpty(employeeIds)) {
-					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					timeLogQuery = timeLogQuery.whereIn('time_log.projectId', projectIds);
-				}
-
-				const timeLogRows = await timeLogQuery;
-
-				// Step 4: Group timeLogs by contactId and attach to contacts
-				const timeLogsByContact: Record<string, any[]> = {};
-				for (const row of timeLogRows) {
-					const cid = row.organizationContactId;
-					if (!timeLogsByContact[cid]) timeLogsByContact[cid] = [];
-					timeLogsByContact[cid].push({
-						id: row.id,
-						duration: row.duration,
-						employee: { billRateValue: row.employee_billRateValue }
-					});
-				}
-
-				organizationContacts = contactRows.map((contact: any) => ({
-					...contact,
-					timeLogs: timeLogsByContact[contact.id] || []
-				}));
+				organizationContacts = await this.getMikroOrmBudgetTargets(
+					{
+						table: 'organization_contact',
+						timeLogKey: 'organizationContactId',
+						columns: ['id', 'name', 'budget', 'budgetType']
+					},
+					{ tenantId, organizationId, employeeIds, projectIds, startDate, endDate }
+				);
 				break;
 			}
 			case MultiORMEnum.TypeORM:
