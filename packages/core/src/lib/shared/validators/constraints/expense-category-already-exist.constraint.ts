@@ -48,23 +48,31 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 				queryConditions['id'] = Not(object.id); // Exclude current category from the check
 			}
 
+			// LIKE treats `%` / `_` in the name as wildcards, so the query only narrows the candidates (a name
+			// always matches its own pattern); the exact, case-insensitive comparison is done on the results.
+			const isSameName = (category: { name?: string }) => category.name?.toLowerCase() === normalizedName;
+
 			switch (ormType) {
-				case MultiORMEnum.MikroORM:
+				case MultiORMEnum.MikroORM: {
 					// MikroORM has its own operators: TypeORM's `Not()` above is not understood here (the query
 					// threw and the catch below let every update through), and `$ilike` is PostgreSQL-only.
-					return !(await this.mikroOrmExpenseCategoryRepository.findOneOrFail({
+					const candidates = await this.mikroOrmExpenseCategoryRepository.find({
 						organizationId,
 						tenantId,
 						name: mikroOrmILike(normalizedName),
 						...(args.targetName === 'UpdateExpenseCategoryDTO' && object.id
 							? { id: { $ne: object.id } }
 							: {})
-					}));
-				case MultiORMEnum.TypeORM:
-					return !(await this.typeOrmExpenseCategoryRepository.findOneByOrFail({
+					});
+					return !candidates.some(isSameName);
+				}
+				case MultiORMEnum.TypeORM: {
+					const candidates = await this.typeOrmExpenseCategoryRepository.findBy({
 						...queryConditions,
 						name: ILike(normalizedName)
-					}));
+					});
+					return !candidates.some(isSameName);
+				}
 				default:
 					throw new Error(`Not implemented for ${ormType}`);
 			}
