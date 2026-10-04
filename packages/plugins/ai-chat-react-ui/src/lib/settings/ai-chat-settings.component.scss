@@ -700,11 +700,14 @@
 		color: var(--text-hint-color);
 	}
 
+	// As wide as the form below it, so the "or enter an API key manually"
+	// divider spans the fields it introduces rather than the whole card.
 	.connect-box {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.5rem;
+		max-width: 34rem;
 		margin-bottom: 1.25rem;
 
 		.hint {
@@ -735,8 +738,81 @@
 		}
 	}
 
+	// One control height and type for the whole form — 36px, 13px at a normal
+	// weight — instead of Nebular's semibold field text beside 11px labels. The
+	// model pickers are `ng-select`, whose own theme is a WHITE trigger and panel:
+	// on the dark themes that put a white box in a dark form. They take the input
+	// colours here (`!important` because the library's theme stylesheet loads
+	// after the app's and wins every tie — see `report-filter-select()`).
 	.config-form {
 		max-width: 34rem;
+
+		input[nbInput] {
+			height: 36px;
+			min-height: 36px;
+			padding-top: 0;
+			padding-bottom: 0;
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 16px;
+		}
+
+		::ng-deep {
+			nb-form-field .nb-form-field-prefix-medium,
+			nb-form-field .nb-form-field-suffix-medium {
+				height: 36px;
+			}
+
+			.ng-select .ng-select-container {
+				min-height: 36px;
+				height: 36px;
+				background-color: var(--input-basic-background-color, var(--gauzy-card-1)) !important;
+				border: 1px solid var(--input-basic-border-color, var(--border-basic-color-4));
+				border-radius: var(--border-radius);
+				color: var(--text-basic-color);
+				font-size: 13px;
+			}
+
+			.ng-select .ng-select-container .ng-value-container .ng-placeholder {
+				color: var(--text-hint-color);
+			}
+
+			.ng-select .ng-select-container .ng-value-container .ng-value,
+			.ng-select .ng-select-container .ng-value-container .ng-input > input {
+				color: var(--text-basic-color);
+			}
+
+			.ng-select .ng-arrow-wrapper .ng-arrow,
+			.ng-select .ng-clear-wrapper {
+				color: var(--text-hint-color);
+			}
+
+			.ng-select.ng-select-focused .ng-select-container {
+				border-color: var(--color-primary-default);
+			}
+
+			.ng-dropdown-panel {
+				background-color: var(--gauzy-card-1) !important;
+				border: 1px solid var(--border-basic-color-4);
+				border-radius: var(--border-radius);
+				box-shadow: var(--gauzy-shadow, none);
+
+				.ng-option {
+					background-color: transparent !important;
+					color: var(--text-basic-color) !important;
+					font-size: 13px;
+
+					&.ng-option-marked {
+						background-color: var(--gauzy-hover-tint) !important;
+					}
+
+					&.ng-option-selected {
+						background-color: var(--color-primary-transparent-default) !important;
+						color: var(--color-primary-default) !important;
+					}
+				}
+			}
+		}
 	}
 
 	.form-group {
@@ -812,7 +888,16 @@
 			display: flex;
 			flex-wrap: wrap;
 			align-items: center;
-			gap: 1rem;
+			gap: 1.5rem;
+			font-size: 13px;
+
+			// The toggle's label at the same 13px / normal weight as the radio
+			// label beside it, not Nebular's semibold.
+			::ng-deep nb-toggle .text {
+				font-size: 13px;
+				font-weight: 400;
+				color: var(--text-basic-color);
+			}
 		}
 
 		// Speech-to-text block of the config form: boxed so the voice preferences read as one
@@ -846,6 +931,8 @@
 			align-items: center;
 			gap: 0.375rem;
 			margin: 0;
+			font-size: 13px;
+			color: var(--text-basic-color);
 			cursor: pointer;
 
 			input[type='radio'] {
