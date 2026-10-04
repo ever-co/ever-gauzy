@@ -125,20 +125,43 @@
 									[ngTemplateOutletContext]="{ $implicit: provider }"
 								></ng-container>
 								<span class="label">
-									{{ provider.label }}
-									@if (defaultProviderId() === provider.id) {
-										<span class="default-chip">{{
-											'AI_CHAT_UI.SETTINGS.LIST.DEFAULT' | translate
-										}}</span>
-									}
+									<span class="label__line">
+										{{ provider.label }}
+										@if (defaultProviderId() === provider.id) {
+											<span class="default-chip">{{
+												'AI_CHAT_UI.SETTINGS.LIST.DEFAULT' | translate
+											}}</span>
+										}
+									</span>
+									<!-- The model the chat uses, without opening Configure. -->
+									<span class="cell-sub model-id" [class.is-placeholder]="!getCredential(provider.id)?.defaultModel">{{
+										getCredential(provider.id)?.defaultModel ||
+											('AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate)
+									}}</span>
 								</span>
 							</span>
-							<span class="cell">
+							<span class="cell credential">
 								<nb-badge
 									class="static-badge"
 									[text]="getBadgeKey(provider) | translate"
 									[status]="getBadgeStatus(provider)"
 								></nb-badge>
+								<!-- What is stored, at a glance: the masked key the API returns and when it last changed. -->
+								@if (getCredential(provider.id); as credential) {
+									@if (credential.apiKey || credential.updatedAt) {
+										<span class="cell-sub">
+											@if (credential.apiKey) {
+												<span class="masked-key">{{ credential.apiKey }}</span>
+											}
+											@if (credential.updatedAt) {
+												<span>{{
+													'AI_CHAT_UI.SETTINGS.LIST.UPDATED'
+														| translate: { date: (credential.updatedAt | date: 'mediumDate') }
+												}}</span>
+											}
+										</span>
+									}
+								}
 							</span>
 							<span class="cell">
 								@if (getCredential(provider.id)?.id) {
@@ -232,12 +255,28 @@
 											}
 										</span>
 									</span>
-									<span class="cell">
+									<span class="cell credential">
 										<nb-badge
 											class="static-badge"
 											[text]="getVoiceBadgeKey(provider) | translate"
 											[status]="getVoiceBadgeStatus(provider)"
 										></nb-badge>
+										<!-- What is stored, at a glance: the masked key the API returns and when it last changed. -->
+										@if (getCredential(provider.id); as credential) {
+											@if (credential.apiKey || credential.updatedAt) {
+												<span class="cell-sub">
+													@if (credential.apiKey) {
+														<span class="masked-key">{{ credential.apiKey }}</span>
+													}
+													@if (credential.updatedAt) {
+														<span>{{
+															'AI_CHAT_UI.SETTINGS.LIST.UPDATED'
+																| translate: { date: (credential.updatedAt | date: 'mediumDate') }
+														}}</span>
+													}
+												</span>
+											}
+										}
 									</span>
 									<span class="cell speech-model">
 										{{ getCredential(provider.id)?.speechModel || provider.defaultSpeechModel || '—' }}

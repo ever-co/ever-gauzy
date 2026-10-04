@@ -579,6 +579,67 @@
 			color: var(--text-hint-color);
 		}
 
+		// The name on its first line and the model in use under it.
+		.cell.name .label {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			min-width: 0;
+		}
+
+		.label__line {
+			display: inline-flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 0 0.5rem;
+
+			.default-chip,
+			.fallback-chip,
+			.capability-chip {
+				margin-left: 0;
+			}
+		}
+
+		// The badge with the stored key and its last change under it.
+		.cell.credential {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 4px;
+		}
+
+		// Secondary line of a cell: 11px in the hint colour, the way a report row
+		// carries a detail under its value.
+		.cell-sub {
+			display: inline-flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0 0.5rem;
+			min-width: 0;
+			font-size: 11px;
+			font-weight: 400;
+			line-height: 14px;
+			color: var(--text-hint-color);
+
+			&.model-id {
+				display: block;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				font-family: var(--font-family-mono, monospace);
+
+				// "Provider default" is a label, not a model id: no code font.
+				&.is-placeholder {
+					font-family: inherit;
+				}
+			}
+		}
+
+		.masked-key {
+			font-family: var(--font-family-mono, monospace);
+			letter-spacing: 0.02em;
+		}
+
 		.actions-col {
 			display: inline-flex;
 			align-items: center;
