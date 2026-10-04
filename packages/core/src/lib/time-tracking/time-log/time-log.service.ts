@@ -1068,11 +1068,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Step 4: Attach the time logs to their target
 		const timeLogsByTarget: Record<string, any[]> = {};
 		for (const row of timeLogRows) {
-			(timeLogsByTarget[row.targetId] ??= []).push({
+			const timeLogs = timeLogsByTarget[row.targetId] || [];
+			timeLogs.push({
 				id: row.id,
 				duration: row.duration,
 				employee: { billRateValue: row.employee_billRateValue }
 			});
+			timeLogsByTarget[row.targetId] = timeLogs;
 		}
 		return rows.map((row: any) => ({ ...row, timeLogs: timeLogsByTarget[row.id] || [] }));
 	}
