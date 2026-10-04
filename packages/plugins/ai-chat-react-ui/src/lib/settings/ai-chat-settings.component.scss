@@ -237,6 +237,10 @@
 			// Marks that carry a fixed brand colour set `color` inline and win
 			// here; the rest inherit the theme text colour set above.
 			fill: currentColor;
+			// The app's global `mark, .mark { background-color: #fcf8e3 }` (the
+			// highlighted-text style) matched this class and painted a cream box
+			// over every logo, hiding it.
+			background: transparent;
 		}
 	}
 
@@ -496,10 +500,15 @@
 		min-width: 0;
 		overflow-x: auto;
 
+		// The header and every row are separate grids, so each sized an `auto`
+		// actions column to its own content — 0px in the header, ~110px in a row —
+		// and the column titles sat left of the values under them. A fixed actions
+		// column keeps the four tracks identical in both. Track minimums still sum
+		// to ~37rem, so a narrow card scrolls the list sideways.
 		.row-head,
 		.row {
 			display: grid;
-			grid-template-columns: minmax(14rem, 1.4fr) minmax(9rem, 1fr) minmax(7rem, 0.7fr) auto;
+			grid-template-columns: minmax(12rem, 1.4fr) minmax(8rem, 1fr) minmax(7rem, 0.8fr) 10rem;
 			gap: 1rem;
 			align-items: center;
 			padding: 8px;
@@ -521,7 +530,10 @@
 		}
 
 		.row {
-			border-bottom: 1px solid var(--color-basic-transparent-200);
+			// `.row` is also Bootstrap's grid row, which brings `margin: 0 -10px`:
+			// every row was 20px wider than the list, and the list scrolled.
+			margin: 0;
+			border-bottom: 1px solid var(--border-basic-color-2);
 
 			&:last-child {
 				border-bottom: none;
@@ -841,7 +853,13 @@
 				accent-color: var(--color-primary-default);
 				width: 1rem;
 				height: 1rem;
+				// A global `input { min-height: 38px }` stretched the radio into a
+				// 38px-tall box with a border around the dot.
+				min-height: 0;
 				margin: 0;
+				padding: 0;
+				border: none;
+				background: transparent;
 				cursor: pointer;
 			}
 		}

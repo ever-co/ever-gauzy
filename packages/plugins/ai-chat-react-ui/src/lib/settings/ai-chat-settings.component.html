@@ -16,7 +16,7 @@
 			>
 				<g [attr.transform]="logo.transform">
 					@for (path of logo.paths; track $index) {
-						<path [attr.d]="path"></path>
+						<path [attr.d]="path" [attr.fill-rule]="logo.fillRule"></path>
 					}
 				</g>
 			</svg>
@@ -259,7 +259,7 @@
 						</div>
 					} @else {
 						<div class="voice-empty">
-							<nb-icon icon="mic-off-outline" status="warning"></nb-icon>
+							<nb-icon icon="mic-outline" status="warning"></nb-icon>
 							<div class="notice-text">
 								<span class="notice-title">{{ 'AI_CHAT_UI.SETTINGS.VOICE.EMPTY' | translate }}</span>
 								<span class="notice-hint">{{ 'AI_CHAT_UI.SETTINGS.VOICE.EMPTY_HINT' | translate }}</span>
