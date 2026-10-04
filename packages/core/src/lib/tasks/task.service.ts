@@ -455,6 +455,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Case-insensitive "contains" filters on task title / prefix for the MikroORM task list queries
+	 * (`$ilike` is PostgreSQL-only, see `mikroOrmContains`).
+	 */
+	private mikroOrmTitlePrefixFilters(title?: string, prefix?: string): Record<string, unknown> {
+		return {
+			...(isNotEmpty(title) ? { title: mikroOrmContains(title) } : {}),
+			...(isNotEmpty(prefix) ? { prefix: mikroOrmContains(prefix) } : {})
+		};
+	}
+
+	/**
 	 * Find employee tasks
 	 *
 	 * @param options - Pagination options including limit, page, and sorting.
@@ -485,8 +496,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = mikroOrmContains(title);
-					if (isNotEmpty(prefix)) mikroWhere.prefix = mikroOrmContains(prefix);
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title, prefix));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -763,8 +773,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = mikroOrmContains(title);
-					if (isNotEmpty(prefix)) mikroWhere.prefix = mikroOrmContains(prefix);
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title, prefix));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -1198,8 +1207,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId) && isEmpty(modules)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = mikroOrmContains(title);
-					if (isNotEmpty(prefix)) mikroWhere.prefix = mikroOrmContains(prefix);
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title, prefix));
 					if (isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = organizationSprintId;
 					}
