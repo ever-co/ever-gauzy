@@ -26,6 +26,27 @@
 	}
 </ng-template>
 
+<!--
+	Under a provider's Credential badge, in both the chat and the voice lists: the masked key the
+	API returns and when the credential last changed. One template, so the two lists cannot drift.
+-->
+<ng-template #credentialDetails let-provider>
+	@if (getCredential(provider.id); as credential) {
+		@if (credential.apiKey || credential.updatedAt) {
+			<span class="cell-sub">
+				@if (credential.apiKey) {
+					<span class="masked-key">{{ credential.apiKey }}</span>
+				}
+				@if (credential.updatedAt) {
+					<span>{{
+						'AI_CHAT_UI.SETTINGS.LIST.UPDATED' | translate: { date: (credential.updatedAt | date: 'mediumDate') }
+					}}</span>
+				}
+			</span>
+		}
+	}
+</ng-template>
+
 <nb-card class="ai-chat-settings page-card" [nbSpinner]="loading() || connecting()" nbSpinnerStatus="primary">
 	<!-- ══════════════ LIST VIEW (default) ══════════════ -->
 	@if (view() === 'list') {
@@ -146,22 +167,10 @@
 									[text]="getBadgeKey(provider) | translate"
 									[status]="getBadgeStatus(provider)"
 								></nb-badge>
-								<!-- What is stored, at a glance: the masked key the API returns and when it last changed. -->
-								@if (getCredential(provider.id); as credential) {
-									@if (credential.apiKey || credential.updatedAt) {
-										<span class="cell-sub">
-											@if (credential.apiKey) {
-												<span class="masked-key">{{ credential.apiKey }}</span>
-											}
-											@if (credential.updatedAt) {
-												<span>{{
-													'AI_CHAT_UI.SETTINGS.LIST.UPDATED'
-														| translate: { date: (credential.updatedAt | date: 'mediumDate') }
-												}}</span>
-											}
-										</span>
-									}
-								}
+								<ng-container
+									[ngTemplateOutlet]="credentialDetails"
+									[ngTemplateOutletContext]="{ $implicit: provider }"
+								></ng-container>
 							</span>
 							<span class="cell">
 								@if (getCredential(provider.id)?.id) {
@@ -261,22 +270,10 @@
 											[text]="getVoiceBadgeKey(provider) | translate"
 											[status]="getVoiceBadgeStatus(provider)"
 										></nb-badge>
-										<!-- What is stored, at a glance: the masked key the API returns and when it last changed. -->
-										@if (getCredential(provider.id); as credential) {
-											@if (credential.apiKey || credential.updatedAt) {
-												<span class="cell-sub">
-													@if (credential.apiKey) {
-														<span class="masked-key">{{ credential.apiKey }}</span>
-													}
-													@if (credential.updatedAt) {
-														<span>{{
-															'AI_CHAT_UI.SETTINGS.LIST.UPDATED'
-																| translate: { date: (credential.updatedAt | date: 'mediumDate') }
-														}}</span>
-													}
-												</span>
-											}
-										}
+										<ng-container
+											[ngTemplateOutlet]="credentialDetails"
+											[ngTemplateOutletContext]="{ $implicit: provider }"
+										></ng-container>
 									</span>
 									<span class="cell speech-model">
 										{{ getCredential(provider.id)?.speechModel || provider.defaultSpeechModel || '—' }}
