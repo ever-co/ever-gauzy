@@ -588,59 +588,141 @@
 	}
 
 	// ── CATALOG view ──────────────────────────────────────────────────
+	// Compact horizontal cards, like a list of integrations: the logo on the
+	// left, the name, and every chip on one wrapping line beneath it. The cards
+	// were tall centred tiles with each chip on a line of its own, so a provider
+	// with one capability left a near-empty card beside one stacking three rows.
 	.catalog-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-		gap: 1rem;
+		grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+		gap: 12px;
 	}
 
 	.catalog-card {
+		position: relative;
 		display: flex;
-		flex-direction: column;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.625rem;
-		padding: 1.5rem 1rem 1.25rem;
-		border: 1px solid var(--color-basic-transparent-300);
-		border-radius: 0.75rem;
-		background: transparent;
+		align-content: center;
+		gap: 6px 4px;
+		min-height: 4.5rem;
+		// Room on the left for the logo, which is taken out of the flow so the
+		// chips wrap under the name rather than under the logo.
+		padding: 12px 12px 12px calc(12px + 2.5rem + 12px);
+		border: 1px solid var(--border-basic-color-2);
+		border-radius: var(--border-radius);
+		// A panel on the canvas, like every other block on the page.
+		background: var(--gauzy-card-1);
+		text-align: left;
 		cursor: pointer;
-		transition: border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+		transition:
+			border-color 0.2s ease,
+			background-color 0.2s ease;
 		color: inherit;
 		font: inherit;
 
-		&:hover,
-		&:focus-visible {
-			border-color: var(--color-primary-default);
-			transform: translateY(-2px);
-			box-shadow: 0 4px 16px var(--color-primary-transparent-200);
-			outline: none;
+		// A quiet hover, as on the dashboard's header buttons and the report rows:
+		// the hairline one step stronger and the hover tint — not a full primary
+		// outline, which lit a card up like a selection as the pointer passed.
+		&:hover {
+			border-color: var(--border-basic-color-4);
+			background: var(--gauzy-hover-tint);
 		}
 
+		// Keyboard focus keeps a clear primary ring.
+		&:focus-visible {
+			border-color: var(--color-primary-default);
+			outline: 2px solid var(--color-primary-transparent-default);
+			outline-offset: 0;
+		}
+
+		// The shared tile at 40px here, not the 56px `large` size.
+		.tile,
+		.tile.large {
+			position: absolute;
+			top: 50%;
+			left: 12px;
+			width: 2.5rem;
+			height: 2.5rem;
+			border-radius: 0.5rem;
+			transform: translateY(-50%);
+		}
+
+		.tile.brand.large {
+			padding: 0.5rem;
+		}
+
+		.tile.monogram.large {
+			font-size: 14px;
+		}
+
+		// Regular weight throughout the card: the name stands out by its size and
+		// the full text colour, the chips by their tint — no bold anywhere.
 		.name {
-			font-weight: 600;
+			flex: 0 0 100%;
+			min-width: 0;
+			overflow: hidden;
+			font-size: 13px;
+			font-weight: 400;
+			color: var(--text-basic-color);
+			line-height: 18px;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.capabilities {
+			justify-content: flex-start;
+		}
+
+		.capability-chip {
+			font-weight: 400;
 		}
 
 		.configured {
 			display: inline-flex;
 			align-items: center;
-			gap: 0.25rem;
-			font-size: 0.75rem;
+			gap: 4px;
+			font-size: 11px;
+			line-height: 14px;
 			color: var(--color-success-800);
 
 			nb-icon {
-				font-size: 0.9375rem;
+				font-size: 14px;
+				width: 14px;
+				height: 14px;
 			}
 		}
 
+		// "Connect": the one-click sign-in, pinned to the card's top-right corner
+		// as a status of the provider rather than one more chip in the row. A
+		// primary tint with a soft primary outline, on the chip scale and at a
+		// regular weight like its neighbours.
 		.connect-chip {
-			font-size: 0.6875rem;
-			font-weight: 700;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-			padding: 0.125rem 0.5rem;
-			border-radius: 1rem;
-			background: var(--color-primary-transparent-200);
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			font-size: 11px;
+			font-weight: 400;
+			line-height: 14px;
+			padding: 1px 6px;
+			border: 1px solid var(--color-primary-transparent-400, var(--color-primary-transparent-300));
+			border-radius: var(--border-radius);
+			background: var(--color-primary-transparent-100);
 			color: var(--color-primary-700);
+			transition:
+				background-color 0.2s ease,
+				border-color 0.2s ease;
+		}
+
+		// Keep the name clear of the corner chip on the cards that show one.
+		&:has(.connect-chip) .name {
+			padding-right: 4.5rem;
+		}
+
+		// The chip answers the card's hover, so the offer is what draws the eye.
+		&:hover .connect-chip {
+			background: var(--color-primary-transparent-200);
+			border-color: var(--color-primary-default);
 		}
 	}
 
