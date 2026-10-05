@@ -2,6 +2,7 @@ import { useRef, useEffect, type CSSProperties } from 'react';
 import type { UIMessage } from 'ai';
 import { ChatMessageItem } from './ChatMessageItem';
 import type { IDocsCitation } from './DocsCitationChips';
+import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
 export interface ChatMessageListProps {
@@ -12,6 +13,10 @@ export interface ChatMessageListProps {
 	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
 	/** Open a document citation chip (router navigation supplied by the panel). */
 	onOpenCitation?: (citation: IDocsCitation) => void;
+	/** Preview an attachment chip on a user message (the panel's preview overlay). */
+	onPreviewAttachment?: (attachment: IPreviewableAttachment) => void;
+	/** The `File` uploaded this session for card `index` of message `messageId` (thumbnail, size). */
+	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
 }
@@ -28,6 +33,8 @@ export function ChatMessageList({
 	status,
 	onApprovalResponse,
 	onOpenCitation,
+	onPreviewAttachment,
+	resolveAttachmentFile,
 	translate
 }: ChatMessageListProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -63,6 +70,8 @@ export function ChatMessageList({
 					isStreaming={isStreaming && message === lastMessage && message.role === 'assistant'}
 					onApprovalResponse={onApprovalResponse}
 					onOpenCitation={onOpenCitation}
+					onPreviewAttachment={onPreviewAttachment}
+					resolveAttachmentFile={resolveAttachmentFile}
 					translate={translate}
 				/>
 			))}
