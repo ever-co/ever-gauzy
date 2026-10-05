@@ -496,7 +496,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title, prefix));
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -773,7 +773,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title, prefix));
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -1211,7 +1211,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId) && isEmpty(modules)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title, prefix));
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = organizationSprintId;
 					}
