@@ -73,10 +73,12 @@ export class EmailConfirmationService {
 			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
+			// Always set codeExpireAt — default to 7 days to match the environment module default
+			const verificationExpiry = environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
 			await this.userService.update(id, {
 				emailToken: await this.passwordHashService.hash(token),
 				code: verificationCode,
-				codeExpireAt: moment(new Date()).add(this.verificationExpirySeconds(), 'seconds').toDate()
+				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
 
 			// Send email verification link. Resolves false when the provider did not take the message;
@@ -148,7 +150,7 @@ export class EmailConfirmationService {
 
 	/**
 	 * How long a verification link and code stay valid, in seconds - 7 days when unset, matching the
-	 * environment module default.
+	 * environment module default and the expiry `sendEmailVerification` gives the link and code.
 	 */
 	private verificationExpirySeconds(): number {
 		return environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;

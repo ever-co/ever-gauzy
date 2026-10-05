@@ -16,15 +16,12 @@ import { EmailConfirmationService } from './email-confirmation.service';
 
 const USER = { id: 'user-1', email: 'jane+gauzy@corp.co', emailVerifiedAt: null } as unknown as IUser;
 
-function makeService(
-	options: { sent?: boolean; sendThrows?: boolean; user?: IUser; verificationEmailSent?: boolean } = {}
-) {
+function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUser } = {}) {
 	const emailService = {
 		emailVerification: jest.fn(async () => {
 			if (options.sendThrows) throw new Error('boom');
 			return options.sent ?? true;
-		}),
-		hasSentVerificationEmail: jest.fn(async () => options.verificationEmailSent ?? false)
+		})
 	};
 	const userService = {
 		update: jest.fn(async () => undefined),
@@ -131,8 +128,23 @@ describe('EmailConfirmationService', () => {
 	 * the status now says whether a still-valid verification email really went out.
 	 */
 	describe('getVerificationStatus', () => {
+		function makeStatusService(options: { user?: IUser; verificationEmailSent?: boolean } = {}) {
+			const emailService = {
+				hasSentVerificationEmail: jest.fn(async () => options.verificationEmailSent ?? false)
+			};
+			const userService = { getIfExists: jest.fn(async () => options.user ?? USER) };
+			const featureService = { isFeatureEnabled: jest.fn(async () => true) };
+			const service = new EmailConfirmationService(
+				emailService as any,
+				userService as any,
+				featureService as any,
+				{} as any
+			);
+			return { service, emailService };
+		}
+
 		it('reports an unverified user who was never sent a link: not verified, nothing sent', async () => {
-			const { service } = makeService({ verificationEmailSent: false });
+			const { service } = makeStatusService({ verificationEmailSent: false });
 			await expect(service.getVerificationStatus()).resolves.toEqual({
 				isEmailVerified: false,
 				verificationEmailSent: false
@@ -140,7 +152,7 @@ describe('EmailConfirmationService', () => {
 		});
 
 		it('reports a link that went out inside the validity window as sent', async () => {
-			const { service, emailService } = makeService({ verificationEmailSent: true });
+			const { service, emailService } = makeStatusService({ verificationEmailSent: true });
 			const before = Date.now();
 
 			await expect(service.getVerificationStatus()).resolves.toEqual({
@@ -157,7 +169,7 @@ describe('EmailConfirmationService', () => {
 		});
 
 		it('reports a verified user as verified without reading the email history (control)', async () => {
-			const { service, emailService } = makeService({
+			const { service, emailService } = makeStatusService({
 				user: { ...USER, emailVerifiedAt: new Date() } as unknown as IUser,
 				verificationEmailSent: true
 			});
@@ -169,7 +181,7 @@ describe('EmailConfirmationService', () => {
 		});
 
 		it('never exposes anything but the two flags', async () => {
-			const { service } = makeService();
+			const { service } = makeStatusService();
 			expect(Object.keys(await service.getVerificationStatus())).toEqual([
 				'isEmailVerified',
 				'verificationEmailSent'
