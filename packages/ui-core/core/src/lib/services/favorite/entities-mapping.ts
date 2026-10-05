@@ -41,7 +41,7 @@ export const ENTITY_ICONS: Record<BaseEntityEnum, string> = {
 export const ENTITY_LINKS: Record<BaseEntityEnum, (id: string) => string> = {
 	[BaseEntityEnum.OrganizationProject]: (id) => `/pages/organization/projects/${id}/edit`,
 	[BaseEntityEnum.Task]: (id) => `/pages/tasks/dashboard?taskId=${id}`,
-	[BaseEntityEnum.Employee]: (id) => `/pages/employees/edit/${id}/account`,
+	[BaseEntityEnum.Employee]: (id) => `/pages/employees/view/${id}`,
 	[BaseEntityEnum.Candidate]: (id) => `/pages/employees/candidates/edit/${id}`,
 	[BaseEntityEnum.Contact]: (id) => `/pages/contacts/view/${id}`,
 	[BaseEntityEnum.OrganizationTeam]: () => `/pages/organization/teams`,
