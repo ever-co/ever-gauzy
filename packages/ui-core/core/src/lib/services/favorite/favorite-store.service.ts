@@ -57,22 +57,22 @@ export class FavoriteStoreService {
 		const employeeId = this._store.user?.employee?.id;
 		const isAdmin = this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW);
 
-		let favoriteStubsPromise: Promise<{ items: IFavorite[]; total: number }>;
+		let favoriteStubs: IFavorite[];
 
-		if (employeeId) {
-			favoriteStubsPromise = this._favoriteService.findByEmployee({
-				where: { organizationId, tenantId, employeeId }
-			});
-		} else if (isAdmin) {
-			// Admin without an employee record: favorites are saved at the organization level
-			favoriteStubsPromise = this._favoriteService.findAll({
+		if (isAdmin) {
+			// Admins see their own favorites plus organization-level pins (saved without an employee)
+			const { items } = await this._favoriteService.findAll({
 				where: { organizationId, tenantId }
 			});
+			favoriteStubs = items.filter((fav) => !fav.employeeId || fav.employeeId === employeeId);
+		} else if (employeeId) {
+			const { items } = await this._favoriteService.findByEmployee({
+				where: { organizationId, tenantId, employeeId }
+			});
+			favoriteStubs = items;
 		} else {
 			return [];
 		}
-
-		const { items: favoriteStubs } = await favoriteStubsPromise;
 
 		if (!favoriteStubs.length) {
 			return [];
@@ -86,17 +86,25 @@ export class FavoriteStoreService {
 		const favoritePromises = [];
 
 		for (const entityType of Object.keys(groupedFavorites)) {
+			// The details endpoint returns every favorited record of this type it can see (for an admin,
+			// other users' too), so keep only the ones in this user's favorites.
+			const favoriteEntityIds = new Set(
+				groupedFavorites[entityType as BaseEntityEnum].map((fav: IFavorite) => fav.entityId)
+			);
 			const promise = this._favoriteService
 				.getFavoriteDetails({
 					where: {
 						entity: entityType,
 						organizationId,
 						tenantId,
-						...(employeeId && { employeeId })
+						...(!isAdmin && employeeId && { employeeId })
 					}
 				})
 				.then(({ items }: { items: IFavorite[]; total: number }) =>
-					this._withPersonNames(entityType as BaseEntityEnum, items)
+					this._withPersonNames(
+						entityType as BaseEntityEnum,
+						Array.isArray(items) ? items.filter((item) => item && favoriteEntityIds.has(item.id)) : items
+					)
 				)
 				.then((details) => {
 					if (!details || !Array.isArray(details)) {
@@ -157,7 +165,12 @@ export class FavoriteStoreService {
 						entityType as BaseEntityEnum.Employee | BaseEntityEnum.Candidate,
 						item.id
 					);
-					return { ...item, user: person?.user } as IFavorite;
+					// Without CHANGE_SELECTED_EMPLOYEE the employee route ignores the requested id and returns the
+					// caller's own record; never label a colleague's link with the caller's name.
+					if (person?.id !== item.id) {
+						return item;
+					}
+					return { ...item, user: person.user } as IFavorite;
 				} catch {
 					return item;
 				}
