@@ -51,23 +51,25 @@ export class FavoriteStoreService {
 			return [];
 		}
 
+		// Favorites belong to the signed-in user (that's who the favorite toggle saves them for), so key the
+		// sidebar off the user's own employee record. NOT `selectedEmployee`: the Edit Employee page sets it to
+		// the employee being viewed, which used to load *their* favorites and leave the section empty/hidden.
+		const employeeId = this._store.user?.employee?.id;
 		const isAdmin = this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW);
-		const employeeId = this._store.selectedEmployee?.id;
 
 		let favoriteStubsPromise: Promise<{ items: IFavorite[]; total: number }>;
 
-		if (isAdmin && !employeeId) {
+		if (employeeId) {
+			favoriteStubsPromise = this._favoriteService.findByEmployee({
+				where: { organizationId, tenantId, employeeId }
+			});
+		} else if (isAdmin) {
+			// Admin without an employee record: favorites are saved at the organization level
 			favoriteStubsPromise = this._favoriteService.findAll({
 				where: { organizationId, tenantId }
 			});
 		} else {
-			const targetEmployeeId = employeeId || this._store.user.employee?.id;
-			if (!targetEmployeeId) {
-				return [];
-			}
-			favoriteStubsPromise = this._favoriteService.findByEmployee({
-				where: { organizationId, tenantId, employeeId: targetEmployeeId }
-			});
+			return [];
 		}
 
 		const { items: favoriteStubs } = await favoriteStubsPromise;
@@ -89,7 +91,8 @@ export class FavoriteStoreService {
 					where: {
 						entity: entityType,
 						organizationId,
-						tenantId
+						tenantId,
+						...(employeeId && { employeeId })
 					}
 				})
 				.then(({ items: details }: { items: IFavorite[]; total: number }) => {
