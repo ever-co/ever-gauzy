@@ -28,6 +28,7 @@ import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
 import { describeEmailSendError } from './../email-send/email-send-error';
+import { redactDatabaseError } from './../core/errors/database-error';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 
 @Injectable()
@@ -84,7 +85,9 @@ export class EmailConfirmationService {
 				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
 			if (!stored) {
-				this.logger.warn(`Not sending the verification email for user ${id}: the account no longer holds that address`);
+				this.logger.warn(
+					`Not sending the verification email for user ${id}: the account no longer holds that address`
+				);
 				return false;
 			}
 
@@ -252,14 +255,24 @@ export class EmailConfirmationService {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
 			return;
 		}
+		// Recorded only while the account still holds the address that was confirmed. When it moved to
+		// another address in the meantime nothing is written, and that is not a success: by code, the
+		// code has already been used up, so answering OK would leave the user believing they are done.
+		let recorded = false;
 		try {
-			// Recorded only while the account still holds the address that was confirmed.
-			await this.userService.markEmailAsVerified(user['id'], user.email);
-		} finally {
-			return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
+			recorded = await this.userService.markEmailAsVerified(user['id'], user.email);
+		} catch (error) {
+			this.logger.error(
+				`Could not record the e-mail confirmation of user ${user['id']}`,
+				redactDatabaseError(error)
+			);
 		}
+		if (!recorded) {
+			throw new BadRequestException('Failed to verify email.');
+		}
+		return new Object({
+			status: HttpStatus.OK,
+			message: `OK`
+		});
 	}
 }

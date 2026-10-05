@@ -16,7 +16,9 @@ import { EmailConfirmationService } from './email-confirmation.service';
 
 const USER = { id: 'user-1', email: 'jane+gauzy@corp.co', emailVerifiedAt: null } as unknown as IUser;
 
-function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUser; stored?: boolean } = {}) {
+function makeService(
+	options: { sent?: boolean; sendThrows?: boolean; user?: IUser; stored?: boolean; verified?: boolean } = {}
+) {
 	const emailService = {
 		emailVerification: jest.fn(async () => {
 			if (options.sendThrows) throw new Error('boom');
@@ -25,7 +27,7 @@ function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUs
 	};
 	const userService = {
 		storeEmailVerificationCode: jest.fn(async () => options.stored ?? true),
-		markEmailAsVerified: jest.fn(async () => ({ affected: 1 })),
+		markEmailAsVerified: jest.fn(async () => options.verified ?? true),
 		getIfExists: jest.fn(async () => options.user ?? USER)
 	};
 	const featureService = { isFeatureEnabled: jest.fn(async () => true) };
@@ -110,7 +112,11 @@ describe('EmailConfirmationService', () => {
 			expect(userService.storeEmailVerificationCode).toHaveBeenCalledWith(
 				USER.id,
 				USER.email,
-				expect.objectContaining({ emailToken: 'hashed', code: expect.any(String), codeExpireAt: expect.any(Date) })
+				expect.objectContaining({
+					emailToken: 'hashed',
+					code: expect.any(String),
+					codeExpireAt: expect.any(Date)
+				})
 			);
 		});
 
@@ -129,6 +135,25 @@ describe('EmailConfirmationService', () => {
 			await service.confirmEmail(USER);
 
 			expect(userService.markEmailAsVerified).toHaveBeenCalledWith(USER.id, USER.email);
+		});
+
+		it('answers OK when the confirmation was recorded', async () => {
+			const { service } = makeService({ verified: true });
+
+			await expect(service.confirmEmail(USER)).resolves.toEqual({ status: HttpStatus.OK, message: 'OK' });
+		});
+
+		it('fails when the account no longer holds the confirmed address (nothing was recorded)', async () => {
+			const { service } = makeService({ verified: false });
+
+			await expect(service.confirmEmail(USER)).rejects.toBeInstanceOf(BadRequestException);
+		});
+
+		it('fails when the confirmation could not be written', async () => {
+			const { service, userService } = makeService();
+			userService.markEmailAsVerified.mockRejectedValueOnce(new Error('connection reset'));
+
+			await expect(service.confirmEmail(USER)).rejects.toBeInstanceOf(BadRequestException);
 		});
 	});
 

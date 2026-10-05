@@ -75,6 +75,12 @@ class FixtureUser {
  * request (a confirmation e-mail being prepared, a confirmation completing) can land.
  */
 let concurrentWrite: ((manager: EntityManager) => Promise<unknown>) | undefined;
+/**
+ * Runs a write right after an UPDATE went through, and again after every later UPDATE until the
+ * write reports that it applied: the earliest moment a request that is waiting for the new address
+ * (a confirmation e-mail being resent to it) can store its link and code.
+ */
+let writeOnceApplicable: ((manager: EntityManager) => Promise<boolean>) | undefined;
 @EventSubscriber()
 class ConcurrentWriteSubscriber implements EntitySubscriberInterface<FixtureUser> {
 	listenTo() {
@@ -84,6 +90,13 @@ class ConcurrentWriteSubscriber implements EntitySubscriberInterface<FixtureUser
 		const write = concurrentWrite;
 		concurrentWrite = undefined;
 		await write?.(event.manager);
+	}
+	async afterUpdate(event: UpdateEvent<FixtureUser>) {
+		const write = writeOnceApplicable;
+		writeOnceApplicable = undefined;
+		if (write && !(await write(event.manager))) {
+			writeOnceApplicable = write;
+		}
 	}
 }
 
@@ -117,6 +130,7 @@ describe('UserService.updateProfile — changing the e-mail address resets its c
 
 	afterEach(() => {
 		concurrentWrite = undefined;
+		writeOnceApplicable = undefined;
 	});
 
 	/** A confirmed account at `ada@example.com` that also holds a pending confirmation link and code. */
@@ -230,7 +244,11 @@ describe('UserService.updateProfile — changing the e-mail address resets its c
 			await users.insert({ id, email: 'ada@example.com', firstName: 'Ada' });
 		}
 		const plantCodeForPreviousAddress = (id: string) => async (manager: EntityManager) =>
-			manager.update(FixtureUser, { id }, { code: 'OLDADDR1', codeExpireAt: CODE_EXPIRY, emailToken: 'old-token' });
+			manager.update(
+				FixtureUser,
+				{ id },
+				{ code: 'OLDADDR1', codeExpireAt: CODE_EXPIRY, emailToken: 'old-token' }
+			);
 
 		it('CONTROL: a code stored between the read and the UPDATE of save() survives a plain save', async () => {
 			await seedUnconfirmed(SELF);
@@ -267,6 +285,29 @@ describe('UserService.updateProfile — changing the e-mail address resets its c
 			expect((await stored(SELF)).emailVerifiedAt).toBeNull();
 		});
 
+		it('keeps a link and code issued for the new address as soon as the account holds it', async () => {
+			await seedUnconfirmed(SELF);
+			const { service } = build(employee);
+			// A resend for the new address, stored the moment the address is in place - while the
+			// profile update is still running.
+			writeOnceApplicable = async (manager) => {
+				const { affected } = await manager.update(
+					FixtureUser,
+					{ id: SELF, email: 'new@example.com' },
+					{ code: 'NEWADDR1', codeExpireAt: CODE_EXPIRY, emailToken: 'new-token' }
+				);
+				return affected !== 0;
+			};
+
+			await service.updateProfile(SELF, { email: 'new@example.com', firstName: 'Ada L.' } as any);
+
+			const row = await stored(SELF);
+			expect(row.email).toBe('new@example.com');
+			expect(row.firstName).toBe('Ada L.');
+			expect(row.code).toBe('NEWADDR1');
+			expect(row.emailToken).toBe('new-token');
+		});
+
 		it('does not store a code prepared for the previous address once the address has changed', async () => {
 			await seedUnconfirmed(SELF);
 			const { service } = build(employee);
@@ -301,10 +342,10 @@ describe('UserService.updateProfile — changing the e-mail address resets its c
 			const { service } = build(employee);
 			await service.updateProfile(SELF, { email: 'new@example.com' } as any);
 
-			await service.markEmailAsVerified(SELF, 'ada@example.com');
+			await expect(service.markEmailAsVerified(SELF, 'ada@example.com')).resolves.toBe(false);
 			expect((await stored(SELF)).emailVerifiedAt).toBeNull();
 
-			await service.markEmailAsVerified(SELF, 'new@example.com');
+			await expect(service.markEmailAsVerified(SELF, 'new@example.com')).resolves.toBe(true);
 			expect((await stored(SELF)).emailVerifiedAt).not.toBeNull();
 		});
 	});
@@ -420,9 +461,7 @@ describe('UserService.updateProfile — MikroORM', () => {
 
 	/** Reads the row straight from the database, past MikroORM's identity map. */
 	async function stored(id: string): Promise<Record<string, any>> {
-		const [row] = await orm.em
-			.getConnection()
-			.execute('SELECT * FROM email_change_user_mikro WHERE id = ?', [id]);
+		const [row] = await orm.em.getConnection().execute('SELECT * FROM email_change_user_mikro WHERE id = ?', [id]);
 		return row;
 	}
 
@@ -497,7 +536,9 @@ describe('UserService.updateProfile — MikroORM', () => {
 		await expect(service.storeEmailVerificationCode(SELF, 'ada@example.com', values)).resolves.toBe(false);
 		expect((await stored(SELF)).code).toBeNull();
 
-		await expect(service.storeEmailVerificationCode(SELF, 'new@example.com', { ...values, code: 'NEWADDR1' })).resolves.toBe(true);
+		await expect(
+			service.storeEmailVerificationCode(SELF, 'new@example.com', { ...values, code: 'NEWADDR1' })
+		).resolves.toBe(true);
 		expect((await stored(SELF)).code).toBe('NEWADDR1');
 	});
 });

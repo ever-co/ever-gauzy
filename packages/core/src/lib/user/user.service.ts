@@ -226,25 +226,30 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param email The address the confirmation was issued for. When given, the write only applies
 	 * while the account still holds that address, so a confirmation that completes just after the user
 	 * moved to another address is not recorded for the new one.
-	 * @returns
+	 * @returns whether the confirmation was recorded (false: the account no longer holds `email`).
 	 */
-	public async markEmailAsVerified(id: ID, email?: string) {
+	public async markEmailAsVerified(id: ID, email?: string): Promise<boolean> {
 		const where = email === undefined ? { id } : { id, email };
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroOrmRepository.nativeUpdate(where, {
+				return (
+					(await this.mikroOrmRepository.nativeUpdate(where, {
+						emailVerifiedAt: freshTimestamp(),
+						emailToken: null,
+						code: null,
+						codeExpireAt: null
+					})) > 0
+				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmRepository.update(where, {
 					emailVerifiedAt: freshTimestamp(),
 					emailToken: null,
 					code: null,
 					codeExpireAt: null
 				});
-			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.update(where, {
-					emailVerifiedAt: freshTimestamp(),
-					emailToken: null,
-					code: null,
-					codeExpireAt: null
-				});
+				// Same reading as storeEmailVerificationCode: only a reported 0 means nothing was written.
+				return affected !== 0;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -556,21 +561,22 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// A new address starts unconfirmed: the stored confirmation (and any pending link or code)
-			// belongs to the previous mailbox, so it is cleared in the same save.
-			const emailChanged = isEmailAddressChange(user.email, entity.email);
+			// belongs to the previous mailbox. The address and the cleared confirmation are written
+			// together, in one UPDATE after the rest of the profile (see moveToUnconfirmedAddress), so
+			// the save leaves those columns alone.
+			const newEmail = entity.email;
+			const emailChanged = isEmailAddressChange(user.email, newEmail);
 			if (emailChanged) {
-				Object.assign(entity, UNCONFIRMED_EMAIL_STATE);
+				for (const column of ['email', ...Object.keys(UNCONFIRMED_EMAIL_STATE)]) {
+					delete entity[column];
+				}
 			}
 
 			// Save the updated user entity
 			await this.save(entity);
 
 			if (emailChanged) {
-				// TypeORM's `save` only writes the columns that differ from the row it read just before,
-				// so a link/code or confirmation stored for the previous address between that read and
-				// the write (a confirmation e-mail still being prepared, a confirmation completing) would
-				// survive next to the new address. This UPDATE always runs, once the new address is stored.
-				await this.resetEmailConfirmation(id as ID);
+				await this.moveToUnconfirmedAddress(id as ID, newEmail);
 			}
 
 			await this.liftAgentRestrictionsOnMoveIntoEEAOrUK(user, entity);
@@ -592,16 +598,27 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Clears a user's e-mail confirmation together with any pending confirmation link or code.
-	 * Unlike `save`, always issues the UPDATE for every listed column.
+	 * Moves a user to a new, not yet confirmed address: the address and the cleared confirmation
+	 * (with any pending link or code) are written in ONE UPDATE that always sets every listed column.
+	 *
+	 * Neither half can be left to another write. `save` cannot carry the reset: TypeORM only writes
+	 * the columns that differ from the row it read just before, so a link/code or a confirmation
+	 * stored for the previous address between that read and the write would survive next to the new
+	 * address. And a reset issued after the new address is already stored would also erase a link and
+	 * code a resend has meanwhile issued FOR the new address, so that message would arrive unusable.
+	 *
+	 * In one statement, a write for the previous address lands either before it (and is cleared by
+	 * it) or after it (and no longer matches: see storeEmailVerificationCode and markEmailAsVerified),
+	 * while a write for the new address can only land after it, and is kept.
 	 */
-	private async resetEmailConfirmation(id: ID): Promise<void> {
+	private async moveToUnconfirmedAddress(id: ID, email: string): Promise<void> {
+		const values = { email, ...UNCONFIRMED_EMAIL_STATE };
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmRepository.nativeUpdate({ id }, { ...UNCONFIRMED_EMAIL_STATE });
+				await this.mikroOrmRepository.nativeUpdate({ id }, values);
 				return;
 			case MultiORMEnum.TypeORM:
-				await this.typeOrmRepository.update({ id }, { ...UNCONFIRMED_EMAIL_STATE });
+				await this.typeOrmRepository.update({ id }, values);
 				return;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
