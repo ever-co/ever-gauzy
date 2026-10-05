@@ -244,6 +244,25 @@ describe('EmailVerificationNoticeComponent', () => {
 			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
 		});
 
+		it('does not let a slow lookup for a changed address undo a send made meanwhile', () => {
+			let calls = 0;
+			const slowLookup = new Subject<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>();
+			const { component, user$ } = setup({
+				user: UNVERIFIED,
+				status: () =>
+					++calls === 1 ? of({ isEmailVerified: false, verificationEmailSent: false }) : slowLookup
+			});
+
+			user$.next({ ...UNVERIFIED, email: 'jane.new@corp.co' } as IUser); // lookup for the new address starts
+			component.resend(); // the notice is still on screen, so the user sends before it answers
+			expect(component.linkSent()).toBe(true);
+
+			slowLookup.next({ isEmailVerified: false, verificationEmailSent: false });
+
+			expect(component.linkSent()).toBe(true);
+			expect(component.state()).toBe('sent');
+		});
+
 		it('does not re-read the status when the rate limit refused the resend (nothing was attempted)', () => {
 			const { component, authService } = setup({
 				user: UNVERIFIED,

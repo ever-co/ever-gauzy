@@ -60,6 +60,8 @@ export class EmailVerificationNoticeComponent implements OnInit {
 	private resendSubscription: Subscription | null = null;
 	/** The status re-read after a failed resend; a newer resend makes its answer stale. */
 	private refreshSubscription: Subscription | null = null;
+	/** Counts resends: a status answer requested before the latest one started is stale. */
+	private sends = 0;
 
 	private readonly store = inject(Store);
 	private readonly authService = inject(AuthService);
@@ -94,8 +96,15 @@ export class EmailVerificationNoticeComponent implements OnInit {
 						return of(false);
 					}
 					this.email.set(user.email);
+					// The button stays usable while this lookup runs (after an address change, say): an
+					// answer that arrives after a newer send began must not overwrite that send's result.
+					const sendsAtLookup = this.sends;
 					return this.authService.getEmailVerificationStatus().pipe(
-						tap((status) => this.linkSent.set(status?.verificationEmailSent === true)),
+						tap((status) => {
+							if (this.sends === sendsAtLookup) {
+								this.linkSent.set(status?.verificationEmailSent === true);
+							}
+						}),
 						map((status) => status?.isEmailVerified === false),
 						// 404 = verification switched off on this deployment; anything else = unknown.
 						catchError(() => of(false))
@@ -115,6 +124,7 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		this.errorMessage.set(null);
 		// A re-read from an earlier failed attempt must not land on top of this attempt's answer.
 		this.cancelRefresh();
+		this.sends++;
 		const askedFor = this.subjectKey();
 
 		this.resendSubscription = this.authService
