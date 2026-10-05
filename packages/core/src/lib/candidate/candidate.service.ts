@@ -4,7 +4,14 @@ import { ICandidateCreateInput, BaseEntityEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { flatten, MultiORMEnum, parseFindOptionsRelations, parseSortOrder, splitKeywords } from './../core/utils';
+import {
+	flatten,
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
@@ -78,12 +85,14 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 							if (isNotEmpty(where.user.name)) {
 								const keywords: string[] = splitKeywords(where.user.name);
 								for (const keyword of keywords) {
-									userFilter.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
-									userFilter.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
+									userFilter.push(
+										{ user: { firstName: mikroOrmContains(keyword) } },
+										{ user: { lastName: mikroOrmContains(keyword) } }
+									);
 								}
 							}
 							if (isNotEmpty(where.user.email)) {
-								userFilter.push({ user: { email: { $ilike: `%${where.user.email}%` } } });
+								userFilter.push({ user: { email: mikroOrmContains(where.user.email) } });
 							}
 							if (userFilter.length > 0) {
 								mikroWhere.$or = userFilter;
