@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "添加{{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "仅您自己",
+			"TENANT": "此租户中的所有人"
+		},
+		"UNSAVED_CHANGES": "未保存的更改",
+		"ACCOUNT": {
+			"TITLE": "账户",
+			"DESCRIPTION": "您当前登录使用的账户。",
+			"MANAGE": "管理个人资料",
+			"ROLE": "角色",
+			"MEMBER_SINCE": "加入时间"
+		},
+		"PREFERENCES": {
+			"TITLE": "偏好设置",
+			"DESCRIPTION": "应用对您的外观和行为。更改会立即生效。",
+			"THEME": "主题",
+			"THEME_HINT": "整个应用的配色方案。",
+			"LANGUAGE": "语言",
+			"LANGUAGE_HINT": "菜单、标签和消息使用的语言。",
+			"LAYOUT": "默认布局",
+			"RESET_LAYOUTS": "重置页面布局",
+			"SAVE_ERROR": "无法保存您的偏好设置。",
+			"LAYOUTS_RESET": "页面布局已重置为您的默认设置。"
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "方形图片，至少 128 × 128 像素。",
+			"NAME_HINT": "向此租户的所有用户显示。",
+			"TENANT_ID": "租户 ID",
+			"TENANT_ID_HINT": "联系支持或调用 API 时请提供此 ID。",
+			"COPY_ERROR": "无法复制租户 ID。",
+			"TITLE": "租户资料",
+			"DESCRIPTION": "此租户的名称和徽标，会在工作区切换器和侧边栏中向所有用户显示。",
+			"NAME": "租户名称",
+			"NAME_PLACEHOLDER": "输入租户名称",
+			"NAME_REQUIRED": "租户名称为必填项。",
+			"LOGO": "租户徽标",
+			"LOGO_CHANGE": "点击上传新徽标",
+			"LOGO_REMOVE": "移除徽标",
+			"LOGO_UPLOAD_ERROR": "无法上传徽标。",
+			"CREATED_AT": "创建于",
+			"SAVED": "租户资料已保存",
+			"SAVE_ERROR": "无法保存租户资料。",
+			"LOAD_ERROR": "无法加载租户资料。"
+		},
 		"PREFERRED_UI": {
+			"LABEL": "界面",
 			"TITLE": "用户界面",
 			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
 			"OPTIONS": {

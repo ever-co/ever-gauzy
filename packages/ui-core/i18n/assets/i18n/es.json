@@ -1164,7 +1164,52 @@
 		"ADD_ITEM": "Agregar {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Solo usted",
+			"TENANT": "Todos en este tenant"
+		},
+		"UNSAVED_CHANGES": "Cambios sin guardar",
+		"ACCOUNT": {
+			"TITLE": "Cuenta",
+			"DESCRIPTION": "La cuenta con la que ha iniciado sesión.",
+			"MANAGE": "Gestionar perfil",
+			"ROLE": "Rol",
+			"MEMBER_SINCE": "Miembro desde"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferencias",
+			"DESCRIPTION": "Cómo se ve y se comporta la aplicación para usted. Los cambios se aplican al instante.",
+			"THEME": "Tema",
+			"THEME_HINT": "Esquema de colores de toda la aplicación.",
+			"LANGUAGE": "Idioma",
+			"LANGUAGE_HINT": "Idioma de los menús, etiquetas y mensajes.",
+			"LAYOUT": "Diseño predeterminado",
+			"RESET_LAYOUTS": "Restablecer diseños de página",
+			"SAVE_ERROR": "No se pudo guardar su preferencia.",
+			"LAYOUTS_RESET": "Diseños de página restablecidos a su valor predeterminado."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Imagen cuadrada, de al menos 128 × 128 px.",
+			"NAME_HINT": "Se muestra a todos los usuarios de este tenant.",
+			"TENANT_ID": "ID del tenant",
+			"TENANT_ID_HINT": "Indíquelo al contactar con soporte o al usar la API.",
+			"COPY_ERROR": "No se pudo copiar el ID del tenant.",
+			"TITLE": "Perfil del tenant",
+			"DESCRIPTION": "El nombre y el logotipo de este tenant, que se muestran a todos los usuarios en el selector de espacios de trabajo y en la barra lateral.",
+			"NAME": "Nombre del tenant",
+			"NAME_PLACEHOLDER": "Introduzca el nombre del tenant",
+			"NAME_REQUIRED": "El nombre del tenant es obligatorio.",
+			"LOGO": "Logotipo del tenant",
+			"LOGO_CHANGE": "Haga clic para subir un nuevo logotipo",
+			"LOGO_REMOVE": "Quitar logotipo",
+			"LOGO_UPLOAD_ERROR": "No se pudo subir el logotipo.",
+			"CREATED_AT": "Creado el",
+			"SAVED": "Perfil del tenant guardado",
+			"SAVE_ERROR": "No se pudo guardar el perfil del tenant.",
+			"LOAD_ERROR": "No se pudo cargar el perfil del tenant."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interfaz",
 			"TITLE": "Interfaz de usuario",
 			"DESCRIPTION": "Elija qué interfaz usan todos los usuarios de este inquilino para las páginas disponibles en ambas variantes.",
 			"OPTIONS": {

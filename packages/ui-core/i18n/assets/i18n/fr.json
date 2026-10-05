@@ -1163,7 +1163,52 @@
 		"ADD_ITEM": "Ajouter {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Vous uniquement",
+			"TENANT": "Tout le monde dans ce tenant"
+		},
+		"UNSAVED_CHANGES": "Modifications non enregistrées",
+		"ACCOUNT": {
+			"TITLE": "Compte",
+			"DESCRIPTION": "Le compte avec lequel vous êtes connecté.",
+			"MANAGE": "Gérer le profil",
+			"ROLE": "Rôle",
+			"MEMBER_SINCE": "Membre depuis"
+		},
+		"PREFERENCES": {
+			"TITLE": "Préférences",
+			"DESCRIPTION": "L'apparence et le comportement de l'application pour vous. Les changements s'appliquent immédiatement.",
+			"THEME": "Thème",
+			"THEME_HINT": "Jeu de couleurs de toute l'application.",
+			"LANGUAGE": "Langue",
+			"LANGUAGE_HINT": "Langue des menus, libellés et messages.",
+			"LAYOUT": "Disposition par défaut",
+			"RESET_LAYOUTS": "Réinitialiser les dispositions des pages",
+			"SAVE_ERROR": "Votre préférence n'a pas pu être enregistrée.",
+			"LAYOUTS_RESET": "Dispositions des pages réinitialisées à votre valeur par défaut."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Image carrée, au moins 128 × 128 px.",
+			"NAME_HINT": "Affiché à tous les utilisateurs de ce tenant.",
+			"TENANT_ID": "ID du tenant",
+			"TENANT_ID_HINT": "Indiquez-le en contactant le support ou en appelant l'API.",
+			"COPY_ERROR": "L'ID du tenant n'a pas pu être copié.",
+			"TITLE": "Profil du tenant",
+			"DESCRIPTION": "Le nom et le logo de ce tenant, affichés à tous les utilisateurs dans le sélecteur d'espaces de travail et la barre latérale.",
+			"NAME": "Nom du tenant",
+			"NAME_PLACEHOLDER": "Saisissez le nom du tenant",
+			"NAME_REQUIRED": "Le nom du tenant est obligatoire.",
+			"LOGO": "Logo du tenant",
+			"LOGO_CHANGE": "Cliquez pour téléverser un nouveau logo",
+			"LOGO_REMOVE": "Supprimer le logo",
+			"LOGO_UPLOAD_ERROR": "Le logo n'a pas pu être téléversé.",
+			"CREATED_AT": "Créé le",
+			"SAVED": "Profil du tenant enregistré",
+			"SAVE_ERROR": "Le profil du tenant n'a pas pu être enregistré.",
+			"LOAD_ERROR": "Le profil du tenant n'a pas pu être chargé."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "Interface utilisateur",
 			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
 			"OPTIONS": {
