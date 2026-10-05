@@ -11,6 +11,16 @@
 		background: var(--gauzy-card-2, var(--background-basic-color-2));
 	}
 
+	// The personal groups live inside their own component host, so the next group here is the
+	// host's sibling, not a `.settings-group` sibling — give it the same gap explicitly.
+	ga-general-personal-settings {
+		display: block;
+
+		+ .settings-group {
+			margin-top: 1rem;
+		}
+	}
+
 	.preferred-ui-options {
 		display: flex;
 		flex-wrap: wrap;
