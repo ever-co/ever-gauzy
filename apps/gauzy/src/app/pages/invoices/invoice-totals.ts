@@ -72,25 +72,23 @@ export function calculateInvoiceTotals(input: IInvoiceTotalsInput): IInvoiceTota
 	for (const item of input.items ?? []) {
 		const amount = +item.totalValue || 0;
 
+		let itemTaxes = 0;
 		if (item.applyTax) {
 			const itemTax = taxOn(amount, tax, input.taxType);
 			const itemTax2 = taxOn(composed ? amount + itemTax : amount, tax2, input.tax2Type);
-			totalTax += itemTax + itemTax2;
+			itemTaxes = itemTax + itemTax2;
+			totalTax += itemTaxes;
 		}
 
 		if (item.applyDiscount) {
 			if (input.discountType === DiscountTaxTypeEnum.PERCENT) {
-				if (!input.discountAfterTax) {
-					totalDiscount += amount * (discountValue / 100);
-				}
+				// After tax, the percentage is of this item's amount plus its own taxes. Like before tax,
+				// only the items that apply the discount count (it used to be the whole invoice's).
+				totalDiscount += (input.discountAfterTax ? amount + itemTaxes : amount) * (discountValue / 100);
 			} else if (input.discountType === DiscountTaxTypeEnum.FLAT_VALUE) {
 				totalDiscount += discountValue;
 			}
 		}
-	}
-
-	if (input.discountAfterTax && input.discountType === DiscountTaxTypeEnum.PERCENT) {
-		totalDiscount = (subtotal + totalTax) * (discountValue / 100);
 	}
 
 	const total = subtotal - totalDiscount + totalTax;

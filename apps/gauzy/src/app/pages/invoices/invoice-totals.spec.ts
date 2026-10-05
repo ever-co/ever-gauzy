@@ -151,6 +151,20 @@ describe('calculateInvoiceTotals', () => {
 			expect(totalDiscount).toBeCloseTo(33, 10);
 		});
 
+		it('takes an after-tax percentage only of the items that apply the discount, and their own tax', () => {
+			const items = [
+				{ totalValue: 100, applyTax: true, applyDiscount: true },
+				{ totalValue: 200, applyTax: false, applyDiscount: false }
+			];
+			const { totalDiscount, total } = calculateInvoiceTotals(
+				input({ items, discountType: PERCENT, discountValue: 10, tax2Type: null, discountAfterTax: true })
+			);
+
+			// 10% of (100 + its 10 tax) = 11 - not 10% of the whole invoice's 310 = 31
+			expect(totalDiscount).toBeCloseTo(11, 10);
+			expect(total).toBeCloseTo(299, 10);
+		});
+
 		it('takes a flat discount once per discounted item', () => {
 			const { totalDiscount } = calculateInvoiceTotals(input({ discountType: FLAT_VALUE, discountValue: 5 }));
 
