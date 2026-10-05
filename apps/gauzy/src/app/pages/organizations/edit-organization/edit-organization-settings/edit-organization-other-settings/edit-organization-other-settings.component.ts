@@ -282,6 +282,10 @@ export class EditOrganizationOtherSettingsComponent
 		}
 		this.currentSectionIndex = index;
 		setTimeout(() => {
+			// A second click may have closed it again before this runs.
+			if (!item.expanded) {
+				return;
+			}
 			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
 				behavior: 'smooth',
 				block: 'start'
