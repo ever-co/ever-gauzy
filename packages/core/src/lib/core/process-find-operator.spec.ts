@@ -1,17 +1,19 @@
-import * as config from '@gauzy/config';
+import { defineConfig, resetConfig } from '@gauzy/config';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { MySqlDriver } from '@mikro-orm/mysql';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { ILike, LessThan, LessThanOrEqual, Like, MoreThan } from 'typeorm';
 import { convertTypeORMWhereToMikroORM, processFindOperator } from './utils';
 
-/** Pins the configured MikroORM driver read by `isMikroOrmPostgres()`. */
-function withMikroOrmDriver(driver: unknown) {
-	const original = config.getConfig();
-	jest.spyOn(config, 'getConfig').mockReturnValue({
-		...original,
-		dbMikroOrmConnectionOptions: { ...original.dbMikroOrmConnectionOptions, driver }
-	} as unknown as ReturnType<typeof config.getConfig>);
+/**
+ * Configures the MikroORM driver that `isMikroOrmPostgres()` reads, through the config API itself.
+ *
+ * Not `jest.spyOn(config, 'getConfig')`: `@gauzy/config` re-exports it through `export *`, which
+ * compiles to a non-configurable getter, so the spy threw "Cannot redefine property: getConfig" and
+ * these cases never reached an assertion.
+ */
+async function withMikroOrmDriver(driver: unknown): Promise<void> {
+	await defineConfig({ dbMikroOrmConnectionOptions: { driver } } as Parameters<typeof defineConfig>[0]);
 }
 
 /**
@@ -19,7 +21,12 @@ function withMikroOrmDriver(driver: unknown) {
  * become `{}`, which MikroORM treats as no condition, so the filter silently matched every row.
  */
 describe('processFindOperator', () => {
-	afterEach(() => jest.restoreAllMocks());
+	beforeEach(() => jest.spyOn(console, 'log').mockImplementation(() => undefined));
+
+	afterEach(() => {
+		resetConfig();
+		jest.restoreAllMocks();
+	});
 
 	it('translates the comparison operators', () => {
 		expect(processFindOperator(LessThanOrEqual(10))).toEqual({ $lte: 10 });
@@ -31,16 +38,16 @@ describe('processFindOperator', () => {
 		expect(processFindOperator(Like('%Ada%'))).toEqual({ $like: '%Ada%' });
 	});
 
-	it('translates ILIKE to $ilike on PostgreSQL', () => {
-		withMikroOrmDriver(PostgreSqlDriver);
+	it('translates ILIKE to $ilike on PostgreSQL', async () => {
+		await withMikroOrmDriver(PostgreSqlDriver);
 		expect(processFindOperator(ILike('%Ada%'))).toEqual({ $ilike: '%Ada%' });
 	});
 
 	it.each([
 		['MySQL', MySqlDriver],
 		['SQLite', BetterSqliteDriver]
-	])('translates ILIKE to $like on %s, which has no ILIKE', (_label, driver) => {
-		withMikroOrmDriver(driver);
+	])('translates ILIKE to $like on %s, which has no ILIKE', async (_label, driver) => {
+		await withMikroOrmDriver(driver);
 		expect(processFindOperator(ILike('%Ada%'))).toEqual({ $like: '%Ada%' });
 	});
 
