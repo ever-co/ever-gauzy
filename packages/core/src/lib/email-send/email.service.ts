@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { IsNull } from 'typeorm';
+import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IInviteEmployeeModel,
@@ -657,6 +657,45 @@ export class EmailService {
 				user,
 				status
 			});
+		}
+	}
+
+	/**
+	 * Whether the user holds a working verification link: the LATEST verification email to their
+	 * current address at or after `since` was accepted by the provider.
+	 *
+	 * Reads the `email_sent` rows written by {@link emailVerification}, which records every attempt
+	 * with status SENT or FAILED. The app must not tell anyone "we sent you a link" when no working
+	 * link went out:
+	 * - users created before verification existed (or whose sign-up mail was lost) have no row;
+	 * - every attempt replaces the stored token and code BEFORE sending, so after a failed resend
+	 *   the earlier SENT link no longer works - only the latest attempt counts;
+	 * - a link sent to an address the user has since changed went to someone else's mailbox.
+	 *
+	 * Never throws; an unreadable history answers false, so the caller offers to send a link instead
+	 * of promising one.
+	 *
+	 * @param userId The user the verification email was for.
+	 * @param email The user's current address.
+	 * @param since Oldest send that still counts (the start of the link's validity window).
+	 */
+	async hasSentVerificationEmail(userId: ID, email: string, since: Date): Promise<boolean> {
+		try {
+			const latest = await this.typeOrmEmailHistoryRepository.findOne({
+				where: {
+					userId,
+					email,
+					createdAt: MoreThanOrEqual(since),
+					emailTemplate: { name: `${EmailTemplateEnum.EMAIL_VERIFICATION}/html` }
+				},
+				order: { createdAt: 'DESC' }
+			});
+			return latest?.status === EmailStatusEnum.SENT;
+		} catch (error) {
+			this.logger.error(
+				`Could not read the verification emails of user ${userId}: ${describeEmailSendError(error)}`
+			);
+			return false;
 		}
 	}
 

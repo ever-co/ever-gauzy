@@ -29,11 +29,14 @@ export class AuthService {
 	}
 
 	/**
-	 * Whether the signed-in user still has to verify their email. Answers 404 when the deployment
-	 * has email verification switched off.
+	 * Whether the signed-in user still has to verify their email, and whether a still-valid
+	 * verification email has actually been sent to them. Answers 404 when the deployment has email
+	 * verification switched off. `verificationEmailSent` is absent on older APIs.
 	 */
-	getEmailVerificationStatus(): Observable<{ isEmailVerified: boolean }> {
-		return this.http.get<{ isEmailVerified: boolean }>(`${API_PREFIX}/auth/email/verify/status`);
+	getEmailVerificationStatus(): Observable<{ isEmailVerified: boolean; verificationEmailSent?: boolean }> {
+		return this.http.get<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>(
+			`${API_PREFIX}/auth/email/verify/status`
+		);
 	}
 
 	/**

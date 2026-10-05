@@ -259,7 +259,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name);
+					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name as string);
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -381,7 +381,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					}
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name);
+					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name as string);
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,

@@ -818,7 +818,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						totalTax += +tax;
 						break;
 					default:
-						totalTax = 0;
 						break;
 				}
 				switch (this.form.value.tax2Type) {
@@ -829,7 +828,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						totalTax += +tax2;
 						break;
 					default:
-						totalTax = 0;
 						break;
 				}
 			}
