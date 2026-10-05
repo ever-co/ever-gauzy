@@ -75,6 +75,8 @@ export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRec
 					})
 					.andWhere('startedAt', '>=', startedAt)
 					.andWhere('startedAt', '<', stoppedAt)
+					// Raw knex skips MikroORM's soft-delete filter: the slots of a deleted time log must not count
+					.whereNull('deletedAt')
 					.first();
 				break;
 			}
