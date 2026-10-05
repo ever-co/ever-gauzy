@@ -201,6 +201,49 @@ describe('EmailVerificationNoticeComponent', () => {
 			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.SEND');
 		});
 
+		it('stops claiming a link was sent when the re-read after a refused resend fails too', () => {
+			let calls = 0;
+			const { component } = setup({
+				user: UNVERIFIED,
+				status: () =>
+					++calls === 1
+						? of({ isEmailVerified: false, verificationEmailSent: true })
+						: throwError(() => new HttpErrorResponse({ status: 500 })),
+				resend: () => throwError(() => new HttpErrorResponse({ status: 503, error: { message: 'try later' } }))
+			});
+			expect(component.linkSent()).toBe(true);
+
+			component.resend();
+
+			expect(calls).toBe(2);
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('does not let a late re-read from a failed attempt undo a successful retry', () => {
+			let calls = 0;
+			const lateReRead = new Subject<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>();
+			let attempt = 0;
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () =>
+					++calls === 1 ? of({ isEmailVerified: false, verificationEmailSent: false }) : lateReRead,
+				resend: () =>
+					++attempt === 1
+						? throwError(() => new HttpErrorResponse({ status: 503, error: { message: 'try later' } }))
+						: of({ status: 200 })
+			});
+
+			component.resend(); // refused: starts a re-read that has not answered yet
+			component.resend(); // retry succeeds
+			expect(component.state()).toBe('sent');
+			expect(component.linkSent()).toBe(true);
+
+			lateReRead.next({ isEmailVerified: false, verificationEmailSent: false });
+
+			expect(component.linkSent()).toBe(true);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
+		});
+
 		it('does not re-read the status when the rate limit refused the resend (nothing was attempted)', () => {
 			const { component, authService } = setup({
 				user: UNVERIFIED,

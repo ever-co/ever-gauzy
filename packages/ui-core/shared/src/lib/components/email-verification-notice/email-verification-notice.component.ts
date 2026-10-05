@@ -58,6 +58,8 @@ export class EmailVerificationNoticeComponent implements OnInit {
 	/** Their address: a link (sent, or being sent) belongs to one address, not to the account. */
 	private currentEmail: string | null = null;
 	private resendSubscription: Subscription | null = null;
+	/** The status re-read after a failed resend; a newer resend makes its answer stale. */
+	private refreshSubscription: Subscription | null = null;
 
 	private readonly store = inject(Store);
 	private readonly authService = inject(AuthService);
@@ -111,6 +113,8 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		}
 		this.state.set('sending');
 		this.errorMessage.set(null);
+		// A re-read from an earlier failed attempt must not land on top of this attempt's answer.
+		this.cancelRefresh();
 		const askedFor = this.subjectKey();
 
 		this.resendSubscription = this.authService
@@ -142,6 +146,7 @@ export class EmailVerificationNoticeComponent implements OnInit {
 	}
 
 	private resetResend(): void {
+		this.cancelRefresh();
 		this.resendSubscription?.unsubscribe();
 		this.resendSubscription = null;
 		this.state.set('idle');
@@ -152,20 +157,27 @@ export class EmailVerificationNoticeComponent implements OnInit {
 	 * Re-read whether a working link is out, after a resend the API did not complete. The API
 	 * replaces the stored token and code before it sends, so a refused send can leave the link from
 	 * an earlier email dead: "We sent you a link" may no longer be true. The answer is dropped when
-	 * the user or address changed meanwhile, and a failed lookup leaves the notice as it was.
+	 * the user or address changed meanwhile or a newer resend started (it cancels this lookup), and a
+	 * lookup that fails counts as "not sent": the notice must not vouch for a link it cannot confirm.
 	 */
 	private refreshLinkSent(askedFor: string): void {
-		this.authService
+		this.cancelRefresh();
+		this.refreshSubscription = this.authService
 			.getEmailVerificationStatus()
 			.pipe(
 				catchError(() => of(null)),
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((status) => {
-				if (status && this.subjectKey() === askedFor) {
-					this.linkSent.set(status.verificationEmailSent === true);
+				if (this.subjectKey() === askedFor) {
+					this.linkSent.set(status?.verificationEmailSent === true);
 				}
 			});
+	}
+
+	private cancelRefresh(): void {
+		this.refreshSubscription?.unsubscribe();
+		this.refreshSubscription = null;
 	}
 
 	/** Only called while the user who asked is still the signed-in one (see `resend`). */
