@@ -18,7 +18,7 @@ describe('EmailVerificationNoticeComponent', () => {
 
 	function setup(options: {
 		user: IUser | null;
-		status?: () => Observable<{ isEmailVerified: boolean }>;
+		status?: () => Observable<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>;
 		resend?: () => Observable<Object>;
 	}) {
 		const user$ = new BehaviorSubject<IUser | null>(options.user);
@@ -109,6 +109,218 @@ describe('EmailVerificationNoticeComponent', () => {
 		pending.next({ status: 200 });
 
 		expect(component.state()).toBe('idle');
+	});
+
+	/**
+	 * Production regression (2026-10-05): the notice told every unverified user "We sent a
+	 * verification link to ...", including people invited years before verification existed who had
+	 * never been sent one. It may only claim a link went out when the API says so.
+	 */
+	describe('says "we sent a link" only when one went out', () => {
+		type Fixture = { detectChanges(): void; nativeElement: HTMLElement };
+
+		/** The notice sentence (translation keys render as-is: no translations are loaded). */
+		function noticeText(fixture: Fixture): string {
+			fixture.detectChanges();
+			return fixture.nativeElement.querySelector('.notice-text')?.textContent?.trim() ?? '';
+		}
+
+		/** The label of the send / resend button. */
+		function sendButtonText(fixture: Fixture): string {
+			fixture.detectChanges();
+			const button = fixture.nativeElement.querySelector('button:not(.notice-dismiss)');
+			return button?.textContent?.trim() ?? '';
+		}
+
+		it('offers to send a link when none was sent, and does not claim one was', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false })
+			});
+			expect(component.visible()).toBe(true);
+			expect(component.linkSent()).toBe(false);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE_NOT_SENT');
+			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.SEND');
+		});
+
+		it('says a link was sent, with Resend, when the API reports one (control)', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: true })
+			});
+			expect(component.linkSent()).toBe(true);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
+			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.RESEND');
+		});
+
+		it('treats an API without the field as "nothing sent"', () => {
+			const { component } = setup({ user: UNVERIFIED, status: () => of({ isEmailVerified: false }) });
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('switches to "we sent a link" once the user sends one', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false })
+			});
+			component.resend();
+			expect(component.state()).toBe('sent');
+			expect(component.linkSent()).toBe(true);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
+		});
+
+		it('uses the wording the page passes in (Billing)', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false })
+			});
+			component.notSentMessageKey = 'SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT';
+			expect(noticeText(fixture)).toBe('SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT');
+		});
+
+		it('re-reads the status after a refused resend: the earlier link may no longer work', () => {
+			// The API replaces the token before sending, so a refused resend kills the earlier link.
+			let sent = true;
+			const { component, fixture, authService } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: sent }),
+				resend: () => {
+					sent = false;
+					return throwError(() => new HttpErrorResponse({ status: 503, error: { message: 'try later' } }));
+				}
+			});
+			expect(component.linkSent()).toBe(true);
+
+			component.resend();
+
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(2);
+			expect(component.state()).toBe('error');
+			expect(component.errorMessage()).toBe('try later');
+			expect(component.linkSent()).toBe(false);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE_NOT_SENT');
+			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.SEND');
+		});
+
+		it('stops claiming a link was sent when the re-read after a refused resend fails too', () => {
+			let calls = 0;
+			const { component } = setup({
+				user: UNVERIFIED,
+				status: () =>
+					++calls === 1
+						? of({ isEmailVerified: false, verificationEmailSent: true })
+						: throwError(() => new HttpErrorResponse({ status: 500 })),
+				resend: () => throwError(() => new HttpErrorResponse({ status: 503, error: { message: 'try later' } }))
+			});
+			expect(component.linkSent()).toBe(true);
+
+			component.resend();
+
+			expect(calls).toBe(2);
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('does not let a late re-read from a failed attempt undo a successful retry', () => {
+			let calls = 0;
+			const lateReRead = new Subject<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>();
+			let attempt = 0;
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () =>
+					++calls === 1 ? of({ isEmailVerified: false, verificationEmailSent: false }) : lateReRead,
+				resend: () =>
+					++attempt === 1
+						? throwError(() => new HttpErrorResponse({ status: 503, error: { message: 'try later' } }))
+						: of({ status: 200 })
+			});
+
+			component.resend(); // refused: starts a re-read that has not answered yet
+			component.resend(); // retry succeeds
+			expect(component.state()).toBe('sent');
+			expect(component.linkSent()).toBe(true);
+
+			lateReRead.next({ isEmailVerified: false, verificationEmailSent: false });
+
+			expect(component.linkSent()).toBe(true);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
+		});
+
+		it('does not let a slow lookup for a changed address undo a send made meanwhile', () => {
+			let calls = 0;
+			const slowLookup = new Subject<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>();
+			const { component, user$ } = setup({
+				user: UNVERIFIED,
+				status: () =>
+					++calls === 1 ? of({ isEmailVerified: false, verificationEmailSent: false }) : slowLookup
+			});
+
+			user$.next({ ...UNVERIFIED, email: 'jane.new@corp.co' } as IUser); // lookup for the new address starts
+			component.resend(); // the notice is still on screen, so the user sends before it answers
+			expect(component.linkSent()).toBe(true);
+
+			slowLookup.next({ isEmailVerified: false, verificationEmailSent: false });
+
+			expect(component.linkSent()).toBe(true);
+			expect(component.state()).toBe('sent');
+		});
+
+		it('does not re-read the status when the rate limit refused the resend (nothing was attempted)', () => {
+			const { component, authService } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: true }),
+				resend: () => throwError(() => new HttpErrorResponse({ status: 429 }))
+			});
+
+			component.resend();
+
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(1);
+			expect(component.state()).toBe('error');
+			expect(component.linkSent()).toBe(true);
+		});
+
+		it('re-checks, with the new address, when the signed-in user changes their email', () => {
+			let sent = true;
+			const { component, authService, user$ } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: sent })
+			});
+			expect(component.linkSent()).toBe(true);
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(1);
+
+			// Same user, new address: the link for the old one does not count for the new one.
+			sent = false;
+			user$.next({ ...UNVERIFIED, email: 'jane.new@corp.co' } as IUser);
+
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(2);
+			expect(component.email()).toBe('jane.new@corp.co');
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('drops a resend answer for the previous address once the user changed it', () => {
+			const pending = new Subject<Object>();
+			const { component, user$ } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false }),
+				resend: () => pending
+			});
+			component.resend();
+			user$.next({ ...UNVERIFIED, email: 'jane.new@corp.co' } as IUser);
+			pending.next({ status: 200 });
+
+			expect(component.state()).toBe('idle');
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('forgets the "sent" state of the previous user when another user signs in', () => {
+			let sent = true;
+			const { component, user$ } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: sent })
+			});
+			expect(component.linkSent()).toBe(true);
+			sent = false;
+			user$.next({ id: 'u2', email: 'max@corp.co', isEmailVerified: false } as IUser);
+			expect(component.linkSent()).toBe(false);
+		});
 	});
 
 	it('keeps a dismissal to the user who dismissed it', () => {

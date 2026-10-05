@@ -136,13 +136,34 @@ export class EmailConfirmationService {
 	}
 
 	/**
-	 * Whether the signed-in user has verified their email.
+	 * Whether the signed-in user has verified their email, and whether a verification email that is
+	 * still valid has actually gone out to them.
 	 *
-	 * @returns `{ isEmailVerified }` for the current user; false when the user cannot be found.
+	 * The web app used to tell every unverified user "We sent a verification link to ...". On a
+	 * deployment that switched verification on later, most unverified users never got one - they
+	 * signed up or were invited before it existed, or their link expired long ago - so the notice
+	 * promised an email nobody sent. `verificationEmailSent` lets it say "send me a link" instead.
+	 *
+	 * @returns `{ isEmailVerified, verificationEmailSent }` for the current user; both false when the
+	 * user cannot be found.
 	 */
-	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean }> {
+	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean; verificationEmailSent: boolean }> {
 		const user = await this.userService.getIfExists(RequestContext.currentUserId());
-		return { isEmailVerified: !!user?.emailVerifiedAt };
+		const isEmailVerified = !!user?.emailVerifiedAt;
+		if (!user || isEmailVerified) {
+			return { isEmailVerified, verificationEmailSent: false };
+		}
+		const since = moment(new Date()).subtract(this.verificationExpirySeconds(), 'seconds').toDate();
+		const verificationEmailSent = await this.emailService.hasSentVerificationEmail(user.id, user.email, since);
+		return { isEmailVerified, verificationEmailSent };
+	}
+
+	/**
+	 * How long a verification link and code stay valid, in seconds - 7 days when unset, matching the
+	 * environment module default and the expiry `sendEmailVerification` gives the link and code.
+	 */
+	private verificationExpirySeconds(): number {
+		return environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
 	}
 
 	/**
