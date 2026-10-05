@@ -74,8 +74,12 @@ export class BillingService {
 		return this.http.get<IBillingPlan[]>(`${this.endpoint}/plans`);
 	}
 
-	changePlan(lookupKey: string): Observable<IBillingSubscription> {
-		return this.http.post<IBillingSubscription>(`${this.endpoint}/subscription/change`, { lookupKey });
+	/**
+	 * Switch plans. `returnUrl` is where Stripe's portal sends the admin back to if the API answers 402
+	 * `payment_method_required` — an upgrade to a paid plan from one with no card on file.
+	 */
+	changePlan(lookupKey: string, returnUrl?: string): Observable<IBillingSubscription> {
+		return this.http.post<IBillingSubscription>(`${this.endpoint}/subscription/change`, { lookupKey, returnUrl });
 	}
 
 	cancel(): Observable<IBillingSubscription> {

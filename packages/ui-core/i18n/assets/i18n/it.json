@@ -816,6 +816,7 @@
 		"SKILLS": "Abilità",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Seleziona fuso orario",
+		"SELECT_TIMEZONE_HINT": "Gli orari degli appuntamenti sono mostrati in questo fuso orario.",
 		"SHOW_AVERAGE_BONUS": "Mostra Bonus Medio",
 		"SHOW_AVERAGE_INCOME": "Mostra il reddito medio",
 		"SHOW_PAYPERIOD": "Mostra il periodo di pagamento",
@@ -1756,6 +1757,19 @@
 		"TIME_TRACKING": "Rilevamento del tempo",
 		"PROJECT_MANAGEMENT": "Gestione del progetto",
 		"EMPLOYEE_STATISTICS": "Statistiche dei dipendenti",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Su {{ count }} dipendenti",
+			"OF_INCOME": "{{ value }}% delle entrate",
+			"MARGIN": "Margine del {{ value }}%",
+			"BREAKDOWN": "Entrate per dipendente",
+			"NO_DATA": "Nessuna attività finanziaria in questo periodo",
+			"NO_DATA_HINT": "Le entrate e le spese registrate in questo periodo appariranno qui.",
+			"NO_EMPLOYEES": "Nessun dato dei dipendenti per questo periodo",
+			"SORT_BY": "Ordina per {{ name }}",
+			"SORT_LABEL": "Ordina per",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Per favore, seleziona un mese e un dipendente dal menu sopra",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Inserisci il testo per gli utenti non autenticati",
 		"CHARTS": {
@@ -2442,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Consenti al dipendente di uscire dall'applicazione Agente. Quando disabilitato, l'opzione di uscita sarà bloccata nell'app Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Consenti logout dall'app Agent",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Consenti al dipendente di disconnettersi dall'applicazione Agente. Quando disabilitato, l'opzione di logout sarà bloccata nell'app Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Protezione dei lavoratori SEE / Regno Unito attiva",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Per organizzazioni e lavoratori nel SEE o nel Regno Unito, i lavoratori possono sempre uscire e disconnettersi dall'agente desktop. Una registrazione che il lavoratore non può interrompere è difficile da giustificare ai sensi del GDPR e dell'art. 8 CEDU, quindi queste restrizioni non sono disponibili qui.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Conferma la limitazione di uscita o disconnessione dall'agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Con questa limitazione il lavoratore non può impedire all'agente desktop di registrarlo. Conferma di aver valutato questa misura come lecita e proporzionata per questi lavoratori e di assumertene la responsabilità. La conferma viene registrata sul tuo account.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Traccia Attività Tastiera e Mouse",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Abilita il tracciamento completo dell'attività di tastiera e mouse, inclusi i tasti premuti e i movimenti esatti del mouse in tutte le app desktop e agente.",
 				"TRACK_ALL_DISPLAYS": "Traccia tutti i display",
@@ -2713,7 +2731,10 @@
 		"ADDRESS": "Indirizzo",
 		"ADDRESS_2": "Indirizzo 2",
 		"MEMBERS": "Membri",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Fai clic o trascina un'immagine per caricarla",
+		"SEARCH_EMPLOYEES": "Cerca dipendenti per nome o email",
+		"NO_MEMBERS": "Nessun membro aggiunto"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Lingue",
@@ -3701,9 +3722,28 @@
 		"DICTATION_KEY_REJECTED": "Il provider vocale ha rifiutato la sua chiave API. Aggiornala nella pagina impostazioni «Provider IA».",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Il provider vocale ha rifiutato la sua chiave API: chiedi a un amministratore di aggiornarla in Impostazioni → Provider IA.",
 		"DICTATION_OPEN_SETTINGS": "Apri Provider IA",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Il piano IA gratuito ha raggiunto il limite di richieste. Collega il tuo account OpenRouter o configura un altro provider IA per un accesso senza interruzioni.",
+		"RATE_LIMITED_OWN": "Il tuo provider IA sta limitando le richieste in questo momento. Controlla il tuo piano e i limiti con il provider, oppure configura un altro provider IA.",
+		"RATE_LIMIT_RETRY_IN": "Puoi riprovare tra circa {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Apri Provider IA",
+		"ERROR_NOT_CONFIGURED": "La chat IA richiede un provider configurato. Aggiungine uno nella pagina impostazioni «Provider IA».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "La chat IA richiede un provider configurato: chiedi a un amministratore di aggiungerne uno in Impostazioni → Provider IA.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Il provider IA selezionato non può rispondere al momento. Controllalo nella pagina impostazioni «Provider IA».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Il provider IA selezionato non può rispondere al momento: chiedi a un amministratore di controllare Impostazioni → Provider IA.",
+		"ERROR_MODEL_UNAVAILABLE": "Questo modello non è disponibile con la chiave API attuale. Scegline un altro nella pagina impostazioni «Provider IA».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Questo modello non è disponibile con la chiave API attuale: chiedi a un amministratore di controllare Impostazioni → Provider IA.",
+		"ERROR_KEY_REJECTED": "Il provider IA ha rifiutato la sua chiave API. Aggiornala nella pagina impostazioni «Provider IA».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Il provider IA ha rifiutato la sua chiave API: chiedi a un amministratore di aggiornarla in Impostazioni → Provider IA.",
+		"ERROR_RATE_LIMITED": "Il provider IA sta limitando le richieste.",
+		"RECORDING": "Registrazione",
+		"PREVIEW": "Anteprima",
+		"PREVIEW_PAGE": "Pagina",
+		"PREVIEW_NEW_TAB": "Apri in una nuova scheda",
+		"PREVIEW_CLOSE": "Chiudi anteprima",
+		"PREVIEW_UNAVAILABLE": "Nessuna anteprima disponibile per questo file.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Apri in Documenti",
+		"ATTACH_UPLOADING": "Caricamento…",
+		"ATTACH_DOCUMENT": "Documento"
 	},
 	"HEADER_TITLE": {
 		"FOR": "per",
@@ -4446,6 +4486,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoraggio attivo: vengono registrati tempo e attività",
+		"MONITORING_IDLE": "Agente inattivo",
+		"MONITORING_TRAY_ACTIVE": "Monitoraggio attivo, registrazione di: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitoraggio in pausa: non viene registrato nulla",
+		"MONITORING_CAPTURE_TIME": "tempo e applicazioni attive",
+		"MONITORING_CAPTURE_SCREENSHOTS": "screenshot",
+		"MONITORING_CAPTURE_INPUT": "attività di tastiera e mouse",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Seleziona cliente",
 			"SELECT_PROJECT": "Seleziona progetto",
@@ -4973,7 +5020,9 @@
 		"NO_SCREENSHOT": "Nessuna schermata",
 		"NO_SCREENSHOTS": "Nessuna schermata",
 		"NO_RECORD_FOUND": "Nessun record trovato. Seleziona un intervallo di date, un dipendente o un progetto",
-		"SCREEN_SELECTED": "{{ count }} Schermata/e selezionata/e"
+		"SCREEN_SELECTED": "{{ count }} Schermata/e selezionata/e",
+		"NO_TIME_TRACKED": "Nessun tempo registrato",
+		"MINUTES_TRACKED": "{{ minutes }} min registrati"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Creiamo la tua prima organizzazione",
@@ -4999,6 +5048,16 @@
 		"BUFFER_AT_START": "Buffer all'inizio",
 		"BUFFER_AT_END": "Buffer alla fine",
 		"BREAK_TIME": "Pausa",
+		"DETAILS": "Dettagli",
+		"PARTICIPANTS": "Partecipanti",
+		"FORM_HINT": "Indica l'argomento della riunione, quando si svolge e chi partecipa.",
+		"DETAILS_HINT": "Ordine del giorno, luogo e note visibili a tutti gli invitati.",
+		"SCHEDULE": "Programma",
+		"SCHEDULE_HINT": "Scegli la data e la fascia oraria, con margine e pausa facoltativi.",
+		"BUFFER_TIME_HINT": "Lascia del tempo libero prima o dopo la riunione.",
+		"BREAK_TIME_HINT": "Sospendi la riunione per una breve pausa.",
+		"BREAK_START": "La pausa inizia alle",
+		"PARTICIPANTS_HINT": "Le persone che ricevono l'invito.",
 		"ARE_YOU_SURE": "Sei sicuro? Questa azione è irreversibile"
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5043,7 +5102,9 @@
 		"CANCEL": "Annulla appuntamento",
 		"TIMEZONE": "La tua zona oraria:",
 		"CHANGE": "Cambiare",
+		"CHANGE_TIMEZONE": "Cambia",
 		"SELECT_EMPLOYEE_ERROR": "Seleziona un dipendente, per favore",
+		"SELECT_EMPLOYEE_HINT": "Scegli chi vuoi incontrare, poi un orario che ti va bene.",
 		"EXPIRED_OR_CANCELLED": "Questo appuntamento è scaduto o è stato annullato",
 		"EMAIL_SENT": "È stata inviata un'email all'host oltre che a tutti i partecipanti per questa riunione",
 		"NO_ACTIVE_EVENT_TYPES": "Non ci sono tipi di eventi attivi",
@@ -5318,6 +5379,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Non hai un account?",
 		"FORGOT_PASSWORD_TITLE": "Password dimenticata?",
 		"OR_SIGN_IN_WITH": "O accedi con",
+		"SIGN_IN_WITH_EVER_ID": "Accedi con Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Accedi con Keycloak",
 		"FORGOT_EMAIL_TITLE": "Hai dimenticato l'email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Accedi con un codice magico",

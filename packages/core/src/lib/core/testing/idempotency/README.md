@@ -76,9 +76,12 @@ test-tooling layer only (`packages/plugins/integration-zapier/jest.config.ts` +
 `tsconfig.spec.json`): `isolatedModules: true` on the ts-jest transform (transpile per-file instead
 of type-checking the whole program — the same reason `@gauzy/core`'s own bootstrap doesn't need to
 satisfy a downstream consumer's stricter flags) plus the same `transformIgnorePatterns` +
-`allowJs: true` `packages/core/jest.config.ts`/`tsconfig.spec.json` already needed for the ESM-only
+`allowJs: true` `packages/core/jest.config.ts`/`tsconfig.spec.json` already had for the ESM-only
 deps (`uuid`, ...) reached through `@gauzy/core`'s entity graph. No production code touched by this
-part of the fix.
+part of the fix. (Since then the pattern has moved to the root `jest.preset.js`, and `allowJs` turned
+out not to matter for it: ts-jest >= 29.3.2 compiles `.js` under `node_modules` regardless. The
+pattern is what lets the ESM-only dependencies through; `allowJs` only affects repository-local
+`.js` files.)
 
 The structurally identical `integration-make-com` and `integration-sim` timer handlers share the
 same webhook-duplication gap and are **not** fixed here — see Known gaps below.

@@ -18,6 +18,17 @@ import { RequestContext } from './request-context';
  */
 const SAFE_CORRELATION_ID = /^[\x21-\x7E]{1,128}$/;
 
+/**
+ * Kubernetes probes hit /api/health every few seconds on every pod. Logging their start and end drowned
+ * the real requests, and with the Sentry logger each line was also a Sentry event (the bulk of the
+ * organisation's error quota), so health checks are not logged. Decided by path only: a User-Agent is
+ * set by the client, so trusting `kube-probe/*` would let any caller hide any request from these logs.
+ */
+export function isHealthCheckRequest(req: Pick<Request, 'originalUrl'>): boolean {
+	const path = (req.originalUrl ?? '').split('?')[0];
+	return path === '/api/health' || path.startsWith('/api/health/');
+}
+
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
 	/**
@@ -73,9 +84,10 @@ export class RequestContextMiddleware implements NestMiddleware {
 
 			// Build the full request URL
 			const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+			const logLifecycle = this.loggingEnabled && !isHealthCheckRequest(req);
 
 			// Log the start of the request if logging is enabled
-			if (this.loggingEnabled) {
+			if (logLifecycle) {
 				const contextId = RequestContext.getContextId();
 				this.logger.log(`Context ${contextId}: ${req.method} request to ${fullUrl} started.`);
 			}
@@ -85,7 +97,7 @@ export class RequestContextMiddleware implements NestMiddleware {
 
 			// Override the res.end function to log when the response finishes
 			res.end = (...args: any[]): Response => {
-				if (this.loggingEnabled) {
+				if (logLifecycle) {
 					const contextId = RequestContext.getContextId();
 					this.logger.log(
 						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with status ${res.statusCode}.`

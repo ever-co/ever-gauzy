@@ -4,8 +4,10 @@
       {{ 'TAGS_PAGE.HEADER' | translate }}
     </label>
   }
+  <!-- `tags-select` is copied onto the body-appended panel; _overrides.scss sizes its rows -->
   <ng-select
     id="addTags"
+    class="tags-select"
     [items]="tags"
     [multiple]="multiple"
     bindLabel="name"
@@ -18,14 +20,15 @@
     [placeholder]="'MENU.TAGS' | translate"
     >
     <ng-template ng-option-tmp let-tag="item" let-tag$="item$">
-      <div class="tag-option">
+      <div class="tag-option" [style.--tag-color]="background(tag.color)">
         @if (multiple) {
-          <input type="checkbox" class="tag-option-check" [ngModel]="tag$.selected" />
+          <span class="tag-check" [class.tag-check--on]="tag$.selected" aria-hidden="true">
+            @if (tag$.selected) {
+              <nb-icon icon="checkmark-outline"></nb-icon>
+            }
+          </span>
         }
-        <nb-badge
-          [style.background]="background(tag.color)"
-          class="tag-color"
-        ></nb-badge>
+        <span class="tag-dot"></span>
         <span class="text">{{ tag.name }}</span>
       </div>
     </ng-template>
@@ -43,8 +46,7 @@
           ; track
           item) {
           <div class="ng-value">
-            <nb-badge class="tag-color tag-label" [style.background]="background(item.color)"
-            [style.color]="backgroundContrast(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
+            <nb-badge class="tag-color tag-label" [style.--tag-color]="background(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
           </div>
         }
         @if (selectedTags && selectedTags.length > noOfTagsFits) {
@@ -62,8 +64,7 @@
         @for (item of selectedTags; track item) {
           <div class="ng-value">
             <nb-badge class="tag-color tag-label"
-              [style.background]="background(item.color)"
-              [style.color]="backgroundContrast(item.color)"
+              [style.--tag-color]="background(item.color)"
               [text]="item.name"
               (click)="clear(item)"
             ></nb-badge>

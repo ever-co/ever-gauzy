@@ -42,7 +42,12 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
-				const result = await knex('payment').count('id as count').sum('amount as amount').first();
+				// Raw knex bypasses the soft-delete filter that TypeORM's query builder applies
+				const result = await knex('payment')
+					.whereNull('deletedAt')
+					.count('id as count')
+					.sum('amount as amount')
+					.first();
 				return {
 					count: parseInt(result?.count ?? '0', 10),
 					amount: parseFloat(result?.amount ?? '0') || 0

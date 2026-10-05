@@ -21,7 +21,7 @@ export class AutomaticUpdate {
 	 */
 	constructor(context: UpdateContext, settingWindow: BrowserWindow) {
 		this._context = context;
-		this._delay = 1; // Default value is 1 hour
+		this._delay = null; // Hours set from the settings page; until then the stored setting, or 1 hour
 		this._intervalId = null;
 		this._window = settingWindow;
 	}
@@ -64,8 +64,10 @@ export class AutomaticUpdate {
 	 */
 	public get delay(): number {
 		const setting = LocalStore.getStore('appSetting');
-		this._delay = setting?.automaticUpdateDelay ? setting?.automaticUpdateDelay : 1;
-		return moment.duration(this._delay, 'hours').asMilliseconds();
+		// The delay last sent from the settings page, else the stored one (e.g. at startup), else 1 hour.
+		const hours =
+			[this._delay, setting?.automaticUpdateDelay].map(Number).find((value) => this._isValidDelay(value)) ?? 1;
+		return moment.duration(hours, 'hours').asMilliseconds();
 	}
 
 	public set delay(value: number) {
@@ -77,5 +79,13 @@ export class AutomaticUpdate {
 	public get isEnabled(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting?.automaticUpdate == true;
+	}
+
+	/**
+	 * A positive number of hours that setInterval can hold: a longer delay overflows its 32-bit limit
+	 * and would fire every millisecond.
+	 */
+	private _isValidDelay(hours: number): boolean {
+		return hours > 0 && moment.duration(hours, 'hours').asMilliseconds() <= 2 ** 31 - 1;
 	}
 }

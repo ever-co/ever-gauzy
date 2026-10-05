@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HubstaffComponent } from './hubstaff.component';
+import { IntegrationHubstaffModule } from '../../integration-hubstaff-ui.module';
 describe('HubstaffComponent', () => {
 	let component: HubstaffComponent;
 	let fixture: ComponentFixture<HubstaffComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [HubstaffComponent],
+			// Not standalone: import the plugin NgModule that declares it, for the template's real scope.
+			imports: [IntegrationHubstaffModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});

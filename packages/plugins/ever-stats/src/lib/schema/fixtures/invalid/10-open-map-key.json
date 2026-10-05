@@ -1,0 +1,64 @@
+{
+  "schema": "ever.stats.v1",
+  "report_id": "63d8c277-7fa0-4f5d-a5a7-c88fc94e6186",
+  "instance_id": "41b54444-0795-416c-bdb8-72fe2925a157",
+  "sent_at": "2026-11-02",
+  "module_version": "1.0.0",
+  "product": "works",
+  "instance_kind": "backend",
+  "serves": [
+    "works"
+  ],
+  "version": "1.4.2",
+  "channel": "stable",
+  "install_source": "self-hosted",
+  "country": "ZZ",
+  "period": "2026-11",
+  "final": false,
+  "counts": {
+    "users": 407,
+    "tenants": 444,
+    "organizations": 481,
+    "works": 518,
+    "agents": 555,
+    "missions": 592,
+    "teams": 629,
+    "fleet_nodes": 666,
+    "plugins_enabled": 703,
+    "works_by_kind": {
+      "website": 201,
+      "landing_page": 238,
+      "blog": 275,
+      "directory": 312,
+      "awesome_repo": 349,
+      "repo": 386,
+      "company": 423,
+      "campaign": 460,
+      "default": 497,
+      "app": 534,
+      "other": 571
+    }
+  },
+  "features": {
+    "app_works_enabled": false,
+    "app_launcher_enabled": true,
+    "dynamic_plugins": true,
+    "deploy_ever_works_enabled": false,
+    "subscriptions_enabled": true,
+    "mcp_enabled": true
+  },
+  "aggregates": {
+    "deployments": 150,
+    "deployments_by_provider": {
+      "ever_works": 100,
+      "vercel": 137,
+      "k8s": 174,
+      "your_cluster": 211,
+      "ever_works_apps": 248,
+      "other": 285,
+      "acme-internal": 1
+    },
+    "runs": 224,
+    "credits_consumed": 261
+  }
+}

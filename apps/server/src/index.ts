@@ -42,6 +42,7 @@ import {
 	DialogOpenFile,
 	DialogStopServerExitConfirmation,
 	desktopSecretsToEnv,
+	desktopStatsEnv,
 	ensureDesktopSecrets,
 	ErrorEventManager,
 	ErrorReport,
@@ -415,6 +416,9 @@ const getEnvApi = () => {
 		DEBUG: process.env.NODE_ENV !== 'production' ? 'true' : 'false',
 		API_PORT: String(config.port),
 		...addsConfig,
+		// The embedded server reports its anonymous usage statistics as a desktop installation of
+		// this release, and the statistics switch typed in the settings is normalised.
+		...desktopStatsEnv(addsConfig, app.getVersion()),
 		...desktopSecretsToEnv(secret)
 	};
 };

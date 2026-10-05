@@ -319,3 +319,15 @@ export * from './lib/webhook';
 export * from './lib/job-execution';
 export * from './lib/job-dead-letter';
 export * from './lib/auth/purpose-token';
+// The authentication module and service as DI tokens, for sign-in plugins that hand a verified
+// identity to Gauzy's own e-mail code, register path and social sign-in instead of re-implementing
+// them (the Keycloak and Ever ID sign-in plugins), and the terms acceptance module and service, so a
+// plugin's sign-up requires exactly the documents the register form requires.
+export { AuthModule } from './lib/auth/auth.module';
+export { AuthService } from './lib/auth/auth.service';
+export { TermsAcceptanceModule } from './lib/terms-acceptance/terms-acceptance.module';
+export { TermsAcceptanceService } from './lib/terms-acceptance/terms-acceptance.service';
+// The instance-wide counters of `GET /api/stats/global`, for the anonymous usage statistics plugin,
+// which reads the same counters outside any request (instance-wide, never per tenant).
+export { StatsModule } from './lib/stats/stats.module';
+export { StatsService } from './lib/stats/stats.service';

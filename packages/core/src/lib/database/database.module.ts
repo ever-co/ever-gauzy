@@ -6,7 +6,8 @@ import { MySqlDriver } from '@mikro-orm/mysql';
 import { KnexModule } from 'nest-knexjs';
 import { ConfigModule, ConfigService, DatabaseTypeEnum, TypeOrmCompatibleBetterSqliteDriver } from '@gauzy/config';
 import { ConnectionEntityManager } from './connection-entity-manager';
-import { createPlatformDataSource } from './embedded-transaction-queue';
+import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
+import { MigrationLockingDataSource } from './migration-run-lock';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 
 /**
@@ -59,18 +60,22 @@ const mikroOrmDriver = mikroOrmDriverMap[process.env.DB_TYPE] || TypeOrmCompatib
 				const dbConnectionOptions = configService.getConfigValue('dbConnectionOptions');
 				return dbConnectionOptions;
 			},
-			// On SQLite every transaction shares the data source's one query runner, so this factory
-			// queues them one at a time; any other dialect gets the data source TypeORM builds, untouched.
-			// See embedded-transaction-queue.ts.
+			// `migrationsRun` runs the pending migrations inside `initialize()`; the migration-locking data
+			// source makes two processes booting against one Postgres database run them one after the other
+			// (see migration-run-lock.ts).
+			//
+			// On SQLite every transaction shares the data source's one query runner, so the queue installed
+			// on it runs them one at a time; any other dialect keeps the data source as built. See
+			// embedded-transaction-queue.ts.
 			//
 			// Under DB_ORM=mikro-orm TypeORM is still initialised, and its mapping is complete there too since
 			// d739d81b25. The pass that removes raw TypeORM `@RelationId`, `@Index` and `@Unique` entries naming a
 			// property TypeORM does not map stays as a safety net for any decorator that still registers with one
 			// ORM alone; on the core entities it removes nothing. Under TypeORM (production) the call returns before
 			// reading anything. See typeorm-skeleton-metadata.ts.
-			dataSourceFactory: (options) => {
+			dataSourceFactory: async (options) => {
 				pruneTypeOrmSkeletonMetadata();
-				return createPlatformDataSource(options);
+				return serializeEmbeddedTransactions(new MigrationLockingDataSource(options));
 			},
 			imports: [ConfigModule],
 			inject: [ConfigService]

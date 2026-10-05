@@ -12,6 +12,7 @@ import {
 	docsActionMenuSignature,
 	docsActionOf,
 	toDocsActionTarget,
+	DOCS_ACTION_MENU_CLASS,
 	IDocsActionMenuContext
 } from '../actions/docs-action-menu';
 import { DocsRowActionsService } from '../actions/docs-row-actions.service';
@@ -184,6 +185,7 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 	@Output() loadMore = new EventEmitter<void>();
 
 	public readonly kindEnum = DocumentKindEnum;
+	protected readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
 
 	/**
 	 * Documents whose thumbnail failed to load — a signed provider URL that expired between
@@ -209,7 +211,8 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 		return this.rows.length < this.totalCount;
 	}
 
-	onCardClick(row: DocsCardRow): void {
+	onCardClick(row: DocsCardRow, event?: Event): void {
+		if (this.isFromActionsMenu(event)) return;
 		if (row.kind === DocumentKindEnum.FOLDER) {
 			this.drillIn.emit(row.id as ID);
 		} else {
@@ -233,6 +236,23 @@ export class DocsCardsComponent extends TranslationBaseComponent implements OnIn
 		} else {
 			this.drillIn.emit(row.id as ID);
 		}
+	}
+
+	/** Card body double click — the per-kind default open, unless it landed on the kebab. */
+	protected onCardDoubleClick(row: DocsCardRow, event: Event): void {
+		if (this.isFromActionsMenu(event)) return;
+		this.onDefaultOpen(row, event);
+	}
+
+	/**
+	 * True when the event came from the card's kebab.
+	 *
+	 * 🛑 The kebab cannot stop `click` propagation itself: `nbContextMenu`'s click
+	 * trigger listens on `document`, so a stopped click never opens the menu. The
+	 * card handlers skip it here instead.
+	 */
+	private isFromActionsMenu(event?: Event): boolean {
+		return !!(event?.target as HTMLElement | null)?.closest?.('.docs-card-actions');
 	}
 
 	isActive(row: DocsCardRow): boolean {

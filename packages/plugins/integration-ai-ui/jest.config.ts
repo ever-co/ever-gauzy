@@ -1,7 +1,8 @@
 export default {
 	displayName: 'plugin-integration-ai-ui',
 	preset: '../../../jest.preset.js',
-	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
+	// test-setup starts the zone test env; the root defaults add the app-wide TestBed providers (see file).
+	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts', '<rootDir>/../../../jest.angular-defaults.ts'],
 	coverageDirectory: '../../../coverage/packages/plugins/integration-ai-ui',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [
@@ -12,7 +13,10 @@ export default {
 			}
 		]
 	},
-	transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$|(?:.*/)?(@ngneat|@datorama|uuid|lodash-es|camelcase|nanoid)/)'],
+	// `transformIgnorePatterns` is inherited from the root `jest.preset.js` (the ESM-only packages plus
+	// every `.mjs` bundle). Do not redefine it here: a project key REPLACES the preset list, and the one
+	// that used to sit here carried only the `.mjs` exception, so @datorama/akita, @ngneat/* and
+	// lodash-es were never transformed and the suites that reach them failed to load.
 	snapshotSerializers: [
 		'jest-preset-angular/build/serializers/no-ng-attributes',
 		'jest-preset-angular/build/serializers/ng-snapshot',

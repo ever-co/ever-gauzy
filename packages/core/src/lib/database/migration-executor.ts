@@ -10,6 +10,7 @@ import { serializeEmbeddedTransactions } from './embedded-transaction-queue';
 import { pruneTypeOrmSkeletonMetadata } from './typeorm-skeleton-metadata';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
+import { MigrationLockingDataSource } from './migration-run-lock';
 import { isDatabaseType, isSqliteDB } from './../core/utils';
 
 /**
@@ -215,13 +216,14 @@ export async function initializeDatabaseConnection(config: Partial<ApplicationPl
 		throw new Error('❌ Missing database connection options in plugin config.');
 	}
 
-	// The same queue the application's data source gets, so a migration's transaction on SQLite can never
-	// share the connection's one query runner with another transaction (see embedded-transaction-queue.ts).
+	// Locking, so a CLI run and a booting server never run the same migrations side by side; and the same
+	// queue the application's data source gets, so a migration's transaction on SQLite can never share the
+	// connection's one query runner with another transaction (see embedded-transaction-queue.ts).
 	// Under DB_ORM=mikro-orm TypeORM sees skeleton entities; drop the metadata entries that name a property it
 	// was never given, or the data source cannot build (a strict no-op under TypeORM).
 	pruneTypeOrmSkeletonMetadata();
 	const dataSource = serializeEmbeddedTransactions(
-		new DataSource({
+		new MigrationLockingDataSource({
 			...dbConnectionOptions,
 			subscribers: [],
 			synchronize: false,

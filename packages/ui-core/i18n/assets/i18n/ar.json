@@ -815,6 +815,7 @@
 		"SKILLS": "المهارات",
 		"PRIVACY": "الخصوصية",
 		"SELECT_TIMEZONE": "اختر المنطقة الزمنية",
+		"SELECT_TIMEZONE_HINT": "تُعرض أوقات المواعيد بهذه المنطقة الزمنية.",
 		"SHOW_AVERAGE_BONUS": "عرض المكافأة المتوسطة",
 		"SHOW_AVERAGE_INCOME": "عرض الدخل المتوسط",
 		"SHOW_PAYPERIOD": "عرض فترة الدفع",
@@ -1755,6 +1756,19 @@
 		"TIME_TRACKING": "تتبع الوقت",
 		"PROJECT_MANAGEMENT": "إدارة المشاريع",
 		"EMPLOYEE_STATISTICS": "إحصاءات الموظفين",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "عبر {{ count }} موظفين",
+			"OF_INCOME": "{{ value }}% من الإيرادات",
+			"MARGIN": "هامش {{ value }}%",
+			"BREAKDOWN": "الأرباح حسب الموظف",
+			"NO_DATA": "لا يوجد نشاط مالي في هذه الفترة",
+			"NO_DATA_HINT": "ستظهر هنا الإيرادات والمصروفات المسجلة لهذا النطاق الزمني.",
+			"NO_EMPLOYEES": "لا توجد سجلات للموظفين في هذه الفترة",
+			"SORT_BY": "الترتيب حسب {{ name }}",
+			"SORT_LABEL": "ترتيب حسب",
+			"SORT_ASCENDING": "تصاعدي",
+			"SORT_DESCENDING": "تنازلي"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "يرجى تحديد شهر وموظف من القائمة أعلاه",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "أدخل النص للمستخدمين غير المصادق عليهم",
 		"CHARTS": {
@@ -2441,6 +2455,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "السماح للموظف بالخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار الخروج في تطبيق العميل.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "السماح بتسجيل الخروج من تطبيق العميل",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "السماح للموظف بتسجيل الخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار تسجيل الخروج في تطبيق العميل.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "حماية العاملين في المنطقة الاقتصادية الأوروبية / المملكة المتحدة مفعّلة",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "بالنسبة للمؤسسات والعاملين في المنطقة الاقتصادية الأوروبية أو المملكة المتحدة، يمكن للعاملين دائمًا الخروج من وكيل سطح المكتب وتسجيل الخروج منه. يصعب تبرير التسجيل الذي لا يستطيع العامل إيقافه بموجب اللائحة العامة لحماية البيانات والمادة 8 من الاتفاقية الأوروبية لحقوق الإنسان، لذا فإن هذه القيود غير متاحة هنا.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "تأكيد تقييد الخروج من الوكيل أو تسجيل الخروج منه",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "مع هذا القيد لا يستطيع العامل إيقاف تسجيل وكيل سطح المكتب له. أكّد أنك قيّمت ذلك على أنه قانوني ومتناسب لهؤلاء العاملين وأنك تتحمل المسؤولية عنه. يُسجَّل تأكيدك على حسابك.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "تتبع نشاط لوحة المفاتيح والماوس",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "تمكين تتبع كامل لنشاط لوحة المفاتيح والماوس، بما في ذلك ضغطات المفاتيح وحركات الماوس الدقيقة في جميع تطبيقات سطح المكتب والوكيل.",
 				"TRACK_ALL_DISPLAYS": "تتبع جميع الشاشات",
@@ -2698,7 +2716,10 @@
 		"ADDRESS": "عنوان",
 		"ADDRESS_2": "العنوان 2",
 		"MEMBERS": "أعضاء",
-		"BUDGET": "الميزانية"
+		"BUDGET": "الميزانية",
+		"PHOTO_HINT": "انقر أو أفلت صورة لرفعها",
+		"SEARCH_EMPLOYEES": "ابحث عن الموظفين بالاسم أو البريد الإلكتروني",
+		"NO_MEMBERS": "لم تتم إضافة أعضاء بعد"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "اللغات",
@@ -3686,9 +3707,28 @@
 		"DICTATION_KEY_REJECTED": "رفض مزوّد الصوت مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الصوت مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
 		"DICTATION_OPEN_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "الفئة المجانية للذكاء الاصطناعي بلغت حد الطلبات حاليًا. اربط حسابك الخاص في OpenRouter أو اضبط مزوّد ذكاء اصطناعي آخر للاستخدام دون انقطاع.",
+		"RATE_LIMITED_OWN": "مزوّد الذكاء الاصطناعي لديك يحدّ من الطلبات حاليًا. تحقّق من خطتك وحدودك لدى المزوّد، أو اضبط مزوّد ذكاء اصطناعي آخر.",
+		"RATE_LIMIT_RETRY_IN": "يمكنك المحاولة مرة أخرى بعد نحو {{seconds}} ثانية.",
+		"OPEN_AI_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
+		"ERROR_NOT_CONFIGURED": "تحتاج دردشة الذكاء الاصطناعي إلى مزوّد مُعَدّ. أضف واحدًا في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "تحتاج دردشة الذكاء الاصطناعي إلى مزوّد مُعَدّ — اطلب من المسؤول إضافة واحد في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_PROVIDER_UNAVAILABLE": "لا يستطيع مزوّد الذكاء الاصطناعي المحدد الرد الآن. تحقّق منه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "لا يستطيع مزوّد الذكاء الاصطناعي المحدد الرد الآن — اطلب من المسؤول التحقق من الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_MODEL_UNAVAILABLE": "هذا النموذج غير متاح بمفتاح API الحالي. اختر نموذجًا آخر في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "هذا النموذج غير متاح بمفتاح API الحالي — اطلب من المسؤول التحقق من الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_KEY_REJECTED": "رفض مزوّد الذكاء الاصطناعي مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الذكاء الاصطناعي مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_RATE_LIMITED": "مزوّد الذكاء الاصطناعي يحدّ من الطلبات.",
+		"RECORDING": "جارٍ التسجيل",
+		"PREVIEW": "معاينة",
+		"PREVIEW_PAGE": "صفحة",
+		"PREVIEW_NEW_TAB": "فتح في علامة تبويب جديدة",
+		"PREVIEW_CLOSE": "إغلاق المعاينة",
+		"PREVIEW_UNAVAILABLE": "لا تتوفر معاينة لهذا الملف.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "فتح في المستندات",
+		"ATTACH_UPLOADING": "جارٍ الرفع…",
+		"ATTACH_DOCUMENT": "مستند"
 	},
 	"HEADER_TITLE": {
 		"FOR": "لـ",
@@ -4431,6 +4471,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "المراقبة نشطة: يتم تسجيل الوقت والنشاط",
+		"MONITORING_IDLE": "الوكيل خامل",
+		"MONITORING_TRAY_ACTIVE": "المراقبة نشطة، يتم تسجيل: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "المراقبة متوقفة مؤقتًا: لا يتم تسجيل أي شيء",
+		"MONITORING_CAPTURE_TIME": "الوقت والتطبيقات النشطة",
+		"MONITORING_CAPTURE_SCREENSHOTS": "لقطات الشاشة",
+		"MONITORING_CAPTURE_INPUT": "نشاط لوحة المفاتيح والفأرة",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "اختر العميل",
 			"SELECT_PROJECT": "اختر المشروع",
@@ -4958,7 +5005,9 @@
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
-		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة",
+		"NO_TIME_TRACKED": "لم يتم تتبع أي وقت",
+		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
@@ -4984,6 +5033,16 @@
 		"BUFFER_AT_START": "التخزين المؤقت في البداية",
 		"BUFFER_AT_END": "المخزون في النهاية",
 		"BREAK_TIME": "وقت الراحة",
+		"DETAILS": "التفاصيل",
+		"PARTICIPANTS": "المشاركون",
+		"FORM_HINT": "حدّد موضوع الاجتماع وموعده ومن سينضم إليه.",
+		"DETAILS_HINT": "جدول الأعمال والمكان والملاحظات التي تظهر لكل المدعوين.",
+		"SCHEDULE": "الجدول الزمني",
+		"SCHEDULE_HINT": "اختر التاريخ والفترة الزمنية، مع وقت احتياطي واستراحة اختياريين.",
+		"BUFFER_TIME_HINT": "اترك وقتًا فارغًا قبل الاجتماع أو بعده.",
+		"BREAK_TIME_HINT": "أوقف الاجتماع لاستراحة قصيرة.",
+		"BREAK_START": "تبدأ الاستراحة في",
+		"PARTICIPANTS_HINT": "الأشخاص الذين يتلقون الدعوة.",
 		"ARE_YOU_SURE": "هل أنت متأكد؟ هذا الإجراء لا يمكن عكسه."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5028,7 +5087,9 @@
 		"CANCEL": "إلغاء الموعد",
 		"TIMEZONE": "منطقة زمنية الخاصة بك:",
 		"CHANGE": "(تغيير)",
+		"CHANGE_TIMEZONE": "تغيير",
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
+		"SELECT_EMPLOYEE_HINT": "اختر الشخص الذي تريد مقابلته، ثم اختر وقتًا يناسبك.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
 		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث",
@@ -5303,6 +5364,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "ليس لديك حساب؟",
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
 		"OR_SIGN_IN_WITH": "أو قم بتسجيل الدخول بـ",
+		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {
 			"TITLE": "تسجيل الدخول بواسطة رمز سحري",

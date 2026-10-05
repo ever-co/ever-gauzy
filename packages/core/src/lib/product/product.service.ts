@@ -23,6 +23,15 @@ import { TypeOrmProductRepository } from './repository/type-orm-product.reposito
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 
+/** Largest page `findAllProducts` serves when paging is requested. */
+export const MAX_PRODUCTS_PAGE_SIZE = 100;
+
+/** Parses a paging query value as a positive integer, or `undefined` when it is not one. */
+function toPositiveInteger(value: unknown): number | undefined {
+	const parsed = Number(value);
+	return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 @Injectable()
 export class ProductService extends TenantAwareCrudService<Product> {
 	propsTranslate: TranslatePropertyInput[] = [
@@ -101,14 +110,28 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		langCode?: LanguagesEnum,
 		relations?: string[],
 		findInput?: IProductFindInput,
-		options = { page: 1, limit: 10 }
+		options: { page?: number | string; limit?: number | string } = {}
 	): Promise<IPagination<Product | IProductTranslated>> {
-		const { items, total } = await this.findAll({
+		const findOptions = {
 			relations: relations,
 			where: {
 				...findInput
 			}
-		} as FindManyOptions<Product>);
+		} as FindManyOptions<Product>;
+
+		// Without any paging option, keep returning the whole list as before (API / MCP callers).
+		// Otherwise paginate (`paginate` treats `skip` as a 1-based page) with a stable order, falling back
+		// to page 1 / 10 items for invalid values and capping the page size.
+		const isProvided = (value: unknown) => value !== undefined && value !== null && value !== '';
+		const { items, total } =
+			isProvided(options.page) || isProvided(options.limit)
+				? await this.paginate({
+						...findOptions,
+						order: { createdAt: 'DESC', id: 'DESC' },
+						skip: toPositiveInteger(options.page) ?? 1,
+						take: Math.min(toPositiveInteger(options.limit) ?? 10, MAX_PRODUCTS_PAGE_SIZE)
+				  } as FindManyOptions<Product>)
+				: await this.findAll(findOptions);
 		return await this.mapTranslatedProducts(items as any, langCode).then((items) => {
 			return { items, total };
 		});

@@ -3,6 +3,7 @@ import {
 	ChangeDetectorRef,
 	Component,
 	DestroyRef,
+	HostListener,
 	OnInit,
 	inject,
 	signal,
@@ -10,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterStateSnapshot } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -28,8 +29,8 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { EMPTY, forkJoin, of } from 'rxjs';
-import { catchError, filter, finalize, switchMap } from 'rxjs/operators';
+import { EMPTY, Observable, forkJoin, of } from 'rxjs';
+import { catchError, filter, finalize, map, switchMap, tap } from 'rxjs/operators';
 import {
 	IAiChatModel,
 	IAiChatModelCatalogue,
@@ -39,7 +40,7 @@ import {
 	IAiProviderCredentialUpdateInput
 } from '@gauzy/contracts';
 import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
-import { ConfirmComponent } from '@gauzy/ui-core/shared';
+import { ComponentsModule, ConfirmComponent } from '@gauzy/ui-core/shared';
 import { AiChatAvailabilityService } from '../ai-chat-availability.service';
 import { AiChatSettingsService } from './ai-chat-settings.service';
 import { IProviderLogo, PROVIDER_LOGOS } from './provider-logos';
@@ -108,6 +109,9 @@ interface ProviderCredentialForm {
 /** Which providers the catalog view offers: everything, or only the ones that can transcribe. */
 type CatalogFilter = 'all' | 'voice';
 
+/** The capability chips above the full catalog: narrow it to one kind of provider. */
+export type CapabilityFilter = 'all' | 'chat' | 'speech' | 'local';
+
 /**
  * AiChatSettingsComponent
  *
@@ -152,6 +156,9 @@ type CatalogFilter = 'all' | 'voice';
 		NbSpinnerModule,
 		NbToggleModule,
 		NbTooltipModule,
+		// `ngx-header-title`: the page title with the organization qualifier and the
+		// breadcrumb trail, as on every other page.
+		ComponentsModule,
 		// The model list runs to hundreds of entries on the routing providers, so the picker has to be
 		// searchable — nb-select is not.
 		NgSelectModule
@@ -253,6 +260,34 @@ export class AiChatSettingsComponent implements OnInit {
 		this.catalogFilter() === 'voice' ? this.speechCapableProviders() : this.providers()
 	);
 
+	/** The capability chip selected above the full catalog. Reset whenever the catalog opens. */
+	readonly capabilityFilter = signal<CapabilityFilter>('all');
+
+	/** The chips, in display order, with the label key each one shows. */
+	readonly capabilityFilters: ReadonlyArray<{ id: CapabilityFilter; labelKey: string }> = [
+		{ id: 'all', labelKey: 'AI_CHAT_UI.SETTINGS.CATALOG.FILTER_ALL' },
+		{ id: 'chat', labelKey: 'AI_CHAT_UI.SETTINGS.BADGE.CHAT' },
+		{ id: 'speech', labelKey: 'AI_CHAT_UI.SETTINGS.BADGE.SPEECH' },
+		{ id: 'local', labelKey: 'AI_CHAT_UI.SETTINGS.BADGE.LOCAL' }
+	];
+
+	/** How many catalog providers each chip would show — rendered beside its label. */
+	readonly capabilityCounts = computed<Record<CapabilityFilter, number>>(() => {
+		const providers = this.catalogProviders();
+		return {
+			all: providers.length,
+			chat: providers.filter((provider) => this.matchesCapability(provider, 'chat')).length,
+			speech: providers.filter((provider) => this.matchesCapability(provider, 'speech')).length,
+			local: providers.filter((provider) => this.matchesCapability(provider, 'local')).length
+		};
+	});
+
+	/** The catalog cards actually rendered: the catalog narrowed by the selected chip. */
+	readonly visibleCatalogProviders = computed<IAiChatProvider[]>(() => {
+		const selected = this.capabilityFilter();
+		return this.catalogProviders().filter((provider) => this.matchesCapability(provider, selected));
+	});
+
 	/**
 	 * Tenant credentials indexed by provider id (API keys masked).
 	 * A signal because {@link chatNotice} has to react to it: a saved-but-unusable
@@ -272,6 +307,14 @@ export class AiChatSettingsComponent implements OnInit {
 	 * "no pin" — dictation then walks the speech-capable providers in order.
 	 */
 	readonly voiceDefaultControl = new FormControl<string | null>(null);
+
+	/**
+	 * What the two exclusive controls held when last synced from the SAVED credentials. They are
+	 * set programmatically (`setValue` never marks a control dirty), so unsaved changes to them are
+	 * detected by comparing against this snapshot instead of `dirty`.
+	 */
+	private savedDefaultProviderId: string | null = null;
+	private savedVoiceDefaultProviderId: string | null = null;
 
 	private readonly fb = inject(FormBuilder);
 	private readonly store = inject(Store);
@@ -410,16 +453,24 @@ export class AiChatSettingsComponent implements OnInit {
 		this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const providerId = params.get('provider');
 			if (providerId) {
+				// Read BEFORE updating the signals: did this navigation open a different form?
+				const opensAnotherForm = this.view() !== 'config' || this.selectedProviderId() !== providerId;
 				this.selectedProviderId.set(providerId);
 				this.view.set('config');
 				// The two exclusive "default" controls are page-wide: an UNSAVED toggle made in one
-				// provider's config must not leak into the next one's — start from what is saved.
-				this.syncExclusiveControls();
+				// provider's config must not leak into the next one's — start from what is saved. Only
+				// when the form actually changes, though: a query-param change that keeps the same
+				// provider open (the Connect callback stripping `?code=`, which the leave guard lets
+				// through) must not quietly reset defaults the user has picked but not yet saved.
+				if (opensAnotherForm) {
+					this.syncExclusiveControls();
+				}
 				// Only this view needs the catalogue, and only for this one provider.
 				this.loadModels(providerId);
 			} else if (params.get('add') !== null) {
 				this.view.set('catalog');
 				this.catalogFilter.set(params.get('add') === 'voice' ? 'voice' : 'all');
+				this.capabilityFilter.set('all');
 			} else {
 				this.view.set('list');
 			}
@@ -1141,6 +1192,9 @@ export class AiChatSettingsComponent implements OnInit {
 					// The very first provider turns the chat on — the list view the
 					// user lands on must already say so.
 					this.refreshChatAvailability();
+					// What was just saved is no longer "unsaved": clear it before navigating, or the
+					// leave guard would ask to discard the very edits that were stored.
+					this.markSaved(provider);
 					// Navigates: without the `takeUntilDestroyed(this.destroyRef)` above, a save that
 					// resolves after the user left would yank them back to this page.
 					this.showList();
@@ -1259,6 +1313,116 @@ export class AiChatSettingsComponent implements OnInit {
 		this.defaultProviderControl.setValue(defaultCredential?.providerId ?? null, { emitEvent: false });
 		const voiceDefaultCredential = credentials.find((credential) => credential.isVoiceDefault);
 		this.voiceDefaultControl.setValue(voiceDefaultCredential?.providerId ?? null, { emitEvent: false });
+		this.savedDefaultProviderId = this.defaultProviderControl.value;
+		this.savedVoiceDefaultProviderId = this.voiceDefaultControl.value;
+	}
+
+	// ── Catalog filter ─────────────────────────────────────────────────
+
+	setCapabilityFilter(capability: CapabilityFilter): void {
+		this.capabilityFilter.set(capability);
+	}
+
+	private matchesCapability(provider: IAiChatProvider, capability: CapabilityFilter): boolean {
+		switch (capability) {
+			case 'chat':
+				return provider.chatCapable !== false;
+			case 'speech':
+				return !!provider.speechCapable;
+			case 'local':
+				return !!provider.local;
+			default:
+				return true;
+		}
+	}
+
+	// ── Unsaved changes ────────────────────────────────────────────────
+
+	/** Whether the config view holds edits that have not been saved. */
+	hasUnsavedChanges(): boolean {
+		if (this.view() !== 'config') {
+			return false;
+		}
+		const providerId = this.selectedProviderId();
+		const form = providerId ? this.forms.get(providerId) : undefined;
+		return (
+			!!form?.dirty ||
+			this.defaultProviderControl.value !== this.savedDefaultProviderId ||
+			this.voiceDefaultControl.value !== this.savedVoiceDefaultProviderId
+		);
+	}
+
+	/**
+	 * Leaves the config view — for Back and Cancel. It only navigates: the unsaved-changes check is
+	 * the route's `canDeactivate` guard ({@link canLeave}), which also covers every OTHER way out —
+	 * a sidebar link, another provider, the browser's back button — so there is one prompt, never two.
+	 */
+	leaveConfigure(provider: IAiChatProvider, destination: 'back' | 'list'): void {
+		if (destination === 'list') {
+			this.showList();
+		} else {
+			this.backFromConfigure(provider);
+		}
+	}
+
+	/**
+	 * The `canDeactivate` check, for every navigation away from the config view: out of the page
+	 * entirely, or — the route runs its guards on query-param changes too — to the list, the catalog
+	 * or another provider. Asks before unsaved edits are dropped; discarding rebuilds the forms from
+	 * the saved credentials so the edits do not reappear next time. A navigation that keeps the same
+	 * provider open (the Connect callback stripping `?code=`, say) is not leaving, so it passes.
+	 */
+	canLeave(nextState?: RouterStateSnapshot): boolean | Observable<boolean> {
+		if (!this.hasUnsavedChanges()) {
+			return true;
+		}
+		const providerId = this.selectedProviderId();
+		const nextProviderId = nextState?.root.queryParamMap.get('provider');
+		const stillOnThisPage = !!nextState && nextState.url.split('?')[0] === this.router.url.split('?')[0];
+		if (stillOnThisPage && nextProviderId === providerId) {
+			return true;
+		}
+		return this.dialogService
+			.open(ConfirmComponent, {
+				context: {
+					data: {
+						title: this.translateService.instant('AI_CHAT_UI.SETTINGS.UNSAVED.TITLE'),
+						message: this.translateService.instant('AI_CHAT_UI.SETTINGS.UNSAVED.MESSAGE', {
+							provider: this.selectedProvider()?.label ?? providerId
+						})
+					}
+				}
+			})
+			.onClose.pipe(
+				map(Boolean),
+				tap((discard) => {
+					if (discard) {
+						this.buildForms();
+					}
+				})
+			);
+	}
+
+	/** Marks a provider's form as saved: nothing in it is unsaved any more. */
+	private markSaved(provider: IAiChatProvider): void {
+		this.forms.get(provider.id)?.markAsPristine();
+		this.savedDefaultProviderId = this.defaultProviderControl.value;
+		this.savedVoiceDefaultProviderId = this.voiceDefaultControl.value;
+	}
+
+	/** Cancel: back to the list for a provider that is already set up, else back to the catalog. */
+	cancelConfigure(provider: IAiChatProvider): void {
+		this.leaveConfigure(provider, this.getCredential(provider.id) || provider.configured ? 'list' : 'back');
+	}
+
+	/** Closing or reloading the tab with unsaved edits: let the browser ask. */
+	@HostListener('window:beforeunload', ['$event'])
+	onBeforeUnload(event: BeforeUnloadEvent): void {
+		if (this.hasUnsavedChanges()) {
+			event.preventDefault();
+			// Legacy browsers only show the prompt when a return value is set.
+			event.returnValue = '';
+		}
 	}
 
 	/**

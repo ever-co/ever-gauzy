@@ -26,7 +26,7 @@ on:
       - develop
   # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
   # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
-  # trigger below runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # trigger above runs the whole workflow when code lands on develop. To restore the PR trigger,
   # replace this comment with:
   #   pull_request:
   #     branches:
@@ -126,7 +126,24 @@ jobs:
 
       - name: Restore node_modules
         shell: bash
-        run: .github/scripts/restore-node-modules.sh
+        # On the x64-4 lane the workspace is a 16Gi RAM disk, and the archive restored above (2.47 GB)
+        # plus the tree it unpacks to (about 15 GB of RAM-disk pages) does not fit: every cache hit on this
+        # lane ran out of space and fell back to a 2 h install (e.g. runs 36067622802, 36262033210).
+        # Moving the archive onto the disk-backed package-cache volume first (a different file system, so
+        # `mv` copies it and then frees the RAM pages) leaves only the tree in RAM. Deleting it after tar
+        # opens it would not help: an open file keeps its pages until it is closed. Skipped where
+        # YARN_CACHE_FOLDER is unset (GitHub-hosted runners); a failed move extracts in place, as before.
+        run: |
+          dest="${YARN_CACHE_FOLDER:+${YARN_CACHE_FOLDER%/*}}"
+          if [ -n "$dest" ] && [ -f "$NODE_MODULES_ARCHIVE" ] && mkdir -p "$dest" \
+            && mv -fT "$NODE_MODULES_ARCHIVE" "$dest/$NODE_MODULES_ARCHIVE"; then
+            export NODE_MODULES_ARCHIVE="$dest/$NODE_MODULES_ARCHIVE"
+            echo "archive moved to $NODE_MODULES_ARCHIVE"
+          fi
+          .github/scripts/restore-node-modules.sh
+          # Workspace headroom after the restore (size, used, free, in bytes), so a growing tree shows up
+          # here before it runs out again. A report line only: `|| true` keeps it from failing the step.
+          echo "workspace after restore: $(df -B1 --output=size,used,avail . | tail -1)" || true
 
       # NON-BLOCKING, on purpose. See the header. `--nxBail=false` so one failing project still
       # lets every other project report; without it the first failure hides the rest.
@@ -141,6 +158,9 @@ jobs:
         if: always()
         shell: bash
         run: |
+          # Workspace headroom after ESLint (size, used, free, in bytes), including whatever the lint run
+          # wrote. A report line only, so it can never fail this step.
+          echo "workspace after lint: $(df -B1 --output=size,used,avail . | tail -1)" || true
           {
             echo "## ESLint"
             echo

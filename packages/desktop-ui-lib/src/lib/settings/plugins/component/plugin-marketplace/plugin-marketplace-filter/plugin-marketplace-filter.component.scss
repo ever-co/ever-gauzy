@@ -1,12 +1,28 @@
+// The host sits between `.filter-panel` (a column of definite height) and the
+// panel. As a flex column capped at that height it lets the panel shrink to fit
+// and scroll its sections, instead of growing past the bottom of the column.
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+
 .marketplace-filter {
   background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
-  overflow: visible;
-  transition: all 0.3s ease;
+  border: 1px solid var(--border-basic-color-2);
+  border-radius: var(--border-radius);
   position: relative;
-  // No `--gauzy-shadow`: it is a 1px ring on the dark canvas and this panel
-  // already draws a 1px `--border-basic-color-3` border — one hairline, not two.
+  // The panel is the frame and the clip: a column whose header is a fixed row
+  // and whose sections scroll beneath it, never past its rounded edge. It used
+  // to be `overflow: visible` inside a scrolling `.filter-panel`, with a sticky
+  // header — so scrolling carried the panel's top border and corners away while
+  // the header stayed put, and the top of the panel read as cut open.
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 
   &.collapsed {
     .filter-content {
@@ -33,67 +49,67 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, rgba(143, 155, 179, 0.05) 0%, rgba(143, 155, 179, 0.02) 100%);
-    border-bottom: 1px solid var(--border-basic-color-3);
-    padding: 1.25rem 1rem;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    backdrop-filter: saturate(180%) blur(6px);
-    background-clip: padding-box;
+    background: var(--gauzy-card-1);
+    border-bottom: 1px solid var(--border-basic-color-2);
+    padding: 12px 16px;
+    flex: 0 0 auto;
 
     .header-content {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 8px;
       flex: 1;
 
+      // An unfilled accent icon rather than a gradient chip — see the results
+      // header in `plugin-marketplace.component.scss`.
       .header-icon-container {
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: calc(var(--border-radius) * 1.5);
-        background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(51, 102, 255, 0.25);
-        transition: all 0.3s ease;
 
         nb-icon {
-          font-size: 1.25rem;
-          color: white;
-        }
-
-        &:hover {
-          transform: translateY(-2px) rotate(180deg);
-          box-shadow: 0 6px 16px rgba(51, 102, 255, 0.35);
+          font-size: 18px;
+          color: var(--color-primary-default);
         }
       }
 
       .filter-title {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 8px;
         position: relative;
 
+        // A panel title: the report group header's 13px / 600, one step up.
         h4 {
           margin: 0;
-          font-size: 1.125rem;
-          font-weight: 700;
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 20px;
           color: var(--gauzy-text-color-1);
-          letter-spacing: -0.01em;
         }
 
+        // The active-filter count sits beside the title as a small chip. It was
+        // positioned absolutely inside a zero-size wrapper, which left the
+        // number hanging below the word "Filters".
         .active-filters-badge {
-          position: relative;
-          margin-left: 0.25rem;
+          display: inline-flex;
+          align-items: center;
 
           nb-badge {
-            position: absolute !important;
-          }
-
-          ::ng-deep nb-badge {
-            animation: pulse-badge 2s ease-in-out infinite;
+            position: static !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: var(--color-primary-transparent-default);
+            color: var(--color-primary-default);
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
           }
         }
       }
@@ -101,34 +117,30 @@
 
     .header-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 4px;
       align-items: center;
 
       button {
-        border-radius: calc(var(--border-radius) * 2);
-        transition: all 0.3s ease;
-
-        &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(143, 155, 179, 0.2);
-        }
-
-        nb-icon {
-          transition: transform 0.3s ease;
-        }
+        border-radius: var(--border-radius);
       }
 
-      .collapse-toggle {
-        &:hover nb-icon {
-          transform: scale(1.2);
-        }
+      // Nebular paints a disabled ghost button with a filled grey box; with no
+      // filters set, "Clear" should simply read as unavailable text.
+      button[nbButton].appearance-ghost[disabled],
+      button[nbButton].appearance-ghost[aria-disabled='true'] {
+        background-color: transparent;
+        border-color: transparent;
       }
     }
   }
 
-  // Filter Content — parent .filter-panel handles scrolling
+  // The scrolling part of the panel: everything below the header.
   .filter-content {
-    border-radius: var(--border-radius);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
   }
 
   .filter-form {
@@ -137,127 +149,96 @@
   }
 
   // Filter Sections
+  // One panel with divided sections, like an accordion — not a stack of
+  // separately bordered boxes inside the bordered panel.
   .filter-section {
-    border: 1px solid var(--border-basic-color-3);
-    border-radius: calc(var(--border-radius) * 1.2);
+    border: none;
+    border-bottom: 1px solid var(--border-basic-color-2);
+    border-radius: 0;
     overflow: hidden;
-    transition: all 0.3s ease;
-    background: var(--gauzy-card-1);
-    margin-bottom: 1rem;
+    background: transparent;
+    margin-bottom: 0;
 
     &:last-child {
-      margin-bottom: 0;
-    }
-
-    &.expanded {
-      box-shadow: 0 4px 12px rgba(51, 102, 255, 0.12);
-      border-color: var(--color-primary-default);
+      border-bottom: none;
     }
 
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 1.25rem;
-      background: linear-gradient(135deg, rgba(143, 155, 179, 0.03) 0%, rgba(143, 155, 179, 0.01) 100%);
+      padding: 10px 16px;
+      background: transparent;
       cursor: pointer;
       border: none;
       width: 100%;
       text-align: left;
       appearance: none;
-      transition: all 0.3s ease;
+      transition: background-color 0.2s ease;
       position: relative;
 
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 3px;
-        background: linear-gradient(180deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
       &:hover {
-        background: linear-gradient(135deg, rgba(143, 155, 179, 0.08) 0%, rgba(143, 155, 179, 0.04) 100%);
-        padding-left: 1.5rem;
-
-        &::before {
-          opacity: 1;
-        }
-
-        .section-title nb-icon {
-          color: var(--color-primary-default);
-          transform: scale(1.1);
-        }
+        background: var(--gauzy-hover-tint);
       }
 
+      // The report group header: 13px / 600.
       .section-title {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        font-weight: 700;
-        font-size: 0.95rem;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        line-height: 18px;
         color: var(--gauzy-text-color-1);
-        letter-spacing: -0.01em;
 
         nb-icon {
-          color: var(--color-info-default);
-          font-size: 1.125rem;
-          transition: all 0.3s ease;
+          color: var(--text-hint-color);
+          font-size: 16px;
         }
       }
 
       .section-toggle {
-        color: var(--gauzy-text-color-2);
-        transition: transform 0.3s ease;
+        color: var(--text-hint-color);
+        font-size: 16px;
       }
     }
 
-    &.expanded .section-header {
-      background: linear-gradient(135deg, rgba(51, 102, 255, 0.05) 0%, rgba(46, 91, 255, 0.02) 100%);
-
-      &::before {
-        opacity: 1;
-      }
-
-      .section-toggle {
-        transform: rotate(180deg);
-      }
+    &.expanded .section-header .section-title nb-icon {
+      color: var(--color-primary-default);
     }
 
+    // The open section's fields continue straight on from its header.
     .section-content {
-      padding: 1.25rem;
-      background: var(--gauzy-card-1);
-      border-top: 1px solid var(--border-basic-color-3);
-      animation: slide-down 0.3s ease;
+      padding: 8px 16px 16px;
+      background: transparent;
     }
   }
 
   // Form Elements
   .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 16px;
 
     &:last-child {
       margin-bottom: 0;
     }
 
+    // The report column label: 11px / 600, uppercase, in the hint colour.
     .form-label {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      font-weight: 700;
-      color: var(--gauzy-text-color-1);
-      font-size: 0.875rem;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-hint-color);
+      font-size: 11px;
+      line-height: 14px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.04em;
 
+      // The field below already carries its own icon where it needs one
+      // (the search box), so a second one on the label is noise.
       nb-icon {
-        font-size: 1rem;
-        color: var(--color-primary-default);
+        display: none;
       }
     }
 
@@ -282,11 +263,11 @@
   .form-fieldset {
     border: none;
     padding: 0;
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 16px 0;
 
     legend {
       padding: 0;
-      margin-bottom: 0.75rem;
+      margin-bottom: 8px;
     }
 
     &:last-child {
@@ -297,16 +278,57 @@
   // Sort Controls
   .sort-controls {
     display: flex;
-    gap: 0.75rem;
+    gap: 8px;
     align-items: stretch;
 
     nb-select {
       flex: 1;
     }
 
+    // The direction as one segmented control, framed like the select beside
+    // it — same 32px height, hairline and radius — rather than two separately
+    // bordered buttons, one of them a solid purple block.
     nb-button-group {
-      max-height: 32px;
+      display: inline-flex;
       flex-shrink: 0;
+      gap: 2px;
+      height: 32px;
+      padding: 2px;
+      border: 1px solid var(--border-basic-color-4);
+      border-radius: var(--border-radius);
+      box-shadow: none;
+      box-sizing: border-box;
+    }
+
+    nb-button-group button[nbButton].appearance-filled {
+      width: 30px;
+      min-width: 0;
+      height: 26px;
+      padding: 0;
+      justify-content: center;
+      border: none;
+      border-radius: calc(var(--border-radius) - 3px);
+      background-color: transparent;
+      color: var(--text-hint-color);
+      box-shadow: none;
+
+      nb-icon {
+        font-size: 16px;
+        margin: 0;
+      }
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint);
+        color: var(--gauzy-text-color-1);
+      }
+
+      // The direction in effect: a primary tint, quieter than a solid fill.
+      // Marked with `is-active` rather than `status`, which `nb-button-group`
+      // overwrites on first render — so descending never showed as selected.
+      &.is-active {
+        background-color: var(--color-primary-transparent-default);
+        color: var(--color-primary-default);
+      }
     }
   }
 
@@ -315,21 +337,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 2rem 1.5rem;
-    color: var(--gauzy-text-color-2);
-
-    nb-spinner {
-      ::ng-deep .spin-circle {
-        border-top-color: var(--color-primary-default);
-        border-right-color: var(--color-info-default);
-      }
-    }
+    gap: 12px;
+    padding: 24px 16px;
+    color: var(--text-hint-color);
 
     .loading-text {
-      font-size: 0.875rem;
-      font-weight: 500;
-      animation: pulse-text 2s ease-in-out infinite;
+      font-size: 12px;
+      line-height: 16px;
     }
   }
 
@@ -337,13 +351,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    border-top: 1px solid var(--border-basic-color-3);
-    color: var(--gauzy-text-color-2);
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--border-basic-color-2);
+    color: var(--text-hint-color);
 
     .loading-text {
-      font-size: 0.875rem;
+      font-size: 12px;
+      line-height: 16px;
     }
   }
 
@@ -353,24 +368,20 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 3rem 2rem;
+    gap: 8px;
+    padding: 24px 16px;
     text-align: center;
 
     .empty-icon {
-      font-size: 3rem;
-      color: var(--color-basic-600);
-      padding: 1rem;
-      background: linear-gradient(135deg, rgba(143, 155, 179, 0.1) 0%, rgba(143, 155, 179, 0.05) 100%);
-      border-radius: calc(var(--border-radius) * 2);
-      animation: float 3s ease-in-out infinite;
+      font-size: 24px;
+      color: var(--text-hint-color);
     }
 
     .empty-text {
       margin: 0;
-      color: var(--gauzy-text-color-1);
-      font-size: 0.9rem;
-      font-weight: 600;
+      color: var(--text-hint-color);
+      font-size: 12px;
+      line-height: 16px;
     }
   }
 
@@ -379,14 +390,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
-    border-top: 1px solid var(--border-basic-color-3);
+    padding: 12px;
+    border-top: 1px solid var(--border-basic-color-2);
 
     .end-text {
-      font-size: 0.75rem;
-      color: var(--gauzy-text-color-2);
-      font-style: italic;
-      font-weight: 500;
+      font-size: 11px;
+      line-height: 14px;
+      color: var(--text-hint-color);
     }
   }
 
@@ -419,64 +429,35 @@
   .categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    gap: 8px;
 
+    // A row-table cell rather than a tile: hairline, 12px text, and a flat
+    // hover tint — no lift, glow or accent rail.
     .category-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem;
-      border: 1px solid var(--border-basic-color-3);
-      border-radius: calc(var(--border-radius) * 1.2);
-      background: var(--gauzy-card-2);
+      padding: 8px 12px;
+      border: 1px solid var(--border-basic-color-2);
+      border-radius: var(--border-radius);
+      background: transparent;
       cursor: pointer;
       width: 100%;
       text-align: left;
       appearance: none;
-      transition: all 0.3s ease;
+      transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
       position: relative;
       overflow: hidden;
 
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 3px;
-        background: linear-gradient(180deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
       &:hover {
-        border-color: var(--color-primary-default);
-        box-shadow: 0 4px 12px rgba(51, 102, 255, 0.15);
-        transform: translateX(4px);
-
-        &::before {
-          opacity: 1;
-        }
-
-        .category-icon {
-          color: var(--color-primary-default);
-          transform: scale(1.1);
-        }
+        background: var(--gauzy-hover-tint);
       }
 
       &.selected {
         border-color: var(--color-success-default);
-        background: linear-gradient(135deg, rgba(0, 214, 143, 0.1) 0%, rgba(0, 214, 143, 0.05) 100%);
-
-        &::before {
-          background: linear-gradient(180deg, var(--color-success-default) 0%, var(--color-success-600) 100%);
-          opacity: 1;
-        }
-
-        .category-indicator {
-          color: var(--color-success-default);
-          animation: scale-in 0.3s ease;
-        }
+        background: var(--color-success-transparent-default);
 
         .category-icon {
           color: var(--color-success-default);
@@ -486,26 +467,26 @@
       .category-content {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 8px;
         flex: 1;
         min-width: 0;
 
         .category-icon {
           flex-shrink: 0;
-          color: var(--color-info-default);
-          font-size: 1.25rem;
-          transition: all 0.3s ease;
+          color: var(--text-hint-color);
+          font-size: 16px;
         }
 
         .category-info {
           display: flex;
           flex-direction: column;
           min-width: 0;
-          gap: 0.125rem;
+          gap: 0;
 
           .category-name {
-            font-weight: 600;
-            font-size: 0.875rem;
+            font-weight: 500;
+            font-size: 12px;
+            line-height: 16px;
             color: var(--gauzy-text-color-1);
             white-space: nowrap;
             overflow: hidden;
@@ -513,16 +494,17 @@
           }
 
           .category-count {
-            font-size: 0.75rem;
-            color: var(--gauzy-text-color-2);
-            font-weight: 500;
+            font-size: 11px;
+            line-height: 14px;
+            color: var(--text-hint-color);
+            font-variant-numeric: tabular-nums;
           }
         }
       }
 
       .category-indicator {
         color: var(--color-success-default);
-        font-size: 1.25rem;
+        font-size: 16px;
         flex-shrink: 0;
       }
     }
@@ -532,49 +514,48 @@
   .checkbox-group {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 4px;
 
+    // Pulled out by its own padding so the checkboxes line up with the labels
+    // and fields above while the hover tint still has room around them.
     .checkbox-item {
       display: flex;
       align-items: center;
-      padding: 0.5rem 0.75rem;
-      border-radius: calc(var(--border-radius) * 0.8);
-      transition: all 0.3s ease;
+      padding: 2px 6px;
+      margin: 0 -6px;
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s ease;
 
       &:hover {
-        background: linear-gradient(135deg, rgba(143, 155, 179, 0.05) 0%, rgba(143, 155, 179, 0.02) 100%);
-        transform: translateX(4px);
+        background: var(--gauzy-hover-tint);
       }
 
       ::ng-deep nb-checkbox {
         .custom-checkbox {
           border-radius: calc(var(--border-radius) * 0.5);
-          transition: all 0.3s ease;
         }
 
-        &:hover .custom-checkbox {
-          border-color: var(--color-primary-default);
-          box-shadow: 0 0 0 2px rgba(51, 102, 255, 0.1);
+        .text {
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16px;
         }
       }
 
       .checkbox-label {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-left: 0.75rem;
-        font-size: 0.875rem;
+        gap: 6px;
+        margin-left: 8px;
+        font-size: 12px;
+        line-height: 16px;
         color: var(--gauzy-text-color-1);
-        font-weight: 500;
+        font-weight: 400;
 
         nb-icon {
-          color: var(--color-primary-default);
-          transition: transform 0.3s ease;
+          font-size: 14px;
+          color: var(--text-hint-color);
         }
-      }
-
-      &:hover .checkbox-label nb-icon {
-        transform: scale(1.1);
       }
     }
   }
@@ -583,27 +564,11 @@
   .price-categories {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 8px;
 
     .price-category-btn {
       text-transform: capitalize;
-      border-radius: calc(var(--border-radius) * 2);
-      transition: all 0.3s ease;
-      font-weight: 600;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(143, 155, 179, 0.2);
-      }
-
-      &[status='primary'] {
-        background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
-        box-shadow: 0 2px 8px rgba(51, 102, 255, 0.25);
-
-        &:hover {
-          box-shadow: 0 4px 12px rgba(51, 102, 255, 0.35);
-        }
-      }
+      border-radius: var(--border-radius);
     }
   }
 
@@ -611,26 +576,15 @@
   .price-range-controls {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 8px;
 
     .range-input {
       flex: 1;
-
-      ::ng-deep input {
-        border-radius: calc(var(--border-radius) * 0.8);
-        transition: all 0.3s ease;
-
-        &:focus {
-          box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.1);
-          border-color: var(--color-primary-default);
-        }
-      }
     }
 
     .range-separator {
-      color: var(--gauzy-text-color-2);
-      font-size: 0.875rem;
-      font-weight: 600;
+      color: var(--text-hint-color);
+      font-size: 12px;
       white-space: nowrap;
     }
   }
@@ -639,7 +593,7 @@
   .date-range-controls {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 8px;
 
     .date-input {
       flex: 1;
@@ -647,7 +601,7 @@
 
     .date-separator {
       color: var(--text-hint-color);
-      font-size: 0.875rem;
+      font-size: 12px;
       white-space: nowrap;
     }
   }
@@ -691,10 +645,9 @@
     }
 
     span {
-      color: var(--gauzy-text-color-1);
-      font-size: 0.9rem;
-      font-weight: 600;
-      animation: pulse-text 2s ease-in-out infinite;
+      color: var(--text-hint-color);
+      font-size: 12px;
+      line-height: 16px;
     }
   }
 
@@ -815,16 +768,12 @@
   nb-select,
   nb-form-field input,
   nb-checkbox {
-    font-size: 0.875rem;
+    font-size: 12px;
   }
 
   nb-tag {
-    font-size: 0.75rem;
+    font-size: 11px;
     font-weight: 500;
-  }
-
-  nb-button {
-    font-size: 0.875rem;
   }
 
   // Custom scrollbar for select dropdowns
@@ -856,76 +805,30 @@
   }
 }
 
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-badge {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(51, 102, 255, 0.4);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 6px rgba(51, 102, 255, 0);
-  }
-}
-
-@keyframes pulse-text {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
 .filter-section.expanded .section-content {
   animation: sectionExpand 0.2s ease-out;
 }
 
 // Focus states
 .marketplace-filter {
-  button:focus,
-  input:focus,
-  select:focus,
-  .category-item:focus {
+  // Nebular draws its button focus ring on `:focus`, so a mouse click left a
+  // glow around the chip or arrow that was clicked. Keep it for keyboard focus.
+  button[nbButton]:focus:not(:focus-visible) {
+    box-shadow: none;
+  }
+
+  // `:focus-visible`, so the ring shows for keyboard focus only — on `:focus`
+  // every mouse click on a section header left a purple line under it.
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  .category-item:focus-visible {
     outline: 2px solid var(--text-primary-color);
     outline-offset: 2px;
   }
 
   .category-item {
-    &:focus {
+    &:focus-visible {
       border-color: var(--text-primary-color);
     }
   }
@@ -944,5 +847,121 @@
 
   [aria-expanded='false'] + .section-content {
     display: none;
+  }
+}
+
+// ── Search suggestions ──────────────────────────────────────────────────────
+//
+// `NbAutocompleteModule` is not in this component's `imports`, so `<nb-autocomplete>`
+// is an unknown element and its `nb-option`s render INLINE, as loose text under
+// the search box that pushes the rest of the panel down. Hidden here so the
+// search field behaves exactly as it did; showing them as a dropdown would mean
+// wiring the autocomplete up, which is a behaviour change.
+.marketplace-filter nb-autocomplete {
+  display: none;
+}
+
+// ── Form controls ───────────────────────────────────────────────────────────
+//
+// One control height for the whole panel — 32px, the same as the sort-direction
+// buttons and the header actions — and the report filters' 12px text at a
+// normal weight. Nebular's medium controls are 40px with semibold values, which
+// made the panel the heaviest thing on the page.
+.marketplace-filter {
+  // `min-height` as well: a global `input` rule sets a 38px floor that
+  // `height` alone cannot get under.
+  .filter-form input[nbInput] {
+    height: 32px;
+    min-height: 32px;
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+  }
+
+  .form-group > nb-select,
+  .sort-controls > nb-select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  ::ng-deep {
+    nb-form-field .nb-form-field-prefix-medium,
+    nb-form-field .nb-form-field-suffix-medium {
+      height: 32px;
+
+      nb-icon {
+        font-size: 16px;
+        color: var(--text-hint-color);
+      }
+    }
+
+    nb-select.appearance-outline.size-medium .select-button {
+      min-height: 32px;
+      height: 32px;
+      padding-top: 0;
+      padding-bottom: 0;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+
+      span {
+        font-weight: inherit;
+      }
+    }
+  }
+
+  // Status and type options: the option's name in plain text with a small dot
+  // in its colour, instead of a filled, uppercase tag for every row — eight
+  // loud colours in one column read as a warning list rather than a filter.
+  // The option values arrive uppercase ("ACTIVE"), so `capitalize` alone would
+  // leave them shouting: lowercase the whole word and raise its first letter.
+  // `inline-block`, not flex — `::first-letter` does not apply to a flex box —
+  // and the dot is a background rather than a `::before`, which would itself
+  // take the first-letter slot.
+  .checkbox-item nb-tag.appearance-filled {
+    --dot: var(--text-hint-color);
+    display: inline-block;
+    height: auto;
+    margin-left: 8px;
+    padding: 0 0 0 14px;
+    border: none;
+    background: radial-gradient(circle at 4px 50%, var(--dot) 3.5px, transparent 4px) no-repeat;
+    color: var(--gauzy-text-color-1);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    text-transform: lowercase;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  @each $status in (primary, success, info, warning, danger) {
+    .checkbox-item nb-tag.appearance-filled.status-#{$status} {
+      --dot: var(--color-#{$status}-default);
+    }
+  }
+
+  // Price categories as compact chips that fit on one row, not 32px buttons
+  // wrapping onto a second.
+  .price-categories {
+    gap: 6px;
+
+    button[nbButton].price-category-btn.appearance-outline.size-small {
+      height: 28px;
+      padding: 0 10px;
+      background: transparent;
+      border-color: var(--border-basic-color-4);
+      color: var(--gauzy-text-color-1);
+      font-size: 12px;
+      font-weight: 500;
+
+      &:hover {
+        background: var(--gauzy-hover-tint);
+      }
+    }
   }
 }

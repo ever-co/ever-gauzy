@@ -820,6 +820,7 @@
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Select Timezone",
+		"SELECT_TIMEZONE_HINT": "זמני הפגישות מוצגים באזור זמן זה.",
 		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
 		"SHOW_AVERAGE_INCOME": "Show Average Income",
 		"SHOW_PAYPERIOD": "Show Pay Period",
@@ -1800,6 +1801,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
+			"OF_INCOME": "{{ value }}% מההכנסה",
+			"MARGIN": "שולי רווח של {{ value }}%",
+			"BREAKDOWN": "הכנסות לפי עובד",
+			"NO_DATA": "אין פעילות פיננסית בתקופה זו",
+			"NO_DATA_HINT": "הכנסות והוצאות שנרשמו בטווח התאריכים הזה יופיעו כאן.",
+			"NO_EMPLOYEES": "אין רשומות עובדים לתקופה זו",
+			"SORT_BY": "מיון לפי {{ name }}",
+			"SORT_LABEL": "מיון לפי",
+			"SORT_ASCENDING": "סדר עולה",
+			"SORT_DESCENDING": "סדר יורד"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -2482,6 +2496,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "אפשר לעובד לצאת מאפליקציית הסוכן. כאשר מושבת, אפשרות היציאה תיחסם באפליקציית הסוכן.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "אפשר התנתקות מאפליקציית הסוכן",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "אפשר לעובד להתנתק מאפליקציית הסוכן. כאשר מושבת, אפשרות ההתנתקות תיחסם באפליקציית הסוכן.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "הגנת עובדים באזור הכלכלי האירופי / בבריטניה פעילה",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "עבור ארגונים ועובדים באזור הכלכלי האירופי או בבריטניה, עובדים יכולים תמיד לצאת מסוכן שולחן העבודה ולהתנתק ממנו. קשה להצדיק תיעוד שהעובד אינו יכול להפסיק לפי GDPR וסעיף 8 לאמנה האירופית לזכויות אדם, ולכן הגבלות אלה אינן זמינות כאן.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "אישור הגבלת יציאה או התנתקות מהסוכן",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "עם הגבלה זו העובד אינו יכול לעצור את התיעוד על ידי סוכן שולחן העבודה. אשרו שבדקתם שהדבר חוקי ומידתי עבור עובדים אלה ושאתם נוטלים עליו אחריות. האישור שלכם נרשם בחשבון שלכם.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "עקוב אחר פעילות המקלדת והעכבר",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "הפעל מעקב מלא אחר פעילות מקלדת ועכבר, כולל לחיצות מקשים ותנועות עכבר מדויקות בכל אפליקציות שולחן העבודה והסוכן.",
 				"TRACK_ALL_DISPLAYS": "עקוב אחר כל המסכים",
@@ -2738,7 +2756,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
+		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
+		"NO_MEMBERS": "עדיין לא נוספו חברים"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -3724,9 +3745,28 @@
 		"DICTATION_KEY_REJECTED": "ספק הקול דחה את מפתח ה-API שלו. עדכנו אותו בעמוד ההגדרות „ספקי AI”.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "ספק הקול דחה את מפתח ה-API שלו — בקשו ממנהל מערכת לעדכן אותו בהגדרות ← ספקי AI.",
 		"DICTATION_OPEN_SETTINGS": "פתח ספקי AI",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "שכבת ה-AI החינמית מוגבלת כרגע בקצב הבקשות. חברו חשבון OpenRouter משלכם או הגדירו ספק AI אחר לשימוש ללא הפרעה.",
+		"RATE_LIMITED_OWN": "ספק ה-AI שלכם מגביל כרגע את הבקשות. בדקו את התוכנית והמגבלות שלכם אצל הספק, או הגדירו ספק AI אחר.",
+		"RATE_LIMIT_RETRY_IN": "אפשר לנסות שוב בעוד כ-{{seconds}} שניות.",
+		"OPEN_AI_SETTINGS": "פתח ספקי AI",
+		"ERROR_NOT_CONFIGURED": "צ'אט ה-AI זקוק לספק מוגדר. הוסיפו אחד בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "צ'אט ה-AI זקוק לספק מוגדר — בקשו ממנהל מערכת להוסיף אחד בהגדרות ← ספקי AI.",
+		"ERROR_PROVIDER_UNAVAILABLE": "ספק ה-AI שנבחר לא יכול לענות כרגע. בדקו אותו בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "ספק ה-AI שנבחר לא יכול לענות כרגע — בקשו ממנהל מערכת לבדוק את הגדרות ← ספקי AI.",
+		"ERROR_MODEL_UNAVAILABLE": "המודל הזה אינו זמין עם מפתח ה-API הנוכחי. בחרו מודל אחר בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "המודל הזה אינו זמין עם מפתח ה-API הנוכחי — בקשו ממנהל מערכת לבדוק את הגדרות ← ספקי AI.",
+		"ERROR_KEY_REJECTED": "ספק ה-AI דחה את מפתח ה-API שלו. עדכנו אותו בעמוד ההגדרות „ספקי AI”.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "ספק ה-AI דחה את מפתח ה-API שלו — בקשו ממנהל מערכת לעדכן אותו בהגדרות ← ספקי AI.",
+		"ERROR_RATE_LIMITED": "ספק ה-AI מגביל את הבקשות.",
+		"RECORDING": "מקליט",
+		"PREVIEW": "תצוגה מקדימה",
+		"PREVIEW_PAGE": "דף",
+		"PREVIEW_NEW_TAB": "פתיחה בכרטיסייה חדשה",
+		"PREVIEW_CLOSE": "סגירת התצוגה המקדימה",
+		"PREVIEW_UNAVAILABLE": "אין תצוגה מקדימה זמינה לקובץ הזה.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "פתיחה במסמכים",
+		"ATTACH_UPLOADING": "מעלה…",
+		"ATTACH_DOCUMENT": "מסמך"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -4459,6 +4499,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "הניטור פעיל: מתועדים זמן ופעילות",
+		"MONITORING_IDLE": "הסוכן במצב המתנה",
+		"MONITORING_TRAY_ACTIVE": "הניטור פעיל, מתועד: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "הניטור מושהה: שום דבר אינו מתועד",
+		"MONITORING_CAPTURE_TIME": "זמן ויישומים פעילים",
+		"MONITORING_CAPTURE_SCREENSHOTS": "צילומי מסך",
+		"MONITORING_CAPTURE_INPUT": "פעילות מקלדת ועכבר",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "בחר לקוח",
 			"SELECT_PROJECT": "בחר פרויקט",
@@ -4985,7 +5032,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו"
+		"SCREEN_SELECTED": "{{ count }} מסך/ות נבחר/ו",
+		"NO_TIME_TRACKED": "לא נמדד זמן",
+		"MINUTES_TRACKED": "{{ minutes }} דק׳ נמדדו"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
@@ -5011,6 +5060,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "פרטים",
+		"PARTICIPANTS": "משתתפים",
+		"FORM_HINT": "הגדירו את נושא הפגישה, מתי היא מתקיימת ומי משתתף.",
+		"DETAILS_HINT": "סדר יום, מקום והערות שמוצגים לכל המוזמנים.",
+		"SCHEDULE": "לוח זמנים",
+		"SCHEDULE_HINT": "בחרו תאריך וחלון זמן, עם זמן חיץ והפסקה אופציונליים.",
+		"BUFFER_TIME_HINT": "השאירו זמן פנוי לפני הפגישה או אחריה.",
+		"BREAK_TIME_HINT": "עצרו את הפגישה להפסקה קצרה.",
+		"BREAK_START": "ההפסקה מתחילה ב-",
+		"PARTICIPANTS_HINT": "האנשים שמקבלים את ההזמנה.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5055,7 +5114,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "שינוי",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "בחרו את מי תרצו לפגוש, ואז בחרו שעה שנוחה לכם.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
@@ -5309,6 +5370,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
+		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",

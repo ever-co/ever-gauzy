@@ -79,10 +79,12 @@ export class ProductController extends CrudController<Product> {
 		@Param('langCode') langCode: LanguagesEnum,
 		@Query('data', ParseJsonPipe) data: any,
 		@Query('page') page: any,
-		@Query('_limit') limit: any
+		@Query('_limit') limit: any,
+		@Query('take') take: any
 	): Promise<IPagination<Product | IProductTranslated>> {
 		const { relations = [], findInput = null } = data;
-		return this.productService.findAllProducts(langCode, relations, findInput, { page, limit });
+		// The web app's data source sends the page size as `take`; `_limit` is kept for other API clients
+		return this.productService.findAllProducts(langCode, relations, findInput, { page, limit: take || limit });
 	}
 
 	/**

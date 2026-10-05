@@ -56,3 +56,24 @@ export const parseNonNegativeInt = (value: string | undefined, fallback: number)
 	const parsed = Number(normalized);
 	return Number.isSafeInteger(parsed) ? parsed : fallback;
 };
+
+/**
+ * The web app's home link used in email templates (`{{appLink}}`, e.g. the welcome email footer).
+ *
+ * `APP_LINK` when it holds a value; otherwise `CLIENT_BASE_URL` with a trailing slash; otherwise
+ * `fallback`. Before this, an unset or empty `APP_LINK` went straight to the hard-coded fallback.
+ * Every hosted deployment carries `APP_LINK` as an empty key, and the API loads `environment.ts`
+ * (whose fallback is `http://localhost:4200/`), so every welcome email from app.gauzy.co linked its
+ * footer to localhost while the rest of the email used the real host.
+ *
+ * @param fallback - Used only when neither variable is set.
+ * @returns The link, always ending in `/` when derived from `CLIENT_BASE_URL`.
+ */
+export const resolveAppLink = (fallback: string): string => {
+	const explicit = (process.env['APP_LINK'] ?? '').trim();
+	if (explicit) {
+		return explicit;
+	}
+	const clientBaseUrl = (process.env['CLIENT_BASE_URL'] ?? '').trim().replace(/\/+$/, '');
+	return clientBaseUrl ? `${clientBaseUrl}/` : fallback;
+};

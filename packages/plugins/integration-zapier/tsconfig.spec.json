@@ -3,9 +3,10 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"module": "commonjs",
-		// Required for the `transformIgnorePatterns` exception in `jest.config.ts` to do anything —
-		// see `packages/core/tsconfig.spec.json`, which this mirrors for the same reason: importing
-		// `@gauzy/core` (e.g. `TimerStartedEvent`) reaches ESM-only deps like `uuid`.
+		// Mirrors `packages/core/tsconfig.spec.json`. It was added so the `transformIgnorePatterns` list
+		// in `jest.config.ts` would work for the ESM-only deps (like `uuid`) that importing `@gauzy/core`
+		// reaches, but ts-jest >= 29.3.2 (pinned 29.4.6) compiles `.js` under `node_modules`
+		// regardless, so that list no longer depends on it. It still applies to any repo-local `.js`.
 		"allowJs": true,
 		// Makes ts-jest transpile each file on its own instead of type-checking the whole program.
 		// Without it, importing anything that transitively reaches `@gauzy/core` (e.g. this package's

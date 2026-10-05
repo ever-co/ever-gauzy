@@ -14,6 +14,7 @@ import * as moment from 'moment';
 import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { IEmployee, IOrganization, IOrganizationProject, IRole, ITenant, IUser } from '@gauzy/contracts';
 import { validateSeedCredentials } from '../../bootstrap/validate-secrets';
+import { MigrationLockingDataSource } from '../../database/migration-run-lock';
 import { getPluginModules, hasLifecycleMethod, PluginLifecycleMethods } from '@gauzy/plugin';
 import { createRoles } from '../../role/role.seed';
 import { createDefaultSkills } from '../../skills/skill.seed';
@@ -1699,13 +1700,14 @@ export class SeedDataService {
 					...dbConnectionOptions,
 					...this.overrideDbConfig
 				};
-				// The same transaction queue the application's data source gets on SQLite, where every
+				// Locking: with `migrationsRun` it runs the pending migrations, possibly while a server boots.
+				// And the same transaction queue the application's data source gets on SQLite, where every
 				// transaction would otherwise share the data source's one query runner.
 				// Under DB_ORM=mikro-orm TypeORM sees skeleton entities; drop the metadata entries that name a
 				// property it was never given, or the data source cannot build (a strict no-op under TypeORM).
 				pruneTypeOrmSkeletonMetadata();
 				const dataSource = serializeEmbeddedTransactions(
-					new DataSource({
+					new MigrationLockingDataSource({
 						...options
 					} as DataSourceOptions)
 				);

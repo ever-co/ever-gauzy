@@ -845,6 +845,7 @@
 		"SKILLS": "Умения",
 		"PRIVACY": "Приватност",
 		"SELECT_TIMEZONE": "Изберете часовата зона",
+		"SELECT_TIMEZONE_HINT": "Часовете на срещите се показват в тази часова зона.",
 		"SHOW_AVERAGE_BONUS": "Покажи среден бонус",
 		"SHOW_AVERAGE_INCOME": "Покажи среден доход",
 		"SHOW_PAYPERIOD": "Покажи период на плащане",
@@ -1834,6 +1835,19 @@
 		"TIME_TRACKING": "Проследяване на времето",
 		"PROJECT_MANAGEMENT": "Управление на проекти",
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "За {{ count }} служители",
+			"OF_INCOME": "{{ value }}% от приходите",
+			"MARGIN": "{{ value }}% марж",
+			"BREAKDOWN": "Приходи по служител",
+			"NO_DATA": "Няма финансова активност за този период",
+			"NO_DATA_HINT": "Приходите и разходите за този период ще се показват тук.",
+			"NO_EMPLOYEES": "Няма записи за служители за този период",
+			"SORT_BY": "Сортиране по {{ name }}",
+			"SORT_LABEL": "Сортиране по",
+			"SORT_ASCENDING": "Възходящо",
+			"SORT_DESCENDING": "Низходящо"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
 		"CHARTS": {
@@ -2516,6 +2530,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Разреши на служителя да излезе от приложението агент. Когато е деактивирано, опцията за излизане ще бъде блокирана в приложението агент.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Разреши изход от профила в приложението агент",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Разреши на служителя да излезе от профила в приложението агент. Когато е деактивирано, опцията за изход от профила ще бъде блокирана в приложението агент.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Активна защита на служителите в ЕИП / Обединеното кралство",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "За организации и служители в ЕИП или Обединеното кралство служителите винаги могат да излязат и да се отпишат от десктоп агента. Наблюдение, което служителят не може да прекъсне, трудно се обосновава според GDPR и чл. 8 от ЕКПЧ, затова тези ограничения не са налични тук.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Потвърдете ограничаването на изхода или отписването от агента",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "С това ограничение служителят не може да спре наблюдението от десктоп агента. Потвърдете, че сте преценили това като законосъобразно и пропорционално за тези служители и поемате отговорност за него. Потвърждението ви се записва към вашия профил.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Проследяване на активността на клавиатурата и мишката",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Активирай пълно проследяване на активността на клавиатурата и мишката, включително натискания на клавиши и точни движения на мишката във всички настолни приложения и агент.",
 				"TRACK_ALL_DISPLAYS": "Проследяване на всички дисплеи",
@@ -2772,7 +2790,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Щракнете или пуснете изображение за качване",
+		"SEARCH_EMPLOYEES": "Търсете служители по име или имейл",
+		"NO_MEMBERS": "Все още няма добавени членове"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -3759,9 +3780,28 @@
 		"DICTATION_KEY_REJECTED": "Гласовият доставчик отхвърли своя API ключ. Актуализирайте го на страницата с настройки „Доставчици на ИИ“.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Гласовият доставчик отхвърли своя API ключ — помолете администратор да го актуализира в Настройки → Доставчици на ИИ.",
 		"DICTATION_OPEN_SETTINGS": "Отвори Доставчици на ИИ",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Безплатното ниво на ИИ в момента е достигнало лимита на заявки. Свържете свой акаунт в OpenRouter или настройте друг доставчик на ИИ за непрекъснат достъп.",
+		"RATE_LIMITED_OWN": "Вашият доставчик на ИИ в момента ограничава заявките. Проверете плана и лимитите си при доставчика или настройте друг доставчик на ИИ.",
+		"RATE_LIMIT_RETRY_IN": "Можете да опитате отново след около {{seconds}} с.",
+		"OPEN_AI_SETTINGS": "Отвори Доставчици на ИИ",
+		"ERROR_NOT_CONFIGURED": "ИИ чатът се нуждае от настроен доставчик. Добавете такъв на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "ИИ чатът се нуждае от настроен доставчик — помолете администратор да добави такъв в Настройки → Доставчици на ИИ.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Избраният доставчик на ИИ не може да отговори в момента. Проверете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Избраният доставчик на ИИ не може да отговори в момента — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_MODEL_UNAVAILABLE": "Този модел не е достъпен с текущия API ключ. Изберете друг на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Този модел не е достъпен с текущия API ключ — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_KEY_REJECTED": "Доставчикът на ИИ отхвърли своя API ключ. Обновете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Доставчикът на ИИ отхвърли своя API ключ — помолете администратор да го обнови в Настройки → Доставчици на ИИ.",
+		"ERROR_RATE_LIMITED": "Доставчикът на ИИ ограничава заявките.",
+		"RECORDING": "Запис",
+		"PREVIEW": "Преглед",
+		"PREVIEW_PAGE": "Страница",
+		"PREVIEW_NEW_TAB": "Отваряне в нов раздел",
+		"PREVIEW_CLOSE": "Затваряне на прегледа",
+		"PREVIEW_UNAVAILABLE": "Няма наличен преглед за този файл.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Отваряне в Документи",
+		"ATTACH_UPLOADING": "Качване…",
+		"ATTACH_DOCUMENT": "Документ"
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",
@@ -4495,6 +4535,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Наблюдението е активно: записват се време и активност",
+		"MONITORING_IDLE": "Агентът е неактивен",
+		"MONITORING_TRAY_ACTIVE": "Наблюдението е активно, записва се: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Наблюдението е на пауза: нищо не се записва",
+		"MONITORING_CAPTURE_TIME": "време и активни приложения",
+		"MONITORING_CAPTURE_SCREENSHOTS": "екранни снимки",
+		"MONITORING_CAPTURE_INPUT": "активност на клавиатура и мишка",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Изберете клиент",
 			"SELECT_PROJECT": "Изберете проект",
@@ -5022,7 +5069,9 @@
 		"NO_SCREENSHOT": "Няма екранна снимка",
 		"NO_SCREENSHOTS": "Няма екранни снимки",
 		"NO_RECORD_FOUND": "Не са намерени записи. Моля, изберете диапазон от дати, служител или проект.",
-		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)"
+		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)",
+		"NO_TIME_TRACKED": "Няма проследено време",
+		"MINUTES_TRACKED": "Проследени {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",
@@ -5048,6 +5097,16 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
+		"DETAILS": "Подробности",
+		"PARTICIPANTS": "Участници",
+		"FORM_HINT": "Задайте темата на срещата, кога ще се проведе и кой ще участва.",
+		"DETAILS_HINT": "Дневен ред, място и бележки, видими за всички поканени.",
+		"SCHEDULE": "График",
+		"SCHEDULE_HINT": "Изберете дата и час, с незадължителен буфер и почивка.",
+		"BUFFER_TIME_HINT": "Оставете свободно време преди или след срещата.",
+		"BREAK_TIME_HINT": "Прекъснете срещата за кратка почивка.",
+		"BREAK_START": "Почивката започва в",
+		"PARTICIPANTS_HINT": "Хората, които получават поканата.",
 		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5092,7 +5151,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "Промяна",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "Изберете с кого искате да се срещнете, след това изберете удобен за вас час.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
@@ -5346,6 +5407,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Нямате акаунт?",
 		"FORGOT_PASSWORD_TITLE": "Забравена парола?",
 		"OR_SIGN_IN_WITH": "Или влезте с",
+		"SIGN_IN_WITH_EVER_ID": "Вход с Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Вход с Keycloak",
 		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магически код",

@@ -6,13 +6,46 @@ import { defineBddConfig } from 'playwright-bdd';
  *
  * Migration target replacing Cypress (see cypress.json). Mirrors the Cypress
  * settings: baseURL http://localhost:4200, 1920x1080 viewport, generous timeouts
- * for the heavy Angular app. Run via `nx e2e gauzy-e2e` (Nx starts `gauzy:serve`)
- * or directly with `npx playwright test` against an already-running app.
+ * for the heavy Angular app. Run via `nx e2e gauzy-e2e` or `npx playwright test`:
+ * without `E2E_BASE_URL`, the `webServer` entries below start the API and the web
+ * app (or reuse ones already running on their ports). With `E2E_BASE_URL` set (as
+ * CI does, after starting both itself) nothing is started.
  *
  * The legacy Cucumber `.feature` files are migrated in batches under `tests/`;
  * see knowledge runbook E2E_PLAYWRIGHT_MIGRATION.
  */
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:4200';
+
+// The old Cypress target had Nx start `gauzy:serve` (devServerTarget); the Playwright executor has no
+// such option, so `nx e2e gauzy-e2e` hit an empty :4200. Playwright's own `webServer` restores that,
+// and also starts the API the suite logs in against. Only when no E2E_BASE_URL is given: CI starts
+// both servers itself (API on :3001) and points the suite at them. `reuseExistingServer` keeps a dev's
+// already-running `yarn start` in use — note the suite then writes to THAT API's database (it creates
+// records and changes account-wide settings), so point it at a disposable one. The first API start
+// migrates and seeds a fresh database, and the Angular dev build is slow, hence the long timeouts.
+const repoRoot = '../..';
+const webServer = process.env.E2E_BASE_URL
+	? undefined
+	: [
+			{
+				command: 'yarn start:api',
+				// Fixed at :3000, NOT `API_PORT`: the web dev server's proxy (apps/gauzy/proxy.conf.json)
+				// always targets :3000, so an API on another port would pass this check while every
+				// browser request missed it. A non-default API_PORT now fails here, at startup.
+				url: 'http://localhost:3000/api/health/live',
+				cwd: repoRoot,
+				reuseExistingServer: true,
+				timeout: 20 * 60_000
+			},
+			{
+				// `yarn start:gauzy` minus `--open`: no browser tab next to the one Playwright drives.
+				command: 'yarn run postinstall.web && yarn ng serve gauzy',
+				url: baseURL,
+				cwd: repoRoot,
+				reuseExistingServer: true,
+				timeout: 20 * 60_000
+			}
+		];
 
 // Restored BDD (Gherkin) layer via playwright-bdd: .feature files + step definitions -> generated
 // Playwright specs. `bddgen` writes the specs into this dir and the 'bdd' project below runs them.
@@ -73,6 +106,7 @@ export default defineConfig({
 		screenshot: 'only-on-failure',
 		video: 'off'
 	},
+	webServer,
 	projects: [
 		{ name: 'chromium', testDir: './tests', testIgnore: ['bdd/**'], use: { ...devices['Desktop Chrome'] } },
 		{ name: 'bdd', testDir: bddTestDir, use: { ...devices['Desktop Chrome'] } }

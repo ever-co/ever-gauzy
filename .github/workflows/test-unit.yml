@@ -87,7 +87,25 @@ jobs:
         # is no `if:` on a previous step's outcome to get wrong.
         run: .github/scripts/restore-node-modules.sh
 
+      - name: Generate the Angular environment file
+        # `packages/ui-config/src/lib/environments/environment.ts` is generated (and gitignored), so a
+        # fresh checkout has none — and every spec that reaches `@gauzy/ui-config`, directly or through
+        # ui-core, failed to load with "Cannot find module './lib/environments/environment'" (about a
+        # dozen Angular projects). Same command the Playwright workflow runs before it builds the web
+        # app. It goes through yarn, not Nx, so `.env.local` is not loaded here either.
+        run: yarn config:dev
+
       - name: Run unit tests
+        env:
+          # Nx loads the workspace `.env` files into every task by default, and this repository commits
+          # a `.env.local` tuned for LOCAL DEVELOPMENT — DEMO=true, WORKER_QUEUE_ENABLED=false,
+          # NODE_ENV=development, and so on. Every unit test therefore ran as a demo-mode dev process:
+          # the logs printed "Is DEMO: true" 141 times and never once "false", and specs asserting
+          # production behaviour (role-permission counts, the worker's BullMQ root) failed for that
+          # reason alone. The suites must not depend on whichever `.env` sits in the checkout, so this
+          # turns the loading off; a spec that needs a particular mode pins it itself. `.env.local`
+          # stays as it is — it is the local-dev default, and nothing here needs it removed.
+          NX_LOAD_DOT_ENV_FILES: 'false'
         # `--nxBail=false` so one failing project still lets every other project report; without that
         # the first failure hides the rest and each fix costs another full run to find the next
         # problem. It is the real flag name — nx has no `--continue`, and an unknown option is

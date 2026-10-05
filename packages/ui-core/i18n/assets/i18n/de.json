@@ -816,6 +816,7 @@
 		"SKILLS": "Fähigkeiten",
 		"PRIVACY": "Datenschutz",
 		"SELECT_TIMEZONE": "Wähle Zeitzone.",
+		"SELECT_TIMEZONE_HINT": "Terminzeiten werden in dieser Zeitzone angezeigt.",
 		"SHOW_AVERAGE_BONUS": "Durchschnittlicher Bonus anzeigen",
 		"SHOW_AVERAGE_INCOME": "Zeige durchschnittliches Einkommen",
 		"SHOW_PAYPERIOD": "Zeige den Zahlungszeitraum.",
@@ -1756,6 +1757,19 @@
 		"TIME_TRACKING": "Zeiterfassung",
 		"PROJECT_MANAGEMENT": "Projektmanagement",
 		"EMPLOYEE_STATISTICS": "Mitarbeiterstatistiken",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Über {{ count }} Mitarbeiter",
+			"OF_INCOME": "{{ value }}% der Einnahmen",
+			"MARGIN": "{{ value }}% Marge",
+			"BREAKDOWN": "Einnahmen pro Mitarbeiter",
+			"NO_DATA": "Keine finanziellen Aktivitäten in diesem Zeitraum",
+			"NO_DATA_HINT": "Einnahmen und Ausgaben für diesen Zeitraum werden hier angezeigt.",
+			"NO_EMPLOYEES": "Keine Mitarbeiterdaten für diesen Zeitraum",
+			"SORT_BY": "Nach {{ name }} sortieren",
+			"SORT_LABEL": "Sortieren nach",
+			"SORT_ASCENDING": "Aufsteigend",
+			"SORT_DESCENDING": "Absteigend"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Bitte wählen Sie einen Monat und Mitarbeiter aus dem oben stehenden Menü aus.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Einfügen Sie Text für nicht authentifizierte Benutzer.",
 		"CHARTS": {
@@ -2442,6 +2456,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Mitarbeiter dürfen die Agent-Anwendung beenden. Wenn deaktiviert, wird die Beenden-Option in der Agent-App blockiert.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Abmeldung von der Agent-App erlauben",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Mitarbeiter dürfen sich von der Agent-Anwendung abmelden. Wenn deaktiviert, wird die Abmelde-Option in der Agent-App blockiert.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Schutz für Beschäftigte im EWR / Vereinigten Königreich aktiv",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Für Organisationen und Beschäftigte im EWR oder im Vereinigten Königreich können Beschäftigte den Desktop-Agenten jederzeit beenden und sich abmelden. Eine Erfassung, die Beschäftigte nicht unterbrechen können, ist nach DSGVO und Art. 8 EMRK kaum zu rechtfertigen, daher sind diese Einschränkungen hier nicht verfügbar.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Einschränkung von Beenden oder Abmelden bestätigen",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Mit dieser Einschränkung kann die beschäftigte Person die Erfassung durch den Desktop-Agenten nicht stoppen. Bestätigen Sie, dass Sie dies für diese Belegschaft als rechtmäßig und verhältnismäßig bewertet haben und die Verantwortung dafür übernehmen. Ihre Bestätigung wird Ihrem Konto zugeordnet gespeichert.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Tastatur- und Mausaktivität verfolgen",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Vollständige Verfolgung der Tastatur- und Mausaktivität aktivieren, einschließlich Tastenanschläge und exakte Mausbewegungen in allen Desktop-Apps und Agent.",
 				"TRACK_ALL_DISPLAYS": "Alle Bildschirme verfolgen",
@@ -2709,7 +2727,10 @@
 		"ADDRESS": "Adresse",
 		"ADDRESS_2": "Adresse 2",
 		"MEMBERS": "Mitglieder",
-		"BUDGET": "Haushalt"
+		"BUDGET": "Haushalt",
+		"PHOTO_HINT": "Klicken oder Bild hierher ziehen, um es hochzuladen",
+		"SEARCH_EMPLOYEES": "Mitarbeiter nach Name oder E-Mail suchen",
+		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Sprachen",
@@ -3697,9 +3718,28 @@
 		"DICTATION_KEY_REJECTED": "Der Sprachanbieter hat seinen API-Schlüssel abgelehnt. Aktualisieren Sie ihn auf der Einstellungsseite „KI-Anbieter“.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Der Sprachanbieter hat seinen API-Schlüssel abgelehnt – bitten Sie einen Administrator, ihn unter Einstellungen → KI-Anbieter zu aktualisieren.",
 		"DICTATION_OPEN_SETTINGS": "KI-Anbieter öffnen",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Die kostenlose KI-Stufe ist gerade ausgelastet. Verbinden Sie Ihr eigenes OpenRouter-Konto oder richten Sie einen anderen KI-Anbieter ein, um ohne Unterbrechung weiterzuarbeiten.",
+		"RATE_LIMITED_OWN": "Ihr KI-Anbieter begrenzt gerade die Anfragen. Prüfen Sie Ihren Tarif und Ihre Limits beim Anbieter oder richten Sie einen anderen KI-Anbieter ein.",
+		"RATE_LIMIT_RETRY_IN": "Sie können es in etwa {{seconds}} s erneut versuchen.",
+		"OPEN_AI_SETTINGS": "KI-Anbieter öffnen",
+		"ERROR_NOT_CONFIGURED": "Für den KI-Chat wird ein eingerichteter Anbieter benötigt. Fügen Sie einen auf der Einstellungsseite „KI-Anbieter“ hinzu.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "Für den KI-Chat wird ein eingerichteter Anbieter benötigt – bitten Sie einen Administrator, unter Einstellungen → KI-Anbieter einen hinzuzufügen.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Der ausgewählte KI-Anbieter kann gerade nicht antworten. Prüfen Sie ihn auf der Einstellungsseite „KI-Anbieter“.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Der ausgewählte KI-Anbieter kann gerade nicht antworten – bitten Sie einen Administrator, Einstellungen → KI-Anbieter zu prüfen.",
+		"ERROR_MODEL_UNAVAILABLE": "Dieses Modell ist mit dem aktuellen API-Schlüssel nicht verfügbar. Wählen Sie auf der Einstellungsseite „KI-Anbieter“ ein anderes.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Dieses Modell ist mit dem aktuellen API-Schlüssel nicht verfügbar – bitten Sie einen Administrator, Einstellungen → KI-Anbieter zu prüfen.",
+		"ERROR_KEY_REJECTED": "Der KI-Anbieter hat seinen API-Schlüssel abgelehnt. Aktualisieren Sie ihn auf der Einstellungsseite „KI-Anbieter“.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Der KI-Anbieter hat seinen API-Schlüssel abgelehnt – bitten Sie einen Administrator, ihn unter Einstellungen → KI-Anbieter zu aktualisieren.",
+		"ERROR_RATE_LIMITED": "Der KI-Anbieter begrenzt gerade die Anfragen.",
+		"RECORDING": "Aufnahme",
+		"PREVIEW": "Vorschau",
+		"PREVIEW_PAGE": "Seite",
+		"PREVIEW_NEW_TAB": "In neuem Tab öffnen",
+		"PREVIEW_CLOSE": "Vorschau schließen",
+		"PREVIEW_UNAVAILABLE": "Für diese Datei ist keine Vorschau verfügbar.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "In Dokumenten öffnen",
+		"ATTACH_UPLOADING": "Wird hochgeladen…",
+		"ATTACH_DOCUMENT": "Dokument"
 	},
 	"HEADER_TITLE": {
 		"FOR": "für",
@@ -4442,6 +4482,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Überwachung aktiv: Zeit und Aktivität werden erfasst",
+		"MONITORING_IDLE": "Agent inaktiv",
+		"MONITORING_TRAY_ACTIVE": "Überwachung aktiv, erfasst wird: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Überwachung pausiert: Es wird nichts erfasst",
+		"MONITORING_CAPTURE_TIME": "Zeit und aktive Anwendungen",
+		"MONITORING_CAPTURE_SCREENSHOTS": "Screenshots",
+		"MONITORING_CAPTURE_INPUT": "Tastatur- und Mausaktivität",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Kunde auswählen",
 			"SELECT_PROJECT": "Projekt auswählen",
@@ -4969,7 +5016,9 @@
 		"NO_SCREENSHOT": "Kein Screenshot",
 		"NO_SCREENSHOTS": "Keine Screenshots",
 		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus.",
-		"SCREEN_SELECTED": "{{ count }} Bildschirm(e) ausgewählt"
+		"SCREEN_SELECTED": "{{ count }} Bildschirm(e) ausgewählt",
+		"NO_TIME_TRACKED": "Keine Zeit erfasst",
+		"MINUTES_TRACKED": "{{ minutes }} Min. erfasst"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Lass uns deine erste Organisation erstellen",
@@ -4995,6 +5044,16 @@
 		"BUFFER_AT_START": "Puffer am Anfang",
 		"BUFFER_AT_END": "Puffer am Ende",
 		"BREAK_TIME": "Pause",
+		"DETAILS": "Details",
+		"PARTICIPANTS": "Teilnehmer",
+		"FORM_HINT": "Legen Sie fest, worum es im Meeting geht, wann es stattfindet und wer teilnimmt.",
+		"DETAILS_HINT": "Agenda, Ort und Notizen, die alle Eingeladenen sehen.",
+		"SCHEDULE": "Zeitplan",
+		"SCHEDULE_HINT": "Wählen Sie Datum und Zeitfenster, optional mit Puffer und Pause.",
+		"BUFFER_TIME_HINT": "Freie Zeit vor oder nach dem Meeting einplanen.",
+		"BREAK_TIME_HINT": "Das Meeting für eine kurze Pause unterbrechen.",
+		"BREAK_START": "Pause beginnt um",
+		"PARTICIPANTS_HINT": "Personen, die die Einladung erhalten.",
 		"ARE_YOU_SURE": "Bist du sicher? Diese Aktion ist nicht rückgängig zu machen."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5039,7 +5098,9 @@
 		"CANCEL": "Termin stornieren",
 		"TIMEZONE": "Ihre Zeitzone:",
 		"CHANGE": "Ändern",
+		"CHANGE_TIMEZONE": "Ändern",
 		"SELECT_EMPLOYEE_ERROR": "Bitte wählen Sie einen Mitarbeiter aus.",
+		"SELECT_EMPLOYEE_HINT": "Wählen Sie aus, wen Sie treffen möchten, und dann eine passende Uhrzeit.",
 		"EXPIRED_OR_CANCELLED": "Dieser Termin ist abgelaufen oder wurde abgesagt.",
 		"EMAIL_SENT": "Eine E-Mail wurde an den Gastgeber sowie an alle Teilnehmer für dieses Treffen gesendet.",
 		"NO_ACTIVE_EVENT_TYPES": "Es gibt keine aktiven Ereignistypen.",
@@ -5314,6 +5375,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Hast du kein Konto?",
 		"FORGOT_PASSWORD_TITLE": "Passwort vergessen?",
 		"OR_SIGN_IN_WITH": "Oder mit anmelden",
+		"SIGN_IN_WITH_EVER_ID": "Mit Ever ID anmelden",
+		"SIGN_IN_WITH_KEYCLOAK": "Mit Keycloak anmelden",
 		"FORGOT_EMAIL_TITLE": "E-Mail vergessen?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Einloggen mit einem magischen Code",

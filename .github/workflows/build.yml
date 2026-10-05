@@ -275,8 +275,11 @@ jobs:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     services:
+      # Both service images come from the Amazon ECR Public mirror of the Docker official images
+      # (byte-identical: the Postgres digest is the one pinned before), not from Docker Hub, whose
+      # anonymous pull limit the shared runners hit (429 on develop, 2026-10-03).
       postgres:
-        image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+        image: public.ecr.aws/docker/library/postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
         env:
           POSTGRES_USER: migration_test
           POSTGRES_PASSWORD: migration_test
@@ -286,6 +289,21 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U migration_test -d migration_test"
           --health-interval 5s --health-timeout 5s --health-retries 12
+      # cspell:words mysqladmin umigration pmigration corepack
+      # MySQL for the database suites of the anonymous usage statistics plugins, which run on all
+      # three engines Gauzy supports (SQLite in memory, Postgres and MySQL here).
+      mysql:
+        image: public.ecr.aws/docker/library/mysql:8.4@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242
+        env:
+          MYSQL_ROOT_PASSWORD: migration_test
+          MYSQL_DATABASE: migration_test
+          MYSQL_USER: migration_test
+          MYSQL_PASSWORD: migration_test
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -umigration_test -pmigration_test"
+          --health-interval 5s --health-timeout 5s --health-retries 24
     steps:
       - uses: actions/checkout@v4
 
@@ -350,6 +368,55 @@ jobs:
 
       - name: Test Ever Async integration boundary
         run: yarn nx run plugin-integration-ever-async:test-integration
+
+      - name: Test anonymous usage statistics on SQLite, PostgreSQL and MySQL
+        # The database suites of the statistics plugins on the three engines (Postgres in a schema
+        # of its own): migrations up/up/down, one identity under concurrent first boots, the operator
+        # rules (an address registered again in another tenant is never the operator), the sending
+        # lease, the counters and monthly totals of the collector itself, the canary, and the module
+        # inside an operator's request (counts of every tenant, nothing of the database leaks).
+        env:
+          EVER_STATS_TEST_POSTGRES_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
+          EVER_STATS_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
+        run: yarn nx run plugin-ever-stats:test-integration
+
+      - name: Checkout the Ever Platform mock (ever-co/ever-connect-sdk, pinned commit)
+        uses: actions/checkout@v4
+        with:
+          repository: ever-co/ever-connect-sdk
+          ref: 2fd74dad9357a18471292f38012a5f5e4e6d2938
+          path: .ever-connect-sdk
+          persist-credentials: false
+
+      - name: Test anonymous usage statistics against the Ever Platform mock
+        # The plugin against the public SDK's mock platform, which validates, verifies and records
+        # every call: on, one report accepted and no other call; EVER_STATS_ENABLED=false and
+        # switched off in Settings, no call at all (Send now 409); a control without the mock that
+        # must not pass. The mock runs from the pinned checkout, moved out of the workspace so Nx
+        # never sees it, with its dependencies installed from the SDK's own lockfile (by the package
+        # manager the SDK pins, through corepack, without changing this job's yarn).
+        env:
+          EVER_STATS_MOCK_PLATFORM_URL: http://127.0.0.1:18080
+          EVER_STATS_MOCK_PLATFORM_REQUIRED: 'true'
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+        run: |
+          mv .ever-connect-sdk "$RUNNER_TEMP/ever-connect-sdk"
+          cd "$RUNNER_TEMP/ever-connect-sdk"
+          corepack pnpm install --frozen-lockfile --prod --filter ./tools/mock-platform
+          cd tools/mock-platform
+          node bin/ever-mock-platform.mjs --port 18080 > "$RUNNER_TEMP/mock-platform.log" 2>&1 &
+          cd "$GITHUB_WORKSPACE"
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:18080/__mock/healthz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:18080/__mock/healthz > /dev/null || { cat "$RUNNER_TEMP/mock-platform.log"; exit 1; }
+          yarn nx run plugin-ever-stats:test-mock-platform
+
+      - name: Test the API plugin list and its boot order
+        # The statistics plugin is in the list unless EVER_STATS_ENABLED=false, also when that is
+        # written only in .env or .env.local (read before the list is built).
+        run: node node_modules/jest/bin/jest.js -c apps/api/jest.config.ts --runInBand plugins.matrix
 
       - name: Build API
         run: yarn build:api:prod:ci
