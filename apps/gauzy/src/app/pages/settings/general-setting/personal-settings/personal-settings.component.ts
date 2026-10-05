@@ -131,11 +131,14 @@ export class PersonalSettingsComponent implements OnInit {
 		if (!language || language === this.preferredLanguage()) {
 			return;
 		}
+		const previous = this.preferredLanguage();
 		// The layout's ThemeLanguageSelectorService applies the language and text direction.
 		this.store.preferredLanguage = language;
 		try {
 			await this.usersService.updatePreferredLanguage({ preferredLanguage: language });
 		} catch {
+			// Not saved: switch back, or the next load of the user's settings would do it silently.
+			this.store.preferredLanguage = previous;
 			this.toastr.danger('SETTINGS_GENERAL.PREFERENCES.SAVE_ERROR');
 		}
 	}
@@ -144,10 +147,13 @@ export class PersonalSettingsComponent implements OnInit {
 		if (!layout || layout === this.preferredLayout()) {
 			return;
 		}
+		const previous = this.preferredLayout();
 		this.store.preferredComponentLayout = layout;
 		try {
 			await this.usersService.updatePreferredComponentLayout({ preferredComponentLayout: layout });
 		} catch {
+			// Not saved: switch back, or the next load of the user's settings would do it silently.
+			this.store.preferredComponentLayout = previous;
 			this.toastr.danger('SETTINGS_GENERAL.PREFERENCES.SAVE_ERROR');
 		}
 	}
