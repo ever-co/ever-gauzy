@@ -21,12 +21,14 @@ import {
 	IOrganizationProject,
 	ITask,
 	IProduct,
-	IExpense
+	IExpense,
+	TaxCalculationTypeEnum
 } from '@gauzy/contracts';
 import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { calculateInvoiceTotals } from '../invoice-totals';
 import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
@@ -76,6 +78,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	loading: boolean;
 	selectedLanguage: string;
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
+	taxCalculationTypes = Object.values(TaxCalculationTypeEnum);
 	isRemainingAmount: string;
 	alreadyPaid: number;
 	amountDue: number;
@@ -227,6 +230,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
+			taxCalculationType: [TaxCalculationTypeEnum.SIMPLE],
 			tags: []
 		});
 	}
@@ -246,6 +250,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			discountType: invoice.discountType,
 			taxType: invoice.taxType,
 			tax2Type: invoice.tax2Type,
+			// Invoices saved before the type was stored have none: they were always recalculated as SIMPLE.
+			taxCalculationType: invoice.taxCalculationType ?? TaxCalculationTypeEnum.SIMPLE,
 			tags: invoice.tags
 		});
 		this.form.updateValueAndValidity();
@@ -521,6 +527,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
+				taxCalculationType: invoiceData.taxCalculationType,
 				terms: invoiceData.terms,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
@@ -682,6 +689,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
+				taxCalculationType: invoiceData.taxCalculationType,
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
@@ -800,64 +808,20 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	async calculateTotal() {
 		const tableData = await this.smartTableSource.getAll();
 
-		const discountValue =
-			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
-		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
-		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
-
-		let totalDiscount = 0;
-		let totalTax = 0;
-
-		for (const item of tableData) {
-			if (item.applyTax) {
-				switch (this.form.value.taxType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax / 100);
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax;
-						break;
-					default:
-						break;
-				}
-				switch (this.form.value.tax2Type) {
-					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax2 / 100);
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax2;
-						break;
-					default:
-						break;
-				}
-			}
-
-			if (item.applyDiscount) {
-				switch (this.form.value.discountType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						if (!this.discountAfterTax) {
-							totalDiscount += item.totalValue * (+discountValue / 100);
-						}
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += +discountValue;
-						break;
-					default:
-						totalDiscount = 0;
-						break;
-				}
-			}
-		}
-
-		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
-			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
-		}
-
-		this.total = this.subtotal - totalDiscount + totalTax;
-
-		if (this.total < 0) {
-			this.total = 0;
-		}
+		// See invoice-totals.ts, shared with the add page: the stored calculation type, so a compound
+		// invoice keeps its total when edited.
+		this.total = calculateInvoiceTotals({
+			items: tableData,
+			subtotal: this.subtotal,
+			tax: this.form.value.tax,
+			taxType: this.form.value.taxType,
+			tax2: this.form.value.tax2,
+			tax2Type: this.form.value.tax2Type,
+			taxCalculationType: this.form.value.taxCalculationType,
+			discountValue: this.form.value.discountValue,
+			discountType: this.form.value.discountType,
+			discountAfterTax: this.discountAfterTax
+		}).total;
 
 		this.alreadyPaid = +this.invoice.alreadyPaid;
 		this.amountDue = +this.total - +this.alreadyPaid;
