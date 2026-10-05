@@ -1,6 +1,14 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, In, IsNull } from 'typeorm';
-import { BaseEntityEnum, ID, IFavorite, IFavoriteCreateInput, IPagination, RolesEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	ID,
+	IFavorite,
+	IFavoriteCreateInput,
+	IPagination,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Favorite } from './favorite.entity';
@@ -10,12 +18,14 @@ import { EmployeeService } from '../employee/employee.service';
 import { GlobalFavoriteDiscoveryService } from './global-favorite-service.service';
 
 /**
- * Relations to load with a favorite's entity so it can be given a display name.
+ * Relations to load with a favorite's entity so it can be given a display name, and the permission
+ * the caller needs to receive them (GET /favorite/type has no entity-view permission of its own).
  */
-const FAVORITE_DETAIL_RELATIONS: Partial<Record<BaseEntityEnum, string[]>> = {
-	[BaseEntityEnum.Employee]: ['user'],
-	[BaseEntityEnum.Candidate]: ['user']
-};
+const FAVORITE_DETAIL_RELATIONS: Partial<Record<BaseEntityEnum, { relations: string[]; permission: PermissionsEnum }>> =
+	{
+		[BaseEntityEnum.Employee]: { relations: ['user'], permission: PermissionsEnum.ORG_EMPLOYEES_VIEW },
+		[BaseEntityEnum.Candidate]: { relations: ['user'], permission: PermissionsEnum.ORG_CANDIDATES_VIEW }
+	};
 
 @Injectable()
 export class FavoriteService extends TenantAwareCrudService<Favorite> {
@@ -179,8 +189,13 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 			// related entity where condition (Filtered records with passed IDs)
 			const whereCondition = { id: In(entityIds) };
 
-			// Employees and candidates carry no name of their own: it lives on the linked user
-			const relations = FAVORITE_DETAIL_RELATIONS[favoriteType];
+			// Employees and candidates carry no name of their own: it lives on the linked user. Only load it
+			// for callers allowed to view that entity type; others get the records without it.
+			const detailRelations = FAVORITE_DETAIL_RELATIONS[favoriteType];
+			const relations =
+				detailRelations && RequestContext.hasPermission(detailRelations.permission)
+					? detailRelations.relations
+					: undefined;
 
 			// Get related favorite records using findAll method and passing query params
 			const items = await this.favoriteDiscoveryService.callMethod(favoriteType, 'findAll', {
