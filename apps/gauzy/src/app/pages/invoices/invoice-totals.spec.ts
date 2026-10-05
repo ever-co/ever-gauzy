@@ -1,5 +1,10 @@
 import { DiscountTaxTypeEnum, TaxCalculationTypeEnum } from '@gauzy/contracts';
-import { calculateInvoiceTotals, IInvoiceTotalsInput } from './invoice-totals';
+import {
+	calculateInvoiceFormTotals,
+	calculateInvoiceTotals,
+	IInvoiceTotalsInput,
+	taxCalculationTypeMatters
+} from './invoice-totals';
 
 const { PERCENT, FLAT_VALUE } = DiscountTaxTypeEnum;
 const { SIMPLE, COMPOSED } = TaxCalculationTypeEnum;
@@ -168,5 +173,75 @@ describe('calculateInvoiceTotals', () => {
 
 		expect(totalTax).toBe(0);
 		expect(totalDiscount).toBe(0);
+	});
+});
+
+describe('calculateInvoiceFormTotals', () => {
+	const items = [
+		{ totalValue: 100, applyTax: true },
+		{ totalValue: 200, applyTax: true }
+	];
+
+	it('reads the tax and discount fields of the form value, the way the add and edit pages hold them', () => {
+		const form = {
+			invoiceNumber: 7,
+			terms: 'ignored',
+			tax: 10,
+			taxType: PERCENT,
+			tax2: 5,
+			tax2Type: PERCENT,
+			taxCalculationType: COMPOSED,
+			discountValue: 10,
+			discountType: PERCENT
+		};
+
+		expect(calculateInvoiceFormTotals(form, items, 300, true)).toEqual(
+			calculateInvoiceTotals({
+				items,
+				subtotal: 300,
+				tax: 10,
+				taxType: PERCENT,
+				tax2: 5,
+				tax2Type: PERCENT,
+				taxCalculationType: COMPOSED,
+				discountValue: 10,
+				discountType: PERCENT,
+				discountAfterTax: true
+			})
+		);
+	});
+
+	it('is the subtotal when the form has no tax or discount yet', () => {
+		expect(calculateInvoiceFormTotals(null, items, 300, false).total).toBe(300);
+	});
+});
+
+describe('taxCalculationTypeMatters (whether the Simple/Compound choice is shown)', () => {
+	it.each([
+		[PERCENT, PERCENT, true],
+		// A flat first tax still changes the base a compound percentage is taken of.
+		[FLAT_VALUE, PERCENT, true],
+		[PERCENT, FLAT_VALUE, false],
+		[FLAT_VALUE, FLAT_VALUE, false],
+		[null, PERCENT, false],
+		[PERCENT, null, false]
+	])('first %s, second %s: %s', (taxType, tax2Type, expected) => {
+		expect(taxCalculationTypeMatters(taxType, tax2Type)).toBe(expected);
+	});
+
+	it('is shown exactly when it changes the total', () => {
+		const pairs = [PERCENT, FLAT_VALUE, null].flatMap((taxType) =>
+			[PERCENT, FLAT_VALUE, null].map((tax2Type) => ({ taxType, tax2Type }))
+		);
+		for (const { taxType, tax2Type } of pairs) {
+			const simple = calculateInvoiceTotals(input({ taxType, tax2Type, taxCalculationType: SIMPLE })).total;
+			const composed = calculateInvoiceTotals(input({ taxType, tax2Type, taxCalculationType: COMPOSED })).total;
+
+			expect({ taxType, tax2Type, shown: taxCalculationTypeMatters(taxType, tax2Type) }).toEqual({
+				taxType,
+				tax2Type,
+				shown: simple !== composed
+			});
+		}
 	});
 });

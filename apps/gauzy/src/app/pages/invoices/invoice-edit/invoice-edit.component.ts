@@ -28,7 +28,7 @@ import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { calculateInvoiceTotals } from '../invoice-totals';
+import { calculateInvoiceFormTotals, taxCalculationTypeMatters } from '../invoice-totals';
 import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
@@ -79,6 +79,11 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	selectedLanguage: string;
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
 	taxCalculationTypes = Object.values(TaxCalculationTypeEnum);
+
+	/** Whether the Simple/Compound choice changes the total for the selected tax types (and so is shown). */
+	get showTaxCalculationType(): boolean {
+		return taxCalculationTypeMatters(this.form?.get('taxType')?.value, this.form?.get('tax2Type')?.value);
+	}
 	isRemainingAmount: string;
 	alreadyPaid: number;
 	amountDue: number;
@@ -808,20 +813,9 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	async calculateTotal() {
 		const tableData = await this.smartTableSource.getAll();
 
-		// See invoice-totals.ts, shared with the add page: the stored calculation type, so a compound
-		// invoice keeps its total when edited.
-		this.total = calculateInvoiceTotals({
-			items: tableData,
-			subtotal: this.subtotal,
-			tax: this.form.value.tax,
-			taxType: this.form.value.taxType,
-			tax2: this.form.value.tax2,
-			tax2Type: this.form.value.tax2Type,
-			taxCalculationType: this.form.value.taxCalculationType,
-			discountValue: this.form.value.discountValue,
-			discountType: this.form.value.discountType,
-			discountAfterTax: this.discountAfterTax
-		}).total;
+		// See invoice-totals.ts, shared with the add page. The form carries the stored calculation type, so a
+		// compound invoice keeps its total when edited.
+		this.total = calculateInvoiceFormTotals(this.form.value, tableData, this.subtotal, this.discountAfterTax).total;
 
 		this.alreadyPaid = +this.invoice.alreadyPaid;
 		this.amountDue = +this.total - +this.alreadyPaid;
