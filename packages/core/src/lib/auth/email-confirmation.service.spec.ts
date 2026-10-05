@@ -160,9 +160,15 @@ describe('EmailConfirmationService', () => {
 				verificationEmailSent: true
 			});
 
-			// Asked about this user, over exactly the link's lifetime (7 days unless configured).
-			const [userId, since] = emailService.hasSentVerificationEmail.mock.calls[0] as unknown as [string, Date];
+			// Asked about this user and their current address, over exactly the link's lifetime
+			// (7 days unless configured).
+			const [userId, email, since] = emailService.hasSentVerificationEmail.mock.calls[0] as unknown as [
+				string,
+				string,
+				Date
+			];
 			expect(userId).toBe(USER.id);
+			expect(email).toBe(USER.email);
 			const lifetimeMs = (environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7) * 1000;
 			expect(since.getTime()).toBeGreaterThanOrEqual(before - lifetimeMs - 1000);
 			expect(since.getTime()).toBeLessThanOrEqual(Date.now() - lifetimeMs + 1000);

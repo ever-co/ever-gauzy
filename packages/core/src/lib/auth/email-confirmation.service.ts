@@ -144,7 +144,7 @@ export class EmailConfirmationService {
 			return { isEmailVerified, verificationEmailSent: false };
 		}
 		const since = moment(new Date()).subtract(this.verificationExpirySeconds(), 'seconds').toDate();
-		const verificationEmailSent = await this.emailService.hasSentVerificationEmail(user.id, since);
+		const verificationEmailSent = await this.emailService.hasSentVerificationEmail(user.id, user.email, since);
 		return { isEmailVerified, verificationEmailSent };
 	}
 
