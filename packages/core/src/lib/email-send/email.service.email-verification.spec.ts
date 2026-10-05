@@ -154,3 +154,48 @@ describe('EmailService.emailVerification', () => {
 		expect(options.message.headers).toEqual({ 'X-PM-TrackLinks': 'None' });
 	});
 });
+
+/**
+ * The verification notice may only say "we sent you a link" when one really went out: the status
+ * endpoint asks for a SENT verification row for this user inside the link's validity window.
+ */
+describe('EmailService.hasSentVerificationEmail', () => {
+	function makeLookupService(exists: () => Promise<boolean>) {
+		const historyRepository = { exists: jest.fn(exists) };
+		const service = new EmailService(historyRepository as any, {} as any, {} as any, {} as any);
+		return { service, historyRepository };
+	}
+
+	beforeEach(() => {
+		jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('looks only for SENT verification emails to this user since the given time', async () => {
+		const { service, historyRepository } = makeLookupService(async () => true);
+		const since = new Date('2026-09-28T10:00:00Z');
+
+		await expect(service.hasSentVerificationEmail('user-1', since)).resolves.toBe(true);
+
+		const [{ where }] = historyRepository.exists.mock.calls[0] as unknown as [{ where: any }];
+		expect(where.userId).toBe('user-1');
+		expect(where.status).toBe(EmailStatusEnum.SENT);
+		expect(where.emailTemplate).toEqual({ name: 'email-verification/html' });
+		// MoreThanOrEqual(since): a FindOperator carrying the window start.
+		expect(where.createdAt.type).toBe('moreThanOrEqual');
+		expect(where.createdAt.value).toBe(since);
+	});
+
+	it('answers false when no such email exists (control)', async () => {
+		const { service } = makeLookupService(async () => false);
+		await expect(service.hasSentVerificationEmail('user-1', new Date())).resolves.toBe(false);
+	});
+
+	it('answers false instead of throwing when the history cannot be read', async () => {
+		const { service } = makeLookupService(async () => {
+			throw new Error('db down');
+		});
+		await expect(service.hasSentVerificationEmail('user-1', new Date())).resolves.toBe(false);
+	});
+});

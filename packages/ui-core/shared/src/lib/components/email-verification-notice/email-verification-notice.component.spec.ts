@@ -18,7 +18,7 @@ describe('EmailVerificationNoticeComponent', () => {
 
 	function setup(options: {
 		user: IUser | null;
-		status?: () => Observable<{ isEmailVerified: boolean }>;
+		status?: () => Observable<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>;
 		resend?: () => Observable<Object>;
 	}) {
 		const user$ = new BehaviorSubject<IUser | null>(options.user);
@@ -109,6 +109,86 @@ describe('EmailVerificationNoticeComponent', () => {
 		pending.next({ status: 200 });
 
 		expect(component.state()).toBe('idle');
+	});
+
+	/**
+	 * Production regression (2026-10-05): the notice told every unverified user "We sent a
+	 * verification link to ...", including people invited years before verification existed who had
+	 * never been sent one. It may only claim a link went out when the API says so.
+	 */
+	describe('says "we sent a link" only when one went out', () => {
+		type Fixture = { detectChanges(): void; nativeElement: HTMLElement };
+
+		/** The notice sentence (translation keys render as-is: no translations are loaded). */
+		function noticeText(fixture: Fixture): string {
+			fixture.detectChanges();
+			return fixture.nativeElement.querySelector('.notice-text')?.textContent?.trim() ?? '';
+		}
+
+		/** The label of the send / resend button. */
+		function sendButtonText(fixture: Fixture): string {
+			fixture.detectChanges();
+			const button = fixture.nativeElement.querySelector('button:not(.notice-dismiss)');
+			return button?.textContent?.trim() ?? '';
+		}
+
+		it('offers to send a link when none was sent, and does not claim one was', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false })
+			});
+			expect(component.visible()).toBe(true);
+			expect(component.linkSent()).toBe(false);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE_NOT_SENT');
+			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.SEND');
+		});
+
+		it('says a link was sent, with Resend, when the API reports one (control)', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: true })
+			});
+			expect(component.linkSent()).toBe(true);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
+			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.RESEND');
+		});
+
+		it('treats an API without the field as "nothing sent"', () => {
+			const { component } = setup({ user: UNVERIFIED, status: () => of({ isEmailVerified: false }) });
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('switches to "we sent a link" once the user sends one', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false })
+			});
+			component.resend();
+			expect(component.state()).toBe('sent');
+			expect(component.linkSent()).toBe(true);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE');
+		});
+
+		it('uses the wording the page passes in (Billing)', () => {
+			const { component, fixture } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false })
+			});
+			component.notSentMessageKey = 'SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT';
+			expect(noticeText(fixture)).toBe('SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT');
+		});
+
+		it('forgets the "sent" state of the previous user when another user signs in', () => {
+			let sent = true;
+			const { component, user$ } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: sent })
+			});
+			expect(component.linkSent()).toBe(true);
+			sent = false;
+			user$.next({ id: 'u2', email: 'max@corp.co', isEmailVerified: false } as IUser);
+			expect(component.linkSent()).toBe(false);
+		});
 	});
 
 	it('keeps a dismissal to the user who dismissed it', () => {

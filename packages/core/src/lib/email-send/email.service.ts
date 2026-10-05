@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { IsNull } from 'typeorm';
+import { IsNull, MoreThanOrEqual } from 'typeorm';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import {
 	IInviteEmployeeModel,
@@ -657,6 +657,36 @@ export class EmailService {
 				user,
 				status
 			});
+		}
+	}
+
+	/**
+	 * Whether the provider accepted a verification email for this user at or after `since`.
+	 *
+	 * Reads the `email_sent` rows written by {@link emailVerification}, which records every attempt
+	 * with status SENT or FAILED. Only a SENT row counts: the app must not tell anyone "we sent you a
+	 * link" when no link went out - users created before verification existed (or whose sign-up mail
+	 * was lost) have never been sent one. Never throws; an unreadable history answers false, so the
+	 * caller offers to send a link instead of promising one.
+	 *
+	 * @param userId The user the verification email was for.
+	 * @param since Oldest send that still counts (the start of the link's validity window).
+	 */
+	async hasSentVerificationEmail(userId: ID, since: Date): Promise<boolean> {
+		try {
+			return await this.typeOrmEmailHistoryRepository.exists({
+				where: {
+					userId,
+					status: EmailStatusEnum.SENT,
+					createdAt: MoreThanOrEqual(since),
+					emailTemplate: { name: `${EmailTemplateEnum.EMAIL_VERIFICATION}/html` }
+				}
+			});
+		} catch (error) {
+			this.logger.error(
+				`Could not read the verification emails of user ${userId}: ${describeEmailSendError(error)}`
+			);
+			return false;
 		}
 	}
 

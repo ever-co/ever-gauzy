@@ -16,12 +16,15 @@ import { EmailConfirmationService } from './email-confirmation.service';
 
 const USER = { id: 'user-1', email: 'jane+gauzy@corp.co', emailVerifiedAt: null } as unknown as IUser;
 
-function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUser } = {}) {
+function makeService(
+	options: { sent?: boolean; sendThrows?: boolean; user?: IUser; verificationEmailSent?: boolean } = {}
+) {
 	const emailService = {
 		emailVerification: jest.fn(async () => {
 			if (options.sendThrows) throw new Error('boom');
 			return options.sent ?? true;
-		})
+		}),
+		hasSentVerificationEmail: jest.fn(async () => options.verificationEmailSent ?? false)
 	};
 	const userService = {
 		update: jest.fn(async () => undefined),
@@ -122,20 +125,55 @@ describe('EmailConfirmationService', () => {
 		});
 	});
 
+	/**
+	 * The notice used to say "We sent a verification link" to every unverified user. On production
+	 * most of them had never been sent one (invited or signed up before verification existed), so
+	 * the status now says whether a still-valid verification email really went out.
+	 */
 	describe('getVerificationStatus', () => {
-		it('reports an unverified user as not verified', async () => {
-			const { service } = makeService();
-			await expect(service.getVerificationStatus()).resolves.toEqual({ isEmailVerified: false });
+		it('reports an unverified user who was never sent a link: not verified, nothing sent', async () => {
+			const { service } = makeService({ verificationEmailSent: false });
+			await expect(service.getVerificationStatus()).resolves.toEqual({
+				isEmailVerified: false,
+				verificationEmailSent: false
+			});
 		});
 
-		it('reports a verified user as verified (control)', async () => {
-			const { service } = makeService({ user: { ...USER, emailVerifiedAt: new Date() } as unknown as IUser });
-			await expect(service.getVerificationStatus()).resolves.toEqual({ isEmailVerified: true });
+		it('reports a link that went out inside the validity window as sent', async () => {
+			const { service, emailService } = makeService({ verificationEmailSent: true });
+			const before = Date.now();
+
+			await expect(service.getVerificationStatus()).resolves.toEqual({
+				isEmailVerified: false,
+				verificationEmailSent: true
+			});
+
+			// Asked about this user, over exactly the link's lifetime (7 days unless configured).
+			const [userId, since] = emailService.hasSentVerificationEmail.mock.calls[0] as unknown as [string, Date];
+			expect(userId).toBe(USER.id);
+			const lifetimeMs = (environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7) * 1000;
+			expect(since.getTime()).toBeGreaterThanOrEqual(before - lifetimeMs - 1000);
+			expect(since.getTime()).toBeLessThanOrEqual(Date.now() - lifetimeMs + 1000);
 		});
 
-		it('never exposes anything but the flag', async () => {
+		it('reports a verified user as verified without reading the email history (control)', async () => {
+			const { service, emailService } = makeService({
+				user: { ...USER, emailVerifiedAt: new Date() } as unknown as IUser,
+				verificationEmailSent: true
+			});
+			await expect(service.getVerificationStatus()).resolves.toEqual({
+				isEmailVerified: true,
+				verificationEmailSent: false
+			});
+			expect(emailService.hasSentVerificationEmail).not.toHaveBeenCalled();
+		});
+
+		it('never exposes anything but the two flags', async () => {
 			const { service } = makeService();
-			expect(Object.keys(await service.getVerificationStatus())).toEqual(['isEmailVerified']);
+			expect(Object.keys(await service.getVerificationStatus())).toEqual([
+				'isEmailVerified',
+				'verificationEmailSent'
+			]);
 		});
 	});
 });

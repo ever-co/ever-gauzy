@@ -4,7 +4,7 @@ import { Component, DestroyRef, Input, OnInit, inject, signal } from '@angular/c
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NbButtonModule } from '@nebular/theme';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { Subscription, catchError, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { Subscription, catchError, distinctUntilChanged, map, of, switchMap, tap } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { AuthService, Store } from '@gauzy/ui-core/core';
 
@@ -22,6 +22,11 @@ type ResendState = 'idle' | 'sending' | 'sent' | 'error';
  * endpoint answers 404 where email verification is switched off, so self-hosted installs without
  * verification never see the notice, even though none of their users is "verified".
  *
+ * Says "we sent you a link" only when the API reports a still-valid verification email really went
+ * out (`verificationEmailSent`). Users invited or signed up before verification was switched on, or
+ * whose link expired, were never sent a working one; for them the notice offers to send it instead
+ * of promising an email that is not coming.
+ *
  * - `banner` (default): a dismissible strip for the main layout.
  * - `inline`: no dismiss button, for pages explaining why something is missing (Billing).
  */
@@ -35,13 +40,17 @@ type ResendState = 'idle' | 'sending' | 'sent' | 'error';
 export class EmailVerificationNoticeComponent implements OnInit {
 	/** `banner` for the layout, `inline` for a page body. */
 	@Input() variant: 'banner' | 'inline' = 'banner';
-	/** Translation key of the explanation shown before the Resend button. */
+	/** Translation key of the explanation shown when a verification email has been sent. */
 	@Input() messageKey = 'EMAIL_VERIFICATION.NOTICE';
+	/** Translation key of the explanation shown when no valid verification email has been sent yet. */
+	@Input() notSentMessageKey = 'EMAIL_VERIFICATION.NOTICE_NOT_SENT';
 
 	readonly visible = signal(false);
 	readonly state = signal<ResendState>('idle');
 	readonly errorMessage = signal<string | null>(null);
 	readonly email = signal<string | null>(null);
+	/** Whether a still-valid verification email has gone out (per the API, or our own send). */
+	readonly linkSent = signal(false);
 
 	private dismissed = false;
 	/** The user the notice currently speaks for; a resend answer for anyone else is dropped. */
@@ -65,6 +74,7 @@ export class EmailVerificationNoticeComponent implements OnInit {
 					if ((user?.id ?? null) !== this.currentUserId) {
 						this.currentUserId = user?.id ?? null;
 						this.dismissed = false;
+						this.linkSent.set(false);
 						this.resetResend();
 					}
 					// Only ask the API when the loaded user says "unverified"; a verified user costs nothing.
@@ -73,6 +83,7 @@ export class EmailVerificationNoticeComponent implements OnInit {
 					}
 					this.email.set(user.email);
 					return this.authService.getEmailVerificationStatus().pipe(
+						tap((status) => this.linkSent.set(status?.verificationEmailSent === true)),
 						map((status) => status?.isEmailVerified === false),
 						// 404 = verification switched off on this deployment; anything else = unknown.
 						catchError(() => of(false))
@@ -98,6 +109,7 @@ export class EmailVerificationNoticeComponent implements OnInit {
 			.subscribe({
 				next: () => {
 					if (this.currentUserId === askedFor) {
+						this.linkSent.set(true);
 						this.state.set('sent');
 					}
 				},
