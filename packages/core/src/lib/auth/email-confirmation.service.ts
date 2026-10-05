@@ -28,6 +28,7 @@ import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
 import { describeEmailSendError } from './../email-send/email-send-error';
+import { redactDatabaseError } from './../core/errors/database-error';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 
 @Injectable()
@@ -75,11 +76,20 @@ export class EmailConfirmationService {
 			// Update user's email token field and verification code
 			// Always set codeExpireAt — default to 7 days to match the environment module default
 			const verificationExpiry = environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
-			await this.userService.update(id, {
+			// Stored only while the account still holds the address this message goes to: the code
+			// endpoint matches a stored code against the CURRENT address, so a code for an address the
+			// user has just left must not be stored next to the new one (nor mailed out).
+			const stored = await this.userService.storeEmailVerificationCode(id, email, {
 				emailToken: await this.passwordHashService.hash(token),
 				code: verificationCode,
 				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
+			if (!stored) {
+				this.logger.warn(
+					`Not sending the verification email for user ${id}: the account no longer holds that address`
+				);
+				return false;
+			}
 
 			// Send email verification link. Resolves false when the provider did not take the message;
 			// the send itself is logged and recorded in email_sent by EmailService.
@@ -245,13 +255,24 @@ export class EmailConfirmationService {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
 			return;
 		}
+		// Recorded only while the account still holds the address that was confirmed. When it moved to
+		// another address in the meantime nothing is written, and that is not a success: by code, the
+		// code has already been used up, so answering OK would leave the user believing they are done.
+		let recorded = false;
 		try {
-			await this.userService.markEmailAsVerified(user['id']);
-		} finally {
-			return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
+			recorded = await this.userService.markEmailAsVerified(user['id'], user.email);
+		} catch (error) {
+			this.logger.error(
+				`Could not record the e-mail confirmation of user ${user['id']}`,
+				redactDatabaseError(error)
+			);
 		}
+		if (!recorded) {
+			throw new BadRequestException('Failed to verify email.');
+		}
+		return new Object({
+			status: HttpStatus.OK,
+			message: `OK`
+		});
 	}
 }
