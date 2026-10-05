@@ -9,6 +9,14 @@ import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repo
 import { EmployeeService } from '../employee/employee.service';
 import { GlobalFavoriteDiscoveryService } from './global-favorite-service.service';
 
+/**
+ * Relations to load with a favorite's entity so it can be given a display name.
+ */
+const FAVORITE_DETAIL_RELATIONS: Partial<Record<BaseEntityEnum, string[]>> = {
+	[BaseEntityEnum.Employee]: ['user'],
+	[BaseEntityEnum.Candidate]: ['user']
+};
+
 @Injectable()
 export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	constructor(
@@ -171,9 +179,13 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 			// related entity where condition (Filtered records with passed IDs)
 			const whereCondition = { id: In(entityIds) };
 
+			// Employees and candidates carry no name of their own: it lives on the linked user
+			const relations = FAVORITE_DETAIL_RELATIONS[favoriteType];
+
 			// Get related favorite records using findAll method and passing query params
 			const items = await this.favoriteDiscoveryService.callMethod(favoriteType, 'findAll', {
-				where: whereCondition
+				where: whereCondition,
+				...(relations && { relations })
 			});
 
 			// return found records for specific service
