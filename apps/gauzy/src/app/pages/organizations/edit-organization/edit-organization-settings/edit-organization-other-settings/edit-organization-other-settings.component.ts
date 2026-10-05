@@ -241,7 +241,7 @@ export class EditOrganizationOtherSettingsComponent
 	private accordionItemElements: QueryList<ElementRef<HTMLElement>>;
 
 	/**
-	 * Whether the section at this position is the one currently open.
+	 * Whether the section at this position is open.
 	 *
 	 * @param index position in `settingsSections`
 	 */
@@ -250,26 +250,42 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	/**
-	 * Reveal a settings section from the aside.
-	 *
-	 * The aside used to call `toggle()` on the accordion item and stop there, which
-	 * had two consequences. Clicking the section you were already reading closed it,
-	 * and — because the accordion is a single scrolling column roughly two thousand
-	 * lines long — opening anything below the fold moved nothing into view, so the
-	 * lower entries looked inert. This is an index into the page, so it opens rather
-	 * than toggles, and brings the section it opened with it.
+	 * The section last opened from the aside (General, open on load, to begin with). Several
+	 * sections can be open at once, so being open no longer singles one out: `aria-current` marks
+	 * this one only, while `aria-expanded` reports every open section.
+	 */
+	private currentSectionIndex = 0;
+
+	/**
+	 * Whether the section at this position is the one the aside last took the user to, and is
+	 * still open.
 	 *
 	 * @param index position in `settingsSections`
 	 */
-	openSection(index: number): void {
+	isCurrentSection(index: number): boolean {
+		return index === this.currentSectionIndex && this.isSectionExpanded(index);
+	}
+
+	/**
+	 * Toggle a settings section from the aside and bring it into view when opened.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	toggleSection(index: number): void {
 		const item = this.accordionItems?.get(index);
 		if (!item) {
 			return;
 		}
+		item.toggle();
 		if (!item.expanded) {
-			item.open();
+			return;
 		}
+		this.currentSectionIndex = index;
 		setTimeout(() => {
+			// A second click may have closed it again before this runs.
+			if (!item.expanded) {
+				return;
+			}
 			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
 				behavior: 'smooth',
 				block: 'start'

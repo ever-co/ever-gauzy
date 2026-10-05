@@ -16,7 +16,9 @@ import { EmailConfirmationService } from './email-confirmation.service';
 
 const USER = { id: 'user-1', email: 'jane+gauzy@corp.co', emailVerifiedAt: null } as unknown as IUser;
 
-function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUser } = {}) {
+function makeService(
+	options: { sent?: boolean; sendThrows?: boolean; user?: IUser; stored?: boolean; verified?: boolean } = {}
+) {
 	const emailService = {
 		emailVerification: jest.fn(async () => {
 			if (options.sendThrows) throw new Error('boom');
@@ -24,7 +26,8 @@ function makeService(options: { sent?: boolean; sendThrows?: boolean; user?: IUs
 		})
 	};
 	const userService = {
-		update: jest.fn(async () => undefined),
+		storeEmailVerificationCode: jest.fn(async () => options.stored ?? true),
+		markEmailAsVerified: jest.fn(async () => options.verified ?? true),
 		getIfExists: jest.fn(async () => options.user ?? USER)
 	};
 	const featureService = { isFeatureEnabled: jest.fn(async () => true) };
@@ -99,6 +102,58 @@ describe('EmailConfirmationService', () => {
 		it('reports false (and does not throw) when the send path throws', async () => {
 			const { service } = makeService({ sendThrows: true });
 			await expect(service.sendEmailVerification(USER, {})).resolves.toBe(false);
+		});
+
+		it('stores the link and code bound to the address the message is sent to', async () => {
+			const { service, userService } = makeService();
+
+			await service.sendEmailVerification(USER, {});
+
+			expect(userService.storeEmailVerificationCode).toHaveBeenCalledWith(
+				USER.id,
+				USER.email,
+				expect.objectContaining({
+					emailToken: 'hashed',
+					code: expect.any(String),
+					codeExpireAt: expect.any(Date)
+				})
+			);
+		});
+
+		it('sends nothing when the account no longer holds that address', async () => {
+			const { service, emailService } = makeService({ stored: false });
+
+			await expect(service.sendEmailVerification(USER, {})).resolves.toBe(false);
+			expect(emailService.emailVerification).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('confirmEmail', () => {
+		it('records the confirmation only for the address that was confirmed', async () => {
+			const { service, userService } = makeService();
+
+			await service.confirmEmail(USER);
+
+			expect(userService.markEmailAsVerified).toHaveBeenCalledWith(USER.id, USER.email);
+		});
+
+		it('answers OK when the confirmation was recorded', async () => {
+			const { service } = makeService({ verified: true });
+
+			await expect(service.confirmEmail(USER)).resolves.toEqual({ status: HttpStatus.OK, message: 'OK' });
+		});
+
+		it('fails when the account no longer holds the confirmed address (nothing was recorded)', async () => {
+			const { service } = makeService({ verified: false });
+
+			await expect(service.confirmEmail(USER)).rejects.toBeInstanceOf(BadRequestException);
+		});
+
+		it('fails when the confirmation could not be written', async () => {
+			const { service, userService } = makeService();
+			userService.markEmailAsVerified.mockRejectedValueOnce(new Error('connection reset'));
+
+			await expect(service.confirmEmail(USER)).rejects.toBeInstanceOf(BadRequestException);
 		});
 	});
 
