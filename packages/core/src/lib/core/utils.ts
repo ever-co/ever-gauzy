@@ -1063,6 +1063,21 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		case 'moreThan': {
 			return { $gt: operator.value };
 		}
+		// Without these, the operator fell through to the default `{}`, which MikroORM reads as "no
+		// condition": a max-only invoice total or a LIKE name search silently matched every row.
+		case 'lessThanOrEqual': {
+			return { $lte: operator.value };
+		}
+		case 'lessThan': {
+			return { $lt: operator.value };
+		}
+		case 'like': {
+			return { $like: operator.value };
+		}
+		case 'ilike': {
+			// `$ilike` is PostgreSQL-only in MikroORM; MySQL / SQLite LIKE is already case-insensitive
+			return isMikroOrmPostgres() ? { $ilike: operator.value } : { $like: operator.value };
+		}
 		// Add additional cases for other operator types if needed
 		default: {
 			// Handle unknown or unimplemented operator types
