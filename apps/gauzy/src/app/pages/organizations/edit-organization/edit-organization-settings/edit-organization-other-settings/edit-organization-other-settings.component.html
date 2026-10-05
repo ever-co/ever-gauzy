@@ -18,8 +18,8 @@
 						[class.active]="isSectionExpanded($index)"
 						[attr.aria-expanded]="isSectionExpanded($index)"
 						[attr.aria-controls]="'settings-section-' + section.key"
-						[attr.aria-current]="isSectionExpanded($index) ? 'true' : null"
-							(click)="toggleSection($index)"
+						[attr.aria-current]="isCurrentSection($index) ? 'true' : null"
+						(click)="toggleSection($index)"
 					>
 						{{ section.label | translate }}
 					</button>
@@ -29,7 +29,7 @@
 	</aside>
 	<section class="fields-section">
 		<div class="accordion-section">
-				<nb-accordion #accordion [multi]="true">
+			<nb-accordion #accordion [multi]="true">
 				<nb-accordion-item #general id="settings-section-general" [expanded]="true">
 					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}

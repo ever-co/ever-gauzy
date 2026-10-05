@@ -250,6 +250,23 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	/**
+	 * The section last opened from the aside (General, open on load, to begin with). Several
+	 * sections can be open at once, so being open no longer singles one out: `aria-current` marks
+	 * this one only, while `aria-expanded` reports every open section.
+	 */
+	private currentSectionIndex = 0;
+
+	/**
+	 * Whether the section at this position is the one the aside last took the user to, and is
+	 * still open.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	isCurrentSection(index: number): boolean {
+		return index === this.currentSectionIndex && this.isSectionExpanded(index);
+	}
+
+	/**
 	 * Toggle a settings section from the aside and bring it into view when opened.
 	 *
 	 * @param index position in `settingsSections`
@@ -263,6 +280,7 @@ export class EditOrganizationOtherSettingsComponent
 		if (!item.expanded) {
 			return;
 		}
+		this.currentSectionIndex = index;
 		setTimeout(() => {
 			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
 				behavior: 'smooth',
