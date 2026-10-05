@@ -108,7 +108,7 @@ export class TenantController {
 	async update(@Body() entity: UpdateTenantDTO): Promise<ITenant | UpdateResult> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			return await this.tenantService.update(tenantId, entity);
+			return await this.tenantService.updateProfile(tenantId, entity);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
