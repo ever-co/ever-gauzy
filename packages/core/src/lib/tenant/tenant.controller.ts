@@ -6,6 +6,7 @@ import {
 	Delete,
 	ForbiddenException,
 	Get,
+	HttpException,
 	HttpStatus,
 	Post,
 	Put,
@@ -110,6 +111,10 @@ export class TenantController {
 			const tenantId = RequestContext.currentTenantId();
 			return await this.tenantService.updateProfile(tenantId, entity);
 		} catch (error) {
+			// Keep a deliberate HTTP status (e.g. the 400 CrudService.update raises for an unknown image id).
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new ForbiddenException();
 		}
 	}
