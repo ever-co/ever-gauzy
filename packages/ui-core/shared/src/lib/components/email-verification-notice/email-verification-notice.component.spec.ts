@@ -178,6 +178,39 @@ describe('EmailVerificationNoticeComponent', () => {
 			expect(noticeText(fixture)).toBe('SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT');
 		});
 
+		it('re-checks, with the new address, when the signed-in user changes their email', () => {
+			let sent = true;
+			const { component, authService, user$ } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: sent })
+			});
+			expect(component.linkSent()).toBe(true);
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(1);
+
+			// Same user, new address: the link for the old one does not count for the new one.
+			sent = false;
+			user$.next({ ...UNVERIFIED, email: 'jane.new@corp.co' } as IUser);
+
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(2);
+			expect(component.email()).toBe('jane.new@corp.co');
+			expect(component.linkSent()).toBe(false);
+		});
+
+		it('drops a resend answer for the previous address once the user changed it', () => {
+			const pending = new Subject<Object>();
+			const { component, user$ } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: false }),
+				resend: () => pending
+			});
+			component.resend();
+			user$.next({ ...UNVERIFIED, email: 'jane.new@corp.co' } as IUser);
+			pending.next({ status: 200 });
+
+			expect(component.state()).toBe('idle');
+			expect(component.linkSent()).toBe(false);
+		});
+
 		it('forgets the "sent" state of the previous user when another user signs in', () => {
 			let sent = true;
 			const { component, user$ } = setup({

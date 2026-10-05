@@ -55,6 +55,8 @@ export class EmailVerificationNoticeComponent implements OnInit {
 	private dismissed = false;
 	/** The user the notice currently speaks for; a resend answer for anyone else is dropped. */
 	private currentUserId: string | null = null;
+	/** Their address: a link (sent, or being sent) belongs to one address, not to the account. */
+	private currentEmail: string | null = null;
 	private resendSubscription: Subscription | null = null;
 
 	private readonly store = inject(Store);
@@ -68,12 +70,20 @@ export class EmailVerificationNoticeComponent implements OnInit {
 				map((user: IUser) =>
 					user ? { id: user.id, email: user.email, unverified: user.isEmailVerified === false } : null
 				),
-				distinctUntilChanged((a, b) => a?.id === b?.id && a?.unverified === b?.unverified),
+				distinctUntilChanged(
+					(a, b) => a?.id === b?.id && a?.email === b?.email && a?.unverified === b?.unverified
+				),
 				switchMap((user) => {
 					// Another user signed in: forget the previous user's dismissal and resend (even one in flight).
 					if ((user?.id ?? null) !== this.currentUserId) {
 						this.currentUserId = user?.id ?? null;
+						this.currentEmail = user?.email ?? null;
 						this.dismissed = false;
+						this.linkSent.set(false);
+						this.resetResend();
+					} else if ((user?.email ?? null) !== this.currentEmail) {
+						// Same user, new address: whatever was sent (or is being sent) went to the old one.
+						this.currentEmail = user?.email ?? null;
 						this.linkSent.set(false);
 						this.resetResend();
 					}
@@ -101,24 +111,29 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		}
 		this.state.set('sending');
 		this.errorMessage.set(null);
-		const askedFor = this.currentUserId;
+		const askedFor = this.subjectKey();
 
 		this.resendSubscription = this.authService
 			.resendEmailVerificationLink()
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: () => {
-					if (this.currentUserId === askedFor) {
+					if (this.subjectKey() === askedFor) {
 						this.linkSent.set(true);
 						this.state.set('sent');
 					}
 				},
 				error: (error: HttpErrorResponse) => {
-					if (this.currentUserId === askedFor) {
+					if (this.subjectKey() === askedFor) {
 						this.onResendError(error);
 					}
 				}
 			});
+	}
+
+	/** Who and which address a resend answer belongs to. */
+	private subjectKey(): string {
+		return `${this.currentUserId ?? ''}|${this.currentEmail ?? ''}`;
 	}
 
 	dismiss(): void {
