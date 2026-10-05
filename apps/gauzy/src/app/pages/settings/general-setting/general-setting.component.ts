@@ -1,8 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, Validators } from '@angular/forms';
-import { IImageAsset, ITenant, PermissionsEnum, PreferredUiEnum, RolesEnum } from '@gauzy/contracts';
+import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { IImageAsset, ITenant, IWorkSpace, PermissionsEnum, PreferredUiEnum, RolesEnum } from '@gauzy/contracts';
 import { Store, TenantService, TenantUiPreferencesService, ToastrService } from '@gauzy/ui-core/core';
+
+/** The workspace switcher's fallback when a tenant has no logo (see `WorkspaceAuthService`). */
+const DEFAULT_WORKSPACE_LOGO = '/assets/images/default.svg';
+
+/** Rejects a value that is empty once trimmed — the API refuses a whitespace-only tenant name. */
+function notBlank(control: AbstractControl): ValidationErrors | null {
+	return typeof control.value === 'string' && control.value.length > 0 && !control.value.trim() ? { blank: true } : null;
+}
 
 /**
  * Settings → General. Groups, top to bottom:
@@ -56,7 +64,7 @@ export class GeneralSettingComponent implements OnInit {
 	private copiedTimer: ReturnType<typeof setTimeout> | null = null;
 
 	public readonly profileForm = this.fb.group({
-		name: ['', [Validators.required, Validators.maxLength(255)]],
+		name: ['', [Validators.required, notBlank, Validators.maxLength(255)]],
 		imageId: [null as string | null],
 		logo: [null as string | null]
 	});
@@ -131,15 +139,31 @@ export class GeneralSettingComponent implements OnInit {
 			return;
 		}
 		const { name, imageId, logo } = this.profileForm.getRawValue();
+		const input = { name: (name ?? '').trim(), imageId, logo };
 		this.profileSaving.set(true);
 		try {
-			await this.tenantService.update({ name: (name ?? '').trim(), imageId, logo });
-			const tenant = await this.tenantService.getCurrent();
+			try {
+				await this.tenantService.update(input);
+			} catch (error) {
+				this.toastr.danger(error?.error?.message ?? 'SETTINGS_GENERAL.TENANT_PROFILE.SAVE_ERROR');
+				return;
+			}
+			// The save went through. `PUT /tenant` answers with an UpdateResult, so re-read the
+			// tenant; should that fail, show what was just saved instead of the stale values.
+			let tenant: ITenant;
+			try {
+				tenant = await this.tenantService.getCurrent();
+			} catch {
+				const previous = this.tenant();
+				tenant = {
+					...previous,
+					...input,
+					image: imageId && imageId === previous?.imageId ? previous?.image : null
+				};
+			}
 			this.applyTenant(tenant);
 			this.syncStoreTenant(tenant);
 			this.toastr.success('SETTINGS_GENERAL.TENANT_PROFILE.SAVED');
-		} catch (error) {
-			this.toastr.danger(error?.error?.message ?? 'SETTINGS_GENERAL.TENANT_PROFILE.SAVE_ERROR');
 		} finally {
 			this.profileSaving.set(false);
 		}
@@ -176,15 +200,27 @@ export class GeneralSettingComponent implements OnInit {
 		this.logoUrl.set(logo);
 	}
 
-	/** The workspace switcher and sidebar logo read `user.tenant`; refresh them without a reload. */
+	/**
+	 * The sidebar logo and the workspace switcher read the selected workspace, the cached
+	 * workspace list and `user.tenant`; refresh all three without a reload.
+	 */
 	private syncStoreTenant(tenant: ITenant): void {
 		const user = this.store.user;
-		if (!user) {
-			return;
+		if (user) {
+			this.store.user = {
+				...user,
+				tenant: { ...user.tenant, name: tenant.name, logo: tenant.logo, imageId: tenant.imageId, image: tenant.image }
+			};
 		}
-		this.store.user = {
-			...user,
-			tenant: { ...user.tenant, name: tenant.name, logo: tenant.logo, imageId: tenant.imageId, image: tenant.image }
-		};
+		const toWorkspace = (workspace: IWorkSpace): IWorkSpace =>
+			workspace?.id === tenant.id
+				? { ...workspace, name: tenant.name, imgUrl: tenant.logo || DEFAULT_WORKSPACE_LOGO }
+				: workspace;
+		if (this.store.workspaces.some((workspace) => workspace.id === tenant.id)) {
+			this.store.workspaces = this.store.workspaces.map(toWorkspace);
+		}
+		if (this.store.selectedWorkspace?.id === tenant.id) {
+			this.store.selectedWorkspace = toWorkspace(this.store.selectedWorkspace);
+		}
 	}
 }

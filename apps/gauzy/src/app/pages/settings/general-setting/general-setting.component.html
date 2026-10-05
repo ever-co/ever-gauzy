@@ -96,11 +96,17 @@
 									formControlName="name"
 									[placeholder]="'SETTINGS_GENERAL.TENANT_PROFILE.NAME_PLACEHOLDER' | translate"
 									[status]="
-										profileForm.controls.name.touched && profileForm.controls.name.invalid ? 'danger' : 'basic'
+										(profileForm.controls.name.touched || profileForm.controls.name.dirty) &&
+										profileForm.controls.name.invalid
+											? 'danger'
+											: 'basic'
 									"
 								/>
 							</div>
-							@if (profileForm.controls.name.touched && profileForm.controls.name.hasError('required')) {
+							@if (
+								(profileForm.controls.name.touched || profileForm.controls.name.dirty) &&
+								(profileForm.controls.name.hasError('required') || profileForm.controls.name.hasError('blank'))
+							) {
 								<span class="field-error">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.NAME_REQUIRED' | translate }}</span>
 							}
 						</div>
