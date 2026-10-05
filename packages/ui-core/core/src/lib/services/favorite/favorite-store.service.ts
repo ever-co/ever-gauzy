@@ -95,7 +95,10 @@ export class FavoriteStoreService {
 						...(employeeId && { employeeId })
 					}
 				})
-				.then(({ items: details }: { items: IFavorite[]; total: number }) => {
+				.then(({ items }: { items: IFavorite[]; total: number }) =>
+					this._withPersonNames(entityType as BaseEntityEnum, items)
+				)
+				.then((details) => {
 					if (!details || !Array.isArray(details)) {
 						return [];
 					}
@@ -106,12 +109,7 @@ export class FavoriteStoreService {
 								return null;
 							}
 
-							const rawTitle =
-								(item as unknown as { name?: string; title?: string; profile_link?: string }).name ||
-								(item as unknown as { name?: string; title?: string; profile_link?: string }).title ||
-								(item as unknown as { name?: string; title?: string; profile_link?: string })
-									.profile_link ||
-								'Untitled';
+							const rawTitle = this._getFavoriteTitle(item) || 'Untitled';
 							const title = this._truncateTitle(rawTitle);
 							return {
 								id: `favorite-${entityType}-${item.id}`,
@@ -134,6 +132,62 @@ export class FavoriteStoreService {
 
 		const allFavoriteItems = await Promise.all(favoritePromises);
 		return allFavoriteItems.flat();
+	}
+
+	/**
+	 * Employees and candidates get their name from the linked user. Older APIs return them from the
+	 * favorite details endpoint without it (leaving only the "roster-r" style slug), so load any
+	 * missing user here.
+	 */
+	private async _withPersonNames(entityType: BaseEntityEnum, items: IFavorite[]): Promise<IFavorite[]> {
+		if (
+			!Array.isArray(items) ||
+			(entityType !== BaseEntityEnum.Employee && entityType !== BaseEntityEnum.Candidate)
+		) {
+			return items;
+		}
+
+		return Promise.all(
+			items.map(async (item) => {
+				if (!item?.id || (item as { user?: unknown }).user) {
+					return item;
+				}
+				try {
+					const person = await this._favoriteService.getPersonWithUser(
+						entityType as BaseEntityEnum.Employee | BaseEntityEnum.Candidate,
+						item.id
+					);
+					return { ...item, user: person?.user } as IFavorite;
+				} catch {
+					return item;
+				}
+			})
+		);
+	}
+
+	/**
+	 * Resolves a display name for a favorite's entity. Employees and candidates have no name of their own,
+	 * it comes from the linked user and is shortened to "First L." (e.g. "Roster R.").
+	 */
+	private _getFavoriteTitle(item: unknown): string | undefined {
+		const entity = item as {
+			name?: string;
+			title?: string;
+			fullName?: string;
+			profile_link?: string;
+			user?: { firstName?: string; lastName?: string; email?: string };
+		};
+		if (entity.name || entity.title) {
+			return entity.name || entity.title;
+		}
+
+		const firstName = entity.user?.firstName?.trim();
+		const lastName = entity.user?.lastName?.trim();
+		if (firstName || lastName) {
+			return firstName && lastName ? `${firstName} ${lastName.charAt(0).toUpperCase()}.` : firstName || lastName;
+		}
+
+		return entity.fullName || entity.user?.email || entity.profile_link;
 	}
 
 	private _truncateTitle(title: string, maxLength = 24): string {
