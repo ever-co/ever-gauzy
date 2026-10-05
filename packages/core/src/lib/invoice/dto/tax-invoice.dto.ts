@@ -1,5 +1,5 @@
-import { DiscountTaxTypeEnum } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
+import { DiscountTaxTypeEnum, TaxCalculationTypeEnum } from "@gauzy/contracts";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsNumber, IsEnum } from "class-validator";
 
 export class TaxInvoiceDTO {
@@ -12,6 +12,12 @@ export class TaxInvoiceDTO {
     @IsOptional()
     @IsEnum(DiscountTaxTypeEnum)
     tax2Type: DiscountTaxTypeEnum;
+
+    /** Declared because create/update validate with `whitelist: true`, which strips undeclared fields. */
+    @ApiPropertyOptional({ type: () => String, enum: TaxCalculationTypeEnum })
+    @IsOptional()
+    @IsEnum(TaxCalculationTypeEnum)
+    taxCalculationType?: TaxCalculationTypeEnum;
 
     @ApiProperty({ type: () => Number, readOnly: true })
     @IsOptional()

@@ -441,6 +441,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			tax2: tax2 ? tax2.originalValue : 0,
 			taxType: this.selectedInvoice.taxType,
 			tax2Type: this.selectedInvoice.tax2Type,
+			taxCalculationType: this.selectedInvoice.taxCalculationType,
 			terms: this.selectedInvoice.terms,
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
