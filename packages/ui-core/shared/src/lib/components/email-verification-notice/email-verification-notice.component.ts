@@ -125,7 +125,7 @@ export class EmailVerificationNoticeComponent implements OnInit {
 				},
 				error: (error: HttpErrorResponse) => {
 					if (this.subjectKey() === askedFor) {
-						this.onResendError(error);
+						this.onResendError(error, askedFor);
 					}
 				}
 			});
@@ -148,8 +148,28 @@ export class EmailVerificationNoticeComponent implements OnInit {
 		this.errorMessage.set(null);
 	}
 
+	/**
+	 * Re-read whether a working link is out, after a resend the API did not complete. The API
+	 * replaces the stored token and code before it sends, so a refused send can leave the link from
+	 * an earlier email dead: "We sent you a link" may no longer be true. The answer is dropped when
+	 * the user or address changed meanwhile, and a failed lookup leaves the notice as it was.
+	 */
+	private refreshLinkSent(askedFor: string): void {
+		this.authService
+			.getEmailVerificationStatus()
+			.pipe(
+				catchError(() => of(null)),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((status) => {
+				if (status && this.subjectKey() === askedFor) {
+					this.linkSent.set(status.verificationEmailSent === true);
+				}
+			});
+	}
+
 	/** Only called while the user who asked is still the signed-in one (see `resend`). */
-	private onResendError(error: HttpErrorResponse): void {
+	private onResendError(error: HttpErrorResponse, askedFor: string): void {
 		const apiMessage = typeof error?.error?.message === 'string' ? error.error.message : null;
 
 		// Verified in another tab (or by code) since the page loaded: stop asking.
@@ -164,8 +184,12 @@ export class EmailVerificationNoticeComponent implements OnInit {
 
 		this.state.set('error');
 		if (error?.status === 429) {
+			// Rejected by the rate limit before anything was attempted: nothing changed server-side.
 			this.errorMessage.set(this.translate.instant('EMAIL_VERIFICATION.TOO_MANY_REQUESTS'));
-		} else if (apiMessage && (error.status === 503 || (error.status >= 400 && error.status < 500))) {
+			return;
+		}
+		this.refreshLinkSent(askedFor);
+		if (apiMessage && (error.status === 503 || (error.status >= 400 && error.status < 500))) {
 			// 503 carries "We could not send the verification email right now…", written for people.
 			this.errorMessage.set(apiMessage);
 		} else {

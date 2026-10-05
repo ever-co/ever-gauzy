@@ -178,6 +178,43 @@ describe('EmailVerificationNoticeComponent', () => {
 			expect(noticeText(fixture)).toBe('SETTINGS_MENU.BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT');
 		});
 
+		it('re-reads the status after a refused resend: the earlier link may no longer work', () => {
+			// The API replaces the token before sending, so a refused resend kills the earlier link.
+			let sent = true;
+			const { component, fixture, authService } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: sent }),
+				resend: () => {
+					sent = false;
+					return throwError(() => new HttpErrorResponse({ status: 503, error: { message: 'try later' } }));
+				}
+			});
+			expect(component.linkSent()).toBe(true);
+
+			component.resend();
+
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(2);
+			expect(component.state()).toBe('error');
+			expect(component.errorMessage()).toBe('try later');
+			expect(component.linkSent()).toBe(false);
+			expect(noticeText(fixture)).toBe('EMAIL_VERIFICATION.NOTICE_NOT_SENT');
+			expect(sendButtonText(fixture)).toBe('EMAIL_VERIFICATION.SEND');
+		});
+
+		it('does not re-read the status when the rate limit refused the resend (nothing was attempted)', () => {
+			const { component, authService } = setup({
+				user: UNVERIFIED,
+				status: () => of({ isEmailVerified: false, verificationEmailSent: true }),
+				resend: () => throwError(() => new HttpErrorResponse({ status: 429 }))
+			});
+
+			component.resend();
+
+			expect(authService.getEmailVerificationStatus).toHaveBeenCalledTimes(1);
+			expect(component.state()).toBe('error');
+			expect(component.linkSent()).toBe(true);
+		});
+
 		it('re-checks, with the new address, when the signed-in user changes their email', () => {
 			let sent = true;
 			const { component, authService, user$ } = setup({
