@@ -3,8 +3,6 @@
 		@if (employee) {
 		<!-- ── Profile header: who, their presence, and the actions on them ── -->
 		<div class="profile-row">
-			<ngx-back-navigation class="back"></ngx-back-navigation>
-
 			<span class="avatar" [ngClass]="'presence-' + presence.tone">
 				@if (avatarUrl) {
 				<img [src]="avatarUrl" [alt]="displayName" />
@@ -42,6 +40,7 @@
 			</div>
 
 			<div class="profile-actions">
+				<ngx-back-navigation class="back"></ngx-back-navigation>
 				<!-- The only action on a read-only page: hand over to the editor,
 				     behind the editor's own permission. -->
 				<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT]">
@@ -381,7 +380,7 @@
 			<div class="profile-main">
 				<!-- About -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.ABOUT', icon: 'person-outline', section: 'account' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.ABOUT', icon: 'person-outline' }"></ng-container>
 					<div class="panel-body">
 						@if (profile.shortDescription || profile.description) {
 						@if (profile.shortDescription) {
@@ -398,7 +397,7 @@
 
 				<!-- Employment -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT', icon: 'briefcase-outline', section: 'employment' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT', icon: 'briefcase-outline' }"></ng-container>
 					<div class="panel-body">
 						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: profile.employment }"></ng-container>
 					</div>
@@ -406,7 +405,7 @@
 
 				<!-- Rates -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES', icon: 'credit-card-outline', section: 'rates' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES', icon: 'credit-card-outline' }"></ng-container>
 					<div class="panel-body">
 						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: profile.rates }"></ng-container>
 					</div>
@@ -414,7 +413,7 @@
 
 				<!-- Skills & tags -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.SKILLS_TAGS', icon: 'star-outline', section: 'account' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.SKILLS_TAGS', icon: 'star-outline' }"></ng-container>
 					<div class="panel-body chip-groups">
 						@if (profile.skills.length || profile.tags.length) {
 						@if (profile.skills.length) {
@@ -447,7 +446,7 @@
 			<aside class="profile-side">
 				<!-- Contact -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.CONTACT', icon: 'phone-outline', section: 'account' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.CONTACT', icon: 'phone-outline' }"></ng-container>
 					<div class="panel-body">
 						@if (profile.contact.length) {
 						<ul class="side-list">
@@ -473,7 +472,7 @@
 
 				<!-- Location -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION', icon: 'pin-outline', section: 'location' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION', icon: 'pin-outline' }"></ng-container>
 					<div class="panel-body">
 						@if (profile.address.length) {
 						<address class="address">
@@ -489,7 +488,7 @@
 
 				<!-- Social profiles -->
 				<section class="panel">
-					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS', icon: 'share-outline', section: 'networks' }"></ng-container>
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS', icon: 'share-outline' }"></ng-container>
 					<div class="panel-body">
 						@if (profile.socials.length) {
 						<ul class="side-list">
@@ -565,19 +564,13 @@
 	}
 </ng-template>
 
-<!-- A Profile card's header: icon, title, and an Edit link into the matching edit tab. -->
-<ng-template #cardHeader let-title="title" let-icon="icon" let-section="section">
+<!-- A Profile card's header: icon and title. Editing is the page header's Edit button. -->
+<ng-template #cardHeader let-title="title" let-icon="icon">
 	<header class="panel-header">
 		<h5 class="panel-title panel-title--icon">
 			<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
 			{{ title | translate }}
 		</h5>
-		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT]">
-			<button type="button" class="panel-link" (click)="editSection(section)">
-				<nb-icon icon="edit-2-outline" aria-hidden="true"></nb-icon>
-				{{ 'BUTTONS.EDIT' | translate }}
-			</button>
-		</ng-template>
 	</header>
 </ng-template>
 
