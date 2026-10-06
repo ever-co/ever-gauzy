@@ -657,14 +657,6 @@ nb-sidebar[tag='menu-sidebar'] {
   margin-right: 0;
 }
 
-// ── The draggable Timer card paints over the nav menu ───────────────────────
-//
-// The Timer card (ngx-web-time-tracker) is rendered INSIDE the header band, and the fixed band is
-// a stacking context at z-index 1040 — so the card's own z-index cannot lift it past the nav menu
-// sidebar (1041) or the workspace menu (1042); dragged next to the menu, the menu covered it.
-// While the card is open the band is lifted to 1043 instead: above every sidebar, still below the
-// CDK overlay container (1050), so the card's own Client/Project/Task dropdowns open over it.
-// The band and the menu do not overlap geometrically, so only the card itself changes order.
 :host ::ng-deep nb-layout .layout nb-layout-header.fixed:has(ngx-web-time-tracker .timer-card) {
   z-index: 1043;
 }
