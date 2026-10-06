@@ -50,9 +50,22 @@ nb-card {
 	min-width: 0;
 }
 
+// Back sits beside Edit, centred on the button row rather than on the avatar.
 .back {
 	flex: 0 0 auto;
-	margin-top: 0.75rem;
+	display: inline-flex;
+	align-items: center;
+
+	// The shared button carries a 1.5rem trailing margin for its usual spot
+	// before a page title; here the actions row's gap spaces it, and it takes
+	// the Edit button's height so the two read as one group.
+	// Qualified past the shared rule, which is direction-scoped (`[dir=ltr] :host
+	// .main button`) and outranks a plain `.main button`.
+	.profile-actions & ::ng-deep .main button.appearance-outline {
+		margin: 0;
+		width: 2rem;
+		height: 2rem;
+	}
 }
 
 .avatar {
@@ -211,6 +224,7 @@ nb-card {
 .profile-actions {
 	flex: 0 0 auto;
 	display: flex;
+	align-items: center;
 	gap: $gap-sm;
 	margin-top: 0.5rem;
 }
