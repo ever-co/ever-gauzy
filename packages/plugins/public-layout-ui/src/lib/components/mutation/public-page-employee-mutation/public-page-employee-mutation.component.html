@@ -17,27 +17,36 @@
 			</button>
 		</div>
 
-		<nav class="tabs" role="tablist">
+		<!-- Full tab pattern: each tab names the pane it controls, each pane the tab that labels it. -->
+		<div class="tabs" role="tablist">
 			@for (tab of tabs; track tab.id) {
 			<button
 				type="button"
 				role="tab"
 				class="tab"
-				[class.is-active]="activeTab === tab.id"
+				[id]="'public-edit-tab-' + tab.id"
+				[attr.aria-controls]="'public-edit-pane-' + tab.id"
 				[attr.aria-selected]="activeTab === tab.id"
+				[class.is-active]="activeTab === tab.id"
 				(click)="activeTab = tab.id"
 			>
 				<nb-icon [icon]="tab.icon" aria-hidden="true"></nb-icon>
 				{{ tab.title | translate }}
 			</button>
 			}
-		</nav>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body class="dialog-body">
 		<form [formGroup]="form">
 			<!-- Account -->
-			<div class="pane" [hidden]="activeTab !== 'account'">
+			<div
+				class="pane"
+				role="tabpanel"
+				id="public-edit-pane-account"
+				aria-labelledby="public-edit-tab-account"
+				[hidden]="activeTab !== 'account'"
+			>
 				<section class="section">
 					<div class="grid">
 						<div class="field">
@@ -71,7 +80,13 @@
 			</div>
 
 			<!-- Employment -->
-			<div class="pane" [hidden]="activeTab !== 'employment'">
+			<div
+				class="pane"
+				role="tabpanel"
+				id="public-edit-pane-employment"
+				aria-labelledby="public-edit-tab-employment"
+				[hidden]="activeTab !== 'employment'"
+			>
 				<section class="section">
 					<div class="grid">
 						<div class="field">
@@ -139,7 +154,13 @@
 			</div>
 
 			<!-- Rates -->
-			<div class="pane pane--split" [hidden]="activeTab !== 'rates'">
+			<div
+				class="pane pane--split"
+				role="tabpanel"
+				id="public-edit-pane-rates"
+				aria-labelledby="public-edit-tab-rates"
+				[hidden]="activeTab !== 'rates'"
+			>
 				<section class="section">
 					<h6 class="section-title">{{ 'FORM.RATES.DEFAULT_RATE' | translate }}</h6>
 					<div class="grid">
@@ -197,7 +218,13 @@
 			</div>
 
 			<!-- Awards -->
-			<div class="pane" [hidden]="activeTab !== 'awards'">
+			<div
+				class="pane"
+				role="tabpanel"
+				id="public-edit-pane-awards"
+				aria-labelledby="public-edit-tab-awards"
+				[hidden]="activeTab !== 'awards'"
+			>
 				<section class="section">
 					@if (employeeAwards?.length) {
 					<ul class="awards">
@@ -251,7 +278,13 @@
 			</div>
 
 			<!-- Privacy -->
-			<div class="pane" [hidden]="activeTab !== 'privacy'">
+			<div
+				class="pane"
+				role="tabpanel"
+				id="public-edit-pane-privacy"
+				aria-labelledby="public-edit-tab-privacy"
+				[hidden]="activeTab !== 'privacy'"
+			>
 				<section class="section">
 					<p class="section-help">{{ 'PUBLIC_PAGE.EDIT.PRIVACY_HELP' | translate }}</p>
 					<ul class="settings">
