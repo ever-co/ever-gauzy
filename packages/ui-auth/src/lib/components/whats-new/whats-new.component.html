@@ -1,37 +1,10 @@
-<!-- Mirrors the register page's "Gauzy features" panel (register-side-features)
-     so both auth side panels share one look; entries add a date and a
-     "Learn more" hint. -->
-<section class="main-section">
-	<h4 class="main-header">
-		{{ 'CHANGELOG_MENU.HEADER' | translate }}
-	</h4>
-	@for (item of items$ | async; track item.id; let last = $last) {
-		<a
-			class="entry"
-			[class.linked]="item.learnMoreUrl"
-			[attr.href]="item.learnMoreUrl || null"
-			[attr.target]="item.learnMoreUrl ? '_blank' : null"
-			[attr.rel]="item.learnMoreUrl ? 'noopener noreferrer' : null"
-		>
-			<div class="headings-wrapper">
-				<nb-icon [icon]="item.icon"></nb-icon>
-				<div class="headings">
-					<span class="heading">{{ item.title }}</span>
-					@if (item.date) {
-						<span class="date">{{ item.date | date }}</span>
-					}
-				</div>
-			</div>
-			<p class="description">{{ item.content }}</p>
-			@if (item.imageUrl) {
-				<img [src]="item.imageUrl" [alt]="item.title || ''" class="entry-img" />
-			}
-			@if (item.learnMoreUrl) {
-				<span class="learn-more">{{ 'CHANGELOG_MENU.LEARN_MORE_URL' | translate }}</span>
-			}
-		</a>
-		@if (!last) {
-			<div class="small-hr-div"></div>
+<section class="section-wrapper">
+	<div class="whats-new-wrapper">
+		<h3 class="main-header">
+			{{ 'CHANGELOG_MENU.HEADER' | translate }}
+		</h3>
+		@for (item of items$ | async; track item.id; let last = $last) {
+			<ngx-changelog-entry class="on-gradient" [class.last]="last" [entry]="item" />
 		}
-	}
+	</div>
 </section>
