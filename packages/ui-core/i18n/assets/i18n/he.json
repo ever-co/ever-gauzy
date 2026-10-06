@@ -2000,7 +2000,78 @@
 			"PREVIOUS": "Previous"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "תקופה",
+			"PERIODS": {
+				"THIS_WEEK": "השבוע",
+				"THIS_MONTH": "החודש",
+				"LAST_30_DAYS": "30 הימים האחרונים"
+			},
+			"TABS": {
+				"OVERVIEW": "סקירה",
+				"PROFILE": "פרופיל"
+			},
+			"PRESENCE": {
+				"TRACKING": "רושם זמן",
+				"ONLINE": "מחובר",
+				"AWAY": "לא ליד המחשב",
+				"OFFLINE": "לא מחובר"
+			},
+			"LOCAL_TIME": "שעה מקומית",
+			"MEMBER_SINCE": "חבר מאז",
+			"WEEKLY_LIMIT": "מגבלה שבועית",
+			"WORKED_TODAY": "עבד היום",
+			"WORKED_PERIOD": "עבד בתקופה",
+			"ACTIVITY_META": "{{ value }} פעילות",
+			"AVG_ACTIVITY": "פעילות ממוצעת",
+			"OPEN_TASKS": "משימות פתוחות",
+			"OPEN_TASKS_META": "{{ progress }} בתהליך · {{ overdue }} באיחור",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "לעומת השבוע שעבר",
+				"THIS_MONTH": "לעומת החודש שעבר",
+				"LAST_30_DAYS": "לעומת 30 הימים הקודמים"
+			},
+			"HOURS_WORKED": "שעות עבודה",
+			"HOURS_META": "{{ total }} סה״כ · {{ average }} ליום עבודה",
+			"TRACKED": "נרשם",
+			"MANUAL": "ידני",
+			"OPEN_TIMESHEET": "פתח גיליון שעות",
+			"PROJECTS": "פרויקטים",
+			"RECENT_SCREENSHOTS": "צילומי מסך אחרונים",
+			"VIEW_ALL": "הצג הכל",
+			"ASSIGNED_TASKS": "משימות שהוקצו",
+			"TASKS_META": "{{ open }} פתוחות · {{ done }} הושלמו",
+			"STATUS": {
+				"TODO": "לביצוע",
+				"IN_PROGRESS": "בתהליך",
+				"BLOCKED": "חסומה",
+				"DONE": "הושלמה"
+			},
+			"COLUMNS": {
+				"TASK": "משימה",
+				"PROJECT": "פרויקט",
+				"STATUS": "סטטוס",
+				"DUE": "תאריך יעד",
+				"TIME": "זמן",
+				"NAME": "שם"
+			},
+			"TOP_TASKS": "המשימות שעליהן עבדו הכי הרבה",
+			"APPS_URLS": "אפליקציות וכתובות URL",
+			"NO_TIME": "לא נרשם זמן בתקופה זו",
+			"NO_TASKS": "אין משימות שהוקצו",
+			"NO_APPS": "אין פעילות אפליקציות או URL בתקופה זו",
+			"NO_SCREENSHOTS": "אין צילומי מסך בתקופה זו",
+			"UNAVAILABLE": "אין לך גישה לנתונים אלה",
+			"PROFILE": {
+				"ABOUT": "אודות",
+				"CONTACT": "יצירת קשר",
+				"SKILLS_TAGS": "כישורים ותגיות",
+				"TIME_ZONE": "אזור זמן",
+				"NOT_PROVIDED": "טרם צוין",
+				"NO_DESCRIPTION": "עדיין לא נוסף תיאור"
+			}
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",

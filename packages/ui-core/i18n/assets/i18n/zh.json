@@ -1958,7 +1958,78 @@
 			"PREVIOUS": "以前"
 		},
 		"NOT_STARTED": "未开始",
-		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。"
+		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。",
+		"VIEW": {
+			"PERIOD": "期间",
+			"PERIODS": {
+				"THIS_WEEK": "本周",
+				"THIS_MONTH": "本月",
+				"LAST_30_DAYS": "最近 30 天"
+			},
+			"TABS": {
+				"OVERVIEW": "概览",
+				"PROFILE": "个人资料"
+			},
+			"PRESENCE": {
+				"TRACKING": "正在计时",
+				"ONLINE": "在线",
+				"AWAY": "离开",
+				"OFFLINE": "离线"
+			},
+			"LOCAL_TIME": "当地时间",
+			"MEMBER_SINCE": "加入时间",
+			"WEEKLY_LIMIT": "每周上限",
+			"WORKED_TODAY": "今日工作",
+			"WORKED_PERIOD": "期间工作",
+			"ACTIVITY_META": "{{ value }} 活跃度",
+			"AVG_ACTIVITY": "平均活跃度",
+			"OPEN_TASKS": "未完成任务",
+			"OPEN_TASKS_META": "{{ progress }} 进行中 · {{ overdue }} 已逾期",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "较上周",
+				"THIS_MONTH": "较上月",
+				"LAST_30_DAYS": "较前 30 天"
+			},
+			"HOURS_WORKED": "工作时长",
+			"HOURS_META": "共 {{ total }} · 每个工作日 {{ average }}",
+			"TRACKED": "已追踪",
+			"MANUAL": "手动",
+			"OPEN_TIMESHEET": "打开时间表",
+			"PROJECTS": "项目",
+			"RECENT_SCREENSHOTS": "最近截图",
+			"VIEW_ALL": "查看全部",
+			"ASSIGNED_TASKS": "已分配任务",
+			"TASKS_META": "{{ open }} 未完成 · {{ done }} 已完成",
+			"STATUS": {
+				"TODO": "待办",
+				"IN_PROGRESS": "进行中",
+				"BLOCKED": "已阻塞",
+				"DONE": "已完成"
+			},
+			"COLUMNS": {
+				"TASK": "任务",
+				"PROJECT": "项目",
+				"STATUS": "状态",
+				"DUE": "截止日期",
+				"TIME": "时长",
+				"NAME": "名称"
+			},
+			"TOP_TASKS": "耗时最多的任务",
+			"APPS_URLS": "应用和网址",
+			"NO_TIME": "本期间未记录时间",
+			"NO_TASKS": "没有分配的任务",
+			"NO_APPS": "本期间没有应用或网址活动",
+			"NO_SCREENSHOTS": "本期间没有截图",
+			"UNAVAILABLE": "您无权访问这些数据",
+			"PROFILE": {
+				"ABOUT": "简介",
+				"CONTACT": "联系方式",
+				"SKILLS_TAGS": "技能和标签",
+				"TIME_ZONE": "时区",
+				"NOT_PROVIDED": "尚未填写",
+				"NO_DESCRIPTION": "尚未添加描述"
+			}
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "所有目标",

@@ -1957,7 +1957,78 @@
 			"PREVIOUS": "السابق"
 		},
 		"NOT_STARTED": "لم يبدأ بعد",
-		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ."
+		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ.",
+		"VIEW": {
+			"PERIOD": "الفترة",
+			"PERIODS": {
+				"THIS_WEEK": "هذا الأسبوع",
+				"THIS_MONTH": "هذا الشهر",
+				"LAST_30_DAYS": "آخر 30 يومًا"
+			},
+			"TABS": {
+				"OVERVIEW": "نظرة عامة",
+				"PROFILE": "الملف الشخصي"
+			},
+			"PRESENCE": {
+				"TRACKING": "يسجّل الوقت",
+				"ONLINE": "متصل",
+				"AWAY": "بعيد",
+				"OFFLINE": "غير متصل"
+			},
+			"LOCAL_TIME": "الوقت المحلي",
+			"MEMBER_SINCE": "عضو منذ",
+			"WEEKLY_LIMIT": "الحد الأسبوعي",
+			"WORKED_TODAY": "عمل اليوم",
+			"WORKED_PERIOD": "عمل خلال الفترة",
+			"ACTIVITY_META": "نشاط {{ value }}",
+			"AVG_ACTIVITY": "متوسط النشاط",
+			"OPEN_TASKS": "المهام المفتوحة",
+			"OPEN_TASKS_META": "{{ progress }} قيد التنفيذ · {{ overdue }} متأخرة",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "مقارنة بالأسبوع الماضي",
+				"THIS_MONTH": "مقارنة بالشهر الماضي",
+				"LAST_30_DAYS": "مقارنة بالـ 30 يومًا السابقة"
+			},
+			"HOURS_WORKED": "ساعات العمل",
+			"HOURS_META": "{{ total }} إجمالي · {{ average }} لكل يوم عمل",
+			"TRACKED": "مسجّل",
+			"MANUAL": "يدوي",
+			"OPEN_TIMESHEET": "فتح سجل الدوام",
+			"PROJECTS": "المشاريع",
+			"RECENT_SCREENSHOTS": "لقطات الشاشة الأخيرة",
+			"VIEW_ALL": "عرض الكل",
+			"ASSIGNED_TASKS": "المهام المسندة",
+			"TASKS_META": "{{ open }} مفتوحة · {{ done }} منجزة",
+			"STATUS": {
+				"TODO": "للتنفيذ",
+				"IN_PROGRESS": "قيد التنفيذ",
+				"BLOCKED": "محظورة",
+				"DONE": "منجزة"
+			},
+			"COLUMNS": {
+				"TASK": "المهمة",
+				"PROJECT": "المشروع",
+				"STATUS": "الحالة",
+				"DUE": "الاستحقاق",
+				"TIME": "الوقت",
+				"NAME": "الاسم"
+			},
+			"TOP_TASKS": "أكثر المهام عملًا",
+			"APPS_URLS": "التطبيقات والروابط",
+			"NO_TIME": "لم يُسجَّل وقت في هذه الفترة",
+			"NO_TASKS": "لا توجد مهام مسندة",
+			"NO_APPS": "لا يوجد نشاط للتطبيقات أو الروابط في هذه الفترة",
+			"NO_SCREENSHOTS": "لا توجد لقطات شاشة في هذه الفترة",
+			"UNAVAILABLE": "ليس لديك صلاحية الوصول إلى هذه البيانات",
+			"PROFILE": {
+				"ABOUT": "نبذة",
+				"CONTACT": "التواصل",
+				"SKILLS_TAGS": "المهارات والوسوم",
+				"TIME_ZONE": "المنطقة الزمنية",
+				"NOT_PROVIDED": "لم يُحدَّد بعد",
+				"NO_DESCRIPTION": "لم يُضف وصف بعد"
+			}
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "جميع الأهداف",

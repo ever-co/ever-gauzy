@@ -1958,7 +1958,78 @@
 			"PREVIOUS": "Vorige"
 		},
 		"NOT_STARTED": "Niet begonnen",
-		"NOT_STARTED_HELP": "De begindatum van het werk is niet ingesteld voor deze werknemer. De werknemer wordt niet meegenomen in de boekhouding, gesplitste kosten, enz."
+		"NOT_STARTED_HELP": "De begindatum van het werk is niet ingesteld voor deze werknemer. De werknemer wordt niet meegenomen in de boekhouding, gesplitste kosten, enz.",
+		"VIEW": {
+			"PERIOD": "Periode",
+			"PERIODS": {
+				"THIS_WEEK": "Deze week",
+				"THIS_MONTH": "Deze maand",
+				"LAST_30_DAYS": "Laatste 30 dagen"
+			},
+			"TABS": {
+				"OVERVIEW": "Overzicht",
+				"PROFILE": "Profiel"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registreert tijd",
+				"ONLINE": "Online",
+				"AWAY": "Afwezig",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Lokale tijd",
+			"MEMBER_SINCE": "Lid sinds",
+			"WEEKLY_LIMIT": "Weeklimiet",
+			"WORKED_TODAY": "Vandaag gewerkt",
+			"WORKED_PERIOD": "Gewerkt in periode",
+			"ACTIVITY_META": "{{ value }} activiteit",
+			"AVG_ACTIVITY": "Gemiddelde activiteit",
+			"OPEN_TASKS": "Open taken",
+			"OPEN_TASKS_META": "{{ progress }} bezig · {{ overdue }} te laat",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "t.o.v. vorige week",
+				"THIS_MONTH": "t.o.v. vorige maand",
+				"LAST_30_DAYS": "t.o.v. vorige 30 dagen"
+			},
+			"HOURS_WORKED": "Gewerkte uren",
+			"HOURS_META": "{{ total }} totaal · {{ average }} per werkdag",
+			"TRACKED": "Geregistreerd",
+			"MANUAL": "Handmatig",
+			"OPEN_TIMESHEET": "Urenstaat openen",
+			"PROJECTS": "Projecten",
+			"RECENT_SCREENSHOTS": "Recente screenshots",
+			"VIEW_ALL": "Alles bekijken",
+			"ASSIGNED_TASKS": "Toegewezen taken",
+			"TASKS_META": "{{ open }} open · {{ done }} klaar",
+			"STATUS": {
+				"TODO": "Te doen",
+				"IN_PROGRESS": "Bezig",
+				"BLOCKED": "Geblokkeerd",
+				"DONE": "Klaar"
+			},
+			"COLUMNS": {
+				"TASK": "Taak",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Deadline",
+				"TIME": "Tijd",
+				"NAME": "Naam"
+			},
+			"TOP_TASKS": "Meest gewerkte taken",
+			"APPS_URLS": "Apps & URL's",
+			"NO_TIME": "Geen tijd geregistreerd in deze periode",
+			"NO_TASKS": "Geen taken toegewezen",
+			"NO_APPS": "Geen app- of URL-activiteit in deze periode",
+			"NO_SCREENSHOTS": "Geen screenshots in deze periode",
+			"UNAVAILABLE": "U hebt geen toegang tot deze gegevens",
+			"PROFILE": {
+				"ABOUT": "Over",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Vaardigheden & tags",
+				"TIME_ZONE": "Tijdzone",
+				"NOT_PROVIDED": "Nog niet opgegeven",
+				"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd"
+			}
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Alle doelstellingen",

@@ -1958,7 +1958,78 @@
 			"PREVIOUS": "Vorherige"
 		},
 		"NOT_STARTED": "Nicht begonnen",
-		"NOT_STARTED_HELP": "Der Arbeitsbeginn für diesen Mitarbeiter ist noch nicht festgelegt. Der Mitarbeiter wird nicht berücksichtigt in der Buchhaltung, die Aufteilung von Ausgaben usw."
+		"NOT_STARTED_HELP": "Der Arbeitsbeginn für diesen Mitarbeiter ist noch nicht festgelegt. Der Mitarbeiter wird nicht berücksichtigt in der Buchhaltung, die Aufteilung von Ausgaben usw.",
+		"VIEW": {
+			"PERIOD": "Zeitraum",
+			"PERIODS": {
+				"THIS_WEEK": "Diese Woche",
+				"THIS_MONTH": "Dieser Monat",
+				"LAST_30_DAYS": "Letzte 30 Tage"
+			},
+			"TABS": {
+				"OVERVIEW": "Übersicht",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Erfasst gerade Zeit",
+				"ONLINE": "Online",
+				"AWAY": "Abwesend",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Ortszeit",
+			"MEMBER_SINCE": "Mitglied seit",
+			"WEEKLY_LIMIT": "Wochenlimit",
+			"WORKED_TODAY": "Heute gearbeitet",
+			"WORKED_PERIOD": "Im Zeitraum gearbeitet",
+			"ACTIVITY_META": "{{ value }} Aktivität",
+			"AVG_ACTIVITY": "Durchschnittliche Aktivität",
+			"OPEN_TASKS": "Offene Aufgaben",
+			"OPEN_TASKS_META": "{{ progress }} in Bearbeitung · {{ overdue }} überfällig",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "ggü. letzter Woche",
+				"THIS_MONTH": "ggü. letztem Monat",
+				"LAST_30_DAYS": "ggü. vorherigen 30 Tagen"
+			},
+			"HOURS_WORKED": "Gearbeitete Stunden",
+			"HOURS_META": "{{ total }} gesamt · {{ average }} pro Arbeitstag",
+			"TRACKED": "Erfasst",
+			"MANUAL": "Manuell",
+			"OPEN_TIMESHEET": "Zeiterfassung öffnen",
+			"PROJECTS": "Projekte",
+			"RECENT_SCREENSHOTS": "Neueste Screenshots",
+			"VIEW_ALL": "Alle anzeigen",
+			"ASSIGNED_TASKS": "Zugewiesene Aufgaben",
+			"TASKS_META": "{{ open }} offen · {{ done }} erledigt",
+			"STATUS": {
+				"TODO": "Zu erledigen",
+				"IN_PROGRESS": "In Bearbeitung",
+				"BLOCKED": "Blockiert",
+				"DONE": "Erledigt"
+			},
+			"COLUMNS": {
+				"TASK": "Aufgabe",
+				"PROJECT": "Projekt",
+				"STATUS": "Status",
+				"DUE": "Fällig",
+				"TIME": "Zeit",
+				"NAME": "Name"
+			},
+			"TOP_TASKS": "Meistbearbeitete Aufgaben",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "Keine Zeit in diesem Zeitraum erfasst",
+			"NO_TASKS": "Keine Aufgaben zugewiesen",
+			"NO_APPS": "Keine App- oder URL-Aktivität in diesem Zeitraum",
+			"NO_SCREENSHOTS": "Keine Screenshots in diesem Zeitraum",
+			"UNAVAILABLE": "Sie haben keinen Zugriff auf diese Daten",
+			"PROFILE": {
+				"ABOUT": "Über",
+				"CONTACT": "Kontakt",
+				"SKILLS_TAGS": "Fähigkeiten & Tags",
+				"TIME_ZONE": "Zeitzone",
+				"NOT_PROVIDED": "Noch nicht angegeben",
+				"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt"
+			}
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Alle Ziele",

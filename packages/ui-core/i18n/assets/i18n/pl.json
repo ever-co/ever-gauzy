@@ -1957,7 +1957,78 @@
 			"PREVIOUS": "Poprzedni"
 		},
 		"NOT_STARTED": "Nie rozpoczęto",
-		"NOT_STARTED_HELP": "Rozpoczęcie pracy w dniu nie zostało ustawione dla tego pracownika. Pracownik nie będzie brany pod uwagę w rozliczeniach, podziale kosztów itp"
+		"NOT_STARTED_HELP": "Rozpoczęcie pracy w dniu nie zostało ustawione dla tego pracownika. Pracownik nie będzie brany pod uwagę w rozliczeniach, podziale kosztów itp",
+		"VIEW": {
+			"PERIOD": "Okres",
+			"PERIODS": {
+				"THIS_WEEK": "Ten tydzień",
+				"THIS_MONTH": "Ten miesiąc",
+				"LAST_30_DAYS": "Ostatnie 30 dni"
+			},
+			"TABS": {
+				"OVERVIEW": "Przegląd",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Rejestruje czas",
+				"ONLINE": "Online",
+				"AWAY": "Zaraz wracam",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Czas lokalny",
+			"MEMBER_SINCE": "Członek od",
+			"WEEKLY_LIMIT": "Limit tygodniowy",
+			"WORKED_TODAY": "Przepracowano dziś",
+			"WORKED_PERIOD": "Przepracowano w okresie",
+			"ACTIVITY_META": "{{ value }} aktywności",
+			"AVG_ACTIVITY": "Średnia aktywność",
+			"OPEN_TASKS": "Otwarte zadania",
+			"OPEN_TASKS_META": "{{ progress }} w toku · {{ overdue }} po terminie",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs poprzedni tydzień",
+				"THIS_MONTH": "vs poprzedni miesiąc",
+				"LAST_30_DAYS": "vs poprzednie 30 dni"
+			},
+			"HOURS_WORKED": "Przepracowane godziny",
+			"HOURS_META": "{{ total }} łącznie · {{ average }} na dzień pracy",
+			"TRACKED": "Śledzone",
+			"MANUAL": "Ręczne",
+			"OPEN_TIMESHEET": "Otwórz kartę czasu pracy",
+			"PROJECTS": "Projekty",
+			"RECENT_SCREENSHOTS": "Ostatnie zrzuty ekranu",
+			"VIEW_ALL": "Zobacz wszystko",
+			"ASSIGNED_TASKS": "Przypisane zadania",
+			"TASKS_META": "{{ open }} otwartych · {{ done }} ukończonych",
+			"STATUS": {
+				"TODO": "Do zrobienia",
+				"IN_PROGRESS": "W toku",
+				"BLOCKED": "Zablokowane",
+				"DONE": "Ukończone"
+			},
+			"COLUMNS": {
+				"TASK": "Zadanie",
+				"PROJECT": "Projekt",
+				"STATUS": "Status",
+				"DUE": "Termin",
+				"TIME": "Czas",
+				"NAME": "Nazwa"
+			},
+			"TOP_TASKS": "Najczęściej realizowane zadania",
+			"APPS_URLS": "Aplikacje i adresy URL",
+			"NO_TIME": "Brak zarejestrowanego czasu w tym okresie",
+			"NO_TASKS": "Brak przypisanych zadań",
+			"NO_APPS": "Brak aktywności aplikacji lub URL w tym okresie",
+			"NO_SCREENSHOTS": "Brak zrzutów ekranu w tym okresie",
+			"UNAVAILABLE": "Nie masz dostępu do tych danych",
+			"PROFILE": {
+				"ABOUT": "O mnie",
+				"CONTACT": "Kontakt",
+				"SKILLS_TAGS": "Umiejętności i tagi",
+				"TIME_ZONE": "Strefa czasowa",
+				"NOT_PROVIDED": "Jeszcze nie podano",
+				"NO_DESCRIPTION": "Nie dodano jeszcze opisu"
+			}
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Wszystkie cele",
