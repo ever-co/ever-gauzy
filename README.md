@@ -321,7 +321,7 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 1.  **API** — [![Deploy the Gauzy API on ZopDay][zopday-btn]][zopday-api]
 
-    Before starting it, create a PostgreSQL database in ZopDay and point the service at it with `DB_TYPE=postgres` plus `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASS` — left unset, the image falls back to a SQLite file inside the container, which is lost whenever the container is replaced. Set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET`, `EXPRESS_SESSION_SECRET` and the `DEMO_*_PASSWORD` values described under "Production" above; the API refuses to start while they are unset or left at their defaults.
+    Before starting it, create a PostgreSQL database in ZopDay and point the service at it with `DB_TYPE=postgres` plus `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASS` — left unset, the image falls back to a SQLite file inside the container, which is lost whenever the container is replaced. Set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` as described under "Production" above — in production the API refuses to start while those are unset or left at their defaults. Set the `DEMO_*_PASSWORD` values too: they are checked when an empty database is first seeded, so a fresh instance will not get past that seed while they are left at the published defaults.
 
 2.  **Web app** — [![Deploy the Gauzy web app on ZopDay][zopday-btn]][zopday-webapp]
 
