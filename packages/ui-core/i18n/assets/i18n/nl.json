@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "{{ name }} toevoegen"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Alleen jij",
+			"TENANT": "Iedereen in deze tenant"
+		},
+		"UNSAVED_CHANGES": "Niet-opgeslagen wijzigingen",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "Het account waarmee je bent aangemeld.",
+			"MANAGE": "Profiel beheren",
+			"ROLE": "Rol",
+			"MEMBER_SINCE": "Lid sinds"
+		},
+		"PREFERENCES": {
+			"TITLE": "Voorkeuren",
+			"DESCRIPTION": "Hoe de app er voor jou uitziet en werkt. Wijzigingen gelden direct.",
+			"THEME": "Thema",
+			"THEME_HINT": "Kleurenschema van de hele app.",
+			"LANGUAGE": "Taal",
+			"LANGUAGE_HINT": "Taal van menu's, labels en berichten.",
+			"LAYOUT": "Standaardindeling",
+			"RESET_LAYOUTS": "Pagina-indelingen herstellen",
+			"SAVE_ERROR": "Je voorkeur kon niet worden opgeslagen.",
+			"LAYOUTS_RESET": "Pagina-indelingen hersteld naar je standaard."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Vierkante afbeelding, minimaal 128 × 128 px.",
+			"NAME_HINT": "Zichtbaar voor elke gebruiker van deze tenant.",
+			"TENANT_ID": "Tenant-ID",
+			"TENANT_ID_HINT": "Vermeld deze bij contact met support of bij API-aanroepen.",
+			"COPY_ERROR": "De tenant-ID kon niet worden gekopieerd.",
+			"TITLE": "Tenantprofiel",
+			"DESCRIPTION": "De naam en het logo van deze tenant, voor alle gebruikers zichtbaar in de werkruimtewisselaar en de zijbalk.",
+			"NAME": "Tenantnaam",
+			"NAME_PLACEHOLDER": "Voer de tenantnaam in",
+			"NAME_REQUIRED": "De tenantnaam is verplicht.",
+			"LOGO": "Tenantlogo",
+			"LOGO_CHANGE": "Klik om een nieuw logo te uploaden",
+			"LOGO_REMOVE": "Logo verwijderen",
+			"LOGO_UPLOAD_ERROR": "Het logo kon niet worden geüpload.",
+			"CREATED_AT": "Aangemaakt op",
+			"SAVED": "Tenantprofiel opgeslagen",
+			"SAVE_ERROR": "Het tenantprofiel kon niet worden opgeslagen.",
+			"LOAD_ERROR": "Het tenantprofiel kon niet worden geladen."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "Gebruikersinterface",
 			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
 			"OPTIONS": {

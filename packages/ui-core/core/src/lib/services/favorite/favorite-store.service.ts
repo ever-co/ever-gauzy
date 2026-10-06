@@ -155,9 +155,18 @@ export class FavoriteStoreService {
 			return items;
 		}
 
+		// Skip lookups the caller cannot resolve instead of sending one doomed request per item on every
+		// refresh: the candidate route needs ORG_CANDIDATES_VIEW, and without CHANGE_SELECTED_EMPLOYEE the
+		// employee route only ever answers with the caller's own record.
+		const ownEmployeeId = this._store.user?.employee?.id;
+		const canResolve = (id: string): boolean =>
+			entityType === BaseEntityEnum.Candidate
+				? this._store.hasPermission(PermissionsEnum.ORG_CANDIDATES_VIEW)
+				: this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || id === ownEmployeeId;
+
 		return Promise.all(
 			items.map(async (item) => {
-				if (!item?.id || (item as { user?: unknown }).user) {
+				if (!item?.id || (item as { user?: unknown }).user || !canResolve(item.id)) {
 					return item;
 				}
 				try {

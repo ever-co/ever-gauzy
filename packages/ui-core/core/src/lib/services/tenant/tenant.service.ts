@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ITenant, ITenantCreateInput, ITenantSetting } from '@gauzy/contracts';
+import { ITenant, ITenantCreateInput, ITenantSetting, ITenantUpdateInput } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
@@ -19,6 +19,25 @@ export class TenantService {
 	 */
 	create(input: ITenantCreateInput): Promise<ITenant> {
 		return firstValueFrom(this.http.post<ITenant>(`${this.API_URL}`, input));
+	}
+
+	/**
+	 * Retrieves the tenant of the signed-in user (with its logo image asset).
+	 *
+	 * @returns {Promise<ITenant>} - A promise that resolves to the current tenant.
+	 */
+	getCurrent(): Promise<ITenant> {
+		return firstValueFrom(this.http.get<ITenant>(`${this.API_URL}`));
+	}
+
+	/**
+	 * Updates the name and logo of the signed-in user's tenant (requires the SUPER_ADMIN role).
+	 *
+	 * @param {ITenantUpdateInput} input - The new tenant name and logo.
+	 * @returns {Promise<ITenant>} - A promise that resolves to the update result.
+	 */
+	update(input: ITenantUpdateInput): Promise<ITenant> {
+		return firstValueFrom(this.http.put<ITenant>(`${this.API_URL}`, input));
 	}
 
 	/**

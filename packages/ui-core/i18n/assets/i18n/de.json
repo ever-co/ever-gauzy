@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "{{ name }} hinzufügen"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Nur Sie",
+			"TENANT": "Alle in diesem Mandanten"
+		},
+		"UNSAVED_CHANGES": "Ungespeicherte Änderungen",
+		"ACCOUNT": {
+			"TITLE": "Konto",
+			"DESCRIPTION": "Das Konto, mit dem Sie angemeldet sind.",
+			"MANAGE": "Profil verwalten",
+			"ROLE": "Rolle",
+			"MEMBER_SINCE": "Mitglied seit"
+		},
+		"PREFERENCES": {
+			"TITLE": "Einstellungen",
+			"DESCRIPTION": "Wie die App für Sie aussieht und sich verhält. Änderungen gelten sofort.",
+			"THEME": "Design",
+			"THEME_HINT": "Farbschema der gesamten App.",
+			"LANGUAGE": "Sprache",
+			"LANGUAGE_HINT": "Sprache von Menüs, Beschriftungen und Meldungen.",
+			"LAYOUT": "Standardlayout",
+			"RESET_LAYOUTS": "Seitenlayouts zurücksetzen",
+			"SAVE_ERROR": "Ihre Einstellung konnte nicht gespeichert werden.",
+			"LAYOUTS_RESET": "Seitenlayouts auf Ihren Standard zurückgesetzt."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Quadratisches Bild, mindestens 128 × 128 px.",
+			"NAME_HINT": "Wird allen Benutzern dieses Mandanten angezeigt.",
+			"TENANT_ID": "Mandanten-ID",
+			"TENANT_ID_HINT": "Geben Sie sie beim Support oder bei API-Aufrufen an.",
+			"COPY_ERROR": "Die Mandanten-ID konnte nicht kopiert werden.",
+			"TITLE": "Mandantenprofil",
+			"DESCRIPTION": "Name und Logo dieses Mandanten, die allen Benutzern im Arbeitsbereich-Umschalter und in der Seitenleiste angezeigt werden.",
+			"NAME": "Mandantenname",
+			"NAME_PLACEHOLDER": "Mandantennamen eingeben",
+			"NAME_REQUIRED": "Der Mandantenname ist erforderlich.",
+			"LOGO": "Mandantenlogo",
+			"LOGO_CHANGE": "Klicken, um ein neues Logo hochzuladen",
+			"LOGO_REMOVE": "Logo entfernen",
+			"LOGO_UPLOAD_ERROR": "Das Logo konnte nicht hochgeladen werden.",
+			"CREATED_AT": "Erstellt am",
+			"SAVED": "Mandantenprofil gespeichert",
+			"SAVE_ERROR": "Das Mandantenprofil konnte nicht gespeichert werden.",
+			"LOAD_ERROR": "Das Mandantenprofil konnte nicht geladen werden."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Oberfläche",
 			"TITLE": "Benutzeroberfläche",
 			"DESCRIPTION": "Wählen Sie, welche Oberfläche alle Benutzer dieses Mandanten für Seiten verwenden, die in beiden Varianten verfügbar sind.",
 			"OPTIONS": {

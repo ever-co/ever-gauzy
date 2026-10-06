@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "Aggiungi {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Solo tu",
+			"TENANT": "Tutti in questo tenant"
+		},
+		"UNSAVED_CHANGES": "Modifiche non salvate",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "L'account con cui hai effettuato l'accesso.",
+			"MANAGE": "Gestisci profilo",
+			"ROLE": "Ruolo",
+			"MEMBER_SINCE": "Membro dal"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferenze",
+			"DESCRIPTION": "Aspetto e comportamento dell'app per te. Le modifiche si applicano subito.",
+			"THEME": "Tema",
+			"THEME_HINT": "Combinazione di colori dell'intera app.",
+			"LANGUAGE": "Lingua",
+			"LANGUAGE_HINT": "Lingua di menu, etichette e messaggi.",
+			"LAYOUT": "Layout predefinito",
+			"RESET_LAYOUTS": "Reimposta i layout delle pagine",
+			"SAVE_ERROR": "Impossibile salvare la tua preferenza.",
+			"LAYOUTS_RESET": "Layout delle pagine reimpostati al tuo predefinito."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Immagine quadrata, almeno 128 × 128 px.",
+			"NAME_HINT": "Mostrato a tutti gli utenti di questo tenant.",
+			"TENANT_ID": "ID del tenant",
+			"TENANT_ID_HINT": "Indicalo quando contatti il supporto o chiami l'API.",
+			"COPY_ERROR": "Impossibile copiare l'ID del tenant.",
+			"TITLE": "Profilo del tenant",
+			"DESCRIPTION": "Il nome e il logo di questo tenant, mostrati a tutti gli utenti nel selettore degli spazi di lavoro e nella barra laterale.",
+			"NAME": "Nome del tenant",
+			"NAME_PLACEHOLDER": "Inserisci il nome del tenant",
+			"NAME_REQUIRED": "Il nome del tenant è obbligatorio.",
+			"LOGO": "Logo del tenant",
+			"LOGO_CHANGE": "Fai clic per caricare un nuovo logo",
+			"LOGO_REMOVE": "Rimuovi logo",
+			"LOGO_UPLOAD_ERROR": "Impossibile caricare il logo.",
+			"CREATED_AT": "Creato il",
+			"SAVED": "Profilo del tenant salvato",
+			"SAVE_ERROR": "Impossibile salvare il profilo del tenant.",
+			"LOAD_ERROR": "Impossibile caricare il profilo del tenant."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interfaccia",
 			"TITLE": "Interfaccia utente",
 			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni.",
 			"OPTIONS": {

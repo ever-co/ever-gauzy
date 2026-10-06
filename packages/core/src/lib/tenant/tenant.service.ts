@@ -1,6 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
+import {
+	FileStorageProviderEnum,
+	ID,
+	ITenant,
+	ITenantCreateInput,
+	ITenantUpdateInput,
+	IUser,
+	RolesEnum
+} from '@gauzy/contracts';
+import { UpdateResult } from 'typeorm';
 import { ConfigService } from '@gauzy/config';
 import { MultiORMEnum } from '../core/utils';
 import { CrudService } from '../core/crud/crud.service';
@@ -307,6 +316,29 @@ export class TenantService extends CrudService<Tenant> {
 			console.warn('Could not resolve a Stripe customer for this tenant:', (error as Error)?.message);
 			return null;
 		}
+	}
+
+	/**
+	 * Updates a tenant's name and logo.
+	 *
+	 * Under MikroORM `imageId` is a read-only mirror of the `image` relation (`relationId` columns are
+	 * `persist: false`, see `column.helper.ts`), so a plain `update({ imageId })` leaves the logo
+	 * unchanged there. Write the relation instead; `null` clears it. TypeORM writes the column directly.
+	 *
+	 * @param id - The tenant to update.
+	 * @param input - The new name and logo; an omitted `imageId` leaves the image as it is.
+	 */
+	async updateProfile(id: ID, input: ITenantUpdateInput): Promise<ITenant | UpdateResult> {
+		const { imageId, ...rest } = input;
+		if (imageId === undefined) {
+			return await this.update(id, rest);
+		}
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			// MikroORM's nativeUpdate takes the related row's primary key for a many-to-one.
+			const row: Record<string, unknown> = { ...rest, image: imageId ?? null };
+			return await this.update(id, row as Partial<Tenant>);
+		}
+		return await this.update(id, { ...rest, imageId });
 	}
 
 	/**

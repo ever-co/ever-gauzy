@@ -1161,7 +1161,52 @@
 		"ADD_ITEM": "Dodaj {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Tylko ty",
+			"TENANT": "Wszyscy w tym dzierżawcy"
+		},
+		"UNSAVED_CHANGES": "Niezapisane zmiany",
+		"ACCOUNT": {
+			"TITLE": "Konto",
+			"DESCRIPTION": "Konto, na które jesteś zalogowany.",
+			"MANAGE": "Zarządzaj profilem",
+			"ROLE": "Rola",
+			"MEMBER_SINCE": "Członek od"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferencje",
+			"DESCRIPTION": "Jak aplikacja wygląda i działa dla ciebie. Zmiany obowiązują natychmiast.",
+			"THEME": "Motyw",
+			"THEME_HINT": "Schemat kolorów całej aplikacji.",
+			"LANGUAGE": "Język",
+			"LANGUAGE_HINT": "Język menu, etykiet i komunikatów.",
+			"LAYOUT": "Domyślny układ",
+			"RESET_LAYOUTS": "Resetuj układy stron",
+			"SAVE_ERROR": "Nie udało się zapisać twojej preferencji.",
+			"LAYOUTS_RESET": "Układy stron przywrócono do domyślnego."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Kwadratowy obraz, co najmniej 128 × 128 px.",
+			"NAME_HINT": "Widoczne dla każdego użytkownika tego dzierżawcy.",
+			"TENANT_ID": "ID dzierżawcy",
+			"TENANT_ID_HINT": "Podaj je, kontaktując się z pomocą techniczną lub korzystając z API.",
+			"COPY_ERROR": "Nie udało się skopiować ID dzierżawcy.",
+			"TITLE": "Profil dzierżawcy",
+			"DESCRIPTION": "Nazwa i logo tego dzierżawcy, wyświetlane wszystkim użytkownikom w przełączniku obszarów roboczych i na pasku bocznym.",
+			"NAME": "Nazwa dzierżawcy",
+			"NAME_PLACEHOLDER": "Wprowadź nazwę dzierżawcy",
+			"NAME_REQUIRED": "Nazwa dzierżawcy jest wymagana.",
+			"LOGO": "Logo dzierżawcy",
+			"LOGO_CHANGE": "Kliknij, aby przesłać nowe logo",
+			"LOGO_REMOVE": "Usuń logo",
+			"LOGO_UPLOAD_ERROR": "Nie udało się przesłać logo.",
+			"CREATED_AT": "Utworzono",
+			"SAVED": "Profil dzierżawcy zapisany",
+			"SAVE_ERROR": "Nie udało się zapisać profilu dzierżawcy.",
+			"LOAD_ERROR": "Nie udało się wczytać profilu dzierżawcy."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interfejs",
 			"TITLE": "Interfejs użytkownika",
 			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
 			"OPTIONS": {

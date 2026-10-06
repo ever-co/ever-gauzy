@@ -59,9 +59,17 @@ export class FavoriteService {
 	getPersonWithUser(entity: BaseEntityEnum.Employee | BaseEntityEnum.Candidate, id: ID): Promise<IEmployee | ICandidate> {
 		const path = entity === BaseEntityEnum.Employee ? 'employee' : 'candidate';
 		return firstValueFrom(
-			this.http.get<IEmployee | ICandidate>(`${API_PREFIX}/${path}/${id}`, {
-				params: toParams({ relations: ['user'] })
-			})
+			this.http
+				.get<IEmployee | ICandidate>(`${API_PREFIX}/${path}/${id}`, {
+					params: toParams({ relations: ['user'] })
+				})
+				.pipe(
+					catchError((error) => {
+						console.error(`Error loading ${path} with user:`, error);
+						// Rethrow as is: the caller falls back to the favorite without a name.
+						throw error;
+					})
+				)
 		);
 	}
 

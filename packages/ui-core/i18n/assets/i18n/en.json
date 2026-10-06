@@ -5915,7 +5915,52 @@
 		}
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Only you",
+			"TENANT": "Everyone in this tenant"
+		},
+		"UNSAVED_CHANGES": "Unsaved changes",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "The account you are signed in with.",
+			"MANAGE": "Manage profile",
+			"ROLE": "Role",
+			"MEMBER_SINCE": "Member since"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferences",
+			"DESCRIPTION": "How the app looks and behaves for you. Changes apply immediately.",
+			"THEME": "Theme",
+			"THEME_HINT": "Colour scheme of the whole app.",
+			"LANGUAGE": "Language",
+			"LANGUAGE_HINT": "Language of menus, labels and messages.",
+			"LAYOUT": "Default layout",
+			"RESET_LAYOUTS": "Reset page layouts",
+			"SAVE_ERROR": "Your preference could not be saved.",
+			"LAYOUTS_RESET": "Page layouts reset to your default."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Square image, at least 128 × 128 px.",
+			"NAME_HINT": "Shown to every user of this tenant.",
+			"TENANT_ID": "Tenant ID",
+			"TENANT_ID_HINT": "Quote it when contacting support or calling the API.",
+			"COPY_ERROR": "The tenant ID could not be copied.",
+			"TITLE": "Tenant profile",
+			"DESCRIPTION": "The name and logo of this tenant, shown in the workspace switcher and the sidebar for every user.",
+			"NAME": "Tenant name",
+			"NAME_PLACEHOLDER": "Enter the tenant name",
+			"NAME_REQUIRED": "The tenant name is required.",
+			"LOGO": "Tenant logo",
+			"LOGO_CHANGE": "Click to upload a new logo",
+			"LOGO_REMOVE": "Remove logo",
+			"LOGO_UPLOAD_ERROR": "The logo could not be uploaded.",
+			"CREATED_AT": "Created on",
+			"SAVED": "Tenant profile saved",
+			"SAVE_ERROR": "The tenant profile could not be saved.",
+			"LOAD_ERROR": "The tenant profile could not be loaded."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "User interface",
 			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
 			"OPTIONS": {
