@@ -1,0 +1,50 @@
+// Forward so mixins/themes are available to importers
+@forward 'themes';
+@forward './reusable';
+@use 'themes' as *;
+@use './reusable' as *;
+
+.section-wrapper {
+  background: rgba(245, 109, 88, 0.05);
+  border-radius: nb-theme(border-radius);
+  padding: 25px;
+  box-sizing: border-box;
+  width: 100%;
+  & .learn-more {
+    @include mobile-screen {
+      display: none;
+    }
+  }
+}
+.whats-new-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  & .main-header {
+    color: nb-theme(text-primary-color);
+    font-family: Inter;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.009em;
+    text-align: left;
+    margin-bottom: 19px;
+    padding-left: 5px;
+  }
+  // Card internals live in the shared ngx-changelog-entry component
+  // (ui-core/shared); only inter-card spacing is the wrapper's concern, so the
+  // login panel and the sidebar keep their differing bottom reserve.
+  & ngx-changelog-entry {
+    display: block;
+    margin-bottom: 15px;
+    &:last-of-type {
+      margin-bottom: 83px;
+      @include mobile-screen {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
