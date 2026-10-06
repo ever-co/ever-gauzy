@@ -180,6 +180,14 @@ img.employee-image,
 }
 
 :host {
+  // Sections sit on the card's own surface, as on the employee View page:
+  // solid `gauzy-card-1` panels with a hairline, on the `gauzy-card-2` tab body.
+  // Every tab paints its panels with `gauzy-card-3` (`@shared/_employee-tab-panel`
+  // and the shared employee forms), a half-transparent white that read as grey on
+  // grey, so the token is re-pointed here once rather than in each of the tabs.
+  // Scoped to this page: the organization editor shares the partial and keeps it.
+  --gauzy-card-3: var(--gauzy-card-1);
+
   @include nb-card_overrides(hidden, calc($default-card-height + 3.5rem), $default-radius);
   // The field surface and the field height, both taken off the shared scale rather
   // than pinned here — the same pair `edit-organization.component.scss` now passes,
