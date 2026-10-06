@@ -9,6 +9,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 		  [name]="avatar?.name"
 		  [id]="avatar?.id"
 		  [employee]="avatar.employee"
+		  [linkTo]="linkTo"
 		  class="report-table"
 		></ngx-avatar>
 		@if (rowData?.isDefault) {
@@ -105,4 +106,5 @@ export class PictureNameTagsComponent extends NotesWithTagsComponent {
 	}
 
 	@Input() isTags = true;
+	@Input() linkTo: 'edit' | 'view' = 'edit';
 }
