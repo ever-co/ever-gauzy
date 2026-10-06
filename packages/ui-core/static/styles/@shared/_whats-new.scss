@@ -17,6 +17,15 @@
     }
   }
 }
+// The panel's text is white (see ngx-changelog-entry's `on-gradient`). In these
+// themes primary-400 is too light for that — 2.6:1 (cosmic) to 3.5:1
+// (material-dark) — so the gradient starts at primary-600 instead (>= 5.2:1 in
+// all of them). The gauzy themes (4.5:1+) keep the register panel's 400 → 600.
+@each $theme in default, dark, corporate, cosmic, material-dark {
+  :host-context(.nb-theme-#{$theme}) .section-wrapper {
+    background: linear-gradient(to bottom, nb-theme(color-primary-600), nb-theme(color-primary-700));
+  }
+}
 .whats-new-wrapper {
   width: 100%;
   height: 100%;

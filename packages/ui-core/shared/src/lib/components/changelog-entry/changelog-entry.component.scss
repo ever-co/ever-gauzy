@@ -157,7 +157,8 @@
 // Login page panel: entries on the primary gradient card, styled like the
 // register page's "Gauzy features" cards. All text is solid white — the only
 // value that reaches WCAG AA (4.5:1) on the gradient's light end; weight and
-// size carry the hierarchy instead of opacity.
+// size carry the hierarchy instead of opacity. Themes whose primary-400 is too
+// light for white get a darker gradient in @shared/_whats-new.
 :host(.on-gradient) {
 	.entry {
 		border-bottom: 1px solid rgba(255, 255, 255, 0.15);
