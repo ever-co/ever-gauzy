@@ -316,10 +316,10 @@ nb-card {
 	}
 
 	&.is-active {
-		color: var(--gauzy-text-color-1);
+		color: nb-theme(color-primary-500);
 
 		&::after {
-			background-color: var(--gauzy-action-info-text);
+			background-color: nb-theme(color-primary-500);
 		}
 	}
 }
@@ -711,85 +711,280 @@ nb-card-body.ev-body {
 	&.group-blocked::before {
 		background-color: var(--gauzy-chart-negative);
 	}
-}
 
-td.is-overdue {
-	color: var(--gauzy-action-danger-text);
-
-	nb-icon {
-		width: 0.875rem;
-		height: 0.875rem;
-		font-size: 0.875rem;
-		vertical-align: -0.125rem;
+	&.group-done::before {
+		background-color: var(--gauzy-chart-revenue);
 	}
 }
 
-/* ── Workload strip ──────────────────────────────────────────────────────── */
+/* ── Assigned tasks ──────────────────────────────────────────────────────── */
 
-.workload {
-	padding: $gap-md $gap-lg;
-	border-bottom: $hairline;
-}
-
-.seg--todo {
-	// Neutral: work not yet started is the baseline, not a state to call out.
-	background-color: color-mix(in srgb, var(--gauzy-text-color-2) 45%, transparent);
-}
-
-.seg--progress {
-	background-color: var(--gauzy-chart-profit);
-}
-
-.seg--blocked {
-	background-color: var(--gauzy-chart-negative);
-}
-
-.seg--done {
-	background-color: var(--gauzy-chart-revenue);
-}
-
-.status-strip {
-	display: flex;
-	gap: 2px;
-	height: 0.5rem;
-	border-radius: 999px;
-	overflow: hidden;
-	background-color: var(--gauzy-hover-tint);
-
-	.seg {
-		display: block;
-		height: 100%;
-	}
-}
-
-.status-key {
-	display: flex;
+// Title on one side, the segmented filter on the other; wraps under the title
+// when the panel is too narrow for both.
+.panel-header--wrap {
 	flex-wrap: wrap;
-	gap: $gap-xs $gap-lg;
-	margin: $gap-sm 0 0;
+	row-gap: $gap-sm;
+}
+
+.title-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.25rem;
+	height: 1.125rem;
+	margin-inline-start: 0.375rem;
+	padding: 0 0.375rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.6875rem;
+	font-weight: $weight-medium;
+	line-height: 1;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+	vertical-align: 0.0625rem;
+}
+
+/*
+ * Segmented control: one hairline track, the selected segment lifted onto the
+ * card surface. The count rides inside each segment so a view and its size
+ * read as one thing.
+ */
+.segmented {
+	display: inline-flex;
+	gap: 0.125rem;
+	padding: 0.125rem;
+	border-radius: calc(var(--gauzy-radius-sm) + 0.125rem);
+	background-color: var(--gauzy-card-2);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.segment {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	height: 1.625rem;
+	padding: 0 0.625rem;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	font: inherit;
+	font-size: 0.75rem;
+	font-weight: $weight-normal;
+	line-height: 1;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 1px;
+	}
+
+	// The selected view in the theme's primary purple — the colour of the
+	// header's Create button — shared with the active tab, so every "you are
+	// here" on the page reads alike.
+	&.is-active {
+		background-color: nb-theme(color-primary-transparent-100);
+		box-shadow: inset 0 0 0 1px nb-theme(color-primary-500);
+		font-weight: $weight-medium;
+		color: nb-theme(color-primary-500);
+
+		.segment-count:not(.is-alert) {
+			color: nb-theme(color-primary-500);
+		}
+	}
+}
+
+.segment-count {
+	font-size: 0.6875rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+
+	// Only a non-zero overdue count is worth colouring.
+	&.is-alert {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+.task-list {
+	margin: 0;
 	padding: 0;
 	list-style: none;
-	font-size: nb-theme(text-caption-font-size);
+}
+
+.task-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: start;
+	column-gap: $gap-md;
+	padding: 0.625rem $gap-lg;
+	border-bottom: $hairline;
+	transition: background-color 0.12s ease-in-out;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+}
+
+// Status as a ring: hollow while not started, filled once work is under way.
+.task-dot {
+	--dot: color-mix(in srgb, var(--gauzy-text-color-2) 70%, transparent);
+
+	width: 0.625rem;
+	height: 0.625rem;
+	margin-top: 0.3125rem;
+	border-radius: 50%;
+	box-shadow: inset 0 0 0 2px var(--dot);
+
+	&.group-progress {
+		--dot: var(--gauzy-chart-profit);
+		background: conic-gradient(var(--dot) 0 50%, transparent 50% 100%);
+	}
+
+	&.group-blocked {
+		--dot: var(--gauzy-chart-negative);
+		background-color: var(--dot);
+	}
+
+	&.group-done {
+		--dot: var(--gauzy-chart-revenue);
+		background-color: var(--dot);
+	}
+}
+
+.task-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1875rem;
+	min-width: 0;
+}
+
+.task-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+// Key · project · status · priority, separated by middle dots.
+.task-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	min-width: 0;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.task-key {
+	font-weight: $weight-medium;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.01em;
+}
+
+.task-meta-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.1875rem;
+	min-width: 0;
+	white-space: nowrap;
+}
+
+// A middle dot between neighbours, never before the first.
+.task-meta > * + *::before {
+	content: '·';
+	margin: 0 0.375rem;
+}
+
+// Priority in words with an arrow; colour only repeats what the arrow says.
+.task-priority {
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	&.priority-urgent {
+		color: var(--gauzy-action-danger-text);
+	}
+
+	&.priority-high nb-icon {
+		color: var(--gauzy-chart-expenses);
+	}
+}
+
+.task-due {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.1875rem;
+	min-width: 6rem;
+	text-align: end;
+	white-space: nowrap;
+}
+
+.task-due-date {
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+
+	.task-due:not(:has(.task-due-relative)) & {
+		font-weight: $weight-normal;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.task-due-relative {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.1875rem;
+	font-size: 0.6875rem;
 	line-height: 1rem;
 	color: var(--gauzy-text-color-2);
 
-	li {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.3125rem;
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
 	}
 
-	b {
+	.is-overdue & {
+		color: var(--gauzy-action-danger-text);
 		font-weight: $weight-medium;
-		color: var(--gauzy-text-color-1);
-		font-variant-numeric: tabular-nums;
+	}
+
+	.is-soon & {
+		color: var(--gauzy-chart-expenses);
+		font-weight: $weight-medium;
 	}
 }
 
-.key-dot {
-	width: 0.5rem;
-	height: 0.5rem;
-	border-radius: 50%;
+.table-footer {
+	margin: 0;
+	padding: $gap-sm $gap-lg;
+	border-top: $hairline;
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.state--compact {
+	min-height: 5rem;
 }
 
 /* ── Screenshots ─────────────────────────────────────────────────────────── */
@@ -1062,5 +1257,10 @@ td.is-overdue {
 
 	.data-table .col-project {
 		display: none;
+	}
+
+	.segmented {
+		width: 100%;
+		overflow-x: auto;
 	}
 }
