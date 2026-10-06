@@ -9,7 +9,6 @@ import {
 	IActivitiesStatistics,
 	ICountsStatistics,
 	IEmployee,
-	IOrganization,
 	IProjectsStatistics,
 	ITask,
 	ITasksStatistics,
@@ -21,7 +20,7 @@ import {
 	TimeFormatEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { distinctUntilChange, toUtcOffset } from '@gauzy/ui-core/common';
+import { toUtcOffset } from '@gauzy/ui-core/common';
 import { Store, TasksService, TimesheetService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TimeZoneService } from '@gauzy/ui-core/shared';
@@ -48,19 +47,29 @@ interface IRankedRow {
 	width: number;
 }
 
-/** An open task as the Assigned tasks table lists it. */
+/** A task as the Assigned tasks table lists it. */
 interface IAssignedTaskRow {
 	id: string;
 	key: string;
 	title: string;
 	project?: string;
 	status: string;
-	statusGroup: 'todo' | 'progress' | 'blocked';
+	statusGroup: 'todo' | 'progress' | 'blocked' | 'done';
+	priority?: string;
+	priorityLevel?: 'urgent' | 'high' | 'medium' | 'low';
+	/** The due date in full, for the tooltip. */
 	dueDate?: string;
+	/** The due date in words: an i18n key and its count ("3 days overdue", "Due today"). */
+	due: { key: string; count?: number };
 	/** Due date as a timestamp, for sorting; Infinity when there is none. */
 	dueTime: number;
+	/** When it was finished, for ordering the Done view newest first. */
+	doneTime: number;
 	overdue: boolean;
 }
+
+/** The views of the Assigned tasks table, each with its count on the tab. */
+export type TaskFilter = 'open' | 'progress' | 'overdue' | 'done';
 
 /** Change against the same span of the previous period. */
 interface IDelta {
@@ -111,7 +120,7 @@ const IN_PROGRESS_STATUSES: string[] = [
 
 /** How many rows a ranked table shows. */
 const LIST_LIMIT = 6;
-/** How many rows the Assigned tasks table shows. */
+/** How many rows the Assigned tasks table shows per view. */
 const TASK_LIMIT = 8;
 
 /**
@@ -139,7 +148,6 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 
 	public employee: IEmployee;
 	public profile: IEmployeeProfile;
-	public organization: IOrganization;
 	public tab: EmployeeViewTab = 'overview';
 
 	public readonly period$ = new BehaviorSubject<EmployeeViewPeriod>(EmployeeViewPeriod.THIS_WEEK);
@@ -159,8 +167,10 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	public tasks: Loadable<IAssignedTaskRow[]> = Loadable.empty([]);
 	public screenshots: Loadable<ITimeSlot[]> = Loadable.empty([]);
 
-	/** Task counts behind the Open tasks figure and the status strip. */
+	/** Task counts behind the Open tasks figure and the filter tabs. */
 	public taskSummary = { open: 0, todo: 0, progress: 0, blocked: 0, overdue: 0, done: 0 };
+	public readonly taskFilters: TaskFilter[] = ['open', 'progress', 'overdue', 'done'];
+	public taskFilter: TaskFilter = 'open';
 	/** Hours in the period and the per-working-day average, for the chart's caption. */
 	public hoursSummary = { total: 0, average: 0 };
 
@@ -197,13 +207,10 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 				this.profile = this.buildProfile(employee);
 			})
 		);
-		const organization$ = this._store.selectedOrganization$.pipe(
-			filter((organization: IOrganization) => !!organization),
-			distinctUntilChange(),
-			tap((organization: IOrganization) => (this.organization = organization))
-		);
-
-		combineLatest([employee$, organization$, this.period$])
+		// Scoped by the employee's own organization, not the header's selection:
+		// this route hides the organization selector, so on a direct link the
+		// selected organization is never set and the page would wait on it forever.
+		combineLatest([employee$, this.period$])
 			.pipe(
 				debounceTime(50),
 				tap(() => this.load()),
@@ -416,10 +423,30 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		return { percent: Math.abs(percent), direction: percent > 0 ? 'up' : percent < 0 ? 'down' : 'flat' };
 	}
 
-	/** Share of the status strip a group takes, as a CSS percentage. */
-	share(count: number): string {
-		const total = this.taskSummary.open + this.taskSummary.done;
-		return total ? `${(count / total) * 100}%` : '0%';
+	/** How many tasks a filter tab stands for. */
+	taskCount(filter: TaskFilter): number {
+		return this.taskSummary[filter];
+	}
+
+	/** Every task in the selected view, in the order that view reads best. */
+	get filteredTasks(): IAssignedTaskRow[] {
+		const rows = this.tasks.value || [];
+		switch (this.taskFilter) {
+			case 'progress':
+				return rows.filter((row) => row.statusGroup === 'progress');
+			case 'overdue':
+				return rows.filter((row) => row.overdue);
+			case 'done':
+				return rows.filter((row) => row.statusGroup === 'done').sort((a, b) => b.doneTime - a.doneTime);
+			case 'open':
+			default:
+				return rows.filter((row) => row.statusGroup !== 'done');
+		}
+	}
+
+	/** The rows the table shows: the first few of the selected view. */
+	get visibleTasks(): IAssignedTaskRow[] {
+		return this.filteredTasks.slice(0, TASK_LIMIT);
 	}
 
 	/* ── Loading ─────────────────────────────────────────────────────────── */
@@ -431,7 +458,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	}
 
 	private load(): void {
-		if (!this.employee || !this.organization) return;
+		if (!this.employee?.organizationId) return;
 
 		const request = this.buildRequest(this.periodRange());
 		const previous = this.buildRequest(this.previousRange());
@@ -460,7 +487,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		);
 		this.track('screenshots', () => this.fetchScreenshots(request));
 		this.track('tasks', async () => {
-			const { id: organizationId, tenantId } = this.organization;
+			const { organizationId, tenantId } = this.employee;
 			const tasks = await this._tasksService.getAllTasksByEmployee(employeeId, {
 				where: { organizationId, tenantId },
 				relations: ['project', 'members']
@@ -496,7 +523,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 
 	/** A window as the statistics endpoints expect it: UTC wall-clock strings in the viewer's zone. */
 	private buildRequest(range: { start: moment.Moment; end: moment.Moment }): ITimeLogFilters & ITimeLogTodayFilters {
-		const { id: organizationId, tenantId } = this.organization;
+		const { organizationId, tenantId } = this.employee;
 		const timeZone = this._timeZoneService.currentTimeZone;
 		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
 
@@ -547,8 +574,9 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 
 	/**
 	 * Keeps the tasks this employee is a member of (the endpoint also returns
-	 * their teams' tasks), counts them by status for the summary, and lists the
-	 * open ones — overdue first, then by due date.
+	 * their teams' tasks), counts them for the filter tabs, and describes each
+	 * one in plain words — its status group, its priority, and how its due date
+	 * stands against today. Ordered overdue first, then soonest due, undated last.
 	 */
 	private toAssignedTasks(tasks: ITask[], employeeId: string): IAssignedTaskRow[] {
 		const own = tasks.filter(
@@ -557,45 +585,64 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		const today = moment().startOf('day');
 		const summary = { open: 0, todo: 0, progress: 0, blocked: 0, overdue: 0, done: 0 };
 
-		const open: IAssignedTaskRow[] = [];
-		for (const task of own) {
+		const rows: IAssignedTaskRow[] = own.map((task) => {
 			const status = (task.status || '').toLowerCase();
-			if (CLOSED_STATUSES.includes(status)) {
-				summary.done++;
-				continue;
-			}
-			const statusGroup = IN_PROGRESS_STATUSES.includes(status)
+			const statusGroup: IAssignedTaskRow['statusGroup'] = CLOSED_STATUSES.includes(status)
+				? 'done'
+				: IN_PROGRESS_STATUSES.includes(status)
 				? 'progress'
 				: status === TaskStatusEnum.BLOCKED
 				? 'blocked'
 				: 'todo';
-			const overdue = !!task.dueDate && moment(task.dueDate).isBefore(today);
+			const isDone = statusGroup === 'done';
+			const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
+			const overdue = !isDone && daysLeft !== null && daysLeft < 0;
 
-			summary.open++;
-			summary[statusGroup]++;
-			if (overdue) summary.overdue++;
+			if (isDone) {
+				summary.done++;
+			} else {
+				summary.open++;
+				summary[statusGroup]++;
+				if (overdue) summary.overdue++;
+			}
 
-			open.push({
+			const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
+			return {
 				id: task.id,
 				key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
 				title: task.title,
 				project: task.project?.name,
 				status: task.taskStatus?.name || this.humanize(task.status) || '',
 				statusGroup,
+				priority: task.taskPriority?.name || this.humanize(task.priority) || undefined,
+				priorityLevel: ['urgent', 'high', 'medium', 'low'].includes(priority)
+					? (priority as IAssignedTaskRow['priorityLevel'])
+					: undefined,
 				dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
+				due: ViewEmployeeComponent.dueInWords(daysLeft, isDone),
 				dueTime: task.dueDate ? moment(task.dueDate).valueOf() : Infinity,
+				doneTime: moment(task.resolvedAt || task.updatedAt || 0).valueOf(),
 				overdue
-			});
-		}
+			};
+		});
 		this.taskSummary = summary;
 
 		// Overdue first, then soonest due; undated last. (Infinity - Infinity is NaN, hence the guard.)
-		return open
-			.sort(
-				(a, b) =>
-					Number(b.overdue) - Number(a.overdue) || (a.dueTime === b.dueTime ? 0 : a.dueTime - b.dueTime)
-			)
-			.slice(0, TASK_LIMIT);
+		return rows.sort(
+			(a, b) => Number(b.overdue) - Number(a.overdue) || (a.dueTime === b.dueTime ? 0 : a.dueTime - b.dueTime)
+		);
+	}
+
+	/** Days until (or past) the due date, as the words the Due column prints. */
+	private static dueInWords(daysLeft: number | null, isDone: boolean): IAssignedTaskRow['due'] {
+		const prefix = 'EMPLOYEES_PAGE.VIEW.DUE.';
+		if (daysLeft === null) return { key: prefix + 'NONE' };
+		if (isDone) return { key: prefix + 'WAS_DUE' };
+		if (daysLeft < -1) return { key: prefix + 'OVERDUE_DAYS', count: -daysLeft };
+		if (daysLeft === -1) return { key: prefix + 'OVERDUE_DAY' };
+		if (daysLeft === 0) return { key: prefix + 'TODAY' };
+		if (daysLeft === 1) return { key: prefix + 'TOMORROW' };
+		return { key: prefix + 'IN_DAYS', count: daysLeft };
 	}
 
 	/** "in-progress" -> "In progress". */
