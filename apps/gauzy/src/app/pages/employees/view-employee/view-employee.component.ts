@@ -111,12 +111,16 @@ const Loadable = {
 
 type PanelKey = 'counts' | 'previousCounts' | 'hours' | 'projects' | 'topTasks' | 'apps' | 'tasks' | 'screenshots';
 
-const CLOSED_STATUSES: string[] = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
-const IN_PROGRESS_STATUSES: string[] = [
+const CLOSED_STATUSES = new Set<string>([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]);
+const IN_PROGRESS_STATUSES = new Set<string>([
 	TaskStatusEnum.IN_PROGRESS,
 	TaskStatusEnum.READY_FOR_REVIEW,
 	TaskStatusEnum.IN_REVIEW
-];
+]);
+const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
+
+type TaskSummary = { open: number; todo: number; progress: number; blocked: number; overdue: number; done: number };
+type HoursSummary = { total: number; average: number };
 
 /** How many rows a ranked table shows. */
 const LIST_LIMIT = 6;
@@ -167,12 +171,50 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	public tasks: Loadable<IAssignedTaskRow[]> = Loadable.empty([]);
 	public screenshots: Loadable<ITimeSlot[]> = Loadable.empty([]);
 
-	/** Task counts behind the Open tasks figure and the filter tabs. */
-	public taskSummary = { open: 0, todo: 0, progress: 0, blocked: 0, overdue: 0, done: 0 };
 	public readonly taskFilters: TaskFilter[] = ['open', 'progress', 'overdue', 'done'];
 	public taskFilter: TaskFilter = 'open';
-	/** Hours in the period and the per-working-day average, for the chart's caption. */
-	public hoursSummary = { total: 0, average: 0 };
+
+	/*
+	 * The task counts and the hours caption are DERIVED from the panel values
+	 * `track()` accepted, never written while a request is in flight: `track()`
+	 * drops a stale response, so it can no longer leave counts or a caption from
+	 * another period or employee beside the current rows. Each is memoised on
+	 * the value it was computed from, as the template reads them on every change
+	 * detection.
+	 */
+	private _taskSummary: { from: IAssignedTaskRow[]; value: TaskSummary } | null = null;
+	private _hoursSummary: { from: IEmployeeHoursDay[]; value: HoursSummary } | null = null;
+
+	/** Task counts behind the Open tasks figure and the filter tabs. */
+	get taskSummary(): TaskSummary {
+		const rows = this.tasks.value || [];
+		if (this._taskSummary?.from !== rows) {
+			const value: TaskSummary = { open: 0, todo: 0, progress: 0, blocked: 0, overdue: 0, done: 0 };
+			for (const row of rows) {
+				if (row.statusGroup === 'done') {
+					value.done++;
+					continue;
+				}
+				value.open++;
+				value[row.statusGroup]++;
+				if (row.overdue) value.overdue++;
+			}
+			this._taskSummary = { from: rows, value };
+		}
+		return this._taskSummary.value;
+	}
+
+	/** Seconds worked in the period and per working day, for the chart's caption. */
+	get hoursSummary(): HoursSummary {
+		const days = this.hours.value || [];
+		if (this._hoursSummary?.from !== days) {
+			const total = days.reduce((sum, day) => sum + day.tracked + day.manual, 0);
+			const worked = days.filter((day) => day.tracked + day.manual > 0).length;
+			const value = { total: total * 3600, average: worked ? (total / worked) * 3600 : 0 };
+			this._hoursSummary = { from: days, value };
+		}
+		return this._hoursSummary.value;
+	}
 
 	/** The employee's wall clock, refreshed each minute. */
 	public localTime: string | undefined;
@@ -413,7 +455,10 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		const before = Number(previous) || 0;
 		if (!before) return { percent: null, direction: 'flat' };
 		const percent = Math.round(((now - before) / before) * 100);
-		return { percent: Math.abs(percent), direction: percent > 0 ? 'up' : percent < 0 ? 'down' : 'flat' };
+		let direction: IDelta['direction'] = 'flat';
+		if (percent > 0) direction = 'up';
+		else if (percent < 0) direction = 'down';
+		return { percent: Math.abs(percent), direction };
 	}
 
 	/** How many tasks a filter tab stands for. */
@@ -447,7 +492,7 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	/** Re-fetches the screenshots after one is deleted from its card. */
 	reloadScreenshots(): void {
 		const request = this.buildRequest(this.periodRange());
-		this.track('screenshots', () => this.fetchScreenshots(request));
+		void this.track('screenshots', () => this.fetchScreenshots(request));
 	}
 
 	private load(): void {
@@ -457,29 +502,36 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		const previous = this.buildRequest(this.previousRange());
 		const employeeId = this.employee.id;
 
-		this.track('counts', () => this._statisticsService.getCounts(request));
-		this.track('previousCounts', () => this._statisticsService.getCounts(previous));
-		this.track('hours', async () => this.toHoursDays(await this._timesheetService.getDailyReportChart(request)));
-		this.track('projects', async () =>
+		// Each panel loads on its own and `track()` catches its own failure, so
+		// the returned promises are deliberately not awaited.
+		void this.track('counts', () => this._statisticsService.getCounts(request));
+		void this.track('previousCounts', () => this._statisticsService.getCounts(previous));
+		void this.track('hours', async () => this.toHoursDays(await this._timesheetService.getDailyReportChart(request)));
+		void this.track('projects', async () =>
 			this.rank(await this._statisticsService.getProjects(request), (project: IProjectsStatistics) => ({
 				id: project.id,
 				name: project.name
 			}))
 		);
-		this.track('topTasks', async () =>
-			this.rank(
-				await this._statisticsService.getTasksStatistics({ ...request, take: LIST_LIMIT }),
-				(task: ITasksStatistics) => ({ id: task.id, name: task.title, meta: task.project?.name })
-			)
+		// Fetched in full and ranked here, like Projects and Apps. The endpoint
+		// orders by last update, not by time, and applies `take` first, so a
+		// server-side limit could drop the most-worked tasks and would leave each
+		// share computed over the kept rows only.
+		void this.track('topTasks', async () =>
+			this.rank(await this._statisticsService.getTasksStatistics(request), (task: ITasksStatistics) => ({
+				id: task.id,
+				name: task.title,
+				meta: task.project?.name
+			}))
 		);
-		this.track('apps', async () =>
+		void this.track('apps', async () =>
 			this.rank(await this._statisticsService.getActivities(request), (activity: IActivitiesStatistics) => ({
 				id: activity.title,
 				name: activity.title
 			}))
 		);
-		this.track('screenshots', () => this.fetchScreenshots(request));
-		this.track('tasks', async () => {
+		void this.track('screenshots', () => this.fetchScreenshots(request));
+		void this.track('tasks', async () => {
 			const { organizationId, tenantId } = this.employee;
 			const tasks = await this._tasksService.getAllTasksByEmployee(employeeId, {
 				where: { organizationId, tenantId },
@@ -534,17 +586,13 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 
 	/** Daily-chart rows (hours per log type) -> the chart's tracked/manual days. */
 	private toHoursDays(rows: any): IEmployeeHoursDay[] {
-		const days: IEmployeeHoursDay[] = (Array.isArray(rows) ? rows : []).map((row: any) => ({
-			label: moment(row.date).format(this.period === EmployeeViewPeriod.THIS_WEEK ? 'ddd D' : 'D MMM'),
+		const format = this.period === EmployeeViewPeriod.THIS_WEEK ? 'ddd D' : 'D MMM';
+		return (Array.isArray(rows) ? rows : []).map((row: any) => ({
+			label: moment(row.date).format(format),
 			// Resumed time is timer time picked back up after an idle prompt, so it counts as tracked.
 			tracked: (Number(row.value?.[TimeLogType.TRACKED]) || 0) + (Number(row.value?.[TimeLogType.RESUMED]) || 0),
 			manual: Number(row.value?.[TimeLogType.MANUAL]) || 0
 		}));
-
-		const total = days.reduce((sum, day) => sum + day.tracked + day.manual, 0);
-		const worked = days.filter((day) => day.tracked + day.manual > 0).length;
-		this.hoursSummary = { total: total * 3600, average: worked ? (total / worked) * 3600 : 0 };
-		return days;
 	}
 
 	/** Sorts by duration, keeps the top rows, and sizes each against the total and the largest. */
@@ -566,64 +614,59 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
-	 * Keeps the tasks this employee is a member of (the endpoint also returns
-	 * their teams' tasks), counts them for the filter tabs, and describes each
-	 * one in plain words — its status group, its priority, and how its due date
-	 * stands against today. Ordered overdue first, then soonest due, undated last.
+	 * Keeps the tasks assigned to this employee and describes each in plain
+	 * words: its status group, its priority, and how its due date stands against
+	 * today. Ordered overdue first, then soonest due, undated last. Pure: the
+	 * counts are derived from the accepted rows (see `taskSummary`).
+	 *
+	 * The endpoint also returns the tasks of the employee's teams. A team task
+	 * with no assignee is kept, as it is the team's and so theirs; one assigned to
+	 * other members is not this employee's work and would inflate their open and
+	 * overdue counts, so it is left out.
 	 */
 	private toAssignedTasks(tasks: ITask[], employeeId: string): IAssignedTaskRow[] {
-		const own = tasks.filter(
-			(task) => !task.members?.length || task.members.some((member) => member?.id === employeeId)
-		);
 		const today = moment().startOf('day');
-		const summary = { open: 0, todo: 0, progress: 0, blocked: 0, overdue: 0, done: 0 };
-
-		const rows: IAssignedTaskRow[] = own.map((task) => {
-			const status = (task.status || '').toLowerCase();
-			const statusGroup: IAssignedTaskRow['statusGroup'] = CLOSED_STATUSES.includes(status)
-				? 'done'
-				: IN_PROGRESS_STATUSES.includes(status)
-				? 'progress'
-				: status === TaskStatusEnum.BLOCKED
-				? 'blocked'
-				: 'todo';
-			const isDone = statusGroup === 'done';
-			const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
-			const overdue = !isDone && daysLeft !== null && daysLeft < 0;
-
-			if (isDone) {
-				summary.done++;
-			} else {
-				summary.open++;
-				summary[statusGroup]++;
-				if (overdue) summary.overdue++;
-			}
-
-			const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
-			return {
-				id: task.id,
-				key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
-				title: task.title,
-				project: task.project?.name,
-				status: task.taskStatus?.name || this.humanize(task.status) || '',
-				statusGroup,
-				priority: task.taskPriority?.name || this.humanize(task.priority) || undefined,
-				priorityLevel: ['urgent', 'high', 'medium', 'low'].includes(priority)
-					? (priority as IAssignedTaskRow['priorityLevel'])
-					: undefined,
-				dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
-				due: ViewEmployeeComponent.dueInWords(daysLeft, isDone),
-				dueTime: task.dueDate ? moment(task.dueDate).valueOf() : Infinity,
-				doneTime: moment(task.resolvedAt || task.updatedAt || 0).valueOf(),
-				overdue
-			};
-		});
-		this.taskSummary = summary;
+		const rows = tasks
+			.filter((task) => !task.members?.length || task.members.some((member) => member?.id === employeeId))
+			.map((task) => this.toTaskRow(task, today));
 
 		// Overdue first, then soonest due; undated last. (Infinity - Infinity is NaN, hence the guard.)
 		return rows.sort(
 			(a, b) => Number(b.overdue) - Number(a.overdue) || (a.dueTime === b.dueTime ? 0 : a.dueTime - b.dueTime)
 		);
+	}
+
+	/** One task as a table row. */
+	private toTaskRow(task: ITask, today: moment.Moment): IAssignedTaskRow {
+		const statusGroup = ViewEmployeeComponent.statusGroupOf(task.status);
+		const isDone = statusGroup === 'done';
+		const daysLeft = task.dueDate ? moment(task.dueDate).startOf('day').diff(today, 'days') : null;
+		const priority = (task.taskPriority?.name || task.priority || '').toLowerCase();
+
+		return {
+			id: task.id,
+			key: task.prefix && task.number ? `${task.prefix}-${task.number}` : '',
+			title: task.title,
+			project: task.project?.name,
+			status: task.taskStatus?.name || this.humanize(task.status) || '',
+			statusGroup,
+			priority: task.taskPriority?.name || this.humanize(task.priority) || undefined,
+			priorityLevel: PRIORITY_LEVELS.has(priority) ? (priority as IAssignedTaskRow['priorityLevel']) : undefined,
+			dueDate: task.dueDate ? moment(task.dueDate).format('ll') : undefined,
+			due: ViewEmployeeComponent.dueInWords(daysLeft, isDone),
+			dueTime: task.dueDate ? moment(task.dueDate).valueOf() : Infinity,
+			doneTime: moment(task.resolvedAt || task.updatedAt || 0).valueOf(),
+			overdue: !isDone && daysLeft !== null && daysLeft < 0
+		};
+	}
+
+	/** Which of the four groups a task status belongs to. */
+	private static statusGroupOf(status: string | undefined): IAssignedTaskRow['statusGroup'] {
+		const value = (status || '').toLowerCase();
+		if (CLOSED_STATUSES.has(value)) return 'done';
+		if (IN_PROGRESS_STATUSES.has(value)) return 'progress';
+		if (value === TaskStatusEnum.BLOCKED) return 'blocked';
+		return 'todo';
 	}
 
 	/** Days until (or past) the due date, as the words the Due column prints. */
