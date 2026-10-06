@@ -2852,7 +2852,19 @@
 		"EMPLOYEE_UPDATED": "El empleado ha sido actualizado.",
 		"IMAGE_UPDATED": "La imagen ha sido actualizada.",
 		"FAIL_TO_UPDATE_IMAGE": "La actualización falló.",
-		"ANONYMOUS": "Anónimo."
+		"ANONYMOUS": "Anónimo.",
+		"ABOUT": "Acerca de",
+		"INACTIVE": "Inactivo",
+		"PER_HOUR": "/ hora",
+		"MEMBER_SINCE": "Miembro desde",
+		"NO_DESCRIPTION": "Aún no se ha añadido una descripción",
+		"NO_SKILLS": "Aún no hay habilidades",
+		"VIEW_COMPANY_PROFILE": "Ver perfil de la empresa",
+		"EDIT": {
+			"NO_AWARDS": "Aún no hay premios",
+			"ADD_AWARD": "Añadir premio",
+			"PRIVACY_HELP": "Elige qué datos pueden ver los visitantes en el perfil público."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Página de Gestión de Propuestas",

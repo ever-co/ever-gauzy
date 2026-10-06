@@ -2615,7 +2615,19 @@
 		"EMPLOYEE_UPDATED": "crwdns7894:0crwdne7894:0",
 		"IMAGE_UPDATED": "crwdns7896:0crwdne7896:0",
 		"FAIL_TO_UPDATE_IMAGE": "crwdns7898:0crwdne7898:0",
-		"ANONYMOUS": "crwdns7992:0crwdne7992:0"
+		"ANONYMOUS": "crwdns7992:0crwdne7992:0",
+		"ABOUT": "About",
+		"INACTIVE": "Inactive",
+		"PER_HOUR": "/ hour",
+		"MEMBER_SINCE": "Member since",
+		"NO_DESCRIPTION": "No description has been added yet",
+		"NO_SKILLS": "No skills listed yet",
+		"VIEW_COMPANY_PROFILE": "View company profile",
+		"EDIT": {
+			"NO_AWARDS": "No awards added yet",
+			"ADD_AWARD": "Add award",
+			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "crwdns2151:0crwdne2151:0",

@@ -2875,7 +2875,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "אודות",
+		"INACTIVE": "לא פעיל",
+		"PER_HOUR": "/ שעה",
+		"MEMBER_SINCE": "חבר מאז",
+		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
+		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
+		"EDIT": {
+			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"ADD_AWARD": "הוספת פרס",
+			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "הצעות - ניהול",

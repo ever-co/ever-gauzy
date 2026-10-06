@@ -2850,7 +2850,19 @@
 		"EMPLOYEE_UPDATED": "Werknemer is bijgewerkt.",
 		"IMAGE_UPDATED": "De afbeelding is bijgewerkt.",
 		"FAIL_TO_UPDATE_IMAGE": "Update mislukt.",
-		"ANONYMOUS": "Anoniem"
+		"ANONYMOUS": "Anoniem",
+		"ABOUT": "Over",
+		"INACTIVE": "Inactief",
+		"PER_HOUR": "/ uur",
+		"MEMBER_SINCE": "Lid sinds",
+		"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd",
+		"NO_SKILLS": "Nog geen vaardigheden vermeld",
+		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
+		"EDIT": {
+			"NO_AWARDS": "Nog geen onderscheidingen",
+			"ADD_AWARD": "Onderscheiding toevoegen",
+			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Pagina voor beheer van voorstellen",

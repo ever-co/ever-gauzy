@@ -2845,7 +2845,19 @@
 		"EMPLOYEE_UPDATED": "L'employé a été mis à jour.",
 		"IMAGE_UPDATED": "L'image a été mise à jour.",
 		"FAIL_TO_UPDATE_IMAGE": "Mise à jour échouée.",
-		"ANONYMOUS": "Anonyme"
+		"ANONYMOUS": "Anonyme",
+		"ABOUT": "À propos",
+		"INACTIVE": "Inactif",
+		"PER_HOUR": "/ heure",
+		"MEMBER_SINCE": "Membre depuis",
+		"NO_DESCRIPTION": "Aucune description n’a encore été ajoutée",
+		"NO_SKILLS": "Aucune compétence indiquée",
+		"VIEW_COMPANY_PROFILE": "Voir le profil de l’entreprise",
+		"EDIT": {
+			"NO_AWARDS": "Aucune distinction ajoutée",
+			"ADD_AWARD": "Ajouter une distinction",
+			"PRIVACY_HELP": "Choisissez les informations visibles sur le profil public."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Page de gestion des propositions",

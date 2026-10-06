@@ -2835,7 +2835,19 @@
 		"EMPLOYEE_UPDATED": "تم تحديث الموظف.",
 		"IMAGE_UPDATED": "تم تحديث الصورة.",
 		"FAIL_TO_UPDATE_IMAGE": "فشل التحديث.",
-		"ANONYMOUS": "مجهول"
+		"ANONYMOUS": "مجهول",
+		"ABOUT": "نبذة",
+		"INACTIVE": "غير نشط",
+		"PER_HOUR": "/ ساعة",
+		"MEMBER_SINCE": "عضو منذ",
+		"NO_DESCRIPTION": "لم يُضف وصف بعد",
+		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
+		"EDIT": {
+			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"ADD_AWARD": "إضافة جائزة",
+			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "صفحة إدارة الاقتراحات",

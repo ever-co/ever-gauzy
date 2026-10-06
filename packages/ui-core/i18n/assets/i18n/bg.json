@@ -2909,7 +2909,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "За служителя",
+		"INACTIVE": "Неактивен",
+		"PER_HOUR": "/ час",
+		"MEMBER_SINCE": "Член от",
+		"NO_DESCRIPTION": "Все още няма добавено описание",
+		"NO_SKILLS": "Все още няма посочени умения",
+		"VIEW_COMPANY_PROFILE": "Виж профила на компанията",
+		"EDIT": {
+			"NO_AWARDS": "Все още няма награди",
+			"ADD_AWARD": "Добави награда",
+			"PRIVACY_HELP": "Изберете кои данни посетителите виждат в публичния профил."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
