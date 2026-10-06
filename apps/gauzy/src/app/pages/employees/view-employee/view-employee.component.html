@@ -3,7 +3,7 @@
 		@if (employee) {
 		<!-- ── Profile header: who, their presence, and the actions on them ── -->
 		<div class="profile-row">
-			<span class="avatar" [ngClass]="'presence-' + presence.tone">
+			<span class="avatar" [class]="'presence-' + presence.tone">
 				@if (avatarUrl) {
 				<img [src]="avatarUrl" [alt]="displayName" />
 				} @else {
@@ -15,11 +15,11 @@
 			<div class="profile-text">
 				<div class="profile-name-row">
 					<h4 class="profile-name">{{ displayName }}</h4>
-					<span class="presence-label" [ngClass]="'presence-' + presence.tone">
+					<span class="presence-label" [class]="'presence-' + presence.tone">
 						<span class="presence-dot" aria-hidden="true"></span>
 						{{ presence.key | translate }}
 					</span>
-					<span class="chip status-chip" [ngClass]="'tone-' + workStatus.tone">{{ workStatus.key | translate }}</span>
+					<span class="chip status-chip" [class]="'tone-' + workStatus.tone">{{ workStatus.key | translate }}</span>
 				</div>
 				<div class="profile-sub">
 					@if (employee.organizationPosition?.name) {
@@ -93,6 +93,8 @@
 					type="button"
 					role="tab"
 					class="tab"
+					id="employee-view-tab-overview"
+					aria-controls="employee-view-pane-overview"
 					[class.is-active]="tab === 'overview'"
 					[attr.aria-selected]="tab === 'overview'"
 					(click)="tab = 'overview'"
@@ -103,6 +105,8 @@
 					type="button"
 					role="tab"
 					class="tab"
+					id="employee-view-tab-profile"
+					aria-controls="employee-view-pane-profile"
 					[class.is-active]="tab === 'profile'"
 					[attr.aria-selected]="tab === 'profile'"
 					(click)="tab = 'profile'"
@@ -136,6 +140,7 @@
 	<nb-card-body class="ev-body">
 		@if (employee) {
 		@if (tab === 'overview') {
+		<div class="tab-pane" role="tabpanel" id="employee-view-pane-overview" aria-labelledby="employee-view-tab-overview">
 		<!-- ── Summary: one strip, four cells, each against the previous period ── -->
 		<section class="summary" [nbSpinner]="counts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 			<div class="summary-cell">
@@ -259,15 +264,15 @@
 					</h5>
 					@if (!tasks.failed && taskSummary.open + taskSummary.done) {
 					<!-- Segmented filter: each segment names a view and says how many tasks are in it. -->
-					<div class="segmented" role="tablist" [attr.aria-label]="'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS' | translate">
+					<!-- Toggle buttons over one list (not tabs): the selected view is the pressed one. -->
+					<div class="segmented" role="group" [attr.aria-label]="'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS' | translate">
 						@for (filter of taskFilters; track filter) {
 						<button
 							type="button"
-							role="tab"
 							class="segment"
-							[ngClass]="'segment--' + filter"
+							[class]="'segment--' + filter"
 							[class.is-active]="taskFilter === filter"
-							[attr.aria-selected]="taskFilter === filter"
+							[attr.aria-pressed]="taskFilter === filter"
 							(click)="taskFilter = filter"
 						>
 							{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.' + filter.toUpperCase() | translate }}
@@ -292,7 +297,7 @@
 					<ul class="task-list">
 						@for (task of visibleTasks; track task.id) {
 						<li class="task-row">
-							<span class="task-dot" [ngClass]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
+							<span class="task-dot" [class]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
 							<span class="task-main">
 								<span class="task-title" [title]="task.title">{{ task.title }}</span>
 								<span class="task-meta">
@@ -304,7 +309,7 @@
 									}
 									<span class="task-meta-item">{{ task.status }}</span>
 									@if (task.priority) {
-									<span class="task-meta-item task-priority" [ngClass]="'priority-' + (task.priorityLevel || 'none')">
+									<span class="task-meta-item task-priority" [class]="'priority-' + (task.priorityLevel || 'none')">
 										<nb-icon
 											[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
 											aria-hidden="true"
@@ -374,9 +379,10 @@
 				</section>
 			</div>
 		</div>
+		</div>
 		} @else {
 		<!-- ── Profile tab: main record on the left, contact sidebar on the right ── -->
-		<div class="profile">
+		<div class="profile" role="tabpanel" id="employee-view-pane-profile" aria-labelledby="employee-view-tab-profile">
 			<div class="profile-main">
 				<!-- About -->
 				<section class="panel">
@@ -516,7 +522,7 @@
 
 <!-- Change against the previous period: arrow + percentage, then what it is measured against. -->
 <ng-template #deltaTpl let-delta>
-	<span class="delta" [ngClass]="'delta--' + delta.direction">
+	<span class="delta" [class]="'delta--' + delta.direction">
 		@if (delta.percent !== null) {
 		<nb-icon
 			[icon]="delta.direction === 'up' ? 'arrow-upward-outline' : delta.direction === 'down' ? 'arrow-downward-outline' : 'minus-outline'"
