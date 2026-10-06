@@ -316,13 +316,6 @@ export class ViewEmployeeComponent extends TranslationBaseComponent implements O
 		}
 	}
 
-	/** Opens the edit page on the tab that holds a Profile card's fields. */
-	editSection(section: 'account' | 'employment' | 'rates' | 'location' | 'networks'): void {
-		if (this.employee) {
-			this._router.navigate(['/pages/employees/edit', this.employee.id, section]);
-		}
-	}
-
 	/**
 	 * Opens one of the employee activity / timesheet pages scoped to this
 	 * employee. Those pages read the employee from the header selector, so it is
