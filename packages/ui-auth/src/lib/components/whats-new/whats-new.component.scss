@@ -1,1 +1,138 @@
-@use '@shared/whats-new' as *;
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+
+// Same panel as register-side-features / register-side-single-feature.
+.main-section {
+  background: linear-gradient(to bottom, nb-theme(color-primary-400), nb-theme(color-primary-600));
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  padding: 16px;
+}
+.main-header {
+  color: white;
+  font-family: Inter;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 19px;
+  letter-spacing: -0.009em;
+  text-align: left;
+  margin-bottom: 14px;
+}
+.entry {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+  &.linked {
+    cursor: pointer;
+    &:hover .heading {
+      color: white;
+    }
+  }
+}
+.headings-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 6px;
+  & > nb-icon {
+    flex-shrink: 0;
+    margin-right: 5px;
+    margin-top: 1.5px;
+    height: 14px;
+    width: 14px;
+  }
+  & .headings {
+    display: flex;
+    flex-direction: column;
+    row-gap: 2px;
+  }
+  & .heading {
+    font-family: Inter;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: left;
+  }
+  & .date {
+    font-family: Inter;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 14px;
+    color: rgba(255, 255, 255, 0.55);
+  }
+}
+.description {
+  font-family: Inter;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 15px;
+  text-align: left;
+  width: 100%;
+  margin-bottom: 0;
+}
+.heading,
+nb-icon,
+.description {
+  color: rgba(255, 255, 255, 0.75);
+}
+.entry-img {
+  width: 100%;
+  max-width: 176px;
+  height: 104px;
+  margin-top: 10px;
+  border: 1px solid black;
+  box-shadow: 0px 8px 21px -11px #000000;
+  border-radius: 5px;
+  object-fit: contain;
+}
+.learn-more {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-family: Inter;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  color: white;
+}
+.small-hr-div {
+  width: 220px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 1px;
+  margin-bottom: 12px;
+  margin-top: 12px;
+}
+
+@include small-laptop-screen {
+  .description {
+    font-size: 12px;
+  }
+  .entry-img {
+    max-width: 184px;
+    height: 110px;
+  }
+}
+@include tablet-screen {
+  .small-hr-div {
+    width: 100%;
+  }
+  .entry-img {
+    width: 360px;
+    max-width: 100%;
+    height: 232px;
+  }
+}
+@include mobile-screen {
+  .entry-img {
+    width: 90%;
+    max-width: 100%;
+    height: 45vw;
+  }
+}
