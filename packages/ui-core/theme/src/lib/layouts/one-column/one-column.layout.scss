@@ -22,18 +22,19 @@ $chat-hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   // The nb-sidebar HOST of the Quick Settings panel. Nebular gives a `[fixed]`
   // sidebar `position: fixed; z-index: 999`, so the host is a stacking context
   // and THIS z-index — not the one on `.main-container-fixed` further down — is
-  // what orders the panel against the fixed header (1040) and the CDK overlay
-  // container (1050). Keep it between the two.
+  // what orders the panel against the fixed header (1040, or 1042 while the
+  // Timer card is open) and the CDK overlay container (1050). Keep it between
+  // the two.
   .settings-sidebar.expanded {
     width: 22.5rem !important;
     height: fit-content;
-    z-index: 1042;
+    z-index: 1043;
   }
 
   .changelog-sidebar.expanded {
     width: 22.5rem !important;
     height: fit-content;
-    z-index: 1042;
+    z-index: 1043;
   }
 
   nb-user {
@@ -655,6 +656,10 @@ nb-sidebar[tag='menu-sidebar'] {
   max-width: none;
   margin-left: 0;
   margin-right: 0;
+}
+
+:host ::ng-deep nb-layout .layout nb-layout-header.fixed:has(ngx-web-time-tracker .timer-card) {
+  z-index: 1042;
 }
 
 // ── Chrome hairlines ────────────────────────────────────────────────────────
