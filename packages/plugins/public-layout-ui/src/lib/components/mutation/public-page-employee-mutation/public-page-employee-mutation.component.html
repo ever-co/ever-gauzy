@@ -1,400 +1,286 @@
-<nb-card class="main">
-  <nb-card-header class="d-flex flex-column">
-    <span class="cancel">
-      <i class="fas fa-times" (click)="close()"></i>
-    </span>
-    <h5 class="title">
-      {{ 'POP_UPS.EDIT_PAGE' | translate }}
-    </h5>
-  </nb-card-header>
-  <nb-card-body class="body">
-    <form [formGroup]="form">
-      <nb-tabset class="tab_sections">
-        <nb-tab
-          tabTitle="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT' | translate }}"
-          tabIcon="person-outline"
-          responsive
-          >
-          <div class="row">
-            <div class="col">
-              <div class="form-group">
-                <label class="label" for="usernameInput">
-                  {{ 'FORM.USERNAME' | translate }}
-                </label>
-                <input
-                  fullWidth
-                  id="usernameInput"
-                  type="text"
-                  nbInput
-                  formControlName="username"
-                  placeholder="{{ 'FORM.USERNAME' | translate }}"
-                  />
-                </div>
-              </div>
-              <div class="col">
-                <div class="form-group">
-                  <label for="emailInput" class="label">
-                    {{ 'FORM.EMAIL' | translate }}
-                  </label>
-                  <input
-                    fullWidth
-                    id="emailInput"
-                    type="email"
-                    nbInput
-                    formControlName="email"
-                    placeholder="{{ 'FORM.EMAIL' | translate }}"
-                    />
-                  </div>
-                </div>
-              </div>
+<nb-card class="dialog">
+	<!--
+		Header: title, whose page it is, close — and the tabs under them. The tabs
+		live INSIDE the header: nb-card only projects its own header / body /
+		footer, so a bare element beside them is rendered after the body.
+	-->
+	<nb-card-header class="dialog-header">
+		<div class="dialog-top">
+			<div class="dialog-heading">
+				<h5 class="dialog-title">{{ 'POP_UPS.EDIT_PAGE' | translate }}</h5>
+				@if (employee?.user?.name) {
+				<span class="dialog-subtitle">{{ employee.user.name }}</span>
+				}
+			</div>
+			<button type="button" class="dialog-close" (click)="close()" [attr.aria-label]="'BUTTONS.CLOSE' | translate">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
 
-              <div class="row">
-                <div class="col">
-                  <div class="form-group">
-                    <label class="label" for="firstNameInput">
-                      {{ 'FORM.LABELS.FIRST_NAME' | translate }}
-                    </label>
-                    <input
-                      fullWidth
-                      id="firstNameInput"
-                      type="text"
-                      nbInput
-                      formControlName="firstName"
-                      placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}"
-                      />
-                    </div>
-                  </div>
-                  <div class="col">
-                    <div class="form-group">
-                      <label for="lastNameInput" class="label">
-                        {{ 'FORM.LABELS.LAST_NAME' | translate }}
-                      </label>
-                      <input
-                        fullWidth
-                        id="lastNameInput"
-                        type="text"
-                        nbInput
-                        formControlName="lastName"
-                        placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col">
-                      <div class="form-group">
-                        <label for="preferredLanguage" class="label">
-                          {{ 'FORM.LABELS.PREFERRED_LANGUAGE' | translate }}
-                        </label>
-                        <ngx-language-selector
-                          [placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
-                          class="d-block"
-                          selectBy="object"
-                          template="ng-select"
-                          formControlName="preferredLanguage"
-                        ></ngx-language-selector>
-                      </div>
-                    </div>
-                  </div>
-                </nb-tab>
+		<nav class="tabs" role="tablist">
+			@for (tab of tabs; track tab.id) {
+			<button
+				type="button"
+				role="tab"
+				class="tab"
+				[class.is-active]="activeTab === tab.id"
+				[attr.aria-selected]="activeTab === tab.id"
+				(click)="activeTab = tab.id"
+			>
+				<nb-icon [icon]="tab.icon" aria-hidden="true"></nb-icon>
+				{{ tab.title | translate }}
+			</button>
+			}
+		</nav>
+	</nb-card-header>
 
-                <nb-tab
-                  tabTitle="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT' | translate }}"
-                  tabIcon="browser-outline"
-                  responsive
-                  >
-                  <div class="row">
-                    <div class="col-md-12">
-                      <div class="form-group">
-                        <label for="startedWork" class="label">
-                          {{ 'FORM.LABELS.START_DATE' | translate }}
-                        </label>
-                        <input
-                          [nbDatepicker]="datepicker"
-                          nbInput
-                          fullWidth
-                          placeholder="{{ 'FORM.PLACEHOLDERS.START_DATE' | translate }}"
-                          formControlName="startedWorkOn"
-                          />
-                          <nb-datepicker #datepicker></nb-datepicker>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row">
-                      <div class="col">
-                        <div class="form-group">
-                          <label class="label" for="shortDescription">
-                            {{ 'FORM.LABELS.SHORT_DESCRIPTION' | translate }}
-                          </label>
-                          <input
-                            fullWidth
-                            id="shortDescription"
-                            type="text"
-                            nbInput
-                            formControlName="short_description"
-                            placeholder="{{ 'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER' | translate }}"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col">
-                          <div class="form-group">
-                            <p class="label">
-                              {{ 'FORM.LABELS.DESCRIPTION' | translate }}
-                            </p>
-                            <div class="rich-text-editor-field">
-                              <ga-rich-text-editor
-                                formControlName="description"
-                                class="description"
-                                preset="standard"
-                                outputFormat="html"
-                                minHeight="200px"
-                              ></ga-rich-text-editor>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <label for="employmentType" class="label">
-                              {{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate }}
-                            </label>
-                            <ng-select
-                              id="employmentType"
-                              [items]="employmentTypes$ | async"
-                              formControlName="organizationEmploymentTypes"
-                              bindLabel="name"
-                              [searchable]="false"
-                              placeholder="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate }}"
-                              [multiple]="true"
-                              appendTo="body"
-                              >
-                            </ng-select>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <label class="label" for="empLevelInput">
-                              {{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate }}
-                            </label>
-                            <ng-select appendTo="body" formControlName="employeeLevel">
-                              @for (empL of employeeLevels; track empL) {
-                                <ng-option [value]="empL.level">
-                                  {{ empL.level }}
-                                </ng-option>
-                              }
-                            </ng-select>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <ga-tags-color-input
-                              [selectedTags]="employee.tags"
-                              (selectedTagsEvent)="selectedTagsHandler($event)"
-                              [isOrgLevel]="true"
-                            ></ga-tags-color-input>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <ngx-skills-input
-                              [form]="form"
-                              [selectedSkills]="employee.skills"
-                              (selectedSkillsEvent)="selectedSkillsHandler($event)"
-                            ></ngx-skills-input>
-                          </div>
-                        </div>
-                      </div>
-                    </nb-tab>
-                    <nb-tab
-                      tabTitle="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES' | translate }}"
-                      tabIcon="pricetags-outline"
-                      responsive
-                      >
-                      <div class="row">
-                        <div class="col">
-                          <nb-card>
-                            <nb-card-header>
-                              {{ 'FORM.RATES.DEFAULT_RATE' | translate }}
-                            </nb-card-header>
-                            <nb-card-body>
-                              <div class="form-group">
-                                <label class="label">{{ 'FORM.LABELS.PAY_PERIOD' | translate }}</label>
-                                <nb-select
-                                  id="payPeriodsSelect"
-                                  formControlName="payPeriod"
-                                  placeholder="{{ 'FORM.LABELS.PAY_PERIOD' | translate }}"
-                                  class="d-block"
-                                  size="medium"
-                                  fullWidth="true"
-                                  >
-                                  @for (payPeriod of payPeriods; track payPeriod) {
-                                    <nb-option [value]="payPeriod">
-                                      {{ payPeriod | replace : '_' : ' ' | titlecase }}
-                                    </nb-option>
-                                  }
-                                </nb-select>
-                              </div>
-                              <div class="bill-rate">
-                                <div class="form-group">
-                                  <label class="label" for="billRateValueInput">{{
-                                    'FORM.LABELS.BILL_RATE' | translate
-                                  }}</label>
-                                  <input
-                                    fullWidth
-                                    id="billRateValueInput"
-                                    type="number"
-                                    [min]="0"
-                                    step="0.01"
-                                    nbInput
-                                    formControlName="billRateValue"
-                                    placeholder="{{ 'FORM.PLACEHOLDERS.BILL_RATE' | translate }}"
-                                    />
-                                  </div>
-                                  <div class="form-group currency-per-hour">
-                                    <ga-currency formControlName="billRateCurrency"></ga-currency>
-                                  </div>
-                                </div>
-                              </nb-card-body>
-                            </nb-card>
-                          </div>
-                          <div class="col">
-                            <nb-card>
-                              <nb-card-header>
-                                {{ 'FORM.RATES.LIMITS' | translate }}
-                              </nb-card-header>
-                              <nb-card-body>
-                                <div class="form-group">
-                                  <label class="label" for="reWeeklyLimitInput">{{
-                                    'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate
-                                  }}</label>
-                                  <input
-                                    fullWidth
-                                    id="reWeeklyLimitInput"
-                                    type="text"
-                                    nbInput
-                                    type="number"
-                                    [min]="0"
-                                    step="0.1"
-                                    max="5"
-                                    formControlName="reWeeklyLimit"
-                                    placeholder="{{ 'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT' | translate }}"
-                                    />
-                                  </div>
-                                </nb-card-body>
-                              </nb-card>
-                            </div>
-                          </div>
-                        </nb-tab>
-                        <nb-tab tabTitle="{{ 'POP_UPS.AWARDS' | translate }}" tabIcon="award-outline" responsive>
-                          <div class="row">
-                            <div class="col">
-                              @if (employeeAwards) {
-                                <div class="row">
-                                  <div class="col">
-                                    <nb-tag-list>
-                                      @for (award of employeeAwards; track award) {
-                                        <nb-tag
-                                          (remove)="removeAward(award)"
-                                          [text]="award.name + ' (' + award.year + ')'"
-                                          removable
-                                        ></nb-tag>
-                                      }
-                                    </nb-tag-list>
-                                  </div>
-                                </div>
-                              }
-                              @if (!showAddAward) {
-                                <div (click)="showAddAward = !showAddAward" class="button-add-award">
-                                  <button nbButton status="success" outline size="small">
-                                    <i class="fas fa-plus"></i>
-                                  </button>
-                                  <span class="heading_title">{{ 'POP_UPS.AWARDS' | translate }}</span>
-                                </div>
-                              }
-                              @if (showAddAward) {
-                                <div class="row mt-3 show-add-award">
-                                  <div class="col-sm-4 d-flex flex-column justify-content-end">
-                                    <label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
-                                    <input
-                                      #addInputName
-                                      nbInput
-                                      class="input_name"
-                                      type="text"
-                                      placeholder="{{ 'POP_UPS.NAME' | translate }}"
-                                      fullWidth
-                                      />
-                                    </div>
-                                    <div class="col d-flex flex-column justify-content-end">
-                                      <label class="label">{{ 'POP_UPS.YEAR' | translate }}</label>
-                                      <input
-                                        #addInputYear
-                                        nbInput
-                                        class="input_year"
-                                        type="number"
-                                        [min]="0"
-                                        placeholder="{{ 'POP_UPS.YEAR' | translate }}"
-                                        fullWidth
-                                        />
-                                      </div>
-                                      <span class="col d-flex align-items-end">
-                                        <button
-                                          (click)="addAward(addInputName.value, addInputYear.value)"
-                                          nbButton
-                                          status="success"
-                                          size="small"
-                                          class="mr-3"
-                                          >
-                                          {{ 'BUTTONS.SAVE' | translate }}</button
-                                          ><button
-                                          (click)="showAddAward = !showAddAward"
-                                          nbButton
-                                          status="basic"
-                                          size="small"
-                                          outline
-                                          >
-                                          {{ 'BUTTONS.CANCEL' | translate }}
-                                        </button>
-                                      </span>
-                                    </div>
-                                  }
-                                </div>
-                              </div>
-                            </nb-tab>
-                            <nb-tab tabTitle="{{ 'POP_UPS.PRIVACY' | translate }}" tabIcon="shield-outline" responsive>
-                              <div class="row mt-3">
-                                @for (setting of privacySettings; track setting) {
-                                  <div class="col-sm-6">
-                                    <div class="form-group extra_padding">
-                                      <nb-toggle class="nb_toggle" id="{{ setting.key }}" [formControlName]="setting.key">
-                                        <label class="check" for="{{ setting.key }}">
-                                          {{ setting.translation | translate }}
-                                        </label>
-                                      </nb-toggle>
-                                    </div>
-                                  </div>
-                                }
-                              </div>
-                              <div class="row">
-                                <div class="col-sm-12">
-                                  <div class="form-group">
-                                    <nb-checkbox formControlName="anonymousBonus">
-                                      {{ 'POP_UPS.DISPLAY_BONUS_ANONYMOUSLY' | translate }}
-                                    </nb-checkbox>
-                                  </div>
-                                </div>
-                              </div>
-                            </nb-tab>
-                          </nb-tabset>
-                        </form>
-                      </nb-card-body>
-                      <nb-card-footer>
-                        <button status="success" size="small" nbButton (click)="updateEmployee()">
-                          {{ 'BUTTONS.UPDATE' | translate }}
-                        </button>
-                      </nb-card-footer>
-                    </nb-card>
+	<nb-card-body class="dialog-body">
+		<form [formGroup]="form">
+			<!-- Account -->
+			<div class="pane" [hidden]="activeTab !== 'account'">
+				<section class="section">
+					<div class="grid">
+						<div class="field">
+							<label class="label" for="usernameInput">{{ 'FORM.USERNAME' | translate }}</label>
+							<input fullWidth id="usernameInput" type="text" nbInput formControlName="username" placeholder="{{ 'FORM.USERNAME' | translate }}" />
+						</div>
+						<div class="field">
+							<label class="label" for="emailInput">{{ 'FORM.EMAIL' | translate }}</label>
+							<input fullWidth id="emailInput" type="email" nbInput formControlName="email" placeholder="{{ 'FORM.EMAIL' | translate }}" />
+						</div>
+						<div class="field">
+							<label class="label" for="firstNameInput">{{ 'FORM.LABELS.FIRST_NAME' | translate }}</label>
+							<input fullWidth id="firstNameInput" type="text" nbInput formControlName="firstName" placeholder="{{ 'FORM.PLACEHOLDERS.FIRST_NAME' | translate }}" />
+						</div>
+						<div class="field">
+							<label class="label" for="lastNameInput">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
+							<input fullWidth id="lastNameInput" type="text" nbInput formControlName="lastName" placeholder="{{ 'FORM.PLACEHOLDERS.LAST_NAME' | translate }}" />
+						</div>
+						<div class="field field--wide">
+							<label class="label" for="preferredLanguage">{{ 'FORM.LABELS.PREFERRED_LANGUAGE' | translate }}</label>
+							<ngx-language-selector
+								[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
+								class="d-block"
+								selectBy="object"
+								template="ng-select"
+								formControlName="preferredLanguage"
+							></ngx-language-selector>
+						</div>
+					</div>
+				</section>
+			</div>
+
+			<!-- Employment -->
+			<div class="pane" [hidden]="activeTab !== 'employment'">
+				<section class="section">
+					<div class="grid">
+						<div class="field">
+							<label class="label" for="startedWork">{{ 'FORM.LABELS.START_DATE' | translate }}</label>
+							<input id="startedWork" [nbDatepicker]="datepicker" nbInput fullWidth placeholder="{{ 'FORM.PLACEHOLDERS.START_DATE' | translate }}" formControlName="startedWorkOn" />
+							<nb-datepicker #datepicker></nb-datepicker>
+						</div>
+						<div class="field">
+							<label class="label" for="shortDescription">{{ 'FORM.LABELS.SHORT_DESCRIPTION' | translate }}</label>
+							<input
+								fullWidth
+								id="shortDescription"
+								type="text"
+								nbInput
+								formControlName="short_description"
+								placeholder="{{ 'FORM.PLACEHOLDERS.EG_FULL_STACK_WEB_DEVELOPER' | translate }}"
+							/>
+						</div>
+						<div class="field field--wide">
+							<span class="label">{{ 'FORM.LABELS.DESCRIPTION' | translate }}</span>
+							<ga-rich-text-editor formControlName="description" class="description" preset="standard" outputFormat="html" minHeight="180px"></ga-rich-text-editor>
+						</div>
+					</div>
+				</section>
+
+				<section class="section">
+					<div class="grid">
+						<div class="field">
+							<label class="label" for="employmentType">{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate }}</label>
+							<ng-select
+								id="employmentType"
+								[items]="employmentTypes$ | async"
+								formControlName="organizationEmploymentTypes"
+								bindLabel="name"
+								[searchable]="false"
+								placeholder="{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate }}"
+								[multiple]="true"
+								appendTo="body"
+							></ng-select>
+						</div>
+						<div class="field">
+							<label class="label" for="empLevelInput">{{ 'FORM.LABELS.EMPLOYEE_LEVEL' | translate }}</label>
+							<ng-select labelForId="empLevelInput" appendTo="body" formControlName="employeeLevel">
+								@for (empL of employeeLevels; track empL) {
+								<ng-option [value]="empL.level">{{ empL.level }}</ng-option>
+								}
+							</ng-select>
+						</div>
+						<div class="field">
+							<ga-tags-color-input
+								[selectedTags]="employee.tags"
+								(selectedTagsEvent)="selectedTagsHandler($event)"
+								[isOrgLevel]="true"
+							></ga-tags-color-input>
+						</div>
+						<div class="field">
+							<ngx-skills-input
+								[form]="form"
+								[selectedSkills]="employee.skills"
+								(selectedSkillsEvent)="selectedSkillsHandler($event)"
+							></ngx-skills-input>
+						</div>
+					</div>
+				</section>
+			</div>
+
+			<!-- Rates -->
+			<div class="pane pane--split" [hidden]="activeTab !== 'rates'">
+				<section class="section">
+					<h6 class="section-title">{{ 'FORM.RATES.DEFAULT_RATE' | translate }}</h6>
+					<div class="grid">
+						<div class="field field--wide">
+							<label class="label" for="payPeriodsSelect">{{ 'FORM.LABELS.PAY_PERIOD' | translate }}</label>
+							<nb-select
+								id="payPeriodsSelect"
+								formControlName="payPeriod"
+								placeholder="{{ 'FORM.LABELS.PAY_PERIOD' | translate }}"
+								class="d-block"
+								size="medium"
+								fullWidth="true"
+							>
+								@for (payPeriod of payPeriods; track payPeriod) {
+								<nb-option [value]="payPeriod">{{ payPeriod | replace : '_' : ' ' | titlecase }}</nb-option>
+								}
+							</nb-select>
+						</div>
+						<div class="field">
+							<label class="label" for="billRateValueInput">{{ 'FORM.LABELS.BILL_RATE' | translate }}</label>
+							<input
+								fullWidth
+								id="billRateValueInput"
+								type="number"
+								[min]="0"
+								step="0.01"
+								nbInput
+								formControlName="billRateValue"
+								placeholder="{{ 'FORM.PLACEHOLDERS.BILL_RATE' | translate }}"
+							/>
+						</div>
+						<div class="field">
+							<ga-currency formControlName="billRateCurrency"></ga-currency>
+						</div>
+					</div>
+				</section>
+
+				<section class="section">
+					<h6 class="section-title">{{ 'FORM.RATES.LIMITS' | translate }}</h6>
+					<div class="field">
+						<label class="label" for="reWeeklyLimitInput">{{ 'FORM.LABELS.RECURRING_WEEKLY_LIMIT' | translate }}</label>
+						<input
+							fullWidth
+							id="reWeeklyLimitInput"
+							nbInput
+							type="number"
+							[min]="0"
+							step="0.1"
+							max="5"
+							formControlName="reWeeklyLimit"
+							placeholder="{{ 'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT' | translate }}"
+						/>
+					</div>
+				</section>
+			</div>
+
+			<!-- Awards -->
+			<div class="pane" [hidden]="activeTab !== 'awards'">
+				<section class="section">
+					@if (employeeAwards?.length) {
+					<ul class="awards">
+						@for (award of employeeAwards; track award.id || $index) {
+						<li class="award">
+							<span class="award-icon" aria-hidden="true"><nb-icon icon="award-outline"></nb-icon></span>
+							<span class="award-name">{{ award.name }}</span>
+							<span class="award-year">{{ award.year }}</span>
+							<button
+								type="button"
+								class="icon-button"
+								(click)="removeAward(award)"
+								[attr.aria-label]="'BUTTONS.DELETE' | translate"
+								[nbTooltip]="'BUTTONS.DELETE' | translate"
+							>
+								<nb-icon icon="trash-2-outline"></nb-icon>
+							</button>
+						</li>
+						}
+					</ul>
+					} @else if (!showAddAward) {
+					<p class="empty">{{ 'PUBLIC_PAGE.EDIT.NO_AWARDS' | translate }}</p>
+					}
+
+					@if (showAddAward) {
+					<div class="add-award">
+						<div class="field">
+							<label class="label" for="awardName">{{ 'POP_UPS.NAME' | translate }}</label>
+							<input #addInputName id="awardName" nbInput type="text" placeholder="{{ 'POP_UPS.NAME' | translate }}" fullWidth />
+						</div>
+						<div class="field field--year">
+							<label class="label" for="awardYear">{{ 'POP_UPS.YEAR' | translate }}</label>
+							<input #addInputYear id="awardYear" nbInput type="number" [min]="0" placeholder="{{ 'POP_UPS.YEAR' | translate }}" fullWidth />
+						</div>
+						<div class="add-award-actions">
+							<button type="button" nbButton status="basic" size="small" (click)="showAddAward = false">
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+							<button type="button" nbButton status="primary" size="small" (click)="addAward(addInputName.value, addInputYear.value)">
+								{{ 'BUTTONS.ADD' | translate }}
+							</button>
+						</div>
+					</div>
+					} @else {
+					<button type="button" class="add-link" (click)="showAddAward = true">
+						<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+						{{ 'PUBLIC_PAGE.EDIT.ADD_AWARD' | translate }}
+					</button>
+					}
+				</section>
+			</div>
+
+			<!-- Privacy -->
+			<div class="pane" [hidden]="activeTab !== 'privacy'">
+				<section class="section">
+					<p class="section-help">{{ 'PUBLIC_PAGE.EDIT.PRIVACY_HELP' | translate }}</p>
+					<ul class="settings">
+						<!-- The label is the toggle's own content, so the whole row is clickable. -->
+						@for (setting of privacySettings; track setting.key) {
+						<li class="setting">
+							<nb-toggle class="setting-toggle" labelPosition="start" status="primary" [formControlName]="setting.key">
+								{{ setting.translation | translate }}
+							</nb-toggle>
+						</li>
+						}
+						<li class="setting">
+							<nb-toggle class="setting-toggle" labelPosition="start" status="primary" formControlName="anonymousBonus">
+								{{ 'POP_UPS.DISPLAY_BONUS_ANONYMOUSLY' | translate }}
+							</nb-toggle>
+						</li>
+					</ul>
+				</section>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<!-- ── Footer: actions on the right ───────────────────────────────────── -->
+	<nb-card-footer class="dialog-footer">
+		<button type="button" nbButton status="basic" size="small" (click)="close()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" nbButton status="primary" size="small" (click)="updateEmployee()">
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
