@@ -1999,20 +1999,14 @@
 			"RECENT_SCREENSHOTS": "Neueste Screenshots",
 			"VIEW_ALL": "Alle anzeigen",
 			"ASSIGNED_TASKS": "Zugewiesene Aufgaben",
-			"TASKS_META": "{{ open }} offen · {{ done }} erledigt",
-			"STATUS": {
-				"TODO": "Zu erledigen",
-				"IN_PROGRESS": "In Bearbeitung",
-				"BLOCKED": "Blockiert",
-				"DONE": "Erledigt"
-			},
 			"COLUMNS": {
 				"TASK": "Aufgabe",
 				"PROJECT": "Projekt",
 				"STATUS": "Status",
 				"DUE": "Fällig",
 				"TIME": "Zeit",
-				"NAME": "Name"
+				"NAME": "Name",
+				"PRIORITY": "Priorität"
 			},
 			"TOP_TASKS": "Meistbearbeitete Aufgaben",
 			"APPS_URLS": "Apps & URLs",
@@ -2028,7 +2022,25 @@
 				"TIME_ZONE": "Zeitzone",
 				"NOT_PROVIDED": "Noch nicht angegeben",
 				"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt"
-			}
+			},
+			"TASKS_HELP": "Aufgaben, bei denen diese Person Mitglied ist. Wählen Sie ein Feld, um die Liste zu filtern.",
+			"TASK_FILTERS": {
+				"OPEN": "Offen",
+				"PROGRESS": "In Bearbeitung",
+				"OVERDUE": "Überfällig",
+				"DONE": "Erledigt"
+			},
+			"DUE": {
+				"NONE": "Kein Fälligkeitsdatum",
+				"WAS_DUE": "War fällig",
+				"OVERDUE_DAY": "1 Tag überfällig",
+				"OVERDUE_DAYS": "{{ count }} Tage überfällig",
+				"TODAY": "Heute fällig",
+				"TOMORROW": "Morgen fällig",
+				"IN_DAYS": "In {{ count }} Tagen"
+			},
+			"SHOWING": "{{ shown }} von {{ total }} Aufgaben angezeigt",
+			"NO_TASKS_IN_VIEW": "Keine Aufgaben in dieser Ansicht"
 		}
 	},
 	"GOALS_PAGE": {

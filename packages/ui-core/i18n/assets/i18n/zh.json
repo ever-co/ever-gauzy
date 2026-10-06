@@ -1999,20 +1999,14 @@
 			"RECENT_SCREENSHOTS": "最近截图",
 			"VIEW_ALL": "查看全部",
 			"ASSIGNED_TASKS": "已分配任务",
-			"TASKS_META": "{{ open }} 未完成 · {{ done }} 已完成",
-			"STATUS": {
-				"TODO": "待办",
-				"IN_PROGRESS": "进行中",
-				"BLOCKED": "已阻塞",
-				"DONE": "已完成"
-			},
 			"COLUMNS": {
 				"TASK": "任务",
 				"PROJECT": "项目",
 				"STATUS": "状态",
 				"DUE": "截止日期",
 				"TIME": "时长",
-				"NAME": "名称"
+				"NAME": "名称",
+				"PRIORITY": "优先级"
 			},
 			"TOP_TASKS": "耗时最多的任务",
 			"APPS_URLS": "应用和网址",
@@ -2028,7 +2022,25 @@
 				"TIME_ZONE": "时区",
 				"NOT_PROVIDED": "尚未填写",
 				"NO_DESCRIPTION": "尚未添加描述"
-			}
+			},
+			"TASKS_HELP": "此人参与的任务。点击方框筛选列表。",
+			"TASK_FILTERS": {
+				"OPEN": "未完成",
+				"PROGRESS": "进行中",
+				"OVERDUE": "已逾期",
+				"DONE": "已完成"
+			},
+			"DUE": {
+				"NONE": "无截止日期",
+				"WAS_DUE": "原定截止",
+				"OVERDUE_DAY": "逾期 1 天",
+				"OVERDUE_DAYS": "逾期 {{ count }} 天",
+				"TODAY": "今天到期",
+				"TOMORROW": "明天到期",
+				"IN_DAYS": "{{ count }} 天后到期"
+			},
+			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
+			"NO_TASKS_IN_VIEW": "此视图中没有任务"
 		}
 	},
 	"GOALS_PAGE": {

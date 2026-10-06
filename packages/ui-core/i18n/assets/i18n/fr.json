@@ -2000,20 +2000,14 @@
 			"RECENT_SCREENSHOTS": "Captures d’écran récentes",
 			"VIEW_ALL": "Tout voir",
 			"ASSIGNED_TASKS": "Tâches assignées",
-			"TASKS_META": "{{ open }} ouvertes · {{ done }} terminées",
-			"STATUS": {
-				"TODO": "À faire",
-				"IN_PROGRESS": "En cours",
-				"BLOCKED": "Bloquée",
-				"DONE": "Terminée"
-			},
 			"COLUMNS": {
 				"TASK": "Tâche",
 				"PROJECT": "Projet",
 				"STATUS": "Statut",
 				"DUE": "Échéance",
 				"TIME": "Temps",
-				"NAME": "Nom"
+				"NAME": "Nom",
+				"PRIORITY": "Priorité"
 			},
 			"TOP_TASKS": "Tâches les plus travaillées",
 			"APPS_URLS": "Applications et URL",
@@ -2029,7 +2023,25 @@
 				"TIME_ZONE": "Fuseau horaire",
 				"NOT_PROVIDED": "Pas encore renseigné",
 				"NO_DESCRIPTION": "Aucune description n’a encore été ajoutée"
-			}
+			},
+			"TASKS_HELP": "Tâches dont cette personne est membre. Choisissez une case pour filtrer la liste.",
+			"TASK_FILTERS": {
+				"OPEN": "Ouvertes",
+				"PROGRESS": "En cours",
+				"OVERDUE": "En retard",
+				"DONE": "Terminées"
+			},
+			"DUE": {
+				"NONE": "Pas d’échéance",
+				"WAS_DUE": "Échéance",
+				"OVERDUE_DAY": "1 jour de retard",
+				"OVERDUE_DAYS": "{{ count }} jours de retard",
+				"TODAY": "Échéance aujourd’hui",
+				"TOMORROW": "Échéance demain",
+				"IN_DAYS": "Dans {{ count }} jours"
+			},
+			"SHOWING": "{{ shown }} tâches affichées sur {{ total }}",
+			"NO_TASKS_IN_VIEW": "Aucune tâche dans cette vue"
 		}
 	},
 	"GOALS_PAGE": {

@@ -1999,20 +1999,14 @@
 			"RECENT_SCREENSHOTS": "Screenshot recenti",
 			"VIEW_ALL": "Vedi tutto",
 			"ASSIGNED_TASKS": "Attività assegnate",
-			"TASKS_META": "{{ open }} aperte · {{ done }} completate",
-			"STATUS": {
-				"TODO": "Da fare",
-				"IN_PROGRESS": "In corso",
-				"BLOCKED": "Bloccata",
-				"DONE": "Completata"
-			},
 			"COLUMNS": {
 				"TASK": "Attività",
 				"PROJECT": "Progetto",
 				"STATUS": "Stato",
 				"DUE": "Scadenza",
 				"TIME": "Tempo",
-				"NAME": "Nome"
+				"NAME": "Nome",
+				"PRIORITY": "Priorità"
 			},
 			"TOP_TASKS": "Attività più lavorate",
 			"APPS_URLS": "App e URL",
@@ -2028,7 +2022,25 @@
 				"TIME_ZONE": "Fuso orario",
 				"NOT_PROVIDED": "Non ancora indicato",
 				"NO_DESCRIPTION": "Non è stata ancora aggiunta una descrizione"
-			}
+			},
+			"TASKS_HELP": "Attività di cui questa persona fa parte. Scegli un riquadro per filtrare l’elenco.",
+			"TASK_FILTERS": {
+				"OPEN": "Aperte",
+				"PROGRESS": "In corso",
+				"OVERDUE": "In ritardo",
+				"DONE": "Completate"
+			},
+			"DUE": {
+				"NONE": "Nessuna scadenza",
+				"WAS_DUE": "Scadeva",
+				"OVERDUE_DAY": "1 giorno di ritardo",
+				"OVERDUE_DAYS": "{{ count }} giorni di ritardo",
+				"TODAY": "Scade oggi",
+				"TOMORROW": "Scade domani",
+				"IN_DAYS": "Tra {{ count }} giorni"
+			},
+			"SHOWING": "{{ shown }} di {{ total }} attività mostrate",
+			"NO_TASKS_IN_VIEW": "Nessuna attività in questa vista"
 		}
 	},
 	"GOALS_PAGE": {

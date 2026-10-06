@@ -1999,20 +1999,14 @@
 			"RECENT_SCREENSHOTS": "Capturas de tela recentes",
 			"VIEW_ALL": "Ver tudo",
 			"ASSIGNED_TASKS": "Tarefas atribuídas",
-			"TASKS_META": "{{ open }} abertas · {{ done }} concluídas",
-			"STATUS": {
-				"TODO": "A fazer",
-				"IN_PROGRESS": "Em andamento",
-				"BLOCKED": "Bloqueada",
-				"DONE": "Concluída"
-			},
 			"COLUMNS": {
 				"TASK": "Tarefa",
 				"PROJECT": "Projeto",
 				"STATUS": "Status",
 				"DUE": "Prazo",
 				"TIME": "Tempo",
-				"NAME": "Nome"
+				"NAME": "Nome",
+				"PRIORITY": "Prioridade"
 			},
 			"TOP_TASKS": "Tarefas mais trabalhadas",
 			"APPS_URLS": "Apps e URLs",
@@ -2028,7 +2022,25 @@
 				"TIME_ZONE": "Fuso horário",
 				"NOT_PROVIDED": "Ainda não informado",
 				"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda"
-			}
+			},
+			"TASKS_HELP": "Tarefas das quais esta pessoa é membro. Escolha uma caixa para filtrar a lista.",
+			"TASK_FILTERS": {
+				"OPEN": "Abertas",
+				"PROGRESS": "Em andamento",
+				"OVERDUE": "Atrasadas",
+				"DONE": "Concluídas"
+			},
+			"DUE": {
+				"NONE": "Sem prazo",
+				"WAS_DUE": "Prazo era",
+				"OVERDUE_DAY": "1 dia de atraso",
+				"OVERDUE_DAYS": "{{ count }} dias de atraso",
+				"TODAY": "Vence hoje",
+				"TOMORROW": "Vence amanhã",
+				"IN_DAYS": "Em {{ count }} dias"
+			},
+			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
 		}
 	},
 	"GOALS_PAGE": {

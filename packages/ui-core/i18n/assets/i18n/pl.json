@@ -1998,20 +1998,14 @@
 			"RECENT_SCREENSHOTS": "Ostatnie zrzuty ekranu",
 			"VIEW_ALL": "Zobacz wszystko",
 			"ASSIGNED_TASKS": "Przypisane zadania",
-			"TASKS_META": "{{ open }} otwartych · {{ done }} ukończonych",
-			"STATUS": {
-				"TODO": "Do zrobienia",
-				"IN_PROGRESS": "W toku",
-				"BLOCKED": "Zablokowane",
-				"DONE": "Ukończone"
-			},
 			"COLUMNS": {
 				"TASK": "Zadanie",
 				"PROJECT": "Projekt",
 				"STATUS": "Status",
 				"DUE": "Termin",
 				"TIME": "Czas",
-				"NAME": "Nazwa"
+				"NAME": "Nazwa",
+				"PRIORITY": "Priorytet"
 			},
 			"TOP_TASKS": "Najczęściej realizowane zadania",
 			"APPS_URLS": "Aplikacje i adresy URL",
@@ -2027,7 +2021,25 @@
 				"TIME_ZONE": "Strefa czasowa",
 				"NOT_PROVIDED": "Jeszcze nie podano",
 				"NO_DESCRIPTION": "Nie dodano jeszcze opisu"
-			}
+			},
+			"TASKS_HELP": "Zadania, w których ta osoba uczestniczy. Wybierz pole, aby przefiltrować listę.",
+			"TASK_FILTERS": {
+				"OPEN": "Otwarte",
+				"PROGRESS": "W toku",
+				"OVERDUE": "Po terminie",
+				"DONE": "Ukończone"
+			},
+			"DUE": {
+				"NONE": "Brak terminu",
+				"WAS_DUE": "Termin był",
+				"OVERDUE_DAY": "1 dzień po terminie",
+				"OVERDUE_DAYS": "{{ count }} dni po terminie",
+				"TODAY": "Termin dziś",
+				"TOMORROW": "Termin jutro",
+				"IN_DAYS": "Za {{ count }} dni"
+			},
+			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
+			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
 		}
 	},
 	"GOALS_PAGE": {

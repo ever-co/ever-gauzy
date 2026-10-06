@@ -1883,20 +1883,14 @@
 			"RECENT_SCREENSHOTS": "Recent screenshots",
 			"VIEW_ALL": "View all",
 			"ASSIGNED_TASKS": "Assigned tasks",
-			"TASKS_META": "{{ open }} open · {{ done }} done",
-			"STATUS": {
-				"TODO": "To do",
-				"IN_PROGRESS": "In progress",
-				"BLOCKED": "Blocked",
-				"DONE": "Done"
-			},
 			"COLUMNS": {
 				"TASK": "Task",
 				"PROJECT": "Project",
 				"STATUS": "Status",
 				"DUE": "Due",
 				"TIME": "Time",
-				"NAME": "Name"
+				"NAME": "Name",
+				"PRIORITY": "Priority"
 			},
 			"TOP_TASKS": "Most worked tasks",
 			"APPS_URLS": "Apps & URLs",
@@ -1912,7 +1906,25 @@
 				"TIME_ZONE": "Time zone",
 				"NOT_PROVIDED": "Not provided yet",
 				"NO_DESCRIPTION": "No description has been added yet"
-			}
+			},
+			"TASKS_HELP": "Tasks this person is a member of. Pick a box to filter the list.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "In progress",
+				"OVERDUE": "Overdue",
+				"DONE": "Done"
+			},
+			"DUE": {
+				"NONE": "No due date",
+				"WAS_DUE": "Was due",
+				"OVERDUE_DAY": "1 day overdue",
+				"OVERDUE_DAYS": "{{ count }} days overdue",
+				"TODAY": "Due today",
+				"TOMORROW": "Due tomorrow",
+				"IN_DAYS": "In {{ count }} days"
+			},
+			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
+			"NO_TASKS_IN_VIEW": "No tasks in this view"
 		}
 	},
 	"GOALS_PAGE": {
