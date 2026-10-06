@@ -251,76 +251,98 @@
 		<!-- ── Work: what is assigned, what got the hours, and on which apps ── -->
 		<div class="grid">
 			<section class="panel" [nbSpinner]="tasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-				<header class="panel-header">
-					<div class="panel-heading">
-						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS' | translate }}</h5>
+				<header class="panel-header panel-header--wrap">
+					<h5 class="panel-title">
+						{{ 'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS' | translate }}
 						@if (!tasks.failed && taskSummary.open + taskSummary.done) {
-						<span class="panel-caption">
-							{{ 'EMPLOYEES_PAGE.VIEW.TASKS_META' | translate : { open: taskSummary.open, done: taskSummary.done } }}
-						</span>
+						<span class="title-count">{{ taskSummary.open + taskSummary.done }}</span>
+						}
+					</h5>
+					@if (!tasks.failed && taskSummary.open + taskSummary.done) {
+					<!-- Segmented filter: each segment names a view and says how many tasks are in it. -->
+					<div class="segmented" role="tablist" [attr.aria-label]="'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS' | translate">
+						@for (filter of taskFilters; track filter) {
+						<button
+							type="button"
+							role="tab"
+							class="segment"
+							[ngClass]="'segment--' + filter"
+							[class.is-active]="taskFilter === filter"
+							[attr.aria-selected]="taskFilter === filter"
+							(click)="taskFilter = filter"
+						>
+							{{ 'EMPLOYEES_PAGE.VIEW.TASK_FILTERS.' + filter.toUpperCase() | translate }}
+							<span class="segment-count" [class.is-alert]="filter === 'overdue' && taskCount(filter) > 0">{{ taskCount(filter) }}</span>
+						</button>
 						}
 					</div>
+					}
 				</header>
 				<div class="panel-body panel-body--flush">
 					@if (tasks.failed) {
 					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 					} @else if (!tasks.loading && !(taskSummary.open + taskSummary.done)) {
 					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TASKS', icon: 'checkmark-square-outline' }"></ng-container>
-					} @else {
-					<!-- Status strip: the whole workload at a glance, each segment named in the key beside it. -->
-					<div class="workload">
-						<div class="status-strip" aria-hidden="true">
-							<span class="seg seg--todo" [style.width]="share(taskSummary.todo)"></span>
-							<span class="seg seg--progress" [style.width]="share(taskSummary.progress)"></span>
-							<span class="seg seg--blocked" [style.width]="share(taskSummary.blocked)"></span>
-							<span class="seg seg--done" [style.width]="share(taskSummary.done)"></span>
-						</div>
-						<ul class="status-key">
-							<li><span class="key-dot seg--todo"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.TODO' | translate }} <b>{{ taskSummary.todo }}</b></li>
-							<li><span class="key-dot seg--progress"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.IN_PROGRESS' | translate }} <b>{{ taskSummary.progress }}</b></li>
-							@if (taskSummary.blocked) {
-							<li><span class="key-dot seg--blocked"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.BLOCKED' | translate }} <b>{{ taskSummary.blocked }}</b></li>
-							}
-							<li><span class="key-dot seg--done"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.DONE' | translate }} <b>{{ taskSummary.done }}</b></li>
-						</ul>
-					</div>
-
-					@if (tasks.value.length) {
-					<table class="data-table">
-						<thead>
-							<tr>
-								<th>{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.TASK' | translate }}</th>
-								<th class="col-project">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT' | translate }}</th>
-								<th>{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.STATUS' | translate }}</th>
-								<th class="num">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.DUE' | translate }}</th>
-							</tr>
-						</thead>
-						<tbody>
-							@for (task of tasks.value; track task.id) {
-							<tr>
-								<td class="cell-main">
-									<span class="cell-title" [title]="task.title">
-										@if (task.key) {
-										<span class="task-key">{{ task.key }}</span>
-										}
-										{{ task.title }}
+					} @else if (visibleTasks.length) {
+					<!--
+						One row per task: a status dot, the title on its own line with the
+						key, project and status under it, and the due date on the right with
+						how far away it is beneath — the title gets the width, nothing else
+						competes with it for a column.
+					-->
+					<ul class="task-list">
+						@for (task of visibleTasks; track task.id) {
+						<li class="task-row">
+							<span class="task-dot" [ngClass]="'group-' + task.statusGroup" [title]="task.status" aria-hidden="true"></span>
+							<span class="task-main">
+								<span class="task-title" [title]="task.title">{{ task.title }}</span>
+								<span class="task-meta">
+									@if (task.key) {
+									<span class="task-key">{{ task.key }}</span>
+									}
+									@if (task.project) {
+									<span class="task-meta-item">{{ task.project }}</span>
+									}
+									<span class="task-meta-item">{{ task.status }}</span>
+									@if (task.priority) {
+									<span class="task-meta-item task-priority" [ngClass]="'priority-' + (task.priorityLevel || 'none')">
+										<nb-icon
+											[icon]="task.priorityLevel === 'urgent' || task.priorityLevel === 'high' ? 'arrow-upward-outline' : task.priorityLevel === 'low' ? 'arrow-downward-outline' : 'minus-outline'"
+											aria-hidden="true"
+										></nb-icon>
+										{{ task.priority }}
 									</span>
-								</td>
-								<td class="col-project cell-muted">{{ task.project || '—' }}</td>
-								<td>
-									<span class="task-status" [ngClass]="'group-' + task.statusGroup">{{ task.status }}</span>
-								</td>
-								<td class="num" [class.is-overdue]="task.overdue">
+									}
+								</span>
+							</span>
+							<span
+								class="task-due"
+								[class.is-overdue]="task.overdue"
+								[class.is-soon]="!task.overdue && (task.due.key.endsWith('TODAY') || task.due.key.endsWith('TOMORROW'))"
+							>
+								<span class="task-due-date">{{ task.dueDate || ('EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate) }}</span>
+								@if (task.dueDate) {
+								<span class="task-due-relative">
 									@if (task.overdue) {
 									<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
 									}
-									{{ task.dueDate || '—' }}
-								</td>
-							</tr>
-							}
-						</tbody>
-					</table>
+									{{ task.due.key | translate : { count: task.due.count } }}
+								</span>
+								}
+							</span>
+						</li>
+						}
+					</ul>
+					@if (filteredTasks.length > visibleTasks.length) {
+					<p class="table-footer">
+						{{ 'EMPLOYEES_PAGE.VIEW.SHOWING' | translate : { shown: visibleTasks.length, total: filteredTasks.length } }}
+					</p>
 					}
+					} @else if (!tasks.loading) {
+					<div class="state state--compact">
+						<nb-icon icon="checkmark-circle-2-outline" aria-hidden="true"></nb-icon>
+						<p>{{ 'EMPLOYEES_PAGE.VIEW.NO_TASKS_IN_VIEW' | translate }}</p>
+					</div>
 					}
 				</div>
 			</section>
