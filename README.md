@@ -317,9 +317,12 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 #### Deploy on ZopDay
 
-[ZopDay](https://zop.dev/zopday) runs a Docker image on its managed ZopCloud or in your own AWS or GCP account. Gauzy runs as two containers, so deploy the API first, then the web app with `API_BASE_URL` pointing at it:
+[ZopDay](https://zop.dev/zopday) runs a Docker image on its managed ZopCloud or in your own AWS or GCP account. Gauzy runs as two containers, so deploy them in this order:
 
 [![Deploy Gauzy API on ZopDay][zopday-btn]][zopday-api] [![Deploy Gauzy Web App on ZopDay][zopday-btn]][zopday-webapp]
+
+1.  **API.** Before starting it, create a PostgreSQL database in ZopDay and point the service at it with `DB_TYPE=postgres` plus `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASS` — left unset, the image falls back to a SQLite file inside the container, which is lost whenever the container is replaced. Set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET`, `EXPRESS_SESSION_SECRET` and the `DEMO_*_PASSWORD` values described under "Production" above; the API refuses to start while they are unset or left at their defaults.
+2.  **Web app.** Set `API_BASE_URL` to the public URL the API service got, otherwise the browser is sent to `http://localhost:3000` instead of the API.
 
 [zopday-btn]: https://zop.dev/deploytozopday-inkhard.svg
 [zopday-api]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-api:latest&port=3000&name=gauzy-api
