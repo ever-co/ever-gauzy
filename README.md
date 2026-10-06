@@ -315,6 +315,16 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 [easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
 [easypanel-deploy]: https://easypanel.io/templates/ever-gauzy
 
+#### Deploy on ZopDay
+
+[ZopDay](https://zop.dev/zopday) runs a Docker image on its managed ZopCloud or in your own AWS or GCP account. Gauzy runs as two containers, so deploy the API first, then the web app with `API_BASE_URL` pointing at it:
+
+[![Deploy Gauzy API on ZopDay][zopday-btn]][zopday-api] [![Deploy Gauzy Web App on ZopDay][zopday-btn]][zopday-webapp]
+
+[zopday-btn]: https://zop.dev/deploytozopday-inkhard.svg
+[zopday-api]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-api:latest&port=3000&name=gauzy-api
+[zopday-webapp]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-webapp:latest&port=4200&name=gauzy-webapp
+
 ## 💌 Contact Us
 
 -   [Ever.co Website Contact Us page](https://ever.co/contacts)
