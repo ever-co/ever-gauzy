@@ -1,42 +1,590 @@
 <nb-card>
-	<nb-card-header class="d-flex flex-column pb-0">
-		<div class="card-header-title">
-			<!-- A record page is titled by the record. Using the employee's name
-			     also keeps this page free of new i18n keys, which would otherwise
-			     render raw in every language but English until the translation
-			     files catch up. -->
-			<h4>
-				<ngx-header-title [allowEmployee]="false">
-					{{ displayName }}
-				</ngx-header-title>
-			</h4>
-			<div class="btn-group actions">
-				<ngx-back-navigation></ngx-back-navigation>
+	<nb-card-header class="ev-header">
+		@if (employee) {
+		<!-- ── Profile header: who, their presence, and the actions on them ── -->
+		<div class="profile-row">
+			<ngx-back-navigation class="back"></ngx-back-navigation>
+
+			<span class="avatar" [ngClass]="'presence-' + presence.tone">
+				@if (avatarUrl) {
+				<img [src]="avatarUrl" [alt]="displayName" />
+				} @else {
+				<span class="avatar-initials" aria-hidden="true">{{ initials }}</span>
+				}
+				<span class="avatar-dot" [title]="presence.key | translate"></span>
+			</span>
+
+			<div class="profile-text">
+				<div class="profile-name-row">
+					<h4 class="profile-name">{{ displayName }}</h4>
+					<span class="presence-label" [ngClass]="'presence-' + presence.tone">
+						<span class="presence-dot" aria-hidden="true"></span>
+						{{ presence.key | translate }}
+					</span>
+					<span class="chip status-chip" [ngClass]="'tone-' + workStatus.tone">{{ workStatus.key | translate }}</span>
+				</div>
+				<div class="profile-sub">
+					@if (employee.organizationPosition?.name) {
+					<span>{{ employee.organizationPosition.name }}</span>
+					}
+					@if (employee.user?.email) {
+					<a class="profile-email" [href]="'mailto:' + employee.user.email">{{ employee.user.email }}</a>
+					}
+				</div>
+				@if (traits.length) {
+				<div class="profile-traits">
+					<!-- Tracked by position: two traits can be the same string. -->
+					@for (trait of traits; track $index) {
+					<span class="chip">{{ trait }}</span>
+					}
+				</div>
+				}
+			</div>
+
+			<div class="profile-actions">
 				<!-- The only action on a read-only page: hand over to the editor,
 				     behind the editor's own permission. -->
 				<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT]">
-					<button nbButton status="basic" class="action primary" size="small" (click)="edit()">
+					<button nbButton status="basic" size="small" (click)="edit()">
 						<nb-icon icon="edit-outline"></nb-icon>
 						{{ 'BUTTONS.EDIT' | translate }}
 					</button>
 				</ng-template>
 			</div>
 		</div>
+
+		<!-- ── Facts strip: the contract terms the figures below are read against ── -->
+		<dl class="facts">
+			<div class="fact">
+				<dt>{{ 'EMPLOYEES_PAGE.VIEW.LOCAL_TIME' | translate }}</dt>
+				<dd>
+					{{ localTime || '—' }}
+					@if (employeeTimeZone) {
+					<span class="fact-meta">{{ employeeTimeZone }}</span>
+					}
+				</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'EMPLOYEES_PAGE.VIEW.MEMBER_SINCE' | translate }}</dt>
+				<dd>
+					{{ startedOn || '—' }}
+					@if (tenure) {
+					<span class="fact-meta">{{ tenure }}</span>
+					}
+				</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'FORM.LABELS.BILL_RATE' | translate }}</dt>
+				<dd>{{ billRate || '—' }}</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'EMPLOYEES_PAGE.VIEW.WEEKLY_LIMIT' | translate }}</dt>
+				<dd>{{ weeklyLimit || '—' }}</dd>
+			</div>
+			<div class="fact">
+				<dt>{{ 'SM_TABLE.TIME_TRACKING' | translate }}</dt>
+				<dd>{{ (employee.isTrackingEnabled ? 'EMPLOYEES_PAGE.ENABLED' : 'EMPLOYEES_PAGE.DISABLED') | translate }}</dd>
+			</div>
+		</dl>
+
+		<!-- ── Tabs, with the period controls on the Overview's own line ── -->
+		<div class="tab-row">
+			<div class="tabs" role="tablist">
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					[class.is-active]="tab === 'overview'"
+					[attr.aria-selected]="tab === 'overview'"
+					(click)="tab = 'overview'"
+				>
+					{{ 'EMPLOYEES_PAGE.VIEW.TABS.OVERVIEW' | translate }}
+				</button>
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					[class.is-active]="tab === 'profile'"
+					[attr.aria-selected]="tab === 'profile'"
+					(click)="tab = 'profile'"
+				>
+					{{ 'EMPLOYEES_PAGE.VIEW.TABS.PROFILE' | translate }}
+				</button>
+			</div>
+			@if (tab === 'overview') {
+			<div class="period">
+				<span class="period-range">
+					<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+					{{ rangeLabel }}
+				</span>
+				<nb-select
+					class="period-switcher"
+					size="small"
+					status="basic"
+					[(selected)]="period"
+					[attr.aria-label]="'EMPLOYEES_PAGE.VIEW.PERIOD' | translate"
+				>
+					@for (option of periods; track option) {
+					<nb-option [value]="option">{{ 'EMPLOYEES_PAGE.VIEW.PERIODS.' + option | translate }}</nb-option>
+					}
+				</nb-select>
+			</div>
+			}
+		</div>
+		}
 	</nb-card-header>
-	<nb-card-body>
+
+	<nb-card-body class="ev-body">
 		@if (employee) {
-			<div class="employee-identity">
-				@if (employee.user?.imageUrl) {
-					<img class="employee-avatar" [src]="employee.user.imageUrl" alt="" />
-				}
-				<div class="employee-identity-text">
-					<span class="employee-name">{{ displayName }}</span>
-					@if (employee.organizationPosition?.name) {
-						<span class="employee-position">{{ employee.organizationPosition.name }}</span>
+		@if (tab === 'overview') {
+		<!-- ── Summary: one strip, four cells, each against the previous period ── -->
+		<section class="summary" [nbSpinner]="counts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.WORKED_TODAY' | translate }}</span>
+				<span class="summary-value">{{ counts.failed ? '—' : formatDuration(counts.value?.todayDuration) }}</span>
+				<span class="summary-meta">
+					{{ 'EMPLOYEES_PAGE.VIEW.ACTIVITY_META' | translate : { value: formatPercent(counts.value?.todayActivities) } }}
+				</span>
+			</div>
+
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.WORKED_PERIOD' | translate }}</span>
+				<span class="summary-value">{{ counts.failed ? '—' : formatDuration(counts.value?.weekDuration) }}</span>
+				<ng-container *ngTemplateOutlet="deltaTpl; context: { $implicit: durationDelta }"></ng-container>
+			</div>
+
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.AVG_ACTIVITY' | translate }}</span>
+				<span class="summary-value">{{ counts.failed ? '—' : formatPercent(counts.value?.weekActivities) }}</span>
+				<ng-container *ngTemplateOutlet="deltaTpl; context: { $implicit: activityDelta }"></ng-container>
+			</div>
+
+			<div class="summary-cell">
+				<span class="summary-label">{{ 'EMPLOYEES_PAGE.VIEW.OPEN_TASKS' | translate }}</span>
+				<span class="summary-value">{{ tasks.failed ? '—' : taskSummary.open }}</span>
+				<span class="summary-meta" [class.is-negative]="taskSummary.overdue > 0">
+					@if (taskSummary.overdue > 0) {
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					}
+					{{ 'EMPLOYEES_PAGE.VIEW.OPEN_TASKS_META' | translate : { progress: taskSummary.progress, overdue: taskSummary.overdue } }}
+				</span>
+			</div>
+		</section>
+
+		<!-- ── Time: hours per day, and where they went ─────────────────────── -->
+		<div class="grid">
+			<section class="panel panel--chart" [nbSpinner]="hours.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.HOURS_WORKED' | translate }}</h5>
+						@if (!hours.failed && hoursSummary.total) {
+						<span class="panel-caption">
+							{{ 'EMPLOYEES_PAGE.VIEW.HOURS_META' | translate : { total: formatDuration(hoursSummary.total), average: formatDuration(hoursSummary.average) } }}
+						</span>
+						}
+					</div>
+					<button type="button" class="panel-link" (click)="openFor(['/pages/employees/timesheets/daily'])">
+						{{ 'EMPLOYEES_PAGE.VIEW.OPEN_TIMESHEET' | translate }}
+						<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+					</button>
+				</header>
+				<div class="panel-body">
+					@if (hours.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (!hours.loading && !hoursSummary.total) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'clock-outline' }"></ng-container>
+					} @else {
+					<ngx-employee-hours-chart
+						[days]="hours.value"
+						[formatHours]="formatHours"
+						[trackedLabel]="'EMPLOYEES_PAGE.VIEW.TRACKED' | translate"
+						[manualLabel]="'EMPLOYEES_PAGE.VIEW.MANUAL' | translate"
+					></ngx-employee-hours-chart>
 					}
 				</div>
+			</section>
+
+			<section class="panel" [nbSpinner]="projects.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}</h5>
+				</header>
+				<div class="panel-body panel-body--flush">
+					<ng-container
+						*ngTemplateOutlet="ranked; context: { $implicit: projects, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'briefcase-outline' }"
+					></ng-container>
+				</div>
+			</section>
+		</div>
+
+		<!-- ── Recent screenshots: the period's latest captured slots ──────── -->
+		<section class="panel" [nbSpinner]="screenshots.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+			<header class="panel-header">
+				<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.RECENT_SCREENSHOTS' | translate }}</h5>
+				<button type="button" class="panel-link" (click)="openFor(['/pages/employees/activity/screenshots'])">
+					{{ 'EMPLOYEES_PAGE.VIEW.VIEW_ALL' | translate }}
+					<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+				</button>
+			</header>
+			<div class="panel-body">
+				@if (screenshots.failed) {
+				<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+				} @else if (!screenshots.loading && !screenshots.value.length) {
+				<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_SCREENSHOTS', icon: 'image-outline' }"></ng-container>
+				} @else {
+				<div class="screenshots">
+					@for (timeSlot of screenshots.value; track timeSlot.id) {
+					<ngx-screenshots-item
+						class="screenshot"
+						[timeSlot]="timeSlot"
+						[timeFormat]="timeFormat"
+						[timezone]="timeZone"
+						[employeeId]="employee.id"
+						[multiple]="false"
+						(delete)="reloadScreenshots()"
+					></ngx-screenshots-item>
+					}
+				</div>
+				}
 			</div>
-			<ngx-record-view [record]="employee" [sections]="sections"></ngx-record-view>
+		</section>
+
+		<!-- ── Work: what is assigned, what got the hours, and on which apps ── -->
+		<div class="grid">
+			<section class="panel" [nbSpinner]="tasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+				<header class="panel-header">
+					<div class="panel-heading">
+						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.ASSIGNED_TASKS' | translate }}</h5>
+						@if (!tasks.failed && taskSummary.open + taskSummary.done) {
+						<span class="panel-caption">
+							{{ 'EMPLOYEES_PAGE.VIEW.TASKS_META' | translate : { open: taskSummary.open, done: taskSummary.done } }}
+						</span>
+						}
+					</div>
+				</header>
+				<div class="panel-body panel-body--flush">
+					@if (tasks.failed) {
+					<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+					} @else if (!tasks.loading && !(taskSummary.open + taskSummary.done)) {
+					<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'EMPLOYEES_PAGE.VIEW.NO_TASKS', icon: 'checkmark-square-outline' }"></ng-container>
+					} @else {
+					<!-- Status strip: the whole workload at a glance, each segment named in the key beside it. -->
+					<div class="workload">
+						<div class="status-strip" aria-hidden="true">
+							<span class="seg seg--todo" [style.width]="share(taskSummary.todo)"></span>
+							<span class="seg seg--progress" [style.width]="share(taskSummary.progress)"></span>
+							<span class="seg seg--blocked" [style.width]="share(taskSummary.blocked)"></span>
+							<span class="seg seg--done" [style.width]="share(taskSummary.done)"></span>
+						</div>
+						<ul class="status-key">
+							<li><span class="key-dot seg--todo"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.TODO' | translate }} <b>{{ taskSummary.todo }}</b></li>
+							<li><span class="key-dot seg--progress"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.IN_PROGRESS' | translate }} <b>{{ taskSummary.progress }}</b></li>
+							@if (taskSummary.blocked) {
+							<li><span class="key-dot seg--blocked"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.BLOCKED' | translate }} <b>{{ taskSummary.blocked }}</b></li>
+							}
+							<li><span class="key-dot seg--done"></span>{{ 'EMPLOYEES_PAGE.VIEW.STATUS.DONE' | translate }} <b>{{ taskSummary.done }}</b></li>
+						</ul>
+					</div>
+
+					@if (tasks.value.length) {
+					<table class="data-table">
+						<thead>
+							<tr>
+								<th>{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.TASK' | translate }}</th>
+								<th class="col-project">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.PROJECT' | translate }}</th>
+								<th>{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.STATUS' | translate }}</th>
+								<th class="num">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.DUE' | translate }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							@for (task of tasks.value; track task.id) {
+							<tr>
+								<td class="cell-main">
+									<span class="cell-title" [title]="task.title">
+										@if (task.key) {
+										<span class="task-key">{{ task.key }}</span>
+										}
+										{{ task.title }}
+									</span>
+								</td>
+								<td class="col-project cell-muted">{{ task.project || '—' }}</td>
+								<td>
+									<span class="task-status" [ngClass]="'group-' + task.statusGroup">{{ task.status }}</span>
+								</td>
+								<td class="num" [class.is-overdue]="task.overdue">
+									@if (task.overdue) {
+									<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+									}
+									{{ task.dueDate || '—' }}
+								</td>
+							</tr>
+							}
+						</tbody>
+					</table>
+					}
+					}
+				</div>
+			</section>
+
+			<div class="stack">
+				<section class="panel" [nbSpinner]="topTasks.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<header class="panel-header">
+						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.TOP_TASKS' | translate }}</h5>
+					</header>
+					<div class="panel-body panel-body--flush">
+						<ng-container
+							*ngTemplateOutlet="ranked; context: { $implicit: topTasks, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.TASK', empty: 'EMPLOYEES_PAGE.VIEW.NO_TIME', icon: 'list-outline' }"
+						></ng-container>
+					</div>
+				</section>
+
+				<section class="panel" [nbSpinner]="apps.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+					<header class="panel-header">
+						<h5 class="panel-title">{{ 'EMPLOYEES_PAGE.VIEW.APPS_URLS' | translate }}</h5>
+						<button type="button" class="panel-link" (click)="openFor(['/pages/employees/activity/apps'])">
+							{{ 'EMPLOYEES_PAGE.VIEW.VIEW_ALL' | translate }}
+							<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+						</button>
+					</header>
+					<div class="panel-body panel-body--flush">
+						<ng-container
+							*ngTemplateOutlet="ranked; context: { $implicit: apps, column: 'EMPLOYEES_PAGE.VIEW.COLUMNS.NAME', empty: 'EMPLOYEES_PAGE.VIEW.NO_APPS', icon: 'monitor-outline' }"
+						></ng-container>
+					</div>
+				</section>
+			</div>
+		</div>
+		} @else {
+		<!-- ── Profile tab: main record on the left, contact sidebar on the right ── -->
+		<div class="profile">
+			<div class="profile-main">
+				<!-- About -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.ABOUT', icon: 'person-outline', section: 'account' }"></ng-container>
+					<div class="panel-body">
+						@if (profile.shortDescription || profile.description) {
+						@if (profile.shortDescription) {
+						<p class="about-lead">{{ profile.shortDescription }}</p>
+						}
+						@if (profile.description) {
+						<div class="about-body" [innerHTML]="profile.description"></div>
+						}
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NO_DESCRIPTION' | translate }}</p>
+						}
+					</div>
+				</section>
+
+				<!-- Employment -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT', icon: 'briefcase-outline', section: 'employment' }"></ng-container>
+					<div class="panel-body">
+						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: profile.employment }"></ng-container>
+					</div>
+				</section>
+
+				<!-- Rates -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES', icon: 'credit-card-outline', section: 'rates' }"></ng-container>
+					<div class="panel-body">
+						<ng-container *ngTemplateOutlet="fieldGrid; context: { $implicit: profile.rates }"></ng-container>
+					</div>
+				</section>
+
+				<!-- Skills & tags -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.SKILLS_TAGS', icon: 'star-outline', section: 'account' }"></ng-container>
+					<div class="panel-body chip-groups">
+						@if (profile.skills.length || profile.tags.length) {
+						@if (profile.skills.length) {
+						<div class="chip-group">
+							<span class="field-label">{{ 'POP_UPS.SKILLS' | translate }}</span>
+							<div class="chip-list">
+								@for (skill of profile.skills; track $index) {
+								<span class="chip chip--swatch"><span class="swatch" [style.background-color]="skill.color"></span>{{ skill.name }}</span>
+								}
+							</div>
+						</div>
+						}
+						@if (profile.tags.length) {
+						<div class="chip-group">
+							<span class="field-label">{{ 'SM_TABLE.TAGS' | translate }}</span>
+							<div class="chip-list">
+								@for (tag of profile.tags; track $index) {
+								<span class="chip chip--swatch"><span class="swatch" [style.background-color]="tag.color"></span>{{ tag.name }}</span>
+								}
+							</div>
+						</div>
+						}
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+						}
+					</div>
+				</section>
+			</div>
+
+			<aside class="profile-side">
+				<!-- Contact -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.VIEW.PROFILE.CONTACT', icon: 'phone-outline', section: 'account' }"></ng-container>
+					<div class="panel-body">
+						@if (profile.contact.length) {
+						<ul class="side-list">
+							@for (field of profile.contact; track field.label) {
+							<li class="side-item">
+								<nb-icon [icon]="field.icon" aria-hidden="true"></nb-icon>
+								<span class="side-text">
+									<span class="field-label">{{ field.label | translate }}</span>
+									@if (field.href) {
+									<a class="field-link" [href]="field.href">{{ field.value }}</a>
+									} @else {
+									<span class="field-value">{{ field.value }}</span>
+									}
+								</span>
+							</li>
+							}
+						</ul>
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+						}
+					</div>
+				</section>
+
+				<!-- Location -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION', icon: 'pin-outline', section: 'location' }"></ng-container>
+					<div class="panel-body">
+						@if (profile.address.length) {
+						<address class="address">
+							@for (line of profile.address; track $index) {
+							<span>{{ line }}</span>
+							}
+						</address>
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+						}
+					</div>
+				</section>
+
+				<!-- Social profiles -->
+				<section class="panel">
+					<ng-container *ngTemplateOutlet="cardHeader; context: { title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.NETWORKS', icon: 'share-outline', section: 'networks' }"></ng-container>
+					<div class="panel-body">
+						@if (profile.socials.length) {
+						<ul class="side-list">
+							@for (social of profile.socials; track social.label) {
+							<li class="side-item">
+								<nb-icon [icon]="social.icon" aria-hidden="true"></nb-icon>
+								<span class="side-text">
+									<span class="field-label">{{ social.label }}</span>
+									<a class="field-link" [href]="social.href" target="_blank" rel="noopener noreferrer" [title]="social.href">{{ social.value }}</a>
+								</span>
+							</li>
+							}
+						</ul>
+						} @else {
+						<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+						}
+					</div>
+				</section>
+			</aside>
+		</div>
+		}
 		}
 	</nb-card-body>
 </nb-card>
+
+<!-- Change against the previous period: arrow + percentage, then what it is measured against. -->
+<ng-template #deltaTpl let-delta>
+	<span class="delta" [ngClass]="'delta--' + delta.direction">
+		@if (delta.percent !== null) {
+		<nb-icon
+			[icon]="delta.direction === 'up' ? 'arrow-upward-outline' : delta.direction === 'down' ? 'arrow-downward-outline' : 'minus-outline'"
+			aria-hidden="true"
+		></nb-icon>
+		<b>{{ delta.percent }}%</b>
+		} @else {
+		<b>—</b>
+		}
+		<span class="delta-label">{{ 'EMPLOYEES_PAGE.VIEW.VS_PREVIOUS.' + period | translate }}</span>
+	</span>
+</ng-template>
+
+<!-- A ranked table: name over its bar, time, and share of the period's total. -->
+<ng-template #ranked let-panel let-column="column" let-emptyKey="empty" let-icon="icon">
+	@if (panel.failed) {
+	<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+	} @else if (!panel.loading && !panel.value.length) {
+	<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: icon }"></ng-container>
+	} @else {
+	<table class="data-table">
+		<thead>
+			<tr>
+				<th>{{ column | translate }}</th>
+				<th class="num">{{ 'EMPLOYEES_PAGE.VIEW.COLUMNS.TIME' | translate }}</th>
+				<th class="num col-share">%</th>
+			</tr>
+		</thead>
+		<tbody>
+			@for (row of panel.value; track row.id) {
+			<tr>
+				<td class="cell-main">
+					<span class="cell-title" [title]="row.name">{{ row.name }}</span>
+					@if (row.meta) {
+					<span class="cell-meta">{{ row.meta }}</span>
+					}
+					<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="row.width"></span></span>
+				</td>
+				<td class="num cell-strong">{{ formatDuration(row.duration) }}</td>
+				<td class="num col-share cell-muted">{{ formatPercent(row.share) }}</td>
+			</tr>
+			}
+		</tbody>
+	</table>
+	}
+</ng-template>
+
+<!-- A Profile card's header: icon, title, and an Edit link into the matching edit tab. -->
+<ng-template #cardHeader let-title="title" let-icon="icon" let-section="section">
+	<header class="panel-header">
+		<h5 class="panel-title panel-title--icon">
+			<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+			{{ title | translate }}
+		</h5>
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT]">
+			<button type="button" class="panel-link" (click)="editSection(section)">
+				<nb-icon icon="edit-2-outline" aria-hidden="true"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</ng-template>
+	</header>
+</ng-template>
+
+<!-- Label over value, two to a row; only fields that are set reach here. -->
+<ng-template #fieldGrid let-fields>
+	@if (fields.length) {
+	<dl class="field-grid">
+		@for (field of fields; track field.label) {
+		<div class="field">
+			<dt class="field-label">{{ field.label | translate }}</dt>
+			<dd class="field-value">{{ field.value }}</dd>
+		</div>
+		}
+	</dl>
+	} @else {
+	<p class="not-provided">{{ 'EMPLOYEES_PAGE.VIEW.PROFILE.NOT_PROVIDED' | translate }}</p>
+	}
+</ng-template>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #unavailable>
+	<div class="state">
+		<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EMPLOYEES_PAGE.VIEW.UNAVAILABLE' | translate }}</p>
+	</div>
+</ng-template>
