@@ -84,8 +84,28 @@ export interface IEmployeeHoursDay {
 	standalone: false
 })
 export class EmployeeHoursChartComponent implements OnInit, AfterViewInit, OnDestroy {
-	@Input() trackedLabel = 'Tracked';
-	@Input() manualLabel = 'Manual';
+	/*
+	 * Series names are written into the datasets, which is where the tooltip reads
+	 * them, so a new (e.g. re-translated) name rebuilds the data rather than only
+	 * updating the HTML legend.
+	 */
+	private _trackedLabel = 'Tracked';
+	@Input() set trackedLabel(value: string) {
+		this._trackedLabel = value;
+		this.buildData();
+	}
+	get trackedLabel(): string {
+		return this._trackedLabel;
+	}
+
+	private _manualLabel = 'Manual';
+	@Input() set manualLabel(value: string) {
+		this._manualLabel = value;
+		this.buildData();
+	}
+	get manualLabel(): string {
+		return this._manualLabel;
+	}
 
 	private _days: IEmployeeHoursDay[] = [];
 	@Input() set days(value: IEmployeeHoursDay[]) {
@@ -154,7 +174,13 @@ export class EmployeeHoursChartComponent implements OnInit, AfterViewInit, OnDes
 			interaction: { mode: 'index', intersect: false },
 			plugins: {
 				legend: { display: false },
-				tooltip: employeeChartTooltip(this.palette, (value) => this.formatHours(value))
+				// Hours are on the y axis here; the shared helper reads `parsed.x`
+				// first, which on a vertical bar chart is the day's index.
+				tooltip: employeeChartTooltip(
+					this.palette,
+					(value) => this.formatHours(value),
+					(item) => Number(item.parsed?.y) || 0
+				)
 			},
 			scales: {
 				// Day labels stay horizontal. A month of days does not fit flat, and
