@@ -1,6 +1,7 @@
-import { Component, ElementRef, inject, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
 import { debounceTime, tap } from 'rxjs/operators';
 import {
@@ -53,22 +54,23 @@ export interface IEmployeeHoursDay {
 			}
 			.legend {
 				display: flex;
-				gap: 1rem;
+				gap: 0.875rem;
 				margin: 0;
 				padding: 0;
 				list-style: none;
-				font-size: 0.6875rem;
-				line-height: 1rem;
 				color: var(--gauzy-text-color-2);
 			}
+			/* Sized on the item itself: a global rule sets every li to 14px. */
 			.legend li {
 				display: inline-flex;
 				align-items: center;
-				gap: 0.375rem;
+				gap: 0.3125rem;
+				font-size: 0.6875rem;
+				line-height: 1rem;
 			}
 			.swatch {
-				width: 0.5rem;
-				height: 0.5rem;
+				width: 0.4375rem;
+				height: 0.4375rem;
 				border-radius: 50%;
 			}
 			/* Chart.js sizes the canvas from its positioned parent. */
@@ -81,7 +83,7 @@ export interface IEmployeeHoursDay {
 	],
 	standalone: false
 })
-export class EmployeeHoursChartComponent implements OnInit {
+export class EmployeeHoursChartComponent implements OnInit, AfterViewInit, OnDestroy {
 	@Input() trackedLabel = 'Tracked';
 	@Input() manualLabel = 'Manual';
 
@@ -98,10 +100,22 @@ export class EmployeeHoursChartComponent implements OnInit {
 	public data: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
 	public options: ChartConfiguration<'bar'>['options'];
 
+	@ViewChild(BaseChartDirective) private readonly _chart?: BaseChartDirective;
+
 	private readonly _themeService = inject(NbThemeService);
 	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
 
+	/**
+	 * Chart.js measures its box once, when the chart is created, and on this
+	 * page that is before the panel grid has settled — the plot came out at
+	 * roughly two-thirds of the panel and stayed there. Watching the host and
+	 * asking the chart to re-measure keeps the plot the width of its panel.
+	 */
+	private readonly _resizeObserver =
+		typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.remeasure()) : null;
+
 	ngOnInit(): void {
+		this._resizeObserver?.observe(this._elementRef.nativeElement);
 		this._themeService
 			.getJsTheme()
 			.pipe(
@@ -116,8 +130,25 @@ export class EmployeeHoursChartComponent implements OnInit {
 			.subscribe();
 	}
 
+	ngAfterViewInit(): void {
+		this.remeasure();
+	}
+
+	ngOnDestroy(): void {
+		this._resizeObserver?.disconnect();
+	}
+
+	/** Re-measures on the next frame, once the chart and its new layout exist. */
+	private remeasure(): void {
+		requestAnimationFrame(() => this._chart?.chart?.resize());
+	}
+
+	/** Axis tick size: a step below the legend, so the data reads first. */
+	private static readonly TICK_FONT = { size: 10 };
+
 	private buildOptions(): void {
 		const valueScale = employeeChartValueScale(this.palette, true);
+		const categoryScale = employeeChartCategoryScale(this.palette, true) as any;
 		this.options = {
 			...employeeChartBase(),
 			interaction: { mode: 'index', intersect: false },
@@ -126,11 +157,29 @@ export class EmployeeHoursChartComponent implements OnInit {
 				tooltip: employeeChartTooltip(this.palette, (value) => this.formatHours(value))
 			},
 			scales: {
-				x: employeeChartCategoryScale(this.palette, true) as any,
+				// Day labels stay horizontal. A month of days does not fit flat, and
+				// Chart.js's answer is to slant every label; instead it skips labels
+				// until the ones left fit level, with room between them. Every bar
+				// still names its own day in the tooltip.
+				x: {
+					...categoryScale,
+					ticks: {
+						...categoryScale.ticks,
+						font: EmployeeHoursChartComponent.TICK_FONT,
+						maxRotation: 0,
+						minRotation: 0,
+						autoSkip: true,
+						autoSkipPadding: 16
+					}
+				},
 				y: {
 					...valueScale,
 					beginAtZero: true,
-					ticks: { ...(valueScale as any).ticks, callback: (value: number | string) => `${value}h` }
+					ticks: {
+						...(valueScale as any).ticks,
+						font: EmployeeHoursChartComponent.TICK_FONT,
+						callback: (value: number | string) => `${value}h`
+					}
 				} as any
 			}
 		};
@@ -157,5 +206,6 @@ export class EmployeeHoursChartComponent implements OnInit {
 				}
 			]
 		};
+		this.remeasure();
 	}
 }
