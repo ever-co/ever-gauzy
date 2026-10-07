@@ -35,6 +35,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { dayOfWeekAsString } from '../../selectors/date-range-picker/date-picker.utils';
+import { pastDaysOfCurrentWeek } from './appointment-calendar.utils';
 import { TimezoneSelectorComponent } from '../timezone-selector/timezone-selector.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -155,14 +156,10 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	getCalendarOption() {
-		// Get yesterday's day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-		let currentDay = moment().subtract(1, 'day').day();
+		const firstDay = dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY);
 
-		// Loop to hide days from yesterday until Sunday
-		while (currentDay >= 0) {
-			this.hiddenDays.push(currentDay);
-			currentDay--;
-		}
+		// Hide the days of the current week that are already over (see headerMount: other weeks show every day)
+		this.hiddenDays = pastDaysOfCurrentWeek(firstDay, moment().day());
 		this.calendarOptions = {
 			eventClick: this.handleEventClick.bind(this),
 			events: this.getEvents.bind(this),
@@ -174,7 +171,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			weekends: true,
 			height: 'auto',
 			dayHeaderDidMount: this.headerMount.bind(this),
-			firstDay: dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY),
+			firstDay,
 			selectable: true,
 			select: this.handleEventSelect.bind(this)
 		};
