@@ -733,6 +733,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			return;
 		}
 
+		// An IME (Japanese, Chinese, Korean…) uses Enter to commit the composed text; that key belongs
+		// to the composition, not to us. Safari sends the committing keydown with `isComposing` already
+		// false, so its 229 keyCode ("IME is processing") is the only reliable signal there.
+		if (event.isComposing || event.keyCode === 229) {
+			return;
+		}
+
 		if (event.key !== 'Enter' && event.key !== 'ArrowDown') {
 			return;
 		}
