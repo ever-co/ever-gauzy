@@ -185,7 +185,7 @@ export class FeatureToggleComponent extends TranslationBaseComponent implements 
 	}
 
 	getTranslationFormat(text: string) {
-		return text.replace(/ /g, '_').replace(/,|&/g, '').replace(/__/g, '_').toUpperCase();
+		return text.replace(/ /g, '_').replace(/,|&|:/g, '').replace(/__/g, '_').toUpperCase();
 	}
 
 	/**
