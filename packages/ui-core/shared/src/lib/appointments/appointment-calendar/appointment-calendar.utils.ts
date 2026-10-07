@@ -10,7 +10,7 @@
  * @param today - Today's day of the week (0 = Sunday … 6 = Saturday).
  */
 export function pastDaysOfCurrentWeek(firstDay: number, today: number): number[] {
-	const days: number[] = [];
+	let days: number[] = [];
 	for (let day = firstDay; day !== today; day = (day + 1) % 7) {
 		days.push(day);
 	}
