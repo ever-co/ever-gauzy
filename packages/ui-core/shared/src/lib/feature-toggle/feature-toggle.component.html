@@ -14,7 +14,7 @@
 							<header class="group-header">
 								@if (row?.icon) {
 									<span class="group-icon">
-										<nb-icon [icon]="row?.icon"></nb-icon>
+										<nb-icon [icon]="featureIcon(row?.icon)"></nb-icon>
 									</span>
 								}
 								<div class="group-copy">
