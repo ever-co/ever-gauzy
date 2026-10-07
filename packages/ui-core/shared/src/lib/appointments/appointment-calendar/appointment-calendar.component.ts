@@ -429,11 +429,12 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 		);
 		const allowedDuration = moment(endTime).diff(moment(startTime), 'minutes') >= this.allowedDuration;
 		if (!find || !durationCheck || this._selectedEmployeeId || this._selectedOrganizationId || allowedDuration) {
+			// 24-hour clock: a 12-hour `hh` without `A` turned a 14:00 slot into 02:00 on the calendar
 			const startDate = moment(convertLocalToTimezone(startTime, null, this.selectedTimeZoneName)).format(
-				'YYYY-MM-DD hh:mm:ss'
+				'YYYY-MM-DD HH:mm:ss'
 			);
 			const endDate = moment(convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)).format(
-				'YYYY-MM-DD hh:mm:ss'
+				'YYYY-MM-DD HH:mm:ss'
 			);
 
 			this.calendarEvents.push({
