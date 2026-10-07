@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	ID,
 	IDailyPlan,
@@ -14,7 +14,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -371,6 +371,59 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Deletes a daily plan the caller owns or manages.
+	 *
+	 * The inherited implementation narrows the criteria to the caller's own employeeId, so a manager
+	 * deleting a member's plan matched no row and the route answered 200 with `{ affected: 0 }`.
+	 *
+	 * @param criteria - The plan id, or find conditions when called internally
+	 * @param options - Additional find options forwarded to the base implementation
+	 * @returns The delete result
+	 * @throws NotFoundException if the plan does not exist or the caller may not act on its owner
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<DailyPlan>,
+		options?: LegacyFindOneOptions<DailyPlan>
+	): Promise<DeleteResult> {
+		// Only the route passes a plain id. Anything else keeps the inherited behaviour, so the bypass
+		// below can never combine with a condition object and widen the deletion to the whole tenant.
+		if (typeof criteria !== 'string') {
+			return await super.delete(criteria, options);
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+
+		// This read must run without the automatic employee filter, otherwise a plan owned by anyone
+		// else is never found and the check below could never run. It covers this single read only.
+		const { success, record: plan } = await this.withoutEmployeeFilter(() =>
+			this.findOneOrFailByOptions({ where: { id: criteria, tenantId } })
+		);
+
+		// The owner, the team and the organization come from the stored plan, never from the request.
+		// The error does not say whether the plan exists, so plan ids stay unguessable.
+		const canManage =
+			success &&
+			!!plan &&
+			(await this._managedEmployeeService.canManageEmployee(
+				plan.employeeId,
+				plan.organizationTeamId,
+				plan.organizationId
+			));
+
+		if (!canManage) {
+			throw new NotFoundException('Daily plan not found or you do not have permission to access it');
+		}
+
+		const result = await this.withoutEmployeeFilter(() => super.delete(criteria, options));
+
+		if (!result.affected) {
+			throw new NotFoundException('Daily plan not found');
+		}
+
+		return result;
+	}
+
+	/**
 	 * Add a task to a specified daily plan.
 	 *
 	 * @param planId - The unique identifier of the daily plan to which the task will be added.
@@ -456,6 +509,18 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
+
+			// The employee comes from the request body, so the caller must be allowed to act on them.
+			// The message matches the not-found case below, so a probe cannot tell the two apart.
+			const canManage = await this._managedEmployeeService.canManageEmployee(
+				employeeId,
+				organizationTeamId,
+				organizationId
+			);
+
+			if (!canManage) {
+				throw new BadRequestException('Daily plans not found');
+			}
 
 			// Initial query for finding daily plans
 			let dailyPlansToUpdate: DailyPlan[];
