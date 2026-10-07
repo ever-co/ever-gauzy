@@ -1,7 +1,17 @@
 @forward '../../employees/activity/layout/layout.component';
 
-.tabset{
-    padding: 0;
+// The shared layout pulls its host up 24px to tuck under a page header this page doesn't
+// have; keep the card on the same top line as the other settings pages.
+:host {
+	margin-top: 0;
+
+	@media (max-width: 767.98px) {
+		margin-top: 0;
+	}
+}
+
+.tabset {
+	padding: 0;
 }
 
 // "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits

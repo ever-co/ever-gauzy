@@ -13,8 +13,10 @@ $hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
 :host {
 	display: block;
 
+	// Natural height: the page column scrolls, so the card ends where its content ends instead
+	// of at a viewport guess that leaves a gap (or overflows) depending on the banners above.
 	nb-card.card-feature {
-		height: calc(100vh - 16.5rem);
+		min-height: 16rem;
 		margin: 0;
 		padding: 0;
 		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
@@ -36,8 +38,8 @@ $hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
 	}
 
 	nb-card-body.features {
-		overflow: auto;
-		padding: 1rem;
+		overflow: visible;
+		padding: 1rem 1rem 0;
 		background: var(--gauzy-card-2, var(--background-basic-color-2));
 	}
 }
