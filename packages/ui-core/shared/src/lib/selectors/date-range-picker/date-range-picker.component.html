@@ -1,6 +1,6 @@
 <div class="row col-auto">
 	<div class="filter-input">
-		<div class="custom-input">
+		<div class="custom-input" (click)="openDatepicker($event)">
 			@if (arrows) {
 			<button size="tiny" nbButton status="primary" outline (click)="previousRange()">
 				<nb-icon icon="arrow-ios-back-outline"></nb-icon>
@@ -9,7 +9,7 @@
 				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 			</button>
 			}
-			<i class="far fa-calendar" (click)="openDatepicker($event)"></i>
+			<i class="far fa-calendar"></i>
 			<input
 				nbInput
 				name="date-range"
