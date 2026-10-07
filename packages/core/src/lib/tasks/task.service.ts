@@ -780,8 +780,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(teams)) {
 						mikroWhere.teams = { id: { $in: teams as ID[] } };
 					}
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId: members['id'] } };
+					// Same rule as the TypeORM branch: only a CHANGE_SELECTED_EMPLOYEE holder may pick the
+					// employee; everyone else is limited to the teams they are a member of.
+					const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+						? isNotEmpty(members) && isNotEmpty(members['id'])
+							? members['id']
+							: null
+						: RequestContext.currentEmployeeId();
+					if (isNotEmpty(employeeId)) {
+						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
