@@ -5,6 +5,7 @@ import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
 	ICandidate,
 	ICandidateInterview,
+	ICandidateInterviewers,
 	IEmployee,
 	IDateRange,
 	ICandidatePersonalQualities,
@@ -285,12 +286,14 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	}
 
 	async editInterview() {
-		let deletedIds = [];
+		let removedInterviewers: ICandidateInterviewers[] = [];
 		let newIds = [];
 		let updatedInterview;
 		const oldIds = this.editData.interviewers.map((item) => item.employeeId);
 		if (this.interview.interviewers) {
-			deletedIds = oldIds.filter((item) => !this.interview.interviewers.includes(item));
+			removedInterviewers = this.editData.interviewers.filter(
+				({ employeeId }) => !this.interview.interviewers.includes(employeeId)
+			);
 			newIds = this.interview.interviewers.filter((item: string) => !oldIds.includes(item));
 		}
 		try {
@@ -305,7 +308,9 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-		await this.candidateInterviewersService.deleteBulkByEmployeeId(deletedIds);
+		// Delete the deselected interviewers' own rows. The bulk endpoint expects `{ employeeId }` objects
+		// (plain ids were ignored, so nobody was ever removed) and is not scoped to this interview.
+		await Promise.all(removedInterviewers.map(({ id }) => this.candidateInterviewersService.delete(id)));
 		this.addInterviewers(this.interviewId, newIds);
 		this.interviewId = null;
 		return updatedInterview;
