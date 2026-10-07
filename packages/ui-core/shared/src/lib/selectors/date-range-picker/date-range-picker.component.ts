@@ -659,6 +659,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param event - The mouse event triggered by clicking the calendar icon.
 	 */
 	openDatepicker(event: MouseEvent): void {
+		// The directive closes the panel on any document click outside its <input>, and this icon
+		// sits outside it: left to bubble, the same click opened the panel and closed it again
+		// before it ever painted. Stop it here so the toggle is the only thing that click does.
+		event.stopPropagation();
+
 		if (this.dateRangePickerDirective) {
 			this.dateRangePickerDirective.toggle(event);
 		} else {

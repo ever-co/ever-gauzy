@@ -207,6 +207,9 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     letter-spacing: 0em;
     text-align: center;
     color: nb-theme(gauzy-text-color-1);
+    // Clickable (it toggles the picker). iOS Safari also only delivers taps on a
+    // non-interactive element reliably when it carries a pointer cursor.
+    cursor: pointer;
     @include nb-ltr(margin-left, 9px);
     @include nb-rtl(margin-right, 12px);
 }
