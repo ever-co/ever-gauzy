@@ -837,7 +837,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						query.setFindOptions({ where: advancedWhere });
 					}
 
-					query.andWhere((qb: SelectQueryBuilder<Task>) => {
+					const teamTasksCondition = (qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 						subQuery.leftJoin(
@@ -868,7 +868,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							});
 						}
 						return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
-					});
+					};
+					// With a project and teams, the project's tasks are listed alongside the team's. Keeping both
+					// in one bracket makes the tenant and filter conditions below apply to each.
+					query.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							web.andWhere(teamTasksCondition);
+							if (isNotEmpty(projectId) && isNotEmpty(teams)) {
+								web.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+							}
+						})
+					);
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							const tenantId = RequestContext.currentTenantId();
@@ -876,9 +886,6 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						})
 					);
-					if (isNotEmpty(projectId) && isNotEmpty(teams)) {
-						query.orWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
 					query.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							if (isNotEmpty(projectId) && isEmpty(teams)) {
