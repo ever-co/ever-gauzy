@@ -4005,7 +4005,8 @@
 		"ROLES_PERMISSIONS": "Rollen & Berechtigungen",
 		"TIME_TRACKING": "Zeiterfassung",
 		"ESTIMATE": "Kostenvoranschlag",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Dokumente"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4103,6 +4104,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Gehe zum Dashboard, verwalte Mitarbeiterstatistiken, Zeiterfassungs-Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Zentrale Anlaufstelle für Unternehmensdokumente: Uploads, Wiki-Seiten, Prüfung und KI-Wissen"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
