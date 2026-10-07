@@ -380,6 +380,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param options - Additional find options forwarded to the base implementation
 	 * @returns The delete result
 	 * @throws NotFoundException if the plan does not exist or the caller may not act on its owner
+	 * @throws BadRequestException if an id is given together with additional where conditions
 	 */
 	public async delete(
 		criteria: string | FindOptionsWhere<DailyPlan>,
@@ -389,6 +390,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// below can never combine with a condition object and widen the deletion to the whole tenant.
 		if (typeof criteria !== 'string') {
 			return await super.delete(criteria, options);
+		}
+
+		// The inherited implementation merges options.where over the criteria, so a where carrying an id
+		// would replace the one authorized below and delete another plan inside the bypass. No caller
+		// needs that combination, so it is refused rather than silently narrowed.
+		if (options?.where) {
+			throw new BadRequestException('Deleting a daily plan by id does not accept where conditions');
 		}
 
 		const tenantId = RequestContext.currentTenantId();
