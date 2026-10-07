@@ -1887,7 +1887,90 @@
 			"PREVIOUS": "crwdns3091:0crwdne3091:0"
 		},
 		"NOT_STARTED": "crwdns3564:0crwdne3564:0",
-		"NOT_STARTED_HELP": "crwdns3566:0crwdne3566:0"
+		"NOT_STARTED_HELP": "crwdns3566:0crwdne3566:0",
+		"VIEW": {
+			"PERIOD": "Period",
+			"PERIODS": {
+				"THIS_WEEK": "This week",
+				"THIS_MONTH": "This month",
+				"LAST_30_DAYS": "Last 30 days"
+			},
+			"TABS": {
+				"OVERVIEW": "Overview",
+				"PROFILE": "Profile"
+			},
+			"PRESENCE": {
+				"TRACKING": "Tracking time",
+				"ONLINE": "Online",
+				"AWAY": "Away",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Local time",
+			"MEMBER_SINCE": "Member since",
+			"WEEKLY_LIMIT": "Weekly limit",
+			"WORKED_TODAY": "Worked today",
+			"WORKED_PERIOD": "Worked in period",
+			"ACTIVITY_META": "{{ value }} activity",
+			"AVG_ACTIVITY": "Average activity",
+			"OPEN_TASKS": "Open tasks",
+			"OPEN_TASKS_META": "{{ progress }} in progress · {{ overdue }} overdue",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs last week",
+				"THIS_MONTH": "vs last month",
+				"LAST_30_DAYS": "vs previous 30 days"
+			},
+			"HOURS_WORKED": "Hours worked",
+			"HOURS_META": "{{ total }} total · {{ average }} per working day",
+			"TRACKED": "Tracked",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Open timesheet",
+			"PROJECTS": "Projects",
+			"RECENT_SCREENSHOTS": "Recent screenshots",
+			"VIEW_ALL": "View all",
+			"ASSIGNED_TASKS": "Assigned tasks",
+			"COLUMNS": {
+				"TASK": "Task",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Due",
+				"TIME": "Time",
+				"NAME": "Name",
+				"PRIORITY": "Priority"
+			},
+			"TOP_TASKS": "Most worked tasks",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "No time tracked in this period",
+			"NO_TASKS": "No tasks assigned",
+			"NO_APPS": "No app or URL activity in this period",
+			"NO_SCREENSHOTS": "No screenshots in this period",
+			"UNAVAILABLE": "You don't have access to this data",
+			"PROFILE": {
+				"ABOUT": "About",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Skills & tags",
+				"TIME_ZONE": "Time zone",
+				"NOT_PROVIDED": "Not provided yet",
+				"NO_DESCRIPTION": "No description has been added yet"
+			},
+			"TASKS_HELP": "Tasks this person is a member of. Pick a box to filter the list.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "In progress",
+				"OVERDUE": "Overdue",
+				"DONE": "Done"
+			},
+			"DUE": {
+				"NONE": "No due date",
+				"WAS_DUE": "Was due",
+				"OVERDUE_DAY": "1 day overdue",
+				"OVERDUE_DAYS": "{{ count }} days overdue",
+				"TODAY": "Due today",
+				"TOMORROW": "Due tomorrow",
+				"IN_DAYS": "In {{ count }} days"
+			},
+			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
+			"NO_TASKS_IN_VIEW": "No tasks in this view"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "crwdns10270:0crwdne10270:0",
@@ -2577,7 +2660,19 @@
 		"EMPLOYEE_UPDATED": "crwdns7894:0crwdne7894:0",
 		"IMAGE_UPDATED": "crwdns7896:0crwdne7896:0",
 		"FAIL_TO_UPDATE_IMAGE": "crwdns7898:0crwdne7898:0",
-		"ANONYMOUS": "crwdns7992:0crwdne7992:0"
+		"ANONYMOUS": "crwdns7992:0crwdne7992:0",
+		"ABOUT": "About",
+		"INACTIVE": "Inactive",
+		"PER_HOUR": "/ hour",
+		"MEMBER_SINCE": "Member since",
+		"NO_DESCRIPTION": "No description has been added yet",
+		"NO_SKILLS": "No skills listed yet",
+		"VIEW_COMPANY_PROFILE": "View company profile",
+		"EDIT": {
+			"NO_AWARDS": "No awards added yet",
+			"ADD_AWARD": "Add award",
+			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "crwdns2151:0crwdne2151:0",

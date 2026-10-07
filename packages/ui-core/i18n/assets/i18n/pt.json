@@ -2003,7 +2003,90 @@
 			"PREVIOUS": "Anterior"
 		},
 		"NOT_STARTED": "Não iniciado",
-		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc."
+		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc.",
+		"VIEW": {
+			"PERIOD": "Período",
+			"PERIODS": {
+				"THIS_WEEK": "Esta semana",
+				"THIS_MONTH": "Este mês",
+				"LAST_30_DAYS": "Últimos 30 dias"
+			},
+			"TABS": {
+				"OVERVIEW": "Visão geral",
+				"PROFILE": "Perfil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registrando tempo",
+				"ONLINE": "Online",
+				"AWAY": "Ausente",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Hora local",
+			"MEMBER_SINCE": "Membro desde",
+			"WEEKLY_LIMIT": "Limite semanal",
+			"WORKED_TODAY": "Trabalhado hoje",
+			"WORKED_PERIOD": "Trabalhado no período",
+			"ACTIVITY_META": "{{ value }} de atividade",
+			"AVG_ACTIVITY": "Atividade média",
+			"OPEN_TASKS": "Tarefas abertas",
+			"OPEN_TASKS_META": "{{ progress }} em andamento · {{ overdue }} atrasadas",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs semana passada",
+				"THIS_MONTH": "vs mês passado",
+				"LAST_30_DAYS": "vs 30 dias anteriores"
+			},
+			"HOURS_WORKED": "Horas trabalhadas",
+			"HOURS_META": "{{ total }} no total · {{ average }} por dia trabalhado",
+			"TRACKED": "Registrado",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Abrir folha de horas",
+			"PROJECTS": "Projetos",
+			"RECENT_SCREENSHOTS": "Capturas de tela recentes",
+			"VIEW_ALL": "Ver tudo",
+			"ASSIGNED_TASKS": "Tarefas atribuídas",
+			"COLUMNS": {
+				"TASK": "Tarefa",
+				"PROJECT": "Projeto",
+				"STATUS": "Status",
+				"DUE": "Prazo",
+				"TIME": "Tempo",
+				"NAME": "Nome",
+				"PRIORITY": "Prioridade"
+			},
+			"TOP_TASKS": "Tarefas mais trabalhadas",
+			"APPS_URLS": "Apps e URLs",
+			"NO_TIME": "Nenhum tempo registrado neste período",
+			"NO_TASKS": "Nenhuma tarefa atribuída",
+			"NO_APPS": "Nenhuma atividade de app ou URL neste período",
+			"NO_SCREENSHOTS": "Nenhuma captura de tela neste período",
+			"UNAVAILABLE": "Você não tem acesso a estes dados",
+			"PROFILE": {
+				"ABOUT": "Sobre",
+				"CONTACT": "Contato",
+				"SKILLS_TAGS": "Habilidades e tags",
+				"TIME_ZONE": "Fuso horário",
+				"NOT_PROVIDED": "Ainda não informado",
+				"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda"
+			},
+			"TASKS_HELP": "Tarefas das quais esta pessoa é membro. Escolha uma caixa para filtrar a lista.",
+			"TASK_FILTERS": {
+				"OPEN": "Abertas",
+				"PROGRESS": "Em andamento",
+				"OVERDUE": "Atrasadas",
+				"DONE": "Concluídas"
+			},
+			"DUE": {
+				"NONE": "Sem prazo",
+				"WAS_DUE": "Prazo era",
+				"OVERDUE_DAY": "1 dia de atraso",
+				"OVERDUE_DAYS": "{{ count }} dias de atraso",
+				"TODAY": "Vence hoje",
+				"TOMORROW": "Vence amanhã",
+				"IN_DAYS": "Em {{ count }} dias"
+			},
+			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Todos os objetivos",
@@ -2812,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "O funcionário foi atualizado.",
 		"IMAGE_UPDATED": "A imagem foi atualizada.",
 		"FAIL_TO_UPDATE_IMAGE": "Atualização falhou.",
-		"ANONYMOUS": "Anônimo"
+		"ANONYMOUS": "Anônimo",
+		"ABOUT": "Sobre",
+		"INACTIVE": "Inativo",
+		"PER_HOUR": "/ hora",
+		"MEMBER_SINCE": "Membro desde",
+		"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda",
+		"NO_SKILLS": "Nenhuma habilidade listada",
+		"VIEW_COMPANY_PROFILE": "Ver perfil da empresa",
+		"EDIT": {
+			"NO_AWARDS": "Nenhum prêmio adicionado",
+			"ADD_AWARD": "Adicionar prêmio",
+			"PRIVACY_HELP": "Escolha quais detalhes os visitantes veem no perfil público."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Página de Gerenciamento de Propostas",

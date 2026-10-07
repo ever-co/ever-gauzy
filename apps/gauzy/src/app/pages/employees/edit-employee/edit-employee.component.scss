@@ -180,19 +180,24 @@ img.employee-image,
 }
 
 :host {
+  // Sections sit on the card's own surface, as on the employee View page:
+  // solid `gauzy-card-1` panels with a hairline, on the `gauzy-card-2` tab body.
+  // Every tab paints its panels with `gauzy-card-3` (`@shared/_employee-tab-panel`
+  // and the shared employee forms), a half-transparent white that read as grey on
+  // grey, so the token is re-pointed here once rather than in each of the tabs.
+  // Scoped to this page: the organization editor shares the partial and keeps it.
+  --gauzy-card-3: var(--gauzy-card-1);
+
   @include nb-card_overrides(hidden, calc($default-card-height + 3.5rem), $default-radius);
   // The field surface and the field height, both taken off the shared scale rather
   // than pinned here — the same pair `edit-organization.component.scss` now passes,
   // for the same two reasons.
   //
-  // `gauzy-card-1` is the CARD's surface, the bottom of the elevation ramp, and no
-  // field on this page sits there: every one of the nine tabs puts its fields on a
-  // `.tab__panel`, which is `gauzy-card-3` (`@shared/_employee-tab-panel`), two
-  // steps up (card-1 -> the `gauzy-card-2` tab body -> the card-3 panel). On the
-  // light themes the difference is invisible; on `gauzy-dark` card-1 is an opaque
-  // `rgba(18, 18, 20, 1)` against a panel that composites to about #202022, so each
-  // field read as a hole punched through its panel. `gauzy-card-4` is the next step
-  // up from the panel, which is what a control resting on card-3 should be.
+  // Fields take `gauzy-card-1`, the same solid surface as the sections they sit on
+  // (`gauzy-card-3` is re-pointed to card-1 above): white on the light themes and
+  // black on the dark ones, as in the public profile's edit dialog. They used the
+  // translucent `gauzy-card-4` step while the panels were translucent card-3; over
+  // a solid panel that step read as grey on the dark theme.
   //
   // `$default-height` replaces the hardcoded `42px`: it is
   // `calc(select-medium-text-line-height + input-medium-padding-y * 2)`, i.e. the
@@ -206,7 +211,7 @@ img.employee-image,
   // template to scope around.
   @include ga-overrides.input-appearance(
     ga-overrides.$default-height,
-    var(--gauzy-card-4, var(--gauzy-card-1, var(--card-background-color)))
+    var(--gauzy-card-1, var(--card-background-color))
   );
 }
 

@@ -2003,7 +2003,90 @@
 			"PREVIOUS": "Precedente"
 		},
 		"NOT_STARTED": "Non ancora iniziato",
-		"NOT_STARTED_HELP": "La data di inizio del lavoro non è stata fissata per questo dipendente. Il dipendente non sarà preso in considerazione nel calcolo dei conti, la suddivisione delle spese, ecc"
+		"NOT_STARTED_HELP": "La data di inizio del lavoro non è stata fissata per questo dipendente. Il dipendente non sarà preso in considerazione nel calcolo dei conti, la suddivisione delle spese, ecc",
+		"VIEW": {
+			"PERIOD": "Periodo",
+			"PERIODS": {
+				"THIS_WEEK": "Questa settimana",
+				"THIS_MONTH": "Questo mese",
+				"LAST_30_DAYS": "Ultimi 30 giorni"
+			},
+			"TABS": {
+				"OVERVIEW": "Panoramica",
+				"PROFILE": "Profilo"
+			},
+			"PRESENCE": {
+				"TRACKING": "Sta registrando il tempo",
+				"ONLINE": "Online",
+				"AWAY": "Assente",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Ora locale",
+			"MEMBER_SINCE": "Membro dal",
+			"WEEKLY_LIMIT": "Limite settimanale",
+			"WORKED_TODAY": "Lavorato oggi",
+			"WORKED_PERIOD": "Lavorato nel periodo",
+			"ACTIVITY_META": "{{ value }} di attività",
+			"AVG_ACTIVITY": "Attività media",
+			"OPEN_TASKS": "Attività aperte",
+			"OPEN_TASKS_META": "{{ progress }} in corso · {{ overdue }} in ritardo",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs settimana scorsa",
+				"THIS_MONTH": "vs mese scorso",
+				"LAST_30_DAYS": "vs 30 giorni precedenti"
+			},
+			"HOURS_WORKED": "Ore lavorate",
+			"HOURS_META": "{{ total }} in totale · {{ average }} per giorno lavorativo",
+			"TRACKED": "Registrato",
+			"MANUAL": "Manuale",
+			"OPEN_TIMESHEET": "Apri foglio ore",
+			"PROJECTS": "Progetti",
+			"RECENT_SCREENSHOTS": "Screenshot recenti",
+			"VIEW_ALL": "Vedi tutto",
+			"ASSIGNED_TASKS": "Attività assegnate",
+			"COLUMNS": {
+				"TASK": "Attività",
+				"PROJECT": "Progetto",
+				"STATUS": "Stato",
+				"DUE": "Scadenza",
+				"TIME": "Tempo",
+				"NAME": "Nome",
+				"PRIORITY": "Priorità"
+			},
+			"TOP_TASKS": "Attività più lavorate",
+			"APPS_URLS": "App e URL",
+			"NO_TIME": "Nessun tempo registrato in questo periodo",
+			"NO_TASKS": "Nessuna attività assegnata",
+			"NO_APPS": "Nessuna attività di app o URL in questo periodo",
+			"NO_SCREENSHOTS": "Nessuno screenshot in questo periodo",
+			"UNAVAILABLE": "Non hai accesso a questi dati",
+			"PROFILE": {
+				"ABOUT": "Informazioni",
+				"CONTACT": "Contatti",
+				"SKILLS_TAGS": "Competenze e tag",
+				"TIME_ZONE": "Fuso orario",
+				"NOT_PROVIDED": "Non ancora indicato",
+				"NO_DESCRIPTION": "Non è stata ancora aggiunta una descrizione"
+			},
+			"TASKS_HELP": "Attività di cui questa persona fa parte. Scegli un riquadro per filtrare l’elenco.",
+			"TASK_FILTERS": {
+				"OPEN": "Aperte",
+				"PROGRESS": "In corso",
+				"OVERDUE": "In ritardo",
+				"DONE": "Completate"
+			},
+			"DUE": {
+				"NONE": "Nessuna scadenza",
+				"WAS_DUE": "Scadeva",
+				"OVERDUE_DAY": "1 giorno di ritardo",
+				"OVERDUE_DAYS": "{{ count }} giorni di ritardo",
+				"TODAY": "Scade oggi",
+				"TOMORROW": "Scade domani",
+				"IN_DAYS": "Tra {{ count }} giorni"
+			},
+			"SHOWING": "{{ shown }} di {{ total }} attività mostrate",
+			"NO_TASKS_IN_VIEW": "Nessuna attività in questa vista"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Tutti gli obiettivi",
@@ -2812,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "L'impiegato è stato aggiornato",
 		"IMAGE_UPDATED": "L'immagine è stata aggiornata",
 		"FAIL_TO_UPDATE_IMAGE": "Aggiornamento fallito",
-		"ANONYMOUS": "Anonimo"
+		"ANONYMOUS": "Anonimo",
+		"ABOUT": "Informazioni",
+		"INACTIVE": "Inattivo",
+		"PER_HOUR": "/ ora",
+		"MEMBER_SINCE": "Membro dal",
+		"NO_DESCRIPTION": "Non è stata ancora aggiunta una descrizione",
+		"NO_SKILLS": "Nessuna competenza indicata",
+		"VIEW_COMPANY_PROFILE": "Vedi profilo aziendale",
+		"EDIT": {
+			"NO_AWARDS": "Nessun premio aggiunto",
+			"ADD_AWARD": "Aggiungi premio",
+			"PRIVACY_HELP": "Scegli quali dettagli i visitatori vedono nel profilo pubblico."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Pagina di gestione delle proposte",

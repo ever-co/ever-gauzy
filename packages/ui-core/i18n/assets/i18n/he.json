@@ -2045,7 +2045,90 @@
 			"PREVIOUS": "Previous"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "תקופה",
+			"PERIODS": {
+				"THIS_WEEK": "השבוע",
+				"THIS_MONTH": "החודש",
+				"LAST_30_DAYS": "30 הימים האחרונים"
+			},
+			"TABS": {
+				"OVERVIEW": "סקירה",
+				"PROFILE": "פרופיל"
+			},
+			"PRESENCE": {
+				"TRACKING": "רושם זמן",
+				"ONLINE": "מחובר",
+				"AWAY": "לא ליד המחשב",
+				"OFFLINE": "לא מחובר"
+			},
+			"LOCAL_TIME": "שעה מקומית",
+			"MEMBER_SINCE": "חבר מאז",
+			"WEEKLY_LIMIT": "מגבלה שבועית",
+			"WORKED_TODAY": "עבד היום",
+			"WORKED_PERIOD": "עבד בתקופה",
+			"ACTIVITY_META": "{{ value }} פעילות",
+			"AVG_ACTIVITY": "פעילות ממוצעת",
+			"OPEN_TASKS": "משימות פתוחות",
+			"OPEN_TASKS_META": "{{ progress }} בתהליך · {{ overdue }} באיחור",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "לעומת השבוע שעבר",
+				"THIS_MONTH": "לעומת החודש שעבר",
+				"LAST_30_DAYS": "לעומת 30 הימים הקודמים"
+			},
+			"HOURS_WORKED": "שעות עבודה",
+			"HOURS_META": "{{ total }} סה״כ · {{ average }} ליום עבודה",
+			"TRACKED": "נרשם",
+			"MANUAL": "ידני",
+			"OPEN_TIMESHEET": "פתח גיליון שעות",
+			"PROJECTS": "פרויקטים",
+			"RECENT_SCREENSHOTS": "צילומי מסך אחרונים",
+			"VIEW_ALL": "הצג הכל",
+			"ASSIGNED_TASKS": "משימות שהוקצו",
+			"COLUMNS": {
+				"TASK": "משימה",
+				"PROJECT": "פרויקט",
+				"STATUS": "סטטוס",
+				"DUE": "תאריך יעד",
+				"TIME": "זמן",
+				"NAME": "שם",
+				"PRIORITY": "עדיפות"
+			},
+			"TOP_TASKS": "המשימות שעליהן עבדו הכי הרבה",
+			"APPS_URLS": "אפליקציות וכתובות URL",
+			"NO_TIME": "לא נרשם זמן בתקופה זו",
+			"NO_TASKS": "אין משימות שהוקצו",
+			"NO_APPS": "אין פעילות אפליקציות או URL בתקופה זו",
+			"NO_SCREENSHOTS": "אין צילומי מסך בתקופה זו",
+			"UNAVAILABLE": "אין לך גישה לנתונים אלה",
+			"PROFILE": {
+				"ABOUT": "אודות",
+				"CONTACT": "יצירת קשר",
+				"SKILLS_TAGS": "כישורים ותגיות",
+				"TIME_ZONE": "אזור זמן",
+				"NOT_PROVIDED": "טרם צוין",
+				"NO_DESCRIPTION": "עדיין לא נוסף תיאור"
+			},
+			"TASKS_HELP": "משימות שהאדם הזה משתתף בהן. בחרו תיבה כדי לסנן את הרשימה.",
+			"TASK_FILTERS": {
+				"OPEN": "פתוחות",
+				"PROGRESS": "בתהליך",
+				"OVERDUE": "באיחור",
+				"DONE": "הושלמו"
+			},
+			"DUE": {
+				"NONE": "ללא תאריך יעד",
+				"WAS_DUE": "היה אמור להסתיים",
+				"OVERDUE_DAY": "באיחור של יום",
+				"OVERDUE_DAYS": "באיחור של {{ count }} ימים",
+				"TODAY": "להיום",
+				"TOMORROW": "למחר",
+				"IN_DAYS": "בעוד {{ count }} ימים"
+			},
+			"SHOWING": "מוצגות {{ shown }} מתוך {{ total }} משימות",
+			"NO_TASKS_IN_VIEW": "אין משימות בתצוגה זו"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -2837,7 +2920,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "אודות",
+		"INACTIVE": "לא פעיל",
+		"PER_HOUR": "/ שעה",
+		"MEMBER_SINCE": "חבר מאז",
+		"NO_DESCRIPTION": "עדיין לא נוסף תיאור",
+		"NO_SKILLS": "עדיין לא צוינו כישורים",
+		"VIEW_COMPANY_PROFILE": "צפייה בפרופיל החברה",
+		"EDIT": {
+			"NO_AWARDS": "עדיין לא נוספו פרסים",
+			"ADD_AWARD": "הוספת פרס",
+			"PRIVACY_HELP": "בחרו אילו פרטים יוצגו למבקרים בפרופיל הציבורי."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "הצעות - ניהול",

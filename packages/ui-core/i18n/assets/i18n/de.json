@@ -2003,7 +2003,90 @@
 			"PREVIOUS": "Vorherige"
 		},
 		"NOT_STARTED": "Nicht begonnen",
-		"NOT_STARTED_HELP": "Der Arbeitsbeginn für diesen Mitarbeiter ist noch nicht festgelegt. Der Mitarbeiter wird nicht berücksichtigt in der Buchhaltung, die Aufteilung von Ausgaben usw."
+		"NOT_STARTED_HELP": "Der Arbeitsbeginn für diesen Mitarbeiter ist noch nicht festgelegt. Der Mitarbeiter wird nicht berücksichtigt in der Buchhaltung, die Aufteilung von Ausgaben usw.",
+		"VIEW": {
+			"PERIOD": "Zeitraum",
+			"PERIODS": {
+				"THIS_WEEK": "Diese Woche",
+				"THIS_MONTH": "Dieser Monat",
+				"LAST_30_DAYS": "Letzte 30 Tage"
+			},
+			"TABS": {
+				"OVERVIEW": "Übersicht",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Erfasst gerade Zeit",
+				"ONLINE": "Online",
+				"AWAY": "Abwesend",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Ortszeit",
+			"MEMBER_SINCE": "Mitglied seit",
+			"WEEKLY_LIMIT": "Wochenlimit",
+			"WORKED_TODAY": "Heute gearbeitet",
+			"WORKED_PERIOD": "Im Zeitraum gearbeitet",
+			"ACTIVITY_META": "{{ value }} Aktivität",
+			"AVG_ACTIVITY": "Durchschnittliche Aktivität",
+			"OPEN_TASKS": "Offene Aufgaben",
+			"OPEN_TASKS_META": "{{ progress }} in Bearbeitung · {{ overdue }} überfällig",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "ggü. letzter Woche",
+				"THIS_MONTH": "ggü. letztem Monat",
+				"LAST_30_DAYS": "ggü. vorherigen 30 Tagen"
+			},
+			"HOURS_WORKED": "Gearbeitete Stunden",
+			"HOURS_META": "{{ total }} gesamt · {{ average }} pro Arbeitstag",
+			"TRACKED": "Erfasst",
+			"MANUAL": "Manuell",
+			"OPEN_TIMESHEET": "Zeiterfassung öffnen",
+			"PROJECTS": "Projekte",
+			"RECENT_SCREENSHOTS": "Neueste Screenshots",
+			"VIEW_ALL": "Alle anzeigen",
+			"ASSIGNED_TASKS": "Zugewiesene Aufgaben",
+			"COLUMNS": {
+				"TASK": "Aufgabe",
+				"PROJECT": "Projekt",
+				"STATUS": "Status",
+				"DUE": "Fällig",
+				"TIME": "Zeit",
+				"NAME": "Name",
+				"PRIORITY": "Priorität"
+			},
+			"TOP_TASKS": "Meistbearbeitete Aufgaben",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "Keine Zeit in diesem Zeitraum erfasst",
+			"NO_TASKS": "Keine Aufgaben zugewiesen",
+			"NO_APPS": "Keine App- oder URL-Aktivität in diesem Zeitraum",
+			"NO_SCREENSHOTS": "Keine Screenshots in diesem Zeitraum",
+			"UNAVAILABLE": "Sie haben keinen Zugriff auf diese Daten",
+			"PROFILE": {
+				"ABOUT": "Über",
+				"CONTACT": "Kontakt",
+				"SKILLS_TAGS": "Fähigkeiten & Tags",
+				"TIME_ZONE": "Zeitzone",
+				"NOT_PROVIDED": "Noch nicht angegeben",
+				"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt"
+			},
+			"TASKS_HELP": "Aufgaben, bei denen diese Person Mitglied ist. Wählen Sie ein Feld, um die Liste zu filtern.",
+			"TASK_FILTERS": {
+				"OPEN": "Offen",
+				"PROGRESS": "In Bearbeitung",
+				"OVERDUE": "Überfällig",
+				"DONE": "Erledigt"
+			},
+			"DUE": {
+				"NONE": "Kein Fälligkeitsdatum",
+				"WAS_DUE": "War fällig",
+				"OVERDUE_DAY": "1 Tag überfällig",
+				"OVERDUE_DAYS": "{{ count }} Tage überfällig",
+				"TODAY": "Heute fällig",
+				"TOMORROW": "Morgen fällig",
+				"IN_DAYS": "In {{ count }} Tagen"
+			},
+			"SHOWING": "{{ shown }} von {{ total }} Aufgaben angezeigt",
+			"NO_TASKS_IN_VIEW": "Keine Aufgaben in dieser Ansicht"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Alle Ziele",
@@ -2808,7 +2891,19 @@
 		"EMPLOYEE_UPDATED": "Der Mitarbeiter wurde aktualisiert.",
 		"IMAGE_UPDATED": "Das Bild wurde aktualisiert.",
 		"FAIL_TO_UPDATE_IMAGE": "Aktualisierung fehlgeschlagen.",
-		"ANONYMOUS": "Anonym"
+		"ANONYMOUS": "Anonym",
+		"ABOUT": "Über",
+		"INACTIVE": "Inaktiv",
+		"PER_HOUR": "/ Stunde",
+		"MEMBER_SINCE": "Mitglied seit",
+		"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt",
+		"NO_SKILLS": "Noch keine Fähigkeiten angegeben",
+		"VIEW_COMPANY_PROFILE": "Unternehmensprofil ansehen",
+		"EDIT": {
+			"NO_AWARDS": "Noch keine Auszeichnungen",
+			"ADD_AWARD": "Auszeichnung hinzufügen",
+			"PRIVACY_HELP": "Legen Sie fest, welche Angaben Besucher im öffentlichen Profil sehen."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Vorschlagsverwaltungsseite",

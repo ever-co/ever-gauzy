@@ -44,6 +44,7 @@ import {
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseMutationModule,
 	RecordViewModule,
+	ScreenshotsItemModule,
 	RichTextEditorModule,
 	SharedModule,
 	SkillsInputModule,
@@ -78,11 +79,14 @@ import {
 } from './table-components';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { ViewEmployeeComponent } from './view-employee/view-employee.component';
+import { EmployeeHoursChartComponent } from './view-employee/employee-hours-chart/employee-hours-chart.component';
+import { BaseChartDirective } from 'ng2-charts';
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 const COMPONENTS = [
 	EmployeesComponent,
 	ViewEmployeeComponent,
+	EmployeeHoursChartComponent,
 	EmployeeBonusComponent,
 	EmployeeAverageIncomeComponent,
 	EmployeeAverageExpensesComponent,
@@ -128,6 +132,7 @@ const COMPONENTS = [
 		EmployeesRoutingModule,
 		SharedModule,
 		RecordViewModule,
+		ScreenshotsItemModule,
 		TableComponentsModule,
 		EmployeeMutationModule,
 		EmployeeEndWorkModule,
@@ -149,6 +154,7 @@ const COMPONENTS = [
 		CardGridModule,
 		TimeZoneSelectorModule,
 		DynamicTabsModule,
+		BaseChartDirective,
 		// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 		// imported directly — the Documents hub module is never pulled in here.
 		DocumentLinksPanelComponent

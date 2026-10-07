@@ -2003,7 +2003,90 @@
 			"PREVIOUS": "以前"
 		},
 		"NOT_STARTED": "未开始",
-		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。"
+		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。",
+		"VIEW": {
+			"PERIOD": "期间",
+			"PERIODS": {
+				"THIS_WEEK": "本周",
+				"THIS_MONTH": "本月",
+				"LAST_30_DAYS": "最近 30 天"
+			},
+			"TABS": {
+				"OVERVIEW": "概览",
+				"PROFILE": "个人资料"
+			},
+			"PRESENCE": {
+				"TRACKING": "正在计时",
+				"ONLINE": "在线",
+				"AWAY": "离开",
+				"OFFLINE": "离线"
+			},
+			"LOCAL_TIME": "当地时间",
+			"MEMBER_SINCE": "加入时间",
+			"WEEKLY_LIMIT": "每周上限",
+			"WORKED_TODAY": "今日工作",
+			"WORKED_PERIOD": "期间工作",
+			"ACTIVITY_META": "{{ value }} 活跃度",
+			"AVG_ACTIVITY": "平均活跃度",
+			"OPEN_TASKS": "未完成任务",
+			"OPEN_TASKS_META": "{{ progress }} 进行中 · {{ overdue }} 已逾期",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "较上周",
+				"THIS_MONTH": "较上月",
+				"LAST_30_DAYS": "较前 30 天"
+			},
+			"HOURS_WORKED": "工作时长",
+			"HOURS_META": "共 {{ total }} · 每个工作日 {{ average }}",
+			"TRACKED": "已追踪",
+			"MANUAL": "手动",
+			"OPEN_TIMESHEET": "打开时间表",
+			"PROJECTS": "项目",
+			"RECENT_SCREENSHOTS": "最近截图",
+			"VIEW_ALL": "查看全部",
+			"ASSIGNED_TASKS": "已分配任务",
+			"COLUMNS": {
+				"TASK": "任务",
+				"PROJECT": "项目",
+				"STATUS": "状态",
+				"DUE": "截止日期",
+				"TIME": "时长",
+				"NAME": "名称",
+				"PRIORITY": "优先级"
+			},
+			"TOP_TASKS": "耗时最多的任务",
+			"APPS_URLS": "应用和网址",
+			"NO_TIME": "本期间未记录时间",
+			"NO_TASKS": "没有分配的任务",
+			"NO_APPS": "本期间没有应用或网址活动",
+			"NO_SCREENSHOTS": "本期间没有截图",
+			"UNAVAILABLE": "您无权访问这些数据",
+			"PROFILE": {
+				"ABOUT": "简介",
+				"CONTACT": "联系方式",
+				"SKILLS_TAGS": "技能和标签",
+				"TIME_ZONE": "时区",
+				"NOT_PROVIDED": "尚未填写",
+				"NO_DESCRIPTION": "尚未添加描述"
+			},
+			"TASKS_HELP": "此人参与的任务。点击方框筛选列表。",
+			"TASK_FILTERS": {
+				"OPEN": "未完成",
+				"PROGRESS": "进行中",
+				"OVERDUE": "已逾期",
+				"DONE": "已完成"
+			},
+			"DUE": {
+				"NONE": "无截止日期",
+				"WAS_DUE": "原定截止",
+				"OVERDUE_DAY": "逾期 1 天",
+				"OVERDUE_DAYS": "逾期 {{ count }} 天",
+				"TODAY": "今天到期",
+				"TOMORROW": "明天到期",
+				"IN_DAYS": "{{ count }} 天后到期"
+			},
+			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
+			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "所有目标",
@@ -2812,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "员工已更新。",
 		"IMAGE_UPDATED": "图片已经更新。",
 		"FAIL_TO_UPDATE_IMAGE": "更新失败。",
-		"ANONYMOUS": "匿名"
+		"ANONYMOUS": "匿名",
+		"ABOUT": "简介",
+		"INACTIVE": "未激活",
+		"PER_HOUR": "/ 小时",
+		"MEMBER_SINCE": "加入时间",
+		"NO_DESCRIPTION": "尚未添加描述",
+		"NO_SKILLS": "尚未列出技能",
+		"VIEW_COMPANY_PROFILE": "查看公司简介",
+		"EDIT": {
+			"NO_AWARDS": "尚未添加奖项",
+			"ADD_AWARD": "添加奖项",
+			"PRIVACY_HELP": "选择访客可在公开资料中看到的信息。"
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "提案管理页面",
