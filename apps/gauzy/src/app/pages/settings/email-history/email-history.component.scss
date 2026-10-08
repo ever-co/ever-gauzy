@@ -165,10 +165,20 @@ $control-height: 2rem;
 }
 
 .archived-toggle {
+	display: flex;
 	flex: 0 0 auto;
+	align-items: center;
+	height: $control-height;
 	margin-inline-start: 0.25rem;
 
+	// The theme gives every `label` an 8px bottom margin, which lifted the switch above
+	// the selects' centre line. Without it the switch and its text sit on that line.
+	::ng-deep label {
+		margin: 0;
+	}
+
 	::ng-deep .text {
+		line-height: 1rem;
 		font-size: 0.75rem;
 		font-weight: 400;
 		color: var(--text-basic-color);
@@ -390,7 +400,6 @@ $control-height: 2rem;
 // ── Mail header: sender + subject + actions, then the details ───────────
 .view-header {
 	flex: 0 0 auto;
-	border-bottom: 1px solid $hairline;
 }
 
 .view-title-row {
@@ -463,14 +472,23 @@ $control-height: 2rem;
 }
 
 // Two columns of label / value pairs on the recessed surface; one column when narrow.
+// The details and the email preview below are two matching boxes: same recessed
+// surface, same hairline, same radius and side gutters.
+@mixin view-box {
+	margin-inline: 1rem;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
+	box-shadow: inset 0 0 0 1px $hairline;
+}
+
 .view-details {
+	@include view-box;
 	display: grid;
-	// Addresses run longer than the date / language / template values, so they get more room.
-	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	// The end column sizes to its values, so the date is never cut off; the addresses
+	// take whatever is left and truncate (full value in the tooltip).
+	grid-template-columns: minmax(0, 1fr) auto;
 	gap: 0.25rem 1.5rem;
 	padding: 0.625rem 1rem;
-	border-top: 1px solid $hairline;
-	background: var(--gauzy-card-2, var(--background-basic-color-2));
 
 	@container email-view (max-width: 32rem) {
 		grid-template-columns: minmax(0, 1fr);
@@ -510,11 +528,12 @@ $control-height: 2rem;
 }
 
 .view-body {
+	@include view-box;
 	flex: 1 1 auto;
 	min-height: 0;
+	margin-block: 0.75rem 1rem;
 	padding: 1rem;
 	overflow: auto;
-	background: var(--gauzy-card-2, var(--background-basic-color-2));
 }
 
 // The stored HTML is an email, written for a mail client's white page: its headings
