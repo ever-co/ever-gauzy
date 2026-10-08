@@ -475,7 +475,12 @@ suite('Ever Platform connection against the mock platform', () => {
 			'stranger'
 		);
 		expect(entitlement.body.link).toMatchObject({ subject: 'link', handle: 'globex', status: 'valid' });
-		expect(entitlement.body.instance).toMatchObject({ subject: 'instance', handle: 'acme' });
+		// The installation's document names the connecting Ever organization and its plan: the operator's only.
+		expect(entitlement.body.instance).toBeNull();
+		expect(
+			(await call('get', `/api/ever-connect/entitlement?organizationId=${acme.organizationId}`, 'operator')).body
+				.instance
+		).toMatchObject({ subject: 'instance', handle: 'acme' });
 		const dump =
 			JSON.stringify(await dataSource.query(`SELECT * FROM ${q('better-sqlite3', 'ever_connect_link')}`)) +
 			JSON.stringify(await dataSource.query(`SELECT * FROM ${q('better-sqlite3', 'ever_connect_connection')}`)) +
@@ -638,8 +643,9 @@ suite('Ever Platform connection against the mock platform', () => {
 		expect(during).toEqual(expect.arrayContaining([6, 8]));
 		expect((await integration(acme.organizationId, 'operator', 'stats_link')).pending_remote_revoke).toBe(true);
 
-		// Once Ever Platform takes it, the mark is cleared.
+		// Once Ever Platform takes it, the mark is cleared (a heartbeat a minute at most).
 		fault = null;
+		await mock('clock', { advance: 61 });
 		expect(await scheduler.heartbeat()).toBe(true);
 		expect((await calls()).filter((entry) => entry.row === 10 && entry.status < 300)).toHaveLength(1);
 		expect(await integration(acme.organizationId, 'operator', 'stats_link')).toMatchObject({

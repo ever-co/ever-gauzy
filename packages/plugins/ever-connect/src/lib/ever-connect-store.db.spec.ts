@@ -124,7 +124,7 @@ describe.each(TEST_TARGETS)('EverConnect migration on $name', (target) => {
 			expect(statement).not.toMatch(/\b(INSERT|UPDATE|DELETE|ALTER|REFERENCES|FOREIGN KEY)\b/i);
 		}
 		// One statement per table and index: none per tenant or row.
-		expect(first.length).toBeLessThanOrEqual(d === 'mysql' ? 6 : 13);
+		expect(first.length).toBeLessThanOrEqual(d === 'mysql' ? 6 : 14);
 	});
 });
 

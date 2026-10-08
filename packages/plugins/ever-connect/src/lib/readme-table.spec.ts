@@ -30,9 +30,7 @@ describe('the README table of requests', () => {
 	it.each(tableRows().map((entry) => [entry.row, entry.requests] as const))(
 		'row %s: every request is one of the SDK row',
 		(row, requests) => {
-			const sdk = (ROWS as ReadonlyArray<{ row: number; endpoints: Array<{ method: string; path: string }> }>).find(
-				(entry) => entry.row === row
-			);
+			const sdk = ROWS.find((entry) => entry.row === row);
 			expect(sdk).toBeDefined();
 			const endpoints = sdk!.endpoints.map((endpoint) => `${endpoint.method} ${endpoint.path}`);
 			expect(requests.length).toBeGreaterThan(0);
