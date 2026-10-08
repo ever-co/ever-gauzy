@@ -783,11 +783,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					// Same rule as the TypeORM branch: only a CHANGE_SELECTED_EMPLOYEE holder may pick the
 					// employee; everyone else is limited to the teams they are a member of.
 					const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-					const employeeId = canChangeEmployee
-						? isNotEmpty(members) && isNotEmpty(members['id'])
-							? members['id']
-							: null
-						: RequestContext.currentEmployeeId();
+					let employeeId: ID | null = RequestContext.currentEmployeeId();
+					if (canChangeEmployee) {
+						employeeId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+					}
 					// A caller who may not act for other employees and has no employee record belongs to no
 					// team: without this, the missing filter listed every team task of the organization.
 					if (!canChangeEmployee && !isNotEmpty(employeeId)) {
