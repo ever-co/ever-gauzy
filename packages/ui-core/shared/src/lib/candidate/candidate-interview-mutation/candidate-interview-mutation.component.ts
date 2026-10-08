@@ -288,7 +288,6 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	async editInterview() {
 		let removedInterviewers: ICandidateInterviewers[] = [];
 		let newIds = [];
-		let updatedInterview;
 		const oldIds = this.editData.interviewers.map((item) => item.employeeId);
 		if (this.interview.interviewers) {
 			removedInterviewers = this.editData.interviewers.filter(
@@ -296,6 +295,8 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 			);
 			newIds = this.interview.interviewers.filter((item: string) => !oldIds.includes(item));
 		}
+
+		let updatedInterview;
 		try {
 			this.updateCriterions(this.editData.personalQualities, this.editData.technologies);
 			updatedInterview = await this.candidateInterviewService.update(this.interviewId, {
@@ -307,10 +308,23 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
+			// The interview was not saved: leave its interviewers as they were
+			this.interviewId = null;
+			return;
 		}
+
 		// Delete the deselected interviewers' own rows. The bulk endpoint expects `{ employeeId }` objects
 		// (plain ids were ignored, so nobody was ever removed) and is not scoped to this interview.
-		await Promise.all(removedInterviewers.map(({ id }) => this.candidateInterviewersService.delete(id)));
+		// Each deletion stands on its own: a failure is reported, and neither the other deletions nor the
+		// additions below are skipped because of it.
+		const deletions = await Promise.allSettled(
+			removedInterviewers.map(({ id }) => this.candidateInterviewersService.delete(id))
+		);
+		for (const deletion of deletions) {
+			if (deletion.status === 'rejected') {
+				this.errorHandler.handleError(deletion.reason);
+			}
+		}
 		this.addInterviewers(this.interviewId, newIds);
 		this.interviewId = null;
 		return updatedInterview;
