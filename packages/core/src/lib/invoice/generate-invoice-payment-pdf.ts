@@ -20,7 +20,7 @@ export async function generateInvoicePaymentPdfDefinition(
 	for (const payment of payments) {
 		const currentPayment = [
 			`${moment(invoice.dueDate).format(organization.dateFormat)}`,
-			`${payment.amount}`,
+			amount(payment.amount),
 			`${payment.createdByUser.name}`,
 			`${payment.note ? payment.note : '-'}`,
 			`${payment.overdue ? translatedText.overdue : translatedText.onTime}`

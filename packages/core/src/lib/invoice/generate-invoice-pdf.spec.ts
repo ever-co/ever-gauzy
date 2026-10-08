@@ -132,10 +132,11 @@ describe('generateInvoicePdfDefinition', () => {
 
 describe('generateInvoicePaymentPdfDefinition', () => {
 	const payments = [
-		{ amount: 8, createdByUser: { name: 'Jane' }, note: null, overdue: false }
+		{ amount: 3, createdByUser: { name: 'Jane' }, note: null, overdue: false },
+		{ amount: 5, createdByUser: { name: 'Joe' }, note: 'wire', overdue: true }
 	] as any[];
 
-	it('renders the total value and the total paid with the organization currency position', async () => {
+	it('renders each payment, the total value and the total paid with the organization currency position', async () => {
 		const right = await generateInvoicePaymentPdfDefinition(
 			invoice(),
 			payments,
@@ -144,7 +145,7 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 			8,
 			translatedText
 		);
-		expect(texts(right)).toEqual(expect.arrayContaining(['108 USD', '8 USD']));
+		expect(texts(right)).toEqual(expect.arrayContaining(['3 USD', '5 USD', '108 USD', '8 USD']));
 
 		const left = await generateInvoicePaymentPdfDefinition(
 			invoice(),
@@ -154,6 +155,6 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 			8,
 			translatedText
 		);
-		expect(texts(left)).toEqual(expect.arrayContaining(['USD 108', 'USD 8']));
+		expect(texts(left)).toEqual(expect.arrayContaining(['USD 3', 'USD 5', 'USD 108', 'USD 8']));
 	});
 });
