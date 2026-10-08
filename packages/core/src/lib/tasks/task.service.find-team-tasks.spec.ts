@@ -13,9 +13,12 @@ import { TaskService } from './task.service';
  */
 describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 	const employee = createTenantFixture({ user: { employeeId: 'employee-1' } as IUser });
+	// Same tenant, a user with no employee record (e.g. a plain user account)
+	const noEmployee = createTenantFixture({ tenantId: employee.tenantId, organizationId: employee.organizationId });
 
 	let restore: () => void;
 	let findAndCount: jest.Mock;
+	let createQueryBuilder: jest.Mock;
 	let service: TaskService;
 
 	const teamTasks = (members?: { id: string }) =>
@@ -30,10 +33,11 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		jest.spyOn(TaskService.prototype as any, 'serialize').mockImplementation((entity: object) => ({ ...entity }));
 		findAndCount = jest.fn().mockResolvedValue([[], 0]);
+		createQueryBuilder = jest.fn();
 		const stub = {};
 		service = new TaskService(
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'task' } } as any,
+			{ metadata: { tableName: 'task' }, createQueryBuilder } as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{ findAndCount } as any,
 			...(Array.from({ length: 8 }, () => stub) as [never, never, never, never, never, never, never, never])
@@ -67,5 +71,22 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 		await teamTasks();
 
 		expect(where()).not.toHaveProperty('teams');
+	});
+
+	describe('a caller without CHANGE_SELECTED_EMPLOYEE and without an employee record', () => {
+		it('gets no team tasks on MikroORM, without querying', async () => {
+			({ restore } = asTenantUser(noEmployee));
+
+			await expect(teamTasks({ id: 'someone-else' })).resolves.toEqual({ items: [], total: 0 });
+			expect(findAndCount).not.toHaveBeenCalled();
+		});
+
+		it('gets no team tasks on TypeORM, without querying', async () => {
+			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+			({ restore } = asTenantUser(noEmployee));
+
+			await expect(teamTasks({ id: 'someone-else' })).resolves.toEqual({ items: [], total: 0 });
+			expect(createQueryBuilder).not.toHaveBeenCalled();
+		});
 	});
 });

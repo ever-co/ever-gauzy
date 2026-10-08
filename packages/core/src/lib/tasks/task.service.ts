@@ -782,11 +782,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 					// Same rule as the TypeORM branch: only a CHANGE_SELECTED_EMPLOYEE holder may pick the
 					// employee; everyone else is limited to the teams they are a member of.
-					const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+					const employeeId = canChangeEmployee
 						? isNotEmpty(members) && isNotEmpty(members['id'])
 							? members['id']
 							: null
 						: RequestContext.currentEmployeeId();
+					// A caller who may not act for other employees and has no employee record belongs to no
+					// team: without this, the missing filter listed every team task of the organization.
+					if (!canChangeEmployee && !isNotEmpty(employeeId)) {
+						return { items: [], total: 0 };
+					}
 					if (isNotEmpty(employeeId)) {
 						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
 					}
@@ -817,6 +823,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						organizationSprintId = null
 					} = where;
 					const { organizationId, projectId, members } = where;
+
+					// See the MikroORM branch: no employee record and no CHANGE_SELECTED_EMPLOYEE means no team
+					if (
+						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+						!isNotEmpty(RequestContext.currentEmployeeId())
+					) {
+						return { items: [], total: 0 };
+					}
 
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.leftJoin(`${query.alias}.teams`, 'teams');
