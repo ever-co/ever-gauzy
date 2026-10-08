@@ -8,18 +8,11 @@ export const STATS_REPORTS_PATH = '/v1/stats/reports';
 /** The default Ever Platform API origin. */
 export const DEFAULT_STATS_API_URL = 'https://api.ever.co';
 
-/** The signature headers: the statistics public key, the signature, and the optional key id. */
-export const STATS_HEADERS = Object.freeze({
-	key: 'Ever-Stats-Key',
-	signature: 'Ever-Stats-Signature',
-	keyId: 'Ever-Stats-Key-Id'
-});
-
-/** The prefix of the `Ever-Stats-Signature` value. */
-export const STATS_SIGNATURE_PREFIX = 'ed25519=';
-
-/** The largest report body, in bytes. */
-export const MAX_STATS_REPORT_BYTES = 16 * 1024;
+/**
+ * The report endpoint's signature headers (the statistics public key, the signature, the key id),
+ * the signature prefix and the largest report body, from the SDK.
+ */
+export { MAX_STATS_REPORT_BYTES, STATS_HEADERS, STATS_SIGNATURE_PREFIX } from '@ever-co/connect-sdk';
 
 /** The schema id every report carries. */
 export const STATS_SCHEMA_ID = 'ever.stats.v1';
@@ -47,7 +40,7 @@ export const STATS_LEASE_MS = 15 * 60 * 1000;
  * repository, at the commit this plugin's copy (`src/lib/schema/`) was taken from.
  */
 export const STATS_SCHEMA_URL =
-	'https://github.com/ever-co/ever-connect-sdk/blob/2fd74dad9357a18471292f38012a5f5e4e6d2938/contracts/schemas/ever.stats.v1.json';
+	'https://github.com/ever-co/ever-connect-sdk/blob/d75f380b78a368910651a3438a6577d4dd9dce9d/contracts/schemas/ever.stats.v1.json';
 
 /** The largest answer body read from Ever Platform; a longer one is not read further. */
 export const MAX_STATS_RESPONSE_BYTES = 64 * 1024;

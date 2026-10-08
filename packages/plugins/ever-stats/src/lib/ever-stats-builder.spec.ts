@@ -1,12 +1,13 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { validateStatsReportBytes } from '@ever-co/connect-sdk';
 import { EverStatsBuilder, parseReleaseVersion } from './ever-stats-builder.service';
 import { statsPeriod } from './ever-stats-collector.service';
 import { MODULE_VERSION } from './ever-stats.constants';
-import { STATS_SCHEMA } from './schema/stats-schema';
-import { checkStatsBytes } from './vendor/stats-checks';
+import { contractsFile } from './fixtures/contracts-file';
 
-const FIXTURES = join(__dirname, 'schema/fixtures');
+/** The platform's fixtures, from the SDK's contracts package. */
+const FIXTURES = contractsFile('fixtures', 'stats');
 const expected = JSON.parse(readFileSync(join(FIXTURES, 'expected.json'), 'utf8')).fixtures as Record<
 	string,
 	{ status: number; path?: string; error?: string }
@@ -35,16 +36,18 @@ describe('EverStatsBuilder', () => {
 
 		it.each(invalid)('refuses invalid/%s with the platform path and code, so it is never sent', (name) => {
 			const bytes = readFileSync(join(FIXTURES, 'invalid', name));
-			const result = checkStatsBytes(STATS_SCHEMA, bytes) as { ok: boolean; status?: number; errors?: Array<{ path: string; code: string }> };
+			const result = validateStatsReportBytes(new Uint8Array(bytes));
 			const want = expected[`invalid/${name}`];
 			expect(result.ok).toBe(false);
-			expect(result.status).toBe(want.status);
-			expect(result.errors?.[0].path).toBe(want.path);
-			expect(result.errors?.[0].code).toBe(want.error);
+			const refused = 'error' in result ? result.error : null;
+			expect(refused).not.toBeNull();
+			expect(refused.status).toBe(want.status);
+			expect(refused.errors[0].path).toBe(want.path);
+			expect(refused.errors[0].code).toBe(want.error);
 		});
 
 		it('accepts the gauzy golden', () => {
-			expect(checkStatsBytes(STATS_SCHEMA, readFileSync(join(FIXTURES, 'valid/gauzy.json'))).ok).toBe(true);
+			expect(validateStatsReportBytes(new Uint8Array(readFileSync(join(FIXTURES, 'valid/gauzy.json')))).ok).toBe(true);
 			expect(builder.check(golden).ok).toBe(true);
 		});
 

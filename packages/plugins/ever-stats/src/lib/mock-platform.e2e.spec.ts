@@ -13,12 +13,12 @@ import { EverStatsStore } from './ever-stats.store';
 import { createCoreTables, insert, migrateUp, openTestDataSource, q } from './fixtures/test-db';
 
 /**
- * End to end against the Ever Platform mock of ever-co/ever-connect-sdk (`tools/mock-platform`), an
- * independent implementation of the report endpoint (its own schema validation, signature check and
- * key pinning) that records every call it receives. CI runs it in `build-api` against the mock at a
- * pinned commit; locally:
+ * End to end against the Ever Platform mock of the SDK's dev tools (`@ever-co/connect-tools`, the
+ * exact version in this plugin's package.json), an independent implementation of the report
+ * endpoint (its own schema validation, signature check and key pinning) that records every call it
+ * receives. CI runs it in `build-api`; locally:
  *
- *     node tools/mock-platform/bin/ever-mock-platform.mjs --port 18080
+ *     node node_modules/@ever-co/connect-tools/dist/mock-platform/bin/ever-mock-platform.mjs --port 18080
  *     EVER_STATS_MOCK_PLATFORM_URL=http://127.0.0.1:18080 yarn nx run plugin-ever-stats:test-mock-platform
  *
  * Without `EVER_STATS_MOCK_PLATFORM_URL` the suite is skipped, unless

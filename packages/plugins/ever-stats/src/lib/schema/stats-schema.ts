@@ -1,9 +1,13 @@
-import * as VENDORED_SCHEMA from './ever.stats.v1.schema.json';
+import { SCHEMAS } from '@ever-co/connect-contracts';
 
 /**
- * The vendored `ever.stats.v1` schema as an object. A bundler may wrap a JSON import in a module
- * object with a `default` member; plain CommonJS returns the document itself.
+ * The `ever.stats.v1` schema, from the SDK's contracts package (`@ever-co/connect-contracts`): byte
+ * for byte the one Ever Platform publishes at `GET /v1/stats/schema` (`schema.drift.spec.ts` pins
+ * its SHA-256). The checks Ever Platform runs on a report are the SDK's (`validateStatsReportBytes`).
  */
-export const STATS_SCHEMA: { readonly [key: string]: unknown } = Object.freeze(
-	((VENDORED_SCHEMA as unknown as { default?: unknown }).default ?? VENDORED_SCHEMA) as { readonly [key: string]: unknown }
-);
+export const STATS_SCHEMA: { readonly [key: string]: unknown } = SCHEMAS.stats as unknown as {
+	readonly [key: string]: unknown;
+};
+
+/** The SHA-256 of the published schema file (its `ETag` on Ever Platform). */
+export const SCHEMA_SHA256 = '0cd746f7dec75117a6b812b7a832f9ceca4c97a6ecf65d22d6967a6475efc6e5';
