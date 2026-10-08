@@ -132,8 +132,8 @@ export interface ProductScopedCheckoutSession {
  *
  * `metadata.ever_product` is what the shared checkout stamps on every subscription it creates. The
  * lookup-key branch covers subscriptions made in the Stripe Dashboard or the customer portal, which
- * carry no metadata but still sit on a catalog price. Only the FIRST item is read: it is the plan
- * (add-ons come after it) and it is the item `changePlan` operates on.
+ * carry no metadata but still sit on a catalog price. Only the plan item is read (`planItemOf`: the
+ * first item on a catalog price, wherever a per-employee add-on sits), the item `changePlan` operates on.
  *
  * A self-hosted license of the same product is refused on either signal: `ever_hosting` other than
  * `cloud`, or a plan price of this product that is not an `ever_<product>_cloud_` price.

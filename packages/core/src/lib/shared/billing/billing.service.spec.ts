@@ -411,6 +411,7 @@ describe('BillingService.changePlan — the plan item, not the per-employee add-
 		expect(body().get('items[0][price]')).toBe(ENT_MONTHLY.id);
 		expect(body().get('items[1][id]')).toBe('si_seat');
 		expect(body().get('items[1][price]')).toBe(SEAT_ENT.id);
+		expect(body().get('items[1][quantity]')).toBe('3');
 		expect(updated.lookupKey).toBe(ENT_MONTHLY.lookup_key);
 		expect(updated.amount).toBe(49900);
 	});

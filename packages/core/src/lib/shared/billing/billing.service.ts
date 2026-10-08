@@ -283,7 +283,15 @@ export class BillingService {
 			{
 				'items[0][id]': item.id,
 				'items[0][price]': price.id,
-				...(seatItem && seatPrice ? { 'items[1][id]': seatItem.id, 'items[1][price]': seatPrice.id } : {}),
+				// The add-on keeps its employee count; it is sent explicitly so the new price never bills a
+				// different number of employees than the old one did.
+				...(seatItem && seatPrice
+					? {
+							'items[1][id]': seatItem.id,
+							'items[1][price]': seatPrice.id,
+							'items[1][quantity]': String(seatItem.quantity ?? 1)
+						}
+					: {}),
 				// A pending cancellation would otherwise survive the switch and quietly kill the new plan.
 				cancel_at_period_end: 'false'
 			},
@@ -743,7 +751,7 @@ interface StripeSubscriptionObject {
 	trial_end?: number | null;
 	current_period_end?: number | null;
 	cancel_at_period_end?: boolean;
-	items?: { data?: Array<{ id: string; price?: StripePriceObject }> };
+	items?: { data?: Array<{ id: string; quantity?: number; price?: StripePriceObject }> };
 	/** Advances whenever a proration is actually charged; used to separate repeated plan changes. */
 	latest_invoice?: string | { id?: string } | null;
 }
