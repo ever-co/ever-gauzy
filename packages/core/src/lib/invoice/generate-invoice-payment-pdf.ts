@@ -1,6 +1,7 @@
 import { IPayment, IOrganization, IOrganizationContact, IInvoice } from '@gauzy/contracts';
 
 import * as moment from 'moment';
+import { formatCurrencyAmount } from './invoice-currency.util';
 
 export async function generateInvoicePaymentPdfDefinition(
 	invoice: IInvoice,
@@ -10,6 +11,10 @@ export async function generateInvoicePaymentPdfDefinition(
 	totalPaid: number,
 	translatedText?: any
 ) {
+	// Every amount follows the organization's "Currency Position" setting, like the web app does.
+	const amount = (value: number | string) =>
+		formatCurrencyAmount(value, invoice.currency, organization?.currencyPosition);
+
 	const body = [];
 
 	for (const payment of payments) {
@@ -93,7 +98,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.totalValue}: `
 							},
-							`${invoice.currency} ${invoice.totalValue}`
+							amount(invoice.totalValue)
 						]
 					}
 				]
@@ -107,7 +112,7 @@ export async function generateInvoicePaymentPdfDefinition(
 								bold: true,
 								text: `${translatedText.totalPaid}: `
 							},
-							` ${invoice.currency} ${totalPaid}`
+							amount(totalPaid)
 						]
 					}
 				]

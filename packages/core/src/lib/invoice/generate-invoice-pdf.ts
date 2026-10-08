@@ -4,6 +4,7 @@ import {
 	IOrganizationContact,
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
+import { formatCurrencyAmount } from './invoice-currency.util';
 
 export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
@@ -12,13 +13,17 @@ export async function generateInvoicePdfDefinition(
 	translatedText?: any,
 	language?: string
 ) {
+	// Every amount follows the organization's "Currency Position" setting, like the web app does.
+	const amount = (value: number | string) =>
+		formatCurrencyAmount(value, invoice.currency, organization?.currencyPosition);
+
 	const body = [];
 	for (const item of invoice.invoiceItems) {
 		const currentItem = [
 			`${item.description}`,
 			`${item.quantity}`,
-			`${invoice.currency} ${item.price}`,
-			`${invoice.currency} ${item.totalValue}`
+			amount(item.price),
+			amount(item.totalValue)
 		];
 		switch (invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -185,9 +190,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax}${invoice.taxType === 'PERCENT' ? '%' : ''
-							}`
+						text: invoice.taxType === 'FLAT' ? amount(invoice.tax) : `${invoice.tax}%`
 					}
 				]
 			},
@@ -207,9 +210,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax2}${invoice.tax2Type === 'PERCENT' ? '%' : ''
-							}`
+						text: invoice.tax2Type === 'FLAT' ? amount(invoice.tax2) : `${invoice.tax2}%`
 					}
 				]
 			},
@@ -229,11 +230,8 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.discountType === 'FLAT'
-								? invoice.currency
-								: ''
-							} ${invoice.discountValue}${invoice.discountType === 'PERCENT' ? '%' : ''
-							}`
+						text:
+							invoice.discountType === 'FLAT' ? amount(invoice.discountValue) : `${invoice.discountValue}%`
 					}
 				]
 			},
@@ -244,7 +242,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						bold: true,
 						alignment: 'right',
-						text: `${translatedText.totalValue}: ${invoice.currency} ${invoice.totalValue}`
+						text: `${translatedText.totalValue}: ${amount(invoice.totalValue)}`
 					}
 				]
 			},
@@ -255,12 +253,12 @@ export async function generateInvoicePdfDefinition(
 					? [
 						{
 							width: '50%',
-							text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
+							text: `${translatedText.alreadyPaid}: ${amount(invoice.alreadyPaid)}`
 						},
 						{
 							alignment: 'right',
 							width: '50%',
-							text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
+							text: `${translatedText.amountDue}: ${amount(invoice.amountDue)}`
 						}
 					]
 					: []
