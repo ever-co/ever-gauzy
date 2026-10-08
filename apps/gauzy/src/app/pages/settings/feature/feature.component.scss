@@ -1,3 +1,4 @@
+@use 'themes' as *;
 @forward '../../employees/activity/layout/layout.component';
 
 // The shared layout pulls its host up 24px to tuck under a page header this page doesn't
@@ -10,8 +11,30 @@
 	}
 }
 
-.tabset {
+// Same frame as `.card-scroll` on Settings → General: the card fills the page height and
+// the feature list scrolls inside it, so the scrollbar sits in the card, not on the page.
+// (`.card-scroll` itself is not used: it forces `overflow: hidden` on every nested body.)
+.feature-card {
+	height: calc(100vh - #{nb-theme(header-height)} - #{nb-theme(footer-height)} - 0.5rem);
+	min-height: 20rem;
+	margin-bottom: 0;
+}
+
+// Pass the card's height down the tab set to the routed feature list.
+:host nb-card nb-card-body.tabset {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
 	padding: 0;
+	overflow: hidden;
+
+	::ng-deep nb-route-tabset {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-height: 0;
+	}
 }
 
 // "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits
