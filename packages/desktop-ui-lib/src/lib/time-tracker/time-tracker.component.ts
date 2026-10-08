@@ -470,6 +470,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.selectedTimeSlot.id
 				);
 				this.selectedTimeSlot.id = timeSlotId;
+				if (!timeSlotId) {
+					// The slot came from the server (no local capture yet): drop it from the screen and
+					// let the refresh below look the next one up instead of reusing the cached answer.
+					this.clearLastScreenCapture();
+				}
 				// Refresh screen
 				await Promise.allSettled([this.getTodayTime(true), this.getLastTimeSlotImage({ timeSlotId })]);
 			}
@@ -2076,6 +2081,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				// screenshots (taken before the reinstall or on another machine): show the latest ones
 				// instead of an empty panel until the first local capture lands (#8348).
 				res = await this.getRemoteLastTimeSlot();
+				// A capture may have landed (last_capture_local) while the lookup was pending: never
+				// replace it with an older server result.
+				if (res && this.hasNewerLocalCapture(res)) {
+					return;
+				}
 			}
 			if (!res) {
 				return;
@@ -2100,6 +2110,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			this._errorHandlerService.handleError(error);
 		}
+	}
+
+	/**
+	 * Whether the screenshot currently on screen is more recent than the newest one of `timeSlot`.
+	 */
+	private hasNewerLocalCapture(timeSlot: ITimeSlot): boolean {
+		const local = this.lastScreenCapture?.recordedAt;
+		const remote = timeSlot.screenshots?.[0]?.recordedAt;
+		return !!local && !!remote && new Date(local).getTime() > new Date(remote).getTime();
+	}
+
+	/**
+	 * Forgets the screenshot on screen and the cached server lookup, e.g. after that screenshot was
+	 * deleted, so the next getLastTimeSlotImage() starts from a blank panel.
+	 */
+	private clearLastScreenCapture(): void {
+		this._remoteLastTimeSlot$ = null;
+		this.lastTimeSlot = null;
+		this.screenshots$.next([]);
+		this.lastScreenCapture$.next({});
+		localStorage.removeItem('lastScreenCapture');
 	}
 
 	/**
