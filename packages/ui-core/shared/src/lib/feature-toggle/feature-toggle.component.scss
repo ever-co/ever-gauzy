@@ -11,12 +11,16 @@
 $hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
 
 :host {
+	// Takes the height the Features tab set hands down, so the list below scrolls inside
+	// the card. The host stays a block: `pages.component` forces `display: block` on every
+	// `router-outlet + *`, so the card fills it with `height: 100%` rather than flex.
 	display: block;
+	flex: 1 1 auto;
+	min-height: 0;
 
-	// Natural height: the page column scrolls, so the card ends where its content ends instead
-	// of at a viewport guess that leaves a gap (or overflows) depending on the banners above.
 	nb-card.card-feature {
-		min-height: 16rem;
+		height: 100%;
+		min-height: 0;
 		margin: 0;
 		padding: 0;
 		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
@@ -38,7 +42,9 @@ $hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
 	}
 
 	nb-card-body.features {
-		overflow: visible;
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: auto;
 		padding: 1rem 1rem 0;
 		background: var(--gauzy-card-2, var(--background-basic-color-2));
 	}
