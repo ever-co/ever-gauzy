@@ -194,7 +194,7 @@ export class EverConnectIntegrationStateService {
 	 * per process; concurrent calls share one read.
 	 */
 	async sync(options: { force?: boolean } = {}): Promise<void> {
-		if (this.syncing) {
+		if (this.syncing !== null) {
 			return this.syncing;
 		}
 		if (!options.force && this.lastSyncAt !== null && this.now() - this.lastSyncAt < SYNC_COALESCE_MS) {

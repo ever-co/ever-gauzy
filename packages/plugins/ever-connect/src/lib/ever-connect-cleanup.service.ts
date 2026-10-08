@@ -58,7 +58,7 @@ export class EverConnectCleanupService implements OnModuleInit, OnModuleDestroy 
 
 	/** Cleans up every deleted tenant and organization the plugin still holds rows of. Returns how many. */
 	async reconcile(): Promise<number> {
-		if (this.running) {
+		if (this.running !== null) {
 			return this.running;
 		}
 		this.running = this.reconcileOnce().finally(() => {
