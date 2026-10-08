@@ -4009,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Funções e Permissões",
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"ESTIMATE": "Estimativa",
-		"DASHBOARD": "Painel de Controle"
+		"DASHBOARD": "Painel de Controle",
+		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4107,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel de controle, Gerenciar Estatísticas dos Funcionários, Painel de Controle de Rastreamento de Tempo."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

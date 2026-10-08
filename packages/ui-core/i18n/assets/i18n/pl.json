@@ -4008,7 +4008,8 @@
 		"ROLES_PERMISSIONS": "Role i uprawnienia",
 		"TIME_TRACKING": "Śledzenie czasu",
 		"ESTIMATE": "Oszacowanie",
-		"DASHBOARD": "Panel nawigacyjny"
+		"DASHBOARD": "Panel nawigacyjny",
+		"DOCUMENTS": "Dokumenty"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4106,6 +4107,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Przejdź do kokpitu, Zarządzanie statystykami pracowników, Kokpit śledzenia czasu"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centralne miejsce na dokumenty firmy: przesyłanie, strony wiki, przegląd i wiedza AI"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

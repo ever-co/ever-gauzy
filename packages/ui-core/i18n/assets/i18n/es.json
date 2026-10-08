@@ -4011,7 +4011,8 @@
 		"ROLES_PERMISSIONS": "Roles y permisos",
 		"TIME_TRACKING": "Seguimiento del tiempo.",
 		"ESTIMATE": "Estimación",
-		"DASHBOARD": "Panel de control"
+		"DASHBOARD": "Panel de control",
+		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4109,6 +4110,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ve al panel de control, Gestiona las estadísticas de los empleados, Panel de seguimiento del tiempo."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centro de documentos de la empresa: cargas, páginas wiki, revisión y conocimiento de IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

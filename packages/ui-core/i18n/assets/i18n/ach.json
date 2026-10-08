@@ -3709,7 +3709,8 @@
 		"ROLES_PERMISSIONS": "crwdns10649:0crwdne10649:0",
 		"TIME_TRACKING": "crwdns10651:0crwdne10651:0",
 		"ESTIMATE": "crwdns10653:0crwdne10653:0",
-		"DASHBOARD": "crwdns10655:0crwdne10655:0"
+		"DASHBOARD": "crwdns10655:0crwdne10655:0",
+		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3807,6 +3808,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "crwdns10719:0crwdne10719:0"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central hub for company documents: uploads, wiki pages, review, and AI knowledge"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

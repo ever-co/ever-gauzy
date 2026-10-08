@@ -4032,7 +4032,8 @@
 		"ROLES_PERMISSIONS": "Роли и Разрешения",
 		"TIME_TRACKING": "Время отслеживания",
 		"ESTIMATE": "Оценить",
-		"DASHBOARD": "Приборная доска"
+		"DASHBOARD": "Приборная доска",
+		"DOCUMENTS": "Документы"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4130,6 +4131,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Перейти к панели инструментов, управлять статистикой сотрудников, отслеживать время"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Единый центр документов компании: загрузки, вики-страницы, проверка и знания для ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
