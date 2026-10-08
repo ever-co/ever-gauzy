@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -49,7 +48,8 @@ describe('the vendored Ever Platform SDK', () => {
 
 	const sdk = process.env['EVER_CONNECT_SDK_DIR'];
 	(sdk && existsSync(sdk) ? it : it.skip)('equals the upstream files of that commit (EVER_CONNECT_SDK_DIR)', () => {
-		const head = execFileSync('git', ['-C', sdk as string, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+		// A detached checkout (CI checks the SDK out at the commit) holds the commit in `.git/HEAD`.
+		const head = readFileSync(join(sdk as string, '.git', 'HEAD'), 'utf8').trim();
 		expect(head).toBe(manifest.commit);
 		for (const entry of Object.values(manifest.files)) {
 			expect(sha256(readFileSync(join(sdk as string, entry.upstream), 'utf8'))).toBe(entry.upstream_sha256);

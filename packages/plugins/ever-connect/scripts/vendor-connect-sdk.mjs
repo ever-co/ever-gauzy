@@ -20,7 +20,6 @@
  *
  * checks without writing.
  */
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
@@ -76,6 +75,22 @@ export const FILES = {
 
 const sha256 = (text) => createHash('sha256').update(text).digest('hex');
 
+/**
+ * The commit a checkout is at, read from its `.git` directory (no `git` process): a detached HEAD
+ * holds the commit; a branch HEAD names a ref, in its own file or in `packed-refs`.
+ */
+export function headCommit(dir) {
+	const git = join(dir, '.git');
+	const head = readFileSync(join(git, 'HEAD'), 'utf8').trim();
+	if (!head.startsWith('ref: ')) return head;
+	const ref = head.slice(5).trim();
+	if (existsSync(join(git, ref))) return readFileSync(join(git, ref), 'utf8').trim();
+	const packed = existsSync(join(git, 'packed-refs')) ? readFileSync(join(git, 'packed-refs'), 'utf8') : '';
+	const line = packed.split('\n').find((entry) => entry.endsWith(` ${ref}`));
+	if (!line) throw new Error(`cannot resolve ${ref} in ${dir}`);
+	return line.split(' ')[0];
+}
+
 /** The vendored text of one upstream file. */
 export function vendoredText(group, file, upstream, commit) {
 	if (file.endsWith('.json')) {
@@ -102,7 +117,7 @@ function main() {
 		process.exit(2);
 	}
 	const check = flag === '--check';
-	const commit = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+	const commit = headCommit(dir);
 	const manifest = { source: 'https://github.com/ever-co/ever-connect-sdk', commit, files: {} };
 	const outputs = new Map();
 	for (const [group, { from, files }] of Object.entries(FILES)) {

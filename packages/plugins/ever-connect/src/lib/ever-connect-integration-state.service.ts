@@ -136,7 +136,7 @@ export class EverConnectIntegrationStateService {
 			return ['*'];
 		}
 		const ui = (await this.store.policies()).filter((row) => !row.allowed).map((row) => row.integration);
-		return [...new Set([...this.config.deny, ...ui])].sort();
+		return [...new Set([...this.config.deny, ...ui])].sort((a, b) => a.localeCompare(b));
 	}
 
 	// ── Reading Ever Platform's states ────────────────────────────────────────
