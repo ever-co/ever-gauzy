@@ -5462,7 +5462,18 @@
 			"SYSTEM": "Systeem",
 			"FILTERS": {
 				"TO": "Naar",
-				"TEMPLATE_LANGUAGE": "Sjabloon/Taal"
+				"TEMPLATE_LANGUAGE": "Sjabloon/Taal",
+				"RECIPIENT": "Ontvanger",
+				"TEMPLATE": "Sjabloon",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "Alle ontvangers",
+				"ALL_TEMPLATES": "Alle sjablonen",
+				"ALL_STATUSES": "Alle statussen",
+				"SENT": "Verzonden",
+				"FAILED": "Mislukt",
+				"ARCHIVED": "Gearchiveerd",
+				"SHOWING": "{{ count }} van {{ total }} weergegeven",
+				"NO_MATCH": "Geen e-mails komen overeen met deze filters."
 			}
 		}
 	},

@@ -5460,7 +5460,18 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "Кому",
-				"TEMPLATE_LANGUAGE": "Шаблон/Язык"
+				"TEMPLATE_LANGUAGE": "Шаблон/Язык",
+				"RECIPIENT": "Получатель",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Все получатели",
+				"ALL_TEMPLATES": "Все шаблоны",
+				"ALL_STATUSES": "Все статусы",
+				"SENT": "Отправлено",
+				"FAILED": "Ошибка",
+				"ARCHIVED": "Архивные",
+				"SHOWING": "Показано {{ count }} из {{ total }}",
+				"NO_MATCH": "Нет писем, соответствующих этим фильтрам."
 			}
 		}
 	},
