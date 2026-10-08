@@ -42,6 +42,8 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 
 	let restore: () => void;
 	let deleted: string[];
+	let updated: { id: string; changes: Record<string, unknown> }[];
+	let entitySubscriptionService: { deleteForEmployee: jest.Mock };
 	let service: OrganizationTeamEmployeeService;
 
 	beforeEach(() => {
@@ -51,6 +53,8 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		} as never;
 		({ restore } = asTenantUser(manager));
 		deleted = [];
+		updated = [];
+		entitySubscriptionService = { deleteForEmployee: jest.fn() };
 
 		jest.spyOn(CrudService.prototype, 'find').mockImplementation(async (options) =>
 			rows.filter((row) => matches(row, options?.where))
@@ -59,6 +63,15 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			const row = rows.find((candidate) => matches(candidate, where));
 			if (!row) throw new Error('not found');
 			return row as never;
+		});
+		jest.spyOn(CrudService.prototype, 'findOneByIdString').mockImplementation(async (id, options) => {
+			const row = rows.find((candidate) => matches(candidate, { ...options?.where, id }));
+			if (!row) throw new Error('not found');
+			return row as never;
+		});
+		jest.spyOn(CrudService.prototype, 'update').mockImplementation(async (id, changes) => {
+			updated.push({ id: id as string, changes: changes as Record<string, unknown> });
+			return {} as never;
 		});
 		jest.spyOn(CrudService.prototype, 'deleteMany').mockImplementation(async (ids) => {
 			deleted.push(...ids);
@@ -80,7 +93,7 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{ unassignEmployeeFromTeamTasks: jest.fn() } as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ delete: jest.fn() } as any
+			entitySubscriptionService as any
 		);
 	});
 
@@ -90,20 +103,34 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		jest.restoreAllMocks();
 	});
 
-	it('removes a member deselected while editing the team', async () => {
-		await requestStorage.run(new Map(), () =>
+	const editTeam = (managerIds: string[], memberIds: string[]) =>
+		requestStorage.run(new Map(), () =>
 			service.updateOrganizationTeam(
 				teamId,
 				manager.organizationId,
 				[],
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				{ id: 'role-manager' } as any,
-				['manager-employee'],
-				[]
+				managerIds,
+				memberIds
 			)
 		);
 
+	it('removes a member deselected while editing the team, and their team subscription', async () => {
+		await editTeam(['manager-employee'], []);
+
 		expect(deleted).toEqual(['row-member']);
+		expect(entitySubscriptionService.deleteForEmployee).toHaveBeenCalledWith(
+			expect.objectContaining({ entityId: teamId, employeeId: 'member-employee' })
+		);
+	});
+
+	it("changes another member's role while editing the team", async () => {
+		// The member is promoted to manager
+		await editTeam(['manager-employee', 'member-employee'], []);
+
+		expect(deleted).toEqual([]);
+		expect(updated).toEqual([{ id: 'row-member', changes: { role: { id: 'role-manager' }, isManager: true } }]);
 	});
 
 	it('removes another member through DELETE /organization-team-employee/:id', async () => {

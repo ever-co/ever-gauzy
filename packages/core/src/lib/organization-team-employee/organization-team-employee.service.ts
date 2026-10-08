@@ -88,12 +88,13 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			// CHANGE_SELECTED_EMPLOYEE only matched their own row, so other members were never removed
 			await this.withoutEmployeeFilter(() => this.deleteMany(removedMembers.map((member) => member.id)));
 
-			// Unsubscribe members who were unassigned from team
+			// Unsubscribe members who were unassigned from team. Not `delete()`: for a manager without
+			// CHANGE_SELECTED_EMPLOYEE that would target the manager's own subscription, not the member's.
 			try {
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._entitySubscriptionService.delete({
+							await this._entitySubscriptionService.deleteForEmployee({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
 								employeeId: member.employeeId,
