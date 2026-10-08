@@ -135,10 +135,23 @@ function stubStripe(state: StripeState) {
 		} else if (method === 'POST' && path.startsWith('/subscriptions/')) {
 			const params = new URLSearchParams(init.body);
 			const current = state.subscriptions.find((s) => path === `/subscriptions/${s.id}`);
-			const newPrice =
-				Object.values(state.prices).find((p: any) => p.id === params.get('items[0][price]')) ??
-				current.items.data[0].price;
-			body = { ...current, items: { data: [{ id: current.items.data[0].id, price: newPrice }] } };
+			// Apply every `items[i][id]` / `items[i][price]` pair to the item with that id, like Stripe.
+			const changes = new Map<string, string>();
+			for (let i = 0; params.has(`items[${i}][id]`); i++) {
+				changes.set(params.get(`items[${i}][id]`), params.get(`items[${i}][price]`));
+			}
+			body = {
+				...current,
+				items: {
+					data: current.items.data.map((item: any) => ({
+						...item,
+						price: changes.has(item.id)
+							? (Object.values(state.prices).find((p: any) => p.id === changes.get(item.id)) ??
+								item.price)
+							: item.price
+					}))
+				}
+			};
 		} else {
 			throw new Error(`Unexpected Stripe request in test: ${method} ${path}`);
 		}
@@ -343,6 +356,98 @@ describe('BillingService.changePlan — product scope', () => {
 		});
 		await service().changePlan(CUSTOMER, FREE_PRICE.lookup_key, 'gauzy');
 		expect(posts().map((p) => p.path)).toEqual(['/subscriptions/sub_g']);
+	});
+});
+
+describe('BillingService.changePlan — the plan item, not the per-employee add-on', () => {
+	const SB_MONTHLY = {
+		id: 'price_sb_m',
+		lookup_key: 'ever_gauzy_cloud_small_business_monthly',
+		unit_amount: 4900,
+		currency: 'usd',
+		recurring: { interval: 'month' }
+	};
+	const ENT_MONTHLY = {
+		id: 'price_ent_m',
+		lookup_key: 'ever_gauzy_cloud_enterprise_monthly',
+		unit_amount: 49900,
+		currency: 'usd',
+		recurring: { interval: 'month' }
+	};
+	const SEAT_SB = {
+		id: 'price_seat_sb_m',
+		lookup_key: 'seat_ever_gauzy_cloud_small_business_monthly',
+		unit_amount: 500,
+		currency: 'usd',
+		recurring: { interval: 'month' }
+	};
+	const SEAT_ENT = {
+		id: 'price_seat_ent_m',
+		lookup_key: 'seat_ever_gauzy_cloud_enterprise_monthly',
+		unit_amount: 1000,
+		currency: 'usd',
+		recurring: { interval: 'month' }
+	};
+	const withSeats = (order: 'plan-first' | 'seat-first') => {
+		const plan = { id: 'si_plan', price: SB_MONTHLY };
+		const seat = { id: 'si_seat', quantity: 3, price: SEAT_SB };
+		return sub({
+			status: 'active',
+			default_payment_method: 'pm_sub',
+			items: { data: order === 'plan-first' ? [plan, seat] : [seat, plan] }
+		});
+	};
+	const body = () => new URLSearchParams(posts()[0].body);
+
+	it('moves the plan and its add-on together: Small Business + seats → Enterprise + Enterprise seats', async () => {
+		stubStripe({
+			subscriptions: [withSeats('plan-first')],
+			prices: { [ENT_MONTHLY.lookup_key]: ENT_MONTHLY, [SEAT_ENT.lookup_key]: SEAT_ENT },
+			customer: {}
+		});
+		const updated = await service().changePlan(CUSTOMER, ENT_MONTHLY.lookup_key, 'gauzy');
+		expect(posts()).toHaveLength(1);
+		expect(body().get('items[0][id]')).toBe('si_plan');
+		expect(body().get('items[0][price]')).toBe(ENT_MONTHLY.id);
+		expect(body().get('items[1][id]')).toBe('si_seat');
+		expect(body().get('items[1][price]')).toBe(SEAT_ENT.id);
+		expect(updated.lookupKey).toBe(ENT_MONTHLY.lookup_key);
+		expect(updated.amount).toBe(49900);
+	});
+
+	it('finds the plan by its price when the add-on is the first item', async () => {
+		stubStripe({
+			subscriptions: [withSeats('seat-first')],
+			prices: { [ENT_MONTHLY.lookup_key]: ENT_MONTHLY, [SEAT_ENT.lookup_key]: SEAT_ENT },
+			customer: {}
+		});
+		const updated = await service().changePlan(CUSTOMER, ENT_MONTHLY.lookup_key, 'gauzy');
+		expect(body().get('items[0][id]')).toBe('si_plan');
+		expect(body().get('items[1][id]')).toBe('si_seat');
+		expect(updated.lookupKey).toBe(ENT_MONTHLY.lookup_key);
+	});
+
+	it('refuses a target with no add-on price of its own while the subscription has extra employees, changing nothing', async () => {
+		stubStripe({
+			subscriptions: [withSeats('plan-first')],
+			prices: { [FREE_PRICE.lookup_key]: FREE_PRICE },
+			customer: {}
+		});
+		await expect(service().changePlan(CUSTOMER, FREE_PRICE.lookup_key, 'gauzy')).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(posts()).toEqual([]);
+	});
+
+	it('a subscription without the add-on changes only the plan item', async () => {
+		stubStripe({
+			subscriptions: [sub({ default_payment_method: 'pm_sub' })],
+			prices: { [ENT_MONTHLY.lookup_key]: ENT_MONTHLY, [SEAT_ENT.lookup_key]: SEAT_ENT },
+			customer: {}
+		});
+		await service().changePlan(CUSTOMER, ENT_MONTHLY.lookup_key, 'gauzy');
+		expect(body().get('items[0][id]')).toBe('si_g');
+		expect(body().has('items[1][id]')).toBe(false);
 	});
 });
 
