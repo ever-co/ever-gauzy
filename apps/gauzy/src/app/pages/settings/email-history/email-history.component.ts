@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogService } from '@nebular/theme';
 import {
 	EmailStatusEnum,
+	IEmailFindInput,
 	IEmailHistory,
+	IEmailTemplate,
 	IEmployee,
 	IOrganization,
 	IOrganizationContact,
@@ -13,9 +14,30 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { EmailFiltersComponent } from './email-filters/email-filters.component';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EmailService, EmployeesService, OrganizationContactService, Store, ToastrService } from '@gauzy/ui-core/core';
+import {
+	EmailService,
+	EmailTemplateService,
+	EmployeesService,
+	OrganizationContactService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
+
+/** One option in the Template filter: grouped by `title`, the language shown beside it. */
+interface ITemplateOption {
+	id: string;
+	title: string;
+	language: string;
+	label: string;
+}
+
+/** A removable label under the filter bar, one per active filter. */
+interface IActiveFilter {
+	key: 'recipient' | 'template' | 'status' | 'archived';
+	label: string;
+	value?: string;
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,15 +49,26 @@ import { EmailService, EmployeesService, OrganizationContactService, Store, Toas
 export class EmailHistoryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
 	selectedEmail: IEmailHistory;
-	filteredCount: Number;
 	thresholdHitCount = 1;
 	pageSize = 10;
 	imageUrl: string;
-	filters = {};
 	disableLoadMore: boolean = false;
 	totalNoPage: number;
 	nextDataLoading: boolean = false;
 	EmailStatusEnum: typeof EmailStatusEnum = EmailStatusEnum;
+
+	// ── Filters ──────────────────────────────────────────────────────────
+	recipientFilter: string = null;
+	templateFilter: string = null;
+	statusFilter: EmailStatusEnum = null;
+	showArchived: boolean = false;
+
+	/** Every address we know of: employees, contacts and whoever the loaded emails went to. */
+	recipients: { email: string }[] = [];
+	templateOptions: ITemplateOption[] = [];
+	statusOptions = [EmailStatusEnum.SENT, EmailStatusEnum.FAILED];
+	/** Total emails the API reports for the current filters (the list loads them a page at a time). */
+	total: number = 0;
 
 	organizationContacts: IOrganizationContact[] = [];
 	emails: IEmailHistory[] = [];
@@ -44,8 +77,8 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 	emails$: Subject<any> = new Subject();
 
 	constructor(
-		private readonly dialogService: NbDialogService,
 		private readonly emailService: EmailService,
+		private readonly emailTemplateService: EmailTemplateService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly organizationContactService: OrganizationContactService,
@@ -71,6 +104,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 				tap(() => this.resetFilters()),
 				tap(() => this._getEmployees()),
 				tap(() => this._getOrganizationContacts()),
+				tap(() => this._getTemplateOptions()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -81,22 +115,92 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		this.selectedEmail.content = email.content ? email.content : email.emailTemplate.hbs;
 	}
 
-	async openFiltersDialog() {
-		const filters = await firstValueFrom(
-			this.dialogService.open(EmailFiltersComponent, {
-				context: {
-					filters: this.filters
-				}
-			}).onClose
-		);
-		if (filters) {
-			this.filters = filters;
-			this.filteredCount = Object.values(filters).filter(Boolean).length;
-			this.emails$.next(true);
-		}
+	// ── Filters ──────────────────────────────────────────────────────────
+
+	/** Any filter change reloads the list from its first page. */
+	onFiltersChange() {
+		this.thresholdHitCount = 1;
+		this.emails$.next(true);
 	}
 
-	getEmailLanguageFullName(languageCode: LanguagesEnum) {
+	get hasActiveFilters(): boolean {
+		return this.activeFilters.length > 0;
+	}
+
+	get activeFilters(): IActiveFilter[] {
+		const active: IActiveFilter[] = [];
+		if (this.recipientFilter) {
+			active.push({
+				key: 'recipient',
+				label: 'SETTINGS.EMAIL_HISTORY.FILTERS.RECIPIENT',
+				value: this.recipientFilter
+			});
+		}
+		if (this.templateFilter) {
+			const template = this.templateOptions.find((option) => option.id === this.templateFilter);
+			active.push({
+				key: 'template',
+				label: 'SETTINGS.EMAIL_HISTORY.FILTERS.TEMPLATE',
+				value: template ? template.label : this.templateFilter
+			});
+		}
+		if (this.statusFilter) {
+			active.push({
+				key: 'status',
+				label: 'SETTINGS.EMAIL_HISTORY.FILTERS.STATUS',
+				value: this.getTranslation(`SETTINGS.EMAIL_HISTORY.FILTERS.${this.statusFilter}`)
+			});
+		}
+		if (this.showArchived) {
+			active.push({ key: 'archived', label: 'SETTINGS.EMAIL_HISTORY.FILTERS.ARCHIVED' });
+		}
+		return active;
+	}
+
+	removeFilter(key: IActiveFilter['key']) {
+		switch (key) {
+			case 'recipient':
+				this.recipientFilter = null;
+				break;
+			case 'template':
+				this.templateFilter = null;
+				break;
+			case 'status':
+				this.statusFilter = null;
+				break;
+			case 'archived':
+				this.showArchived = false;
+				break;
+		}
+		this.onFiltersChange();
+	}
+
+	clearFilters() {
+		this.resetFilters();
+		this.onFiltersChange();
+	}
+
+	public resetFilters() {
+		this.recipientFilter = null;
+		this.templateFilter = null;
+		this.statusFilter = null;
+		this.showArchived = false;
+	}
+
+	/** `where` for the email list. Only filters that are set are sent. */
+	private _buildWhere(): IEmailFindInput {
+		const { id: organizationId, tenantId } = this.organization;
+		return {
+			organizationId,
+			tenantId,
+			isArchived: this.showArchived,
+			...(this.recipientFilter ? { email: this.recipientFilter } : {}),
+			...(this.templateFilter ? { emailTemplateId: this.templateFilter } : {}),
+			...(this.statusFilter ? { status: this.statusFilter } : {})
+		};
+	}
+
+	getEmailLanguageFullName(languageCode: LanguagesEnum | string) {
 		switch (languageCode) {
 			case LanguagesEnum.ENGLISH:
 				return 'English';
@@ -115,26 +219,18 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		}
 
 		try {
-			const { id: organizationId, tenantId } = this.organization;
 			this.loading = true;
 			await this.emailService
-				.getAll(
-					['emailTemplate', 'user'],
-					{
-						organizationId,
-						tenantId,
-						isArchived: false,
-						...(this.filters ? this.filters : {})
-					},
-					this.thresholdHitCount * this.pageSize
-				)
+				.getAll(['emailTemplate', 'user'], this._buildWhere(), this.thresholdHitCount * this.pageSize)
 				.then((data) => {
 					this.emails = data.items.map((email) => ({
 						...email,
 						avatarUrl: this.getUrl(email),
 						formattedDate: this.getEmailDate(email.createdAt)
 					}));
-					this.selectedEmail = this.emails ? this.emails[0] : null;
+					this.total = data.total;
+					this.selectedEmail = this.emails.length ? this.emails[0] : null;
+					this._updateRecipients();
 					const totalNoPage = Math.ceil(data.total / this.pageSize);
 
 					if (this.thresholdHitCount >= totalNoPage) {
@@ -169,6 +265,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 				})
 			)
 		).items;
+		this._updateRecipients();
 	}
 
 	private async _getOrganizationContacts() {
@@ -181,6 +278,45 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 				tenantId
 			})
 		).items;
+		this._updateRecipients();
+	}
+
+	/**
+	 * The Template filter: the HTML variant of each template (the subject and text
+	 * variants share its id-less name), grouped by template with the language beside it.
+	 */
+	private async _getTemplateOptions() {
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
+		try {
+			const { items } = await this.emailTemplateService.getAll({ organizationId, tenantId });
+			this.templateOptions = items
+				.filter((template: IEmailTemplate) => template.name.includes('html'))
+				.map((template: IEmailTemplate) => {
+					const title = this._toTitleCase(template.name.split('/')[0].split('-').join(' '));
+					const language =
+						this.getEmailLanguageFullName(template.languageCode) || template.languageCode || '';
+					return { id: template.id, title, language, label: language ? `${title} · ${language}` : title };
+				})
+				.sort((a, b) => a.title.localeCompare(b.title) || a.language.localeCompare(b.language));
+		} catch (error) {
+			this.templateOptions = [];
+		}
+	}
+
+	/** Keeps the Recipient options in sync with every source of addresses, without duplicates. */
+	private _updateRecipients() {
+		const addresses = [
+			...this.employees.map((employee) => employee.user?.email),
+			...this.organizationContacts.map((contact) => contact.primaryEmail),
+			...this.emails.map((email) => email.email)
+		].filter(Boolean);
+		this.recipients = [...new Set(addresses)].sort((a, b) => a.localeCompare(b)).map((email) => ({ email }));
+	}
+
+	private _toTitleCase(str: string) {
+		return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
 	}
 
 	async archive() {
@@ -255,11 +391,6 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		} else {
 			return '../../../../assets/images/avatars/avatar-default.svg';
 		}
-	}
-
-	public resetFilters() {
-		this.filters = {};
-		this.filteredCount = 0;
 	}
 
 	ngOnDestroy() {}
