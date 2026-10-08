@@ -7,11 +7,13 @@
 }
 
 // Two-column settings shell: narrow settings menu | selected page content.
+// `min-height`, not `height`: the shell grows with long pages instead of stopping at
+// one viewport while the content runs on past it.
 .settings-shell {
 	display: flex;
 	align-items: flex-start;
 	gap: 1rem;
-	height: 100%;
+	min-height: 100%;
 }
 
 .settings-nav {
