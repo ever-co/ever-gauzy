@@ -2,7 +2,7 @@
 import { CanActivate, ExecutionContext, Global, INestApplication, Injectable, Module } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
-import { createHash, createPrivateKey, createPublicKey } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -83,30 +83,23 @@ async function calls(): Promise<RecordedCall[]> {
 
 const rows = async () => (await calls()).map((call) => call.row);
 
-/** The mock's TEST root (a key derived from a public seed), for `EVER_PLATFORM_ROOT_KEYS_FILE`. */
-function testRootsFile(dir: string, issuer: string, label = 'ever-connect-sdk/test-root/1'): string {
-	const seed = createHash('sha256').update(label).digest();
-	const prefix = Buffer.from('302e020100300506032b657004220420', 'hex');
-	const x = createPublicKey(
-		createPrivateKey({ key: Buffer.concat([prefix, seed]), format: 'der', type: 'pkcs8' })
-	).export({ format: 'jwk' }).x;
-	const file = join(dir, `roots-${label.replace(/\W/g, '_')}.json`);
-	writeFileSync(
-		file,
-		JSON.stringify({
-			keys: [
-				{
-					kid: 'test-root-1',
-					iss: new URL(issuer).origin,
-					kty: 'OKP',
-					crv: 'Ed25519',
-					x,
-					use: 'sig',
-					alg: 'EdDSA'
-				}
-			]
-		})
-	);
+/**
+ * The mock's TEST root for `EVER_PLATFORM_ROOT_KEYS_FILE`, from `@ever-co/connect-tools`; with
+ * another TEST key's public part (`stranger`), a root under the same kid that signed nothing. The
+ * tools are ESM only, so a child Node process reads them.
+ */
+function testRootsFile(dir: string, issuer: string, keyName: 'root' | 'stranger' = 'root'): string {
+	const script = [
+		"import { testKey, testRootEntry } from '@ever-co/connect-tools/mock-platform/keys';",
+		`const entry = { ...testRootEntry(${JSON.stringify(new URL(issuer).origin)}), x: testKey(${JSON.stringify(keyName)}).x };`,
+		'process.stdout.write(JSON.stringify({ keys: [entry] }));'
+	].join('\n');
+	const roots = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
+		cwd: __dirname,
+		encoding: 'utf8'
+	});
+	const file = join(dir, `roots-${keyName}.json`);
+	writeFileSync(file, roots);
 	return file;
 }
 
@@ -604,7 +597,7 @@ suite('Ever Platform connection against the mock platform', () => {
 	});
 
 	it('keys that cannot be verified: refused before the code is used', async () => {
-		const wrongRoots = testRootsFile(dir, ISSUER, 'ever-connect-sdk/test-root/9');
+		const wrongRoots = testRootsFile(dir, ISSUER, 'stranger');
 		app = await start(environment({ EVER_PLATFORM_ROOT_KEYS_FILE: wrongRoots }));
 		const refused = await call('post', '/api/ever-connect/connect', 'operator', { code: 'EVC-TEST-0000-0001' });
 		expect(refused.status).toBe(422);
