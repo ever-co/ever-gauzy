@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
@@ -8,6 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
+import { Employee } from './../core/entities/internal';
 import { EntitySubscription } from './entity-subscription.entity';
 import { MikroOrmEntitySubscriptionRepository } from './repository/mikro-orm-entity-subscription.repository';
 import { TypeOrmEntitySubscriptionRepository } from './repository/type-orm-entity-subscription.repository';
@@ -35,9 +36,16 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 			// The subscription belongs to the employee named in the input (a mentioned or assigned employee);
 			// only when none is given does it fall back to the current user. It used to always take the
 			// current user, so every mention / assignment subscription went to the author instead.
-			const employeeId = input.employeeId ?? RequestContext.currentUser()?.employeeId;
+			const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+			const employeeId = input.employeeId ?? currentEmployeeId;
 			// Extract the entity ID and type from the input
 			const { entity, entityId, organizationId } = input;
+
+			// Mention ids come from request bodies: another employee may only be subscribed when they
+			// belong to the current tenant / organization
+			if (employeeId && employeeId !== currentEmployeeId) {
+				await this.assertEmployeeInScope(employeeId, tenantId, organizationId);
+			}
 
 			// Check if the subscription already exists
 			try {
@@ -59,6 +67,20 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 		} catch (error) {
 			console.log('Error creating subscription:', error);
 			throw new BadRequestException('Failed to create subscription', error);
+		}
+	}
+
+	/**
+	 * Rejects an employee who is not part of the given tenant / organization.
+	 */
+	private async assertEmployeeInScope(employeeId: ID, tenantId: ID, organizationId?: ID): Promise<void> {
+		const exists = await this.typeOrmRepository.manager.getRepository(Employee).existsBy({
+			id: employeeId,
+			tenantId,
+			...(organizationId ? { organizationId } : {})
+		});
+		if (!exists) {
+			throw new ForbiddenException('The employee does not belong to this organization');
 		}
 	}
 
