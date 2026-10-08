@@ -1,3 +1,4 @@
+import { of } from 'rxjs';
 import { TenantOnboardingComponent } from './tenant-onboarding.component';
 
 /**
@@ -7,6 +8,8 @@ import { TenantOnboardingComponent } from './tenant-onboarding.component';
  */
 describe('TenantOnboardingComponent.onboardUser', () => {
 	const organization = { name: 'Acme' } as never;
+	// `registerEmployeeFeature` runs in the background: the employee creation must have been requested
+	// synchronously, so `employeesService.create` returns an observable that resolves at once.
 
 	const setup = (user: { tenantId?: string }) => {
 		const tenantService = {
@@ -17,18 +20,23 @@ describe('TenantOnboardingComponent.onboardUser', () => {
 		const router = { navigate: jest.fn() };
 		const errorHandlingService = { handleError: jest.fn() };
 		const store: Record<string, unknown> = { user };
+		// After onboarding, /user/me reports the tenant the user now belongs to
+		const usersService = {
+			getMe: jest.fn().mockResolvedValue({ id: 'user-1', tenantId: user.tenantId ?? 'new-tenant' })
+		};
+		const employeesService = { create: jest.fn().mockReturnValue(of({})) };
 		const component = new TenantOnboardingComponent(
 			router as never,
 			{} as never,
 			organizationsService as never,
 			tenantService as never,
-			{ getMe: jest.fn().mockResolvedValue({ id: 'user-1', tenantId: 'existing-tenant' }) } as never,
+			usersService as never,
 			store as never,
 			{ refreshToken: jest.fn() } as never,
-			{ create: jest.fn() } as never,
+			employeesService as never,
 			errorHandlingService as never
 		);
-		return { component, tenantService, organizationsService, router, errorHandlingService };
+		return { component, tenantService, organizationsService, employeesService, router, errorHandlingService };
 	};
 
 	it('creates the organization in the existing tenant of a user who already has one', async () => {
@@ -47,14 +55,18 @@ describe('TenantOnboardingComponent.onboardUser', () => {
 	});
 
 	it('still creates a new tenant first for a user without one', async () => {
-		const { component, tenantService, organizationsService } = setup({});
+		const { component, tenantService, organizationsService, employeesService } = setup({});
 
-		await component.onboardUser(organization);
+		await component.onboardUser({ name: 'Acme', registerAsEmployee: true } as never);
 
 		expect(tenantService.create).toHaveBeenCalledWith({ name: 'Acme' });
 		expect(tenantService.getCurrent).not.toHaveBeenCalled();
 		expect(organizationsService.create).toHaveBeenCalledWith(
 			expect.objectContaining({ tenant: { id: 'new-tenant' } })
+		);
+		// The employee record is created in the new tenant
+		expect(employeesService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ userId: 'user-1', organizationId: 'org-1', tenantId: 'new-tenant' })
 		);
 	});
 });
