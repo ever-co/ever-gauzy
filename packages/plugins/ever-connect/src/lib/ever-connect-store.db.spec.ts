@@ -324,10 +324,10 @@ describe.each(TEST_TARGETS)('EverConnect store on $name', (target) => {
 	it('a deleted organization or tenant: found, and its rows removed from every table (others kept)', async () => {
 		const acme = await seedTenant(dataSource, d, 'Acme', '2026-01-01 00:00:00', 'ops@acme.example');
 		const zephyr = await seedTenant(dataSource, d, 'Zephyr', '2026-02-01 00:00:00', 'ops@zephyr.example');
-		const initech = await seedTenant(dataSource, d, 'Initech', '2026-03-01 00:00:00', 'ops@initech.example');
+		const globex = await seedTenant(dataSource, d, 'Globex', '2026-03-01 00:00:00', 'ops@globex.example');
 		const store = new EverConnectStore(dataSource, now);
 		const audit = new EverConnectAuditService(dataSource, now);
-		const owners = [acme, zephyr, initech];
+		const owners = [acme, zephyr, globex];
 		for (const [i, owner] of owners.entries()) {
 			const linkId = `01JD4M2N3P4Q5R6S7T8V9V0LK${i}`;
 			await store.insertLink(linkValues(owner.tenantId, owner.organizationId, linkId));
@@ -351,14 +351,14 @@ describe.each(TEST_TARGETS)('EverConnect store on $name', (target) => {
 			});
 		}
 		expect(await store.deletedOwners()).toEqual([]);
-		// Zephyr's organization is soft-deleted; Initech's tenant is deleted outright.
+		// Zephyr's organization is soft-deleted; Globex's tenant is deleted outright.
 		await dataSource.query(
 			`UPDATE ${q(d, 'organization')} SET ${q(d, 'deletedAt')} = ${d === 'better-sqlite3' ? "datetime('now')" : 'CURRENT_TIMESTAMP'} WHERE ${q(d, 'id')} = '${zephyr.organizationId}'`
 		);
-		await dataSource.query(`DELETE FROM ${q(d, 'tenant')} WHERE ${q(d, 'id')} = '${initech.tenantId}'`);
+		await dataSource.query(`DELETE FROM ${q(d, 'tenant')} WHERE ${q(d, 'id')} = '${globex.tenantId}'`);
 		const deleted = await store.deletedOwners();
 		expect(deleted.map((owner) => owner.organizationId).sort()).toEqual(
-			[zephyr.organizationId, initech.organizationId].sort()
+			[zephyr.organizationId, globex.organizationId].sort()
 		);
 		for (const owner of deleted) {
 			await store.purgeOwner(owner);
