@@ -158,14 +158,15 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	getCalendarOption() {
 		const firstDay = dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY);
 
-		// Hide the days of the current week that are already over (see headerMount: other weeks show every day)
+		// The days of the current week that are already over; headerMount applies them to the week view
+		// of the current week only (in the month view a hidden weekday would vanish from every week)
 		this.hiddenDays = pastDaysOfCurrentWeek(firstDay, moment().day());
 		this.calendarOptions = {
 			eventClick: this.handleEventClick.bind(this),
 			events: this.getEvents.bind(this),
 			initialView: 'timeGridWeek',
 			headerToolbar: this.headerToolbarOptions,
-			hiddenDays: this.hiddenDays,
+			hiddenDays: [],
 			themeSystem: 'bootstrap',
 			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin, momentTimezonePlugin],
 			weekends: true,
@@ -354,10 +355,9 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	headerMount(config) {
-		const currentStart = this.calendarComponent.getApi().view.currentStart;
-		const currentEnd = this.calendarComponent.getApi().view.currentEnd;
-		const hideDays = moment().isBetween(currentStart, currentEnd, 'day', '[]') ? this.hiddenDays : [];
-		this.calendarComponent.getApi().setOption('hiddenDays', hideDays);
+		const { type, currentStart, currentEnd } = this.calendarComponent.getApi().view;
+		const isCurrentWeekView = type === 'timeGridWeek' && moment().isBetween(currentStart, currentEnd, 'day', '[]');
+		this.calendarComponent.getApi().setOption('hiddenDays', isCurrentWeekView ? this.hiddenDays : []);
 		// Past weeks cannot be booked, so "previous" only appears once the user has moved forward
 		const navigation = moment(currentStart).isSameOrBefore(moment(), 'day') ? 'next' : 'prev,next';
 		this.headerToolbarOptions.right = `${navigation} dayGridMonth,timeGridWeek`;
