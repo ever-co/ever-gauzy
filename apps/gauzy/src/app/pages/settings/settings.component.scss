@@ -7,8 +7,8 @@
 }
 
 // Two-column settings shell: narrow settings menu | selected page content.
-// `min-height`, not `height`: the shell grows with long pages instead of stopping at
-// one viewport while the content runs on past it.
+// `min-height`, not `height`: the shell must grow with long pages, or the sticky menu
+// below is released as soon as the first viewport of content scrolls past.
 .settings-shell {
 	display: flex;
 	align-items: flex-start;
@@ -23,6 +23,12 @@
 	background-color: nb-theme(gauzy-card-2);
 	border-radius: nb-theme(border-radius);
 	padding: 0.75rem 0.5rem;
+
+	// Stays in view while the page column scrolls; scrolls itself on short viewports.
+	position: sticky;
+	top: 0;
+	max-height: calc(100vh - 9rem);
+	overflow-y: auto;
 }
 
 .settings-nav-title {
@@ -116,7 +122,9 @@
 	}
 
 	.settings-nav {
+		position: static;
 		width: 100%;
+		max-height: none;
 	}
 
 	.settings-content {
