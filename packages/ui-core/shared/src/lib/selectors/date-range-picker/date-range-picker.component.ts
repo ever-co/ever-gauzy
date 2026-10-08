@@ -54,6 +54,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 */
 	private _appliedDatePickerConfig: IDatePickerConfig | null = null;
 
+	/** Re-positions the open panel whenever its size changes; see `ngAfterViewInit`. */
+	private _panelResizeObserver: ResizeObserver | null = null;
+
 	// Declaration of arrow variables
 	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
@@ -358,6 +361,23 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// The library positions the panel ONCE, on a timer after opening, from the panel's width at
+		// that moment. Its calendars only take up space once the panel carries `shown`
+		// (`.md-drppicker.shown .calendar { display: block }`), and when the timer beats the render
+		// that applies it — seen in WebKit, and from the keyboard — it measures the 118px preset list
+		// alone and the panel lands past the right edge of the screen. Re-position on every size
+		// change while open instead; the observer runs before paint, so the panel never shows misplaced.
+		const picker = this.dateRangePickerDirective?.picker;
+		const panel = picker?.pickerContainer?.nativeElement;
+		if (panel && typeof ResizeObserver !== 'undefined') {
+			this._panelResizeObserver = new ResizeObserver(() => {
+				if (picker.isShown) {
+					this.dateRangePickerDirective.setPosition();
+				}
+			});
+			this._panelResizeObserver.observe(panel);
+		}
 	}
 
 	/**
@@ -672,6 +692,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 
 	/**
 	 * Opens the date picker when anywhere in the control is clicked, except the arrow buttons.
+	 * The calendar button also lands here from the keyboard: Enter/Space fire its click.
 	 *
 	 * @param event - The mouse event triggered by clicking the control.
 	 */
@@ -679,7 +700,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		const target = event.target as HTMLElement;
 
 		// The arrows step the range; they must not open the panel too.
-		if (target.closest('button')) {
+		if (target.closest('button:not(.calendar-trigger)')) {
 			return;
 		}
 
@@ -698,6 +719,33 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		// again before it ever painted. Stop it here so opening is the only thing that click does.
 		event.stopPropagation();
 		this.dateRangePickerDirective.open(event);
+	}
+
+	/**
+	 * Keyboard counterpart of `openDatepicker`: Enter or ArrowDown in the date input opens the picker,
+	 * which the library itself only does on a pointer click. The buttons are left alone — Enter/Space
+	 * already fire their click (the calendar button's lands in `openDatepicker`).
+	 *
+	 * @param event - The keydown event bubbling up from inside the control.
+	 */
+	onControlKeydown(event: KeyboardEvent): void {
+		if (!(event.target instanceof HTMLInputElement)) {
+			return;
+		}
+
+		// An IME (Japanese, Chinese, Korean…) uses Enter to commit the composed text; that key belongs
+		// to the composition, not to us. Safari sends the committing keydown with `isComposing` already
+		// false, so its 229 keyCode ("IME is processing") is the only reliable signal there.
+		if (event.isComposing || event.keyCode === 229) {
+			return;
+		}
+
+		if (event.key !== 'Enter' && event.key !== 'ArrowDown') {
+			return;
+		}
+
+		event.preventDefault();
+		this.dateRangePickerDirective?.open(event);
 	}
 
 	/**
@@ -741,5 +789,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		this._panelResizeObserver?.disconnect();
+	}
 }
