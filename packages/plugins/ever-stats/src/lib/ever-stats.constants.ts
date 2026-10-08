@@ -40,7 +40,7 @@ export const STATS_LEASE_MS = 15 * 60 * 1000;
  * repository, at the commit this plugin's copy (`src/lib/schema/`) was taken from.
  */
 export const STATS_SCHEMA_URL =
-	'https://github.com/ever-co/ever-connect-sdk/blob/d75f380b78a368910651a3438a6577d4dd9dce9d/contracts/schemas/ever.stats.v1.json';
+	'https://github.com/ever-co/ever-connect-sdk/blob/a9844bd44c9fdb4d7f8be404b88331e578d8180c/contracts/schemas/ever.stats.v1.json';
 
 /** The largest answer body read from Ever Platform; a longer one is not read further. */
 export const MAX_STATS_RESPONSE_BYTES = 64 * 1024;
