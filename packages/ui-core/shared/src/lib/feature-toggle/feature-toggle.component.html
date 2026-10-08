@@ -44,7 +44,7 @@
 							</header>
 
 							<!-- Sub-features -->
-							@if (row?.children.length > 0) {
+							@if (row?.children?.length > 0) {
 								@for (child of row?.children; track child) {
 									<div class="setting-row">
 										<nb-checkbox
