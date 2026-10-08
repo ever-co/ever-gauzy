@@ -34,7 +34,7 @@ Before the code is used, Ever Platform's key manifest is fetched and verified; a
 
 ### Requests made while connected
 
-All requests go through the Ever Platform SDK's client: only `EVER_PLATFORM_API_URL`, no redirects followed, no cookies, a 10 s deadline for writes and 6 s for reads, `User-Agent: ever-connect-sdk/<version> (gauzy/<version>)`, an `Idempotency-Key` on writes. The instance token is kept in memory only.
+All requests go through the Ever Platform SDK's client (`@ever-co/connect-sdk`, pinned to an exact version): only `EVER_PLATFORM_API_URL`, no redirects followed, no cookies, a 10 s deadline for writes and 6 s for reads, `User-Agent: ever-connect-sdk/<version> (gauzy/<version>)`, an `Idempotency-Key` on writes. The instance token is kept in memory only.
 
 | #   | Request                                                                     | When                                                                                                                          | What it carries                                                            |
 | --- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |

@@ -1279,7 +1279,6 @@
 		".all-contributorsrc",
 		"packages/plugins/ever-stats/src/lib/schema/**",
 		"packages/plugins/ever-stats/src/lib/vendor/**",
-		"packages/plugins/ever-connect/src/lib/vendor/**",
 		".github/CONTRIBUTORS.md",
 		".deploy/*",
 		".git/*",

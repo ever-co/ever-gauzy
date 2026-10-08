@@ -1,20 +1,14 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { INTEGRATIONS } from '../sdk';
 import { GAUZY_INTEGRATIONS, gauzyIntegration, offeredOn, sharedDefinition } from './integration-definitions';
 
 /**
- * The scopes Gauzy shows (and app.ever.co consents to) are the SDK's definitions. Each key Gauzy
- * offers pins the `scope_version` and the SHA-256 of the scope it was reviewed with; when the SDK's
- * scope changes this fails until the pin is updated, and a changed scope without a new
- * `scope_version` fails against the SDK's own lock.
+ * The scopes Gauzy shows (and app.ever.co consents to) are the definitions of the SDK's contracts
+ * package (`@ever-co/connect-contracts`). Each key Gauzy offers pins the `scope_version` and the
+ * SHA-256 of the scope it was reviewed with; when a new package version changes a scope, this fails
+ * until the pin is reviewed and updated. (The SDK's own build checks that a changed scope also gets
+ * a new `scope_version`.)
  */
-const lock = JSON.parse(
-	readFileSync(join(__dirname, '../vendor/contracts/integrations/scope-versions.lock.json'), 'utf8')
-) as {
-	integrations: Record<string, { scope_version: number; scope_sha256: string }>;
-};
 
 /** The SDK's digest of a scope: SHA-256 of its JSON with sorted keys, two-space indented, plus a newline. */
 function sortKeys(value: unknown): unknown {
@@ -43,14 +37,10 @@ describe('integration definitions', () => {
 	});
 
 	it.each(GAUZY_INTEGRATIONS.map((definition) => [definition.key, definition] as const))(
-		'%s: pinned scope = SDK lock = the scope shipped',
+		'%s: the pinned scope version and digest are the scope shipped',
 		(key, definition) => {
 			const shared = sharedDefinition(key);
 			expect(definition.scopeVersion).toBe(shared.scope_version);
-			expect(lock.integrations[key]).toEqual({
-				scope_version: definition.scopeVersion,
-				scope_sha256: definition.scopeSha256
-			});
 			expect(scopeDigest(shared.scope)).toBe(definition.scopeSha256);
 		}
 	);

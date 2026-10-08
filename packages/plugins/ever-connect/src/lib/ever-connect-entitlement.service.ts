@@ -6,11 +6,11 @@ import { EverConnectSecretStore } from './ever-connect-secret-store';
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore, LinkRecord } from './ever-connect.store';
 import {
-	decodeJws,
 	EntitlementError,
 	entitlementStatus,
 	EntitlementStatus,
 	RateLimitedError,
+	readJwsPayload,
 	VerifiedEntitlement
 } from './sdk';
 
@@ -243,11 +243,11 @@ export class EverConnectEntitlementService {
 		jws: string | null,
 		fetchedAt: number | null
 	): EntitlementSummary | null {
-		const decoded = jws ? decodeJws(jws) : null;
-		if (!decoded) {
+		const payload = jws ? readJwsPayload(jws) : null;
+		if (!payload) {
 			return null;
 		}
-		const claims = decoded.payload as { iat?: number; exp?: number; ever?: Record<string, unknown> };
+		const claims = payload as { iat?: number; exp?: number; ever?: Record<string, unknown> };
 		const ever = (claims.ever ?? {}) as Record<string, unknown> & { plan?: { code?: unknown } };
 		return {
 			subject,

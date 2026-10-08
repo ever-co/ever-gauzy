@@ -29,12 +29,12 @@ import {
 } from './fixtures/test-db';
 
 /**
- * End to end against the Ever Platform mock of ever-co/ever-connect-sdk (`tools/mock-platform`): an
- * independent implementation of every call an installation makes (contract validation of every
- * body, signatures, consent states, the event feed) that records each call it receives. CI runs it
- * in `build-api` against the mock at the commit the plugin's vendored SDK names; locally:
+ * End to end against the Ever Platform mock of the SDK's dev tools (`@ever-co/connect-tools`, the
+ * exact version in this plugin's package.json): an independent implementation of every call an
+ * installation makes (contract validation of every body, signatures, consent states, the event
+ * feed) that records each call it receives. CI runs it in `build-api`; locally:
  *
- *     EVER_MOCK_CONFIG_JSON='{"issuer":"https://mock-platform.test"}' node tools/mock-platform/bin/ever-mock-platform.mjs --port 18081
+ *     EVER_MOCK_CONFIG_JSON='{"issuer":"https://mock-platform.test"}' node node_modules/@ever-co/connect-tools/dist/mock-platform/bin/ever-mock-platform.mjs --port 18081
  *     EVER_CONNECT_MOCK_PLATFORM_URL=http://127.0.0.1:18081 yarn nx run plugin-ever-connect:test-mock-platform
  *
  * The mock's issuer is an https name (Ever Platform's documents always name an https issuer);

@@ -414,8 +414,8 @@ jobs:
           yarn nx run plugin-ever-stats:test-mock-platform
 
       - name: Test the Ever Platform connection on SQLite, PostgreSQL and MySQL
-        # The connection plugin's specs: the strict switch and settings, the vendored SDK unchanged,
-        # the integration definitions against the SDK's scope lock, the route manifest, the audit
+        # The connection plugin's specs: the strict switch and settings, the integration definitions
+        # against the scopes of the pinned SDK contracts package, the route manifest, the audit
         # allow-list; and on the three databases (Postgres in a schema of its own) the migration
         # (up/up/down/up), the connection row and its leases, the catalog row under concurrent
         # starts, documents stored encrypted, and the module's routes: operator routes 404 to
@@ -425,33 +425,19 @@ jobs:
           EVER_CONNECT_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
         run: node node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathIgnorePatterns mock-platform
 
-      - name: Checkout the Ever Platform mock for the connection (ever-co/ever-connect-sdk, the vendored commit)
-        uses: actions/checkout@v4
-        with:
-          repository: ever-co/ever-connect-sdk
-          ref: 62c3fa0a5a0b1b487de860cb2b714505caeeb7bf
-          path: .ever-connect-sdk-connect
-          persist-credentials: false
-
       - name: Test the Ever Platform connection against the mock
-        # The vendored SDK files must equal that commit's. Then the plugin against the SDK's mock
-        # platform, which validates every body against the contract and records every call: connect
-        # (no address in the redeem), an installation-wide consent waiting for the operator's accept,
-        # switching off, the policy, links, the feed, revocation, disconnect, EVER_CONNECT_CODE used
-        # once, keys that cannot be verified refused before the code is used. Every call must be a
-        # documented row.
+        # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the
+        # exact version in the plugin's package.json, installed with the workspace), which validates
+        # every body against the contract and records every call: connect (no address in the redeem),
+        # an installation-wide consent waiting for the operator's accept, switching off, the policy,
+        # links, the feed, revocation, disconnect, EVER_CONNECT_CODE used once, keys that cannot be
+        # verified refused before the code is used. Every call must be a documented row.
         env:
           EVER_CONNECT_MOCK_PLATFORM_URL: http://127.0.0.1:18081
           EVER_CONNECT_MOCK_PLATFORM_REQUIRED: 'true'
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
         run: |
-          mv .ever-connect-sdk-connect "$RUNNER_TEMP/ever-connect-sdk-connect"
-          node packages/plugins/ever-connect/scripts/vendor-connect-sdk.mjs "$RUNNER_TEMP/ever-connect-sdk-connect" --check
-          cd "$RUNNER_TEMP/ever-connect-sdk-connect"
-          corepack pnpm install --frozen-lockfile --prod --filter ./tools/mock-platform
-          cd tools/mock-platform
-          EVER_MOCK_CONFIG_JSON='{"issuer":"https://mock-platform.test"}' node bin/ever-mock-platform.mjs --port 18081 > "$RUNNER_TEMP/mock-platform-connect.log" 2>&1 &
-          cd "$GITHUB_WORKSPACE"
+          TOOLS_DIR=$(node -p "require('node:path').dirname(require.resolve('@ever-co/connect-tools/package.json', { paths: ['packages/plugins/ever-connect'] }))")
+          EVER_MOCK_CONFIG_JSON='{"issuer":"https://mock-platform.test"}' node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18081 > "$RUNNER_TEMP/mock-platform-connect.log" 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://127.0.0.1:18081/__mock/healthz > /dev/null; then break; fi
             sleep 1

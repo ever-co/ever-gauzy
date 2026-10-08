@@ -4,11 +4,8 @@ const baseConfig = require('../../../eslint.config.js');
  * Every request of the Ever Platform connection goes through the Ever Platform SDK's client (its
  * generated operation table, one base URL, no redirect): no other HTTP client, no analytics plugin,
  * and nothing of the anonymous statistics module (which is independent of it).
- *
- * `src/lib/vendor/` is the SDK's own code, copied unchanged by `scripts/vendor-connect-sdk.mjs`.
  */
 module.exports = [
-	{ ignores: ['src/lib/vendor/**'] },
 	...baseConfig,
 	{
 		files: ['**/*.ts'],

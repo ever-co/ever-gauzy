@@ -31,6 +31,8 @@
 		"@nestjs/core": "^11.1.26"
 	},
 	"dependencies": {
+		"@ever-co/connect-contracts": "1.0.0-rc.1",
+		"@ever-co/connect-sdk": "1.0.0-rc.1",
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/constants": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
@@ -43,6 +45,7 @@
 		"typeorm": "^1.0.0"
 	},
 	"devDependencies": {
+		"@ever-co/connect-tools": "1.0.0-rc.1",
 		"@types/jest": "30.0.0",
 		"@types/node": "^24.10.0",
 		"typescript": "^5.9.3"

@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * Two rules on the plugin's own sources (specs and the vendored SDK excluded):
+ * Two rules on the plugin's own sources (specs and test fixtures excluded):
  *
  * - the install source is declared, never guessed: no source reads a payment key, the demo switch,
  *   a cloud provider variable, the container path, the desktop switch or the hostname;
@@ -34,7 +34,7 @@ export function sources(root: string): Array<{ path: string; text: string }> {
 	for (const entry of readdirSync(root)) {
 		const path = join(root, entry);
 		if (statSync(path).isDirectory()) {
-			if (entry !== 'vendor' && entry !== 'fixtures') out.push(...sources(path));
+			if (entry !== 'fixtures') out.push(...sources(path));
 		} else if (/\.(ts|html)$/.test(entry) && !/\.spec\.ts$/.test(entry)) {
 			out.push({ path, text: readFileSync(path, 'utf8') });
 		}

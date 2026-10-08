@@ -34,7 +34,7 @@ import {
 	offeredOn,
 	sharedDefinition
 } from './integrations/integration-definitions';
-import { CONSTANTS, IntegrationKey, ProblemError, signJws } from './sdk';
+import { CONSTANTS, IntegrationKey, ProblemError, signCompactJws } from './sdk';
 
 /** The platform's brief state of one integration. */
 interface RemoteState {
@@ -757,7 +757,7 @@ export class EverConnectIntegrationStateService {
 		const signer = await this.instance.statsSigner();
 		try {
 			const statsPublicJwk = { kty: 'OKP', crv: 'Ed25519', x: identity.statsPublicKey };
-			const statement = await signJws(
+			const statement = await signCompactJws(
 				(bytes) => signer.sign(bytes),
 				{ typ: CONSTANTS.stats_link_typ },
 				{

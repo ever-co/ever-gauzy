@@ -1,7 +1,6 @@
 import { InstallSource, parseInstallSource } from '@gauzy/plugin-ever-instance';
 import { DEFAULT_PLATFORM_API_URL, isInstanceWideKey } from './ever-connect.constants';
-import { isLocalHost } from './vendor/connect-sdk/local';
-import { CONSTANTS } from './vendor/connect-contracts';
+import { CONSTANTS, isLocalHost } from './sdk';
 
 export { isEverConnectEnabled } from './ever-connect-enabled';
 
