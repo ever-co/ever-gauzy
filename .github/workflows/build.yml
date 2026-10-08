@@ -413,9 +413,42 @@ jobs:
           curl -sf http://127.0.0.1:18080/__mock/healthz > /dev/null || { cat "$RUNNER_TEMP/mock-platform.log"; exit 1; }
           yarn nx run plugin-ever-stats:test-mock-platform
 
+      - name: Test the Ever Platform connection on SQLite, PostgreSQL and MySQL
+        # The connection plugin's specs: the strict switch and settings, the integration definitions
+        # against the scopes of the pinned SDK contracts package, the route manifest, the audit
+        # allow-list; and on the three databases (Postgres in a schema of its own) the migration
+        # (up/up/down/up), the connection row and its leases, the catalog row under concurrent
+        # starts, documents stored encrypted, and the module's routes: operator routes 404 to
+        # everyone else, and nothing is sent or scheduled while the installation is not connected.
+        env:
+          EVER_CONNECT_TEST_POSTGRES_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
+          EVER_CONNECT_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
+        run: node node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathIgnorePatterns mock-platform
+
+      - name: Test the Ever Platform connection against the mock
+        # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the
+        # exact version in the plugin's package.json, installed with the workspace), which validates
+        # every body against the contract and records every call: connect (no address in the redeem),
+        # an installation-wide consent waiting for the operator's accept, switching off, the policy,
+        # links, the feed, revocation, disconnect, EVER_CONNECT_CODE used once, keys that cannot be
+        # verified refused before the code is used. Every call must be a documented row.
+        env:
+          EVER_CONNECT_MOCK_PLATFORM_URL: http://127.0.0.1:18081
+          EVER_CONNECT_MOCK_PLATFORM_REQUIRED: 'true'
+        run: |
+          TOOLS_DIR=$(node -p "require('node:path').dirname(require.resolve('@ever-co/connect-tools/package.json', { paths: ['packages/plugins/ever-connect'] }))")
+          node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18081 > "$RUNNER_TEMP/mock-platform-connect.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:18081/__mock/healthz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:18081/__mock/healthz > /dev/null || { cat "$RUNNER_TEMP/mock-platform-connect.log"; exit 1; }
+          yarn nx run plugin-ever-connect:test-mock-platform
+
       - name: Test the API plugin list and its boot order
         # The statistics plugin is in the list unless EVER_STATS_ENABLED=false, also when that is
-        # written only in .env or .env.local (read before the list is built).
+        # written only in .env or .env.local (read before the list is built); the Ever Platform
+        # connection only with EVER_CONNECT_ENABLED=true; every combination of the optional plugins.
         run: node node_modules/jest/bin/jest.js -c apps/api/jest.config.ts --runInBand plugins.matrix
 
       - name: Build API

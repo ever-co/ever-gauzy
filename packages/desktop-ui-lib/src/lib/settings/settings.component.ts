@@ -394,6 +394,23 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			]
 		},
 		{
+			title: 'Ever Platform',
+			fields: [
+				{
+					// `true` loads the Ever Platform connection (applies on the next start; off otherwise).
+					name: 'EVER_CONNECT_ENABLED',
+					field: 'EVER_CONNECT_ENABLED',
+					value: ''
+				},
+				{
+					// `interval` reads Ever Platform events every 15 minutes instead of a long poll.
+					name: 'EVER_CONNECT_FEED_MODE',
+					field: 'EVER_CONNECT_FEED_MODE',
+					value: ''
+				}
+			]
+		},
+		{
 			title: 'Other',
 			fields: [
 				{

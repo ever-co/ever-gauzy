@@ -9,12 +9,17 @@ import { join } from 'node:path';
  */
 const PLUGINS_SOURCE = readFileSync(join(__dirname, 'plugins.ts'), 'utf8');
 const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.\/)[^']+)'/g), (match) => match[1]).filter(
-	(name) => name !== '@gauzy/plugin-auth-zitadel' && name !== '@gauzy/plugin-auth-keycloak' && name !== '@gauzy/plugin-ever-stats'
+	(name) =>
+		name !== '@gauzy/plugin-auth-zitadel' &&
+		name !== '@gauzy/plugin-auth-keycloak' &&
+		name !== '@gauzy/plugin-ever-stats' &&
+		name !== '@gauzy/plugin-ever-connect'
 );
 
 class AuthZitadelPlugin {}
 class AuthKeycloakPlugin {}
 class EverStatsPlugin {}
+class EverConnectPlugin {}
 
 /** A stand-in plugin class; `init()` mimics the configurable plugins. */
 function stubPluginClass() {
@@ -51,6 +56,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-ever-stats', () => ({
 				EverStatsPlugin,
 				isEverStatsEnabled: jest.requireActual('../../../packages/plugins/ever-stats/src/lib/ever-stats-enabled').isEverStatsEnabled
+			}));
+			jest.doMock('@gauzy/plugin-ever-connect', () => ({
+				EverConnectPlugin,
+				isEverConnectEnabled: jest.requireActual('../../../packages/plugins/ever-connect/src/lib/ever-connect-enabled').isEverConnectEnabled
 			}));
 			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			plugins = require('./plugins').plugins;
@@ -101,6 +110,54 @@ describe('API plugin list: anonymous usage statistics', () => {
 			const plugins = loadPlugins({ EVER_STATS_ENABLED: value });
 			expect(plugins.includes(EverStatsPlugin)).toBe(loaded);
 			expect(warn.mock.calls.filter(([message]) => String(message).includes('EVER_STATS_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+});
+
+describe('API plugin list: Ever Platform connection', () => {
+	it.each([
+		['unset (the default)', undefined, false, 0],
+		['false', 'false', false, 0],
+		['true', 'true', true, 0],
+		['TRUE', 'TRUE', false, 1],
+		['1', '1', false, 1],
+		['yes', 'yes', false, 1]
+	])('EVER_CONNECT_ENABLED %s: loaded %s, %i log line(s)', (_name, value, loaded, lines) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({ EVER_CONNECT_ENABLED: value });
+			expect(plugins.includes(EverConnectPlugin)).toBe(loaded);
+			expect(warn.mock.calls.filter(([message]) => String(message).includes('EVER_CONNECT_ENABLED'))).toHaveLength(lines);
+		} finally {
+			warn.mockRestore();
+		}
+	});
+
+	// The optional plugins are independent: every combination of the switches loads exactly its own.
+	const combinations = [false, true].flatMap((stats) =>
+		[false, true].flatMap((connect) => [false, true].flatMap((zitadel) => [false, true].map((keycloak) => ({ stats, connect, zitadel, keycloak }))))
+	);
+	it.each(combinations)('statistics $stats, connection $connect, Ever ID $zitadel, Keycloak $keycloak', ({ stats, connect, zitadel, keycloak }) => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		try {
+			const plugins = loadPlugins({
+				EVER_STATS_ENABLED: stats ? undefined : 'false',
+				EVER_CONNECT_ENABLED: connect ? 'true' : undefined,
+				ZITADEL_ENABLED: zitadel ? 'true' : undefined,
+				KEYCLOAK_ENABLED: keycloak ? 'true' : undefined,
+				KEYCLOAK_CLIENT_ID: 'gauzy',
+				KEYCLOAK_CLIENT_SECRET: 'a-real-secret',
+				KEYCLOAK_REALM: 'gauzy',
+				KEYCLOAK_AUTH_SERVER_URL: 'https://id.example.test'
+			});
+			expect([plugins.includes(EverStatsPlugin), plugins.includes(EverConnectPlugin), plugins.includes(AuthZitadelPlugin), plugins.includes(AuthKeycloakPlugin)]).toEqual([
+				stats,
+				connect,
+				zitadel,
+				keycloak
+			]);
 		} finally {
 			warn.mockRestore();
 		}
