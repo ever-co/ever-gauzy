@@ -68,7 +68,10 @@ export class EverConnectLifecycle implements OnApplicationBootstrap {
 export class EverConnectModule {
 	static register(env: Record<string, string | undefined> = process.env): DynamicModule {
 		const logger = new Logger('EverConnect');
-		const config = readEverConnectConfig(env, (message) => logger.warn(message));
+		// The plugin list imports this module even when it is not loaded: its settings warn only when it is.
+		const config = readEverConnectConfig(env, (message) =>
+			isEverConnectEnabled(env, () => undefined) ? logger.warn(message) : undefined
+		);
 		return {
 			module: EverConnectModule,
 			// Gauzy's tenant and permission guards of the organization routes need the role permissions.
