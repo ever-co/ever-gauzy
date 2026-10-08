@@ -22,7 +22,14 @@ const captureOnlyActiveWindow = async (
 	if (!allowScreenshotCapture()) {
 		return;
 	}
-	const display = displays.find((x) => x.id === activeScreen.id.toString());
+	// The screenshot library and Electron do not always report the same display ids (Linux can
+	// answer an empty id), so the active monitor may not be found: fall back to the first display
+	// rather than crashing on `undefined` and skipping the capture altogether (#7771).
+	const display = displays.find((x) => x.id === activeScreen?.id?.toString()) ?? displays[0];
+	if (!display) {
+		console.warn('captureOnlyActiveWindow -> no display to capture');
+		return [];
+	}
 	if (!isTemp) {
 		const result = await uploadScreenShot(
 			display.img,
@@ -74,7 +81,7 @@ const captureAllWindow = async (
 					windowPath,
 					soundPath
 				);
-				if (display.id === activeScreen.id.toString()) {
+				if (display.id === activeScreen?.id?.toString()) {
 					result.push({
 						...res,
 						name: display.name
@@ -247,16 +254,14 @@ export const detectActiveWindow = () => {
 
 	const cursorPosition = screen.getCursorScreenPoint();
 
-	let idx = null;
+	// Let Electron resolve the display under the cursor on both axes. The previous scan only
+	// compared the x range, so with monitors stacked vertically (same x, different y) it always
+	// answered the first one and "capture active monitor" shot the inactive screen (#5855).
+	const activeDisplay = screen.getDisplayNearestPoint(cursorPosition);
 
-	const currentPosition = allScreen.find((item, i) => {
-		if (cursorPosition.x >= item.bounds.x && cursorPosition.x <= item.bounds.width + item.bounds.x) {
-			idx = i;
-			return item;
-		}
-	});
+	const idx = allScreen.findIndex((display) => display.id === activeDisplay.id);
 
-	return { ...currentPosition, index: idx };
+	return { ...activeDisplay, index: idx >= 0 ? idx : null };
 };
 
 const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
@@ -482,8 +487,16 @@ export async function getScreenshot() {
 		switch (appSetting.monitor.captured) {
 			case 'all':
 				return allDisplays;
-			case 'active-only':
-				return [allDisplays.find((x) => x.id === activeWindow.id.toString())];
+			case 'active-only': {
+				const activeDisplay = allDisplays.find((x) => x.id === activeWindow?.id?.toString());
+				// Same fallback as captureOnlyActiveWindow: an id the library did not report must not
+				// turn into `[undefined]` and break the upload downstream (#7771).
+				if (!activeDisplay) {
+					console.warn('getScreenshot -> active display not found, capturing all displays');
+					return allDisplays;
+				}
+				return [activeDisplay];
+			}
 			default:
 				break;
 		}

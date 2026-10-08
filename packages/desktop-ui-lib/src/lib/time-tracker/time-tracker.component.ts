@@ -2265,33 +2265,30 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 			this._auditLogService.screenshotLogInfo(`Captured ${sources.length} screenshot(s) with thumbnail size ${thumbSize.width}x${thumbSize.height}.`);
 
-			const screens: IScreenshotResult[] = [];
-
 			sources.forEach((source) => {
 				this._loggerService.info('screenshot_res::', JSON.stringify(source));
-				if (
-					this.appSetting &&
-					this.appSetting.monitor &&
-					this.appSetting.monitor.captured &&
-					this.appSetting.monitor.captured === 'active-only'
-				) {
-					if (arg.activeWindow && source.display_id === arg.activeWindow.id.toString()) {
-						screens.push({
-							img: source.thumbnail.toPNG(),
-							name: source.name,
-							id: source.display_id
-						});
-					}
-				} else {
-					if (arg.activeWindow) {
-						screens.push({
-							img: source.thumbnail.toPNG(),
-							name: source.name,
-							id: source.display_id
-						});
-					}
-				}
 			});
+
+			if (!arg.activeWindow) {
+				return [];
+			}
+
+			const activeOnly = this.appSetting?.monitor?.captured === 'active-only';
+			const matched = activeOnly
+				? sources.filter((source) => source.display_id === arg.activeWindow.id.toString())
+				: sources;
+
+			// `display_id` is empty on some Linux setups (X11 as well as Wayland), so the active monitor
+			// can never be matched and "active-only" silently produced no screenshot at all (#7771).
+			// Only trust the filter when it actually matched, otherwise keep every captured source —
+			// the same rule takeScreenCapture() applies to the Wayland frames.
+			const selected = activeOnly && matched.length === 0 ? sources : matched;
+
+			const screens: IScreenshotResult[] = selected.map((source) => ({
+				img: source.thumbnail.toPNG(),
+				name: source.name,
+				id: source.display_id
+			}));
 
 			// this._loggerService.info('screenshot data::', JSON.stringify(screens));
 
