@@ -1,3 +1,4 @@
+// cspell:ignore Ijoxf
 import { generateKeyPairSync, sign, verify } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
