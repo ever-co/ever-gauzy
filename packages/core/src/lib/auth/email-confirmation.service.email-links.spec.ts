@@ -22,7 +22,7 @@ describe('EmailConfirmationService.sendEmailVerification - confirmation link', (
 		emailVerification = jest.fn(async () => true);
 		service = new EmailConfirmationService(
 			{ emailVerification } as any,
-			{ update: jest.fn(async () => undefined) } as any,
+			{ storeEmailVerificationCode: jest.fn(async () => true) } as any,
 			{ isFeatureEnabled: jest.fn(async () => true) } as any,
 			{ hash: jest.fn(async () => 'hashed') } as any
 		);

@@ -32,7 +32,11 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     /* I've used padding so you can see the edges of the elements. */
     padding: 2px 0px 2px 5px;
     margin-right: 16px;
+    // The whole control opens the picker. iOS Safari also only delivers taps on a
+    // non-interactive element reliably when it carries a pointer cursor.
+    cursor: pointer;
     input {
+        cursor: pointer;
         // Fill the pill rather than pinning a second height inside it, and lift
         // the global control floor: in here the field is the control's TEXT, not
         // a control of its own, so it must not claim a control's height.

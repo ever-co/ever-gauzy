@@ -1,7 +1,7 @@
 @if (visible()) {
 	<div class="email-verification-notice" [class.inline]="variant === 'inline'" role="status" aria-live="polite">
 		<p class="notice-text">
-			{{ messageKey | translate: { email: email() } }}
+			{{ (linkSent() ? messageKey : notSentMessageKey) | translate: { email: email() } }}
 		</p>
 		<div class="notice-actions">
 			@switch (state()) {
@@ -17,21 +17,26 @@
 			@if (state() !== 'sent') {
 				<button
 					nbButton
-					size="small"
+					size="tiny"
 					status="warning"
 					type="button"
 					[disabled]="state() === 'sending'"
 					(click)="resend()"
 				>
 					{{
-						(state() === 'sending' ? 'EMAIL_VERIFICATION.SENDING' : 'EMAIL_VERIFICATION.RESEND') | translate
+						(state() === 'sending'
+							? 'EMAIL_VERIFICATION.SENDING'
+							: linkSent()
+								? 'EMAIL_VERIFICATION.RESEND'
+								: 'EMAIL_VERIFICATION.SEND'
+						) | translate
 					}}
 				</button>
 			}
 			@if (variant === 'banner') {
 				<button
 					nbButton
-					size="small"
+					size="tiny"
 					ghost
 					type="button"
 					class="notice-dismiss"

@@ -1191,7 +1191,52 @@
 		"ADD_ITEM": "Добавете {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Само вие",
+			"TENANT": "Всички в този наемател"
+		},
+		"UNSAVED_CHANGES": "Незапазени промени",
+		"ACCOUNT": {
+			"TITLE": "Акаунт",
+			"DESCRIPTION": "Акаунтът, с който сте влезли.",
+			"MANAGE": "Управление на профила",
+			"ROLE": "Роля",
+			"MEMBER_SINCE": "Член от"
+		},
+		"PREFERENCES": {
+			"TITLE": "Предпочитания",
+			"DESCRIPTION": "Как изглежда и работи приложението за вас. Промените се прилагат веднага.",
+			"THEME": "Тема",
+			"THEME_HINT": "Цветова схема на цялото приложение.",
+			"LANGUAGE": "Език",
+			"LANGUAGE_HINT": "Език на менютата, етикетите и съобщенията.",
+			"LAYOUT": "Оформление по подразбиране",
+			"RESET_LAYOUTS": "Нулиране на оформленията на страниците",
+			"SAVE_ERROR": "Предпочитанието ви не можа да бъде запазено.",
+			"LAYOUTS_RESET": "Оформленията на страниците са върнати към подразбиращото се."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Квадратно изображение, поне 128 × 128 px.",
+			"NAME_HINT": "Показва се на всеки потребител на този наемател.",
+			"TENANT_ID": "ID на наемателя",
+			"TENANT_ID_HINT": "Посочете го, когато се свързвате с поддръжката или използвате API.",
+			"COPY_ERROR": "ID на наемателя не можа да бъде копиран.",
+			"TITLE": "Профил на наемателя",
+			"DESCRIPTION": "Името и логото на този наемател, показвани в превключвателя на работни пространства и страничната лента за всички потребители.",
+			"NAME": "Име на наемателя",
+			"NAME_PLACEHOLDER": "Въведете името на наемателя",
+			"NAME_REQUIRED": "Името на наемателя е задължително.",
+			"LOGO": "Лого на наемателя",
+			"LOGO_CHANGE": "Щракнете, за да качите ново лого",
+			"LOGO_REMOVE": "Премахване на логото",
+			"LOGO_UPLOAD_ERROR": "Логото не можа да бъде качено.",
+			"CREATED_AT": "Създаден на",
+			"SAVED": "Профилът на наемателя е запазен",
+			"SAVE_ERROR": "Профилът на наемателя не можа да бъде запазен.",
+			"LOAD_ERROR": "Профилът на наемателя не можа да бъде зареден."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Интерфейс",
 			"TITLE": "Потребителски интерфейс",
 			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта.",
 			"OPTIONS": {
@@ -2034,7 +2079,90 @@
 			"PREVIOUS": "Previous"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "Период",
+			"PERIODS": {
+				"THIS_WEEK": "Тази седмица",
+				"THIS_MONTH": "Този месец",
+				"LAST_30_DAYS": "Последните 30 дни"
+			},
+			"TABS": {
+				"OVERVIEW": "Общ преглед",
+				"PROFILE": "Профил"
+			},
+			"PRESENCE": {
+				"TRACKING": "Отчита време",
+				"ONLINE": "На линия",
+				"AWAY": "Отсъства",
+				"OFFLINE": "Офлайн"
+			},
+			"LOCAL_TIME": "Местно време",
+			"MEMBER_SINCE": "Член от",
+			"WEEKLY_LIMIT": "Седмичен лимит",
+			"WORKED_TODAY": "Работено днес",
+			"WORKED_PERIOD": "Работено за периода",
+			"ACTIVITY_META": "{{ value }} активност",
+			"AVG_ACTIVITY": "Средна активност",
+			"OPEN_TASKS": "Отворени задачи",
+			"OPEN_TASKS_META": "{{ progress }} в процес · {{ overdue }} просрочени",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "спрямо миналата седмица",
+				"THIS_MONTH": "спрямо миналия месец",
+				"LAST_30_DAYS": "спрямо предходните 30 дни"
+			},
+			"HOURS_WORKED": "Изработени часове",
+			"HOURS_META": "{{ total }} общо · {{ average }} на работен ден",
+			"TRACKED": "Отчетено",
+			"MANUAL": "Ръчно",
+			"OPEN_TIMESHEET": "Отвори графика",
+			"PROJECTS": "Проекти",
+			"RECENT_SCREENSHOTS": "Последни екранни снимки",
+			"VIEW_ALL": "Виж всички",
+			"ASSIGNED_TASKS": "Възложени задачи",
+			"COLUMNS": {
+				"TASK": "Задача",
+				"PROJECT": "Проект",
+				"STATUS": "Статус",
+				"DUE": "Срок",
+				"TIME": "Време",
+				"NAME": "Име",
+				"PRIORITY": "Приоритет"
+			},
+			"TOP_TASKS": "Най-работени задачи",
+			"APPS_URLS": "Приложения и URL адреси",
+			"NO_TIME": "Няма отчетено време за този период",
+			"NO_TASKS": "Няма възложени задачи",
+			"NO_APPS": "Няма активност на приложения или URL за този период",
+			"NO_SCREENSHOTS": "Няма екранни снимки за този период",
+			"UNAVAILABLE": "Нямате достъп до тези данни",
+			"PROFILE": {
+				"ABOUT": "За служителя",
+				"CONTACT": "Контакти",
+				"SKILLS_TAGS": "Умения и етикети",
+				"TIME_ZONE": "Часова зона",
+				"NOT_PROVIDED": "Все още не е посочено",
+				"NO_DESCRIPTION": "Все още няма добавено описание"
+			},
+			"TASKS_HELP": "Задачи, в които участва този човек. Изберете поле, за да филтрирате списъка.",
+			"TASK_FILTERS": {
+				"OPEN": "Отворени",
+				"PROGRESS": "В процес",
+				"OVERDUE": "Просрочени",
+				"DONE": "Завършени"
+			},
+			"DUE": {
+				"NONE": "Без краен срок",
+				"WAS_DUE": "Срокът беше",
+				"OVERDUE_DAY": "1 ден просрочие",
+				"OVERDUE_DAYS": "{{ count }} дни просрочие",
+				"TODAY": "Срок днес",
+				"TOMORROW": "Срок утре",
+				"IN_DAYS": "След {{ count }} дни"
+			},
+			"SHOWING": "Показани {{ shown }} от {{ total }} задачи",
+			"NO_TASKS_IN_VIEW": "Няма задачи в този изглед"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -2826,7 +2954,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "За служителя",
+		"INACTIVE": "Неактивен",
+		"PER_HOUR": "/ час",
+		"MEMBER_SINCE": "Член от",
+		"NO_DESCRIPTION": "Все още няма добавено описание",
+		"NO_SKILLS": "Все още няма посочени умения",
+		"VIEW_COMPANY_PROFILE": "Виж профила на компанията",
+		"EDIT": {
+			"NO_AWARDS": "Все още няма награди",
+			"ADD_AWARD": "Добави награда",
+			"PRIVACY_HELP": "Изберете кои данни посетителите виждат в публичния профил."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
@@ -3780,9 +3920,28 @@
 		"DICTATION_KEY_REJECTED": "Гласовият доставчик отхвърли своя API ключ. Актуализирайте го на страницата с настройки „Доставчици на ИИ“.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Гласовият доставчик отхвърли своя API ключ — помолете администратор да го актуализира в Настройки → Доставчици на ИИ.",
 		"DICTATION_OPEN_SETTINGS": "Отвори Доставчици на ИИ",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Безплатното ниво на ИИ в момента е достигнало лимита на заявки. Свържете свой акаунт в OpenRouter или настройте друг доставчик на ИИ за непрекъснат достъп.",
+		"RATE_LIMITED_OWN": "Вашият доставчик на ИИ в момента ограничава заявките. Проверете плана и лимитите си при доставчика или настройте друг доставчик на ИИ.",
+		"RATE_LIMIT_RETRY_IN": "Можете да опитате отново след около {{seconds}} с.",
+		"OPEN_AI_SETTINGS": "Отвори Доставчици на ИИ",
+		"ERROR_NOT_CONFIGURED": "ИИ чатът се нуждае от настроен доставчик. Добавете такъв на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "ИИ чатът се нуждае от настроен доставчик — помолете администратор да добави такъв в Настройки → Доставчици на ИИ.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Избраният доставчик на ИИ не може да отговори в момента. Проверете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Избраният доставчик на ИИ не може да отговори в момента — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_MODEL_UNAVAILABLE": "Този модел не е достъпен с текущия API ключ. Изберете друг на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Този модел не е достъпен с текущия API ключ — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_KEY_REJECTED": "Доставчикът на ИИ отхвърли своя API ключ. Обновете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Доставчикът на ИИ отхвърли своя API ключ — помолете администратор да го обнови в Настройки → Доставчици на ИИ.",
+		"ERROR_RATE_LIMITED": "Доставчикът на ИИ ограничава заявките.",
+		"RECORDING": "Запис",
+		"PREVIEW": "Преглед",
+		"PREVIEW_PAGE": "Страница",
+		"PREVIEW_NEW_TAB": "Отваряне в нов раздел",
+		"PREVIEW_CLOSE": "Затваряне на прегледа",
+		"PREVIEW_UNAVAILABLE": "Няма наличен преглед за този файл.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Отваряне в Документи",
+		"ATTACH_UPLOADING": "Качване…",
+		"ATTACH_DOCUMENT": "Документ"
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",

@@ -51,26 +51,28 @@ export class FavoriteStoreService {
 			return [];
 		}
 
+		// Favorites belong to the signed-in user (that's who the favorite toggle saves them for), so key the
+		// sidebar off the user's own employee record. NOT `selectedEmployee`: the Edit Employee page sets it to
+		// the employee being viewed, which used to load *their* favorites and leave the section empty/hidden.
+		const employeeId = this._store.user?.employee?.id;
 		const isAdmin = this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW);
-		const employeeId = this._store.selectedEmployee?.id;
 
-		let favoriteStubsPromise: Promise<{ items: IFavorite[]; total: number }>;
+		let favoriteStubs: IFavorite[];
 
-		if (isAdmin && !employeeId) {
-			favoriteStubsPromise = this._favoriteService.findAll({
+		if (isAdmin) {
+			// Admins see their own favorites plus organization-level pins (saved without an employee)
+			const { items } = await this._favoriteService.findAll({
 				where: { organizationId, tenantId }
 			});
-		} else {
-			const targetEmployeeId = employeeId || this._store.user.employee?.id;
-			if (!targetEmployeeId) {
-				return [];
-			}
-			favoriteStubsPromise = this._favoriteService.findByEmployee({
-				where: { organizationId, tenantId, employeeId: targetEmployeeId }
+			favoriteStubs = items.filter((fav) => !fav.employeeId || fav.employeeId === employeeId);
+		} else if (employeeId) {
+			const { items } = await this._favoriteService.findByEmployee({
+				where: { organizationId, tenantId, employeeId }
 			});
+			favoriteStubs = items;
+		} else {
+			return [];
 		}
-
-		const { items: favoriteStubs } = await favoriteStubsPromise;
 
 		if (!favoriteStubs.length) {
 			return [];
@@ -84,15 +86,27 @@ export class FavoriteStoreService {
 		const favoritePromises = [];
 
 		for (const entityType of Object.keys(groupedFavorites)) {
+			// The details endpoint returns every favorited record of this type it can see (for an admin,
+			// other users' too), so keep only the ones in this user's favorites.
+			const favoriteEntityIds = new Set(
+				groupedFavorites[entityType as BaseEntityEnum].map((fav: IFavorite) => fav.entityId)
+			);
 			const promise = this._favoriteService
 				.getFavoriteDetails({
 					where: {
 						entity: entityType,
 						organizationId,
-						tenantId
+						tenantId,
+						...(!isAdmin && employeeId && { employeeId })
 					}
 				})
-				.then(({ items: details }: { items: IFavorite[]; total: number }) => {
+				.then(({ items }: { items: IFavorite[]; total: number }) =>
+					this._withPersonNames(
+						entityType as BaseEntityEnum,
+						Array.isArray(items) ? items.filter((item) => item && favoriteEntityIds.has(item.id)) : items
+					)
+				)
+				.then((details) => {
 					if (!details || !Array.isArray(details)) {
 						return [];
 					}
@@ -103,12 +117,7 @@ export class FavoriteStoreService {
 								return null;
 							}
 
-							const rawTitle =
-								(item as unknown as { name?: string; title?: string; profile_link?: string }).name ||
-								(item as unknown as { name?: string; title?: string; profile_link?: string }).title ||
-								(item as unknown as { name?: string; title?: string; profile_link?: string })
-									.profile_link ||
-								'Untitled';
+							const rawTitle = this._getFavoriteTitle(item) || 'Untitled';
 							const title = this._truncateTitle(rawTitle);
 							return {
 								id: `favorite-${entityType}-${item.id}`,
@@ -131,6 +140,76 @@ export class FavoriteStoreService {
 
 		const allFavoriteItems = await Promise.all(favoritePromises);
 		return allFavoriteItems.flat();
+	}
+
+	/**
+	 * Employees and candidates get their name from the linked user. Older APIs return them from the
+	 * favorite details endpoint without it (leaving only the "roster-r" style slug), so load any
+	 * missing user here.
+	 */
+	private async _withPersonNames(entityType: BaseEntityEnum, items: IFavorite[]): Promise<IFavorite[]> {
+		if (
+			!Array.isArray(items) ||
+			(entityType !== BaseEntityEnum.Employee && entityType !== BaseEntityEnum.Candidate)
+		) {
+			return items;
+		}
+
+		// Skip lookups the caller cannot resolve instead of sending one doomed request per item on every
+		// refresh: the candidate route needs ORG_CANDIDATES_VIEW, and without CHANGE_SELECTED_EMPLOYEE the
+		// employee route only ever answers with the caller's own record.
+		const ownEmployeeId = this._store.user?.employee?.id;
+		const canResolve = (id: string): boolean =>
+			entityType === BaseEntityEnum.Candidate
+				? this._store.hasPermission(PermissionsEnum.ORG_CANDIDATES_VIEW)
+				: this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) || id === ownEmployeeId;
+
+		return Promise.all(
+			items.map(async (item) => {
+				if (!item?.id || (item as { user?: unknown }).user || !canResolve(item.id)) {
+					return item;
+				}
+				try {
+					const person = await this._favoriteService.getPersonWithUser(
+						entityType as BaseEntityEnum.Employee | BaseEntityEnum.Candidate,
+						item.id
+					);
+					// Without CHANGE_SELECTED_EMPLOYEE the employee route ignores the requested id and returns the
+					// caller's own record; never label a colleague's link with the caller's name.
+					if (person?.id !== item.id) {
+						return item;
+					}
+					return { ...item, user: person.user } as IFavorite;
+				} catch {
+					return item;
+				}
+			})
+		);
+	}
+
+	/**
+	 * Resolves a display name for a favorite's entity. Employees and candidates have no name of their own,
+	 * it comes from the linked user and is shortened to "First L." (e.g. "Roster R.").
+	 */
+	private _getFavoriteTitle(item: unknown): string | undefined {
+		const entity = item as {
+			name?: string;
+			title?: string;
+			fullName?: string;
+			profile_link?: string;
+			user?: { firstName?: string; lastName?: string; email?: string };
+		};
+		if (entity.name || entity.title) {
+			return entity.name || entity.title;
+		}
+
+		const firstName = entity.user?.firstName?.trim();
+		const lastName = entity.user?.lastName?.trim();
+		if (firstName || lastName) {
+			return firstName && lastName ? `${firstName} ${lastName.charAt(0).toUpperCase()}.` : firstName || lastName;
+		}
+
+		return entity.fullName || entity.user?.email || entity.profile_link;
 	}
 
 	private _truncateTitle(title: string, maxLength = 24): string {

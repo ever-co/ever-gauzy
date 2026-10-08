@@ -737,6 +737,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getRawValue();
+					// Clicking a name opens the read-only profile, not the edit form.
+					instance.linkTo = 'view';
 				},
 				filter: {
 					type: 'custom',

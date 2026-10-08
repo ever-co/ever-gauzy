@@ -315,6 +315,22 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 [easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
 [easypanel-deploy]: https://easypanel.io/templates/ever-gauzy
 
+#### Deploy on ZopDay
+
+[ZopDay](https://zop.dev/zopday) runs a Docker image on its managed ZopCloud or in your own AWS or GCP account. Gauzy runs as two containers, so deploy them in this order:
+
+1.  **API** — [![Deploy the Gauzy API on ZopDay][zopday-btn]][zopday-api]
+
+    Before starting it, create a PostgreSQL database in ZopDay and point the service at it with `DB_TYPE=postgres` plus `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASS` — left unset, the image falls back to a SQLite file inside the container, which is lost whenever the container is replaced. Set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` as described under "Production" above — in production the API refuses to start while those are unset or left at their defaults. Set the `DEMO_*_PASSWORD` values too: they are checked when an empty database is first seeded, so a fresh instance will not get past that seed while they are left at the published defaults.
+
+2.  **Web app** — [![Deploy the Gauzy web app on ZopDay][zopday-btn]][zopday-webapp]
+
+    Set `API_BASE_URL` to the public URL the API service got, otherwise the browser is sent to `http://localhost:3000` instead of the API.
+
+[zopday-btn]: https://zop.dev/deploytozopday-inkhard.svg
+[zopday-api]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-api:latest&port=3000&name=gauzy-api
+[zopday-webapp]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-webapp:latest&port=4200&name=gauzy-webapp
+
 ## 💌 Contact Us
 
 -   [Ever.co Website Contact Us page](https://ever.co/contacts)

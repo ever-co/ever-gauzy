@@ -1161,7 +1161,52 @@
 		"ADD_ITEM": "Dodaj {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Tylko ty",
+			"TENANT": "Wszyscy w tym dzierżawcy"
+		},
+		"UNSAVED_CHANGES": "Niezapisane zmiany",
+		"ACCOUNT": {
+			"TITLE": "Konto",
+			"DESCRIPTION": "Konto, na które jesteś zalogowany.",
+			"MANAGE": "Zarządzaj profilem",
+			"ROLE": "Rola",
+			"MEMBER_SINCE": "Członek od"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferencje",
+			"DESCRIPTION": "Jak aplikacja wygląda i działa dla ciebie. Zmiany obowiązują natychmiast.",
+			"THEME": "Motyw",
+			"THEME_HINT": "Schemat kolorów całej aplikacji.",
+			"LANGUAGE": "Język",
+			"LANGUAGE_HINT": "Język menu, etykiet i komunikatów.",
+			"LAYOUT": "Domyślny układ",
+			"RESET_LAYOUTS": "Resetuj układy stron",
+			"SAVE_ERROR": "Nie udało się zapisać twojej preferencji.",
+			"LAYOUTS_RESET": "Układy stron przywrócono do domyślnego."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Kwadratowy obraz, co najmniej 128 × 128 px.",
+			"NAME_HINT": "Widoczne dla każdego użytkownika tego dzierżawcy.",
+			"TENANT_ID": "ID dzierżawcy",
+			"TENANT_ID_HINT": "Podaj je, kontaktując się z pomocą techniczną lub korzystając z API.",
+			"COPY_ERROR": "Nie udało się skopiować ID dzierżawcy.",
+			"TITLE": "Profil dzierżawcy",
+			"DESCRIPTION": "Nazwa i logo tego dzierżawcy, wyświetlane wszystkim użytkownikom w przełączniku obszarów roboczych i na pasku bocznym.",
+			"NAME": "Nazwa dzierżawcy",
+			"NAME_PLACEHOLDER": "Wprowadź nazwę dzierżawcy",
+			"NAME_REQUIRED": "Nazwa dzierżawcy jest wymagana.",
+			"LOGO": "Logo dzierżawcy",
+			"LOGO_CHANGE": "Kliknij, aby przesłać nowe logo",
+			"LOGO_REMOVE": "Usuń logo",
+			"LOGO_UPLOAD_ERROR": "Nie udało się przesłać logo.",
+			"CREATED_AT": "Utworzono",
+			"SAVED": "Profil dzierżawcy zapisany",
+			"SAVE_ERROR": "Nie udało się zapisać profilu dzierżawcy.",
+			"LOAD_ERROR": "Nie udało się wczytać profilu dzierżawcy."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interfejs",
 			"TITLE": "Interfejs użytkownika",
 			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
 			"OPTIONS": {
@@ -1957,7 +2002,90 @@
 			"PREVIOUS": "Poprzedni"
 		},
 		"NOT_STARTED": "Nie rozpoczęto",
-		"NOT_STARTED_HELP": "Rozpoczęcie pracy w dniu nie zostało ustawione dla tego pracownika. Pracownik nie będzie brany pod uwagę w rozliczeniach, podziale kosztów itp"
+		"NOT_STARTED_HELP": "Rozpoczęcie pracy w dniu nie zostało ustawione dla tego pracownika. Pracownik nie będzie brany pod uwagę w rozliczeniach, podziale kosztów itp",
+		"VIEW": {
+			"PERIOD": "Okres",
+			"PERIODS": {
+				"THIS_WEEK": "Ten tydzień",
+				"THIS_MONTH": "Ten miesiąc",
+				"LAST_30_DAYS": "Ostatnie 30 dni"
+			},
+			"TABS": {
+				"OVERVIEW": "Przegląd",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Rejestruje czas",
+				"ONLINE": "Online",
+				"AWAY": "Zaraz wracam",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Czas lokalny",
+			"MEMBER_SINCE": "Członek od",
+			"WEEKLY_LIMIT": "Limit tygodniowy",
+			"WORKED_TODAY": "Przepracowano dziś",
+			"WORKED_PERIOD": "Przepracowano w okresie",
+			"ACTIVITY_META": "{{ value }} aktywności",
+			"AVG_ACTIVITY": "Średnia aktywność",
+			"OPEN_TASKS": "Otwarte zadania",
+			"OPEN_TASKS_META": "{{ progress }} w toku · {{ overdue }} po terminie",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs poprzedni tydzień",
+				"THIS_MONTH": "vs poprzedni miesiąc",
+				"LAST_30_DAYS": "vs poprzednie 30 dni"
+			},
+			"HOURS_WORKED": "Przepracowane godziny",
+			"HOURS_META": "{{ total }} łącznie · {{ average }} na dzień pracy",
+			"TRACKED": "Śledzone",
+			"MANUAL": "Ręczne",
+			"OPEN_TIMESHEET": "Otwórz kartę czasu pracy",
+			"PROJECTS": "Projekty",
+			"RECENT_SCREENSHOTS": "Ostatnie zrzuty ekranu",
+			"VIEW_ALL": "Zobacz wszystko",
+			"ASSIGNED_TASKS": "Przypisane zadania",
+			"COLUMNS": {
+				"TASK": "Zadanie",
+				"PROJECT": "Projekt",
+				"STATUS": "Status",
+				"DUE": "Termin",
+				"TIME": "Czas",
+				"NAME": "Nazwa",
+				"PRIORITY": "Priorytet"
+			},
+			"TOP_TASKS": "Najczęściej realizowane zadania",
+			"APPS_URLS": "Aplikacje i adresy URL",
+			"NO_TIME": "Brak zarejestrowanego czasu w tym okresie",
+			"NO_TASKS": "Brak przypisanych zadań",
+			"NO_APPS": "Brak aktywności aplikacji lub URL w tym okresie",
+			"NO_SCREENSHOTS": "Brak zrzutów ekranu w tym okresie",
+			"UNAVAILABLE": "Nie masz dostępu do tych danych",
+			"PROFILE": {
+				"ABOUT": "O mnie",
+				"CONTACT": "Kontakt",
+				"SKILLS_TAGS": "Umiejętności i tagi",
+				"TIME_ZONE": "Strefa czasowa",
+				"NOT_PROVIDED": "Jeszcze nie podano",
+				"NO_DESCRIPTION": "Nie dodano jeszcze opisu"
+			},
+			"TASKS_HELP": "Zadania, w których ta osoba uczestniczy. Wybierz pole, aby przefiltrować listę.",
+			"TASK_FILTERS": {
+				"OPEN": "Otwarte",
+				"PROGRESS": "W toku",
+				"OVERDUE": "Po terminie",
+				"DONE": "Ukończone"
+			},
+			"DUE": {
+				"NONE": "Brak terminu",
+				"WAS_DUE": "Termin był",
+				"OVERDUE_DAY": "1 dzień po terminie",
+				"OVERDUE_DAYS": "{{ count }} dni po terminie",
+				"TODAY": "Termin dziś",
+				"TOMORROW": "Termin jutro",
+				"IN_DAYS": "Za {{ count }} dni"
+			},
+			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
+			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Wszystkie cele",
@@ -2766,7 +2894,19 @@
 		"EMPLOYEE_UPDATED": "Pracownik został zaktualizowany",
 		"IMAGE_UPDATED": "Obraz został zaktualizowany",
 		"FAIL_TO_UPDATE_IMAGE": "Aktualizacja nie powiodła się",
-		"ANONYMOUS": "Anonimowy"
+		"ANONYMOUS": "Anonimowy",
+		"ABOUT": "O mnie",
+		"INACTIVE": "Nieaktywny",
+		"PER_HOUR": "/ godz.",
+		"MEMBER_SINCE": "Członek od",
+		"NO_DESCRIPTION": "Nie dodano jeszcze opisu",
+		"NO_SKILLS": "Brak umiejętności",
+		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
+		"EDIT": {
+			"NO_AWARDS": "Nie dodano jeszcze nagród",
+			"ADD_AWARD": "Dodaj nagrodę",
+			"PRIVACY_HELP": "Wybierz, które dane odwiedzający widzą w profilu publicznym."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Strona zarządzania propozycjami",
@@ -3721,9 +3861,28 @@
 		"DICTATION_KEY_REJECTED": "Dostawca głosu odrzucił swój klucz API. Zaktualizuj go na stronie ustawień „Dostawcy AI”.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Dostawca głosu odrzucił swój klucz API — poproś administratora o jego aktualizację w Ustawienia → Dostawcy AI.",
 		"DICTATION_OPEN_SETTINGS": "Otwórz Dostawców AI",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Darmowy pakiet AI osiągnął teraz limit zapytań. Połącz własne konto OpenRouter lub skonfiguruj innego dostawcę AI, aby korzystać bez przerw.",
+		"RATE_LIMITED_OWN": "Twój dostawca AI ogranicza teraz liczbę zapytań. Sprawdź swój plan i limity u dostawcy albo skonfiguruj innego dostawcę AI.",
+		"RATE_LIMIT_RETRY_IN": "Możesz spróbować ponownie za około {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Otwórz Dostawców AI",
+		"ERROR_NOT_CONFIGURED": "Czat AI wymaga skonfigurowanego dostawcy. Dodaj go na stronie ustawień „Dostawcy AI”.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "Czat AI wymaga skonfigurowanego dostawcy — poproś administratora o dodanie go w Ustawienia → Dostawcy AI.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Wybrany dostawca AI nie może teraz odpowiedzieć. Sprawdź go na stronie ustawień „Dostawcy AI”.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Wybrany dostawca AI nie może teraz odpowiedzieć — poproś administratora o sprawdzenie Ustawienia → Dostawcy AI.",
+		"ERROR_MODEL_UNAVAILABLE": "Ten model nie jest dostępny z bieżącym kluczem API. Wybierz inny na stronie ustawień „Dostawcy AI”.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Ten model nie jest dostępny z bieżącym kluczem API — poproś administratora o sprawdzenie Ustawienia → Dostawcy AI.",
+		"ERROR_KEY_REJECTED": "Dostawca AI odrzucił swój klucz API. Zaktualizuj go na stronie ustawień „Dostawcy AI”.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Dostawca AI odrzucił swój klucz API — poproś administratora o jego aktualizację w Ustawienia → Dostawcy AI.",
+		"ERROR_RATE_LIMITED": "Dostawca AI ogranicza liczbę zapytań.",
+		"RECORDING": "Nagrywanie",
+		"PREVIEW": "Podgląd",
+		"PREVIEW_PAGE": "Strona",
+		"PREVIEW_NEW_TAB": "Otwórz w nowej karcie",
+		"PREVIEW_CLOSE": "Zamknij podgląd",
+		"PREVIEW_UNAVAILABLE": "Podgląd tego pliku jest niedostępny.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Otwórz w Dokumentach",
+		"ATTACH_UPLOADING": "Przesyłanie…",
+		"ATTACH_DOCUMENT": "Dokument"
 	},
 	"HEADER_TITLE": {
 		"FOR": "dla",

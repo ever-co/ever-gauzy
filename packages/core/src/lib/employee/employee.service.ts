@@ -20,6 +20,7 @@ import { sanitizeRichHtml } from './../core/html-sanitizer';
 import {
 	flatten,
 	getDateRangeFormat,
+	mikroOrmContains,
 	MultiORMEnum,
 	parseFindOptionsRelations,
 	parseSortOrder,
@@ -583,14 +584,16 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							if (isNotEmpty(mWhere.user.name)) {
 								const keywords: string[] = splitKeywords(mWhere.user.name);
 								keywords.forEach((keyword: string) => {
-									userOr.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
-									userOr.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
+									userOr.push(
+										{ user: { firstName: mikroOrmContains(keyword) } },
+										{ user: { lastName: mikroOrmContains(keyword) } }
+									);
 								});
 							}
 							if (isNotEmpty(mWhere.user.email)) {
 								const keywords: string[] = splitKeywords(mWhere.user.email);
 								keywords.forEach((keyword: string) => {
-									userOr.push({ user: { email: { $ilike: `%${keyword}%` } } });
+									userOr.push({ user: { email: mikroOrmContains(keyword) } });
 								});
 							}
 							if (userOr.length > 0) {

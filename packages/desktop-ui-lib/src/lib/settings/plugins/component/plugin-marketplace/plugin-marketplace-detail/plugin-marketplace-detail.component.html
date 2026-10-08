@@ -38,6 +38,8 @@
 					<nb-badge
 						class="security-badge verified"
 						status="success"
+						role="img"
+						[attr.aria-label]="'PLUGIN.SECURITY.VERIFIED' | translate"
 						[nbTooltip]="'PLUGIN.SECURITY.VERIFIED' | translate"
 					>
 						<nb-icon icon="shield-checkmark-outline"></nb-icon>
@@ -46,6 +48,8 @@
 					<nb-badge
 						class="security-badge signed"
 						status="info"
+						role="img"
+						[attr.aria-label]="'PLUGIN.SECURITY.SIGNED' | translate"
 						[nbTooltip]="'PLUGIN.SECURITY.SIGNED' | translate"
 					>
 						<nb-icon icon="checkmark-circle-outline"></nb-icon>
