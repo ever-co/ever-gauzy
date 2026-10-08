@@ -38,7 +38,7 @@ import { isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
-import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -455,6 +455,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	}
 
 	/**
+	 * Case-insensitive "contains" filters on task title / prefix for the MikroORM task list queries
+	 * (`$ilike` is PostgreSQL-only, see `mikroOrmContains`).
+	 */
+	private mikroOrmTitlePrefixFilters(title?: string, prefix?: string): Record<string, unknown> {
+		return {
+			...(isNotEmpty(title) ? { title: mikroOrmContains(title) } : {}),
+			...(isNotEmpty(prefix) ? { prefix: mikroOrmContains(prefix) } : {})
+		};
+	}
+
+	/**
 	 * Find employee tasks
 	 *
 	 * @param options - Pagination options including limit, page, and sorting.
@@ -485,8 +496,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -763,8 +773,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
 					}
@@ -1202,8 +1211,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(projectId) && isEmpty(modules)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
 					if (isNotEmpty(isDraft)) mikroWhere.isDraft = isDraft;
-					if (isNotEmpty(title)) mikroWhere.title = { $ilike: `%${title}%` };
-					if (isNotEmpty(prefix)) mikroWhere.prefix = { $ilike: `%${prefix}%` };
+					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = organizationSprintId;
 					}

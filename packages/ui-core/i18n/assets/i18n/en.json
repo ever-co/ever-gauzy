@@ -1268,6 +1268,7 @@
 		"BILLING_RESUMED": "Your subscription will continue.",
 		"BILLING_NO_SUBSCRIPTION": "This account has no subscription yet.",
 		"BILLING_VERIFY_EMAIL_TO_LINK": "Already paid? A subscription is connected to this workspace once you verify your email address. We sent the link to {{ email }}.",
+		"BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT": "Already paid? A subscription is connected to this workspace once you verify your email address ({{ email }}). Send yourself a verification link to do that.",
 		"BILLING_AVAILABLE_PLANS": "Available plans",
 		"BILLING_CURRENT": "Current",
 		"BILLING_SWITCH": "Switch to this plan",
@@ -2490,7 +2491,90 @@
 			"CREATE_EMPLOYEES": "Create employees ({{ count }})"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "Period",
+			"PERIODS": {
+				"THIS_WEEK": "This week",
+				"THIS_MONTH": "This month",
+				"LAST_30_DAYS": "Last 30 days"
+			},
+			"TABS": {
+				"OVERVIEW": "Overview",
+				"PROFILE": "Profile"
+			},
+			"PRESENCE": {
+				"TRACKING": "Tracking time",
+				"ONLINE": "Online",
+				"AWAY": "Away",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Local time",
+			"MEMBER_SINCE": "Member since",
+			"WEEKLY_LIMIT": "Weekly limit",
+			"WORKED_TODAY": "Worked today",
+			"WORKED_PERIOD": "Worked in period",
+			"ACTIVITY_META": "{{ value }} activity",
+			"AVG_ACTIVITY": "Average activity",
+			"OPEN_TASKS": "Open tasks",
+			"OPEN_TASKS_META": "{{ progress }} in progress · {{ overdue }} overdue",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs last week",
+				"THIS_MONTH": "vs last month",
+				"LAST_30_DAYS": "vs previous 30 days"
+			},
+			"HOURS_WORKED": "Hours worked",
+			"HOURS_META": "{{ total }} total · {{ average }} per working day",
+			"TRACKED": "Tracked",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Open timesheet",
+			"PROJECTS": "Projects",
+			"RECENT_SCREENSHOTS": "Recent screenshots",
+			"VIEW_ALL": "View all",
+			"ASSIGNED_TASKS": "Assigned tasks",
+			"COLUMNS": {
+				"TASK": "Task",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Due",
+				"TIME": "Time",
+				"NAME": "Name",
+				"PRIORITY": "Priority"
+			},
+			"TOP_TASKS": "Most worked tasks",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "No time tracked in this period",
+			"NO_TASKS": "No tasks assigned",
+			"NO_APPS": "No app or URL activity in this period",
+			"NO_SCREENSHOTS": "No screenshots in this period",
+			"UNAVAILABLE": "You don't have access to this data",
+			"PROFILE": {
+				"ABOUT": "About",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Skills & tags",
+				"TIME_ZONE": "Time zone",
+				"NOT_PROVIDED": "Not provided yet",
+				"NO_DESCRIPTION": "No description has been added yet"
+			},
+			"TASKS_HELP": "Tasks this person is a member of. Pick a box to filter the list.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "In progress",
+				"OVERDUE": "Overdue",
+				"DONE": "Done"
+			},
+			"DUE": {
+				"NONE": "No due date",
+				"WAS_DUE": "Was due",
+				"OVERDUE_DAY": "1 day overdue",
+				"OVERDUE_DAYS": "{{ count }} days overdue",
+				"TODAY": "Due today",
+				"TOMORROW": "Due tomorrow",
+				"IN_DAYS": "In {{ count }} days"
+			},
+			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
+			"NO_TASKS_IN_VIEW": "No tasks in this view"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -3336,7 +3420,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "About",
+		"INACTIVE": "Inactive",
+		"PER_HOUR": "/ hour",
+		"MEMBER_SINCE": "Member since",
+		"NO_DESCRIPTION": "No description has been added yet",
+		"NO_SKILLS": "No skills listed yet",
+		"VIEW_COMPANY_PROFILE": "View company profile",
+		"EDIT": {
+			"NO_AWARDS": "No awards added yet",
+			"ADD_AWARD": "Add award",
+			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -4329,7 +4425,26 @@
 		"RETRY": "Retry",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s.",
+		"OPEN_AI_SETTINGS": "Open AI Providers",
+		"ERROR_NOT_CONFIGURED": "AI chat needs a configured provider. Add one on the AI Providers settings page.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "AI chat needs a configured provider — ask an administrator to add one in Settings → AI Providers.",
+		"ERROR_PROVIDER_UNAVAILABLE": "The selected AI provider cannot answer right now. Check it on the AI Providers settings page.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "The selected AI provider cannot answer right now — ask an administrator to check Settings → AI Providers.",
+		"ERROR_MODEL_UNAVAILABLE": "This model is not available with the current API key. Choose another one on the AI Providers settings page.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "This model is not available with the current API key — ask an administrator to check Settings → AI Providers.",
+		"ERROR_KEY_REJECTED": "The AI provider rejected its API key. Update it on the AI Providers settings page.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "The AI provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
+		"ERROR_RATE_LIMITED": "The AI provider is rate limiting requests.",
+		"RECORDING": "Recording",
+		"PREVIEW": "Preview",
+		"PREVIEW_PAGE": "Page",
+		"PREVIEW_NEW_TAB": "Open in a new tab",
+		"PREVIEW_CLOSE": "Close preview",
+		"PREVIEW_UNAVAILABLE": "No preview is available for this file.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Open in Documents",
+		"ATTACH_UPLOADING": "Uploading…",
+		"ATTACH_DOCUMENT": "Document"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -5895,7 +6010,52 @@
 		}
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Only you",
+			"TENANT": "Everyone in this tenant"
+		},
+		"UNSAVED_CHANGES": "Unsaved changes",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "The account you are signed in with.",
+			"MANAGE": "Manage profile",
+			"ROLE": "Role",
+			"MEMBER_SINCE": "Member since"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferences",
+			"DESCRIPTION": "How the app looks and behaves for you. Changes apply immediately.",
+			"THEME": "Theme",
+			"THEME_HINT": "Colour scheme of the whole app.",
+			"LANGUAGE": "Language",
+			"LANGUAGE_HINT": "Language of menus, labels and messages.",
+			"LAYOUT": "Default layout",
+			"RESET_LAYOUTS": "Reset page layouts",
+			"SAVE_ERROR": "Your preference could not be saved.",
+			"LAYOUTS_RESET": "Page layouts reset to your default."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Square image, at least 128 × 128 px.",
+			"NAME_HINT": "Shown to every user of this tenant.",
+			"TENANT_ID": "Tenant ID",
+			"TENANT_ID_HINT": "Quote it when contacting support or calling the API.",
+			"COPY_ERROR": "The tenant ID could not be copied.",
+			"TITLE": "Tenant profile",
+			"DESCRIPTION": "The name and logo of this tenant, shown in the workspace switcher and the sidebar for every user.",
+			"NAME": "Tenant name",
+			"NAME_PLACEHOLDER": "Enter the tenant name",
+			"NAME_REQUIRED": "The tenant name is required.",
+			"LOGO": "Tenant logo",
+			"LOGO_CHANGE": "Click to upload a new logo",
+			"LOGO_REMOVE": "Remove logo",
+			"LOGO_UPLOAD_ERROR": "The logo could not be uploaded.",
+			"CREATED_AT": "Created on",
+			"SAVED": "Tenant profile saved",
+			"SAVE_ERROR": "The tenant profile could not be saved.",
+			"LOAD_ERROR": "The tenant profile could not be loaded."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "User interface",
 			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
 			"OPTIONS": {
@@ -7082,9 +7242,11 @@
 	},
 	"EMAIL_VERIFICATION": {
 		"NOTICE": "Please verify your email address. We sent a verification link to {{ email }}.",
+		"NOTICE_NOT_SENT": "Your email address {{ email }} is not verified yet. Send yourself a verification link to confirm it.",
+		"SEND": "Send verification email",
 		"RESEND": "Resend email",
 		"SENDING": "Sending…",
-		"SENT": "A new verification link is on its way to {{ email }}.",
+		"SENT": "A verification link is on its way to {{ email }}.",
 		"RESEND_FAILED": "We could not send the email right now. Please try again in a few minutes.",
 		"TOO_MANY_REQUESTS": "Too many requests. Please wait a minute and try again.",
 		"DISMISS": "Dismiss",

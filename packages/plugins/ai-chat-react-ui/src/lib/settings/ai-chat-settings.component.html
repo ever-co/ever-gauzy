@@ -16,7 +16,7 @@
 			>
 				<g [attr.transform]="logo.transform">
 					@for (path of logo.paths; track $index) {
-						<path [attr.d]="path"></path>
+						<path [attr.d]="path" [attr.fill-rule]="logo.fillRule"></path>
 					}
 				</g>
 			</svg>
@@ -26,25 +26,54 @@
 	}
 </ng-template>
 
-<nb-card class="ai-chat-settings" [nbSpinner]="loading() || connecting()" nbSpinnerStatus="primary">
+<!--
+	Under a provider's Credential badge, in both the chat and the voice lists: the masked key the
+	API returns and when the credential last changed. One template, so the two lists cannot drift.
+-->
+<ng-template #credentialDetails let-provider>
+	@if (getCredential(provider.id); as credential) {
+		@if (credential.apiKey || credential.updatedAt) {
+			<span class="cell-sub">
+				@if (credential.apiKey) {
+					<span class="masked-key">{{ credential.apiKey }}</span>
+				}
+				@if (credential.updatedAt) {
+					<span>{{
+						'AI_CHAT_UI.SETTINGS.LIST.UPDATED' | translate: { date: (credential.updatedAt | date: 'mediumDate') }
+					}}</span>
+				}
+			</span>
+		}
+	}
+</ng-template>
+
+<nb-card class="ai-chat-settings page-card" [nbSpinner]="loading() || connecting()" nbSpinnerStatus="primary">
 	<!-- ══════════════ LIST VIEW (default) ══════════════ -->
 	@if (view() === 'list') {
-		<nb-card-header>
+		<nb-card-header class="page-card__header">
 			<div class="page-header">
-				<div>
-					<h5>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</h5>
-					<p class="description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
+				<div class="page-header__main">
+					<h4 class="page-header__title">
+						<ngx-header-title>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</ngx-header-title>
+					</h4>
 				</div>
 				<!-- Header actions only once something is configured: with an empty list
 				     the centred call-to-action below is the single obvious next step,
-				     and showing both put two identical green buttons on one screen. -->
+				     and showing both put two identical buttons on one screen. -->
 				@if (configuredProviders().length || voiceProviders().length) {
-					<div class="header-actions">
-						<button nbButton status="success" (click)="showCatalog()">
+					<div class="page-header__actions">
+						<button nbButton outline status="basic" size="small" class="header-action" (click)="showCatalog()">
 							<nb-icon icon="plus-outline"></nb-icon>
 							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_PROVIDER' | translate }}
 						</button>
-						<button nbButton outline status="success" (click)="showVoiceCatalog()">
+						<button
+							nbButton
+							outline
+							status="basic"
+							size="small"
+							class="header-action"
+							(click)="showVoiceCatalog()"
+						>
 							<nb-icon icon="mic-outline"></nb-icon>
 							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.ADD_VOICE_PROVIDER' | translate }}
 						</button>
@@ -52,7 +81,8 @@
 				}
 			</div>
 		</nb-card-header>
-		<nb-card-body>
+		<nb-card-body class="page-card__body">
+			<p class="page-description">{{ 'AI_CHAT_UI.SETTINGS.DESCRIPTION' | translate }}</p>
 			<!-- Where is the chat? Answer it here — configuring a provider is the
 			     only place the user learns whether the chat turned on, and why not. -->
 			@if (chatNoticeMeta(); as notice) {
@@ -63,7 +93,7 @@
 						<span class="notice-hint">{{ notice.hint | translate }}</span>
 					</div>
 					@if (chatNotice() === 'ready') {
-						<button nbButton size="small" status="success" class="notice-action" (click)="openChat()">
+						<button nbButton outline size="small" status="basic" class="notice-action header-action" (click)="openChat()">
 							<nb-icon icon="message-circle-outline"></nb-icon>
 							{{ 'AI_CHAT_UI.SETTINGS.STATUS.OPEN_CHAT' | translate }}
 						</button>
@@ -72,7 +102,7 @@
 			}
 
 			@if (!loading() && !configuredProviders().length && !voiceProviders().length) {
-				<div class="empty-state">
+				<div class="panel empty-state">
 					<span class="empty-illustration" aria-hidden="true">
 						<nb-icon icon="cube-outline"></nb-icon>
 					</span>
@@ -95,6 +125,12 @@
 			}
 
 			@if (configuredProviders().length) {
+				<section class="panel" aria-labelledby="ai-chat-providers-title">
+					<header class="panel__header">
+						<h5 class="panel__title" id="ai-chat-providers-title">
+							{{ 'AI_CHAT_UI.SETTINGS.LIST.TITLE' | translate }}
+						</h5>
+					</header>
 				<div class="provider-rows">
 					<div class="row-head">
 						<span>{{ 'AI_CHAT_UI.SETTINGS.LIST.NAME' | translate }}</span>
@@ -110,20 +146,31 @@
 									[ngTemplateOutletContext]="{ $implicit: provider }"
 								></ng-container>
 								<span class="label">
-									{{ provider.label }}
-									@if (defaultProviderId() === provider.id) {
-										<span class="default-chip">{{
-											'AI_CHAT_UI.SETTINGS.LIST.DEFAULT' | translate
-										}}</span>
-									}
+									<span class="label__line">
+										{{ provider.label }}
+										@if (defaultProviderId() === provider.id) {
+											<span class="default-chip">{{
+												'AI_CHAT_UI.SETTINGS.LIST.DEFAULT' | translate
+											}}</span>
+										}
+									</span>
+									<!-- The model the chat uses, without opening Configure. -->
+									<span class="cell-sub model-id" [class.is-placeholder]="!getCredential(provider.id)?.defaultModel">{{
+										getCredential(provider.id)?.defaultModel ||
+											('AI_CHAT_UI.SETTINGS.FORM.DEFAULT_MODEL_NONE' | translate)
+									}}</span>
 								</span>
 							</span>
-							<span class="cell">
+							<span class="cell credential">
 								<nb-badge
 									class="static-badge"
 									[text]="getBadgeKey(provider) | translate"
 									[status]="getBadgeStatus(provider)"
 								></nb-badge>
+								<ng-container
+									[ngTemplateOutlet]="credentialDetails"
+									[ngTemplateOutletContext]="{ $implicit: provider }"
+								></ng-container>
 							</span>
 							<span class="cell">
 								@if (getCredential(provider.id)?.id) {
@@ -167,6 +214,7 @@
 						</div>
 					}
 				</div>
+				</section>
 			}
 
 			<!-- ── Voice (dictation) ──
@@ -174,16 +222,14 @@
 			     default. Shown whenever the page has SOMETHING configured: a tenant with a chat
 			     provider but no voice provider needs to learn here why dictation is off. -->
 			@if (!loading() && (configuredProviders().length || voiceProviders().length)) {
-				<section class="voice-section" aria-labelledby="ai-chat-voice-title">
-					<div class="section-head">
-						<div>
-							<h6 id="ai-chat-voice-title">
-								<nb-icon icon="mic-outline"></nb-icon>
-								{{ 'AI_CHAT_UI.SETTINGS.VOICE.TITLE' | translate }}
-							</h6>
-							<p class="description">{{ 'AI_CHAT_UI.SETTINGS.VOICE.DESCRIPTION' | translate }}</p>
-						</div>
-					</div>
+				<section class="panel voice-section" aria-labelledby="ai-chat-voice-title">
+					<header class="panel__header">
+						<h5 class="panel__title" id="ai-chat-voice-title">
+							<nb-icon icon="mic-outline"></nb-icon>
+							{{ 'AI_CHAT_UI.SETTINGS.VOICE.TITLE' | translate }}
+						</h5>
+						<p class="panel__description">{{ 'AI_CHAT_UI.SETTINGS.VOICE.DESCRIPTION' | translate }}</p>
+					</header>
 
 					@if (voiceProviders().length) {
 						<div class="provider-rows">
@@ -218,12 +264,16 @@
 											}
 										</span>
 									</span>
-									<span class="cell">
+									<span class="cell credential">
 										<nb-badge
 											class="static-badge"
 											[text]="getVoiceBadgeKey(provider) | translate"
 											[status]="getVoiceBadgeStatus(provider)"
 										></nb-badge>
+										<ng-container
+											[ngTemplateOutlet]="credentialDetails"
+											[ngTemplateOutletContext]="{ $implicit: provider }"
+										></ng-container>
 									</span>
 									<span class="cell speech-model">
 										{{ getCredential(provider.id)?.speechModel || provider.defaultSpeechModel || '—' }}
@@ -245,7 +295,7 @@
 						</div>
 					} @else {
 						<div class="voice-empty">
-							<nb-icon icon="mic-off-outline" status="warning"></nb-icon>
+							<nb-icon icon="mic-outline" status="warning"></nb-icon>
 							<div class="notice-text">
 								<span class="notice-title">{{ 'AI_CHAT_UI.SETTINGS.VOICE.EMPTY' | translate }}</span>
 								<span class="notice-hint">{{ 'AI_CHAT_UI.SETTINGS.VOICE.EMPTY_HINT' | translate }}</span>
@@ -263,26 +313,37 @@
 
 	<!-- ══════════════ CATALOG VIEW (?add=1) ══════════════ -->
 	@if (view() === 'catalog') {
-		<nb-card-header>
+		<nb-card-header class="page-card__header">
 			<div class="page-header">
-				<div>
-					<button nbButton ghost size="small" class="back" (click)="showList()">
+				<div class="page-header__main">
+					<h4 class="page-header__title">
+						<ngx-header-title>{{
+							(catalogFilter() === 'voice'
+								? 'AI_CHAT_UI.SETTINGS.CATALOG.VOICE_TITLE'
+								: 'AI_CHAT_UI.SETTINGS.CATALOG.TITLE'
+							) | translate
+						}}</ngx-header-title>
+					</h4>
+				</div>
+				<div class="page-header__actions">
+					<button nbButton outline status="basic" size="small" class="header-action" (click)="showList()">
 						<nb-icon icon="arrow-back-outline"></nb-icon>
 						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
 					</button>
-					@if (catalogFilter() === 'voice') {
-						<h5>{{ 'AI_CHAT_UI.SETTINGS.CATALOG.VOICE_TITLE' | translate }}</h5>
-						<p class="description">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.VOICE_DESCRIPTION' | translate }}</p>
-					} @else {
-						<h5>{{ 'AI_CHAT_UI.SETTINGS.CATALOG.TITLE' | translate }}</h5>
-						<p class="description">{{ 'AI_CHAT_UI.SETTINGS.CATALOG.DESCRIPTION' | translate }}</p>
-					}
 				</div>
 			</div>
 		</nb-card-header>
-		<nb-card-body>
+		<nb-card-body class="page-card__body">
+			<p class="page-description">
+				{{
+					(catalogFilter() === 'voice'
+						? 'AI_CHAT_UI.SETTINGS.CATALOG.VOICE_DESCRIPTION'
+						: 'AI_CHAT_UI.SETTINGS.CATALOG.DESCRIPTION'
+					) | translate
+				}}
+			</p>
 			@if (!loading() && !catalogProviders().length) {
-				<p class="empty-state">
+				<p class="panel empty-state">
 					{{
 						(catalogFilter() === 'voice'
 							? 'AI_CHAT_UI.SETTINGS.CATALOG.NO_VOICE_PROVIDERS'
@@ -291,8 +352,25 @@
 					}}
 				</p>
 			}
+			<!-- Narrow the full catalog to one kind of provider. The voice catalog is already narrowed. -->
+			@if (catalogFilter() === 'all' && catalogProviders().length) {
+				<div class="capability-filters" role="group" [attr.aria-label]="'AI_CHAT_UI.SETTINGS.CATALOG.TITLE' | translate">
+					@for (option of capabilityFilters; track option.id) {
+						<button
+							type="button"
+							class="capability-filter"
+							[class.is-active]="capabilityFilter() === option.id"
+							[attr.aria-pressed]="capabilityFilter() === option.id"
+							(click)="setCapabilityFilter(option.id)"
+						>
+							{{ option.labelKey | translate }}
+							<span class="count">{{ capabilityCounts()[option.id] }}</span>
+						</button>
+					}
+				</div>
+			}
 			<div class="catalog-grid">
-				@for (provider of catalogProviders(); track provider.id) {
+				@for (provider of visibleCatalogProviders(); track provider.id) {
 					<button type="button" class="catalog-card" (click)="showConfigure(provider.id)">
 						<ng-container
 							[ngTemplateOutlet]="providerTile"
@@ -333,19 +411,37 @@
 
 	<!-- ══════════════ CONFIG VIEW (?provider=<id>) ══════════════ -->
 	@if (view() === 'config' && selectedProvider(); as provider) {
-		<nb-card-header>
+		<nb-card-header class="page-card__header">
 			<div class="page-header">
-				<div>
-					<button nbButton ghost size="small" class="back" (click)="backFromConfigure(provider)">
+				<div class="page-header__main">
+					<h4 class="page-header__title">
+						<ngx-header-title>{{ 'AI_CHAT_UI.SETTINGS.TITLE' | translate }}</ngx-header-title>
+					</h4>
+				</div>
+				<div class="page-header__actions">
+					<button
+						nbButton
+						outline
+						status="basic"
+						size="small"
+						class="header-action"
+						(click)="leaveConfigure(provider, 'back')"
+					>
 						<nb-icon icon="arrow-back-outline"></nb-icon>
 						{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.BACK' | translate }}
 					</button>
+				</div>
+			</div>
+		</nb-card-header>
+		<nb-card-body class="page-card__body page-card__body--config">
+			<section class="panel config-panel">
+				<header class="panel__header config-header">
 					<div class="config-title">
 						<ng-container
 							[ngTemplateOutlet]="providerTile"
 							[ngTemplateOutletContext]="{ $implicit: provider }"
 						></ng-container>
-						<h5>{{ provider.label }}</h5>
+						<h5 class="config-name">{{ provider.label }}</h5>
 						<nb-badge
 							class="static-badge"
 							[text]="(isVoiceOnly(provider) ? getVoiceBadgeKey(provider) : getBadgeKey(provider)) | translate"
@@ -371,10 +467,8 @@
 						     configured is working. Say it plainly, and point at the way out. -->
 						<p class="platform-notice">{{ 'AI_CHAT_UI.SETTINGS.PLATFORM_NOTICE' | translate }}</p>
 					}
-				</div>
-			</div>
-		</nb-card-header>
-		<nb-card-body>
+				</header>
+				<div class="panel__body">
 			<!-- Connect flow (providers that support it) -->
 			@if (provider.connectType) {
 				<div class="connect-box">
@@ -448,6 +542,12 @@
 						}
 						@if (form.controls.apiKey.touched && form.controls.apiKey.hasError('required')) {
 							<span class="error">{{ 'AI_CHAT_UI.SETTINGS.FORM.API_KEY_REQUIRED' | translate }}</span>
+						}
+						@if (provider.requiresApiKey !== false) {
+							<span class="security-note">
+								<nb-icon icon="lock-outline" aria-hidden="true"></nb-icon>
+								{{ 'AI_CHAT_UI.SETTINGS.FORM.KEY_SECURITY' | translate }}
+							</span>
 						}
 					</div>
 
@@ -633,6 +733,9 @@
 						>
 							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.SAVE' | translate }}
 						</button>
+						<button nbButton outline status="basic" type="button" class="form-cancel" (click)="cancelConfigure(provider)">
+							{{ 'AI_CHAT_UI.SETTINGS.ACTIONS.CANCEL' | translate }}
+						</button>
 						@if (getCredential(provider.id)) {
 							<button
 								nbButton
@@ -651,6 +754,8 @@
 					</div>
 				</form>
 			}
+				</div>
+			</section>
 		</nb-card-body>
 	}
 </nb-card>

@@ -5,7 +5,7 @@ import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauz
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
@@ -52,6 +52,18 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
+	 * Case-insensitive "contains" filters on name / color / description for the MikroORM tag queries
+	 * (`$ilike` is PostgreSQL-only, see `mikroOrmContains`).
+	 */
+	private mikroOrmTextFilters(fields: Record<string, string | undefined>): Record<string, unknown> {
+		const filters: Record<string, unknown> = {};
+		for (const [field, value] of Object.entries(fields)) {
+			if (isNotEmpty(value)) filters[field] = mikroOrmContains(value);
+		}
+		return filters;
+	}
+
+	/**
 	 * GET tags by tenant or organization level
 	 *
 	 * @param input - Filter criteria for finding tags.
@@ -77,9 +89,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					isSystem: false
 				};
 				if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-				if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
-				if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
-				if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+				Object.assign(where, this.mikroOrmTextFilters({ name, color, description }));
 
 				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 					populate: relations as any[]
@@ -135,9 +145,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						isSystem: false
 					};
 					if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-					if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
-					if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
-					if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+					Object.assign(where, this.mikroOrmTextFilters({ name, color, description }));
 
 					// Always load tagType: tagTypeName below is derived from it, whatever the caller asked for
 					const requested = Array.isArray(relations) ? relations : Object.keys(relations);

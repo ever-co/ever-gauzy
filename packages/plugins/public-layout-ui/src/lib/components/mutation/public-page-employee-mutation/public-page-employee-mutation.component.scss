@@ -1,1 +1,445 @@
-@forward '../public-page-organization-mutation/public-page-organization-mutation.component';
+@use 'themes' as *;
+
+/*
+ * ── Edit public profile dialog ───────────────────────────────────────────────
+ *
+ * Same vocabulary as the employee pages: a plain header, underline tabs in the
+ * primary colour, white sections with a hairline on a grey body, and the
+ * actions on the right of the footer. Its own stylesheet now — it used to
+ * `@forward` the organization dialog's, which the organization dialog keeps.
+ */
+
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$hairline: 1px solid var(--gauzy-border-default-color);
+$radius: var(--gauzy-radius-sm, 0.5rem);
+
+// Header (with the tabs) and footer stay put; only the body scrolls between them.
+nb-card.dialog {
+	display: flex;
+	flex-direction: column;
+	width: 52rem;
+	max-width: calc(100vw - 2rem);
+	max-height: calc(100vh - 4rem);
+	margin: 0;
+	overflow: hidden;
+	background-color: var(--gauzy-card-1);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.dialog-header {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: $gap-sm;
+	padding: $gap-lg 1.25rem 0;
+	border-bottom: $hairline;
+}
+
+.dialog-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: $gap-md;
+}
+
+.dialog-heading {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+.dialog-title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.dialog-subtitle {
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.dialog-close {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 0;
+	border-radius: $radius;
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+
+	nb-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		font-size: 1.25rem;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		color: var(--gauzy-text-color-1);
+	}
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+
+// Sits on the header's bottom hairline; the active tab's underline covers it.
+// Wraps rather than scrolls, so the bar never grows a scrollbar.
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 1.25rem;
+	margin-bottom: -1px;
+}
+
+.tab {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: $gap-sm 0.125rem 0.625rem;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+	cursor: pointer;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset-inline: 0;
+		bottom: -1px;
+		height: 2px;
+		border-radius: 2px 2px 0 0;
+		background-color: transparent;
+	}
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid nb-theme(color-primary-500);
+		outline-offset: 2px;
+	}
+
+	&.is-active {
+		color: nb-theme(color-primary-500);
+
+		&::after {
+			background-color: nb-theme(color-primary-500);
+		}
+	}
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.dialog-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: $gap-lg 1.25rem;
+	overflow-y: auto;
+	background-color: var(--gauzy-card-2);
+}
+
+/*
+ * Every control on the white sections is white too, keeping its border so it
+ * still reads as a field: text inputs, both select flavours, the date and
+ * number inputs, and the description editor.
+ */
+:host ::ng-deep .dialog-body {
+	[nbInput],
+	nb-select .select-button,
+	.ng-select .ng-select-container,
+	ga-rich-text-editor .rich-text-editor,
+	ga-rich-text-editor .rich-text-editor__content {
+		background-color: var(--gauzy-card-1) !important;
+	}
+}
+
+.pane {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+// Rates: the rate and its limits side by side.
+.pane--split {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	align-items: start;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.section {
+	padding: $gap-lg 1.25rem;
+	border-radius: $radius;
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.section-title {
+	margin: 0 0 $gap-md;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--gauzy-text-color-2);
+}
+
+.section-help {
+	margin: 0 0 $gap-sm;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $gap-lg 1.25rem;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	min-width: 0;
+}
+
+.field--wide {
+	grid-column: 1 / -1;
+}
+
+.label,
+:host ::ng-deep .field label {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.empty {
+	margin: 0 0 $gap-md;
+	font-size: 0.8125rem;
+	font-style: italic;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+}
+
+/* ── Awards ──────────────────────────────────────────────────────────────── */
+
+.awards {
+	display: flex;
+	flex-direction: column;
+	margin: 0 0 $gap-md;
+	padding: 0;
+	list-style: none;
+}
+
+.award {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	padding: $gap-sm 0;
+
+	& + & {
+		border-top: $hairline;
+	}
+}
+
+.award-icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	background-color: nb-theme(color-primary-transparent-100);
+	color: nb-theme(color-primary-500);
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+}
+
+.award-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 0.875rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.award-year {
+	flex: 0 0 auto;
+	font-size: 0.8125rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.icon-button {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 0;
+	border-radius: $radius;
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+
+	&:hover {
+		background-color: nb-theme(color-danger-transparent-100);
+		color: nb-theme(color-danger-500);
+	}
+}
+
+.add-award {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 7rem auto;
+	align-items: end;
+	gap: $gap-md;
+	padding: $gap-md;
+	border-radius: $radius;
+	background-color: var(--gauzy-card-2);
+}
+
+.add-award-actions {
+	display: flex;
+	gap: $gap-sm;
+}
+
+.add-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.25rem 0.5rem;
+	margin-inline-start: -0.5rem;
+	border: 0;
+	border-radius: $radius;
+	background: transparent;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: nb-theme(color-primary-500);
+	cursor: pointer;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+
+	&:hover {
+		background-color: nb-theme(color-primary-transparent-100);
+	}
+}
+
+/* ── Privacy ─────────────────────────────────────────────────────────────── */
+
+.settings {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.setting {
+	padding: 0.625rem 0;
+
+	& + & {
+		border-top: $hairline;
+	}
+}
+
+// Label on the left, switch on the right, across the full row.
+.setting-toggle {
+	display: block;
+	width: 100%;
+
+	::ng-deep label.toggle-label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+		cursor: pointer;
+	}
+
+	::ng-deep .text {
+		font-size: 0.8125rem;
+		font-weight: 400;
+		color: var(--gauzy-text-color-1);
+	}
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.dialog-footer {
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: flex-end;
+	gap: $gap-sm;
+	padding: $gap-md 1.25rem;
+	border-top: $hairline;
+	background-color: var(--gauzy-card-1);
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 40rem) {
+	.grid,
+	.pane--split {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.field--wide {
+		grid-column: auto;
+	}
+
+	.add-award {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

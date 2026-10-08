@@ -227,7 +227,9 @@ export abstract class RecurringExpenseEditHandler<
 		}
 
 		//4. This resolves the conflict, now do a simple non conflicting update.
-		this.updateExpenseStartDateAndValue(id, input);
+		// Awaited and returned like the other branches: the request used to answer before this update
+		// ran, with an empty body, and a failure here became an unhandled rejection.
+		return await this.updateExpenseStartDateAndValue(id, input);
 	};
 
 	/**

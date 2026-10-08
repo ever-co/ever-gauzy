@@ -1010,6 +1010,23 @@ export function mikroOrmContains(value: string, postgres: boolean = isMikroOrmPo
 }
 
 /**
+ * Builds a case-insensitive LIKE condition for a MikroORM filter from a ready-made pattern
+ * (e.g. `abc%` for "starts with", or an exact name without wildcards).
+ *
+ * Like `mikroOrmContains`, it uses `$ilike` on PostgreSQL only (MikroORM emits it verbatim as `ILIKE`)
+ * and `$like` on MySQL / SQLite, whose LIKE is already case-insensitive.
+ *
+ * @param pattern The LIKE pattern
+ * @param postgres Whether the MikroORM database is PostgreSQL (resolved from the config by default)
+ */
+export function mikroOrmILike(
+	pattern: string,
+	postgres: boolean = isMikroOrmPostgres()
+): { $ilike: string } | { $like: string } {
+	return postgres ? { $ilike: pattern } : { $like: pattern };
+}
+
+/**
  * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
  * @param order TypeORM 'order' option
  * @returns Parsed MikroORM 'orderBy' option
@@ -1062,6 +1079,21 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 		}
 		case 'moreThan': {
 			return { $gt: operator.value };
+		}
+		// Without these, the operator fell through to the default `{}`, which MikroORM reads as "no
+		// condition": a max-only invoice total or a LIKE name search silently matched every row.
+		case 'lessThanOrEqual': {
+			return { $lte: operator.value };
+		}
+		case 'lessThan': {
+			return { $lt: operator.value };
+		}
+		case 'like': {
+			return { $like: operator.value };
+		}
+		case 'ilike': {
+			// `$ilike` is PostgreSQL-only in MikroORM; MySQL / SQLite LIKE is already case-insensitive
+			return isMikroOrmPostgres() ? { $ilike: operator.value } : { $like: operator.value };
 		}
 		// Add additional cases for other operator types if needed
 		default: {

@@ -349,6 +349,30 @@
                                   </div>
                                 </div>
                               </div>
+                              @if (showTaxCalculationType) {
+                                <div class="row">
+                                  <div class="col-sm-12">
+                                    <div class="form-group">
+                                      <label for="inputTaxCalculationType" class="label">{{
+                                        'INVOICES_PAGE.TAX_CALCULATION_TYPE' | translate
+                                      }}</label>
+                                      <nb-select
+                                        formControlName="taxCalculationType"
+                                        placeholder="{{ 'INVOICES_PAGE.TAX_CALCULATION_TYPE' | translate }}"
+                                        (ngModelChange)="calculateTotal()"
+                                        id="inputTaxCalculationType"
+                                        fullWidth
+                                        >
+                                        @for (taxCalculationType of taxCalculationTypes; track taxCalculationType) {
+                                          <nb-option value="{{ taxCalculationType }}">
+                                            {{ 'INVOICES_PAGE.' + taxCalculationType | translate }}
+                                          </nb-option>
+                                        }
+                                      </nb-select>
+                                    </div>
+                                  </div>
+                                </div>
+                              }
                             </div>
                             <div class="discountCheckbox">
                               <nb-checkbox

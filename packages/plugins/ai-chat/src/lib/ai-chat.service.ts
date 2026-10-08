@@ -3,8 +3,10 @@ import type { Response } from 'express';
 import type { UIMessage, LanguageModel } from 'ai';
 import {
 	AI_CHAT_SETTINGS_PATH,
+	AiChatErrorCode,
 	AiSpeechErrorCode,
 	IAiChatConfig,
+	IAiChatErrorBody,
 	IAiChatModel,
 	IAiChatModelCatalogue,
 	IAiChatProvider,
@@ -24,7 +26,15 @@ import { createDeferredDataPartWriter } from './tools/data-parts';
 import { AiChatToolRegistry } from './tools/tool-registry';
 import { AiProviderCredentialService } from './credentials/ai-provider-credential.service';
 import { AiChatConversationService } from './conversations/ai-chat-conversation.service';
-import { buildRateLimitEnvelope, isRateLimitError, rateLimitRetryAfter, RATE_LIMIT_CODE } from './rate-limit';
+import {
+	buildKeyRejectedEnvelope,
+	buildRateLimitEnvelope,
+	isKeyRejectedError,
+	isRateLimitError,
+	KEY_REJECTED_CODE,
+	rateLimitRetryAfter,
+	RATE_LIMIT_CODE
+} from './rate-limit';
 
 /**
  * Largest dictation upload accepted, matching what the upstream speech APIs take anyway.
@@ -232,6 +242,11 @@ export class AiChatService {
 		 * re-flatten a rate-limit envelope that failed on the wrapper's side.
 		 */
 		const maskError = (error: unknown): string => {
+			// A rejected key is fixed on the AI Providers page, so it gets its own envelope too —
+			// the generic string would leave the user with nothing to act on.
+			if (isKeyRejectedError(error)) {
+				return buildKeyRejectedEnvelope({ code: KEY_REJECTED_CODE, providerId, credentialSource });
+			}
 			if (!isRateLimitError(error)) return 'An error occurred.';
 			const retryAfterSeconds = rateLimitRetryAfter(error);
 			return buildRateLimitEnvelope({
@@ -399,7 +414,11 @@ export class AiChatService {
 			// not-implemented error as a failed turn. Same controlled 503 either way.
 			if (definition.chatCapable === false) {
 				throw new ServiceUnavailableException(
-					`AI provider '${definition.label}' cannot serve chat yet — select another provider.`
+					this.chatErrorBody(
+						AiChatErrorCode.PROVIDER_UNAVAILABLE,
+						`AI provider '${definition.label}' cannot serve chat yet — select another provider.`,
+						definition.id
+					)
 				);
 			}
 		} else {
@@ -438,13 +457,22 @@ export class AiChatService {
 
 		if (!definition) {
 			throw new ServiceUnavailableException(
-				'AI chat is not configured: no provider has credentials (tenant settings or server environment).'
+				this.chatErrorBody(
+					AiChatErrorCode.NOT_CONFIGURED,
+					'AI chat is not configured: no provider has credentials (tenant settings or server environment).'
+				)
 			);
 		}
 
 		const credentials = await this.resolveCredentials(definition);
 		if (!credentials) {
-			throw new ServiceUnavailableException(`AI provider '${definition.id}' has no usable credentials.`);
+			throw new ServiceUnavailableException(
+				this.chatErrorBody(
+					AiChatErrorCode.NOT_CONFIGURED,
+					`AI provider '${definition.id}' has no usable credentials.`,
+					definition.id
+				)
+			);
 		}
 
 		const platformModels = await this.resolvePlatformModels(definition, credentials);
@@ -452,8 +480,12 @@ export class AiChatService {
 			// Running on the shared free key: the model list is an ALLOWLIST, not a suggestion.
 			if (!platformModels.length) {
 				throw new ServiceUnavailableException(
-					`AI provider '${definition.id}' has no free models available right now. ` +
-						`Add your own API key in Settings → AI Providers to continue.`
+					this.chatErrorBody(
+						AiChatErrorCode.PROVIDER_UNAVAILABLE,
+						`AI provider '${definition.id}' has no free models available right now. ` +
+							`Add your own API key in Settings → AI Providers to continue.`,
+						definition.id
+					)
 				);
 			}
 			const allowed = new Set(platformModels.map((m) => m.id));
@@ -462,9 +494,14 @@ export class AiChatService {
 				// ids, so a mismatch means a stale client or a hand-crafted request, and quietly
 				// answering from a different model than the caller asked for is its own bug.
 				throw new BadRequestException(
-					`Model '${requestedModelId}' is not available on the free tier. ` +
-						`Choose one of: ${platformModels.map((m) => m.id).join(', ')} — ` +
-						`or add your own '${definition.id}' API key in Settings → AI Providers for full access.`
+					this.chatErrorBody(
+						AiChatErrorCode.MODEL_UNAVAILABLE,
+						`Model '${requestedModelId}' is not available on the free tier. ` +
+							`Choose one of: ${platformModels.map((m) => m.id).join(', ')} — ` +
+							`or add your own '${definition.id}' API key in Settings → AI Providers for full access.`,
+						definition.id,
+						400
+					)
 				);
 			}
 			// GAUZY_AI_CHAT_DEFAULT_MODEL is deliberately NOT consulted here: it is provider-agnostic
@@ -745,6 +782,29 @@ export class AiChatService {
 			...(attemptedProviders?.length ? { attemptedProviders } : {})
 		};
 		return new ServiceUnavailableException(body);
+	}
+
+	/**
+	 * Body of a refused chat turn: the same structured shape as {@link speechUnavailable}, so the chat
+	 * panel can show a translated message with a link to the provider that needs fixing.
+	 *
+	 * An object body REPLACES Nest's default `{ statusCode, message, error }` rather than extending
+	 * it, so those two fields are restated here — the response stays a superset of what it was.
+	 */
+	private chatErrorBody(
+		code: AiChatErrorCode,
+		message: string,
+		providerId?: string,
+		status: 400 | 503 = 503
+	): IAiChatErrorBody {
+		return {
+			statusCode: status,
+			message,
+			error: status === 400 ? 'Bad Request' : 'Service Unavailable',
+			code,
+			settingsPath: AI_CHAT_SETTINGS_PATH,
+			...(providerId ? { providerId } : {})
+		};
 	}
 
 	/**

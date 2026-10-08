@@ -106,6 +106,10 @@ function toMikroOrmProfileDateTime(value: Date, dbType: ProfileActivityDatabaseT
 		: toUtcNaiveDateTime(value);
 }
 
+/** Sorts statistics by their (summed) duration, largest first. */
+export const byDurationDesc = (a: { duration?: number | string }, b: { duration?: number | string }): number =>
+	Number(b.duration || 0) - Number(a.duration || 0);
+
 @Injectable()
 export class StatisticService {
 	private readonly logger = new Logger(StatisticService.name);
@@ -1705,7 +1709,9 @@ export class StatisticService {
 						} as IProjectsStatistics;
 					})
 					.value()
-					.splice(0, 5);
+					// Rank by the per-project total, not by the order of the individual time logs above
+					.sort(byDurationDesc)
+					.slice(0, 5);
 
 				// Query 2: Total duration (without COUNT division) for percentage calculation
 				let totalDurationExpr: string;
@@ -1843,7 +1849,9 @@ export class StatisticService {
 						} as IProjectsStatistics;
 					})
 					.value()
-					.splice(0, 5);
+					// Rank by the per-project total, not by the order of the individual time logs above
+					.sort(byDurationDesc)
+					.slice(0, 5);
 
 				const totalDurationQuery = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 

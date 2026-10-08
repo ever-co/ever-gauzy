@@ -35,6 +35,7 @@
 			"API_KEY": "API key",
 			"API_KEY_PLACEHOLDER": "Enter API key",
 			"API_KEY_KEEP": "Leave blank to keep the current key.",
+			"KEY_SECURITY": "Your key is encrypted at rest and is never shown again after you save it — only its last characters.",
 			"API_KEY_REQUIRED": "API key is required.",
 			"SHOW_KEY": "Show API key",
 			"HIDE_KEY": "Hide API key",
@@ -72,6 +73,7 @@
 			"VOICE_ONLY_NOTICE": "This provider transcribes speech for dictation only — it has no chat models. Choose another provider for chat."
 		},
 		"ACTIONS": {
+			"CANCEL": "Cancel",
 			"SAVE": "Save",
 			"DELETE": "Delete",
 			"ADD_PROVIDER": "Add AI Provider",
@@ -89,6 +91,10 @@
 			"EMPTY_HINT": "Add a provider that supports speech-to-text: OpenAI, Groq, Mistral, Deepgram, ElevenLabs — or a local server (Speaches, LocalAI, whisper.cpp) that needs no API key.",
 			"ADD": "Add a voice provider"
 		},
+		"UNSAVED": {
+			"TITLE": "Discard changes?",
+			"MESSAGE": "You have unsaved changes to {{provider}}. Leave without saving them?"
+		},
 		"DELETE_CONFIRM": {
 			"TITLE": "Delete credential",
 			"MESSAGE": "Delete the {{provider}} API credential for this tenant? AI chat may stop working for this provider."
@@ -104,16 +110,19 @@
 			"CONNECT_SESSION_EXPIRED": "The Connect session has expired or was started in another tab. Please click Connect again."
 		},
 		"LIST": {
+			"TITLE": "Chat providers",
 			"EMPTY": "Connect a provider to enable the AI chat and assistant features.",
 			"NAME": "Provider",
 			"SOURCE": "Credential",
 			"ENABLED": "Enabled",
 			"DEFAULT": "Default",
 			"VIA_ENV": "Managed via server environment",
+			"UPDATED": "Updated {{date}}",
 			"EMPTY_TITLE": "No AI providers yet",
 			"EMPTY_PROVIDERS": "Gauzy AI · OpenRouter · Vercel AI Gateway · Anthropic · OpenAI · Gemini · Grok · Groq · Mistral · LocalAI · OpenAI-compatible — voice: Deepgram · ElevenLabs · Speaches · whisper.cpp"
 		},
 		"CATALOG": {
+			"FILTER_ALL": "All",
 			"TITLE": "Add AI Provider",
 			"DESCRIPTION": "Choose a provider to connect or configure with your own API key.",
 			"VOICE_TITLE": "Add AI Voice Provider",

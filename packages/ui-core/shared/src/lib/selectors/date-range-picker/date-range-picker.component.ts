@@ -276,6 +276,21 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			})
 		);
 
+		// Build the preset menu as soon as the route's config is known. The pipeline below rebuilds it
+		// too, but only after an organization round-trip: until that answered (seconds on a slow API)
+		// the panel opened EMPTY, the library positioned it from that 8px box, and it landed off the
+		// right edge of the screen — to the user it opened and closed again.
+		storeDatePickerConfig$
+			.pipe(
+				filter((datePickerConfig) => !!datePickerConfig),
+				tap(({ isLockDatePicker, unitOfTime }) => {
+					this.isLockDatePicker = isLockDatePicker;
+					this.createDateRangeMenus(unitOfTime);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParamsUnitOfTime$, timeZone$])
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
@@ -347,8 +362,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 
 	/**
 	 * Creates the date range translated menus based on the current configuration.
+	 *
+	 * @param unitOfTime The unit a locked picker offers; defaults to the picker's current unit.
 	 */
-	createDateRangeMenus(): void {
+	createDateRangeMenus(unitOfTime: moment.unitOfTime.Base = this.unitOfTime): void {
 		this.ranges = {};
 
 		// Helper function to add ranges to the ranges object
@@ -357,7 +374,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		};
 
 		// Determine which units of time are allowed
-		const allowedUnits = this.isLockDatePicker ? [this.unitOfTime] : ['day', 'week', 'month'];
+		const allowedUnits = this.isLockDatePicker ? [unitOfTime] : ['day', 'week', 'month'];
 
 		// Add date ranges based on the allowed units of time
 		allowedUnits.forEach((unit) => {
@@ -654,16 +671,33 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Opens the date picker when the calendar icon is clicked.
+	 * Opens the date picker when anywhere in the control is clicked, except the arrow buttons.
 	 *
-	 * @param event - The mouse event triggered by clicking the calendar icon.
+	 * @param event - The mouse event triggered by clicking the control.
 	 */
 	openDatepicker(event: MouseEvent): void {
-		if (this.dateRangePickerDirective) {
-			this.dateRangePickerDirective.toggle(event);
-		} else {
-			console.warn('DateRangePickerDirective is not initialized.');
+		const target = event.target as HTMLElement;
+
+		// The arrows step the range; they must not open the panel too.
+		if (target.closest('button')) {
+			return;
 		}
+
+		if (!this.dateRangePickerDirective) {
+			console.warn('DateRangePickerDirective is not initialized.');
+			return;
+		}
+
+		// The <input> opens the panel itself, and the directive counts it as inside.
+		if (target instanceof HTMLInputElement) {
+			return;
+		}
+
+		// The directive closes the panel on any document click outside its <input>, and the rest of
+		// this control sits outside it: left to bubble, the same click opened the panel and closed it
+		// again before it ever painted. Stop it here so opening is the only thing that click does.
+		event.stopPropagation();
+		this.dateRangePickerDirective.open(event);
 	}
 
 	/**
