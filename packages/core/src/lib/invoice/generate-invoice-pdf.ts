@@ -1,4 +1,5 @@
 import {
+	DiscountTaxTypeEnum,
 	IInvoice,
 	IOrganization,
 	IOrganizationContact,
@@ -16,6 +17,19 @@ export async function generateInvoicePdfDefinition(
 	// Every amount follows the organization's "Currency Position" setting, like the web app does.
 	const amount = (value: number | string) =>
 		formatCurrencyAmount(value, invoice.currency, organization?.currencyPosition);
+
+	// A tax or discount is a flat amount, a percentage, or — when its type was never set on the
+	// invoice — a bare number, which must not be dressed up as a percentage.
+	const taxOrDiscount = (value: number | string, type?: DiscountTaxTypeEnum | string) => {
+		switch (type) {
+			case DiscountTaxTypeEnum.FLAT_VALUE:
+				return amount(value);
+			case DiscountTaxTypeEnum.PERCENT:
+				return `${value}%`;
+			default:
+				return `${value}`;
+		}
+	};
 
 	const body = [];
 	for (const item of invoice.invoiceItems) {
@@ -190,7 +204,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: invoice.taxType === 'FLAT' ? amount(invoice.tax) : `${invoice.tax}%`
+						text: taxOrDiscount(invoice.tax, invoice.taxType)
 					}
 				]
 			},
@@ -210,7 +224,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: invoice.tax2Type === 'FLAT' ? amount(invoice.tax2) : `${invoice.tax2}%`
+						text: taxOrDiscount(invoice.tax2, invoice.tax2Type)
 					}
 				]
 			},
@@ -230,8 +244,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text:
-							invoice.discountType === 'FLAT' ? amount(invoice.discountValue) : `${invoice.discountValue}%`
+						text: taxOrDiscount(invoice.discountValue, invoice.discountType)
 					}
 				]
 			},
