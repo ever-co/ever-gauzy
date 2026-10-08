@@ -226,6 +226,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	sound: any = null;
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
 	private _remoteLastTimeSlot$: Promise<ITimeSlot | null> | null = null;
+	/** Bumped by every local capture; a pending server lookup whose generation moved on is stale. */
+	private _localCaptureGeneration = 0;
 	private readonly logout$ = new Subject<void>();
 
 	constructor(
@@ -1169,6 +1171,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('last_capture_local', (event, arg) =>
 			this._ngZone.run(() => {
 				console.log('Last Capture Screenshot:');
+				this._localCaptureGeneration++;
 				this.lastScreenCapture$.next({
 					fullUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
 					thumbUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
@@ -2074,20 +2077,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 
 			let res: ITimeSlot | null;
-			if (lastTimeSlot?.timeSlotId) {
+			const fromServer = !lastTimeSlot?.timeSlotId;
+			const generation = this._localCaptureGeneration;
+			// A capture may land (last_capture_local) while a server lookup is pending: a result that
+			// is older than what is on screen, or whose generation moved on, must not replace it.
+			const isStale = () =>
+				fromServer && (generation !== this._localCaptureGeneration || this.hasNewerLocalCapture(res));
+			if (!fromServer) {
 				res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
 			} else {
 				// A fresh install has no local capture yet, but the server may still hold this employee's
 				// screenshots (taken before the reinstall or on another machine): show the latest ones
 				// instead of an empty panel until the first local capture lands (#8348).
 				res = await this.getRemoteLastTimeSlot();
-				// A capture may have landed (last_capture_local) while the lookup was pending: never
-				// replace it with an older server result.
-				if (res && this.hasNewerLocalCapture(res)) {
-					return;
-				}
 			}
-			if (!res) {
+			if (!res || isStale()) {
 				return;
 			}
 
@@ -2095,7 +2099,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
 				this.lastScreenCapture$.next(lastCaptureScreen);
-				await this.localImage(this.lastScreenCapture);
+				await this.localImage(lastCaptureScreen);
+				// The thumbnail fetch above is another await a local capture can slip through.
+				if (isStale()) {
+					localStorage.removeItem('lastScreenCapture');
+					return;
+				}
 				this.screenshots$.next(screenshots);
 				this.lastTimeSlot = res;
 			}
