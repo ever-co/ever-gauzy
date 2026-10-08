@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+import { readRememberedCheckoutSession, rememberCheckoutSession } from '@gauzy/ui-core/core';
 import { TenantOnboardingComponent } from './tenant-onboarding.component';
 
 /**
@@ -47,6 +48,7 @@ describe('TenantOnboardingComponent.onboardUser', () => {
 		await component.onboardUser(organization);
 
 		expect(tenantService.create).not.toHaveBeenCalled();
+		expect(tenantService.getCurrent).toHaveBeenCalled();
 		expect(organizationsService.create).toHaveBeenCalledWith(
 			expect.objectContaining({ name: 'Acme', tenant: { id: 'existing-tenant' } })
 		);
@@ -56,10 +58,16 @@ describe('TenantOnboardingComponent.onboardUser', () => {
 
 	it('still creates a new tenant first for a user without one', async () => {
 		const { component, tenantService, organizationsService, employeesService } = setup({});
+		// A buyer coming from the shared checkout: the remembered Checkout Session goes to the new tenant
+		rememberCheckoutSession('cs_test_12345678');
 
 		await component.onboardUser({ name: 'Acme', registerAsEmployee: true } as never);
 
-		expect(tenantService.create).toHaveBeenCalledWith({ name: 'Acme' });
+		expect(tenantService.create).toHaveBeenCalledWith({
+			name: 'Acme',
+			stripeCheckoutSessionId: 'cs_test_12345678'
+		});
+		expect(readRememberedCheckoutSession()).toBeUndefined();
 		expect(tenantService.getCurrent).not.toHaveBeenCalled();
 		expect(organizationsService.create).toHaveBeenCalledWith(
 			expect.objectContaining({ tenant: { id: 'new-tenant' } })
