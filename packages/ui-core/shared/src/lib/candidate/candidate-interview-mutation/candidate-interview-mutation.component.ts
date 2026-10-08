@@ -288,12 +288,12 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	async editInterview() {
 		let removedInterviewers: ICandidateInterviewers[] = [];
 		let newIds = [];
-		const oldIds = this.editData.interviewers.map((item) => item.employeeId);
+		const oldIds = new Set(this.editData.interviewers.map((item) => item.employeeId));
 		if (this.interview.interviewers) {
 			removedInterviewers = this.editData.interviewers.filter(
 				({ employeeId }) => !this.interview.interviewers.includes(employeeId)
 			);
-			newIds = this.interview.interviewers.filter((item: string) => !oldIds.includes(item));
+			newIds = this.interview.interviewers.filter((item: string) => !oldIds.has(item));
 		}
 
 		let updatedInterview;
