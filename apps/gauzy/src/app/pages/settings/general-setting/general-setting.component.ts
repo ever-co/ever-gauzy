@@ -13,6 +13,15 @@ function notBlank(control: AbstractControl): ValidationErrors | null {
 }
 
 /**
+ * The id of the tenant's logo asset. Under MikroORM `imageId` is a non-persisted mirror that the API
+ * leaves empty, so read it from the (eagerly loaded) `image` relation first; otherwise a plain save
+ * would send `imageId: null` and unlink the logo.
+ */
+function tenantImageId(tenant: ITenant | null): string | null {
+	return tenant?.image?.id ?? tenant?.imageId ?? null;
+}
+
+/**
  * Settings → General. Groups, top to bottom:
  * - the signed-in user's account and personal preferences (see {@link PersonalSettingsComponent}),
  * - the tenant profile (name, logo and id — super administrators only), and
@@ -158,7 +167,7 @@ export class GeneralSettingComponent implements OnInit {
 				tenant = {
 					...previous,
 					...input,
-					image: imageId && imageId === previous?.imageId ? previous?.image : null
+					image: imageId && imageId === tenantImageId(previous) ? previous?.image : null
 				};
 			}
 			this.applyTenant(tenant);
@@ -194,7 +203,7 @@ export class GeneralSettingComponent implements OnInit {
 		const logo = tenant?.image?.fullUrl ?? tenant?.logo ?? null;
 		this.profileForm.reset({
 			name: tenant?.name ?? '',
-			imageId: tenant?.imageId ?? null,
+			imageId: tenantImageId(tenant),
 			logo
 		});
 		this.logoUrl.set(logo);
@@ -209,7 +218,7 @@ export class GeneralSettingComponent implements OnInit {
 		if (user) {
 			this.store.user = {
 				...user,
-				tenant: { ...user.tenant, name: tenant.name, logo: tenant.logo, imageId: tenant.imageId, image: tenant.image }
+				tenant: { ...user.tenant, name: tenant.name, logo: tenant.logo, imageId: tenantImageId(tenant), image: tenant.image }
 			};
 		}
 		const toWorkspace = (workspace: IWorkSpace): IWorkSpace =>
