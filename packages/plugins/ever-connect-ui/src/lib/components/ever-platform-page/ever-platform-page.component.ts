@@ -96,6 +96,20 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 												<nb-alert status="warning" data-test="key-material">{{
 													'EVER_CONNECT.CONNECTION.KEY_MATERIAL' | translate
 												}}</nb-alert>
+											} @else if (status?.connection?.secret_short) {
+												<nb-alert status="warning" data-test="secret-short">{{
+													'EVER_CONNECT.CONNECTION.SECRET_SHORT' | translate
+												}}</nb-alert>
+											}
+											@if (status?.connection?.connect_key === 'unreadable') {
+												<nb-alert status="danger" data-test="key-unreadable">{{
+													'EVER_CONNECT.CONNECTION.KEY_UNREADABLE' | translate
+												}}</nb-alert>
+											}
+											@if (status?.connection?.return_unusable) {
+												<nb-alert status="info" data-test="return-unusable">{{
+													'EVER_CONNECT.CONNECTION.RETURN_UNUSABLE' | translate
+												}}</nb-alert>
 											}
 											@if (
 												status?.connection?.status === 'connected' ||
@@ -132,6 +146,22 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 													<dt>{{ 'EVER_CONNECT.CONNECTION.KEY' | translate }}</dt>
 													<dd>
 														<code>{{ status.connection.kid }}</code>
+														@if (
+															status.connection.status === 'connected' &&
+															status.connection.connect_key === 'ok'
+														) {
+															<button
+																nbButton
+																ghost
+																size="tiny"
+																type="button"
+																data-test="rotate-key"
+																[disabled]="busy"
+																(click)="rotateKey()"
+															>
+																{{ 'EVER_CONNECT.CONNECTION.ROTATE_KEY' | translate }}
+															</button>
+														}
 													</dd>
 													<dt>{{ 'EVER_CONNECT.CONNECTION.LAST_SEEN' | translate }}</dt>
 													<dd>
@@ -637,6 +667,10 @@ export class EverPlatformPageComponent implements OnInit {
 		this.run(this.api.checkApproval(), () => undefined);
 	}
 
+	rotateKey(): void {
+		this.run(this.api.rotateKey(), () => this.say('EVER_CONNECT.NOTICES.KEY_ROTATED'));
+	}
+
 	disconnect(): void {
 		this.run(this.api.disconnect(), () => {
 			this.confirmingDisconnect = false;
@@ -676,6 +710,11 @@ export class EverPlatformPageComponent implements OnInit {
 		this.api.consentUrl(item.key, this.organizationId).subscribe({
 			next: ({ url }) => {
 				this.busy = false;
+				// Only an https link is opened (the API checks its host as well).
+				if (!/^https:\/\//i.test(String(url))) {
+					this.say('EVER_CONNECT.ERRORS.consent_url_invalid', {}, 'danger');
+					return;
+				}
 				window.open(url, '_blank', 'noopener');
 				this.say('EVER_CONNECT.NOTICES.CONSENT_OPENED');
 			},
@@ -736,6 +775,10 @@ export class EverPlatformPageComponent implements OnInit {
 		const code = typeof error?.error?.code === 'string' ? error.error.code : null;
 		const known = [
 			'key_material_missing',
+			'key_unreadable',
+			'consent_url_invalid',
+			'redeem_unverifiable',
+			'rotation_not_installed',
 			'code_invalid',
 			'already_connected',
 			'already_linked',

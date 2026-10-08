@@ -10,7 +10,7 @@ import {
 import { createHash } from 'node:crypto';
 import { EverConnectAuditService } from './ever-connect-audit.service';
 import { LINK_CODE_SHAPE, PRODUCT } from './ever-connect.constants';
-import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
+import { checkLinkBinding, EverConnectEntitlementService, LinkBindingError } from './ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
 import {
 	EverConnectPlatformService,
@@ -19,7 +19,7 @@ import {
 	isUnreachable
 } from './ever-connect-platform.service';
 import { EverConnectSignals } from './ever-connect-signals';
-import { EverConnectStore, LinkRecord } from './ever-connect.store';
+import { EverConnectStore, LinkRecord, LiveLinkExistsError } from './ever-connect.store';
 import { EntitlementError, ProblemError, VerifiedEntitlement } from './sdk';
 
 /** What the Organization link tab shows. */
@@ -118,11 +118,12 @@ export class EverConnectLinkService {
 		let verified: VerifiedEntitlement;
 		try {
 			verified = await this.entitlements.fetchLinkDocument(linkId);
+			checkLinkBinding(verified, input);
 		} catch (error) {
-			// Nothing is stored for a link whose document does not verify; the platform is told the link
-			// is not used (best effort).
+			// Nothing is stored for a link whose document does not verify (or names another tenant or
+			// organization); the platform is told the link is not used (best effort).
 			await client.instances.tenantLinks.remove(linkId).catch(() => undefined);
-			if (error instanceof EntitlementError) {
+			if (error instanceof EntitlementError || error instanceof LinkBindingError) {
 				throw new UnprocessableEntityException({
 					statusCode: 422,
 					code: 'entitlement_unverifiable',
@@ -131,7 +132,20 @@ export class EverConnectLinkService {
 			}
 			throw this.problem(error);
 		}
-		return this.store_(input, created.org_id, linkId, verified, input.userId);
+		try {
+			return await this.store_(input, created.org_id, linkId, verified, input.userId);
+		} catch (error) {
+			if (error instanceof LiveLinkExistsError) {
+				// Another request linked this organization meanwhile: this link is not used.
+				await client.instances.tenantLinks.remove(linkId).catch(() => undefined);
+				throw new ConflictException({
+					statusCode: 409,
+					code: 'already_linked',
+					message: 'This organization is already linked.'
+				});
+			}
+			throw error;
+		}
 	}
 
 	/** Stores a link the redeem created (a connect code that pre-binds the organization). */
@@ -141,6 +155,7 @@ export class EverConnectLinkService {
 		linkId: string
 	): Promise<LinkView | null> {
 		const verified = await this.entitlements.fetchLinkDocument(linkId);
+		checkLinkBinding(verified, input);
 		return this.store_(input, everOrgId, linkId, verified, input.userId);
 	}
 
@@ -152,18 +167,13 @@ export class EverConnectLinkService {
 		userId: string | null
 	): Promise<LinkView> {
 		const handle = verified.claims.ever.handle ?? null;
-		const integrationTenantId = await this.store.createLinkRecord(owner, {
-			EVER_LINK_ID: linkId,
-			EVER_ORG_ID: everOrgId,
-			EVER_HANDLE: handle ?? '',
-			EVER_LINK_STATUS: 'linked',
-			ENTITLEMENT_SEQ: String(verified.seq),
-			ENTITLEMENT_EXP: String(verified.claims.exp)
-		});
+		// The link row first: its unique live key refuses a second live link for this organization
+		// (two requests at once). Then Gauzy's own record of it; when that cannot be written, the link
+		// row goes too.
 		const link = await this.store.insertLink({
 			tenantId: owner.tenantId,
 			organizationId: owner.organizationId,
-			integrationTenantId,
+			integrationTenantId: null,
 			linkId,
 			everOrgId,
 			everHandle: handle,
@@ -175,7 +185,24 @@ export class EverConnectLinkService {
 			entitlementFetchedAt: null,
 			linkedByUserId: userId
 		});
-		await this.store.updateLink(linkId, this.entitlements.linkDocumentColumns(verified));
+		let integrationTenantId: string;
+		try {
+			integrationTenantId = await this.store.createLinkRecord(owner, {
+				EVER_LINK_ID: linkId,
+				EVER_ORG_ID: everOrgId,
+				EVER_HANDLE: handle ?? '',
+				EVER_LINK_STATUS: 'linked',
+				ENTITLEMENT_SEQ: String(verified.seq),
+				ENTITLEMENT_EXP: String(verified.claims.exp)
+			});
+		} catch (error) {
+			await this.store.deleteLink(linkId);
+			throw error;
+		}
+		await this.store.updateLink(linkId, {
+			integrationTenantId,
+			...this.entitlements.linkDocumentColumns(verified)
+		});
 		await this.audit.record({
 			action: 'link.create',
 			actorLabel: 'user',
@@ -185,7 +212,7 @@ export class EverConnectLinkService {
 			details: { link_id: linkId, ever_org_id: everOrgId }
 		});
 		await this.states
-			.sync('user')
+			.sync({ force: true })
 			.catch((error) => this.logger.warn(`Integration states could not be read now (${errorCode(error)}).`));
 		return linkView((await this.store.linkById(linkId)) ?? link);
 	}

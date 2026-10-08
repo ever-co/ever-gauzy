@@ -20,6 +20,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { AuditRow, EverConnectAuditService } from './ever-connect-audit.service';
+import { EverConnectCleanupService } from './ever-connect-cleanup.service';
 import type { EverConnectConfig } from './ever-connect-config';
 import { ConnectionSummary, EverConnectConnectionService } from './ever-connect-connection.service';
 import { EVER_CONNECT_SETTINGS } from './ever-connect.constants';
@@ -70,6 +71,7 @@ export class EverConnectController {
 		private readonly audit: EverConnectAuditService,
 		private readonly store: EverConnectStore,
 		private readonly operator: EverOperatorService,
+		private readonly cleanup: EverConnectCleanupService,
 		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig
 	) {}
 
@@ -119,7 +121,9 @@ export class EverConnectController {
 		@Query('organizationId') organizationId?: string
 	): Promise<IntegrationView[]> {
 		const scope = await organizationScope(request, organizationId, this.store, this.operator);
-		await this.states.sync('user');
+		await this.cleanup.reconcile();
+		// Coalesced: at most one read every 30 seconds, whoever opens the page.
+		await this.states.sync();
 		return this.states.list(scope);
 	}
 
@@ -194,7 +198,10 @@ export class EverConnectController {
 		});
 	}
 
-	/** The decoded entitlement documents (the installation's, this organization's link's). */
+	/**
+	 * The decoded entitlement documents: this organization's link's, and the installation's for the
+	 * operator only (it names the connecting Ever organization and its plan).
+	 */
 	@Get('entitlement')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@Header('Cache-Control', 'no-store')
@@ -203,18 +210,22 @@ export class EverConnectController {
 		@Query('organizationId') organizationId?: string
 	): Promise<{ instance: EntitlementSummary | null; link: EntitlementSummary | null }> {
 		const scope = await organizationScope(request, organizationId, this.store, this.operator);
-		return this.entitlements.summary(scope.tenantId, scope.organizationId);
+		return this.entitlements.summary(scope.tenantId, scope.organizationId, scope.isOperator);
 	}
 
-	/** Refreshes the documents now (at most 6 an hour). */
+	/**
+	 * Refreshes the documents now: this organization's link's (at most 6 an hour for each link), and
+	 * the installation's for the operator (at most 6 an hour).
+	 */
 	@Post('entitlement/refresh')
 	@HttpCode(HttpStatus.OK)
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@Header('Cache-Control', 'no-store')
 	async refreshEntitlement(@Req() request: RequestWithUser, @Query('organizationId') organizationId?: string) {
 		const scope = await organizationScope(request, organizationId, this.store, this.operator);
+		await this.cleanup.reconcile();
 		await this.entitlements.refreshOnDemand(scope);
-		return this.entitlements.summary(scope.tenantId, scope.organizationId);
+		return this.entitlements.summary(scope.tenantId, scope.organizationId, scope.isOperator);
 	}
 
 	/** This organization's audit, newest first (the installation's own rows for the operator only). */

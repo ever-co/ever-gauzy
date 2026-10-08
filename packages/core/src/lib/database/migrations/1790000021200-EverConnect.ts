@@ -118,11 +118,15 @@ const TABLES: Table[] = [
 			varchar('linkedByUserId', 36),
 			bigint('createdAt', true),
 			bigint('updatedAt', true),
-			bigint('unlinkedAt')
+			bigint('unlinkedAt'),
+			// `<tenantId>|<organizationId>` while the link is live, NULL once unlinked: one live link per
+			// Gauzy organization (a unique index allows any number of NULLs on every database).
+			varchar('liveKey', 80)
 		],
 		indexes: [
 			{ name: 'IDX_ever_connect_link_organization', columns: ['tenantId', 'organizationId'] },
-			{ name: 'IDX_ever_connect_link_link_id', columns: ['linkId'], unique: true }
+			{ name: 'IDX_ever_connect_link_link_id', columns: ['linkId'], unique: true },
+			{ name: 'IDX_ever_connect_link_live', columns: ['liveKey'], unique: true }
 		]
 	},
 	{

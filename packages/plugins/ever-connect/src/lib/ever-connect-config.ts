@@ -34,18 +34,37 @@ export interface EverConnectConfig {
 	version: string;
 	/**
 	 * The origin of the web app (`CLIENT_BASE_URL`) that app.ever.co may send an administrator back
-	 * to after a consent, or `null` (https only; plain http on a local host). Ever Platform keeps
+	 * to after a consent, or `null`: https only, or plain http on `localhost`, `127.0.0.1` or `[::1]`
+	 * (as the contract allows). An address on a private network is never sent. Ever Platform keeps
 	 * only a digest of it.
 	 */
 	returnOrigin: string | null;
 	/** The web app address app.ever.co sends an administrator back to (no fragment), or `null`. */
 	returnUrl: string | null;
+	/** `CLIENT_BASE_URL` is set but is not one that may be sent (plain http on another host). */
+	returnUnusable: boolean;
 	/**
 	 * `EVER_PLATFORM_ISSUER`: the issuer Ever Platform's documents name, when it differs from the
-	 * origin of `EVER_PLATFORM_API_URL` (a mock platform in tests). The SDK honours it only for a
-	 * local address and ignores it, with one warning, anywhere else.
+	 * origin of `EVER_PLATFORM_API_URL` (a mock platform in tests). Honoured only when
+	 * `EVER_PLATFORM_API_URL` is a loopback address (`localhost`, `127.0.0.0/8`, `::1`).
 	 */
 	issuer: string | null;
+	/**
+	 * `EVER_PLATFORM_API_URL` is a loopback address: only then are `EVER_PLATFORM_ISSUER` and
+	 * `EVER_PLATFORM_ROOT_KEYS_FILE` (test keys) honoured.
+	 */
+	loopback: boolean;
+}
+
+/** `localhost` (and `*.localhost`), `127.0.0.0/8` and `::1`. */
+export function isLoopbackHost(hostname: string): boolean {
+	const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+	return (
+		host === 'localhost' ||
+		host.endsWith('.localhost') ||
+		host === '::1' ||
+		/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)
+	);
 }
 
 const KEY = /^[a-z0-9_]{2,64}$/;
@@ -72,6 +91,11 @@ function parseApiUrl(env: Env, warn: Warn): string | null {
 			'EVER_PLATFORM_API_URL must be https (plain http only for a local or private address) and carry no credential, query or fragment; the Ever Platform connection sends nothing until it is corrected.'
 		);
 		return null;
+	}
+	if (url.protocol === 'http:') {
+		warn(
+			'EVER_PLATFORM_API_URL is plain http: the connect code and the instance token cross the network in clear. Use it for a local test platform only.'
+		);
 	}
 	return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
 }
@@ -122,7 +146,13 @@ export function releaseVersion(raw: string | undefined): string {
 	return match ? `${Number(match[1])}.${Number(match[2])}.${Number(match[3])}` : '0.0.0';
 }
 
-/** The web app origin a consent may return to: https, or plain http on a local host. */
+/** The hosts plain http may return to (the contract's `return_origins`). */
+const HTTP_RETURN_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+/**
+ * The web app origin a consent may return to: https, or plain http on `localhost`, `127.0.0.1` or
+ * `[::1]`. Any other address (plain http on a private network) is never sent.
+ */
 function parseReturn(raw: string | undefined): { origin: string; url: string } | null {
 	const value = raw?.trim();
 	if (!value) {
@@ -134,8 +164,8 @@ function parseReturn(raw: string | undefined): { origin: string; url: string } |
 	} catch {
 		return null;
 	}
-	const local = isLocalHost(url.hostname);
-	if (!(url.protocol === 'https:' || (url.protocol === 'http:' && local)) || url.username || url.password) {
+	const httpOk = url.protocol === 'http:' && HTTP_RETURN_HOSTS.has(url.hostname.toLowerCase());
+	if (!(url.protocol === 'https:' || httpOk) || url.username || url.password) {
 		return null;
 	}
 	const base = `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
@@ -151,8 +181,16 @@ function parseReturn(raw: string | undefined): { origin: string; url: string } |
 export function readEverConnectConfig(env: Env = process.env, warn: Warn = () => undefined): EverConnectConfig {
 	const installSource = parseInstallSource(env, warn);
 	const ret = parseReturn(env['CLIENT_BASE_URL']);
+	const apiUrl = parseApiUrl(env, warn);
+	const loopback = apiUrl !== null && isLoopbackHost(new URL(apiUrl).hostname);
+	const issuer = env['EVER_PLATFORM_ISSUER']?.trim() || null;
+	if (!loopback && (issuer || env['EVER_PLATFORM_ROOT_KEYS_FILE']?.trim())) {
+		warn(
+			'EVER_PLATFORM_ISSUER and EVER_PLATFORM_ROOT_KEYS_FILE are for a test platform on a loopback address only; they are ignored.'
+		);
+	}
 	return {
-		apiUrl: parseApiUrl(env, warn),
+		apiUrl,
 		installSource,
 		cloud: installSource === 'cloud',
 		feedMode: parseFeedMode(env['EVER_CONNECT_FEED_MODE'], warn),
@@ -162,7 +200,9 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		version: releaseVersion(env['GAUZY_APP_VERSION']),
 		returnOrigin: ret?.origin ?? null,
 		returnUrl: ret?.url ?? null,
-		issuer: env['EVER_PLATFORM_ISSUER']?.trim() || null
+		returnUnusable: Boolean(env['CLIENT_BASE_URL']?.trim()) && !ret,
+		issuer: loopback ? issuer : null,
+		loopback
 	};
 }
 

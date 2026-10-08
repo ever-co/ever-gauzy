@@ -2,7 +2,7 @@ import { DataSource, Logger, QueryRunner } from 'typeorm';
 import { EverConnectAuditService } from './ever-connect-audit.service';
 import { EverConnectCatalogService } from './ever-connect-catalog.service';
 import { EverConnectSecretStore } from './ever-connect-secret-store';
-import { EverConnectStore } from './ever-connect.store';
+import { EverConnectStore, LinkRecord, LiveLinkExistsError } from './ever-connect.store';
 import {
 	connectMigrations,
 	CORE_TABLES,
@@ -285,6 +285,95 @@ describe.each(TEST_TARGETS)('EverConnect store on $name', (target) => {
 		});
 		expect(operator.items.map((row) => row.action)).toEqual(['link.create', 'instance.connect']);
 		expect(operator.total).toBe(2);
+	});
+
+	const linkValues = (tenantId: string, organizationId: string, linkId: string) => ({
+		tenantId,
+		organizationId,
+		integrationTenantId: null,
+		linkId,
+		everOrgId: '01JD4M2N3P4Q5R6S7T8V9V0EVR',
+		everHandle: 'acme',
+		status: 'linked' as const,
+		entitlementJwsEncrypted: null,
+		entitlementSeq: null,
+		entitlementIat: null,
+		entitlementExp: null,
+		entitlementFetchedAt: null
+	});
+
+	it('one live link per organization, also under concurrent inserts; free again once unlinked', async () => {
+		const tenant = await seedTenant(dataSource, d, 'Acme', '2026-01-01 00:00:00', 'ops@acme.example');
+		const store = new EverConnectStore(dataSource, now);
+		const results = await Promise.allSettled(
+			['01JD4M2N3P4Q5R6S7T8V9V0LK1', '01JD4M2N3P4Q5R6S7T8V9V0LK2', '01JD4M2N3P4Q5R6S7T8V9V0LK3'].map((linkId) =>
+				store.insertLink(linkValues(tenant.tenantId, tenant.organizationId, linkId))
+			)
+		);
+		expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+		for (const result of results.filter((r) => r.status === 'rejected')) {
+			expect((result as PromiseRejectedResult).reason).toBeInstanceOf(LiveLinkExistsError);
+		}
+		const live = (await store.linkOf(tenant.tenantId, tenant.organizationId)) as LinkRecord;
+		await store.updateLink(live.linkId, { status: 'unlinked', unlinkedAt: clock });
+		await expect(
+			store.insertLink(linkValues(tenant.tenantId, tenant.organizationId, '01JD4M2N3P4Q5R6S7T8V9V0LK4'))
+		).resolves.toMatchObject({ status: 'linked' });
+	});
+
+	it('a deleted organization or tenant: found, and its rows removed from every table (others kept)', async () => {
+		const acme = await seedTenant(dataSource, d, 'Acme', '2026-01-01 00:00:00', 'ops@acme.example');
+		const zephyr = await seedTenant(dataSource, d, 'Zephyr', '2026-02-01 00:00:00', 'ops@zephyr.example');
+		const initech = await seedTenant(dataSource, d, 'Initech', '2026-03-01 00:00:00', 'ops@initech.example');
+		const store = new EverConnectStore(dataSource, now);
+		const audit = new EverConnectAuditService(dataSource, now);
+		const owners = [acme, zephyr, initech];
+		for (const [i, owner] of owners.entries()) {
+			const linkId = `01JD4M2N3P4Q5R6S7T8V9V0LK${i}`;
+			await store.insertLink(linkValues(owner.tenantId, owner.organizationId, linkId));
+			await store.saveIntegration(linkId, 'counterparty_lookup', { state: 'coming_soon' }, owner);
+			await insert(dataSource, d, 'ever_connect_lookup_cache', {
+				id: `cache-${i}`,
+				tenantId: owner.tenantId,
+				organizationId: owner.organizationId,
+				kind: 'email',
+				hash: `hash-${i}`,
+				saltVersion: 'v1',
+				result: 'none',
+				expiresAt: clock + 1
+			});
+			await audit.record({
+				action: 'link.create',
+				actorLabel: 'user',
+				tenantId: owner.tenantId,
+				organizationId: owner.organizationId,
+				details: { link_id: linkId }
+			});
+		}
+		expect(await store.deletedOwners()).toEqual([]);
+		// Zephyr's organization is soft-deleted; Initech's tenant is deleted outright.
+		await dataSource.query(
+			`UPDATE ${q(d, 'organization')} SET ${q(d, 'deletedAt')} = ${d === 'better-sqlite3' ? "datetime('now')" : 'CURRENT_TIMESTAMP'} WHERE ${q(d, 'id')} = '${zephyr.organizationId}'`
+		);
+		await dataSource.query(`DELETE FROM ${q(d, 'tenant')} WHERE ${q(d, 'id')} = '${initech.tenantId}'`);
+		const deleted = await store.deletedOwners();
+		expect(deleted.map((owner) => owner.organizationId).sort()).toEqual(
+			[zephyr.organizationId, initech.organizationId].sort()
+		);
+		for (const owner of deleted) {
+			await store.purgeOwner(owner);
+			await audit.purge(owner);
+		}
+		expect(await store.deletedOwners()).toEqual([]);
+		for (const table of [
+			'ever_connect_link',
+			'ever_connect_integration',
+			'ever_connect_lookup_cache',
+			'ever_connect_audit'
+		]) {
+			const rows = await dataSource.query(`SELECT ${q(d, 'tenantId')} AS t FROM ${q(d, table)}`);
+			expect([table, rows.map((row: { t: string }) => row.t)]).toEqual([table, [acme.tenantId]]);
+		}
 	});
 
 	it('documents are stored encrypted: no compact JWS in any table (and a control store would leak)', async () => {

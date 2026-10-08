@@ -15,6 +15,8 @@ import { Subscription } from 'rxjs';
 import {
 	connectKeyMaterialProblem,
 	EverConnectKeyMaterialError,
+	EverConnectKeyUnreadableError,
+	EverInstanceKeyError,
 	EverInstanceService
 } from '@gauzy/plugin-ever-instance';
 import { ActorLabel, EverConnectAuditService } from './ever-connect-audit.service';
@@ -27,7 +29,9 @@ import {
 	EVER_CONNECT_CLOCK,
 	EVER_CONNECT_ENV,
 	EVER_CONNECT_SETTINGS,
-	PRODUCT
+	KID_SHAPE,
+	PRODUCT,
+	ULID_SHAPE
 } from './ever-connect.constants';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
@@ -41,9 +45,25 @@ import {
 } from './ever-connect-platform.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { ConnectionRecord, EverConnectStore } from './ever-connect.store';
-import { EntitlementError, KeyManifestError, ProblemError } from './sdk';
+import { EntitlementError, KeyManifestError, ProblemError, signKeyRotation } from './sdk';
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+
+/**
+ * 422 `key_unreadable` for a connect key the current secrets cannot read (`ENCRYPTION_KEY` or
+ * `JWT_SECRET` changed since it was stored); any other error as it is.
+ */
+export function keyProblem(error: unknown): unknown {
+	if (error instanceof EverConnectKeyUnreadableError || error instanceof EverInstanceKeyError) {
+		return new UnprocessableEntityException({
+			statusCode: 422,
+			code: 'key_unreadable',
+			message:
+				'The connect key of this installation cannot be read since ENCRYPTION_KEY or JWT_SECRET changed. Disconnect, then connect again with a new code.'
+		});
+	}
+	return error;
+}
 
 /** Who connects, and the organization to link along (optional). */
 export interface ConnectInput {
@@ -51,7 +71,7 @@ export interface ConnectInput {
 	actorLabel: ActorLabel;
 	userId: string | null;
 	/** The operator's tenant and organization, linked at once when the code names an organization. */
-	tenant?: { tenantId: string; organizationId: string; displayName?: string | null } | null;
+	tenant?: { tenantId: string; organizationId: string } | null;
 }
 
 export interface ConnectResult {
@@ -72,9 +92,18 @@ export interface ConnectionSummary {
 	last_error: string | null;
 	api_url: string | null;
 	return_url: string | null;
+	/** CLIENT_BASE_URL is plain http outside loopback: it is not sent, and consent links carry no return. */
+	return_unusable: boolean;
 	key_material: 'ok' | 'no_secret' | 'jwt_secret_default' | 'encryption_key_default';
+	/** The secret that protects the keys is shorter than 32 characters. */
+	secret_short: boolean;
+	/** `unreadable`: ENCRYPTION_KEY or JWT_SECRET changed since the key was stored (disconnect, then connect again). */
+	connect_key: 'none' | 'ok' | 'unreadable';
 	env_code: 'none' | 'pending' | 'used';
 }
+
+/** A secret shorter than this is accepted but flagged on the Connection tab. */
+const STRONG_SECRET_LENGTH = 32;
 
 const iso = (ms: number | null) => (ms === null ? null : new Date(ms).toISOString());
 
@@ -147,7 +176,10 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			last_error: c.lastError,
 			api_url: this.config.apiUrl,
 			return_url: this.config.returnUrl,
+			return_unusable: this.config.returnUnusable,
 			key_material: connectKeyMaterialProblem(this.env) ?? 'ok',
+			secret_short: (this.env['ENCRYPTION_KEY']?.trim() || this.env['JWT_SECRET']?.trim() || '').length < STRONG_SECRET_LENGTH,
+			connect_key: await this.instance.connectKeyState(),
 			env_code: !code ? 'none' : c.envCodeConsumedHash === sha256(code.trim().toUpperCase()) ? 'used' : 'pending'
 		};
 	}
@@ -207,8 +239,12 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			});
 		}
 		let key;
+		let client;
 		try {
-			key = await this.instance.ensureConnectKey();
+			// Not connected: a key the current secrets cannot read is replaced by a new one.
+			key = await this.instance.ensureConnectKey({ replaceUnreadable: true });
+			this.platform.setRegistryInstanceId(null);
+			client = await this.platform.getClient();
 		} catch (error) {
 			if (error instanceof EverConnectKeyMaterialError) {
 				throw new UnprocessableEntityException({
@@ -218,10 +254,8 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 					message: error.message
 				});
 			}
-			throw error;
+			throw keyProblem(error);
 		}
-		this.platform.setRegistryInstanceId(null);
-		const client = await this.platform.getClient();
 		// Ever Platform's keys first: a platform whose documents this installation cannot verify is
 		// refused before the code is used.
 		try {
@@ -231,11 +265,7 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 		}
 		const identity = await this.instance.ensure();
 		const tenant = input.tenant
-			? {
-					product_tenant_id: input.tenant.tenantId,
-					product_org_id: input.tenant.organizationId,
-					...(input.tenant.displayName ? { display_name: input.tenant.displayName.slice(0, 120) } : {})
-				}
+			? { product_tenant_id: input.tenant.tenantId, product_org_id: input.tenant.organizationId }
 			: null;
 		const body = {
 			code,
@@ -261,6 +291,22 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			)) as typeof redeemed;
 		} catch (error) {
 			throw this.problem(error, 'redeem');
+		}
+		// The ids Ever Platform answered are checked before they are kept: a Registry id, the key id of
+		// the key this installation sent, a link id.
+		if (
+			!ULID_SHAPE.test(String(redeemed?.instance_id)) ||
+			redeemed.kid !== key.keyId ||
+			!KID_SHAPE.test(String(redeemed.kid)) ||
+			(redeemed.link && !ULID_SHAPE.test(String(redeemed.link.id)))
+		) {
+			this.platform.setRegistryInstanceId(ULID_SHAPE.test(String(redeemed?.instance_id)) ? redeemed.instance_id : null);
+			await this.undoConnect('redeem_unverifiable');
+			throw new UnprocessableEntityException({
+				statusCode: 422,
+				code: 'redeem_unverifiable',
+				message: "Ever Platform's answer to the connect code could not be verified; the installation was not connected."
+			});
 		}
 		const status: ConnectionStatus = redeemed.status === 'pending_approval' ? 'pending_approval' : 'connected';
 		this.platform.setRegistryInstanceId(redeemed.instance_id);
@@ -341,13 +387,13 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			}
 		}
 		await this.states
-			.sync('operator')
+			.sync({ force: true })
 			.catch((error) => this.logger.warn(`Integration states could not be read now (${errorCode(error)}).`));
 		return link;
 	}
 
 	/** Undoes a connect whose document did not verify: nothing is kept here, Ever Platform is told (best effort). */
-	private async undoConnect(): Promise<void> {
+	private async undoConnect(reason = 'entitlement_unverifiable'): Promise<void> {
 		try {
 			const client = await this.platform.getClient();
 			await client.instances.disconnect(sha256(`undo|${this.platform.registryInstanceId}`));
@@ -368,7 +414,7 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 			instanceEntitlementIat: null,
 			instanceEntitlementExp: null,
 			instanceEntitlementFetchedAt: null,
-			lastError: 'entitlement_unverifiable'
+			lastError: reason
 		});
 	}
 
@@ -521,8 +567,8 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 
 	/**
 	 * The local steps of a disconnect, and of a revocation (`401 credential_revoked`, or the feed's
-	 * `instance.revoked`): status, documents, integrations, links, timers. A revoked connect key is
-	 * dropped (Ever Platform never accepts it again; the next connect makes a new one).
+	 * `instance.revoked`): status, documents, integrations, links, timers, and the connect key (one
+	 * key per connection; the next connect makes a new one).
 	 */
 	async stopLocally(
 		status: 'disconnected' | 'revoked',
@@ -558,9 +604,8 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 				remote
 			);
 		}
-		if (status === 'revoked') {
-			await this.instance.dropConnectKey();
-		}
+		// One connect key per connection: the next connect makes a new one.
+		await this.instance.dropConnectKey();
 		await this.audit.record({
 			action: 'instance.disconnect',
 			actorLabel: actor.actorLabel,
@@ -569,8 +614,75 @@ export class EverConnectConnectionService implements OnModuleInit, OnModuleDestr
 		});
 	}
 
+	// ── Key rotation ──────────────────────────────────────────────────────────
+
+	/**
+	 * Replaces the connect key of a connected installation (`POST /v1/instances/me/keys`): a new key
+	 * pair, two proofs signed by the SDK (`signKeyRotation`: one with the current key, one with the new
+	 * one), then the new key is stored in place of the old one. Ever Platform accepts the old key for
+	 * an overlap after the rotation, so requests already on their way still pass. With a key the
+	 * current secrets cannot read, 422 `key_unreadable`: disconnect, then connect again.
+	 */
+	async rotateKey(actor: { actorLabel: ActorLabel; userId: string | null }): Promise<{ kid: string }> {
+		const connection = await this.store.connection();
+		if (connection.status !== 'connected' || !connection.platformInstanceId) {
+			throw new ConflictException({
+				statusCode: 409,
+				code: 'not_connected',
+				message: 'This installation is not connected to Ever Platform.'
+			});
+		}
+		let current;
+		let client;
+		try {
+			current = await this.instance.connectSigner();
+			client = await this.platform.getClient();
+		} catch (error) {
+			throw keyProblem(error);
+		}
+		if (!current) {
+			throw keyProblem(new EverConnectKeyUnreadableError());
+		}
+		const rotation = await this.instance.prepareConnectKeyRotation(current.kid);
+		const body = await signKeyRotation({
+			current,
+			next: rotation.next,
+			registryInstanceId: connection.platformInstanceId,
+			issuer: client.issuer,
+			now: Math.floor(this.now() / 1000)
+		});
+		let answer: { kid: string; previous_kid: string };
+		try {
+			answer = (await client.instances.rotateKey(
+				body as never,
+				sha256(`rotate|${connection.platformInstanceId}|${current.kid}|${rotation.next.kid}`)
+			)) as typeof answer;
+		} catch (error) {
+			if (isCredentialRevoked(error)) this.signals.revoked$.next();
+			throw this.problem(error, 'rotate');
+		}
+		if (answer.kid !== rotation.next.kid || !(await rotation.commit())) {
+			// Ever Platform answered for another key, or the stored key changed meanwhile: the old key
+			// stays here, and Ever Platform accepts it until its overlap ends.
+			this.logger.warn('The rotated connect key could not be installed; the current key stays in use.');
+			throw new ConflictException({
+				statusCode: 409,
+				code: 'rotation_not_installed',
+				message: 'The new key could not be installed. Try again.'
+			});
+		}
+		await this.store.updateConnection({ kid: answer.kid });
+		await this.audit.record({
+			action: 'instance.rotate_key',
+			actorLabel: actor.actorLabel,
+			actorUserId: actor.userId,
+			details: { platform_instance_id: connection.platformInstanceId, kid: answer.kid, from: current.kid }
+		});
+		return { kid: answer.kid };
+	}
+
 	/** An HTTP answer for a failed platform step: never the platform's text, its code only. */
-	private problem(error: unknown, step: 'keys' | 'redeem' | 'entitlement'): Error {
+	private problem(error: unknown, step: 'keys' | 'redeem' | 'entitlement' | 'rotate'): Error {
 		if (isCredentialRevoked(error)) {
 			this.signals.revoked$.next();
 		}

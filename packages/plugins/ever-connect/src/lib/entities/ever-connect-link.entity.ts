@@ -13,6 +13,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
 @SkipExport()
 @ColumnIndex('IDX_ever_connect_link_organization', ['tenantId', 'organizationId'])
 @ColumnIndex('IDX_ever_connect_link_link_id', ['linkId'], { unique: true })
+@ColumnIndex('IDX_ever_connect_link_live', ['liveKey'], { unique: true })
 @MultiORMEntity('ever_connect_link')
 export class EverConnectLink {
 	@PrimaryKey({ type: 'varchar', length: 36 })
@@ -69,4 +70,8 @@ export class EverConnectLink {
 
 	@MultiORMColumn({ type: 'bigint', nullable: true })
 	unlinkedAt?: number | null;
+
+	/** `<tenantId>|<organizationId>` while the link is live, NULL once unlinked (unique: one live link per organization). */
+	@MultiORMColumn({ type: 'varchar', length: 80, nullable: true })
+	liveKey?: string | null;
 }

@@ -39,7 +39,9 @@ describe('readEverConnectConfig', () => {
 			version: '0.0.0',
 			returnOrigin: null,
 			returnUrl: null,
-			issuer: null
+			returnUnusable: false,
+			issuer: null,
+			loopback: false
 		});
 	});
 
@@ -67,10 +69,10 @@ describe('readEverConnectConfig', () => {
 		['https://user:pass@api.ever.co', null],
 		['https://api.ever.co/?x=1', null],
 		['not a url', null]
-	])('EVER_PLATFORM_API_URL %s gives %s (never another address)', (value, expected) => {
+	])('EVER_PLATFORM_API_URL %s gives %s (never another address; plain http warns)', (value, expected) => {
 		const warn = jest.fn();
 		expect(readEverConnectConfig({ EVER_PLATFORM_API_URL: value }, warn).apiUrl).toBe(expected);
-		expect(warn).toHaveBeenCalledTimes(expected === null ? 1 : 0);
+		expect(warn).toHaveBeenCalledTimes(expected === null || expected.startsWith('http:') ? 1 : 0);
 		for (const [message] of warn.mock.calls) {
 			expect(message).not.toContain(value);
 		}
@@ -94,6 +96,31 @@ describe('readEverConnectConfig', () => {
 		expect(deniedByEnv(config, 'stats_link')).toBe(true);
 		expect(deniedByEnv(config, 'webhooks')).toBe(false);
 		expect(deniedByEnv(readEverConnectConfig({ EVER_CONNECT_INTEGRATIONS_DENY: '*' }), 'webhooks')).toBe(true);
+	});
+
+	it('the test issuer and root keys are honoured for a loopback platform only', () => {
+		const env = { EVER_PLATFORM_ISSUER: 'https://mock-platform.test' };
+		expect(readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'http://127.0.0.1:18081' })).toMatchObject({
+			issuer: 'https://mock-platform.test',
+			loopback: true
+		});
+		const warn = jest.fn();
+		expect(
+			readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'http://192.168.1.20:8080' }, warn)
+		).toMatchObject({ issuer: null, loopback: false });
+		expect(warn.mock.calls.map(([message]) => message).join(' ')).toMatch(/loopback/);
+		expect(readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'https://api-dev.ever.co' }).issuer).toBeNull();
+	});
+
+	it('a web app on plain http outside loopback (a private network address) is never sent', () => {
+		expect(readEverConnectConfig({ CLIENT_BASE_URL: 'http://192.168.1.20:4200' })).toMatchObject({
+			returnOrigin: null,
+			returnUrl: null,
+			returnUnusable: true
+		});
+		expect(readEverConnectConfig({ CLIENT_BASE_URL: 'http://127.0.0.1:4200' }).returnOrigin).toBe(
+			'http://127.0.0.1:4200'
+		);
 	});
 
 	it('the return address is the web app origin (https, or http on a local host); nothing else', () => {

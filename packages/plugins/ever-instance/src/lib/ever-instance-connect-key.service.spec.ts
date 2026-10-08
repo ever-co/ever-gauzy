@@ -2,7 +2,7 @@
 import { createPublicKey, verify } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EverInstanceEvents } from './ever-instance.events';
-import { EverConnectKeyMaterialError, EverInstanceService } from './ever-instance.service';
+import { EverConnectKeyMaterialError, EverConnectKeyUnreadableError, EverInstanceService } from './ever-instance.service';
 import {
 	connectKeyMaterialProblem,
 	EverInstanceKeyError,
@@ -95,6 +95,40 @@ describe.each(TEST_TARGETS)('EverInstanceService connect key on $name', (target)
 		await expect(service({ ENCRYPTION_KEY: 'another-key' }).connectSigner()).rejects.toBeInstanceOf(
 			EverInstanceKeyError
 		);
+	});
+
+	it('after a secret change it reads as unreadable, and is replaced only when the caller asks (compare and set)', async () => {
+		const first = await service().ensureConnectKey();
+		expect(await service().connectKeyState()).toBe('ok');
+		const rotated = service({ ENCRYPTION_KEY: 'another-key' });
+		expect(await rotated.connectKeyState()).toBe('unreadable');
+		await expect(rotated.ensureConnectKey()).rejects.toBeInstanceOf(EverConnectKeyUnreadableError);
+		expect(await service().connectKey()).toEqual(first);
+		const replaced = await rotated.ensureConnectKey({ replaceUnreadable: true });
+		expect(replaced.keyId).not.toBe(first.keyId);
+		expect(await rotated.connectKeyState()).toBe('ok');
+		expect((await rotated.connectSigner())?.kid).toBe(replaced.keyId);
+		// A readable key is never replaced.
+		expect(await rotated.ensureConnectKey({ replaceUnreadable: true })).toEqual(replaced);
+	});
+
+	it('a rotation key signs before it is stored, and is installed only in place of the expected key', async () => {
+		const current = await service().ensureConnectKey();
+		const rotation = await service().prepareConnectKeyRotation(current.keyId);
+		expect(rotation.next.kid).not.toBe(current.keyId);
+		expect(JSON.stringify(rotation.next)).toBe(JSON.stringify({ kid: rotation.next.kid }));
+		const bytes = Buffer.from('proof');
+		const publicKey = createPublicKey({
+			key: { kty: 'OKP', crv: 'Ed25519', x: rotation.publicKey },
+			format: 'jwk'
+		});
+		expect(verify(null, bytes, publicKey, await rotation.next.sign(bytes))).toBe(true);
+		expect(await service().connectKey()).toEqual(current);
+		const stale = await service().prepareConnectKeyRotation('not-the-key');
+		expect(await stale.commit()).toBe(false);
+		expect(await rotation.commit()).toBe(true);
+		expect(await service().connectKey()).toEqual({ publicKey: rotation.publicKey, keyId: rotation.next.kid });
+		expect((await service().connectSigner())?.kid).toBe(rotation.next.kid);
 	});
 
 	it('is dropped after a revocation (the next connect makes a new one); the statistics identity stays', async () => {

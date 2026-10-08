@@ -9,8 +9,8 @@ import {
 	EntitlementError,
 	entitlementStatus,
 	EntitlementStatus,
+	claimsOfVerifiedJws,
 	RateLimitedError,
-	readJwsPayload,
 	VerifiedEntitlement
 } from './sdk';
 
@@ -30,6 +30,30 @@ export interface EntitlementSummary {
 	meters: Record<string, { used: number; period: string | null }>;
 }
 
+/** A link's document names another Gauzy tenant or organization than the one the link belongs to here. */
+export class LinkBindingError extends Error {
+	readonly code = 'tenant_mismatch';
+	constructor() {
+		super('The link document names another tenant or organization.');
+		this.name = 'LinkBindingError';
+	}
+}
+
+/**
+ * Throws {@link LinkBindingError} unless the verified link document is bound to `owner` (its
+ * `ever.tenant` names this Gauzy tenant and organization, when it names one).
+ */
+export function checkLinkBinding(
+	verified: VerifiedEntitlement,
+	owner: { tenantId: string; organizationId: string }
+): void {
+	const tenant = (verified.claims.ever as { tenant?: { product_tenant_id?: string; product_org_id?: string } | null })
+		.tenant;
+	if (tenant && (tenant.product_tenant_id !== owner.tenantId || tenant.product_org_id !== owner.organizationId)) {
+		throw new LinkBindingError();
+	}
+}
+
 const iso = (seconds: number | null | undefined) =>
 	typeof seconds === 'number' ? new Date(seconds * 1000).toISOString() : null;
 const isoMs = (ms: number | null | undefined) => (typeof ms === 'number' ? new Date(ms).toISOString() : null);
@@ -43,7 +67,8 @@ const isoMs = (ms: number | null | undefined) => (typeof ms === 'number' ? new D
 export class EverConnectEntitlementService {
 	private readonly secrets: EverConnectSecretStore;
 	private readonly now: () => number;
-	private readonly refreshes: number[] = [];
+	/** On-demand refreshes of the last hour, per document (`instance`, or a link id). */
+	private readonly refreshes = new Map<string, number[]>();
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -103,22 +128,38 @@ export class EverConnectEntitlementService {
 	}
 
 	/**
-	 * On-demand refresh (the Entitlements tab): at most 6 an hour for the installation, else 429.
+	 * On-demand refresh (the Entitlements tab), at most 6 an hour for each document, else 429: the
+	 * caller's organization link's document, and the installation's for the operator only (other
+	 * tenants never spend the installation's budget, nor each other's).
 	 */
-	async refreshOnDemand(actor: { userId: string | null; tenantId: string; organizationId: string }): Promise<void> {
-		const hourAgo = this.now() - 3_600_000;
-		while (this.refreshes.length && this.refreshes[0] <= hourAgo) {
-			this.refreshes.shift();
-		}
-		if (this.refreshes.length >= ENTITLEMENT_REFRESHES_PER_HOUR) {
-			throw new HttpException(
-				{ statusCode: 429, code: 'rate_limited', message: 'At most 6 refreshes an hour.' },
-				HttpStatus.TOO_MANY_REQUESTS
-			);
-		}
-		this.refreshes.push(this.now());
-		await this.refreshInstance({ actorLabel: 'user', actorUserId: actor.userId });
+	async refreshOnDemand(actor: {
+		userId: string | null;
+		tenantId: string;
+		organizationId: string;
+		isOperator: boolean;
+	}): Promise<void> {
 		const link = await this.store.linkOf(actor.tenantId, actor.organizationId);
+		const documents = [...(actor.isOperator ? ['instance'] : []), ...(link ? [link.linkId] : [])];
+		if (!documents.length) {
+			return;
+		}
+		const hourAgo = this.now() - 3_600_000;
+		for (const document of documents) {
+			const recent = (this.refreshes.get(document) ?? []).filter((at) => at > hourAgo);
+			this.refreshes.set(document, recent);
+			if (recent.length >= ENTITLEMENT_REFRESHES_PER_HOUR) {
+				throw new HttpException(
+					{ statusCode: 429, code: 'rate_limited', message: 'At most 6 refreshes an hour.' },
+					HttpStatus.TOO_MANY_REQUESTS
+				);
+			}
+		}
+		for (const document of documents) {
+			this.refreshes.get(document)?.push(this.now());
+		}
+		if (actor.isOperator) {
+			await this.refreshInstance({ actorLabel: 'operator', actorUserId: actor.userId });
+		}
 		if (link) {
 			await this.refreshLink(link, { actorLabel: 'user', actorUserId: actor.userId });
 		}
@@ -136,9 +177,10 @@ export class EverConnectEntitlementService {
 		if (connection.status !== 'connected' || !connection.platformInstanceId) {
 			return;
 		}
-		const stored = this.secrets.open(connection.instanceEntitlementJwsEncrypted);
+		// The stored sequence and issue time (kept in clear) guard against an older document, also when
+		// the stored document itself cannot be read any more.
 		const cached =
-			stored && connection.instanceEntitlementSeq !== null
+			connection.instanceEntitlementSeq !== null
 				? { seq: connection.instanceEntitlementSeq, iat: connection.instanceEntitlementIat ?? 0 }
 				: null;
 		await this.guard(async () => {
@@ -175,9 +217,8 @@ export class EverConnectEntitlementService {
 		if (link.status === 'unlinked') {
 			return;
 		}
-		const stored = this.secrets.open(link.entitlementJwsEncrypted);
 		const cached =
-			stored && link.entitlementSeq !== null ? { seq: link.entitlementSeq, iat: link.entitlementIat ?? 0 } : null;
+			link.entitlementSeq !== null ? { seq: link.entitlementSeq, iat: link.entitlementIat ?? 0 } : null;
 		await this.guard(async () => {
 			const client = await this.platform.getClient();
 			const answer = await client.instances.linkEntitlement(link.linkId, cached?.seq);
@@ -187,6 +228,7 @@ export class EverConnectEntitlementService {
 			}
 			try {
 				const verified = await this.platform.verify(answer.document, `link:${link.linkId}`, cached);
+				checkLinkBinding(verified, link);
 				await this.store.updateLink(link.linkId, this.linkDocumentColumns(verified));
 				if (
 					link.integrationTenantId &&
@@ -222,16 +264,19 @@ export class EverConnectEntitlementService {
 	/** The decoded summary of the stored documents for one organization (and the installation). */
 	async summary(
 		tenantId: string,
-		organizationId: string
+		organizationId: string,
+		isOperator: boolean
 	): Promise<{ instance: EntitlementSummary | null; link: EntitlementSummary | null }> {
 		const connection = await this.store.connection();
 		const link = await this.store.linkOf(tenantId, organizationId);
 		return {
-			instance: this.summarize(
-				'instance',
-				this.secrets.open(connection.instanceEntitlementJwsEncrypted),
-				connection.instanceEntitlementFetchedAt
-			),
+			instance: isOperator
+				? this.summarize(
+						'instance',
+						this.secrets.open(connection.instanceEntitlementJwsEncrypted),
+						connection.instanceEntitlementFetchedAt
+					)
+				: null,
 			link: link
 				? this.summarize('link', this.secrets.open(link.entitlementJwsEncrypted), link.entitlementFetchedAt)
 				: null
@@ -243,7 +288,8 @@ export class EverConnectEntitlementService {
 		jws: string | null,
 		fetchedAt: number | null
 	): EntitlementSummary | null {
-		const payload = jws ? readJwsPayload(jws) : null;
+		// Stored documents were verified before they were stored: their claims are read for display only.
+		const payload = jws ? claimsOfVerifiedJws(jws) : null;
 		if (!payload) {
 			return null;
 		}
@@ -271,7 +317,7 @@ export class EverConnectEntitlementService {
 		actor: { actorLabel: ActorLabel; actorUserId?: string | null },
 		link?: LinkRecord
 	): Promise<void> {
-		if (!(error instanceof EntitlementError)) {
+		if (!(error instanceof EntitlementError) && !(error instanceof LinkBindingError)) {
 			throw error;
 		}
 		await this.store.updateConnection({ lastError: `entitlement_${error.code}` });

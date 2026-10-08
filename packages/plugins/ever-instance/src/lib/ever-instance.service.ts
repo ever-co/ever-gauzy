@@ -85,6 +85,30 @@ export class EverConnectKeyMaterialError extends Error {
 	}
 }
 
+/**
+ * The stored connect key cannot be read with the secrets of this process (`ENCRYPTION_KEY` or
+ * `JWT_SECRET` changed since it was stored). It is replaced only while the installation is not
+ * connected: disconnect, then connect again with a new code.
+ */
+export class EverConnectKeyUnreadableError extends Error {
+	readonly code = 'key_unreadable';
+	constructor() {
+		super('The Ever Platform connect key of this installation cannot be read with the current secrets.');
+		this.name = 'EverConnectKeyUnreadableError';
+	}
+}
+
+/** A new connect key, not stored yet: it signs the rotation's proof, then `commit()` installs it. */
+export interface EverConnectKeyRotation {
+	readonly next: EverConnectSigner;
+	readonly publicKey: string;
+	/**
+	 * Installs the new key in place of the current one (compare and set on its key id: nothing is
+	 * written when the stored key changed meanwhile). Returns whether it was installed.
+	 */
+	commit(): Promise<boolean>;
+}
+
 /** The identity changed (a reset by another request or process) between two reads. */
 export class EverInstanceIdentityChangedError extends Error {
 	constructor() {
@@ -226,37 +250,116 @@ export class EverInstanceService {
 	}
 
 	/**
+	 * Whether the stored connect key can be read with the secrets of this process: `none` before one
+	 * was made, `unreadable` after `ENCRYPTION_KEY` or `JWT_SECRET` changed since it was stored.
+	 */
+	async connectKeyState(): Promise<'none' | 'ok' | 'unreadable'> {
+		const row = await this.readRow();
+		if (!row?.['connectPublicKey'] || !row['connectPrivateKeyEncrypted']) {
+			return 'none';
+		}
+		try {
+			unwrapKey(String(row['connectPrivateKeyEncrypted']), 'connect', this.env).fill(0);
+			return 'ok';
+		} catch (error) {
+			if (error instanceof EverInstanceKeyError) {
+				return 'unreadable';
+			}
+			throw error;
+		}
+	}
+
+	/**
 	 * The Ever Platform connect key, made on first use: a second Ed25519 key pair, separate from the
 	 * statistics key, so resetting the statistics identity never touches the connection and the
 	 * connection never signs a statistics report. Refuses ({@link EverConnectKeyMaterialError})
 	 * unless `ENCRYPTION_KEY` or a `JWT_SECRET` other than a published default is set. Safe when
 	 * several processes call it at once: only the first write is kept (compare and set on an empty key).
+	 *
+	 * A stored key that cannot be read with the current secrets is replaced with `replaceUnreadable`
+	 * (the caller makes sure the installation is not connected; compare and set on the old value),
+	 * else {@link EverConnectKeyUnreadableError}.
 	 */
-	async ensureConnectKey(): Promise<EverConnectKeyRecord> {
+	async ensureConnectKey(options: { replaceUnreadable?: boolean } = {}): Promise<EverConnectKeyRecord> {
 		const problem = connectKeyMaterialProblem(this.env);
 		if (problem) {
 			throw new EverConnectKeyMaterialError(problem);
 		}
 		await this.ensure();
 		const existing = await this.connectKey();
-		if (existing) {
+		if (existing && (await this.connectKeyState()) === 'unreadable') {
+			if (!options.replaceUnreadable) {
+				throw new EverConnectKeyUnreadableError();
+			}
+			const row = await this.readRow();
+			await this.writeConnectKey(String(row?.['connectPrivateKeyEncrypted'] ?? ''));
+			this.logger.warn('The Ever Platform connect key could not be read with the current secrets; a new one was made.');
+		} else if (existing) {
 			return existing;
+		} else {
+			await this.writeConnectKey(null);
 		}
-		const { publicKey, privateKeyDer } = generateEd25519KeyPair();
-		const wrapped = wrapKey(privateKeyDer, 'connect', this.env);
-		privateKeyDer.fill(0);
-		const d = this.dialect;
-		await runSql(
-			this.dataSource,
-			`UPDATE ${quote(d, TABLE)} SET ${this.col('connectPublicKey')} = ${ph(d, 1)}, ${this.col('connectPrivateKeyEncrypted')} = ${ph(d, 2)}, ${this.col('connectKeyId')} = ${ph(d, 3)}, ${this.col('updatedAt')} = ${ph(d, 4)} ` +
-				`WHERE ${this.col('id')} = ${ph(d, 5)} AND ${this.col('connectPublicKey')} IS NULL`,
-			[publicKey, wrapped, keyIdOf(publicKey), Date.now(), EVER_INSTANCE_ROW_ID]
-		);
 		const stored = await this.connectKey();
 		if (!stored) {
 			throw new Error('The connect key of this installation could not be stored.');
 		}
 		return stored;
+	}
+
+	/** Writes a new connect key where the stored one is `expected` (`null`: where there is none yet). */
+	private async writeConnectKey(expected: string | null): Promise<void> {
+		const { publicKey, privateKeyDer } = generateEd25519KeyPair();
+		const wrapped = wrapKey(privateKeyDer, 'connect', this.env);
+		privateKeyDer.fill(0);
+		const d = this.dialect;
+		const condition =
+			expected === null
+				? `${this.col('connectPublicKey')} IS NULL`
+				: `${this.col('connectPrivateKeyEncrypted')} = ${ph(d, 6)}`;
+		await runSql(
+			this.dataSource,
+			`UPDATE ${quote(d, TABLE)} SET ${this.col('connectPublicKey')} = ${ph(d, 1)}, ${this.col('connectPrivateKeyEncrypted')} = ${ph(d, 2)}, ${this.col('connectKeyId')} = ${ph(d, 3)}, ${this.col('updatedAt')} = ${ph(d, 4)} ` +
+				`WHERE ${this.col('id')} = ${ph(d, 5)} AND ${condition}`,
+			[publicKey, wrapped, keyIdOf(publicKey), Date.now(), EVER_INSTANCE_ROW_ID, ...(expected === null ? [] : [expected])]
+		);
+	}
+
+	/**
+	 * A new connect key for a rotation: the SDK's `signKeyRotation` signs its proofs with the current
+	 * key and this one, Ever Platform installs it, then `commit()` stores it in place of the key whose
+	 * id is `currentKid`. Until then it exists in memory only. Refuses without key material.
+	 */
+	async prepareConnectKeyRotation(currentKid: string): Promise<EverConnectKeyRotation> {
+		const problem = connectKeyMaterialProblem(this.env);
+		if (problem) {
+			throw new EverConnectKeyMaterialError(problem);
+		}
+		const { publicKey, privateKeyDer } = generateEd25519KeyPair();
+		const privateKey = createPrivateKey({ key: privateKeyDer, format: 'der', type: 'pkcs8' });
+		const wrapped = wrapKey(privateKeyDer, 'connect', this.env);
+		privateKeyDer.fill(0);
+		const kid = keyIdOf(publicKey);
+		const next: EverConnectSigner = {
+			kid,
+			publicKeyRaw: new Uint8Array(Buffer.from(publicKey, 'base64url')),
+			sign: async (bytes: Uint8Array) => new Uint8Array(edSign(null, bytes, privateKey))
+		};
+		Object.defineProperty(next, 'toJSON', { value: () => ({ kid }), enumerable: false });
+		Object.defineProperty(next, 'toString', { value: () => `EverConnectSigner(${kid})`, enumerable: false });
+		return {
+			next,
+			publicKey,
+			commit: async () => {
+				const d = this.dialect;
+				const { affected } = await runSql(
+					this.dataSource,
+					`UPDATE ${quote(d, TABLE)} SET ${this.col('connectPublicKey')} = ${ph(d, 1)}, ${this.col('connectPrivateKeyEncrypted')} = ${ph(d, 2)}, ${this.col('connectKeyId')} = ${ph(d, 3)}, ${this.col('updatedAt')} = ${ph(d, 4)} ` +
+						`WHERE ${this.col('id')} = ${ph(d, 5)} AND ${this.col('connectKeyId')} = ${ph(d, 6)}`,
+					[publicKey, wrapped, kid, Date.now(), EVER_INSTANCE_ROW_ID, currentKid]
+				);
+				return affected === 1;
+			}
+		};
 	}
 
 	/**
@@ -285,8 +388,9 @@ export class EverInstanceService {
 	}
 
 	/**
-	 * Forgets the connect key. Ever Platform never accepts a revoked key again, so after a revocation
-	 * the next connect makes a new one. The statistics key is not touched.
+	 * Forgets the connect key, after every disconnect and revocation (one key per connection; Ever
+	 * Platform never accepts a revoked key again): the next connect makes a new one. The statistics key
+	 * is not touched.
 	 */
 	async dropConnectKey(): Promise<void> {
 		const d = this.dialect;

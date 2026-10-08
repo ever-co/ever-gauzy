@@ -437,7 +437,7 @@ jobs:
           EVER_CONNECT_MOCK_PLATFORM_REQUIRED: 'true'
         run: |
           TOOLS_DIR=$(node -p "require('node:path').dirname(require.resolve('@ever-co/connect-tools/package.json', { paths: ['packages/plugins/ever-connect'] }))")
-          EVER_MOCK_CONFIG_JSON='{"issuer":"https://mock-platform.test"}' node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18081 > "$RUNNER_TEMP/mock-platform-connect.log" 2>&1 &
+          node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18081 > "$RUNNER_TEMP/mock-platform-connect.log" 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://127.0.0.1:18081/__mock/healthz > /dev/null; then break; fi
             sleep 1

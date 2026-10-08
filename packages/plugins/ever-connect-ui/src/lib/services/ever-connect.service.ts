@@ -25,7 +25,10 @@ export interface EverConnectStatus {
 		last_error: string | null;
 		api_url: string | null;
 		return_url: string | null;
+		return_unusable: boolean;
 		key_material: 'ok' | 'no_secret' | 'jwt_secret_default' | 'encryption_key_default';
+		secret_short: boolean;
+		connect_key: 'none' | 'ok' | 'unreadable';
 		env_code: 'none' | 'pending' | 'used';
 	} | null;
 	link: EverConnectLink | null;
@@ -169,6 +172,11 @@ export class EverConnectUiService {
 
 	checkApproval(): Observable<{ status: ConnectionStatus }> {
 		return this.http.post<{ status: ConnectionStatus }>(`${BASE}/connection/check`, {});
+	}
+
+	/** Replaces the connect key (the installation stays connected). */
+	rotateKey(): Observable<{ kid: string }> {
+		return this.http.post<{ kid: string }>(`${BASE}/connection/rotate-key`, {});
 	}
 
 	disconnect(): Observable<{ status: ConnectionStatus }> {

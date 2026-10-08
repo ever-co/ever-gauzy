@@ -39,6 +39,12 @@ export const LINK_CODE_SHAPE = /^EVL(-[0-9A-HJKMNP-TV-Z]{4}){3}$/i;
 /** A Registry id (ULID). */
 export const ULID_SHAPE = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
+/** A key id: base64url of the first 8 bytes of SHA-256 over the public key, 11 characters. */
+export const KID_SHAPE = /^[A-Za-z0-9_-]{11}$/;
+
+/** The longest event feed cursor kept (`feedCursor`). */
+export const MAX_FEED_CURSOR_LENGTH = 64;
+
 /**
  * The integrations that act for the whole installation rather than one linked organization. Only
  * the operator of the installation asks for their consent link and accepts them locally.

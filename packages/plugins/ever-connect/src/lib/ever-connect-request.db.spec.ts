@@ -208,6 +208,17 @@ describe.each(TEST_TARGETS)('Ever Platform routes on $name', (target) => {
 		expect(calls).toEqual([]);
 	});
 
+	it('control: the recording fetch does see a request when one is made (a valid code with key material)', async () => {
+		app = await start({
+			EVER_OPERATOR_USER_IDS: acme.superAdminId,
+			ENCRYPTION_KEY: 'a-strong-encryption-key-for-tests'
+		});
+		const connect = await call('post', '/api/ever-connect/connect', 'operator', { code: 'EVC-AAAA-BBBB-CCCC' });
+		expect(connect.status).toBe(502);
+		expect(calls.length).toBeGreaterThan(0);
+		expect(new Set(calls)).toEqual(new Set(['https://api.ever.co/.well-known/ever-keys.json']));
+	});
+
 	it.each([
 		[
 			'the stranger of another tenant with the operator address',

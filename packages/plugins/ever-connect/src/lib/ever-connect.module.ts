@@ -3,6 +3,7 @@ import { RolePermissionModule } from '@gauzy/core';
 import { EverInstanceModule, EverInstanceService, EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { EverConnectAuditService } from './ever-connect-audit.service';
 import { EverConnectCatalogService } from './ever-connect-catalog.service';
+import { EverConnectCleanupService } from './ever-connect-cleanup.service';
 import { readEverConnectConfig } from './ever-connect-config';
 import { EverConnectConnectionService } from './ever-connect-connection.service';
 import { EVER_CONNECT_ENV, EVER_CONNECT_SETTINGS } from './ever-connect.constants';
@@ -88,6 +89,7 @@ export class EverConnectModule {
 				EverConnectEntitlementService,
 				EverConnectIntegrationStateService,
 				EverConnectLinkService,
+				EverConnectCleanupService,
 				EverConnectConnectionService,
 				EverConnectScheduler,
 				EverConnectOperatorGuard,

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { EverInstanceService } from '@gauzy/plugin-ever-instance';
-import { ActorLabel, EverConnectAuditService } from './ever-connect-audit.service';
+import { EverConnectAuditService } from './ever-connect-audit.service';
 import { deniedByEnv } from './ever-connect-config';
 import type { EverConnectConfig } from './ever-connect-config';
 import {
@@ -82,6 +82,48 @@ export interface IntegrationView {
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
 const isoMs = (ms: number | null) => (ms === null ? null : new Date(ms).toISOString());
 
+/** A page asking to re-read the states reads them at most once in this time (per process). */
+export const SYNC_COALESCE_MS = 30_000;
+
+/** Whether writing `values` would change nothing of `before`. */
+function unchanged(before: IntegrationRecord, values: Partial<Record<keyof IntegrationRecord, unknown>>): boolean {
+	return Object.entries(values).every(([column, value]) => {
+		const current = before[column as keyof IntegrationRecord] ?? null;
+		return (value ?? null) === current;
+	});
+}
+
+/**
+ * Whether a consent link from Ever Platform may be opened: https, on app.ever.co or on a host of the
+ * registrable domain of `EVER_PLATFORM_API_URL` (`api-dev.ever.co` → `*.ever.co`).
+ */
+export function consentLinkAllowed(link: string, apiUrl: string | null): boolean {
+	let url: URL;
+	try {
+		url = new URL(link);
+	} catch {
+		return false;
+	}
+	if (url.protocol !== 'https:' || url.username || url.password) {
+		return false;
+	}
+	const host = url.hostname.toLowerCase();
+	if (host === 'app.ever.co') {
+		return true;
+	}
+	let apiHost: string | null = null;
+	try {
+		apiHost = apiUrl ? new URL(apiUrl).hostname.toLowerCase() : null;
+	} catch {
+		apiHost = null;
+	}
+	if (!apiHost || /^[0-9.]+$/.test(apiHost) || apiHost.includes(':') || !apiHost.includes('.')) {
+		return false;
+	}
+	const domain = apiHost.split('.').slice(-2).join('.');
+	return host === domain || host.endsWith(`.${domain}`);
+}
+
 /**
  * The integration states of this installation, and the only paths that change them:
  *
@@ -103,6 +145,10 @@ export class EverConnectIntegrationStateService {
 	private readonly now: () => number;
 	/** Integrations whose local effect failed and is retried at the next heartbeat. */
 	private readonly retry = new Set<string>();
+	/** The read of Ever Platform's states in progress, shared by concurrent callers. */
+	private syncing: Promise<void> | null = null;
+	/** When the states were last read (for coalescing reads from page views). */
+	private lastSyncAt: number | null = null;
 
 	constructor(
 		private readonly platform: EverConnectPlatformService,
@@ -143,24 +189,40 @@ export class EverConnectIntegrationStateService {
 
 	/**
 	 * Reads Ever Platform's states and applies them: a state that became `enabled` runs the
-	 * integration's local effect (once), one that went off stops it, and each change is audited.
+	 * integration's local effect (once), one that went off stops it, and each change is audited as
+	 * Ever Platform's. Without `force` (a page asking to re-read), at most one read every 30 seconds
+	 * per process; concurrent calls share one read.
 	 */
-	async sync(actor: ActorLabel = 'platform'): Promise<void> {
+	async sync(options: { force?: boolean } = {}): Promise<void> {
+		if (this.syncing) {
+			return this.syncing;
+		}
+		if (!options.force && this.lastSyncAt !== null && this.now() - this.lastSyncAt < SYNC_COALESCE_MS) {
+			return;
+		}
+		this.syncing = this.syncOnce().finally(() => {
+			this.syncing = null;
+		});
+		return this.syncing;
+	}
+
+	private async syncOnce(): Promise<void> {
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected' || !connection.platformInstanceId) {
 			return;
 		}
 		const remote = await this.guard(async () => (await this.platform.getClient()).instances.integrations());
+		this.lastSyncAt = this.now();
 		const instanceStates = (remote.instance ?? {}) as Record<string, RemoteState>;
 		const linkStates = (remote.links ?? {}) as Record<string, Record<string, RemoteState>>;
 		const links = await this.store.liveLinks();
 		for (const definition of this.offered()) {
 			if (definition.instanceWide) {
-				await this.apply('instance', definition, instanceStates[definition.key], {}, actor);
+				await this.apply('instance', definition, instanceStates[definition.key], {});
 				continue;
 			}
 			for (const link of links) {
-				await this.apply(link.linkId, definition, linkStates[link.linkId]?.[definition.key], link, actor);
+				await this.apply(link.linkId, definition, linkStates[link.linkId]?.[definition.key], link);
 			}
 		}
 	}
@@ -169,14 +231,14 @@ export class EverConnectIntegrationStateService {
 		scope: string,
 		definition: GauzyIntegrationDefinition,
 		remote: RemoteState | undefined,
-		owner: Partial<LinkRecord>,
-		actor: ActorLabel
+		owner: Partial<LinkRecord>
 	): Promise<void> {
 		const key = definition.key;
 		const before = await this.store.integration(scope, key);
 		const denied = await this.deniedBy(key);
 		let state: IntegrationLocalState = 'available';
 		let revokeSource: RevokeSource | null = before?.revokeSource as RevokeSource | null;
+		let operatorAccept: string | null = before?.operatorAccept ?? null;
 		if (!definition.available) {
 			state = 'coming_soon';
 		} else if (denied) {
@@ -184,7 +246,23 @@ export class EverConnectIntegrationStateService {
 			revokeSource = denied === 'env' ? 'env' : 'policy';
 		} else if (remote) {
 			state = this.localState(remote.state);
-			if (state === 'enabled' && before?.pendingRemoteRevoke) {
+			const sameConsent = Boolean(remote.consent_id) && remote.consent_id === before?.consentId;
+			// The operator's accept holds for one consent: a new consent waits for a new accept.
+			operatorAccept = sameConsent ? (before?.operatorAccept ?? null) : null;
+			if (
+				definition.instanceWide &&
+				!this.config.cloud &&
+				state === 'enabled' &&
+				operatorAccept !== 'accepted'
+			) {
+				// Ever Platform reads `enabled`, but the operator did not accept this consent here: an
+				// installation-wide integration runs only after their local accept.
+				state = 'pending_operator';
+			}
+			if (state === 'pending_operator' && operatorAccept !== 'accepted') {
+				operatorAccept = 'pending';
+			}
+			if ((state === 'enabled' || state === 'pending_operator') && before?.pendingRemoteRevoke) {
 				// Switched off here while Ever Platform could not be told: off it stays.
 				state = 'disabled';
 			}
@@ -208,7 +286,7 @@ export class EverConnectIntegrationStateService {
 			scopeVersion: remote?.scope_version ?? before?.scopeVersion ?? null,
 			consentId,
 			revokeSource,
-			operatorAccept: state === 'pending_operator' ? 'pending' : (before?.operatorAccept ?? null)
+			operatorAccept
 		};
 		if (consentId && consentId !== before?.consentId) {
 			values.consentedAt = this.now();
@@ -216,6 +294,10 @@ export class EverConnectIntegrationStateService {
 		}
 		if (state === 'revoked_remote' && before?.state !== 'revoked_remote') {
 			values.revokedAt = this.now();
+		}
+		if (before && unchanged(before, values)) {
+			// Nothing changed: no write.
+			return;
 		}
 		const after = await this.store.saveIntegration(scope, key, values, {
 			tenantId: owner.tenantId ?? null,
@@ -239,7 +321,7 @@ export class EverConnectIntegrationStateService {
 			await this.onEnable(after);
 			await this.audit.record({
 				action: 'integration.enable',
-				actorLabel: actor,
+				actorLabel: 'platform',
 				...where,
 				details: { consent_id: consentId, state }
 			});
@@ -247,7 +329,7 @@ export class EverConnectIntegrationStateService {
 			await this.onDisable(after);
 			await this.audit.record({
 				action: 'integration.disable',
-				actorLabel: actor,
+				actorLabel: 'platform',
 				...where,
 				details: { state, reason: revokeSource }
 			});
@@ -338,8 +420,9 @@ export class EverConnectIntegrationStateService {
 
 	/** The installation-wide integrations waiting for the operator's accept. */
 	async pendingApprovals(): Promise<IntegrationView[]> {
+		// Accepted ones wait for Ever Platform, not for the operator.
 		const rows = (await this.store.integrations({ scope: 'instance' })).filter(
-			(row) => row.state === 'pending_operator'
+			(row) => row.state === 'pending_operator' && row.operatorAccept !== 'accepted'
 		);
 		const views: IntegrationView[] = [];
 		for (const row of rows) {
@@ -414,24 +497,34 @@ export class EverConnectIntegrationStateService {
 				message: 'Nothing to consent to.'
 			});
 		}
+		let answer: { url: string; expires_at: string };
 		try {
-			const answer = await this.guard(async () =>
+			answer = await this.guard(async () =>
 				(await this.platform.getClient()).instances.consentUrl({
 					integration: key,
 					...(link ? { link: link.linkId } : {}),
 					...(this.config.returnUrl ? { return: this.config.returnUrl } : {})
 				})
 			);
-			return { url: answer.url, expires_at: answer.expires_at };
 		} catch (error) {
 			throw this.problem(error);
 		}
+		if (!consentLinkAllowed(String(answer?.url ?? ''), this.config.apiUrl)) {
+			// Only an https link to Ever Platform's web app is passed to the browser.
+			throw new HttpException(
+				{ statusCode: 502, code: 'consent_url_invalid', message: 'Ever Platform answered an unusable consent link.' },
+				HttpStatus.BAD_GATEWAY
+			);
+		}
+		return { url: answer.url, expires_at: answer.expires_at };
 	}
 
 	/**
 	 * `{enabled: true}` never switches an integration on from here: 409 `consent_required` (with the
-	 * consent link when it can be had). `{enabled: false}` switches it off: Ever Platform first; when it
-	 * cannot be reached, off here anyway and retried at the next heartbeat.
+	 * consent link when it can be had). `{enabled: false}` switches it off here first, always (nothing
+	 * of it runs any more), then tells Ever Platform; whatever Ever Platform answers (a redirect, a
+	 * refusal, no answer), the integration stays off and Ever Platform is told again at each heartbeat
+	 * until it takes it.
 	 */
 	async setEnabled(key: string, enabled: boolean, context: IntegrationContext): Promise<IntegrationView> {
 		const definition = this.offeredDefinition(key);
@@ -459,34 +552,19 @@ export class EverConnectIntegrationStateService {
 		if (!row || (!row.enabled && row.state !== 'pending_operator')) {
 			return this.view(definition, row, true);
 		}
-		let remote = true;
-		try {
-			await this.guard(async () =>
-				(await this.platform.getClient()).instances.setIntegration(key, {
-					enabled: false,
-					reason: 'instance',
-					...(link ? { tenant_link_id: link.linkId } : {})
-				})
-			);
-		} catch (error) {
-			if (error instanceof ProblemError && error.status === 404) {
-				remote = true;
-			} else if (isUnreachable(error)) {
-				remote = false;
-			} else {
-				throw error;
-			}
-		}
-		const after = await this.store.saveIntegration(scope, key, {
+		let after = await this.store.saveIntegration(scope, key, {
 			state: 'disabled',
 			enabled: false,
 			revokeSource: 'instance',
 			revokedAt: this.now(),
-			pendingRemoteRevoke: !remote
+			pendingRemoteRevoke: true,
+			operatorAccept: row.state === 'pending_operator' ? null : row.operatorAccept
 		});
 		if (row.enabled) {
 			await this.onDisable(after);
 		}
+		const remote = await this.tellOff(after);
+		after = (await this.store.integration(scope, key)) ?? after;
 		await this.audit.record({
 			action: 'integration.disable',
 			actorLabel: context.isOperator && definition.instanceWide ? 'operator' : 'user',
@@ -501,8 +579,10 @@ export class EverConnectIntegrationStateService {
 
 	/**
 	 * The operator's local accept (or decline) of an installation-wide integration the connecting
-	 * organization consented to: the only path that switches one on. Ever Platform enables it
-	 * (`POST /v1/instances/me/integrations/{key}/accept`), and only then its local effect runs.
+	 * organization consented to: the only path that switches one on, also when Ever Platform already
+	 * reads it as enabled. The accept is told to Ever Platform
+	 * (`POST /v1/instances/me/integrations/{key}/accept`) and holds for this consent only; the local
+	 * effect runs once Ever Platform reads it as enabled with this consent.
 	 */
 	async accept(key: string, accepted: boolean, actorUserId: string | null): Promise<IntegrationView> {
 		const definition = this.offeredDefinition(key);
@@ -519,15 +599,34 @@ export class EverConnectIntegrationStateService {
 		}
 		const connection = await this.requireConnected();
 		const consentId = row.consentId;
-		const answer = await this.guard(async () =>
-			(await this.platform.getClient()).instances.acceptIntegration(
-				key,
-				{ consent_id: consentId, accepted },
-				sha256(`accept|${connection.platformInstanceId}|${key}|${consentId}|${accepted}`)
-			)
-		);
+		let answer: RemoteState | null;
+		try {
+			answer = (await this.guard(async () =>
+				(await this.platform.getClient()).instances.acceptIntegration(
+					key,
+					{ consent_id: consentId, accepted },
+					sha256(`accept|${connection.platformInstanceId}|${key}|${consentId}|${accepted}`)
+				)
+			)) as RemoteState;
+		} catch (error) {
+			if (!(accepted && error instanceof ProblemError && error.status === 409)) {
+				throw this.problem(error);
+			}
+			// Ever Platform does not wait for this accept (it reads the consent as enabled already):
+			// the accept is this installation's own, for that same consent.
+			answer = await this.remoteInstanceState(key);
+			if (answer?.state !== 'enabled' || answer.consent_id !== consentId) {
+				throw this.problem(error);
+			}
+		}
 		const where = { tenantId: null, organizationId: null, integration: key };
-		if (accepted && (answer as RemoteState).state === 'enabled') {
+		if (accepted && (answer?.state !== 'enabled' || (answer.consent_id && answer.consent_id !== consentId))) {
+			// Accepted, but Ever Platform does not read it as enabled yet: it stays waiting, accepted
+			// for this consent, and starts when Ever Platform enables it.
+			const waiting = await this.store.saveIntegration('instance', key, { operatorAccept: 'accepted' });
+			return this.view(definition, waiting, true);
+		}
+		if (accepted) {
 			const after = await this.store.saveIntegration('instance', key, {
 				state: 'enabled',
 				enabled: true,
@@ -602,6 +701,7 @@ export class EverConnectIntegrationStateService {
 			details: { allowed }
 		});
 		if (!allowed) {
+			const wereOn: IntegrationRecord[] = [];
 			for (const row of await this.store.integrations({ name: key })) {
 				if (row.state === 'coming_soon' || row.state === 'denied_by_policy') continue;
 				const after = await this.store.saveIntegration(row.scope, key, {
@@ -611,6 +711,7 @@ export class EverConnectIntegrationStateService {
 					revokedAt: this.now()
 				});
 				if (row.enabled) {
+					wereOn.push(after);
 					await this.onDisable(after);
 					await this.audit.record({
 						action: 'integration.disable',
@@ -623,12 +724,17 @@ export class EverConnectIntegrationStateService {
 					});
 				}
 			}
-			await this.tellPolicy(key);
+			await this.tellPolicy(key, wereOn);
 		}
 		this.signals.heartbeat$.next();
 	}
 
-	private async tellPolicy(key: string): Promise<void> {
+	/**
+	 * Tells Ever Platform about a deny now (`reason: policy` denies the key on every link of this
+	 * installation). The heartbeat a second later carries the whole deny list anyway; when this call
+	 * fails, the rows that were on are also marked to be told again at each heartbeat.
+	 */
+	private async tellPolicy(key: string, wereOn: IntegrationRecord[]): Promise<void> {
 		const connection = await this.store.connection();
 		if (connection.status !== 'connected') return;
 		const definition = gauzyIntegration(key);
@@ -643,10 +749,49 @@ export class EverConnectIntegrationStateService {
 				})
 			);
 		} catch (error) {
+			for (const row of wereOn) {
+				await this.store.saveIntegration(row.scope, row.name, { pendingRemoteRevoke: true });
+			}
 			this.logger.warn(
 				`Ever Platform was not told about the deny of ${key} now (${errorCode(error)}); the next heartbeat carries it.`
 			);
 		}
+	}
+
+	/**
+	 * Tells Ever Platform that an integration was switched off here. Never throws: on a 2xx or a 404
+	 * (already off there) the pending mark is cleared; on any other outcome it stays, for the next
+	 * heartbeat. Returns whether Ever Platform took it.
+	 */
+	private async tellOff(row: IntegrationRecord): Promise<boolean> {
+		const connection = await this.store.connection();
+		if (connection.status !== 'connected' || !connection.platformInstanceId) {
+			return false;
+		}
+		try {
+			await this.guard(async () =>
+				(await this.platform.getClient()).instances.setIntegration(row.name, {
+					enabled: false,
+					reason: 'instance',
+					...(row.scope !== 'instance' ? { tenant_link_id: row.scope } : {})
+				})
+			);
+		} catch (error) {
+			if (!(error instanceof ProblemError && error.status === 404)) {
+				this.logger.warn(
+					`Ever Platform was not told now that ${row.name} is off (${errorCode(error)}); it is off here, and told again at the next heartbeat.`
+				);
+				return false;
+			}
+		}
+		await this.store.saveIntegration(row.scope, row.name, { pendingRemoteRevoke: false });
+		return true;
+	}
+
+	/** Ever Platform's state of one installation-wide integration, read now. */
+	private async remoteInstanceState(key: string): Promise<RemoteState | null> {
+		const remote = await this.guard(async () => (await this.platform.getClient()).instances.integrations());
+		return ((remote.instance ?? {}) as Record<string, RemoteState>)[key] ?? null;
 	}
 
 	// ── Local effects ─────────────────────────────────────────────────────────
@@ -686,28 +831,14 @@ export class EverConnectIntegrationStateService {
 	}
 
 	/**
-	 * At each heartbeat: tells Ever Platform about integrations switched off here while it could not
-	 * be reached, and retries a local effect that failed.
+	 * At each heartbeat: tells Ever Platform about integrations switched off here that it has not
+	 * taken yet, and retries a local effect that failed. One failure never stops the others, nor the
+	 * rest of the heartbeat.
 	 */
 	async retryPending(): Promise<void> {
 		for (const row of await this.store.integrations()) {
 			if (!row.pendingRemoteRevoke) continue;
-			try {
-				await this.guard(async () =>
-					(await this.platform.getClient()).instances.setIntegration(row.name, {
-						enabled: false,
-						reason: 'instance',
-						...(row.scope !== 'instance' ? { tenant_link_id: row.scope } : {})
-					})
-				);
-				await this.store.saveIntegration(row.scope, row.name, { pendingRemoteRevoke: false });
-			} catch (error) {
-				if (error instanceof ProblemError && error.status === 404) {
-					await this.store.saveIntegration(row.scope, row.name, { pendingRemoteRevoke: false });
-				} else if (!isUnreachable(error)) {
-					throw error;
-				}
-			}
+			await this.tellOff(row);
 		}
 		for (const slot of [...this.retry]) {
 			const [scope, name] = slot.split('|');

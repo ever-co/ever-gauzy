@@ -17,7 +17,7 @@ Values are checked by the plugin, not by `CHECK` constraints, so a later state n
 
 ## `ever_connect_link`
 
-One row per Gauzy organization linked to an Ever organization: `tenantId`, `organizationId`, `integrationTenantId` (Gauzy's `integration_tenant` record of the link), `linkId` (unique), `everOrgId`, `everHandle`, `status` (`linked`, `suspended`, `orphaned`, `unlinked`), `entitlementJwsEncrypted` and its `Seq`, `Iat`, `Exp`, `FetchedAt`, `linkedByUserId`, `createdAt`, `updatedAt`, `unlinkedAt`. Index on (`tenantId`, `organizationId`).
+One row per Gauzy organization linked to an Ever organization: `tenantId`, `organizationId`, `integrationTenantId` (Gauzy's `integration_tenant` record of the link), `linkId` (unique), `everOrgId`, `everHandle`, `status` (`linked`, `suspended`, `orphaned`, `unlinked`), `entitlementJwsEncrypted` and its `Seq`, `Iat`, `Exp`, `FetchedAt`, `linkedByUserId`, `createdAt`, `updatedAt`, `unlinkedAt`, `liveKey` (`<tenantId>|<organizationId>` while the link is live, NULL once unlinked; unique, so one Gauzy organization has at most one live link, also under concurrent requests). Index on (`tenantId`, `organizationId`). There is no foreign key to the core tables: the rows of a deleted Gauzy tenant or organization are removed by the plugin (see the README, "What is stored").
 
 ## `ever_connect_integration`
 

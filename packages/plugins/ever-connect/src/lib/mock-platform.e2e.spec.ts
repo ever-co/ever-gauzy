@@ -13,6 +13,11 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, RequestContext, RequestContextMiddleware, RolePermissionModule, TenantPermissionGuard } from '@gauzy/core';
 import { EVER_INSTANCE_ENV } from '@gauzy/plugin-ever-instance';
 import { EVER_CONNECT_FETCH } from './ever-connect.constants';
+import {
+	EverConnectOrganizationDeletionSubscriber,
+	EverConnectTenantDeletionSubscriber,
+	GAUZY_OWNER_DELETED
+} from './ever-connect-deletion.subscriber';
 import { EverConnectModule } from './ever-connect.module';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import {
@@ -34,11 +39,12 @@ import {
  * installation makes (contract validation of every body, signatures, consent states, the event
  * feed) that records each call it receives. CI runs it in `build-api`; locally:
  *
- *     EVER_MOCK_CONFIG_JSON='{"issuer":"https://mock-platform.test"}' node node_modules/@ever-co/connect-tools/dist/mock-platform/bin/ever-mock-platform.mjs --port 18081
+ *     node node_modules/@ever-co/connect-tools/dist/mock-platform/bin/ever-mock-platform.mjs --port 18081
  *     EVER_CONNECT_MOCK_PLATFORM_URL=http://127.0.0.1:18081 yarn nx run plugin-ever-connect:test-mock-platform
  *
- * The mock's issuer is an https name (Ever Platform's documents always name an https issuer);
- * `EVER_PLATFORM_ISSUER` tells the plugin, which the SDK accepts for a local address only.
+ * The mock's issuer is an https name (`MOCK_ISSUER`, `https://mock-platform.test`: Ever Platform's
+ * documents always name an https issuer) served on a local address; `EVER_PLATFORM_ISSUER` tells the
+ * plugin, which honours it for a loopback address only.
  *
  * Without `EVER_CONNECT_MOCK_PLATFORM_URL` the suite is skipped, unless
  * `EVER_CONNECT_MOCK_PLATFORM_REQUIRED=true` (CI), where a missing mock fails it.
@@ -55,6 +61,13 @@ if (REQUIRED && !MOCK) {
 		expect(MOCK).toBeDefined();
 	});
 }
+
+/** A problem answer as Ever Platform (or a proxy in front of it) would send. */
+const problemAnswer = (status: number, code: string): Response =>
+	new Response(JSON.stringify({ type: `https://ever.co/problems/${code}`, title: code, status, code }), {
+		status,
+		headers: { 'content-type': 'application/problem+json' }
+	});
 
 interface RecordedCall {
 	method: string;
@@ -142,10 +155,14 @@ suite('Ever Platform connection against the mock platform', () => {
 	let zephyr: SeededTenant;
 	const users: Record<string, TestUser> = {};
 	const sent: Array<{ method: string; url: string; body: string | null }> = [];
+	/** Answers some requests instead of the mock (a redirect, a refusal...); `null` lets every request through. */
+	let fault: ((method: string, url: string) => Response | null) | null = null;
 	const tap = (async (input: string, init?: RequestInit) => {
 		const body = init?.body ? Buffer.from(init.body as Uint8Array).toString('utf8') : null;
-		sent.push({ method: String(init?.method ?? 'GET'), url: String(input), body });
-		return fetch(input, init);
+		const method = String(init?.method ?? 'GET');
+		sent.push({ method, url: String(input), body });
+		const faulted = fault?.(method, String(input));
+		return faulted ?? fetch(input, init);
 	}) as unknown as typeof fetch;
 
 	beforeAll(() => {
@@ -160,6 +177,7 @@ suite('Ever Platform connection against the mock platform', () => {
 	beforeEach(async () => {
 		await mock('reset', {});
 		sent.length = 0;
+		fault = null;
 		dataSource = await openTestDataSource({ name: 'better-sqlite3' });
 		await createCoreTables(dataSource, 'better-sqlite3');
 		await migrateUp(dataSource);
@@ -377,7 +395,7 @@ suite('Ever Platform connection against the mock platform', () => {
 		const link11 = (await calls()).filter((call) => call.row === 11);
 		expect(link11.map((call) => call.status)).toEqual([409]);
 
-		// Switching off goes to Ever Platform first.
+		// Switching off: off here first, then Ever Platform is told.
 		const off = await call(
 			'put',
 			`/api/ever-connect/integrations/stats_link?organizationId=${acme.organizationId}`,
@@ -486,10 +504,16 @@ suite('Ever Platform connection against the mock platform', () => {
 		).toBeNull();
 		expect(await rows()).toContain(5);
 
-		// A revocation in app.ever.co reaches the installation through the feed.
+		// A new consent in app.ever.co (Ever Platform reads it as enabled at once): it waits for the
+		// operator's accept again, which holds for one consent only.
 		await mock('consent', { integration: 'stats_link' });
 		await readFeed();
-		expect((await integration(acme.organizationId, 'operator', 'stats_link')).state).toBe('enabled');
+		expect((await integration(acme.organizationId, 'operator', 'stats_link')).state).toBe('pending_operator');
+		expect(
+			(await call('post', '/api/ever-connect/integrations/stats_link/accept', 'operator', { accepted: true })).body
+				.state
+		).toBe('enabled');
+		// A revocation in app.ever.co reaches the installation through the feed.
 		await mock('revoke', { integration: 'stats_link' });
 		await readFeed();
 		expect(await integration(acme.organizationId, 'operator', 'stats_link')).toMatchObject({
@@ -532,6 +556,227 @@ suite('Ever Platform connection against the mock platform', () => {
 			expect(entry.status).not.toBe(422);
 			expect(entry.user_agent).toMatch(/^ever-connect-sdk\/[^ ]+ \(gauzy\/0\.0\.0\)$/);
 		}
+	});
+
+	/** Connects with the operator's organization; the scheduler is stopped (the tests drive it). */
+	const connectAcme = async (code = 'EVC-TEST-0000-0001') => {
+		const connected = await call('post', '/api/ever-connect/connect', 'operator', {
+			code,
+			organizationId: acme.organizationId
+		});
+		expect(connected.status).toBe(200);
+		(app as INestApplication).get(EverConnectScheduler).stop();
+		return connected.body as { kid: string };
+	};
+
+	/** stats_link consented in app.ever.co, waiting for the operator, then accepted: enabled. */
+	const enableStatsLink = async () => {
+		await mock('consent', { integration: 'stats_link', operator_accept: 'pending' });
+		await readFeed();
+		const accepted = await call('post', '/api/ever-connect/integrations/stats_link/accept', 'operator', {
+			accepted: true
+		});
+		expect(accepted.body.state).toBe('enabled');
+	};
+
+	const statsLinkCalls = async () => (await calls()).filter((entry) => entry.row === 11).length;
+
+	it('an installation-wide integration Ever Platform reads as enabled still waits for the operator (and again after a new consent)', async () => {
+		app = await start(environment());
+		await connectAcme();
+		// The consent is enabled on Ever Platform at once (no pending_operator there).
+		await mock('consent', { integration: 'stats_link' });
+		await readFeed();
+		expect((await integration(acme.organizationId, 'operator', 'stats_link')).state).toBe('pending_operator');
+		expect(
+			(
+				await call('get', `/api/ever-connect/status?organizationId=${acme.organizationId}`, 'operator')
+			).body.pending_approvals.map((p: { key: string }) => p.key)
+		).toEqual(['stats_link']);
+		expect(await statsLinkCalls()).toBe(0);
+		// Re-reading the states changes nothing.
+		await call('post', `/api/ever-connect/integrations/refresh?organizationId=${acme.organizationId}`, 'operator');
+		expect(await statsLinkCalls()).toBe(0);
+
+		const accepted = await call('post', '/api/ever-connect/integrations/stats_link/accept', 'operator', {
+			accepted: true
+		});
+		expect(accepted.status).toBe(200);
+		expect(accepted.body.state).toBe('enabled');
+		expect(await statsLinkCalls()).toBe(1);
+
+		// A new consent: waiting for the operator again; nothing more is sent.
+		await mock('consent', { integration: 'stats_link' });
+		await readFeed();
+		expect((await integration(acme.organizationId, 'operator', 'stats_link')).state).toBe('pending_operator');
+		expect(await statsLinkCalls()).toBe(1);
+	});
+
+	it.each([
+		['a redirect (an access proxy)', () => new Response(null, { status: 302, headers: { location: 'https://access.example.test/' } })],
+		['a 403', () => problemAnswer(403, 'forbidden')],
+		['a 500', () => problemAnswer(500, 'internal_error')]
+	])('switching off answers %s from Ever Platform: off here anyway, told again at the next heartbeat', async (_name, answer) => {
+		app = await start(environment());
+		await connectAcme();
+		await enableStatsLink();
+		fault = (method, url) => (method === 'PUT' && url.includes('/v1/instances/me/integrations/') ? answer() : null);
+		const off = await call(
+			'put',
+			`/api/ever-connect/integrations/stats_link?organizationId=${acme.organizationId}`,
+			'operator',
+			{ enabled: false }
+		);
+		expect(off.status).toBe(200);
+		expect(off.body).toMatchObject({ state: 'disabled', enabled: false, pending_remote_revoke: true });
+
+		// The next heartbeat tries again (still refused) and goes on: the documents are read.
+		const scheduler = (app as INestApplication).get(EverConnectScheduler);
+		const before = (await calls()).length;
+		expect(await scheduler.heartbeat()).toBe(true);
+		const during = (await calls()).slice(before).map((entry) => entry.row);
+		expect(during).toEqual(expect.arrayContaining([6, 8]));
+		expect((await integration(acme.organizationId, 'operator', 'stats_link')).pending_remote_revoke).toBe(true);
+
+		// Once Ever Platform takes it, the mark is cleared.
+		fault = null;
+		expect(await scheduler.heartbeat()).toBe(true);
+		expect((await calls()).filter((entry) => entry.row === 10 && entry.status < 300)).toHaveLength(1);
+		expect(await integration(acme.organizationId, 'operator', 'stats_link')).toMatchObject({
+			state: 'disabled',
+			pending_remote_revoke: false
+		});
+	});
+
+	it('switching off with an unusable EVER_PLATFORM_API_URL: off here anyway, Ever Platform told once it can be', async () => {
+		app = await start(environment());
+		await connectAcme();
+		await enableStatsLink();
+		await app.close();
+		app = await start(environment({ EVER_PLATFORM_API_URL: 'http://203.0.113.10' }));
+		const off = await call(
+			'put',
+			`/api/ever-connect/integrations/stats_link?organizationId=${acme.organizationId}`,
+			'operator',
+			{ enabled: false }
+		);
+		expect(off.status).toBe(200);
+		expect(off.body).toMatchObject({ state: 'disabled', pending_remote_revoke: true });
+		await app.close();
+		app = await start(environment());
+		app.get(EverConnectScheduler).stop();
+		expect(await app.get(EverConnectScheduler).heartbeat()).toBe(true);
+		expect((await integration(acme.organizationId, 'operator', 'stats_link')).pending_remote_revoke).toBe(false);
+	});
+
+	it('the connect key: replaced on Ever Platform with two proofs; unreadable after a secret change until a disconnect; one key per connection', async () => {
+		app = await start(environment());
+		const first = await connectAcme();
+		const keyId = async () =>
+			(
+				await dataSource.query(
+					`SELECT ${q('better-sqlite3', 'connectKeyId')} AS k FROM ${q('better-sqlite3', 'ever_instance')}`
+				)
+			)[0].k as string | null;
+		expect(await keyId()).toBe(first.kid);
+
+		// Replace key: Ever Platform installs the new key, and it signs from now on.
+		const rotated = await call('post', '/api/ever-connect/connection/rotate-key', 'operator', {});
+		expect(rotated.status).toBe(200);
+		expect(rotated.body.kid).not.toBe(first.kid);
+		expect(await keyId()).toBe(rotated.body.kid);
+		const state = await mock<{ instances: Array<{ kid: string }> }>('state');
+		expect(state.instances.map((i) => i.kid)).toContain(rotated.body.kid);
+		const before = (await calls()).length;
+		expect(await app.get(EverConnectScheduler).heartbeat()).toBe(true);
+		expect((await calls()).slice(before).map((entry) => entry.row)).toEqual(expect.arrayContaining([4, 6]));
+		expect(
+			(await call('get', '/api/ever-connect/status', 'operator')).body.connection
+		).toMatchObject({ kid: rotated.body.kid, connect_key: 'ok' });
+
+		// ENCRYPTION_KEY changes: the key cannot be read, and the Connection tab says so.
+		await app.close();
+		app = await start(environment({ ENCRYPTION_KEY: 'another-strong-encryption-key-for-e2e' }));
+		app.get(EverConnectScheduler).stop();
+		await expect(app.get(EverConnectScheduler).heartbeat()).rejects.toBeDefined();
+		expect((await call('get', '/api/ever-connect/status', 'operator')).body.connection).toMatchObject({
+			status: 'connected',
+			connect_key: 'unreadable',
+			last_error: 'key_unreadable'
+		});
+		const rotateUnreadable = await call('post', '/api/ever-connect/connection/rotate-key', 'operator', {});
+		expect(rotateUnreadable.status).toBe(422);
+		expect(rotateUnreadable.body.code).toBe('key_unreadable');
+
+		// Disconnect drops the key; connecting again with a new code makes a new one (no 500).
+		expect((await call('post', '/api/ever-connect/disconnect', 'operator', { confirm: true })).body).toEqual({
+			status: 'disconnected'
+		});
+		expect(await keyId()).toBeNull();
+		await mock('codes', { code: 'EVC-TEST-0000-0009' });
+		const again = await connectAcme('EVC-TEST-0000-0009');
+		expect(again.kid).not.toBe(rotated.body.kid);
+		expect(await keyId()).toBe(again.kid);
+		expect((await call('get', '/api/ever-connect/status', 'operator')).body.connection).toMatchObject({
+			status: 'connected',
+			connect_key: 'ok'
+		});
+
+		// A disconnect drops the key every time, not only after a revocation.
+		await call('post', '/api/ever-connect/disconnect', 'operator', { confirm: true });
+		expect(await keyId()).toBeNull();
+	});
+
+	it('a deleted Gauzy organization or tenant: its link is removed on Ever Platform and here, and its rows go', async () => {
+		app = await start(environment());
+		await connectAcme();
+		const linked = await call('post', `/api/ever-connect/links?organizationId=${zephyr.organizationId}`, 'stranger', {
+			link_code: 'EVL-TEST-0000-0002'
+		});
+		expect(linked.status).toBe(201);
+		const rowsOf = async (table: string, tenantId: string) =>
+			(
+				await dataSource.query(
+					`SELECT COUNT(*) AS n FROM ${q('better-sqlite3', table)} WHERE ${q('better-sqlite3', 'tenantId')} = ?`,
+					[tenantId]
+				)
+			)[0].n as number;
+		expect(await rowsOf('ever_connect_link', zephyr.tenantId)).toBe(1);
+		expect(await rowsOf('ever_connect_audit', zephyr.tenantId)).toBeGreaterThan(0);
+
+		// Gauzy deletes Zephyr's organization (soft delete, no entity event here): the next heartbeat
+		// finds it before it reads anything for that organization.
+		await dataSource.query(
+			`UPDATE ${q('better-sqlite3', 'organization')} SET ${q('better-sqlite3', 'deletedAt')} = datetime('now') WHERE ${q('better-sqlite3', 'id')} = ?`,
+			[zephyr.organizationId]
+		);
+		const before = (await calls()).length;
+		expect(await app.get(EverConnectScheduler).heartbeat()).toBe(true);
+		const removed = (await calls()).slice(before).filter((entry) => entry.row === 5 && entry.method === 'DELETE');
+		expect(removed).toHaveLength(1);
+		for (const table of ['ever_connect_link', 'ever_connect_integration', 'ever_connect_audit']) {
+			expect([table, await rowsOf(table, zephyr.tenantId)]).toEqual([table, 0]);
+		}
+		const purged = await dataSource.query(
+			`SELECT ${q('better-sqlite3', 'tenantId')} AS t, ${q('better-sqlite3', 'details')} AS d FROM ${q('better-sqlite3', 'ever_connect_audit')} WHERE ${q('better-sqlite3', 'action')} = 'link.purge'`
+		);
+		expect(purged).toHaveLength(1);
+		expect(purged[0].t).toBeNull();
+		expect(JSON.parse(purged[0].d)).toMatchObject({ reason: 'organization_deleted', remote: true });
+
+		// A tenant deleted through its entity: the subscriber signals, the cleanup follows at once.
+		await dataSource.query(`DELETE FROM ${q('better-sqlite3', 'tenant')} WHERE ${q('better-sqlite3', 'id')} = ?`, [
+			acme.tenantId
+		]);
+		const signals: number[] = [];
+		const subscription = GAUZY_OWNER_DELETED.subscribe(() => signals.push(1));
+		await new EverConnectTenantDeletionSubscriber().afterEntityDelete();
+		await new EverConnectOrganizationDeletionSubscriber().afterEntitySoftRemove();
+		subscription.unsubscribe();
+		expect(signals).toHaveLength(2);
+		await new Promise((resolve) => setTimeout(resolve, 2_500));
+		expect(await rowsOf('ever_connect_link', acme.tenantId)).toBe(0);
+		expect((await calls()).filter((entry) => entry.row === 5 && entry.method === 'DELETE')).toHaveLength(2);
 	});
 
 	it('a revoked credential: the installation stops at once and never uses the key again', async () => {

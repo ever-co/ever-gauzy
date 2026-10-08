@@ -87,6 +87,8 @@ const CONNECTION = 'ever_connect_connection';
 const LINK = 'ever_connect_link';
 const INTEGRATION = 'ever_connect_integration';
 const POLICY = 'ever_connect_policy';
+const LOOKUP_CACHE = 'ever_connect_lookup_cache';
+const AUDIT = 'ever_connect_audit';
 
 function toConnection(row: Row): ConnectionRecord {
 	return {
@@ -161,6 +163,17 @@ function toIntegration(row: Row): IntegrationRecord {
 		updatedAt: num(row['updatedAt']) ?? 0
 	};
 }
+
+/** A Gauzy organization already has a live link (one live link per organization). */
+export class LiveLinkExistsError extends Error {
+	constructor() {
+		super('This organization already has a live link.');
+		this.name = 'LiveLinkExistsError';
+	}
+}
+
+/** The unique key of a live link: its Gauzy tenant and organization. */
+export const liveKeyOf = (tenantId: string, organizationId: string): string => `${tenantId}|${organizationId}`;
 
 /**
  * Reads and writes the plugin's tables, and Gauzy's own record of a tenant link (an
@@ -266,17 +279,42 @@ export class EverConnectStore {
 		return rows.map(toLink).filter((link) => link.status !== 'unlinked');
 	}
 
+	/**
+	 * Inserts a live link. The unique `liveKey` (`<tenantId>|<organizationId>`) refuses a second live
+	 * link for one Gauzy organization, also when two requests race: {@link LiveLinkExistsError}.
+	 */
 	async insertLink(
 		values: Omit<LinkRecord, 'id' | 'createdAt' | 'unlinkedAt'> & { linkedByUserId?: string | null }
 	): Promise<LinkRecord> {
 		const at = this.now();
 		const id = randomUUID();
-		await this.sql.insert(LINK, { id, ...values, createdAt: at, updatedAt: at, unlinkedAt: null });
+		try {
+			await this.sql.insert(LINK, {
+				id,
+				...values,
+				liveKey: liveKeyOf(values.tenantId, values.organizationId),
+				createdAt: at,
+				updatedAt: at,
+				unlinkedAt: null
+			});
+		} catch (error) {
+			if (await this.linkOf(values.tenantId, values.organizationId)) {
+				throw new LiveLinkExistsError();
+			}
+			throw error;
+		}
 		return (await this.linkById(values.linkId)) as LinkRecord;
 	}
 
-	async updateLink(linkId: string, values: Partial<Record<keyof LinkRecord, unknown>>): Promise<void> {
-		await this.sql.update(LINK, { ...values, updatedAt: this.now() }, { linkId });
+	/** Updates a link; once it is `unlinked`, it no longer holds its organization's live key. */
+	async updateLink(linkId: string, values: Partial<Record<keyof LinkRecord | 'liveKey', unknown>>): Promise<void> {
+		const extra = values['status'] === 'unlinked' ? { liveKey: null } : {};
+		await this.sql.update(LINK, { ...values, ...extra, updatedAt: this.now() }, { linkId });
+	}
+
+	/** Removes a link row that was never completed (its Gauzy record could not be written). */
+	async deleteLink(linkId: string): Promise<void> {
+		await this.sql.run(`DELETE FROM ${this.sql.q(LINK)} WHERE ${this.sql.q('linkId')} = ${this.sql.ph(1)}`, [linkId]);
 	}
 
 	// ── Integrations ──────────────────────────────────────────────────────────
@@ -350,6 +388,57 @@ export class EverConnectStore {
 				{ integration }
 			);
 		}
+	}
+
+	// ── Deleted Gauzy tenants and organizations ───────────────────────────────
+
+	/**
+	 * The (tenant, organization) pairs the plugin's tables still hold although that Gauzy tenant or
+	 * organization was deleted (or soft-deleted). There are no foreign keys to cascade (the tables are
+	 * the plugin's own), so this is how a deletion reaches them.
+	 */
+	async deletedOwners(): Promise<Array<{ tenantId: string; organizationId: string | null }>> {
+		const q = (c: string) => this.sql.q(c);
+		// Gauzy's ids are uuid on Postgres; the plugin keeps them as text.
+		const text = (expr: string) => (this.sql.dialect === 'postgres' ? `${expr}::text` : expr);
+		const found = new Map<string, { tenantId: string; organizationId: string | null }>();
+		for (const table of [LINK, INTEGRATION, LOOKUP_CACHE, AUDIT]) {
+			const { rows } = await this.sql.run(
+				`SELECT DISTINCT t.${q('tenantId')} AS ${q('tenantId')}, t.${q('organizationId')} AS ${q('organizationId')} FROM ${q(table)} t ` +
+					`WHERE t.${q('tenantId')} IS NOT NULL AND (` +
+					`NOT EXISTS (SELECT 1 FROM ${q('tenant')} x WHERE ${text(`x.${q('id')}`)} = t.${q('tenantId')} AND x.${q('deletedAt')} IS NULL) ` +
+					`OR (t.${q('organizationId')} IS NOT NULL AND NOT EXISTS (SELECT 1 FROM ${q('organization')} o WHERE ${text(`o.${q('id')}`)} = t.${q('organizationId')} AND o.${q('deletedAt')} IS NULL)))`
+			);
+			for (const row of rows) {
+				const owner = { tenantId: String(row['tenantId']), organizationId: str(row['organizationId']) };
+				found.set(`${owner.tenantId}|${owner.organizationId ?? ''}`, owner);
+			}
+		}
+		return [...found.values()];
+	}
+
+	/**
+	 * Removes what the plugin keeps for a deleted Gauzy organization (or, without `organizationId`, for
+	 * every organization of a deleted tenant): its links, integration states and lookup cache rows.
+	 */
+	async purgeOwner(owner: { tenantId: string; organizationId: string | null }): Promise<void> {
+		const q = (c: string) => this.sql.q(c);
+		const params: unknown[] = [owner.tenantId];
+		let where = `${q('tenantId')} = ${this.sql.ph(1)}`;
+		if (owner.organizationId) {
+			params.push(owner.organizationId);
+			where += ` AND ${q('organizationId')} = ${this.sql.ph(2)}`;
+		}
+		for (const table of [INTEGRATION, LOOKUP_CACHE, LINK]) {
+			await this.sql.run(`DELETE FROM ${q(table)} WHERE ${where}`, params);
+		}
+	}
+
+	/** The links (any state) of one owner, as {@link purgeOwner} scopes it. */
+	async linksOf(owner: { tenantId: string; organizationId: string | null }): Promise<LinkRecord[]> {
+		const where: Row = { tenantId: owner.tenantId };
+		if (owner.organizationId) where['organizationId'] = owner.organizationId;
+		return (await this.sql.select(LINK, where)).map(toLink);
 	}
 
 	// ── Who may act for an organization ─────────────────────────────────────────

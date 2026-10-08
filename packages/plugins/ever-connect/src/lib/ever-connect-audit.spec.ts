@@ -3,8 +3,8 @@ import { AUDIT_ACTIONS, AuditEntryRefusedError, EverConnectAuditService } from '
 
 /**
  * The audit records each action with ids and states only: a `details` key outside the allow-list,
- * or a value that looks like an address, is refused; and the service has no way to change or remove
- * a row.
+ * or a value that looks like an address, is refused; and the service has no way to change a row
+ * (rows are removed only with a deleted Gauzy organization or tenant).
  */
 describe('Ever Platform audit entries', () => {
 	it.each(AUDIT_ACTIONS.map((action) => [action]))('%s with id-only details is accepted', (action) => {
@@ -42,8 +42,8 @@ describe('Ever Platform audit entries', () => {
 		).toThrow(AuditEntryRefusedError);
 	});
 
-	it('has no method that updates or deletes a row', () => {
+	it('has no method that changes a row; the only removal is the purge of a deleted organization', () => {
 		const methods = Object.getOwnPropertyNames(EverConnectAuditService.prototype);
-		expect(methods.filter((name) => /update|delete|remove|purge|clear|edit/i.test(name))).toEqual([]);
+		expect(methods.filter((name) => /update|delete|remove|purge|clear|edit/i.test(name))).toEqual(['purge']);
 	});
 });

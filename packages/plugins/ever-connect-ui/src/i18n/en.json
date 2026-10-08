@@ -13,7 +13,11 @@
 	"CONNECTION": {
 		"EVER_CLOUD": "Operated by Ever Cloud. The connection of this installation is managed by Ever.",
 		"KEY_MATERIAL": "Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) on the API before connecting: the connection key and the documents of the connection are stored encrypted with it.",
-		"NOTICE": "Connecting sends Ever Platform: the product (Ever Gauzy) and its version, how it is installed (EVER_INSTALL_SOURCE), the public part of a key this installation makes for the connection, the address of this web app so app.ever.co can send you back here (Ever Platform keeps only a fingerprint of it) and, if you choose, the ids of this organization to link it at once. No address of this installation's API, no name and no e-mail address is sent. Paste the connect code you created in app.ever.co.",
+		"NOTICE": "Connecting sends Ever Platform: the product (Ever Gauzy) and its version, how it is installed (EVER_INSTALL_SOURCE), whether this API also serves Ever Teams, the public part of a key this installation makes for the connection, the address of this web app so app.ever.co can send you back here (https only; Ever Platform keeps only a fingerprint of it) and, if you choose, the ids of this organization and its tenant to link it at once. No address of this installation's API, no name and no e-mail address is sent. Paste the connect code you created in app.ever.co.",
+		"SECRET_SHORT": "The secret that protects the keys of this connection (ENCRYPTION_KEY, or JWT_SECRET) is shorter than 32 characters. Use a long, random one.",
+		"KEY_UNREADABLE": "The connection key of this installation cannot be read since ENCRYPTION_KEY or JWT_SECRET changed, so nothing can be sent. Disconnect, then connect again with a new connect code.",
+		"RETURN_UNUSABLE": "The address of this web app (CLIENT_BASE_URL) is plain http outside this computer, so it is not sent: after a consent in app.ever.co, come back to this page yourself.",
+		"ROTATE_KEY": "Replace key",
 		"LINK_ORGANIZATION": "Link this organization too",
 		"CONNECT": "Connect this installation",
 		"STATE": "State",
@@ -47,7 +51,7 @@
 		"CONFIRM": "Disconnect this installation"
 	},
 	"LINK": {
-		"DESCRIPTION": "Link this organization to an Ever organization: paste a link code created in app.ever.co. Ever Platform then knows this organization's id and the name of the product.",
+		"DESCRIPTION": "Link this organization to an Ever organization: paste a link code created in app.ever.co. Ever Platform then knows the ids of this organization and its tenant, and the name of the product.",
 		"NOT_CONNECTED": "This installation is not connected to Ever Platform yet.",
 		"LINK": "Link this organization",
 		"LINKED": "Linked to ever.co/{{ handle }}",
@@ -105,12 +109,17 @@
 		"DECLINED": "Declined: nothing is sent.",
 		"LINKED": "This organization is linked.",
 		"UNLINKED": "The link was removed.",
-		"CONSENT_OPENED": "app.ever.co opened in a new tab. When you come back, this page shows the result.",
+		"CONSENT_OPENED": "app.ever.co opened in a new tab. Reopen this page afterwards to see the result.",
 		"DISABLED": "Disabled.",
-		"DISABLED_OFFLINE": "Disabled here. Ever Platform could not be reached; it is told as soon as it can be."
+		"DISABLED_OFFLINE": "Disabled here. Ever Platform has not taken it yet; it is told again until it does.",
+		"KEY_ROTATED": "The connection key was replaced."
 	},
 	"ERRORS": {
 		"key_material_missing": "Set ENCRYPTION_KEY (or a strong, unique JWT_SECRET) on the API first. Nothing was sent.",
+		"key_unreadable": "The connection key cannot be read since ENCRYPTION_KEY or JWT_SECRET changed. Disconnect, then connect again with a new code.",
+		"consent_url_invalid": "Ever Platform answered a link that cannot be opened. Nothing was opened.",
+		"redeem_unverifiable": "Ever Platform's answer could not be verified. The installation was not connected.",
+		"rotation_not_installed": "The new key could not be installed. Try again.",
 		"code_invalid": "This code is not valid. Create a new one in app.ever.co.",
 		"product_mismatch": "This code was created for another product.",
 		"already_connected": "This installation is already connected.",

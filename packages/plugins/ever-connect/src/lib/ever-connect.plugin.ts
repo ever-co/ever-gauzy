@@ -1,6 +1,10 @@
 import { GauzyCorePlugin as Plugin } from '@gauzy/plugin';
 import { EverInstance } from '@gauzy/plugin-ever-instance';
 import { EVER_CONNECT_ENTITIES } from './entities';
+import {
+	EverConnectOrganizationDeletionSubscriber,
+	EverConnectTenantDeletionSubscriber
+} from './ever-connect-deletion.subscriber';
 import { EverConnectModule } from './ever-connect.module';
 
 /**
@@ -22,6 +26,8 @@ const entities =
  */
 @Plugin({
 	imports: [EverConnectModule.register()],
-	entities: [...entities]
+	entities: [...entities],
+	// A deleted Gauzy tenant or organization: its link is removed and its rows go with it.
+	subscribers: [EverConnectOrganizationDeletionSubscriber, EverConnectTenantDeletionSubscriber]
 })
 export class EverConnectPlugin {}

@@ -43,18 +43,18 @@ export class EverConnectInstanceController {
 
 	/**
 	 * Connects this installation with a connect code from app.ever.co: `{ "code": "EVC-…",
-	 * "organizationId"?: "<the operator's organization, linked at once when the code names one>",
-	 * "tenant_display_name"?: "<shown to the Ever organization>" }`.
+	 * "organizationId"?: "<the operator's organization, linked at once when the code names one>" }`.
+	 * No name is sent: only the tenant and organization ids of that organization.
 	 */
 	@Post('connect')
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	async connect(
 		@Req() request: RequestWithUser,
-		@Body() body: { code?: unknown; organizationId?: unknown; tenant_display_name?: unknown }
+		@Body() body: { code?: unknown; organizationId?: unknown }
 	): Promise<ConnectResult> {
 		const user = request.user ?? {};
-		let tenant: { tenantId: string; organizationId: string; displayName: string | null } | null = null;
+		let tenant: { tenantId: string; organizationId: string } | null = null;
 		if (typeof body?.organizationId === 'string' && body.organizationId !== '') {
 			if (
 				!UUID.test(body.organizationId) ||
@@ -64,14 +64,7 @@ export class EverConnectInstanceController {
 			) {
 				throw new BadRequestException('organizationId must be an organization you belong to.');
 			}
-			tenant = {
-				tenantId: user.tenantId,
-				organizationId: body.organizationId,
-				displayName:
-					typeof body.tenant_display_name === 'string' && body.tenant_display_name.trim()
-						? body.tenant_display_name.trim()
-						: null
-			};
+			tenant = { tenantId: user.tenantId, organizationId: body.organizationId };
 		}
 		return this.connection.connect({
 			code: typeof body?.code === 'string' ? body.code : '',
@@ -87,6 +80,17 @@ export class EverConnectInstanceController {
 	@Header('Cache-Control', 'no-store')
 	async check(): Promise<{ status: string }> {
 		return { status: await this.connection.checkApproval() };
+	}
+
+	/**
+	 * Replaces the connect key (`POST /v1/instances/me/keys` with the SDK's two proofs): for a key
+	 * that may have leaked, or as a routine. The installation stays connected.
+	 */
+	@Post('connection/rotate-key')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	async rotateKey(@Req() request: RequestWithUser): Promise<{ kid: string }> {
+		return this.connection.rotateKey({ actorLabel: 'operator', userId: request.user?.id ?? null });
 	}
 
 	/** Disconnects this installation: `{ "confirm": true }`. */
@@ -144,9 +148,37 @@ export class EverConnectInstanceController {
 	@Put('public-url')
 	@Header('Cache-Control', 'no-store')
 	async publicUrl(@Body() body: { url?: unknown }) {
-		if (typeof body?.url !== 'string' || !/^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(body.url)) {
-			throw new BadRequestException('url must be an https address without query or fragment');
+		if (!publicAddress(body?.url)) {
+			throw new BadRequestException(
+				'url must be an https address with a host name, without credentials, query or fragment'
+			);
 		}
-		return this.states.setPublicUrl(body.url);
+		return this.states.setPublicUrl(String(body.url));
 	}
+}
+
+/**
+ * Whether `value` may be published as the installation's address: https, a host name (no IP
+ * address literal, no credentials, no port 0), no query or fragment.
+ */
+export function publicAddress(value: unknown): boolean {
+	if (typeof value !== 'string' || !/^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/.test(value)) {
+		return false;
+	}
+	let url: URL;
+	try {
+		url = new URL(value);
+	} catch {
+		return false;
+	}
+	const host = url.hostname;
+	return (
+		url.protocol === 'https:' &&
+		!url.username &&
+		!url.password &&
+		url.port !== '0' &&
+		!/^[0-9.]+$/.test(host) &&
+		!host.startsWith('[') &&
+		host.includes('.')
+	);
 }
