@@ -21,9 +21,9 @@ describe('OnboardingResolver', () => {
 				{ provide: ErrorHandlingService, useValue: { handleError: jest.fn() } }
 			]
 		});
-		const result = await firstValueFrom(
-			TestBed.runInInjectionContext(() => OnboardingResolver(null, null)) as Observable<IUser | null>
-		);
+		// The resolver reads nothing from the route, so it declares no parameters
+		const resolver = OnboardingResolver as () => Observable<IUser | null>;
+		const result = await firstValueFrom(TestBed.runInInjectionContext(() => resolver()));
 		return { result, router, usersService };
 	};
 
