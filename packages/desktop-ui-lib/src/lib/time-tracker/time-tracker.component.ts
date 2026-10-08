@@ -18,6 +18,7 @@ import {
 	ITask,
 	ITaskUpdateInput,
 	ITimeLog,
+	ITimeSlot,
 	ITimeSlotTimeLogs,
 	PermissionsEnum,
 	TaskStatusEnum,
@@ -224,6 +225,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	sound: any = null;
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
+	private _remoteLastTimeSlot$: Promise<ITimeSlot | null> | null = null;
 	private readonly logout$ = new Subject<void>();
 
 	constructor(
@@ -2062,12 +2064,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public async getLastTimeSlotImage(arg): Promise<void> {
 		try {
 			const lastTimeSlot: { timeSlotId?: string } = await this.electronService.invoke('GET_LAST_CAPTURE');
-			if (this._isOffline || !lastTimeSlot?.timeSlotId) {
+			if (this._isOffline) {
 				return;
 			}
 
-			const res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
-			const { screenshots = [] } = res || {};
+			let res: ITimeSlot | null;
+			if (lastTimeSlot?.timeSlotId) {
+				res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
+			} else {
+				// A fresh install has no local capture yet, but the server may still hold this employee's
+				// screenshots (taken before the reinstall or on another machine): show the latest ones
+				// instead of an empty panel until the first local capture lands (#8348).
+				res = await this.getRemoteLastTimeSlot();
+			}
+			if (!res) {
+				return;
+			}
+
+			const { screenshots = [] } = res;
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -2086,6 +2100,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			this._errorHandlerService.handleError(error);
 		}
+	}
+
+	/**
+	 * Looks the latest time slot with screenshots up on the server, once per session: the answer only
+	 * changes once a local capture exists, and from then on getLastTimeSlotImage() no longer asks.
+	 */
+	private getRemoteLastTimeSlot(): Promise<ITimeSlot | null> {
+		if (!this._remoteLastTimeSlot$) {
+			this._remoteLastTimeSlot$ = this.timeTrackerService.getLatestTimeSlotWithScreenshots().catch((error) => {
+				// Let the next call try again instead of caching the failure.
+				this._remoteLastTimeSlot$ = null;
+				throw error;
+			});
+		}
+		return this._remoteLastTimeSlot$;
 	}
 
 	public async localImage(
