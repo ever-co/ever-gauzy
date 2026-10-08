@@ -5949,6 +5949,28 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
+"@ever-co/connect-contracts@1.0.0-rc.1":
+  version "1.0.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-contracts/-/connect-contracts-1.0.0-rc.1.tgz#7615f469b89c30325c2820ac09e6081503ae4d50"
+  integrity sha512-uDZV7Bl3DTz3SrpRWYH6YF+b1pISbdmtWIP0NDNVHHCkq9jNNuqhhPn6COiQaFL2HkuK1tVki0DtCnrG5xKG6w==
+
+"@ever-co/connect-sdk@1.0.0-rc.1":
+  version "1.0.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-sdk/-/connect-sdk-1.0.0-rc.1.tgz#398dbc3845acb74c5f126ae47dea88f9cf2cf2ef"
+  integrity sha512-oNmUV3WXvoQVStpU8AGUr6J6YCRROz83tV+HxnUBGa7wX/Fr+Ko5IlQEb4BWulNfGnmIL2b7r+MWqQfigwmMpg==
+  dependencies:
+    "@ever-co/connect-contracts" "1.0.0-rc.1"
+    ajv "8.20.0"
+
+"@ever-co/connect-tools@1.0.0-rc.1":
+  version "1.0.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-tools/-/connect-tools-1.0.0-rc.1.tgz#f815cfb2da6e467e8b652818cc665899b445703f"
+  integrity sha512-Yd4EfzeJnbYwykFlbtc7GG8VCf9GrePgZbVc8rkti/5NzMWROZ2joZDsAdvZW3V8Kkz14bjJ5Ocj1JpoJI+utQ==
+  dependencies:
+    ajv "8.20.0"
+    ajv-formats "3.0.1"
+    yaml "2.9.1"
+
 "@ever-co/legal@^0.1.0":
   version "0.1.2"
   resolved "https://registry.npmjs.org/@ever-co/legal/-/legal-0.1.2.tgz#586ac467d2bb62d4296808b0790459ccd6f593c1"
@@ -18033,6 +18055,16 @@ ajv@8.17.1:
   version "8.17.1"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.17.1.tgz#37d9a5c776af6bc92d7f4f9510eba4c0a60d11a6"
   integrity sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
+  dependencies:
+    fast-deep-equal "^3.1.3"
+    fast-uri "^3.0.1"
+    json-schema-traverse "^1.0.0"
+    require-from-string "^2.0.2"
+
+ajv@8.20.0:
+  version "8.20.0"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.20.0.tgz#304b3636add88ba7d936760dd50ece006dea95f9"
+  integrity sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==
   dependencies:
     fast-deep-equal "^3.1.3"
     fast-uri "^3.0.1"
@@ -47489,6 +47521,11 @@ yaml@2.9.0, yaml@^2.2.2:
   version "2.9.0"
   resolved "https://registry.npmjs.org/yaml/-/yaml-2.9.0.tgz#78274afd93598a1dfdd6130df6a566defcbf9aa4"
   integrity sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==
+
+yaml@2.9.1:
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/yaml/-/yaml-2.9.1.tgz#c16233fb31944e705cfefaff38795587f57588ce"
+  integrity sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==
 
 yaml@^1.10.0, yaml@^1.7.2:
   version "1.10.2"
