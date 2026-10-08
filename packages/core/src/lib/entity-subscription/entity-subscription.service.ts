@@ -32,10 +32,10 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 		try {
 			// Extract the tenant ID from the request context
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			// Extract the user from the request context
-			const user = RequestContext.currentUser();
-			// Extract the employee ID from the user
-			const employeeId = user.employeeId;
+			// The subscription belongs to the employee named in the input (a mentioned or assigned employee);
+			// only when none is given does it fall back to the current user. It used to always take the
+			// current user, so every mention / assignment subscription went to the author instead.
+			const employeeId = input.employeeId ?? RequestContext.currentUser()?.employeeId;
 			// Extract the entity ID and type from the input
 			const { entity, entityId, organizationId } = input;
 
