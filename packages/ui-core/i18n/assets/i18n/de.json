@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "{{ name }} hinzufügen"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Nur Sie",
+			"TENANT": "Alle in diesem Mandanten"
+		},
+		"UNSAVED_CHANGES": "Ungespeicherte Änderungen",
+		"ACCOUNT": {
+			"TITLE": "Konto",
+			"DESCRIPTION": "Das Konto, mit dem Sie angemeldet sind.",
+			"MANAGE": "Profil verwalten",
+			"ROLE": "Rolle",
+			"MEMBER_SINCE": "Mitglied seit"
+		},
+		"PREFERENCES": {
+			"TITLE": "Einstellungen",
+			"DESCRIPTION": "Wie die App für Sie aussieht und sich verhält. Änderungen gelten sofort.",
+			"THEME": "Design",
+			"THEME_HINT": "Farbschema der gesamten App.",
+			"LANGUAGE": "Sprache",
+			"LANGUAGE_HINT": "Sprache von Menüs, Beschriftungen und Meldungen.",
+			"LAYOUT": "Standardlayout",
+			"RESET_LAYOUTS": "Seitenlayouts zurücksetzen",
+			"SAVE_ERROR": "Ihre Einstellung konnte nicht gespeichert werden.",
+			"LAYOUTS_RESET": "Seitenlayouts auf Ihren Standard zurückgesetzt."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Quadratisches Bild, mindestens 128 × 128 px.",
+			"NAME_HINT": "Wird allen Benutzern dieses Mandanten angezeigt.",
+			"TENANT_ID": "Mandanten-ID",
+			"TENANT_ID_HINT": "Geben Sie sie beim Support oder bei API-Aufrufen an.",
+			"COPY_ERROR": "Die Mandanten-ID konnte nicht kopiert werden.",
+			"TITLE": "Mandantenprofil",
+			"DESCRIPTION": "Name und Logo dieses Mandanten, die allen Benutzern im Arbeitsbereich-Umschalter und in der Seitenleiste angezeigt werden.",
+			"NAME": "Mandantenname",
+			"NAME_PLACEHOLDER": "Mandantennamen eingeben",
+			"NAME_REQUIRED": "Der Mandantenname ist erforderlich.",
+			"LOGO": "Mandantenlogo",
+			"LOGO_CHANGE": "Klicken, um ein neues Logo hochzuladen",
+			"LOGO_REMOVE": "Logo entfernen",
+			"LOGO_UPLOAD_ERROR": "Das Logo konnte nicht hochgeladen werden.",
+			"CREATED_AT": "Erstellt am",
+			"SAVED": "Mandantenprofil gespeichert",
+			"SAVE_ERROR": "Das Mandantenprofil konnte nicht gespeichert werden.",
+			"LOAD_ERROR": "Das Mandantenprofil konnte nicht geladen werden."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Oberfläche",
 			"TITLE": "Benutzeroberfläche",
 			"DESCRIPTION": "Wählen Sie, welche Oberfläche alle Benutzer dieses Mandanten für Seiten verwenden, die in beiden Varianten verfügbar sind.",
 			"OPTIONS": {
@@ -1958,7 +2003,90 @@
 			"PREVIOUS": "Vorherige"
 		},
 		"NOT_STARTED": "Nicht begonnen",
-		"NOT_STARTED_HELP": "Der Arbeitsbeginn für diesen Mitarbeiter ist noch nicht festgelegt. Der Mitarbeiter wird nicht berücksichtigt in der Buchhaltung, die Aufteilung von Ausgaben usw."
+		"NOT_STARTED_HELP": "Der Arbeitsbeginn für diesen Mitarbeiter ist noch nicht festgelegt. Der Mitarbeiter wird nicht berücksichtigt in der Buchhaltung, die Aufteilung von Ausgaben usw.",
+		"VIEW": {
+			"PERIOD": "Zeitraum",
+			"PERIODS": {
+				"THIS_WEEK": "Diese Woche",
+				"THIS_MONTH": "Dieser Monat",
+				"LAST_30_DAYS": "Letzte 30 Tage"
+			},
+			"TABS": {
+				"OVERVIEW": "Übersicht",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Erfasst gerade Zeit",
+				"ONLINE": "Online",
+				"AWAY": "Abwesend",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Ortszeit",
+			"MEMBER_SINCE": "Mitglied seit",
+			"WEEKLY_LIMIT": "Wochenlimit",
+			"WORKED_TODAY": "Heute gearbeitet",
+			"WORKED_PERIOD": "Im Zeitraum gearbeitet",
+			"ACTIVITY_META": "{{ value }} Aktivität",
+			"AVG_ACTIVITY": "Durchschnittliche Aktivität",
+			"OPEN_TASKS": "Offene Aufgaben",
+			"OPEN_TASKS_META": "{{ progress }} in Bearbeitung · {{ overdue }} überfällig",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "ggü. letzter Woche",
+				"THIS_MONTH": "ggü. letztem Monat",
+				"LAST_30_DAYS": "ggü. vorherigen 30 Tagen"
+			},
+			"HOURS_WORKED": "Gearbeitete Stunden",
+			"HOURS_META": "{{ total }} gesamt · {{ average }} pro Arbeitstag",
+			"TRACKED": "Erfasst",
+			"MANUAL": "Manuell",
+			"OPEN_TIMESHEET": "Zeiterfassung öffnen",
+			"PROJECTS": "Projekte",
+			"RECENT_SCREENSHOTS": "Neueste Screenshots",
+			"VIEW_ALL": "Alle anzeigen",
+			"ASSIGNED_TASKS": "Zugewiesene Aufgaben",
+			"COLUMNS": {
+				"TASK": "Aufgabe",
+				"PROJECT": "Projekt",
+				"STATUS": "Status",
+				"DUE": "Fällig",
+				"TIME": "Zeit",
+				"NAME": "Name",
+				"PRIORITY": "Priorität"
+			},
+			"TOP_TASKS": "Meistbearbeitete Aufgaben",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "Keine Zeit in diesem Zeitraum erfasst",
+			"NO_TASKS": "Keine Aufgaben zugewiesen",
+			"NO_APPS": "Keine App- oder URL-Aktivität in diesem Zeitraum",
+			"NO_SCREENSHOTS": "Keine Screenshots in diesem Zeitraum",
+			"UNAVAILABLE": "Sie haben keinen Zugriff auf diese Daten",
+			"PROFILE": {
+				"ABOUT": "Über",
+				"CONTACT": "Kontakt",
+				"SKILLS_TAGS": "Fähigkeiten & Tags",
+				"TIME_ZONE": "Zeitzone",
+				"NOT_PROVIDED": "Noch nicht angegeben",
+				"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt"
+			},
+			"TASKS_HELP": "Aufgaben, bei denen diese Person Mitglied ist. Wählen Sie ein Feld, um die Liste zu filtern.",
+			"TASK_FILTERS": {
+				"OPEN": "Offen",
+				"PROGRESS": "In Bearbeitung",
+				"OVERDUE": "Überfällig",
+				"DONE": "Erledigt"
+			},
+			"DUE": {
+				"NONE": "Kein Fälligkeitsdatum",
+				"WAS_DUE": "War fällig",
+				"OVERDUE_DAY": "1 Tag überfällig",
+				"OVERDUE_DAYS": "{{ count }} Tage überfällig",
+				"TODAY": "Heute fällig",
+				"TOMORROW": "Morgen fällig",
+				"IN_DAYS": "In {{ count }} Tagen"
+			},
+			"SHOWING": "{{ shown }} von {{ total }} Aufgaben angezeigt",
+			"NO_TASKS_IN_VIEW": "Keine Aufgaben in dieser Ansicht"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Alle Ziele",
@@ -2763,7 +2891,19 @@
 		"EMPLOYEE_UPDATED": "Der Mitarbeiter wurde aktualisiert.",
 		"IMAGE_UPDATED": "Das Bild wurde aktualisiert.",
 		"FAIL_TO_UPDATE_IMAGE": "Aktualisierung fehlgeschlagen.",
-		"ANONYMOUS": "Anonym"
+		"ANONYMOUS": "Anonym",
+		"ABOUT": "Über",
+		"INACTIVE": "Inaktiv",
+		"PER_HOUR": "/ Stunde",
+		"MEMBER_SINCE": "Mitglied seit",
+		"NO_DESCRIPTION": "Es wurde noch keine Beschreibung hinzugefügt",
+		"NO_SKILLS": "Noch keine Fähigkeiten angegeben",
+		"VIEW_COMPANY_PROFILE": "Unternehmensprofil ansehen",
+		"EDIT": {
+			"NO_AWARDS": "Noch keine Auszeichnungen",
+			"ADD_AWARD": "Auszeichnung hinzufügen",
+			"PRIVACY_HELP": "Legen Sie fest, welche Angaben Besucher im öffentlichen Profil sehen."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Vorschlagsverwaltungsseite",
@@ -3865,7 +4005,8 @@
 		"ROLES_PERMISSIONS": "Rollen & Berechtigungen",
 		"TIME_TRACKING": "Zeiterfassung",
 		"ESTIMATE": "Kostenvoranschlag",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Dokumente"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3963,6 +4104,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Gehe zum Dashboard, verwalte Mitarbeiterstatistiken, Zeiterfassungs-Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Zentrale Anlaufstelle für Unternehmensdokumente: Uploads, Wiki-Seiten, Prüfung und KI-Wissen"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

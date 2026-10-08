@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "{{ name }} toevoegen"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Alleen jij",
+			"TENANT": "Iedereen in deze tenant"
+		},
+		"UNSAVED_CHANGES": "Niet-opgeslagen wijzigingen",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "Het account waarmee je bent aangemeld.",
+			"MANAGE": "Profiel beheren",
+			"ROLE": "Rol",
+			"MEMBER_SINCE": "Lid sinds"
+		},
+		"PREFERENCES": {
+			"TITLE": "Voorkeuren",
+			"DESCRIPTION": "Hoe de app er voor jou uitziet en werkt. Wijzigingen gelden direct.",
+			"THEME": "Thema",
+			"THEME_HINT": "Kleurenschema van de hele app.",
+			"LANGUAGE": "Taal",
+			"LANGUAGE_HINT": "Taal van menu's, labels en berichten.",
+			"LAYOUT": "Standaardindeling",
+			"RESET_LAYOUTS": "Pagina-indelingen herstellen",
+			"SAVE_ERROR": "Je voorkeur kon niet worden opgeslagen.",
+			"LAYOUTS_RESET": "Pagina-indelingen hersteld naar je standaard."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Vierkante afbeelding, minimaal 128 × 128 px.",
+			"NAME_HINT": "Zichtbaar voor elke gebruiker van deze tenant.",
+			"TENANT_ID": "Tenant-ID",
+			"TENANT_ID_HINT": "Vermeld deze bij contact met support of bij API-aanroepen.",
+			"COPY_ERROR": "De tenant-ID kon niet worden gekopieerd.",
+			"TITLE": "Tenantprofiel",
+			"DESCRIPTION": "De naam en het logo van deze tenant, voor alle gebruikers zichtbaar in de werkruimtewisselaar en de zijbalk.",
+			"NAME": "Tenantnaam",
+			"NAME_PLACEHOLDER": "Voer de tenantnaam in",
+			"NAME_REQUIRED": "De tenantnaam is verplicht.",
+			"LOGO": "Tenantlogo",
+			"LOGO_CHANGE": "Klik om een nieuw logo te uploaden",
+			"LOGO_REMOVE": "Logo verwijderen",
+			"LOGO_UPLOAD_ERROR": "Het logo kon niet worden geüpload.",
+			"CREATED_AT": "Aangemaakt op",
+			"SAVED": "Tenantprofiel opgeslagen",
+			"SAVE_ERROR": "Het tenantprofiel kon niet worden opgeslagen.",
+			"LOAD_ERROR": "Het tenantprofiel kon niet worden geladen."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "Gebruikersinterface",
 			"DESCRIPTION": "Kies welke interface iedereen in deze tenant gebruikt voor pagina's die in beide varianten beschikbaar zijn.",
 			"OPTIONS": {
@@ -1958,7 +2003,90 @@
 			"PREVIOUS": "Vorige"
 		},
 		"NOT_STARTED": "Niet begonnen",
-		"NOT_STARTED_HELP": "De begindatum van het werk is niet ingesteld voor deze werknemer. De werknemer wordt niet meegenomen in de boekhouding, gesplitste kosten, enz."
+		"NOT_STARTED_HELP": "De begindatum van het werk is niet ingesteld voor deze werknemer. De werknemer wordt niet meegenomen in de boekhouding, gesplitste kosten, enz.",
+		"VIEW": {
+			"PERIOD": "Periode",
+			"PERIODS": {
+				"THIS_WEEK": "Deze week",
+				"THIS_MONTH": "Deze maand",
+				"LAST_30_DAYS": "Laatste 30 dagen"
+			},
+			"TABS": {
+				"OVERVIEW": "Overzicht",
+				"PROFILE": "Profiel"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registreert tijd",
+				"ONLINE": "Online",
+				"AWAY": "Afwezig",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Lokale tijd",
+			"MEMBER_SINCE": "Lid sinds",
+			"WEEKLY_LIMIT": "Weeklimiet",
+			"WORKED_TODAY": "Vandaag gewerkt",
+			"WORKED_PERIOD": "Gewerkt in periode",
+			"ACTIVITY_META": "{{ value }} activiteit",
+			"AVG_ACTIVITY": "Gemiddelde activiteit",
+			"OPEN_TASKS": "Open taken",
+			"OPEN_TASKS_META": "{{ progress }} bezig · {{ overdue }} te laat",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "t.o.v. vorige week",
+				"THIS_MONTH": "t.o.v. vorige maand",
+				"LAST_30_DAYS": "t.o.v. vorige 30 dagen"
+			},
+			"HOURS_WORKED": "Gewerkte uren",
+			"HOURS_META": "{{ total }} totaal · {{ average }} per werkdag",
+			"TRACKED": "Geregistreerd",
+			"MANUAL": "Handmatig",
+			"OPEN_TIMESHEET": "Urenstaat openen",
+			"PROJECTS": "Projecten",
+			"RECENT_SCREENSHOTS": "Recente screenshots",
+			"VIEW_ALL": "Alles bekijken",
+			"ASSIGNED_TASKS": "Toegewezen taken",
+			"COLUMNS": {
+				"TASK": "Taak",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Deadline",
+				"TIME": "Tijd",
+				"NAME": "Naam",
+				"PRIORITY": "Prioriteit"
+			},
+			"TOP_TASKS": "Meest gewerkte taken",
+			"APPS_URLS": "Apps & URL's",
+			"NO_TIME": "Geen tijd geregistreerd in deze periode",
+			"NO_TASKS": "Geen taken toegewezen",
+			"NO_APPS": "Geen app- of URL-activiteit in deze periode",
+			"NO_SCREENSHOTS": "Geen screenshots in deze periode",
+			"UNAVAILABLE": "U hebt geen toegang tot deze gegevens",
+			"PROFILE": {
+				"ABOUT": "Over",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Vaardigheden & tags",
+				"TIME_ZONE": "Tijdzone",
+				"NOT_PROVIDED": "Nog niet opgegeven",
+				"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd"
+			},
+			"TASKS_HELP": "Taken waarvan deze persoon lid is. Kies een vak om de lijst te filteren.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "Bezig",
+				"OVERDUE": "Te laat",
+				"DONE": "Klaar"
+			},
+			"DUE": {
+				"NONE": "Geen deadline",
+				"WAS_DUE": "Deadline was",
+				"OVERDUE_DAY": "1 dag te laat",
+				"OVERDUE_DAYS": "{{ count }} dagen te laat",
+				"TODAY": "Vandaag",
+				"TOMORROW": "Morgen",
+				"IN_DAYS": "Over {{ count }} dagen"
+			},
+			"SHOWING": "{{ shown }} van {{ total }} taken getoond",
+			"NO_TASKS_IN_VIEW": "Geen taken in deze weergave"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Alle doelstellingen",
@@ -2767,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "Werknemer is bijgewerkt.",
 		"IMAGE_UPDATED": "De afbeelding is bijgewerkt.",
 		"FAIL_TO_UPDATE_IMAGE": "Update mislukt.",
-		"ANONYMOUS": "Anoniem"
+		"ANONYMOUS": "Anoniem",
+		"ABOUT": "Over",
+		"INACTIVE": "Inactief",
+		"PER_HOUR": "/ uur",
+		"MEMBER_SINCE": "Lid sinds",
+		"NO_DESCRIPTION": "Er is nog geen beschrijving toegevoegd",
+		"NO_SKILLS": "Nog geen vaardigheden vermeld",
+		"VIEW_COMPANY_PROFILE": "Bedrijfsprofiel bekijken",
+		"EDIT": {
+			"NO_AWARDS": "Nog geen onderscheidingen",
+			"ADD_AWARD": "Onderscheiding toevoegen",
+			"PRIVACY_HELP": "Kies welke gegevens bezoekers op het openbare profiel zien."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Pagina voor beheer van voorstellen",
@@ -3869,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Rollen & Machtigingen",
 		"TIME_TRACKING": "Tijdregistratie",
 		"ESTIMATE": "Schatting",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documenten"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3967,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ga naar het dashboard, Beheer personeelsstatistieken, Tijdregistratie-dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centrale plek voor bedrijfsdocumenten: uploads, wikipagina's, beoordeling en AI-kennis"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

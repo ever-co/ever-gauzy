@@ -32,7 +32,11 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     /* I've used padding so you can see the edges of the elements. */
     padding: 2px 0px 2px 5px;
     margin-right: 16px;
+    // The whole control opens the picker. iOS Safari also only delivers taps on a
+    // non-interactive element reliably when it carries a pointer cursor.
+    cursor: pointer;
     input {
+        cursor: pointer;
         // Fill the pill rather than pinning a second height inside it, and lift
         // the global control floor: in here the field is the control's TEXT, not
         // a control of its own, so it must not claim a control's height.
@@ -60,6 +64,24 @@ $button-radius: nb-theme(button-rectangle-border-radius);
     input:focus {
         /* removing the input focus blue box. Put this on the form if you like. */
         outline: none;
+    }
+    // The calendar icon's button: no chrome (it must not pick up the arrow
+    // buttons' `.filter-input button` look), so it reads as the bare icon it
+    // was; only a keyboard focus ring shows.
+    .calendar-trigger {
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: none;
+        color: inherit;
+        cursor: pointer;
+        &:focus-visible {
+            outline: 2px solid nb-theme(color-primary-default);
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
     }
     &:hover,
     &:focus {

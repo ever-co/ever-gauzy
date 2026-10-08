@@ -44,6 +44,21 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	employeeAwards: IEmployeeAward[] = [];
 	showAddAward: boolean;
 
+	/** The dialog's sections, in tab order: an id, its i18n title and its icon. */
+	readonly tabs = [
+		{ id: 'account', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT', icon: 'person-outline' },
+		{ id: 'employment', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT', icon: 'briefcase-outline' },
+		{ id: 'rates', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES', icon: 'pricetags-outline' },
+		{ id: 'awards', title: 'POP_UPS.AWARDS', icon: 'award-outline' },
+		{ id: 'privacy', title: 'POP_UPS.PRIVACY', icon: 'shield-outline' }
+	] as const;
+	/**
+	 * The selected section. Panes are hidden, not destroyed, when another is
+	 * selected: the tags and skills inputs read their initial value from the
+	 * employee, so re-creating them would drop a selection made before switching.
+	 */
+	activeTab: 'account' | 'employment' | 'rates' | 'awards' | 'privacy' = 'account';
+
 	constructor(
 		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<PublicPageEmployeeMutationComponent>,

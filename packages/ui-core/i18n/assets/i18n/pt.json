@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "Adicionar {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Somente você",
+			"TENANT": "Todos neste tenant"
+		},
+		"UNSAVED_CHANGES": "Alterações não salvas",
+		"ACCOUNT": {
+			"TITLE": "Conta",
+			"DESCRIPTION": "A conta com a qual você entrou.",
+			"MANAGE": "Gerenciar perfil",
+			"ROLE": "Função",
+			"MEMBER_SINCE": "Membro desde"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferências",
+			"DESCRIPTION": "Como o aplicativo aparece e se comporta para você. As alterações são aplicadas imediatamente.",
+			"THEME": "Tema",
+			"THEME_HINT": "Esquema de cores de todo o aplicativo.",
+			"LANGUAGE": "Idioma",
+			"LANGUAGE_HINT": "Idioma dos menus, rótulos e mensagens.",
+			"LAYOUT": "Layout padrão",
+			"RESET_LAYOUTS": "Redefinir layouts das páginas",
+			"SAVE_ERROR": "Não foi possível salvar sua preferência.",
+			"LAYOUTS_RESET": "Layouts das páginas redefinidos para o seu padrão."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Imagem quadrada, com pelo menos 128 × 128 px.",
+			"NAME_HINT": "Exibido para todos os usuários deste tenant.",
+			"TENANT_ID": "ID do tenant",
+			"TENANT_ID_HINT": "Informe-o ao contatar o suporte ou ao usar a API.",
+			"COPY_ERROR": "Não foi possível copiar o ID do tenant.",
+			"TITLE": "Perfil do tenant",
+			"DESCRIPTION": "O nome e o logotipo deste tenant, exibidos para todos os usuários no seletor de espaços de trabalho e na barra lateral.",
+			"NAME": "Nome do tenant",
+			"NAME_PLACEHOLDER": "Digite o nome do tenant",
+			"NAME_REQUIRED": "O nome do tenant é obrigatório.",
+			"LOGO": "Logotipo do tenant",
+			"LOGO_CHANGE": "Clique para enviar um novo logotipo",
+			"LOGO_REMOVE": "Remover logotipo",
+			"LOGO_UPLOAD_ERROR": "Não foi possível enviar o logotipo.",
+			"CREATED_AT": "Criado em",
+			"SAVED": "Perfil do tenant salvo",
+			"SAVE_ERROR": "Não foi possível salvar o perfil do tenant.",
+			"LOAD_ERROR": "Não foi possível carregar o perfil do tenant."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "Interface do usuário",
 			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões.",
 			"OPTIONS": {
@@ -1958,7 +2003,90 @@
 			"PREVIOUS": "Anterior"
 		},
 		"NOT_STARTED": "Não iniciado",
-		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc."
+		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc.",
+		"VIEW": {
+			"PERIOD": "Período",
+			"PERIODS": {
+				"THIS_WEEK": "Esta semana",
+				"THIS_MONTH": "Este mês",
+				"LAST_30_DAYS": "Últimos 30 dias"
+			},
+			"TABS": {
+				"OVERVIEW": "Visão geral",
+				"PROFILE": "Perfil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registrando tempo",
+				"ONLINE": "Online",
+				"AWAY": "Ausente",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Hora local",
+			"MEMBER_SINCE": "Membro desde",
+			"WEEKLY_LIMIT": "Limite semanal",
+			"WORKED_TODAY": "Trabalhado hoje",
+			"WORKED_PERIOD": "Trabalhado no período",
+			"ACTIVITY_META": "{{ value }} de atividade",
+			"AVG_ACTIVITY": "Atividade média",
+			"OPEN_TASKS": "Tarefas abertas",
+			"OPEN_TASKS_META": "{{ progress }} em andamento · {{ overdue }} atrasadas",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs semana passada",
+				"THIS_MONTH": "vs mês passado",
+				"LAST_30_DAYS": "vs 30 dias anteriores"
+			},
+			"HOURS_WORKED": "Horas trabalhadas",
+			"HOURS_META": "{{ total }} no total · {{ average }} por dia trabalhado",
+			"TRACKED": "Registrado",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Abrir folha de horas",
+			"PROJECTS": "Projetos",
+			"RECENT_SCREENSHOTS": "Capturas de tela recentes",
+			"VIEW_ALL": "Ver tudo",
+			"ASSIGNED_TASKS": "Tarefas atribuídas",
+			"COLUMNS": {
+				"TASK": "Tarefa",
+				"PROJECT": "Projeto",
+				"STATUS": "Status",
+				"DUE": "Prazo",
+				"TIME": "Tempo",
+				"NAME": "Nome",
+				"PRIORITY": "Prioridade"
+			},
+			"TOP_TASKS": "Tarefas mais trabalhadas",
+			"APPS_URLS": "Apps e URLs",
+			"NO_TIME": "Nenhum tempo registrado neste período",
+			"NO_TASKS": "Nenhuma tarefa atribuída",
+			"NO_APPS": "Nenhuma atividade de app ou URL neste período",
+			"NO_SCREENSHOTS": "Nenhuma captura de tela neste período",
+			"UNAVAILABLE": "Você não tem acesso a estes dados",
+			"PROFILE": {
+				"ABOUT": "Sobre",
+				"CONTACT": "Contato",
+				"SKILLS_TAGS": "Habilidades e tags",
+				"TIME_ZONE": "Fuso horário",
+				"NOT_PROVIDED": "Ainda não informado",
+				"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda"
+			},
+			"TASKS_HELP": "Tarefas das quais esta pessoa é membro. Escolha uma caixa para filtrar a lista.",
+			"TASK_FILTERS": {
+				"OPEN": "Abertas",
+				"PROGRESS": "Em andamento",
+				"OVERDUE": "Atrasadas",
+				"DONE": "Concluídas"
+			},
+			"DUE": {
+				"NONE": "Sem prazo",
+				"WAS_DUE": "Prazo era",
+				"OVERDUE_DAY": "1 dia de atraso",
+				"OVERDUE_DAYS": "{{ count }} dias de atraso",
+				"TODAY": "Vence hoje",
+				"TOMORROW": "Vence amanhã",
+				"IN_DAYS": "Em {{ count }} dias"
+			},
+			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Todos os objetivos",
@@ -2767,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "O funcionário foi atualizado.",
 		"IMAGE_UPDATED": "A imagem foi atualizada.",
 		"FAIL_TO_UPDATE_IMAGE": "Atualização falhou.",
-		"ANONYMOUS": "Anônimo"
+		"ANONYMOUS": "Anônimo",
+		"ABOUT": "Sobre",
+		"INACTIVE": "Inativo",
+		"PER_HOUR": "/ hora",
+		"MEMBER_SINCE": "Membro desde",
+		"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda",
+		"NO_SKILLS": "Nenhuma habilidade listada",
+		"VIEW_COMPANY_PROFILE": "Ver perfil da empresa",
+		"EDIT": {
+			"NO_AWARDS": "Nenhum prêmio adicionado",
+			"ADD_AWARD": "Adicionar prêmio",
+			"PRIVACY_HELP": "Escolha quais detalhes os visitantes veem no perfil público."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Página de Gerenciamento de Propostas",
@@ -3869,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Funções e Permissões",
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"ESTIMATE": "Estimativa",
-		"DASHBOARD": "Painel de Controle"
+		"DASHBOARD": "Painel de Controle",
+		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3967,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel de controle, Gerenciar Estatísticas dos Funcionários, Painel de Controle de Rastreamento de Tempo."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

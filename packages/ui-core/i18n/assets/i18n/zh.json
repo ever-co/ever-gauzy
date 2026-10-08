@@ -1162,7 +1162,52 @@
 		"ADD_ITEM": "添加{{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "仅您自己",
+			"TENANT": "此租户中的所有人"
+		},
+		"UNSAVED_CHANGES": "未保存的更改",
+		"ACCOUNT": {
+			"TITLE": "账户",
+			"DESCRIPTION": "您当前登录使用的账户。",
+			"MANAGE": "管理个人资料",
+			"ROLE": "角色",
+			"MEMBER_SINCE": "加入时间"
+		},
+		"PREFERENCES": {
+			"TITLE": "偏好设置",
+			"DESCRIPTION": "应用对您的外观和行为。更改会立即生效。",
+			"THEME": "主题",
+			"THEME_HINT": "整个应用的配色方案。",
+			"LANGUAGE": "语言",
+			"LANGUAGE_HINT": "菜单、标签和消息使用的语言。",
+			"LAYOUT": "默认布局",
+			"RESET_LAYOUTS": "重置页面布局",
+			"SAVE_ERROR": "无法保存您的偏好设置。",
+			"LAYOUTS_RESET": "页面布局已重置为您的默认设置。"
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "方形图片，至少 128 × 128 像素。",
+			"NAME_HINT": "向此租户的所有用户显示。",
+			"TENANT_ID": "租户 ID",
+			"TENANT_ID_HINT": "联系支持或调用 API 时请提供此 ID。",
+			"COPY_ERROR": "无法复制租户 ID。",
+			"TITLE": "租户资料",
+			"DESCRIPTION": "此租户的名称和徽标，会在工作区切换器和侧边栏中向所有用户显示。",
+			"NAME": "租户名称",
+			"NAME_PLACEHOLDER": "输入租户名称",
+			"NAME_REQUIRED": "租户名称为必填项。",
+			"LOGO": "租户徽标",
+			"LOGO_CHANGE": "点击上传新徽标",
+			"LOGO_REMOVE": "移除徽标",
+			"LOGO_UPLOAD_ERROR": "无法上传徽标。",
+			"CREATED_AT": "创建于",
+			"SAVED": "租户资料已保存",
+			"SAVE_ERROR": "无法保存租户资料。",
+			"LOAD_ERROR": "无法加载租户资料。"
+		},
 		"PREFERRED_UI": {
+			"LABEL": "界面",
 			"TITLE": "用户界面",
 			"DESCRIPTION": "选择此租户中所有用户在同时提供两种版本的页面上使用哪种界面。",
 			"OPTIONS": {
@@ -1958,7 +2003,90 @@
 			"PREVIOUS": "以前"
 		},
 		"NOT_STARTED": "未开始",
-		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。"
+		"NOT_STARTED_HELP": "该员工的工作开始日期尚未确定。在我们的账目、费用分摊等方面，不会考虑该员工。",
+		"VIEW": {
+			"PERIOD": "期间",
+			"PERIODS": {
+				"THIS_WEEK": "本周",
+				"THIS_MONTH": "本月",
+				"LAST_30_DAYS": "最近 30 天"
+			},
+			"TABS": {
+				"OVERVIEW": "概览",
+				"PROFILE": "个人资料"
+			},
+			"PRESENCE": {
+				"TRACKING": "正在计时",
+				"ONLINE": "在线",
+				"AWAY": "离开",
+				"OFFLINE": "离线"
+			},
+			"LOCAL_TIME": "当地时间",
+			"MEMBER_SINCE": "加入时间",
+			"WEEKLY_LIMIT": "每周上限",
+			"WORKED_TODAY": "今日工作",
+			"WORKED_PERIOD": "期间工作",
+			"ACTIVITY_META": "{{ value }} 活跃度",
+			"AVG_ACTIVITY": "平均活跃度",
+			"OPEN_TASKS": "未完成任务",
+			"OPEN_TASKS_META": "{{ progress }} 进行中 · {{ overdue }} 已逾期",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "较上周",
+				"THIS_MONTH": "较上月",
+				"LAST_30_DAYS": "较前 30 天"
+			},
+			"HOURS_WORKED": "工作时长",
+			"HOURS_META": "共 {{ total }} · 每个工作日 {{ average }}",
+			"TRACKED": "已追踪",
+			"MANUAL": "手动",
+			"OPEN_TIMESHEET": "打开时间表",
+			"PROJECTS": "项目",
+			"RECENT_SCREENSHOTS": "最近截图",
+			"VIEW_ALL": "查看全部",
+			"ASSIGNED_TASKS": "已分配任务",
+			"COLUMNS": {
+				"TASK": "任务",
+				"PROJECT": "项目",
+				"STATUS": "状态",
+				"DUE": "截止日期",
+				"TIME": "时长",
+				"NAME": "名称",
+				"PRIORITY": "优先级"
+			},
+			"TOP_TASKS": "耗时最多的任务",
+			"APPS_URLS": "应用和网址",
+			"NO_TIME": "本期间未记录时间",
+			"NO_TASKS": "没有分配的任务",
+			"NO_APPS": "本期间没有应用或网址活动",
+			"NO_SCREENSHOTS": "本期间没有截图",
+			"UNAVAILABLE": "您无权访问这些数据",
+			"PROFILE": {
+				"ABOUT": "简介",
+				"CONTACT": "联系方式",
+				"SKILLS_TAGS": "技能和标签",
+				"TIME_ZONE": "时区",
+				"NOT_PROVIDED": "尚未填写",
+				"NO_DESCRIPTION": "尚未添加描述"
+			},
+			"TASKS_HELP": "此人参与的任务。点击方框筛选列表。",
+			"TASK_FILTERS": {
+				"OPEN": "未完成",
+				"PROGRESS": "进行中",
+				"OVERDUE": "已逾期",
+				"DONE": "已完成"
+			},
+			"DUE": {
+				"NONE": "无截止日期",
+				"WAS_DUE": "原定截止",
+				"OVERDUE_DAY": "逾期 1 天",
+				"OVERDUE_DAYS": "逾期 {{ count }} 天",
+				"TODAY": "今天到期",
+				"TOMORROW": "明天到期",
+				"IN_DAYS": "{{ count }} 天后到期"
+			},
+			"SHOWING": "显示 {{ shown }} / {{ total }} 个任务",
+			"NO_TASKS_IN_VIEW": "此视图中没有任务"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "所有目标",
@@ -2767,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "员工已更新。",
 		"IMAGE_UPDATED": "图片已经更新。",
 		"FAIL_TO_UPDATE_IMAGE": "更新失败。",
-		"ANONYMOUS": "匿名"
+		"ANONYMOUS": "匿名",
+		"ABOUT": "简介",
+		"INACTIVE": "未激活",
+		"PER_HOUR": "/ 小时",
+		"MEMBER_SINCE": "加入时间",
+		"NO_DESCRIPTION": "尚未添加描述",
+		"NO_SKILLS": "尚未列出技能",
+		"VIEW_COMPANY_PROFILE": "查看公司简介",
+		"EDIT": {
+			"NO_AWARDS": "尚未添加奖项",
+			"ADD_AWARD": "添加奖项",
+			"PRIVACY_HELP": "选择访客可在公开资料中看到的信息。"
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "提案管理页面",
@@ -3869,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "角色和权限",
 		"TIME_TRACKING": "时间跟踪",
 		"ESTIMATE": "估计",
-		"DASHBOARD": "仪表板"
+		"DASHBOARD": "仪表板",
+		"DOCUMENTS": "文档"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3967,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "前往仪表盘，管理员工统计数据，时间追踪仪表盘。"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "公司文档中心：上传、Wiki 页面、审阅和 AI 知识"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

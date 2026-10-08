@@ -1,0 +1,163 @@
+/*
+ * ── Settings → General: shared group / row layout ──────────────────────────
+ *
+ * Every block of the page is a "group": a titled panel whose content is a list
+ * of rows — label and hint on the start side, the control on the end side,
+ * hairline between rows. Used by the page itself and by the personal settings
+ * child component, so both read as one page.
+ *
+ * Same vocabulary as the HR dashboard: 12px body, three weights (500 titles,
+ * 400 everything else), gauzy-* surface tokens, hairline insets, no shadows.
+ */
+
+$row-control-width: 16rem;
+
+@mixin general-setting-layout {
+	.settings-group {
+		max-width: 52rem;
+		border-radius: var(--gauzy-radius-sm, 0.5rem);
+		background: var(--gauzy-card-1, var(--card-background-color));
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+		font-size: 0.75rem;
+
+		& + .settings-group {
+			margin-top: 1rem;
+		}
+	}
+
+	.group-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.875rem 1rem 0.75rem;
+	}
+
+	.group-title {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 500;
+	}
+
+	// `p` elements: Nebular's paragraph typography would otherwise win over the group's 12px.
+	.group-description,
+	.group-message {
+		font-size: 0.75rem;
+		line-height: 1.125rem;
+	}
+
+	.group-description {
+		margin: 0.125rem 0 0;
+		color: var(--text-hint-color);
+	}
+
+	.group-scope {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		color: var(--text-hint-color);
+		white-space: nowrap;
+
+		nb-icon {
+			font-size: 0.875rem;
+		}
+	}
+
+	.setting-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem 1.5rem;
+		padding: 0.75rem 1rem;
+		border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+
+		&.align-start {
+			align-items: flex-start;
+		}
+	}
+
+	.row-copy {
+		display: flex;
+		flex: 1 1 14rem;
+		flex-direction: column;
+		gap: 0.125rem;
+		min-width: 0;
+	}
+
+	.row-label {
+		font-weight: 400;
+		color: var(--text-basic-color);
+	}
+
+	.row-hint {
+		color: var(--text-hint-color);
+	}
+
+	.row-control {
+		display: flex;
+		flex: 0 1 $row-control-width;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		min-width: 0;
+
+		nb-select,
+		input[nbInput] {
+			width: 100%;
+			max-width: none;
+		}
+
+		&.auto {
+			flex-basis: auto;
+		}
+	}
+
+	.row-value {
+		color: var(--text-basic-color);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		&.mono {
+			font-family: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+			font-size: 0.6875rem;
+		}
+	}
+
+	.group-footer {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.5rem;
+		padding: 0.625rem 1rem;
+		border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+	}
+
+	.group-status {
+		margin-inline-end: auto;
+		color: var(--text-hint-color);
+	}
+
+	.group-message {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.375rem;
+		margin: 0;
+		padding: 0.75rem 1rem;
+		border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+		color: var(--text-hint-color);
+
+		nb-icon {
+			flex: 0 0 auto;
+			font-size: 0.875rem;
+		}
+	}
+
+	.field-error {
+		width: 100%;
+		color: var(--color-danger-default);
+		text-align: end;
+	}
+}
