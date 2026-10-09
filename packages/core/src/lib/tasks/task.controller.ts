@@ -27,6 +27,8 @@ import {
 	CreateTaskDTO,
 	GetTaskByIdDTO,
 	TaskDateFilterInputDTO,
+	TaskByNumberParamsDTO,
+	TaskByNumberQueryDTO,
 	TaskMaxNumberQueryDTO,
 	TaskQueryDTO,
 	UpdateTaskDTO
@@ -183,6 +185,37 @@ export class TaskController extends CrudController<Task> {
 	@UseValidationPipe({ transform: true })
 	async findTasksByViewQuery(@Param('id', UUIDValidationPipe) viewId: ID): Promise<IPagination<ITask>> {
 		return this.taskService.findTasksByViewQuery(viewId);
+	}
+
+	/**
+	 * GET one task by its human key: the project prefix and the number (`FUL-12`).
+	 *
+	 * The organization is the query's own member and is checked against the caller's memberships; the
+	 * project is optional and is what disambiguates a prefix two projects share — without it, a key that
+	 * names two tasks is refused rather than answered with whichever one the store returned first.
+	 *
+	 * @param params The prefix and the number.
+	 * @param query The organization and, optionally, the project.
+	 * @returns The task.
+	 */
+	@ApiOperation({ summary: 'Get a task by its project prefix and number.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Task retrieved successfully.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No task carries that key in this organization.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The key names more than one task; state the project.' })
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	@Get('/by-number/:prefix/:number')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findByNumber(
+		@Param() params: TaskByNumberParamsDTO,
+		@Query() query: TaskByNumberQueryDTO
+	): Promise<ITask> {
+		return this.taskService.findByNumber({
+			tenantId: query.tenantId,
+			organizationId: query.organizationId,
+			projectId: query.projectId,
+			prefix: params.prefix,
+			number: params.number
+		});
 	}
 
 	/**
