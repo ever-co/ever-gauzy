@@ -130,9 +130,17 @@ import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { PaymentCollectionStatus, PaymentSessionStatus } from '../payment.types';
 import { PaymentAuthorizedEvent, PaymentCanceledEvent, PaymentFailedEvent } from '../events';
+import { PaymentCollection } from '../payment-collection/payment-collection.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { PaymentProviderService } from '../payment-provider/payment-provider.service';
+import { PaymentSession } from './payment-session.entity';
 import { PaymentSessionService } from './payment-session.service';
+
+/** The entity classes the services hand a transaction's manager, resolved to tables. */
+const ENTITY_TABLES = new Map<unknown, string>([
+	[PaymentSession, 'payment_session'],
+	[PaymentCollection, 'payment_collection']
+]);
 
 /**
  * The lifetime of one attempt with one provider (doc 10 §8.5, §8.11).
@@ -221,10 +229,23 @@ function repository(tables: Record<string, Row[]>, tableName: string) {
 			return String(row[field] ?? '') === String(expected ?? '');
 		});
 
+	/** The rows of the table an entity class is stored in. */
+	const rowsOf = (entity: unknown): Row[] => {
+		const table = ENTITY_TABLES.get(entity);
+
+		if (!table) {
+			throw new Error('the in-memory double was handed an entity it does not know');
+		}
+
+		return tables[table];
+	};
+
 	/**
-	 * The manager the composed collection service opens its transaction on: the entity-keyed reads and
-	 * the conditional write it makes, against this table, with every write undone when the work throws.
-	 * A conditional write is a WHERE, so every member of its criteria has to hold for the row to change.
+	 * The manager the services open their transactions on: the entity-keyed reads and conditional writes
+	 * they make, against the tables the entity classes name, with every write undone when the work
+	 * throws. A conditional write is a WHERE, so every member of its criteria has to hold for the row to
+	 * change. No row lock is emulated: the transactions run side by side, which leaves the conditional
+	 * writes as the only guard, the strictest storage a case can face.
 	 */
 	const manager = {
 		transaction: async (run: (transactional: any) => Promise<any>) => {
@@ -232,13 +253,13 @@ function repository(tables: Record<string, Row[]>, tableName: string) {
 
 			try {
 				return await run({
-					findOne: async (_entity: unknown, options: any = {}) => {
-						const row = rows().find((one) => matches(one, options.where));
+					findOne: async (entity: unknown, options: any = {}) => {
+						const row = rowsOf(entity).find((one) => matches(one, options.where));
 
 						return row ? { ...row } : null;
 					},
-					update: async (_entity: unknown, criteria: any, partial: Row) => {
-						const row = rows().find((one) => matches(one, criteria ?? {}));
+					update: async (entity: unknown, criteria: any, partial: Row) => {
+						const row = rowsOf(entity).find((one) => matches(one, criteria ?? {}));
 
 						if (!row) {
 							return { affected: 0 };
@@ -1003,5 +1024,64 @@ describe('PaymentSessionService — the expiry sweep (doc 10 §8.5)', () => {
 
 		expect(page.total).toBe(1);
 		expect(page.items[0].id).toBe('mine');
+	});
+});
+
+/**
+ * One answer delivered twice at the same moment, and a void the collection refuses (PR #10254 review,
+ * the sibling of "Capture totals can disagree").
+ *
+ * The status check that keeps a re-delivered approval from reserving the amount twice read the session
+ * before anything was written, so a provider retry arriving while the first answer was being recorded
+ * passed it as well and the collection took the amount twice. And a void wrote the session `CANCELED`
+ * before the collection released the authorisation, so a release the collection refused left a
+ * cancelled session over money still held.
+ */
+describe('PaymentSessionService — a transition and the collection it moves are one write', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('counts an approval once when it is delivered twice at the same moment', async () => {
+		const fixture = world();
+		const opened = await fixture.service.openSession(attempt({ amount: '40' }) as never);
+
+		fixture.published.length = 0;
+
+		const answers = await Promise.all([
+			fixture.service.authorizeSession(opened.id),
+			fixture.service.authorizeSession(opened.id)
+		]);
+
+		expect(answers.map((answer) => answer.status)).toEqual([
+			PaymentSessionStatus.AUTHORIZED,
+			PaymentSessionStatus.AUTHORIZED
+		]);
+		expect(fixture.collection().authorizedAmount).toBe('40');
+		expect(fixture.published.filter((event) => event instanceof PaymentAuthorizedEvent)).toHaveLength(1);
+	});
+
+	it('leaves the session holding its authorisation when the collection refuses to release it', async () => {
+		// The collection has already captured part of what it authorised, so it cannot release the whole
+		// of this attempt: the refusal has to take the session's cancellation back with it.
+		const fixture = world({
+			collections: [
+				collectionRow(COLLECTION, {
+					authorizedAmount: '40',
+					capturedAmount: '30',
+					status: PaymentCollectionStatus.PARTIALLY_CAPTURED
+				})
+			],
+			sessions: [sessionRow('held', { status: PaymentSessionStatus.AUTHORIZED, amount: '40' })]
+		});
+
+		await expect(fixture.service.voidSession('held')).rejects.toThrow(/PAYMENT_CANCEL_EXCEEDS_AUTHORIZED/);
+
+		expect(fixture.session('held')?.status).toBe(PaymentSessionStatus.AUTHORIZED);
+		expect(fixture.collection().canceledAmount).toBe('0');
+		expect(fixture.published.filter((event) => event instanceof PaymentCanceledEvent)).toHaveLength(0);
 	});
 });
