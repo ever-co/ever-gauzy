@@ -2174,7 +2174,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async localImage(
-		img: { thumbUrl?: string; recordedAt?: string; fullUrl?: string } | string,
+		img: { thumbUrl?: string; recordedAt?: string | Date; fullUrl?: string } | string,
 		originalBase64Image?: string,
 		recordedAt?: string | Date
 	): Promise<void> {
