@@ -10,18 +10,6 @@
             {{ 'EMAIL_TEMPLATES_PAGE.HEADER' | translate }}
           </ngx-header-title>
         </h4>
-        <button
-          type="button"
-          class="save-button"
-          nbButton
-          size="small"
-          status="success"
-          [disabled]="form.invalid"
-          (click)="submitForm()"
-        >
-          <nb-icon icon="save-outline"></nb-icon>
-          {{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
-        </button>
       </nb-card-header>
 
       <nb-card-body>
@@ -59,6 +47,18 @@
               }
             </nb-select>
           </div>
+          <button
+            type="button"
+            class="save-button"
+            nbButton
+            size="small"
+            status="success"
+            [disabled]="form.invalid"
+            (click)="submitForm()"
+          >
+            <nb-icon icon="save-outline"></nb-icon>
+            {{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
+          </button>
         </div>
 
         <div class="workspace">

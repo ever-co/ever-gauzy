@@ -38,18 +38,15 @@ $control-height: 2rem;
 }
 
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-
   h4 {
     margin: 0;
   }
 }
 
+// Sits at the end of the picker row; wraps under the pickers on a narrow card.
 .save-button {
   flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 // "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits
