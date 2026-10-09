@@ -1,5 +1,5 @@
 import { BadRequestException, Logger } from '@nestjs/common';
-import { PatternSafetyOptions, describePattern, isSafePattern } from '@gauzy/core';
+import { PatternSafetyOptions, isSafePattern, sanitizeRegExp } from '@gauzy/core';
 
 /**
  * The one place that decides what a stored postal-code pattern means.
@@ -88,12 +88,14 @@ function compilePostalPattern(pattern: string): RegExp | null {
 	}
 
 	let compiled: RegExp | null = null;
-	const verdict = describePattern(pattern, POSTAL_PATTERN_OPTIONS);
+	// The source comes from the analysis or not at all: `sanitizeRegExp` hands back the anchored form only
+	// for a pattern it accepted — the same form the rule kernel's `MATCHES` compiles.
+	const verdict = sanitizeRegExp(pattern, POSTAL_PATTERN_OPTIONS);
 
-	if (verdict.safe) {
+	if (verdict.source !== undefined) {
 		try {
-			// Anchored, and with `i` — which is what `POSTAL_PATTERN_OPTIONS` tells the analysis.
-			compiled = new RegExp(`^(?:${pattern})$`, 'i');
+			// With `i` — which is what `POSTAL_PATTERN_OPTIONS` tells the analysis.
+			compiled = new RegExp(verdict.source, 'i');
 		} catch {
 			compiled = null;
 		}

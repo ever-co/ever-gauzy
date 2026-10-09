@@ -229,6 +229,37 @@ export function describePattern(pattern: string, options: PatternSafetyOptions =
 	});
 }
 
+/** A pattern the analysis has screened: the verdict, and the source to compile when it passed. */
+export interface ISanitizedPattern extends IPatternVerdict {
+	/**
+	 * The anchored source, `^(?:pattern)$`. Present only when the analysis accepted the pattern, and the
+	 * only string an author's pattern is ever compiled to run from.
+	 */
+	source?: string;
+}
+
+/**
+ * Screens an author's pattern and returns the one form in which it may be compiled to run.
+ *
+ * A `MATCHES` rule and a postal-code pattern are regular expressions on purpose — the column holds one
+ * — so the pattern is sanitised by screening it, not by escaping it: escaping would turn every pattern
+ * into a literal and remove the feature. The verdict is {@link describePattern}'s, and the source is
+ * produced only when that verdict is safe, anchored as `^(?:…)$` so that a pattern states what the
+ * whole value is. A caller that compiles `source` therefore cannot run a pattern the analysis refused,
+ * nor anchor it differently from the form the analysis modelled — both were one forgotten `if` away
+ * while every caller checked the verdict and then rebuilt `^(?:${pattern})$` for itself.
+ *
+ * @param pattern The pattern as the author wrote it, without anchors.
+ * @param options Whether the caller compiles with `i`; see {@link isSafePattern} for the default. The
+ * caller compiles `source` with the flags it stated here.
+ * @returns The verdict, carrying `source` when, and only when, the pattern is safe.
+ */
+export function sanitizeRegExp(pattern: string, options: PatternSafetyOptions = {}): ISanitizedPattern {
+	const verdict = describePattern(pattern, options);
+
+	return verdict.safe ? { ...verdict, source: `^(?:${pattern})$` } : verdict;
+}
+
 /**
  * Checks one rule.
  *

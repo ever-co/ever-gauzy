@@ -315,6 +315,12 @@ export function analyzePattern(pattern: string, options: IPatternAnalysisOptions
 		// The engine that will run the pattern decides its syntax first, so that the reader below only
 		// ever sees patterns JavaScript accepts and a typing mistake is reported as one rather than as
 		// whatever the analysis happened to trip over.
+		//
+		// This compiles the pattern and never runs it: the expression is discarded, the pattern's length
+		// was bounded just above, and parsing a pattern costs time linear in its length. It is the one
+		// place an author's unscreened pattern reaches the constructor, and it has to be — whether the
+		// engine accepts a pattern is the engine's answer to give. A pattern is only ever *run* from the
+		// source `sanitizeRegExp` returns once this analysis has accepted it.
 		new RegExp(`^(?:${pattern})$`, options.caseInsensitive ? 'i' : '');
 	} catch {
 		return {
