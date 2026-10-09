@@ -133,8 +133,12 @@ for (const line of schema.split(/\r?\n/)) {
  * a run result and a settlement difference are where the amounts live. **This is the decision above, taken the
  * other way for three fields**: they should be restated faithfully or the classes should stop restating the
  * schema, and until one of those happens the pile is 28.
+ *
+ * **Taken to 0 on 2026-10-09 (owner decision: money is `Decimal` everywhere).** The twenty-eight now name the
+ * kernel's own `DecimalScalar` (exported from `@gauzy/core`), which is the type their SDL serves, so the classes
+ * restate the schema faithfully and any new `Float` amount fails this gate outright.
  */
-const CODE_FIRST_BASELINE = 28;
+const CODE_FIRST_BASELINE = 0;
 
 const codeFirst = [];
 let codeType = null;
