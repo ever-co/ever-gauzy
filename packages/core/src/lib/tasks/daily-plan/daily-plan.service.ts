@@ -1,5 +1,13 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { isUUID } from 'class-validator';
 import {
 	ID,
 	IDailyPlan,
@@ -212,6 +220,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		await this.assertCanReadTeamPlans(options?.where?.organizationTeamId);
 
 		try {
 			// Apply optional find options if provided
@@ -266,6 +275,40 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		} catch (error) {
 			console.log('Error while fetching daily plans for team');
 			throw new HttpException(`Failed to fetch daily plans for team: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * Refuses a team read unless the caller belongs to that team.
+	 *
+	 * A caller with CHANGE_SELECTED_EMPLOYEE still reads any team, or the whole organization when no team
+	 * is named, and so does an organization-wide viewer without an employee record, the same exception
+	 * `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. Anyone else must name a team they are an
+	 * active member or manager of.
+	 *
+	 * @param organizationTeamId - The team named in the request's `where`, as the client sent it
+	 * @throws ForbiddenException when the caller may not read that team's plans
+	 */
+	private async assertCanReadTeamPlans(organizationTeamId: unknown): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+
+		if (!employeeId && RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return;
+		}
+
+		// A repeated or nested query value is not a string, and a malformed id would make the uuid
+		// comparison fail: both are refused here instead of reaching the membership query.
+		const isMember =
+			typeof organizationTeamId === 'string' &&
+			isUUID(organizationTeamId) &&
+			(await this._managedEmployeeService.isMemberOfTeam(employeeId, organizationTeamId));
+
+		if (!isMember) {
+			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
 		}
 	}
 
