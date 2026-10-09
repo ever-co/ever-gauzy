@@ -5296,7 +5296,9 @@
 			"reject-candidate": "拒绝候选人"
 		},
 		"HTML_EDITOR": "HTML编辑器",
-		"FULL_PREVIEW": "完整预览"
+		"FULL_PREVIEW": "完整预览",
+		"VIEW_GRID": "网格",
+		"VIEW_EDITOR": "编辑器"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "管道",

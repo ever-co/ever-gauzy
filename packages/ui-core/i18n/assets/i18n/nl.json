@@ -5296,7 +5296,9 @@
 			"reject-candidate": "Kandidaat Afwijzen"
 		},
 		"HTML_EDITOR": "HTML-editor",
-		"FULL_PREVIEW": "Volledig voorbeeld"
+		"FULL_PREVIEW": "Volledig voorbeeld",
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pijpleidingen",

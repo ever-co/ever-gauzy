@@ -5287,7 +5287,9 @@
 			"reject-candidate": "Rejeter le Candidat"
 		},
 		"HTML_EDITOR": "Éditeur HTML",
-		"FULL_PREVIEW": "Aperçu complet"
+		"FULL_PREVIEW": "Aperçu complet",
+		"VIEW_GRID": "Grille",
+		"VIEW_EDITOR": "Éditeur"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Les pipelines.",

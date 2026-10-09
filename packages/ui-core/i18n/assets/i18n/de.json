@@ -5292,7 +5292,9 @@
 			"reject-candidate": "Kandidat ablehnen"
 		},
 		"HTML_EDITOR": "HTML-Editor",
-		"FULL_PREVIEW": "Vollständige Vorschau"
+		"FULL_PREVIEW": "Vollständige Vorschau",
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",

@@ -5281,7 +5281,9 @@
 			"reject-candidate": "رفض المرشح"
 		},
 		"HTML_EDITOR": "محرر HTML",
-		"FULL_PREVIEW": "معاينة كاملة"
+		"FULL_PREVIEW": "معاينة كاملة",
+		"VIEW_GRID": "شبكة",
+		"VIEW_EDITOR": "المحرر"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "الأنابيب",

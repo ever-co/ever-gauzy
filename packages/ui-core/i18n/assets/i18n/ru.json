@@ -5312,7 +5312,9 @@
 			"reject-candidate": "Отклонить кандидата"
 		},
 		"HTML_EDITOR": "HTML-редактор",
-		"FULL_PREVIEW": "Полный просмотр"
+		"FULL_PREVIEW": "Полный просмотр",
+		"VIEW_GRID": "Сетка",
+		"VIEW_EDITOR": "Редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",

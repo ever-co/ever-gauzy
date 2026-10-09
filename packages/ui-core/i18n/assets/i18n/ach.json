@@ -4649,7 +4649,9 @@
 			"TEMPLATE_NAMES": "crwdns9828:0crwdne9828:0"
 		},
 		"HTML_EDITOR": "crwdns11166:0crwdne11166:0",
-		"FULL_PREVIEW": "Full preview"
+		"FULL_PREVIEW": "Full preview",
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "crwdns4740:0crwdne4740:0",

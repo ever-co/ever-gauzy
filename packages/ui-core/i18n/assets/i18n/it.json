@@ -5296,7 +5296,9 @@
 			"reject-candidate": "Rifiuta Candidato"
 		},
 		"HTML_EDITOR": "Editor di HTML",
-		"FULL_PREVIEW": "Anteprima completa"
+		"FULL_PREVIEW": "Anteprima completa",
+		"VIEW_GRID": "Griglia",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipeline",

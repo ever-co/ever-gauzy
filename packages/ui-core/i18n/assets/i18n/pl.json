@@ -5295,7 +5295,9 @@
 			"reject-candidate": "Odrzuć Kandydata"
 		},
 		"HTML_EDITOR": "Edytor HTML",
-		"FULL_PREVIEW": "Pełny podgląd"
+		"FULL_PREVIEW": "Pełny podgląd",
+		"VIEW_GRID": "Siatka",
+		"VIEW_EDITOR": "Edytor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Rurociekle",
