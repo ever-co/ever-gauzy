@@ -12,7 +12,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { isQueryFlagSet } from './../inventory.query';
 import { StockTransferLine } from './stock-transfer-line.entity';
 import { StockTransferLineService } from './stock-transfer-line.service';
-import { CreateStockTransferLineDTO, StockTransferLineDTO, StockTransferLineQueryDTO  } from './dto';
+import { CreateStockTransferLineDTO, StockTransferLineQueryDTO  } from './dto';
 
 /**
  * The lines of a transfer, exposed so a caller can read and extend a draft.

@@ -107,7 +107,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { SubscriptionBillingPeriod, SubscriptionStatus } from '../subscription.types';
@@ -675,13 +675,13 @@ describe('SubscriptionPlanService — the cadence and the sellability the catalo
 	it('reads a plan a subscription may be created from, once the catalogue agrees', async () => {
 		const fixture = planFixture({ plans: [planRow('plan-1', { variantId: VARIANT })] });
 
-		await expect(fixture.service.assertSubscribeable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
+		await expect(fixture.service.assertSubscribable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
 	});
 
 	it('refuses an inactive plan, which no new subscription may be created from', async () => {
 		const fixture = planFixture({ plans: [planRow('plan-1', { isActive: false })] });
 
-		await expect(fixture.service.assertSubscribeable('plan-1')).rejects.toThrow(/SUBSCRIPTION_PLAN_INACTIVE/);
+		await expect(fixture.service.assertSubscribable('plan-1')).rejects.toThrow(/SUBSCRIPTION_PLAN_INACTIVE/);
 	});
 
 	it('refuses a plan whose variant the catalogue does not mark as sellable on a recurring basis', async () => {
@@ -692,7 +692,7 @@ describe('SubscriptionPlanService — the cadence and the sellability the catalo
 			catalog: { subscribable: { [VARIANT]: false } }
 		});
 
-		await expect(fixture.service.assertSubscribeable('plan-1')).rejects.toThrow(
+		await expect(fixture.service.assertSubscribable('plan-1')).rejects.toThrow(
 			/SUBSCRIPTION_VARIANT_NOT_SELLABLE/
 		);
 	});
@@ -703,7 +703,7 @@ describe('SubscriptionPlanService — the cadence and the sellability the catalo
 			catalog: { defaultVariant: { [PRODUCT]: null } }
 		});
 
-		await expect(fixture.service.assertSubscribeable('plan-1')).rejects.toThrow(
+		await expect(fixture.service.assertSubscribable('plan-1')).rejects.toThrow(
 			/SUBSCRIPTION_PLAN_TARGET_UNRESOLVED/
 		);
 	});
@@ -714,8 +714,8 @@ describe('SubscriptionPlanService — the cadence and the sellability the catalo
 		const withoutCatalog = planFixture({ plans: [planRow('plan-1', { variantId: VARIANT })], catalog: false });
 		const entitlement = planFixture({ plans: [planRow('plan-1')] });
 
-		await expect(withoutCatalog.service.assertSubscribeable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
-		await expect(entitlement.service.assertSubscribeable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
+		await expect(withoutCatalog.service.assertSubscribable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
+		await expect(entitlement.service.assertSubscribable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
 	});
 
 	it('resolves the variant a plan delivers, and answers nothing for an entitlement', async () => {

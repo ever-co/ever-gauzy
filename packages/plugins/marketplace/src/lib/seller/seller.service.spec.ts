@@ -91,7 +91,7 @@ jest.mock('@gauzy/config', () => ({
 	}
 }));
 
-import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
 	CurrencyCode,
 	SellerPayoutSchedule,

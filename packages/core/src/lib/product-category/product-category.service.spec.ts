@@ -1,3 +1,4 @@
+// cspell:ignore Branche
 import '../core/entities/internal';
 
 import { randomUUID } from 'node:crypto';

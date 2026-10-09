@@ -15,7 +15,7 @@ import { isQueryFlagSet } from './../inventory.query';
 import { StockReservationReferenceType } from './../inventory.enums';
 import { StockReservation } from './stock-reservation.entity';
 import { StockReservationService } from './stock-reservation.service';
-import { CreateStockReservationDTO, StockReservationDTO, StockReservationQueryDTO, UpdateStockReservationDTO  } from './dto';
+import { CreateStockReservationDTO, StockReservationQueryDTO, UpdateStockReservationDTO  } from './dto';
 import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**

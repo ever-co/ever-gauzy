@@ -1,3 +1,4 @@
+// cspell:ignore reconcil
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {

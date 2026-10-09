@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ICartCheckoutContext, ICartCheckoutHandler, ICartCheckoutResult } from '@gauzy/plugin-cart';
-import { CommerceCart, CommerceCartService } from '@gauzy/plugin-cart';
+import {
+	CommerceCart,
+	CommerceCartService,
+	ICartCheckoutContext,
+	ICartCheckoutHandler,
+	ICartCheckoutResult
+} from '@gauzy/plugin-cart';
 import { OrderService } from '../order/order.service';
 
 /**

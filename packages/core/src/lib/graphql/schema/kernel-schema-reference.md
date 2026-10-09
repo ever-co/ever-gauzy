@@ -1,12 +1,16 @@
 <!--
-Superseded. This file began as the kernel schema document and was split into the documents that are
-now loaded: common.type.gql (root operation types, scalars, the event envelope, the operation
-types), ilter.type.gql (the shared filter inputs), pagination.type.gql (the page input) and
-../role/schema/role.type.gql with ../role/schema/role.api.gql (the role domain). It is kept as a
-readable record of the whole kernel surface in one place, and it is deliberately NOT a .gql file:
-two documents declaring one type cannot both survive uildSchema, and ProductReview belongs to
-the reviews plugin rather than to the kernel. The loaded documents are the source of truth.
+Superseded. This file began as the kernel schema document and was split into the
+documents that are now loaded: common.type.gql (root operation types, scalars,
+the event envelope, the operation types), filter.type.gql (the shared filter
+inputs), pagination.type.gql (the page input) and ../role/schema/role.type.gql
+with ../role/schema/role.api.gql (the role domain). It is kept as a readable
+record of the whole kernel surface in one place, and it is deliberately NOT a
+.gql file: two documents declaring one type cannot both survive buildSchema, and
+ProductReview belongs to the reviews plugin rather than to the kernel. The
+loaded documents are the source of truth.
 -->
+
+```graphql
 scalar DateTime
 
 scalar Decimal
@@ -25,21 +29,24 @@ type Mutation {
 
 type Subscription {
   """
-  A stream of the platform's events, selected by name. One event is delivered per message, so a
-  payload never merges unrelated facts. A subscription is a notification and never a system of
-  record: an event produced while a client is disconnected is not replayed, and a client that must
-  not miss one registers a webhook.
+  A stream of the platform's events, selected by name. One event is delivered
+  per message, so a payload never merges unrelated facts. A subscription is a
+  notification and never a system of record: an event produced while a client is
+  disconnected is not replayed, and a client that must not miss one registers a
+  webhook.
   """
   events(
     """
-    The event names to receive, exactly as the platform names them (`order.placed`) or as a
-    one-segment prefix pattern (`order.*`). At least one name is required, and a selection that
-    matches no known event is refused at subscribe time so a typo is visible immediately.
+    The event names to receive, exactly as the platform names them
+    (`order.placed`) or as a one-segment prefix pattern (`order.*`). At least
+    one name is required, and a selection that matches no known event is refused
+    at subscribe time so a typo is visible immediately.
     """
     names: [String!]!
 
     """
-    Narrows the stream to one aggregate. It can only narrow what the credential may read.
+    Narrows the stream to one aggregate. It can only narrow what the credential
+    may read.
     """
     aggregateId: ID
 
@@ -51,7 +58,8 @@ type Subscription {
 """One event of the platform catalogue, as a subscriber receives it."""
 type EventEnvelope {
   """
-  The event identity: stable, and the idempotency key a consumer applies its effects under.
+  The event identity: stable, and the idempotency key a consumer applies its
+  effects under.
   """
   eventId: ID!
 
@@ -65,8 +73,8 @@ type EventEnvelope {
   aggregate: EventAggregate!
 
   """
-  Monotonic within the tenant. It correlates an event with the delivery ledger; it is not a cursor,
-  because a subscription does not resume.
+  Monotonic within the tenant. It correlates an event with the delivery ledger;
+  it is not a cursor, because a subscription does not resume.
   """
   sequence: Int
 
@@ -88,9 +96,10 @@ type EventAggregate {
 """
 The boundary of a page.
 
-One shared type, so a client learns the shape once and a cursor means the same thing on every
-connection. `startCursor` and `endCursor` are opaque: they are produced and consumed by the same
-codec the REST surface uses, so a cursor obtained over one surface resumes on the other.
+One shared type, so a client learns the shape once and a cursor means the same
+thing on every connection. `startCursor` and `endCursor` are opaque: they are
+produced and consumed by the same codec the REST surface uses, so a cursor
+obtained over one surface resumes on the other.
 """
 type PageInfo {
   hasNextPage: Boolean!
@@ -102,13 +111,15 @@ type PageInfo {
 """
 An expected, caller-correctable outcome of a mutation.
 
-This is a payload member, not an error transport: a business rejection is reported here with the
-operation succeeding, and only a request the caller could not have made correctly becomes a GraphQL
-error. `path` names the input member the outcome belongs to, as a field path.
+This is a payload member, not an error transport: a business rejection is
+reported here with the operation succeeding, and only a request the caller could
+not have made correctly becomes a GraphQL error. `path` names the input member
+the outcome belongs to, as a field path.
 """
 type UserError {
   """
-  The stable platform error code, the same string the REST surface returns for the condition.
+  The stable platform error code, the same string the REST surface returns for
+  the condition.
   """
   code: String!
 
@@ -146,16 +157,18 @@ enum OperationStepStatus {
 }
 
 """
-A durable multi-step operation: a write that spans more than one step, whose progress survives a
-restart and whose partial effects are undone when a later step fails.
+A durable multi-step operation: a write that spans more than one step, whose
+progress survives a restart and whose partial effects are undone when a later
+step fails.
 """
 type Operation {
   id: ID!
 
   """
-  The operation type, for example `CHECKOUT_COMPLETE`. Declared as a string rather than an enum
-  because an operation type is registered by the package that owns the workflow, and a closed enum
-  would make a new workflow a schema change.
+  The operation type, for example `CHECKOUT_COMPLETE`. Declared as a string
+  rather than an enum because an operation type is registered by the package
+  that owns the workflow, and a closed enum would make a new workflow a schema
+  change.
   """
   type: String!
   status: OperationStatus!
@@ -193,7 +206,8 @@ type OperationStep {
   finishedAt: DateTime
 
   """
-  The state of this step's compensating action, when the operation had to undo its work.
+  The state of this step's compensating action, when the operation had to undo
+  its work.
   """
   compensationStatus: OperationStepStatus
 }
@@ -217,7 +231,8 @@ input IDFilter {
   nin: [ID!]
 
   """
-  Whether the column is absent. `true` selects absent values, `false` selects present ones.
+  Whether the column is absent. `true` selects absent values, `false` selects
+  present ones.
   """
   isNull: Boolean
 }
@@ -259,9 +274,9 @@ input NumberFilter {
 """
 Comparison on an exact decimal, such as a money amount or a rate.
 
-Values are decimal strings rather than floating-point numbers, for the same reason the output is:
-`100.10` has no exact binary representation, and a filter that rounds is a filter that returns the
-wrong rows.
+Values are decimal strings rather than floating-point numbers, for the same
+reason the output is: `100.10` has no exact binary representation, and a filter
+that rounds is a filter that returns the wrong rows.
 """
 input DecimalFilter {
   eq: Decimal
@@ -310,10 +325,11 @@ input JSONFilter {
 """
 A tenant filter, with exactly one member.
 
-The tenant a read runs under comes from the credential, never from a filter, so there is nothing for
-a caller to choose here: the single member exists so that a resource whose rows are shared across
-organizations inside one tenant can say so in its generated input, and its value is checked against
-the caller's own tenant before it is used.
+The tenant a read runs under comes from the credential, never from a filter, so
+there is nothing for a caller to choose here: the single member exists so that a
+resource whose rows are shared across organizations inside one tenant can say so
+in its generated input, and its value is checked against the caller's own tenant
+before it is used.
 """
 input TenantFilter {
   """
@@ -323,8 +339,8 @@ input TenantFilter {
 }
 
 """
-Cursor pagination. `first`/`after` walk forwards, `last`/`before` walk backwards, and a request that
-states both directions is refused.
+Cursor pagination. `first`/`after` walk forwards, `last`/`before` walk
+backwards, and a request that states both directions is refused.
 """
 input PageInput {
   """The page size, walking forwards from `after`."""
@@ -368,3 +384,4 @@ type ProductReview {
   body: String
   rating: Float!
 }
+```

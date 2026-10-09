@@ -1,3 +1,4 @@
+// cspell:ignore cccx
 import { Logger } from '@nestjs/common';
 import {
 	IRule,

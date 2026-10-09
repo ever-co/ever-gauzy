@@ -1,3 +1,4 @@
+// cspell:ignore NORD nord
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a split ledger needs and none of which is available
@@ -75,7 +76,7 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { BadRequestException } from '@nestjs/common';
-import { CommissionBasis, CommissionSource, CurrencyCode, SellerTransactionKind, SellerTransactionStatus } from '@gauzy/contracts';
+import { CommissionBasis, CurrencyCode, SellerTransactionKind, SellerTransactionStatus } from '@gauzy/contracts';
 import { Money, RequestContext } from '@gauzy/core';
 import { SellerCommissionService } from '../commission/seller-commission.service';
 import { Seller } from '../seller/seller.entity';

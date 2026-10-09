@@ -1,3 +1,4 @@
+// cspell:ignore whsec
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — the configuration, the ORM, the
  * job registry, the module scanner — none of which a provider registry needs and none of which is

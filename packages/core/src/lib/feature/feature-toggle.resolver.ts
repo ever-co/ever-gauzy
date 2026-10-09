@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { getFeatureToggleDefinitions } from 'unleash-client';
 import { FeatureFlag, Public } from '@gauzy/common';
 import { environment } from '@gauzy/config';

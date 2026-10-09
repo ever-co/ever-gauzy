@@ -69,7 +69,7 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { BadRequestException } from '@nestjs/common';
-import { ISearchDocument, ISearchIndexRegistration, SearchFieldKind } from '@gauzy/contracts';
+import { ISearchIndexRegistration, SearchFieldKind } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
 import { SearchIndexRegistry } from '../registry/search-index.registry';
 import { DatabaseSearchProvider } from '../providers/database-search.provider';

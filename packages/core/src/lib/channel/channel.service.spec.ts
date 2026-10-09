@@ -72,7 +72,6 @@ const ORG = '00000000-0000-4000-8000-000000000002';
 const CHANNEL = 'channel-1';
 const OTHER_CHANNEL = 'channel-2';
 const REGION = 'region-1';
-const OTHER_REGION = 'region-2';
 
 type Row = Record<string, any>;
 

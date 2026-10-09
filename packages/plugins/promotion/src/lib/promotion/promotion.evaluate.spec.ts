@@ -1,3 +1,4 @@
+// cspell:ignore FREESHIP freeship
 import { BadRequestException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { Money, RequestContext } from '@gauzy/core';
@@ -52,8 +53,6 @@ const CUSTOMER_A = '00000000-0000-4000-8000-000000000060';
 const CUSTOMER_B = '00000000-0000-4000-8000-000000000061';
 
 const AT = new Date('2026-01-15T12:00:00.000Z');
-const LAST_YEAR = new Date('2025-06-01T00:00:00.000Z');
-const NEXT_YEAR = new Date('2027-06-01T00:00:00.000Z');
 
 interface IPromotionRow {
 	id: string;

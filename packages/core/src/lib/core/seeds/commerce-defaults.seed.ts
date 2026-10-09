@@ -1,6 +1,5 @@
 import { DataSource } from 'typeorm';
-import { IOrganization } from '@gauzy/contracts';
-import { ChannelStatus, SequenceResetPolicy } from '@gauzy/contracts';
+import { ChannelStatus, IOrganization, SequenceResetPolicy } from '@gauzy/contracts';
 import { Channel } from '../../channel/channel.entity';
 import { Region } from '../../region/region.entity';
 import { Sequence } from '../../sequence/sequence.entity';

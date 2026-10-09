@@ -17,7 +17,7 @@
  * scopes.
  */
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException, SetMetadata, UsePipes, ValidationPipe } = require('@nestjs/common');
+	const { SetMetadata, UsePipes, ValidationPipe } = require('@nestjs/common');
 	const { PERMISSIONS_METADATA } = require('@gauzy/constants');
 
 	// The kernel's own declarations and its conditional write, so the cases below assert the platform

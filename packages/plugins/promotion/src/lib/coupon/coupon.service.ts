@@ -1,3 +1,4 @@
+// cspell:ignore ABCDEFGHJKMNPQRSTVWXYZ
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';

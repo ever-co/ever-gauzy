@@ -12,7 +12,6 @@ import { FeatureFlag } from '@gauzy/common';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.entity';
 import { IntegrationEntitySettingTiedUpdateCommand } from './commands';
 
 /** The members `IntegrationEntitySettingTiedInput` declares in the schema. */

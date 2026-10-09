@@ -1500,14 +1500,6 @@ describe('OrderTotalsService — the outbox row, through the configured ORM', ()
 	/** The rows the store holds, in partition then sequence order. */
 	const rows = async () => orm.em.fork().find(OutboxRow, {}, { orderBy: { partitionKey: 'asc', sequence: 'asc' } });
 
-	/** A fixture on MikroORM, whose outbox appends land in the store above. */
-	const onMikroOrm = (order: Record<string, unknown> = {}) =>
-		orderFixture(order, {
-			orm: 'mikro-orm',
-			unitOfWork: { usesMikroOrm: true, run: (work: () => Promise<unknown>) => work() },
-			mikroOutbox: orm.em.fork().getRepository(OutboxRow)
-		});
-
 	// The row itself — partition, gapless sequence, tenancy, payload — is the platform outbox's to write, and
 	// core's `event-outbox.orm-parity.spec.ts` proves it on the real mapping under both ORMs. What this package
 	// owes is to hand the platform append the MikroORM manager when MikroORM is the configured ORM, and the

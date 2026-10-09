@@ -1,3 +1,4 @@
+// cspell:ignore plaintex
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a credential service needs and none of which is

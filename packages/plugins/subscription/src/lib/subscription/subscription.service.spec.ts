@@ -187,7 +187,6 @@ import {
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 import { SubscriptionItemService } from '../subscription-item/subscription-item.service';
 import { SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
-import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
 import { Subscription } from './subscription.entity';

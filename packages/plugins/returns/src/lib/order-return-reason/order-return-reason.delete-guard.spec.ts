@@ -33,8 +33,6 @@
  */
 
 jest.mock('@gauzy/core', () => {
-	const { NotFoundException } = require('@nestjs/common');
-
 	/** A no-op decorator factory: the entities are declared but never mapped onto a database here. */
 	const decorator = () => () => undefined;
 

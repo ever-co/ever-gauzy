@@ -13,8 +13,6 @@ import { EventOutboxStatus, ID } from '@gauzy/contracts';
 import '../core/entities/internal';
 
 import { RequestContext } from '../core/context/request-context';
-import { EventDelivery } from './event-delivery.entity';
-import { EventOutbox } from './event-outbox.entity';
 import { EVENT_DELIVERY_ACTIONS } from './event-delivery.publisher';
 import { EventOutboxService } from './event-outbox.service';
 import { TypeOrmEventDeliveryRepository } from './repository/type-orm-event-delivery.repository';

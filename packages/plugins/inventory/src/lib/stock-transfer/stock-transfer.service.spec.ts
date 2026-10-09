@@ -810,7 +810,7 @@ describe('StockTransferService — creating, numbering and the state machine (do
 	});
 
 	it('walks the transitions that move stock no distance and bumps the version each time', async () => {
-		const { fixture, transfer } = await approvedTransfer(10);
+		const { fixture } = await approvedTransfer(10);
 
 		// DRAFT → REQUESTED → APPROVED: a document being prepared moves no stock at all.
 		expect(fixture.transfer()).toMatchObject({ status: StockTransferStatus.APPROVED, version: 3 });

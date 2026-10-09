@@ -1,3 +1,4 @@
+// cspell:ignore recurringexpense
 /**
  * 🛑 The entity graph must load FIRST, before any import that pulls a core service or controller — see
  * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the entity
@@ -324,15 +325,6 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'deleteOrganizationRecurringExpense', route: 'delete' },
 	{ field: 'softDeleteOrganizationRecurringExpense', route: 'softRemove' },
 	{ field: 'recoverOrganizationRecurringExpense', route: 'softRecover' }
-];
-
-/** The write fields, whose delegations are asserted one by one below. */
-const WRITES = [
-	'createOrganizationRecurringExpense',
-	'updateOrganizationRecurringExpense',
-	'deleteOrganizationRecurringExpense',
-	'softDeleteOrganizationRecurringExpense',
-	'recoverOrganizationRecurringExpense'
 ];
 
 /**

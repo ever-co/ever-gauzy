@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { Money, RequestContext } from '@gauzy/core';
 import { PromotionUsageService } from './promotion-usage.service';

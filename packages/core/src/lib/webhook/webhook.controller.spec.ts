@@ -1,3 +1,4 @@
+// cspell:ignore whsec
 /**
  * The webhook resources over REST (API specification §7.21, §2, §4).
  *

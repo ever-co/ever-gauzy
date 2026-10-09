@@ -100,7 +100,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
 import { OrderClaimReason, OrderClaimStatus } from '../returns.types';
 import { OrderClaimLineService } from './order-claim-line.service';

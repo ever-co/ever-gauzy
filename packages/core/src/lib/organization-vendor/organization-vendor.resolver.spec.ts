@@ -1,3 +1,4 @@
+// cspell:ignore organizationvendor
 /**
  * 🛑 This import must stay FIRST, before any import that pulls a core service or controller — see
  * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the
@@ -282,15 +283,6 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'deleteOrganizationVendor', route: 'delete' },
 	{ field: 'softDeleteOrganizationVendor', route: 'softRemove' },
 	{ field: 'recoverOrganizationVendor', route: 'softRecover' }
-];
-
-/** The write fields, whose delegations are asserted one by one below. */
-const WRITES = [
-	'createOrganizationVendor',
-	'updateOrganizationVendor',
-	'deleteOrganizationVendor',
-	'softDeleteOrganizationVendor',
-	'recoverOrganizationVendor'
 ];
 
 /**

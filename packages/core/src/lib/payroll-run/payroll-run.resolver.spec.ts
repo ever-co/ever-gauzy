@@ -1,3 +1,4 @@
+// cspell:ignore payrollrun
 /**
  * 🛑 This import must stay FIRST, before any import that pulls a core service or controller — see
  * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the
@@ -243,15 +244,6 @@ function permissionOfField(field: string): unknown {
 	const fields = PayrollRunResolver.prototype as unknown as Record<string, object>;
 
 	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
-}
-
-/** The guards one resolver field runs under: the class's chain plus whatever the field restates. */
-function guardsOfField(field: string): unknown[] {
-	const fields = PayrollRunResolver.prototype as unknown as Record<string, object>;
-	const declared = Reflect.getMetadata('__guards__', PayrollRunResolver) ?? [];
-	const restated = Reflect.getMetadata('__guards__', fields[field]) ?? [];
-
-	return Array.from(new Set([...declared, ...restated]));
 }
 
 describe('PayrollRunResolver — the SDL declares the capabilities the REST routes serve', () => {

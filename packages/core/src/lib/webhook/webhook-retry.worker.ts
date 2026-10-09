@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { QueueJobHandler, QueueWorker, QueueWorkerHost } from '@gauzy/scheduler';
 import type { ID } from '@gauzy/contracts';
 import { WEBHOOK_QUEUE_NAME, WEBHOOK_RETRY_BATCH_SIZE, WEBHOOK_RETRY_JOB } from './webhook-constant';
+import type { WebhookDelivery } from './webhook-delivery.entity';
 import { WebhookDeliveryService } from './webhook-delivery.service';
 
 /** What the scheduler tells the worker about the pass it asked for. */
@@ -54,7 +55,7 @@ export class WebhookRetryWorker extends QueueWorkerHost {
 			`Re-attempting due webhook deliveries, requested at ${job.data?.requestedAt ?? 'an unrecorded moment'}`
 		);
 
-		let due = [];
+		let due: WebhookDelivery[];
 
 		try {
 			due = await this.webhookDeliveryService.findDue(WEBHOOK_RETRY_BATCH_SIZE);

@@ -1,3 +1,4 @@
+// cspell:ignore IOLU
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';

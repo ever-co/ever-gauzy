@@ -1,3 +1,4 @@
+// cspell:ignore sqljs
 import { Injectable, Optional } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/core';
 import { DataSource } from 'typeorm';

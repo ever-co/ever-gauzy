@@ -938,7 +938,7 @@ async function main() {
 		(item) => item?.metadata?.flowKey === FIXTURE.instrumentKey || item?.brand === 'Platform Flow'
 	);
 	let instrumentStatus = instruments.status;
-	let instrumentCreated = false;
+	let instrumentCreated;
 
 	if (!instrument) {
 		const saved = await scoped(

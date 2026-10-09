@@ -252,7 +252,7 @@ export class OrderTotalsService {
 	) {}
 
 	/**
-	 * Recomputes an order's totals, statusses and version.
+	 * Recomputes an order's totals, statuses and version.
 	 *
 	 * **A write that states no version is retried when it loses the version race**, up to
 	 * {@link ORDER_RECOMPUTE_ATTEMPTS} times, each attempt reading the order afresh. Two kinds of write are

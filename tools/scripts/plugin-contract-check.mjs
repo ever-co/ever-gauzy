@@ -17,7 +17,7 @@
  * Exit: 0 when every check passes, 1 otherwise.
  */
 
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative, sep, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -339,7 +339,7 @@ for (const [plugin, tables] of Object.entries(PLUGINS)) {
 	// declaration is also what pays for a load-order prerequisite written as a plugin's class - the
 	// form the compiler checks - since a class can only be named by importing it.
 	{
-		let manifest = null;
+		let manifest;
 		try {
 			manifest = JSON.parse(read(pkgPath));
 		} catch {

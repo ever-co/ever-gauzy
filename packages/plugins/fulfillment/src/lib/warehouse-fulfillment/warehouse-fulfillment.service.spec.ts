@@ -136,7 +136,7 @@ jest.mock('@gauzy/plugin-order', () => ({
 	OrderLineService: class OrderLineService {}
 }));
 
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { FulfillmentDirection, FulfillmentStatusDetail } from '@gauzy/contracts';
 import { RequestContext } from '@gauzy/core';
@@ -269,8 +269,6 @@ function repository(rows: Row[]) {
 			return 0;
 		});
 	};
-	const identify = (criteria: any) => (typeof criteria === 'string' ? criteria : criteria?.id);
-
 	return {
 		rows,
 		find: async (options: Row = {}) => select(options),

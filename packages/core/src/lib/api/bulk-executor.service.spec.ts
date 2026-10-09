@@ -1,7 +1,7 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
-import { BulkExecutor, IBulkExecutionOptions } from './bulk-executor.service';
+import { BulkExecutor } from './bulk-executor.service';
 import { BulkItemRequest, BulkRequest, BulkResult, toBulkItemOutcomes } from './bulk';
 import { FieldVisibility } from './field-visibility.service';
 

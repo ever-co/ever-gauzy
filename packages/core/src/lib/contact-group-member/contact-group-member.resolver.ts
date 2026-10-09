@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, ID, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
 import { ContactGroupSource, IContactGroup, IContactGroupMember, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from '../shared/decorators';

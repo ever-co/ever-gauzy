@@ -247,7 +247,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 			}
 		}
 
-		const plan = await this.planService.assertSubscribeable(input.planId);
+		const plan = await this.planService.assertSubscribable(input.planId);
 		const cadence = this.planService.cadenceOf(plan);
 		const currency = input.currency ?? plan.currency;
 
@@ -638,7 +638,7 @@ export class SubscriptionService extends TenantAwareCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const plan = await this.planService.assertSubscribeable(input.planId);
+		const plan = await this.planService.assertSubscribable(input.planId);
 		const variantId = await this.planService.resolveVariantId(plan);
 		const existing = await this.itemService.findForSubscription(id);
 		const requested: ISubscriptionItemInput[] = variantId

@@ -1,3 +1,4 @@
+// cspell:ignore ABCDEFGHJKMNPQRSTVWXYZ
 import { PluginSettingContribution } from '@gauzy/plugin';
 
 /**

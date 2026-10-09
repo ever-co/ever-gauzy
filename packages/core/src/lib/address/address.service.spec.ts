@@ -1,3 +1,4 @@
+// cspell:ignore Hafenstrasse Werftweg
 /**
  * The address book — the reusable postal addresses a party, a location or the organization owns
  * (schema chapter §3.6).

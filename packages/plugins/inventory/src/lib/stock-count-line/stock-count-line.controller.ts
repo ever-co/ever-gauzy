@@ -6,7 +6,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { isQueryFlagSet } from './../inventory.query';
 import { StockCountLine } from './stock-count-line.entity';
 import { StockCountLineService } from './stock-count-line.service';
-import { StockCountLineDTO, StockCountLineQueryDTO  } from './dto';
+import { StockCountLineQueryDTO  } from './dto';
 
 /**
  * The count-line resource, read-only by design.

@@ -30,7 +30,6 @@ import {
 	OrganizationContactEditByEmployeeCommand,
 	OrganizationContactUpdateCommand
 } from './commands';
-import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
 
 /** The members `ContactDetailInput` declares in the schema. */

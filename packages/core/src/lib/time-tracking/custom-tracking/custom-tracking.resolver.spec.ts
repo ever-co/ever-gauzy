@@ -1,3 +1,4 @@
+// cspell:ignore IAAAA IAAAB
 /**
  * 🛑 This import must stay FIRST, before any import that pulls a core service or controller — see
  * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the
@@ -43,7 +44,6 @@ import { CustomTrackingService } from './custom-tracking.service';
 
 const ORGANIZATION = '00000000-0000-4000-8000-000000000002';
 const EMPLOYEE = '00000000-0000-4000-8000-000000000020';
-const OTHER_EMPLOYEE = '00000000-0000-4000-8000-000000000021';
 const SLOT = '00000000-0000-4000-8000-000000000040';
 const PROJECT = '00000000-0000-4000-8000-000000000030';
 const SESSION = 'session-8f4c1a';
@@ -129,17 +129,6 @@ function surfaces() {
 		customTrackingService,
 		resolver: new CustomTrackingResolver(customTrackingService as never)
 	};
-}
-
-/** Whether an HTTP failure is a refusal rather than a miss. */
-function isRefusal(error: unknown): boolean {
-	return (
-		error instanceof Error &&
-		'getStatus' in error &&
-		typeof (error as { getStatus(): number }).getStatus === 'function' &&
-		(error as { getStatus(): number }).getStatus() >= 400 &&
-		(error as { getStatus(): number }).getStatus() !== 404
-	);
 }
 
 /**

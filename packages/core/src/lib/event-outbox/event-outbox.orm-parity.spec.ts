@@ -1,3 +1,4 @@
+// cspell:ignore dont
 /**
  * 🛑 This import must stay FIRST, before any import that pulls a core service — see
  * `../channel/channel.controller.spec.ts` for the cycle it avoids. It also loads the entity registry

@@ -358,7 +358,6 @@ describe('CommerceCartController — a route that requires an idempotency key', 
 
 describe('CommerceCartController — the versioned write', () => {
 	it('refuses a write based on a version the cart has moved on from', async () => {
-		const service = cartServiceDouble();
 		const guard = new VersionGuard(new Reflector(), {
 			get: () => ({ findOneByIdString: async () => ({ id: CART_ID, version: CURRENT_VERSION }) })
 		} as any);

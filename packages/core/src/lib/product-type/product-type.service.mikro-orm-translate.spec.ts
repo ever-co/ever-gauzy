@@ -1,3 +1,4 @@
+// cspell:ignore Fahrrad Gerät Räder Zwei
 import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -836,8 +836,8 @@ describe('creating a series', () => {
 	});
 
 	it('fills in the defaults a series is created with, in the scope the request carries', async () => {
-		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
-		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
 		const { service } = seriesStore([]);
 
 		const created = await service.ensure({ key: 'ORDER' });

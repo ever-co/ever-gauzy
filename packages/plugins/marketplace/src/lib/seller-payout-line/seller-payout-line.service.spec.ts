@@ -92,7 +92,6 @@ jest.mock('@gauzy/config', () => ({
 
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
-import { SellerPayoutLine } from './seller-payout-line.entity';
 import { SellerPayoutLineService } from './seller-payout-line.service';
 
 /**

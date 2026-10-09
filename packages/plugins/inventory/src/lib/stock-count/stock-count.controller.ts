@@ -14,7 +14,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { isQueryFlagSet } from './../inventory.query';
 import { StockCount } from './stock-count.entity';
 import { StockCountService } from './stock-count.service';
-import { CreateStockCountDTO, RecordStockCountLinesDTO, StockCountDTO, StockCountQueryDTO  } from './dto';
+import { CreateStockCountDTO, RecordStockCountLinesDTO, StockCountQueryDTO  } from './dto';
 import { STOCK_LEVEL_VERSION_TARGET } from './../stock-level/stock-level.types';
 
 /**

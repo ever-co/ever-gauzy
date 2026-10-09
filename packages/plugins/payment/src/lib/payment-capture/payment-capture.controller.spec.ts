@@ -122,7 +122,6 @@ jest.mock('@gauzy/core/src/lib/idempotency/idempotency.service', () => ({
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { from, lastValueFrom } from 'rxjs';
-import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { IdempotencyInterceptor } from '@gauzy/core/src/lib/idempotency/idempotency.interceptor';
 import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempotency.policy';
 import { PaymentCaptureController } from './payment-capture.controller';

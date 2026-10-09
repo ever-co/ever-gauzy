@@ -100,7 +100,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { RequestContext } from '@gauzy/core';
 import { CarrierManifestStatus, IWarehouseFulfillmentPort, MANIFEST_NUMBER_KEY } from '../warehouse.types';
 import { CarrierManifestService } from './carrier-manifest.service';
