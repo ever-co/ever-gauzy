@@ -2,6 +2,7 @@ import { BadRequestException, HttpStatus, Optional, UseGuards } from '@nestjs/co
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID, IPaymentMethodToken, PermissionsEnum } from '@gauzy/contracts';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	FieldVisibility,
 	Idempotent,
@@ -13,7 +14,6 @@ import {
 	IConnectionPageSelection,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { PaymentPermission } from '../../payment.permissions';
 import { PAYMENT_METHOD_CARD_DATA_NOT_ACCEPTED } from '../../payment.card-data.pipe';

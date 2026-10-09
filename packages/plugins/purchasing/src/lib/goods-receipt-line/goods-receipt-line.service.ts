@@ -116,9 +116,14 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 	 *
 	 * @param receiptId The receipt being written.
 	 * @param inputs The lines that arrived.
+	 * @param tenancy The receipt's tenant and organization; the caller's when omitted.
 	 * @returns The written lines, in the order they were supplied.
 	 */
-	public async writeLines(receiptId: ID, inputs: IGoodsReceiptLineWrite[]): Promise<GoodsReceiptLine[]> {
+	public async writeLines(
+		receiptId: ID,
+		inputs: IGoodsReceiptLineWrite[],
+		tenancy: { tenantId?: ID; organizationId?: ID } = {}
+	): Promise<GoodsReceiptLine[]> {
 		const lines: GoodsReceiptLine[] = [];
 
 		for (const input of inputs) {
@@ -133,7 +138,15 @@ export class GoodsReceiptLineService extends TenantAwareCrudService<GoodsReceipt
 					batchNumber: input.batchNumber,
 					expiresAt: input.expiresAt,
 					warehouseBinId: input.warehouseBinId,
-					note: input.note
+					note: input.note,
+					// **The tenancy is the header's, and it has to be stated.** `TenantAwareCrudService.create` stamps the
+					// tenant from the request and states no organization at all, so a receipt line written without one carried
+					// `organizationId = NULL` while every read of these lines filters by the caller's organization — the
+					// rows were invisible to the service that wrote them (the returns package's item 32, found by its
+					// receipt run). The header's tenancy is passed down; the caller's is the fallback, which is the
+					// organization the header itself was written in.
+					tenantId: tenancy.tenantId ?? RequestContext.currentTenantId(),
+					organizationId: tenancy.organizationId ?? RequestContext.currentOrganizationId()
 				} as any)
 			);
 		}

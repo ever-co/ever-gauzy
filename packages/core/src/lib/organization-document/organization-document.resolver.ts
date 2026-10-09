@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -10,10 +10,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationDocument } from './organization-document.entity';
 import { OrganizationDocumentService } from './organization-document.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateOrganizationDocumentInput` declares in the schema. */
 export interface ICreateOrganizationDocumentInput {
@@ -87,6 +88,12 @@ const ORGANIZATION_DOCUMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * every one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
  * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
  * two-protocol rule forbids.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationDocument` and `recoverOrganizationDocument` state the
+ * same, neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -212,8 +219,15 @@ export class OrganizationDocumentResolver {
 	}
 
 	/**
-	 * Withdraws a document: the row is marked rather than removed, and the recovery below reads it back.
+	 * Retires a row without removing it, through the service method `DELETE /api/organization-documents/:id/soft`
+	 * calls, under the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('softDeleteOrganizationDocument')
 	async softDeleteOrganizationDocument(
 		@Args('id', { type: () => ID }) id: Id
@@ -222,8 +236,15 @@ export class OrganizationDocumentResolver {
 	}
 
 	/**
-	 * Puts a withdrawn document back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/organization-documents/:id/recover` calls, under
+	 * the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('recoverOrganizationDocument')
 	async recoverOrganizationDocument(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationDocument> {
 		return await this.organizationDocumentService.softRecover(id);

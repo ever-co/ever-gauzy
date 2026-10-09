@@ -14,7 +14,8 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EquipmentController } from './equipment.controller';
 import { EquipmentModule } from './equipment.module';
 import { EquipmentResolver } from './equipment.resolver';
@@ -827,12 +828,18 @@ describe('EquipmentResolver — the guard stack and the permission are the contr
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = (Reflect.getMetadata('__guards__', EquipmentResolver) ?? []) as unknown[];
 
-		for (const { route } of PERMISSION_PARITY) {
+		for (const { field, route } of PERMISSION_PARITY) {
 			// The controller's chain and the resolver's are the same set, which is the whole parity
 			// claim: a route that added a guard of its own would narrow REST below GraphQL and is caught
 			// here. The gate is the one guard beyond that set, and it is declared on the class rather
-			// than on any field, so every route here runs under it.
-			expect([...guardsOfRoute(EquipmentController, route), FeatureFlagGuard].sort()).toEqual([...stated].sort());
+			// than on any field, so every route here runs under it. The retire-and-restore pair states
+			// `PermissionGuard` on the handler and on the field alike, so it is compared field by field.
+			const fieldGuards = (Reflect.getMetadata('__guards__', (EquipmentResolver.prototype as any)[field]) ??
+				[]) as unknown[];
+
+			expect([...guardsOfRoute(EquipmentController, route), FeatureFlagGuard].sort()).toEqual(
+				[...new Set([...stated, ...fieldGuards])].sort()
+			);
 		}
 	});
 
@@ -844,22 +851,40 @@ describe('EquipmentResolver — the guard stack and the permission are the contr
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EquipmentResolver)).toBeUndefined();
 	});
 
-	it('states on every field the permission its own route runs under — none, and never a grant', () => {
+	it('states on every field the permission its own route runs under — none, except the retire-and-restore pair', () => {
 		for (const { field, route } of PERMISSION_PARITY) {
-			expect(permissionOfField(field)).toBe(permissionOfRoute(EquipmentController, route));
-			expect(permissionOfField(field)).toBeUndefined();
+			expect(permissionOfField(field)).toEqual(permissionOfRoute(EquipmentController, route));
+
+			if (!SOFT_ROUTES.includes(route)) {
+				expect(permissionOfField(field)).toBeUndefined();
+			}
 		}
 	});
 
 	it('declares no handler-level guard the resolver does not run under', () => {
 		// A handler that guarded itself more narrowly than its class would be a route GraphQL could not
 		// mirror by class-level parity alone, so the set is compared route by route above and the raw
-		// handler metadata is asserted here: this controller adds none.
-		for (const { route } of PERMISSION_PARITY) {
+		// handler metadata is asserted here: this controller adds none but the retire-and-restore pair's.
+		for (const { route } of PERMISSION_PARITY.filter(({ route }) => !SOFT_ROUTES.includes(route))) {
 			expect(Reflect.getMetadata('__guards__', handlersOf(EquipmentController)[route])).toBeUndefined();
 		}
 	});
+
+	it('gates the retire-and-restore pair with ORG_EQUIPMENT_EDIT on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
+		// The CRUD base declares the two routes with no permission and `PermissionGuard` answers `true` to
+		// empty metadata, so any member of the tenant could retire or restore an asset. The controller
+		// overrides both to state the catalogue's edit grant, and the fields state the same.
+		for (const { field, route } of PERMISSION_PARITY.filter(({ route }) => SOFT_ROUTES.includes(route))) {
+			expect(Reflect.getMetadata('__guards__', handlersOf(EquipmentController)[route])).toEqual([PermissionGuard]);
+			expect(permissionOfRoute(EquipmentController, route)).toEqual([PermissionsEnum.ORG_EQUIPMENT_EDIT]);
+			expect(Reflect.getMetadata('__guards__', (EquipmentResolver.prototype as any)[field])).toEqual([PermissionGuard]);
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.ORG_EQUIPMENT_EDIT]);
+		}
+	});
 });
+
+/** The two inherited lifecycle routes the controller overrides only to attach a permission. */
+const SOFT_ROUTES = ['softRemove', 'softRecover'];
 
 describe('EquipmentResolver — a capability that is switched off is not served', () => {
 	it('declares the capability the commerce catalogue declares for this surface, on the class', () => {

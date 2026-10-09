@@ -147,6 +147,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * product, which is what the partial unique index on `productId` enforces.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isDefault?: boolean;
@@ -155,6 +156,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * Digital goods, services and time are sold as variants that need no shipment.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: true })
 	requiresShipping?: boolean;
@@ -163,6 +165,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * Deterministic ordering of the variant among its siblings, on the product page and in pick lists.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	@MultiORMColumn({ type: 'int', default: 0 })

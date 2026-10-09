@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { OrganizationAwardController } from './organization-award.controller';
 import { OrganizationAwardResolver } from './organization-award.resolver';
@@ -468,8 +469,13 @@ describe('OrganizationAwardResolver — the guard stack is the controller’s, a
 			// The controller's chain plus the gate on the endpoint itself and the resolver's are the same
 			// set, which is the whole parity claim.
 			expect([...guardsOfRoute(OrganizationAwardController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...stated, ...(['softRemove', 'softRecover'].includes(handler) ? [PermissionGuard] : [])].sort()
 			);
+		}
+
+		// The retire-and-restore pair states `PermissionGuard` on the handler (above) and on the field alike.
+		for (const field of ['softDeleteOrganizationAward', 'recoverOrganizationAward']) {
+			expect(Reflect.getMetadata('__guards__', (OrganizationAwardResolver.prototype as any)[field])).toEqual([PermissionGuard]);
 		}
 	});
 
@@ -498,8 +504,11 @@ describe('OrganizationAwardResolver — the guard stack is the controller’s, a
 		expect(stated).toEqual(expected);
 		// Every one of them is unpermissioned, on both surfaces: the controller states none on any route,
 		// and a field that demanded one would refuse a caller the REST route serves.
-		for (const [, permission] of Object.entries(stated)) {
-			expect(permission).toBeUndefined();
+		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
+		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
+		// empty metadata, so any member of the tenant could retire or restore a row.
+		for (const [field, permission] of Object.entries(stated)) {
+			expect(permission).toEqual(['softDeleteOrganizationAward', 'recoverOrganizationAward'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
 		}
 	});
 });

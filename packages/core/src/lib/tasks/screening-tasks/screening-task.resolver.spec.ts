@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
-import { ScreeningTaskStatusEnum } from '@gauzy/contracts';
+import { PermissionsEnum, ScreeningTaskStatusEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../../api/cursor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -352,8 +352,14 @@ describe('ScreeningTaskResolver — the guard stack and the permission are the c
 		);
 
 		expect(stated).toEqual(expected);
+		// The class states an empty list, which every field inherits — except the retire-and-restore pair,
+		// which the controller overrides only to state the task edit grant (GHSA-v79w-54p2-wmh5): the CRUD
+		// base declares none, and `PermissionGuard` answers `true` to an empty list, so any member of the
+		// tenant could retire or restore a screening.
 		for (const [field] of ROUTE_OF_FIELD) {
-			expect(permissionOfField(field)).toEqual([]);
+			expect(permissionOfField(field)).toEqual(
+				['softDeleteScreeningTask', 'recoverScreeningTask'].includes(field) ? [PermissionsEnum.ORG_TASK_EDIT] : []
+			);
 		}
 	});
 });

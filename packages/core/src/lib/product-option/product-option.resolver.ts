@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { IPagination, ID as Id } from '@gauzy/contracts';
+import { IPagination, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -10,10 +10,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateProductOptionInput` declares in the schema. */
 export interface ICreateProductOptionInput {
@@ -81,6 +82,12 @@ const PRODUCT_OPTION_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * here a caller the REST route serves — two surfaces of one concept with two scopes is exactly what
  * this delivery exists to prevent. Tightening the resource is a change to make in both places at once,
  * and it is not this delivery's to make.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and
+ * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or restore a
+ * row (GHSA-v79w-54p2-wmh5) — so `softDeleteProductOption` and `recoverProductOption` state the same,
+ * neither wider nor narrower than REST.
  *
  * **The group is not served here.** No delivered route reads a group as a resource, so there is no
  * root field for one; the group is reachable as the type `groupId` names, which is stated in the SDL
@@ -205,17 +212,32 @@ export class ProductOptionResolver {
 	}
 
 	/**
-	 * Softly removes an option: the row is marked rather than removed, and the restore below reads it
-	 * back.
+	 * Retires a row without removing it, through the service method `DELETE /api/product-options/:id/soft` calls,
+	 * under the permission that route states: `ORG_INVENTORY_PRODUCT_EDIT` (the inventory edit grant the product
+	 * routes state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('softDeleteProductOption')
 	async softDeleteProductOption(@Args('id', { type: () => ID }) id: Id): Promise<ProductOption> {
 		return await this.productOptionService.softRemove(id);
 	}
 
 	/**
-	 * Restores an option that was softly removed, clearing the marker the removal set.
+	 * Restores a retired row through the service method `PUT /api/product-options/:id/recover` calls, under the
+	 * permission that route states: `ORG_INVENTORY_PRODUCT_EDIT` (the inventory edit grant the product routes
+	 * state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('recoverProductOption')
 	async recoverProductOption(@Args('id', { type: () => ID }) id: Id): Promise<ProductOption> {
 		return await this.productOptionService.softRecover(id);

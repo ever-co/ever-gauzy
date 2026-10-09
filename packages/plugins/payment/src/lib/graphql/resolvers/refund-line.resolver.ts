@@ -1,11 +1,15 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard,
+import {
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
 	IConnectionPageSelection,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { RefundLineService } from '../../refund-line/refund-line.service';
 import { IRefundLine } from '../../payment.types';

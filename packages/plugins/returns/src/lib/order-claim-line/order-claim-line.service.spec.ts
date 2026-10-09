@@ -270,6 +270,28 @@ describe('OrderClaimLineService — what a claimed line is about (doc 10 §12.1)
 
 	afterEach(() => jest.restoreAllMocks());
 
+	/**
+	 * Item 32 of the programme's record: the claim line writer called `super.create` with no organization, and
+	 * `TenantAwareCrudService.create` states the tenant from the request and no organization at all, so every
+	 * line was written with `organizationId = NULL` and every scoped read of the lines found nothing. The
+	 * fixtures hid it, because the double's `create` stamps the request's organization onto a row that states
+	 * none. This reads what the writer hands the base class instead, which the double cannot paper over.
+	 */
+	it('states the header’s tenant and organization on every line it hands the base class', async () => {
+		const fixture = claimLineFixture();
+		const create = jest.spyOn(Object.getPrototypeOf(OrderClaimLineService.prototype), 'create');
+
+		await fixture.service.replaceLines('claim-1', [
+			{ orderLineId: ORDER_LINE, quantity: '1', reason: OrderClaimReason.DAMAGED },
+			{ variantId: VARIANT, quantity: '1', reason: OrderClaimReason.WRONG_ITEM }
+		]);
+
+		expect(create).toHaveBeenCalledTimes(2);
+		for (const [line] of create.mock.calls) {
+			expect(line).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
+		}
+	});
+
 	it('records an original unit as a claim about the order line, and a replacement as an additional item', async () => {
 		const fixture = claimLineFixture();
 

@@ -163,6 +163,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 * and refund rows, never set directly by a caller.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: PaymentStatusDetail, default: PaymentStatusDetail.CAPTURED })
+	@IsOptional()
 	@IsEnum(PaymentStatusDetail)
 	@MultiORMColumn({ type: 'simple-enum', enum: PaymentStatusDetail, default: PaymentStatusDetail.CAPTURED })
 	status?: PaymentStatusDetail;
@@ -209,6 +210,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 * disagree.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({
 		type: 'numeric',
@@ -223,6 +225,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 * Amount refunded against this payment.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({
 		type: 'numeric',
@@ -237,6 +240,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 * Amount of the authorisation released without capture.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({
 		type: 'numeric',

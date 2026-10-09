@@ -249,13 +249,7 @@ const ROUTES: ReadonlyArray<[string, string]> = [
 ];
 
 /** The fields whose routes are inherited from the CRUD base without a permission of their own. */
-const UNPERMISSIONED: ReadonlyArray<string> = [
-	'requestApproval',
-	'requestApprovalCount',
-	'deleteRequestApproval',
-	'softDeleteRequestApproval',
-	'recoverRequestApproval'
-];
+const UNPERMISSIONED: ReadonlyArray<string> = ['requestApproval', 'requestApprovalCount', 'deleteRequestApproval'];
 
 describe('RequestApprovalResolver — the SDL declares the capabilities the REST routes serve', () => {
 	it('declares the two registers, the one-row query and the count', () => {
@@ -681,10 +675,25 @@ describe('RequestApprovalResolver — the guard stack and the permissions are th
 		expect(stated).toEqual(expected);
 	});
 
+	it('gates the retire-and-restore pair with the edit grant on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
+		// `DELETE /:id/soft` and `PUT /:id/recover` were inherited from the CRUD base with no permission, and
+		// `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or
+		// restore a request. The controller overrides both to state the edit grant its writes state.
+		for (const [field, route] of [
+			['softDeleteRequestApproval', 'softRemove'],
+			['recoverRequestApproval', 'softRecover']
+		]) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(RequestApprovalController)[route])).toEqual([
+				PermissionsEnum.REQUEST_APPROVAL_EDIT
+			]);
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.REQUEST_APPROVAL_EDIT]);
+		}
+	});
+
 	it('states nothing on the routes that declare no permission of their own', () => {
-		// `GET /:id`, `GET /count`, `DELETE /:id`, `DELETE /:id/soft` and `PUT /:id/recover` are inherited
-		// from the CRUD base without a permission, so each runs under the controller's class chain and no
-		// permission. Stating one here would give GraphQL a scope REST does not have.
+		// `GET /:id`, `GET /count` and `DELETE /:id` are inherited from the CRUD base without a permission,
+		// so each runs under the controller's class chain and no permission. Stating one here would give
+		// GraphQL a scope REST does not have.
 		for (const field of UNPERMISSIONED) {
 			expect(permissionOfField(field)).toBeUndefined();
 		}

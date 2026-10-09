@@ -147,27 +147,30 @@ export class RefundReasonController extends CrudController<RefundReason> {
 	}
 
 	/**
-	 * Deletes a refund reason.
+	 * "Deletes" a refund reason the way this package deletes one: it is deactivated, and kept.
 	 *
-	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
-	 * permission it demands. The base declares the route with no permission metadata at all, so
-	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
-	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
-	 * class's read grant alone. It now states `REFUNDS_CREATE`, the grant the create, update and
-	 * deactivate routes here carry and the one the GraphQL `deleteRefundReason` mutation states for the
-	 * same reason.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row — while this
+	 * class's own docstring says a reason that is finished with "is deactivated rather than deleted: the
+	 * reporting that groups by it has to keep resolving", the resolver says "There is no hard delete", and
+	 * the GraphQL `deleteRefundReason` field reaches `RefundReasonService.deactivateReason`. The route now
+	 * reaches the same method, so the two surfaces do one thing under one name and the refunds that cite
+	 * the reason keep resolving it. Taking a reason out of the reads altogether stays available, recoverably,
+	 * as `DELETE ':id/soft'` / `softDeleteRefundReason`; there is no hard-delete path, because the design
+	 * has none. The route's permission is unchanged: `REFUNDS_CREATE`, the grant the create, update and
+	 * deactivate routes here carry and the one `deleteRefundReason` states.
 	 *
-	 * @param id The reason to delete.
-	 * @param options The inherited options, forwarded to the service.
-	 * @returns The result of the delete.
+	 * @param id The reason to deactivate.
+	 * @param options The inherited rest parameter; the deactivation reads the reason in the caller's scope.
+	 * @returns The deactivated reason.
 	 */
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
+	@ApiOperation({ summary: 'Deactivate a refund reason (a reason is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Reason deactivated' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Reason not found' })
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.refundReasonService.deactivateReason(id);
 	}
 
 	/**

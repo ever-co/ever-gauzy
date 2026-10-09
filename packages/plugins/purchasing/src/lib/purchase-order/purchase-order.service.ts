@@ -175,7 +175,9 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 		const written = await this.lineService.replaceLines(purchaseOrder.id, lines as IPurchaseOrderLineInput[], {
 			vendorId: entity.vendorId,
 			currency,
-			date: raisedAt
+			date: raisedAt,
+			tenantId: purchaseOrder.tenantId,
+			organizationId: purchaseOrder.organizationId
 		});
 		const withTotals = await this.lineService.writeLineTotals(written, currency);
 
@@ -237,7 +239,12 @@ export class PurchaseOrderService extends TenantAwareCrudService<PurchaseOrder> 
 			changes.dueDate = this.dueDateFrom(new Date(), entity.paymentTermsDaysSnapshot);
 		}
 
-		const context = { vendorId: purchaseOrder.vendorId, currency };
+		const context = {
+			vendorId: purchaseOrder.vendorId,
+			currency,
+			tenantId: purchaseOrder.tenantId,
+			organizationId: purchaseOrder.organizationId
+		};
 		const supplied = entity.lines;
 		let lines = await this.lineService.findForOrder(id);
 

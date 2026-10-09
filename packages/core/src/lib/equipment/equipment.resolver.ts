@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { DecimalString, ID as Id, IPagination } from '@gauzy/contracts';
+import { DecimalString, ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -11,9 +11,10 @@ import {
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { Equipment } from './equipment.entity';
 import { EquipmentService } from './equipment.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateEquipmentInput` declares in the schema. */
 export interface ICreateEquipmentInput {
@@ -119,7 +120,10 @@ const EQUIPMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * that stated a grant the route does not ask for would narrow REST below GraphQL, and an empty
  * `@Permissions()` would restate the same absence as though it were a decision this surface had made.
  * What decides who reaches these rows is the same on both protocols — the guard chain above and the
- * tenant the service applies from the credential.
+ * tenant the service applies from the credential. **The one exception is the retire-and-restore pair**:
+ * the controller overrides the two inherited routes to state `ORG_EQUIPMENT_EDIT` behind `PermissionGuard`
+ * (the CRUD base states no permission, which `PermissionGuard` answered with `true` for any member of the
+ * tenant — GHSA-v79w-54p2-wmh5), so `softDeleteEquipment` and `recoverEquipment` state the same.
  *
  * **The gate is the catalogue's, and it is declared once for every field.** `FeatureFlagGuard` is
  * appended to the chain above — after the controller's own, so a caller with no credential is refused
@@ -261,22 +265,30 @@ export class EquipmentResolver {
 	}
 
 	/**
-	 * Withdraws an asset without removing the row.
+	 * Retires a row without removing it, through the service method `DELETE /api/equipment/:id/soft` calls, under
+	 * the permission that route states: `ORG_EQUIPMENT_EDIT` (the equipment catalogue's edit grant).
 	 *
-	 * No permission is stated on the field beyond what the controller's class carries, because the
-	 * delivered route states none of its own: the withdrawal is inherited from the CRUD base, where the
-	 * controller's class-level declaration — none — is the whole of its scope. The delivered route
-	 * passes the service the empty option list that leaves, so the field states none either.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Mutation('softDeleteEquipment')
 	async softDeleteEquipment(@Args('id', { type: () => ID }) id: Id): Promise<Equipment> {
 		return await this.equipmentService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn asset back. Its permission is the withdrawal's, for the same reason: the
-	 * delivered route carries none of its own to mirror.
+	 * Restores a retired row through the service method `PUT /api/equipment/:id/recover` calls, under the
+	 * permission that route states: `ORG_EQUIPMENT_EDIT` (the equipment catalogue's edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EQUIPMENT_EDIT)
 	@Mutation('recoverEquipment')
 	async recoverEquipment(@Args('id', { type: () => ID }) id: Id): Promise<Equipment> {
 		return await this.equipmentService.softRecover(id);

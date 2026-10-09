@@ -1,6 +1,7 @@
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -11,7 +12,6 @@ import {
 	paginateRows,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { OrderLineInvoice } from '../order-line-invoice/order-line-invoice.entity';
 import { OrderLineInvoiceService } from '../order-line-invoice/order-line-invoice.service';

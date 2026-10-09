@@ -17,8 +17,8 @@ import { DatabaseTypeEnum } from '@gauzy/config';
 /**
  * Creates the inventory tables.
  */
-export class CreateInventoryTables1791000000160 implements MigrationInterface {
-	name = 'CreateInventoryTables1791000000160';
+export class CreateInventoryTables1791000000161 implements MigrationInterface {
+	name = 'CreateInventoryTables1791000000161';
 
 	/**
 	 * Up Migration

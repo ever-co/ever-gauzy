@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -11,10 +11,11 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Skill } from './skill.entity';
 import { SkillService } from './skill.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateSkillInput` declares in the schema. */
 export interface ICreateSkillInput {
@@ -82,6 +83,12 @@ const SKILL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * inherits, so this class carries that guard and the gate below and nothing else — no permission on
  * the class and none on a field. A permission here would refuse a caller the REST route serves, and
  * tightening the resource is a change to make in both places at once.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteSkill` and `recoverSkill` state the same, neither wider nor narrower
+ * than REST.
  *
  * **The delivered name route is folded into the connection's filter.** It reads one skill by its
  * name and joins nothing the list read does not, so a `name` filter answers the same row the route
@@ -198,16 +205,30 @@ export class SkillResolver {
 	}
 
 	/**
-	 * Withdraws a skill: the row is marked rather than removed, and the recovery below reads it back.
+	 * Retires a row without removing it, through the service method `DELETE /api/skills/:id/soft` calls, under the
+	 * permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('softDeleteSkill')
 	async softDeleteSkill(@Args('id', { type: () => ID }) id: Id): Promise<Skill> {
 		return await this.skillService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn skill back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/skills/:id/recover` calls, under the permission
+	 * that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('recoverSkill')
 	async recoverSkill(@Args('id', { type: () => ID }) id: Id): Promise<Skill> {
 		return await this.skillService.softRecover(id);

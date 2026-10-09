@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -9,10 +9,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { EmployeeLevel } from './employee-level.entity';
 import { EmployeeLevelService } from './employee-level.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateEmployeeLevelInput` declares in the schema. */
 export interface ICreateEmployeeLevelInput {
@@ -94,6 +95,12 @@ const EMPLOYEE_LEVEL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * permission would refuse a caller the REST route serves — the asymmetry the two-protocol rule
  * forbids. Tightening the resource is a change to make in both places at once, and it is not this
  * delivery's to make.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteEmployeeLevel` and `recoverEmployeeLevel` state the same, neither
+ * wider nor narrower than REST.
  *
  * **The write routes are not the same shape, and each field keeps its own.** `POST /` files a level,
  * while `PUT /:id` hands the service `create({ ...entity, id })` — an upsert, because the service's
@@ -222,16 +229,30 @@ export class EmployeeLevelResolver {
 	}
 
 	/**
-	 * Withdraws a level: the row is marked rather than removed, and the recovery below reads it back.
+	 * Retires a row without removing it, through the service method `DELETE /api/employee-level/:id/soft` calls,
+	 * under the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('softDeleteEmployeeLevel')
 	async softDeleteEmployeeLevel(@Args('id', { type: () => ID }) id: Id): Promise<EmployeeLevel> {
 		return await this.employeeLevelService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn level back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/employee-level/:id/recover` calls, under the
+	 * permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('recoverEmployeeLevel')
 	async recoverEmployeeLevel(@Args('id', { type: () => ID }) id: Id): Promise<EmployeeLevel> {
 		return await this.employeeLevelService.softRecover(id);

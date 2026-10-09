@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { OrganizationLanguageController } from './organization-language.controller';
 import { OrganizationLanguageResolver } from './organization-language.resolver';
@@ -478,8 +479,13 @@ describe('OrganizationLanguageResolver — the guard stack is the controller’s
 
 		for (const handler of routes) {
 			expect([...guardsOfRoute(OrganizationLanguageController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...stated, ...(['softRemove', 'softRecover'].includes(handler) ? [PermissionGuard] : [])].sort()
 			);
+		}
+
+		// The retire-and-restore pair states `PermissionGuard` on the handler (above) and on the field alike.
+		for (const field of ['softDeleteOrganizationLanguage', 'recoverOrganizationLanguage']) {
+			expect(Reflect.getMetadata('__guards__', (OrganizationLanguageResolver.prototype as any)[field])).toEqual([PermissionGuard]);
 		}
 	});
 
@@ -506,8 +512,11 @@ describe('OrganizationLanguageResolver — the guard stack is the controller’s
 		);
 
 		expect(stated).toEqual(expected);
-		for (const [, permission] of Object.entries(stated)) {
-			expect(permission).toBeUndefined();
+		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
+		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
+		// empty metadata, so any member of the tenant could retire or restore a row.
+		for (const [field, permission] of Object.entries(stated)) {
+			expect(permission).toEqual(['softDeleteOrganizationLanguage', 'recoverOrganizationLanguage'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
 		}
 	});
 });

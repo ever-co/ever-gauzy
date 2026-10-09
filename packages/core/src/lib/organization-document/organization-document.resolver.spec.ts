@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { OrganizationDocumentController } from './organization-document.controller';
 import { OrganizationDocumentResolver } from './organization-document.resolver';
@@ -474,8 +475,13 @@ describe('OrganizationDocumentResolver — the guard stack is the controller’s
 			// set, which is the whole parity claim: an inherited route carries the class chain and nothing
 			// of its own, so the CRUD base's own guards are part of what is compared here.
 			expect([...guardsOfRoute(OrganizationDocumentController, handler), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...stated, ...(['softRemove', 'softRecover'].includes(handler) ? [PermissionGuard] : [])].sort()
 			);
+		}
+
+		// The retire-and-restore pair states `PermissionGuard` on the handler (above) and on the field alike.
+		for (const field of ['softDeleteOrganizationDocument', 'recoverOrganizationDocument']) {
+			expect(Reflect.getMetadata('__guards__', (OrganizationDocumentResolver.prototype as any)[field])).toEqual([PermissionGuard]);
 		}
 	});
 
@@ -503,8 +509,11 @@ describe('OrganizationDocumentResolver — the guard stack is the controller’s
 
 		expect(stated).toEqual(expected);
 		// Every one of them is unpermissioned, on both surfaces.
-		for (const [, permission] of Object.entries(stated)) {
-			expect(permission).toBeUndefined();
+		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
+		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
+		// empty metadata, so any member of the tenant could retire or restore a row.
+		for (const [field, permission] of Object.entries(stated)) {
+			expect(permission).toEqual(['softDeleteOrganizationDocument', 'recoverOrganizationDocument'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
 		}
 	});
 });

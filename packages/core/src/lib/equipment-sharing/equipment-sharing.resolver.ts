@@ -130,11 +130,13 @@ const EQUIPMENT_SHARING_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * runs under, so a field is never narrower or wider than the route it mirrors. Three readings are worth
  * spelling out, because each is a case where the obvious answer is the wrong one:
  *
- * - the node read, the count and the three removals state **no permission at all**, because the routes
- *   they mirror state none: the node read, the count and the two lifecycle removals are inherited from
- *   the CRUD base, and the hard removal is declared on the controller without a permission. The
- *   controller declares none on its class either, so the whole of their scope is the guard chain. An
- *   empty `@Permissions()` would have been a second statement of the same absence.
+ * - the node read, the count and the hard removal state **no permission at all**, because the routes
+ *   they mirror state none: the node read and the count are inherited from the CRUD base, and the hard
+ *   removal is declared on the controller without a permission. The controller declares none on its class
+ *   either, so the whole of their scope is the guard chain. An empty `@Permissions()` would have been a
+ *   second statement of the same absence. The retirement and the restoration were inherited the same
+ *   way until the controller overrode them to state the approver pair its update route states
+ *   (GHSA-v79w-54p2-wmh5); their fields state that pair too.
  * - the list, the two by-pivot fields and the paginated spelling all state the view permission, which
  *   is what their own routes state — and the create states the maker pair, which is the one grant its
  *   route holds that the edit routes do not.
@@ -439,21 +441,30 @@ export class EquipmentSharingResolver {
 	}
 
 	/**
-	 * Withdraws a period without removing the row.
+	 * Retires a row without removing it, through the service method `DELETE /api/equipment-sharing/:id/soft`
+	 * calls, under the permission that route states: `EQUIPMENT_APPROVE_REQUEST` or `ORG_EQUIPMENT_SHARING_EDIT`
+	 * (the grants its update, approve and refuse routes state).
 	 *
-	 * No permission is stated on the field beyond what the controller's class carries, because the
-	 * delivered route states none of its own: the withdrawal is inherited from the CRUD base, where the
-	 * controller's class-level declaration — none — is the whole of its scope.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Mutation('softDeleteEquipmentSharing')
 	async softDeleteEquipmentSharing(@Args('id', { type: () => ID }) id: Id): Promise<EquipmentSharing> {
 		return await this.equipmentSharingService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn period back. Its permission is the withdrawal's, for the same reason: the
-	 * delivered route carries none of its own to mirror.
+	 * Restores a retired row through the service method `PUT /api/equipment-sharing/:id/recover` calls, under the
+	 * permission that route states: `EQUIPMENT_APPROVE_REQUEST` or `ORG_EQUIPMENT_SHARING_EDIT` (the grants its
+	 * update, approve and refuse routes state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
 	@Mutation('recoverEquipmentSharing')
 	async recoverEquipmentSharing(@Args('id', { type: () => ID }) id: Id): Promise<EquipmentSharing> {
 		return await this.equipmentSharingService.softRecover(id);

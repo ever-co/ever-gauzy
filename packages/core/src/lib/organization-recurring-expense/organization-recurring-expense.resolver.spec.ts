@@ -20,7 +20,7 @@ import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { GLOBAL_MODULE_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
-import { RecurringExpenseDeletionEnum } from '@gauzy/contracts';
+import { PermissionsEnum, RecurringExpenseDeletionEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
@@ -1045,11 +1045,15 @@ describe('OrganizationRecurringExpenseResolver — the guard chain is the contro
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = (Reflect.getMetadata('__guards__', OrganizationRecurringExpenseResolver) ?? []) as unknown[];
 
-		for (const { route } of PERMISSION_PARITY) {
+		for (const { field, route } of PERMISSION_PARITY) {
 			const declared = Reflect.getMetadata('__guards__', OrganizationRecurringExpenseController) ?? [];
 			const restated = guardsOfHandler(OrganizationRecurringExpenseController, route);
 
-			expect([...new Set([...declared, ...restated, FeatureFlagGuard])].sort()).toEqual([...stated].sort());
+			// A guard a handler restates is stated by its field too (asserted below), so the field's own
+			// guards join the class's on the resolver side.
+			expect([...new Set([...declared, ...restated, FeatureFlagGuard])].sort()).toEqual(
+				[...new Set([...stated, ...guardsOfField(field)])].sort()
+			);
 		}
 	});
 
@@ -1058,12 +1062,15 @@ describe('OrganizationRecurringExpenseResolver — the guard chain is the contro
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, OrganizationRecurringExpenseResolver)).toBeUndefined();
 	});
 
-	it.each(PERMISSION_PARITY)('$field states no permission, exactly as $route does', ({ field, route }) => {
-		// The delivered controller carries the tenant guard and no permission at all, on the class or on
-		// any handler — so a field that required one would refuse a caller the REST route serves, which is
-		// the narrowing this delivery exists to prevent.
-		expect(permissionOfRoute(OrganizationRecurringExpenseController, route)).toBeUndefined();
-		expect(permissionOfField(field)).toBeUndefined();
+	it.each(PERMISSION_PARITY)('$field states the permission $route does', ({ field, route }) => {
+		// The delivered controller carries the tenant guard and no permission on the class or on any handler
+		// but the retire-and-restore pair, which it overrides only to state the organization-expenses edit
+		// grant behind `PermissionGuard` (GHSA-v79w-54p2-wmh5) — so a field that required more would refuse
+		// a caller the REST route serves, which is the narrowing this delivery exists to prevent.
+		const expected = ['softRemove', 'softRecover'].includes(route) ? [PermissionsEnum.ORG_EXPENSES_EDIT] : undefined;
+
+		expect(permissionOfRoute(OrganizationRecurringExpenseController, route)).toEqual(expected);
+		expect(permissionOfField(field)).toEqual(expected);
 		// The guard a field states of its own is the guard its route's handler states of its own: the
 		// class-level chains are compared above, and a handler that added one is caught here.
 		expect(guardsOfField(field)).toEqual(guardsOfHandler(OrganizationRecurringExpenseController, route));

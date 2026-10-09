@@ -86,6 +86,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * authoritative for the legacy product API; a product is listable only when both say so.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: ProductStatus, default: ProductStatus.ACTIVE })
+	@IsOptional()
 	@IsEnum(ProductStatus)
 	@MultiORMColumn({ type: 'simple-enum', enum: ProductStatus, default: ProductStatus.ACTIVE })
 	status?: ProductStatus;
@@ -103,6 +104,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * Organization-level merchandising flag for "featured products" queries.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isFeatured?: boolean;
@@ -111,6 +113,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * Manual ordering inside a curated list when no collection position applies.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	@MultiORMColumn({ type: 'int', default: 0 })

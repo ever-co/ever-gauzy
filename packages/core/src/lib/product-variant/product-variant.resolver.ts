@@ -2,7 +2,7 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { IPagination, IProductTranslatable, IProductVariant, IVariantCreateInput, ID as Id } from '@gauzy/contracts';
+import { IPagination, IProductTranslatable, IProductVariant, IVariantCreateInput, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -10,12 +10,13 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantService } from './product-variant.service';
 import { ProductVariantCreateCommand, ProductVariantDeleteCommand } from './commands';
 import { ProductService } from '../product/product.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateProductVariantsInput` declares in the schema. */
 export interface ICreateProductVariantsInput {
@@ -86,6 +87,12 @@ const PRODUCT_VARIANT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * refuse here a caller the REST route serves — two surfaces of one concept with two scopes is
  * exactly what this delivery exists to prevent. Tightening the resource is a change to make in both
  * places at once, and it is not this delivery's to make.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ORG_INVENTORY_PRODUCT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and
+ * `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or restore a
+ * row (GHSA-v79w-54p2-wmh5) — so `softDeleteProductVariant` and `recoverProductVariant` state the same,
+ * neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -212,23 +219,32 @@ export class ProductVariantResolver {
 	}
 
 	/**
-	 * Withdraws a variant without removing its rows.
+	 * Retires a row without removing it, through the service method `DELETE /api/product-variants/:id/soft` calls,
+	 * under the permission that route states: `ORG_INVENTORY_PRODUCT_EDIT` (the inventory edit grant the product
+	 * routes state).
 	 *
-	 * The route it mirrors is the inherited `DELETE /:id/soft`, which carries no permission of its own, so a
-	 * permission stated here would refuse a caller that route serves. The write is the service's own
-	 * `softRemove`, which is what the route calls — a withdrawal is not a deletion, and the two are
-	 * deliberately different operations on this resource.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('softDeleteProductVariant')
 	async softDeleteProductVariant(@Args('id', { type: () => ID }) id: Id): Promise<IProductVariant> {
 		return await this.productVariantService.softRemove(id);
 	}
 
 	/**
-	 * Brings a withdrawn variant back.
+	 * Restores a retired row through the service method `PUT /api/product-variants/:id/recover` calls, under the
+	 * permission that route states: `ORG_INVENTORY_PRODUCT_EDIT` (the inventory edit grant the product routes
+	 * state).
 	 *
-	 * The counterpart of the withdrawal, mirroring the inherited `PUT /:id/recover` route.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('recoverProductVariant')
 	async recoverProductVariant(@Args('id', { type: () => ID }) id: Id): Promise<IProductVariant> {
 		return await this.productVariantService.softRecover(id);

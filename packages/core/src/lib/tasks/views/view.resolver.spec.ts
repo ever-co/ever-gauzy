@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { TaskViewController } from './view.controller';
 import { TaskViewResolver } from './view.resolver';
@@ -328,15 +329,20 @@ describe('TaskViewResolver — the guard stack is the controller’s and no perm
 		}
 	});
 
-	it('states no permission on the class or on any field, because no route states one', () => {
+	it('states no permission on the class or on any field but the retire-and-restore pair', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskViewResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TaskViewController)).toBeUndefined();
 
-		for (const [, handler] of ROUTE_OF_FIELD) {
-			expect(permissionOfRoute(TaskViewController, handler)).toBeUndefined();
-		}
-		for (const [field] of ROUTE_OF_FIELD) {
-			expect(permissionOfField(field)).toBeUndefined();
+		// The pair is overridden by the controller only to state the task edit grant (GHSA-v79w-54p2-wmh5):
+		// the CRUD base declares none, and `PermissionGuard` answers `true` to empty metadata, so any member
+		// of the tenant could retire or restore a view. Every other route states none.
+		const pair = ['softDeleteTaskView', 'recoverTaskView'];
+
+		for (const [field, handler] of ROUTE_OF_FIELD) {
+			const expected = pair.includes(field) ? [PermissionsEnum.ORG_TASK_EDIT] : undefined;
+
+			expect(permissionOfRoute(TaskViewController, handler)).toEqual(expected);
+			expect(permissionOfField(field)).toEqual(expected);
 		}
 	});
 });

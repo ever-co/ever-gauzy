@@ -785,6 +785,27 @@ export class SeedCoreDefaults1791000000520 implements MigrationInterface {
 	 * carries, and `publishedAt` is deliberately never written, because publication is an explicit
 	 * act and nothing in this migration may publish anything.
 	 *
+	 * **A derived slug is unique, or it is not written.** `1791000000095` gives both tables a unique
+	 * index on `(organizationId, slug)` among live rows (`UQ_product_org_slug`,
+	 * `UQ_product_category_org_slug`), and neither source is unique: `product.code` never was — the
+	 * demo seed draws one word per product, so an organization's codes repeat — and two categories may
+	 * share a name. A single `UPDATE … SET "slug" = LOWER("code")` therefore violated the index on the
+	 * first duplicate, the migration aborted, and the API did not boot on any database holding products.
+	 * The backfill now reads the live rows, decides every slug in one deterministic pass (oldest row
+	 * first, then by id) and writes each row by id:
+	 *
+	 * - the first row of an organization to derive a slug keeps it as derived, so a catalogue whose codes
+	 *   were unique gets exactly what the single statement used to give it;
+	 * - a later row deriving the same slug — or one another live row already holds — gets the slug
+	 *   followed by its own id's first eight hex digits, and the whole id if even that is taken;
+	 * - a slug that cannot be made unique is left `NULL`, which the index allows and the reads tolerate
+	 *   (a product is still addressable by id).
+	 *
+	 * Two slugs are compared case- and accent-insensitively and without trailing spaces, which is the
+	 * strictest of the three dialects' comparisons (MySQL's default collation); being stricter than a
+	 * dialect only costs a suffix, never a violation. The writes are plain `UPDATE … WHERE "id" = $2 AND
+	 * "<column>" IS NULL`, so the step stays re-runnable and never overwrites a slug a row already has.
+	 *
 	 * @param queryRunner
 	 * @param dbType
 	 */
@@ -795,10 +816,24 @@ export class SeedCoreDefaults1791000000520 implements MigrationInterface {
 			this.skip(productStep, ['product.slug', 'product.status']);
 		} else {
 			if (productColumns.includes('slug') && productColumns.includes('code')) {
-				await this.run(
+				const products: Array<{ id: string; organizationId: string | null; code: string | null; slug: string | null }> =
+					(await this.run(
+						queryRunner,
+						dbType,
+						`SELECT "id", "organizationId", "code", "slug" FROM "product" WHERE "deletedAt" IS NULL ORDER BY "createdAt" ASC, "id" ASC`
+					)) ?? [];
+
+				await this.writeUniqueSlugs(
 					queryRunner,
 					dbType,
-					`UPDATE "product" SET "slug" = LOWER("code") WHERE "slug" IS NULL AND "deletedAt" IS NULL`
+					'product',
+					'slug',
+					products.map((row) => ({
+						id: row.id,
+						organizationId: row.organizationId,
+						current: row.slug,
+						derived: typeof row.code === 'string' && row.code.trim() !== '' ? row.code.toLowerCase() : null
+					}))
 				);
 			}
 			if (productColumns.includes('status')) {
@@ -811,7 +846,8 @@ export class SeedCoreDefaults1791000000520 implements MigrationInterface {
 		/**
 		 * A category carries no name of its own — it lives in the translation table — so a category
 		 * slug is only derivable when both are present. When they are not, the step says so rather
-		 * than inventing an identifier.
+		 * than inventing an identifier. The name a category's slug is derived from is its first
+		 * translation by id, as before.
 		 */
 		const categoryStep = 'the category code and slug backfill';
 		const categoryColumns = await this.presentColumns(queryRunner, 'product_category', ['code', 'slug']);
@@ -824,18 +860,178 @@ export class SeedCoreDefaults1791000000520 implements MigrationInterface {
 		} else if (translationColumns.length < 2) {
 			this.skip(categoryStep, ['product_category_translation.productCategoryId', 'product_category_translation.name']);
 		} else {
-			for (const column of categoryColumns) {
-				await this.run(
+			const translations: Array<{ productCategoryId: string; name: string | null }> =
+				(await this.run(
 					queryRunner,
 					dbType,
-					`UPDATE "product_category" SET "${column}" = (
-						SELECT LOWER(REPLACE("t"."name", ' ', '-')) FROM "product_category_translation" "t"
-						WHERE "t"."productCategoryId" = "product_category"."id"
-						ORDER BY "t"."id" ASC LIMIT 1
-					 ) WHERE "${column}" IS NULL AND "deletedAt" IS NULL`
+					`SELECT "productCategoryId", "name" FROM "product_category_translation" ORDER BY "id" ASC`
+				)) ?? [];
+			const nameOf = new Map<string, string>();
+			for (const translation of translations) {
+				if (!nameOf.has(translation.productCategoryId) && typeof translation.name === 'string') {
+					nameOf.set(translation.productCategoryId, translation.name);
+				}
+			}
+
+			for (const column of categoryColumns) {
+				const categories: Array<{ id: string; organizationId: string | null; current: string | null }> =
+					(await this.run(
+						queryRunner,
+						dbType,
+						`SELECT "id", "organizationId", "${column}" AS "current" FROM "product_category" WHERE "deletedAt" IS NULL ORDER BY "createdAt" ASC, "id" ASC`
+					)) ?? [];
+
+				await this.writeUniqueSlugs(
+					queryRunner,
+					dbType,
+					'product_category',
+					column,
+					categories.map((row) => {
+						const name = nameOf.get(row.id);
+
+						return {
+							id: row.id,
+							organizationId: row.organizationId,
+							current: row.current,
+							derived: name !== undefined && name.trim() !== '' ? name.split(' ').join('-').toLowerCase() : null
+						};
+					})
 				);
 			}
 		}
+	}
+
+	/**
+	 * Writes a derived slug to every live row that has none, unique within the row's organization.
+	 *
+	 * The rows arrive in the order the slugs are decided in. Every slug a live row already holds is
+	 * reserved first, so a derived slug can never collide with one an administrator chose; then each row
+	 * without one takes its derived slug, or that slug with its id's first eight hex digits, or with its
+	 * whole id, whichever is first free — and keeps `NULL` when none is, or when it has nothing to
+	 * derive from. See {@link seedSlugs} for why.
+	 *
+	 * @param queryRunner
+	 * @param dbType
+	 * @param table The table written.
+	 * @param column The slug column written.
+	 * @param rows The live rows, each with its current value and the slug derived for it.
+	 */
+	private async writeUniqueSlugs(
+		queryRunner: QueryRunner,
+		dbType: DatabaseTypeEnum,
+		table: string,
+		column: string,
+		rows: Array<{ id: string; organizationId: string | null; current: string | null; derived: string | null }>
+	): Promise<void> {
+		const taken = new Set<string>();
+		const keyOf = (organizationId: string | null, slug: string) =>
+			`${organizationId ?? this.nilOrganization}|${SeedCoreDefaults1791000000520.comparable(slug)}`;
+
+		for (const row of rows) {
+			if (typeof row.current === 'string' && row.current !== '') {
+				taken.add(keyOf(row.organizationId, row.current));
+			}
+		}
+
+		let written = 0;
+		let suffixed = 0;
+		let skipped = 0;
+
+		for (const row of rows) {
+			if ((typeof row.current === 'string' && row.current !== '') || !row.derived) {
+				continue;
+			}
+
+			const base = row.derived.slice(0, this.slugLength);
+			const compactId = String(row.id).replace(/-/g, '').slice(0, 8);
+			const candidates = [
+				base,
+				`${base.slice(0, this.slugLength - compactId.length - 1)}-${compactId}`,
+				`${base.slice(0, this.slugLength - String(row.id).length - 1)}-${row.id}`
+			];
+			let slug: string | undefined;
+
+			for (const candidate of candidates) {
+				if (taken.has(keyOf(row.organizationId, candidate))) {
+					continue;
+				}
+
+				taken.add(keyOf(row.organizationId, candidate));
+
+				try {
+					await this.run(
+						queryRunner,
+						dbType,
+						`UPDATE "${table}" SET "${column}" = $1 WHERE "id" = $2 AND "${column}" IS NULL`,
+						[candidate, row.id]
+					);
+					slug = candidate;
+					break;
+				} catch (error) {
+					// The comparison key above is stricter than Postgres's and SQLite's, so only a MySQL collation
+					// that equates more than it does (`ß` and `ss`, say) can still refuse a candidate. MySQL fails
+					// the statement and keeps the transaction, so the next candidate is tried; anything else, and
+					// any other error, is not this step's to absorb.
+					if (dbType !== DatabaseTypeEnum.mysql || !SeedCoreDefaults1791000000520.isDuplicateKey(error)) {
+						throw error;
+					}
+				}
+			}
+
+			if (slug === undefined) {
+				skipped++;
+				continue;
+			}
+
+			written++;
+			if (slug !== base) {
+				suffixed++;
+			}
+		}
+
+		console.log(
+			chalk.gray(
+				`${this.name}: ${table}.${column} backfilled on ${written} row(s), ${suffixed} of them suffixed to stay unique ` +
+					`within their organization; ${skipped} left NULL because no unique value was free.`
+			)
+		);
+	}
+
+	/** The length of the slug columns (`varchar(255)` on every dialect). */
+	private readonly slugLength = 255;
+
+	/** The organization key of a row that has none, as the unique indexes fold it. */
+	private readonly nilOrganization = '00000000-0000-0000-0000-000000000000';
+
+	/**
+	 * A slug as the strictest dialect compares it: case- and accent-insensitive, trailing spaces ignored.
+	 *
+	 * @param slug The slug.
+	 * @returns Its comparison key.
+	 */
+	private static comparable(slug: string): string {
+		return slug
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.toLowerCase()
+			.replace(/ +$/, '');
+	}
+
+	/**
+	 * Whether a statement was refused by a unique index on MySQL (`ER_DUP_ENTRY`, errno 1062).
+	 *
+	 * @param error What the driver threw, possibly wrapped by TypeORM's `QueryFailedError`.
+	 * @returns True for a duplicate-key refusal.
+	 */
+	private static isDuplicateKey(error: unknown): boolean {
+		const failure = error as { code?: string; errno?: number; driverError?: { code?: string; errno?: number } };
+
+		return (
+			failure?.code === 'ER_DUP_ENTRY' ||
+			failure?.errno === 1062 ||
+			failure?.driverError?.code === 'ER_DUP_ENTRY' ||
+			failure?.driverError?.errno === 1062
+		);
 	}
 
 	/**

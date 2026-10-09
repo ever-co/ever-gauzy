@@ -281,6 +281,23 @@ describe('OrderExchangeLineService — where a replacement’s price comes from 
 
 	afterEach(() => jest.restoreAllMocks());
 
+	/**
+	 * Item 32 of the programme's record: the exchange line writer called `super.create` with no organization, and
+	 * `TenantAwareCrudService.create` states the tenant from the request and no organization at all, so every
+	 * line was written with `organizationId = NULL` and every scoped read of the lines found nothing. The
+	 * fixtures hid it, because the double's `create` stamps the request's organization onto a row that states
+	 * none. This reads what the writer hands the base class instead, which the double cannot paper over.
+	 */
+	it('states the header’s tenant and organization on every line it hands the base class', async () => {
+		const fixture = exchangeLineFixture();
+		const create = jest.spyOn(Object.getPrototypeOf(OrderExchangeLineService.prototype), 'create');
+
+		await fixture.service.replaceLines('exchange-1', [{ orderLineId: ORDER_LINE, variantId: VARIANT, quantity: '2' }]);
+
+		expect(create).toHaveBeenCalledTimes(1);
+		expect(create.mock.calls[0][0]).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
+	});
+
 	it('prices a replacement of an ordered variant at the price the customer already agreed to', async () => {
 		const fixture = exchangeLineFixture();
 

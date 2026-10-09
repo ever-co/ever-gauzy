@@ -194,26 +194,32 @@ export class RefundController extends CrudController<Refund> {
 	}
 
 	/**
-	 * Deletes a refund row.
+	 * Retires a refund. A refund is a money record, and this route no longer erases one.
 	 *
-	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
-	 * permission it demands. The base declares the route with no permission metadata at all, so
-	 * `PermissionGuard` (`packages/core/src/lib/shared/guards/permission.guard.ts`) answers `true` to
-	 * empty metadata with its `isEmpty(permissions)` return, and the inherited handler stood on this
-	 * class's read grant alone. It now states `REFUNDS_CREATE`, the grant the create, update and cancel
-	 * routes here already carry.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row. `13` §11.4
+	 * keeps `refund` in its "**Soft delete only (`deletedAt`); no hard delete through the API**" row, and
+	 * `17` §3.2 names `softDeleteRefund` and no `deleteRefund` for the same reason, so the route now
+	 * retires the refund exactly as `DELETE ':id/soft'` and the `softDeleteRefund` field do: through
+	 * `RefundService.softRemove`, which keeps the row and refuses a refund that succeeded or is still
+	 * pending with `REFUND_NOT_RETIRABLE` — a retired succeeded refund would drop out of the refundable
+	 * figure and let the same money be paid back twice. There is no hard-delete path: nothing in the design
+	 * asks for one. The route's permission is unchanged: `REFUNDS_CREATE`, the grant the create, update and
+	 * cancel routes here carry; the base declares none, and `PermissionGuard` answers `true` to empty
+	 * metadata.
 	 *
-	 * @param id The refund to delete.
-	 * @param options The inherited options, forwarded to the service.
-	 * @returns The result of the delete.
+	 * @param id The refund to retire.
+	 * @param options The inherited rest parameter; the retirement reads the refund in the caller's scope.
+	 * @returns The retired refund.
 	 */
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
+	@ApiOperation({ summary: 'Retire a refund (soft delete; a refund is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The refund was retired' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'REFUND_NOT_RETIRABLE: it succeeded or is pending' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Refund not found' })
 	@Permissions(PaymentPermission.REFUNDS_CREATE as PermissionsEnum)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await this.refundService.softRemove(id);
 	}
 
 	/**

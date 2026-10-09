@@ -10,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import {
 	DEFAULT_CONNECTION_PAGE_SIZE,
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -21,7 +22,6 @@ import {
 	paginateRows,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { SearchService, decodeCursor } from '../../services/search.service';
 import { SearchPermissions } from '../../search.permissions';

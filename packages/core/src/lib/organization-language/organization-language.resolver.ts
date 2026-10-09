@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -10,10 +10,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationLanguage } from './organization-language.entity';
 import { OrganizationLanguageService } from './organization-language.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateOrganizationLanguageInput` declares in the schema. */
 export interface ICreateOrganizationLanguageInput {
@@ -87,6 +88,12 @@ const ORGANIZATION_LANGUAGE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * every one of its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a
  * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
  * two-protocol rule forbids.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationLanguage` and `recoverOrganizationLanguage` state the
+ * same, neither wider nor narrower than REST.
  *
  * **The language is an identifier rather than a field.** The reference row is joined only when a REST
  * caller names the relation, and this surface names none, so `languageCode` is what is carried and the
@@ -218,9 +225,15 @@ export class OrganizationLanguageResolver {
 	}
 
 	/**
-	 * Withdraws a language row: the row is marked rather than removed, and the recovery below reads it
-	 * back.
+	 * Retires a row without removing it, through the service method `DELETE /api/organization-languages/:id/soft`
+	 * calls, under the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('softDeleteOrganizationLanguage')
 	async softDeleteOrganizationLanguage(
 		@Args('id', { type: () => ID }) id: Id
@@ -229,8 +242,15 @@ export class OrganizationLanguageResolver {
 	}
 
 	/**
-	 * Puts a withdrawn language row back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/organization-languages/:id/recover` calls, under
+	 * the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('recoverOrganizationLanguage')
 	async recoverOrganizationLanguage(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationLanguage> {
 		return await this.organizationLanguageService.softRecover(id);

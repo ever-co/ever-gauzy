@@ -12,6 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { SkillController } from './skill.controller';
 import { SkillResolver } from './skill.resolver';
@@ -362,8 +363,15 @@ describe('SkillResolver — the guard stack is the controller’s and no permiss
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = Reflect.getMetadata('__guards__', SkillResolver) ?? [];
 
-		for (const [, handler] of ROUTES) {
-			expect([...guardsOfRoute(SkillController, handler), FeatureFlagGuard].sort()).toEqual([...stated].sort());
+		for (const [field, handler] of ROUTES) {
+			// The retire-and-restore pair states `PermissionGuard` on the handler and on the field alike, so the
+			// field's own guards join the class's on the resolver side.
+			const fieldGuards = (Reflect.getMetadata('__guards__', (SkillResolver.prototype as any)[field]) ??
+				[]) as unknown[];
+
+			expect([...guardsOfRoute(SkillController, handler), FeatureFlagGuard].sort()).toEqual(
+				[...new Set([...stated, ...fieldGuards])].sort()
+			);
 		}
 	});
 
@@ -372,7 +380,7 @@ describe('SkillResolver — the guard stack is the controller’s and no permiss
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, SkillResolver)).toBeUndefined();
 	});
 
-	it('states no permission on any field, because no route has one to restate', () => {
+	it('states on every field the permission its route states, which is none but the retire-and-restore pair', () => {
 		const stated = Object.fromEntries(ROUTES.map(([field]) => [field, permissionOfField(field)]));
 		const expected = Object.fromEntries(
 			ROUTES.map(([field, handler]) => [field, permissionOfRoute(SkillController, handler)])
@@ -381,7 +389,12 @@ describe('SkillResolver — the guard stack is the controller’s and no permiss
 		// Every entry is `undefined`, on both sides: this resource is guarded and otherwise open, and a
 		// permission invented here would refuse a caller the REST route serves.
 		expect(stated).toEqual(expected);
-		expect(Object.values(stated).every((value) => value === undefined)).toBe(true);
+		// Except the retire-and-restore pair, which the controller overrides only to state `ALL_ORG_EDIT` behind
+		// `PermissionGuard` (GHSA-v79w-54p2-wmh5): the CRUD base declares none, and the guard answers `true` to
+		// empty metadata, so any member of the tenant could retire or restore a row.
+		for (const [field, value] of Object.entries(stated)) {
+			expect(value).toEqual(['softDeleteSkill', 'recoverSkill'].includes(field) ? [PermissionsEnum.ALL_ORG_EDIT] : undefined);
+		}
 	});
 });
 

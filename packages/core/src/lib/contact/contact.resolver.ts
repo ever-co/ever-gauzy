@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { IPagination, ID as Id } from '@gauzy/contracts';
+import { IPagination, ID as Id, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -10,10 +10,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { Contact } from './contact.entity';
 import { ContactService } from './contact.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateContactInput` declares in the schema. */
 export interface ICreateContactInput {
@@ -99,6 +100,12 @@ const CONTACT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * permission here would refuse a caller the REST route serves, which is exactly the asymmetry the
  * two-protocol rule forbids; tightening the resource is a change to make in both places at once, and
  * it is not this delivery's to make.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ORG_CONTACT_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteContact` and `recoverContact` state the same, neither wider nor
+ * narrower than REST.
  *
  * **The list is a connection, and no relation is a field of it.** The delivered list read answers
  * the row and the relations its caller named, and the connection joins none of them: the type
@@ -231,20 +238,30 @@ export class ContactResolver {
 	}
 
 	/**
-	 * Withdraws a contact: the row is marked rather than removed, and the recovery below reads it
-	 * back.
+	 * Retires a row without removing it, through the service method `DELETE /api/contact/:id/soft` calls, under
+	 * the permission that route states: `ORG_CONTACT_EDIT` (the contacts edit grant).
 	 *
-	 * The delivered route declares no query parameter of its own and passes the service the option
-	 * list it bound from the query string, so the field states none either.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Mutation('softDeleteContact')
 	async softDeleteContact(@Args('id', { type: () => ID }) id: Id): Promise<Contact> {
 		return await this.contactService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn contact back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/contact/:id/recover` calls, under the permission
+	 * that route states: `ORG_CONTACT_EDIT` (the contacts edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Mutation('recoverContact')
 	async recoverContact(@Args('id', { type: () => ID }) id: Id): Promise<Contact> {
 		return await this.contactService.softRecover(id);

@@ -6,7 +6,7 @@ import { getConfig, environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyAssets, getImageDimensions } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
-import { getApiPublicPath } from '../../core/util';
+import { getApiPublicPath } from '../../core';
 
 // Get the application configuration
 const config = getConfig();

@@ -15,7 +15,7 @@ import { ChannelWarehouse } from './channel-warehouse/channel-warehouse.entity';
 import { StockAdjustment } from './stock-adjustment/stock-adjustment.entity';
 import { StockCount } from './stock-count/stock-count.entity';
 import { StockCountLine } from './stock-count-line/stock-count-line.entity';
-import { CreateInventoryTables1791000000160 } from './database/migrations/1791000000160-CreateInventoryTables';
+import { CreateInventoryTables1791000000161 } from './database/migrations/1791000000161-CreateInventoryTables';
 import { BackfillStockRowScope1791000000405 } from './database/migrations/1791000000405-BackfillStockRowScope';
 import { AddWarehouseSellerColumn1791000000436 } from './database/migrations/1791000000436-AddWarehouseSellerColumn';
 import {
@@ -66,7 +66,7 @@ const pluginMetadata = {
 		StockCountLine
 	],
 	migrations: [
-		CreateInventoryTables1791000000160,
+		CreateInventoryTables1791000000161,
 		BackfillStockRowScope1791000000405,
 		AddWarehouseSellerColumn1791000000436
 	],
