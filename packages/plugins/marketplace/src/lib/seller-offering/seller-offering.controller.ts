@@ -70,7 +70,10 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 	@ApiResponse({ status: 200, description: 'Offerings retrieved successfully', type: SellerOffering })
 	@Get('/')
 	@UseValidationPipe({ transform: true })
-	async findAll(@Req() request: any, @Query() filter: BaseQueryDTO<SellerOffering>): Promise<IPagination<SellerOffering>> {
+	async findAll(
+		@Req() request: any,
+		@Query() filter: BaseQueryDTO<SellerOffering>
+	): Promise<IPagination<SellerOffering>> {
 		return this.sellerOfferingService.listOfferings(filter, this.scope(request));
 	}
 
@@ -166,11 +169,12 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 		return this.sellerOfferingService.setChannelSets(id, body ?? {}, this.scope(request));
 	}
 
-	/** Withdraws an offering. The row is kept: it explains a past line's price and commission. */
-	@ApiOperation({ summary: 'Withdraw an offering' })
-	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
-	@Delete('/:id')
-	async withdraw(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerOffering> {
+	/**
+	 * Withdraws an offering. The row is kept: it explains a past line's price and commission.
+	 *
+	 * Served by `DELETE /:id` through `delete` below, which is the one handler that route has.
+	 */
+	async withdraw(request: any, id: ID): Promise<SellerOffering> {
 		return this.sellerOfferingService.withdraw(id, this.scope(request));
 	}
 
@@ -253,25 +257,25 @@ export class SellerOfferingController extends CrudController<SellerOffering> {
 	}
 
 	/**
-	 * DELETE an offering by id
+	 * DELETE an offering by id: withdraws it.
 	 *
-	 * The route belongs to `CrudController`, which declares it with no permission metadata of its own, and
-	 * `PermissionGuard` answers `true` to that empty metadata — its `isEmpty(permissions)` return in
-	 * `packages/core/src/lib/shared/guards/permission.guard.ts` — so the inherited handler stood on this
-	 * controller's class-level view grant alone. This override exists only to state its permission: the path
-	 * and the body are the base class's, and an offering is a child row of the seller, so deleting one takes
-	 * SELLERS_DELETE, the DELETE value the catalogue declares for the seller it hangs off.
+	 * An offering is withdrawn, never erased — the row explains a past line's price and commission — so the
+	 * inherited hard delete is not served. This route used to have two handlers: `withdraw`, declared first,
+	 * and this override of `CrudController.delete`, declared on the same method and path with
+	 * SELLERS_DELETE. Express runs the first handler registered, so the hard delete was documented and could
+	 * never answer. Now the route has one handler: it keeps the name of the CRUD handler it overrides (which
+	 * is what keeps the inherited hard delete off this controller) and does what the route has always done —
+	 * withdraw, under SELLER_OFFERINGS_EDIT. Archiving is `DELETE /:id/soft`.
 	 *
+	 * @param request The HTTP request, which carries the seller scope the guard resolved.
 	 * @param id The offering id.
-	 * @returns The result of the deletion.
+	 * @returns The withdrawn offering.
 	 */
-	@ApiOperation({ summary: 'Delete an offering' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Offering deleted successfully' })
-	@Permissions(PermissionsEnum.SELLERS_DELETE)
+	@ApiOperation({ summary: 'Withdraw an offering' })
+	@Permissions(PermissionsEnum.SELLER_OFFERINGS_EDIT)
 	@Delete(':id')
-	@HttpCode(HttpStatus.ACCEPTED)
-	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+	async delete(@Req() request: any, @Param('id', UUIDValidationPipe) id: ID): Promise<SellerOffering> {
+		return this.withdraw(request, id);
 	}
 
 	/**
