@@ -43,8 +43,10 @@ import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { ProductRelationController } from '../../product-relation/product-relation.controller';
+import { ProductVariantMediaController } from '../../product-variant-media/product-variant-media.controller';
 import { schemaExtensions } from '../schema-extensions';
 import { ProductRelationResolver } from './product-relation.resolver';
+import { ProductVariantMediaResolver } from './product-variant-media.resolver';
 
 type Row = Record<string, any>;
 
@@ -89,6 +91,15 @@ const RESOURCES: IResource[] = [
 		controller: ProductRelationController,
 		resolver: ProductRelationResolver,
 		build: (service) => new ProductRelationResolver(service)
+	},
+	{
+		// `productVariantMedia` is the list, so the node query takes the qualified name (§7.65 item 6).
+		name: 'ProductVariantMedia',
+		field: 'productVariantMediaItem',
+		answers: 'ProductVariantMedia',
+		controller: ProductVariantMediaController,
+		resolver: ProductVariantMediaResolver,
+		build: (service) => new ProductVariantMediaResolver(service)
 	}
 ];
 

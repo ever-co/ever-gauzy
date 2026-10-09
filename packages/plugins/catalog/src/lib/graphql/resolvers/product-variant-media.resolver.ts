@@ -62,6 +62,24 @@ export class ProductVariantMediaResolver {
 	}
 
 	/**
+	 * Reads one gallery row by id.
+	 *
+	 * The route it mirrors is `GET /product-variant-media/:id`, inherited from `CrudController`, so the read is
+	 * the base's `findOneByIdString(id)` and the permission is the controller's class-level `PRODUCTS_VIEW`.
+	 * The field cannot be called `productVariantMedia`: that name is the list, and GraphQL allows one field per
+	 * name on a type (a second declaration fails composition and boot, which no unit suite sees), so it takes
+	 * the domain-qualified name the API specification allows for exactly this case.
+	 *
+	 * @param id The gallery row to read.
+	 * @returns The row, or null when no such row is visible to the caller.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_VIEW))
+	@Query('productVariantMediaItem')
+	async productVariantMediaItem(@Args('id') id: ID): Promise<ProductVariantMedia> {
+		return this.productVariantMediaService.findOneByIdString(id);
+	}
+
+	/**
 	 * Replaces the gallery of a variant, including which image is its thumbnail.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.PRODUCTS_EDIT))
