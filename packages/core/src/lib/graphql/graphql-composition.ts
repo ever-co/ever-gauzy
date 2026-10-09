@@ -867,14 +867,18 @@ export function assertExtendable(schema: GraphQLSchema, document: DocumentNode):
 }
 
 /**
- * Renders a report as the text of a failure.
+ * Renders a report as text: the text of a failure when it carries errors, and a summary otherwise.
+ *
+ * The header follows the error count, because the composition gate prints the report on its success
+ * path too — a header fixed to "did not compose" made every green run open by saying it had failed.
  *
  * @param report The report.
  * @returns The message.
  */
 export function describeCompositionReport(report: GraphqlCompositionReport): string {
+	const outcome = report.errors.length > 0 ? 'did not compose' : 'composed';
 	const lines: string[] = [
-		`The GraphQL schema did not compose: ${report.errors.length} error(s), ${report.warnings.length} warning(s).`
+		`The GraphQL schema ${outcome}: ${report.errors.length} error(s), ${report.warnings.length} warning(s).`
 	];
 
 	for (const problem of report.errors) {

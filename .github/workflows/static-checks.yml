@@ -194,8 +194,9 @@ jobs:
           node-version: 24
 
       # No `yarn install`, for the same reason `typecheck-configs` above does without one: every
-      # script below imports `node:fs`, `node:path` and `node:url` and nothing else. Against the
-      # hours a cold install costs on this fleet, that is the whole trade.
+      # script below imports Node's built-in modules and nothing else - except the GraphQL
+      # composition gate, which gets its two packages from a step of its own further down. Against
+      # the hours a cold install costs on this fleet, that is the whole trade.
       #
       # Each gate is its own step so the run page names which rule broke, rather than one step that
       # says a loop exited non-zero. `if: always()` on every step after the first so one red gate
@@ -278,8 +279,22 @@ jobs:
       # is declared once, the other compares it against the committed classification). One gate per step: a
       # `run: |` block stops at the first failure, so the second gate in it would go unrun in the run that
       # mattered — the same hiding this workflow's own comment warns about, one level further in.
+      #
+      # The composition gate is the one gate in this job that needs packages: it runs the composition pass in
+      # `packages/core/src/lib/graphql/graphql-composition.ts`, which is TypeScript and imports `graphql`, and with
+      # no install the step can only exit 2 ("Cannot load the composition pass"). So the two packages it loads are
+      # installed on their own, the way `typecheck-configs` installs the compiler - exact versions (the ones
+      # yarn.lock resolves, so the pass runs on the `graphql` the API runs on), no scripts, no lockfile writes,
+      # into RUNNER_TEMP - and handed to the gate through NODE_PATH, which Node consults after the checkout's own
+      # (absent) node_modules. `if: always()` so a red gate above does not leave this gate without its packages.
+      - name: Install the composition gate's packages
+        if: always()
+        run: npm install --no-save --no-package-lock --ignore-scripts --prefix "$RUNNER_TEMP/graphql-composition" typescript@5.9.3 graphql@16.12.0
+
       - name: The GraphQL schema composes
         if: always()
+        env:
+          NODE_PATH: ${{ runner.temp }}/graphql-composition/node_modules
         run: node tools/scripts/check-graphql-composition.js
 
       - name: The GraphQL schema is unchanged
