@@ -56,6 +56,10 @@ module.exports = {
 	// worker whose idle heap passes this limit between test files, which bounds the total without
 	// slowing the small projects.
 	workerIdleMemoryLimit: '2GB',
+	// And at most half the cores per project (Jest's default is cores - 1): the run above was still killed
+	// with only the idle limit (run 37986158097), because a single heavy suite grows a worker past it before
+	// the worker is idle. Two concurrent projects then hold at most `cores` workers between them.
+	maxWorkers: '50%',
 	// The Nx resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
 	resolver: require.resolve('./jest.resolver.js'),
 	// ngx-daterangepicker-material (ui-core's date-range selector) imports `dayjs/esm` and its plugins
