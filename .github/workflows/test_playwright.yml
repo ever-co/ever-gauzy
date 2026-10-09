@@ -436,7 +436,23 @@ jobs:
         # prebuilt bundle directly. Same file, same workspace-root cwd — which is what both the
         # .env lookup and the sqlite path in @gauzy/config resolve against — minus the webpack
         # watcher.
-        run: forever start dist/apps/api/main.js
+        #
+        # The committed `.env.local` (local-dev defaults: API_PORT=3000, API_BASE_URL=:3000, DEMO=true)
+        # is loaded WITH override by apps/api/src/preload-env.ts, before any module reads the config
+        # (since 4370087d90, 2026-10-03). It therefore beats the env below: the API bound :3000 in DEMO
+        # mode, the :3001 readiness probe never answered and every shard timed out from that day on.
+        # Pin this job's values in that file too (dotenv: the last occurrence of a key wins); the
+        # checkout restores the tracked file on the next run.
+        run: |
+          {
+            echo ''
+            echo '# test_playwright.yml e2e job overrides'
+            echo "API_PORT=$API_PORT"
+            echo "API_BASE_URL=$API_BASE_URL"
+            echo "DEMO=$DEMO"
+            echo "DB_TYPE=$DB_TYPE"
+          } >> .env.local
+          forever start dist/apps/api/main.js
         env:
           # The heap ceiling `start:api:forever` used.
           NODE_OPTIONS: --max-old-space-size=12288
