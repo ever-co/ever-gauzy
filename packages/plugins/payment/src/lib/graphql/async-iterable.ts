@@ -1,77 +1,17 @@
 import { Observable } from 'rxjs';
+import { observableToAsyncIterable } from '@gauzy/core';
 
 /**
- * Adapts a platform event stream to the async iterable a GraphQL subscription must return.
+ * Adapts a platform event stream to the async iterable a GraphQL subscription has to return.
  *
- * The platform publishes through an rxjs subject and GraphQL consumes an async iterator, so the
- * bridge between the two lives here rather than in each resolver, which is what keeps a resolver a
- * transport adapter with nothing of its own in it.
- *
- * The two properties that matter are both about the subscriber being slower than the producer. Events
- * that arrive between two pulls are buffered rather than dropped, so a slow client sees a gap-free
- * stream instead of whatever happened to be next when it asked; and a subscription that is torn down
- * unsubscribes from the source, so a disconnected client stops costing the publisher anything.
+ * @deprecated This package carried its own copy, which nothing used. The adapter is the kernel's now: a
+ * subscription field returns `tenantScopedEventStream` from `@gauzy/core`, which holds every event to the
+ * subscriber's tenant, and `observableToAsyncIterable` is the unscoped adapter it is built on. This name
+ * is kept, and delegates, so nothing that imports it breaks; nothing in this package does any more.
  *
  * @param source The observable to adapt.
  * @returns An async iterable that yields each value the observable emits.
  */
 export function toAsyncIterable<T>(source: Observable<T>): AsyncIterable<T> {
-	return {
-		[Symbol.asyncIterator](): AsyncIterator<T> {
-			const buffered: T[] = [];
-			let waiting: ((result: IteratorResult<T>) => void) | null = null;
-			let finished = false;
-
-			const settle = (): void => {
-				if (waiting) {
-					const resolve = waiting;
-					waiting = null;
-					resolve({ value: undefined as unknown as T, done: true });
-				}
-			};
-
-			const subscription = source.subscribe({
-				next: (value: T) => {
-					if (waiting) {
-						const resolve = waiting;
-						waiting = null;
-						resolve({ value, done: false });
-						return;
-					}
-
-					buffered.push(value);
-				},
-				error: () => {
-					finished = true;
-					settle();
-				},
-				complete: () => {
-					finished = true;
-					settle();
-				}
-			});
-
-			return {
-				next: (): Promise<IteratorResult<T>> => {
-					if (buffered.length) {
-						return Promise.resolve({ value: buffered.shift() as T, done: false });
-					}
-
-					if (finished) {
-						return Promise.resolve({ value: undefined as unknown as T, done: true });
-					}
-
-					return new Promise<IteratorResult<T>>((resolve) => {
-						waiting = resolve;
-					});
-				},
-				return: (): Promise<IteratorResult<T>> => {
-					finished = true;
-					subscription.unsubscribe();
-
-					return Promise.resolve({ value: undefined as unknown as T, done: true });
-				}
-			};
-		}
-	};
+	return observableToAsyncIterable(source);
 }

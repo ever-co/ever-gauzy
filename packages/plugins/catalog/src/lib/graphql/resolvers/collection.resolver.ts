@@ -1,14 +1,12 @@
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { filter } from 'rxjs';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
+import { connectionFromOffsetPage, deliverPayloadAsIs, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, EventBus, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard, tenantScopedEventStream } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { Collection } from '../../collection/collection.entity';
 import { CollectionService } from '../../collection/collection.service';
 import { CollectionChangedEvent } from '../../events';
-import { toAsyncIterable } from '../async-iterable';
 
 /**
  * Collections over GraphQL.
@@ -158,13 +156,31 @@ export class CollectionResolver {
 	}
 
 	/**
-	 * Streams the collections that change, optionally narrowed to one collection.
+	 * Streams the collections of the subscriber's tenant that change, optionally narrowed to one collection.
+	 *
+	 * 🛑 **The stream used to deliver every tenant's collections.** It read the bus and narrowed on the
+	 * `id` argument alone, so a subscriber holding the view grant was handed each change any tenant made
+	 * — and, with no `resolve`, an error frame per change in place of the row, which still told it when
+	 * another tenant was editing. The kernel's tenant-scoped stream now admits only an event whose tenant
+	 * is the subscriber's (captured when the subscription opened, never read from the publisher's request
+	 * the bus calls back in), and each event is re-read as the subscriber with its tenant stated, so the
+	 * row delivered is the one `collection(id)` would answer and the event is dropped when that read finds
+	 * nothing.
+	 *
+	 * @param id The collection to narrow the stream to, when one is named.
+	 * @returns The changed collections, as the subscriber may read them.
 	 */
 	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_VIEW))
-	@Subscription('collectionChanged')
-	collectionChanged(@Args('id') id?: ID): AsyncIterable<CollectionChangedEvent> {
-		const source = this.eventBus.ofType(CollectionChangedEvent);
+	@Subscription('collectionChanged', { resolve: deliverPayloadAsIs })
+	collectionChanged(@Args('id') id?: ID): AsyncIterableIterator<Collection> {
+		const changes = this.eventBus.ofType(CollectionChangedEvent);
 
-		return toAsyncIterable(id ? source.pipe(filter((event) => event.collectionId === id)) : source);
+		return tenantScopedEventStream<CollectionChangedEvent, Collection>(changes, {
+			narrow: (event) => !id || event.collectionId === id,
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event, scope) =>
+				this.collectionService.findOneByWhereOptions({ id: event.collectionId, tenantId: scope.tenantId })
+		});
 	}
 }

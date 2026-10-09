@@ -1,8 +1,9 @@
 import { Inject, Optional, UseGuards } from '@nestjs/common';
 import { Args, Context, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
-import { filter, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ID, IPagination } from '@gauzy/contracts';
 import {
+	deliverPayloadAsIs,
 	EventBus,
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
@@ -10,6 +11,7 @@ import {
 	PermissionGuard,
 	Permissions,
 	TenantPermissionGuard,
+	tenantScopedEventStream,
 	Versioned,
 	versionExpectationOf
 } from '@gauzy/core';
@@ -39,7 +41,6 @@ import {
 	IEntitlementEditInput,
 	IEntitlementGrantInput
 } from '../../entitlement.types';
-import { toAsyncIterable } from '../async-iterable';
 import { buildConnection, IPageSelection, resolvePageWindow } from '../pagination';
 import { toUserError } from '../wire';
 
@@ -518,8 +519,8 @@ export class EntitlementResolver {
 	 * @param entitlementId An optional right to narrow the stream to.
 	 * @returns The stream.
 	 */
-	@Subscription('entitlementChanged')
-	entitlementChanged(@Args('entitlementId') entitlementId?: ID): AsyncIterable<Entitlement> {
+	@Subscription('entitlementChanged', { resolve: deliverPayloadAsIs })
+	entitlementChanged(@Args('entitlementId') entitlementId?: ID): AsyncIterableIterator<Entitlement> {
 		return this.stream(this.eventBus.ofType(EntitlementChangedEvent), entitlementId);
 	}
 
@@ -529,8 +530,8 @@ export class EntitlementResolver {
 	 * @param entitlementId An optional right to narrow the stream to.
 	 * @returns The stream.
 	 */
-	@Subscription('entitlementActivated')
-	entitlementActivated(@Args('entitlementId') entitlementId?: ID): AsyncIterable<Entitlement> {
+	@Subscription('entitlementActivated', { resolve: deliverPayloadAsIs })
+	entitlementActivated(@Args('entitlementId') entitlementId?: ID): AsyncIterableIterator<Entitlement> {
 		return this.stream(this.eventBus.ofType(EntitlementActivatedEvent), entitlementId);
 	}
 
@@ -540,8 +541,8 @@ export class EntitlementResolver {
 	 * @param entitlementId An optional right to narrow the stream to.
 	 * @returns The stream.
 	 */
-	@Subscription('entitlementRevoked')
-	entitlementRevoked(@Args('entitlementId') entitlementId?: ID): AsyncIterable<Entitlement> {
+	@Subscription('entitlementRevoked', { resolve: deliverPayloadAsIs })
+	entitlementRevoked(@Args('entitlementId') entitlementId?: ID): AsyncIterableIterator<Entitlement> {
 		return this.stream(this.eventBus.ofType(EntitlementRevokedEvent), entitlementId);
 	}
 
@@ -652,32 +653,33 @@ export class EntitlementResolver {
 	}
 
 	/**
+	 * One right stream, scoped to the subscriber's tenant and organization.
+	 *
+	 * 🛑 **The re-read this stream always did was not the subscriber's.** Each event was re-read through
+	 * `findOneScoped(id)`, whose scope defaults to the request context — but the bus calls its observers
+	 * synchronously inside the **publisher's** request, so the read ran as the tenant that wrote the right,
+	 * found it, and delivered it to every subscriber of every tenant; and a read that did fail delivered an
+	 * `undefined` frame. The kernel's tenant-scoped stream captures the subscriber when the subscription
+	 * opens, hands that scope to the read explicitly (so the statement always carries the subscriber's
+	 * tenant), checks the row it returns against it again, and drops the event when the read finds nothing.
+	 *
 	 * @param source The event stream.
 	 * @param entitlementId An optional right to narrow it to.
-	 * @returns A stream of the rights the events name, re-read through the service so a subscriber
-	 * never receives a snapshot that has already moved on.
+	 * @returns A stream of the rights the events name, re-read as the subscriber so a subscriber never
+	 * receives a snapshot that has already moved on — or a right it cannot read.
 	 */
 	private stream(
 		source: Observable<EntitlementChangedEvent | EntitlementActivatedEvent | EntitlementRevokedEvent>,
 		entitlementId?: ID
-	): AsyncIterable<Entitlement> {
-		const narrowed = entitlementId ? source.pipe(filter((event) => event.entitlementId === entitlementId)) : source;
-
-		return toAsyncIterable(
-			new Observable<Entitlement>((subscriber) => {
-				const subscription = narrowed.subscribe({
-					next: (event) => {
-						void this.entitlementService
-							.findOneScoped(event.entitlementId)
-							.then((entitlement) => subscriber.next(entitlement))
-							.catch(() => subscriber.next(undefined as unknown as Entitlement));
-					},
-					error: (error) => subscriber.error(error),
-					complete: () => subscriber.complete()
-				});
-
-				return () => subscription.unsubscribe();
-			})
-		);
+	): AsyncIterableIterator<Entitlement> {
+		return tenantScopedEventStream(source, {
+			narrow: (event) => !entitlementId || event.entitlementId === entitlementId,
+			organizationOf: (event) => event.organizationId,
+			read: (event, scope) =>
+				this.entitlementService.findOneScoped(event.entitlementId, {
+					tenantId: scope.tenantId,
+					organizationId: scope.organizationId
+				})
+		});
 	}
 }

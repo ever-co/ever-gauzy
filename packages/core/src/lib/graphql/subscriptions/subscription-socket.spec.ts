@@ -13,10 +13,13 @@ import { ClsModule, ClsService } from 'nestjs-cls';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { RequestContext } from '../../core/context/request-context';
 import { RequestContextMiddleware } from '../../core/context/request-context.middleware';
+import { BaseEvent } from '../../event-bus/base-event';
+import { EventBus } from '../../event-bus/event-bus';
 import { AuthGuard } from '../../shared/guards/auth.guard';
 import { TenantBaseGuard } from '../../shared/guards/tenant-base.guard';
 import { createGraphqlModuleOptions } from '../graphql-helper';
 import { GraphqlPubSub } from './graphql-pubsub.service';
+import { deliverPayloadAsIs, tenantScopedEventStream } from './plugin-subscription';
 
 /**
  * The subscription socket, end to end: a Nest application configured by `createGraphqlModuleOptions`,
@@ -61,10 +64,23 @@ describe('the subscription socket, end to end', () => {
 		}
 	}
 
+	/** An in-process fact of one tenant, the way a plugin publishes one on the bus. */
+	class WidgetStreamedEvent extends BaseEvent {
+		constructor(
+			readonly widgetId: string,
+			readonly tenantId: string
+		) {
+			super();
+		}
+	}
+
 	@Resolver()
 	@UseGuards(TenantBaseGuard)
 	class WidgetResolver {
-		constructor(private readonly pubSub: GraphqlPubSub) {}
+		constructor(
+			private readonly pubSub: GraphqlPubSub,
+			private readonly bus: EventBus
+		) {}
 
 		@Query('whoami')
 		whoami() {
@@ -85,20 +101,35 @@ describe('the subscription socket, end to end', () => {
 				this.pubSub.topicFor(EVENT_NAME, String(RequestContext.currentTenantId() ?? ''))
 			);
 		}
+
+		/** A plugin's subscription, written the way the plugins write one now: over the kernel's stream. */
+		@Subscription('widgetStreamed', { resolve: deliverPayloadAsIs })
+		widgetStreamed() {
+			return tenantScopedEventStream(this.bus.ofType(WidgetStreamedEvent), {
+				tenantOf: (event) => event.tenantId,
+				// What a tenant-aware re-read sees: the tenant of the context it runs in.
+				read: (event) => ({
+					id: event.widgetId,
+					tenantId: event.tenantId,
+					readAs: RequestContext.currentTenantId()
+				})
+			});
+		}
 	}
 
-	@Module({ providers: [WidgetResolver, GraphqlPubSub], exports: [GraphqlPubSub] })
+	@Module({ providers: [WidgetResolver, GraphqlPubSub, EventBus], exports: [GraphqlPubSub, EventBus] })
 	class WidgetModule {}
 
 	const SDL = `
 		type Query { whoami: Caller }
 		type Caller { tenantId: ID, userId: ID, organizationId: ID }
-		type Subscription { widgetChanged: Widget }
-		type Widget { id: ID!, tenantId: ID! }
+		type Subscription { widgetChanged: Widget, widgetStreamed: Widget! }
+		type Widget { id: ID!, tenantId: ID!, readAs: ID }
 	`;
 
 	let app: INestApplication;
 	let pubSub: GraphqlPubSub;
+	let bus: EventBus;
 	let url: string;
 	const clients: Client[] = [];
 
@@ -172,6 +203,7 @@ describe('the subscription socket, end to end', () => {
 		const { port } = app.getHttpServer().address() as AddressInfo;
 		url = `ws://127.0.0.1:${port}/graphql`;
 		pubSub = app.get(GraphqlPubSub);
+		bus = app.get(EventBus);
 	}, 60_000);
 
 	afterEach(async () => {
@@ -237,6 +269,52 @@ describe('the subscription socket, end to end', () => {
 
 		// Completing the subscriptions closed the streams they opened.
 		await until(() => pubSub.openStreams === 0);
+	});
+
+	it("delivers a plugin's in-process stream to its own tenant only, read as the subscriber", async () => {
+		const received: Record<string, unknown[]> = { [TENANT_A]: [], [TENANT_B]: [] };
+		const failures: unknown[] = [];
+		const query = 'subscription { widgetStreamed { id tenantId readAs } }';
+
+		const unsubscribe = [TENANT_A, TENANT_B].map((tenantId) =>
+			connect({ Authorization: tokenFor(tenantId === TENANT_A ? 'user-a' : 'user-b') }).subscribe(
+				{ query },
+				{
+					next: (value) => received[tenantId].push(value),
+					error: (error) => failures.push(error),
+					complete: () => undefined
+				}
+			)
+		);
+
+		// Both subscriptions are open once each has a listener on the bus.
+		const listening = () => (bus as unknown as { event$: { observers?: unknown[] } }).event$.observers?.length ?? 0;
+		await until(() => listening() >= 2 || failures.length > 0);
+		expect(failures).toEqual([]);
+
+		// Published inside tenant B's request — as a mutation of tenant B reaches the bus.
+		const asUser = (userId: string, work: () => Promise<void>) =>
+			RequestContext.runWithRequest({ user: USERS[userId] } as never, work);
+		await asUser('user-b', () => bus.publish(new WidgetStreamedEvent('b-1', TENANT_B)));
+		await asUser('user-b', () => bus.publish(new WidgetStreamedEvent('a-1', TENANT_A)));
+
+		await until(() => received[TENANT_A].length === 1 && received[TENANT_B].length === 1);
+		// Nothing else is on its way: a further event of A arrives after it, not before.
+		await asUser('user-a', () => bus.publish(new WidgetStreamedEvent('a-2', TENANT_A)));
+		await until(() => received[TENANT_A].length === 2);
+		unsubscribe.forEach((stop) => stop());
+
+		expect(received[TENANT_A]).toEqual([
+			// Published by tenant B's request, read as the subscriber: the re-read never runs as the publisher.
+			{ data: { widgetStreamed: { id: 'a-1', tenantId: TENANT_A, readAs: TENANT_A } } },
+			{ data: { widgetStreamed: { id: 'a-2', tenantId: TENANT_A, readAs: TENANT_A } } }
+		]);
+		expect(received[TENANT_B]).toEqual([
+			{ data: { widgetStreamed: { id: 'b-1', tenantId: TENANT_B, readAs: TENANT_B } } }
+		]);
+
+		// Completing the subscriptions detached them from the bus.
+		await until(() => listening() === 0);
 	});
 
 	it('refuses a subscription whose stated tenant the credential does not carry', async () => {

@@ -8,10 +8,9 @@
  */
 import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import {
+	deliverPayloadAsIs,
 	EventBus,
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
@@ -23,7 +22,8 @@ import {
 	TenantPermissionGuard,
 	Versioned,
 	connectionFromOffsetPage,
-	resolveConnectionWindow
+	resolveConnectionWindow,
+	tenantScopedEventStream
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
@@ -145,8 +145,11 @@ export class StockLevelResolver {
 	 * @param variantId The variant the subscriber asked about, when it asked about one.
 	 * @returns The availabilities, as the domain publishes them.
 	 */
-	@Subscription('stockLevelChanged')
-	stockLevelChanged(@Args('warehouseId') warehouseId: string, @Args('variantId') variantId: string): any {
+	@Subscription('stockLevelChanged', { resolve: deliverPayloadAsIs })
+	stockLevelChanged(
+		@Args('warehouseId') warehouseId: string,
+		@Args('variantId') variantId: string
+	): AsyncIterableIterator<IStockAvailability> {
 		return this.stream(InventoryLevelChangedEvent, warehouseId, variantId);
 	}
 
@@ -161,9 +164,9 @@ export class StockLevelResolver {
 	 * @param warehouseId The location the subscriber asked about, when it asked about one.
 	 * @returns The availabilities that crossed the threshold.
 	 */
-	@Subscription('stockLevelLow')
+	@Subscription('stockLevelLow', { resolve: deliverPayloadAsIs })
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	stockLevelLow(@Args('warehouseId') warehouseId: string): any {
+	stockLevelLow(@Args('warehouseId') warehouseId: string): AsyncIterableIterator<IStockAvailability> {
 		return this.stream(InventoryLevelLowEvent, warehouseId);
 	}
 
@@ -176,19 +179,25 @@ export class StockLevelResolver {
 	 * @param warehouseId The location the subscriber asked about, when it asked about one.
 	 * @returns The availabilities that reached zero.
 	 */
-	@Subscription('stockLevelOutOfStock')
+	@Subscription('stockLevelOutOfStock', { resolve: deliverPayloadAsIs })
 	@Permissions(InventoryPermission.STOCK_VIEW as PermissionsEnum)
-	stockLevelOutOfStock(@Args('warehouseId') warehouseId: string): any {
+	stockLevelOutOfStock(@Args('warehouseId') warehouseId: string): AsyncIterableIterator<IStockAvailability> {
 		return this.stream(InventoryLevelOutOfStockEvent, warehouseId);
 	}
 
 	/**
-	 * One event stream, narrowed to what the subscriber asked for.
+	 * One event stream, scoped to the subscriber's tenant and narrowed to what the subscriber asked for.
 	 *
 	 * The three level events are separate classes so a subscriber declares which one it cares about
 	 * instead of filtering on a field, and the location and variant arguments are applied here so all
 	 * three streams narrow the same way rather than each inventing its own reading of them. An argument
 	 * the caller left out narrows nothing, which is what a nullable argument means.
+	 *
+	 * 🛑 **The arguments were the only narrowing.** A subscriber of one tenant was handed every level any
+	 * tenant changed — the availability names a location and a variant, not an owner — and the stream was
+	 * an rxjs observable, which graphql-js refuses as a subscription source. It is now the kernel's
+	 * tenant-scoped stream: an event is delivered only when the tenant it states is the subscriber's
+	 * (captured when the subscription opened), and an event that states no tenant is delivered to nobody.
 	 *
 	 * @param event The event class the stream carries.
 	 * @param warehouseId The location the subscriber asked about, when it asked about one.
@@ -199,14 +208,14 @@ export class StockLevelResolver {
 		event: new (...args: never[]) => InventoryLevelChangedEvent,
 		warehouseId?: string,
 		variantId?: string
-	): Observable<IStockAvailability> {
-		return this.eventBus.ofType(event).pipe(
-			map((published: InventoryLevelChangedEvent) => published.level),
-			filter(
-				(level: IStockAvailability) =>
-					(!warehouseId || String(level?.warehouseId ?? '') === String(warehouseId)) &&
-					(!variantId || String(level?.variantId ?? '') === String(variantId))
-			)
-		);
+	): AsyncIterableIterator<IStockAvailability> {
+		return tenantScopedEventStream<InventoryLevelChangedEvent, IStockAvailability>(this.eventBus.ofType(event), {
+			narrow: ({ level }) =>
+				(!warehouseId || String(level?.warehouseId ?? '') === String(warehouseId)) &&
+				(!variantId || String(level?.variantId ?? '') === String(variantId)),
+			tenantOf: (published) => published.tenantId,
+			organizationOf: (published) => published.organizationId,
+			read: (published) => published.level
+		});
 	}
 }
