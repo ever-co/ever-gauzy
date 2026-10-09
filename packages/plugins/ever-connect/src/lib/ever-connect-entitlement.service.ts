@@ -1,4 +1,6 @@
-import { HttpException, HttpStatus, Inject, Injectable, Optional } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { HttpException, HttpStatus, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ActorLabel, EverConnectAuditService } from './ever-connect-audit.service';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_ENV, ENTITLEMENT_REFRESHES_PER_HOUR } from './ever-connect.constants';
 import { EverConnectPlatformService, isCredentialRevoked } from './ever-connect-platform.service';
@@ -14,10 +16,43 @@ import {
 	VerifiedEntitlement
 } from './sdk';
 
+/**
+ * Where a document stands on the grace ladder: `valid` until it expires, `grace` for `grace_s` after
+ * that (30 days unless the document says otherwise; its features still apply), then `paused` (no
+ * document, a revoked connection, or the grace over): Ever Platform features pause, nothing else.
+ */
+export type EntitlementLadder = 'valid' | 'grace' | 'paused';
+
+/** The ladder of a verified document's claims at `nowS` (seconds); `revoked` pauses whatever the dates say. */
+export function entitlementLadder(
+	claims: { exp: number; ever: { grace_s?: number } } | null | undefined,
+	nowS: number,
+	revoked = false
+): EntitlementLadder {
+	if (revoked || !claims) {
+		return 'paused';
+	}
+	const status = entitlementStatus(claims as never, nowS);
+	return status === 'valid' ? 'valid' : status === 'stale' ? 'grace' : 'paused';
+}
+
+/** The largest entitlement document accepted from a file (the operator's upload or EVER_ENTITLEMENT_FILE). */
+export const ENTITLEMENT_FILE_MAX_BYTES = 16 * 1024;
+
+/** What an imported document was: its subject, its sequence, and whether it replaced the stored one. */
+export interface EntitlementImportResult {
+	subject: 'instance' | 'link';
+	seq: number;
+	status: 'stored' | 'unchanged';
+}
+
 /** What the Entitlements tab shows of one stored document (decoded; never the document itself). */
 export interface EntitlementSummary {
 	subject: 'instance' | 'link';
 	status: EntitlementStatus;
+	ladder: EntitlementLadder;
+	/** The licence certificate ids the document names (`EVER-GAUZY-SB-1A2B3C4D`): shown, never checked. */
+	licence_ids: string[];
 	seq: number | null;
 	issued_at: string | null;
 	expires_at: string | null;
@@ -65,6 +100,8 @@ const isoMs = (ms: number | null | undefined) => (typeof ms === 'number' ? new D
  */
 @Injectable()
 export class EverConnectEntitlementService {
+	private readonly logger = new Logger('EverConnect');
+	private readonly env: Record<string, string | undefined>;
 	private readonly secrets: EverConnectSecretStore;
 	private readonly now: () => number;
 	/** On-demand refreshes of the last hour, per document (`instance`, or a link id). */
@@ -78,7 +115,8 @@ export class EverConnectEntitlementService {
 		@Optional() @Inject(EVER_CONNECT_ENV) env?: Record<string, string | undefined>,
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number }
 	) {
-		this.secrets = new EverConnectSecretStore(env ?? process.env);
+		this.env = env ?? process.env;
+		this.secrets = new EverConnectSecretStore(this.env);
 		this.now = clock?.now ?? (() => Date.now());
 	}
 
@@ -261,6 +299,189 @@ export class EverConnectEntitlementService {
 		}
 	}
 
+	/**
+	 * The Ever Platform features one organization may use now, from its link's stored document only
+	 * (no request is made): the document's `features` while it is valid or in grace, every feature off
+	 * when it is paused (no document, the grace over, the connection not connected). Nothing outside the
+	 * Ever Platform module reads this: the product's own features never depend on it.
+	 */
+	async features(
+		tenantId: string,
+		organizationId: string
+	): Promise<{ ladder: EntitlementLadder; features: Record<string, boolean> }> {
+		const connection = await this.store.connection();
+		const link = await this.store.linkOf(tenantId, organizationId);
+		const jws = link && connection.status === 'connected' ? this.secrets.open(link.entitlementJwsEncrypted) : null;
+		const claims = jws
+			? (claimsOfVerifiedJws(jws) as {
+					exp: number;
+					ever: { grace_s?: number; features?: Record<string, boolean> };
+				} | null)
+			: null;
+		const ladder = entitlementLadder(claims, Math.floor(this.now() / 1000));
+		const features: Record<string, boolean> = { ...(claims?.ever?.features ?? {}) };
+		if (ladder === 'paused') {
+			for (const key of Object.keys(features)) features[key] = false;
+		}
+		return { ladder, features };
+	}
+
+	/**
+	 * Imports a downloaded entitlement document (for an installation without a route to Ever
+	 * Platform): the same checks as a refresh (issuer, key, signature, schema, this installation, a
+	 * subject of this installation, never older than the stored one), then stored as a refresh stores
+	 * it. Throws an `HttpException`: 409 `not_connected`, 413 `too_large`, 422 `entitlement_invalid`.
+	 */
+	async importDocument(
+		jws: unknown,
+		actor: { actorLabel: ActorLabel; actorUserId?: string | null }
+	): Promise<EntitlementImportResult> {
+		const invalid = (reason: string) =>
+			new HttpException(
+				{ statusCode: 422, code: 'entitlement_invalid', reason, message: 'The entitlement document was refused.' },
+				HttpStatus.UNPROCESSABLE_ENTITY
+			);
+		if (typeof jws !== 'string' || jws.trim() === '') {
+			throw invalid('malformed');
+		}
+		const document = jws.trim();
+		if (Buffer.byteLength(document, 'utf8') > ENTITLEMENT_FILE_MAX_BYTES) {
+			throw new HttpException(
+				{ statusCode: 413, code: 'too_large', message: 'An entitlement document is at most 16 KiB.' },
+				HttpStatus.PAYLOAD_TOO_LARGE
+			);
+		}
+		const connection = await this.store.connection();
+		if (connection.status !== 'connected' || !connection.platformInstanceId) {
+			throw new HttpException(
+				{ statusCode: 409, code: 'not_connected', message: 'Connect this installation to Ever Platform first.' },
+				HttpStatus.CONFLICT
+			);
+		}
+		// The subject only routes the document; the verifier then requires exactly that subject.
+		let sub: unknown = null;
+		try {
+			sub = (claimsOfVerifiedJws(document) as { sub?: unknown } | null)?.sub ?? null;
+		} catch {
+			sub = null;
+		}
+		let link: LinkRecord | null = null;
+		if (typeof sub === 'string' && sub.startsWith('link:')) {
+			link = await this.store.linkById(sub.slice('link:'.length));
+			if (!link || link.status === 'unlinked') {
+				await this.importRefused('subject_mismatch', actor);
+				throw invalid('subject_mismatch');
+			}
+		} else if (sub !== `instance:${connection.platformInstanceId}`) {
+			const reason = typeof sub === 'string' ? 'subject_mismatch' : 'malformed';
+			await this.importRefused(reason, actor);
+			throw invalid(reason);
+		}
+		const subject = link ? 'link' : 'instance';
+		const storedSeq = link ? link.entitlementSeq : connection.instanceEntitlementSeq;
+		const storedIat = (link ? link.entitlementIat : connection.instanceEntitlementIat) ?? 0;
+		let verified: VerifiedEntitlement;
+		try {
+			// No cached floor here: the same document again (a restart with the same file) is answered
+			// `unchanged` below, an older one `entitlement_stale`.
+			verified = await this.platform.verify(
+				document,
+				link ? `link:${link.linkId}` : `instance:${connection.platformInstanceId}`
+			);
+			if (link) checkLinkBinding(verified, link);
+		} catch (error) {
+			if (error instanceof EntitlementError || error instanceof LinkBindingError) {
+				await this.importRefused(error.code, actor, link);
+				throw invalid(error.code);
+			}
+			throw error;
+		}
+		if (storedSeq !== null && verified.seq === storedSeq && verified.claims.iat === storedIat) {
+			return { subject, seq: verified.seq, status: 'unchanged' };
+		}
+		if (storedSeq !== null && (verified.seq <= storedSeq || verified.claims.iat < storedIat)) {
+			await this.importRefused('entitlement_stale', actor, link);
+			throw invalid('entitlement_stale');
+		}
+		if (link) {
+			await this.store.updateLink(link.linkId, this.linkDocumentColumns(verified));
+		} else {
+			await this.storeInstanceDocument(verified);
+		}
+		await this.audit.record({
+			action: 'entitlement.refresh',
+			actorLabel: actor.actorLabel,
+			actorUserId: actor.actorUserId,
+			tenantId: link?.tenantId ?? null,
+			organizationId: link?.organizationId ?? null,
+			details: {
+				subject,
+				...(link ? { link_id: link.linkId } : {}),
+				seq: verified.seq,
+				status: 'stored',
+				source: 'file'
+			}
+		});
+		return { subject, seq: verified.seq, status: 'stored' };
+	}
+
+	/**
+	 * `EVER_ENTITLEMENT_FILE`: a downloaded document imported once the connection starts. A file that
+	 * cannot be read or is refused logs a short reason and changes nothing; the same document again
+	 * (a restart) changes nothing either.
+	 */
+	async importFromEnvFile(): Promise<EntitlementImportResult | null> {
+		const path = (this.env['EVER_ENTITLEMENT_FILE'] ?? '').trim();
+		if (!path) {
+			return null;
+		}
+		let document: string;
+		try {
+			const bytes = await readFile(path);
+			if (bytes.length > ENTITLEMENT_FILE_MAX_BYTES) {
+				this.logger.warn('EVER_ENTITLEMENT_FILE is larger than 16 KiB; it is not imported.');
+				return null;
+			}
+			document = bytes.toString('utf8');
+		} catch {
+			this.logger.warn('EVER_ENTITLEMENT_FILE could not be read; it is not imported.');
+			return null;
+		}
+		const digest = createHash('sha256').update(document.trim()).digest('hex').slice(0, 12);
+		try {
+			const result = await this.importDocument(document, { actorLabel: 'system' });
+			if (result.status === 'stored') {
+				this.logger.log(`EVER_ENTITLEMENT_FILE imported (${result.subject} document #${result.seq}, ${digest}).`);
+			}
+			return result;
+		} catch (error) {
+			const answer = error instanceof HttpException ? (error.getResponse() as { reason?: string; code?: string }) : {};
+			this.logger.warn(`EVER_ENTITLEMENT_FILE was not imported (${answer.reason ?? answer.code ?? 'error'}, ${digest}).`);
+			return null;
+		}
+	}
+
+	private async importRefused(
+		reason: string,
+		actor: { actorLabel: ActorLabel; actorUserId?: string | null },
+		link?: LinkRecord | null
+	): Promise<void> {
+		await this.audit.record({
+			action: 'entitlement.refresh',
+			actorLabel: actor.actorLabel,
+			actorUserId: actor.actorUserId,
+			tenantId: link?.tenantId ?? null,
+			organizationId: link?.organizationId ?? null,
+			details: {
+				subject: link ? 'link' : 'instance',
+				...(link ? { link_id: link.linkId } : {}),
+				status: reason === 'entitlement_stale' ? 'stale' : 'refused',
+				reason,
+				source: 'file'
+			}
+		});
+	}
+
 	/** The decoded summary of the stored documents for one organization (and the installation). */
 	async summary(
 		tenantId: string,
@@ -274,11 +495,17 @@ export class EverConnectEntitlementService {
 				? this.summarize(
 						'instance',
 						this.secrets.open(connection.instanceEntitlementJwsEncrypted),
-						connection.instanceEntitlementFetchedAt
+						connection.instanceEntitlementFetchedAt,
+						connection.status === 'revoked'
 					)
 				: null,
 			link: link
-				? this.summarize('link', this.secrets.open(link.entitlementJwsEncrypted), link.entitlementFetchedAt)
+				? this.summarize(
+						'link',
+						this.secrets.open(link.entitlementJwsEncrypted),
+						link.entitlementFetchedAt,
+						connection.status === 'revoked'
+					)
 				: null
 		};
 	}
@@ -286,7 +513,8 @@ export class EverConnectEntitlementService {
 	private summarize(
 		subject: 'instance' | 'link',
 		jws: string | null,
-		fetchedAt: number | null
+		fetchedAt: number | null,
+		revoked = false
 	): EntitlementSummary | null {
 		// Stored documents were verified before they were stored: their claims are read for display only.
 		const payload = jws ? claimsOfVerifiedJws(jws) : null;
@@ -295,9 +523,15 @@ export class EverConnectEntitlementService {
 		}
 		const claims = payload as { iat?: number; exp?: number; ever?: Record<string, unknown> };
 		const ever = (claims.ever ?? {}) as Record<string, unknown> & { plan?: { code?: unknown } };
+		const nowS = Math.floor(this.now() / 1000);
+		const licenceIds = Array.isArray(ever['licence_ids'])
+			? (ever['licence_ids'] as unknown[]).filter((id): id is string => typeof id === 'string')
+			: [];
 		return {
 			subject,
-			status: entitlementStatus(claims as never, Math.floor(this.now() / 1000)),
+			status: entitlementStatus(claims as never, nowS),
+			ladder: entitlementLadder(claims as never, nowS, revoked),
+			licence_ids: licenceIds,
 			seq: typeof ever['seq'] === 'number' ? ever['seq'] : null,
 			issued_at: iso(claims.iat),
 			expires_at: iso(claims.exp),

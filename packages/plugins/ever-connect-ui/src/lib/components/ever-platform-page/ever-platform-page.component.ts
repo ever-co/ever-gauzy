@@ -476,7 +476,25 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 											</dd>
 											<dt>{{ 'EVER_CONNECT.ENTITLEMENTS.EXPIRES' | translate }}</dt>
 											<dd>{{ document.expires_at | date: 'medium' }} (#{{ document.seq }})</dd>
+											@for (licence of document.licence_ids ?? []; track licence) {
+												<dd class="licence" data-test="licence">
+													{{ 'EVER_CONNECT.ENTITLEMENTS.LICENCE_ACTIVE' | translate: { id: licence } }}
+												</dd>
+											}
 										</dl>
+										@if (document.ladder === 'grace') {
+											<p class="hint" data-test="entitlement-grace">
+												{{
+													'EVER_CONNECT.ENTITLEMENTS.GRACE'
+														| translate: { date: (document.fetched_at | date: 'mediumDate') ?? '—' }
+												}}
+											</p>
+										}
+										@if (document.ladder === 'paused') {
+											<p class="hint" data-test="entitlement-paused">
+												{{ 'EVER_CONNECT.ENTITLEMENTS.PAUSED' | translate }}
+											</p>
+										}
 									}
 								}
 								@if (!entitlement?.link && !entitlement?.instance) {
@@ -493,6 +511,17 @@ export type EverPlatformView = 'loading' | 'ready' | 'unavailable' | 'error';
 								>
 									{{ 'EVER_CONNECT.ENTITLEMENTS.REFRESH' | translate }}
 								</button>
+								@if (status?.operator && status?.connected && status?.managed_by !== 'ever_cloud') {
+									<label class="import" data-test="import-entitlement">
+										{{ 'EVER_CONNECT.ENTITLEMENTS.IMPORT' | translate }}
+										<input
+											type="file"
+											accept=".jws,text/plain"
+											[disabled]="busy"
+											(change)="importEntitlement($event)"
+										/>
+									</label>
+								}
 							</nb-tab>
 							<nb-tab [tabTitle]="'EVER_CONNECT.TABS.AUDIT' | translate" data-test="tab-audit">
 								<table class="table" data-test="audit">
@@ -736,7 +765,29 @@ export class EverPlatformPageComponent implements OnInit {
 		this.run(this.api.refreshEntitlement(this.organizationId), () => undefined);
 	}
 
-	moreAudit(): void {
+	/** Operator only: reads the chosen `.jws` file (at most 16 KiB) and imports it. */
+	importEntitlement(event: Event): void {
+		const input = event.target as HTMLInputElement | null;
+		const file = input?.files?.[0];
+		if (!file) return;
+		if (input) input.value = '';
+		if (file.size > 16 * 1024) {
+			this.say('EVER_CONNECT.ERRORS.entitlement_invalid', {}, 'danger');
+			return;
+		}
+		file.text().then((jws) =>
+			this.run(this.api.importEntitlement(jws), (result) =>
+				this.say(
+					result.status === 'stored'
+						? 'EVER_CONNECT.NOTICES.ENTITLEMENT_IMPORTED'
+						: 'EVER_CONNECT.NOTICES.ENTITLEMENT_UNCHANGED',
+					{ seq: result.seq }
+				)
+			)
+		);
+	}
+
+		moreAudit(): void {
 		if (!this.organizationId) return;
 		this.api.audit(this.organizationId, this.auditPage + 1).subscribe((page) => {
 			this.auditPage += 1;
@@ -786,6 +837,7 @@ export class EverPlatformPageComponent implements OnInit {
 			'denied_by_policy',
 			'keys_unverifiable',
 			'entitlement_unverifiable',
+			'entitlement_invalid',
 			'platform_unreachable',
 			'rate_limited',
 			'not_available',
