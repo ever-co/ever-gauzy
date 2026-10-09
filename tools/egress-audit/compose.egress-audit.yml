@@ -71,7 +71,8 @@ services:
             retries: 60
 
     db:
-        image: postgres:18-alpine
+        # The public mirror of the official image: Docker Hub limits anonymous pulls.
+        image: public.ecr.aws/docker/library/postgres:18-alpine
         environment:
             POSTGRES_DB: gauzy
             POSTGRES_USER: gauzy
