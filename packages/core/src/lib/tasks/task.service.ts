@@ -38,7 +38,13 @@ import { isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
-import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from './../core/utils';
+import {
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseFindOptionsSelect,
+	parseTypeORMFindToMikroOrm
+} from './../core/utils';
 import { addBetween, LIKE_OPERATOR } from './../core/util';
 import { RequestContext } from '../core/context';
 import { TaskViewService } from './views/view.service';
@@ -800,6 +806,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 					if (isNotEmpty(employeeId)) {
 						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
+					}
+
+					// The advanced filters (projects, tags, statuses, members, ...) were only applied by the
+					// TypeORM branch; here they were read and dropped. Build the same TypeORM where and
+					// translate it, merging the `teams` predicate with the team scoping above.
+					if (filters) {
+						const { where: advancedWhere } = parseTypeORMFindToMikroOrm<Task>({
+							where: this.buildAdvancedWhereCondition(filters, where)
+						});
+						const { teams: advancedTeams, ...advancedRest } = (advancedWhere ?? {}) as any;
+						Object.assign(mikroWhere, advancedRest);
+						if (advancedTeams) {
+							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
+						}
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
