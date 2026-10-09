@@ -128,38 +128,7 @@
       margin-bottom: 0;
     }
   }
-}
 
-.main-form {
-  .template-save {
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-  }
-
-  nb-layout {
-    nb-layout-column.email-template-column {
-      padding: 0;
-    }
-  }
-}
-
-.custom-parent-email-content {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
-  overflow: auto;
-  // Takes what the flex column above leaves and scrolls the rendered template
-  // inside itself. Was `height: $height` — see the page-frame note at the top.
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.email-content {
-  width: fit-content;
-}
-
-:host {
   ::ng-deep {
     @include nb-select-overrides(2.25rem, $default-button-radius, $default-box-shadow);
     @include ng-select-overrides(2.25rem, $default-button-radius, $default-box-shadow);
@@ -332,4 +301,33 @@
   .select-block {
     min-width: 130px;
   }
+}
+
+.main-form {
+  .template-save {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+  }
+
+  nb-layout {
+    nb-layout-column.email-template-column {
+      padding: 0;
+    }
+  }
+}
+
+.custom-parent-email-content {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  overflow: auto;
+  // Takes what the flex column above leaves and scrolls the rendered template
+  // inside itself. Was `height: $height` — see the page-frame note at the top.
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.email-content {
+  width: fit-content;
 }

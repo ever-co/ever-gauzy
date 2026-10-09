@@ -47,7 +47,7 @@
               }
             </nb-select>
           </div>
-          <div class="view-toggle" role="group">
+          <fieldset class="view-toggle">
             <button
               type="button"
               class="view-toggle-option"
@@ -68,7 +68,7 @@
               <nb-icon icon="code-outline"></nb-icon>
               {{ 'EMAIL_TEMPLATES_PAGE.VIEW_EDITOR' | translate }}
             </button>
-          </div>
+          </fieldset>
           <button
             type="button"
             class="save-button"
@@ -99,9 +99,8 @@
                     <iframe
                       class="template-thumb-frame"
                       tabindex="-1"
-                      sandbox=""
                       aria-hidden="true"
-                      [srcdoc]="card.html"
+                      [gaSandboxedSrcdoc]="card.html"
                     ></iframe>
                   } @else {
                     <div class="template-thumb-placeholder" [class.failed]="card.failed">

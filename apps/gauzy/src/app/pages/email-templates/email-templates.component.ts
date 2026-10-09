@@ -39,7 +39,8 @@ export type EmailTemplatesViewMode = 'grid' | 'editor';
 export interface EmailTemplateCard {
 	name: EmailTemplateEnum;
 	subject: SafeHtml | null;
-	html: SafeHtml | null;
+	/** Raw rendered email; only ever written into a sandboxed iframe by `SandboxedSrcdocDirective`. */
+	html: string | null;
 	failed: boolean;
 }
 
@@ -98,7 +99,11 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 			.pipe(
 				debounceTime(200),
 				tap(() => this.getTemplate()),
-				tap(() => this.viewMode === 'grid' && this.loadGrid()),
+				tap(() => {
+					if (this.viewMode === 'grid') {
+						void this.loadGrid();
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -191,7 +196,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		}
 		this.viewMode = mode;
 		if (mode === 'grid') {
-			this.loadGrid();
+			void this.loadGrid();
 		} else {
 			this.resizeEditors();
 		}
@@ -256,9 +261,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 						return;
 					}
 					card.subject = this.sanitizer.sanitize(SecurityContext.HTML, subjectHtml);
-					// Rendered inside a sandboxed iframe, so the email's own <style> blocks
-					// stay out of the page.
-					card.html = this.sanitizer.bypassSecurityTrustHtml(bodyHtml);
+					card.html = bodyHtml;
 				} catch {
 					card.failed = true;
 				}
