@@ -168,7 +168,21 @@ export function applyProjection<T extends Record<string, unknown>>(rows: readonl
 	return rows.map((row) => projectRow(row, selection.paths));
 }
 
-/** Projects one row onto a set of dotted paths. */
+/**
+ * Projects one row onto a set of dotted paths.
+ *
+ * The paths are caller input whenever the resource declares no `selectable` list, so a segment is
+ * never allowed to reach the prototype chain of the object being built:
+ *
+ * - `__proto__` is skipped. It is the one key an assignment cannot create — `target.__proto__ = value`
+ *   replaces the target's prototype instead — and reading it returns `Object.prototype`, so the next
+ *   segment's write would land on every object in the process. A row only carries it as an own key
+ *   when it was parsed from JSON, and no declared field is called that.
+ * - An intermediate object is looked up among the target's OWN keys. An inherited member such as
+ *   `constructor` would otherwise be taken for an object already projected, and the walk would carry
+ *   on writing into the `Object` function. Read as own keys, `constructor` and `prototype` are
+ *   ordinary names and are projected like any other.
+ */
 function projectRow<T extends Record<string, unknown>>(row: T, paths: readonly string[]): T {
 	const projected: Record<string, unknown> = {};
 	for (const path of paths) {
@@ -179,7 +193,12 @@ function projectRow<T extends Record<string, unknown>>(row: T, paths: readonly s
 
 		for (let index = 0; index < segments.length; index += 1) {
 			const segment = segments[index];
-			if (!source || typeof source !== 'object' || !Object.prototype.hasOwnProperty.call(source, segment)) {
+			if (
+				segment === '__proto__' ||
+				!source ||
+				typeof source !== 'object' ||
+				!Object.prototype.hasOwnProperty.call(source, segment)
+			) {
 				reachable = false;
 				break;
 			}
@@ -187,7 +206,8 @@ function projectRow<T extends Record<string, unknown>>(row: T, paths: readonly s
 			if (index === segments.length - 1) {
 				target[segment] = value;
 			} else {
-				const next = (target[segment] as Record<string, unknown>) ?? {};
+				const existing = Object.prototype.hasOwnProperty.call(target, segment) ? target[segment] : undefined;
+				const next = (existing as Record<string, unknown>) ?? {};
 				target[segment] = next;
 				target = next;
 				source = value;
