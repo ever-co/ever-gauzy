@@ -43,22 +43,31 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 
 			// Mention ids come from request bodies: another employee may only be subscribed when they
 			// belong to the current tenant / organization
-			if (employeeId && employeeId !== currentEmployeeId) {
+			const forAnotherEmployee = !!employeeId && employeeId !== currentEmployeeId;
+			if (forAnotherEmployee) {
 				await this.assertEmployeeInScope(employeeId, tenantId, organizationId);
 			}
 
+			// For a caller without CHANGE_SELECTED_EMPLOYEE (EMPLOYEE / MANAGER roles) the employee filter (lookup)
+			// and TenantAwareCrudService.create (insert) both swap the named employee for the caller. The employee
+			// was checked above, so act for them explicitly.
+			const asNamedEmployee = <R>(callback: () => Promise<R>): Promise<R> =>
+				forAnotherEmployee ? this.withoutEmployeeFilter(callback) : callback();
+
 			// Check if the subscription already exists
 			try {
-				const entitySubscription = await this.findOneByOptions({
-					where: { employeeId, entity, entityId, organizationId, tenantId }
-				});
+				const entitySubscription = await asNamedEmployee(() =>
+					this.findOneByOptions({
+						where: { employeeId, entity, entityId, organizationId, tenantId }
+					})
+				);
 				if (entitySubscription) {
 					return entitySubscription;
 				}
 			} catch (e) {}
 
 			// Create a new subscription if none exists
-			const subscription = await super.create({ ...input, employeeId, tenantId });
+			const subscription = await asNamedEmployee(() => super.create({ ...input, employeeId, tenantId }));
 
 			/**
 			 * TODO : Optional subscription notification if needed
