@@ -676,6 +676,25 @@ describe('OrderReturnLineService — writing the line set (doc 10 §11.2)', () =
 
 	afterEach(() => jest.restoreAllMocks());
 
+	/**
+	 * Item 32 of the programme's record: the return line writer called `super.create` with no organization, and
+	 * `TenantAwareCrudService.create` states the tenant from the request and no organization at all, so every
+	 * line was written with `organizationId = NULL` and every scoped read of the lines found nothing. The
+	 * fixtures hid it, because the double's `create` stamps the request's organization onto a row that states
+	 * none. This reads what the writer hands the base class instead, which the double cannot paper over.
+	 */
+	it('states the header’s tenant and organization on every line it hands the base class', async () => {
+		const fixture = lineFixture();
+		const create = jest.spyOn(Object.getPrototypeOf(OrderReturnLineService.prototype), 'create');
+
+		await fixture.service.replaceLines('return-1', [
+			{ orderLineId: ORDER_LINE, quantity: 1, restock: false, warehouseId: WAREHOUSE }
+		]);
+
+		expect(create).toHaveBeenCalledTimes(1);
+		expect(create.mock.calls[0][0]).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
+	});
+
 	it('replaces the line set with the requested quantities at the storage scale', async () => {
 		const fixture = lineFixture({ lines: [lineRow('stale', { quantity: '1.000000' })] });
 

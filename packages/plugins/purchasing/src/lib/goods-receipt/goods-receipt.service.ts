@@ -205,7 +205,10 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 			organizationId: RequestContext.currentOrganizationId()
 		} as any);
 
-		const lines = await this.receiptLineService.writeLines(receipt.id, resolved);
+		const lines = await this.receiptLineService.writeLines(receipt.id, resolved, {
+			tenantId: receipt.tenantId,
+			organizationId: receipt.organizationId
+		});
 		const movementIds = await this.writeReceiptMovements(this.numberOf(input, orders), receipt, lines, currency);
 
 		const statuses = await this.applyDeltas(
@@ -275,7 +278,10 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		}
 
 		const resolved = await this.resolveLines([input], orderLines, orders, undefined);
-		const lines = await this.receiptLineService.writeLines(receipt.id, resolved);
+		const lines = await this.receiptLineService.writeLines(receipt.id, resolved, {
+			tenantId: receipt.tenantId,
+			organizationId: receipt.organizationId
+		});
 		const movementIds = await this.writeReceiptMovements(
 			this.numberOf({} as IGoodsReceiptInput, orders),
 			receipt,

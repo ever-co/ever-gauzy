@@ -722,6 +722,42 @@ describe('PurchaseOrderLineService — writing a line set (doc 05 §16.2)', () =
 		expect(written.metadata).toMatchObject({ pricing: { source: 'TERM', leadTimeDays: 3, warnings: [] } });
 	});
 
+	/**
+	 * The defect the returns package recorded as item 32, in this package's writer: `super.create` was handed no
+	 * organization, `TenantAwareCrudService.create` states the tenant from the request and no organization at
+	 * all, and every read of the lines (`findForOrder`, the three-way match) filters by the caller's organization,
+	 * so the lines of every purchase order were invisible to the service that wrote them. The fixture's `create`
+	 * stamps the request's organization onto a row that states none, which is why no case saw it; these read what
+	 * the writer hands the base class instead.
+	 */
+	it('states the order’s tenant and organization on every line it hands the base class', async () => {
+		const fixture = lineFixture();
+		const create = jest.spyOn(Object.getPrototypeOf(PurchaseOrderLineService.prototype), 'create');
+
+		await fixture.service.replaceLines(
+			ORDER,
+			[
+				{ variantId: VARIANT, quantity: '2', unitCost: '1' },
+				{ variantId: VARIANT, quantity: '1', unitCost: '1', expectedAt: new Date('2026-04-01T00:00:00.000Z') }
+			],
+			{ tenantId: TENANT, organizationId: ORG }
+		);
+
+		expect(create).toHaveBeenCalledTimes(2);
+		for (const [line] of create.mock.calls) {
+			expect(line).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
+		}
+	});
+
+	it('falls back to the caller’s organization when the order’s is not handed down', async () => {
+		const fixture = lineFixture();
+		const create = jest.spyOn(Object.getPrototypeOf(PurchaseOrderLineService.prototype), 'create');
+
+		await fixture.service.replaceLines(ORDER, [{ variantId: VARIANT, quantity: '2', unitCost: '1' }], {});
+
+		expect(create.mock.calls[0][0]).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
+	});
+
 	it('states a line’s own cost as given, and keeps the provenance the caller stated with it', async () => {
 		// A line set rewritten as a unit keeps the term its price came from, which is why a caller that
 		// states a cost may state its provenance too.

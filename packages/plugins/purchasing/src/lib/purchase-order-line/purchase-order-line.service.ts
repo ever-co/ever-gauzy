@@ -31,6 +31,10 @@ export interface IPurchaseOrderLineContext {
 	currency?: CurrencyCode;
 	/** The instant the terms are resolved at; now when omitted. */
 	date?: Date;
+	/** The tenant of the purchase order the lines belong to; the caller's when omitted. */
+	tenantId?: ID;
+	/** The organization of the purchase order the lines belong to; the caller's when omitted. */
+	organizationId?: ID;
 }
 
 /** One day, which is the unit a resolved lead time is stated in. */
@@ -209,7 +213,15 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 					total: '0',
 					expectedAt: input.expectedAt,
 					note: input.note,
-					metadata: this.pricingMetadata(input, pricing)
+					metadata: this.pricingMetadata(input, pricing),
+					// **The tenancy is the header's, and it has to be stated.** `TenantAwareCrudService.create` stamps the
+					// tenant from the request and states no organization at all, so a line written without one carried
+					// `organizationId = NULL` while every read of these lines filters by the caller's organization — the
+					// rows were invisible to the service that wrote them (the returns package's item 32, found by its
+					// receipt run). The header's tenancy is passed down; the caller's is the fallback, which is the
+					// organization the header itself was written in.
+					tenantId: context.tenantId ?? RequestContext.currentTenantId(),
+					organizationId: context.organizationId ?? RequestContext.currentOrganizationId()
 				} as any)
 			);
 		}

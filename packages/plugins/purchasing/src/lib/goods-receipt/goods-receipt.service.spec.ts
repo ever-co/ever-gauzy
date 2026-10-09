@@ -582,6 +582,27 @@ describe('GoodsReceiptService — receiving goods (doc 09 §9.4)', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
+	/**
+	 * The receipt-line writer had the returns package's item-32 defect: `super.create` was handed no organization,
+	 * so every receipt line was written with `organizationId = NULL` while `findForReceipt` filters by the caller's
+	 * organization. The fixture's `create` stamps the request's organization onto a row that states none; this
+	 * reads what the writer hands the base class instead.
+	 */
+	it('writes every receipt line with the receipt’s tenant and organization', async () => {
+		const fixture = receiptFixture();
+		const create = jest.spyOn(Object.getPrototypeOf(GoodsReceiptLineService.prototype), 'create');
+
+		await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '8', damagedQuantity: '1' }]
+		});
+
+		const lines = create.mock.calls.map(([row]) => row as Record<string, unknown>).filter((row) => 'receiptId' in row);
+
+		expect(lines).toHaveLength(1);
+		expect(lines[0]).toEqual(expect.objectContaining({ tenantId: TENANT, organizationId: ORG }));
+	});
+
 	it('records a delivery, its movements, the counters and the order’s new status', async () => {
 		const fixture = receiptFixture();
 
