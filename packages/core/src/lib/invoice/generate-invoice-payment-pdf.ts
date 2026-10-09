@@ -28,7 +28,8 @@ export async function generateInvoicePaymentPdfDefinition(
 		body.push(currentPayment);
 	}
 
-	const widths = ['30%', '10%', '20%', '20%', '20%'];
+	// The amount now carries its currency code ("USD 1500"), which a 10% column wraps from 3 digits on
+	const widths = ['25%', '20%', '20%', '20%', '15%'];
 	const tableHeader = [
 		translatedText.paymentDate,
 		translatedText.amount,
