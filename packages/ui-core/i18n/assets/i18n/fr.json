@@ -1163,7 +1163,52 @@
 		"ADD_ITEM": "Ajouter {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Vous uniquement",
+			"TENANT": "Tout le monde dans ce tenant"
+		},
+		"UNSAVED_CHANGES": "Modifications non enregistrées",
+		"ACCOUNT": {
+			"TITLE": "Compte",
+			"DESCRIPTION": "Le compte avec lequel vous êtes connecté.",
+			"MANAGE": "Gérer le profil",
+			"ROLE": "Rôle",
+			"MEMBER_SINCE": "Membre depuis"
+		},
+		"PREFERENCES": {
+			"TITLE": "Préférences",
+			"DESCRIPTION": "L'apparence et le comportement de l'application pour vous. Les changements s'appliquent immédiatement.",
+			"THEME": "Thème",
+			"THEME_HINT": "Jeu de couleurs de toute l'application.",
+			"LANGUAGE": "Langue",
+			"LANGUAGE_HINT": "Langue des menus, libellés et messages.",
+			"LAYOUT": "Disposition par défaut",
+			"RESET_LAYOUTS": "Réinitialiser les dispositions des pages",
+			"SAVE_ERROR": "Votre préférence n'a pas pu être enregistrée.",
+			"LAYOUTS_RESET": "Dispositions des pages réinitialisées à votre valeur par défaut."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Image carrée, au moins 128 × 128 px.",
+			"NAME_HINT": "Affiché à tous les utilisateurs de ce tenant.",
+			"TENANT_ID": "ID du tenant",
+			"TENANT_ID_HINT": "Indiquez-le en contactant le support ou en appelant l'API.",
+			"COPY_ERROR": "L'ID du tenant n'a pas pu être copié.",
+			"TITLE": "Profil du tenant",
+			"DESCRIPTION": "Le nom et le logo de ce tenant, affichés à tous les utilisateurs dans le sélecteur d'espaces de travail et la barre latérale.",
+			"NAME": "Nom du tenant",
+			"NAME_PLACEHOLDER": "Saisissez le nom du tenant",
+			"NAME_REQUIRED": "Le nom du tenant est obligatoire.",
+			"LOGO": "Logo du tenant",
+			"LOGO_CHANGE": "Cliquez pour téléverser un nouveau logo",
+			"LOGO_REMOVE": "Supprimer le logo",
+			"LOGO_UPLOAD_ERROR": "Le logo n'a pas pu être téléversé.",
+			"CREATED_AT": "Créé le",
+			"SAVED": "Profil du tenant enregistré",
+			"SAVE_ERROR": "Le profil du tenant n'a pas pu être enregistré.",
+			"LOAD_ERROR": "Le profil du tenant n'a pas pu être chargé."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "Interface utilisateur",
 			"DESCRIPTION": "Choisissez l'interface utilisée par tous les membres de ce tenant pour les pages disponibles dans les deux versions.",
 			"OPTIONS": {
@@ -1959,7 +2004,90 @@
 			"PREVIOUS": "Précédent"
 		},
 		"NOT_STARTED": "Pas commencé",
-		"NOT_STARTED_HELP": "Le travail commencé n'est pas fixé pour cet employé. L'employé ne sera pas pris en compte dans les comptes, les dépenses partagées, etc."
+		"NOT_STARTED_HELP": "Le travail commencé n'est pas fixé pour cet employé. L'employé ne sera pas pris en compte dans les comptes, les dépenses partagées, etc.",
+		"VIEW": {
+			"PERIOD": "Période",
+			"PERIODS": {
+				"THIS_WEEK": "Cette semaine",
+				"THIS_MONTH": "Ce mois-ci",
+				"LAST_30_DAYS": "30 derniers jours"
+			},
+			"TABS": {
+				"OVERVIEW": "Aperçu",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Suivi du temps en cours",
+				"ONLINE": "En ligne",
+				"AWAY": "Absent",
+				"OFFLINE": "Hors ligne"
+			},
+			"LOCAL_TIME": "Heure locale",
+			"MEMBER_SINCE": "Membre depuis",
+			"WEEKLY_LIMIT": "Limite hebdomadaire",
+			"WORKED_TODAY": "Travaillé aujourd'hui",
+			"WORKED_PERIOD": "Travaillé sur la période",
+			"ACTIVITY_META": "{{ value }} d’activité",
+			"AVG_ACTIVITY": "Activité moyenne",
+			"OPEN_TASKS": "Tâches ouvertes",
+			"OPEN_TASKS_META": "{{ progress }} en cours · {{ overdue }} en retard",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs semaine dernière",
+				"THIS_MONTH": "vs mois dernier",
+				"LAST_30_DAYS": "vs 30 jours précédents"
+			},
+			"HOURS_WORKED": "Heures travaillées",
+			"HOURS_META": "{{ total }} au total · {{ average }} par jour travaillé",
+			"TRACKED": "Suivi",
+			"MANUAL": "Manuel",
+			"OPEN_TIMESHEET": "Ouvrir la feuille de temps",
+			"PROJECTS": "Projets",
+			"RECENT_SCREENSHOTS": "Captures d’écran récentes",
+			"VIEW_ALL": "Tout voir",
+			"ASSIGNED_TASKS": "Tâches assignées",
+			"COLUMNS": {
+				"TASK": "Tâche",
+				"PROJECT": "Projet",
+				"STATUS": "Statut",
+				"DUE": "Échéance",
+				"TIME": "Temps",
+				"NAME": "Nom",
+				"PRIORITY": "Priorité"
+			},
+			"TOP_TASKS": "Tâches les plus travaillées",
+			"APPS_URLS": "Applications et URL",
+			"NO_TIME": "Aucun temps suivi sur cette période",
+			"NO_TASKS": "Aucune tâche assignée",
+			"NO_APPS": "Aucune activité d’application ou d’URL sur cette période",
+			"NO_SCREENSHOTS": "Aucune capture d’écran sur cette période",
+			"UNAVAILABLE": "Vous n'avez pas accès à ces données",
+			"PROFILE": {
+				"ABOUT": "À propos",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Compétences et étiquettes",
+				"TIME_ZONE": "Fuseau horaire",
+				"NOT_PROVIDED": "Pas encore renseigné",
+				"NO_DESCRIPTION": "Aucune description n’a encore été ajoutée"
+			},
+			"TASKS_HELP": "Tâches dont cette personne est membre. Choisissez une case pour filtrer la liste.",
+			"TASK_FILTERS": {
+				"OPEN": "Ouvertes",
+				"PROGRESS": "En cours",
+				"OVERDUE": "En retard",
+				"DONE": "Terminées"
+			},
+			"DUE": {
+				"NONE": "Pas d’échéance",
+				"WAS_DUE": "Échéance",
+				"OVERDUE_DAY": "1 jour de retard",
+				"OVERDUE_DAYS": "{{ count }} jours de retard",
+				"TODAY": "Échéance aujourd’hui",
+				"TOMORROW": "Échéance demain",
+				"IN_DAYS": "Dans {{ count }} jours"
+			},
+			"SHOWING": "{{ shown }} tâches affichées sur {{ total }}",
+			"NO_TASKS_IN_VIEW": "Aucune tâche dans cette vue"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Tous les objectifs",
@@ -2762,7 +2890,19 @@
 		"EMPLOYEE_UPDATED": "L'employé a été mis à jour.",
 		"IMAGE_UPDATED": "L'image a été mise à jour.",
 		"FAIL_TO_UPDATE_IMAGE": "Mise à jour échouée.",
-		"ANONYMOUS": "Anonyme"
+		"ANONYMOUS": "Anonyme",
+		"ABOUT": "À propos",
+		"INACTIVE": "Inactif",
+		"PER_HOUR": "/ heure",
+		"MEMBER_SINCE": "Membre depuis",
+		"NO_DESCRIPTION": "Aucune description n’a encore été ajoutée",
+		"NO_SKILLS": "Aucune compétence indiquée",
+		"VIEW_COMPANY_PROFILE": "Voir le profil de l’entreprise",
+		"EDIT": {
+			"NO_AWARDS": "Aucune distinction ajoutée",
+			"ADD_AWARD": "Ajouter une distinction",
+			"PRIVACY_HELP": "Choisissez les informations visibles sur le profil public."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Page de gestion des propositions",
@@ -3863,7 +4003,8 @@
 		"ROLES_PERMISSIONS": "Rôles et autorisations",
 		"TIME_TRACKING": "Suivi du temps",
 		"ESTIMATE": "Estimation",
-		"DASHBOARD": "Tableau de bord"
+		"DASHBOARD": "Tableau de bord",
+		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3961,6 +4102,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Allez sur le tableau de bord, Gérer les statistiques des employés, Tableau de suivi du temps."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Espace central des documents de l'entreprise : téléversements, pages wiki, relecture et connaissances IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5309,7 +5453,18 @@
 			"SYSTEM": "Système",
 			"FILTERS": {
 				"TO": "A",
-				"TEMPLATE_LANGUAGE": "Modèle/Langue"
+				"TEMPLATE_LANGUAGE": "Modèle/Langue",
+				"RECIPIENT": "Destinataire",
+				"TEMPLATE": "Modèle",
+				"STATUS": "Statut",
+				"ALL_RECIPIENTS": "Tous les destinataires",
+				"ALL_TEMPLATES": "Tous les modèles",
+				"ALL_STATUSES": "Tous les statuts",
+				"SENT": "Envoyé",
+				"FAILED": "Échec",
+				"ARCHIVED": "Archivés",
+				"SHOWING": "{{ count }} sur {{ total }} affichés",
+				"NO_MATCH": "Aucun e-mail ne correspond à ces filtres."
 			}
 		}
 	},

@@ -2491,7 +2491,90 @@
 			"CREATE_EMPLOYEES": "Create employees ({{ count }})"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "Period",
+			"PERIODS": {
+				"THIS_WEEK": "This week",
+				"THIS_MONTH": "This month",
+				"LAST_30_DAYS": "Last 30 days"
+			},
+			"TABS": {
+				"OVERVIEW": "Overview",
+				"PROFILE": "Profile"
+			},
+			"PRESENCE": {
+				"TRACKING": "Tracking time",
+				"ONLINE": "Online",
+				"AWAY": "Away",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Local time",
+			"MEMBER_SINCE": "Member since",
+			"WEEKLY_LIMIT": "Weekly limit",
+			"WORKED_TODAY": "Worked today",
+			"WORKED_PERIOD": "Worked in period",
+			"ACTIVITY_META": "{{ value }} activity",
+			"AVG_ACTIVITY": "Average activity",
+			"OPEN_TASKS": "Open tasks",
+			"OPEN_TASKS_META": "{{ progress }} in progress · {{ overdue }} overdue",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs last week",
+				"THIS_MONTH": "vs last month",
+				"LAST_30_DAYS": "vs previous 30 days"
+			},
+			"HOURS_WORKED": "Hours worked",
+			"HOURS_META": "{{ total }} total · {{ average }} per working day",
+			"TRACKED": "Tracked",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Open timesheet",
+			"PROJECTS": "Projects",
+			"RECENT_SCREENSHOTS": "Recent screenshots",
+			"VIEW_ALL": "View all",
+			"ASSIGNED_TASKS": "Assigned tasks",
+			"COLUMNS": {
+				"TASK": "Task",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Due",
+				"TIME": "Time",
+				"NAME": "Name",
+				"PRIORITY": "Priority"
+			},
+			"TOP_TASKS": "Most worked tasks",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "No time tracked in this period",
+			"NO_TASKS": "No tasks assigned",
+			"NO_APPS": "No app or URL activity in this period",
+			"NO_SCREENSHOTS": "No screenshots in this period",
+			"UNAVAILABLE": "You don't have access to this data",
+			"PROFILE": {
+				"ABOUT": "About",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Skills & tags",
+				"TIME_ZONE": "Time zone",
+				"NOT_PROVIDED": "Not provided yet",
+				"NO_DESCRIPTION": "No description has been added yet"
+			},
+			"TASKS_HELP": "Tasks this person is a member of. Pick a box to filter the list.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "In progress",
+				"OVERDUE": "Overdue",
+				"DONE": "Done"
+			},
+			"DUE": {
+				"NONE": "No due date",
+				"WAS_DUE": "Was due",
+				"OVERDUE_DAY": "1 day overdue",
+				"OVERDUE_DAYS": "{{ count }} days overdue",
+				"TODAY": "Due today",
+				"TOMORROW": "Due tomorrow",
+				"IN_DAYS": "In {{ count }} days"
+			},
+			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
+			"NO_TASKS_IN_VIEW": "No tasks in this view"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -3337,7 +3420,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "About",
+		"INACTIVE": "Inactive",
+		"PER_HOUR": "/ hour",
+		"MEMBER_SINCE": "Member since",
+		"NO_DESCRIPTION": "No description has been added yet",
+		"NO_SKILLS": "No skills listed yet",
+		"VIEW_COMPANY_PROFILE": "View company profile",
+		"EDIT": {
+			"NO_AWARDS": "No awards added yet",
+			"ADD_AWARD": "Add award",
+			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -4480,7 +4575,8 @@
 		"ROLES_PERMISSIONS": "Roles & Permissions",
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4578,6 +4674,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central hub for company documents: uploads, wiki pages, review, and AI knowledge"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5915,7 +6014,52 @@
 		}
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Only you",
+			"TENANT": "Everyone in this tenant"
+		},
+		"UNSAVED_CHANGES": "Unsaved changes",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "The account you are signed in with.",
+			"MANAGE": "Manage profile",
+			"ROLE": "Role",
+			"MEMBER_SINCE": "Member since"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferences",
+			"DESCRIPTION": "How the app looks and behaves for you. Changes apply immediately.",
+			"THEME": "Theme",
+			"THEME_HINT": "Colour scheme of the whole app.",
+			"LANGUAGE": "Language",
+			"LANGUAGE_HINT": "Language of menus, labels and messages.",
+			"LAYOUT": "Default layout",
+			"RESET_LAYOUTS": "Reset page layouts",
+			"SAVE_ERROR": "Your preference could not be saved.",
+			"LAYOUTS_RESET": "Page layouts reset to your default."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Square image, at least 128 × 128 px.",
+			"NAME_HINT": "Shown to every user of this tenant.",
+			"TENANT_ID": "Tenant ID",
+			"TENANT_ID_HINT": "Quote it when contacting support or calling the API.",
+			"COPY_ERROR": "The tenant ID could not be copied.",
+			"TITLE": "Tenant profile",
+			"DESCRIPTION": "The name and logo of this tenant, shown in the workspace switcher and the sidebar for every user.",
+			"NAME": "Tenant name",
+			"NAME_PLACEHOLDER": "Enter the tenant name",
+			"NAME_REQUIRED": "The tenant name is required.",
+			"LOGO": "Tenant logo",
+			"LOGO_CHANGE": "Click to upload a new logo",
+			"LOGO_REMOVE": "Remove logo",
+			"LOGO_UPLOAD_ERROR": "The logo could not be uploaded.",
+			"CREATED_AT": "Created on",
+			"SAVED": "Tenant profile saved",
+			"SAVE_ERROR": "The tenant profile could not be saved.",
+			"LOAD_ERROR": "The tenant profile could not be loaded."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "User interface",
 			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
 			"OPTIONS": {
@@ -6006,7 +6150,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "Recipient",
+				"TEMPLATE": "Template",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "All recipients",
+				"ALL_TEMPLATES": "All templates",
+				"ALL_STATUSES": "All statuses",
+				"SENT": "Sent",
+				"FAILED": "Failed",
+				"ARCHIVED": "Archived",
+				"SHOWING": "Showing {{ count }} of {{ total }}",
+				"NO_MATCH": "No emails match these filters."
 			}
 		}
 	},

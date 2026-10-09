@@ -66,12 +66,12 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 				employeeId: user.employeeId
 			});
 
-			// Create an user subscription for provided entity
+			// Subscribe the mentioned employee to the entity they were mentioned in
 			this._eventBus.publish(
 				new CreateEntitySubscriptionEvent({
 					entity: parentEntityType ?? entity,
 					entityId: parentEntityId ?? entityId,
-					employeeId: user.employeeId,
+					employeeId: mentionedEmployeeId,
 					type: EntitySubscriptionTypeEnum.MENTION,
 					organizationId,
 					tenantId
@@ -85,7 +85,10 @@ export class MentionService extends TenantAwareCrudService<Mention> {
 					entityId: parentEntityId ?? entityId,
 					type: EmployeeNotificationTypeEnum.MENTION,
 					organizationId,
-					tenantId
+					tenantId,
+					// Without a receiver, the notification reached nobody
+					receiverEmployeeId: mentionedEmployeeId,
+					sentByEmployeeId: user.employeeId
 				},
 				NotificationActionTypeEnum.Mentioned,
 				entityName,

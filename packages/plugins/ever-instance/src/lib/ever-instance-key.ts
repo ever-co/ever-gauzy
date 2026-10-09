@@ -31,12 +31,16 @@ import { isKnownDefaultSecret } from '@gauzy/contracts';
  *
  * A stored key is `v1:<source>:<iv>:<tag>:<ciphertext>` (base64url), where `<source>` names the
  * variable the encryption key came from (`k` ENCRYPTION_KEY, `j` JWT_SECRET, `n` none). The
- * ciphertext is bound to what it holds (`stats` or `connect`), so the two cannot be swapped.
+ * ciphertext is bound to what it holds (`stats`, `connect`, ...), so one cannot be swapped for another.
  */
 export type KeyMaterialSource = 'k' | 'j' | 'n';
 
-/** What a stored private key is for. */
-export type KeyPurpose = 'stats' | 'connect';
+/**
+ * What a stored secret is for: the statistics key, the Ever Platform connect key, or a document the
+ * Ever Platform connection keeps (an entitlement document, an integration's configuration). The
+ * purpose is bound into the ciphertext, so one cannot be read as another.
+ */
+export type KeyPurpose = 'stats' | 'connect' | 'entitlement' | 'integration_config';
 
 /** Shown on the settings page while the stored keys are not protected by `ENCRYPTION_KEY`. */
 export type KeyWarning = 'encryption_key_unset' | 'jwt_secret_default' | 'no_secret';
@@ -87,6 +91,24 @@ function material(source: KeyMaterialSource, env: Env): Buffer | null {
 }
 
 const aad = (purpose: KeyPurpose) => Buffer.from(`ever_instance:${purpose}`, 'utf8');
+
+/**
+ * Why this installation cannot keep the Ever Platform connect key (and the documents of that
+ * connection) safely, or `null` when it can. Unlike the statistics key, the connect key authorizes
+ * calls to Ever Platform, so it is stored only under `ENCRYPTION_KEY`, or under a `JWT_SECRET` that
+ * is not one of the values published in the Gauzy repository; never under the fixed fallback.
+ */
+export type ConnectKeyMaterialProblem = 'no_secret' | 'jwt_secret_default' | 'encryption_key_default';
+
+export function connectKeyMaterialProblem(env: Env = process.env): ConnectKeyMaterialProblem | null {
+	if (set(env['ENCRYPTION_KEY'])) {
+		return isKnownDefaultSecret(env['ENCRYPTION_KEY']) ? 'encryption_key_default' : null;
+	}
+	if (!set(env['JWT_SECRET'])) {
+		return 'no_secret';
+	}
+	return isKnownDefaultSecret(env['JWT_SECRET']) ? 'jwt_secret_default' : null;
+}
 
 /** Encrypts `plain` for storage. */
 export function wrapKey(plain: Buffer, purpose: KeyPurpose, env: Env = process.env): string {

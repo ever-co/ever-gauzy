@@ -1161,7 +1161,52 @@
 		"ADD_ITEM": "إضافة {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "أنت فقط",
+			"TENANT": "كل من في هذا المستأجر"
+		},
+		"UNSAVED_CHANGES": "تغييرات غير محفوظة",
+		"ACCOUNT": {
+			"TITLE": "الحساب",
+			"DESCRIPTION": "الحساب الذي سجّلت الدخول به.",
+			"MANAGE": "إدارة الملف الشخصي",
+			"ROLE": "الدور",
+			"MEMBER_SINCE": "عضو منذ"
+		},
+		"PREFERENCES": {
+			"TITLE": "التفضيلات",
+			"DESCRIPTION": "كيف يبدو التطبيق ويتصرف بالنسبة لك. تُطبَّق التغييرات فورًا.",
+			"THEME": "السمة",
+			"THEME_HINT": "نظام ألوان التطبيق بأكمله.",
+			"LANGUAGE": "اللغة",
+			"LANGUAGE_HINT": "لغة القوائم والتسميات والرسائل.",
+			"LAYOUT": "التخطيط الافتراضي",
+			"RESET_LAYOUTS": "إعادة تعيين تخطيطات الصفحات",
+			"SAVE_ERROR": "تعذّر حفظ تفضيلك.",
+			"LAYOUTS_RESET": "تمت إعادة تخطيطات الصفحات إلى الافتراضي."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "صورة مربعة، 128 × 128 بكسل على الأقل.",
+			"NAME_HINT": "يظهر لكل مستخدمي هذا المستأجر.",
+			"TENANT_ID": "معرّف المستأجر",
+			"TENANT_ID_HINT": "اذكره عند التواصل مع الدعم أو استدعاء الواجهة البرمجية.",
+			"COPY_ERROR": "تعذّر نسخ معرّف المستأجر.",
+			"TITLE": "ملف المستأجر",
+			"DESCRIPTION": "اسم هذا المستأجر وشعاره، ويظهران في مبدّل مساحات العمل والشريط الجانبي لكل المستخدمين.",
+			"NAME": "اسم المستأجر",
+			"NAME_PLACEHOLDER": "أدخل اسم المستأجر",
+			"NAME_REQUIRED": "اسم المستأجر مطلوب.",
+			"LOGO": "شعار المستأجر",
+			"LOGO_CHANGE": "انقر لرفع شعار جديد",
+			"LOGO_REMOVE": "إزالة الشعار",
+			"LOGO_UPLOAD_ERROR": "تعذّر رفع الشعار.",
+			"CREATED_AT": "تاريخ الإنشاء",
+			"SAVED": "تم حفظ ملف المستأجر",
+			"SAVE_ERROR": "تعذّر حفظ ملف المستأجر.",
+			"LOAD_ERROR": "تعذّر تحميل ملف المستأجر."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "الواجهة",
 			"TITLE": "واجهة المستخدم",
 			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين.",
 			"OPTIONS": {
@@ -1957,7 +2002,90 @@
 			"PREVIOUS": "السابق"
 		},
 		"NOT_STARTED": "لم يبدأ بعد",
-		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ."
+		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ.",
+		"VIEW": {
+			"PERIOD": "الفترة",
+			"PERIODS": {
+				"THIS_WEEK": "هذا الأسبوع",
+				"THIS_MONTH": "هذا الشهر",
+				"LAST_30_DAYS": "آخر 30 يومًا"
+			},
+			"TABS": {
+				"OVERVIEW": "نظرة عامة",
+				"PROFILE": "الملف الشخصي"
+			},
+			"PRESENCE": {
+				"TRACKING": "يسجّل الوقت",
+				"ONLINE": "متصل",
+				"AWAY": "بعيد",
+				"OFFLINE": "غير متصل"
+			},
+			"LOCAL_TIME": "الوقت المحلي",
+			"MEMBER_SINCE": "عضو منذ",
+			"WEEKLY_LIMIT": "الحد الأسبوعي",
+			"WORKED_TODAY": "عمل اليوم",
+			"WORKED_PERIOD": "عمل خلال الفترة",
+			"ACTIVITY_META": "نشاط {{ value }}",
+			"AVG_ACTIVITY": "متوسط النشاط",
+			"OPEN_TASKS": "المهام المفتوحة",
+			"OPEN_TASKS_META": "{{ progress }} قيد التنفيذ · {{ overdue }} متأخرة",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "مقارنة بالأسبوع الماضي",
+				"THIS_MONTH": "مقارنة بالشهر الماضي",
+				"LAST_30_DAYS": "مقارنة بالـ 30 يومًا السابقة"
+			},
+			"HOURS_WORKED": "ساعات العمل",
+			"HOURS_META": "{{ total }} إجمالي · {{ average }} لكل يوم عمل",
+			"TRACKED": "مسجّل",
+			"MANUAL": "يدوي",
+			"OPEN_TIMESHEET": "فتح سجل الدوام",
+			"PROJECTS": "المشاريع",
+			"RECENT_SCREENSHOTS": "لقطات الشاشة الأخيرة",
+			"VIEW_ALL": "عرض الكل",
+			"ASSIGNED_TASKS": "المهام المسندة",
+			"COLUMNS": {
+				"TASK": "المهمة",
+				"PROJECT": "المشروع",
+				"STATUS": "الحالة",
+				"DUE": "الاستحقاق",
+				"TIME": "الوقت",
+				"NAME": "الاسم",
+				"PRIORITY": "الأولوية"
+			},
+			"TOP_TASKS": "أكثر المهام عملًا",
+			"APPS_URLS": "التطبيقات والروابط",
+			"NO_TIME": "لم يُسجَّل وقت في هذه الفترة",
+			"NO_TASKS": "لا توجد مهام مسندة",
+			"NO_APPS": "لا يوجد نشاط للتطبيقات أو الروابط في هذه الفترة",
+			"NO_SCREENSHOTS": "لا توجد لقطات شاشة في هذه الفترة",
+			"UNAVAILABLE": "ليس لديك صلاحية الوصول إلى هذه البيانات",
+			"PROFILE": {
+				"ABOUT": "نبذة",
+				"CONTACT": "التواصل",
+				"SKILLS_TAGS": "المهارات والوسوم",
+				"TIME_ZONE": "المنطقة الزمنية",
+				"NOT_PROVIDED": "لم يُحدَّد بعد",
+				"NO_DESCRIPTION": "لم يُضف وصف بعد"
+			},
+			"TASKS_HELP": "المهام التي يشارك فيها هذا الشخص. اختر مربعًا لتصفية القائمة.",
+			"TASK_FILTERS": {
+				"OPEN": "مفتوحة",
+				"PROGRESS": "قيد التنفيذ",
+				"OVERDUE": "متأخرة",
+				"DONE": "منجزة"
+			},
+			"DUE": {
+				"NONE": "بلا موعد نهائي",
+				"WAS_DUE": "كان مستحقًا",
+				"OVERDUE_DAY": "متأخرة يومًا واحدًا",
+				"OVERDUE_DAYS": "متأخرة {{ count }} أيام",
+				"TODAY": "مستحقة اليوم",
+				"TOMORROW": "مستحقة غدًا",
+				"IN_DAYS": "خلال {{ count }} أيام"
+			},
+			"SHOWING": "عرض {{ shown }} من {{ total }} مهمة",
+			"NO_TASKS_IN_VIEW": "لا توجد مهام في هذا العرض"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "جميع الأهداف",
@@ -2752,7 +2880,19 @@
 		"EMPLOYEE_UPDATED": "تم تحديث الموظف.",
 		"IMAGE_UPDATED": "تم تحديث الصورة.",
 		"FAIL_TO_UPDATE_IMAGE": "فشل التحديث.",
-		"ANONYMOUS": "مجهول"
+		"ANONYMOUS": "مجهول",
+		"ABOUT": "نبذة",
+		"INACTIVE": "غير نشط",
+		"PER_HOUR": "/ ساعة",
+		"MEMBER_SINCE": "عضو منذ",
+		"NO_DESCRIPTION": "لم يُضف وصف بعد",
+		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
+		"EDIT": {
+			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"ADD_AWARD": "إضافة جائزة",
+			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "صفحة إدارة الاقتراحات",
@@ -3854,7 +3994,8 @@
 		"ROLES_PERMISSIONS": "الأدوار والصلاحيات",
 		"TIME_TRACKING": "تتتبع الوقت",
 		"ESTIMATE": "تقدير",
-		"DASHBOARD": "لوحة القيادة"
+		"DASHBOARD": "لوحة القيادة",
+		"DOCUMENTS": "المستندات"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3952,6 +4093,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "اذهب إلى لوحة التحكم ، إدارة إحصاءات الموظفين ، لوحة تتبع الوقت"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "مركز موحّد لمستندات الشركة: التحميلات وصفحات الويكي والمراجعة ومعرفة الذكاء الاصطناعي"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5303,7 +5447,18 @@
 			"SYSTEM": "النظام",
 			"FILTERS": {
 				"TO": "إلى",
-				"TEMPLATE_LANGUAGE": "القالب / اللغة"
+				"TEMPLATE_LANGUAGE": "القالب / اللغة",
+				"RECIPIENT": "المستلم",
+				"TEMPLATE": "القالب",
+				"STATUS": "الحالة",
+				"ALL_RECIPIENTS": "كل المستلمين",
+				"ALL_TEMPLATES": "كل القوالب",
+				"ALL_STATUSES": "كل الحالات",
+				"SENT": "مُرسل",
+				"FAILED": "فشل",
+				"ARCHIVED": "مؤرشف",
+				"SHOWING": "عرض {{ count }} من {{ total }}",
+				"NO_MATCH": "لا توجد رسائل تطابق عوامل التصفية هذه."
 			}
 		}
 	},

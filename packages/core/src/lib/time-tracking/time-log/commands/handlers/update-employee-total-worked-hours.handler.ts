@@ -65,20 +65,21 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 				const knex = this.mikroOrmTimeLogRepository.getKnex();
 				const sumQuery = this.getSumQuery('time_log');
 
+				// Raw knex skips MikroORM's soft-delete filter: deleted time logs must not count
 				result = await knex('time_log')
 					.withSchema(knex.userParams.schema)
-					.innerJoin('time_slot_time_logs', 'time_slot_time_logs.timeLogId', 'time_log.id')
-					.innerJoin('time_slot', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 					.select(knex.raw(`${sumQuery} as duration`))
 					.where({ 'time_log.employeeId': employeeId, 'time_log.tenantId': tenantId })
+					.whereNull('time_log.deletedAt')
 					.first();
 				break;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
 				// Create a query builder for the TimeLog entity
+				// No join on the time slots: the sum is over each time log's own start / stop, and joining its
+				// slots repeated every log once per slot (a 1h log with six 10-minute slots counted as 6h).
 				const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-				query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 
 				// Get the sum of durations between startedAt and stoppedAt
 				const sumQuery = this.getSumQuery(query.alias);
@@ -149,7 +150,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 								THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, \`${logQueryAlias}\`.\`stoppedAt\`)
 								ELSE 0
 							END
-						) AS DECIMAL(10, 6)
+						) AS DECIMAL(20, 6)
 					)
 				`);
 				break;

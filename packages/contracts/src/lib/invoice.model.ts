@@ -26,6 +26,8 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	taxType: DiscountTaxTypeEnum;
 	tax2: number;
 	tax2Type: DiscountTaxTypeEnum;
+	/** How the second tax combines with the first; absent (older invoices) means SIMPLE. */
+	taxCalculationType?: TaxCalculationTypeEnum;
 	terms?: string;
 	totalValue?: number;
 	organizationContactId?: string;
@@ -60,6 +62,7 @@ export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntity
 	tax2?: number;
 	taxType?: DiscountTaxTypeEnum;
 	tax2Type?: DiscountTaxTypeEnum;
+	taxCalculationType?: TaxCalculationTypeEnum;
 	terms?: string;
 	totalValue?: number;
 	organizationContactId?: string;

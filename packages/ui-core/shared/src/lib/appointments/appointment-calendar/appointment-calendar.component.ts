@@ -35,6 +35,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { dayOfWeekAsString } from '../../selectors/date-range-picker/date-picker.utils';
+import { pastDaysOfCurrentWeek } from './appointment-calendar.utils';
 import { TimezoneSelectorComponent } from '../timezone-selector/timezone-selector.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -155,26 +156,23 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	getCalendarOption() {
-		// Get yesterday's day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-		let currentDay = moment().subtract(1, 'day').day();
+		const firstDay = dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY);
 
-		// Loop to hide days from yesterday until Sunday
-		while (currentDay >= 0) {
-			this.hiddenDays.push(currentDay);
-			currentDay--;
-		}
+		// The days of the current week that are already over; headerMount applies them to the week view
+		// of the current week only (in the month view a hidden weekday would vanish from every week)
+		this.hiddenDays = pastDaysOfCurrentWeek(firstDay, moment().day());
 		this.calendarOptions = {
 			eventClick: this.handleEventClick.bind(this),
 			events: this.getEvents.bind(this),
 			initialView: 'timeGridWeek',
 			headerToolbar: this.headerToolbarOptions,
-			hiddenDays: this.hiddenDays,
+			hiddenDays: [],
 			themeSystem: 'bootstrap',
 			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin, momentTimezonePlugin],
 			weekends: true,
 			height: 'auto',
 			dayHeaderDidMount: this.headerMount.bind(this),
-			firstDay: dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY),
+			firstDay,
 			selectable: true,
 			select: this.handleEventSelect.bind(this)
 		};
@@ -357,10 +355,9 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	headerMount(config) {
-		const currentStart = this.calendarComponent.getApi().view.currentStart;
-		const currentEnd = this.calendarComponent.getApi().view.currentEnd;
-		const hideDays = moment().isBetween(currentStart, currentEnd, 'day', '[]') ? this.hiddenDays : [];
-		this.calendarComponent.getApi().setOption('hiddenDays', hideDays);
+		const { type, currentStart, currentEnd } = this.calendarComponent.getApi().view;
+		const isCurrentWeekView = type === 'timeGridWeek' && moment().isBetween(currentStart, currentEnd, 'day', '[]');
+		this.calendarComponent.getApi().setOption('hiddenDays', isCurrentWeekView ? this.hiddenDays : []);
 		// Past weeks cannot be booked, so "previous" only appears once the user has moved forward
 		const navigation = moment(currentStart).isSameOrBefore(moment(), 'day') ? 'next' : 'prev,next';
 		this.headerToolbarOptions.right = `${navigation} dayGridMonth,timeGridWeek`;
@@ -429,11 +426,12 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 		);
 		const allowedDuration = moment(endTime).diff(moment(startTime), 'minutes') >= this.allowedDuration;
 		if (!find || !durationCheck || this._selectedEmployeeId || this._selectedOrganizationId || allowedDuration) {
+			// 24-hour clock: a 12-hour `hh` without `A` turned a 14:00 slot into 02:00 on the calendar
 			const startDate = moment(convertLocalToTimezone(startTime, null, this.selectedTimeZoneName)).format(
-				'YYYY-MM-DD hh:mm:ss'
+				'YYYY-MM-DD HH:mm:ss'
 			);
 			const endDate = moment(convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)).format(
-				'YYYY-MM-DD hh:mm:ss'
+				'YYYY-MM-DD HH:mm:ss'
 			);
 
 			this.calendarEvents.push({

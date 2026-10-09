@@ -32,7 +32,7 @@ Only `EVER_STATS_ENABLED=false` switches the module off. Unset, empty or `true` 
 | | |
 |---|---|
 | Schedule | Once per UTC day, at a second drawn at random for each report. The first report goes out one day after the first start (ten minutes after a start when the last report is more than a day old). On days 1 to 3 of a month the previous month is sent once more with `final: true`. Several API processes on one database send one report: a lease in the database lets one of them send. |
-| Body | One JSON document, `ever.stats.v1`, at most 16 KiB, integers only. The schema is published in the public Ever Platform SDK repository ([`ever.stats.v1.json`](https://github.com/ever-co/ever-connect-sdk/blob/2fd74dad9357a18471292f38012a5f5e4e6d2938/contracts/schemas/ever.stats.v1.json)); a copy is in `src/lib/schema/ever.stats.v1.schema.json` (its SHA-256 is in `src/lib/schema/schema-hash.ts`). |
+| Body | One JSON document, `ever.stats.v1`, at most 16 KiB, integers only. The schema is published in the public Ever Platform SDK repository ([`ever.stats.v1.json`](https://github.com/ever-co/ever-connect-sdk/blob/a9844bd44c9fdb4d7f8be404b88331e578d8180c/contracts/schemas/ever.stats.v1.json)); this module reads it from the SDK's contracts package, `@ever-co/connect-contracts` (its SHA-256 is pinned in `src/lib/schema/stats-schema.ts`). |
 | Headers | `Ever-Stats-Key`: the public part of this installation's statistics key (Ed25519, base64url); `Ever-Stats-Signature: ed25519=<signature over the exact body>`; `Ever-Stats-Key-Id`; `User-Agent: gauzy-ever-stats/<module version> (gauzy/<version>)`. No cookie, no credential, no redirect followed, 10 s timeout. |
 | Retries | `202`: done. `429`, `5xx` or a connection error: again after 1 h, 4 h, 12 h, then the next day. `404` (the endpoint is not available), a redirect or any other answer: the next day. The answer body is read up to 64 KiB. |
 
@@ -57,7 +57,7 @@ Every number covers the whole installation, all tenants together. Every installa
 
 **Never included:** names of people or companies, e-mail addresses, postal addresses, tax or registration numbers, invoice numbers, document contents, amounts per record, free text, URLs, host names, IP addresses or precise locations.
 
-An example, from the published fixtures (`src/lib/schema/fixtures/valid/gauzy.json`; this module sends its own `module_version`, `0.1.0`):
+An example, from the published fixtures (`fixtures/stats/valid/gauzy.json` of `@ever-co/connect-contracts`; this module sends its own `module_version`, `0.1.0`):
 
 ```json
 {
@@ -129,6 +129,6 @@ Every route that answers without authentication is declared in `ever-connect.rou
 ## For developers
 
 - Counters: one `COUNT(*)` or `SUM()` over a whole table per number, with the plugin's own SQL (`src/lib/ever-stats-collector.service.ts`), so no request context or tenant filter can narrow them, wherever the collection runs. On Postgres they run in one transaction with a 30 s statement timeout.
-- The schema, its fixtures and the checks Ever Platform runs (`src/lib/vendor/stats-checks.ts`) are copied from `ever-co/ever-connect-sdk` at commit `2fd74da`. Update them together; `schema.drift.spec.ts` pins both.
-- Tests: `yarn nx test plugin-ever-stats`; the database suites (`*.db.spec.ts`: migrations, identity, lease, counters, the canary, and the module in an operator's request) also run on Postgres or MySQL with `EVER_STATS_TEST_POSTGRES_URL` / `EVER_STATS_TEST_MYSQL_URL` (`yarn nx run plugin-ever-stats:test-integration`; CI runs both). `yarn nx run plugin-ever-stats:test-mock-platform` runs the plugin against the Ever Platform mock of `ever-co/ever-connect-sdk` (`EVER_STATS_MOCK_PLATFORM_URL`): a report accepted when on, no call at all when switched off by `EVER_STATS_ENABLED=false` or in Settings, and a control without the mock that must fail. CI runs it in `build-api`.
+- The schema and its fixtures come from `@ever-co/connect-contracts`, and the checks Ever Platform runs and the report signature from `@ever-co/connect-sdk` (`validateStatsReportBytes`, `signStatsReportBytes`), both pinned to an exact version in package.json; nothing of the SDK is copied. `schema.drift.spec.ts` pins the schema's SHA-256, so a package version that changes it fails until the change is reviewed.
+- Tests: `yarn nx test plugin-ever-stats`; the database suites (`*.db.spec.ts`: migrations, identity, lease, counters, the canary, and the module in an operator's request) also run on Postgres or MySQL with `EVER_STATS_TEST_POSTGRES_URL` / `EVER_STATS_TEST_MYSQL_URL` (`yarn nx run plugin-ever-stats:test-integration`; CI runs both). `yarn nx run plugin-ever-stats:test-mock-platform` runs the plugin against the Ever Platform mock of `@ever-co/connect-tools` (`EVER_STATS_MOCK_PLATFORM_URL`): a report accepted when on, no call at all when switched off by `EVER_STATS_ENABLED=false` or in Settings, and a control without the mock that must fail. CI runs it in `build-api`.
 - Tables and migrations: see `MIGRATIONS.md`.

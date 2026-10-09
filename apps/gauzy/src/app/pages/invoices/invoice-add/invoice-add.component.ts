@@ -40,6 +40,7 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { calculateInvoiceFormTotals, taxCalculationTypeMatters } from '../invoice-totals';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import {
 	InvoiceApplyTaxDiscountComponent,
@@ -67,6 +68,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	invoiceTypes = Object.values(InvoiceTypeEnum);
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
 	taxCalculationTypes = Object.values(TaxCalculationTypeEnum);
+
+	/** Whether the Simple/Compound choice changes the total for the selected tax types (and so is shown). */
+	get showTaxCalculationType(): boolean {
+		return taxCalculationTypeMatters(this.form?.get('taxType')?.value, this.form?.get('tax2Type')?.value);
+	}
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
 	organization: IOrganization;
@@ -437,6 +443,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			tax2,
 			taxType,
 			tax2Type,
+			taxCalculationType,
 			terms,
 			organizationContact,
 			tags
@@ -454,6 +461,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				tax2,
 				taxType,
 				tax2Type,
+				// Stored, so the edit page recalculates the total the way it was calculated here.
+				taxCalculationType,
 				terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
@@ -978,71 +987,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 
 	async calculateTotal() {
-		const discountValue =
-			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
-		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
-		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
-		const taxCalculationType = this.form.value.taxCalculationType;
-
-		let totalDiscount = 0;
-		let totalTax = 0;
-
 		const tableData = await this.smartTableSource.getAll();
 
-		for (const item of tableData) {
-			if (item.applyTax) {
-				switch (this.form.value.taxType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax / 100);
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax;
-						break;
-					default:
-						break;
-				}
-				switch (this.form.value.tax2Type) {
-					case DiscountTaxTypeEnum.PERCENT:
-						if (taxCalculationType === TaxCalculationTypeEnum.COMPOSED) {
-							totalTax += (item.totalValue + totalTax) * (tax2 / 100);
-						} else {
-							totalTax += item.totalValue * (tax2 / 100);
-						}
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax2;
-						break;
-					default:
-						break;
-				}
-			}
+		// See invoice-totals.ts: shared with the edit page, and where compound tax is worked out per item.
+		this.total = calculateInvoiceFormTotals(this.form.value, tableData, this.subtotal, this.discountAfterTax).total;
 
-			if (item.applyDiscount) {
-				switch (this.form.value.discountType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						if (!this.discountAfterTax) {
-							totalDiscount += item.totalValue * (+discountValue / 100);
-						}
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += +discountValue;
-						break;
-					default:
-						totalDiscount = 0;
-						break;
-				}
-			}
-		}
-
-		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
-			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
-		}
-
-		this.total = this.subtotal - totalDiscount + totalTax;
-
-		if (this.total < 0) {
-			this.total = 0;
-		}
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.smartTableSource.count()

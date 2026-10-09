@@ -142,8 +142,9 @@ export abstract class RecurringExpenseDeleteHandler<
 		) {
 			const createOptions: any = {
 				startDay: 1,
-				startMonth: deleteInput.month + 1,
-				startYear: deleteInput.year,
+				// From the date, so deleting a December wraps to January of the next year (months are 0-based)
+				startMonth: nextStartDate.getMonth(),
+				startYear: nextStartDate.getFullYear(),
 				startDate: nextStartDate,
 				endDay: getLastDayOfMonth(
 					originalExpense.endYear,

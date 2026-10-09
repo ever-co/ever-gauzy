@@ -897,14 +897,16 @@ export function ipcTimer(
 				const lastTimer = await getTimerService().findLastCapture();
 				const lastInterval = await getIntervalService().findLastInterval();
 
-				if (lastTimer) {
+				// A slot shown from the server on a fresh install has no local interval: there is
+				// nothing to point the last capture at, and no id to hand back.
+				if (lastTimer && lastInterval) {
 					lastTimer.timeslotId = lastInterval.remoteId;
 					await getTimerService().update(new Timer(lastTimer));
 				}
 
 				notify.customNotification(notification.message, notification.title);
 
-				return lastInterval.remoteId;
+				return lastInterval?.remoteId ?? null;
 			}
 		} catch (error) {
 			log.error('Error on delete time slot', error);

@@ -655,9 +655,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			...entity,
 			...(hasTenantColumn ? this.scopedBy('tenantId', tenantId) : {}),
 			/**
-			 * If employee has login & create data for self
+			 * If employee has login & create data for self — unless the subclass deliberately creates the row
+			 * for another employee inside withoutEmployeeFilter(), after checking it may do so.
 			 */
-			...(isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn
+			...(isNotEmpty(employeeId) && !hasPermission && hasEmployeeColumn && !this.getSkipEmployeeFilter()
 				? this.scopedBy('employeeId', employeeId)
 				: {})
 		});

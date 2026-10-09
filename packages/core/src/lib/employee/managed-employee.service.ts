@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { Equal, In, IsNull, Or } from 'typeorm';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
@@ -155,6 +155,31 @@ export class ManagedEmployeeService {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if an employee is an active member of a team, whether or not they manage it.
+	 *
+	 * @param employeeId - The employee to look for
+	 * @param organizationTeamId - The team to check
+	 * @returns true if the employee belongs to the team in the current tenant
+	 */
+	async isMemberOfTeam(employeeId: ID, organizationTeamId: ID): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fail closed: an undefined key is dropped from the query, which would then match any membership.
+		if (!tenantId || !employeeId || !organizationTeamId) {
+			return false;
+		}
+
+		return await this.typeOrmTeamEmployeeRepository.existsBy({
+			employeeId,
+			organizationTeamId,
+			tenantId,
+			// Both flags are nullable: a row that never had them set is still an active membership.
+			isActive: Or(IsNull(), Equal(true)),
+			isArchived: Or(IsNull(), Equal(false))
+		});
 	}
 
 	/**
