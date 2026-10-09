@@ -30,7 +30,7 @@ const gate = () => {
 describe('PersistentQueue', () => {
 	let dir: string;
 	let dbPath: string;
-	const opened: PersistentQueue[] = [];
+	let opened: PersistentQueue[] = [];
 
 	const openQueue = (options: Partial<ConstructorParameters<typeof PersistentQueue>[0]> = {}) => {
 		const queue = new PersistentQueue({ dbPath, maxRetries: 0, retryDelayMs: 10, ...options });
@@ -51,8 +51,8 @@ describe('PersistentQueue', () => {
 	});
 
 	it('runs every job of a queue with that queue’s processor, one at a time, in the order they were queued', async () => {
-		const timer: number[] = [];
-		const slot: number[] = [];
+		let timer: number[] = [];
+		let slot: number[] = [];
 		let running = 0;
 		let maxRunning = 0;
 		const queue = openQueue();
@@ -117,7 +117,7 @@ describe('PersistentQueue', () => {
 		it('retries a failing job and succeeds without reporting it', async () => {
 			const onJobFailed = jest.fn();
 			const queue = openQueue({ maxRetries: 3, onJobFailed });
-			const attempts: number[] = [];
+			let attempts: number[] = [];
 			queue.register('timer', async (_payload, { attempt }) => {
 				attempts.push(attempt);
 				if (attempt < 2) throw new Error('SQLITE_BUSY');
@@ -133,7 +133,7 @@ describe('PersistentQueue', () => {
 		it('reports a job that fails every attempt once, drops it, and goes on with the next one', async () => {
 			const onJobFailed = jest.fn();
 			const queue = openQueue({ maxRetries: 2, onJobFailed });
-			const seen: string[] = [];
+			let seen: string[] = [];
 			const failure = new Error('constraint failed');
 			queue.register<{ name: string }>('timer', async ({ name }) => {
 				seen.push(name);
@@ -153,7 +153,7 @@ describe('PersistentQueue', () => {
 		it('survives an onJobFailed callback that rejects', async () => {
 			jest.spyOn(console, 'error').mockImplementation(() => undefined);
 			const queue = openQueue({ onJobFailed: () => Promise.reject(new Error('audit down')) });
-			const seen: number[] = [];
+			let seen: number[] = [];
 			queue.register<number>('timer', async (n) => {
 				seen.push(n);
 				if (n === 1) throw new Error('boom');
@@ -184,7 +184,7 @@ describe('PersistentQueue', () => {
 			await first.close(20);
 			blocked.open();
 
-			const seen: string[] = [];
+			let seen: string[] = [];
 			const second = openQueue();
 			second.register<string>('timer', async (job) => {
 				seen.push(job);
@@ -216,7 +216,7 @@ describe('PersistentQueue', () => {
 			expect(Date.now() - startedClosing).toBeLessThan(1_000);
 			expect(firstAttempts).toBe(1);
 
-			const seen: unknown[] = [];
+			let seen: unknown[] = [];
 			const second = openQueue();
 			second.register('timer', async (job) => {
 				seen.push(job);
@@ -257,7 +257,7 @@ describe('PersistentQueue', () => {
 			const queue = openQueue();
 			const first = gate();
 			const later = gate();
-			const seen: string[] = [];
+			let seen: string[] = [];
 			queue.register<string>('timer', async (job) => {
 				if (job === 'before') await first.opened;
 				if (job === 'after') await later.opened;
@@ -298,7 +298,7 @@ describe('PersistentQueue', () => {
 		it('keeps jobs stored while a queue may not run, and runs them in order once it may', async () => {
 			const queue = openQueue();
 			let online = false;
-			const seen: number[] = [];
+			let seen: number[] = [];
 			queue.register<number>(
 				'upload',
 				async (n) => {
@@ -321,7 +321,7 @@ describe('PersistentQueue', () => {
 	describe('close', () => {
 		it('stores or rejects a job queued while it closes, never leaves it pending', async () => {
 			const queue = openQueue();
-			const seen: number[] = [];
+			let seen: number[] = [];
 			queue.register<number>('timer', async (n) => {
 				seen.push(n);
 			});

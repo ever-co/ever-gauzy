@@ -12,7 +12,7 @@ import * as path from 'path';
 let userData = '';
 jest.mock('electron', () => ({ app: { getPath: () => userData } }), { virtual: true });
 
-const eventSaves: Array<{ table: string; events: unknown }> = [];
+let eventSaves: Array<{ table: string; events: unknown }> = [];
 const windowClears = jest.fn(async () => undefined);
 jest.mock('../integrations', () => {
 	const tables = {
@@ -51,7 +51,7 @@ type TimerWrite = Record<string, unknown>;
 
 /** Records what each job writes to the `timers` table; `hold()` keeps the duration writes waiting. */
 const fakeTimerService = () => {
-	const writes: TimerWrite[] = [];
+	let writes: TimerWrite[] = [];
 	let held: Promise<void> | null = null;
 	let release: () => void = () => undefined;
 	const service = {
@@ -198,7 +198,7 @@ describe('isAsyncTimerDataSyncEnabled', () => {
 });
 
 describe('AsyncTimerSyncQueue', () => {
-	const opened: AsyncTimerSyncQueue[] = [];
+	let opened: AsyncTimerSyncQueue[] = [];
 
 	const openQueue = (timers: ReturnType<typeof fakeTimerService>, offlineMode = fakeOfflineMode(), extra = {}) => {
 		const onJobFailed = jest.fn();

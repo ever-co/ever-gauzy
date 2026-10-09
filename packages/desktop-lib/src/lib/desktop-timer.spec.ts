@@ -136,7 +136,7 @@ type TimerWrite = Record<string, unknown>;
 
 /** Stands in for the `timers` table. `hold(which)` keeps the matching writes waiting until `release()`. */
 const fakeTimerService = () => {
-	const writes: TimerWrite[] = [];
+	let writes: TimerWrite[] = [];
 	let held: Promise<void> | null = null;
 	let holds: (write: TimerWrite) => boolean = () => false;
 	let release: () => void = () => undefined;
@@ -207,7 +207,7 @@ const asyncQueueOf = (handler: TimerHandler): Promise<AsyncTimerSyncQueue | null
 	(handler as any)._asyncTimerSync ?? Promise.resolve(null);
 
 describe('TimerHandler', () => {
-	const handlers: TimerHandler[] = [];
+	let handlers: TimerHandler[] = [];
 	const newHandler = () => {
 		const handler = new TimerHandler();
 		handlers.push(handler);
