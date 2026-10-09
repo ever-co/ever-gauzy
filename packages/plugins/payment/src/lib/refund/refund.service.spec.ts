@@ -593,7 +593,9 @@ describe('RefundService — recording a refund moves nothing (doc 10 §9.1, §9.
 			orderId: ORDER,
 			amount: '40',
 			currency: 'USD',
-			organizationId: ORG
+			organizationId: ORG,
+			// The tenant the refund was written under: a subscription delivers the event to that tenant only.
+			tenantId: TENANT
 		});
 		expect(consoleLog).not.toHaveBeenCalled();
 	});
@@ -811,7 +813,8 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 			refundId: refund.id,
 			paymentId: PAYMENT,
 			amount: '40',
-			currency: 'USD'
+			currency: 'USD',
+			tenantId: TENANT
 		});
 	});
 

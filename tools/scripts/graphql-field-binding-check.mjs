@@ -407,13 +407,7 @@ if (failures.length > 0) {
  * unnoticed.
  */
 const UNBOUND = new Map([
-	['Query.cartByToken', 'the cart service has no token lookup yet: commerce_cart has no token column and no route reads one'],
-	['Subscription.paymentAuthorized', 'payment lifecycle streams'],
-	['Subscription.paymentCanceled', 'payment lifecycle streams'],
-	['Subscription.paymentCaptured', 'payment lifecycle streams'],
-	['Subscription.paymentFailed', 'payment lifecycle streams'],
-	['Subscription.paymentRefunded', 'payment lifecycle streams'],
-	['Subscription.refundCreated', 'payment lifecycle streams']
+	['Query.cartByToken', 'the cart service has no token lookup yet: commerce_cart has no token column and no route reads one']
 ]);
 
 const declaredRoots = ['Query', 'Mutation', 'Subscription'].flatMap((type) =>

@@ -181,7 +181,8 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 				payment.id,
 				amount.amount,
 				currency,
-				payment.organizationId ?? this.scope.organizationId
+				payment.organizationId ?? this.scope.organizationId,
+				payment.tenantId ?? this.scope.tenantId
 			),
 			`capture ${capture.id}`
 		);

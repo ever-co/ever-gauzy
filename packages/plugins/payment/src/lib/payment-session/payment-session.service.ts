@@ -312,7 +312,14 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 		}
 
 		await this.publish(
-			new PaymentAuthorizedEvent(session.id, session.amount, session.currency, collection.id, session.organizationId),
+			new PaymentAuthorizedEvent(
+				session.id,
+				session.amount,
+				session.currency,
+				collection.id,
+				session.organizationId,
+				session.tenantId
+			),
 			`session ${session.id}`
 		);
 
@@ -352,7 +359,8 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 				session.amount,
 				session.currency,
 				reason,
-				session.organizationId
+				session.organizationId,
+				session.tenantId
 			),
 			`session ${session.id}`
 		);
@@ -429,7 +437,8 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 				session.collectionId,
 				released,
 				session.currency,
-				session.organizationId
+				session.organizationId,
+				session.tenantId
 			),
 			`session ${session.id}`
 		);
@@ -478,7 +487,8 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 				session.amount,
 				session.currency,
 				'PAYMENT_SESSION_EXPIRED',
-				session.organizationId
+				session.organizationId,
+				session.tenantId
 			),
 			`session ${session.id}`
 		);

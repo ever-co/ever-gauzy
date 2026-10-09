@@ -1,7 +1,9 @@
-import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
 import {
+	deliverPayloadAsIs,
+	EventBus,
 	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	Idempotent,
@@ -9,9 +11,11 @@ import {
 	Permissions,
 	TenantPermissionGuard,
 	IConnectionPageSelection,
-	resolveConnectionWindow
+	resolveConnectionWindow,
+	tenantScopedEventStream
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
+import { PaymentRefundedEvent, RefundCreatedEvent } from '../../events';
 import { RefundService } from '../../refund/refund.service';
 import { RefundLineService } from '../../refund-line/refund-line.service';
 import { IRefund, IRefundLine } from '../../payment.types';
@@ -68,7 +72,8 @@ import {
 export class RefundResolver {
 	constructor(
 		private readonly refundService: RefundService,
-		private readonly refundLineService: RefundLineService
+		private readonly refundLineService: RefundLineService,
+		private readonly eventBus?: EventBus
 	) {}
 
 	/**
@@ -232,5 +237,53 @@ export class RefundResolver {
 		}
 
 		return this.refundLineService.findLines(refund.id);
+	}
+
+	/**
+	 * Streams the refunds of the subscriber's tenant that succeeded — the money has gone back.
+	 *
+	 * The SDL declared the field and nothing served it. It is the kernel's tenant-scoped stream over the
+	 * event the refund service publishes when a refund succeeds: an event of another tenant, or of none, is
+	 * dropped against the subscriber captured when the subscription opened, and the refund it names is
+	 * re-read through `findRefundOrFail` — the read `GET /refunds/:id` answers with — as the subscriber.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The refunds that succeeded.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_VIEW as PermissionsEnum)
+	@Subscription('paymentRefunded', { resolve: deliverPayloadAsIs })
+	paymentRefunded(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IRefund> {
+		return this.refundStream(PaymentRefundedEvent, organizationId);
+	}
+
+	/**
+	 * Streams the refunds the subscriber's tenant recorded, while they are still an intention.
+	 *
+	 * @param organizationId The organization to narrow the stream to, when one is named.
+	 * @returns The refunds that were created.
+	 */
+	@Permissions(PaymentPermission.REFUNDS_VIEW as PermissionsEnum)
+	@Subscription('refundCreated', { resolve: deliverPayloadAsIs })
+	refundCreated(@Args('organizationId') organizationId?: ID): AsyncIterableIterator<IRefund> {
+		return this.refundStream(RefundCreatedEvent, organizationId);
+	}
+
+	/**
+	 * One refund stream, scoped to the subscriber and narrowed to the organization it named.
+	 *
+	 * @param type The event the stream carries.
+	 * @param organizationId The organization to narrow to, when one is named.
+	 * @returns The refunds the events name, re-read as the subscriber.
+	 */
+	private refundStream<T extends PaymentRefundedEvent | RefundCreatedEvent>(
+		type: new (...args: never[]) => T,
+		organizationId?: ID
+	): AsyncIterableIterator<IRefund> {
+		return tenantScopedEventStream<T, IRefund>(this.eventBus.ofType(type), {
+			narrow: (event) => !organizationId || event.organizationId === organizationId,
+			tenantOf: (event) => event.tenantId,
+			organizationOf: (event) => event.organizationId,
+			read: (event) => this.refundService.findRefundOrFail(event.refundId)
+		});
 	}
 }
