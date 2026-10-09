@@ -1,4 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { RequestContext, SequenceService, TenantAwareCrudService, TenantSettingService } from '@gauzy/core';
 import {
@@ -29,12 +31,20 @@ import {
 import { PurchaseOrder } from '../purchase-order/purchase-order.entity';
 import { PurchaseOrderService } from '../purchase-order/purchase-order.service';
 import { VendorProductTermService } from '../vendor-product-term/vendor-product-term.service';
+import { immutableMembers, movedMembers } from '../purchasing.immutable';
 import { GoodsReceipt } from './goods-receipt.entity';
 import { MikroOrmGoodsReceiptRepository } from './repository/mikro-orm-goods-receipt.repository';
 import { TypeOrmGoodsReceiptRepository } from './repository/type-orm-goods-receipt.repository';
 
 /** The series key goods-receipt numbers are allocated from. */
 const GOODS_RECEIPT_NUMBER_KEY = 'RECEIPT';
+
+/**
+ * The members of a receipt its posting was decided on: its status and cancellation, which only `reverse()` may move
+ * because it writes the compensating movements, and the order and the location its movements and its order lines'
+ * received quantities were posted against.
+ */
+const POSTED_RECEIPT_MEMBERS = ['status', 'canceledAt', 'purchaseOrderId', 'warehouseId'] as const;
 
 /** The concept this domain writes its movements under. */
 const MOVEMENT_REFERENCE = 'GOODS_RECEIPT';
@@ -147,6 +157,52 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		private readonly inventory?: IInventoryPort
 	) {
 		super(typeOrmGoodsReceiptRepository, mikroOrmGoodsReceiptRepository);
+	}
+
+	/**
+	 * Corrects a receipt's own fields, refusing a change to what its movements were posted against.
+	 *
+	 * `PUT /goods-receipts/:id` validates a body that declares `status`, `canceledAt`, `purchaseOrderId` and
+	 * `warehouseId`, and it reached the generic update, which wrote them as asked (handover 2026-09-20 §7.65 item
+	 * 23 (b)). A receipt is born `POSTED`, so every receipt already has the stock movements its lines produced and
+	 * has moved its order lines' received counters: setting `CANCELED` here bypassed `reverse()`, so no compensating
+	 * movement was written and the stock stayed received; and re-pointing the order or the location left the
+	 * movements and the counters naming the old ones. The refusal is made here, below the route, so every caller of
+	 * the generic update is held to it; the route, its DTO and every other member — the note, the metadata, the
+	 * received-by and received-at facts — are unchanged. `reverse()` writes its own status through the base class
+	 * and is not affected.
+	 *
+	 * @param id The receipt, or the conditions that select the receipts to correct.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws BadRequestException with `GOODS_RECEIPT_IMMUTABLE` when the correction would move a receipt's
+	 * status, cancellation, order or location.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<GoodsReceipt>,
+		partialEntity: QueryDeepPartialEntity<GoodsReceipt>
+	): Promise<GoodsReceipt | UpdateResult> {
+		const patch = (partialEntity ?? {}) as Record<string, unknown>;
+
+		if (POSTED_RECEIPT_MEMBERS.some((member) => patch[member] !== undefined)) {
+			const current = typeof id === 'string' ? [await this.findOneByIdString(id)] : await this.find({ where: id });
+
+			for (const receipt of current) {
+				const moved = movedMembers(receipt as unknown as Record<string, unknown>, patch, POSTED_RECEIPT_MEMBERS);
+
+				if (moved.length > 0) {
+					throw immutableMembers(
+						'GOODS_RECEIPT_IMMUTABLE',
+						`a correction cannot change ${moved.join(', ')} of goods receipt '${receipt.id}', because its ` +
+							`stock movements and its order lines' received quantities were posted against them; reverse ` +
+							`the receipt (POST /goods-receipts/:id/cancel) and record the right one instead.`,
+						{ goodsReceiptId: receipt.id, fields: moved }
+					);
+				}
+			}
+		}
+
+		return super.update(id as any, partialEntity);
 	}
 
 	/**

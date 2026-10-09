@@ -562,6 +562,7 @@ function receiptFixture(
 
 	return {
 		service,
+		receiptLineService,
 		tables,
 		movements,
 		putAways,
@@ -1405,5 +1406,149 @@ describe('GoodsReceiptService — the figures a caller reads back', () => {
 		await expect(fixture.service.findOneDetailed('no-such-receipt')).rejects.toThrow(
 			/GOODS_RECEIPT_NOT_FOUND/
 		);
+	});
+});
+
+/**
+ * `PUT /goods-receipts/:id` and `PUT /goods-receipt-lines/:id` reach the generic update (handover 2026-09-20 §7.65
+ * item 23 (b) and (c)).
+ *
+ * A receipt is born `POSTED`: its lines' movements are in the ledger and its order lines' received quantities have
+ * moved. The receipt route's DTO declares the status, the cancellation, the order and the location, and the line
+ * route strips everything a posting decided except the variant — so the generic update could cancel a receipt
+ * without the compensating movements `reverse()` writes, re-point it at another order or location, and re-point a
+ * line at another variant while its movement still stood for the first. The routes and their DTOs are unchanged;
+ * the services refuse the change to what the posting was decided on and keep every other member writable.
+ */
+describe('GoodsReceiptService — a correction cannot move what a posted receipt was decided on', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(RECEIVER);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** A posted receipt with one line of four against the first order line. */
+	async function postedReceipt() {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '4' }]
+		});
+		const stored = fixture.tables.goods_receipt.find((row) => row.id === receipt.id)!;
+		const line = fixture.linesOf(receipt.id)[0];
+
+		return { fixture, receipt, stored, line };
+	}
+
+	/** The generic update each route reached before the guard, called past it, for the controls. */
+	const genericUpdate = (service: object, id: string, patch: Record<string, unknown>) =>
+		(Object.getPrototypeOf(Object.getPrototypeOf(service)) as { update: Function }).update.call(service, id, patch);
+
+	describe('the receipt (item 23 (b))', () => {
+		it('control: the generic update cancelled a posted receipt with no compensating movement', async () => {
+			const { fixture, receipt } = await postedReceipt();
+
+			await genericUpdate(fixture.service, receipt.id, { status: 'CANCELED', canceledAt: new Date() });
+
+			// The hole: the receipt says CANCELED, yet the stock it received is still on hand and the order line
+			// still counts the four units as received — `reverse()` would have written a movement taking them back.
+			expect(fixture.tables.goods_receipt[0]).toMatchObject({ status: 'CANCELED' });
+			expect(fixture.movements).toHaveLength(1);
+			expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '4.000000' });
+		});
+
+		it.each([
+			['its status', () => ({ status: 'CANCELED' }), ['status']],
+			['its cancellation', () => ({ canceledAt: new Date('2026-03-01T00:00:00.000Z') }), ['canceledAt']],
+			['its order', () => ({ purchaseOrderId: 'order-2' }), ['purchaseOrderId']],
+			['its location', () => ({ warehouseId: OTHER_WAREHOUSE }), ['warehouseId']],
+			['several at once', () => ({ status: 'CANCELED', warehouseId: OTHER_WAREHOUSE }), ['status', 'warehouseId']]
+		])('refuses a change to %s, and writes nothing', async (_label, patch, fields) => {
+			const { fixture, receipt, stored } = await postedReceipt();
+			const before = { ...stored };
+
+			await expect(fixture.service.update(receipt.id, patch() as never)).rejects.toMatchObject({
+				status: 400,
+				response: { code: 'GOODS_RECEIPT_IMMUTABLE', details: { goodsReceiptId: receipt.id, fields } }
+			});
+
+			expect(fixture.tables.goods_receipt[0]).toEqual(before);
+			expect(fixture.movements).toHaveLength(1);
+		});
+
+		it('still corrects the receipt’s own fields, and accepts the decided ones restated as they are', async () => {
+			const { fixture, receipt, stored } = await postedReceipt();
+
+			await fixture.service.update(receipt.id, {
+				status: stored.status,
+				purchaseOrderId: stored.purchaseOrderId,
+				warehouseId: stored.warehouseId,
+				canceledAt: null,
+				note: 'delivery note 4471',
+				metadata: { dock: 'B' }
+			} as never);
+
+			expect(fixture.tables.goods_receipt[0]).toMatchObject({
+				status: 'POSTED',
+				note: 'delivery note 4471',
+				metadata: { dock: 'B' }
+			});
+		});
+
+		it('leaves reverse() free to cancel the receipt, writing the movement that takes the stock back', async () => {
+			const { fixture, receipt } = await postedReceipt();
+
+			await fixture.service.reverse(receipt.id, 'wrong delivery');
+
+			expect(fixture.tables.goods_receipt[0]).toMatchObject({ status: 'CANCELED' });
+			expect(fixture.movements).toHaveLength(2);
+		});
+	});
+
+	describe('its line (item 23 (c))', () => {
+		it('control: the generic update re-pointed a posted line at another variant while its movement stood', async () => {
+			const { fixture, line } = await postedReceipt();
+
+			await genericUpdate(fixture.receiptLineService, line.id, { variantId: SECOND_VARIANT });
+
+			// The hole: the line names the second variant, while the movement it posted put the first on hand.
+			expect(fixture.linesOf(line.receiptId)[0]).toMatchObject({ variantId: SECOND_VARIANT });
+			expect(fixture.movements[0]).toMatchObject({ variantId: VARIANT });
+		});
+
+		it('refuses a change to the variant, and writes nothing', async () => {
+			const { fixture, line } = await postedReceipt();
+			const before = { ...line };
+
+			await expect(
+				fixture.receiptLineService.update(line.id, { variantId: SECOND_VARIANT } as never)
+			).rejects.toMatchObject({
+				status: 400,
+				response: {
+					code: 'GOODS_RECEIPT_LINE_IMMUTABLE',
+					details: { goodsReceiptLineId: line.id, fields: ['variantId'] }
+				}
+			});
+
+			expect(fixture.linesOf(line.receiptId)[0]).toEqual(before);
+		});
+
+		it('still annotates the line, and accepts the variant restated as it is', async () => {
+			const { fixture, line } = await postedReceipt();
+
+			await fixture.receiptLineService.update(line.id, {
+				variantId: VARIANT,
+				batchNumber: 'LOT-9',
+				note: 'two cartons dented'
+			} as never);
+
+			expect(fixture.linesOf(line.receiptId)[0]).toMatchObject({
+				variantId: VARIANT,
+				batchNumber: 'LOT-9',
+				note: 'two cartons dented'
+			});
+		});
 	});
 });

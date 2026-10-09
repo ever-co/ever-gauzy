@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { LessThanOrEqual } from 'typeorm';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, LessThanOrEqual } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, TenantAwareCrudService, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
@@ -8,6 +8,22 @@ import { normalizeDecimal } from '../subscription.cycle';
 import { SubscriptionBilling } from './subscription-billing.entity';
 import { MikroOrmSubscriptionBillingRepository } from './repository/mikro-orm-subscription-billing.repository';
 import { TypeOrmSubscriptionBillingRepository } from './repository/type-orm-subscription-billing.repository';
+
+/**
+ * Whether a cycle records money billed.
+ *
+ * Every status past `PENDING` does — an order was raised, a payment settled or failed, a refund or a waiver was
+ * decided — and so does a `PENDING` cycle an order, a charge attempt or a payment has already touched. Only a
+ * `PENDING` cycle none of those reached is a schedule entry that holds no money history.
+ */
+function recordsBilledMoney(billing: SubscriptionBilling): boolean {
+	return (
+		billing.status !== SubscriptionBillingStatus.PENDING ||
+		!!billing.orderId ||
+		Number(billing.attemptCount ?? 0) > 0 ||
+		!!billing.paidAt
+	);
+}
 
 /**
  * The billing ledger: one row per cycle, and the attempt history on it.
@@ -241,6 +257,52 @@ export class SubscriptionBillingService extends TenantAwareCrudService<Subscript
 				...currentScope()
 			}
 		});
+	}
+
+	/**
+	 * Removes a cycle outright, but only one that records no money billed.
+	 *
+	 * `DELETE /subscription-billings/:id` reached the generic hard delete, while doc 13 §11.4 names
+	 * `subscription_billing` in its "soft delete only; no hard delete through the API" row: a cycle is the record of
+	 * money billed, and destroying it loses the history a revenue report, a dunning pass and a dispute all read
+	 * (handover 2026-09-20 §7.65 item 23 (d)). The route, its permission and its answer are unchanged; what it may
+	 * still remove is a cycle nothing has billed yet — a `PENDING` row with no order, no attempt and no payment,
+	 * which is a schedule entry rather than a record of money. Anything else is refused with
+	 * `SUBSCRIPTION_BILLING_NOT_DELETABLE`, and `DELETE /subscription-billings/:id/soft` retires it while keeping the
+	 * history. The refusal is made here, below the route, so any caller of the generic delete is held to it.
+	 *
+	 * The cycles are read inside the caller's tenant and organization, as `findOneScoped` reads them; a cycle that is
+	 * not the caller's is left to the base class, which answers it exactly as it did before.
+	 *
+	 * @param criteria The cycle, or the conditions that select the cycles to remove.
+	 * @param options The inherited options, forwarded to the base class.
+	 * @returns The delete result, as the base class answers it.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_NOT_DELETABLE` when a selected cycle records money billed.
+	 */
+	public async delete(criteria: ID | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<DeleteResult> {
+		const where = typeof criteria === 'string' ? { id: criteria } : { ...(criteria ?? {}) };
+		const cycles = await this.typeOrmSubscriptionBillingRepository.find({
+			where: { ...where, ...currentScope() } as FindOptionsWhere<SubscriptionBilling>
+		});
+		const billed = cycles.find(recordsBilledMoney);
+
+		if (billed) {
+			throw new ConflictException({
+				message:
+					`SUBSCRIPTION_BILLING_NOT_DELETABLE: billing cycle '${billed.id}' is ${billed.status} and records money ` +
+					`billed, so it is history rather than a schedule entry; retire it with DELETE ` +
+					`/subscription-billings/:id/soft instead.`,
+				code: 'SUBSCRIPTION_BILLING_NOT_DELETABLE',
+				details: {
+					subscriptionBillingId: billed.id,
+					status: billed.status,
+					...(billed.orderId ? { orderId: billed.orderId } : {}),
+					attemptCount: Number(billed.attemptCount ?? 0)
+				}
+			});
+		}
+
+		return super.delete(criteria as any, options);
 	}
 
 	/**

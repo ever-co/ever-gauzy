@@ -102,7 +102,9 @@ jest.mock('@gauzy/core', () => {
 			currentTenantId: () => null,
 			currentOrganizationId: () => null,
 			currentEmployeeId: () => null,
-			hasPermission: () => false
+			// A double the cases below can grant from: which instruments the account routes answer with
+			// depends on whether the caller holds the instruments' own grant.
+			hasPermission: jest.fn(() => false)
 		}
 	};
 });
@@ -142,7 +144,7 @@ import { METHOD_METADATA, PATH_METADATA, PIPES_METADATA } from '@nestjs/common/c
 import { Reflector } from '@nestjs/core';
 import { from, lastValueFrom } from 'rxjs';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
-import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
+import { PermissionGuard, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import { IdempotencyInterceptor } from '@gauzy/core/src/lib/idempotency/idempotency.interceptor';
 import { IDEMPOTENT_METADATA_KEY } from '@gauzy/core/src/lib/idempotency/idempotency.policy';
 import { PaymentPermission } from '../payment.permissions';
@@ -272,13 +274,43 @@ describe('PaymentAccountHolderController — the routes (06 §7.12)', () => {
 		});
 	});
 
-	it('reads one account with the instruments saved under it', async () => {
+	it('reads one account with the instruments saved under it, for a caller holding the instruments’ grant', async () => {
 		const { controller } = resource();
+		const hasPermission = RequestContext.hasPermission as unknown as jest.Mock;
+		hasPermission.mockImplementation(
+			(permission: string) => permission === PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW
+		);
 
-		await expect(controller.findById(HOLDER)).resolves.toMatchObject({
-			id: HOLDER,
-			methodTokens: [{ id: 'instrument-1', brand: 'a-brand' }]
-		});
+		try {
+			await expect(controller.findById(HOLDER)).resolves.toMatchObject({
+				id: HOLDER,
+				methodTokens: [{ id: 'instrument-1', brand: 'a-brand' }]
+			});
+		} finally {
+			hasPermission.mockImplementation(() => false);
+		}
+	});
+
+	it('leaves the instruments out for a caller holding only the account grant, on every route that answers them', async () => {
+		// A saved instrument is read under PAYMENT_METHOD_TOKENS_VIEW — `GET /payment-method-tokens` and the
+		// GraphQL `PaymentAccountHolder.methodTokens` field both demand it — so the account routes, which
+		// demand only the account grant, must not be the looser door to the same rows (handover §7.5 item 3).
+		const { controller, instruments } = resource();
+		(RequestContext.hasPermission as unknown as jest.Mock).mockImplementation(() => false);
+
+		const answers = [
+			await controller.findById(HOLDER),
+			await controller.update(HOLDER, { displayName: 'renamed' } as never),
+			await controller.verify(HOLDER, { verificationStatus: 'VERIFIED' } as never)
+		];
+
+		for (const answer of answers) {
+			expect(answer).toMatchObject({ id: HOLDER });
+			// Left out, not emptied: an empty list would claim the account has no instruments.
+			expect(answer).not.toHaveProperty('methodTokens');
+		}
+		// Control: the instruments were there to withhold — the lifecycle read them for every answer.
+		expect(instruments.list).toHaveBeenCalledTimes(3);
 	});
 
 	it('disables the account and reports how many instruments went with it', async () => {

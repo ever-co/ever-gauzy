@@ -2,9 +2,21 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Collection } from '../collection/collection.entity';
 import { CollectionVariant } from './collection-variant.entity';
 import { MikroOrmCollectionVariantRepository } from './repository/mikro-orm-collection-variant.repository';
 import { TypeOrmCollectionVariantRepository } from './repository/type-orm-collection-variant.repository';
+
+/**
+ * The caller's tenant and organization as criteria, each only when the credential states it: a key present with an
+ * undefined value is a criterion the two ORMs read differently.
+ */
+function callerScope(): { tenantId?: ID; organizationId?: ID } {
+	const tenantId = RequestContext.currentTenantId();
+	const organizationId = RequestContext.currentOrganizationId();
+
+	return { ...(tenantId ? { tenantId } : {}), ...(organizationId ? { organizationId } : {}) };
+}
 
 /**
  * Manual membership of variants in a collection, with the same set-replacement semantics as the
@@ -27,7 +39,7 @@ export class CollectionVariantService extends TenantAwareCrudService<CollectionV
 	 */
 	public async findByCollection(collectionId: ID): Promise<CollectionVariant[]> {
 		return this.typeOrmCollectionVariantRepository.find({
-			where: { collectionId, organizationId: RequestContext.currentOrganizationId() },
+			where: { collectionId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
 			relations: { variant: true },
 			order: { position: 'ASC', addedAt: 'ASC' }
 		});
@@ -39,7 +51,14 @@ export class CollectionVariantService extends TenantAwareCrudService<CollectionV
 	 * @param collectionId The collection whose membership is being written.
 	 * @param variantIds The complete set of variant ids the collection should contain, in order.
 	 * @returns The membership rows after the write.
+	 * **The write is the caller's collection's, and only its rows.** The collection is read inside the caller's
+	 * tenant and organization first, and a collection that is not the caller's is answered as one that does not
+	 * exist; the membership rows the set is diffed against are read inside the same scope. Before this, the
+	 * existing rows were read by `collectionId` alone and the ones missing from the new set were deleted by id,
+	 * so a caller naming another tenant's collection rewrote that tenant's shelf.
+	 *
 	 * @throws BadRequestException When the same variant is listed twice.
+	 * @throws NotFoundException When the collection is not the caller's.
 	 */
 	public async replaceVariants(collectionId: ID, variantIds: ID[]): Promise<CollectionVariant[]> {
 		if (new Set(variantIds).size !== variantIds.length) {
@@ -49,7 +68,11 @@ export class CollectionVariantService extends TenantAwareCrudService<CollectionV
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const existing = await this.typeOrmCollectionVariantRepository.find({ where: { collectionId } });
+		await this.assertCollectionInScope(collectionId);
+
+		const existing = await this.typeOrmCollectionVariantRepository.find({
+			where: { collectionId, ...callerScope() }
+		});
 		const kept = new Set(variantIds);
 		const removed = existing.filter((row) => !kept.has(row.variantId));
 
@@ -80,6 +103,69 @@ export class CollectionVariantService extends TenantAwareCrudService<CollectionV
 		});
 
 		return this.findByCollection(collectionId);
+	}
+
+	/**
+	 * Curates variants into a collection, appending the ones it does not already hold after its current set.
+	 *
+	 * This is the set write expressed as an addition — the `addCollectionVariants` field the schema declares — so it
+	 * reaches storage through {@link replaceVariants} and inherits its transaction, its scope check and its
+	 * refusal of another tenant's collection: the current set is kept in its order, and each named variant that
+	 * is not a member yet is appended once, in the order the caller stated it. A variant named twice, or already a
+	 * member, is not an error; the call states what the collection should contain, and it does.
+	 *
+	 * @param collectionId The collection whose membership is being extended.
+	 * @param variantIds The variants to curate into it.
+	 * @returns The membership rows after the write.
+	 * @throws NotFoundException When the collection is not the caller's.
+	 */
+	public async addVariants(collectionId: ID, variantIds: ID[]): Promise<CollectionVariant[]> {
+		await this.assertCollectionInScope(collectionId);
+
+		const current = (await this.findByCollection(collectionId)).map((row) => row.variantId);
+		const additions = [...new Set(variantIds ?? [])].filter((variantId) => !current.includes(variantId));
+
+		return this.replaceVariants(collectionId, [...current, ...additions]);
+	}
+
+	/**
+	 * Removes variants from a collection's manual set, keeping the order of the variants that stay.
+	 *
+	 * The set write expressed as a removal — the `removeCollectionVariants` field the schema declares — through
+	 * {@link replaceVariants}, with the same scope check. A named variant that is not a member is ignored, as the
+	 * product-level removal ignores one.
+	 *
+	 * @param collectionId The collection whose membership is being reduced.
+	 * @param variantIds The variants to take out of it.
+	 * @returns The membership rows after the write.
+	 * @throws NotFoundException When the collection is not the caller's.
+	 */
+	public async removeVariants(collectionId: ID, variantIds: ID[]): Promise<CollectionVariant[]> {
+		await this.assertCollectionInScope(collectionId);
+
+		const removed = new Set(variantIds ?? []);
+		const current = (await this.findByCollection(collectionId)).map((row) => row.variantId);
+
+		return this.replaceVariants(
+			collectionId,
+			current.filter((variantId) => !removed.has(variantId))
+		);
+	}
+
+	/**
+	 * Refuses a collection that is not the caller's, answering it as one that does not exist.
+	 *
+	 * @param collectionId The collection a set write names.
+	 * @throws NotFoundException When no collection of that id is in the caller's tenant and organization.
+	 */
+	private async assertCollectionInScope(collectionId: ID): Promise<void> {
+		const collection = await this.typeOrmCollectionVariantRepository.manager.findOne(Collection, {
+			where: { id: collectionId, ...callerScope() } as any
+		});
+
+		if (!collection) {
+			throw new NotFoundException('The collection was not found.');
+		}
 	}
 
 	/**

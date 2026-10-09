@@ -472,3 +472,60 @@ describe('the soft-delete pair — the permission and the guards are the route�
 		}
 	});
 });
+
+/**
+ * `addCollectionVariants` and `removeCollectionVariants` were declared by this document and answered by nothing, so
+ * introspection advertised two mutations that failed when called (handover 2026-09-20 §7.65 item 11). They are bound
+ * now, as the set write `PUT /collection-variants/by-collection/:collectionId` performs, expressed as an addition and
+ * a removal — so each is pinned against that route: the same grant, the same guard chain, and the service's set
+ * operations rather than a row-level create or remove.
+ */
+describe('the variant set as an addition and a removal — bound, and held to the set route', () => {
+	const SET_FIELDS = [
+		{ field: 'addCollectionVariants', method: 'addVariants' },
+		{ field: 'removeCollectionVariants', method: 'removeVariants' }
+	] as const;
+
+	it('declares both fields in the document, taking the collection and the variants and answering the rows', () => {
+		for (const { field } of SET_FIELDS) {
+			const declared = mutationField(field);
+
+			expect(declared.arguments?.map((argument) => argument.name.value)).toEqual(['collectionId', 'variantIds']);
+			expect(namedTypeOf(declared)).toBe('CollectionVariant');
+		}
+	});
+
+	it('states the set route’s own grant on each field, and runs under the set route’s guard chain', () => {
+		for (const { field } of SET_FIELDS) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(CollectionVariantResolver)[field])).toEqual([
+				catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT)
+			]);
+			expect(permissionOfField(CollectionVariantResolver, field)).toEqual(
+				permissionOfRoute(CollectionVariantController, 'replaceVariants')
+			);
+			expect(guardsOf(CollectionVariantResolver, field)).toEqual(
+				expect.arrayContaining(guardsOf(CollectionVariantController, 'replaceVariants'))
+			);
+		}
+	});
+
+	it('reaches the service’s set operations with the caller’s arguments, never a row-level create or remove', async () => {
+		const rows = [{ id: 'membership-1' }];
+		const service = {
+			addVariants: jest.fn(async () => rows),
+			removeVariants: jest.fn(async () => rows),
+			replaceVariants: jest.fn(),
+			create: jest.fn(),
+			removeVariant: jest.fn()
+		};
+		const resolver = new CollectionVariantResolver(service as never) as unknown as Row;
+
+		for (const { field, method } of SET_FIELDS) {
+			await expect(resolver[field]('collection-1', ['variant-1', 'variant-2'])).resolves.toBe(rows);
+			expect(service[method]).toHaveBeenCalledWith('collection-1', ['variant-1', 'variant-2']);
+		}
+
+		expect(service.create).not.toHaveBeenCalled();
+		expect(service.removeVariant).not.toHaveBeenCalled();
+	});
+});

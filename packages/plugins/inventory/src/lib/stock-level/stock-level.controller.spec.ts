@@ -871,9 +871,61 @@ describe('StockLevelController — reconciliation (doc 09 §10.4, §10.5)', () =
 		expect(fixture.level('level-1')).toMatchObject({ quantity: 10, version: 1 });
 	});
 
-	it('corrects a level the ledger has no movement for to the ledger’s own sum', async () => {
-		// A level with no movements is one the ledger has never recorded. The ledger is the record of
-		// what happened, so the level is brought to it rather than the other way round.
+	it('adopts a level the ledger has no movement for as its opening balance, rather than zeroing real stock', async () => {
+		// A level no movement names predates the ledger: the platform's warehouse quantities were written
+		// before this package existed, and its own quantity route still writes them without a movement. An
+		// earlier revision of this case asserted the level was "corrected" to 0 — the empty ledger's sum —
+		// which is the audit's finding (§7.2 #10): the first reconciliation after an upgrade would have
+		// wiped every pre-existing stock level. The stock is real; the ledger row that explains it is what
+		// was missing, so that is what the run writes.
+		const fixture = levelResourceFixture();
+		fixture.tables.warehouse_product_variant.push({
+			id: 'level-3',
+			tenantId: TENANT,
+			organizationId: ORG,
+			warehouseProductId: 'aggregate-1',
+			variantId: 'a-variant-with-no-movements',
+			quantity: 4,
+			reservedQuantity: 1,
+			version: 3
+		});
+		const aggregateBefore = { ...fixture.aggregate() };
+
+		const report = await fixture.controller.reconcile({});
+
+		// Reported as an adoption: the ledger summed to nothing, and the level kept what it held.
+		expect(report.corrections).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ levelId: 'level-3', quantityBefore: 4, ledgerQuantity: 0, quantityAfter: 4 })
+			])
+		);
+		// The level row is not written at all: same quantity, same version, and the aggregate does not move.
+		expect(fixture.level('level-3')).toMatchObject({ quantity: 4, reservedQuantity: 1, version: 3 });
+		// Only level-1's correction (10 → 7) moves the aggregate; the adopted level contributes nothing.
+		expect(aggregateBefore).toMatchObject({ quantity: 15 });
+		expect(fixture.aggregate()).toMatchObject({ quantity: 12 });
+		// One opening-balance movement, of the shape doc 09 §4.3 states, stamped with the level's scope.
+		const opening = fixture.tables.stock_movement.filter((row) => row.variantId === 'a-variant-with-no-movements');
+		expect(opening).toEqual([
+			expect.objectContaining({
+				tenantId: TENANT,
+				organizationId: ORG,
+				warehouseId: WAREHOUSE,
+				warehouseProductVariantId: 'level-3',
+				type: StockMovementType.RECEIPT,
+				quantity: 4,
+				quantityBefore: 0,
+				quantityAfter: 4,
+				reservedBefore: 1,
+				reservedAfter: 1,
+				referenceType: StockMovementReferenceType.MIGRATION,
+				referenceId: 'level-3',
+				reason: 'OPENING_BALANCE'
+			})
+		]);
+	});
+
+	it('reports nothing for an adopted level on the next run, because its ledger now agrees', async () => {
 		const fixture = levelResourceFixture();
 		fixture.tables.warehouse_product_variant.push({
 			id: 'level-3',
@@ -886,6 +938,47 @@ describe('StockLevelController — reconciliation (doc 09 §10.4, §10.5)', () =
 			version: 3
 		});
 
+		await fixture.controller.reconcile({});
+		const ledgerAfterFirstRun = fixture.ledger().length;
+		const second = await fixture.controller.reconcile({});
+
+		expect(second.corrections).toEqual([]);
+		// The adoption is written once: a second run neither adopts again nor moves the level.
+		expect(fixture.ledger()).toHaveLength(ledgerAfterFirstRun);
+		expect(fixture.level('level-3')).toMatchObject({ quantity: 4, version: 3 });
+	});
+
+	it('still corrects a level whose movements exist and disagree with it, even when they sum to zero', async () => {
+		// Control for the adoption rule: it turns on whether any movement names the level, not on the sum.
+		// A level whose movements cancel out has a ledger, and the ledger is the truth for it.
+		const fixture = levelResourceFixture();
+		fixture.tables.warehouse_product_variant.push({
+			id: 'level-3',
+			tenantId: TENANT,
+			organizationId: ORG,
+			warehouseProductId: 'aggregate-1',
+			variantId: 'a-variant-whose-movements-cancel',
+			quantity: 4,
+			reservedQuantity: 0,
+			version: 3
+		});
+		for (const [id, quantity] of [
+			['movement-in', 6],
+			['movement-out', -6]
+		] as const) {
+			fixture.tables.stock_movement.push({
+				id,
+				tenantId: TENANT,
+				warehouseId: WAREHOUSE,
+				variantId: 'a-variant-whose-movements-cancel',
+				warehouseProductVariantId: 'level-3',
+				type: quantity > 0 ? StockMovementType.RECEIPT : StockMovementType.SALE,
+				quantity,
+				referenceType: StockMovementReferenceType.ORDER,
+				referenceId: 'order-9'
+			});
+		}
+
 		const report = await fixture.controller.reconcile({});
 
 		expect(report.corrections).toEqual(
@@ -894,6 +987,8 @@ describe('StockLevelController — reconciliation (doc 09 §10.4, §10.5)', () =
 			])
 		);
 		expect(fixture.level('level-3')).toMatchObject({ quantity: 0, version: 4 });
+		// No opening balance was written for it: the two movements it already had are all it has.
+		expect(fixture.tables.stock_movement.filter((row) => row.variantId === 'a-variant-whose-movements-cancel')).toHaveLength(2);
 	});
 });
 

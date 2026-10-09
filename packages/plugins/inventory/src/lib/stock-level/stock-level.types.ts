@@ -109,6 +109,11 @@ export interface IStockReconciliationFilter {
  * The numbers are carried so the report says what the run changed and by how much, rather than only
  * how many rows it touched: `quantityBefore` is what the level held, `ledgerQuantity` is what its
  * movements sum to, and `quantityAfter` is the value the correction left behind.
+ *
+ * A level no movement named at all is not corrected but **adopted**: its quantity is recorded in the
+ * ledger as its opening balance and the level is left as it was. Such an entry reads `quantityAfter`
+ * equal to `quantityBefore` while `ledgerQuantity` is the empty ledger's sum, which is what tells an
+ * adoption apart from a correction (there, `quantityAfter` equals `ledgerQuantity`).
  */
 export interface IStockLevelCorrection {
 	readonly levelId: ID;

@@ -22,6 +22,7 @@ import {
 	PaymentAccountHolderService,
 	Permissions,
 	PermissionGuard,
+	RequestContext,
 	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	UseValidationPipe,
@@ -116,7 +117,7 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 	@Permissions(PaymentPermission.PAYMENT_ACCOUNT_HOLDERS_VIEW as PermissionsEnum)
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: ID): Promise<IPaymentAccountHolder> {
-		return this.accountHolders.read(id);
+		return this.withInstrumentsGranted(await this.accountHolders.read(id));
 	}
 
 	/**
@@ -168,7 +169,7 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdatePaymentAccountHolderDTO
 	): Promise<IPaymentAccountHolder> {
-		return this.accountHolders.update(id, entity as never);
+		return this.withInstrumentsGranted(await this.accountHolders.update(id, entity as never));
 	}
 
 	/**
@@ -194,7 +195,7 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: VerifyPaymentAccountHolderDTO
 	): Promise<IPaymentAccountHolder> {
-		return this.accountHolders.verify(id, entity as never);
+		return this.withInstrumentsGranted(await this.accountHolders.verify(id, entity as never));
 	}
 
 	/**
@@ -295,5 +296,35 @@ export class PaymentAccountHolderController extends CrudController<PaymentAccoun
 		}
 
 		return stated;
+	}
+
+	/**
+	 * The account as the caller may see it: with its saved instruments only when the caller holds the
+	 * grant those instruments are read under.
+	 *
+	 * A saved instrument is its own resource with its own permission — `PAYMENT_METHOD_TOKENS_VIEW`,
+	 * "a party's saved instruments: the masked display facts and the status, never the token value" —
+	 * and `GET /payment-method-tokens` demands exactly that grant. The account routes demand the account
+	 * grant, so returning the instruments beneath an account to every caller holding *that* grant made
+	 * this the looser door to the same rows. The GraphQL surface already states the instruments' own
+	 * grant on `PaymentAccountHolder.methodTokens`, so this brings REST to the same rule rather than
+	 * leaving it the wider of the two (handover 2026-09-20 §7.5 item 3).
+	 *
+	 * A caller without the grant is answered the account with the member **left out**, not set to an
+	 * empty list: an empty list would state that the account has no instruments, which is a different
+	 * and false answer. A caller with the grant is answered exactly what the route answered before.
+	 *
+	 * @param holder The account as the lifecycle service read it, with its instruments.
+	 * @returns The account, with or without its instruments.
+	 */
+	private withInstrumentsGranted(holder: IPaymentAccountHolder): IPaymentAccountHolder {
+		if (!holder || RequestContext.hasPermission(PaymentPermission.PAYMENT_METHOD_TOKENS_VIEW as PermissionsEnum)) {
+			return holder;
+		}
+
+		const account: IPaymentAccountHolder = { ...holder };
+		delete account.methodTokens;
+
+		return account;
 	}
 }

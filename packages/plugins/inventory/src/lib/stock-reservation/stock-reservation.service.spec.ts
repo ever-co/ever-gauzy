@@ -1117,3 +1117,81 @@ describe('StockReservationService — releasing, expiring and re-pointing (INV-0
 });
 
 
+
+/**
+ * `POST /stock-reservations/:id` reaches the generic update (handover 2026-09-20 §7.65 item 23 (a)).
+ *
+ * Its DTO is the create DTO made partial, so it validates `quantity`, `status`, `warehouseId` and `variantId`, and
+ * the generic update wrote them onto a live hold with no level write and no movement. The route and its DTO are
+ * unchanged; the service refuses the change to what the level counts the hold by, and keeps every other member
+ * writable.
+ */
+describe('StockReservationService — an update cannot move what the level counts a hold by (INV-03)', () => {
+	/** The generic update the route reached before the guard, called past it, for the control. */
+	const genericUpdate = (service: StockReservationService, id: string, patch: Record<string, unknown>) =>
+		(Object.getPrototypeOf(StockReservationService.prototype) as { update: Function }).update.call(service, id, patch);
+
+	it('control: the generic update rewrote a live hold’s quantity while the level went on counting the old one', async () => {
+		const fixture = reservationFixture({ quantity: 10 });
+		const held = await fixture.service.reserve(hold({ quantity: 2 }) as never);
+
+		await genericUpdate(fixture.service, held.id, { quantity: 7 });
+
+		// The hole: the hold now says 7, the level still reserves 2, and no movement explains the difference.
+		expect(fixture.store.reservations()[0]).toMatchObject({ quantity: 7 });
+		expect(Number(fixture.store.level().reservedQuantity)).toBe(2);
+		expect(fixture.store.ledger()).toHaveLength(1);
+	});
+
+	it.each([
+		['the quantity', { quantity: 7 }, ['quantity']],
+		['the status', { status: StockReservationStatus.RELEASED }, ['status']],
+		['the location', { warehouseId: '00000000-0000-4000-8000-0000000000ff' }, ['warehouseId']],
+		['the variant', { variantId: '00000000-0000-4000-8000-0000000000fe' }, ['variantId']],
+		['several at once', { quantity: 1, status: StockReservationStatus.CONSUMED }, ['quantity', 'status']]
+	])('refuses a change to %s, and writes nothing', async (_label, patch, fields) => {
+		const fixture = reservationFixture({ quantity: 10 });
+		const held = await fixture.service.reserve(hold({ quantity: 2 }) as never);
+		const before = { ...fixture.store.reservations()[0] };
+
+		await expect(fixture.service.update(held.id, patch as never)).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'STOCK_INVARIANT_VIOLATION', details: { invariant: 'INV-03', reservationId: held.id, fields } }
+		});
+
+		expect(fixture.store.reservations()[0]).toEqual(before);
+		expect(Number(fixture.store.level().reservedQuantity)).toBe(2);
+		expect(fixture.store.ledger()).toHaveLength(1);
+	});
+
+	it('still changes the descriptive members, and accepts the counted ones restated as they are', async () => {
+		const fixture = reservationFixture({ quantity: 10 });
+		const held = await fixture.service.reserve(hold({ quantity: 2 }) as never);
+		const expiresAt = new Date('2026-02-01T00:00:00.000Z');
+
+		// A client that sends the hold back whole: the counted members restate the row (the quantity as the
+		// numeric column reads back, as text), and only the expiry and the backorder flag change.
+		await fixture.service.update(held.id, {
+			quantity: '2.000000',
+			status: StockReservationStatus.ACTIVE,
+			warehouseId: WAREHOUSE,
+			variantId: VARIANT,
+			expiresAt,
+			isBackorder: true
+		} as never);
+
+		expect(fixture.store.reservations()[0]).toMatchObject({ expiresAt, isBackorder: true, status: StockReservationStatus.ACTIVE });
+		expect(Number(fixture.store.reservations()[0].quantity)).toBe(2);
+		expect(Number(fixture.store.level().reservedQuantity)).toBe(2);
+	});
+
+	it('leaves the domain writers free to move the hold: a release still closes it and gives the units back', async () => {
+		const fixture = reservationFixture({ quantity: 10 });
+		const held = await fixture.service.reserve(hold({ quantity: 2 }) as never);
+
+		await fixture.service.release(held.id, 'customer left');
+
+		expect(fixture.store.reservations()[0]).toMatchObject({ status: StockReservationStatus.RELEASED });
+		expect(Number(fixture.store.level().reservedQuantity)).toBe(0);
+	});
+});

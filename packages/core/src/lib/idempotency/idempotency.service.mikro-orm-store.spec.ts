@@ -357,6 +357,39 @@ describe('an idempotency key on the real stores, under DB_ORM=mikro-orm as under
 			},
 			ENTITY_GRAPH_TIMEOUT
 		);
+
+		it(
+			"resolves a claim that lost the race into the winner's row, read off this driver's own unique violation",
+			async () => {
+				// The insert is the lock (handover 2026-09-20 §5 item 1): the loser of a race is recognised by the
+				// unique violation its insert raises, so the violation must reach `isUniqueViolation` as the driver
+				// raised it. The unit suite proves the branch over a double; this proves it on the real driver, where
+				// MikroORM wraps the error in its own exception class and a write path that rewrapped it as a `400`
+				// would turn every lost race into a failed request.
+				const key = `raced-key-${store}`;
+				const input = { scope: SCOPE, key, requestHash: 'a'.repeat(64), resourceType: 'order' };
+
+				const winner = await serviceOn(store).startOrReplay(input);
+				expect(winner.outcome).toBe('CLAIMED');
+
+				// The loser's read ran before the winner's insert committed, so it saw no row and went on to insert.
+				const loser = serviceOn(store);
+				const read = jest.spyOn(loser, 'findByKey').mockResolvedValueOnce(null);
+				const lost = await loser.startOrReplay(input);
+
+				// Control: the loser really did miss on its first read and read again after its insert was refused.
+				expect(read).toHaveBeenCalledTimes(2);
+				expect(lost.outcome).toBe('IN_FLIGHT');
+				expect(lost.record.id).toBe(winner.record.id);
+
+				// One key, one row, still the winner's claim and under the caller's scope.
+				const rows = await dataSource.query('SELECT "id", "status", "tenantId", "organizationId" FROM "idempotency_key" WHERE "key" = ?', [key]);
+				expect(rows).toEqual([
+					{ id: winner.record.id, status: IdempotencyStatus.IN_PROGRESS, tenantId: TENANT, organizationId: ORGANIZATION }
+				]);
+			},
+			ENTITY_GRAPH_TIMEOUT
+		);
 	});
 
 	it(

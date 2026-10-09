@@ -2,9 +2,21 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DeepPartial } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Collection } from '../collection/collection.entity';
 import { CollectionProduct } from './collection-product.entity';
 import { MikroOrmCollectionProductRepository } from './repository/mikro-orm-collection-product.repository';
 import { TypeOrmCollectionProductRepository } from './repository/type-orm-collection-product.repository';
+
+/**
+ * The caller's tenant and organization as criteria, each only when the credential states it: a key present with an
+ * undefined value is a criterion the two ORMs read differently.
+ */
+function callerScope(): { tenantId?: ID; organizationId?: ID } {
+	const tenantId = RequestContext.currentTenantId();
+	const organizationId = RequestContext.currentOrganizationId();
+
+	return { ...(tenantId ? { tenantId } : {}), ...(organizationId ? { organizationId } : {}) };
+}
 
 /**
  * Manual membership of products in a collection.
@@ -31,7 +43,7 @@ export class CollectionProductService extends TenantAwareCrudService<CollectionP
 	 */
 	public async findByCollection(collectionId: ID): Promise<CollectionProduct[]> {
 		return this.typeOrmCollectionProductRepository.find({
-			where: { collectionId, organizationId: RequestContext.currentOrganizationId() },
+			where: { collectionId, ...callerScope(), organizationId: RequestContext.currentOrganizationId() },
 			relations: { product: true },
 			order: { position: 'ASC', addedAt: 'ASC' }
 		});
@@ -40,11 +52,18 @@ export class CollectionProductService extends TenantAwareCrudService<CollectionP
 	/**
 	 * Replaces the manual product set of one collection.
 	 *
+	 * **The write is the caller's collection's, and only its rows.** The collection is read inside the caller's
+	 * tenant and organization first, and one that is not the caller's is answered as one that does not exist; the
+	 * membership rows the set is diffed against are read inside the same scope. Before this, the existing rows were
+	 * read by `collectionId` alone and the ones missing from the new set were deleted by id, so a caller naming
+	 * another tenant's collection rewrote that tenant's shelf.
+	 *
 	 * @param collectionId The collection whose membership is being written.
 	 * @param productIds The complete set of product ids the collection should contain, in order.
 	 * @returns The membership rows after the write.
 	 * @throws BadRequestException When the same product is listed twice, which would make the two
 	 * positions ambiguous.
+	 * @throws NotFoundException When the collection is not the caller's.
 	 */
 	public async replaceProducts(collectionId: ID, productIds: ID[]): Promise<CollectionProduct[]> {
 		if (new Set(productIds).size !== productIds.length) {
@@ -54,7 +73,17 @@ export class CollectionProductService extends TenantAwareCrudService<CollectionP
 		const organizationId = RequestContext.currentOrganizationId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const existing = await this.typeOrmCollectionProductRepository.find({ where: { collectionId } });
+		const collection = await this.typeOrmCollectionProductRepository.manager.findOne(Collection, {
+			where: { id: collectionId, ...callerScope() } as any
+		});
+
+		if (!collection) {
+			throw new NotFoundException('The collection was not found.');
+		}
+
+		const existing = await this.typeOrmCollectionProductRepository.find({
+			where: { collectionId, ...callerScope() }
+		});
 		const kept = new Set(productIds);
 		const removed = existing.filter((row) => !kept.has(row.productId));
 

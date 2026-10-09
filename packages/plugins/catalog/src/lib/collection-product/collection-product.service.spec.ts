@@ -126,6 +126,7 @@ jest.mock('@gauzy/core', () => {
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
+import { Collection } from '../collection/collection.entity';
 import { CollectionProduct } from './collection-product.entity';
 import { CollectionProductService } from './collection-product.service';
 
@@ -160,10 +161,13 @@ const OTHER_COLLECTION = '00000000-0000-4000-8000-000000000011';
 const P1 = '00000000-0000-4000-8000-000000000021';
 const P2 = '00000000-0000-4000-8000-000000000022';
 const P3 = '00000000-0000-4000-8000-000000000023';
+const OTHER_TENANT = '00000000-0000-4000-8000-000000000003';
+const FOREIGN_COLLECTION = '00000000-0000-4000-8000-000000000019';
 
 /** The tables this suite drives, as plain arrays. */
 interface ITables {
 	collection_product: any[];
+	collection: any[];
 }
 
 /** One `collection_product` row. */
@@ -397,8 +401,19 @@ function repository(tables: ITables, tableName: keyof ITables, writeManager: any
  * @param rows The membership rows the fixture starts with.
  */
 function membershipFixture(rows: any[] = []) {
-	const tables: ITables = { collection_product: [...rows] };
-	const entityToTable = new Map<unknown, keyof ITables>([[CollectionProduct, 'collection_product']]);
+	// The collections a set write is checked against: the caller's two, and one of another tenant.
+	const tables: ITables = {
+		collection_product: [...rows],
+		collection: [
+			{ id: COLLECTION, tenantId: TENANT, organizationId: ORG },
+			{ id: OTHER_COLLECTION, tenantId: TENANT, organizationId: ORG },
+			{ id: FOREIGN_COLLECTION, tenantId: OTHER_TENANT, organizationId: 'org-of-another-tenant' }
+		]
+	};
+	const entityToTable = new Map<unknown, keyof ITables>([
+		[CollectionProduct, 'collection_product'],
+		[Collection, 'collection']
+	]);
 	const writeManager = manager(tables, entityToTable);
 	const service = new CollectionProductService(
 		repository(tables, 'collection_product', writeManager) as never,
@@ -525,5 +540,55 @@ describe('CollectionProductService — membership with an order (doc 05 §4.4)',
 		const listed = await fixture.service.findByCollection(COLLECTION);
 
 		expect(listed.map((row) => row.id)).toEqual(['first', 'earlier', 'later']);
+	});
+});
+
+/**
+ * The set write is the caller's collection's, and only its rows.
+ *
+ * `replaceProducts` read the existing rows by `collectionId` alone and deleted the ones missing from the new set by
+ * id, so a caller naming another tenant's collection rewrote that tenant's shelf — through `PUT
+ * /collection-products/by-collection/:collectionId`, `addCollectionProducts` and `removeCollectionProducts` alike,
+ * since all three reach it.
+ */
+describe('CollectionProductService — a set write reaches only the caller’s collection', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** Another tenant's shelf: two members of a collection the caller does not own. */
+	const foreignShelf = () => [
+		membership('foreign-1', P1, 0, { collectionId: FOREIGN_COLLECTION, tenantId: OTHER_TENANT, organizationId: 'org-of-another-tenant' }),
+		membership('foreign-2', P2, 1, { collectionId: FOREIGN_COLLECTION, tenantId: OTHER_TENANT, organizationId: 'org-of-another-tenant' })
+	];
+
+	it('refuses another tenant’s collection as one that does not exist, and leaves its shelf as it was', async () => {
+		const fixture = membershipFixture(foreignShelf());
+
+		await expect(fixture.service.replaceProducts(FOREIGN_COLLECTION, [P3])).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(fixture.positionsOf(FOREIGN_COLLECTION)).toEqual([P1, P2]);
+		expect(fixture.tables.collection_product).toHaveLength(2);
+	});
+
+	it('refuses a collection id no collection carries, rather than writing rows that point at nothing', async () => {
+		const fixture = membershipFixture();
+
+		await expect(
+			fixture.service.replaceProducts('00000000-0000-4000-8000-0000000000ee', [P1])
+		).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.tables.collection_product).toEqual([]);
+	});
+
+	it('still writes the caller’s own collection, and only its rows', async () => {
+		const fixture = membershipFixture([...foreignShelf(), membership('own-1', P1, 0)]);
+
+		await fixture.service.replaceProducts(COLLECTION, [P2, P1]);
+
+		expect(fixture.positionsOf(COLLECTION)).toEqual([P2, P1]);
+		expect(fixture.positionsOf(FOREIGN_COLLECTION)).toEqual([P1, P2]);
 	});
 });
