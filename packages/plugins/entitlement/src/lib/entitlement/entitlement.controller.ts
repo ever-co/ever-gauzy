@@ -417,26 +417,25 @@ export class EntitlementController extends CrudController<Entitlement> {
 	}
 
 	/**
-	 * Deletes a right.
+	 * Retires an entitlement. This route no longer erases one.
 	 *
-	 * The `DELETE ':id'` route belongs to `CrudController`, and this override exists only to state the
-	 * permission it demands. The base declares the route with no permission metadata of its own, so
-	 * `PermissionGuard` resolves the metadata handler-first-then-class — `getAllAndOverride` over
-	 * `PERMISSIONS_METADATA` in `packages/core/src/lib/shared/guards/permission.guard.ts` — and answers
-	 * `true` to empty metadata with its `isEmpty(permissions)` return, which left the inherited route
-	 * demanding only this controller's class-level view grant. It now states `ENTITLEMENTS_EDIT`, the
-	 * grant the suspension, extension and withdrawal of a right already require.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row.
+	 * Entitlements are soft delete only (owner decision 2026-10-09): it is the record a licence check, an activation count and a support enquiry are answered from,
+	 * so the route now retires the row exactly as `DELETE ':id/soft'` does — through the service's
+	 * `softRemove`, which keeps the row with `deletedAt` set and lets `PUT ':id/recover'` bring it back.
+	 * There is no hard-delete path through the API. The route's path, status and permission are unchanged.
 	 *
-	 * @param id The right.
-	 * @returns The result of the delete.
+	 * @param id The entitlement to retire.
+	 * @param options The inherited rest parameter.
+	 * @returns The retired entitlement.
 	 */
-	@ApiOperation({ summary: 'Delete an entitlement' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The entitlement was deleted.' })
+	@ApiOperation({ summary: 'Retire an entitlement (soft delete; it is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The entitlement was retired.' })
 	@Permissions(EntitlementPermissions.ENTITLEMENTS_EDIT)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await super.softRemove(id, ...options);
 	}
 
 	/**

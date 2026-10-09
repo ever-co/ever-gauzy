@@ -105,26 +105,25 @@ export class OrderClaimLineController extends CrudController<OrderClaimLine> {
 	}
 
 	/**
-	 * Deletes a claim line.
+	 * Retires a claim line. This route no longer erases one.
 	 *
-	 * The route belongs to `CrudController`, and this override exists only to state its permission:
-	 * the base declares `DELETE :id` with no permission metadata at all, and `PermissionGuard`
-	 * (`packages/core/src/lib/shared/guards/permission.guard.ts`) returns `true` to empty metadata —
-	 * `if (isEmpty(permissions)) { return true; }` — so the inherited handler stands on the
-	 * class-level read grant alone. This line joins a claim, and the plugin declares no
-	 * `CLAIMS_DELETE`, so this states `CLAIMS_CREATE`, the grant that already lets a caller write a
-	 * claim line.
+	 * The `DELETE ':id'` route belongs to `CrudController`, whose handler hard-deletes the row.
+	 * Claim lines are soft delete only (owner decision 2026-10-09): the receipt wrote stock movements and the refund wrote money, and both point back at the row,
+	 * so the route now retires the row exactly as `DELETE ':id/soft'` does — through the service's
+	 * `softRemove`, which keeps the row with `deletedAt` set and lets `PUT ':id/recover'` bring it back.
+	 * There is no hard-delete path through the API. The route's path, status and permission are unchanged.
 	 *
-	 * @param id The claim line to delete.
-	 * @returns The result of the delete.
+	 * @param id The claim line to retire.
+	 * @param options The inherited rest parameter.
+	 * @returns The retired claim line.
 	 */
-	@ApiOperation({ summary: 'Delete a claim line' })
-	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The line was deleted.' })
+	@ApiOperation({ summary: 'Retire a claim line (soft delete; it is never hard-deleted)' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The claim line was retired.' })
 	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
 	@Delete(':id')
 	@HttpCode(HttpStatus.ACCEPTED)
 	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
-		return super.delete(id);
+		return await super.softRemove(id, ...options);
 	}
 
 	/**
