@@ -551,8 +551,10 @@ $control-height: 2rem;
 	font-size: 0.875rem;
 
 	// The global theme paints every `tr` with the card colour (`!important`), which turns
-	// the email's layout tables into a black box in the dark theme. Undo it inside the sheet only.
-	::ng-deep :is(table, thead, tbody, tfoot, tr, th, td) {
+	// the email's layout tables into a black box in the dark theme. Undo it inside the sheet only,
+	// and only on `tr`: an `!important` on table / td / th would also wipe the inline cell
+	// backgrounds (`style` / `bgcolor`) that custom email templates use.
+	::ng-deep tr {
 		background-color: transparent !important;
 	}
 

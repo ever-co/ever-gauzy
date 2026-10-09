@@ -396,9 +396,10 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		if (this.organizationContacts) {
 			organizationContact = this.organizationContacts.find((oc) => oc.primaryEmail === email.email);
 		}
-		if (employee) {
+		// A plain <img> has no initials fallback (as <ngx-avatar> had): never hand it an empty src
+		if (employee?.user?.imageUrl) {
 			return employee.user.imageUrl;
-		} else if (organizationContact) {
+		} else if (organizationContact?.imageUrl) {
 			return organizationContact.imageUrl;
 		} else if (!email.user) {
 			return '../../../../assets/images/logos/ever.jpg';
