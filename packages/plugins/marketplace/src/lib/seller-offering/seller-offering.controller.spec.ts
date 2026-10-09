@@ -446,7 +446,35 @@ describe('SellerOfferingController — the route declarations the executor and t
 		expect(routeOf('bulk')).toEqual({ path: '/bulk', method: RequestMethod.POST });
 		expect(routeOf('publish')).toEqual({ path: '/:id/publish', method: RequestMethod.POST });
 		expect(routeOf('unpublish')).toEqual({ path: '/:id/unpublish', method: RequestMethod.POST });
-		expect(routeOf('withdraw')).toEqual({ path: '/:id', method: RequestMethod.DELETE });
+		expect(routeOf('delete')).toEqual({ path: ':id', method: RequestMethod.DELETE });
+	});
+
+	it('gives DELETE /:id exactly one handler, and it withdraws rather than erases', async () => {
+		const prototype = SellerOfferingController.prototype as unknown as Record<string, object>;
+		const onDeleteById = Object.getOwnPropertyNames(prototype).filter(
+			(name) =>
+				typeof prototype[name] === 'function' &&
+				Reflect.getMetadata(METHOD_METADATA, prototype[name]) === RequestMethod.DELETE &&
+				['/:id', ':id'].includes(Reflect.getMetadata(PATH_METADATA, prototype[name]))
+		);
+		// Before the fix this was ['withdraw', 'delete']: a hard delete declared on the same method and path,
+		// which Express never ran because `withdraw` was registered first.
+		expect(onDeleteById).toEqual(['delete']);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, prototype['delete'])).toEqual([
+			PermissionsEnum.SELLER_OFFERINGS_EDIT
+		]);
+
+		const withdraw = jest.fn(async () => ({ id: 'offering-1', status: 'WITHDRAWN' }));
+		const controller = Object.create(SellerOfferingController.prototype) as SellerOfferingController;
+		Object.assign(controller, { sellerOfferingService: { withdraw } });
+
+		await expect(
+			(controller as unknown as { delete: (request: unknown, id: string) => Promise<unknown> }).delete(
+				request,
+				'offering-1'
+			)
+		).resolves.toEqual({ id: 'offering-1', status: 'WITHDRAWN' });
+		expect(withdraw).toHaveBeenCalledWith('offering-1', expect.anything());
 	});
 
 	it('declares the batch the executor is configured from: the resource, the cap and the permission', () => {
