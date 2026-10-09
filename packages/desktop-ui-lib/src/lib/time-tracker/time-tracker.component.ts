@@ -2092,13 +2092,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				// A fresh install has no local capture yet, but the server may still hold this employee's
 				// screenshots (taken before the reinstall or on another machine): show the latest ones
 				// instead of an empty panel until the first local capture lands (#8348).
-				res = await this.getRemoteLastTimeSlot();
+				try {
+					res = await this.getRemoteLastTimeSlot();
+				} catch (error) {
+					// Best effort: a failed lookup must not raise an error toast on a fresh install; the next call retries.
+					this._loggerService.warn(`WARN: last screenshots lookup failed: ${error?.message ?? error}`);
+					return;
+				}
 			}
-			if (!res || isStale()) {
+			if (fromServer && (!res || isStale())) {
 				return;
 			}
 
-			const { screenshots = [] } = res;
+			const { screenshots = [] } = res || {};
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
 				if (fromServer) {
@@ -2109,7 +2115,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						return;
 					}
 					this.lastScreenCapture$.next(lastCaptureScreen);
-					await this.localImage(thumbnail, lastCaptureScreen.fullUrl);
+					await this.localImage(thumbnail, lastCaptureScreen.fullUrl, lastCaptureScreen.recordedAt);
 				} else {
 					this.lastScreenCapture$.next(lastCaptureScreen);
 					await this.localImage(lastCaptureScreen);
@@ -2169,7 +2175,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async localImage(
 		img: { thumbUrl?: string; recordedAt?: string; fullUrl?: string } | string,
-		originalBase64Image?: string
+		originalBase64Image?: string,
+		recordedAt?: string | Date
 	): Promise<void> {
 		try {
 			// Determine the fullUrl, prioritizing originalBase64Image if provided
@@ -2184,7 +2191,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						: undefined;
 
 			// Set timestamp, preferring recordedAt if available
-			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
+			const timestamp =
+				typeof img === 'object' && img.recordedAt
+					? new Date(img.recordedAt)
+					: recordedAt
+						? new Date(recordedAt)
+						: new Date();
 
 			if (fullUrl && thumbUrl) {
 				const screenCaptureData = {
