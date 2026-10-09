@@ -1,8 +1,7 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { connectionFromOffsetPage, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { connectionFromOffsetPage, FEATURE_GRAPHQL, IConnectionPageSelection, resolveConnectionWindow, FeatureFlagGuard, GraphqlConnection, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { CATALOG_PERMISSION_VALUES, catalogPermission } from '../../catalog.permissions';
 import { CollectionProduct } from '../../collection-product/collection-product.entity';

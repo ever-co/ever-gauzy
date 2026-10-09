@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	EventBus,
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -23,7 +24,6 @@ import {
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { InventoryPermission } from './../inventory.permissions';
 import { StockTransferStatus } from './../inventory.enums';

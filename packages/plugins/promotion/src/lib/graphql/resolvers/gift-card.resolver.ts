@@ -2,8 +2,7 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver, Subscription } f
 import { UseGuards } from '@nestjs/common';
 import { filter } from 'rxjs';
 import { DecimalString, ID, PermissionsEnum } from '@gauzy/contracts';
-import { EventBus, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { EventBus, FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
 import { IGiftCard, IGiftCardTransaction } from '../../promotion.types';

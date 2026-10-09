@@ -1,8 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FEATURE_GRAPHQL, FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PurchasingFeatures } from '../../purchasing.features';
 import { toFailedGoodsReceiptPayload, toGoodsReceiptPayload, toUserError } from '../wire';

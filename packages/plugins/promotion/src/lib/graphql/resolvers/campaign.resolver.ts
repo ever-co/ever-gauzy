@@ -1,8 +1,7 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { PromotionPermission } from '../../promotion.permissions';
 import { CampaignBudgetType, ICampaign, ICampaignBudget, ICampaignBudgetCreateInput, IPromotion } from '../../promotion.types';

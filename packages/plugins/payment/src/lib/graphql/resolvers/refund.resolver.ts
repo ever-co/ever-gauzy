@@ -1,11 +1,16 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, PermissionsEnum } from '@gauzy/contracts';
-import { FeatureFlagGuard, Idempotent, PermissionGuard, Permissions, TenantPermissionGuard,
+import {
+	FEATURE_GRAPHQL,
+	FeatureFlagGuard,
+	Idempotent,
+	PermissionGuard,
+	Permissions,
+	TenantPermissionGuard,
 	IConnectionPageSelection,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { RefundService } from '../../refund/refund.service';
 import { RefundLineService } from '../../refund-line/refund-line.service';

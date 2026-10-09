@@ -105,6 +105,11 @@ export { CreateEntitySubscriptionEvent } from './lib/entity-subscription/events/
 export { FeatureModule } from './lib/feature/feature.module';
 export { FeatureService } from './lib/feature/feature.service';
 export { FeatureOrganizationService } from './lib/feature/feature-organization.service';
+// The code every `@Resolver` states as `@FeatureFlag(FEATURE_GRAPHQL)`, the plugin resolvers included. It is
+// public API so a package reaches it through `@gauzy/core` rather than through a path into this package's
+// sources (`@gauzy/core/src/lib/feature/...`), which only the workspace's own layout resolves. The module
+// imports `@gauzy/contracts` and nothing else, so exporting it here adds no edge to the kernel's graph.
+export { FEATURE_GRAPHQL } from './lib/feature/graphql-feature.code';
 export { RoleAuthorizationService, RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 // The approval machinery is public API for the same reason as `FeatureModule` above: a package that

@@ -2,6 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { ID, ISearchIndexField, SearchFieldKind, SearchReindexScope } from '@gauzy/contracts';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -13,7 +14,6 @@ import {
 	paginateRows,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { SearchIndexDefinitionService } from '../../services/search-index-definition.service';
 import { SearchReindexService, ISearchReindexRun } from '../../services/search-reindex.service';

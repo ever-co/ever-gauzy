@@ -2,6 +2,7 @@ import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { IPagination, ShippingPriceType } from '@gauzy/contracts';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	IConnectionPageSelection,
 	Idempotent,
@@ -11,7 +12,6 @@ import {
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { ShippingOption } from '../shipping-option/shipping-option.entity';
 import { IShippingEligibilityContext, ShippingOptionService } from '../shipping-option/shipping-option.service';

@@ -59,6 +59,9 @@ jest.mock('@gauzy/core', () => {
 	class BaseEntity {}
 
 	return {
+		// The shared GraphQL gate, which the resolvers read from the public barrel rather than from a path into
+		// the kernel's sources: the declaring module's own value, so the assertions below compare against it.
+		FEATURE_GRAPHQL: jest.requireActual('@gauzy/core/src/lib/feature/graphql-feature.code').FEATURE_GRAPHQL,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
 		TenantOrganizationBaseEntity: BaseEntity,

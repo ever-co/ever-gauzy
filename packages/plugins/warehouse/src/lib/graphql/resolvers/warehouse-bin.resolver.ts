@@ -2,6 +2,7 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/g
 import { UseGuards } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -14,7 +15,6 @@ import {
 	paginateRows,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { WarehouseBin } from '../../warehouse-bin/warehouse-bin.entity';
 import { WarehouseBinService } from '../../warehouse-bin/warehouse-bin.service';

@@ -2,8 +2,7 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/g
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { FindManyOptions, FindOptionsWhere, In } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
-import { FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
+import { FEATURE_GRAPHQL, FeatureFlagGuard, PermissionGuard, Permissions, TenantPermissionGuard } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
 import { TAX_PERMISSION_VALUES, taxPermission } from '../../tax.permissions';
 import { IResolvedTaxRate, TaxCalculationResult, TaxWriteInput } from '../../tax.types';

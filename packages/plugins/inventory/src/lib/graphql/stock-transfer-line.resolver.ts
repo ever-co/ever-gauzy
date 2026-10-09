@@ -10,6 +10,7 @@ import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/g
 import { UseGuards } from '@nestjs/common';
 import { DecimalString, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -19,7 +20,6 @@ import {
 	connectionFromOffsetPage,
 	resolveConnectionWindow
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { toDecimalWire } from './../inventory.decimal';
 import { InventoryPermission } from './../inventory.permissions';

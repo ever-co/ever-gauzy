@@ -3,6 +3,7 @@ import { BadRequestException, UseGuards } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { IPagination } from '@gauzy/contracts';
 import {
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IConnectionPageSelection,
@@ -16,7 +17,6 @@ import {
 	resolveConnectionWindow,
 	versionExpectationOf
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import { OrderChangeService } from './../order-change/order-change.service';
 import { OrderChangeActionService } from './../order-change-action/order-change-action.service';

@@ -4,6 +4,7 @@ import { IPagination, PermissionsEnum } from '@gauzy/contracts';
 import type { ID as Id, ISellerPayoutRunResult } from '@gauzy/contracts';
 import {
 	BulkExecutor,
+	FEATURE_GRAPHQL,
 	FeatureFlagGuard,
 	GraphqlConnection,
 	IBulkItemContext,
@@ -18,7 +19,6 @@ import {
 	resolveConnectionWindow,
 	toBulkItemOutcomes
 } from '@gauzy/core';
-import { FEATURE_GRAPHQL } from '@gauzy/core/src/lib/feature/graphql-feature.code';
 import { FeatureFlag } from '@gauzy/common';
 import type { BulkItemRequest } from '@gauzy/core';
 import { Seller } from '../seller/seller.entity';
