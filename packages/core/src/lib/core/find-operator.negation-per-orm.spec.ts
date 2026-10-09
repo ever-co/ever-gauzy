@@ -8,6 +8,7 @@ import {
 	In,
 	IsNull,
 	LessThan,
+	LessThanOrEqual,
 	Like,
 	MoreThan,
 	MoreThanOrEqual,
@@ -153,6 +154,24 @@ const CASES: ReadonlyArray<[label: string, where: () => FindOptionsWhere<any>, i
 	['control: Not(IsNull())', () => ({ name: Not(IsNull()) }), ['r1', 'r2', 'r3', 'r4']]
 ];
 
+/**
+ * The bare range operators, un-negated, each with the rows it selects.
+ *
+ * `LessThan` and `LessThanOrEqual` used to fall through `processFindOperator` to an empty condition, which MikroORM
+ * reads as "no condition": a sweep predicated on `LessThan(expiresAt)` selected — and deleted — every row (handover
+ * 2026-09-20 §5 item 1). The translation exists now and the unit spec pins its output; these pin that the output
+ * selects on the real driver what TypeORM selects, including the NULL row neither ORM may answer.
+ */
+const COMPARISONS: ReadonlyArray<[label: string, where: () => FindOptionsWhere<any>, ids: string[]]> = [
+	['LessThan(n)', () => ({ rank: LessThan(3) }), ['r1', 'r2']],
+	['LessThanOrEqual(n)', () => ({ rank: LessThanOrEqual(3) }), ['r1', 'r2', 'r3']],
+	['MoreThan(n)', () => ({ rank: MoreThan(3) }), ['r4']],
+	['MoreThanOrEqual(n)', () => ({ rank: MoreThanOrEqual(3) }), ['r3', 'r4']],
+	['Between(a, b)', () => ({ rank: Between(2, 3) }), ['r2', 'r3']],
+	['a range And(...) of LessThan and MoreThan', () => ({ rank: And(MoreThan(1), LessThan(4)) }), ['r2', 'r3']],
+	['LessThan(n) beside another condition', () => ({ rank: LessThan(4), name: Not(In(['alpha'])) }), ['r2', 'r3']]
+];
+
 /** The ids a read answered, sorted. */
 const idsOf = (rows: ReadonlyArray<{ id: string }>): string[] => rows.map((row) => row.id).sort();
 
@@ -215,6 +234,24 @@ describe('a negated predicate selects the same rows on both ORMs', () => {
 	it.each(CASES)('%s', async (_label, where, ids) => {
 		expect(idsOf(await typeOrmRows.find({ where: where() }))).toEqual(ids);
 		expect(idsOf(await orm.em.fork().find(NegationRow, mikroOrmWhere(where())))).toEqual(ids);
+	});
+
+	it.each(COMPARISONS)('a bare comparison selects the same rows on both ORMs: %s', async (_label, where, ids) => {
+		expect(idsOf(await typeOrmRows.find({ where: where() }))).toEqual(ids);
+		expect(idsOf(await orm.em.fork().find(NegationRow, mikroOrmWhere(where())))).toEqual(ids);
+	});
+
+	it('deletes by LessThan exactly the rows it selects, on both ORMs — the cleanup sweep’s shape', async () => {
+		// The failure §5 item 1 named: with the operator dropped, the delete's predicate vanished and the sweep
+		// removed rows that were still inside their window. `r3`, `r4` and the NULL row must survive on both stores.
+		const expired = () => ({ rank: LessThan(3) });
+
+		await expect(typeOrmRows.delete(expired())).resolves.toMatchObject({ affected: 2 });
+		await expect(orm.em.fork().nativeDelete(NegationRow, mikroOrmWhere(expired()))).resolves.toBe(2);
+
+		const left = 'SELECT id FROM negation_row ORDER BY id';
+		expect(idsOf(await dataSource.query(left))).toEqual(['r3', 'r4', 'r5']);
+		expect(idsOf(await orm.em.getConnection().execute(left))).toEqual(['r3', 'r4', 'r5']);
 	});
 
 	it('counts, updates and deletes by the system-role guard as it selects, on both ORMs', async () => {
