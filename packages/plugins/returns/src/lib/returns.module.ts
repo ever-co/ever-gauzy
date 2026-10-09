@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EventOutboxModule, FeatureModule, RolePermissionModule, SequenceModule } from '@gauzy/core';
+import {
+	EventOutboxModule,
+	FeatureModule,
+	GraphqlSubscriptionModule,
+	RolePermissionModule,
+	SequenceModule
+} from '@gauzy/core';
 import { resolvers } from './graphql/resolvers';
 import { OrderClaimLine } from './order-claim-line/order-claim-line.entity';
 import { OrderClaimLineController } from './order-claim-line/order-claim-line.controller';
@@ -38,6 +44,7 @@ import { OrderReturnController } from './order-return/order-return.controller';
 import { OrderReturnService } from './order-return/order-return.service';
 import { MikroOrmOrderReturnRepository } from './order-return/repository/mikro-orm-order-return.repository';
 import { TypeOrmOrderReturnRepository } from './order-return/repository/type-orm-order-return.repository';
+import { ReturnsStreamedEvents } from './returns-streamed-events';
 
 /** Every entity this plugin owns, in dependency order, as one array. */
 export const ALL_RETURNS_ENTITIES = [
@@ -84,10 +91,13 @@ export const ALL_RETURNS_ENTITIES = [
 		// Every `return.*` event is appended by the same call that commits the move it describes, so the
 		// module that owns the outbox row is imported here. An event published after a commit is an
 		// event a crash loses, and the outbox is a table precisely so that it is not.
-		EventOutboxModule
+		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `ReturnsStreamedEvents`.
+		GraphqlSubscriptionModule
 	],
 	providers: [
 		OrderReturnService,
+		ReturnsStreamedEvents,
 		OrderReturnLineService,
 		OrderReturnReasonService,
 		OrderClaimService,

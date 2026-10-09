@@ -3,7 +3,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Seller } from './seller/seller.entity';
 import { SellerOffering } from './seller-offering/seller-offering.entity';
 import { SellerTransaction } from './seller-transaction/seller-transaction.entity';
-import { AdjustmentModule, EventOutboxModule, RolePermissionModule } from '@gauzy/core';
+import { AdjustmentModule, EventOutboxModule, GraphqlSubscriptionModule, RolePermissionModule } from '@gauzy/core';
 import { Module } from '@nestjs/common';
 import { SellerModule } from './seller/seller.module';
 import { SellerOfferingModule } from './seller-offering/seller-offering.module';
@@ -19,6 +19,7 @@ import { resolvers } from './graphql/resolvers';
 import { TypeOrmSellerRepository } from './seller/repository/type-orm-seller.repository';
 import { TypeOrmSellerOfferingRepository } from './seller-offering/repository/type-orm-seller-offering.repository';
 import { TypeOrmSellerTransactionRepository } from './seller-transaction/repository/type-orm-seller-transaction.repository';
+import { MarketplaceStreamedEvents } from './marketplace-streamed-events';
 
 /**
  * The marketplace, as one module the plugin registers.
@@ -40,6 +41,8 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 		// the ledger a second time.
 		AdjustmentModule,
 		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `MarketplaceStreamedEvents`.
+		GraphqlSubscriptionModule,
 		// The resolver provided below carries the platform's permission guards, and a guard is resolved
 		// in the context of the module that hosts the handler it protects — so the module that hosts the
 		// resolver has to reach the permission service the guard asks for. The aggregate modules import
@@ -54,6 +57,7 @@ import { TypeOrmSellerTransactionRepository } from './seller-transaction/reposit
 	],
 	providers: [
 		SellerCommissionService,
+		MarketplaceStreamedEvents,
 		SellerSplitService,
 		SellerFundingService,
 		// The resolver below carries the seller access guard the controllers carry, and an enhancer is

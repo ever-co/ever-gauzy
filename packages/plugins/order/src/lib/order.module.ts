@@ -5,6 +5,7 @@ import {
 	AdjustmentModule,
 	ChannelModule,
 	EventOutboxModule,
+	GraphqlSubscriptionModule,
 	IdempotencyModule,
 	Product,
 	ProductTranslation,
@@ -18,6 +19,7 @@ import { PricingModule } from '@gauzy/plugin-pricing';
 import { TaxModule } from '@gauzy/plugin-tax';
 import { ALL_ORDER_ENTITIES } from './entities';
 import { ORDER_AGGREGATE_WRITER } from './order.types';
+import { OrderStreamedEvents } from './order-streamed-events';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
 import { TypeOrmOrderRepository } from './order/repository/type-orm-order.repository';
@@ -129,12 +131,15 @@ import { SubscriptionOrderService } from './subscription-order/subscription-orde
 		// after the fact through a bus — an event published after a commit is an event a crash loses, and
 		// the outbox exists precisely so that it is not.
 		EventOutboxModule,
+		// The subscription catalogue this package's outbox events are declared with — see `OrderStreamedEvents`.
+		GraphqlSubscriptionModule,
 		PricingModule,
 		TaxModule,
 		CartModule
 	],
 	providers: [
 		OrderService,
+		OrderStreamedEvents,
 		{
 			provide: ORDER_AGGREGATE_WRITER,
 			useExisting: OrderService
