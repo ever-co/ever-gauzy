@@ -266,7 +266,17 @@ function repository(rows: Row[], options: { onSave?: (entity: Row) => void } = {
 
 			return { affected: matching.length };
 		},
-		delete: async () => ({ affected: 0 })
+		// A hard delete removes the rows it matches, so a suite can see what a removal took and what it left.
+		delete: async (criteria: any) => {
+			const where = typeof criteria === 'string' ? { id: criteria } : criteria;
+			const matching = rows.filter((row) => matches(row, where));
+
+			for (const row of matching) {
+				rows.splice(rows.indexOf(row), 1);
+			}
+
+			return { affected: matching.length };
+		}
 	};
 }
 
@@ -761,5 +771,80 @@ describe('SubscriptionBillingService — a cycle that is not the caller’s is n
 
 		await expect(fixture.service.findOneScoped(billing.id)).rejects.toBeInstanceOf(NotFoundException);
 		expect(await fixture.service.findByPeriod(SUBSCRIPTION, PERIOD_START)).toBeNull();
+	});
+});
+
+/**
+ * `DELETE /subscription-billings/:id` reached the generic hard delete (handover 2026-09-20 §7.65 item 23 (d)),
+ * while doc 13 §11.4 names `subscription_billing` in its "soft delete only; no hard delete through the API" row.
+ * The route is unchanged; the service refuses to destroy a cycle that records money billed and still removes a
+ * schedule entry nothing has billed.
+ */
+describe('SubscriptionBillingService — a cycle that records money billed is not hard-deleted (doc 13 §11.4)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The generic delete the route reached before the guard, called past it, for the control. */
+	const genericDelete = (service: SubscriptionBillingService, id: string) =>
+		(Object.getPrototypeOf(SubscriptionBillingService.prototype) as { delete: Function }).delete.call(service, id);
+
+	it('control: the generic delete destroyed a paid cycle and its money history with it', async () => {
+		const fixture = billingFixture([
+			billingRow('billing-paid', { status: SubscriptionBillingStatus.PAID, orderId: 'order-1', paidAt: new Date() })
+		]);
+
+		await expect(genericDelete(fixture.service, 'billing-paid')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.billing('billing-paid')).toBeUndefined();
+	});
+
+	it.each([
+		['an invoiced cycle', { status: SubscriptionBillingStatus.INVOICED, orderId: 'order-1' }],
+		['a paid cycle', { status: SubscriptionBillingStatus.PAID, orderId: 'order-1', paidAt: new Date() }],
+		['a failed cycle', { status: SubscriptionBillingStatus.FAILED, attemptCount: 2 }],
+		['a refunded cycle', { status: SubscriptionBillingStatus.REFUNDED, orderId: 'order-1' }],
+		['a waived cycle', { status: SubscriptionBillingStatus.WAIVED }],
+		['a pending cycle a charge attempt already reached', { status: SubscriptionBillingStatus.PENDING, attemptCount: 1 }],
+		['a pending cycle that already has an order', { status: SubscriptionBillingStatus.PENDING, orderId: 'order-1' }]
+	])('refuses to hard-delete %s, and keeps the row', async (_label, overrides) => {
+		const fixture = billingFixture([billingRow('billing-1', overrides)]);
+
+		await expect(fixture.service.delete('billing-1')).rejects.toMatchObject({
+			status: 409,
+			response: {
+				code: 'SUBSCRIPTION_BILLING_NOT_DELETABLE',
+				details: { subscriptionBillingId: 'billing-1', status: overrides.status }
+			}
+		});
+		expect(fixture.billing('billing-1')).toBeDefined();
+	});
+
+	it('still removes a pending cycle nothing has billed, which is a schedule entry rather than history', async () => {
+		const fixture = billingFixture([billingRow('billing-pending')]);
+
+		await expect(fixture.service.delete('billing-pending')).resolves.toMatchObject({ affected: 1 });
+		expect(fixture.billing('billing-pending')).toBeUndefined();
+	});
+
+	it('leaves the soft delete free to retire a billed cycle, keeping its row as history', async () => {
+		const fixture = billingFixture([
+			billingRow('billing-paid', { status: SubscriptionBillingStatus.PAID, orderId: 'order-1', paidAt: new Date() })
+		]);
+
+		await fixture.service.softDelete('billing-paid' as never);
+
+		expect(fixture.billing('billing-paid')).toMatchObject({ deletedAt: expect.any(Date), status: SubscriptionBillingStatus.PAID });
+	});
+
+	it('answers a cycle of another organization exactly as before: the guard does not read it, the base class decides', async () => {
+		const fixture = billingFixture([
+			billingRow('billing-elsewhere', { organizationId: OTHER_ORG, status: SubscriptionBillingStatus.PAID })
+		]);
+
+		// No refusal names a row the caller cannot read; the call reaches the base class as it always did.
+		await expect(fixture.service.delete('billing-elsewhere')).resolves.toBeDefined();
 	});
 });
