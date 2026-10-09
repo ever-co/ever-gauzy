@@ -1,4 +1,4 @@
-// The email-templates sheet `@use`s the theme module, which keeps it private to
+// The `template-editor` sheet `@use`s the theme module, which keeps it private to
 // that file — `@use`ing that sheet here re-emits its CSS but does NOT bring
 // `nb-theme` into this file's scope. Sass passes an unknown function through as
 // plain CSS, so the two rules at the bottom of this file shipped as the literal
@@ -6,10 +6,10 @@
 // selects lost their background, and — the visible one — the rendered template
 // preview never had `color: text-basic-color` applied, so it kept the seeded
 // HTML's own near-black text on the dark themes' dark panel. Hence `@use
-// 'themes'` as well; the email-templates `@use` is here purely for its CSS (it
+// 'themes'` as well; the `template-editor` `@use` is here purely for its CSS (it
 // exports no Sass members) and must stay.
 @use 'themes' as *;
-@use '../email-templates/email-templates.component' as *;
+@use 'template-editor' as *;
 
 // This page carried two `!important` height overrides — `calc($height + 3.5rem)`
 // on the Ace editor and `calc($height + 1.3rem)` on the preview box — which

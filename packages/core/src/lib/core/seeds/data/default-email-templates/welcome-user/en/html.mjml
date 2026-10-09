@@ -1,37 +1,53 @@
 <mjml>
-	<mj-body background-color="#fff">
-		<mj-section>
-			<mj-column>
+	<mj-head>
+		<mj-attributes>
+			<mj-all font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"></mj-all>
+			<mj-text color="#3d4459" font-size="16px" line-height="26px" padding="0 32px"></mj-text>
+		</mj-attributes>
+	</mj-head>
+	<mj-body background-color="#f4f5f8" width="600px">
+		<mj-section padding="32px 16px 0">
+			<mj-column background-color="#ffffff" border="1px solid #e6e8ee" border-radius="12px" padding="32px 0 24px">
 				<mj-image
-					width="100px"
+					width="110px"
+					align="left"
+					padding="0 32px"
 					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
-					border-width="1px"
+					border-width="2px"
+					width="48px"
+					align="left"
+					padding="24px 32px"
 				></mj-divider>
-				<mj-text font-size="20px" font-family="helvetica">
+				<mj-text color="#1b005d" font-size="24px" font-weight="700" line-height="32px" padding="0 32px 16px">
 					Welcome to {{appName}}!
 				</mj-text>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>Dear {{email}},</p>
-					<p style="line-height: 1.5rem">
+				<mj-text>
+					<p style="margin: 0 0 16px">Dear {{email}},</p>
+					<p style="margin: 0 0 16px">
 						Thank you for your registration in {{appName}} -
 						Open-Source Business Management Platform (ERP/CRM/HRM).
 					</p>
-					<p>We are happy to have you on board!</p>
-					<p>Best regards,</p>
-					<p>{{appSignature}}</p>
+					<p style="margin: 0 0 24px">We are happy to have you on board!</p>
+					<p style="margin: 0">Best regards,</p>
+					<p style="margin: 4px 0 0; color: #1b005d; font-weight: 600">{{appSignature}}</p>
 				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section padding="0 16px 32px">
+			<mj-column>
 				<mj-divider
-					border-color="#1B005D"
+					border-color="#e6e8ee"
 					border-width="1px"
+					padding="24px 32px 16px"
 				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica">
+				<mj-text align="center" color="#8a91a5" font-size="12px" line-height="18px">
 					© 2019,
-					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
+					<a href="{{appLink}}" style="color: #598bff; text-decoration: none">{{appName}}</a>
 					by
-					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
+					<a href="{{companyLink}}" style="color: #598bff; text-decoration: none">{{companyName}}</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>
