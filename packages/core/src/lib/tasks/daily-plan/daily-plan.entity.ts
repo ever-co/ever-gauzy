@@ -15,6 +15,12 @@ import {
 import { Employee, OrganizationTeam, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 
+/**
+ * Creating a plan looks up the employee's plan for that day in that team, and removing a task from
+ * upcoming plans reads the employee's plans from today on: `(employeeId, organizationTeamId, date)`
+ * serves both. Created by `AddDailyPlanEmployeeTeamDateIndex1790000023000`.
+ */
+@ColumnIndex('IDX_daily_plan_employee_team_date', ['employeeId', 'organizationTeamId', 'date'])
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })
 export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPlan {
 	[EntityRepositoryType]?: MikroOrmDailyPlanRepository;
