@@ -522,7 +522,7 @@ const CHANNEL_REGION_FOREIGN_KEYS: readonly ForeignKeyDefinition[] = [
 		target: 'channel',
 		constraint: 'FK_channel_warehouse_channel',
 		onDelete: 'CASCADE',
-		origin: '1791000000160-CreateInventoryTables.ts'
+		origin: '1791000000161-CreateInventoryTables.ts'
 	},
 	{
 		table: 'pick_wave',

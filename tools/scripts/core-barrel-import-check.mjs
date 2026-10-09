@@ -32,6 +32,26 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const LIB = join(ROOT, 'packages', 'core', 'src', 'lib');
 const BARREL_DIR = join(LIB, 'core');
 
+/**
+ * Kernel files that keep a barrel import because they must not be edited, keyed by repository path.
+ *
+ * A migration that has shipped is immutable: installations have recorded it as run, and its text is part of
+ * the history every database was built from. These are not exceptions to the rule's reason either. TypeORM
+ * requires a migration file only when a data source initialises, and both entry points that do so —
+ * `bootstrap/index.ts` (the API) and `database/migration-executor.ts` (the CLI, through `../bootstrap`) —
+ * import `AppModule` statically first, so by the time a migration asks for `../../core` the whole graph has
+ * finished evaluating and the import reads the module cache rather than opening a cycle.
+ *
+ * An entry needs a reason, and the check fails when the file no longer imports the barrel, so the list cannot
+ * outlive what it excuses. A new file is never added here: it imports the sub-module instead.
+ */
+const SHIPPED = new Map([
+	[
+		'packages/core/src/lib/database/migrations/1680622389221-SeedDafaultGlobalIssueType.ts',
+		'shipped migration (2023); loaded by TypeORM after AppModule has been evaluated, so the import is a cache read'
+	]
+]);
+
 /** Every `from '<spec>'` and `import '<spec>'`, including multi-line imports. */
 const IMPORT = /(?:from|import)\s+['"]([^'"]+)['"]/g;
 
@@ -58,10 +78,12 @@ function sources(directory) {
 }
 
 const violations = [];
+const excused = new Set();
 let checked = 0;
 
 for (const file of sources(LIB)) {
 	const text = readFileSync(file, 'utf8');
+	const path = relative(ROOT, file).split(sep).join('/');
 
 	for (const match of text.matchAll(IMPORT)) {
 		const specifier = match[1];
@@ -72,9 +94,22 @@ for (const file of sources(LIB)) {
 
 		// A relative import that resolves to the `lib/core` directory itself is the barrel.
 		if (resolve(dirname(file), specifier) === BARREL_DIR) {
+			if (SHIPPED.has(path)) {
+				excused.add(path);
+				continue;
+			}
+
 			const line = text.slice(0, match.index).split('\n').length;
-			violations.push(`${relative(ROOT, file).split(sep).join('/')}:${line}  imports '${specifier}'`);
+			violations.push(`${path}:${line}  imports '${specifier}'`);
 		}
+	}
+}
+
+// An entry whose file no longer imports the barrel (or no longer exists) excuses nothing, and is reported so it
+// is removed rather than left to excuse a future import.
+for (const path of SHIPPED.keys()) {
+	if (!excused.has(path)) {
+		violations.push(`${path}  is listed in SHIPPED but no longer imports the barrel; remove the entry`);
 	}
 }
 
@@ -94,5 +129,5 @@ if (violations.length) {
 
 console.log(
 	`core barrel import check: PASSED — ${checked} relative import(s) across the kernel's non-spec sources, and none ` +
-		'of them loads the lib/core barrel.'
+		`of them loads the lib/core barrel beyond the ${SHIPPED.size} shipped file(s) listed in SHIPPED.`
 );
