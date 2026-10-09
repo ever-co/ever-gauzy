@@ -22,17 +22,27 @@ $control-height: 2rem;
 // inside it, so no scrollbar lands on the page itself. A definite height all the way
 // down is also what Ace needs — its DOM is absolutely positioned, so an editor in an
 // auto-height box measures 0 tall (the empty "Email Body" this replaces).
+//
+// The height comes from the parent, not the viewport: the page renders inside the
+// settings shell's `.settings-content` (`height: 100%`), so `height: 100%` on the host
+// and the form hands the card exactly the content area. A `100vh - header - footer`
+// guess also had to count the layout column's padding, and was taller than the area
+// whenever it missed some — leaving a page scrollbar next to the pane scrollbars.
 :host {
   display: block;
+  height: 100%;
 }
 
 .main-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   margin: 0;
 }
 
 .email-templates-card {
-  height: calc(100vh - #{nb-theme(header-height)} - #{nb-theme(footer-height)} - 0.5rem);
-  min-height: 30rem;
+  flex: 1 1 auto;
+  min-height: 0;
   margin-bottom: 0;
   background: var(--gauzy-card-2, var(--background-basic-color-2));
 }
@@ -340,17 +350,25 @@ $thumb-scale: 0.34;
 }
 
 // ── Workspace ───────────────────────────────────────────────────────────
+// A pane never gets shorter than $pane-min-height: its header, the subject field and
+// the 10rem minimum of the body editor. When the card is too short for that the
+// workspace scrolls, instead of the editor's frame clipping the bottom of Ace (and
+// its scrollbar) out of sight.
+$pane-min-height: 21rem;
+
 .workspace {
   display: grid;
   flex: 1 1 auto;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax($pane-min-height, 1fr);
   gap: 0.75rem;
   min-height: 0;
+  overflow-y: auto;
 
   // Narrow card: editor on top, preview below, each half the height.
   @container email-templates (max-width: 48rem) {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax($pane-min-height, 1fr) minmax($pane-min-height, 1fr);
   }
 }
 

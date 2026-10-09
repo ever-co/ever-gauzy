@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, inject, Input, OnInit, Renderer2 } from '@angular/core';
 
 /**
  * Renders a full HTML document (a rendered email) inside an `<iframe>` without turning
@@ -15,6 +15,9 @@ import { Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 	standalone: false
 })
 export class SandboxedSrcdocDirective implements OnInit {
+	private readonly elementRef = inject<ElementRef<HTMLIFrameElement>>(ElementRef);
+	private readonly renderer = inject(Renderer2);
+
 	@Input('gaSandboxedSrcdoc') set document(html: string | null) {
 		this.html = html ?? '';
 		if (this.sandboxed) {
@@ -24,8 +27,6 @@ export class SandboxedSrcdocDirective implements OnInit {
 
 	private html = '';
 	private sandboxed = false;
-
-	constructor(private readonly elementRef: ElementRef<HTMLIFrameElement>, private readonly renderer: Renderer2) {}
 
 	ngOnInit() {
 		this.renderer.setAttribute(this.elementRef.nativeElement, 'sandbox', '');

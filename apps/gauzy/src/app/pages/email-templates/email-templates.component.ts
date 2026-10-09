@@ -242,10 +242,12 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 			failed: false
 		}));
 
-		const queue = [...this.gridCards];
+		const cards = this.gridCards;
+		// Index of the next card to load, shared by the workers.
+		let next = 0;
 		const worker = async () => {
-			while (queue.length && run === this.gridRun) {
-				const card = queue.shift();
+			while (next < cards.length && run === this.gridRun) {
+				const card = cards[next++];
 				try {
 					const { subject, template } = await this.emailTemplateService.getTemplate({
 						languageCode,
@@ -253,6 +255,10 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 						organizationId,
 						tenantId
 					});
+					// The page may have been left, or the grid reloaded, while this was in flight.
+					if (run !== this.gridRun) {
+						return;
+					}
 					const [{ html: subjectHtml }, { html: bodyHtml }] = await Promise.all([
 						this.emailTemplateService.generateTemplatePreview(subject),
 						this.emailTemplateService.generateTemplatePreview(template)
@@ -318,5 +324,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		// Stops any grid load still running: its workers check the run between requests.
+		this.gridRun++;
+	}
 }
