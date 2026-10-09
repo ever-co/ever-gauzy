@@ -35,7 +35,12 @@ export type AccountingTemplatesViewMode = 'grid' | 'editor';
 /** One tile of the template grid: a thumbnail of the rendered template. */
 export interface AccountingTemplateCard {
 	name: AccountingTemplateTypeEnum;
-	/** Raw rendered template; only ever written into a sandboxed iframe by `SandboxedSrcdocDirective`. */
+	/** Rendered template as returned by the API. */
+	source: string | null;
+	/**
+	 * `source` plus the current theme's colours; only ever written into a sandboxed
+	 * iframe by `SandboxedSrcdocDirective`.
+	 */
 	html: string | null;
 	/** The organization has no template of this type in this language. */
 	empty: boolean;
@@ -127,6 +132,8 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 			.pipe(untilDestroyed(this))
 			.subscribe(({ name }: { name: string }) => {
 				this.templateEditor.setTheme(DARK_CANVAS_THEMES.has(name) ? 'tomorrow_night' : 'sqlserver');
+				// The theme's CSS variables switch with the body class; read them after it lands.
+				setTimeout(() => this.rethemeThumbnails());
 			});
 
 		const editorOptions = {
@@ -267,6 +274,7 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 
 		this.gridCards = this.templateTypes.map((name) => ({
 			name: name as AccountingTemplateTypeEnum,
+			source: null,
 			html: null,
 			empty: false,
 			failed: false
@@ -295,7 +303,12 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 				if (run !== this.gridRun) {
 					return;
 				}
-				card.html = html;
+				const source = await this.inlineAppImages(html);
+				if (run !== this.gridRun) {
+					return;
+				}
+				card.source = source;
+				card.html = this.themeThumbnail(source);
 			} catch {
 				card.failed = true;
 			}
@@ -303,6 +316,93 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 		// A failed load may be retried by toggling the grid again.
 		if (run === this.gridRun && this.gridCards.some((card) => card.failed)) {
 			this.gridKey = null;
+		}
+	}
+
+	/**
+	 * Embeds the template's own images (the organization logo, `assets/images/...`) as
+	 * data URLs.
+	 *
+	 * The sandboxed thumbnail has an opaque origin, so it cannot resolve the relative path,
+	 * and even an absolute app URL is a cross-site request from it, which the dev server
+	 * answers with 403. Fetching from the page (same origin) and inlining the result keeps
+	 * the frame fully sandboxed. Images on other hosts are left as they are; a failed fetch
+	 * leaves that image unchanged.
+	 */
+	private async inlineAppImages(html: string): Promise<string> {
+		const sources = new Set<string>();
+		for (const match of html.matchAll(/<img\b[^>]*?\ssrc="([^"]+)"/gi)) {
+			sources.add(match[1]);
+		}
+		let result = html;
+		for (const src of sources) {
+			if (src.startsWith('data:')) {
+				continue;
+			}
+			const url = new URL(src, document.baseURI);
+			if (url.origin !== location.origin) {
+				continue;
+			}
+			const dataUrl = await this.toDataUrl(url.href);
+			if (dataUrl) {
+				result = result.split(`src="${src}"`).join(`src="${dataUrl}"`);
+			}
+		}
+		return result;
+	}
+
+	/** Cached per URL: the three templates share one logo. */
+	private readonly imageCache = new Map<string, Promise<string | null>>();
+
+	private toDataUrl(href: string): Promise<string | null> {
+		if (!this.imageCache.has(href)) {
+			const load = fetch(href)
+				.then((response) => (response.ok ? response.blob() : null))
+				.then(
+					(blob) =>
+						blob &&
+						new Promise<string | null>((resolve) => {
+							const reader = new FileReader();
+							reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+							reader.onerror = () => resolve(null);
+							reader.readAsDataURL(blob);
+						})
+				)
+				.catch(() => null);
+			this.imageCache.set(href, load);
+		}
+		return this.imageCache.get(href);
+	}
+
+	/**
+	 * Gives a grid thumbnail the same light / dark look as the Template Preview.
+	 *
+	 * The thumbnail lives in a sandboxed iframe, out of reach of the page's styles, so the
+	 * theme's colours are resolved here and written into the document as a style block.
+	 * `!important` beats the `color: #000000` MJML writes inline on every text block.
+	 */
+	private themeThumbnail(source: string): string {
+		const styles = getComputedStyle(document.body);
+		// Theme values only; anything that could close the rule or the tag is dropped.
+		const token = (name: string, fallback: string) =>
+			(styles.getPropertyValue(name).trim() || fallback).replace(/[^#\w\s(),.%-]/g, '');
+		const surface = token('--gauzy-card-1', token('--background-basic-color-1', '#ffffff'));
+		const text = token('--text-basic-color', '#222b45');
+		const link = token('--text-primary-color', text);
+		const hairline = token('--gauzy-border-default-color', token('--border-basic-color-3', '#e4e9f2'));
+		const style =
+			`<style>html,body{background:${surface} !important;}` +
+			`*{color:${text} !important;}a{color:${link} !important;}` +
+			`[style*="border"]{border-color:${hairline} !important;}</style>`;
+		return source.includes('</head>') ? source.replace('</head>', style + '</head>') : style + source;
+	}
+
+	/** Re-applies the current theme to the thumbnails already rendered. */
+	private rethemeThumbnails() {
+		for (const card of this.gridCards) {
+			if (card.source) {
+				card.html = this.themeThumbnail(card.source);
+			}
 		}
 	}
 

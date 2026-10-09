@@ -278,7 +278,8 @@ $thumb-scale: 0.34;
   margin: 1px 1px 0;
   overflow: hidden;
   border-radius: calc(#{$radius} - 1px) calc(#{$radius} - 1px) 0 0;
-  background: #ffffff;
+  // Same surface the themed thumbnail document paints, so no white edge shows.
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
 }
 
 .template-thumb-frame {
