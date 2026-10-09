@@ -150,7 +150,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 								THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, \`${logQueryAlias}\`.\`stoppedAt\`)
 								ELSE 0
 							END
-						) AS DECIMAL(10, 6)
+						) AS DECIMAL(20, 6)
 					)
 				`);
 				break;
