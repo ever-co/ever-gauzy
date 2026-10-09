@@ -24,6 +24,8 @@ on:
   push:
     branches:
       - develop
+  # Manual run on any branch, to check a branch before it lands (not a pull_request trigger).
+  workflow_dispatch:
   # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
   # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
   # trigger above runs the whole workflow when code lands on develop. To restore the PR trigger,

@@ -42,6 +42,9 @@ on:
       - develop
       - stage
       - master
+  # Manual run on any branch (e.g. a long-lived feature branch before it is merged): not a pull_request
+  # trigger, so the owner's "a PR into develop starts no workflow" decision above is unchanged.
+  workflow_dispatch:
 
 # Unique to this workflow and ref. Deliberately NOT a group shared with other workflows: a shared
 # group serializes unrelated builds and silently cancels them (see the image-build starvation
