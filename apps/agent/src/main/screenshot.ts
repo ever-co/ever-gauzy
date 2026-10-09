@@ -12,7 +12,8 @@ type TArgScreen = {
 		height: number
 	},
 	activeWindow: {
-		id: number
+		id: number,
+		index?: number
 	}
 }
 
@@ -55,32 +56,32 @@ export async function getScreenshot(args: TArgScreen): Promise<TScreenShot[]> {
 			thumbnailSize: args.screenSize
 		});
 
-		const screens = [];
+		let selected = sources;
+		if (monitor?.captured === 'active-only') {
+			const matched = args.activeWindow
+				? sources.filter((source) => source.display_id === args.activeWindow.id.toString())
+				: [];
+			// `display_id` is empty on some Linux setups (X11 as well as Wayland), so the active monitor
+			// can never be matched and "active-only" silently produced no screenshot at all (#7771).
+			// Only trust the filter when it actually matched. Otherwise still capture ONE monitor, never
+			// every monitor the user chose not to capture: the source at the active display's index
+			// (desktopCapturer lists screens in display order), else the first one.
+			const fallback = sources[args.activeWindow?.index ?? 0] ?? sources[0];
+			selected = matched.length > 0 ? matched : fallback ? [fallback] : [];
+		}
 
-		sources.forEach((source) => {
-			if (monitor?.captured === 'active-only') {
-				if (args.activeWindow && source.display_id === args.activeWindow.id.toString()) {
-					const fullScreen = sourcesFull.find((src) => src.id === source.id);
-					if (fullScreen) {
-						screens.push({
+		const screens = selected.flatMap((source) => {
+			const fullScreen = sourcesFull.find((src) => src.id === source.id);
+			return fullScreen
+				? [
+						{
 							img: source.thumbnail.toPNG(),
 							name: source.name,
 							id: source.display_id,
 							fullScreen: fullScreen.thumbnail.toPNG()
-						});
-					}
-				}
-			} else {
-				const fullScreen = sourcesFull.find((src) => src.id === source.id);
-				if (fullScreen) {
-					screens.push({
-						img: source.thumbnail.toPNG(),
-						name: source.name,
-						id: source.display_id,
-						fullScreen: fullScreen.thumbnail.toPNG()
-					});
-				}
-			}
+						}
+				  ]
+				: [];
 		});
 		const imgs: TScreenShot[] = await Promise.all(screens.map((buffer) => saveTempImage(buffer)));
 		return imgs;

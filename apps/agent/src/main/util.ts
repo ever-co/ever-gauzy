@@ -108,14 +108,15 @@ export function getScreen() {
 		// Fallback to primary monitor to keep the agent running
 		const primary = screen.getPrimaryDisplay();
 		return {
-			activeWindow: { id: primary.id },
+			activeWindow: { id: primary.id, index: displays.findIndex((display) => display.id === primary.id) },
 			screenSize: primary.workAreaSize
 		};
 	}
 
-	// const displayIndex = displays.indexOf(currentDisplay);
+	// The index is the screenshot fallback when desktopCapturer reports no usable display_id:
+	// it lists screens in display order, so the source at this index is the best guess.
 	return {
-		activeWindow: { id: currentDisplay.id },
+		activeWindow: { id: currentDisplay.id, index: displays.indexOf(currentDisplay) },
 		screenSize: screen.getPrimaryDisplay().workAreaSize
 	}
 }
