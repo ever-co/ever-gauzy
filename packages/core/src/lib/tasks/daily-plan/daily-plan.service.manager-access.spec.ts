@@ -1,7 +1,7 @@
 import '../../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { DailyPlanService } from './daily-plan.service';
@@ -165,6 +165,88 @@ describe('DailyPlanService manager access', () => {
 			expect(repository.findOneOrFail).not.toHaveBeenCalled();
 			expect(managedEmployeeService.canManageEmployee).not.toHaveBeenCalled();
 			expect(repository.save).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('delete', () => {
+		let deleteMock: jest.Mock;
+
+		beforeEach(() => {
+			deleteMock = jest.fn(async () => ({ affected: 1, raw: [] }));
+			(repository as any).delete = deleteMock;
+		});
+
+		it('authorizes against the stored plan and deletes it without the caller employee filter', async () => {
+			plan.organizationTeamId = TEAM_ID;
+
+			await inRequest(async () => {
+				await expect(service.delete(PLAN_ID)).resolves.toEqual({ affected: 1, raw: [] });
+
+				expect(managedEmployeeService.canManageEmployee).toHaveBeenCalledWith(MEMBER_ID, TEAM_ID, ORGANIZATION_ID);
+				expect(deleteMock).toHaveBeenCalledTimes(1);
+				const criteria = deleteMock.mock.calls[0][0];
+				expect(criteria).toEqual(expect.objectContaining({ id: PLAN_ID, tenantId: TENANT_ID }));
+				expect(criteria.employeeId).toBeUndefined();
+				expect(criteria.employee).toBeUndefined();
+				// The bypass is closed again once the delete is done.
+				expect(service['findConditionsWithEmployeeByUser']()).toEqual(MANAGER_FILTER);
+			});
+		});
+
+		it('answers 404 and deletes nothing when the caller cannot manage the plan owner', async () => {
+			managedEmployeeService.canManageEmployee.mockResolvedValue(false);
+
+			await inRequest(async () => {
+				await expect(service.delete(PLAN_ID)).rejects.toBeInstanceOf(NotFoundException);
+				expect(deleteMock).not.toHaveBeenCalled();
+			});
+		});
+
+		it('answers the same 404 for a plan that does not exist, without consulting the manager check', async () => {
+			repository.findOneOrFail.mockRejectedValue(new Error('EntityNotFound'));
+
+			await inRequest(async () => {
+				await expect(service.delete(PLAN_ID)).rejects.toBeInstanceOf(NotFoundException);
+				expect(managedEmployeeService.canManageEmployee).not.toHaveBeenCalled();
+				expect(deleteMock).not.toHaveBeenCalled();
+			});
+		});
+
+		it('answers 404 instead of 200 when the delete matched no row', async () => {
+			deleteMock.mockResolvedValue({ affected: 0, raw: [] });
+
+			await inRequest(async () => {
+				await expect(service.delete(PLAN_ID)).rejects.toBeInstanceOf(NotFoundException);
+			});
+		});
+
+		it('refuses an id combined with where conditions before reading anything', async () => {
+			await inRequest(async () => {
+				await expect(service.delete(PLAN_ID, { where: { id: TASK_ID } } as any)).rejects.toBeInstanceOf(
+					BadRequestException
+				);
+				expect(repository.findOneOrFail).not.toHaveBeenCalled();
+				expect(deleteMock).not.toHaveBeenCalled();
+			});
+		});
+	});
+
+	it('refuses the bulk task removal for an employee the caller cannot manage, before querying', async () => {
+		managedEmployeeService.canManageEmployee.mockResolvedValue(false);
+		const createQueryBuilder = jest.fn();
+		(repository as any).createQueryBuilder = createQueryBuilder;
+
+		await inRequest(async () => {
+			await expect(
+				service.removeTaskFromManyPlans(TASK_ID, {
+					employeeId: MEMBER_ID,
+					organizationId: ORGANIZATION_ID,
+					plansIds: []
+				} as any)
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			expect(managedEmployeeService.canManageEmployee).toHaveBeenCalledWith(MEMBER_ID, undefined, ORGANIZATION_ID);
+			expect(createQueryBuilder).not.toHaveBeenCalled();
 		});
 	});
 });
