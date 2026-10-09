@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, SecurityContext, TemplateRef, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmailTemplateEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
-import { NbThemeService } from '@nebular/theme';
+import { NbDialogService, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import 'brace';
@@ -67,7 +67,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly emailTemplateService: EmailTemplateService,
-		private readonly themeService: NbThemeService
+		private readonly themeService: NbThemeService,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -161,6 +162,14 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 
 		const { html } = await this.emailTemplateService.generateTemplatePreview(code);
 		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(html);
+	}
+
+	/**
+	 * Opens the rendered email at full size, so long templates can be read without
+	 * scrolling inside the side-by-side preview pane.
+	 */
+	openFullPreview(dialog: TemplateRef<unknown>) {
+		this.dialogService.open(dialog, { closeOnBackdropClick: true, hasScroll: false });
 	}
 
 	selectedLanguage(event) {

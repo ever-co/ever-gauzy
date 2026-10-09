@@ -111,6 +111,20 @@
               <label class="pane-title" for="previewEmail">
                 {{ 'EMAIL_TEMPLATES_PAGE.LABELS.EMAIL_PREVIEW' | translate }}
               </label>
+              <button
+                type="button"
+                class="full-preview-button"
+                nbButton
+                ghost
+                size="tiny"
+                status="basic"
+                [disabled]="!previewEmail"
+                [title]="'EMAIL_TEMPLATES_PAGE.FULL_PREVIEW' | translate"
+                (click)="openFullPreview(fullPreviewDialog)"
+              >
+                <nb-icon icon="expand-outline"></nb-icon>
+                {{ 'EMAIL_TEMPLATES_PAGE.FULL_PREVIEW' | translate }}
+              </button>
             </header>
             <div class="pane-body">
               <div class="preview-subject">
@@ -129,3 +143,34 @@
     </nb-card>
   </form>
 }
+
+<!-- ── Full-size preview popup ──────────────────────────────────────── -->
+<ng-template #fullPreviewDialog let-ref="dialogRef">
+  <nb-card class="full-preview-card">
+    <nb-card-header class="full-preview-header">
+      <div class="full-preview-heading">
+        <span class="full-preview-title">
+          {{ 'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' + form.get('name').value | translate }}
+        </span>
+        <span class="full-preview-subject">
+          <span class="field-label">{{ 'EMAIL_TEMPLATES_PAGE.LABELS.SUBJECT' | translate }}:</span>
+          <span [innerHtml]="previewSubject"></span>
+        </span>
+      </div>
+      <button
+        type="button"
+        nbButton
+        ghost
+        size="small"
+        status="basic"
+        [title]="'BUTTONS.CLOSE' | translate"
+        (click)="ref.close()"
+      >
+        <nb-icon icon="close-outline"></nb-icon>
+      </button>
+    </nb-card-header>
+    <nb-card-body class="full-preview-body">
+      <div class="email-paper full-preview-paper" [innerHtml]="previewEmail"></div>
+    </nb-card-body>
+  </nb-card>
+</ng-template>
