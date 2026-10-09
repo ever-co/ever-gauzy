@@ -1,7 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { GetReportMenuItemsInput, ID as Id, IPagination, UpdateReportMenuInput } from '@gauzy/contracts';
+import { GetReportMenuItemsInput, ID as Id, IPagination, RolesEnum, UpdateReportMenuInput } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -11,12 +11,14 @@ import {
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { FeatureFlagGuard } from '../shared/guards';
+import { RequestContext } from '../core/context';
+import { Roles } from '../shared/decorators';
+import { FeatureFlagGuard, RoleGuard, TenantPermissionGuard } from '../shared/guards';
 import { Report } from './report.entity';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
-import { ReportService } from './report.service';
-import { ReportCategoryService } from './report-category.service';
+import { IReportCreateInput, ReportService } from './report.service';
+import { IReportCategoryInput, ReportCategoryService } from './report-category.service';
 import { ReportOrganizationService } from './report-organization.service';
 
 /** The members `UpdateReportMenuInput` declares in the schema. */
@@ -24,6 +26,11 @@ export interface IUpdateReportMenuInput {
 	reportId: Id;
 	organizationId: Id;
 	isEnabled?: boolean;
+}
+
+/** The members `UpdateReportCategoryInput` declares in the schema. */
+export interface IUpdateReportCategoryInput extends IReportCategoryInput {
+	id: Id;
 }
 
 /**
@@ -226,5 +233,92 @@ export class ReportResolver {
 	@Mutation('updateReportMenu')
 	async updateReportMenu(@Args('input') input: IUpdateReportMenuInput): Promise<ReportOrganization> {
 		return await this.reportOrganizationService.updateReportMenu(input as UpdateReportMenuInput);
+	}
+
+	/**
+	 * The reports one organization's menu shows.
+	 *
+	 * The read `GET /report/menu-items` performs, through the same service method: the reports whose menu row
+	 * for the organization is enabled, active and not archived, read under the credential's tenant. Like that
+	 * route — and like `reports` beside it — the field states no permission: every signed-in member of an
+	 * organization loads its menu, so a grant here would refuse callers the route serves. The organization is
+	 * the argument when stated and the credential's otherwise. Every row is a menu entry by construction, so
+	 * `showInMenu` is `true` on each; the same selection is also `reports(filter: { showInMenu: { eq: true } })`,
+	 * and this field is the route's own spelling of it.
+	 */
+	@Query('reportMenuItems')
+	async reportMenuItems(
+		@Args('organizationId', { type: () => ID, nullable: true }) organizationId?: Id,
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<Report>> {
+		const options = {
+			organizationId: organizationId ?? RequestContext.currentOrganizationId() ?? undefined
+		} as GetReportMenuItemsInput;
+		const rows = (await this.reportService.getMenuItems(options)) as Report[];
+
+		return buildConnection<Report>({
+			rows: (rows ?? []).map((row) => Object.assign(row, { showInMenu: true })),
+			filterable: REPORT_FILTERABLE,
+			sortable: REPORT_SORTABLE,
+			defaultSort: REPORT_DEFAULT_SORT,
+			request: { filter, sort, page, first, after, last, before, limit, offset }
+		});
+	}
+
+	/**
+	 * Files one report into the platform-wide catalogue.
+	 *
+	 * The write `POST /report` performs, through the same service method, under the same guards and role on
+	 * the handler: `SUPER_ADMIN`, because the catalogue has no tenant and an entry here is offered to every
+	 * tenant's menu.
+	 */
+	@Mutation('createReport')
+	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	async createReport(@Args('input') input: IReportCreateInput): Promise<Report> {
+		return await this.reportService.createReport(input);
+	}
+
+	/**
+	 * Files one heading of the catalogue. Mirrors `POST /report/category`, `SUPER_ADMIN` only.
+	 */
+	@Mutation('createReportCategory')
+	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	async createReportCategory(@Args('input') input: IReportCategoryInput): Promise<ReportCategory> {
+		return await this.reportCategoryService.createCategory(input);
+	}
+
+	/**
+	 * Edits one heading of the catalogue. Mirrors `PUT /report/category/:id`, `SUPER_ADMIN` only; a member
+	 * left out is left as it is, and a category that is not there is refused.
+	 */
+	@Mutation('updateReportCategory')
+	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	async updateReportCategory(@Args('input') input: IUpdateReportCategoryInput): Promise<ReportCategory> {
+		const { id, ...changes } = input;
+
+		return await this.reportCategoryService.updateCategory(id, changes);
+	}
+
+	/**
+	 * Withdraws one heading of the catalogue — a soft delete, refused while a live report is filed under it.
+	 * Mirrors `DELETE /report/category/:id`, `SUPER_ADMIN` only, and answers `false` for a category that is not
+	 * there rather than claiming a removal that did not happen.
+	 */
+	@Mutation('deleteReportCategory')
+	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	async deleteReportCategory(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
+		return await this.reportCategoryService.withdrawCategory(id);
 	}
 }

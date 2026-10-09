@@ -173,10 +173,9 @@ input ReportCategorySort {
 The fields a report list may be narrowed by. `and` is the default; `or` requires any of its members
 and `not` excludes the rows that match it.
 
-`showInMenu` is filterable because that is how the delivered menu sub-route is expressed here: the
-reports the menu shows are this one list narrowed to `showInMenu: { eq: true }`, which is the same
-selection the menu route performs with its own join rather than a second root field over the same
-rows.
+`showInMenu` is filterable because the reports the menu shows are this one list narrowed to
+`showInMenu: { eq: true }` — the same selection the menu route performs with its own join, which
+`reportMenuItems` serves under the route's own name.
 
 There is no member for the organization. The catalogue row carries no organization column — the
 organization is a dimension of the *menu* row — so an organization filter here could only be
@@ -237,4 +236,47 @@ input UpdateReportMenuInput {
 	organizationId: ID!
 	"Whether the report is shown. Omit it to leave the row's own value as it is."
 	isEnabled: Boolean
+}
+
+"""
+What a `SUPER_ADMIN` states when it files a report into the platform-wide catalogue.
+
+`showInMenu` is not a member: it is computed per organization from that organization's menu rows.
+"""
+input CreateReportInput {
+	"The report's name, 1 to 255 characters."
+	name: String!
+	"The key a client routes by: lowercase words joined by single hyphens, not taken by a live report."
+	slug: String!
+	"What the report shows."
+	description: String
+	"The image the catalogue shows for it."
+	image: String
+	"The icon the menu shows for it."
+	iconClass: String
+	"The live category the report is filed under."
+	categoryId: ID!
+}
+
+"""
+What a `SUPER_ADMIN` states when it files a heading of the report catalogue.
+"""
+input CreateReportCategoryInput {
+	"The heading, 1 to 255 characters."
+	name: String!
+	"The icon the menu shows for it."
+	iconClass: String
+}
+
+"""
+What a `SUPER_ADMIN` states when it edits a heading of the report catalogue. A member left out is left
+as it is.
+"""
+input UpdateReportCategoryInput {
+	"The category to edit."
+	id: ID!
+	"The heading, 1 to 255 characters."
+	name: String
+	"The icon the menu shows for it."
+	iconClass: String
 }
