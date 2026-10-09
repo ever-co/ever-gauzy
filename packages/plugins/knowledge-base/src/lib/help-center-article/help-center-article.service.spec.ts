@@ -179,7 +179,7 @@ describe('HelpCenterArticleService.getArticlesByProjectId (MikroORM)', () => {
 			where: { organizationId: 'org-1' }
 		} as any);
 
-		expect(items.map((article: { id: string }) => article.id)).toEqual(['a-1', 'a-2']);
+		expect(items.map((article) => article.id)).toEqual(['a-1', 'a-2']);
 		expect(total).toBe(2);
 		// The filter is on the base query, so the cloned count query inherits it
 		expect(base.whereNull.mock.invocationCallOrder[0]).toBeLessThan(base.clone.mock.invocationCallOrder[0]);
