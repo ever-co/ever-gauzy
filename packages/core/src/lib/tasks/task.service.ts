@@ -815,7 +815,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const { where: advancedWhere } = parseTypeORMFindToMikroOrm<Task>({
 							where: this.buildAdvancedWhereCondition(filters, where)
 						});
-						const { teams: advancedTeams, ...advancedRest } = (advancedWhere ?? {}) as any;
+						const { teams: advancedTeams, ...advancedRest } = advancedWhere as any;
 						Object.assign(mikroWhere, advancedRest);
 						if (advancedTeams) {
 							mikroWhere.teams = { ...mikroWhere.teams, ...advancedTeams };
