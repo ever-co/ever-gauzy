@@ -69,6 +69,8 @@ jest.mock('@gauzy/core', () => {
 	}
 
 	return {
+		// The platform's own affected-row reader, which the counters' conditional write is decided with.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -109,6 +111,22 @@ jest.mock('@gauzy/core', () => {
 		}
 	};
 });
+
+/**
+ * The configuration reads the process environment at import time; the dialect a transaction runs on is
+ * read off the transaction itself, which the double below states.
+ */
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => false,
+	isPostgres: () => false,
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
 import { NotFoundException } from '@nestjs/common';
 import {
@@ -372,9 +390,43 @@ function lineFixture(
 		organization: [{ id: ORG, tenantId: TENANT, currency: 'USD' }]
 	};
 	const termRepository = repository(tables, 'vendor_product_term');
-	const manager = {
+	const manager: any = {
 		connection: { options: { type: 'postgres' } },
+		// A transaction over arrays: the work runs against this same manager, and its writes to the order
+		// lines are undone when it throws. The cases here are sequential, so no row lock is emulated.
+		transaction: async (run: (transactional: any) => Promise<any>) => {
+			const before = tables.purchase_order_line.map((row) => ({ ...row }));
+
+			try {
+				return await run(manager);
+			} catch (error) {
+				tables.purchase_order_line.splice(0, tables.purchase_order_line.length, ...before);
+
+				throw error;
+			}
+		},
+		// A conditional write is a WHERE: every member of its criteria has to hold for the row to change.
+		update: async (entity: unknown, criteria: any, partial: Row) => {
+			if (entity !== PurchaseOrderLine) {
+				throw new Error('the in-memory double was handed an entity it does not know');
+			}
+
+			const row = tables.purchase_order_line.find(
+				(one) =>
+					!one.deletedAt &&
+					Object.entries(criteria ?? {}).every(([field, expected]) => String(one[field] ?? '') === String(expected ?? ''))
+			);
+
+			if (row) {
+				Object.assign(row, partial);
+			}
+
+			return { affected: row ? 1 : 0 };
+		},
 		findOne: async (entity: unknown, findOptions: any = {}) => {
+			if (entity === PurchaseOrderLine) {
+				return repository(tables, 'purchase_order_line').findOne(findOptions);
+			}
 			if (entity === OrganizationVendor) {
 				return repository(tables, 'organization_vendor').findOne(findOptions);
 			}
@@ -1062,5 +1114,52 @@ describe('PurchaseOrderLineService — dating a line from the agreement it was p
 		const written = await fixture.service.applyLeadTimes(ORDER, new Date('2026-03-01T00:00:00.000Z'));
 
 		expect(written[0].expectedAt).toEqual(new Date('2026-02-01T00:00:00.000Z'));
+	});
+});
+
+/**
+ * The counters are moved under the line's lock and against its ceiling, conditionally on what was read
+ * (PR #10254 review: "Receipts can exceed ordered quantities").
+ */
+describe('PurchaseOrderLineService — the guarded move of the received counters', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('sums the changes that name one line before measuring them against its ceiling', async () => {
+		const fixture = lineFixture({ lines: [lineRow('line-1')] });
+
+		await expect(
+			fixture.service.claimReceiptDeltas([
+				{ lineId: 'line-1', purchaseOrderId: ORDER, receivedQuantity: '6', damagedQuantity: '0', ceiling: '10' },
+				{ lineId: 'line-1', purchaseOrderId: ORDER, receivedQuantity: '6', damagedQuantity: '0', ceiling: '10' }
+			])
+		).rejects.toThrow(new RegExp(PurchasingCodes.RECEIPT_OVER_TOLERANCE));
+		expect(Number(fixture.line('line-1')?.receivedQuantity ?? 0)).toBe(0);
+
+		const moved = await fixture.service.claimReceiptDeltas([
+			{ lineId: 'line-1', purchaseOrderId: ORDER, receivedQuantity: '4', damagedQuantity: '0', ceiling: '10' },
+			{ lineId: 'line-1', purchaseOrderId: ORDER, receivedQuantity: '5', damagedQuantity: '1', ceiling: '10' }
+		]);
+
+		expect(moved).toHaveLength(1);
+		expect(fixture.line('line-1')).toMatchObject({ receivedQuantity: '9.000000', damagedQuantity: '1.000000' });
+	});
+
+	it('moves every line of a delivery or none of them', async () => {
+		const fixture = lineFixture({ lines: [lineRow('line-1'), lineRow('line-2')] });
+
+		await expect(
+			fixture.service.claimReceiptDeltas([
+				{ lineId: 'line-1', purchaseOrderId: ORDER, receivedQuantity: '2', damagedQuantity: '0', ceiling: '10' },
+				{ lineId: 'line-2', purchaseOrderId: ORDER, receivedQuantity: '11', damagedQuantity: '0', ceiling: '10' }
+			])
+		).rejects.toThrow(new RegExp(PurchasingCodes.RECEIPT_OVER_TOLERANCE));
+
+		expect(Number(fixture.line('line-1')?.receivedQuantity ?? 0)).toBe(0);
+		expect(Number(fixture.line('line-2')?.receivedQuantity ?? 0)).toBe(0);
 	});
 });

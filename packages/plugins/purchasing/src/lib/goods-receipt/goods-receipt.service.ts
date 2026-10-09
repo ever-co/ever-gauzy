@@ -1,8 +1,22 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { RequestContext, SequenceService, TenantAwareCrudService, TenantSettingService } from '@gauzy/core';
+import {
+	readAffectedRows,
+	RequestContext,
+	SequenceService,
+	TenantAwareCrudService,
+	TenantSettingService
+} from '@gauzy/core';
 import {
 	GoodsReceiptStatus,
 	IGoodsReceiptInput,
@@ -74,6 +88,10 @@ interface IResolvedReceiptLine {
 	expiresAt?: Date;
 	warehouseBinId?: ID;
 	note?: string;
+	/** What the order line's two counters may reach together: its quantity within its allowance. */
+	ceiling?: DecimalString;
+	/** The allowance the ceiling was computed under. */
+	tolerance?: DecimalString;
 }
 
 /**
@@ -143,6 +161,8 @@ export type GoodsReceiptPosting = GoodsReceipt & {
  */
 @Injectable()
 export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
+	private readonly logger = new Logger(GoodsReceiptService.name);
+
 	constructor(
 		readonly typeOrmGoodsReceiptRepository: TypeOrmGoodsReceiptRepository,
 		readonly mikroOrmGoodsReceiptRepository: MikroOrmGoodsReceiptRepository,
@@ -209,10 +229,13 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 	 * Receives goods.
 	 *
 	 * The order is validated first — it has to be sent, and it has to have something left to receive —
-	 * then every line is resolved against its own order line and checked against its ceiling before
-	 * anything is written. Only then is the receipt written, its movements recorded through the
-	 * inventory capability, the received counters written back to the orders' lines and each order's
-	 * status refreshed from what those counters now say.
+	 * then every line is resolved against its own order line and checked against its ceiling, with the
+	 * entries that name one order line summed, before anything is written. The order lines' received
+	 * counters are then claimed in one write under their row locks, the ceiling measured again against
+	 * the counters as they stand there — which is what keeps two receipts in flight against one line from
+	 * passing it together. Only then is the receipt written and its movements recorded through the
+	 * inventory capability (a failure there gives the claim back), and each order's status refreshed
+	 * from what its counters now say.
 	 *
 	 * A delivery that names no order is a consolidated one: its lines may come from several orders, and
 	 * they all have to belong to orders of the same organization and the same receiving location. A
@@ -244,38 +267,51 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		const orders = await this.resolveOrders(input, orderLines);
 		const warehouseId = this.resolveWarehouse(input, orderLines, orders);
 		const resolved = await this.resolveLines(input.lines, orderLines, orders, input.overReceiptTolerance);
-		const number = await this.allocateNumber();
-		const currency = this.currencyOf(orders);
 
-		const receipt = await super.create({
-			purchaseOrderId: input.purchaseOrderId,
-			warehouseId,
-			number,
-			status: GoodsReceiptStatus.POSTED,
-			receivedAt: input.receivedAt ?? new Date(),
-			receivedByUserId: RequestContext.currentUserId(),
-			version: 1,
-			note: input.note,
-			metadata: input.metadata,
-			tenantId: RequestContext.currentTenantId(),
-			organizationId: RequestContext.currentOrganizationId()
-		} as any);
+		this.assertLedgerFor(resolved);
 
-		const lines = await this.receiptLineService.writeLines(receipt.id, resolved, {
-			tenantId: receipt.tenantId,
-			organizationId: receipt.organizationId
-		});
-		const movementIds = await this.writeReceiptMovements(this.numberOf(input, orders), receipt, lines, currency);
+		// The order lines' counters are claimed before anything else is written, under their row locks and
+		// against their ceilings as they stand there: the check above is made on a read taken before any
+		// lock, and two receipts in flight against one line can each pass it. The claim is the check the
+		// ceiling rests on, and a delivery it refuses has written nothing at all.
+		await this.claimCounters(resolved);
 
-		const statuses = await this.applyDeltas(
-			resolved.map((line) => ({
-				lineId: line.purchaseOrderLineId,
-				receivedQuantity: line.quantity,
-				damagedQuantity: line.damagedQuantity
-			})),
-			resolved,
-			orderLines
-		);
+		let receipt: GoodsReceipt;
+		let movementIds: ID[];
+
+		try {
+			const number = await this.allocateNumber();
+			const currency = this.currencyOf(orders);
+
+			receipt = await super.create({
+				purchaseOrderId: input.purchaseOrderId,
+				warehouseId,
+				number,
+				status: GoodsReceiptStatus.POSTED,
+				receivedAt: input.receivedAt ?? new Date(),
+				receivedByUserId: RequestContext.currentUserId(),
+				version: 1,
+				note: input.note,
+				metadata: input.metadata,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as any);
+
+			const lines = await this.receiptLineService.writeLines(receipt.id, resolved, {
+				tenantId: receipt.tenantId,
+				organizationId: receipt.organizationId
+			});
+
+			movementIds = await this.writeReceiptMovements(this.numberOf(input, orders), receipt, lines, currency);
+		} catch (error) {
+			// A delivery that could not be recorded gives back the quantity it claimed, so the order lines
+			// stay what their receipts say they are.
+			await this.releaseCounters(resolved);
+
+			throw error;
+		}
+
+		const statuses = await this.refreshOrders(resolved);
 
 		const written = await this.findOneDetailed(receipt.id);
 
@@ -334,26 +370,33 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		}
 
 		const resolved = await this.resolveLines([input], orderLines, orders, undefined);
-		const lines = await this.receiptLineService.writeLines(receipt.id, resolved, {
-			tenantId: receipt.tenantId,
-			organizationId: receipt.organizationId
-		});
-		const movementIds = await this.writeReceiptMovements(
-			this.numberOf({} as IGoodsReceiptInput, orders),
-			receipt,
-			lines,
-			this.currencyOf(orders)
-		);
 
-		const statuses = await this.applyDeltas(
-			resolved.map((line) => ({
-				lineId: line.purchaseOrderLineId,
-				receivedQuantity: line.quantity,
-				damagedQuantity: line.damagedQuantity
-			})),
-			resolved,
-			orderLines
-		);
+		this.assertLedgerFor(resolved);
+
+		// Claimed under the line's lock before the line is written, exactly as a whole delivery is.
+		await this.claimCounters(resolved);
+
+		let movementIds: ID[];
+
+		try {
+			const lines = await this.receiptLineService.writeLines(receipt.id, resolved, {
+				tenantId: receipt.tenantId,
+				organizationId: receipt.organizationId
+			});
+
+			movementIds = await this.writeReceiptMovements(
+				this.numberOf({} as IGoodsReceiptInput, orders),
+				receipt,
+				lines,
+				this.currencyOf(orders)
+			);
+		} catch (error) {
+			await this.releaseCounters(resolved);
+
+			throw error;
+		}
+
+		const statuses = await this.refreshOrders(resolved);
 
 		const written = await this.findOneDetailed(receipt.id);
 
@@ -434,53 +477,98 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 		}
 
 		const occurredAt = new Date();
+		const readVersion = receipt.version;
+		const nextVersion = (readVersion ?? 1) + 1;
 
-		for (const line of lines) {
-			if (toQuantityUnits(line.quantity) <= 0n) {
-				continue;
+		// **The reversal is claimed before it is performed.** The status moves to `CANCELED` only while the
+		// receipt is still `POSTED` at the version this call read, in one conditional statement, so two
+		// reversals of one receipt that overlap cannot both write the compensating movements and both take
+		// the quantity off the order lines: the second changes no row and is answered with the receipt the
+		// first one reversed, which is the answer a repeated reversal has always had.
+		const claimed = await super.update(
+			{
+				id,
+				status: GoodsReceiptStatus.POSTED,
+				// A version read as absent is stated as `null`, which both ORM branches of the update read as
+				// `IS NULL` (TypeORM through the platform's `null: 'sql-null'` setting).
+				version: (readVersion === undefined ? null : readVersion) as never
+			} as any,
+			{
+				status: GoodsReceiptStatus.CANCELED,
+				canceledAt: occurredAt,
+				note: reason ?? receipt.note,
+				version: nextVersion
+			} as any
+		);
+
+		if (readAffectedRows(claimed) === 0) {
+			const current = await this.findOneDetailed(id);
+
+			if (current.status === GoodsReceiptStatus.CANCELED) {
+				return current;
 			}
 
-			await this.inventory.recordMovement({
-				warehouseId,
-				variantId: line.variantId,
-				quantity: negateQuantity(line.quantity),
-				kind: StockMovementKind.WRITE_OFF,
-				referenceType: MOVEMENT_REFERENCE,
-				referenceId: line.id,
-				reason: reason ?? RECEIPT_CANCELED,
-				batchNumber: line.batchNumber,
-				expiresAt: line.expiresAt,
-				occurredAt
-			});
+			throw new ConflictException(
+				`GOODS_RECEIPT_VERSION_CONFLICT: goods receipt '${receipt.number}' changed while it was being reversed. Read it again and reverse it again.`
+			);
 		}
 
-		const orderLines = await this.purchaseOrderLineService.findIndexedByIds(
-			lines.map((line) => line.purchaseOrderLineId)
-		);
+		try {
+			for (const line of lines) {
+				if (toQuantityUnits(line.quantity) <= 0n) {
+					continue;
+				}
 
-		await this.applyDeltas(
-			lines.map((line) => ({
-				lineId: line.purchaseOrderLineId,
-				receivedQuantity: negateQuantity(line.quantity),
-				damagedQuantity: negateQuantity(line.damagedQuantity)
-			})),
-			lines.map((line) => ({
-				orderId: orderLines.get(line.purchaseOrderLineId)?.purchaseOrderId as ID,
-				purchaseOrderLineId: line.purchaseOrderLineId,
-				variantId: line.variantId,
-				quantity: line.quantity,
-				damagedQuantity: line.damagedQuantity,
-				unitCost: line.unitCost
-			})),
-			orderLines
-		);
+				await this.inventory.recordMovement({
+					warehouseId,
+					variantId: line.variantId,
+					quantity: negateQuantity(line.quantity),
+					kind: StockMovementKind.WRITE_OFF,
+					referenceType: MOVEMENT_REFERENCE,
+					referenceId: line.id,
+					reason: reason ?? RECEIPT_CANCELED,
+					batchNumber: line.batchNumber,
+					expiresAt: line.expiresAt,
+					occurredAt
+				});
+			}
 
-		await super.update(id, {
-			status: GoodsReceiptStatus.CANCELED,
-			canceledAt: occurredAt,
-			note: reason ?? receipt.note,
-			version: (receipt.version ?? 1) + 1
-		} as any);
+			const orderLines = await this.purchaseOrderLineService.findIndexedByIds(
+				lines.map((line) => line.purchaseOrderLineId)
+			);
+
+			await this.applyDeltas(
+				lines.map((line) => ({
+					lineId: line.purchaseOrderLineId,
+					receivedQuantity: negateQuantity(line.quantity),
+					damagedQuantity: negateQuantity(line.damagedQuantity)
+				})),
+				lines.map((line) => ({
+					orderId: orderLines.get(line.purchaseOrderLineId)?.purchaseOrderId as ID,
+					purchaseOrderLineId: line.purchaseOrderLineId,
+					variantId: line.variantId,
+					quantity: line.quantity,
+					damagedQuantity: line.damagedQuantity,
+					unitCost: line.unitCost
+				})),
+				orderLines
+			);
+		} catch (error) {
+			// The reversal did not complete, so the receipt is handed back as it was — still posted, and
+			// reversible again — rather than left `CANCELED` over stock and counters it never took back.
+			await super
+				.update({ id, status: GoodsReceiptStatus.CANCELED, version: nextVersion } as any, {
+					status: GoodsReceiptStatus.POSTED,
+					canceledAt: null,
+					note: receipt.note,
+					version: nextVersion + 1
+				} as any)
+				.catch((restoreError: unknown) =>
+					this.logger.error(`Goods receipt '${receipt.number}' could not be handed back after a failed reversal`, restoreError)
+				);
+
+			throw error;
+		}
 
 		return await this.findOneDetailed(id);
 	}
@@ -630,6 +718,10 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 	): Promise<IResolvedReceiptLine[]> {
 		const named = this.resolveNamedLines(inputs, orderLines);
 		const resolved: IResolvedReceiptLine[] = [];
+		// What the delivery brings to each order line so far. A line may be recorded in several entries —
+		// two batches, two bins — and its ceiling is measured against what the delivery brings in total:
+		// two entries of six against an order line of ten are twelve, however reasonable each looks alone.
+		const arrivingByLine = new Map<string, DecimalString>();
 
 		for (const [index, input] of inputs.entries()) {
 			const orderLine = named[index];
@@ -650,8 +742,12 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 				);
 			}
 
+			const arrivingTogether = sumQuantity([arrivingByLine.get(String(orderLine.id)) ?? '0', arriving]);
+
+			arrivingByLine.set(String(orderLine.id), arrivingTogether);
+
 			const alreadyReceived = sumQuantity([orderLine.receivedQuantity, orderLine.damagedQuantity]);
-			const afterThisReceipt = sumQuantity([alreadyReceived, arriving]);
+			const afterThisReceipt = sumQuantity([alreadyReceived, arrivingTogether]);
 			const tolerance = await this.resolveOverReceiptTolerance(
 				orderLine,
 				orders.get(orderLine.purchaseOrderId),
@@ -662,7 +758,7 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 			if (isGreaterThanQuantity(afterThisReceipt, ceiling)) {
 				throw new ConflictException(
 					`${PurchasingCodes.RECEIPT_OVER_TOLERANCE}: PO line '${orderLine.id}' was ordered in quantity ${orderLine.quantity}, ` +
-						`${alreadyReceived} has already been received and ${arriving} more would exceed the over-receipt allowance of ${tolerance} in force for it.`
+						`${alreadyReceived} has already been received and ${arrivingTogether} more would exceed the over-receipt allowance of ${tolerance} in force for it.`
 				);
 			}
 
@@ -679,11 +775,97 @@ export class GoodsReceiptService extends TenantAwareCrudService<GoodsReceipt> {
 				batchNumber: input.batchNumber,
 				expiresAt: input.expiresAt,
 				warehouseBinId: input.warehouseBinId,
-				note: input.note
+				note: input.note,
+				ceiling,
+				tolerance
 			});
 		}
 
 		return resolved;
+	}
+
+	/**
+	 * Refuses a delivery with units to move when no inventory capability is registered, before anything
+	 * is claimed or written.
+	 *
+	 * "A receipt whose goods never became sellable is worse than a receipt that did not happen": the
+	 * refusal used to come from the movement step, after the receipt and its lines had been written, so
+	 * the refused delivery left a posted receipt behind it.
+	 *
+	 * @param resolved The lines of the delivery.
+	 * @throws ConflictException with `PURCHASING_INVENTORY_UNAVAILABLE`.
+	 */
+	private assertLedgerFor(resolved: IResolvedReceiptLine[]): void {
+		const hasGoods = resolved.some(
+			(line) => toQuantityUnits(line.quantity) > 0n || toQuantityUnits(line.damagedQuantity) > 0n
+		);
+
+		if (hasGoods && !this.inventory) {
+			throw new ConflictException(
+				'PURCHASING_INVENTORY_UNAVAILABLE: the inventory capability is not registered, so the goods received cannot be written to stock.'
+			);
+		}
+	}
+
+	/**
+	 * Claims what a delivery brings against its order lines' counters, under their row locks and
+	 * against each line's ceiling as the counters stand there, all lines in one write.
+	 *
+	 * @param resolved The lines of the delivery, each carrying its ceiling.
+	 * @throws ConflictException with `RECEIPT_OVER_TOLERANCE` when a line would pass its ceiling.
+	 */
+	private async claimCounters(resolved: IResolvedReceiptLine[]): Promise<void> {
+		await this.purchaseOrderLineService.claimReceiptDeltas(
+			resolved.map((line) => ({
+				lineId: line.purchaseOrderLineId,
+				purchaseOrderId: line.orderId,
+				receivedQuantity: line.quantity,
+				damagedQuantity: line.damagedQuantity,
+				ceiling: line.ceiling,
+				tolerance: line.tolerance
+			}))
+		);
+	}
+
+	/**
+	 * Gives back what {@link claimCounters} claimed, for a delivery that could not be recorded.
+	 *
+	 * The failure that brought the caller here is the one it reports; a release that fails as well is
+	 * logged rather than raised over it, because the caller's own error is what explains the request.
+	 *
+	 * @param resolved The lines of the delivery.
+	 */
+	private async releaseCounters(resolved: IResolvedReceiptLine[]): Promise<void> {
+		try {
+			await this.purchaseOrderLineService.claimReceiptDeltas(
+				resolved.map((line) => ({
+					lineId: line.purchaseOrderLineId,
+					purchaseOrderId: line.orderId,
+					receivedQuantity: negateQuantity(line.quantity),
+					damagedQuantity: negateQuantity(line.damagedQuantity)
+				}))
+			);
+		} catch (error) {
+			this.logger.error('The received quantities a failed delivery claimed could not be given back', error);
+		}
+	}
+
+	/**
+	 * Refreshes the status of every order a delivery touched from what its lines now say.
+	 *
+	 * @param resolved The lines of the delivery.
+	 * @returns The status of every order after the operation, keyed by id.
+	 */
+	private async refreshOrders(resolved: Array<Pick<IResolvedReceiptLine, 'orderId'>>): Promise<Record<string, PurchaseOrderStatus>> {
+		const statuses: Record<string, PurchaseOrderStatus> = {};
+
+		for (const orderId of new Set(resolved.map((line) => line.orderId))) {
+			const updated = await this.purchaseOrderService.refreshReceiptState(orderId);
+
+			statuses[orderId] = updated.status;
+		}
+
+		return statuses;
 	}
 
 	/**

@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager, IsNull } from 'typeorm';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { Money, readAffectedRows, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import {
 	IPurchaseOrderLine,
 	IPurchaseOrderLineInput,
@@ -10,6 +12,7 @@ import {
 } from '../purchasing.types';
 import {
 	addQuantity,
+	isGreaterThanQuantity,
 	isPositiveQuantity,
 	negateQuantity,
 	normalizeQuantity,
@@ -69,6 +72,29 @@ export interface IPurchaseOrderLineDelta {
 	/** Damaged units to add; negative to take them back off. */
 	damagedQuantity: DecimalString;
 }
+
+/**
+ * One change to a line's received counters, with what the change is measured against.
+ *
+ * The ceiling is the most `receivedQuantity + damagedQuantity` may reach once the change is applied:
+ * the ordered quantity within the over-receipt allowance the line is received under. It is checked
+ * against the counters as they stand under the line's row lock, which is what makes it a ceiling and
+ * not a figure two concurrent receipts can each pass on their own read.
+ */
+export interface IPurchaseOrderLineClaim extends IPurchaseOrderLineDelta {
+	/** The order the line has to belong to, when the caller knows it. */
+	purchaseOrderId?: ID;
+	/** What the two counters may reach together after the change; no ceiling when absent. */
+	ceiling?: DecimalString;
+	/** The allowance the ceiling was computed under, named in a refusal. */
+	tolerance?: DecimalString;
+}
+
+/** How many times a counter move is decided again when its conditional write matched no row. */
+const COUNTER_MOVE_ATTEMPTS = 3;
+
+/** A conditional counter write that matched no row: another writer moved the line first. */
+class ReceivedCountersMovedError extends Error {}
 
 /**
  * The lines of a purchase order.
@@ -710,6 +736,10 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 	 * same quantity negated. The counters are the order's record of what the stock ledger already
 	 * holds, so an edit route deliberately cannot reach them.
 	 *
+	 * The move is the guarded one {@link claimReceiptDeltas} makes: the counters are read under the
+	 * lines' row locks and written conditionally on what was read, so a receipt and a reversal of the
+	 * same line that overlap each see the other's change instead of one erasing it.
+	 *
 	 * @param purchaseOrderId The order being received against.
 	 * @param deltas The signed changes, per order line.
 	 * @returns The updated lines.
@@ -719,28 +749,187 @@ export class PurchaseOrderLineService extends TenantAwareCrudService<PurchaseOrd
 		purchaseOrderId: ID,
 		deltas: IPurchaseOrderLineDelta[]
 	): Promise<PurchaseOrderLine[]> {
-		const indexed = await this.findForOrderIndexed(purchaseOrderId);
-		const touched: PurchaseOrderLine[] = [];
+		return await this.claimReceiptDeltas(deltas.map((delta) => ({ ...delta, purchaseOrderId })));
+	}
 
-		for (const delta of deltas) {
-			const line = indexed.get(delta.lineId);
+	/**
+	 * Moves the received counters of the lines a delivery names, as one write, under the lines' row
+	 * locks, re-checking each line's ceiling against the counters as they stand under the lock.
+	 *
+	 * **This is the check the receiving ceiling rests on.** A check made on a read taken before the write
+	 * is a figure two receipts can each pass: an order line of 10 with two receipts of 6 in flight saw 0
+	 * twice, and both posted. The counters were then read, added to in memory and saved back as absolute
+	 * values, so the second save could also erase the first one's increment. Here every line is read
+	 * `FOR UPDATE` (Postgres, MySQL; SQLite's single writer is the lock there), the ceiling is measured
+	 * against that read, and the write names the two counters it read among its criteria — so a receipt
+	 * that overlapped another one waits for it and then sees its quantity, and where no row lock is taken
+	 * the second write matches nothing and the move is decided again.
+	 *
+	 * **Several changes to one line are one change.** A delivery may record an order line in several
+	 * entries (two batches, two bins); they are summed before anything is checked, so the ceiling is
+	 * measured against what the delivery brings in total and not against each entry on its own.
+	 *
+	 * **All the lines move together or none does.** One transaction covers every line the delivery
+	 * names, across orders, so a line refused by its ceiling leaves no other line of the delivery moved.
+	 * The lines are locked in a fixed order, so two deliveries naming the same lines cannot deadlock.
+	 *
+	 * @param claims The signed changes, with the order each line belongs to and its ceiling.
+	 * @returns The moved lines, as written.
+	 * @throws NotFoundException when a line is not the caller's or does not belong to the order named.
+	 * @throws BadRequestException when a change would take a counter below zero.
+	 * @throws ConflictException with `RECEIPT_OVER_TOLERANCE` when a line would pass its ceiling, or with
+	 * `PURCHASE_ORDER_LINE_CONFLICT` when the line kept moving under every attempt.
+	 */
+	public async claimReceiptDeltas(claims: IPurchaseOrderLineClaim[]): Promise<PurchaseOrderLine[]> {
+		const grouped = this.groupClaims(claims);
 
-			if (!line) {
-				throw new NotFoundException(`Purchase-order line ${delta.lineId} does not belong to this order.`);
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await this.typeOrmPurchaseOrderLineRepository.manager.transaction((manager: EntityManager) =>
+					this.claimOn(manager, grouped)
+				);
+			} catch (error) {
+				if (!(error instanceof ReceivedCountersMovedError)) {
+					throw error;
+				}
+
+				if (attempt >= COUNTER_MOVE_ATTEMPTS) {
+					throw new ConflictException(
+						`PURCHASE_ORDER_LINE_CONFLICT: the received quantities of the order lines were moved by another write on each of ${COUNTER_MOVE_ATTEMPTS} attempts, so nothing was written. Try again.`
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Sums the changes that name one line, and orders the lines so every move locks them alike.
+	 *
+	 * @param claims The changes as the caller stated them.
+	 * @returns One change per line, in identifier order.
+	 */
+	private groupClaims(claims: IPurchaseOrderLineClaim[]): IPurchaseOrderLineClaim[] {
+		const byLine = new Map<string, IPurchaseOrderLineClaim>();
+
+		for (const claim of claims) {
+			const key = String(claim.lineId);
+			const known = byLine.get(key);
+
+			if (!known) {
+				byLine.set(key, {
+					...claim,
+					receivedQuantity: normalizeQuantity(claim.receivedQuantity ?? '0'),
+					damagedQuantity: normalizeQuantity(claim.damagedQuantity ?? '0')
+				});
+
+				continue;
 			}
 
-			line.receivedQuantity = addQuantity(line.receivedQuantity ?? '0', delta.receivedQuantity);
-			line.damagedQuantity = addQuantity(line.damagedQuantity ?? '0', delta.damagedQuantity);
+			known.receivedQuantity = addQuantity(known.receivedQuantity, claim.receivedQuantity ?? '0');
+			known.damagedQuantity = addQuantity(known.damagedQuantity, claim.damagedQuantity ?? '0');
 
-			if (toQuantityUnits(line.receivedQuantity) < 0n || toQuantityUnits(line.damagedQuantity) < 0n) {
+			// One line has one ceiling; two statements of it can only differ by a caller's mistake, and the
+			// tighter one is the one that cannot be wrong in the direction this check exists for.
+			if (claim.ceiling !== undefined && (known.ceiling === undefined || isGreaterThanQuantity(known.ceiling, claim.ceiling))) {
+				known.ceiling = claim.ceiling;
+				known.tolerance = claim.tolerance;
+			}
+		}
+
+		return [...byLine.values()].sort((left, right) => String(left.lineId).localeCompare(String(right.lineId)));
+	}
+
+	/**
+	 * One attempt of {@link claimReceiptDeltas}, on the transaction it opened.
+	 *
+	 * @param manager The open transaction.
+	 * @param claims One change per line, in lock order.
+	 * @returns The moved lines.
+	 * @throws ReceivedCountersMovedError when a conditional write matched no row.
+	 */
+	private async claimOn(manager: EntityManager, claims: IPurchaseOrderLineClaim[]): Promise<PurchaseOrderLine[]> {
+		const tenantId = RequestContext.currentTenantId();
+		const organizationId = RequestContext.currentOrganizationId();
+		const moved: PurchaseOrderLine[] = [];
+
+		for (const claim of claims) {
+			const where = {
+				id: claim.lineId,
+				...(tenantId ? { tenantId } : {}),
+				...(organizationId ? { organizationId } : {})
+			};
+			const line = (await manager.findOne(PurchaseOrderLine, {
+				where: where as never,
+				...(this.takesRowLocks(manager) ? { lock: { mode: 'pessimistic_write' as const } } : {})
+			})) as PurchaseOrderLine | null;
+
+			if (!line || (claim.purchaseOrderId && String(line.purchaseOrderId) !== String(claim.purchaseOrderId))) {
+				throw new NotFoundException(`Purchase-order line ${claim.lineId} does not belong to this order.`);
+			}
+
+			const receivedQuantity = addQuantity(line.receivedQuantity ?? '0', claim.receivedQuantity);
+			const damagedQuantity = addQuantity(line.damagedQuantity ?? '0', claim.damagedQuantity);
+
+			if (toQuantityUnits(receivedQuantity) < 0n || toQuantityUnits(damagedQuantity) < 0n) {
 				throw new BadRequestException(
-					`Reversing this receipt would take line ${delta.lineId} below what it has received.`
+					`Reversing this receipt would take line ${claim.lineId} below what it has received.`
 				);
 			}
 
-			touched.push(line);
+			if (claim.ceiling !== undefined) {
+				const settled = sumQuantity([receivedQuantity, damagedQuantity]);
+
+				if (isGreaterThanQuantity(settled, claim.ceiling)) {
+					const already = sumQuantity([line.receivedQuantity, line.damagedQuantity]);
+					const arriving = sumQuantity([claim.receivedQuantity, claim.damagedQuantity]);
+
+					throw new ConflictException(
+						`${PurchasingCodes.RECEIPT_OVER_TOLERANCE}: PO line '${line.id}' was ordered in quantity ${line.quantity}, ` +
+							`${already} has already been received and ${arriving} more would exceed the over-receipt allowance of ${
+								claim.tolerance ?? '0'
+							} in force for it.`
+					);
+				}
+			}
+
+			const written = await manager.update(
+				PurchaseOrderLine,
+				{
+					...where,
+					receivedQuantity: this.asRead(line.receivedQuantity),
+					damagedQuantity: this.asRead(line.damagedQuantity)
+				} as never,
+				{ receivedQuantity, damagedQuantity } as never
+			);
+
+			if (readAffectedRows(written) === 0) {
+				throw new ReceivedCountersMovedError();
+			}
+
+			moved.push(Object.assign(line, { receivedQuantity, damagedQuantity }));
 		}
 
-		return await this.typeOrmPurchaseOrderLineRepository.save(touched);
+		return moved;
+	}
+
+	/**
+	 * @param manager The open transaction.
+	 * @returns Whether the dialect behind it has row locks to take; SQLite's single writer is its lock.
+	 */
+	private takesRowLocks(manager: EntityManager): boolean {
+		const type = manager.connection?.options?.type as string | undefined;
+
+		return type === DatabaseTypeEnum.postgres || type === DatabaseTypeEnum.mysql;
+	}
+
+	/**
+	 * One counter as the criteria of a conditional write must state it: `IS NULL` for a value read as
+	 * absent, because `= NULL` matches nothing and would make the line permanently unreceivable.
+	 *
+	 * @param value The counter as the read handed it over.
+	 * @returns The criteria value that matches the row as it was read.
+	 */
+	private asRead(value: unknown): unknown {
+		return value === null || value === undefined ? IsNull() : value;
 	}
 }
