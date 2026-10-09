@@ -181,9 +181,18 @@ const FEATURE_MODULES = [
 			serverConnectionFactory(inject(ServerConnectionService), inject(Store), inject(Router))()
 		),
 
-		// Loads the Google Maps JavaScript API key during bootstrap.
+		// Loads the Google Maps JavaScript API during bootstrap. Maps are optional: when the script cannot
+		// be loaded (no internet access, a blocked host, an install behind a firewall) the app still
+		// starts and only the map widgets stay empty. A rejected initializer would stop the bootstrap and
+		// leave a blank page.
 		GoogleMapsLoaderService,
-		provideAppInitializer(() => inject(GoogleMapsLoaderService).load(environment.GOOGLE_MAPS_API_KEY)),
+		provideAppInitializer(() =>
+			inject(GoogleMapsLoaderService)
+				.load(environment.GOOGLE_MAPS_API_KEY)
+				.catch((error: unknown) => {
+					console.warn('Google Maps could not be loaded; maps stay unavailable:', error);
+				})
+		),
 
 		// Loads feature toggle definitions and stores them for the app.
 		FeatureService,
