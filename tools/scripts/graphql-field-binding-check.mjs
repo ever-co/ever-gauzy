@@ -407,9 +407,7 @@ if (failures.length > 0) {
  * unnoticed.
  */
 const UNBOUND = new Map([
-	['Query.cartByToken', 'the cart service has no token lookup yet'],
-	['Mutation.addCollectionVariants', 'the variant service replaces a whole membership set; an add is not defined'],
-	['Mutation.removeCollectionVariants', 'as above, for removal'],
+	['Query.cartByToken', 'the cart service has no token lookup yet: commerce_cart has no token column and no route reads one'],
 	['Subscription.events', 'the generic event stream a tenant subscribes to'],
 	['Subscription.paymentAuthorized', 'payment lifecycle streams'],
 	['Subscription.paymentCanceled', 'payment lifecycle streams'],

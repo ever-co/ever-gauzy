@@ -69,11 +69,10 @@ export class CollectionVariantResolver {
 	 * The route it mirrors is `PUT /collection-variants/by-collection/:collectionId`, which writes the
 	 * whole set — additions, removals and the new positions — inside one transaction, because a shelf is
 	 * reordered as a whole and an endpoint that edits one membership leaves the positions of the rows
-	 * nobody touched to be repaired by whoever notices. No field reached it: this document declares
-	 * `addCollectionVariants` and `removeCollectionVariants`, and neither has a resolver, so the
-	 * resource's set had no working door over GraphQL at all — the pair is recorded as unbound in
-	 * `tools/scripts/graphql-field-binding-check.mjs`, with the note "the variant service replaces a whole
-	 * membership set; an add is not defined". This field is the door the service does define.
+	 * nobody touched to be repaired by whoever notices. When this field was added no field reached it: the
+	 * document's `addCollectionVariants` and `removeCollectionVariants` had no resolver, so the resource's set
+	 * had no working door over GraphQL at all. This field is the door the service defines; the add and the
+	 * removal below now answer too, as that same set write expressed as an addition and a removal.
 	 *
 	 * The permission is the controller's own for the route — `COLLECTIONS_EDIT` — because writing the set
 	 * changes what the collection contains, and the call is the one the route makes: the same method, the
@@ -94,13 +93,59 @@ export class CollectionVariantResolver {
 	}
 
 	/**
+	 * Curates variants into a collection, appending the ones it does not hold yet.
+	 *
+	 * The schema has declared this field since the catalogue wave and nothing answered it, so introspection
+	 * advertised a mutation that failed when called. It is now the set write expressed as an addition: the service
+	 * keeps the current set in its order, appends each named variant that is not a member, and writes the result
+	 * through the same `replaceVariants` the route `PUT /collection-variants/by-collection/:collectionId` and
+	 * `replaceCollectionVariants` reach — one transaction, the caller's collection only, and its rows only. It is
+	 * the variant-level twin of `addCollectionProducts`.
+	 *
+	 * The permission is the set route's own — `COLLECTIONS_EDIT` — and the class carries the tenant guard, the
+	 * permission guard and the `FEATURE_GRAPHQL` gate, as every field here does.
+	 *
+	 * @param collectionId The collection whose membership is being extended.
+	 * @param variantIds The variants to curate into it.
+	 * @returns The membership rows after the write.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('addCollectionVariants')
+	async addCollectionVariants(
+		@Args('collectionId') collectionId: ID,
+		@Args('variantIds') variantIds: ID[]
+	): Promise<CollectionVariant[]> {
+		return this.collectionVariantService.addVariants(collectionId, variantIds);
+	}
+
+	/**
+	 * Removes variants from a collection's manual set, keeping the order of the ones that stay.
+	 *
+	 * Declared by the schema and unanswered until now, like `addCollectionVariants`; it is the set write expressed
+	 * as a removal, through the same `replaceVariants`, under the same `COLLECTIONS_EDIT` grant the set route states
+	 * and the product-level `removeCollectionProducts` states. A named variant that is not a member is ignored.
+	 *
+	 * @param collectionId The collection whose membership is being reduced.
+	 * @param variantIds The variants to take out of it.
+	 * @returns The membership rows after the write.
+	 */
+	@Permissions(catalogPermission(CATALOG_PERMISSION_VALUES.COLLECTIONS_EDIT))
+	@Mutation('removeCollectionVariants')
+	async removeCollectionVariants(
+		@Args('collectionId') collectionId: ID,
+		@Args('variantIds') variantIds: ID[]
+	): Promise<CollectionVariant[]> {
+		return this.collectionVariantService.removeVariants(collectionId, variantIds);
+	}
+
+	/**
 	 * Retires one variant membership row recoverably, keeping the variant in the collection's set.
 	 *
 	 * The route it mirrors is `DELETE /collection-variants/:id/soft`, inherited from `CrudController`
-	 * and overridden by the controller only to state the permission the base left unstated. The document
-	 * declares the set mutations for this membership, but no resolver implements them, so until now this
-	 * resource had no write field at all — and the row's own lifecycle, the one a caller holding a
-	 * membership identifier reaches, had none on either spelling.
+	 * and overridden by the controller only to state the permission the base left unstated. When it was added
+	 * the document's set mutations for this membership had no resolver, so this resource had no write field at
+	 * all — and the row's own lifecycle, the one a caller holding a membership identifier reaches, had none on
+	 * either spelling.
 	 *
 	 * The permission is the controller's own for the route — `COLLECTIONS_DELETE` — because retiring a
 	 * membership changes what the collection contains.
