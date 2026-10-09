@@ -9,7 +9,8 @@ import { getDummyImage } from './../core/utils';
  * The two rules a party row is written through, on every path that writes one.
  *
  * **1. `emailKey` mirrors `primaryEmail`.** The column is the normalised (trimmed, lower-cased) form of
- * the address, and it is what the two unique indexes on the table are built from — so it is written
+ * the address, and it is what the two email indexes on the table are built from — lookups rather than
+ * constraints, since two contacts of one organization may share an address — so it is written
  * *here*, in the same statement that writes the address, rather than by whichever caller remembered to
  * set it. A row whose key described a different address from the one on the row would make duplicate
  * detection answer about an address the party does not have, and a partial update that carries no

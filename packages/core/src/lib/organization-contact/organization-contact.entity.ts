@@ -73,8 +73,9 @@ import { Trimmed } from '../shared/decorators';
 	unique: true,
 	where: '"externalId" IS NOT NULL AND "deletedAt" IS NULL'
 })
-@ColumnIndex('UQ_organization_contact_org_email', ['organizationId', 'emailKey'], {
-	unique: true,
+// Not unique: two contacts of one organization may share an address, as they always could. The key is a
+// lookup for duplicate detection and guest-order matching, not a constraint.
+@ColumnIndex('IDX_organization_contact_org_email', ['organizationId', 'emailKey'], {
 	where: '"emailKey" IS NOT NULL AND "deletedAt" IS NULL'
 })
 @ColumnIndex('IDX_organization_contact_email_lookup', ['tenantId', 'emailKey'], {

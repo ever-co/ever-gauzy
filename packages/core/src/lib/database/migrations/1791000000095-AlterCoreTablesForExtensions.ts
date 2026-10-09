@@ -730,11 +730,13 @@ const EXTENDED_INDEXES: Record<string, IndexDefinition[]> = {
 			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "externalId") WHERE "externalId" IS NOT NULL AND "deletedAt" IS NULL',
 			mysql: '(`organizationKey`, `externalId`, `deletedKey`)'
 		},
+		// A lookup, not a rule: `develop` lets two contacts of one organization share an address, and nothing
+		// here may start refusing the second one's edits. The key is what duplicate detection and guest-order
+		// matching filter on, so it is indexed — without `unique`.
 		{
-			name: 'UQ_organization_contact_org_email',
-			unique: true,
-			postgres: '(COALESCE("organizationId", \'00000000-0000-0000-0000-000000000000\'), "emailKey") WHERE "emailKey" IS NOT NULL AND "deletedAt" IS NULL',
-			mysql: '(`organizationKey`, `emailKey`, `deletedKey`)'
+			name: 'IDX_organization_contact_org_email',
+			postgres: '("organizationId", "emailKey") WHERE "emailKey" IS NOT NULL AND "deletedAt" IS NULL',
+			mysql: '(`organizationId`, `emailKey`)'
 		},
 		{
 			name: 'IDX_organization_contact_email_lookup',
