@@ -493,7 +493,7 @@ const PARITY: IParity[] = [
 		declared: [['id', 'ID']],
 		answers: 'DeleteOrderReturnPayload',
 		grant: ReturnsPermissions.RETURNS_CREATE,
-		method: 'delete',
+		method: 'softRemove',
 		service: 'orderReturn',
 		controller: OrderReturnController,
 		resolver: OrderReturnResolver,
@@ -592,7 +592,7 @@ const PARITY: IParity[] = [
 		declared: [['id', 'ID']],
 		answers: 'DeleteOrderClaimPayload',
 		grant: ReturnsPermissions.CLAIMS_CREATE,
-		method: 'delete',
+		method: 'softRemove',
 		service: 'orderClaim',
 		controller: OrderClaimController,
 		resolver: OrderClaimResolver,
@@ -668,7 +668,7 @@ const PARITY: IParity[] = [
 		declared: [['id', 'ID']],
 		answers: 'DeleteOrderExchangePayload',
 		grant: ReturnsPermissions.EXCHANGES_CREATE,
-		method: 'delete',
+		method: 'softRemove',
 		service: 'orderExchange',
 		controller: OrderExchangeController,
 		resolver: OrderExchangeResolver,
@@ -833,7 +833,8 @@ function surfaces(entry: IParity): { stubs: Row; controller: Row; resolver: Row 
 			findOneDetailed: jest.fn().mockResolvedValue(RETURN),
 			refund: jest.fn().mockResolvedValue(REFUNDED),
 			createShipment: jest.fn().mockResolvedValue(LEG),
-			delete: jest.fn().mockResolvedValue(REMOVED)
+			delete: jest.fn().mockResolvedValue(REMOVED),
+			softRemove: jest.fn().mockResolvedValue(RETURN)
 		},
 		orderClaim: {
 			...collaborator(FOREIGN),
@@ -841,7 +842,8 @@ function surfaces(entry: IParity): { stubs: Row; controller: Row; resolver: Row 
 			replaceLines: jest.fn().mockResolvedValue(LINES),
 			findOneDetailed: jest.fn().mockResolvedValue(CLAIM),
 			cancel: jest.fn().mockResolvedValue(CLAIM),
-			delete: jest.fn().mockResolvedValue(REMOVED)
+			delete: jest.fn().mockResolvedValue(REMOVED),
+			softRemove: jest.fn().mockResolvedValue(CLAIM)
 		},
 		orderExchange: {
 			...collaborator(FOREIGN),
@@ -849,7 +851,8 @@ function surfaces(entry: IParity): { stubs: Row; controller: Row; resolver: Row 
 			replaceLines: jest.fn().mockResolvedValue(LINES),
 			findOneDetailed: jest.fn().mockResolvedValue(EXCHANGE),
 			cancel: jest.fn().mockResolvedValue(EXCHANGE),
-			delete: jest.fn().mockResolvedValue(REMOVED)
+			delete: jest.fn().mockResolvedValue(REMOVED),
+			softRemove: jest.fn().mockResolvedValue(EXCHANGE)
 		},
 		orderReturnReason: {
 			...collaborator(FOREIGN),
@@ -1187,8 +1190,8 @@ describe('the eleven fields — the two protocols write the same rows the same w
 			expect(stub[entry.method]).not.toHaveBeenCalled();
 		}
 
-		// One answer, one implementation. The three destructive removals and the physical removal answer an
-		// identifier, because the row the route's own answer described no longer exists.
+		// One answer, one implementation. The three retirements through `delete*` and the reason's physical
+		// removal answer an identifier: their payloads carry the id, not the row.
 		if (entry.answersId) {
 			expect(overGraphql[entry.member]).toBe(ID);
 			expect(overGraphql.userErrors).toEqual([]);
@@ -1570,3 +1573,35 @@ function memberKind(input: string, member: string): string {
 
 	return field.type.kind;
 }
+
+/**
+ * Returns, claims, exchanges and their lines are soft delete only (owner decision, 2026-10-09).
+ *
+ * Every `DELETE /:id` of the plugin retires the row through `softRemove` — the act `DELETE /:id/soft` and
+ * the `softDelete*` fields perform — so `recover*` can bring it back, and no route reaches the service's
+ * physical `delete`. Before the decision each of these six routes reached `delete`.
+ */
+describe('DELETE /:id retires and never erases', () => {
+	const ROUTES: Array<[string, new (service: any) => Row]> = [
+		['order-returns', OrderReturnController as never],
+		['order-claims', OrderClaimController as never],
+		['order-exchanges', OrderExchangeController as never],
+		['order-return-lines', OrderReturnLineController as never],
+		['order-claim-lines', OrderClaimLineController as never],
+		['order-exchange-lines', OrderExchangeLineController as never]
+	];
+
+	it.each(ROUTES)('DELETE /%s/:id reaches softRemove, not delete', async (_path, Controller) => {
+		const service = {
+			softRemove: jest.fn().mockResolvedValue({ id: ID, deletedAt: new Date() }),
+			delete: jest.fn().mockResolvedValue(REMOVED)
+		};
+		const controller = new Controller(service);
+
+		await controller.delete(ID);
+
+		expect(service.softRemove).toHaveBeenCalledTimes(1);
+		expect(service.softRemove.mock.calls[0][0]).toBe(ID);
+		expect(service.delete).not.toHaveBeenCalled();
+	});
+});

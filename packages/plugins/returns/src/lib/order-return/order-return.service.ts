@@ -524,7 +524,9 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 	/**
 	 * Removes a return for good — and, while it still counts against the order, withdraws it first.
 	 *
-	 * The inherited `DELETE /order-returns/:id` and the GraphQL `deleteOrderReturn` field reach this method.
+	 * Nothing in the API reaches this method any more: since the owner's 2026-10-09 decision that returns are
+	 * soft delete only, `DELETE /order-returns/:id` and the GraphQL `deleteOrderReturn` field both retire through
+	 * {@link softRemove}. It stays for a retention job, the one caller doc 05 §1.7 allows a hard delete.
 	 * The lines go with the row (`ON DELETE CASCADE`), so a live return's outstanding units are released
 	 * exactly as {@link softRemove} releases them, and the statement is predicated on the status and the
 	 * version the return was read at: a statement that matched no row is a return that moved on in between,

@@ -10777,19 +10777,11 @@ type Mutation {
   recoverOrderReturn(id: ID!): RequestOrderReturnPayload!
 
   """
-  Removes a return destructively.
+  Retires a return; it no longer removes one.
   
-  Two facts meet here and a reader should meet both rather than one. The withdrawal this domain
-  wants is `softDeleteOrderReturn`: the receipt wrote stock movements and the refund wrote money,
-  and both point back at the row, so retiring a return recoverably keeps them explainable while
-  taking it out of every live read. This field mirrors the *destructive* route the controller
-  inherits from `CrudController` — `06-api-specification.md` §2 declares `DELETE /:id` in the
-  inherited route set for every entity resource §7 lists, returns' row does not say otherwise, and
-  the marketplace row names six `delete*` fields for its own — and it is delivered so the two
-  protocols offer the same acts rather than the safe one twice. What it costs is stated rather
-  than hidden: `order_return_line` cascades from the return, so the rows it removes include the
-  lines the receipt recorded against, and the refunds raised for it keep their identifier but lose
-  the return they were attributed to.
+  Returns are soft delete only: the receipt wrote stock movements and the refund wrote money, and both
+  point back at the row. This field mirrors `DELETE /order-returns/:id`, which retires the return
+  exactly as `softDeleteOrderReturn` does, so `recoverOrderReturn` brings it back.
   """
   deleteOrderReturn(id: ID!): DeleteOrderReturnPayload!
 
@@ -10871,13 +10863,10 @@ type Mutation {
   recoverOrderClaim(id: ID!): RequestOrderClaimPayload!
 
   """
-  Removes a claim destructively.
+  Retires a claim; it no longer removes one.
   
-  `softDeleteOrderClaim` is the withdrawal this domain wants — a claim that settled in money is
-  the record of that money — and this field mirrors the destructive route `CrudController`
-  inherits (`06-api-specification.md` §2), delivered so both protocols offer the same acts. It
-  takes the claim's lines with it, which is what `order_claim_line` cascading from `order_claim`
-  means.
+  Claims are soft delete only — a claim that settled in money is the record of that money. This field
+  mirrors `DELETE /order-claims/:id`, which retires the claim exactly as `softDeleteOrderClaim` does.
   """
   deleteOrderClaim(id: ID!): DeleteOrderClaimPayload!
 
@@ -10929,12 +10918,11 @@ type Mutation {
   recoverOrderExchange(id: ID!): RequestOrderExchangePayload!
 
   """
-  Removes an exchange destructively.
+  Retires an exchange; it no longer removes one.
   
-  `softDeleteOrderExchange` is the withdrawal this domain wants — the difference was priced once
-  and charged, and the row is the explanation of that charge — and this field mirrors the
-  destructive route `CrudController` inherits (`06-api-specification.md` §2), delivered so both
-  protocols offer the same acts. It takes the exchange's outbound lines with it.
+  Exchanges are soft delete only — the row is the explanation of the difference the customer was
+  charged. This field mirrors `DELETE /order-exchanges/:id`, which retires the exchange exactly as
+  `softDeleteOrderExchange` does.
   """
   deleteOrderExchange(id: ID!): DeleteOrderExchangePayload!
 
@@ -52614,23 +52602,22 @@ type ShipOrderReturnPayload {
 }
 
 """
-The outcome of removing a return destructively.
+The outcome of retiring a return through `deleteOrderReturn`.
 
-It carries the identifier and nothing else, because there is no row left to carry: the deletion is
-physical, and a payload shaped like the resource's others would promise a row that no longer exists.
+It carries the identifier and nothing else; `softDeleteOrderReturn` answers the retired row itself.
 """
 type DeleteOrderReturnPayload {
   id: ID
   userErrors: [UserError!]!
 }
 
-"""The outcome of removing a claim destructively."""
+"""The outcome of retiring a claim through `deleteOrderClaim`."""
 type DeleteOrderClaimPayload {
   id: ID
   userErrors: [UserError!]!
 }
 
-"""The outcome of removing an exchange destructively."""
+"""The outcome of retiring an exchange through `deleteOrderExchange`."""
 type DeleteOrderExchangePayload {
   id: ID
   userErrors: [UserError!]!

@@ -313,25 +313,20 @@ export class OrderClaimResolver {
 	}
 
 	/**
-	 * Removes a claim destructively.
+	 * Retires a claim; it no longer removes one.
 	 *
-	 * `softDeleteOrderClaim` is the withdrawal this domain wants — a claim that settled in money is the
-	 * record of that money, and the lines it raised are what a replacement is built from — and this field
-	 * mirrors the destructive route `CrudController` inherits, which `06-api-specification.md` §2
-	 * declares in the inherited route set for every entity resource §7 lists unless a row says otherwise.
-	 * Both facts belong beside each other: the recoverable pair is the domain's preference and the
-	 * destructive route is the framework's inheritance, and a surface that offered only the first would
-	 * refuse an act REST performs. `order_claim_line` cascades from `order_claim`, so what this removes
-	 * includes the lines the claim was decided on.
+	 * It mirrors `DELETE /:id`, which retires rather than erases since the owner's 2026-10-09 decision
+	 * that claims are soft delete only, so both reach the service's `softRemove` — the same act as
+	 * `softDeleteOrderClaim`. The payload keeps its shape: the identifier of the claim retired, or the refusal.
 	 *
-	 * @param id The claim to remove.
-	 * @returns The payload, carrying the identifier that was removed.
+	 * @param id The claim to retire.
+	 * @returns The payload, carrying the identifier that was retired.
 	 */
 	@Mutation('deleteOrderClaim')
 	@Permissions(ReturnsPermissions.CLAIMS_CREATE)
 	async deleteOrderClaim(@Args('id') id: ID) {
 		try {
-			await this.orderClaimService.delete(id);
+			await this.orderClaimService.softRemove(id);
 
 			return { id, userErrors: [] };
 		} catch (error) {

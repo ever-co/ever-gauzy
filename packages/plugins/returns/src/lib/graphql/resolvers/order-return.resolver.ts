@@ -630,28 +630,20 @@ export class OrderReturnResolver {
 	}
 
 	/**
-	 * Removes a return destructively.
+	 * Retires a return; it no longer removes one.
 	 *
-	 * The route it mirrors is `DELETE /order-returns/:id`, inherited from `CrudController` and overridden
-	 * by the controller only to state the permission the base leaves unstated. Two facts meet here and
-	 * both are stated rather than one: `softDeleteOrderReturn` is the withdrawal this domain wants —
-	 * the receipt wrote stock movements and the refund wrote money, and both point back at the row — and
-	 * this field mirrors the framework's own destructive route, which `06-api-specification.md` §2
-	 * declares in the inherited route set for every entity resource §7 lists unless a row says otherwise,
-	 * and which the marketplace row names six `delete*` fields for. Delivering only the recoverable half
-	 * would make GraphQL a narrower surface than REST, which is the one direction §3.1 forbids.
+	 * It mirrors `DELETE /:id`, which retires rather than erases since the owner's 2026-10-09 decision
+	 * that returns are soft delete only, so both reach the service's `softRemove` — the same act as
+	 * `softDeleteOrderReturn`. The payload keeps its shape: the identifier of the return retired, or the refusal.
 	 *
-	 * The answer is an identifier and the refused errors only. There is no row left to carry, so a
-	 * payload shaped like the resource's others would promise one that no longer exists.
-	 *
-	 * @param id The return to remove.
-	 * @returns The payload, carrying the identifier that was removed.
+	 * @param id The return to retire.
+	 * @returns The payload, carrying the identifier that was retired.
 	 */
 	@Mutation('deleteOrderReturn')
 	@Permissions(ReturnsPermissions.RETURNS_CREATE)
 	async deleteOrderReturn(@Args('id') id: ID) {
 		try {
-			await this.orderReturnService.delete(id);
+			await this.orderReturnService.softRemove(id);
 
 			return { id, userErrors: [] };
 		} catch (error) {

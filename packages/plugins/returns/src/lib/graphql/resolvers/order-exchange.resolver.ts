@@ -294,25 +294,20 @@ export class OrderExchangeResolver {
 	}
 
 	/**
-	 * Removes an exchange destructively.
+	 * Retires an exchange; it no longer removes one.
 	 *
-	 * `softDeleteOrderExchange` is the withdrawal this domain wants — the difference was priced once and
-	 * the customer was charged it, and the row is the explanation of that charge — and this field mirrors
-	 * the destructive route `CrudController` inherits, which `06-api-specification.md` §2 declares in the
-	 * inherited route set for every entity resource §7 lists unless a row says otherwise, and which the
-	 * marketplace row names six `delete*` fields for. Both facts belong beside each other: the recoverable
-	 * pair is the domain's preference and the destructive route is the framework's inheritance. A line
-	 * whose `variantId` is referenced with `RESTRICT` from other rows is refused by the database, so this
-	 * removes what the schema lets it remove and no more.
+	 * It mirrors `DELETE /:id`, which retires rather than erases since the owner's 2026-10-09 decision
+	 * that exchanges are soft delete only, so both reach the service's `softRemove` — the same act as
+	 * `softDeleteOrderExchange`. The payload keeps its shape: the identifier of the exchange retired, or the refusal.
 	 *
-	 * @param id The exchange to remove.
-	 * @returns The payload, carrying the identifier that was removed.
+	 * @param id The exchange to retire.
+	 * @returns The payload, carrying the identifier that was retired.
 	 */
 	@Mutation('deleteOrderExchange')
 	@Permissions(ReturnsPermissions.EXCHANGES_CREATE)
 	async deleteOrderExchange(@Args('id') id: ID) {
 		try {
-			await this.orderExchangeService.delete(id);
+			await this.orderExchangeService.softRemove(id);
 
 			return { id, userErrors: [] };
 		} catch (error) {
