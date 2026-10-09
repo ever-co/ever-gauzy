@@ -177,15 +177,26 @@ const FORBIDDEN = ['competitor', 'market leader', 'industry standard', 'other pl
  *
  * @returns The names, or an empty array — and the caller reports which, because a check that quietly
  * became weaker is worse than one that was never strong.
+ *
+ * Only an ABSENT file means "no list". The path used to be built from an identifier this module never
+ * declared, and the `catch` that was meant for a missing file swallowed the ReferenceError too — so the
+ * strict sweep never ran, even for a developer who had written the list, while the run reported
+ * "phrase list only" as if nobody had. A list that is present but cannot be read is therefore a failure
+ * of this check, not a quiet fallback to the weaker sweep.
  */
 function localDenylist() {
-	try {
-		const parsed = JSON.parse(readFileSync(join(HERE, '..', '..', '.vendor-denylist.json'), 'utf8'));
+	const file = join(repoRoot, '.vendor-denylist.json');
+	if (!existsSync(file)) return [];
 
-		return Array.isArray(parsed?.names) ? parsed.names.filter((name) => typeof name === 'string') : [];
-	} catch {
-		return [];
+	try {
+		const parsed = JSON.parse(readFileSync(file, 'utf8'));
+		if (Array.isArray(parsed?.names)) return parsed.names.filter((name) => typeof name === 'string');
+		check('.vendor-denylist.json lists the product names to refuse', false, 'it has no "names" array');
+	} catch (error) {
+		check('.vendor-denylist.json can be read', false, error?.message ?? String(error));
 	}
+
+	return [];
 }
 
 /** Kernel capabilities that live in core and must each be a complete, wired module. */
