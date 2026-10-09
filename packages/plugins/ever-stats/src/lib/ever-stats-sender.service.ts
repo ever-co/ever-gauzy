@@ -1,16 +1,14 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import { signStatsReportBytes, StatsValidationError } from '@ever-co/connect-sdk';
 import type { EverStatsSigner } from '@gauzy/plugin-ever-instance';
 import {
 	MAX_STATS_REPORT_BYTES,
 	MAX_STATS_RESPONSE_BYTES,
 	MODULE_VERSION,
-	STATS_HEADERS,
 	STATS_REPORTS_PATH,
-	STATS_SEND_TIMEOUT_MS,
-	STATS_SIGNATURE_PREFIX
+	STATS_SEND_TIMEOUT_MS
 } from './ever-stats.constants';
-import { STATS_SCHEMA } from './schema/stats-schema';
-import { redactStatsPath } from './vendor/stats-checks';
+import { redactStatsPath } from './schema/stats-path';
 
 /** Injection token: the `fetch` to send with (tests pass their own; default the global one). */
 export const STATS_FETCH = 'EVER_STATS_FETCH';
@@ -70,9 +68,16 @@ function problemSummary(status: number, body: unknown): string {
 	const doc = body !== null && typeof body === 'object' ? (body as Record<string, unknown>) : {};
 	const code = typeof doc['code'] === 'string' && /^[a-z_]{1,64}$/.test(doc['code']) ? doc['code'] : null;
 	const first = Array.isArray(doc['errors']) ? (doc['errors'][0] as Record<string, unknown> | undefined) : undefined;
-	const path = typeof first?.['path'] === 'string' ? redactStatsPath(STATS_SCHEMA, first['path']) || '(body)' : null;
+	const path = typeof first?.['path'] === 'string' ? redactStatsPath(first['path']) || '(body)' : null;
 	const fieldCode = typeof first?.['code'] === 'string' && /^[a-z_]{1,32}$/.test(first['code']) ? first['code'] : null;
 	return [`http_${status}`, code, path, fieldCode].filter(Boolean).join(':').slice(0, 255);
+}
+
+/** Bytes Ever Platform would refuse (the SDK's checks): nothing is sent; only codes and field names are kept. */
+function refusedBeforeSending(error: StatsValidationError): StatsSendOutcome {
+	const first = error.errors[0];
+	const path = first ? redactStatsPath(first.path) || '(body)' : '(body)';
+	return { kind: 'dropped', status: error.status, error: `http_${error.status}:${error.code}:${path}:${first?.code ?? 'type'}`.slice(0, 255) };
 }
 
 /**
@@ -88,19 +93,18 @@ export class EverStatsSender {
 		this.fetcher = fetcher ?? ((...args: Parameters<typeof fetch>) => globalThis.fetch(...args));
 	}
 
-	/** The headers of a signed report (exported for tests and the settings page's documentation). */
+	/**
+	 * The headers of a signed report (exported for tests and the settings page's documentation): the
+	 * SDK signs exactly `bytes` (`signStatsReportBytes`: the key, the signature and the key id, after
+	 * the platform's checks); this module adds its user agent. Throws the SDK's
+	 * `StatsValidationError` for bytes the platform would refuse.
+	 */
 	headers(bytes: Buffer, signer: EverStatsSigner, productVersion: string): Record<string, string> {
-		const signature = signer.sign(bytes);
-		if (signature.length !== 64) {
-			throw new TypeError('an Ed25519 signature is 64 bytes');
-		}
+		const signed = signStatsReportBytes(new Uint8Array(bytes), signer, { keyId: true });
 		return {
-			'content-type': 'application/json',
+			...signed.headers,
 			accept: 'application/json',
-			'user-agent': `gauzy-ever-stats/${MODULE_VERSION} (gauzy/${productVersion})`,
-			[STATS_HEADERS.key]: signer.publicKey,
-			[STATS_HEADERS.signature]: `${STATS_SIGNATURE_PREFIX}${signature.toString('base64url')}`,
-			[STATS_HEADERS.keyId]: signer.keyId
+			'user-agent': `gauzy-ever-stats/${MODULE_VERSION} (gauzy/${productVersion})`
 		};
 	}
 
@@ -108,11 +112,18 @@ export class EverStatsSender {
 		if (bytes.length > MAX_STATS_REPORT_BYTES) {
 			return { kind: 'dropped', status: 413, error: 'too_large:(body):too_large' };
 		}
+		let headers: Record<string, string>;
+		try {
+			headers = this.headers(bytes, signer, productVersion);
+		} catch (error) {
+			if (!(error instanceof StatsValidationError)) throw error;
+			return refusedBeforeSending(error);
+		}
 		let response: Response;
 		try {
 			response = await this.fetcher(`${apiUrl}${STATS_REPORTS_PATH}`, {
 				method: 'POST',
-				headers: this.headers(bytes, signer, productVersion),
+				headers,
 				body: new Uint8Array(bytes),
 				redirect: 'manual',
 				credentials: 'omit',

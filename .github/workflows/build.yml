@@ -380,32 +380,18 @@ jobs:
           EVER_STATS_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
         run: yarn nx run plugin-ever-stats:test-integration
 
-      - name: Checkout the Ever Platform mock (ever-co/ever-connect-sdk, pinned commit)
-        uses: actions/checkout@v4
-        with:
-          repository: ever-co/ever-connect-sdk
-          ref: 2fd74dad9357a18471292f38012a5f5e4e6d2938
-          path: .ever-connect-sdk
-          persist-credentials: false
-
       - name: Test anonymous usage statistics against the Ever Platform mock
-        # The plugin against the public SDK's mock platform, which validates, verifies and records
-        # every call: on, one report accepted and no other call; EVER_STATS_ENABLED=false and
-        # switched off in Settings, no call at all (Send now 409); a control without the mock that
-        # must not pass. The mock runs from the pinned checkout, moved out of the workspace so Nx
-        # never sees it, with its dependencies installed from the SDK's own lockfile (by the package
-        # manager the SDK pins, through corepack, without changing this job's yarn).
+        # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the
+        # exact version in the plugin's package.json, installed with the workspace), which validates,
+        # verifies and records every call: on, one report accepted and no other call;
+        # EVER_STATS_ENABLED=false and switched off in Settings, no call at all (Send now 409); a
+        # control without the mock that must not pass.
         env:
           EVER_STATS_MOCK_PLATFORM_URL: http://127.0.0.1:18080
           EVER_STATS_MOCK_PLATFORM_REQUIRED: 'true'
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
         run: |
-          mv .ever-connect-sdk "$RUNNER_TEMP/ever-connect-sdk"
-          cd "$RUNNER_TEMP/ever-connect-sdk"
-          corepack pnpm install --frozen-lockfile --prod --filter ./tools/mock-platform
-          cd tools/mock-platform
-          node bin/ever-mock-platform.mjs --port 18080 > "$RUNNER_TEMP/mock-platform.log" 2>&1 &
-          cd "$GITHUB_WORKSPACE"
+          TOOLS_DIR=$(node -p "require('node:path').dirname(require.resolve('@ever-co/connect-tools/package.json', { paths: ['packages/plugins/ever-stats'] }))")
+          node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18080 > "$RUNNER_TEMP/mock-platform.log" 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://127.0.0.1:18080/__mock/healthz > /dev/null; then break; fi
             sleep 1

@@ -17,8 +17,9 @@ name: Egress audit
 # "Switched off in Settings" (module loaded, no call at all, Send now 409) is proven by the plugin
 # suite against the same mock platform in build.yml (build-api).
 #
-# The harness is the public Ever Platform SDK's egress audit, checked out at a pinned commit
-# (EVER_CONNECT_SDK_SHA below); nothing of it is copied into this repository.
+# The harness is the egress audit of the SDK's dev tools (`ever-egress-audit` of `@ever-co/connect-tools`,
+# the exact version the statistics plugin pins in its package.json), installed from npm for this run;
+# nothing of it is copied into this repository.
 #
 # Runs every day on the newest published develop API image (the demo image), and on demand with
 # any API image. The configuration comes from the default branch; no code of a pull request runs.
@@ -40,9 +41,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # ever-co/ever-connect-sdk (Apache-2.0), tools/egress-audit and tools/mock-platform.
-  EVER_CONNECT_SDK_REPOSITORY: ever-co/ever-connect-sdk
-  EVER_CONNECT_SDK_SHA: 2fd74dad9357a18471292f38012a5f5e4e6d2938
   AUDIT_CONFIG: tools/egress-audit/egress-audit.config.json
   AUDIT_ARTIFACTS: egress-audit-artifacts
 
@@ -63,26 +61,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Checkout the egress audit harness (pinned commit)
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.EVER_CONNECT_SDK_REPOSITORY }}
-          ref: ${{ env.EVER_CONNECT_SDK_SHA }}
-          path: .egress-audit/sdk
-          persist-credentials: false
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install the harness dependencies (from its lockfile)
-        working-directory: .egress-audit/sdk
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+      - name: Install the harness (@ever-co/connect-tools, the version the statistics plugin pins)
         run: |
-          corepack pnpm install --frozen-lockfile --filter ./tools/egress-audit
-          node tools/egress-audit/run.mjs --help > /dev/null
+          version=$(node -p "require('./packages/plugins/ever-stats/package.json').devDependencies['@ever-co/connect-tools']")
+          npm install --prefix "$RUNNER_TEMP/egress-audit" --no-save --no-audit --no-fund --ignore-scripts "@ever-co/connect-tools@$version"
+          harness="$RUNNER_TEMP/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs"
+          node "$harness" --help > /dev/null
+          echo "EGRESS_AUDIT=$harness" >> "$GITHUB_ENV"
 
       - name: Pull the API image
         env:
@@ -107,19 +97,19 @@ jobs:
         if: ${{ !cancelled() }}
         env:
           GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
-        run: node .egress-audit/sdk/tools/egress-audit/run.mjs --config "$AUDIT_CONFIG" --mode off --artifacts "$AUDIT_ARTIFACTS" --verbose
+        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode off --artifacts "$AUDIT_ARTIFACTS" --verbose
 
       - name: 'off_env_file: EVER_STATS_ENABLED=false only in the API .env.local file'
         if: ${{ !cancelled() }}
         env:
           GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-stats-off.env
-        run: node .egress-audit/sdk/tools/egress-audit/run.mjs --config "$AUDIT_CONFIG" --mode off_env_file --artifacts "$AUDIT_ARTIFACTS" --verbose
+        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode off_env_file --artifacts "$AUDIT_ARTIFACTS" --verbose
 
       - name: 'positive_stats: on, against the mock platform'
         if: ${{ !cancelled() }}
         env:
           GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
-        run: node .egress-audit/sdk/tools/egress-audit/run.mjs --config "$AUDIT_CONFIG" --mode positive_stats --artifacts "$AUDIT_ARTIFACTS" --verbose
+        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode positive_stats --artifacts "$AUDIT_ARTIFACTS" --verbose
 
       - name: 'control: positive_stats without the mock platform must fail'
         if: ${{ !cancelled() }}
@@ -127,7 +117,7 @@ jobs:
           GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
         run: |
           set +e
-          node .egress-audit/sdk/tools/egress-audit/run.mjs --config "$AUDIT_CONFIG" --mode positive_stats --no-mock --artifacts "$AUDIT_ARTIFACTS" --verbose
+          node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode positive_stats --no-mock --artifacts "$AUDIT_ARTIFACTS" --verbose
           code=$?
           set -e
           if [ "$code" -ne 1 ]; then

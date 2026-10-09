@@ -2,6 +2,7 @@
 	"product": "gauzy",
 	"compose": ["compose.egress-audit.yml"],
 	"project": "ever-audit-gauzy",
+	"subnet": "10.231.7.0/24",
 	"api_service": "api",
 	"process_services": ["api"],
 	"services": ["api"],
