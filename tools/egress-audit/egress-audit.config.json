@@ -11,7 +11,7 @@
 	"module_routes": ["/api/ever-stats/status", "/api/ever-stats/last", "/api/ever-stats/state"],
 	"adapter": "adapter.mjs",
 	"wait_s": 120,
-	"allowed_external_hosts": [],
+	"allowed_external_hosts": ["fonts.googleapis.com", "maps.googleapis.com"],
 	"web_service": "webapp",
 	"web_static": true,
 	"web_url": "http://webapp:4200/#",

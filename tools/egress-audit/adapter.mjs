@@ -151,12 +151,21 @@ export default {
 	 */
 	async uiLogin(page, ctx) {
 		await page.goto(`${ctx.baseUrl}/auth/login`);
-		await page.fill('#input-email', SEED_EMAIL);
-		await page.fill('#input-password', SEED_PASSWORD);
-		await Promise.all([
-			page.waitForURL((url) => /^#\/(pages|onboarding)(\/|$)/.test(new URL(url).hash), { timeout: 120_000 }),
-			page.click('form button[type=submit]')
-		]);
+		try {
+			await page.fill('#input-email', SEED_EMAIL, { timeout: 120_000 });
+			await page.fill('#input-password', SEED_PASSWORD);
+			await Promise.all([
+				page.waitForURL((url) => /^#\/(pages|onboarding)(\/|$)/.test(new URL(url).hash), { timeout: 120_000 }),
+				page.click('form button[type=submit]')
+			]);
+		} catch (error) {
+			// Evidence of what the browser showed instead (seed data only): a screenshot and the
+			// page's route and visible text.
+			await page.screenshot({ path: '/out/sign-in-failed.png', fullPage: true }).catch(() => {});
+			const text = await page.evaluate(() => document.body?.innerText ?? '').catch(() => '');
+			ctx.log(`adapter: the sign-in did not complete at ${new URL(page.url()).hash.replace(/\?.*$/, '') || '/'}; the page reads: ${text.replace(/\s+/g, ' ').slice(0, 300)}`);
+			throw error;
+		}
 		const signedIn = await page.evaluate(() => Boolean(window.localStorage.getItem('token')));
 		if (!signedIn) throw new Error('the sign-in page left no session (no token in localStorage)');
 		ctx.log(`adapter: signed in, landed on ${new URL(page.url()).hash.replace(/\?.*$/, '')}`);
