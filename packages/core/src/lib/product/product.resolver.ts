@@ -155,10 +155,10 @@ const PRODUCT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * `TenantPermissionGuard` on the class and `PermissionGuard` with `PermissionsEnum.ORG_INVENTORY_VIEW`
  * or `ORG_INVENTORY_PRODUCT_EDIT` on each of its own routes, so this resolver carries the tenant
  * guard on the class and the same permission guard with the same permission on the fields that
- * mirror those routes. The two lifecycle fields — the soft removal and the recovery the controller
- * inherits from the CRUD base — mirror routes that carry *no* permission, so they carry none either:
- * a field that demanded one would refuse here a caller the REST route serves, and tightening the
- * resource is a change to make in both places at once.
+ * mirror those routes. The two lifecycle fields — the soft removal and the recovery — mirror routes the
+ * controller overrides only to attach that same edit permission behind the permission guard (the CRUD base
+ * states none, and `PermissionGuard` answered `true` to any member of the tenant — GHSA-v79w-54p2-wmh5),
+ * so they carry the same: tightening the resource is a change made in both places at once.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -370,23 +370,32 @@ export class ProductResolver {
 	}
 
 	/**
-	 * Withdraws a product without removing the row.
+	 * Retires a row without removing it, through the service method `DELETE /api/products/:id/soft` calls, under
+	 * the permission that route states: `ORG_INVENTORY_PRODUCT_EDIT` (the grant its create, update and delete
+	 * routes state).
 	 *
-	 * No permission is stated because the delivered route states none: the soft removal is inherited
-	 * from the CRUD base, where the controller's own tenant guard is the whole of its scope, and a
-	 * resolver that demanded more would refuse a caller the REST route serves. The delivered route
-	 * declares no query parameter of its own and passes the service the empty option list that
-	 * leaves, so the field states none either.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('softDeleteProduct')
 	async softDeleteProduct(@Args('id', { type: () => ID }) id: Id): Promise<Product> {
 		return await this.productService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn product back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route carries no permission to mirror.
+	 * Restores a retired row through the service method `PUT /api/products/:id/recover` calls, under the
+	 * permission that route states: `ORG_INVENTORY_PRODUCT_EDIT` (the grant its create, update and delete routes
+	 * state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Mutation('recoverProduct')
 	async recoverProduct(@Args('id', { type: () => ID }) id: Id): Promise<Product> {
 		return await this.productService.softRecover(id);

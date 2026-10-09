@@ -542,11 +542,15 @@ describe('CandidateFeedbacksResolver — the guard stack and the permission are 
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(CandidateFeedbacksController, route));
 	});
 
-	it('states the feedback edit permission on the four fields whose routes state it, and nothing elsewhere', () => {
+	it('states the feedback edit permission on the fields whose routes state it, and nothing elsewhere', () => {
+		// The retire-and-restore pair joined the three writes: the controller overrides the two inherited
+		// routes to state the feedback edit grant (GHSA-v79w-54p2-wmh5), and the fields state the same.
 		for (const field of [
 			'createCandidateFeedback',
 			'updateCandidateFeedback',
-			'deleteCandidateFeedbackByInterview'
+			'deleteCandidateFeedbackByInterview',
+			'softDeleteCandidateFeedback',
+			'recoverCandidateFeedback'
 		]) {
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT]);
 		}
@@ -561,16 +565,22 @@ describe('CandidateFeedbacksResolver — the guard stack and the permission are 
 		expect(permissionOfField('candidateFeedback')).toBeUndefined();
 		expect(permissionOfField('candidateFeedbackCount')).toBeUndefined();
 		expect(permissionOfField('deleteCandidateFeedback')).toBeUndefined();
-		expect(permissionOfField('softDeleteCandidateFeedback')).toBeUndefined();
-		expect(permissionOfField('recoverCandidateFeedback')).toBeUndefined();
 	});
 
-	it('restates the permission guard only on the four fields whose routes carry it', () => {
+	it('restates the permission guard only on the fields whose routes carry it', () => {
 		const withPermissionGuard = [
 			'createCandidateFeedback',
 			'updateCandidateFeedback',
-			'deleteCandidateFeedbackByInterview'
+			'deleteCandidateFeedbackByInterview',
+			'softDeleteCandidateFeedback',
+			'recoverCandidateFeedback'
 		];
+
+		for (const route of ['softRemove', 'softRecover']) {
+			expect(Reflect.getMetadata('__guards__', handlersOf(CandidateFeedbacksController)[route])).toEqual([
+				PermissionGuard
+			]);
+		}
 
 		for (const field of withPermissionGuard) {
 			expect(guardsOfField(field)).toContain(PermissionGuard);
@@ -580,9 +590,7 @@ describe('CandidateFeedbacksResolver — the guard stack and the permission are 
 			'candidateFeedbacks',
 			'candidateFeedback',
 			'candidateFeedbackCount',
-			'deleteCandidateFeedback',
-			'softDeleteCandidateFeedback',
-			'recoverCandidateFeedback'
+			'deleteCandidateFeedback'
 		]) {
 			expect(guardsOfField(field)).not.toContain(PermissionGuard);
 		}

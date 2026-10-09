@@ -645,13 +645,19 @@ describe('OrganizationStrategicInitiativeResolver — the guard stack and the pe
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE
 		]);
 
-		// The four capabilities the controller inherits from the CRUD base carry no permission, so the
-		// fields that mirror them state none: a field that demanded one would be narrower than its route.
-		for (const field of [
-			'organizationStrategicInitiativeCount',
-			'softDeleteOrganizationStrategicInitiative',
-			'recoverOrganizationStrategicInitiative'
-		]) {
+		// The retire-and-restore pair is overridden by the controller only to state the delete grant — the
+		// CRUD base declares none, and `PermissionGuard` answers `true` to empty metadata
+		// (GHSA-v79w-54p2-wmh5) — so the fields that mirror it state the same.
+		expect(permissionOfField('softDeleteOrganizationStrategicInitiative')).toEqual([
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE
+		]);
+		expect(permissionOfField('recoverOrganizationStrategicInitiative')).toEqual([
+			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE
+		]);
+
+		// The count the controller inherits from the CRUD base carries no permission, so the field that
+		// mirrors it states none: a field that demanded one would be narrower than its route.
+		for (const field of ['organizationStrategicInitiativeCount']) {
 			expect(permissionOfField(field)).toBeUndefined();
 		}
 	});

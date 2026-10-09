@@ -133,10 +133,13 @@ const BROADCAST_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *   and publishing one are different grants and only the first is what its route asks for;
  * - the create, the edit and the removal each state the one permission their own route states — the
  *   create permission is not the edit permission, and the removal's is a third;
- * - the count and the two lifecycle moves state **no permission at all**, because the routes they mirror
- *   state none: they are inherited from the CRUD base, and the controller declares nothing on its class,
- *   so the whole of their scope is the guard chain. An empty `@Permissions()` would have been a second
- *   statement of the same absence.
+ * - the count states **no permission at all**, because the route it mirrors states none: it is inherited
+ *   from the CRUD base, and the controller declares nothing on its class, so the whole of its scope is the
+ *   guard chain. An empty `@Permissions()` would have been a second statement of the same absence;
+ * - the two lifecycle moves state `BROADCAST_DELETE`, because the controller overrides the two inherited
+ *   routes to state it — the removal's own grant — rather than leave them to `PermissionGuard`'s `true`
+ *   for empty metadata, which let any member of the tenant withdraw or restore a message
+ *   (GHSA-v79w-54p2-wmh5).
  *
  * **The gate is the catalogue's, and it is declared once for every field.** `FeatureFlagGuard` is
  * appended to the chain above — after the controller's two, so a caller with no credential is refused as
@@ -305,21 +308,28 @@ export class BroadcastResolver {
 	}
 
 	/**
-	 * Withdraws a message without removing the row.
+	 * Retires a row without removing it, through the service method `DELETE /api/broadcasts/:id/soft` calls, under
+	 * the permission that route states: `BROADCAST_DELETE` (the grant its own delete route states).
 	 *
-	 * No permission is stated on the field beyond what the controller's class carries, because the
-	 * delivered route states none of its own: the withdrawal is inherited from the CRUD base, where the
-	 * controller's class-level declaration — none — is the whole of its scope.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.BROADCAST_DELETE)
 	@Mutation('softDeleteBroadcast')
 	async softDeleteBroadcast(@Args('id', { type: () => ID }) id: Id): Promise<Broadcast> {
 		return await this.broadcastService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn message back. Its permission is the withdrawal's, for the same reason: the
-	 * delivered route carries none of its own to mirror.
+	 * Restores a retired row through the service method `PUT /api/broadcasts/:id/recover` calls, under the
+	 * permission that route states: `BROADCAST_DELETE` (the grant its own delete route states).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.BROADCAST_DELETE)
 	@Mutation('recoverBroadcast')
 	async recoverBroadcast(@Args('id', { type: () => ID }) id: Id): Promise<Broadcast> {
 		return await this.broadcastService.softRecover(id);

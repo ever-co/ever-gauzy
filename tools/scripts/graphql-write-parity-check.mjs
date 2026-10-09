@@ -126,13 +126,19 @@ for (const root of ROOTS) {
 
 			checked.resources += 1;
 
-			const softDelete = `softDelete${resource}`;
+			// A few platform controllers are named in the plural (`CandidateFeedbacksController`,
+			// `ScreeningTasksController`) while their GraphQL type, and so its fields, are singular
+			// (`softDeleteCandidateFeedback`). The type's name is the one the convention follows, so the
+			// singular spelling answers the pair as well.
+			const names = /s$/.test(resource) ? [resource, resource.slice(0, -1)] : [resource];
+			const softDelete = names.map((name) => `softDelete${name}`).find((name) => fields.has(name)) ?? `softDelete${resource}`;
 			// The act has two names in this repository and both are correct. §10's table gives
 			// `PUT /<resource>/:id/recover` the field name `restore<Type>`, while a hundred and eleven of the
 			// delivered fields spell it `recover<Type>`; `restoreSeller` is the one that follows the table.
 			// A gate that accepted only one spelling would fail the other, so it accepts either — the
 			// divergence between the table and the surface is recorded in the specification, not settled here.
-			const recovered = [`recover${resource}`, `restore${resource}`].find((name) => fields.has(name)) ?? null;
+			const recovered =
+				names.flatMap((name) => [`recover${name}`, `restore${name}`]).find((name) => fields.has(name)) ?? null;
 
 			if (fields.has(softDelete) && recovered) {
 				checked.answered += 1;

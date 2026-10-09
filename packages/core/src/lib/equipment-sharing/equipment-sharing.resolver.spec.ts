@@ -957,22 +957,31 @@ describe('EquipmentSharingResolver — the guard stack and the permission are th
 	});
 
 	it('states no permission on the fields whose routes state none, because that absence is the parity', () => {
-		// The node read, the count and the two lifecycle removals are inherited from the CRUD base, and
-		// the hard removal is declared on the controller without a permission. Widening any of them here
-		// — or restating the same absence as an empty `@Permissions()` — would be a second statement of
-		// a scope the controller already decided.
-		for (const handler of ['findById', 'getCount', 'delete', 'softRemove', 'softRecover']) {
+		// The node read and the count are inherited from the CRUD base, and the hard removal is declared on
+		// the controller without a permission. Widening any of them here — or restating the same absence as
+		// an empty `@Permissions()` — would be a second statement of a scope the controller already decided.
+		for (const handler of ['findById', 'getCount', 'delete']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EquipmentSharingController)[handler])).toBeUndefined();
 		}
 
-		for (const field of [
-			'equipmentSharing',
-			'equipmentSharingCount',
-			'deleteEquipmentSharing',
-			'softDeleteEquipmentSharing',
-			'recoverEquipmentSharing'
-		]) {
+		for (const field of ['equipmentSharing', 'equipmentSharingCount', 'deleteEquipmentSharing']) {
 			expect(permissionOfField(field)).toBeUndefined();
+		}
+	});
+
+	it('gates the retire-and-restore pair with the update grants on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
+		// The two lifecycle removals were inherited from the CRUD base with no permission, and
+		// `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or
+		// restore a sharing. The controller overrides both to state the grants its update, approve and
+		// refuse routes state, and the fields state the same.
+		const grants = [PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT];
+
+		for (const handler of ['softRemove', 'softRecover']) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EquipmentSharingController)[handler])).toEqual(grants);
+		}
+
+		for (const field of ['softDeleteEquipmentSharing', 'recoverEquipmentSharing']) {
+			expect(permissionOfField(field)).toEqual(grants);
 		}
 	});
 });

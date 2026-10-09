@@ -1,7 +1,7 @@
 import { NotFoundException, UseGuards } from '@nestjs/common';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination } from '@gauzy/contracts';
+import { ID as Id, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ConnectionFilter,
@@ -10,10 +10,11 @@ import {
 	GraphqlConnection,
 	buildConnection
 } from '../api/graphql-connection';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { OrganizationAward } from './organization-award.entity';
 import { OrganizationAwardService } from './organization-award.service';
+import { Permissions } from '../shared/decorators';
 
 /** The members `CreateOrganizationAwardInput` declares in the schema. */
 export interface ICreateOrganizationAwardInput {
@@ -83,6 +84,12 @@ const ORGANIZATION_AWARD_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * its routes is tenant-guarded and otherwise unpermissioned. A resolver that demanded a permission
  * here would refuse a caller the REST route serves, which is exactly the asymmetry the two-protocol
  * rule forbids.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ALL_ORG_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationAward` and `recoverOrganizationAward` state the same,
+ * neither wider nor narrower than REST.
  *
  * **The list is a connection, and no relation is a member of it.** An award row carries a title, a
  * year and the organization it is filed under; there is no relation column and nothing eager, so the
@@ -209,16 +216,30 @@ export class OrganizationAwardResolver {
 	}
 
 	/**
-	 * Withdraws an award: the row is marked rather than removed, and the recovery below reads it back.
+	 * Retires a row without removing it, through the service method `DELETE /api/organization-awards/:id/soft`
+	 * calls, under the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('softDeleteOrganizationAward')
 	async softDeleteOrganizationAward(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationAward> {
 		return await this.organizationAwardService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn award back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/organization-awards/:id/recover` calls, under
+	 * the permission that route states: `ALL_ORG_EDIT` (the organization-settings edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Mutation('recoverOrganizationAward')
 	async recoverOrganizationAward(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationAward> {
 		return await this.organizationAwardService.softRecover(id);

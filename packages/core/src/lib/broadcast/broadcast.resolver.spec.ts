@@ -816,17 +816,28 @@ describe('BroadcastResolver — the guard stack and the permission are the contr
 		expect(permissionOfField('deleteBroadcast')).toEqual([PermissionsEnum.BROADCAST_DELETE]);
 	});
 
-	it('states no permission on the fields whose routes state none, because that absence is the parity', () => {
-		// The count and the two lifecycle moves are inherited from the CRUD base, where they state no
-		// permission of their own — and the controller's class states none either, so the whole of their
-		// scope is the guard chain. Widening them here, or restating the same absence as an empty
-		// `@Permissions()`, would be a second statement of a scope the controller already decided.
-		for (const handler of ['getCount', 'softRemove', 'softRecover']) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(BroadcastController)[handler])).toBeUndefined();
+	it('states no permission on the field whose route states none, because that absence is the parity', () => {
+		// The count is inherited from the CRUD base, where it states no permission of its own — and the
+		// controller's class states none either, so the whole of its scope is the guard chain. Widening it
+		// here, or restating the same absence as an empty `@Permissions()`, would be a second statement of a
+		// scope the controller already decided.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(BroadcastController).getCount)).toBeUndefined();
+		expect(permissionOfField('broadcastCount')).toBeUndefined();
+	});
+
+	it('gates the retire-and-restore pair with the delete grant on both surfaces (GHSA-v79w-54p2-wmh5)', () => {
+		// The two lifecycle moves were inherited from the CRUD base with no permission, and `PermissionGuard`
+		// answers `true` to empty metadata, so any member of the tenant could withdraw or restore a message.
+		// The controller overrides both to state `BROADCAST_DELETE`, its own delete route's grant, and the
+		// fields state the same.
+		for (const handler of ['softRemove', 'softRecover']) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(BroadcastController)[handler])).toEqual([
+				PermissionsEnum.BROADCAST_DELETE
+			]);
 		}
 
-		for (const field of ['broadcastCount', 'softDeleteBroadcast', 'recoverBroadcast']) {
-			expect(permissionOfField(field)).toBeUndefined();
+		for (const field of ['softDeleteBroadcast', 'recoverBroadcast']) {
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.BROADCAST_DELETE]);
 		}
 	});
 });

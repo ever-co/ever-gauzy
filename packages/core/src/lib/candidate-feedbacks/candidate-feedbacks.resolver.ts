@@ -77,11 +77,12 @@ const FEEDBACK_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain is the controller's, and it is the shortest chain in this domain.** The controller
  * carries `TenantPermissionGuard` on its class and nothing else: no class-level permission, and none on
- * the count, the paginated spelling, the list, the node, or the three lifecycle routes it inherits from
- * the CRUD base. Four of its handlers state `PermissionGuard` of their own — the interview-scoped read,
- * the two writes and the interview-scoped removal — and three of those four also state the feedback edit
- * permission. So the class here carries the tenant guard and the gate alone, those four fields restate
- * the permission guard and state the permission their own routes state, and **no field states a
+ * the count, the paginated spelling, the list, the node, or the plain removal it inherits from the CRUD
+ * base. Six of its handlers state `PermissionGuard` of their own — the interview-scoped read, the two
+ * writes, the interview-scoped removal, and the retire-and-restore pair it overrides only to attach the
+ * grant (GHSA-v79w-54p2-wmh5) — and five of those six also state the feedback edit permission. So the
+ * class here carries the tenant guard and the gate alone, those six fields restate the permission guard
+ * and state the permission their own routes state, and **no field states a
  * permission its route does not** — which for this resource means that most of the surface is guarded
  * by the tenant alone, exactly as the routes are. A class-level permission added for symmetry would
  * refuse a caller every one of those routes serves.
@@ -236,13 +237,33 @@ export class CandidateFeedbacksResolver {
 		return true;
 	}
 
-	/** Withdraws a verdict without removing it. */
+	/**
+	 * Retires a row without removing it, through the service method `DELETE /api/candidate-feedbacks/:id/soft`
+	 * calls, under the permission that route states: `ORG_CANDIDATES_FEEDBACK_EDIT` (the grant its create, update
+	 * and delete-by-interview routes state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Mutation('softDeleteCandidateFeedback')
 	async softDeleteCandidateFeedback(@Args('id', { type: () => ID }) id: Id): Promise<CandidateFeedback> {
 		return await this.candidateFeedbacksService.softRemove(id);
 	}
 
-	/** Puts a withdrawn verdict back. */
+	/**
+	 * Restores a retired row through the service method `PUT /api/candidate-feedbacks/:id/recover` calls, under
+	 * the permission that route states: `ORG_CANDIDATES_FEEDBACK_EDIT` (the grant its create, update and
+	 * delete-by-interview routes state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
+	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Mutation('recoverCandidateFeedback')
 	async recoverCandidateFeedback(@Args('id', { type: () => ID }) id: Id): Promise<CandidateFeedback> {
 		return await this.candidateFeedbacksService.softRecover(id);

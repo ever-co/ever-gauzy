@@ -13,6 +13,7 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { EmployeeLevelController } from './employee-level.controller';
 import { EmployeeLevelModule } from './employee-level.module';
@@ -593,12 +594,15 @@ describe('EmployeeLevelResolver — the guard stack is the controller’s, and n
 	it('runs every route under the guard chain the resolver states', () => {
 		const stated = Reflect.getMetadata('__guards__', EmployeeLevelResolver) ?? [];
 
-		for (const { route } of ROUTE_PARITY) {
+		for (const { field, route } of ROUTE_PARITY) {
 			// The controller's chain plus the gate on the endpoint itself and the resolver's are the same
 			// set, which is the whole parity claim: a route that added a guard of its own would narrow
-			// REST below GraphQL and is caught here.
+			// REST below GraphQL and is caught here. The retire-and-restore pair states `PermissionGuard`
+			// on the handler and on the field alike, so the field's own guards join the class's.
+			const fieldGuards = (Reflect.getMetadata('__guards__', fieldsOf(EmployeeLevelResolver)[field]) ?? []) as unknown[];
+
 			expect([...guardsOfRoute(EmployeeLevelController, route), FeatureFlagGuard].sort()).toEqual(
-				[...stated].sort()
+				[...new Set([...stated, ...fieldGuards])].sort()
 			);
 		}
 	});
@@ -613,15 +617,23 @@ describe('EmployeeLevelResolver — the guard stack is the controller’s, and n
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(EmployeeLevelController, route));
 	});
 
-	it('states no permission on the class or on any field, because the controller states none', () => {
-		// The delivered controller carries `TenantPermissionGuard` and no `@Permissions` at all — not on
-		// the two routes it declares and not on the seven it inherits — so every one of its routes is
-		// tenant-guarded and otherwise unpermissioned, and a field that demanded a permission would refuse
-		// a caller the REST route serves.
+	it('states no permission on the class or on any field but the retire-and-restore pair', () => {
+		// The delivered controller carries `TenantPermissionGuard` and no `@Permissions` on the two routes
+		// it declares or the five it still inherits — so those routes are tenant-guarded and otherwise
+		// unpermissioned, and a field that demanded a permission would refuse a caller the REST route serves.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeLevelController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, EmployeeLevelResolver)).toBeUndefined();
 
-		for (const { field, route } of ROUTE_PARITY) {
+		// The retire-and-restore pair is overridden only to state the organization-settings grant behind
+		// `PermissionGuard` (GHSA-v79w-54p2-wmh5), and the fields state the same.
+		for (const { field, route } of ROUTE_PARITY.filter(({ route }) => ['softRemove', 'softRecover'].includes(route))) {
+			expect(permissionOfRoute(EmployeeLevelController, route)).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+			expect(Reflect.getMetadata('__guards__', handlersOf(EmployeeLevelController)[route])).toEqual([PermissionGuard]);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(EmployeeLevelResolver)[field])).toEqual([PermissionGuard]);
+		}
+
+		for (const { field, route } of ROUTE_PARITY.filter(({ route }) => !['softRemove', 'softRecover'].includes(route))) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(EmployeeLevelController)[route])).toBeUndefined();
 			expect(permissionOfField(field)).toBeUndefined();
 			expect(permissionOfRoute(EmployeeLevelController, route)).toBeUndefined();

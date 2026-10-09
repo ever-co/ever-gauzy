@@ -14,6 +14,7 @@ import { buildSchema, printSchema } from 'graphql';
 import { getMetadataArgsStorage } from 'typeorm';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ProductVariantSettingController } from './product-setting.controller';
 import { ProductVariantSetting } from './product-setting.entity';
@@ -493,11 +494,22 @@ describe('ProductVariantSettingResolver — the resource, the route and the guar
 			'getCount',
 			'create',
 			'update',
-			'delete',
-			'softRemove',
-			'softRecover'
+			'delete'
 		]) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlerOf(handler) as object)).toBeUndefined();
+		}
+
+		// Except the retire-and-restore pair: the controller overrides the two inherited routes only to state
+		// the inventory edit grant (GHSA-v79w-54p2-wmh5), and the fields mirror them.
+		for (const handler of ['softRemove', 'softRecover']) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlerOf(handler) as object)).toEqual([
+				PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
+			]);
+		}
+		for (const field of ['softDeleteProductVariantSetting', 'recoverProductVariantSetting']) {
+			expect(
+				Reflect.getMetadata(PERMISSIONS_METADATA, (ProductVariantSettingResolver.prototype as any)[field])
+			).toEqual([PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT]);
 		}
 	});
 

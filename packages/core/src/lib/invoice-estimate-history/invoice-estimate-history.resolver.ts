@@ -82,11 +82,13 @@ const INVOICE_ESTIMATE_HISTORY_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain and the permission are the controller's, field by field.** The controller declares
  * nothing on its class: its list route states `TenantPermissionGuard`, `PermissionGuard` and
- * `INVOICES_VIEW` on itself, and every other route — the count, the node, the creation, the edit, the
- * removal, the withdrawal and the restoration — is the CRUD base's own and states none of them. So the
- * list field here carries the route's own pair of guards and its own permission, the class carries the
- * gate, and no other field narrows anything: a permission stated where the route states none would give
- * REST a wider scope than GraphQL for the same route, and this delivery may not narrow REST to match.
+ * `INVOICES_VIEW` on itself; the withdrawal and the restoration, which it overrides only to attach them
+ * (GHSA-v79w-54p2-wmh5), state the same pair of guards and `INVOICES_EDIT`; and every other route — the
+ * count, the node, the creation, the edit and the removal — is the CRUD base's own and states none of
+ * them. So the list field and the two lifecycle fields here carry their routes' own pair of guards and
+ * permission, the class carries the gate, and no other field narrows anything: a permission stated where
+ * the route states none would give REST a wider scope than GraphQL for the same route, and this delivery
+ * may not narrow REST to match.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
  * GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -208,12 +210,16 @@ export class InvoiceEstimateHistoryResolver {
 	}
 
 	/**
-	 * Withdraws a log entry without removing it.
+	 * Retires a row without removing it, through the service method `DELETE
+	 * /api/invoice-estimate-history/:id/soft` calls, under the permission that route states: `INVOICES_EDIT` (the
+	 * write grant of the invoices whose history this is (its list route reads under `INVOICES_VIEW`)).
 	 *
-	 * The delivered route is inherited from the CRUD base, which declares no query parameter of its own
-	 * and passes the service the option list it bound from the query string, so the field states none
-	 * either.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('softDeleteInvoiceEstimateHistory')
 	async softDeleteInvoiceEstimateHistory(
 		@Args('id', { type: () => ID }) id: Id
@@ -222,8 +228,16 @@ export class InvoiceEstimateHistoryResolver {
 	}
 
 	/**
-	 * Puts a withdrawn log entry back.
+	 * Restores a retired row through the service method `PUT /api/invoice-estimate-history/:id/recover` calls,
+	 * under the permission that route states: `INVOICES_EDIT` (the write grant of the invoices whose history this
+	 * is (its list route reads under `INVOICES_VIEW`)).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('recoverInvoiceEstimateHistory')
 	async recoverInvoiceEstimateHistory(
 		@Args('id', { type: () => ID }) id: Id

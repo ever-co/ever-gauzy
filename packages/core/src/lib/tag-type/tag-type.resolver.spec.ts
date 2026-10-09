@@ -480,18 +480,31 @@ describe('TagTypeResolver — the guard stack and the permission are the control
 		expect(stated).toEqual(expected);
 	});
 
-	it('carries no permission on the node query and the lifecycle routes, because their routes carry none', () => {
-		// `GET /:id`, the removal, the withdrawal and the recovery are inherited from the CRUD base
-		// without a permission of their own, and this controller states none on the class either — so
-		// they run under the guards alone. Demanding a permission here would refuse a caller the REST
-		// route serves; the asymmetry between reading one group and listing them is the controller's to
-		// resolve, and resolving it in one surface only is exactly what this delivery exists to prevent.
-		for (const handler of ['findById', 'delete', 'softRemove', 'softRecover']) {
+	it('carries no permission on the node query and the removal, because their routes carry none', () => {
+		// `GET /:id` and the removal are inherited from the CRUD base without a permission of their own, and
+		// this controller states none on the class either — so they run under the guards alone. Demanding a
+		// permission here would refuse a caller the REST route serves; the asymmetry between reading one
+		// group and listing them is the controller's to resolve, and resolving it in one surface only is
+		// exactly what this delivery exists to prevent.
+		for (const handler of ['findById', 'delete']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(TagTypeController)[handler])).toBeUndefined();
 			expect(permissionOfRoute(TagTypeController, handler)).toBeUndefined();
 		}
-		for (const field of ['tagType', 'deleteTagType', 'softDeleteTagType', 'recoverTagType']) {
+		for (const field of ['tagType', 'deleteTagType']) {
 			expect(permissionOfField(field)).toBeUndefined();
+		}
+
+		// The withdrawal and the recovery were inherited the same way, which let any member of the tenant
+		// retire or restore a group (GHSA-v79w-54p2-wmh5). The controller overrides both to state the
+		// catalogue's delete grant beside `ALL_ORG_EDIT`, and the fields state the same.
+		for (const handler of ['softRemove', 'softRecover']) {
+			expect(permissionOfRoute(TagTypeController, handler)).toEqual([
+				PermissionsEnum.ALL_ORG_EDIT,
+				PermissionsEnum.ORG_TAG_TYPES_DELETE
+			]);
+		}
+		for (const field of ['softDeleteTagType', 'recoverTagType']) {
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_DELETE]);
 		}
 
 		// The routes that do state permissions state them here too, and never the other one.

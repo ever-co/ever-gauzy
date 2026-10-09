@@ -121,9 +121,10 @@ const INVOICE_ITEM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * **The guard is the controller's guard, and no permission is stated above it.** The delivered routes
  * carry `TenantPermissionGuard` and no `@Permissions`, so a resolver that demanded one would refuse
  * here a caller the REST route serves — two surfaces of one concept with two scopes is exactly what
- * this delivery exists to prevent. The bulk write below is the one exception, and it is the
- * controller's exception rather than this resolver's: that route states `PermissionGuard` with the
- * invoice edit permission, so the field states the same guard and the same permission.
+ * this delivery exists to prevent. The bulk write and the retire-and-restore pair are the exceptions,
+ * and they are the controller's rather than this resolver's: those routes state `PermissionGuard` with
+ * the invoice edit permission — the pair because the controller overrides the inherited routes only to
+ * attach it (GHSA-v79w-54p2-wmh5) — so the fields state the same guard and the same permission.
  *
  * **The whole surface is behind the capability the catalogue declares for GraphQL.** `FeatureFlagGuard`
  * is appended to the controller's guard — after the tenant guard, so a caller with no credential is
@@ -264,17 +265,30 @@ export class InvoiceItemResolver {
 	}
 
 	/**
-	 * Withdraws a line without removing the row. The delivered route declares no option of its own, so
-	 * the field states none either.
+	 * Retires a row without removing it, through the service method `DELETE /api/invoice-item/:id/soft` calls,
+	 * under the permission that route states: `INVOICES_EDIT` (the grant its bulk-write route states).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('softDeleteInvoiceItem')
 	async softDeleteInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<InvoiceItem> {
 		return await this.invoiceItemService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn line back.
+	 * Restores a retired row through the service method `PUT /api/invoice-item/:id/recover` calls, under the
+	 * permission that route states: `INVOICES_EDIT` (the grant its bulk-write route states).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_EDIT)
 	@Mutation('recoverInvoiceItem')
 	async recoverInvoiceItem(@Args('id', { type: () => ID }) id: Id): Promise<InvoiceItem> {
 		return await this.invoiceItemService.softRecover(id);

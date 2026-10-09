@@ -751,13 +751,23 @@ describe('ProductResolver — the guard stack is the controller’s, field by fi
 	});
 
 	it('permits the two lifecycle fields exactly as far as their routes do, and no further', () => {
-		// The soft removal and the recovery are inherited from the CRUD base, where the controller's
-		// tenant guard is the whole of their scope. A resolver that demanded a permission here would
-		// refuse a caller the REST route serves.
-		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductResolver.prototype.softDeleteProduct)).toBeUndefined();
-		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductResolver.prototype.recoverProduct)).toBeUndefined();
-		expect(Reflect.getMetadata('__guards__', ProductResolver.prototype.softDeleteProduct)).toBeUndefined();
-		expect(Reflect.getMetadata('__guards__', ProductResolver.prototype.recoverProduct)).toBeUndefined();
+		// The soft removal and the recovery were inherited from the CRUD base with no permission, and
+		// `PermissionGuard` answers `true` to empty metadata, so any member of the tenant could retire or
+		// restore a product (GHSA-v79w-54p2-wmh5). The controller overrides both to state the edit grant its
+		// create, update and delete routes state, behind `PermissionGuard`, and the fields state the same.
+		for (const [field, route] of [
+			['softDeleteProduct', 'softRemove'],
+			['recoverProduct', 'softRecover']
+		] as const) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductController.prototype[route])).toEqual([
+				PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
+			]);
+			expect(Reflect.getMetadata('__guards__', ProductController.prototype[route])).toEqual([PermissionGuard]);
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, ProductResolver.prototype[field])).toEqual([
+				PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
+			]);
+			expect(Reflect.getMetadata('__guards__', ProductResolver.prototype[field])).toEqual([PermissionGuard]);
+		}
 	});
 
 	it('carries the catalogue’s bulk-import permission on the batch, on both surfaces, and one retry scope', () => {

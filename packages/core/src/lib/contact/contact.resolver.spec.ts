@@ -13,6 +13,7 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ContactController } from './contact.controller';
 import { ContactModule } from './contact.module';
@@ -565,7 +566,7 @@ describe('ContactResolver — the guard stack is the controller’s, field by fi
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactResolver)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ContactController)).toBeUndefined();
 
-		for (const { field } of ROUTE_PARITY) {
+		for (const { field } of ROUTE_PARITY.filter(({ route }) => !['softRemove', 'softRecover'].includes(route))) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, fieldsOf(ContactResolver)[field])).toBeUndefined();
 			expect(permissionOfField(field)).toBeUndefined();
 		}
@@ -584,19 +585,22 @@ describe('ContactResolver — the guard stack is the controller’s, field by fi
 		expect(permissionOfField(field)).toEqual(permissionOfRoute(ContactController, route));
 	});
 
-	it('holds the two lifecycle fields to the inherited routes they mirror', () => {
-		// The soft removal and the recovery are inherited from the CRUD base, where the controller's
-		// tenant guard is the whole of their scope. They are real routes of this resource — an override
-		// would be needed to remove them, and none is declared — so they are mirrored rather than left
-		// out, and they carry no permission because their routes carry none.
+	it('holds the two lifecycle fields to the routes they mirror, which state the contacts edit grant', () => {
+		// The soft removal and the recovery were inherited from the CRUD base with the controller's tenant
+		// guard as the whole of their scope, and `PermissionGuard` answers `true` to empty metadata, so any
+		// member of the tenant could retire or restore a contact (GHSA-v79w-54p2-wmh5). The controller now
+		// overrides both only to state `ORG_CONTACT_EDIT` behind `PermissionGuard`; the fields state the same.
 		for (const [field, route] of [
 			['softDeleteContact', 'softRemove'],
 			['recoverContact', 'softRecover']
 		] as ReadonlyArray<[string, string]>) {
 			expect(typeof handlersOf(ContactController)[route]).toBe('function');
-			expect(Reflect.getMetadata('__guards__', handlersOf(ContactController)[route])).toBeUndefined();
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ContactController)[route])).toBeUndefined();
-			expect(Reflect.getMetadata('__guards__', fieldsOf(ContactResolver)[field])).toBeUndefined();
+			expect(Reflect.getMetadata('__guards__', handlersOf(ContactController)[route])).toEqual([PermissionGuard]);
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(ContactController)[route])).toEqual([
+				PermissionsEnum.ORG_CONTACT_EDIT
+			]);
+			expect(Reflect.getMetadata('__guards__', fieldsOf(ContactResolver)[field])).toEqual([PermissionGuard]);
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
 		}
 	});
 });

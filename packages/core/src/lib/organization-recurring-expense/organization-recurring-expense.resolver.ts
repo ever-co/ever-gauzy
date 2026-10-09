@@ -10,7 +10,8 @@ import {
 	IPagination,
 	IRecurringExpenseDeleteInput,
 	IRecurringExpenseEditInput,
-	IStartUpdateTypeInfo
+	IStartUpdateTypeInfo,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
@@ -22,7 +23,7 @@ import {
 import { BaseQueryDTO } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard, PermissionGuard } from '../shared/guards';
 import {
 	OrganizationRecurringExpenseCreateCommand,
 	OrganizationRecurringExpenseDeleteCommand,
@@ -34,6 +35,7 @@ import {
 	OrganizationRecurringExpenseFindSplitExpenseQuery,
 	OrganizationRecurringExpenseStartDateUpdateTypeQuery
 } from './queries';
+import { Permissions } from '../shared/decorators';
 
 /**
  * The members `CreateOrganizationRecurringExpenseInput` declares in the schema.
@@ -168,6 +170,12 @@ const ORGANIZATION_RECURRING_EXPENSE_DEFAULT_SORT: readonly ConnectionSortKey[] 
  * the narrowing this delivery exists to prevent, and a field that stated none while the route stated one
  * would be a way around the permission model. The `PermissionGuard` is deliberately absent for the same
  * reason: the controller does not carry it, so a permission stated here would never be read.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ORG_EXPENSES_EDIT` behind `PermissionGuard` — the CRUD base declares no permission, and `PermissionGuard`
+ * answers `true` to empty metadata, so any member of the tenant could retire or restore a row
+ * (GHSA-v79w-54p2-wmh5) — so `softDeleteOrganizationRecurringExpense` and
+ * `recoverOrganizationRecurringExpense` state the same, neither wider nor narrower than REST.
  *
  * **The month route is folded into the connection and the other two reads are root fields of their
  * own.** The month route is a narrowing of the list — its criterion is a disjunction over the beginning
@@ -391,12 +399,16 @@ export class OrganizationRecurringExpenseResolver {
 	}
 
 	/**
-	 * Withdraws a standing cost without removing the row.
+	 * Retires a row without removing it, through the service method `DELETE
+	 * /api/organization-recurring-expense/:id/soft` calls, under the permission that route states:
+	 * `ORG_EXPENSES_EDIT` (the organization-expenses edit grant).
 	 *
-	 * No permission is stated on the field, and none could be: the delivered route states none of its own
-	 * — the withdrawal is inherited from the CRUD base — and the controller states none on the class
-	 * either.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Mutation('softDeleteOrganizationRecurringExpense')
 	async softDeleteOrganizationRecurringExpense(
 		@Args('id', { type: () => ID }) id: Id
@@ -405,9 +417,15 @@ export class OrganizationRecurringExpenseResolver {
 	}
 
 	/**
-	 * Puts a withdrawn standing cost back. Unpermissioned for the same reason the withdrawal above is:
-	 * the delivered route is inherited and carries no permission to mirror.
+	 * Restores a retired row through the service method `PUT /api/organization-recurring-expense/:id/recover`
+	 * calls, under the permission that route states: `ORG_EXPENSES_EDIT` (the organization-expenses edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Mutation('recoverOrganizationRecurringExpense')
 	async recoverOrganizationRecurringExpense(
 		@Args('id', { type: () => ID }) id: Id

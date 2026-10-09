@@ -2,7 +2,7 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination, IScreeningTask } from '@gauzy/contracts';
+import { ID as Id, IPagination, IScreeningTask, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -77,6 +77,11 @@ const SCREENING_TASK_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * the guards alone. This resolver carries the same chain and the same empty statement, so a field
  * here is neither narrower nor wider than the route it mirrors; the permission guard is in the chain
  * because the controller's chain has it, and it has nothing to check.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ORG_TASK_EDIT` — the CRUD base declares no permission, and `PermissionGuard` answers `true` to empty
+ * metadata, so any member of the tenant could retire or restore a row (GHSA-v79w-54p2-wmh5) — so
+ * `softDeleteScreeningTask` and `recoverScreeningTask` state the same, neither wider nor narrower than REST.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -182,17 +187,28 @@ export class ScreeningTaskResolver {
 	}
 
 	/**
-	 * Withdraws a screening decision without removing it. The route is inherited from the CRUD base
-	 * and runs under the guards alone.
+	 * Retires a row without removing it, through the service method `DELETE /api/screening-tasks/:id/soft` calls,
+	 * under the permission that route states: `ORG_TASK_EDIT` (the task edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('softDeleteScreeningTask')
 	async softDeleteScreeningTask(@Args('id', { type: () => ID }) id: Id): Promise<ScreeningTask> {
 		return await this.screeningTasksService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn decision back. Inherited for the same reason the withdrawal above is.
+	 * Restores a retired row through the service method `PUT /api/screening-tasks/:id/recover` calls, under the
+	 * permission that route states: `ORG_TASK_EDIT` (the task edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('recoverScreeningTask')
 	async recoverScreeningTask(@Args('id', { type: () => ID }) id: Id): Promise<ScreeningTask> {
 		return await this.screeningTasksService.softRecover(id);

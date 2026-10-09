@@ -337,20 +337,30 @@ export class RequestApprovalResolver {
 	}
 
 	/**
-	 * Withdraws a request without removing it.
+	 * Retires a row without removing it, through the service method `DELETE /api/request-approval/:id/soft` calls,
+	 * under the permission that route states: `REQUEST_APPROVAL_EDIT` (the grant its create, update, approve and
+	 * refuse routes state).
 	 *
-	 * The answer is the withdrawn row, whose `deletedAt` is the whole of what the write set — without
-	 * that member on the answer, a caller could not tell a live row from a withdrawn one on the answer
-	 * to the write that withdrew it.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Mutation('softDeleteRequestApproval')
 	async softDeleteRequestApproval(@Args('id', { type: () => ID }) id: Id): Promise<RequestApproval> {
 		return await this.requestApprovalService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn request back, clearing the marker the withdrawal set.
+	 * Restores a retired row through the service method `PUT /api/request-approval/:id/recover` calls, under the
+	 * permission that route states: `REQUEST_APPROVAL_EDIT` (the grant its create, update, approve and refuse
+	 * routes state).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
 	@Mutation('recoverRequestApproval')
 	async recoverRequestApproval(@Args('id', { type: () => ID }) id: Id): Promise<RequestApproval> {
 		return await this.requestApprovalService.softRecover(id);

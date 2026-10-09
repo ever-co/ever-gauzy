@@ -74,10 +74,12 @@ const TAG_TYPE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * controller carries `TenantPermissionGuard` and `PermissionGuard` on the class, no class-level
  * permission, and states `ALL_ORG_VIEW` or `ALL_ORG_EDIT` beside the resource's own permission on the
  * four routes it declares of its own. This resolver carries the same two guards on the class and the
- * same permissions on the fields that mirror those four routes; the node query and the three removals
- * it inherits from the CRUD base state no permission of their own and therefore run under the guards
+ * same permissions on the fields that mirror those four routes; the node query and the removal it
+ * inherits from the CRUD base state no permission of their own and therefore run under the guards
  * alone, so the fields mirroring them state none either. A field that demanded a permission the route
- * does not would refuse here a caller REST serves.
+ * does not would refuse here a caller REST serves. The retirement and the restoration were inherited the
+ * same way until the controller overrode them to state the catalogue's delete grant beside `ALL_ORG_EDIT`
+ * (GHSA-v79w-54p2-wmh5); their fields state the same.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -207,19 +209,30 @@ export class TagTypeResolver {
 	}
 
 	/**
-	 * Withdraws a group without removing it. No permission is stated because the delivered route states
-	 * none: the soft removal is inherited from the CRUD base, where the controller's own guards are the
-	 * whole of its scope.
+	 * Retires a row without removing it, through the service method `DELETE /api/tag-types/:id/soft` calls, under
+	 * the permission that route states: `ALL_ORG_EDIT` or `ORG_TAG_TYPES_DELETE` (the tag-type catalogue's delete
+	 * grant, beside `ALL_ORG_EDIT`, which its create and update routes accept too).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_DELETE)
 	@Mutation('softDeleteTagType')
 	async softDeleteTagType(@Args('id', { type: () => ID }) id: Id): Promise<TagType> {
 		return await this.tagTypeService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn group back. Unpermissioned for the same reason the withdrawal above is: the
-	 * delivered route carries no permission to mirror.
+	 * Restores a retired row through the service method `PUT /api/tag-types/:id/recover` calls, under the
+	 * permission that route states: `ALL_ORG_EDIT` or `ORG_TAG_TYPES_DELETE` (the tag-type catalogue's delete
+	 * grant, beside `ALL_ORG_EDIT`, which its create and update routes accept too).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAG_TYPES_DELETE)
 	@Mutation('recoverTagType')
 	async recoverTagType(@Args('id', { type: () => ID }) id: Id): Promise<TagType> {
 		return await this.tagTypeService.softRecover(id);

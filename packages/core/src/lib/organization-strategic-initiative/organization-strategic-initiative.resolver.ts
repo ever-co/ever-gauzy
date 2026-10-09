@@ -124,11 +124,13 @@ const ORGANIZATION_STRATEGIC_INITIATIVE_DEFAULT_SORT: readonly ConnectionSortKey
  * the row already carries — and the three reads dispatch queries for the same reason.
  *
  * **The guard chain and the permissions are the controller's, field by field.** The controller carries
- * both guards on the class and states a permission on the seven routes it declares; the four it
+ * both guards on the class and states a permission on the seven routes it declares, and on the retire-and-
+ * restore pair it overrides only to attach the delete permission (GHSA-v79w-54p2-wmh5); the two it still
  * inherits from the CRUD base carry none. So every field that mirrors a declared route states that
  * route's permission — the three reads the read permission, the create its own, the update and the
- * signals write the update permission, the removal the delete permission — and the four fields that
- * mirror inherited capabilities state none at all, because the routes they mirror carry none.
+ * signals write the update permission, the removal, the retirement and the restoration the delete
+ * permission — and the fields that mirror inherited capabilities state none at all, because the routes
+ * they mirror carry none.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -316,12 +318,15 @@ export class OrganizationStrategicInitiativeResolver {
 	}
 
 	/**
-	 * Withdraws a strategic initiative: the row is marked rather than removed, and the recovery below
-	 * reads it back.
+	 * Retires a row without removing it, through the service method `DELETE
+	 * /api/organization-strategic-initiative/:id/soft` calls, under the permission that route states:
+	 * `ORG_STRATEGIC_INITIATIVE_DELETE` (the grant its own delete route states).
 	 *
-	 * No permission is stated because the route this mirrors declares none: the withdrawal is inherited
-	 * from the CRUD base.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE)
 	@Mutation('softDeleteOrganizationStrategicInitiative')
 	async softDeleteOrganizationStrategicInitiative(
 		@Args('id', { type: () => ID }) id: Id
@@ -330,10 +335,15 @@ export class OrganizationStrategicInitiativeResolver {
 	}
 
 	/**
-	 * Puts a withdrawn strategic initiative back.
+	 * Restores a retired row through the service method `PUT /api/organization-strategic-initiative/:id/recover`
+	 * calls, under the permission that route states: `ORG_STRATEGIC_INITIATIVE_DELETE` (the grant its own delete
+	 * route states).
 	 *
-	 * Unpermissioned for the same reason the withdrawal above is: the delivered route is inherited.
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE)
 	@Mutation('recoverOrganizationStrategicInitiative')
 	async recoverOrganizationStrategicInitiative(
 		@Args('id', { type: () => ID }) id: Id

@@ -725,7 +725,7 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 		expect(guardsOfField(field)).toEqual(guardsOfHandler(InvoiceItemController, route));
 	});
 
-	it('carries the edit permission on the bulk write alone, because its route is the one route that does', () => {
+	it('carries the edit permission on the bulk write and the retire-and-restore pair, the routes that state it', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceItemController.prototype.createBulk)).toEqual([
 			PermissionsEnum.INVOICES_EDIT
 		]);
@@ -735,21 +735,38 @@ describe('InvoiceItemResolver — the guard stack and the permissions are the co
 		expect(permissionOfField('createInvoiceItemsInBulk')).toEqual([PermissionsEnum.INVOICES_EDIT]);
 		expect(guardsOfField('createInvoiceItemsInBulk')).toEqual([PermissionGuard]);
 
+		// The retire-and-restore pair states the same grant: the controller overrides the two inherited
+		// routes only to attach it (GHSA-v79w-54p2-wmh5), and the fields mirror them.
+		for (const [field, route] of [
+			['softDeleteInvoiceItem', 'softRemove'],
+			['recoverInvoiceItem', 'softRecover']
+		]) {
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, (InvoiceItemController.prototype as any)[route])).toEqual([
+				PermissionsEnum.INVOICES_EDIT
+			]);
+			expect(Reflect.getMetadata('__guards__', (InvoiceItemController.prototype as any)[route])).toEqual([
+				PermissionGuard
+			]);
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.INVOICES_EDIT]);
+			expect(guardsOfField(field)).toEqual([PermissionGuard]);
+		}
+
 		// Every other field is as wide as its route and no wider: those routes state no permission, so
 		// neither do they.
-		for (const { field } of PERMISSION_PARITY.filter((entry) => entry.route !== 'createBulk')) {
+		for (const { field } of PERMISSION_PARITY.filter(
+			(entry) => !['createBulk', 'softRemove', 'softRecover'].includes(entry.route)
+		)) {
 			expect(permissionOfField(field)).toBeUndefined();
 			expect(guardsOfField(field)).toEqual([]);
 		}
 	});
 
 	it('mirrors the inherited routes’ own permissions, which are the controller’s and are none', () => {
-		// The list, the node read and the count are overridden by this controller; the create, the edit,
-		// the removal and the two lifecycle moves are inherited from the CRUD base, which states no
-		// permission on any of them. Reading "no metadata" as "no permission" is right here and wrong
-		// for a controller that carries a class-level one — which is why this suite compares metadata
-		// rather than assuming either answer.
-		for (const handler of ['findAll', 'findById', 'getCount', 'create', 'update', 'delete', 'softRemove', 'softRecover']) {
+		// The list, the node read and the count are overridden by this controller; the create, the edit and
+		// the removal are inherited from the CRUD base, which states no permission on any of them. Reading
+		// "no metadata" as "no permission" is right here and wrong for a controller that carries a
+		// class-level one — which is why this suite compares metadata rather than assuming either answer.
+		for (const handler of ['findAll', 'findById', 'getCount', 'create', 'update', 'delete']) {
 			expect(Reflect.getMetadata(PERMISSIONS_METADATA, InvoiceItemController.prototype[handler])).toBeUndefined();
 			expect(permissionOfRoute(InvoiceItemController, handler)).toBeUndefined();
 		}

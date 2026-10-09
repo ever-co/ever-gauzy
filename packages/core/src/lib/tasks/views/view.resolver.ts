@@ -2,7 +2,7 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IPagination, ITaskView } from '@gauzy/contracts';
+import { ID as Id, IPagination, ITaskView, PermissionsEnum } from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -17,6 +17,7 @@ import { FEATURE_GRAPHQL } from '../../feature/graphql-feature.code';
 import { TaskView } from './view.entity';
 import { TaskViewService } from './view.service';
 import { TaskViewCreateCommand, TaskViewUpdateCommand } from './commands';
+import { Permissions } from '../../shared/decorators';
 
 /** The members `CreateTaskViewInput` declares in the schema. */
 export interface ICreateTaskViewInput {
@@ -85,6 +86,11 @@ const TASK_VIEW_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * under the guards alone. A field that demanded a permission here would refuse a caller every one of
  * those routes serves, and tightening the resource is a change to make in both places at once rather
  * than in one.
+ *
+ * **Except the retire-and-restore pair.** The controller overrides the two inherited routes only to state
+ * `ORG_TASK_EDIT` — the CRUD base declares no permission, and `PermissionGuard` answers `true` to empty
+ * metadata, so any member of the tenant could retire or restore a row (GHSA-v79w-54p2-wmh5) — so
+ * `softDeleteTaskView` and `recoverTaskView` state the same, neither wider nor narrower than REST.
  *
  * **The tasks a view selects are not a field of this resource.** They are the `/api/tasks/view/:id`
  * route's answer, which belongs to the task resource and is served there as `tasksByView`; a second
@@ -182,17 +188,28 @@ export class TaskViewResolver {
 	}
 
 	/**
-	 * Withdraws a saved view without removing it. The delivered route is inherited from the CRUD base
-	 * and states no permission of its own; the class states none either, so neither does this field.
+	 * Retires a row without removing it, through the service method `DELETE /api/task-views/:id/soft` calls, under
+	 * the permission that route states: `ORG_TASK_EDIT` (the task edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('softDeleteTaskView')
 	async softDeleteTaskView(@Args('id', { type: () => ID }) id: Id): Promise<TaskView> {
 		return await this.taskViewService.softRemove(id);
 	}
 
 	/**
-	 * Puts a withdrawn view back. Inherited for the same reason the withdrawal above is.
+	 * Restores a retired row through the service method `PUT /api/task-views/:id/recover` calls, under the
+	 * permission that route states: `ORG_TASK_EDIT` (the task edit grant).
+	 *
+	 * The controller overrides the inherited route only to attach it — the CRUD base states none, and
+	 * `PermissionGuard` answers `true` to empty metadata — so the field states the same, neither wider nor
+	 * narrower than REST.
 	 */
+	@Permissions(PermissionsEnum.ORG_TASK_EDIT)
 	@Mutation('recoverTaskView')
 	async recoverTaskView(@Args('id', { type: () => ID }) id: Id): Promise<TaskView> {
 		return await this.taskViewService.softRecover(id);

@@ -2,7 +2,9 @@ import {
 	IStartUpdateTypeInfo,
 	IOrganizationRecurringExpenseForEmployeeOutput,
 	IRecurringExpenseEditInput,
-	IPagination
+	IPagination,
+	ID,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -15,13 +17,14 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe, AbstractValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import {
@@ -34,6 +37,8 @@ import {
 	OrganizationRecurringExpenseFindSplitExpenseQuery,
 	OrganizationRecurringExpenseStartDateUpdateTypeQuery
 } from './queries';
+import { Permissions } from '../shared/decorators';
+import { TenantOrganizationBaseDTO } from '../core/dto';
 
 @ApiTags('OrganizationRecurringExpense')
 @UseGuards(TenantPermissionGuard)
@@ -219,5 +224,53 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 	async delete(@Param('id', UUIDValidationPipe) id: string, @Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput } = data;
 		return this.commandBus.execute(new OrganizationRecurringExpenseDeleteCommand(id, deleteInput));
+	}
+
+	/**
+	 * Soft deletes a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could retire the row. It now states `ORG_EXPENSES_EDIT`: the organization-expenses edit grant
+	 * (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted record.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationRecurringExpense> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could restore the row. It now states `ORG_EXPENSES_EDIT`: the organization-expenses edit grant
+	 * (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored record.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationRecurringExpense> {
+		return await super.softRecover(id, ...options);
 	}
 }
