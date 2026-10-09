@@ -3,14 +3,18 @@
 # `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
 # for the whole platform, so a domain adds fields to it and never declares its own.
 #
-# **One field, because the controller serves one route, and it is not a connection.** `GET
-# /api/terms/required` answers the published corpus: a short, ordered, unpaginated set of documents with
-# no store behind it, no filter beyond the locale and no order a caller could state. A connection here
-# would offer a cursor, a total and a page over a list that is already complete, which is machinery for
-# a problem this read does not have; the field therefore answers a list, which is the shape the route
-# itself answers. Nothing writes and nothing counts, so there is no mutation and no count field either.
+# **The corpus read is a list, not a connection.** `GET /api/terms/required` answers the published
+# corpus: a short, ordered, unpaginated set of documents with no store behind it, no filter beyond the
+# locale and no order a caller could state. A connection there would offer a cursor, a total and a page
+# over a list that is already complete, which is machinery for a problem that read does not have; the
+# field therefore answers a list, which is the shape the route itself answers.
 #
-# **The field is `@Public()`, and that is the route's own decision rather than a relaxation here.** The
+# **The caller's own acceptances are the other two fields**, mirroring `POST /api/terms/accept` and
+# `GET /api/terms/acceptances`. Both act on the credential's person and tenant only — neither takes a user
+# — and both state `PROFILE_EDIT` on the field, as their routes state it on the handler: an acceptance is
+# a fact about one's own account. The history is a connection over the recorder's rows.
+#
+# **The corpus field is `@Public()`, and that is the route's own decision rather than a relaxation here.** The
 # delivered handler carries the platform's public marker and no guard and no permission, because the
 # documents are read by the signup and invite-acceptance forms *before any account exists*. A guard or a
 # permission on this field would refuse a caller the REST route serves, so neither is stated.
@@ -38,4 +42,36 @@ extend type Query {
 		"""
 		locale: String
 	): [TermsAcceptanceDocument!]!
+
+	"""
+	The caller's own acceptances in the caller's tenant, newest first, integrity-checked.
+
+	Mirrors `GET /terms/acceptances`, under `PROFILE_EDIT`. The person and the tenant are the credential's,
+	so this answers "what have I accepted here?" and never another user's evidence. The records are
+	append-only and carry no soft-delete marker, so there is no `withDeleted`.
+	"""
+	termsAcceptances(
+		filter: TermsAcceptanceFilter
+		sort: [TermsAcceptanceSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): TermsAcceptanceConnection!
+}
+
+extend type Mutation {
+	"""
+	Records the caller's acceptance of the documents it was shown — the re-accept path for an account that
+	already exists, when a document it accepted at signup has been republished.
+
+	Mirrors `POST /terms/accept`, under `PROFILE_EDIT`. The person is the credential's and is not a member of
+	the input, so an acceptance is always one's own. Every claim is checked against the published corpus
+	before anything is written (an unpublished digest is a `400`), and a repeated submission answers the
+	records already on file rather than writing a second one.
+	"""
+	acceptTerms(input: AcceptTermsInput!): [TermsAcceptance!]!
 }

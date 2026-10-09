@@ -1,10 +1,49 @@
-import { Args, Query, Resolver } from '@nestjs/graphql';
+import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
+import type { AcceptanceRecord } from 'terms-acceptance';
 import { FeatureFlag, Public } from '@gauzy/common';
-import { ITermsAcceptanceDocument } from '@gauzy/contracts';
-import { FeatureFlagGuard } from '../shared/guards';
+import { ITermsAcceptanceClaim, ITermsAcceptanceDocument, PermissionsEnum } from '@gauzy/contracts';
+import {
+	ConnectionFilter,
+	ConnectionPageRequest,
+	ConnectionSortKey,
+	GraphqlConnection,
+	buildConnection
+} from '../api/graphql-connection';
+import { Permissions } from '../shared/decorators';
+import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
 import { TermsAcceptanceService } from './terms-acceptance.service';
+
+/** The members `AcceptTermsInput` declares in the schema. */
+export interface IAcceptTermsInput {
+	terms: ITermsAcceptanceClaim[];
+}
+
+/**
+ * The fields an acceptance history may be filtered and sorted by, and the order it is answered in when the
+ * caller states none.
+ *
+ * Every member is a member of the record the recorder answers. The subject and the tenant are not here:
+ * both are the credential's, so a condition on either could only ever select every row or none.
+ */
+const TERMS_ACCEPTANCE_FILTERABLE = {
+	id: 'ID',
+	documentId: 'STRING',
+	version: 'STRING',
+	locale: 'STRING',
+	method: 'STRING',
+	acceptedAt: 'DATE'
+} as const;
+
+/** The fields the sort enum offers. */
+const TERMS_ACCEPTANCE_SORTABLE = ['acceptedAt', 'documentId', 'version'] as const;
+
+/** Newest first — the recorder's own order — with the identifier as the key that makes it total. */
+const TERMS_ACCEPTANCE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
+	{ field: 'acceptedAt', direction: 'DESC' },
+	{ field: 'id', direction: 'DESC' }
+];
 
 /**
  * The published legal corpus over GraphQL.
@@ -65,5 +104,54 @@ export class TermsAcceptanceResolver {
 		@Args('locale', { type: () => String, nullable: true }) locale?: string
 	): Promise<ITermsAcceptanceDocument[]> {
 		return this.termsAcceptanceService.getRequiredDocuments(locale);
+	}
+
+	/**
+	 * The caller's own acceptances in the caller's tenant, newest first.
+	 *
+	 * The read `GET /api/terms/acceptances` performs, through the same service method, under the guards and
+	 * the permission that route states on its handler. The recorder answers the whole history at once —
+	 * integrity-checked, which is why it is not paged at the store — so the connection pages, narrows and
+	 * orders that set. The records carry no soft-delete marker (they are append-only evidence), so there is
+	 * no `withDeleted` to offer.
+	 */
+	@Query('termsAcceptances')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PROFILE_EDIT)
+	async termsAcceptances(
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<AcceptanceRecord>> {
+		const rows = await this.termsAcceptanceService.historyOfCaller();
+
+		return buildConnection<AcceptanceRecord>({
+			rows: rows ?? [],
+			filterable: TERMS_ACCEPTANCE_FILTERABLE,
+			sortable: TERMS_ACCEPTANCE_SORTABLE,
+			defaultSort: TERMS_ACCEPTANCE_DEFAULT_SORT,
+			request: { filter, sort, page, first, after, last, before, limit, offset }
+		});
+	}
+
+	/**
+	 * Records the caller's acceptance of the documents it was shown.
+	 *
+	 * The write `POST /api/terms/accept` performs, through the same service method, under the guards and the
+	 * permission that route states on its handler. The person is the credential's and is not a member of the
+	 * input, so an acceptance can only ever be one's own; every claim is checked against the published corpus
+	 * before anything is written, and a repeated submission answers the records already on file.
+	 */
+	@Mutation('acceptTerms')
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PROFILE_EDIT)
+	async acceptTerms(@Args('input') input: IAcceptTermsInput): Promise<AcceptanceRecord[]> {
+		return this.termsAcceptanceService.acceptAsCaller(input?.terms ?? []);
 	}
 }
