@@ -4026,7 +4026,8 @@
 		"ROLES_PERMISSIONS": "Roles & Permissions",
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
-		"DASHBOARD": "לוח מחוונים"
+		"DASHBOARD": "לוח מחוונים",
+		"DOCUMENTS": "מסמכים"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4124,6 +4125,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "מרכז למסמכי החברה: העלאות, דפי ויקי, סקירה וידע לבינה מלאכותית"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5449,7 +5453,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "נמען",
+				"TEMPLATE": "תבנית",
+				"STATUS": "סטטוס",
+				"ALL_RECIPIENTS": "כל הנמענים",
+				"ALL_TEMPLATES": "כל התבניות",
+				"ALL_STATUSES": "כל הסטטוסים",
+				"SENT": "נשלח",
+				"FAILED": "נכשל",
+				"ARCHIVED": "בארכיון",
+				"SHOWING": "מוצגים {{ count }} מתוך {{ total }}",
+				"NO_MATCH": "אין הודעות דוא\"ל התואמות למסננים אלה."
 			}
 		}
 	},

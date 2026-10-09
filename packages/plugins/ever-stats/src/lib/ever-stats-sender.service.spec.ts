@@ -1,14 +1,19 @@
-// cspell:ignore abcdefghijk
 import { createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'node:http';
 import { AddressInfo, Socket } from 'node:net';
+import { statsKeyId } from '@ever-co/connect-sdk';
 import { EverStatsSender, readCappedBody } from './ever-stats-sender.service';
+import { contractsFile } from './fixtures/contracts-file';
+
+/** A report Ever Platform accepts: the golden of the SDK's contracts package, as its bytes. */
+const GOLDEN = readFileSync(contractsFile('fixtures', 'stats', 'valid', 'gauzy.json'));
 
 /** A statistics signer over a throwaway key, as `EverInstanceService.statsSigner()` returns it. */
 function testSigner() {
 	const { publicKey, privateKey } = generateKeyPairSync('ed25519');
 	const x = publicKey.export({ format: 'jwk' }).x as string;
-	return { publicKey: x, keyId: 'abcdefghijk', sign: (bytes: Uint8Array) => sign(null, bytes, privateKey), dispose: () => undefined };
+	return { publicKey: x, keyId: statsKeyId(x), sign: (bytes: Uint8Array) => sign(null, bytes, privateKey), dispose: () => undefined };
 }
 
 interface Seen {
@@ -59,7 +64,7 @@ describe('EverStatsSender', () => {
 	it('posts exactly the bytes, signed over those bytes, with the statistics key and nothing else', async () => {
 		reply = answer(202, { accepted: true });
 		const signer = testSigner();
-		const bytes = Buffer.from('{"schema":"ever.stats.v1","a":1}');
+		const bytes = GOLDEN;
 		const outcome = await new EverStatsSender().send(base, bytes, signer, '111.47.0');
 		expect(outcome).toEqual({ kind: 'accepted', status: 202 });
 		expect(seen).toHaveLength(1);
@@ -69,7 +74,7 @@ describe('EverStatsSender', () => {
 		expect(request.body.equals(bytes)).toBe(true);
 		expect(request.headers['content-type']).toBe('application/json');
 		expect(request.headers['ever-stats-key']).toBe(signer.publicKey);
-		expect(request.headers['ever-stats-key-id']).toBe('abcdefghijk');
+		expect(request.headers['ever-stats-key-id']).toBe(signer.keyId);
 		expect(request.headers['user-agent']).toBe('gauzy-ever-stats/0.1.0 (gauzy/111.47.0)');
 		expect(request.headers['authorization']).toBeUndefined();
 		expect(request.headers['cookie']).toBeUndefined();
@@ -89,7 +94,7 @@ describe('EverStatsSender', () => {
 		[301, undefined, 'later', 'http_301']
 	])('maps %i to %s, recording only codes and field names', async (status, body, kind, error) => {
 		reply = answer(status as number, body, status === 301 ? { location: 'http://127.0.0.1:9/elsewhere' } : {});
-		const outcome = await new EverStatsSender().send(base, Buffer.from('{}'), testSigner(), '1.0.0');
+		const outcome = await new EverStatsSender().send(base, GOLDEN, testSigner(), '1.0.0');
 		expect(outcome.kind).toBe(kind);
 		expect((outcome as { error?: string }).error).toBe(error);
 		expect(seen).toHaveLength(1);
@@ -97,13 +102,13 @@ describe('EverStatsSender', () => {
 
 	it('honours Retry-After on 429', async () => {
 		reply = answer(429, { code: 'rate_limited' }, { 'retry-after': '120' });
-		const outcome = await new EverStatsSender().send(base, Buffer.from('{}'), testSigner(), '1.0.0');
+		const outcome = await new EverStatsSender().send(base, GOLDEN, testSigner(), '1.0.0');
 		expect(outcome).toMatchObject({ kind: 'retry', status: 429, retryAfterS: 120 });
 	});
 
 	it('retries on a reset connection', async () => {
 		reply = (req) => req.socket.destroy();
-		const outcome = await new EverStatsSender().send(base, Buffer.from('{}'), testSigner(), '1.0.0');
+		const outcome = await new EverStatsSender().send(base, GOLDEN, testSigner(), '1.0.0');
 		expect(outcome).toEqual({ kind: 'retry', status: null, error: 'connection_error', retryAfterS: 0 });
 	});
 
@@ -114,7 +119,7 @@ describe('EverStatsSender', () => {
 			for (let i = 0; i < 64; i += 1) res.write(Buffer.alloc(16 * 1024, 32));
 			res.end('{"code":"schema_violation"}');
 		};
-		const outcome = await new EverStatsSender().send(base, Buffer.from('{}'), testSigner(), '1.0.0');
+		const outcome = await new EverStatsSender().send(base, GOLDEN, testSigner(), '1.0.0');
 		expect(outcome).toEqual({ kind: 'dropped', status: 422, error: 'http_422' });
 
 		let pulled = 0;
@@ -128,6 +133,13 @@ describe('EverStatsSender', () => {
 		expect(pulled).toBeLessThan(10);
 		expect(await readCappedBody(new Response('x'.repeat(10), { headers: { 'content-length': String(10 * 1024 * 1024) } }))).toBeNull();
 		expect(await readCappedBody(new Response('{"code":"ok"}'))).toBe('{"code":"ok"}');
+	});
+
+	it('never sends a report Ever Platform would refuse (the SDK signs only what its checks accept)', async () => {
+		reply = answer(202, { accepted: true });
+		const outcome = await new EverStatsSender().send(base, Buffer.from('{"schema":"ever.stats.v1","a":1}'), testSigner(), '1.0.0');
+		expect(outcome).toMatchObject({ kind: 'dropped', status: 422 });
+		expect(seen).toHaveLength(0);
 	});
 
 	it('never sends more than 16 KiB', async () => {

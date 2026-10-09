@@ -150,7 +150,8 @@ export enum IntegrationEnum {
 	ACTIVE_PIECES = 'ActivePieces',
 	SIM = 'Sim',
 	PLANE = 'Plane',
-	EVER_ASYNC = 'Ever_Async'
+	EVER_ASYNC = 'Ever_Async',
+	EVER_CONNECT = 'Ever_Connect'
 }
 
 export enum IntegrationEntity {

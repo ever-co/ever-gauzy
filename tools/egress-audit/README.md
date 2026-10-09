@@ -14,12 +14,15 @@ call its mode does not allow.
 
 ## The harness
 
-The harness is the public egress audit of the Ever Platform SDK,
-[`ever-co/ever-connect-sdk`](https://github.com/ever-co/ever-connect-sdk) (Apache-2.0),
-`tools/egress-audit` with the mock platform from `tools/mock-platform`. It is not copied here: the
-workflow checks the SDK out at a pinned commit (`EVER_CONNECT_SDK_SHA` in
-`.github/workflows/egress-audit.yml`) and installs the harness's own dependencies from the SDK's
-lockfile.
+The harness is the egress audit of the Ever Platform SDK's dev tools, the
+`ever-egress-audit` of [`@ever-co/connect-tools`][connect-tools] (Apache-2.0),
+with its mock platform. It is not copied here: the workflow installs the exact
+version the statistics plugin pins (`devDependencies` of
+`packages/plugins/ever-stats/package.json`) from npm for the run. The config
+pins the sealed network to a fixed private `subnet`, so the mock's address on
+it (`__MOCK_URL__`) is a local address the module accepts over plain http.
+
+[connect-tools]: https://www.npmjs.com/package/@ever-co/connect-tools
 
 This directory holds only Gauzy's inputs:
 
@@ -50,12 +53,13 @@ which `build-api` runs on every develop push.
 
 `.github/workflows/egress-audit.yml` runs it on a GitHub-hosted runner every day on the newest
 published develop API image, and on demand (`gh workflow run egress-audit.yml -f image=<image>`).
-Locally, with Docker and the SDK checked out at the pinned commit:
+Locally, with Docker and the workspace installed (`@ever-co/connect-tools` is
+a devDependency):
 
 ```sh
 : > /tmp/api-empty.env
 GAUZY_AUDIT_SECRET=$(openssl rand -hex 32) GAUZY_API_IMAGE=ghcr.io/ever-co/gauzy-api-demo:latest GAUZY_AUDIT_DOTENV=/tmp/api-empty.env \
-  node <sdk>/tools/egress-audit/run.mjs --config tools/egress-audit/egress-audit.config.json --mode off
+  node node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs --config tools/egress-audit/egress-audit.config.json --mode off
 ```
 
 The evidence (`report.json`, the pcaps, the DNS log, the API log and the mock's call record per

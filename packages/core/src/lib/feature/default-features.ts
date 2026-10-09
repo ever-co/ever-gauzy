@@ -615,7 +615,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 		image: 'documents.png',
 		link: 'pages/documents',
 		isEnabled: features.FEATURE_DOCUMENTS,
-		icon: 'fas fa-book',
+		icon: 'book-open-outline',
 		status: 'info'
 	}
 ];

@@ -4009,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "角色和权限",
 		"TIME_TRACKING": "时间跟踪",
 		"ESTIMATE": "估计",
-		"DASHBOARD": "仪表板"
+		"DASHBOARD": "仪表板",
+		"DOCUMENTS": "文档"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4107,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "前往仪表盘，管理员工统计数据，时间追踪仪表盘。"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "公司文档中心：上传、Wiki 页面、审阅和 AI 知识"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5458,7 +5462,18 @@
 			"SYSTEM": "系统",
 			"FILTERS": {
 				"TO": "要",
-				"TEMPLATE_LANGUAGE": "模板/语言"
+				"TEMPLATE_LANGUAGE": "模板/语言",
+				"RECIPIENT": "收件人",
+				"TEMPLATE": "模板",
+				"STATUS": "状态",
+				"ALL_RECIPIENTS": "所有收件人",
+				"ALL_TEMPLATES": "所有模板",
+				"ALL_STATUSES": "所有状态",
+				"SENT": "已发送",
+				"FAILED": "失败",
+				"ARCHIVED": "已归档",
+				"SHOWING": "显示 {{ count }} / {{ total }}",
+				"NO_MATCH": "没有符合这些筛选条件的邮件。"
 			}
 		}
 	},

@@ -1,5 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { STATS_SCHEMA } from './stats-schema';
 
 type Node = { [key: string]: unknown };
 const isObject = (v: unknown): v is Node => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -38,7 +37,7 @@ export function metaViolations(schema: unknown, path = '#'): string[] {
 }
 
 describe('ever.stats.v1 schema allow-list rules', () => {
-	const schema = JSON.parse(readFileSync(join(__dirname, 'ever.stats.v1.schema.json'), 'utf8'));
+	const schema = JSON.parse(JSON.stringify(STATS_SCHEMA));
 
 	it('closes every object and bounds every string', () => {
 		expect(metaViolations(schema)).toEqual([]);

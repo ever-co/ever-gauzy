@@ -80,6 +80,7 @@ COPY --chown=node:node packages/plugins/integration-plane-ui/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-ever-async-ui/package.json ./packages/plugins/integration-ever-async-ui/
 COPY --chown=node:node packages/plugins/auth-zitadel-ui/package.json ./packages/plugins/auth-zitadel-ui/
 COPY --chown=node:node packages/plugins/ever-stats-ui/package.json ./packages/plugins/ever-stats-ui/
+COPY --chown=node:node packages/plugins/ever-connect-ui/package.json ./packages/plugins/ever-connect-ui/
 COPY --chown=node:node packages/plugins/integration-sim-ui/package.json ./packages/plugins/integration-sim-ui/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-activepieces-ui/package.json ./packages/plugins/integration-activepieces-ui/

@@ -18,6 +18,7 @@ import {
 	ITask,
 	ITaskUpdateInput,
 	ITimeLog,
+	ITimeSlot,
 	ITimeSlotTimeLogs,
 	PermissionsEnum,
 	TaskStatusEnum,
@@ -126,7 +127,7 @@ interface IScreen {
 
 interface IScreenshotRequest {
 	screenSize: IScreen;
-	activeWindow?: { id: string } | null;
+	activeWindow?: { id: string; index?: number | null } | null;
 }
 
 interface IScreenshotResult {
@@ -224,6 +225,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	sound: any = null;
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
+	private _remoteLastTimeSlot$: Promise<ITimeSlot | null> | null = null;
+	/**
+	 * Bumped by every local capture and every clear of the panel: a pending server lookup whose
+	 * generation moved on is stale and must not touch the screen or the local storage.
+	 */
+	private _captureGeneration = 0;
 	private readonly logout$ = new Subject<void>();
 
 	constructor(
@@ -468,6 +475,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.selectedTimeSlot.id
 				);
 				this.selectedTimeSlot.id = timeSlotId;
+				if (!timeSlotId) {
+					// The slot came from the server (no local capture yet): drop it from the screen and
+					// let the refresh below look the next one up instead of reusing the cached answer.
+					this.clearLastScreenCapture();
+				}
 				// Refresh screen
 				await Promise.allSettled([this.getTodayTime(true), this.getLastTimeSlotImage({ timeSlotId })]);
 			}
@@ -1162,6 +1174,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('last_capture_local', (event, arg) =>
 			this._ngZone.run(() => {
 				console.log('Last Capture Screenshot:');
+				this._captureGeneration++;
 				this.lastScreenCapture$.next({
 					fullUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
 					thumbUrl: this.sanitize.bypassSecurityTrustUrl(arg.fullUrl),
@@ -2062,16 +2075,51 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public async getLastTimeSlotImage(arg): Promise<void> {
 		try {
 			const lastTimeSlot: { timeSlotId?: string } = await this.electronService.invoke('GET_LAST_CAPTURE');
-			if (this._isOffline || !lastTimeSlot?.timeSlotId) {
+			if (this._isOffline) {
 				return;
 			}
 
-			const res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
+			let res: ITimeSlot | null;
+			const fromServer = !lastTimeSlot?.timeSlotId;
+			const generation = this._captureGeneration;
+			// A capture may land, or the panel be cleared by a deletion, while a server lookup is
+			// pending: a result older than what is on screen, or whose generation moved on, is dropped.
+			const isStale = () =>
+				fromServer && (generation !== this._captureGeneration || this.hasNewerLocalCapture(res));
+			if (!fromServer) {
+				res = await this.timeTrackerService.getTimeSlot({ timeSlotId: lastTimeSlot.timeSlotId });
+			} else {
+				// A fresh install has no local capture yet, but the server may still hold this employee's
+				// screenshots (taken before the reinstall or on another machine): show the latest ones
+				// instead of an empty panel until the first local capture lands (#8348).
+				try {
+					res = await this.getRemoteLastTimeSlot();
+				} catch (error) {
+					// Best effort: a failed lookup must not raise an error toast on a fresh install; the next call retries.
+					this._loggerService.warn(`WARN: last screenshots lookup failed: ${error?.message ?? error}`);
+					return;
+				}
+			}
+			if (fromServer && (!res || isStale())) {
+				return;
+			}
+
 			const { screenshots = [] } = res || {};
 			if (screenshots && screenshots.length > 0) {
 				const [lastCaptureScreen] = screenshots;
-				this.lastScreenCapture$.next(lastCaptureScreen);
-				await this.localImage(this.lastScreenCapture);
+				if (fromServer) {
+					// Fetch the thumbnail before touching the screen or the local storage: a capture
+					// landing during that await keeps both, so staleness is checked again afterwards.
+					const thumbnail = await this._imageViewerService.getBase64ImageFromUrl(lastCaptureScreen.thumbUrl);
+					if (isStale()) {
+						return;
+					}
+					this.lastScreenCapture$.next(lastCaptureScreen);
+					await this.localImage(thumbnail, lastCaptureScreen.fullUrl, lastCaptureScreen.recordedAt);
+				} else {
+					this.lastScreenCapture$.next(lastCaptureScreen);
+					await this.localImage(lastCaptureScreen);
+				}
 				this.screenshots$.next(screenshots);
 				this.lastTimeSlot = res;
 			}
@@ -2088,9 +2136,47 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
+	/**
+	 * Whether the screenshot currently on screen is more recent than the newest one of `timeSlot`.
+	 */
+	private hasNewerLocalCapture(timeSlot: ITimeSlot): boolean {
+		const local = this.lastScreenCapture?.recordedAt;
+		const remote = timeSlot.screenshots?.[0]?.recordedAt;
+		return !!local && !!remote && new Date(local).getTime() > new Date(remote).getTime();
+	}
+
+	/**
+	 * Forgets the screenshot on screen and the cached server lookup, e.g. after that screenshot was
+	 * deleted, so the next getLastTimeSlotImage() starts from a blank panel.
+	 */
+	private clearLastScreenCapture(): void {
+		this._captureGeneration++;
+		this._remoteLastTimeSlot$ = null;
+		this.lastTimeSlot = null;
+		this.screenshots$.next([]);
+		this.lastScreenCapture$.next({});
+		localStorage.removeItem('lastScreenCapture');
+	}
+
+	/**
+	 * Looks the latest time slot with screenshots up on the server, once per session: the answer only
+	 * changes once a local capture exists, and from then on getLastTimeSlotImage() no longer asks.
+	 */
+	private getRemoteLastTimeSlot(): Promise<ITimeSlot | null> {
+		if (!this._remoteLastTimeSlot$) {
+			this._remoteLastTimeSlot$ = this.timeTrackerService.getLatestTimeSlotWithScreenshots().catch((error) => {
+				// Let the next call try again instead of caching the failure.
+				this._remoteLastTimeSlot$ = null;
+				throw error;
+			});
+		}
+		return this._remoteLastTimeSlot$;
+	}
+
 	public async localImage(
 		img: { thumbUrl?: string; recordedAt?: string; fullUrl?: string } | string,
-		originalBase64Image?: string
+		originalBase64Image?: string,
+		recordedAt?: string | Date
 	): Promise<void> {
 		try {
 			// Determine the fullUrl, prioritizing originalBase64Image if provided
@@ -2105,7 +2191,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						: undefined;
 
 			// Set timestamp, preferring recordedAt if available
-			const timestamp = typeof img === 'object' && img.recordedAt ? new Date(img.recordedAt) : new Date();
+			const timestamp =
+				typeof img === 'object' && img.recordedAt
+					? new Date(img.recordedAt)
+					: recordedAt
+						? new Date(recordedAt)
+						: new Date();
 
 			if (fullUrl && thumbUrl) {
 				const screenCaptureData = {
@@ -2265,33 +2356,32 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 			this._auditLogService.screenshotLogInfo(`Captured ${sources.length} screenshot(s) with thumbnail size ${thumbSize.width}x${thumbSize.height}.`);
 
-			const screens: IScreenshotResult[] = [];
-
 			sources.forEach((source) => {
 				this._loggerService.info('screenshot_res::', JSON.stringify(source));
-				if (
-					this.appSetting &&
-					this.appSetting.monitor &&
-					this.appSetting.monitor.captured &&
-					this.appSetting.monitor.captured === 'active-only'
-				) {
-					if (arg.activeWindow && source.display_id === arg.activeWindow.id.toString()) {
-						screens.push({
-							img: source.thumbnail.toPNG(),
-							name: source.name,
-							id: source.display_id
-						});
-					}
-				} else {
-					if (arg.activeWindow) {
-						screens.push({
-							img: source.thumbnail.toPNG(),
-							name: source.name,
-							id: source.display_id
-						});
-					}
-				}
 			});
+
+			if (!arg.activeWindow) {
+				return [];
+			}
+
+			const activeOnly = this.appSetting?.monitor?.captured === 'active-only';
+			const matched = activeOnly
+				? sources.filter((source) => source.display_id === arg.activeWindow.id.toString())
+				: sources;
+
+			// `display_id` is empty on some Linux setups (X11 as well as Wayland), so the active monitor
+			// can never be matched and "active-only" silently produced no screenshot at all (#7771).
+			// Only trust the filter when it actually matched. Otherwise still capture ONE monitor, never
+			// every monitor the user chose not to capture: the source at the active display's index
+			// (best guess, desktopCapturer lists screens in display order), else the first one.
+			const fallback = sources[arg.activeWindow.index ?? 0] ?? sources[0];
+			const selected = activeOnly && matched.length === 0 ? (fallback ? [fallback] : []) : matched;
+
+			const screens: IScreenshotResult[] = selected.map((source) => ({
+				img: source.thumbnail.toPNG(),
+				name: source.name,
+				id: source.display_id
+			}));
 
 			// this._loggerService.info('screenshot data::', JSON.stringify(screens));
 
@@ -2374,6 +2464,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async handleLastCapture(screenshots: any[]) {
 		if (!this._isOffline && screenshots.length > 0) {
+			this._captureGeneration++;
 			/* Converting the screenshot image to a base64 string. */
 			const original = `data:image/png;base64, ${this.buffToB64(screenshots[0])}`;
 

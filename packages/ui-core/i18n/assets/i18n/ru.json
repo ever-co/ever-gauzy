@@ -4032,7 +4032,8 @@
 		"ROLES_PERMISSIONS": "Роли и Разрешения",
 		"TIME_TRACKING": "Время отслеживания",
 		"ESTIMATE": "Оценить",
-		"DASHBOARD": "Приборная доска"
+		"DASHBOARD": "Приборная доска",
+		"DOCUMENTS": "Документы"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4130,6 +4131,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Перейти к панели инструментов, управлять статистикой сотрудников, отслеживать время"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Единый центр документов компании: загрузки, вики-страницы, проверка и знания для ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -5456,7 +5460,18 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "Кому",
-				"TEMPLATE_LANGUAGE": "Шаблон/Язык"
+				"TEMPLATE_LANGUAGE": "Шаблон/Язык",
+				"RECIPIENT": "Получатель",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Все получатели",
+				"ALL_TEMPLATES": "Все шаблоны",
+				"ALL_STATUSES": "Все статусы",
+				"SENT": "Отправлено",
+				"FAILED": "Ошибка",
+				"ARCHIVED": "Архивные",
+				"SHOWING": "Показано {{ count }} из {{ total }}",
+				"NO_MATCH": "Нет писем, соответствующих этим фильтрам."
 			}
 		}
 	},

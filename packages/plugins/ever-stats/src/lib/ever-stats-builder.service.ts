@@ -3,8 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { MODULE_VERSION, STATS_SCHEMA_ID } from './ever-stats.constants';
 import type { EverStatsConfig } from './ever-stats-config';
 import { CollectedStats, StatsPeriod } from './ever-stats-collector.service';
-import { STATS_SCHEMA } from './schema/stats-schema';
-import { checkStatsBytes, redactStatsPath, StatsFieldError } from './vendor/stats-checks';
+import { validateStatsReportBytes } from '@ever-co/connect-sdk';
+import { redactStatsPath } from './schema/stats-path';
 
 /** The release this API runs, without any suffix (a fork's build string could name a company), and its channel. */
 export interface ReleaseVersion {
@@ -108,11 +108,12 @@ export class EverStatsBuilder {
 			return { ok: false, built: null, text: '', error: 'schema_violation:(body):type' };
 		}
 		const bytes = Buffer.from(text, 'utf8');
-		const checked = checkStatsBytes(STATS_SCHEMA, bytes);
-		if (!checked.ok) {
-			const refused = checked as { status: number; errors: readonly StatsFieldError[] };
+		// The checks Ever Platform runs, from the SDK.
+		const checked = validateStatsReportBytes(bytes);
+		if ('error' in checked) {
+			const refused = checked.error;
 			const first = refused.errors[0];
-			const path = first ? redactStatsPath(STATS_SCHEMA, first.path) || '(body)' : '(body)';
+			const path = first ? redactStatsPath(first.path) || '(body)' : '(body)';
 			const reason = refused.status === 413 ? 'too_large' : 'schema_violation';
 			return { ok: false, built: null, text, error: `${reason}:${path}:${first?.code ?? 'type'}`.slice(0, 255) };
 		}
