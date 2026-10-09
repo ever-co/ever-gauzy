@@ -8,6 +8,16 @@ import { MultiORMEnum } from '../core/utils';
 import { asTenantUser, createCrossTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { TagService } from './tag.service';
 
+// `@gauzy/config` re-exports `getConfig` with `export *`, which compiles to a non-configurable getter, so
+// `jest.spyOn(config, 'getConfig')` throws "Cannot redefine property". Mock the module instead (as
+// tag.service.find-tags-counters.spec.ts does); each test swaps the return value and `afterEach` puts the
+// real implementation back.
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+	return { ...actual, getConfig: jest.fn(actual.getConfig) };
+});
+const actualGetConfig = jest.requireActual<typeof config>('@gauzy/config').getConfig;
+
 /**
  * The MikroORM tag queries filter by name / color / description. `$ilike` is PostgreSQL-only in MikroORM,
  * so the filters must use `$like` on MySQL / SQLite, and both queries must keep all three filters.
@@ -22,8 +32,8 @@ describe('TagService MikroORM text filters', () => {
 	let service: TagService;
 
 	const withMikroOrmDriver = (driver: unknown) => {
-		const original = config.getConfig();
-		jest.spyOn(config, 'getConfig').mockReturnValue({
+		const original = actualGetConfig();
+		jest.mocked(config.getConfig).mockReturnValue({
 			...original,
 			dbMikroOrmConnectionOptions: { ...original.dbMikroOrmConnectionOptions, driver }
 		} as unknown as ReturnType<typeof config.getConfig>);
@@ -42,6 +52,7 @@ describe('TagService MikroORM text filters', () => {
 	afterEach(() => {
 		restore();
 		jest.restoreAllMocks();
+		jest.mocked(config.getConfig).mockImplementation(actualGetConfig);
 	});
 
 	const queries = {
