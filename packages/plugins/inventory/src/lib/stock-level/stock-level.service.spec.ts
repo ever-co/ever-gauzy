@@ -1135,6 +1135,41 @@ describe('StockLevelService — the invariants a movement may not break (INV-05,
 		expect(fixture.store.levelFor()).toMatchObject({ quantity: 5 });
 	});
 
+	it('refuses a reservation-only movement that would change the on-hand quantity (doc 09 §4.5)', async () => {
+		// A hold is not a sale: RESERVATION and RELEASE move units between available and reserved and never
+		// touch what is on the shelf, which is what `assertInvariants` relies on when it says the quantity
+		// rule is "satisfied by construction" for them. The ledger port accepts any kind with a quantity, so
+		// the rule is the engine's to state rather than every caller's to remember.
+		const fixture = levelFixture({ level: { quantity: 10 } });
+
+		for (const type of [StockMovementType.RESERVATION, StockMovementType.RELEASE]) {
+			await expect(
+				fixture.service.applyMovement(
+					movement({ type, quantityDelta: -3, reservedDelta: 0, referenceId: 'order-1' }) as never
+				)
+			).rejects.toMatchObject({
+				response: { code: 'STOCK_INVARIANT_VIOLATION', details: { type, quantityDelta: -3 } }
+			});
+		}
+
+		expect(fixture.store.ledgerOf()).toEqual([]);
+		expect(fixture.store.levelFor()).toMatchObject({ quantity: 10, reservedQuantity: 0, version: 1 });
+	});
+
+	it('still applies a reservation-only movement that moves only the reserved quantity', async () => {
+		const fixture = levelFixture({ level: { quantity: 10 } });
+
+		await fixture.service.applyMovement(
+			movement({ type: StockMovementType.RESERVATION, quantityDelta: 0, reservedDelta: 4, referenceId: 'order-1' }) as never
+		);
+		await fixture.service.applyMovement(
+			movement({ type: StockMovementType.RELEASE, quantityDelta: 0, reservedDelta: -4, referenceId: 'order-1' }) as never
+		);
+
+		expect(fixture.store.levelFor()).toMatchObject({ quantity: 10, reservedQuantity: 0 });
+		expect(fixture.store.ledgerOf()).toHaveLength(2);
+	});
+
 	it('refuses a delta that is not a finite number', async () => {
 		const fixture = levelFixture({ level: { quantity: 5 } });
 

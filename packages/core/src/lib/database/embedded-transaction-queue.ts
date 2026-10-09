@@ -96,6 +96,30 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  */
 export const EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS = 60_000;
 
+/**
+ * The environment variable a deployment overrides {@link EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS} with.
+ *
+ * The queue is new on the SQLite deployments (the demo, the desktop servers), and a wait ceiling that
+ * cannot be changed without a rebuild would make a long seed or import a reason for every concurrent
+ * request to fail. A positive number of milliseconds replaces the default; anything else keeps it.
+ */
+export const EMBEDDED_TRANSACTION_WAIT_TIMEOUT_ENV = 'DB_SQLITE_TRANSACTION_WAIT_TIMEOUT_MS';
+
+/**
+ * How long a waiter is allowed when the installer states no `waitTimeoutMs` of its own.
+ *
+ * @param env The environment to read, the process's own by default.
+ * @returns The configured positive number of milliseconds, or {@link EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS}.
+ */
+export function resolveEmbeddedTransactionWaitTimeoutMs(
+	env: Record<string, string | undefined> = process.env
+): number {
+	const raw = env?.[EMBEDDED_TRANSACTION_WAIT_TIMEOUT_ENV];
+	const parsed = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
+
+	return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS;
+}
+
 /** The TypeORM data source types whose driver runs every statement through one shared query runner. */
 const EMBEDDED_DATA_SOURCE_TYPES: ReadonlySet<string> = new Set<string>([
 	DatabaseTypeEnum.sqlite,
@@ -285,7 +309,7 @@ export function serializeEmbeddedTransactions(
 	}
 
 	const state: IEmbeddedTransactionState = {
-		queue: new ConnectionQueue(options.waitTimeoutMs ?? EMBEDDED_TRANSACTION_WAIT_TIMEOUT_MS),
+		queue: new ConnectionQueue(options.waitTimeoutMs ?? resolveEmbeddedTransactionWaitTimeoutMs()),
 		context: new AsyncLocalStorage<ConnectionClaim>()
 	};
 	STATES.set(dataSource, state);

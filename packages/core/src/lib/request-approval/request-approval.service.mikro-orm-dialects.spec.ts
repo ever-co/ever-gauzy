@@ -88,8 +88,10 @@ describe('RequestApprovalService.findAllRequestApprovals on MikroORM, per dialec
 					' or ("time_off_request"."organizationId" = ? and "time_off_request"."tenantId" = ?)' +
 					' or ("equipment_sharing"."organizationId" = ? and "equipment_sharing"."tenantId" = ?)' +
 					' or ("request_approval"."organizationId" = ? and "request_approval"."tenantId" = ?))' +
+					// Whichever arm admitted it, the row itself is the caller's tenant's.
+					' and "request_approval"."tenantId" = ?' +
 					' and "request_approval"."deletedAt" is null',
-				bindings: [ORG, TENANT, ORG, TENANT, ORG, TENANT, ORG, TENANT]
+				bindings: [ORG, TENANT, ORG, TENANT, ORG, TENANT, ORG, TENANT, TENANT]
 			}
 		]);
 	});
@@ -118,6 +120,6 @@ describe('RequestApprovalService.findAllRequestApprovals on MikroORM, per dialec
 		await createService(knex).findAllRequestApprovals(NO_RELATIONS, {});
 
 		expect(statements[0].sql).not.toContain('"organizationId" is null');
-		expect(statements[0].bindings).toEqual([null, TENANT, null, TENANT, null, TENANT, null, TENANT]);
+		expect(statements[0].bindings).toEqual([null, TENANT, null, TENANT, null, TENANT, null, TENANT, TENANT]);
 	});
 });

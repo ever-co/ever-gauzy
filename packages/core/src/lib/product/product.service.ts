@@ -2,6 +2,7 @@ import { EntityManager, FindManyOptions, FindOptionsWhere, Repository } from 'ty
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import {
+	ID,
 	IImageAsset,
 	IPagination,
 	IProductCreateInput,
@@ -14,6 +15,7 @@ import {
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context/request-context';
 import { ApiErrorCode } from './../core/errors/api-error-codes';
+import { ApiException } from './../core/errors/api-exception';
 import { operationOf } from './../api/bulk';
 import { IBulkTransactionRunner } from './../api/bulk-executor.service';
 import { Product } from './product.entity';
@@ -25,6 +27,24 @@ import { TypeOrmProductTranslationRepository } from './repository/type-orm-produ
 
 /** Largest page `findAllProducts` serves when paging is requested. */
 export const MAX_PRODUCTS_PAGE_SIZE = 100;
+
+/**
+ * The product columns a bulk item may write: exactly the members `IBulkProductItem` declares.
+ *
+ * The REST bulk route declares no body type, so an item reaches the service carrying whatever keys the
+ * caller sent. Spreading the item into the row let a key the contract never offered reach the write —
+ * `tenantId` on an update moved the caller's own product into another tenant, and `createdByUserId`,
+ * `deletedAt` or `organizationId` were written as stated. Only the declared columns are copied; the
+ * tenant and the organization are the credential's (see `bulkOrganizationId`).
+ */
+export const BULK_PRODUCT_COLUMNS = [
+	'code',
+	'enabled',
+	'imageUrl',
+	'featuredImageId',
+	'productTypeId',
+	'productCategoryId'
+] as const;
 
 /** Parses a paging query value as a positive integer, or `undefined` when it is not one. */
 function toPositiveInteger(value: unknown): number | undefined {
@@ -265,9 +285,18 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	 * @returns The row the item wrote or archived.
 	 */
 	public async applyBulkItem(item: IBulkProductItem, manager?: EntityManager): Promise<Product> {
-		const { tagIds, translations, ...members } = item;
+		const { tagIds, translations } = item;
 		const op = operationOf(item);
+		// Only the declared members reach the row (see BULK_PRODUCT_COLUMNS): a key the item was never
+		// offered — `tenantId`, `organizationId`, `createdByUserId`, `deletedAt` — is not written.
+		const members: Record<string, unknown> = {};
+		for (const column of BULK_PRODUCT_COLUMNS) {
+			if (item[column] !== undefined) {
+				members[column] = item[column];
+			}
+		}
 		const payload = {
+			...(item.id ? { id: item.id } : {}),
 			...members,
 			...(tagIds ? { tags: tagIds.map((id) => ({ id })) } : {}),
 			...(translations ? { translations } : {})
@@ -288,11 +317,45 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		// credential; an identifier the item did state is refused when it names another tenant's row,
 		// which is the guard the delivered create path applies for the same reason.
 		const tenantId = RequestContext.currentTenantId();
+		const organizationId = this.bulkOrganizationId(item);
 		await this.assertNotForeignRow(payload, tenantId);
 
 		return await repository.save(
-			Object.assign(new Product(), { ...payload, tenant: { id: tenantId }, tenantId })
+			Object.assign(new Product(), {
+				...payload,
+				tenant: { id: tenantId },
+				tenantId,
+				...(organizationId ? { organizationId } : {})
+			})
 		);
+	}
+
+	/**
+	 * The organization a product created by a bulk item is filed under.
+	 *
+	 * It is the organization the caller is acting in — the one the request's credential selected and the
+	 * JWT strategy already checked the caller may act in. An item may state it, and an item that states a
+	 * different one is refused: the single-item create validates a stated organization against the
+	 * caller's membership, and a batch must not be the way round that check.
+	 *
+	 * @param item The bulk item being created.
+	 * @returns The organization to stamp, or undefined when the caller is acting in none.
+	 * @throws ApiException 403 ORGANIZATION_MISMATCH when the item names another organization.
+	 */
+	private bulkOrganizationId(item: IBulkProductItem): ID | undefined {
+		const current = RequestContext.currentOrganizationId() ?? undefined;
+		const stated = item.organizationId;
+
+		if (stated && stated !== current) {
+			throw new ApiException(
+				HttpStatus.FORBIDDEN,
+				ApiErrorCode.ORGANIZATION_MISMATCH,
+				`A bulk item may only create products in the organization the request is acting in.`,
+				{ organizationId: stated }
+			);
+		}
+
+		return current;
 	}
 
 	async addGalleryImages(productId: string, images: IImageAsset[]): Promise<Product> {

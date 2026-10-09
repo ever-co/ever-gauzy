@@ -65,7 +65,13 @@ const REQUEST = {
 	/** Its policy is the caller's, but the policy was withdrawn. */
 	withdrawnPolicy: '0f7c1a2e-0000-4000-8000-000000001008',
 	/** Its time-off request is the caller's, but the time-off request was withdrawn. */
-	withdrawnTimeOff: '0f7c1a2e-0000-4000-8000-000000001009'
+	withdrawnTimeOff: '0f7c1a2e-0000-4000-8000-000000001009',
+	/** Another tenant's request whose author named the caller's policy. */
+	foreignNamingPolicy: '0f7c1a2e-0000-4000-8000-00000000100a',
+	/** Another tenant's request whose author named the caller's time-off request. */
+	foreignNamingTimeOff: '0f7c1a2e-0000-4000-8000-00000000100b',
+	/** Another tenant's request whose author named the caller's equipment sharing. */
+	foreignNamingSharing: '0f7c1a2e-0000-4000-8000-00000000100c'
 };
 
 /** The requests the employee is asked to answer, through the pivot, and one ask that was withdrawn. */
@@ -233,6 +239,12 @@ describe('RequestApprovalService reads the same register on TypeORM and on Mikro
 		await request(REQUEST.withdrawn, { ...scope, createdByUserId: USER, deletedAt: WITHDRAWN_AT });
 		await request(REQUEST.withdrawnPolicy, { tenantId: TENANT, approvalPolicyId: WITHDRAWN_POLICY });
 		await request(REQUEST.withdrawnTimeOff, { tenantId: TENANT, requestId: WITHDRAWN_TIME_OFF });
+		// The policy and the record an arm joins are named by the request's own columns, which its author states:
+		// another tenant's request that names the caller's rows must still not reach the caller's list.
+		const foreign = { tenantId: OTHER_TENANT, organizationId: OTHER_ORG };
+		await request(REQUEST.foreignNamingPolicy, { ...foreign, approvalPolicyId: POLICY });
+		await request(REQUEST.foreignNamingTimeOff, { ...foreign, requestId: TIME_OFF, requestType: 'TIME_OFF' });
+		await request(REQUEST.foreignNamingSharing, { ...foreign, requestId: SHARING, requestType: 'EQUIPMENT_SHARING' });
 
 		const approver = { employeeId: EMPLOYEE, status: 1, ...scope };
 		await insert('request_approval_employee', { id: APPROVAL.timeOff, requestApprovalId: REQUEST.byTimeOff, ...approver });

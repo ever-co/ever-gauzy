@@ -47,7 +47,13 @@ const RETRY_BACKOFF_MS = [20, 60, 180];
 /** Default time a caller waits for the level row lock before the write is refused. */
 const DEFAULT_LOCK_TIMEOUT_MS = 5000;
 
-/** Types that change the on-hand quantity. The rest are reservation-only. */
+/**
+ * The reservation-only types: they move units between available and reserved and never change the
+ * on-hand quantity (doc 09 §4.5 — a hold is not a sale). Every other type may change it.
+ *
+ * `applyMovement` refuses one of these that states a non-zero `quantityDelta`, which is what makes the
+ * quantity rule "satisfied by construction" for them in `assertInvariants`.
+ */
 const RESERVATION_ONLY_TYPES: StockMovementType[] = [
 	StockMovementType.RESERVATION,
 	StockMovementType.RELEASE
@@ -187,6 +193,17 @@ export class StockLevelService {
 			throw inventoryError(InventoryErrorCode.INVARIANT_VIOLATION, 'A movement delta must be a finite number.', {
 				badRequest: true
 			});
+		}
+		if (RESERVATION_ONLY_TYPES.includes(movement.type) && quantityDelta !== 0) {
+			// The ledger port accepts any kind with a quantity, and the kind is a caller's statement: a
+			// RESERVATION that moved the on-hand quantity would take units off the shelf before they were
+			// picked, and a RELEASE that did would put back units that never left. Refused as a malformed
+			// movement, before anything is locked or written.
+			throw inventoryError(
+				InventoryErrorCode.INVARIANT_VIOLATION,
+				`A ${movement.type} movement moves units between available and reserved and never changes the on-hand quantity.`,
+				{ badRequest: true, details: { type: movement.type, quantityDelta } }
+			);
 		}
 		if (!movement.referenceType || !movement.referenceId) {
 			throw invariantViolation(

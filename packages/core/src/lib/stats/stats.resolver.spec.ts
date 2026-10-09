@@ -13,6 +13,9 @@ import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FeatureEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
+import { gauzyToggleFeatures } from '@gauzy/config';
+import { RequestContext } from '../core/context/request-context';
+import { FeatureService } from '../feature/feature.service';
 import { FeatureFlagGuard } from '../shared/guards';
 import { StatsModule } from './stats.module';
 import { StatsController } from './stats.controller';
@@ -368,6 +371,95 @@ describe('StatsResolver — a capability that is switched off is not served', ()
 		const { guard } = gate(true);
 
 		await expect(guard.canActivate(graphqlContext('globalStats'))).resolves.toBe(true);
+	});
+
+	/**
+	 * The two cases above script the feature service's answer, so they prove the guard asks for
+	 * `FEATURE_OPEN_STATS` and obeys the answer — not that the answer is the deployment's switch. The
+	 * cases below run the real resolution on both guards the field runs under: the field is public, so
+	 * the caller has no tenant whose toggle could answer, and both read `FEATURE_OPEN_STATS` from the
+	 * deployment's configuration — the switch the delivered route has always been behind. Each case runs
+	 * with the switch off and on, so the pair is its own control.
+	 */
+	describe('with the deployment’s own FEATURE_OPEN_STATS switch', () => {
+		const configured = gauzyToggleFeatures as Record<string, boolean>;
+		let previous: boolean;
+
+		beforeEach(() => {
+			previous = configured[FEATURE_OPEN_STATS];
+			// A public field: no caller, so no tenant whose toggle rows could answer.
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
+			jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+		});
+
+		afterEach(() => {
+			configured[FEATURE_OPEN_STATS] = previous;
+			jest.restoreAllMocks();
+		});
+
+		/** The class guard over the real feature service, which reaches no repository without a tenant. */
+		function realGate(): FeatureFlagGuard {
+			const cache = { get: jest.fn().mockResolvedValue(null), set: jest.fn(), del: jest.fn() };
+
+			return new FeatureFlagGuard(
+				cache as never,
+				new Reflector(),
+				new FeatureService({} as never, {} as never, {} as never, {} as never)
+			);
+		}
+
+		it.each([false, true])('the class guard follows the switch when it is %p', async (enabled) => {
+			configured[FEATURE_OPEN_STATS] = enabled;
+
+			const answer = await realGate()
+				.canActivate(graphqlContext('globalStats'))
+				.catch((thrown) => thrown);
+
+			if (enabled) {
+				expect(answer).toBe(true);
+			} else {
+				expect(answer).toBeInstanceOf(NotFoundException);
+				expect((answer as Error).message).toContain('globalStats');
+			}
+		});
+
+		it.each([false, true])('the route’s own StatsGuard, carried by the field, follows the switch when it is %p', async (enabled) => {
+			configured[FEATURE_OPEN_STATS] = enabled;
+
+			const answer = await new StatsGuard(new Reflector())
+				.canActivate(graphqlContext('globalStats'))
+				.catch((thrown) => thrown);
+
+			if (enabled) {
+				expect(answer).toBe(true);
+			} else {
+				// Refused as the GraphQL field it is — not with a TypeError from reading `method` and `url`
+				// off a request a GraphQL operation does not have.
+				expect(answer).toBeInstanceOf(NotFoundException);
+				expect((answer as Error).message).toBe('Cannot query field globalStats');
+			}
+		});
+
+		it('is not widened by the endpoint code the class states, which the field’s own code replaces', async () => {
+			// The field states its route's code, and a handler's codes replace its class's: with the
+			// stats switch off the field is refused whatever the GraphQL endpoint's own code would answer.
+			const hadEndpointCode = Object.prototype.hasOwnProperty.call(configured, FEATURE_GRAPHQL);
+			const endpointCode = configured[FEATURE_GRAPHQL];
+			configured[FEATURE_OPEN_STATS] = false;
+			configured[FEATURE_GRAPHQL] = true;
+
+			try {
+				await expect(realGate().canActivate(graphqlContext('globalStats'))).rejects.toBeInstanceOf(
+					NotFoundException
+				);
+			} finally {
+				if (hadEndpointCode) {
+					configured[FEATURE_GRAPHQL] = endpointCode;
+				} else {
+					delete configured[FEATURE_GRAPHQL];
+				}
+			}
+		});
 	});
 });
 

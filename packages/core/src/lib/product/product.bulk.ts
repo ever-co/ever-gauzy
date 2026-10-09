@@ -51,6 +51,12 @@ export interface IBulkProductItem {
 	productTypeId?: ID;
 	/** The merchandising grouping the product belongs to. */
 	productCategoryId?: ID;
+	/**
+	 * The organization a created product is filed under. Optional: the organization the request acts in
+	 * is used when it is omitted, and an item naming any other organization is refused. Never written on
+	 * an update — a batch does not move a product between organizations.
+	 */
+	organizationId?: ID;
 	/** The facets to attach to the product, named by the identifier the pivot row is written from. */
 	tagIds?: ID[];
 	/** The product's name and description, one row per language. */
