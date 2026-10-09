@@ -453,6 +453,11 @@ export const schemaExtensions = gql`
 		productRelations(filter: ProductRelationFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductRelationConnection!
 		productRelation(id: ID!): ProductRelation
 		productVariantMedia(filter: ProductVariantMediaFilter, page: PageInput, limit: Int, offset: Int, withDeleted: Boolean): ProductVariantMediaConnection!
+		"""
+		One gallery row, or null when there is none. Named \`productVariantMediaItem\` because
+		\`productVariantMedia\` is the list and GraphQL allows one field per name on a type.
+		"""
+		productVariantMediaItem(id: ID!): ProductVariantMedia
 	}
 
 	extend type Mutation {

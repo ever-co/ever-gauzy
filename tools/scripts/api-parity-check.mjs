@@ -77,6 +77,8 @@ const GRAPHQL_ONLY = {
 	productPublications: 'A variant’s publications, reached over GraphQL through the variant; REST reaches them through the publication links.',
 	productPublication: 'One publication, the row form of the same concept.',
 	productVariantPublications: 'The publications of one variant, reached over GraphQL through the variant itself.',
+	productVariantMediaItem:
+		'One gallery row, the row form of `GET /product-variant-media/:id`; qualified because `productVariantMedia` is the list and GraphQL allows one field per name.',
 	stockCountVariance: 'The variance a count found, computed from its lines.',
 	availableQuantity: 'How much of a variant is available at a location, computed from its level and the holds against it.',
 	productVariantFacets: 'The facet values a variant carries, a projection over its tags and channels.',
