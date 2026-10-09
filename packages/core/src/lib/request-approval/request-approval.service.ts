@@ -1,6 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import type { Collection } from '@mikro-orm/core';
 import { Brackets, FindManyOptions, In } from 'typeorm';
+import { isUUID } from 'class-validator';
 import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,
@@ -118,6 +119,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 							// policy and no time-off / equipment-sharing record (e.g. a purchasing request).
 							.orWhere(inCallerScope('request_approval'));
 					})
+					// The row itself is the caller's tenant's, whichever arm admitted it: the policy and the
+					// record an arm joins are named by the request's own columns, which its author states, so
+					// an arm alone would show another tenant's request to the tenant whose policy or record it
+					// names. Compared as `= NULL` without a tenant, which matches nothing.
+					.andWhere('request_approval.tenantId', '=', tenantId ?? null)
 					.whereNull('request_approval.deletedAt');
 
 				const results = await query;
@@ -174,43 +180,53 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 				const [items, total] = await query
 					.where(
-						new Brackets((sqb) => {
-							sqb.where(p('approvalPolicy.organizationId =:organizationId'), {
-								organizationId
-							}).andWhere(p('approvalPolicy.tenantId =:tenantId'), {
-								tenantId
-							});
+						new Brackets((scopes) => {
+							scopes
+								.where(
+									new Brackets((sqb) => {
+										sqb.where(p('approvalPolicy.organizationId =:organizationId'), {
+											organizationId
+										}).andWhere(p('approvalPolicy.tenantId =:tenantId'), {
+											tenantId
+										});
+									})
+								)
+								.orWhere(
+									new Brackets((sqb) => {
+										sqb.where(p('time_off_request.organizationId =:organizationId'), {
+											organizationId
+										}).andWhere(p('time_off_request.tenantId =:tenantId'), {
+											tenantId
+										});
+									})
+								)
+								.orWhere(
+									new Brackets((sqb) => {
+										sqb.where(p('equipment_sharing.organizationId =:organizationId'), {
+											organizationId
+										}).andWhere(p('equipment_sharing.tenantId =:tenantId'), {
+											tenantId
+										});
+									})
+								)
+								// A request raised in this organization belongs to it even when it names no policy
+								// and no time-off / equipment-sharing record (e.g. a purchasing request).
+								.orWhere(
+									new Brackets((sqb) => {
+										sqb.where(p('request_approval.organizationId =:organizationId'), {
+											organizationId
+										}).andWhere(p('request_approval.tenantId =:tenantId'), {
+											tenantId
+										});
+									})
+								);
 						})
 					)
-					.orWhere(
-						new Brackets((sqb) => {
-							sqb.where(p('time_off_request.organizationId =:organizationId'), {
-								organizationId
-							}).andWhere(p('time_off_request.tenantId =:tenantId'), {
-								tenantId
-							});
-						})
-					)
-					.orWhere(
-						new Brackets((sqb) => {
-							sqb.where(p('equipment_sharing.organizationId =:organizationId'), {
-								organizationId
-							}).andWhere(p('equipment_sharing.tenantId =:tenantId'), {
-								tenantId
-							});
-						})
-					)
-					// A request raised in this organization belongs to it even when it names no policy
-					// and no time-off / equipment-sharing record (e.g. a purchasing request).
-					.orWhere(
-						new Brackets((sqb) => {
-							sqb.where(p('request_approval.organizationId =:organizationId'), {
-								organizationId
-							}).andWhere(p('request_approval.tenantId =:tenantId'), {
-								tenantId
-							});
-						})
-					)
+					// The row itself is the caller's tenant's, whichever arm admitted it: the policy and the
+					// record an arm joins are named by the request's own columns, which its author states, so
+					// an arm alone would show another tenant's request to the tenant whose policy or record it
+					// names.
+					.andWhere(p('request_approval.tenantId =:tenantId'), { tenantId })
 					.getManyAndCount();
 
 				return { items, total };
@@ -359,7 +375,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		requestApproval.approvalPolicyId = entity.approvalPolicyId;
 		requestApproval.name = entity.name;
 		requestApproval.min_count = entity.min_count;
-		requestApproval.requestId = entity.requestId;
+		// Kept only when it is an identifier: the record a request is about is named by its uuid, and the
+		// equipment-sharing list joins on `uuid("requestId")`, which a free-text value would make fail for
+		// every tenant. A value that is not one is left out, which is what this method did with every value
+		// before it stored the field at all.
+		requestApproval.requestId =
+			typeof entity.requestId === 'string' && isUUID(entity.requestId) ? entity.requestId : undefined;
 		requestApproval.requestType = entity.requestType;
 		requestApproval.amount = entity.amount;
 		requestApproval.currency = entity.currency;
