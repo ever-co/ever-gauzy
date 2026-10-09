@@ -22,6 +22,10 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            # The web app first: its entrypoint writes the settings into the built bundle before
+            # nginx serves it, and the browser walk starts as soon as the API answers.
+            webapp:
+                condition: service_healthy
         environment:
             NODE_ENV: production
             DEMO: 'false'
@@ -60,6 +64,11 @@ services:
         environment:
             API_BASE_URL: http://api:3000
             CLIENT_BASE_URL: http://webapp:4200
+        healthcheck:
+            test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:4200/ || exit 1']
+            interval: 5s
+            timeout: 5s
+            retries: 60
 
     db:
         image: postgres:18-alpine

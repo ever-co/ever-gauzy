@@ -193,6 +193,19 @@ jobs:
           echo "The web app image is $(docker image inspect "$WEBAPP_IMAGE" --format '{{index .RepoDigests 0}}')." | tee -a "$GITHUB_STEP_SUMMARY"
           df -h /
 
+      - name: The web app image serves its page (outside the audit, so a broken image is named here)
+        run: |
+          docker run -d --name webapp-smoke -e API_BASE_URL=http://api:3000 -e CLIENT_BASE_URL=http://webapp:4200 -p 127.0.0.1:4299:4200 "$GAUZY_WEBAPP_IMAGE" > /dev/null
+          ok=false
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://127.0.0.1:4299/; then ok=true; break; fi
+            sleep 3
+          done
+          docker logs webapp-smoke 2>&1 | grep -v '^+ ' | tail -20 || true
+          docker rm -f webapp-smoke > /dev/null
+          if [ "$ok" != true ]; then echo "::error::the web app image did not serve http://127.0.0.1:4200/ within 3 minutes"; exit 1; fi
+          echo "The web app image serves its page."
+
       - name: Write the API .env.local files of the modes, and a secret for this run
         run: |
           secret=$(openssl rand -hex 32)
