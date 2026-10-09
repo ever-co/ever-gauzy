@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EntityManager, FindManyOptions, LessThanOrEqual } from 'typeorm';
+import { EntityManager, FindManyOptions, FindOptionsWhere, LessThanOrEqual, UpdateResult } from 'typeorm';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IPagination } from '@gauzy/contracts';
 import { RequestContext, TenantAwareCrudService, WarehouseProductVariant } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType, StockReservationReferenceType, StockReservationStatus } from './../inventory.enums';
@@ -20,6 +21,36 @@ const DEFAULT_TTL_MINUTES: Record<StockReservationReferenceType, number> = {
 	[StockReservationReferenceType.TRANSFER]: 10080,
 	[StockReservationReferenceType.SUBSCRIPTION]: 4320
 };
+
+/**
+ * The members of a hold that only its domain writers may move.
+ *
+ * A hold's quantity is counted in its level's `reservedQuantity`, its location and variant name the level it is
+ * counted against, and its status says whether it is counted at all. Doc 09 §15.1 INV-03 admits only `reserve`,
+ * `release`, `consume` and the expiry sweep as writers of those, because each of them writes the movement that
+ * keeps the level equal to the sum of its `ACTIVE` holds. A generic update writes no movement, so a change to
+ * any of these through it leaves the level counting a hold that no longer says what it counts.
+ */
+const HOLD_COUNTED_MEMBERS = ['quantity', 'status', 'warehouseId', 'variantId'] as const;
+
+/**
+ * Whether a stated member only restates what the hold already holds.
+ *
+ * The quantity is compared as a number, because a `numeric` column reads back as `"2.000000"` while a client
+ * states `2`; the other members are identifiers and an enumeration, compared as text.
+ */
+function restatesHoldMember(member: (typeof HOLD_COUNTED_MEMBERS)[number], stored: unknown, stated: unknown): boolean {
+	if (stated === null) {
+		return stored === null || stored === undefined;
+	}
+	if (member === 'quantity') {
+		const wanted = Number(stated);
+
+		return Number.isFinite(wanted) && wanted === Number(stored);
+	}
+
+	return String(stated) === String(stored ?? '');
+}
 
 /**
  * The movement kind a consumed hold produces.
@@ -401,6 +432,56 @@ export class StockReservationService extends TenantAwareCrudService<StockReserva
 		}
 		await this.typeOrmStockReservationRepository.save(active);
 		return active.length;
+	}
+
+	/**
+	 * Changes the descriptive members of a hold, refusing a change to what the level counts it by.
+	 *
+	 * `POST /stock-reservations/:id` validates a body that declares the quantity, the status and the location —
+	 * the DTO is the create DTO made partial — and the route's own summary says "the quantity and the location
+	 * are not among them". Before this, they were: the generic update wrote all three onto a live hold with no
+	 * level write and no movement, so the level's `reservedQuantity` went on counting the old quantity at the
+	 * old location (handover 2026-09-20 §7.65 item 23 (a)). The refusal is made here, below the route, so every
+	 * caller of the generic update is held to it; the route, its DTO and its other members are unchanged.
+	 *
+	 * A member that restates the value the row already holds is not a change and is accepted, so a client that
+	 * sends the whole hold back with its expiry edited is not refused for the members it did not touch.
+	 *
+	 * @param id The hold, or the conditions that select the holds to change.
+	 * @param partialEntity The members to change.
+	 * @returns The update result, as the base class answers it.
+	 * @throws ConflictException with `STOCK_INVARIANT_VIOLATION` (invariant `INV-03`) when the change would move a
+	 * hold's quantity, status, location or variant.
+	 */
+	public async update(
+		id: ID | FindOptionsWhere<StockReservation>,
+		partialEntity: QueryDeepPartialEntity<StockReservation>
+	): Promise<StockReservation | UpdateResult> {
+		const patch = (partialEntity ?? {}) as Record<string, unknown>;
+		const stated = HOLD_COUNTED_MEMBERS.filter((member) => patch[member] !== undefined);
+
+		if (stated.length > 0) {
+			const current =
+				typeof id === 'string' ? [await this.findOneByIdString(id)] : await this.find({ where: id });
+
+			for (const reservation of current) {
+				const moved = stated.filter(
+					(member) => !restatesHoldMember(member, (reservation as any)[member], patch[member])
+				);
+
+				if (moved.length > 0) {
+					throw invariantViolation(
+						'INV-03',
+						`A hold's ${moved.join(', ')} cannot be changed by an update: the level counts the hold by them, and ` +
+							`only reserve, release, consume and the expiry sweep write the movement that keeps that count true. ` +
+							`Release the hold and place the one you need instead.`,
+						{ reservationId: reservation.id, fields: moved }
+					);
+				}
+			}
+		}
+
+		return super.update(id as any, partialEntity);
 	}
 
 	/** Lists holds with the filters the resource exposes. */
