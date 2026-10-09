@@ -49,7 +49,7 @@ import { ITimerQueueJob, TimerQueueProcessor } from './timer-queue-processor';
 
 type TimerWrite = Record<string, unknown>;
 
-/** Records what each job writes to the `timers` table; `hold()` keeps the next writes waiting. */
+/** Records what each job writes to the `timers` table; `hold()` keeps the duration writes waiting. */
 const fakeTimerService = () => {
 	const writes: TimerWrite[] = [];
 	let held: Promise<void> | null = null;
@@ -58,7 +58,7 @@ const fakeTimerService = () => {
 		writes,
 		failures: 0,
 		update: jest.fn(async (timer: { toObject(): TimerWrite; id?: number }) => {
-			if (held) await held;
+			if (held && timer.toObject().duration !== undefined) await held;
 			if (service.failures > 0) {
 				service.failures--;
 				throw new Error('SQLITE_BUSY: database is locked');
@@ -122,19 +122,23 @@ describe('TimerQueueProcessor', () => {
 		expect(timers.writes[0].isStartedOffline).toBeUndefined();
 	});
 
-	it('follows the offline mode a job was queued in, not the current one', async () => {
+	it('leaves the sync flags alone when a job says so, even offline', async () => {
 		const timers = fakeTimerService();
-		const offline = fakeOfflineMode(true);
-		const processor = new TimerQueueProcessor(timers as any, offline);
+		const processor = new TimerQueueProcessor(timers as any, fakeOfflineMode(true));
 
-		// Queued online, run offline: must stay as it is, or offline sync pushes the session twice.
-		await processor.process({ type: 'update-duration-timer', data: { id: 1, duration: 10, offline: false } }, knex);
-		offline.enabled = false;
-		// Queued offline, run online: still needs the offline sync.
-		await processor.process({ type: 'update-duration-timer', data: { id: 2, duration: 20, offline: true } }, knex);
+		await processor.process({ type: 'update-duration-timer', data: { id: 1, duration: 10, markUnsynced: false } }, knex);
 
+		expect(timers.writes[0]).toMatchObject({ id: 1, duration: 10 });
 		expect(timers.writes[0].synced).toBeUndefined();
-		expect(timers.writes[1].synced).toBe(false);
+	});
+
+	it('marks a timer unsynced on its own', async () => {
+		const timers = fakeTimerService();
+		const processor = new TimerQueueProcessor(timers as any, fakeOfflineMode());
+
+		await processor.markTimerUnsynced(3);
+
+		expect(timers.writes).toEqual([expect.objectContaining({ id: 3, synced: false, duration: undefined })]);
 	});
 
 	it('links the timer to its time slot and timesheet', async () => {
@@ -231,23 +235,42 @@ describe('AsyncTimerSyncQueue', () => {
 		expect(timers.writes.map((write) => write.duration)).toEqual([1000, 2000, 3000, 4000, 5000]);
 	});
 
-	it('keeps the offline mode a duration was queued in, however late it runs', async () => {
+	it('marks a timer tracked offline unsynced when the duration is queued; the stored duration never does', async () => {
 		const timers = fakeTimerService();
 		const offline = fakeOfflineMode(false);
 		const { queue } = openQueue(timers, offline);
 		timers.hold();
 
 		await queue.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+		expect(timers.writes).toEqual([]);
 		offline.enabled = true;
 		await queue.processWithQueue('gauzy-queue', duration(1, 2000), knex);
+		expect(timers.writes).toEqual([expect.objectContaining({ id: 1, synced: false, duration: undefined })]);
+
+		// Offline sync uploads the timer before the stored durations run…
 		offline.enabled = false;
+		timers.writes.push({ id: 1, synced: true });
 		timers.release();
 
+		// …which then must not mark it unsynced again.
 		expect(await queue.drain()).toBe(true);
-		expect(timers.writes.map(({ duration: ms, synced }) => ({ ms, synced }))).toEqual([
+		expect(timers.writes.slice(2).map(({ duration: ms, synced }) => ({ ms, synced }))).toEqual([
 			{ ms: 1000, synced: undefined },
-			{ ms: 2000, synced: false }
+			{ ms: 2000, synced: undefined }
 		]);
+	});
+
+	it('settles: waits for the jobs queued so far before what reads the database', async () => {
+		const timers = fakeTimerService();
+		const { queue } = openQueue(timers);
+		timers.hold();
+		await queue.processWithQueue('gauzy-queue', duration(1, 1000), knex);
+
+		expect(await queue.settle(50)).toBe(false);
+		expect(queue.isIdle()).toBe(false);
+		timers.release();
+		expect(await queue.settle(2_000)).toBe(true);
+		expect(timers.writes).toHaveLength(1);
 	});
 
 	it('runs the jobs a quit or crash left behind on the next start, once each', async () => {
@@ -308,17 +331,17 @@ describe('AsyncTimerSyncQueue', () => {
 		await expect(queue.processWithQueue('gauzy-queue', duration(1, 1), knex)).rejects.toThrow('closed');
 	});
 
-	describe('flushLeftovers', () => {
-		it('does nothing — not even create the file — when the setting was never on', async () => {
+	describe('openLeftovers', () => {
+		it('opens nothing — not even creates the file — when the setting was never on', async () => {
 			const timers = fakeTimerService();
 			const offlineMode = fakeOfflineMode();
 			const options = { processor: new TimerQueueProcessor(timers as any, offlineMode), offlineMode, onJobFailed: jest.fn() };
 
-			expect(await AsyncTimerSyncQueue.flushLeftovers(knex, options)).toBe(true);
+			expect(AsyncTimerSyncQueue.openLeftovers(knex, options)).toBeNull();
 			expect(fs.readdirSync(userData)).toEqual([]);
 		});
 
-		it('runs what an asynchronous session left behind, then releases the file', async () => {
+		it('runs what an asynchronous session left behind', async () => {
 			const before = fakeTimerService();
 			const { queue: first } = openQueue(before);
 			before.hold();
@@ -330,7 +353,9 @@ describe('AsyncTimerSyncQueue', () => {
 			const offlineMode = fakeOfflineMode();
 			const options = { processor: new TimerQueueProcessor(after as any, offlineMode), offlineMode, onJobFailed: jest.fn() };
 
-			expect(await AsyncTimerSyncQueue.flushLeftovers(knex, options)).toBe(true);
+			const leftovers = AsyncTimerSyncQueue.openLeftovers(knex, options);
+			opened.push(leftovers);
+			expect(await leftovers.drain()).toBe(true);
 			expect(after.writes.map((write) => write.duration)).toEqual([1000, 2000]);
 			before.release();
 		});

@@ -29,10 +29,12 @@ export interface IDurationJobData {
 	id: number;
 	duration: number;
 	/**
-	 * Offline mode when the job was queued. Set by the persistent queue, which may run the job much later (after a
-	 * restart, for instance); the in-memory queue runs it right away and leaves it out.
+	 * Whether the update marks the timer unsynced. Left out by the in-memory queue, which runs the job right away:
+	 * the timer is marked when offline mode is on at that moment. The persistent queue sets it to `false` and marks
+	 * the timer itself when it queues the job (`markTimerUnsynced`), because a stored job may run much later — after
+	 * offline sync has uploaded the timer — and marking it then would have it uploaded a second time.
 	 */
-	offline?: boolean;
+	markUnsynced?: boolean;
 }
 
 type TEventService = { save(events: IDesktopEvent | IDesktopEvent[]): Promise<void> };
@@ -88,10 +90,17 @@ export class TimerQueueProcessor {
 		}
 	}
 
-	private updateDuration({ id, duration, offline }: IDurationJobData): Promise<void> {
-		// A duration update only ever marks the timer unsynced while offline, so that offline sync pushes it later.
-		// It never touches `synced` while online: marking an online session unsynced would push it a second time.
-		const markUnsynced = typeof offline === 'boolean' ? offline : this.offlineMode.enabled;
-		return this.timerService.update(new Timer({ id, duration, ...(markUnsynced ? { synced: false } : {}) }));
+	/**
+	 * Marks a timer tracked offline as unsynced, so that offline sync uploads it once back online — what a duration
+	 * update does on the in-memory queue while offline.
+	 */
+	public markTimerUnsynced(id: number): Promise<void> {
+		return this.timerService.update(new Timer({ id, synced: false }));
+	}
+
+	private updateDuration({ id, duration, markUnsynced }: IDurationJobData): Promise<void> {
+		// Never touches `synced` while online: marking an online session unsynced would push it a second time.
+		const unsynced = typeof markUnsynced === 'boolean' ? markUnsynced : this.offlineMode.enabled;
+		return this.timerService.update(new Timer({ id, duration, ...(unsynced ? { synced: false } : {}) }));
 	}
 }

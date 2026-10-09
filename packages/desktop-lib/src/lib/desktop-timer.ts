@@ -25,6 +25,14 @@ import { ITimerQueueJob, TimerQueueProcessor } from './queues/timer-queue-proces
 // embedded-queue is required lazily inside processWithQueue() to avoid
 // loading it at module import time (before app.ready).
 
+/** How long building a time slot waits for the activity saves queued before it (asynchronous sync only). */
+const ACTIVITY_SETTLE_MS = 5_000;
+/** How long a job that could not be stored waits for the stored jobs ahead of it before running in memory. */
+const FALLBACK_SETTLE_MS = 5_000;
+/** How long quitting waits for the stored jobs to be applied, then for the running one; the rest runs on the next start. */
+const QUIT_SETTLE_MS = 3_000;
+const QUIT_CLOSE_MS = 1_000;
+
 export default class TimerHandler {
 	// How frequently to collect activities (ms)
 	activitiesCollectionPeriod = 1000;
@@ -60,6 +68,9 @@ export default class TimerHandler {
 	// for the in-memory queue. Decided once, on the first job, so a session never mixes the two queues: a change of
 	// the setting applies from the next start.
 	private _asyncTimerSync: Promise<AsyncTimerSyncQueue | null> | null = null;
+	// The setting is off but an earlier asynchronous session left jobs behind: new jobs queue behind them until none is
+	// left, then the session moves to the in-memory queue.
+	private _drainingLeftovers = false;
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
 	private readonly _userService: UserService;
@@ -343,6 +354,13 @@ export default class TimerHandler {
 	*/
 	async getAllActivities(knex, lastTimeSlot) {
 		try {
+			// Activity saved before this slot is still queued (asynchronous sync): read the tables once it is written,
+			// or it would miss this slot and, saved after the reset below, land in the next one.
+			if (!(await this.settleTimerJobs(knex, ACTIVITY_SETTLE_MS))) {
+				await this._auditLogHandler.timerAuditError(
+					`[getAllActivities] Activity queued before this time slot was not written within ${ACTIVITY_SETTLE_MS} ms`
+				);
+			}
 			console.log('Get All Activities Start for:', lastTimeSlot);
 			const dataCollection = await this.activitiesCollection(knex, lastTimeSlot);
 			console.log('Get All Activities End for:', lastTimeSlot);
@@ -602,6 +620,10 @@ export default class TimerHandler {
 		 */
 		await this.stopTimerIntervalPeriod();
 
+		if (quitApp) {
+			await this.closeAsyncTimerSync().catch((error) => console.error('Error releasing the timer queue', error));
+		}
+
 		const lastTimer = await this._timerService.findLastOne();
 
 		this.updateToggle(setupWindow, knex, true);
@@ -725,13 +747,59 @@ export default class TimerHandler {
 
 	/*
 	 * The persistent queue when `appSetting.asyncTimerDataSync` is on, otherwise null (the in-memory queue).
-	 * With the setting off, jobs an earlier asynchronous session left behind are run first, so turning it off loses
-	 * nothing; without that session's file this is a no-op. If the persistent queue cannot be opened, the in-memory
-	 * queue is used.
+	 * With the setting off, jobs an earlier asynchronous session left behind keep running, ahead of new jobs, until
+	 * none is left, so turning it off loses nothing and reorders nothing; without that session's file this is a no-op.
+	 * If the persistent queue cannot be opened, or once it is closed, the in-memory queue is used.
 	 */
-	private asyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
+	private async asyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
 		this._asyncTimerSync ??= this.openAsyncTimerSync(knex);
-		return this._asyncTimerSync;
+		const queue = await this._asyncTimerSync;
+		if (!queue || queue.isClosed) {
+			return null;
+		}
+		if (this._drainingLeftovers && this.isIdle(queue)) {
+			this._drainingLeftovers = false;
+			this._asyncTimerSync = Promise.resolve(null);
+			await queue.close();
+			return null;
+		}
+		return queue;
+	}
+
+	/* A store that cannot be read counts as busy: jobs keep going to the persistent queue, or fall back from there. */
+	private isIdle(queue: AsyncTimerSyncQueue): boolean {
+		try {
+			return queue.isIdle();
+		} catch {
+			return false;
+		}
+	}
+
+	/*
+	 * Resolves once the timer jobs queued so far have been applied to the local database (false after `timeoutMs`).
+	 * Always true with the in-memory queue, which is not waited for, as before.
+	 */
+	private async settleTimerJobs(knex, timeoutMs: number): Promise<boolean> {
+		const queue = await this.asyncTimerSync(knex);
+		return queue ? queue.settle(timeoutMs).catch(() => false) : true;
+	}
+
+	/*
+	 * When the app quits: applies what the persistent queue holds (bounded) and releases it; the rest runs on the next
+	 * start, and the jobs that still come (e.g. the last time-slot link) use the in-memory queue.
+	 */
+	private async closeAsyncTimerSync(): Promise<void> {
+		const queue = await this._asyncTimerSync;
+		if (!queue || queue.isClosed) {
+			return;
+		}
+		try {
+			await queue.settle(QUIT_SETTLE_MS);
+		} finally {
+			this._drainingLeftovers = false;
+			this._asyncTimerSync = Promise.resolve(null);
+			await queue.close(QUIT_CLOSE_MS).catch((error) => console.error('Error closing the timer queue', error));
+		}
 	}
 
 	private async openAsyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
@@ -744,7 +812,9 @@ export default class TimerHandler {
 			if (isAsyncTimerDataSyncEnabled(LocalStore.getStore('appSetting'))) {
 				return new AsyncTimerSyncQueue(options).open(knex);
 			}
-			await AsyncTimerSyncQueue.flushLeftovers(knex, options);
+			const leftovers = AsyncTimerSyncQueue.openLeftovers(knex, options);
+			this._drainingLeftovers = leftovers !== null;
+			return leftovers;
 		} catch (error) {
 			await this._auditLogHandler.timerAuditError(
 				`[processWithQueue] Persistent timer queue unavailable, using the in-memory queue: ${error?.message ?? error}`
@@ -760,10 +830,14 @@ export default class TimerHandler {
 			try {
 				return await asyncTimerSync.processWithQueue(type, data, knex);
 			} catch (error) {
-				// The job was not stored: run it on the in-memory queue below rather than lose it.
-				await this._auditLogHandler.timerAuditError(
-					`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${error?.message ?? error}`
-				);
+				// The job was not stored: run it on the in-memory queue below rather than lose it — once the stored jobs
+				// ahead of it have run, so it does not overtake them. A closed queue (quitting) needs neither.
+				if (!asyncTimerSync.isClosed) {
+					await this._auditLogHandler.timerAuditError(
+						`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${error?.message ?? error}`
+					);
+					await asyncTimerSync.settle(FALLBACK_SETTLE_MS).catch(() => false);
+				}
 			}
 		}
 

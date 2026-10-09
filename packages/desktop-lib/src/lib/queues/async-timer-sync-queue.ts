@@ -1,8 +1,8 @@
 import { PersistentQueue } from '@gauzy/desktop-activity';
 import { app } from 'electron';
-import * as fs from 'fs';
 import { Knex } from 'knex';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { IOfflineMode } from '../interfaces';
 import { ITimerQueueJob, TimerQueueJobType, TimerQueueProcessor } from './timer-queue-processor';
 
@@ -31,12 +31,15 @@ export interface IAsyncTimerSyncQueueOptions {
 }
 
 /**
- * The asynchronous path of `TimerHandler.processWithQueue`, taken when `appSetting.asyncTimerDataSync` is on.
+ * The asynchronous path of `TimerHandler.processWithQueue`, taken when `appSetting.asyncTimerDataSync` is on: the
+ * desktop timer's offline-first store.
  *
  * The in-memory queue it replaces loses whatever has not run yet when the app quits or crashes, and drops a job on its
- * first failure. Here a job is stored in SQLite before `processWithQueue` returns; each queue name runs its jobs one
- * at a time, in order, through the same `TimerQueueProcessor`; a failing job is retried; and jobs left over by a quit
- * or a crash run on the next start.
+ * first failure. Here every timer write (durations, time-slot links, ActivityWatch events, clean-ups) is stored in
+ * SQLite before `processWithQueue` returns, whether online or offline; each queue name applies its jobs to the local
+ * database one at a time, in order, through the same `TimerQueueProcessor`; a failing job is retried; and jobs left by
+ * a quit or a crash run on the next start. What reads that database waits for it with `settle` — offline sync then
+ * uploads everything once back online.
  */
 export class AsyncTimerSyncQueue {
 	private readonly queue: PersistentQueue;
@@ -56,21 +59,19 @@ export class AsyncTimerSyncQueue {
 	}
 
 	/**
-	 * Runs the jobs an earlier asynchronous session left behind, then releases the file. Called while the setting is
-	 * off, so turning it off never drops stored work. Without the file (the setting was never on) it does nothing.
-	 * Resolves `false` when jobs are still left after `timeoutMs`; they stay stored for the next start.
+	 * Opens the file an earlier asynchronous session left, which starts running its jobs; null when there is none (the
+	 * setting was never on). Throws when the file cannot be opened.
 	 */
-	public static async flushLeftovers(knex: Knex, options: IAsyncTimerSyncQueueOptions, timeoutMs = 5_000): Promise<boolean> {
+	public static openLeftovers(knex: Knex, options: IAsyncTimerSyncQueueOptions): AsyncTimerSyncQueue | null {
 		const dbPath = options.dbPath ?? AsyncTimerSyncQueue.defaultDbPath();
 		if (!fs.existsSync(dbPath)) {
-			return true;
+			return null;
 		}
-		const leftovers = new AsyncTimerSyncQueue({ ...options, dbPath }).open(knex);
-		try {
-			return await leftovers.drain(timeoutMs);
-		} finally {
-			await leftovers.close();
-		}
+		return new AsyncTimerSyncQueue({ ...options, dbPath }).open(knex);
+	}
+
+	public get isClosed(): boolean {
+		return this.queue.isClosed;
 	}
 
 	/** Opens the default queue, which starts the jobs a previous run left behind. Throws when the file cannot be opened. */
@@ -84,7 +85,17 @@ export class AsyncTimerSyncQueue {
 	public async processWithQueue(type: string, job: ITimerQueueJob, knex: Knex): Promise<void> {
 		this.knex = knex ?? this.knex;
 		this.ensureQueue(type);
-		await this.queue.enqueue(type, this.withEnqueueState(job));
+		await this.queue.enqueue(type, await this.prepare(job));
+	}
+
+	/** Nothing being queued, stored or running. */
+	public isIdle(): boolean {
+		return this.queue.isIdle();
+	}
+
+	/** Resolves `true` once the jobs queued so far have been applied (`false` after `timeoutMs`). */
+	public settle(timeoutMs?: number): Promise<boolean> {
+		return this.queue.settle(timeoutMs);
 	}
 
 	public drain(timeoutMs?: number): Promise<boolean> {
@@ -104,15 +115,17 @@ export class AsyncTimerSyncQueue {
 	}
 
 	/**
-	 * A stored job may run long after it was queued — after a restart, possibly in another offline state. A duration
-	 * update therefore carries the offline mode it was queued in, which is what the in-memory queue sees, as it runs
-	 * jobs right away. Otherwise a session tracked online and replayed offline would be marked unsynced and pushed a
-	 * second time by offline sync.
+	 * A stored duration update never marks the timer unsynced: it may run long after it was queued — after a restart,
+	 * once offline sync has uploaded the timer — and the timer would be uploaded a second time. A timer tracked offline
+	 * is marked right away instead, as the in-memory queue does within moments.
 	 */
-	private withEnqueueState(job: ITimerQueueJob): ITimerQueueJob {
-		if (job?.type !== TimerQueueJobType.UPDATE_DURATION || !job.data || typeof job.data.offline === 'boolean') {
+	private async prepare(job: ITimerQueueJob): Promise<ITimerQueueJob> {
+		if (job?.type !== TimerQueueJobType.UPDATE_DURATION || !job.data) {
 			return job;
 		}
-		return { ...job, data: { ...job.data, offline: this.options.offlineMode.enabled } };
+		if (this.options.offlineMode.enabled && job.data.id) {
+			await this.options.processor.markTimerUnsynced(job.data.id);
+		}
+		return { ...job, data: { ...job.data, markUnsynced: false } };
 	}
 }
