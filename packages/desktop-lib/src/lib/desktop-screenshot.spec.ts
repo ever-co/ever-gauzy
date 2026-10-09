@@ -87,7 +87,7 @@ describe('getScreenshot in active-only mode', () => {
 		expect(result.map((display) => display.id)).toEqual(['2']);
 	});
 
-	it('falls back to every captured display when no id matches the active one', async () => {
+	it('falls back to the captured display when no id matches the active one', async () => {
 		// The library sees a single display with no id while Electron puts the cursor on the second
 		// one: nothing can be matched, and the old code answered `[undefined]`.
 		listDisplays.mockResolvedValue([{ id: '' }]);
@@ -97,6 +97,16 @@ describe('getScreenshot in active-only mode', () => {
 		expect(result).toHaveLength(1);
 		expect(result[0]).toEqual(expect.objectContaining({ id: '', name: 'Screen 0' }));
 		expect(Buffer.isBuffer(result[0].img)).toBe(true);
+	});
+
+	it('captures one display, not every display, when the library reports no ids', async () => {
+		// Two displays the library reports without ids: "active only" must not upload both
+		listDisplays.mockResolvedValue([{ id: '' }, { id: '' }]);
+
+		const result = await getScreenshot();
+
+		expect(result).toHaveLength(1);
+		expect(result[0]).toEqual(expect.objectContaining({ name: 'Screen 1' }));
 	});
 
 	it('returns every display in "all" mode', async () => {

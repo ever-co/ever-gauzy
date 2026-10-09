@@ -126,7 +126,7 @@ interface IScreen {
 
 interface IScreenshotRequest {
 	screenSize: IScreen;
-	activeWindow?: { id: string } | null;
+	activeWindow?: { id: string; index?: number | null } | null;
 }
 
 interface IScreenshotResult {
@@ -2280,9 +2280,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			// `display_id` is empty on some Linux setups (X11 as well as Wayland), so the active monitor
 			// can never be matched and "active-only" silently produced no screenshot at all (#7771).
-			// Only trust the filter when it actually matched, otherwise keep every captured source —
-			// the same rule takeScreenCapture() applies to the Wayland frames.
-			const selected = activeOnly && matched.length === 0 ? sources : matched;
+			// Only trust the filter when it actually matched. Otherwise still capture ONE monitor, never
+			// every monitor the user chose not to capture: the source at the active display's index
+			// (best guess, desktopCapturer lists screens in display order), else the first one.
+			const fallback = sources[arg.activeWindow.index ?? 0] ?? sources[0];
+			const selected = activeOnly && matched.length === 0 ? (fallback ? [fallback] : []) : matched;
 
 			const screens: IScreenshotResult[] = selected.map((source) => ({
 				img: source.thumbnail.toPNG(),

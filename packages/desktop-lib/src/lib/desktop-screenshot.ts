@@ -489,11 +489,15 @@ export async function getScreenshot() {
 				return allDisplays;
 			case 'active-only': {
 				const activeDisplay = allDisplays.find((x) => x.id === activeWindow?.id?.toString());
-				// Same fallback as captureOnlyActiveWindow: an id the library did not report must not
-				// turn into `[undefined]` and break the upload downstream (#7771).
+				// An id the library did not report must not turn into `[undefined]` and break the upload
+				// downstream (#7771). Still capture ONE display, never every monitor the user chose not to
+				// capture: the one at the active display's index (best guess: the library lists displays in
+				// the same order as Electron), else the first one.
 				if (!activeDisplay) {
-					console.warn('getScreenshot -> active display not found, capturing all displays');
-					return allDisplays;
+					const fallback =
+						allDisplays.find((x) => x.name === `Screen ${activeWindow?.index ?? 0}`) ?? allDisplays[0];
+					console.warn('getScreenshot -> active display not found, capturing one display');
+					return fallback ? [fallback] : [];
 				}
 				return [activeDisplay];
 			}
