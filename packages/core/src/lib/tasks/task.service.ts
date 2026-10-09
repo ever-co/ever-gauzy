@@ -780,8 +780,26 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(teams)) {
 						mikroWhere.teams = { id: { $in: teams as ID[] } };
 					}
-					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
-						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId: members['id'] } };
+					// Same rule as the TypeORM branch: only a CHANGE_SELECTED_EMPLOYEE holder may pick the
+					// employee; everyone else is limited to the teams they are a member of.
+					const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+					let employeeId: ID | null = RequestContext.currentEmployeeId();
+					if (canChangeEmployee) {
+						employeeId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
+					}
+					// A caller who may not act for other employees and has no employee record belongs to no
+					// team: without this, the missing filter listed every team task of the organization. An
+					// organization-wide viewer keeps the access their role gives them (same carve-out as
+					// ManagedEmployeeService.filterAccessibleEmployeeIds, #10249).
+					if (
+						!canChangeEmployee &&
+						!isNotEmpty(employeeId) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
+						return { items: [], total: 0 };
+					}
+					if (isNotEmpty(employeeId)) {
+						mikroWhere.teams = { ...mikroWhere.teams, members: { employeeId } };
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
@@ -810,6 +828,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						organizationSprintId = null
 					} = where;
 					const { organizationId, projectId, members } = where;
+
+					// See the MikroORM branch: no employee record and no CHANGE_SELECTED_EMPLOYEE means no team,
+					// unless the caller is an organization-wide viewer
+					if (
+						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+						!isNotEmpty(RequestContext.currentEmployeeId()) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
+						return { items: [], total: 0 };
+					}
 
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 					query.leftJoin(`${query.alias}.teams`, 'teams');
