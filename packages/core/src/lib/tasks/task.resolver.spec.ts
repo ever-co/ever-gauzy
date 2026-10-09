@@ -684,7 +684,13 @@ describe('TaskService.findByNumber — one row by its human key, never a guess',
 
 			await service.findByNumber({ organizationId: ORGANIZATION, prefix: 'FUL', number: 12, projectId: PROJECT });
 			expect(find).toHaveBeenLastCalledWith({
-				where: { tenantId: TENANT, organizationId: ORGANIZATION, prefix: 'FUL', number: 12, projectId: PROJECT },
+				where: {
+					tenantId: TENANT,
+					organizationId: ORGANIZATION,
+					prefix: 'FUL',
+					number: 12,
+					projectId: PROJECT
+				},
 				take: 2
 			});
 		} finally {

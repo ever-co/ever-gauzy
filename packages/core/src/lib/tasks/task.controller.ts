@@ -201,7 +201,7 @@ export class TaskController extends CrudController<Task> {
 	@ApiOperation({ summary: 'Get a task by its project prefix and number.' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Task retrieved successfully.' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No task carries that key in this organization.' })
-	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The key names more than one task; state the project.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'The key names several tasks; state the project.' })
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
 	@Get('/by-number/:prefix/:number')
 	@UseValidationPipe({ transform: true, whitelist: true })

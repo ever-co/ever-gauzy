@@ -568,7 +568,9 @@ describe('InvoiceResolver — one organization’s statistics, scoped and exact'
 			});
 
 			await resolver.invoiceStatistics(true);
-			expect(invoiceService.getStatistics).toHaveBeenLastCalledWith(expect.objectContaining({ isEstimate: true }));
+			expect(invoiceService.getStatistics).toHaveBeenLastCalledWith(
+				expect.objectContaining({ isEstimate: true })
+			);
 
 			const controller = new InvoiceController(invoiceService as never, {} as never);
 			await controller.getStatistics({ organizationId: ORGANIZATION, isEstimate: true } as never);

@@ -73,7 +73,7 @@ describe('PublicInvoiceResolver — the share link, over GraphQL', () => {
 		expect(printed).toMatch(/invoiceByToken\(id: ID!, token: String!\): Invoice\n/);
 	});
 
-	it('dispatches the same query the public route dispatches, with the link’s two members and no relation', async () => {
+	it('dispatches the query the public route dispatches, with the link’s two members and no relation', async () => {
 		const { resolver, queryBus } = surfaces();
 
 		await resolver.invoiceByToken(INVOICE, TOKEN);
@@ -94,7 +94,7 @@ describe('PublicInvoiceResolver — the share link, over GraphQL', () => {
 		expect(invoice.id).toBe(INVOICE);
 	});
 
-	it('lets the refusal through rather than answering null, so a live link cannot be told from a dead one', async () => {
+	it('lets the refusal through rather than a null, so a live link cannot be told from a dead one', async () => {
 		const { resolver, queryBus } = surfaces();
 		const refusal = new ForbiddenException();
 		queryBus.execute.mockRejectedValueOnce(refusal);
