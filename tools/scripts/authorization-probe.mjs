@@ -119,9 +119,33 @@ async function graphql(query, { token, tenantId, variables }) {
 	return { status: response.status, json };
 }
 
-/** A short description of a response. */
+/**
+ * Member names whose values are credentials: a password or its hash, an access or refresh token, a
+ * secret, a key. A response body is printed to a CI log, and the platform answers a sign-in with tokens
+ * and a user update with the row it wrote, so a body is never printed with these values in it.
+ */
+const CREDENTIAL_MEMBER = /pass(?:word|wd|code|phrase)|hash|token|secret|authorization|cookie|api[-_]?key|credential/i;
+
+/** A JSON Web Token, wherever it appears in a body that is not JSON. */
+const BEARER_TOKEN = /\beyJ[\w-]*\.[\w-]*\.[\w-]*/g;
+
+/**
+ * Redacts the credentials a response body carries before it is printed.
+ *
+ * @param {unknown} json The parsed body, when it was JSON.
+ * @param {string} text The raw body.
+ * @returns {string} The body as text, every credential replaced by `[redacted]`.
+ */
+function redact(json, text) {
+	if (json !== undefined) {
+		return JSON.stringify(json, (key, value) => (key && CREDENTIAL_MEMBER.test(key) ? '[redacted]' : value));
+	}
+	return String(text ?? '').replace(BEARER_TOKEN, '[redacted]');
+}
+
+/** A short description of a response, with its credentials redacted. */
 function brief(result) {
-	return (result.json ? JSON.stringify(result.json) : result.text).slice(0, 200);
+	return redact(result.json, result.text).slice(0, 200);
 }
 
 /**
@@ -223,12 +247,16 @@ async function main() {
 	// The account is created without a credential — `CreateUserDTO` declares no password field — so the
 	// password is set the way the platform sets one: `hash` carries it in clear text and the service
 	// hashes it (`update-user.dto.ts`, `UserService.updateProfile`).
-	const password = await call('PUT', `/api/user/${probeUserId}`, {
+	const credentialUpdate = await call('PUT', `/api/user/${probeUserId}`, {
 		token,
 		tenantId,
 		body: { hash: PROBE_PASSWORD }
 	});
-	record('the probe account is given a password', password.status < 400, `HTTP ${password.status} ${brief(password)}`);
+	record(
+		'the probe account is given a password',
+		credentialUpdate.status < 400,
+		`HTTP ${credentialUpdate.status} ${brief(credentialUpdate)}`
+	);
 
 	const probeLogin = await call('POST', '/api/auth/login', {
 		body: { email: PROBE_EMAIL, password: PROBE_PASSWORD }
