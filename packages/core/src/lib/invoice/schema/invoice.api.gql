@@ -83,6 +83,16 @@ extend type Query {
 	highestInvoiceNumber: InvoiceNumberSeries!
 
 	"""
+	The caller's organization's invoices — or, with `isEstimate: true`, its estimates — counted and totalled
+	per currency and per status, as exact decimals.
+
+	Mirrors `GET /invoices/statistics`, under `INVOICES_VIEW`. The tenant and the organization are the
+	credential's; a withdrawn document is not counted, and amounts in different currencies are never added
+	together. This is not the platform-wide invoice count the global statistics read, which spans tenants.
+	"""
+	invoiceStatistics(isEstimate: Boolean): InvoiceStatistics!
+
+	"""
 	The document as a PDF, for the caller's own language.
 
 	The language is the request's: the delivered route reads it from the `language` header and this
