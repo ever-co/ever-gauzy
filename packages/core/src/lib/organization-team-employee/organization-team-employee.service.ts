@@ -84,14 +84,17 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				)
 			);
 
-			await this.deleteMany(removedMembers.map((member) => member.id));
+			// Same bypass as the lookup above: with the employee filter on, a team manager without
+			// CHANGE_SELECTED_EMPLOYEE only matched their own row, so other members were never removed
+			await this.withoutEmployeeFilter(() => this.deleteMany(removedMembers.map((member) => member.id)));
 
-			// Unsubscribe members who were unassigned from team
+			// Unsubscribe members who were unassigned from team. Not `delete()`: for a manager without
+			// CHANGE_SELECTED_EMPLOYEE that would target the manager's own subscription, not the member's.
 			try {
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._entitySubscriptionService.delete({
+							await this._entitySubscriptionService.deleteForEmployee({
 								entity: BaseEntityEnum.OrganizationTeam,
 								entityId: organizationTeamId,
 								employeeId: member.employeeId,
@@ -114,10 +117,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 				// Only update if the role has changed
 				if (newRole?.id !== member.roleId) {
-					await super.update(member.id, {
-						role: newRole,
-						isManager
-					});
+					await this.withoutEmployeeFilter(() =>
+						super.update(member.id, {
+							role: newRole,
+							isManager
+						})
+					);
 				}
 			})
 		);
@@ -358,8 +363,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					// Unassign employee all tasks before removing from the team
 					await this._taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 
-					// Remove the team member
-					return await this.delete(member.id);
+					// Remove the team member (still bypassed: the filter would only match the manager's own row)
+					return await this.withoutEmployeeFilter(() => this.delete(member.id));
 				}
 
 				// Non-manager can only remove themselves from the team

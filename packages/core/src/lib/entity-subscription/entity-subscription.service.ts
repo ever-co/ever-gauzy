@@ -98,4 +98,23 @@ export class EntitySubscriptionService extends TenantAwareCrudService<EntitySubs
 			throw new BadRequestException('Failed to unsubscribing employee from entity', error);
 		}
 	}
+
+	/**
+	 * Deletes the subscriptions matching `where` for the employee named in it, whoever the caller is.
+	 *
+	 * `delete()` restricts a caller without CHANGE_SELECTED_EMPLOYEE to their own employee, and that
+	 * restriction is merged over the given `employeeId`. So a team manager removing another member never
+	 * reached that member's subscription: the delete was pointed at the manager's own row instead.
+	 * Callers must already have checked that they may act on that employee, as the team services do.
+	 *
+	 * @param where - The subscription to delete, including the `employeeId` it belongs to.
+	 */
+	async deleteForEmployee(where: IEntitySubscriptionFindInput & { employeeId: ID }): Promise<DeleteResult> {
+		// With the employee filter off, a missing employeeId would be dropped from the criteria and delete
+		// every member's subscription to the entity.
+		if (!where?.employeeId) {
+			throw new BadRequestException('An employee is required to delete their subscription');
+		}
+		return await this.withoutEmployeeFilter(() => this.delete(where));
+	}
 }
