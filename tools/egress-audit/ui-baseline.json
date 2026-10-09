@@ -1,0 +1,5 @@
+{
+	"description": "Links to Ever hosts the Gauzy web app rendered before the Ever Platform modules (product site, legal pages, downloads, company links), recorded from the base commit with both modules off. May only shrink (check-baseline-shrink); an entry excuses that DOM reference only, never a lookup or a request.",
+	"base_commit": "5fad8d76d7d386aa89a6979bc776f38aa8d9bd07",
+	"entries": []
+}
