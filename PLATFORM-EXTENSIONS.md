@@ -54,8 +54,10 @@ destructive routes with the grant its own GraphQL mutation states. To verify
 that claim rather than read it:
 
 ```powershell
-node tools/scripts/mutating-route-permission-check.mjs   # static: every route states a permission
-node tools/scripts/authorization-probe.mjs               # live: a read-only principal is refused, twice
+# static: every route states a permission
+node tools/scripts/mutating-route-permission-check.mjs
+# live: a read-only principal is refused, twice
+node tools/scripts/authorization-probe.mjs
 ```
 
 The probe creates a throwaway role and account (a read grant and nothing else),
@@ -79,10 +81,10 @@ for a reason a reviewer can weigh rather than an oversight:
   `@Resolver('OrderLineInvoice')` that had to be `OrderLine` for the field the
   SDL gives that type). `inventory` is **not** fixed: it is a composite module
   reaching its services through a dozen sub-modules, and providing the ten
-  resolvers there fails the boot with
-  `Nest can't resolve dependencies of the TenantPermissionGuard … in the InventoryModule module`.
-  Each resolver has to be registered beside the sub-module that owns its
-  service, which is a change to ten modules rather than one.
+  resolvers there fails the boot with `Nest can't resolve dependencies of the
+  TenantPermissionGuard … in the InventoryModule module`. Each resolver has to
+  be registered beside the sub-module that owns its service, which is a change
+  to ten modules rather than one.
 - **The capability gate is one-sided on REST.** Ten packages gate their GraphQL
   resolvers with `@FeatureFlag(FEATURE_GRAPHQL)` while their controllers carry
   only the tenant and permission guards, so a capability switched off still
@@ -111,14 +113,21 @@ The branch is developed and verified against a local installation — SQLite,
 `DB_ORM=typeorm`:
 
 ```powershell
-npx nx reset                                   # always: a stale nx cache silently no-ops the build
+# always: a stale nx cache silently no-ops the build
+npx nx reset
 npx nx build api
-# boot: $env:DB_TYPE='better-sqlite3'; $env:DB_ORM='typeorm'; node dist/apps/api/main.js
-node tools/scripts/graphql-surface-smoke.mjs   # one selection per declared query root field
-node tools/scripts/commerce-e2e.mjs            # REST + GraphQL sweep
-node tools/scripts/commerce-flow-e2e.mjs       # cross-capability proofs
-node tools/scripts/authorization-probe.mjs     # a read-only principal is refused, on both protocols
-foreach ($g in Get-ChildItem tools/scripts/*check*.mjs) { node $g }   # the static gates
+# boot: $env:DB_TYPE='better-sqlite3'; $env:DB_ORM='typeorm';
+#       node dist/apps/api/main.js
+# one selection per declared query root field
+node tools/scripts/graphql-surface-smoke.mjs
+# REST + GraphQL sweep
+node tools/scripts/commerce-e2e.mjs
+# cross-capability proofs
+node tools/scripts/commerce-flow-e2e.mjs
+# a read-only principal is refused, on both protocols
+node tools/scripts/authorization-probe.mjs
+# the static gates
+foreach ($g in Get-ChildItem tools/scripts/*check*.mjs) { node $g }
 ```
 
 The desktop and server applications build from the same tree:

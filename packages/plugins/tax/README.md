@@ -5,13 +5,21 @@ which rates apply, and the resolution a document is taxed through.
 
 The plugin owns five tables:
 
-| table | what it holds |
-|---|---|
-| `tax_category` | the taxable class of a variant or a party (`STANDARD`, `REDUCED`, `ZERO`, `DIGITAL`, …), one of which is the organization default |
-| `tax_rate` | one rate of a category, scoped geographically and in time, optionally compound and optionally inclusive, with a priority, a direction, an amount type and an optional external provider key |
-| `tax_rate_part` | one part of a rate: a base share, a **signed** share of the rate, an arithmetic (`PERCENT`/`FIXED`) and an optional posting code. A rate that declares no part is one implied part (`TAX`, 100 %, base 1), so every rate written before the table existed keeps its exact breakdown |
-| `tax_regime` | a named set of rates with a trigger (region, country, province, postal pattern, registration requirement, window), selected once per document from the party's assignment or from the destination |
-| `tax_regime_rate` | the membership pivot. A rate with **no** row is general and always a candidate; a rate with **at least one** row is a candidate only when one of its regimes is the selected one |
+- `tax_category`: the taxable class of a variant or a party (`STANDARD`,
+  `REDUCED`, `ZERO`, `DIGITAL`, …), one of which is the organization default
+- `tax_rate`: one rate of a category, scoped geographically and in time,
+  optionally compound and optionally inclusive, with a priority, a direction, an
+  amount type and an optional external provider key
+- `tax_rate_part`: one part of a rate: a base share, a **signed** share of the
+  rate, an arithmetic (`PERCENT`/`FIXED`) and an optional posting code. A rate
+  that declares no part is one implied part (`TAX`, 100 %, base 1), so every
+  rate written before the table existed keeps its exact breakdown
+- `tax_regime`: a named set of rates with a trigger (region, country, province,
+  postal pattern, registration requirement, window), selected once per document
+  from the party's assignment or from the destination
+- `tax_regime_rate`: the membership pivot. A rate with **no** row is general and
+  always a candidate; a rate with **at least one** row is a candidate only when
+  one of its regimes is the selected one
 
 Rates are the **rate table** a sale document is taxed from, not a ledger.
 `packages/core` already owns the tax ledger (`tax_line`) and the money rules

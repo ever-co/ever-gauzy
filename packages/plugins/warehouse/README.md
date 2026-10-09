@@ -12,15 +12,31 @@ quantity of its own. The ledger stays the single authority for stock, and every
 physical move this domain causes is a movement written through the inventory
 capability.
 
-| Concept | What it is | Where the quantity lives |
-|---|---|---|
-| **Zone** | A named area of one location: receiving, storage, picking, packing, staging, shipping, returns, quarantine, damage | Nowhere — a zone holds bins, not stock |
-| **Bin** | One addressable position inside a zone, in a tree (aisle → rack → level → position) | Derived from the movement ledger |
-| **Wave** | A batch of picking work released to the floor together | Nowhere — its counters are caches of its lists |
-| **Pick list** | The work for one picker, derived from the shipments that are due to leave | Nowhere — a pick does not move stock |
-| **Pick line** | What, how much, from which bin, and what actually happened | A short pick writes an adjustment through the ledger |
-| **Pack slip** | The packing record: packages, weight, tracking, label | The weight of record, never recomputed |
-| **Carrier manifest** | The document a carrier accepts, and the custody boundary | The members' packed weights, frozen at close |
+- **Zone**
+  - What it is: A named area of one location: receiving, storage, picking,
+    packing, staging, shipping, returns, quarantine, damage
+  - Where the quantity lives: Nowhere — a zone holds bins, not stock
+- **Bin**
+  - What it is: One addressable position inside a zone, in a tree (aisle → rack
+    → level → position)
+  - Where the quantity lives: Derived from the movement ledger
+- **Wave**
+  - What it is: A batch of picking work released to the floor together
+  - Where the quantity lives: Nowhere — its counters are caches of its lists
+- **Pick list**
+  - What it is: The work for one picker, derived from the shipments that are due
+    to leave
+  - Where the quantity lives: Nowhere — a pick does not move stock
+- **Pick line**
+  - What it is: What, how much, from which bin, and what actually happened
+  - Where the quantity lives: A short pick writes an adjustment through the
+    ledger
+- **Pack slip**
+  - What it is: The packing record: packages, weight, tracking, label
+  - Where the quantity lives: The weight of record, never recomputed
+- **Carrier manifest**
+  - What it is: The document a carrier accepts, and the custody boundary
+  - Where the quantity lives: The members' packed weights, frozen at close
 
 ## Tables
 
@@ -89,10 +105,14 @@ GraphQL, the same operations over the one platform schema: `warehouseZones`,
 Two things belong to other domains and are injected under tokens rather than
 implemented here:
 
-| Token | Capability | Without it |
-|---|---|---|
-| `WAREHOUSE_STOCK_LEDGER` | Bin balances, home bins, movements and relocations | A short pick, a substitution and a reconciliation are refused; contents cannot be derived |
-| `WAREHOUSE_FULFILLMENT` | The lines of the shipments due to leave, and the shipments a manifest covers | Work cannot be derived and no manifest can resolve its members |
+- `WAREHOUSE_STOCK_LEDGER`
+  - Capability: Bin balances, home bins, movements and relocations
+  - Without it: A short pick, a substitution and a reconciliation are refused;
+    contents cannot be derived
+- `WAREHOUSE_FULFILLMENT`
+  - Capability: The lines of the shipments due to leave, and the shipments a
+    manifest covers
+  - Without it: Work cannot be derived and no manifest can resolve its members
 
 Nothing here registers a provider under either token: the plugin that owns the
 capability does, and this package works — zones, bins, waves, empty lists,

@@ -6,12 +6,13 @@ foreign-exchange rates.
 
 ## What it owns
 
-| table | holds |
-|---|---|
-| `price_list` | a named, scoped, time-boxed set of prices: `SALE` lists compete on price, `OVERRIDE` lists win outright for their context |
-| `product_price` | one row per `(variant, currency, price list, quantity tier)` — the effective price of a product variant, never a second name for it |
-| `price_preference` | how a currency, region or channel presents prices (tax-inclusive or not) when neither the price nor its list says |
-| `exchange_rate` | the conversion between two currencies, valid from an instant |
+- `price_list`: a named, scoped, time-boxed set of prices: `SALE` lists compete
+  on price, `OVERRIDE` lists win outright for their context
+- `product_price`: one row per `(variant, currency, price list, quantity tier)`
+  — the effective price of a product variant, never a second name for it
+- `price_preference`: how a currency, region or channel presents prices
+  (tax-inclusive or not) when neither the price nor its list says
+- `exchange_rate`: the conversion between two currencies, valid from an instant
 
 A variant with no `product_price` row falls back to the legacy
 `product_variant_price.retailPrice`, so an installation that never creates a

@@ -11,11 +11,13 @@ The domain is one package because an activation limit and a licence key mean
 something only to the thing being sold, and no other domain reads them. It is
 enabled by a tenant as a whole or not at all.
 
-| Concept | What it is |
-|---|---|
-| **Entitlement** | The right itself: who holds it, what granted it, over what term, how many seats it carries, how many activations it permits, and whether it has been revoked |
-| **Activation** | One device, instance or named user occupying a slot of an entitlement — the scarce resource an activation limit counts |
-| **Licence key** | The credential a customer types into the product: issued against an entitlement, shown once, stored as a digest |
+- **Entitlement**: The right itself: who holds it, what granted it, over what
+  term, how many seats it carries, how many activations it permits, and whether
+  it has been revoked
+- **Activation**: One device, instance or named user occupying a slot of an
+  entitlement — the scarce resource an activation limit counts
+- **Licence key**: The credential a customer types into the product: issued
+  against an entitlement, shown once, stored as a digest
 
 ## Tables
 
@@ -54,17 +56,21 @@ capability uses.
 
 ## Endpoints
 
-| Route | Permission |
-|---|---|
-| `GET /api/entitlements`, `/api/entitlements/:id`, `/:id/activations`, `/:id/keys` | `ENTITLEMENTS_VIEW` |
-| `POST /api/entitlements/check` | `ENTITLEMENTS_VIEW` |
-| `POST /api/entitlements`, `POST /api/entitlements/:id/keys` | `ENTITLEMENTS_GRANT` |
-| `PUT /api/entitlements/:id`, `POST /api/entitlements/:id/suspend`, `/resume`, `/extend`, `/revoke` | `ENTITLEMENTS_EDIT` |
-| `POST /api/entitlement-activations`, `GET /api/entitlement-activations`, `/:id` | `ENTITLEMENTS_VIEW` / `ENTITLEMENTS_GRANT` |
-| `POST /api/entitlement-activations/:id/release`, `/:id/revoke` | `ENTITLEMENTS_EDIT` |
-| `GET /api/entitlement-keys`, `/:id` | `ENTITLEMENTS_VIEW` |
-| `POST /api/entitlement-keys`, `/:id/reveal` | `ENTITLEMENTS_GRANT` |
-| `PUT /api/entitlement-keys/:id`, `POST /api/entitlement-keys/:id/revoke`, `/:id/reissue` | `ENTITLEMENTS_EDIT` |
+- `GET /api/entitlements`, `/api/entitlements/:id`, `/:id/activations`,
+  `/:id/keys`: `ENTITLEMENTS_VIEW`
+- `POST /api/entitlements/check`: `ENTITLEMENTS_VIEW`
+- `POST /api/entitlements`, `POST /api/entitlements/:id/keys`:
+  `ENTITLEMENTS_GRANT`
+- `PUT /api/entitlements/:id`, `POST /api/entitlements/:id/suspend`, `/resume`,
+  `/extend`, `/revoke`: `ENTITLEMENTS_EDIT`
+- `POST /api/entitlement-activations`, `GET /api/entitlement-activations`,
+  `/:id`: `ENTITLEMENTS_VIEW` / `ENTITLEMENTS_GRANT`
+- `POST /api/entitlement-activations/:id/release`, `/:id/revoke`:
+  `ENTITLEMENTS_EDIT`
+- `GET /api/entitlement-keys`, `/:id`: `ENTITLEMENTS_VIEW`
+- `POST /api/entitlement-keys`, `/:id/reveal`: `ENTITLEMENTS_GRANT`
+- `PUT /api/entitlement-keys/:id`, `POST /api/entitlement-keys/:id/revoke`,
+  `/:id/reissue`: `ENTITLEMENTS_EDIT`
 
 Every route is behind `FEATURE_ENTITLEMENT`, which defaults to **off**.
 

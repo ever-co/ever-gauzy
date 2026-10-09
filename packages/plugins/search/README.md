@@ -14,17 +14,23 @@ domain's package.
 
 This package owns the **behaviour**:
 
-| Concern | Where |
-|---|---|
-| Which entities are searchable, and how much each field counts | `src/lib/definitions/` |
-| The declaration registry and its validation | `src/lib/registry/search-index.registry.ts` |
-| The provider registry, the built-in database provider and the optional engine seam | `src/lib/providers/` |
-| Turning an event or a source row into a document | `src/lib/services/search-indexer.service.ts`, `search-document.builder.ts` |
-| Keeping the index current | `src/lib/search-index.consumer.ts` |
-| Rebuilding it, in batches, without stopping the API | `src/lib/services/search-reindex.service.ts` |
-| Answering a query, scoped to what the caller may see | `src/lib/services/search.service.ts` |
-| The REST and GraphQL surfaces | `src/lib/search.controller.ts`, `src/lib/graphql/` |
-| The seeded declarations | `src/lib/database/migrations/1791000000400-SeedSearchIndexDefinitions.ts` |
+- Which entities are searchable, and how much each field counts:
+  `src/lib/definitions/`
+- The declaration registry and its validation:
+  `src/lib/registry/search-index.registry.ts`
+- The provider registry, the built-in database provider and the optional engine
+  seam: `src/lib/providers/`
+- Turning an event or a source row into a document:
+  `src/lib/services/search-indexer.service.ts`, `search-document.builder.ts`
+- Keeping the index current: `src/lib/search-index.consumer.ts`
+- Rebuilding it, in batches, without stopping the API:
+  `src/lib/services/search-reindex.service.ts`
+- Answering a query, scoped to what the caller may see:
+  `src/lib/services/search.service.ts`
+- The REST and GraphQL surfaces: `src/lib/search.controller.ts`,
+  `src/lib/graphql/`
+- The seeded declarations:
+  `src/lib/database/migrations/1791000000400-SeedSearchIndexDefinitions.ts`
 
 ## Search works with nothing configured
 
@@ -83,18 +89,17 @@ operation rather than a data-loss risk.
 
 REST (one surface, no admin/public split):
 
-| Method | Path | Permission |
-|---|---|---|
-| `GET` | `/api/search` | `SEARCH_VIEW` |
-| `GET` | `/api/search/suggest` | `SEARCH_VIEW` |
-| `GET` | `/api/search/facets` (also `/api/facets`, kept for clients that already call it) | `SEARCH_VIEW` |
-| `GET` | `/api/search/index-status` | `SEARCH_VIEW` |
-| `GET` | `/api/search/index-definitions` | `SEARCH_INDEX_DEFINITIONS_VIEW` |
-| `GET` | `/api/search/index-definitions/:id` | `SEARCH_INDEX_DEFINITIONS_VIEW` |
-| `PUT` | `/api/search/index-definitions/:id` | `SEARCH_INDEX_DEFINITIONS_EDIT` |
-| `DELETE` | `/api/search/index-definitions/:id` | `SEARCH_INDEX_DEFINITIONS_EDIT` |
-| `POST` | `/api/search/reindex` | `SEARCH_REINDEX` |
-| `DELETE` | `/api/search/index` | `SEARCH_REINDEX` |
+- `GET` `/api/search`: `SEARCH_VIEW`
+- `GET` `/api/search/suggest`: `SEARCH_VIEW`
+- `GET` `/api/search/facets` (also `/api/facets`, kept for clients that already
+  call it): `SEARCH_VIEW`
+- `GET` `/api/search/index-status`: `SEARCH_VIEW`
+- `GET` `/api/search/index-definitions`: `SEARCH_INDEX_DEFINITIONS_VIEW`
+- `GET` `/api/search/index-definitions/:id`: `SEARCH_INDEX_DEFINITIONS_VIEW`
+- `PUT` `/api/search/index-definitions/:id`: `SEARCH_INDEX_DEFINITIONS_EDIT`
+- `DELETE` `/api/search/index-definitions/:id`: `SEARCH_INDEX_DEFINITIONS_EDIT`
+- `POST` `/api/search/reindex`: `SEARCH_REINDEX`
+- `DELETE` `/api/search/index`: `SEARCH_REINDEX`
 
 GraphQL: `search`, `searchSuggest`, `searchFacets`, `searchIndexDefinitions`,
 `searchIndexDefinition`, `searchIndexStatus`, `updateSearchIndexDefinition`,

@@ -5,13 +5,15 @@ shipments themselves.
 
 ## What this package owns
 
-| table | entity | what it is |
-|---|---|---|
-| `shipping_profile` | `ShippingProfile` | a set of variants that ship the same way |
-| `shipping_profile_variant` | `ShippingProfileVariant` | the pivot that attaches a variant to a profile |
-| `shipping_option` | `ShippingOption` | a configured, sellable delivery choice, with a price and a provider |
-| `fulfillment` | `Fulfillment` | one shipment against an order, with its own lifecycle |
-| `fulfillment_line` | `FulfillmentLine` | what is in that shipment |
+- `shipping_profile` (`ShippingProfile`): a set of variants that ship the same
+  way
+- `shipping_profile_variant` (`ShippingProfileVariant`): the pivot that attaches
+  a variant to a profile
+- `shipping_option` (`ShippingOption`): a configured, sellable delivery choice,
+  with a price and a provider
+- `fulfillment` (`Fulfillment`): one shipment against an order, with its own
+  lifecycle
+- `fulfillment_line` (`FulfillmentLine`): what is in that shipment
 
 The split is deliberate. A **profile** answers "does this variant ship at all,
 and with which options" — which is why a cart containing only digital goods is

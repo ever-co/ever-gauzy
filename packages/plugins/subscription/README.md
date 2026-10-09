@@ -6,12 +6,14 @@ REST and GraphQL.
 
 ## What it owns
 
-| table | what it holds |
-|---|---|
-| `subscription_plan` | what can be subscribed to, and on what cadence: the billing period and interval, the trial, the setup fee, the recurring discount and the catalogue item delivered |
-| `subscription` | one running agreement: the customer, the plan, the current period, the next billing instant and the payer remembered for renewals |
-| `subscription_item` | the recurring line set — what each cycle bills |
-| `subscription_billing` | one row per due cycle: the period, the amount, the order the cycle raised and the attempt history |
+- `subscription_plan`: what can be subscribed to, and on what cadence: the
+  billing period and interval, the trial, the setup fee, the recurring discount
+  and the catalogue item delivered
+- `subscription`: one running agreement: the customer, the plan, the current
+  period, the next billing instant and the payer remembered for renewals
+- `subscription_item`: the recurring line set — what each cycle bills
+- `subscription_billing`: one row per due cycle: the period, the amount, the
+  order the cycle raised and the attempt history
 
 ## The shape of the domain
 
@@ -75,6 +77,6 @@ tenant that did not opt in.
 
 ## Building
 
-```
+```bash
 yarn nx build plugin-subscription
 ```

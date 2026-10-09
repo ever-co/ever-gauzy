@@ -14,14 +14,18 @@ package.
 
 ## What it owns
 
-| Table | What it is |
-|---|---|
-| `seller` | A merchant on the marketplace: a party plus the lifecycle, the commission, the tax registration, the payout terms and the balance that make the party a participant. |
-| `seller_offering` | A seller's right to sell one catalogue variant, at its price, under its SKU, in a set of channels, for a period. |
-| `seller_transaction` | The per-seller split of an order's money: the ledger the whole marketplace is reconciled against. |
-| `seller_payout` | One instruction to move one seller's settleable balance, in one currency, to the seller's bank account. |
-| `seller_payout_line` | The join between a payout and the ledger rows it pays. |
-| `seller_settlement` | What the payment provider reported it did, recorded as reported. |
+- `seller`: A merchant on the marketplace: a party plus the lifecycle, the
+  commission, the tax registration, the payout terms and the balance that make
+  the party a participant.
+- `seller_offering`: A seller's right to sell one catalogue variant, at its
+  price, under its SKU, in a set of channels, for a period.
+- `seller_transaction`: The per-seller split of an order's money: the ledger the
+  whole marketplace is reconciled against.
+- `seller_payout`: One instruction to move one seller's settleable balance, in
+  one currency, to the seller's bank account.
+- `seller_payout_line`: The join between a payout and the ledger rows it pays.
+- `seller_settlement`: What the payment provider reported it did, recorded as
+  reported.
 
 ## The seller is a party plus a participation, not a new party
 
@@ -48,9 +52,11 @@ Every monetary column is an exact decimal with its own ISO currency, and every
 computation goes through the platform's money helper rather than through inline
 arithmetic. Two identities hold exactly, at the row's currency precision:
 
-```
-netAmount = grossAmount + taxAmount + sellerDiscountAmount − commissionAmount          (per row)
-Σ (net + commission + platformDiscount) + platformOwnCaptured = capturedAmount        (per order)
+```text
+netAmount = grossAmount + taxAmount + sellerDiscountAmount
+          − commissionAmount                                    (per row)
+Σ (net + commission + platformDiscount) + platformOwnCaptured
+          = capturedAmount                                      (per order)
 ```
 
 Consequences the code enforces rather than documents:
@@ -110,14 +116,17 @@ One surface, one controller per concept. Everything under `CrudController`
 inherits the standard route set; the marketplace adds the lifecycle and money
 operations.
 
-| Resource | Path | Notable operations |
-|---|---|---|
-| Sellers | `/sellers` | `submit`, `verify`, `activate`, `suspend`, `reinstate`, `reject`, `offboard`, `statement`, `balance` |
-| Offerings | `/seller-offerings` | `submit`, `publish`, `unpublish`, `PUT /:id/channels`, `DELETE /:id` (withdraw), `POST /bulk` (publish, pause, withdraw or re-price a page of listings) |
-| Ledger | `/seller-transactions` | `reconciliation`, `:id/settle`, `:id/hold` |
-| Payouts | `/seller-payouts` | `POST /run`, `:id/approve`, `:id/pay`, `:id/cancel`, `:id/retry` |
-| Payout lines | `/seller-payout-lines` | read |
-| Settlements | `/seller-settlements` | `:id/reconcile`, `:id/close`, `:id/dispute` |
+- Sellers (`/sellers`): `submit`, `verify`, `activate`, `suspend`, `reinstate`,
+  `reject`, `offboard`, `statement`, `balance`
+- Offerings (`/seller-offerings`): `submit`, `publish`, `unpublish`,
+  `PUT /:id/channels`, `DELETE /:id` (withdraw), `POST /bulk` (publish, pause,
+  withdraw or re-price a page of listings)
+- Ledger (`/seller-transactions`): `reconciliation`, `:id/settle`, `:id/hold`
+- Payouts (`/seller-payouts`): `POST /run`, `:id/approve`, `:id/pay`,
+  `:id/cancel`, `:id/retry`
+- Payout lines (`/seller-payout-lines`): read
+- Settlements (`/seller-settlements`): `:id/reconcile`, `:id/close`,
+  `:id/dispute`
 
 GraphQL exposes the same resources with the same permissions and the same
 scoping: the seller, its offerings, its ledger, its payouts, its payout lines

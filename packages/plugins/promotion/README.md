@@ -7,17 +7,20 @@ balance ledger.
 
 ## What the package owns
 
-| table | what it is |
-|---|---|
-| `campaign` | a window and a budget; it holds no rules of its own |
-| `campaign_budget` | the spend or usage ceiling of one campaign |
-| `campaign_budget_usage` | consumption of that ceiling for one value of its attribute |
-| `promotion` | the offer: its type, its window, its limits and its counters |
-| `promotion_action` | what the promotion does — a percentage, an amount, a free item, free shipping |
-| `coupon` | a redeemable code belonging to a promotion, with its own limits and window |
-| `promotion_usage` | one application of a promotion: reserved, registered or reverted |
-| `gift_card` | a stored-value instrument |
-| `gift_card_transaction` | the append-only ledger the card balance is derived from |
+* `campaign`: a window and a budget; it holds no rules of its own
+* `campaign_budget`: the spend or usage ceiling of one campaign
+* `campaign_budget_usage`: consumption of that ceiling for one value of its
+  attribute
+* `promotion`: the offer: its type, its window, its limits and its counters
+* `promotion_action`: what the promotion does — a percentage, an amount, a free
+  item, free shipping
+* `coupon`: a redeemable code belonging to a promotion, with its own limits and
+  window
+* `promotion_usage`: one application of a promotion: reserved, registered or
+  reverted
+* `gift_card`: a stored-value instrument
+* `gift_card_transaction`: the append-only ledger the card balance is derived
+  from
 
 ## What it deliberately does not own
 
@@ -60,16 +63,19 @@ balance ledger.
 
 ## Layout
 
-```
+```text
 src/lib/<aggregate>/          one folder per aggregate root
     <aggregate>.entity.ts     the table, its relations and its indexes
     <aggregate>.service.ts    the domain rules of that aggregate
-    <aggregate>.controller.ts the REST surface: one controller per entity, one API surface
+    <aggregate>.controller.ts the REST surface: one controller per entity,
+                              one API surface
     dto/                      request shapes, validated
     repository/               the TypeORM and MikroORM repository pair
 src/lib/migrations/           the package's own migration set
-src/lib/graphql/              the SDL fragment, the type definitions and the resolvers
-src/lib/promotion.permissions.ts  the permission catalogue this package contributes
+src/lib/graphql/              the SDL fragment, the type definitions and the
+                              resolvers
+src/lib/promotion.permissions.ts  the permission catalogue this package
+                                  contributes
 src/lib/promotion.features.ts     the feature flags it contributes
 src/lib/promotion.settings.ts     the settings it reads
 ```

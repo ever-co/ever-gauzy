@@ -10,17 +10,20 @@ against them, and the documents that move or correct them.
 
 ## What it owns
 
-| Table | Purpose |
-|---|---|
-| `stock_movement` | The append-only ledger. Every quantity change writes exactly one row, and the row carries the resulting quantity so the ledger can be summed back to the level. |
-| `stock_reservation` | Stock held for a cart, an order or a post-purchase replacement, with an expiry. |
-| `stock_transfer` | A movement of stock between two locations. |
-| `stock_transfer_line` | The per-variant quantities of a transfer. |
-| `stock_alert` | An explicit low-stock rule with its own recipients and cooling-off period. |
-| `channel_warehouse` | The pivot that enables a location for a sales context. |
-| `stock_adjustment` | The instruction row behind a manual correction, so every movement names a document. |
-| `stock_count` | A physical count session. |
-| `stock_count_line` | One variant's reading inside a session, with its variance. |
+- `stock_movement`: The append-only ledger. Every quantity change writes exactly
+  one row, and the row carries the resulting quantity so the ledger can be
+  summed back to the level.
+- `stock_reservation`: Stock held for a cart, an order or a post-purchase
+  replacement, with an expiry.
+- `stock_transfer`: A movement of stock between two locations.
+- `stock_transfer_line`: The per-variant quantities of a transfer.
+- `stock_alert`: An explicit low-stock rule with its own recipients and
+  cooling-off period.
+- `channel_warehouse`: The pivot that enables a location for a sales context.
+- `stock_adjustment`: The instruction row behind a manual correction, so every
+  movement names a document.
+- `stock_count`: A physical count session.
+- `stock_count_line`: One variant's reading inside a session, with its variance.
 
 ## The rules the package enforces
 

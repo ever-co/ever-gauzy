@@ -5,13 +5,16 @@ becomes an order.
 
 ## What this package owns
 
-| table | entity | what it is |
-|---|---|---|
-| `commerce_cart` | `CommerceCart` | the pricing and validation workspace; fully re-priceable |
-| `commerce_cart_line` | `CommerceCartLine` | one line, with its snapshot of the title, SKU and price at add time |
-| `commerce_cart_shipping_method` | `CommerceCartShippingMethod` | a delivery choice held against a cart before an order exists |
-| `commerce_cart_promotion` | `CommerceCartPromotion` | a snapshot of a promotion applied to the cart |
-| `commerce_checkout_session` | `CommerceCheckoutSession` | the state of an in-progress checkout, which expires |
+- `commerce_cart` (`CommerceCart`): the pricing and validation workspace; fully
+  re-priceable
+- `commerce_cart_line` (`CommerceCartLine`): one line, with its snapshot of the
+  title, SKU and price at add time
+- `commerce_cart_shipping_method` (`CommerceCartShippingMethod`): a delivery
+  choice held against a cart before an order exists
+- `commerce_cart_promotion` (`CommerceCartPromotion`): a snapshot of a promotion
+  applied to the cart
+- `commerce_checkout_session` (`CommerceCheckoutSession`): the state of an
+  in-progress checkout, which expires
 
 The five `commerce_`-prefixed names are the only ones in the platform that carry
 a domain prefix, and they carry it for one reason: a cart has no meaning outside
@@ -35,7 +38,7 @@ table.
 
 `CartTotalsCalculator.compute()` implements the authoritative computation order:
 
-```
+```text
 unit prices  -> line subtotal -> line discounts -> line tax
              -> shipping subtotal -> shipping discounts -> shipping tax
              -> discountTotal / taxTotal / grandTotal

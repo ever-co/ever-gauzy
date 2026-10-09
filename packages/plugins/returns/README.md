@@ -9,11 +9,21 @@ The three flows live in one package because they answer one question, share the
 reason codes, the numbering series and the receiving step, and are enabled by a
 tenant together or not at all.
 
-| Flow | What it is | Where the money is |
-|---|---|---|
-| **Return** | Goods come back and may be refunded, with a governed reason and an explicit lifecycle | `order_return.refundAmount`, and a `refund` row written by the payment capability |
-| **Claim** | A complaint about a delivered order plus the resolution chosen for it — money or a replacement | `order_claim.refundAmount` for a refund claim; a shipment for a replacement claim |
-| **Exchange** | A return that immediately becomes a new shipment, priced against it | `order_exchange.differenceDue`, the frozen difference the customer owes or is owed |
+- **Return**
+  - What it is: Goods come back and may be refunded, with a governed reason and
+    an explicit lifecycle
+  - Where the money is: `order_return.refundAmount`, and a `refund` row written
+    by the payment capability
+- **Claim**
+  - What it is: A complaint about a delivered order plus the resolution chosen
+    for it — money or a replacement
+  - Where the money is: `order_claim.refundAmount` for a refund claim; a
+    shipment for a replacement claim
+- **Exchange**
+  - What it is: A return that immediately becomes a new shipment, priced against
+    it
+  - Where the money is: `order_exchange.differenceDue`, the frozen difference
+    the customer owes or is owed
 
 ## Tables
 
@@ -96,12 +106,23 @@ states none, because reading is how a client learns the version it has to state.
 Four things belong to other domains and are injected under tokens rather than
 implemented here:
 
-| Token | Capability | Without it |
-|---|---|---|
-| `RETURNS_ORDER_FULFILLMENT` | The fulfilled quantities of an order, and the two order-line return counters a return moves: `returnRequestedQuantity` (raised by a return's lines, moved by an edit, released by a rejection or cancellation) and `returnReceivedQuantity` (every unit a receipt brought, sound or damaged) | A return cannot be validated, received or withdrawn, and is refused |
-| `RETURNS_STOCK_LEDGER` | The stock ledger the received units are written to | Goods can be received, but no movement is written |
-| `RETURNS_REFUND_GATEWAY` | The refund that sends money back | A refund cannot be issued |
-| `RETURNS_SHIPMENT_GATEWAY` | The return leg's carrier and label | No return leg can be created |
+- `RETURNS_ORDER_FULFILLMENT`
+  - Capability: The fulfilled quantities of an order, and the two order-line
+    return counters a return moves: `returnRequestedQuantity` (raised by a
+    return's lines, moved by an edit, released by a rejection or cancellation)
+    and `returnReceivedQuantity` (every unit a receipt brought, sound or
+    damaged)
+  - Without it: A return cannot be validated, received or withdrawn, and is
+    refused
+- `RETURNS_STOCK_LEDGER`
+  - Capability: The stock ledger the received units are written to
+  - Without it: Goods can be received, but no movement is written
+- `RETURNS_REFUND_GATEWAY`
+  - Capability: The refund that sends money back
+  - Without it: A refund cannot be issued
+- `RETURNS_SHIPMENT_GATEWAY`
+  - Capability: The return leg's carrier and label
+  - Without it: No return leg can be created
 
 A tenant with none of them can still run the whole lifecycle — nothing here
 writes a stock level or a refund itself.

@@ -32,14 +32,14 @@ guarded, and `purchase_order.vendorId` points at that row.
 
 ## The lifecycle
 
-```
+```text
 DRAFT ──approve──▶ (approved) ──send──▶ SENT ──acknowledge──▶ ACKNOWLEDGED
-  │                                       │                          │
-  │ cancel                                │ cancel                   │ receive
-  ▼                                       ▼                          ▼
-CANCELED                              CANCELED        PARTIALLY_RECEIVED ⇄ RECEIVED
-                                                                       │
-                                                          close ───────┴──▶ CLOSED
+  │                                       │                       │
+  │ cancel                                │ cancel                │ receive
+  ▼                                       ▼                       ▼
+CANCELED                              CANCELED     PARTIALLY_RECEIVED ⇄ RECEIVED
+                                                                    │
+                                                       close ───────┴──▶ CLOSED
 ```
 
 Approval is recorded **as a fact** — `approvedAt`, `approvedByUserId`,
@@ -174,10 +174,14 @@ raised, while a caller that never sends a key is unaffected.
 
 ## Capabilities this plugin reaches through ports
 
-| Token | Capability | Without it |
-|---|---|---|
-| `PURCHASING_INVENTORY` | The stock ledger and put-away | A receipt with units to move is refused; nothing here writes a level itself |
-| `PURCHASING_APPROVAL` | The platform approval request | The approval is recorded on the order alone, which is what a role-based approval needs |
+- `PURCHASING_INVENTORY`
+  - Capability: The stock ledger and put-away
+  - Without it: A receipt with units to move is refused; nothing here writes a
+    level itself
+- `PURCHASING_APPROVAL`
+  - Capability: The platform approval request
+  - Without it: The approval is recorded on the order alone, which is what a
+    role-based approval needs
 
 ## Permissions and features
 

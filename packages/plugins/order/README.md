@@ -5,18 +5,21 @@ before this package; this is it.
 
 ## What this package owns
 
-| table | entity | what it is |
-|---|---|---|
-| `order` | `Order` | the aggregate root: identity, statuses, snapshotted totals, version |
-| `order_line` | `OrderLine` | what was bought, with its own price snapshot |
-| `order_address` | `OrderAddress` | the shipping and billing addresses as they were |
-| `order_shipping_method` | `OrderShippingMethod` | the delivery chosen and what it cost |
-| `order_summary` | `OrderSummary` | the totals of each version, so "what did this total at v3, and why?" is answerable |
-| `order_transaction` | `OrderTransaction` | the order's payment ledger |
-| `order_change` | `OrderChange` | a post-placement modification, as an ordered set of actions |
-| `order_change_action` | `OrderChangeAction` | one action inside a change |
-| `order_credit_line` | `OrderCreditLine` | money owed back to the buyer |
-| `order_history` | `OrderHistory` | the order's own timeline |
+- `order` (`Order`): the aggregate root: identity, statuses, snapshotted totals,
+  version
+- `order_line` (`OrderLine`): what was bought, with its own price snapshot
+- `order_address` (`OrderAddress`): the shipping and billing addresses as they
+  were
+- `order_shipping_method` (`OrderShippingMethod`): the delivery chosen and what
+  it cost
+- `order_summary` (`OrderSummary`): the totals of each version, so "what did
+  this total at v3, and why?" is answerable
+- `order_transaction` (`OrderTransaction`): the order's payment ledger
+- `order_change` (`OrderChange`): a post-placement modification, as an ordered
+  set of actions
+- `order_change_action` (`OrderChangeAction`): one action inside a change
+- `order_credit_line` (`OrderCreditLine`): money owed back to the buyer
+- `order_history` (`OrderHistory`): the order's own timeline
 
 ## The four rules this package exists to enforce
 
