@@ -76,6 +76,9 @@ jest.mock('@gauzy/core', () => {
 	return {
 		ApiErrorCode,
 		commitVersionedUpdate,
+		// The platform's own affected-row reader: the counters' conditional write is decided from what the
+		// driver answered, so the reader is the real one rather than a second copy of it.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		TenantAwareCrudService,
 		BaseEntity,
 		TenantBaseEntity: BaseEntity,
@@ -117,7 +120,24 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
+/**
+ * The configuration reads the process environment at import time; the dialect a transaction runs on is
+ * read off the transaction itself, which the double below states.
+ */
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => false,
+	isPostgres: () => false,
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
+
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { FindOperator } from 'typeorm';
 import {
 	Organization,
 	OrganizationVendor,
@@ -218,6 +238,10 @@ function repository(tables: ITables, tableName: keyof ITables, options: { detach
 			// TypeORM drops an `undefined` member from the condition rather than matching nothing.
 			if (expected === undefined) {
 				return true;
+			}
+
+			if (expected instanceof FindOperator && expected.type === 'isNull') {
+				return row[field] === null || row[field] === undefined;
 			}
 
 			if (Array.isArray(expected)) {
@@ -432,8 +456,11 @@ function receiptFixture(
 		setting?: string | null;
 		withLedger?: boolean;
 		numberSeries?: boolean;
+		dialect?: 'postgres' | 'sqlite';
+		failMovement?: boolean;
 	} = {}
 ) {
+	const dialect = options.dialect ?? 'postgres';
 	const tables: ITables = {
 		goods_receipt: [...(options.receipts ?? [])],
 		goods_receipt_line: [...(options.receiptLines ?? [])],
@@ -452,9 +479,82 @@ function receiptFixture(
 		product_variant_price: [],
 		organization: [{ id: ORG, tenantId: TENANT, currency: 'USD' }]
 	};
-	const managerFor = () => ({
-		connection: { options: { type: 'postgres' } },
+	/** The rows held `FOR UPDATE`, each with the promise that settles when its holder's transaction ends. */
+	const rowLocks = new Map<string, Promise<void>>();
+	const acquire = async (key: string, held: Array<() => void>): Promise<void> => {
+		while (rowLocks.has(key)) {
+			await rowLocks.get(key);
+		}
+
+		let release: () => void = () => undefined;
+		rowLocks.set(key, new Promise<void>((resolve) => (release = resolve)));
+		held.push(() => {
+			rowLocks.delete(key);
+			release();
+		});
+	};
+
+	/**
+	 * The manager the services hand their reads and, inside a transaction, their writes.
+	 *
+	 * Inside a transaction an order line read `pessimistic_write` is held until the transaction ends when
+	 * the dialect is `postgres`, as `FOR UPDATE` holds it, and a second transaction asking for it waits;
+	 * under `sqlite` no row lock is taken, which leaves the conditional write as the only guard. Every
+	 * write is undone when the transaction's work throws, from an undo log, so a transaction that fails
+	 * never takes back what another one committed meanwhile. A conditional write is a WHERE: every member
+	 * of its criteria has to hold for the row to change.
+	 */
+	const managerFor = (undo: Array<() => void> = [], held: Array<() => void> = []): any => ({
+		connection: { options: { type: dialect } },
+		transaction: async (run: (transactional: any) => Promise<any>) => {
+			const ownUndo: Array<() => void> = [];
+			const ownHeld: Array<() => void> = [];
+
+			try {
+				return await run(managerFor(ownUndo, ownHeld));
+			} catch (error) {
+				ownUndo.reverse().forEach((step) => step());
+
+				throw error;
+			} finally {
+				ownHeld.forEach((releaseLock) => releaseLock());
+			}
+		},
+		update: async (entity: unknown, criteria: any, partial: Row) => {
+			if (entity !== PurchaseOrderLine) {
+				throw new Error('the in-memory double was handed an entity it does not know');
+			}
+
+			const row = tables.purchase_order_line.find(
+				(one) => !one.deletedAt && Object.entries(criteria ?? {}).every(([field, expected]) =>
+					expected instanceof FindOperator && expected.type === 'isNull'
+						? one[field] === null || one[field] === undefined
+						: String(one[field] ?? '') === String(expected ?? '')
+				)
+			);
+
+			if (!row) {
+				return { affected: 0 };
+			}
+
+			const before = { ...row };
+
+			Object.assign(row, partial);
+			undo.push(() => {
+				Object.keys(row).forEach((key) => delete row[key]);
+				Object.assign(row, before);
+			});
+
+			return { affected: 1 };
+		},
 		findOne: async (entity: unknown, findOptions: any = {}) => {
+			if (entity === PurchaseOrderLine) {
+				if (findOptions.lock?.mode === 'pessimistic_write' && dialect === 'postgres') {
+					await acquire(`purchase_order_line:${String(findOptions.where?.id)}`, held);
+				}
+
+				return repository(tables, 'purchase_order_line').findOne(findOptions);
+			}
 			if (entity === OrganizationVendor) {
 				return repository(tables, 'organization_vendor').findOne(findOptions);
 			}
@@ -539,6 +639,10 @@ function receiptFixture(
 			? undefined
 			: {
 					recordMovement: async (request: IMovement) => {
+						if (options.failMovement) {
+							throw new Error('the ledger refused the movement');
+						}
+
 						movements.push(request);
 
 						return { movementId: `movement-${movements.length}`, quantityAfter: request.quantity };
@@ -1573,4 +1677,142 @@ describe('GoodsReceiptService — a correction cannot move what a posted receipt
 			});
 		});
 	});
+});
+
+/**
+ * Entries and receipts that would pass an order line together (PR #10254 review: "Receipts can exceed
+ * ordered quantities").
+ *
+ * The ceiling was checked per entry against the order line's counter as read before any write: two
+ * entries of six against an order line of ten each passed, and so did two receipts of six in flight at
+ * once. The counters were then read, added to and saved back as absolute values, so two receipts that
+ * overlapped could also erase each other's increment. Each race runs on a storage that honours
+ * `FOR UPDATE` (`postgres`) and on one that takes no row lock (`sqlite`).
+ */
+describe('GoodsReceiptService — what one delivery, or two at once, may bring to an order line', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(RECEIVER);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses two entries of one order line whose quantities together pass its ceiling, and writes nothing', async () => {
+		const fixture = receiptFixture();
+
+		await expect(
+			fixture.service.receive({
+				purchaseOrderId: ORDER,
+				lines: [
+					{ purchaseOrderLineId: ORDER_LINE, quantity: '6' },
+					{ purchaseOrderLineId: ORDER_LINE, quantity: '6' }
+				]
+			})
+		).rejects.toThrow(new RegExp(PurchasingCodes.RECEIPT_OVER_TOLERANCE));
+
+		expect(fixture.tables.goods_receipt).toEqual([]);
+		expect(fixture.tables.goods_receipt_line).toEqual([]);
+		expect(fixture.movements).toEqual([]);
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '0', damagedQuantity: '0' });
+	});
+
+	it('records an order line split across entries within its ceiling, and counts every entry', async () => {
+		// Two batches of one order line on one delivery note are two entries, and both are received.
+		const fixture = receiptFixture();
+
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [
+				{ purchaseOrderLineId: ORDER_LINE, quantity: '4', batchNumber: 'A' },
+				{ purchaseOrderLineId: ORDER_LINE, quantity: '5', batchNumber: 'B' }
+			]
+		});
+
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '9.000000' });
+		expect(fixture.linesOf(receipt.id)).toHaveLength(2);
+		expect(fixture.movements.map((movement) => [movement.kind, movement.quantity, movement.batchNumber])).toEqual([
+			[StockMovementKind.RECEIPT, '4.000000', 'A'],
+			[StockMovementKind.RECEIPT, '5.000000', 'B']
+		]);
+		expect(receipt.outstandingQuantity).toBe('11.000000');
+	});
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'lets only one of two receipts racing past an order line through (%s)',
+		async (dialect) => {
+			const fixture = receiptFixture({ dialect });
+
+			const outcomes = await Promise.allSettled([
+				fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6' }] }),
+				fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6' }] })
+			]);
+			const refusal = outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult;
+
+			expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+			expect(String(refusal.reason?.message)).toContain(PurchasingCodes.RECEIPT_OVER_TOLERANCE);
+			expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '6.000000' });
+			expect(fixture.tables.goods_receipt).toHaveLength(1);
+			expect(fixture.movements).toHaveLength(1);
+		}
+	);
+
+	it.each(['postgres', 'sqlite'] as const)('counts both of two receipts racing within the ceiling (%s)', async (dialect) => {
+		const fixture = receiptFixture({ dialect });
+
+		await Promise.all([
+			fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '4' }] }),
+			fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '5' }] })
+		]);
+
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '9.000000' });
+		expect(fixture.movements).toHaveLength(2);
+	});
+
+	it('gives the claimed quantity back when the delivery cannot be recorded', async () => {
+		const fixture = receiptFixture({ failMovement: true });
+
+		await expect(
+			fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6' }] })
+		).rejects.toThrow(/the ledger refused the movement/);
+
+		expect(Number(fixture.orderLine(ORDER_LINE)?.receivedQuantity)).toBe(0);
+		expect(Number(fixture.orderLine(ORDER_LINE)?.damagedQuantity)).toBe(0);
+	});
+
+	it('refuses a delivery with units to move and no ledger registered before writing any receipt', async () => {
+		const fixture = receiptFixture({ withLedger: false });
+
+		await expect(
+			fixture.service.receive({ purchaseOrderId: ORDER, lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '1' }] })
+		).rejects.toThrow(/PURCHASING_INVENTORY_UNAVAILABLE/);
+
+		expect(fixture.tables.goods_receipt).toEqual([]);
+		expect(fixture.tables.goods_receipt_line).toEqual([]);
+	});
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'reverses a receipt once when two reversals of it race, writing its compensating movement once (%s)',
+		async (dialect) => {
+			const fixture = receiptFixture({ dialect });
+			const receipt = await fixture.service.receive({
+				purchaseOrderId: ORDER,
+				lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '4' }]
+			});
+
+			const outcomes = await Promise.allSettled([
+				fixture.service.reverse(receipt.id, 'first'),
+				fixture.service.reverse(receipt.id, 'second')
+			]);
+
+			// The one that lost the claim answers with the receipt the winner reversed.
+			expect(outcomes.map((outcome) => outcome.status)).toEqual(['fulfilled', 'fulfilled']);
+			expect(fixture.movements.map((movement) => movement.kind)).toEqual([
+				StockMovementKind.RECEIPT,
+				StockMovementKind.WRITE_OFF
+			]);
+			expect(Number(fixture.orderLine(ORDER_LINE)?.receivedQuantity)).toBe(0);
+			expect(fixture.tables.goods_receipt[0]).toMatchObject({ status: GoodsReceiptStatus.CANCELED, version: 2 });
+		}
+	);
 });

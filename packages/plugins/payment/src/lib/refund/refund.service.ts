@@ -237,55 +237,76 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 			throw new BadRequestException('REFUND_ALREADY_SETTLED');
 		}
 
+		let payment: Payment | undefined;
+		let captured: Money | undefined;
+		let refunded: Money | undefined;
+
 		if (refund.paymentId) {
-			const payment = await this.paymentCaptureService.findPaymentOrFail(refund.paymentId);
+			payment = await this.paymentCaptureService.findPaymentOrFail(refund.paymentId);
 			await this.assertRefundable(payment, refund.amount, refund.currency, { excludeRefundId: refund.id });
 
-			const captured = Money.of(
-				await this.paymentCaptureService.sumCapturedForPayment(payment.id),
-				refund.currency
-			);
-			const refunded = Money.of(payment.refundedAmount ?? '0', refund.currency).add(
+			captured = Money.of(await this.paymentCaptureService.sumCapturedForPayment(payment.id), refund.currency);
+			refunded = Money.of(payment.refundedAmount ?? '0', refund.currency).add(
 				Money.of(refund.amount, refund.currency)
 			);
+		}
 
-			const written = await this.paymentRepository.update(
+		// The payment, its collection and the refund's own status are one write. They used to be three: a
+		// collection that refused the refund (its ceiling) left the payment already moved and the refund
+		// still pending, and the collection's total was read and replaced with no lock, so two approvals
+		// against one collection that overlapped both read the same total and one increment was lost.
+		await this.typeOrmRefundRepository.manager.transaction(async (manager) => {
+			if (payment && captured && refunded) {
+				const written = await manager.update(
+					Payment,
+					{
+						id: payment.id,
+						// The running total this approval reasoned about. The statement lands only while the
+						// payment still holds it, which is what turns the ceiling above into a guarantee rather
+						// than a check two concurrent approvals can both pass. A total read as absent is stated
+						// as `IS NULL`, because `= NULL` matches nothing and would make the payment permanently
+						// unrefundable rather than merely protected.
+						refundedAmount: (payment.refundedAmount === null || payment.refundedAmount === undefined
+							? IsNull()
+							: payment.refundedAmount) as never,
+						...this.scope
+					} as never,
+					{
+						refundedAmount: refunded.amount,
+						status: this.paymentCaptureService.derivePaymentStatus(payment, captured, refunded)
+					} as never
+				);
+
+				if (readAffectedRows(written) === 0) {
+					throw new ConflictException({
+						message: `REFUND_APPROVAL_CONFLICT: payment '${payment.id}' was refunded by another write between this approval reading its running total and writing it, so nothing was overwritten. Read the payment and approve again.`,
+						code: 'REFUND_APPROVAL_CONFLICT',
+						details: { paymentId: payment.id, refundId: refund.id, refundedAmount: payment.refundedAmount ?? '0' }
+					});
+				}
+
+				if (payment.paymentCollectionId) {
+					// Under the collection's row lock and conditional on its totals, on this transaction.
+					await this.paymentCollectionService.recordRefund(payment.paymentCollectionId, refund.amount, manager);
+				}
+			}
+
+			// Settled only while it is still pending: an approval that overlapped another approval, a
+			// cancellation or a failure of the same refund changes nothing here and rolls its money back.
+			const settled = await manager.update(
+				Refund,
+				{ id: refund.id, status: RefundStatus.PENDING, ...this.scope } as never,
 				{
-					id: payment.id,
-					// The running total this approval reasoned about. The statement lands only while the
-					// payment still holds it, which is what turns the ceiling above into a guarantee rather
-					// than a check two concurrent approvals can both pass. A total read as absent is stated
-					// as `IS NULL`, because `= NULL` matches nothing and would make the payment permanently
-					// unrefundable rather than merely protected.
-					refundedAmount: (payment.refundedAmount === null || payment.refundedAmount === undefined
-						? IsNull()
-						: payment.refundedAmount) as never,
-					...this.scope
-				} as never,
-				{
-					refundedAmount: refunded.amount,
-					status: this.paymentCaptureService.derivePaymentStatus(payment, captured, refunded)
+					status: RefundStatus.SUCCEEDED,
+					refundedAt: new Date(),
+					...(note ? { note } : {})
 				} as never
 			);
 
-			if (readAffectedRows(written) === 0) {
-				throw new ConflictException({
-					message: `REFUND_APPROVAL_CONFLICT: payment '${payment.id}' was refunded by another write between this approval reading its running total and writing it, so nothing was overwritten. Read the payment and approve again.`,
-					code: 'REFUND_APPROVAL_CONFLICT',
-					details: { paymentId: payment.id, refundId: refund.id, refundedAmount: payment.refundedAmount ?? '0' }
-				});
+			if (readAffectedRows(settled) === 0) {
+				throw new BadRequestException('REFUND_ALREADY_SETTLED');
 			}
-
-			if (payment.paymentCollectionId) {
-				await this.paymentCollectionService.recordRefund(payment.paymentCollectionId, refund.amount);
-			}
-		}
-
-		await this.update(id, {
-			status: RefundStatus.SUCCEEDED,
-			refundedAt: new Date(),
-			...(note ? { note } : {})
-		} as never);
+		});
 
 		/**
 		 * The register moves here rather than at creation, because a register counts **succeeded**

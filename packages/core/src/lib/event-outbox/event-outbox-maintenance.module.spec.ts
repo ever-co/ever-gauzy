@@ -26,7 +26,7 @@ import { MODULE_METADATA } from '@nestjs/common/constants';
 import { EventConsumerRegistry } from './event-consumer.registry';
 import { EventOutboxDispatchScheduler } from './event-outbox-dispatch.scheduler';
 import { EventOutboxDispatchWorker } from './event-outbox-dispatch.worker';
-import { EventOutboxMaintenanceModule } from './event-outbox-maintenance.module';
+import { EventOutboxDispatchScheduleModule, EventOutboxMaintenanceModule } from './event-outbox-maintenance.module';
 import { EventOutboxModule } from './event-outbox.module';
 import { EventOutboxService } from './event-outbox.service';
 
@@ -35,9 +35,9 @@ function importsOf(module: unknown): unknown[] {
 	return (Reflect.getMetadata(MODULE_METADATA.IMPORTS, module as never) ?? []) as unknown[];
 }
 
-/** The one dynamic registration the maintenance module makes. */
-function registration(): DynamicModule {
-	const dynamic = importsOf(EventOutboxMaintenanceModule).find(
+/** The one dynamic registration a maintenance module makes. */
+function registration(module: unknown = EventOutboxMaintenanceModule): DynamicModule {
+	const dynamic = importsOf(module).find(
 		(entry): entry is DynamicModule => !!entry && typeof entry === 'object' && 'module' in entry
 	);
 
@@ -106,5 +106,39 @@ describe('EventOutboxMaintenanceModule — what the worker asks the kernel for',
 		// The schedule injects nothing — it enqueues a request and returns — so it can be instantiated
 		// wherever it is declared.
 		expect(EventOutboxDispatchScheduler.length).toBe(0);
+	});
+});
+
+/**
+ * The schedule of the pass without the pass (PR #10254 review: "Events skip required consumers").
+ *
+ * The consumer registry is process-local, and the dispatch worker publishes a row once every consumer
+ * of *its own* registry settled. The worker app imported the full maintenance module, so it consumed
+ * dispatch jobs with a registry that lacked the entitlement and search consumers, and a pass it took
+ * published `order.placed` without `EntitlementGrantConsumer` seeing it. A process that only fires the
+ * schedule imports this module instead, and these cases pin that it carries no consumer of the queue.
+ */
+describe('EventOutboxDispatchScheduleModule — the schedule a process fires without consuming a pass', () => {
+	it('declares the schedule and never the dispatch worker', () => {
+		const declared = registration(EventOutboxDispatchScheduleModule);
+
+		expect(declared.providers).toContain(EventOutboxDispatchScheduler);
+		expect(declared.exports).toContain(EventOutboxDispatchScheduler);
+		// The load-bearing absence: with no `@QueueWorker` host for the outbox queue in the process, BullMQ
+		// never hands it a pass, so every pass is run by a process whose registry holds every consumer.
+		expect(declared.providers).not.toContain(EventOutboxDispatchWorker);
+		expect(declared.exports ?? []).not.toContain(EventOutboxDispatchWorker);
+	});
+
+	it('registers the outbox queue, so the schedule has a queue to enqueue the pass on', () => {
+		const declared = registration(EventOutboxDispatchScheduleModule);
+
+		expect((declared.imports ?? []).length).toBeGreaterThan(0);
+	});
+
+	it('brings no registry of its own: the kernel is not part of the registration', () => {
+		// The schedule injects nothing; a registry carried in here would be one nothing consults.
+		expect(importsOf(EventOutboxDispatchScheduleModule)).not.toContain(EventOutboxModule);
+		expect(registration(EventOutboxDispatchScheduleModule).imports ?? []).not.toContain(EventOutboxModule);
 	});
 });

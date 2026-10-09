@@ -98,6 +98,9 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The platform's own affected-row reader: a movement decides whether its conditional write landed
+		// from what the driver answered, so the reader is the real one rather than a second copy.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		BaseEvent: class {},
 		EventBus: class {},
 		Payment: class Payment {},
@@ -113,7 +116,24 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { NotFoundException } from '@nestjs/common';
+/**
+ * The affected-row reader above asks the configuration which dialect is in play, and the configuration
+ * reads the process environment at import time; the dialect a transaction runs on is read off the
+ * transaction itself, which the double below states.
+ */
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => false,
+	isPostgres: () => false,
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
+
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { PaymentCollectionStatus } from '../payment.types';
@@ -173,7 +193,7 @@ interface ITables {
  * @param tables The whole datastore.
  * @param tableName The table this repository writes.
  */
-function repository(tables: ITables, tableName: keyof ITables) {
+function repository(tables: ITables, tableName: keyof ITables, dialect: 'postgres' | 'sqlite' = 'postgres') {
 	let sequence = 0;
 	const rows = () => tables[tableName];
 	const matches = (row: Row, where: Row = {}): boolean =>
@@ -181,6 +201,10 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			if (expected instanceof FindOperator) {
 				if (expected.type === 'in') {
 					return (expected.value as unknown[]).some((one) => String(row[field] ?? '') === String(one));
+				}
+
+				if (expected.type === 'isNull') {
+					return row[field] === null || row[field] === undefined;
 				}
 
 				throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
@@ -195,7 +219,79 @@ function repository(tables: ITables, tableName: keyof ITables) {
 			return String(row[field] ?? '') === String(expected ?? '');
 		});
 
+	/** The rows held `FOR UPDATE`, each with the promise that settles when its holder ends. */
+	const rowLocks = new Map<string, Promise<void>>();
+	const acquire = async (key: string, held: Array<() => void>): Promise<void> => {
+		while (rowLocks.has(key)) {
+			await rowLocks.get(key);
+		}
+
+		let release: () => void = () => undefined;
+		rowLocks.set(key, new Promise<void>((resolve) => (release = resolve)));
+		held.push(() => {
+			rowLocks.delete(key);
+			release();
+		});
+	};
+
+	/**
+	 * The manager a transaction hands its work. Every write is undone when the work throws (from an undo
+	 * log, so a failed transaction never takes back what another committed meanwhile), a
+	 * `pessimistic_write` read holds the row until the transaction ends when the dialect is `postgres`,
+	 * and under `sqlite` no row lock is taken, which leaves the conditional write as the only guard. A
+	 * conditional write is a WHERE: every member of its criteria has to hold for a row to change.
+	 */
+	const transactional = (undo: Array<() => void>, held: Array<() => void>) => ({
+		connection: { options: { type: dialect } },
+		findOne: async (_entity: unknown, options: any = {}) => {
+			if (options.lock?.mode === 'pessimistic_write' && dialect === 'postgres') {
+				const target = rows().find((row) => matches(row, options.where));
+
+				if (target) {
+					await acquire(String(target.id), held);
+				}
+			}
+
+			const row = rows().find((one) => matches(one, options.where));
+
+			return row ? { ...row } : null;
+		},
+		update: async (_entity: unknown, criteria: any, partial: Row) => {
+			const row = rows().find((one) => matches(one, criteria ?? {}));
+
+			if (!row) {
+				return { affected: 0 };
+			}
+
+			const before = { ...row };
+
+			Object.assign(row, partial);
+			undo.push(() => {
+				Object.keys(row).forEach((key) => delete row[key]);
+				Object.assign(row, before);
+			});
+
+			return { affected: 1 };
+		}
+	});
+
 	return {
+		manager: {
+			transaction: async (run: (manager: any) => Promise<any>) => {
+				const undo: Array<() => void> = [];
+				const held: Array<() => void> = [];
+
+				try {
+					return await run(transactional(undo, held));
+				} catch (error) {
+					undo.reverse().forEach((step) => step());
+
+					throw error;
+				} finally {
+					held.forEach((release) => release());
+				}
+			}
+		},
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
 		find: async (options: any = {}) => rows().filter((row) => matches(row, options.where)),
 		findOneBy: async (where: Row) => rows().find((row) => matches(row, where)) ?? null,
@@ -272,9 +368,12 @@ const collectionRow = (id: string, overrides: Row = {}) => ({
  *
  * @param rows The collections the fixture starts with.
  */
-function collectionFixture(rows: Row[] = []) {
+function collectionFixture(rows: Row[] = [], dialect: 'postgres' | 'sqlite' = 'postgres') {
 	const tables: ITables = { payment_collection: [...rows] };
-	const service = new PaymentCollectionService(repository(tables, 'payment_collection') as never, {} as never);
+	const service = new PaymentCollectionService(
+		repository(tables, 'payment_collection', dialect) as never,
+		{} as never
+	);
 
 	return {
 		service,
@@ -839,5 +938,107 @@ describe('PaymentCollectionService — what may still change (doc 10 §8.2, §8.
 
 		expect(page.total).toBe(2);
 		expect(page.items.map((collection) => collection.id).sort()).toEqual(['also-mine', 'mine']);
+	});
+});
+
+/**
+ * Two movements of one collection at the same instant (PR #10254 review: "Capture totals can disagree").
+ *
+ * Each movement used to read the collection, add to a running total in memory and write the absolute
+ * result back with no lock: two captures of 30 that overlapped both read 0 and both wrote 30, so the
+ * collection said 30 while 60 had been taken. Each case runs on a storage that honours `FOR UPDATE`
+ * (`postgres`), where the second movement waits and then decides on what the first left, and on one
+ * that takes no row lock (`sqlite`), where the write conditional on the totals it read is the guard and
+ * a movement that lost is decided again.
+ */
+describe('PaymentCollectionService — concurrent movements of one collection', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each(['postgres', 'sqlite'] as const)('counts both of two overlapping captures (%s)', async (dialect) => {
+		const fixture = collectionFixture(
+			[collectionRow('c1', { authorizedAmount: '100', status: PaymentCollectionStatus.AUTHORIZED })],
+			dialect
+		);
+
+		await Promise.all([fixture.service.recordCapture('c1', '30'), fixture.service.recordCapture('c1', '30')]);
+
+		expect(fixture.store('c1')).toMatchObject({
+			capturedAmount: '60',
+			status: PaymentCollectionStatus.PARTIALLY_CAPTURED
+		});
+	});
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'measures each of two racing captures against what the other left, so together they never pass the amount (%s)',
+		async (dialect) => {
+			const fixture = collectionFixture(
+				[collectionRow('c1', { authorizedAmount: '100', status: PaymentCollectionStatus.AUTHORIZED })],
+				dialect
+			);
+
+			const outcomes = await Promise.allSettled([
+				fixture.service.recordCapture('c1', '60'),
+				fixture.service.recordCapture('c1', '60')
+			]);
+			const refusal = outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult;
+
+			expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+			expect(String(refusal.reason?.message)).toContain('PAYMENT_OVER_CAPTURE');
+			expect(fixture.store('c1').capturedAmount).toBe('60');
+		}
+	);
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'counts an authorisation, a refund and a release that overlap, each against the others (%s)',
+		async (dialect) => {
+			const fixture = collectionFixture(
+				[
+					collectionRow('c1', {
+						authorizedAmount: '50',
+						capturedAmount: '30',
+						status: PaymentCollectionStatus.PARTIALLY_CAPTURED
+					})
+				],
+				dialect
+			);
+
+			await Promise.all([
+				fixture.service.recordAuthorization('c1', '50'),
+				fixture.service.recordRefund('c1', '10'),
+				fixture.service.recordCancellation('c1', '20')
+			]);
+
+			expect(fixture.store('c1')).toMatchObject({
+				authorizedAmount: '100',
+				capturedAmount: '30',
+				refundedAmount: '10',
+				canceledAmount: '20'
+			});
+		}
+	);
+
+	it('gives up with PAYMENT_COLLECTION_CONFLICT when the row keeps moving, having written nothing', async () => {
+		const fixture = collectionFixture(
+			[collectionRow('c1', { authorizedAmount: '100', status: PaymentCollectionStatus.AUTHORIZED })],
+			'sqlite'
+		);
+		const repository = (fixture.service as never as { typeOrmPaymentCollectionRepository: any })
+			.typeOrmPaymentCollectionRepository;
+		const transaction = repository.manager.transaction;
+
+		// Every conditional write finds the row moved, as if another writer always got there first.
+		repository.manager.transaction = (run: (manager: any) => Promise<any>) =>
+			transaction((manager: any) => run({ ...manager, update: async () => ({ affected: 0 }) }));
+
+		const refusal = await fixture.service.recordCapture('c1', '10').catch((thrown) => thrown);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(String(refusal.message)).toContain('PAYMENT_COLLECTION_CONFLICT');
+		expect(fixture.store('c1').capturedAmount).toBe('0');
 	});
 });

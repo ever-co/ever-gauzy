@@ -130,6 +130,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { Money, Payment, RequestContext } from '@gauzy/core';
 import { PaymentCapturedEvent } from '../events';
+import { PaymentCollection } from '../payment-collection/payment-collection.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { PaymentCapture } from './payment-capture.entity';
 import { PaymentCaptureService } from './payment-capture.service';
@@ -197,7 +198,8 @@ interface ITables {
  */
 const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[Payment, 'payment'],
-	[PaymentCapture, 'payment_capture']
+	[PaymentCapture, 'payment_capture'],
+	[PaymentCollection, 'payment_collection']
 ]);
 
 /**
@@ -205,8 +207,9 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
  * entity manager those repositories hand out.
  *
  * @param tables The whole datastore.
+ * @param dialect The dialect the transactions report: `postgres` honours row locks, `sqlite` takes none.
  */
-function datastore(tables: ITables) {
+function datastore(tables: ITables, dialect: 'postgres' | 'sqlite' = 'postgres') {
 	let sequence = 0;
 	const matches = (row: Row, where: Row = {}): boolean =>
 		Object.entries(where).every(([field, expected]) => {
@@ -279,38 +282,118 @@ function datastore(tables: ITables) {
 		return { affected: index >= 0 ? 1 : 0 };
 	};
 
-	/**
-	 * The entity manager the capture service writes the payment row and the ledger row through.
-	 *
-	 * It models the manager's **entity-keyed** API — the entity class chooses the table, and the tables
-	 * are the very arrays the repositories below read — so a compare-and-swap whose criteria match no
-	 * row answers zero affected rows here exactly as it would against a database, which is the whole of
-	 * what `PAYMENT_CAPTURE_CONFLICT` is decided from.
-	 *
-	 * **`transaction` is not a transaction, and this suite does not pretend it is.** It runs the work
-	 * against the same arrays and hands it this same manager; an array has nothing to roll back to, so a
-	 * body that threw half way would leave its earlier write standing. Asserting atomicity against a
-	 * double that cannot provide it would be asserting a guarantee nobody has. What the double can be
-	 * held to is the *order* the service writes in — the payment's compare-and-swap first, the ledger
-	 * row only once it landed — and that order is what keeps a refused swap from leaving a capture row
-	 * behind whatever the storage does afterwards. Atomicity itself is the database's, and is the reason
-	 * the service asks for a transaction at all.
-	 */
-	const manager: any = {
-		transaction: async (run: (transactional: any) => Promise<any>) => run(manager),
-		create: (_entity: unknown, partial: Row) => ({ ...partial }),
-		save: async (entity: unknown, rowOrRows: any) => {
-			const list = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
-			const saved = list.map((row) => save(tableOf(entity), row));
+	/** The rows held `FOR UPDATE`, each with the promise that settles when its holder's transaction ends. */
+	const rowLocks = new Map<string, Promise<void>>();
 
-			return Array.isArray(rowOrRows) ? saved : saved[0];
-		},
-		find: async (entity: unknown, options: any = {}) =>
-			tables[tableOf(entity)].filter((row) => matches(row, options.where)),
-		findOne: async (entity: unknown, options: any = {}) =>
-			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null,
-		update: async (entity: unknown, criteria: any, partial: Row) =>
-			applyUpdate(tableOf(entity), criteria, partial)
+	/**
+	 * Takes a row lock for a transaction, waiting for whichever transaction holds it to end first.
+	 *
+	 * @param key The locked row.
+	 * @param held The transaction's own locks, released when it ends.
+	 */
+	const acquire = async (key: string, held: Array<() => void>): Promise<void> => {
+		while (rowLocks.has(key)) {
+			await rowLocks.get(key);
+		}
+
+		let release: () => void = () => undefined;
+		rowLocks.set(key, new Promise<void>((resolve) => (release = resolve)));
+		held.push(() => {
+			rowLocks.delete(key);
+			release();
+		});
+	};
+
+	/**
+	 * The entity manager a transaction hands its work: the manager's **entity-keyed** API, where the
+	 * entity class chooses the table and the tables are the very arrays the repositories below read.
+	 *
+	 * It is a transaction in the two respects this suite asserts on. **Every write is undone when the
+	 * work throws**, from an undo log rather than a snapshot, so a transaction that fails never takes back
+	 * what another one committed meanwhile. **A read that asks for `pessimistic_write` holds the row until
+	 * the transaction ends** when the dialect is `postgres`, as `FOR UPDATE` does, and a second
+	 * transaction asking for the same row waits. Under `sqlite` no row lock is taken and two transactions
+	 * run side by side, which leaves the conditional writes as the only guard.
+	 *
+	 * @param undo The transaction's undo log.
+	 * @param held The transaction's row locks.
+	 */
+	const transactional = (undo: Array<() => void>, held: Array<() => void>): any => {
+		const manager: any = {
+			connection: { options: { type: dialect } },
+			// A transaction opened inside this one is this one, as a savepoint is to the outer commit.
+			transaction: async (run: (inner: any) => Promise<any>) => run(manager),
+			create: (_entity: unknown, partial: Row) => ({ ...partial }),
+			save: async (entity: unknown, rowOrRows: any) => {
+				const table = tableOf(entity);
+				const list = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
+				const saved = list.map((row) => {
+					const before = tables[table].length;
+					const written = save(table, row);
+
+					if (tables[table].length > before) {
+						undo.push(() => tables[table].splice(tables[table].indexOf(written), 1));
+					}
+
+					return written;
+				});
+
+				return Array.isArray(rowOrRows) ? saved : saved[0];
+			},
+			find: async (entity: unknown, options: any = {}) =>
+				tables[tableOf(entity)].filter((row) => matches(row, options.where)).map((row) => ({ ...row })),
+			findOne: async (entity: unknown, options: any = {}) => {
+				const table = tableOf(entity);
+
+				if (options.lock?.mode === 'pessimistic_write' && dialect === 'postgres') {
+					const target = tables[table].find((row) => matches(row, options.where));
+
+					if (target) {
+						await acquire(`${String(table)}:${target.id}`, held);
+					}
+				}
+
+				const row = tables[table].find((one) => matches(one, options.where));
+
+				return row ? { ...row } : null;
+			},
+			update: async (entity: unknown, criteria: any, partial: Row) => {
+				const table = tableOf(entity);
+				const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+				const row = tables[table].find((one) => matches(one, where));
+
+				if (row) {
+					const before = { ...row };
+
+					undo.push(() => {
+						Object.keys(row).forEach((key) => delete row[key]);
+						Object.assign(row, before);
+					});
+				}
+
+				return applyUpdate(table, criteria, partial);
+			}
+		};
+
+		return manager;
+	};
+
+	/** The repositories' manager: what a service opens its transaction on. */
+	const manager: any = {
+		transaction: async (run: (transactionalManager: any) => Promise<any>) => {
+			const undo: Array<() => void> = [];
+			const held: Array<() => void> = [];
+
+			try {
+				return await run(transactional(undo, held));
+			} catch (error) {
+				undo.reverse().forEach((step) => step());
+
+				throw error;
+			} finally {
+				held.forEach((release) => release());
+			}
+		}
 	};
 
 	/** One table's TypeORM repository, as the base CRUD class reads it. */
@@ -387,13 +470,15 @@ const collectionRow = (id: string, overrides: Row = {}) => ({
  *
  * @param options The rows the fixture starts with.
  */
-function captureFixture(options: { payments?: Row[]; captures?: Row[]; collections?: Row[] } = {}) {
+function captureFixture(
+	options: { payments?: Row[]; captures?: Row[]; collections?: Row[]; dialect?: 'postgres' | 'sqlite' } = {}
+) {
 	const tables: ITables = {
 		payment: options.payments ?? [paymentRow(PAYMENT)],
 		payment_capture: options.captures ?? [],
 		payment_collection: options.collections ?? [collectionRow(COLLECTION)]
 	};
-	const store = datastore(tables);
+	const store = datastore(tables, options.dialect);
 	const published: any[] = [];
 	const collectionService = new PaymentCollectionService(store.repository('payment_collection') as never, {} as never);
 	const service = new PaymentCaptureService(
@@ -860,5 +945,134 @@ describe('PaymentCaptureService — the derived status of the payment row (doc 1
 				Money.of('0', 'USD')
 			)
 		).toBe('AUTHORIZED');
+	});
+});
+
+/**
+ * The payment, the capture and the collection are one write (PR #10254 review: "Capture totals can
+ * disagree").
+ *
+ * The capture used to commit the payment and the ledger row, and only then move the collection, by a
+ * read-and-replace of its running total with no lock. A collection that refused the capture left a
+ * committed capture behind a request that reported failure, and two captures of one collection that
+ * overlapped both read the same total, so one increment was lost. Each race runs on a storage that
+ * honours `FOR UPDATE` (`postgres`) and on one that takes no row lock at all (`sqlite`), where the
+ * collection's conditional write is the only guard.
+ */
+describe('PaymentCaptureService — the payment, the capture and the collection move together', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const SECOND_PAYMENT = 'payment-2';
+
+	/**
+	 * What the reconciliation rests on: each payment's total is the sum of its captures, the collection's
+	 * total is the sum of the captures of its payments, and the collection never holds more than it is for.
+	 */
+	const expectTotalsAgree = (fixture: ReturnType<typeof captureFixture>) => {
+		const sumOf = (rows: Row[]) =>
+			rows.reduce((sum, row) => Money.of(sum, 'USD').add(Money.of(row.amount, 'USD')).amount, '0');
+
+		for (const payment of fixture.tables.payment) {
+			const captures = fixture.tables.payment_capture.filter((row) => row.paymentId === payment.id);
+
+			expect(Money.of(payment.capturedAmount, 'USD').equals(Money.of(sumOf(captures), 'USD'))).toBe(true);
+		}
+
+		const collection = fixture.collection();
+
+		expect(Money.of(collection.capturedAmount, 'USD').equals(Money.of(sumOf(fixture.tables.payment_capture), 'USD'))).toBe(
+			true
+		);
+		expect(Money.of(collection.capturedAmount, 'USD').greaterThan(Money.of(collection.amount, 'USD'))).toBe(false);
+	};
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'two overlapping captures of one collection are both counted, never one overwriting the other (%s)',
+		async (dialect) => {
+			const fixture = captureFixture({
+				dialect,
+				payments: [
+					paymentRow(PAYMENT, { amount: '30', authorizedAmount: '30' }),
+					paymentRow(SECOND_PAYMENT, { amount: '30', authorizedAmount: '30' })
+				]
+			});
+
+			const outcomes = await Promise.allSettled([
+				fixture.service.capture(captureInput({ paymentId: PAYMENT, amount: '30' }) as never),
+				fixture.service.capture(captureInput({ paymentId: SECOND_PAYMENT, amount: '30' }) as never)
+			]);
+
+			if (dialect === 'postgres') {
+				// The second capture reads the collection after the first committed, under the row lock.
+				expect(outcomes.map((outcome) => outcome.status)).toEqual(['fulfilled', 'fulfilled']);
+				expect(fixture.collection().capturedAmount).toBe('60');
+			} else {
+				// No lock: the second decided on a total the first has since moved, so its conditional write
+				// matched nothing and its whole capture rolled back rather than erasing the first one's.
+				expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+				const refusal = (outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult).reason;
+				expect(refusal).toBeInstanceOf(ConflictException);
+				expect(String(refusal.message)).toContain('PAYMENT_COLLECTION_CONFLICT');
+			}
+
+			expectTotalsAgree(fixture);
+		}
+	);
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'two captures racing past what the collection is for leave exactly one capture standing (%s)',
+		async (dialect) => {
+			const fixture = captureFixture({
+				dialect,
+				payments: [
+					paymentRow(PAYMENT, { amount: '60', authorizedAmount: '60' }),
+					paymentRow(SECOND_PAYMENT, { amount: '60', authorizedAmount: '60' })
+				]
+			});
+
+			const outcomes = await Promise.allSettled([
+				fixture.service.capture(captureInput({ paymentId: PAYMENT, amount: '60' }) as never),
+				fixture.service.capture(captureInput({ paymentId: SECOND_PAYMENT, amount: '60' }) as never)
+			]);
+
+			expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+			expect(fixture.tables.payment_capture).toHaveLength(1);
+			expect(fixture.collection().capturedAmount).toBe('60');
+			// The refused capture's payment did not move, and nothing was announced for it.
+			expect(fixture.tables.payment.map((row) => row.capturedAmount).sort()).toEqual(['0', '60']);
+			expect(fixture.published).toHaveLength(1);
+			expectTotalsAgree(fixture);
+		}
+	);
+
+	it('rolls the payment and the capture row back when the collection refuses the capture under its lock', async () => {
+		// The collection is read twice: once early, to refuse a plainly impossible capture before anything
+		// is opened, and once under the row lock, which is the read the decision rests on. Here the early
+		// read is stale (another capture of the collection committed after it), so only the locked read can
+		// see that this capture no longer fits.
+		const fixture = captureFixture({
+			payments: [paymentRow(PAYMENT, { authorizedAmount: '100' })],
+			collections: [collectionRow(COLLECTION, { amount: '100', capturedAmount: '80' })]
+		});
+		const collectionService = (fixture.service as never as { paymentCollectionService: PaymentCollectionService })
+			.paymentCollectionService;
+		jest.spyOn(collectionService, 'findCollectionOrFail').mockImplementation(
+			async () => ({ ...fixture.collection(), capturedAmount: '0' }) as never
+		);
+
+		await expect(fixture.service.capture(captureInput({ amount: '40' }) as never)).rejects.toThrow(
+			/PAYMENT_OVER_CAPTURE/
+		);
+
+		expect(fixture.tables.payment_capture).toEqual([]);
+		expect(fixture.payment().capturedAmount).toBe('0');
+		expect(fixture.collection().capturedAmount).toBe('80');
+		expect(fixture.published).toEqual([]);
 	});
 });

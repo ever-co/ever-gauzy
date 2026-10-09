@@ -135,10 +135,11 @@ jest.mock(
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
-import { RequestContext } from '@gauzy/core';
+import { Payment, RequestContext } from '@gauzy/core';
 import { RefundStatus } from '../payment.types';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
+import { PaymentCollection } from '../payment-collection/payment-collection.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLine } from '../refund-line/refund-line.entity';
 import { RefundLineService } from '../refund-line/refund-line.service';
@@ -201,7 +202,9 @@ interface ITables {
 /** The entity classes the services hand to their transaction manager, resolved to tables. */
 const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	[Refund, 'refund'],
-	[RefundLine, 'refund_line']
+	[RefundLine, 'refund_line'],
+	[Payment, 'payment'],
+	[PaymentCollection, 'payment_collection']
 ]);
 
 /**
@@ -289,6 +292,19 @@ function datastore(tables: ITables) {
 			tables[tableOf(entity)].filter((row) => matches(row, options.where)),
 		findOne: async (entity: unknown, options: any = {}) =>
 			tables[tableOf(entity)].find((row) => matches(row, options.where)) ?? null,
+		// A conditional write states its WHOLE criteria, the running totals it read among them, so a
+		// double that matched on the id alone would report a lost race as a write that landed.
+		update: async (entity: unknown, criteria: any, partial: Row) => {
+			const table = tableOf(entity);
+			const where = typeof criteria === 'string' ? { id: criteria } : (criteria ?? {});
+			const index = tables[table].findIndex((row) => matches(row, where));
+
+			if (index >= 0) {
+				Object.assign(tables[table][index], partial);
+			}
+
+			return { affected: index >= 0 ? 1 : 0 };
+		},
 		/**
 		 * The one raw read this domain makes: the order lines a breakdown cites, read by name inside the
 		 * writing transaction. The conditions the service states are applied — the ids, the soft-delete
@@ -1171,5 +1187,64 @@ describe('RefundService — the report to the order line register (doc 10 §9.2,
 		expect(await fixture.service.findRefundLines('legacy')).toEqual([
 			expect.objectContaining({ orderLineId: LINE_TWO, quantity: '2', amount: '60', legacy: true })
 		]);
+	});
+});
+
+/**
+ * The payment, its collection and the refund's own status are one write (PR #10254 review, the sibling of
+ * "Capture totals can disagree").
+ *
+ * An approval used to move the payment, then move the collection by a read-and-replace of its total,
+ * then mark the refund succeeded, as three separate writes. A collection that refused the refund left
+ * the payment already moved and the refund still pending; the total it replaced could lose an overlapping
+ * approval's increment.
+ */
+describe('RefundService — an approval moves the payment, the collection and the refund together', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('rolls the payment back and leaves the refund pending when the collection refuses it', async () => {
+		// The payment captured 100 and may give 40 back, but its collection recorded only 20 as captured
+		// (its own ceiling): the collection's refusal has to take the payment's movement with it.
+		const fixture = refundFixture({
+			collections: [collectionRow(COLLECTION, { capturedAmount: '20' })],
+			refunds: [refundRow('mine', { amount: '40' })]
+		});
+
+		await expect(fixture.service.approveRefund('mine')).rejects.toThrow(/REFUND_AMOUNT_EXCEEDS_CAPTURED/);
+
+		expect(fixture.payment()).toMatchObject({ refundedAmount: '0', status: 'CAPTURED' });
+		expect(fixture.collection().refundedAmount).toBe('0');
+		expect(fixture.tables.refund[0].status).toBe(RefundStatus.PENDING);
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('moves nothing when the refund stopped being pending between the read and the write', async () => {
+		// Another approval, a cancellation or a failure of the same refund landed first: the status write
+		// is conditional on PENDING, and its refusal rolls the money back.
+		const fixture = refundFixture({ refunds: [refundRow('mine', { amount: '40' })] });
+		const read = fixture.service.findRefundOrFail.bind(fixture.service);
+		let reads = 0;
+
+		jest.spyOn(fixture.service, 'findRefundOrFail').mockImplementation(async (id) => {
+			const refund = { ...(await read(id)) } as never;
+
+			if (++reads === 1) {
+				fixture.tables.refund[0].status = RefundStatus.CANCELED;
+			}
+
+			return refund;
+		});
+
+		await expect(fixture.service.approveRefund('mine')).rejects.toThrow(/REFUND_ALREADY_SETTLED/);
+
+		expect(fixture.payment().refundedAmount).toBe('0');
+		expect(fixture.collection().refundedAmount).toBe('0');
+		expect(fixture.tables.refund[0].status).toBe(RefundStatus.CANCELED);
 	});
 });

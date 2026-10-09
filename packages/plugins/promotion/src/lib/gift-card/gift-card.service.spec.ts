@@ -119,15 +119,153 @@ function criteriaOf(criteria: unknown): Record<string, unknown> {
 	return (criteria ?? {}) as Record<string, unknown>;
 }
 
+/** How the double's storage behaves, beyond holding the rows. */
+interface IStorageOptions {
+	/**
+	 * The dialect the transaction reports. `postgres` honours `FOR UPDATE` as the database does: a
+	 * transaction that asks for a row another one holds waits until that one ends. `sqlite` takes no row
+	 * lock at all and runs transactions side by side, which is stricter than SQLite itself (whose single
+	 * writer serialises them) and leaves the conditional write as the only guard.
+	 */
+	dialect?: 'postgres' | 'sqlite';
+	/** The card's balance write throws. */
+	failCardWrite?: boolean;
+	/** The ledger insert throws. */
+	failLedgerInsert?: boolean;
+	/** Every conditional balance write matches no row, as if another writer always got there first. */
+	alwaysContended?: boolean;
+}
+
 /**
  * @param cards The `gift_card` rows.
+ * @param storage How the storage behaves.
  * @returns The service, the cards, the ledger and the events the movements produced.
  */
-function serviceUnderTest(cards: IGiftCardRow[]) {
+function serviceUnderTest(cards: IGiftCardRow[], storage: IStorageOptions = {}) {
 	const ledger: ILedgerRow[] = [];
 	const published: unknown[] = [];
+	const dialect = storage.dialect ?? 'postgres';
+	let ledgerSequence = 0;
+
+	/** The rows held under `FOR UPDATE`, each with the promise that settles when its holder ends. */
+	const rowLocks = new Map<string, Promise<void>>();
+
+	/**
+	 * Takes the row lock for a transaction, waiting for whichever transaction holds it to end first.
+	 *
+	 * @param id The row to lock.
+	 * @param held The transaction's own locks, released when it ends.
+	 */
+	const acquire = async (id: string, held: Array<() => void>): Promise<void> => {
+		while (rowLocks.has(id)) {
+			await rowLocks.get(id);
+		}
+
+		let release: () => void = () => undefined;
+		rowLocks.set(id, new Promise<void>((resolve) => (release = resolve)));
+		held.push(() => {
+			rowLocks.delete(id);
+			release();
+		});
+	};
+
+	/**
+	 * The manager a transaction is handed: every write is undone if the transaction fails, and a row
+	 * read `FOR UPDATE` stays locked until it ends. Reads hand back detached copies, as TypeORM does.
+	 *
+	 * @param undo The transaction's undo log.
+	 * @param held The transaction's row locks.
+	 */
+	const transactionalManager = (undo: Array<() => void>, held: Array<() => void>) => ({
+		connection: { options: { type: dialect } },
+		createQueryBuilder: () => {
+			let where: Record<string, unknown> = {};
+			let locked = false;
+			const builder = {
+				where: (conditions: Record<string, unknown>) => {
+					where = conditions;
+
+					return builder;
+				},
+				setLock: (mode: string) => {
+					locked = mode === 'pessimistic_write';
+
+					return builder;
+				},
+				getOne: async () => {
+					if (locked) {
+						await acquire(String(where.id), held);
+					}
+
+					const row = cards.find((one) => matches(one, where));
+
+					return row ? { ...row } : null;
+				}
+			};
+
+			return builder;
+		},
+		findOne: async (_entity: unknown, options: { where?: Record<string, unknown> }) => {
+			const row = cards.find((one) => matches(one, options?.where));
+
+			return row ? { ...row } : null;
+		},
+		find: async (_entity: unknown, options: { where?: Record<string, unknown> }) =>
+			ledger.filter((row) => matches(row, options?.where)).map((row) => ({ ...row })),
+		// A conditional write is a WHERE: every member of the criteria has to hold, and the affected count
+		// is the answer. A double that matched on the id alone would report every conditional write as
+		// landing.
+		update: async (_entity: unknown, criteria: Record<string, unknown>, partial: Partial<IGiftCardRow>) => {
+			if (storage.failCardWrite) {
+				throw new Error('the card write failed');
+			}
+
+			const matching = storage.alwaysContended ? [] : cards.filter((one) => matches(one, criteria));
+
+			for (const row of matching) {
+				const before = { ...row };
+
+				Object.assign(row, partial);
+				undo.push(() => {
+					Object.keys(row).forEach((key) => delete (row as never)[key]);
+					Object.assign(row, before);
+				});
+			}
+
+			return { affected: matching.length };
+		},
+		create: (_entity: unknown, partial: ILedgerRow) => ({ id: `ledger-${++ledgerSequence}`, ...partial }),
+		save: async (_entity: unknown, entity: ILedgerRow) => {
+			if (storage.failLedgerInsert) {
+				throw new Error('the ledger insert failed');
+			}
+
+			ledger.push(entity);
+			undo.push(() => ledger.splice(ledger.indexOf(entity), 1));
+
+			return entity;
+		}
+	});
+
+	const manager = {
+		transaction: async <T>(work: (transactional: unknown) => Promise<T>): Promise<T> => {
+			const undo: Array<() => void> = [];
+			const held: Array<() => void> = [];
+
+			try {
+				return await work(transactionalManager(undo, held));
+			} catch (error) {
+				undo.reverse().forEach((step) => step());
+
+				throw error;
+			} finally {
+				held.forEach((release) => release());
+			}
+		}
+	};
 
 	const repository = {
+		manager,
 		find: async (options?: { where?: Record<string, unknown> }) =>
 			cards.filter((row) => matches(row, options?.where)),
 		findOne: async (options?: { where?: Record<string, unknown>; select?: Record<string, boolean> }) => {
@@ -153,6 +291,10 @@ function serviceUnderTest(cards: IGiftCardRow[]) {
 		// Scoped criteria: see the note in the campaign budget suite. The write addresses
 		// `{ id, tenantId }` rather than an identifier on its own.
 		update: async (criteria: string | Record<string, unknown>, partial: Partial<IGiftCardRow>) => {
+			if (storage.failCardWrite) {
+				throw new Error('the card write failed');
+			}
+
 			const row = cards.find((one) => matches(one, criteriaOf(criteria)));
 
 			if (row) {
@@ -166,8 +308,12 @@ function serviceUnderTest(cards: IGiftCardRow[]) {
 	const ledgerRepository = {
 		find: async (options?: { where?: Record<string, unknown> }) =>
 			ledger.filter((row) => matches(row, options?.where)),
-		create: (partial: ILedgerRow) => ({ id: `ledger-${ledger.length + 1}`, ...partial }),
+		create: (partial: ILedgerRow) => ({ id: `ledger-${++ledgerSequence}`, ...partial }),
 		save: async (entity: ILedgerRow) => {
+			if (storage.failLedgerInsert) {
+				throw new Error('the ledger insert failed');
+			}
+
 			ledger.push(entity);
 
 			return entity;
@@ -479,5 +625,157 @@ describe('GiftCardService — the behaviour each defect was found by', () => {
 		const derived = await giftCardTransactionService.deriveBalance(card.id, card.initialAmount);
 
 		expect(derived).toBe(cards[0].balance);
+	});
+});
+
+/**
+ * Two movements of one card at the same instant (PR #10254 review: "Gift cards can spend twice").
+ *
+ * `applyMovement` used to read the balance, write the ledger row and then replace the balance with no
+ * lock and no transaction, so two redemptions of 80 against 100 both read 100, both passed and both
+ * stored 20: 160 spent from a card that held 100. The refund ceiling was read the same way, before the
+ * writes. Each race is run on both storage behaviours: Postgres, where the card is locked `FOR UPDATE`
+ * and the second movement waits for the first; and a storage that takes no row lock and runs the two
+ * side by side, where the write conditional on the balance it was decided on is the only guard.
+ */
+describe('GiftCardService — concurrent movements of one card', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/**
+	 * GC1 and GC2 together: the stored balance is the face value plus every movement after the issue,
+	 * it is never negative, and each movement's `balanceAfter` is the balance it left.
+	 */
+	const expectLedgerAndBalanceAgree = (card: IGiftCardRow, ledger: ILedgerRow[]) => {
+		const moved = ledger.reduce((sum, row) => Money.of(sum, 'USD').add(Money.of(row.amount, 'USD')).amount, '0');
+
+		expect(Money.of(card.initialAmount, 'USD').add(Money.of(moved, 'USD')).toStorageString()).toBe(
+			Money.of(card.balance, 'USD').toStorageString()
+		);
+		expect(Money.of(card.balance, 'USD').isNegative()).toBe(false);
+
+		let running = Money.of(card.initialAmount, 'USD');
+
+		for (const row of ledger) {
+			running = running.add(Money.of(row.amount, 'USD'));
+			expect(Money.of(row.balanceAfter, 'USD').toStorageString()).toBe(running.toStorageString());
+		}
+	};
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'two redemptions of 80 racing on a card of 100 never spend more than it holds (%s)',
+		async (dialect) => {
+			const { service, cards, ledger, published } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-RACE' })], {
+				dialect
+			});
+
+			const outcomes = await Promise.allSettled([
+				service.redeem('gc-1', '80.000000', { orderId: ORDER, outstanding: '80.000000' }),
+				service.redeem('gc-1', '80.000000', { orderId: ORDER, outstanding: '80.000000' })
+			]);
+
+			// The second redemption is decided on what the first left: it applies the 20 the card still
+			// holds, never a second 80.
+			const applied = outcomes
+				.filter((outcome): outcome is PromiseFulfilledResult<{ applied: string }> => outcome.status === 'fulfilled')
+				.map((outcome) => outcome.value.applied)
+				.sort();
+
+			expect(applied).toEqual(['-20', '-80']);
+			expect(ledger.map((row) => row.amount).sort()).toEqual(['-20', '-80']);
+			expect(cards[0].balance).toBe('0');
+			expect(cards[0].status).toBe(GiftCardStatus.REDEEMED);
+			expectLedgerAndBalanceAgree(cards[0], ledger);
+			expect(published).toHaveLength(2);
+		}
+	);
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'two refunds racing on one card never return more than it paid (%s)',
+		async (dialect) => {
+			const { service, cards, ledger } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-REFUND' })], {
+				dialect
+			});
+			await service.redeem('gc-1', '80.000000', { orderId: ORDER, outstanding: '80.000000' });
+
+			const outcomes = await Promise.allSettled([
+				service.refund('gc-1', '80.000000', { orderId: ORDER }),
+				service.refund('gc-1', '80.000000', { orderId: ORDER })
+			]);
+
+			// The ceiling (what the card paid, less what was already returned) is read under the same
+			// lock as the write, so the second refund finds it used up and is refused.
+			expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+			expect(
+				(outcomes.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult).reason
+			).toBeInstanceOf(BadRequestException);
+			expect(ledger.filter((row) => row.type === GiftCardTransactionType.REFUND).map((row) => row.amount)).toEqual([
+				'80'
+			]);
+			expect(cards[0].balance).toBe('100');
+			expectLedgerAndBalanceAgree(cards[0], ledger);
+		}
+	);
+
+	it('writes no ledger row and announces nothing when the balance write fails', async () => {
+		const { service, cards, ledger, published } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })], {
+			failCardWrite: true
+		});
+
+		await expect(
+			service.redeem('gc-1', '30.000000', { orderId: ORDER, outstanding: '30.000000' })
+		).rejects.toBeDefined();
+
+		expect(ledger).toHaveLength(0);
+		expect(cards[0].balance).toBe('100.000000');
+		expect(published).toHaveLength(0);
+	});
+
+	it('leaves the balance where it was when the ledger row cannot be written', async () => {
+		const { service, cards, ledger, published } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })], {
+			failLedgerInsert: true
+		});
+
+		await expect(
+			service.redeem('gc-1', '30.000000', { orderId: ORDER, outstanding: '30.000000' })
+		).rejects.toBeDefined();
+
+		expect(ledger).toHaveLength(0);
+		expect(cards[0].balance).toBe('100.000000');
+		expect(cards[0].status).toBe(GiftCardStatus.ACTIVE);
+		expect(published).toHaveLength(0);
+	});
+
+	it('gives up with GIFT_CARD_CONFLICT when the card keeps moving, having written nothing', async () => {
+		const { service, cards, ledger, published } = serviceUnderTest([giftCard({ id: 'gc-1', code: 'GC-1000' })], {
+			dialect: 'sqlite',
+			alwaysContended: true
+		});
+
+		await expect(
+			service.redeem('gc-1', '30.000000', { orderId: ORDER, outstanding: '30.000000' })
+		).rejects.toMatchObject({ message: expect.stringContaining('GIFT_CARD_CONFLICT') });
+
+		expect(ledger).toHaveLength(0);
+		expect(cards[0].balance).toBe('100.000000');
+		expect(published).toHaveLength(0);
+	});
+
+	it('writes a forfeited balance off and expires the card in one write, decided under the lock', async () => {
+		const { service, cards, ledger } = serviceUnderTest([
+			giftCard({ id: 'gc-1', code: 'GC-EXP', expiresAt: LAST_YEAR, balance: '35.000000' })
+		]);
+
+		const expired = await service.expire('gc-1', true);
+
+		expect(expired.status).toBe(GiftCardStatus.EXPIRED);
+		expect(cards[0]).toMatchObject({ balance: '0', status: GiftCardStatus.EXPIRED });
+		expect(ledger).toEqual([
+			expect.objectContaining({ type: GiftCardTransactionType.EXPIRE, amount: '-35', balanceAfter: '0' })
+		]);
 	});
 });

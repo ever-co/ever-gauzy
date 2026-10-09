@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager, IsNull } from 'typeorm';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { Money } from '@gauzy/core';
+import { Money, readAffectedRows } from '@gauzy/core';
 import { PaymentCollection } from './payment-collection.entity';
 import { TypeOrmPaymentCollectionRepository } from './repository/type-orm-payment-collection.repository';
 import { MikroOrmPaymentCollectionRepository } from './repository/mikro-orm-payment-collection.repository';
@@ -11,6 +13,19 @@ import {
 	IPaymentCollectionUpdateInput,
 	PaymentCollectionStatus
 } from '../payment.types';
+
+/**
+ * How many times a movement this service opened its own transaction for is decided again when another
+ * writer moved the collection between this one reading it and writing it. Under the row lock that
+ * cannot happen; the attempts are what the conditional write falls back on where no row lock is taken.
+ */
+const MOVEMENT_ATTEMPTS = 3;
+
+/** The columns of a collection one movement writes, decided on the collection as it stands under its lock. */
+type TCollectionChanges = Partial<IPaymentCollection> & { status?: PaymentCollectionStatus };
+
+/** A conditional write that matched no row: another writer moved the collection first. */
+class PaymentCollectionMovedError extends Error {}
 
 /**
  * The money side of one order or cart.
@@ -33,6 +48,16 @@ import {
  *
  * A cart has at most one live collection and an order has one per checkout attempt, which is what
  * makes "how much is outstanding for this order?" a question with one answer.
+ *
+ * **Every movement of an amount is decided under the collection's row lock and written conditionally on
+ * what it was decided on.** The four running totals used to be read, added to in memory and written
+ * back as absolute values with no lock, so two captures, refunds or authorisations of one collection
+ * that overlapped both read the same total and the second write erased the first one's increment, and
+ * each ceiling above was checked against a figure that might already have moved. A movement now reads
+ * the row `FOR UPDATE` (Postgres, MySQL; SQLite's single writer is the lock there), checks its ceiling
+ * against that read, and writes with the four totals and the status it read among the criteria. A
+ * caller that moves a payment or writes a ledger row with the movement hands its transaction in, so
+ * the collection moves with them or not at all.
  */
 @Injectable()
 export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCollection> {
@@ -241,17 +266,24 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	 *
 	 * @param id The collection.
 	 * @param amount The amount authorised.
+	 * @param manager The transaction to move the collection on, when the caller holds one.
 	 * @returns The stored collection.
+	 * @throws BadRequestException when the authorisation would exceed the collection amount.
 	 */
-	async recordAuthorization(id: ID, amount: DecimalString): Promise<IPaymentCollection> {
-		const collection = await this.findCollectionOrFail(id);
-		this.assertCanAuthorize(collection, amount);
+	async recordAuthorization(id: ID, amount: DecimalString, manager?: EntityManager): Promise<IPaymentCollection> {
+		return this.moveAmounts(
+			id,
+			(collection) => {
+				this.assertCanAuthorize(collection, amount);
 
-		return this.applyAmounts(id, {
-			authorizedAmount: Money.of(collection.authorizedAmount, collection.currency).add(
-				Money.of(amount, collection.currency)
-			).amount
-		});
+				return {
+					authorizedAmount: Money.of(collection.authorizedAmount, collection.currency).add(
+						Money.of(amount, collection.currency)
+					).amount
+				};
+			},
+			manager
+		);
 	}
 
 	/**
@@ -259,18 +291,24 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	 *
 	 * @param id The collection.
 	 * @param amount The amount captured.
+	 * @param manager The transaction to move the collection on, when the caller holds one.
 	 * @returns The stored collection.
 	 * @throws BadRequestException when the capture would exceed the collection amount.
 	 */
-	async recordCapture(id: ID, amount: DecimalString): Promise<IPaymentCollection> {
-		const collection = await this.findCollectionOrFail(id);
-		this.assertCanCapture(collection, amount);
+	async recordCapture(id: ID, amount: DecimalString, manager?: EntityManager): Promise<IPaymentCollection> {
+		return this.moveAmounts(
+			id,
+			(collection) => {
+				this.assertCanCapture(collection, amount);
 
-		return this.applyAmounts(id, {
-			capturedAmount: Money.of(collection.capturedAmount, collection.currency).add(
-				Money.of(amount, collection.currency)
-			).amount
-		});
+				return {
+					capturedAmount: Money.of(collection.capturedAmount, collection.currency).add(
+						Money.of(amount, collection.currency)
+					).amount
+				};
+			},
+			manager
+		);
 	}
 
 	/**
@@ -278,18 +316,24 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	 *
 	 * @param id The collection.
 	 * @param amount The amount refunded.
+	 * @param manager The transaction to move the collection on, when the caller holds one.
 	 * @returns The stored collection.
 	 * @throws BadRequestException when the refund would exceed what was captured.
 	 */
-	async recordRefund(id: ID, amount: DecimalString): Promise<IPaymentCollection> {
-		const collection = await this.findCollectionOrFail(id);
-		this.assertCanRefund(collection, amount);
+	async recordRefund(id: ID, amount: DecimalString, manager?: EntityManager): Promise<IPaymentCollection> {
+		return this.moveAmounts(
+			id,
+			(collection) => {
+				this.assertCanRefund(collection, amount);
 
-		return this.applyAmounts(id, {
-			refundedAmount: Money.of(collection.refundedAmount, collection.currency).add(
-				Money.of(amount, collection.currency)
-			).amount
-		});
+				return {
+					refundedAmount: Money.of(collection.refundedAmount, collection.currency).add(
+						Money.of(amount, collection.currency)
+					).amount
+				};
+			},
+			manager
+		);
 	}
 
 	/**
@@ -298,38 +342,47 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	 * @param id The collection.
 	 * @param amount The amount released. Zero is accepted, because cancelling a session that never
 	 * reached the provider releases nothing.
+	 * @param manager The transaction to move the collection on, when the caller holds one.
 	 * @returns The stored collection.
+	 * @throws BadRequestException when the release would pass what is still authorised and uncaptured.
 	 */
-	async recordCancellation(id: ID, amount: DecimalString): Promise<IPaymentCollection> {
-		const collection = await this.findCollectionOrFail(id);
-		const released = Money.of(collection.canceledAmount, collection.currency).add(
-			Money.of(amount, collection.currency)
-		);
-		const outstanding = Money.of(collection.authorizedAmount, collection.currency).subtract(
-			Money.of(collection.capturedAmount, collection.currency)
-		);
+	async recordCancellation(id: ID, amount: DecimalString, manager?: EntityManager): Promise<IPaymentCollection> {
+		return this.moveAmounts(
+			id,
+			(collection) => {
+				const released = Money.of(collection.canceledAmount, collection.currency).add(
+					Money.of(amount, collection.currency)
+				);
+				const outstanding = Money.of(collection.authorizedAmount, collection.currency).subtract(
+					Money.of(collection.capturedAmount, collection.currency)
+				);
 
-		if (released.greaterThan(outstanding)) {
-			throw new BadRequestException('PAYMENT_CANCEL_EXCEEDS_AUTHORIZED');
-		}
+				if (released.greaterThan(outstanding)) {
+					throw new BadRequestException('PAYMENT_CANCEL_EXCEEDS_AUTHORIZED');
+				}
 
-		return this.applyAmounts(id, { canceledAmount: released.amount });
+				return { canceledAmount: released.amount };
+			},
+			manager
+		);
 	}
 
 	/**
 	 * Marks a collection as awaiting an answer, which a session that reached the provider does.
 	 *
+	 * Decided under the same lock as the amounts, so a status written for a collection that had not
+	 * moved can never land on one an authorisation moved in the meantime.
+	 *
 	 * @param id The collection.
+	 * @param manager The transaction to write on, when the caller holds one.
 	 * @returns The stored collection.
 	 */
-	async markAwaiting(id: ID): Promise<IPaymentCollection> {
-		const collection = await this.findCollectionOrFail(id);
-
-		if (this.hasMoved(collection)) {
-			return collection;
-		}
-
-		return this.applyAmounts(id, { status: PaymentCollectionStatus.AWAITING });
+	async markAwaiting(id: ID, manager?: EntityManager): Promise<IPaymentCollection> {
+		return this.moveAmounts(
+			id,
+			(collection) => (this.hasMoved(collection) ? null : { status: PaymentCollectionStatus.AWAITING }),
+			manager
+		);
 	}
 
 	/**
@@ -337,16 +390,15 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	 * does.
 	 *
 	 * @param id The collection.
+	 * @param manager The transaction to write on, when the caller holds one.
 	 * @returns The stored collection.
 	 */
-	async markFailed(id: ID): Promise<IPaymentCollection> {
-		const collection = await this.findCollectionOrFail(id);
-
-		if (this.hasMoved(collection)) {
-			return collection;
-		}
-
-		return this.applyAmounts(id, { status: PaymentCollectionStatus.FAILED });
+	async markFailed(id: ID, manager?: EntityManager): Promise<IPaymentCollection> {
+		return this.moveAmounts(
+			id,
+			(collection) => (this.hasMoved(collection) ? null : { status: PaymentCollectionStatus.FAILED }),
+			manager
+		);
 	}
 
 	/**
@@ -392,25 +444,138 @@ export class PaymentCollectionService extends PaymentScopedCrudService<PaymentCo
 	}
 
 	/**
-	 * Writes a derived status and the amounts it was derived from, in one update.
+	 * Moves a collection: decides the change on the row as it stands under its lock, and writes the
+	 * change and the status derived from it in one conditional statement.
+	 *
+	 * Inside a caller's transaction the movement is part of it, so a refusal here (a ceiling, or a write
+	 * that matched nothing) rolls the caller's payment row and ledger row back with it. Without one, the
+	 * movement opens its own, and a write that matched nothing is decided again on the row as it now
+	 * stands, a bounded number of times.
 	 *
 	 * @param id The collection.
-	 * @param changes The amounts and the status to write.
+	 * @param decide Decides the columns to write from the locked row; `null` writes nothing.
+	 * @param manager The caller's transaction, when it holds one.
 	 * @returns The stored collection.
+	 * @throws NotFoundException when the collection is not in the caller's scope.
+	 * @throws ConflictException with `PAYMENT_COLLECTION_CONFLICT` when another writer moved the row
+	 * between this read and this write.
 	 */
-	private async applyAmounts(
+	private async moveAmounts(
 		id: ID,
-		changes: Partial<IPaymentCollection> & { status?: PaymentCollectionStatus }
+		decide: (collection: IPaymentCollection) => TCollectionChanges | null,
+		manager?: EntityManager
 	): Promise<IPaymentCollection> {
-		const current = await this.findCollectionOrFail(id);
+		const conflict = () =>
+			new ConflictException({
+				message: `PAYMENT_COLLECTION_CONFLICT: payment collection '${id}' was moved by another write between this one reading it and writing it, so nothing was overwritten. Try again.`,
+				code: 'PAYMENT_COLLECTION_CONFLICT',
+				details: { paymentCollectionId: id }
+			});
+
+		if (manager) {
+			try {
+				return await this.moveAmountsOn(manager, id, decide);
+			} catch (error) {
+				throw error instanceof PaymentCollectionMovedError ? conflict() : error;
+			}
+		}
+
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await this.typeOrmPaymentCollectionRepository.manager.transaction((transactional: EntityManager) =>
+					this.moveAmountsOn(transactional, id, decide)
+				);
+			} catch (error) {
+				if (!(error instanceof PaymentCollectionMovedError)) {
+					throw error;
+				}
+
+				if (attempt >= MOVEMENT_ATTEMPTS) {
+					throw conflict();
+				}
+			}
+		}
+	}
+
+	/**
+	 * One movement of a collection, on an open transaction.
+	 *
+	 * The row is read `FOR UPDATE` where the dialect has row locks, and the write names every running
+	 * total and the status it read among its criteria: the status is derived from all four totals, so a
+	 * write predicated on only the one it moves could still store a status another writer's change had
+	 * made wrong.
+	 *
+	 * @param manager The open transaction.
+	 * @param id The collection.
+	 * @param decide Decides the columns to write from the locked row.
+	 * @returns The stored collection, read on the same transaction.
+	 * @throws PaymentCollectionMovedError when the conditional write matched no row.
+	 */
+	private async moveAmountsOn(
+		manager: EntityManager,
+		id: ID,
+		decide: (collection: IPaymentCollection) => TCollectionChanges | null
+	): Promise<IPaymentCollection> {
+		const where = { id, ...this.scope };
+		const current = (await manager.findOne(PaymentCollection, {
+			where: where as never,
+			...(this.takesRowLocks(manager) ? { lock: { mode: 'pessimistic_write' as const } } : {})
+		})) as IPaymentCollection | null;
+
+		if (!current) {
+			throw new NotFoundException('PAYMENT_COLLECTION_NOT_FOUND');
+		}
+
+		const changes = decide(current);
+
+		if (!changes) {
+			return current;
+		}
+
 		const merged: IPaymentCollection = { ...current, ...changes };
 		const status = changes.status ?? this.deriveStatus(merged);
 		const completedAt =
 			status === PaymentCollectionStatus.COMPLETED ? current.completedAt ?? new Date() : current.completedAt;
 
-		await this.update(id, { ...changes, status, completedAt } as never);
+		const written = await manager.update(
+			PaymentCollection,
+			{
+				...where,
+				authorizedAmount: this.asRead(current.authorizedAmount),
+				capturedAmount: this.asRead(current.capturedAmount),
+				refundedAmount: this.asRead(current.refundedAmount),
+				canceledAmount: this.asRead(current.canceledAmount),
+				status: this.asRead(current.status)
+			} as never,
+			{ ...changes, status, completedAt } as never
+		);
 
-		return this.findCollectionOrFail(id);
+		if (readAffectedRows(written) === 0) {
+			throw new PaymentCollectionMovedError();
+		}
+
+		return (await manager.findOne(PaymentCollection, { where: where as never })) as IPaymentCollection;
+	}
+
+	/**
+	 * @param manager The open transaction.
+	 * @returns Whether the dialect behind it has row locks to take; SQLite's single writer is its lock.
+	 */
+	private takesRowLocks(manager: EntityManager): boolean {
+		const type = manager.connection?.options?.type as string | undefined;
+
+		return type === DatabaseTypeEnum.postgres || type === DatabaseTypeEnum.mysql;
+	}
+
+	/**
+	 * One running total as the criteria of a conditional write must state it: a value read as absent is
+	 * `IS NULL`, because `= NULL` matches nothing and would make the collection permanently unmovable.
+	 *
+	 * @param value The value as the read handed it over.
+	 * @returns The criteria value that matches the row as it was read.
+	 */
+	private asRead(value: unknown): unknown {
+		return value === null || value === undefined ? IsNull() : value;
 	}
 
 	/**

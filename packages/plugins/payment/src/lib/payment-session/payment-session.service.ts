@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as chalk from 'chalk';
+import { EntityManager } from 'typeorm';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { BaseEvent, EventBus, Money } from '@gauzy/core';
+import { BaseEvent, EventBus, Money, readAffectedRows } from '@gauzy/core';
 import { PaymentSession } from './payment-session.entity';
 import { TypeOrmPaymentSessionRepository } from './repository/type-orm-payment-session.repository';
 import { MikroOrmPaymentSessionRepository } from './repository/mikro-orm-payment-session.repository';
@@ -237,6 +238,13 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 	 * `AUTHORIZED` is deliberately not one of the statuses `TERMINAL` lists: the money it holds is
 	 * still real and still releasable, so `voidSession` and the capture path keep working on it.
 	 *
+	 * **Two deliveries at the same moment are counted once too.** The status check above reads the
+	 * session before anything is written, so a provider's retry that arrives while the first answer is
+	 * still being recorded passed it as well, and the collection's `authorizedAmount` took the amount
+	 * twice. The transition is therefore written conditionally on the status this call read, on one
+	 * transaction with the collection's own movement: the delivery that loses changes no row, moves
+	 * nothing, and is answered with the authorisation the winner recorded.
+	 *
 	 * @param id The session to authorise.
 	 * @param input Optional data the provider returned with the approval.
 	 * @returns The stored session, and on a re-delivery the authorisation already on record.
@@ -246,6 +254,8 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 	 */
 	async authorizeSession(id: ID, input: IPaymentSessionUpdateInput = {}): Promise<IPaymentSession> {
 		const session = await this.findSessionOrFail(id);
+		// The status every check below is decided on, and the one the transition is predicated on.
+		const readStatus = session.status;
 
 		if (session.status === PaymentSessionStatus.AUTHORIZED) {
 			return session;
@@ -275,13 +285,32 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 		const collection = await this.paymentCollectionService.findCollectionOrFail(session.collectionId);
 		this.paymentCollectionService.assertCanAuthorize(collection, session.amount);
 
-		await this.update(id, {
-			status: PaymentSessionStatus.AUTHORIZED,
-			authorizedAt: new Date(),
-			data: { ...(session.data ?? {}), ...(input.data ?? {}) }
-		} as never);
+		const authorized = await this.typeOrmPaymentSessionRepository.manager.transaction(
+			async (manager: EntityManager) => {
+				const moved = await this.transition(manager, session.id, readStatus, {
+					status: PaymentSessionStatus.AUTHORIZED,
+					authorizedAt: new Date(),
+					data: { ...(session.data ?? {}), ...(input.data ?? {}) }
+				});
 
-		await this.paymentCollectionService.recordAuthorization(collection.id, session.amount);
+				if (moved) {
+					await this.paymentCollectionService.recordAuthorization(collection.id, session.amount, manager);
+				}
+
+				return moved;
+			}
+		);
+
+		if (!authorized) {
+			const current = await this.findSessionOrFail(id);
+
+			if (current.status === PaymentSessionStatus.AUTHORIZED) {
+				return current;
+			}
+
+			throw this.sessionMoved(session.id, readStatus);
+		}
+
 		await this.publish(
 			new PaymentAuthorizedEvent(session.id, session.amount, session.currency, collection.id, session.organizationId),
 			`session ${session.id}`
@@ -359,20 +388,39 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 	 */
 	async voidSession(id: ID, metadata: Record<string, unknown> = {}): Promise<IPaymentSession> {
 		const session = await this.findSessionOrFail(id);
+		// The status the release below is decided on, and the one the transition is predicated on.
+		const readStatus = session.status;
 
 		if (this.isTerminal(session.status)) {
 			throw new BadRequestException('PAYMENT_SESSION_ALREADY_CLOSED');
 		}
 
-		const released = session.status === PaymentSessionStatus.AUTHORIZED ? session.amount : '0';
+		const released = readStatus === PaymentSessionStatus.AUTHORIZED ? session.amount : '0';
 
-		await this.update(id, {
-			status: PaymentSessionStatus.CANCELED,
-			metadata: { ...(session.metadata ?? {}), ...metadata }
-		} as never);
+		// The cancellation and the release of what it held are one write, conditional on the status this
+		// call read: a void the collection refuses leaves the session holding its authorisation, and a void
+		// that overlapped another transition of the session releases nothing it no longer holds.
+		const voided = await this.typeOrmPaymentSessionRepository.manager.transaction(async (manager: EntityManager) => {
+			const moved = await this.transition(manager, session.id, readStatus, {
+				status: PaymentSessionStatus.CANCELED,
+				metadata: { ...(session.metadata ?? {}), ...metadata }
+			});
 
-		if (Money.of(released, session.currency).isPositive()) {
-			await this.paymentCollectionService.recordCancellation(session.collectionId, released);
+			if (moved && Money.of(released, session.currency).isPositive()) {
+				await this.paymentCollectionService.recordCancellation(session.collectionId, released, manager);
+			}
+
+			return moved;
+		});
+
+		if (!voided) {
+			const current = await this.findSessionOrFail(id);
+
+			if (this.isTerminal(current.status)) {
+				throw new BadRequestException('PAYMENT_SESSION_ALREADY_CLOSED');
+			}
+
+			throw this.sessionMoved(session.id, readStatus);
 		}
 
 		await this.publish(
@@ -493,6 +541,44 @@ export class PaymentSessionService extends PaymentScopedCrudService<PaymentSessi
 		if (input.status === PaymentSessionStatus.REQUIRES_MORE) {
 			throw new BadRequestException('REQUIRES_MORE is unreachable off-session: no buyer can complete the action.');
 		}
+	}
+
+	/**
+	 * Moves a session out of the status it was read in, on the caller's transaction, and only if it is
+	 * still in it.
+	 *
+	 * @param manager The open transaction.
+	 * @param sessionId The session.
+	 * @param readStatus The status the caller read it in and decided on.
+	 * @param changes The columns to write.
+	 * @returns True when the session moved; false when another write moved it first.
+	 */
+	private async transition(
+		manager: EntityManager,
+		sessionId: ID,
+		readStatus: PaymentSessionStatus,
+		changes: Record<string, unknown>
+	): Promise<boolean> {
+		const written = await manager.update(
+			PaymentSession,
+			{ id: sessionId, status: readStatus, ...this.scope } as never,
+			changes as never
+		);
+
+		return readAffectedRows(written) > 0;
+	}
+
+	/**
+	 * @param sessionId The session.
+	 * @param readStatus The status the caller read it in.
+	 * @returns The refusal of a transition another write overtook.
+	 */
+	private sessionMoved(sessionId: ID, readStatus: PaymentSessionStatus): ConflictException {
+		return new ConflictException({
+			message: `PAYMENT_SESSION_CONFLICT: payment session '${sessionId}' moved out of ${readStatus} while this call was recording its answer, so nothing was written. Read the session again.`,
+			code: 'PAYMENT_SESSION_CONFLICT',
+			details: { paymentSessionId: sessionId, status: readStatus }
+		});
 	}
 
 	/**

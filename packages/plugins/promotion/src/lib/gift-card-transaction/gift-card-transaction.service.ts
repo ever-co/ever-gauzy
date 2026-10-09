@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
 import { DecimalString, ID } from '@gauzy/contracts';
 import {
 	RequestContext,
@@ -52,18 +53,30 @@ export class GiftCardTransactionService extends TenantScopedCrudService<GiftCard
 	 * row lock and hands the result here, which is what keeps the chain of `balanceAfter` values
 	 * consistent with the movement amounts.
 	 *
-	 * @param input The movement to record.
+	 * **A movement of a balance is written on the transaction that moved the balance.** The card's
+	 * `applyMovement` locks the card, writes the new balance and hands its transaction here, so the
+	 * ledger row and the balance it explains commit together or not at all. Without a transaction the
+	 * row is written on its own, which is what issuing a card does: a new card has no balance to race.
+	 *
+	 * @param input The movement to record. `tenantId` and `organizationId`, when stated, are the card's
+	 * own scope, and take precedence over the caller's: the ledger row belongs where its card is.
+	 * @param manager The transaction to write on, when the caller holds one.
 	 * @returns The stored movement.
 	 * @throws BadRequestException when the movement is zero, which is not a movement.
 	 */
-	async append(input: {
-		giftCardId: ID;
-		orderId?: ID;
-		amount: string;
-		balanceAfter: string;
-		type: GiftCardTransactionType;
-		note?: string;
-	}): Promise<IGiftCardTransaction> {
+	async append(
+		input: {
+			giftCardId: ID;
+			orderId?: ID;
+			amount: string;
+			balanceAfter: string;
+			type: GiftCardTransactionType;
+			note?: string;
+			tenantId?: ID;
+			organizationId?: ID;
+		},
+		manager?: EntityManager
+	): Promise<IGiftCardTransaction> {
 		// A zero movement is not a movement: it would claim the ledger recorded something while the
 		// balance stayed exactly where it was. The comparison is made on the decimal, not on a parsed
 		// `number`, so `0.000000` and `0` are the same nothing.
@@ -71,11 +84,23 @@ export class GiftCardTransactionService extends TenantScopedCrudService<GiftCard
 			throw new BadRequestException('A zero-amount movement is not recorded on a gift-card ledger.');
 		}
 
-		return this.create({
-			...input,
+		const { tenantId, organizationId, ...movement } = input;
+		const row = {
+			...movement,
 			occurredAt: new Date(),
-			...this.scope
-		} as never);
+			...this.scope,
+			...(tenantId ? { tenantId } : {}),
+			...(organizationId ? { organizationId } : {})
+		};
+
+		if (manager) {
+			return (await manager.save(
+				GiftCardTransaction,
+				manager.create(GiftCardTransaction, row as never)
+			)) as unknown as IGiftCardTransaction;
+		}
+
+		return this.create(row as never);
 	}
 
 	/**
@@ -129,14 +154,20 @@ export class GiftCardTransactionService extends TenantScopedCrudService<GiftCard
 	 * The sum of the movements of one type, which the redemption rules need: a refund may never
 	 * exceed what was consumed.
 	 *
+	 * A rule that is decided on this figure reads it on the transaction that holds the card's lock,
+	 * so the figure cannot move between the decision and the write: two refunds of the same card each
+	 * read the other's movement or neither runs.
+	 *
 	 * @param giftCardId The card to total.
 	 * @param type The movement type to total.
+	 * @param manager The transaction to read on, when the caller holds one.
 	 * @returns The signed sum, as an exact decimal.
 	 */
-	async totalOfType(giftCardId: ID, type: GiftCardTransactionType): Promise<string> {
-		const rows = await this.typeOrmGiftCardTransactionRepository.find({
-			where: { giftCardId, type, ...this.scope }
-		});
+	async totalOfType(giftCardId: ID, type: GiftCardTransactionType, manager?: EntityManager): Promise<string> {
+		const where = { giftCardId, type, ...this.scope };
+		const rows = manager
+			? await manager.find(GiftCardTransaction, { where: where as never })
+			: await this.typeOrmGiftCardTransactionRepository.find({ where });
 
 		return rows.reduce<DecimalString>((sum, row) => addDecimalStrings(sum, row.amount), '0');
 	}
