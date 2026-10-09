@@ -202,6 +202,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * not in a table a checkout may forget to join, which is why it is a column here.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: ContactStatus, default: ContactStatus.ACTIVE })
+	@IsOptional()
 	@IsEnum(ContactStatus)
 	@MultiORMColumn({ type: 'simple-enum', enum: ContactStatus, default: ContactStatus.ACTIVE })
 	status?: ContactStatus;
@@ -220,6 +221,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * Party-wide tax exemption (an export customer, an exempt institution).
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	taxExempt?: boolean;
@@ -255,6 +257,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * and the two numbers cannot drift apart across rows.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({
 		type: 'numeric',
@@ -280,6 +283,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * balance a checkout reads without summing the ledger.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({
 		type: 'numeric',
@@ -313,6 +317,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * Consent flag, with its own audit value.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	acceptsMarketing?: boolean;
@@ -357,6 +362,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	 * behaviour: rows the backfill cannot classify stay `INDIVIDUAL` and are listed for review.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: PartyKind, default: PartyKind.INDIVIDUAL })
+	@IsOptional()
 	@IsEnum(PartyKind)
 	@MultiORMColumn({ type: 'simple-enum', enum: PartyKind, default: PartyKind.INDIVIDUAL })
 	partyKind?: PartyKind;

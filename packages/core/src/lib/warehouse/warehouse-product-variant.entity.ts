@@ -145,6 +145,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	 * When false this variant is not counted at this location.
 	 */
 	@ApiPropertyOptional({ type: Boolean, default: true })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: true })
 	trackInventory?: boolean;

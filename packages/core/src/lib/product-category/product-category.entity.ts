@@ -113,6 +113,7 @@ export class ProductCategory extends TranslatableBase
 	 * Ordering of the category among its siblings.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	@MultiORMColumn({ type: 'int', default: 0 })
@@ -122,6 +123,7 @@ export class ProductCategory extends TranslatableBase
 	 * Merchandising flag for "featured categories" navigation.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isFeatured?: boolean;
@@ -131,6 +133,7 @@ export class ProductCategory extends TranslatableBase
 	 * navigation filter covers both.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: ProductStatus, default: ProductStatus.ACTIVE })
+	@IsOptional()
 	@IsEnum(ProductStatus)
 	@MultiORMColumn({ type: 'simple-enum', enum: ProductStatus, default: ProductStatus.ACTIVE })
 	status?: ProductStatus;

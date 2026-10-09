@@ -83,6 +83,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * whether the stock held there is own stock or a supplier's.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: WarehouseType, default: WarehouseType.WAREHOUSE })
+	@IsOptional()
 	@IsEnum(WarehouseType)
 	@MultiORMColumn({ type: 'simple-enum', enum: WarehouseType, default: WarehouseType.WAREHOUSE })
 	type?: WarehouseType;
@@ -91,6 +92,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * Allocation preference when several locations can serve a line; lower wins.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	@MultiORMColumn({ type: 'int', default: 0 })
@@ -100,6 +102,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * The location can be selected as an in-store pickup point.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isPickupLocation?: boolean;
@@ -108,6 +111,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * The location may ship. False on a virtual or dropship placeholder that only aggregates.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: true })
 	isFulfillmentLocation?: boolean;

@@ -71,6 +71,7 @@ export class TenantSetting extends TenantBaseEntity implements ITenant {
 	 * the compiled default.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: SettingScope, default: SettingScope.TENANT })
+	@IsOptional()
 	@IsEnum(SettingScope)
 	@MultiORMColumn({ type: 'simple-enum', enum: SettingScope, default: SettingScope.TENANT })
 	scope?: SettingScope;
@@ -99,6 +100,7 @@ export class TenantSetting extends TenantBaseEntity implements ITenant {
 	 * The value is sensitive: masked in every response and excluded from the settings dump.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isEncrypted?: boolean;

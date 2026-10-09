@@ -37,6 +37,7 @@ export class Currency extends BaseEntity implements ICurrency {
 	 * code this row has not been told about.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 2 })
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	@MultiORMColumn({ type: 'int', default: 2 })
@@ -57,6 +58,7 @@ export class Currency extends BaseEntity implements ICurrency {
 	 * second vocabulary exists for one formatting question.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: MoneySymbolPosition, default: MoneySymbolPosition.PREFIX })
+	@IsOptional()
 	@IsEnum(MoneySymbolPosition)
 	@MultiORMColumn({
 		type: 'simple-enum',
@@ -69,6 +71,7 @@ export class Currency extends BaseEntity implements ICurrency {
 	 * Space between the symbol and the amount, for the currencies that are written with one.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	symbolSpace?: boolean;
@@ -78,6 +81,7 @@ export class Currency extends BaseEntity implements ICurrency {
 	 * exact at the currency's scale an error rather than a silent truncation.
 	 */
 	@ApiPropertyOptional({ type: () => String, enum: RoundingMode, default: RoundingMode.HALF_UP })
+	@IsOptional()
 	@IsEnum(RoundingMode)
 	@MultiORMColumn({ type: 'simple-enum', enum: RoundingMode, default: RoundingMode.HALF_UP })
 	roundingMode?: RoundingMode;
@@ -86,6 +90,7 @@ export class Currency extends BaseEntity implements ICurrency {
 	 * Cash-rounding step applied only at the payment boundary; `0` disables it.
 	 */
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
+	@IsOptional()
 	@IsNumber()
 	@MultiORMColumn({
 		type: 'numeric',
@@ -100,6 +105,7 @@ export class Currency extends BaseEntity implements ICurrency {
 	 * False for unit-of-account and metal codes, which can never be a cart or an order currency.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: true })
 	isTender?: boolean;

@@ -103,6 +103,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	 * Orders may be taken beyond availability at this location.
 	 */
 	@ApiPropertyOptional({ type: Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	allowBackorder?: boolean;
@@ -140,6 +141,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	 * When false the ledger is not consulted and the product is always sellable at this location.
 	 */
 	@ApiPropertyOptional({ type: Boolean, default: true })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: true })
 	trackInventory?: boolean;
@@ -148,6 +150,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	 * Digital or made-to-order product at this location: availability is reported as unlimited.
 	 */
 	@ApiPropertyOptional({ type: Boolean, default: false })
+	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: 'boolean', default: false })
 	isUnlimited?: boolean;
@@ -173,6 +176,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	 * one statement. The column it declares is the one that was already here.
 	 */
 	@ApiPropertyOptional({ type: Number, default: 1 })
+	@IsOptional()
 	@IsInt()
 	@Min(1)
 	@VersionedColumn()
