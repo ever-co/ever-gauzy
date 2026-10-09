@@ -49,6 +49,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       SENTRY_PROFILE_SAMPLE_RATE: ${SENTRY_PROFILE_SAMPLE_RATE:-1}
+      DEMO: ${DEMO:-false}
     entrypoint: './entrypoint.compose.sh'
     command: ['nginx', '-g', 'daemon off;']
     env_file:
