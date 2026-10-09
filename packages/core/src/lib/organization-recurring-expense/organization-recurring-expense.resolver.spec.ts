@@ -1,3 +1,4 @@
+// cspell:ignore recurringexpense
 /**
  * 🛑 The entity graph must load FIRST, before any import that pulls a core service or controller — see
  * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the entity

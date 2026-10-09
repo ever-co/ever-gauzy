@@ -1,3 +1,4 @@
+// cspell:ignore closeshort wareh
 /**
  * The write routes of this package that no field answered, and the reading that collapsed or refused
  * the rest.

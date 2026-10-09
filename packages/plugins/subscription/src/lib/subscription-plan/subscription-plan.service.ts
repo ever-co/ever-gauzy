@@ -224,7 +224,7 @@ export class SubscriptionPlanService extends TenantAwareCrudService<Subscription
 	 * @throws BadRequestException when the plan is inactive or its catalogue target is not sellable on
 	 * a recurring basis.
 	 */
-	public async assertSubscribeable(id: ID): Promise<SubscriptionPlan> {
+	public async assertSubscribable(id: ID): Promise<SubscriptionPlan> {
 		const plan = await this.findOneScoped(id);
 
 		if (plan.isActive === false) {

@@ -1,3 +1,4 @@
+// cspell:ignore NORD nord
 /**
  * `@gauzy/core` boots the whole application graph from its barrel — configuration, the ORM, the job
  * registry, the module scanner — none of which a split ledger needs and none of which is available

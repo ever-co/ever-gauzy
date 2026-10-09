@@ -1,3 +1,4 @@
+// cspell:ignore FREESHIP freeship
 import { BadRequestException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { Money, RequestContext } from '@gauzy/core';

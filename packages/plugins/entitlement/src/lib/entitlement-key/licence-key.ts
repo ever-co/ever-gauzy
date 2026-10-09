@@ -1,3 +1,4 @@
+// cspell:ignore ABCDEFGHJKMNPQRSTUVWXYZ
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'node:crypto';
 import { DEFAULT_KEY_PREFIX_LENGTH, LicenceKeyFormat } from '../entitlement.enums';
 

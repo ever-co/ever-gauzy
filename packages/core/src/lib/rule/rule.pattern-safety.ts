@@ -1,3 +1,4 @@
+// cspell:ignore Irregexp
 /**
  * Whether a `MATCHES` pattern can be run on the event loop without stopping the process.
  *

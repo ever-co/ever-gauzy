@@ -1,3 +1,4 @@
+// cspell:ignore nordwind
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsOptional, Max, Min, ValidateNested } from 'class-validator';

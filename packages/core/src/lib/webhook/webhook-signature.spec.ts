@@ -1,3 +1,4 @@
+// cspell:ignore whsec Ünïcødé
 import { createHmac } from 'node:crypto';
 import {
 	WEBHOOK_SIGNATURE_TOLERANCE_SECONDS,

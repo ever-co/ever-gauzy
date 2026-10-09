@@ -1,3 +1,4 @@
+// cspell:ignore pppx xaxb
 import {
 	PatternRejection,
 	RULE_MAX_MATCH_INPUT,

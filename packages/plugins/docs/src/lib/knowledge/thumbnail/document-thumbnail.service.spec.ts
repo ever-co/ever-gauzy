@@ -1,3 +1,4 @@
+// cspell:ignore noext
 /**
  * Thumbnail generation (07 §4.4).
  *

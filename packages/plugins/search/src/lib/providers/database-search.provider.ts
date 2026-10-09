@@ -1,3 +1,4 @@
+// cspell:ignore searchvector
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { DatabaseTypeEnum } from '@gauzy/config';

@@ -1,3 +1,4 @@
+// cspell:ignore accesstoken accountnumber apikey apisecret cardnumber clientsecret expirationdate expirydate privateapikey publishablesecret refreshtoken secretkey signingsecret webhooksecret
 import { registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 
 /** Shape a monetary operand must have: an exact decimal, never an exponent and never a float literal. */

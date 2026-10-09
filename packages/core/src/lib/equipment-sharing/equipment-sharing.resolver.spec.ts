@@ -1,3 +1,4 @@
+// cspell:ignore equipmentsharing equipmentsharingpolic
 /**
  * 🛑 This import must stay FIRST, before any import that pulls a core service or controller — see
  * `channel.controller.spec.ts` for the cycle it avoids: an entity decorator is undefined when the
@@ -720,7 +721,7 @@ describe('EquipmentSharingResolver — the two pivot reads are fields of their o
 		const connection = await resolver.equipmentSharingsByEmployee(EMPLOYEE);
 
 		// The path segment is named for an employee, and the delivered read narrows on the user who
-		// filed the request: the field calls that read rather than inventing a membernarrowing of its own.
+		// filed the request: the field calls that read rather than inventing a member narrowing of its own.
 		expect(equipmentSharingService.findEquipmentSharingsByEmployeeId).toHaveBeenCalledWith(EMPLOYEE);
 		expect(connection.nodes[0].createdByUserId).toBe(USER);
 	});

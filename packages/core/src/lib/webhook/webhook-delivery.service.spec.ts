@@ -1,3 +1,4 @@
+// cspell:ignore whsec
 import { NotFoundException } from '@nestjs/common';
 import { createHmac } from 'node:crypto';
 import { validateSync } from 'class-validator';
