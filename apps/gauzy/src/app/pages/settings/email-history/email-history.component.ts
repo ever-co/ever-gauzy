@@ -61,14 +61,14 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 	recipientFilter: string = null;
 	templateFilter: string = null;
 	statusFilter: EmailStatusEnum = null;
-	showArchived: boolean = false;
+	showArchived = false;
 
 	/** Every address we know of: employees, contacts and whoever the loaded emails went to. */
 	recipients: { email: string }[] = [];
 	templateOptions: ITemplateOption[] = [];
 	statusOptions = [EmailStatusEnum.SENT, EmailStatusEnum.FAILED];
 	/** Total emails the API reports for the current filters (the list loads them a page at a time). */
-	total: number = 0;
+	total = 0;
 
 	organizationContacts: IOrganizationContact[] = [];
 	emails: IEmailHistory[] = [];
@@ -117,8 +117,14 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 
 	// ── Filters ──────────────────────────────────────────────────────────
 
-	/** Any filter change reloads the list from its first page. */
+	/**
+	 * Any filter change reloads the list from its first page. The selection is cleared:
+	 * the open email may not match the new filters.
+	 */
 	onFiltersChange() {
+		this.selectedEmail = null;
+		// Show the spinner through the debounce rather than a momentary empty state.
+		this.loading = true;
 		this.thresholdHitCount = 1;
 		this.emails$.next(true);
 	}
@@ -127,34 +133,32 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 		return this.activeFilters.length > 0;
 	}
 
+	/** Built in one expression (no `push`), so the list is never mutated after it is declared. */
 	get activeFilters(): IActiveFilter[] {
-		const active: IActiveFilter[] = [];
-		if (this.recipientFilter) {
-			active.push({
+		const template = this.templateFilter
+			? this.templateOptions.find((option) => option.id === this.templateFilter)
+			: null;
+
+		const candidates: (IActiveFilter | false)[] = [
+			!!this.recipientFilter && {
 				key: 'recipient',
 				label: 'SETTINGS.EMAIL_HISTORY.FILTERS.RECIPIENT',
 				value: this.recipientFilter
-			});
-		}
-		if (this.templateFilter) {
-			const template = this.templateOptions.find((option) => option.id === this.templateFilter);
-			active.push({
+			},
+			!!this.templateFilter && {
 				key: 'template',
 				label: 'SETTINGS.EMAIL_HISTORY.FILTERS.TEMPLATE',
 				value: template ? template.label : this.templateFilter
-			});
-		}
-		if (this.statusFilter) {
-			active.push({
+			},
+			!!this.statusFilter && {
 				key: 'status',
 				label: 'SETTINGS.EMAIL_HISTORY.FILTERS.STATUS',
 				value: this.getTranslation(`SETTINGS.EMAIL_HISTORY.FILTERS.${this.statusFilter}`)
-			});
-		}
-		if (this.showArchived) {
-			active.push({ key: 'archived', label: 'SETTINGS.EMAIL_HISTORY.FILTERS.ARCHIVED' });
-		}
-		return active;
+			},
+			this.showArchived && { key: 'archived', label: 'SETTINGS.EMAIL_HISTORY.FILTERS.ARCHIVED' }
+		];
+
+		return candidates.filter((active): active is IActiveFilter => !!active);
 	}
 
 	removeFilter(key: IActiveFilter['key']) {
@@ -229,7 +233,16 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 						formattedDate: this.getEmailDate(email.createdAt)
 					}));
 					this.total = data.total;
-					this.selectedEmail = this.emails.length ? this.emails[0] : null;
+					// Loading more, resending or archiving reloads the list with the same filters:
+					// keep the open email while it is still in the results, else open the first.
+					const stillListed = this.selectedEmail
+						? this.emails.find((email) => email.id === this.selectedEmail.id)
+						: null;
+					if (stillListed) {
+						this.selectEmail(stillListed);
+					} else {
+						this.selectedEmail = this.emails.length ? this.emails[0] : null;
+					}
 					this._updateRecipients();
 					const totalNoPage = Math.ceil(data.total / this.pageSize);
 
@@ -302,6 +315,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent implements O
 				.sort((a, b) => a.title.localeCompare(b.title) || a.language.localeCompare(b.language));
 		} catch (error) {
 			this.templateOptions = [];
+			this.toastrService.danger(error, this.getTranslation('TOASTR.TITLE.ERROR'));
 		}
 	}
 
