@@ -61,6 +61,14 @@ export interface IUpdateOrganizationTeamInput extends ICreateOrganizationTeamInp
 	requirePlanToTrack?: boolean;
 }
 
+/** The members `AddTeamMemberInput` declares in the schema. */
+export interface IAddTeamMemberInput {
+	organizationTeamId: Id;
+	organizationId: Id;
+	employeeId: Id;
+	isManager?: boolean;
+}
+
 /** The members `OrganizationTeamDeleteInput` declares in the schema. */
 export interface IOrganizationTeamDeleteInput {
 	organizationId: Id;
@@ -341,6 +349,26 @@ export class OrganizationTeamResolver {
 			id,
 			this.payload(values) as unknown as IOrganizationTeamUpdateInput
 		);
+	}
+
+	/**
+	 * Adds one employee to a team, or changes whether that member manages it.
+	 *
+	 * The same service method `POST /organization-team/:id/members` calls, under the permission that route
+	 * states — the set-based edit's own, because this rides on it: the service reads the team's members, adds
+	 * this one and hands the whole set to that edit, so who may edit which team is decided once. An employee
+	 * outside the organization is refused. Leaving `isManager` out keeps an existing member's role.
+	 */
+	@Mutation('addTeamMember')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	async addTeamMember(@Args('input') input: IAddTeamMemberInput): Promise<IOrganizationTeam> {
+		const { organizationTeamId, organizationId, employeeId, isManager } = input;
+
+		return await this.organizationTeamService.addMember(organizationTeamId, {
+			organizationId,
+			employeeId,
+			...(isManager === undefined || isManager === null ? {} : { isManager })
+		});
 	}
 
 	/**
