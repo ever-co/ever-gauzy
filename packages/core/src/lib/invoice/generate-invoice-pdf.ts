@@ -1,9 +1,11 @@
 import {
+	DiscountTaxTypeEnum,
 	IInvoice,
 	IOrganization,
 	IOrganizationContact,
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
+import { formatCurrencyAmount } from './invoice-currency.util';
 
 export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
@@ -12,13 +14,30 @@ export async function generateInvoicePdfDefinition(
 	translatedText?: any,
 	language?: string
 ) {
+	// Every amount follows the organization's "Currency Position" setting, like the web app does.
+	const amount = (value: number | string) =>
+		formatCurrencyAmount(value, invoice.currency, organization?.currencyPosition);
+
+	// A tax or discount is a flat amount, a percentage, or — when its type was never set on the
+	// invoice — a bare number, which must not be dressed up as a percentage.
+	const taxOrDiscount = (value: number | string, type?: DiscountTaxTypeEnum | string) => {
+		switch (type) {
+			case DiscountTaxTypeEnum.FLAT_VALUE:
+				return amount(value);
+			case DiscountTaxTypeEnum.PERCENT:
+				return `${value}%`;
+			default:
+				return `${value}`;
+		}
+	};
+
 	const body = [];
 	for (const item of invoice.invoiceItems) {
 		const currentItem = [
 			`${item.description}`,
 			`${item.quantity}`,
-			`${invoice.currency} ${item.price}`,
-			`${invoice.currency} ${item.totalValue}`
+			amount(item.price),
+			amount(item.totalValue)
 		];
 		switch (invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
@@ -185,9 +204,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax}${invoice.taxType === 'PERCENT' ? '%' : ''
-							}`
+						text: taxOrDiscount(invoice.tax, invoice.taxType)
 					}
 				]
 			},
@@ -207,9 +224,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax2}${invoice.tax2Type === 'PERCENT' ? '%' : ''
-							}`
+						text: taxOrDiscount(invoice.tax2, invoice.tax2Type)
 					}
 				]
 			},
@@ -229,11 +244,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.discountType === 'FLAT'
-								? invoice.currency
-								: ''
-							} ${invoice.discountValue}${invoice.discountType === 'PERCENT' ? '%' : ''
-							}`
+						text: taxOrDiscount(invoice.discountValue, invoice.discountType)
 					}
 				]
 			},
@@ -244,7 +255,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						bold: true,
 						alignment: 'right',
-						text: `${translatedText.totalValue}: ${invoice.currency} ${invoice.totalValue}`
+						text: `${translatedText.totalValue}: ${amount(invoice.totalValue)}`
 					}
 				]
 			},
@@ -255,12 +266,12 @@ export async function generateInvoicePdfDefinition(
 					? [
 						{
 							width: '50%',
-							text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
+							text: `${translatedText.alreadyPaid}: ${amount(invoice.alreadyPaid)}`
 						},
 						{
 							alignment: 'right',
 							width: '50%',
-							text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
+							text: `${translatedText.amountDue}: ${amount(invoice.amountDue)}`
 						}
 					]
 					: []
