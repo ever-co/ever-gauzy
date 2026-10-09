@@ -4,6 +4,7 @@ import {
 	ConnectionFilter,
 	ConnectionFieldKind,
 	MAX_CONNECTION_PAGE_SIZE,
+	applyConnectionFilter,
 	buildConnection,
 	connectionFromOffsetPage,
 	connectionFromPage,
@@ -462,5 +463,103 @@ describe('resolveConnectionWindow — the window a cursor names', () => {
 
 		expect(thrown).toBeInstanceOf(BadRequestException);
 		expect((thrown as BadRequestException).getStatus()).toBe(400);
+	});
+});
+
+describe('applyConnectionFilter — `like` and `ilike` are decided in linear time', () => {
+	/**
+	 * The expression the matcher replaced, verbatim, for comparison on short inputs only: the pattern
+	 * escaped, `%` read as `.*`, `_` as `.`, anchored, with `i` for `ilike`.
+	 */
+	function previousLike(value: string, pattern: string, caseInsensitive: boolean): boolean {
+		const escaped = String(pattern).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const translated = escaped.split('%').join('.*').split('_').join('.');
+
+		return new RegExp(`^${translated}$`, caseInsensitive ? 'i' : '').test(value);
+	}
+
+	/** Whether the one-row filter keeps the row. */
+	function matches(value: string, operator: 'like' | 'ilike', pattern: string): boolean {
+		const filter = { name: { [operator]: pattern } } as ConnectionFilter;
+
+		return applyConnectionFilter([{ name: value }], filter, { name: 'STRING' }).length === 1;
+	}
+
+	/** A deterministic generator, so a failure names a case that can be replayed. */
+	function generator(seed: number): () => number {
+		let state = seed >>> 0;
+
+		return () => {
+			state = (state * 1664525 + 1013904223) >>> 0;
+
+			return state / 0x100000000;
+		};
+	}
+
+	it.each([
+		['like', 'Widget', 'Widget', true],
+		['like', 'Widget', 'widget', false],
+		['ilike', 'Widget', 'widget', true],
+		['like', 'Widget', 'Wid%', true],
+		['like', 'Widget', '%dge_', true],
+		['like', 'Widget', '%dge', false],
+		['like', 'Widget', 'W_dget', true],
+		['like', 'Widget', '%', true],
+		['like', '', '%', true],
+		['like', '', '_', false],
+		['like', 'a.b', 'a.b', true],
+		['like', 'axb', 'a.b', false],
+		['like', 'a(b)*c', 'a(b)*c', true],
+		['like', 'back\\slash', 'back\\slash', true],
+		['like', 'two\nlines', 'two%', false],
+		['like', 'two\nlines', 'two_lines', false],
+		['like', 'two\nlines', 'two\nlines', true],
+		['ilike', 'STRASSE', 'straße', false],
+		['ilike', 'ΣΟΦΙΑ', 'σοφια', true]
+	] as const)('%s keeps %j against %j: %s', (operator, value, pattern, expected) => {
+		expect(matches(value, operator, pattern)).toBe(expected);
+		expect(previousLike(value, pattern, operator === 'ilike')).toBe(expected);
+	});
+
+	it('answers what the previous expression answered, on generated values and patterns', () => {
+		// Built from the two wildcards, every metacharacter the expression escaped, the line terminators
+		// `.` refused, and letters whose case folding is irregular without the `u` flag.
+		// The second, narrow alphabet is there so that a good share of the cases match at all.
+		const alphabets = [[...'%_aAb.*\\([^$\n\r\u2028ßſsSσςΣéÉKk\u212a'], [...'%_aA\n']];
+		const random = generator(20261009);
+		const draw = (alphabet: string[], length: number): string =>
+			Array.from({ length }, () => alphabet[Math.floor(random() * alphabet.length)]).join('');
+		let matched = 0;
+
+		for (let run = 0; run < 8000; run += 1) {
+			const alphabet = alphabets[run % 2];
+			const pattern = draw(alphabet, Math.floor(random() * 7));
+			const value = draw(alphabet, Math.floor(random() * 9));
+
+			matched += previousLike(value, pattern, true) ? 1 : 0;
+
+			for (const operator of ['like', 'ilike'] as const) {
+				expect([operator, value, pattern, matches(value, operator, pattern)]).toEqual([
+					operator,
+					value,
+					pattern,
+					previousLike(value, pattern, operator === 'ilike')
+				]);
+			}
+		}
+
+		// Control: a generator that never produced a match would agree on `false` and prove nothing.
+		expect(matched).toBeGreaterThan(300);
+	});
+
+	it('answers a pattern of many wildcards against a long value without backtracking', () => {
+		// Measured on Node with the previous expression: this pattern took 0.24 s against thirty `a`s, 3.3 s
+		// against forty and 25 s against fifty. Five thousand is nothing to a walk that reads each one once.
+		const pattern = '%a%a%a%a%a%a%a%a%b';
+		const started = Date.now();
+
+		expect(matches('a'.repeat(5_000), 'like', pattern)).toBe(false);
+		expect(matches(`${'a'.repeat(5_000)}b`, 'ilike', pattern)).toBe(true);
+		expect(Date.now() - started).toBeLessThan(2_000);
 	});
 });

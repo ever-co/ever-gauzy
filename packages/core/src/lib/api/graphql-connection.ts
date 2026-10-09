@@ -232,20 +232,103 @@ function compare(left: unknown, right: unknown): number {
 }
 
 /**
- * Translates a `like`/`ilike` pattern into a regular expression.
- *
- * `%` and `_` are the protocol's wildcards and nothing else is: a pattern is text a caller wrote,
- * not a regular expression, so the pattern is escaped before the two wildcards are reinstated.
- *
- * @param pattern The pattern.
- * @param caseInsensitive Whether the match ignores case.
- * @returns The expression.
+ * @param unit One UTF-16 code unit.
+ * @returns Whether it is a line terminator — the characters `.` does not match without the `s` flag.
  */
-function patternToRegExp(pattern: string, caseInsensitive: boolean): RegExp {
-	const escaped = String(pattern).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	const translated = escaped.split('%').join('.*').split('_').join('.');
+function isLineTerminator(unit: string): boolean {
+	return unit === '\n' || unit === '\r' || unit === '\u2028' || unit === '\u2029';
+}
 
-	return new RegExp(`^${translated}$`, caseInsensitive ? 'i' : '');
+/**
+ * One code unit as a case-insensitive expression without the `u` flag compares it (ECMA-262
+ * `Canonicalize`): upper-cased when that yields a single code unit, and never folded from outside
+ * ASCII into it — so `ß` stays `ß` and the long `ſ` does not become `S`.
+ *
+ * @param unit One UTF-16 code unit.
+ * @returns Its canonical form.
+ */
+function canonicalCase(unit: string): string {
+	const upper = unit.toUpperCase();
+
+	if (upper.length !== 1 || (unit.charCodeAt(0) >= 128 && upper.charCodeAt(0) < 128)) {
+		return unit;
+	}
+
+	return upper;
+}
+
+/**
+ * Whether a value matches a `like`/`ilike` pattern.
+ *
+ * `%` and `_` are the protocol's wildcards and nothing else is: a pattern is text a caller wrote, not a
+ * regular expression, so every other character stands for itself. The answer is exactly the one the
+ * expression this replaced gave — the pattern escaped, `%` read as `.*` and `_` as `.`, anchored as
+ * `^…$`, with `i` for `ilike` — so neither wildcard crosses a line terminator, as `.` does not, and case
+ * is folded the way that expression folded it.
+ *
+ * It is decided without a backtracking engine. The expression gave the engine one choice point per `%`,
+ * and the caller writes the pattern: `%a%a%a%a%a%a%a%a%b` against a fifty-character value took 25 s on
+ * the event loop, once per row. Here the value is walked once, carrying the set of pattern positions
+ * reachable so far, which costs the value's length times the pattern's whatever the pattern holds.
+ *
+ * @param value The row's value.
+ * @param pattern The pattern the caller stated.
+ * @param caseInsensitive Whether the match ignores case (`ilike`).
+ * @returns True when the whole value matches the whole pattern.
+ */
+function matchesLikePattern(value: string, pattern: string, caseInsensitive: boolean): boolean {
+	const units = String(pattern).split('');
+	const literal = caseInsensitive ? units.map(canonicalCase) : units;
+	const size = units.length;
+
+	/** Marks every position a run of `%` lets the walk reach without consuming anything. */
+	const close = (reachable: Uint8Array): void => {
+		for (let position = 0; position < size; position += 1) {
+			if (reachable[position] && units[position] === '%') {
+				reachable[position + 1] = 1;
+			}
+		}
+	};
+
+	let reachable = new Uint8Array(size + 1);
+
+	reachable[0] = 1;
+	close(reachable);
+
+	for (let index = 0; index < value.length; index += 1) {
+		const unit = value[index];
+		const compared = caseInsensitive ? canonicalCase(unit) : unit;
+		const wildcardMatches = !isLineTerminator(unit);
+		const next = new Uint8Array(size + 1);
+		let any = false;
+
+		for (let position = 0; position < size; position += 1) {
+			if (!reachable[position]) {
+				continue;
+			}
+
+			const token = units[position];
+
+			if (token === '%') {
+				if (wildcardMatches) {
+					next[position] = 1;
+					any = true;
+				}
+			} else if (token === '_' ? wildcardMatches : literal[position] === compared) {
+				next[position + 1] = 1;
+				any = true;
+			}
+		}
+
+		if (!any) {
+			return false;
+		}
+
+		close(next);
+		reachable = next;
+	}
+
+	return reachable[size] === 1;
 }
 
 /**
@@ -331,10 +414,10 @@ function matchesCondition(value: unknown, condition: ConnectionCondition, kind: 
 				}
 				break;
 			case 'like':
-				if (typeof value !== 'string' || !patternToRegExp(String(stated), false).test(value)) return false;
+				if (typeof value !== 'string' || !matchesLikePattern(value, String(stated), false)) return false;
 				break;
 			case 'ilike':
-				if (typeof value !== 'string' || !patternToRegExp(String(stated), true).test(value)) return false;
+				if (typeof value !== 'string' || !matchesLikePattern(value, String(stated), true)) return false;
 				break;
 			case 'gt':
 				if (value === null || value === undefined || compare(onScale(value), onScale(stated)) <= 0) return false;
