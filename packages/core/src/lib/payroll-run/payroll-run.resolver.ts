@@ -23,7 +23,7 @@ import {
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
-import { PayrollRunService } from './payroll-run.service';
+import { IPayrollItemUpdateInput, PayrollRunService } from './payroll-run.service';
 
 /** The members `CreatePayrollRunInput` declares in the schema. */
 export interface ICreatePayrollRunInput {
@@ -53,6 +53,36 @@ export interface ICreatePayrollItemInput extends Omit<IPayrollItemCreateInput, '
 	type: string;
 	category: string;
 }
+
+/** The members `UpdatePayrollItemInput` declares in the schema. */
+export interface IUpdatePayrollItemInput extends Omit<IPayrollItemUpdateInput, 'type' | 'category'> {
+	organizationId: Id;
+	type?: string;
+	category?: string;
+}
+
+/** The fields a payroll line list may be filtered and sorted by. */
+const PAYROLL_ITEM_FILTERABLE = {
+	id: 'ID',
+	payrollRunId: 'ID',
+	employeeId: 'ID',
+	type: 'STRING',
+	category: 'STRING',
+	description: 'STRING',
+	amount: 'DECIMAL',
+	taxable: 'BOOLEAN',
+	createdAt: 'DATE',
+	updatedAt: 'DATE'
+} as const;
+
+/** The fields the sort enum offers. */
+const PAYROLL_ITEM_SORTABLE = ['createdAt', 'updatedAt', 'amount', 'type', 'category'] as const;
+
+/** Newest first — the delivered read's own order — with the identifier as the key that makes it total. */
+const PAYROLL_ITEM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
+	{ field: 'createdAt', direction: 'DESC' },
+	{ field: 'id', direction: 'DESC' }
+];
 
 /**
  * The fields a payroll run list may be filtered and sorted by, and the order it is returned in when the
@@ -205,6 +235,49 @@ export class PayrollRunResolver {
 	}
 
 	/**
+	 * The payroll lines of one organization across its runs, newest first, optionally narrowed to one run
+	 * or one employee.
+	 *
+	 * The read `GET /payroll-run/items` performs, through the same service method and under the view grant.
+	 * The service scopes it by the caller's tenant and the organization named, and pages it at the store the
+	 * way the run list is paged — so the page size stated here is handed through, and the connection then
+	 * narrows and orders the rows that page answered. Lines are removed outright rather than withdrawn, so
+	 * there is no `withDeleted` to offer.
+	 */
+	@Query('payrollItems')
+	@Permissions(PermissionsEnum.ORG_PAYROLL_VIEW)
+	async payrollItems(
+		@Args('organizationId', { type: () => ID }) organizationId: Id,
+		@Args('payrollRunId', { type: () => ID, nullable: true }) payrollRunId?: Id,
+		@Args('employeeId', { type: () => ID, nullable: true }) employeeId?: Id,
+		@Args('filter') filter?: ConnectionFilter,
+		@Args('sort') sort?: ConnectionSortKey[],
+		@Args('page') page?: ConnectionPageRequest,
+		@Args('first', { type: () => Int, nullable: true }) first?: number,
+		@Args('after', { type: () => String, nullable: true }) after?: string,
+		@Args('last', { type: () => Int, nullable: true }) last?: number,
+		@Args('before', { type: () => String, nullable: true }) before?: string,
+		@Args('limit', { type: () => Int, nullable: true }) limit?: number,
+		@Args('offset', { type: () => Int, nullable: true }) offset?: number
+	): Promise<GraphqlConnection<IPayrollItem>> {
+		const take = limit ?? first ?? last;
+		const { items }: IPagination<IPayrollItem> = await this.payrollRunService.findItems({
+			organizationId,
+			...(payrollRunId ? { payrollRunId } : {}),
+			...(employeeId ? { employeeId } : {}),
+			...(take === undefined || take === null ? {} : { limit: Math.min(Math.max(1, take), 100) })
+		});
+
+		return buildConnection<IPayrollItem>({
+			rows: items ?? [],
+			filterable: PAYROLL_ITEM_FILTERABLE,
+			sortable: PAYROLL_ITEM_SORTABLE,
+			defaultSort: PAYROLL_ITEM_DEFAULT_SORT,
+			request: { filter, sort, page, first, last, after, before, limit, offset }
+		});
+	}
+
+	/**
 	 * Total pay across every paid run of one organization, grouped by currency.
 	 *
 	 * The same service call the delivered statistics route makes. The grouping, the cents arithmetic and
@@ -335,6 +408,32 @@ export class PayrollRunResolver {
 		@Args('input') input: ICreatePayrollItemInput
 	): Promise<IPayrollItem> {
 		return await this.payrollRunService.addItem(id, input as unknown as IPayrollItemCreateInput);
+	}
+
+	/**
+	 * Edits one line of a draft run and recomputes the run's totals from its lines.
+	 *
+	 * The same service method `PUT /payroll-run/:id/items/:itemId` calls, under the same edit grant. The run
+	 * and the line are the identifiers, never input members; the organization is the one the run is read
+	 * under. A line of a run that is not a draft is refused, a line moved to another employee must move to
+	 * one of the same organization, and the totals are recomputed in integer cents — every rule the service's
+	 * own, exactly as for an added or a removed line.
+	 */
+	@Mutation('updatePayrollItem')
+	@Permissions(PermissionsEnum.ORG_PAYROLL_EDIT)
+	async updatePayrollItem(
+		@Args('id', { type: () => ID }) id: Id,
+		@Args('itemId', { type: () => ID }) itemId: Id,
+		@Args('input') input: IUpdatePayrollItemInput
+	): Promise<IPayrollItem> {
+		const { organizationId, ...changes } = input;
+
+		return await this.payrollRunService.updateItem(
+			id,
+			itemId,
+			organizationId,
+			changes as unknown as IPayrollItemUpdateInput
+		);
 	}
 
 	/**

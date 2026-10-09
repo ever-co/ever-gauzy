@@ -316,3 +316,84 @@ input CreatePayrollItemInput {
 	"Whether the amount is subject to tax. Omit for the delivered default, which is taxable."
 	taxable: Boolean
 }
+
+"""
+What a caller states when it edits one line of a draft run. A member left out is left as it is.
+"""
+input UpdatePayrollItemInput {
+	"The organization the run belongs to. The run is read under it."
+	organizationId: ID!
+	"The employee the line is paid to. Must be an employee of the same organization."
+	employeeId: ID
+	"What the line represents. The delivered vocabulary is the platform's own."
+	type: String
+	"Whether the line adds to or subtracts from net pay: `EARNING` or `DEDUCTION`."
+	category: String
+	"What the line is for."
+	description: String
+	"Always a positive amount; the category decides the sign."
+	amount: Decimal
+	"How many units the line covers, when it is a rate."
+	quantity: Decimal
+	"The rate one unit is paid at, when it is a rate."
+	unitPrice: Decimal
+	"Whether the amount is subject to tax."
+	taxable: Boolean
+}
+
+"""
+The boundary of one page of payroll lines.
+"""
+type PayrollItemEdge {
+	node: PayrollItem!
+	cursor: String!
+}
+
+"""
+One page of payroll lines, with the total the filters select and the boundary cursors.
+"""
+type PayrollItemConnection {
+	nodes: [PayrollItem!]!
+	edges: [PayrollItemEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a payroll line list may be sorted by.
+"""
+enum PayrollItemSortField {
+	createdAt
+	updatedAt
+	amount
+	type
+	category
+}
+
+"""
+The order the lines are returned in. At most three keys are accepted.
+"""
+input PayrollItemSort {
+	field: PayrollItemSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a payroll line list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it. The organization is an argument of the root field, not a filter.
+"""
+input PayrollItemFilter {
+	id: IDFilter
+	payrollRunId: IDFilter
+	employeeId: IDFilter
+	type: StringFilter
+	category: StringFilter
+	description: StringFilter
+	amount: DecimalFilter
+	taxable: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [PayrollItemFilter!]
+	or: [PayrollItemFilter!]
+	not: PayrollItemFilter
+}
