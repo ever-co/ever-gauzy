@@ -4061,7 +4061,8 @@
 		"ROLES_PERMISSIONS": "Роли и права",
 		"TIME_TRACKING": "Проследяване на време",
 		"ESTIMATE": "Оценка",
-		"DASHBOARD": "Табло"
+		"DASHBOARD": "Табло",
+		"DOCUMENTS": "Документи"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4159,6 +4160,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Централно място за фирмените документи: качване, уики страници, преглед и знания за ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

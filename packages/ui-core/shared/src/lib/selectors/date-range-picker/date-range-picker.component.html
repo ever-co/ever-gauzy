@@ -1,6 +1,6 @@
 <div class="row col-auto">
 	<div class="filter-input">
-		<div class="custom-input" (click)="openDatepicker($event)">
+		<div class="custom-input" (click)="openDatepicker($event)" (keydown)="onControlKeydown($event)">
 			@if (arrows) {
 			<button size="tiny" nbButton status="primary" outline (click)="previousRange()">
 				<nb-icon icon="arrow-ios-back-outline"></nb-icon>
@@ -9,7 +9,16 @@
 				<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 			</button>
 			}
-			<i class="far fa-calendar"></i>
+			<!-- A native button so the picker opens from the keyboard too (Enter/Space); the library
+				 only opens on a pointer click of its <input>. -->
+			<button
+				type="button"
+				class="calendar-trigger"
+				[attr.aria-label]="'HEADER.SELECT_A_DATE' | translate"
+				(click)="openDatepicker($event)"
+			>
+				<i class="far fa-calendar" aria-hidden="true"></i>
+			</button>
 			<input
 				nbInput
 				name="date-range"

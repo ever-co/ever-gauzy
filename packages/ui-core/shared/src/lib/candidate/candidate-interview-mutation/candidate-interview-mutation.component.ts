@@ -5,6 +5,7 @@ import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
 	ICandidate,
 	ICandidateInterview,
+	ICandidateInterviewers,
 	IEmployee,
 	IDateRange,
 	ICandidatePersonalQualities,
@@ -285,14 +286,17 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	}
 
 	async editInterview() {
-		let deletedIds = [];
+		let removedInterviewers: ICandidateInterviewers[] = [];
 		let newIds = [];
-		let updatedInterview;
-		const oldIds = this.editData.interviewers.map((item) => item.employeeId);
+		const oldIds = new Set(this.editData.interviewers.map((item) => item.employeeId));
 		if (this.interview.interviewers) {
-			deletedIds = oldIds.filter((item) => !this.interview.interviewers.includes(item));
-			newIds = this.interview.interviewers.filter((item: string) => !oldIds.includes(item));
+			removedInterviewers = this.editData.interviewers.filter(
+				({ employeeId }) => !this.interview.interviewers.includes(employeeId)
+			);
+			newIds = this.interview.interviewers.filter((item: string) => !oldIds.has(item));
 		}
+
+		let updatedInterview;
 		try {
 			this.updateCriterions(this.editData.personalQualities, this.editData.technologies);
 			updatedInterview = await this.candidateInterviewService.update(this.interviewId, {
@@ -304,8 +308,23 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
+			// The interview was not saved: leave its interviewers as they were
+			this.interviewId = null;
+			return;
 		}
-		await this.candidateInterviewersService.deleteBulkByEmployeeId(deletedIds);
+
+		// Delete the deselected interviewers' own rows. The bulk endpoint expects `{ employeeId }` objects
+		// (plain ids were ignored, so nobody was ever removed) and is not scoped to this interview.
+		// Each deletion stands on its own: a failure is reported, and neither the other deletions nor the
+		// additions below are skipped because of it.
+		const deletions = await Promise.allSettled(
+			removedInterviewers.map(({ id }) => this.candidateInterviewersService.delete(id))
+		);
+		for (const deletion of deletions) {
+			if (deletion.status === 'rejected') {
+				this.errorHandler.handleError(deletion.reason);
+			}
+		}
 		this.addInterviewers(this.interviewId, newIds);
 		this.interviewId = null;
 		return updatedInterview;

@@ -1,0 +1,42 @@
+{
+	"$comment": "Every endpoint of this module that answers without an organization permission or the operator check (public or signed-in only), and every request Ever Platform makes to an installation through it. routes-manifest.spec.ts compares it with the registered routes; UPDATE_ROUTES_MANIFEST=1 rewrites the method and path list.",
+	"version": 1,
+	"product": "gauzy",
+	"module": "ever-connect",
+	"public_endpoints": [
+		{
+			"method": "GET",
+			"path": "/api/ever-connect/health",
+			"auth": "signed_in",
+			"mounted_when": "EVER_STATS_SERVES contains teams",
+			"answers": "{\"connected\": true|false}",
+			"purpose": "The paired Ever Teams web app asks it, with the signed-in person's token, whether this installation is connected to Ever Platform."
+		}
+	],
+	"platform_requests": [
+		{
+			"method": "GET",
+			"path": "/api/ever-connect/usage",
+			"auth": "platform",
+			"mounted": false,
+			"answers": "ever.usage.v1 (counts only)",
+			"purpose": "Not in this release. Will answer Ever Platform's count of employees and users of a linked organization, only while the usage reporting integration is enabled for it."
+		},
+		{
+			"method": "GET",
+			"path": "/api/ever-connect/provision",
+			"auth": "platform_intent",
+			"mounted": false,
+			"answers": "a confirmation page",
+			"purpose": "Not in this release. Will receive a signed provisioning intent from Ever Platform."
+		},
+		{
+			"method": "POST",
+			"path": "/api/ever-connect/provision",
+			"auth": "platform_intent",
+			"mounted": false,
+			"answers": "the provisioning result",
+			"purpose": "Not in this release. Will complete a signed provisioning intent after the operator's confirmation."
+		}
+	]
+}

@@ -172,7 +172,7 @@
 		<button (click)="dialogRef.close()" status="basic" class="mr-2" outline nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [disabled]="form.invalid" (click)="saveEquipment()" status="success" nbButton>
+		<button [disabled]="form.invalid || loading" (click)="saveEquipment()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

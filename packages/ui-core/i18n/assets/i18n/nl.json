@@ -4009,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Rollen & Machtigingen",
 		"TIME_TRACKING": "Tijdregistratie",
 		"ESTIMATE": "Schatting",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documenten"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4107,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ga naar het dashboard, Beheer personeelsstatistieken, Tijdregistratie-dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centrale plek voor bedrijfsdocumenten: uploads, wikipagina's, beoordeling en AI-kennis"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {

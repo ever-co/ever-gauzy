@@ -132,8 +132,8 @@ export interface ProductScopedCheckoutSession {
  *
  * `metadata.ever_product` is what the shared checkout stamps on every subscription it creates. The
  * lookup-key branch covers subscriptions made in the Stripe Dashboard or the customer portal, which
- * carry no metadata but still sit on a catalog price. Only the FIRST item is read: it is the plan
- * (add-ons come after it) and it is the item `changePlan` operates on.
+ * carry no metadata but still sit on a catalog price. Only the plan item is read (`planItemOf`: the
+ * first item on a catalog price, wherever a per-employee add-on sits), the item `changePlan` operates on.
  *
  * A self-hosted license of the same product is refused on either signal: `ever_hosting` other than
  * `cloud`, or a plan price of this product that is not an `ever_<product>_cloud_` price.
@@ -149,7 +149,7 @@ export function subscriptionIsForProduct(
 ): boolean {
 	if (!subscription || !product) return false;
 	if (!hostingIsCloud(subscription.metadata)) return false;
-	const lookupKey = subscription.items?.data?.[0]?.price?.lookup_key;
+	const lookupKey = planItemOf(subscription)?.price?.lookup_key;
 	const metadataProduct = subscription.metadata?.ever_product;
 	if (typeof lookupKey === 'string' && CATALOG_LOOKUP_KEY.test(lookupKey)) {
 		return lookupKey.startsWith(cloudLookupKeyPrefix(product)) && (!metadataProduct || metadataProduct === product);
@@ -159,6 +159,27 @@ export function subscriptionIsForProduct(
 
 /** Any catalog lookup key: `ever_<product>_<hosting>_...`. */
 const CATALOG_LOOKUP_KEY = /^ever_[a-z0-9]+_/;
+
+/** Prefix of a plan's per-employee add-on price: `seat_<plan lookup key>`. */
+export const SEAT_LOOKUP_KEY_PREFIX = 'seat_';
+
+/** The lookup key of the per-employee add-on price that belongs to a plan price. */
+export function seatLookupKey(planLookupKey: string): string {
+	return `${SEAT_LOOKUP_KEY_PREFIX}${planLookupKey}`;
+}
+
+/**
+ * The plan item of a subscription: the first item on a catalog price (`ever_<product>_...`), or the
+ * first item when none is. The shared checkout puts the plan first and an optional per-employee
+ * add-on (`seat_<plan lookup key>`) after it, but nothing that edits the subscription later is bound
+ * to that order, so the plan is found by its price rather than by its position.
+ */
+export function planItemOf<T extends { price?: { lookup_key?: string | null } | null }>(
+	subscription: { items?: { data?: T[] } | null } | null | undefined
+): T | undefined {
+	const items = subscription?.items?.data ?? [];
+	return items.find((item) => CATALOG_LOOKUP_KEY.test(item?.price?.lookup_key ?? '')) ?? items[0];
+}
 
 /**
  * Whether a completed Checkout Session is a purchase of `product`'s HOSTED plan that can establish a
@@ -198,7 +219,7 @@ export function describeProduct(object: {
 	if (typeof metadata.ever_product === 'string' && metadata.ever_product) {
 		return clip(metadata.ever_product);
 	}
-	const lookupKey = object?.items?.data?.[0]?.price?.lookup_key;
+	const lookupKey = planItemOf(object)?.price?.lookup_key;
 	if (typeof lookupKey === 'string') {
 		const match = /^ever_([a-z0-9]+)_/.exec(lookupKey);
 		if (match) return clip(match[1]);
