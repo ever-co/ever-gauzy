@@ -12,7 +12,12 @@
 jest.mock('@gauzy/core', () => ({
 	ActivityLogModule: class ActivityLogModule {},
 	DatabaseModule: class DatabaseModule {},
+	EventOutboxDispatchScheduleModule: class EventOutboxDispatchScheduleModule {},
+	EventOutboxMaintenanceModule: class EventOutboxMaintenanceModule {},
+	IdempotencyMaintenanceModule: class IdempotencyMaintenanceModule {},
+	JobExecutionModule: class JobExecutionModule {},
 	MentionModule: class MentionModule {},
+	WebhookMaintenanceModule: class WebhookMaintenanceModule {},
 	TokenModule: { forRoot: jest.fn(() => ({ module: class TokenModule {} })) }
 }));
 
@@ -117,5 +122,34 @@ describe('worker AppModule', () => {
 
 		expect(rootIndex).toBeGreaterThanOrEqual(0);
 		expect(pluginIndex).toBeGreaterThan(rootIndex);
+	});
+
+	/**
+	 * The outbox dispatch pass runs where every event consumer is registered, and that is not here
+	 * (PR #10254 review: "Events skip required consumers").
+	 *
+	 * The registry a pass consults is the one of the process that runs it. This process does not load
+	 * the entitlement or search plugins, so a pass it took published `order.placed` once the consumers
+	 * it did know had settled, and `EntitlementGrantConsumer` never saw the event. The worker fires the
+	 * schedule (the API's scheduler root is `enabled: false`) and the API, which loads every
+	 * consumer-bearing module, runs the pass. The full maintenance module would also register the
+	 * queue's consumer here, which is exactly what must not happen.
+	 */
+	it('fires the outbox dispatch schedule and never hosts the pass that delivers it', async () => {
+		process.env.WORKER_QUEUE_ENABLED = 'true';
+
+		await jest.isolateModulesAsync(async () => {
+			const { AppModule: Isolated } = await import('./app.module');
+			const core = await import('@gauzy/core');
+			const order: any[] = Reflect.getMetadata(MODULE_METADATA.IMPORTS, Isolated) ?? [];
+
+			// A control first: the queue-gated maintenance modules are present, so an absence below is the
+			// wiring's choice and not a gate that evaluated to "no queue".
+			expect(order).toContain(core.IdempotencyMaintenanceModule);
+			expect(order).toContain(core.WebhookMaintenanceModule);
+
+			expect(order).toContain(core.EventOutboxDispatchScheduleModule);
+			expect(order).not.toContain(core.EventOutboxMaintenanceModule);
+		});
 	});
 });

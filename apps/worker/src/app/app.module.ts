@@ -1,7 +1,7 @@
 import {
 	ActivityLogModule,
 	DatabaseModule,
-	EventOutboxMaintenanceModule,
+	EventOutboxDispatchScheduleModule,
 	IdempotencyMaintenanceModule,
 	JobExecutionModule,
 	MentionModule,
@@ -66,9 +66,19 @@ import { WORKER_DEFAULT_QUEUE, WORKER_QUEUE_ENABLED, WORKER_SCHEDULER_ENABLED } 
 		 * `isSchedulerQueueRootEnabled()`: the jobs travel on a queue, a queue needs a root, and
 		 * registering a worker where there is no root is not a degraded schedule — it is a boot that
 		 * fails on `Worker requires a connection`.
+		 *
+		 * 🛑 **The outbox is the schedule only: this process fires the dispatch pass and never runs it.**
+		 * The pass hands each event to the consumers registered in the process that runs it, and marks
+		 * the row published once those have settled. The registry is process-local, and this process
+		 * does not host every consumer — the entitlement and search plugins are not loaded here, and
+		 * GraphQL subscribers are connected to the API — so a pass taken here published `order.placed`
+		 * without `EntitlementGrantConsumer` or the search index ever seeing it. The API imports the
+		 * full `EventOutboxMaintenanceModule` (its scheduler root is `enabled: false`, so there it is the
+		 * consumer only); this process imports `EventOutboxDispatchScheduleModule`, which registers the
+		 * queue and the per-minute job that enqueues onto it and no consumer of that queue.
 		 */
 		...(WORKER_QUEUE_ENABLED
-			? [IdempotencyMaintenanceModule, EventOutboxMaintenanceModule, WebhookMaintenanceModule]
+			? [IdempotencyMaintenanceModule, EventOutboxDispatchScheduleModule, WebhookMaintenanceModule]
 			: []),
 		/**
 		 * The ledger a scheduled pass is recorded in.
