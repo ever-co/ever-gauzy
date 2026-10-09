@@ -32,6 +32,11 @@ name: Build
 
 on:
   pull_request:
+    # Off by owner decision (2026-09-21): a pull request INTO develop does not start this workflow. The cost
+    # belonged to every commit on the branch being merged, and the run belongs to the merge - the push
+    # trigger below runs it when code lands on develop. PRs aimed at other branches still run it.
+    branches-ignore:
+      - develop
   push:
     branches:
       - develop
@@ -42,7 +47,26 @@ on:
 # group serializes unrelated builds and silently cancels them (see the image-build starvation
 # incident). Within this workflow+ref, only the newest commit is built.
 concurrency:
-  group: build-${{ github.workflow }}-${{ github.ref }}
+  # Keyed on the HEAD REF, not on `github.ref`, so the two events that fire for one commit land in
+  # the same group. `pull_request:` above is unfiltered, so while a release-cascade PR is open whose
+  # head is a build branch (today: #10257, `stage` -> `stage-apps`), a single push to `stage` starts
+  # BOTH a push run on `refs/heads/stage` AND a pull_request run on `refs/pull/10257/merge`. Under
+  # `github.ref` those are different strings, so neither cancelled the other and the fleet compiled
+  # the same tree twice — two 3-hour builds per push, for as long as the cascade PR stays open.
+  #
+  # The trade-off, stated plainly: the pull_request run builds the MERGE commit and the push run
+  # builds the branch head. For a fast-forward cascade those are the same tree and the second build
+  # is pure waste; if the base has diverged they differ, and collapsing them means only the newer
+  # event's view is compiled. That is acceptable here because no branch declares a required status
+  # check, so nothing is gated on the verdict that loses — but it IS a real narrowing, not a free win.
+  #
+  # Qualified by the head REPOSITORY as well as the ref. Fork pull requests are skipped at the job
+  # level, but a skipped job still creates a run that claims the group first — so without the repo
+  # in the key, a fork branch named `develop` could cancel a genuine `develop` build and then skip.
+  group: >-
+    build-${{ github.workflow }}-${{ github.event_name == 'pull_request'
+    && format('{0}@{1}', github.event.pull_request.head.repo.full_name, github.event.pull_request.head.ref)
+    || format('{0}@{1}', github.repository, github.ref_name) }}
   # Was `github.event_name == 'pull_request'`, which left branch pushes uncancelled:
   # four merges to develop in an hour meant four full 3-h compiles of commits that were
   # already superseded. This job only compiles — nothing outside the run depends on a
@@ -89,6 +113,9 @@ jobs:
 
       - name: Test native rebuild setup
         run: yarn test:postinstall
+
+      - name: Test release update-channel guard
+        run: yarn test:publish-channel
 
       - name: Restore node_modules archive
         id: cache
@@ -248,8 +275,11 @@ jobs:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
     timeout-minutes: 180
     services:
+      # Both service images come from the Amazon ECR Public mirror of the Docker official images
+      # (byte-identical: the Postgres digest is the one pinned before), not from Docker Hub, whose
+      # anonymous pull limit the shared runners hit (429 on develop, 2026-10-03).
       postgres:
-        image: postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+        image: public.ecr.aws/docker/library/postgres:18-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
         env:
           POSTGRES_USER: migration_test
           POSTGRES_PASSWORD: migration_test
@@ -259,6 +289,21 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U migration_test -d migration_test"
           --health-interval 5s --health-timeout 5s --health-retries 12
+      # cspell:words mysqladmin umigration pmigration corepack
+      # MySQL for the database suites of the anonymous usage statistics plugins, which run on all
+      # three engines Gauzy supports (SQLite in memory, Postgres and MySQL here).
+      mysql:
+        image: public.ecr.aws/docker/library/mysql:8.4@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242
+        env:
+          MYSQL_ROOT_PASSWORD: migration_test
+          MYSQL_DATABASE: migration_test
+          MYSQL_USER: migration_test
+          MYSQL_PASSWORD: migration_test
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -umigration_test -pmigration_test"
+          --health-interval 5s --health-timeout 5s --health-retries 24
     steps:
       - uses: actions/checkout@v4
 
@@ -323,6 +368,74 @@ jobs:
 
       - name: Test Ever Async integration boundary
         run: yarn nx run plugin-integration-ever-async:test-integration
+
+      - name: Test anonymous usage statistics on SQLite, PostgreSQL and MySQL
+        # The database suites of the statistics plugins on the three engines (Postgres in a schema
+        # of its own): migrations up/up/down, one identity under concurrent first boots, the operator
+        # rules (an address registered again in another tenant is never the operator), the sending
+        # lease, the counters and monthly totals of the collector itself, the canary, and the module
+        # inside an operator's request (counts of every tenant, nothing of the database leaks).
+        env:
+          EVER_STATS_TEST_POSTGRES_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
+          EVER_STATS_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
+        run: yarn nx run plugin-ever-stats:test-integration
+
+      - name: Test anonymous usage statistics against the Ever Platform mock
+        # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the
+        # exact version in the plugin's package.json, installed with the workspace), which validates,
+        # verifies and records every call: on, one report accepted and no other call;
+        # EVER_STATS_ENABLED=false and switched off in Settings, no call at all (Send now 409); a
+        # control without the mock that must not pass.
+        env:
+          EVER_STATS_MOCK_PLATFORM_URL: http://127.0.0.1:18080
+          EVER_STATS_MOCK_PLATFORM_REQUIRED: 'true'
+        run: |
+          TOOLS_DIR=$(node -p "require('node:path').dirname(require.resolve('@ever-co/connect-tools/package.json', { paths: ['packages/plugins/ever-stats'] }))")
+          node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18080 > "$RUNNER_TEMP/mock-platform.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:18080/__mock/healthz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:18080/__mock/healthz > /dev/null || { cat "$RUNNER_TEMP/mock-platform.log"; exit 1; }
+          yarn nx run plugin-ever-stats:test-mock-platform
+
+      - name: Test the Ever Platform connection on SQLite, PostgreSQL and MySQL
+        # The connection plugin's specs: the strict switch and settings, the integration definitions
+        # against the scopes of the pinned SDK contracts package, the route manifest, the audit
+        # allow-list; and on the three databases (Postgres in a schema of its own) the migration
+        # (up/up/down/up), the connection row and its leases, the catalog row under concurrent
+        # starts, documents stored encrypted, and the module's routes: operator routes 404 to
+        # everyone else, and nothing is sent or scheduled while the installation is not connected.
+        env:
+          EVER_CONNECT_TEST_POSTGRES_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
+          EVER_CONNECT_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
+        run: node node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathIgnorePatterns mock-platform
+
+      - name: Test the Ever Platform connection against the mock
+        # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the
+        # exact version in the plugin's package.json, installed with the workspace), which validates
+        # every body against the contract and records every call: connect (no address in the redeem),
+        # an installation-wide consent waiting for the operator's accept, switching off, the policy,
+        # links, the feed, revocation, disconnect, EVER_CONNECT_CODE used once, keys that cannot be
+        # verified refused before the code is used. Every call must be a documented row.
+        env:
+          EVER_CONNECT_MOCK_PLATFORM_URL: http://127.0.0.1:18081
+          EVER_CONNECT_MOCK_PLATFORM_REQUIRED: 'true'
+        run: |
+          TOOLS_DIR=$(node -p "require('node:path').dirname(require.resolve('@ever-co/connect-tools/package.json', { paths: ['packages/plugins/ever-connect'] }))")
+          node "$TOOLS_DIR/dist/mock-platform/bin/ever-mock-platform.mjs" --port 18081 > "$RUNNER_TEMP/mock-platform-connect.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:18081/__mock/healthz > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:18081/__mock/healthz > /dev/null || { cat "$RUNNER_TEMP/mock-platform-connect.log"; exit 1; }
+          yarn nx run plugin-ever-connect:test-mock-platform
+
+      - name: Test the API plugin list and its boot order
+        # The statistics plugin is in the list unless EVER_STATS_ENABLED=false, also when that is
+        # written only in .env or .env.local (read before the list is built); the Ever Platform
+        # connection only with EVER_CONNECT_ENABLED=true; every combination of the optional plugins.
+        run: node node_modules/jest/bin/jest.js -c apps/api/jest.config.ts --runInBand plugins.matrix
 
       - name: Build API
         run: yarn build:api:prod:ci

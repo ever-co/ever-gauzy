@@ -815,6 +815,7 @@
 		"SKILLS": "المهارات",
 		"PRIVACY": "الخصوصية",
 		"SELECT_TIMEZONE": "اختر المنطقة الزمنية",
+		"SELECT_TIMEZONE_HINT": "تُعرض أوقات المواعيد بهذه المنطقة الزمنية.",
 		"SHOW_AVERAGE_BONUS": "عرض المكافأة المتوسطة",
 		"SHOW_AVERAGE_INCOME": "عرض الدخل المتوسط",
 		"SHOW_PAYPERIOD": "عرض فترة الدفع",
@@ -1153,10 +1154,59 @@
 		"APPLICATIONS": "تطبيقات",
 		"OPEN_GA_BROWSER": "افتح Gauzy في المتصفح",
 		"START_SERVER": "تشغيل الخادم",
-		"STOP_SERVER": "توقف الخادم"
+		"STOP_SERVER": "توقف الخادم",
+		"DOCUMENTS": "المستندات",
+		"BILLING": "الفوترة",
+		"MONITORING": "المراقبة",
+		"ADD_ITEM": "إضافة {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "أنت فقط",
+			"TENANT": "كل من في هذا المستأجر"
+		},
+		"UNSAVED_CHANGES": "تغييرات غير محفوظة",
+		"ACCOUNT": {
+			"TITLE": "الحساب",
+			"DESCRIPTION": "الحساب الذي سجّلت الدخول به.",
+			"MANAGE": "إدارة الملف الشخصي",
+			"ROLE": "الدور",
+			"MEMBER_SINCE": "عضو منذ"
+		},
+		"PREFERENCES": {
+			"TITLE": "التفضيلات",
+			"DESCRIPTION": "كيف يبدو التطبيق ويتصرف بالنسبة لك. تُطبَّق التغييرات فورًا.",
+			"THEME": "السمة",
+			"THEME_HINT": "نظام ألوان التطبيق بأكمله.",
+			"LANGUAGE": "اللغة",
+			"LANGUAGE_HINT": "لغة القوائم والتسميات والرسائل.",
+			"LAYOUT": "التخطيط الافتراضي",
+			"RESET_LAYOUTS": "إعادة تعيين تخطيطات الصفحات",
+			"SAVE_ERROR": "تعذّر حفظ تفضيلك.",
+			"LAYOUTS_RESET": "تمت إعادة تخطيطات الصفحات إلى الافتراضي."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "صورة مربعة، 128 × 128 بكسل على الأقل.",
+			"NAME_HINT": "يظهر لكل مستخدمي هذا المستأجر.",
+			"TENANT_ID": "معرّف المستأجر",
+			"TENANT_ID_HINT": "اذكره عند التواصل مع الدعم أو استدعاء الواجهة البرمجية.",
+			"COPY_ERROR": "تعذّر نسخ معرّف المستأجر.",
+			"TITLE": "ملف المستأجر",
+			"DESCRIPTION": "اسم هذا المستأجر وشعاره، ويظهران في مبدّل مساحات العمل والشريط الجانبي لكل المستخدمين.",
+			"NAME": "اسم المستأجر",
+			"NAME_PLACEHOLDER": "أدخل اسم المستأجر",
+			"NAME_REQUIRED": "اسم المستأجر مطلوب.",
+			"LOGO": "شعار المستأجر",
+			"LOGO_CHANGE": "انقر لرفع شعار جديد",
+			"LOGO_REMOVE": "إزالة الشعار",
+			"LOGO_UPLOAD_ERROR": "تعذّر رفع الشعار.",
+			"CREATED_AT": "تاريخ الإنشاء",
+			"SAVED": "تم حفظ ملف المستأجر",
+			"SAVE_ERROR": "تعذّر حفظ ملف المستأجر.",
+			"LOAD_ERROR": "تعذّر تحميل ملف المستأجر."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "الواجهة",
 			"TITLE": "واجهة المستخدم",
 			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين.",
 			"OPTIONS": {
@@ -1751,6 +1801,19 @@
 		"TIME_TRACKING": "تتبع الوقت",
 		"PROJECT_MANAGEMENT": "إدارة المشاريع",
 		"EMPLOYEE_STATISTICS": "إحصاءات الموظفين",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "عبر {{ count }} موظفين",
+			"OF_INCOME": "{{ value }}% من الإيرادات",
+			"MARGIN": "هامش {{ value }}%",
+			"BREAKDOWN": "الأرباح حسب الموظف",
+			"NO_DATA": "لا يوجد نشاط مالي في هذه الفترة",
+			"NO_DATA_HINT": "ستظهر هنا الإيرادات والمصروفات المسجلة لهذا النطاق الزمني.",
+			"NO_EMPLOYEES": "لا توجد سجلات للموظفين في هذه الفترة",
+			"SORT_BY": "الترتيب حسب {{ name }}",
+			"SORT_LABEL": "ترتيب حسب",
+			"SORT_ASCENDING": "تصاعدي",
+			"SORT_DESCENDING": "تنازلي"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "يرجى تحديد شهر وموظف من القائمة أعلاه",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "أدخل النص للمستخدمين غير المصادق عليهم",
 		"CHARTS": {
@@ -1939,7 +2002,90 @@
 			"PREVIOUS": "السابق"
 		},
 		"NOT_STARTED": "لم يبدأ بعد",
-		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ."
+		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ.",
+		"VIEW": {
+			"PERIOD": "الفترة",
+			"PERIODS": {
+				"THIS_WEEK": "هذا الأسبوع",
+				"THIS_MONTH": "هذا الشهر",
+				"LAST_30_DAYS": "آخر 30 يومًا"
+			},
+			"TABS": {
+				"OVERVIEW": "نظرة عامة",
+				"PROFILE": "الملف الشخصي"
+			},
+			"PRESENCE": {
+				"TRACKING": "يسجّل الوقت",
+				"ONLINE": "متصل",
+				"AWAY": "بعيد",
+				"OFFLINE": "غير متصل"
+			},
+			"LOCAL_TIME": "الوقت المحلي",
+			"MEMBER_SINCE": "عضو منذ",
+			"WEEKLY_LIMIT": "الحد الأسبوعي",
+			"WORKED_TODAY": "عمل اليوم",
+			"WORKED_PERIOD": "عمل خلال الفترة",
+			"ACTIVITY_META": "نشاط {{ value }}",
+			"AVG_ACTIVITY": "متوسط النشاط",
+			"OPEN_TASKS": "المهام المفتوحة",
+			"OPEN_TASKS_META": "{{ progress }} قيد التنفيذ · {{ overdue }} متأخرة",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "مقارنة بالأسبوع الماضي",
+				"THIS_MONTH": "مقارنة بالشهر الماضي",
+				"LAST_30_DAYS": "مقارنة بالـ 30 يومًا السابقة"
+			},
+			"HOURS_WORKED": "ساعات العمل",
+			"HOURS_META": "{{ total }} إجمالي · {{ average }} لكل يوم عمل",
+			"TRACKED": "مسجّل",
+			"MANUAL": "يدوي",
+			"OPEN_TIMESHEET": "فتح سجل الدوام",
+			"PROJECTS": "المشاريع",
+			"RECENT_SCREENSHOTS": "لقطات الشاشة الأخيرة",
+			"VIEW_ALL": "عرض الكل",
+			"ASSIGNED_TASKS": "المهام المسندة",
+			"COLUMNS": {
+				"TASK": "المهمة",
+				"PROJECT": "المشروع",
+				"STATUS": "الحالة",
+				"DUE": "الاستحقاق",
+				"TIME": "الوقت",
+				"NAME": "الاسم",
+				"PRIORITY": "الأولوية"
+			},
+			"TOP_TASKS": "أكثر المهام عملًا",
+			"APPS_URLS": "التطبيقات والروابط",
+			"NO_TIME": "لم يُسجَّل وقت في هذه الفترة",
+			"NO_TASKS": "لا توجد مهام مسندة",
+			"NO_APPS": "لا يوجد نشاط للتطبيقات أو الروابط في هذه الفترة",
+			"NO_SCREENSHOTS": "لا توجد لقطات شاشة في هذه الفترة",
+			"UNAVAILABLE": "ليس لديك صلاحية الوصول إلى هذه البيانات",
+			"PROFILE": {
+				"ABOUT": "نبذة",
+				"CONTACT": "التواصل",
+				"SKILLS_TAGS": "المهارات والوسوم",
+				"TIME_ZONE": "المنطقة الزمنية",
+				"NOT_PROVIDED": "لم يُحدَّد بعد",
+				"NO_DESCRIPTION": "لم يُضف وصف بعد"
+			},
+			"TASKS_HELP": "المهام التي يشارك فيها هذا الشخص. اختر مربعًا لتصفية القائمة.",
+			"TASK_FILTERS": {
+				"OPEN": "مفتوحة",
+				"PROGRESS": "قيد التنفيذ",
+				"OVERDUE": "متأخرة",
+				"DONE": "منجزة"
+			},
+			"DUE": {
+				"NONE": "بلا موعد نهائي",
+				"WAS_DUE": "كان مستحقًا",
+				"OVERDUE_DAY": "متأخرة يومًا واحدًا",
+				"OVERDUE_DAYS": "متأخرة {{ count }} أيام",
+				"TODAY": "مستحقة اليوم",
+				"TOMORROW": "مستحقة غدًا",
+				"IN_DAYS": "خلال {{ count }} أيام"
+			},
+			"SHOWING": "عرض {{ shown }} من {{ total }} مهمة",
+			"NO_TASKS_IN_VIEW": "لا توجد مهام في هذا العرض"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "جميع الأهداف",
@@ -2437,6 +2583,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "السماح للموظف بالخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار الخروج في تطبيق العميل.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "السماح بتسجيل الخروج من تطبيق العميل",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "السماح للموظف بتسجيل الخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار تسجيل الخروج في تطبيق العميل.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "حماية العاملين في المنطقة الاقتصادية الأوروبية / المملكة المتحدة مفعّلة",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "بالنسبة للمؤسسات والعاملين في المنطقة الاقتصادية الأوروبية أو المملكة المتحدة، يمكن للعاملين دائمًا الخروج من وكيل سطح المكتب وتسجيل الخروج منه. يصعب تبرير التسجيل الذي لا يستطيع العامل إيقافه بموجب اللائحة العامة لحماية البيانات والمادة 8 من الاتفاقية الأوروبية لحقوق الإنسان، لذا فإن هذه القيود غير متاحة هنا.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "تأكيد تقييد الخروج من الوكيل أو تسجيل الخروج منه",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "مع هذا القيد لا يستطيع العامل إيقاف تسجيل وكيل سطح المكتب له. أكّد أنك قيّمت ذلك على أنه قانوني ومتناسب لهؤلاء العاملين وأنك تتحمل المسؤولية عنه. يُسجَّل تأكيدك على حسابك.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "تتبع نشاط لوحة المفاتيح والماوس",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "تمكين تتبع كامل لنشاط لوحة المفاتيح والماوس، بما في ذلك ضغطات المفاتيح وحركات الماوس الدقيقة في جميع تطبيقات سطح المكتب والوكيل.",
 				"TRACK_ALL_DISPLAYS": "تتبع جميع الشاشات",
@@ -2694,7 +2844,10 @@
 		"ADDRESS": "عنوان",
 		"ADDRESS_2": "العنوان 2",
 		"MEMBERS": "أعضاء",
-		"BUDGET": "الميزانية"
+		"BUDGET": "الميزانية",
+		"PHOTO_HINT": "انقر أو أفلت صورة لرفعها",
+		"SEARCH_EMPLOYEES": "ابحث عن الموظفين بالاسم أو البريد الإلكتروني",
+		"NO_MEMBERS": "لم تتم إضافة أعضاء بعد"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "اللغات",
@@ -2727,7 +2880,19 @@
 		"EMPLOYEE_UPDATED": "تم تحديث الموظف.",
 		"IMAGE_UPDATED": "تم تحديث الصورة.",
 		"FAIL_TO_UPDATE_IMAGE": "فشل التحديث.",
-		"ANONYMOUS": "مجهول"
+		"ANONYMOUS": "مجهول",
+		"ABOUT": "نبذة",
+		"INACTIVE": "غير نشط",
+		"PER_HOUR": "/ ساعة",
+		"MEMBER_SINCE": "عضو منذ",
+		"NO_DESCRIPTION": "لم يُضف وصف بعد",
+		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
+		"EDIT": {
+			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"ADD_AWARD": "إضافة جائزة",
+			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "صفحة إدارة الاقتراحات",
@@ -3682,9 +3847,28 @@
 		"DICTATION_KEY_REJECTED": "رفض مزوّد الصوت مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الصوت مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
 		"DICTATION_OPEN_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "الفئة المجانية للذكاء الاصطناعي بلغت حد الطلبات حاليًا. اربط حسابك الخاص في OpenRouter أو اضبط مزوّد ذكاء اصطناعي آخر للاستخدام دون انقطاع.",
+		"RATE_LIMITED_OWN": "مزوّد الذكاء الاصطناعي لديك يحدّ من الطلبات حاليًا. تحقّق من خطتك وحدودك لدى المزوّد، أو اضبط مزوّد ذكاء اصطناعي آخر.",
+		"RATE_LIMIT_RETRY_IN": "يمكنك المحاولة مرة أخرى بعد نحو {{seconds}} ثانية.",
+		"OPEN_AI_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
+		"ERROR_NOT_CONFIGURED": "تحتاج دردشة الذكاء الاصطناعي إلى مزوّد مُعَدّ. أضف واحدًا في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "تحتاج دردشة الذكاء الاصطناعي إلى مزوّد مُعَدّ — اطلب من المسؤول إضافة واحد في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_PROVIDER_UNAVAILABLE": "لا يستطيع مزوّد الذكاء الاصطناعي المحدد الرد الآن. تحقّق منه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "لا يستطيع مزوّد الذكاء الاصطناعي المحدد الرد الآن — اطلب من المسؤول التحقق من الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_MODEL_UNAVAILABLE": "هذا النموذج غير متاح بمفتاح API الحالي. اختر نموذجًا آخر في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "هذا النموذج غير متاح بمفتاح API الحالي — اطلب من المسؤول التحقق من الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_KEY_REJECTED": "رفض مزوّد الذكاء الاصطناعي مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الذكاء الاصطناعي مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_RATE_LIMITED": "مزوّد الذكاء الاصطناعي يحدّ من الطلبات.",
+		"RECORDING": "جارٍ التسجيل",
+		"PREVIEW": "معاينة",
+		"PREVIEW_PAGE": "صفحة",
+		"PREVIEW_NEW_TAB": "فتح في علامة تبويب جديدة",
+		"PREVIEW_CLOSE": "إغلاق المعاينة",
+		"PREVIEW_UNAVAILABLE": "لا تتوفر معاينة لهذا الملف.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "فتح في المستندات",
+		"ATTACH_UPLOADING": "جارٍ الرفع…",
+		"ATTACH_DOCUMENT": "مستند"
 	},
 	"HEADER_TITLE": {
 		"FOR": "لـ",
@@ -3810,7 +3994,8 @@
 		"ROLES_PERMISSIONS": "الأدوار والصلاحيات",
 		"TIME_TRACKING": "تتتبع الوقت",
 		"ESTIMATE": "تقدير",
-		"DASHBOARD": "لوحة القيادة"
+		"DASHBOARD": "لوحة القيادة",
+		"DOCUMENTS": "المستندات"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3908,6 +4093,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "اذهب إلى لوحة التحكم ، إدارة إحصاءات الموظفين ، لوحة تتبع الوقت"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "مركز موحّد لمستندات الشركة: التحميلات وصفحات الويكي والمراجعة ومعرفة الذكاء الاصطناعي"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4427,6 +4615,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "المراقبة نشطة: يتم تسجيل الوقت والنشاط",
+		"MONITORING_IDLE": "الوكيل خامل",
+		"MONITORING_TRAY_ACTIVE": "المراقبة نشطة، يتم تسجيل: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "المراقبة متوقفة مؤقتًا: لا يتم تسجيل أي شيء",
+		"MONITORING_CAPTURE_TIME": "الوقت والتطبيقات النشطة",
+		"MONITORING_CAPTURE_SCREENSHOTS": "لقطات الشاشة",
+		"MONITORING_CAPTURE_INPUT": "نشاط لوحة المفاتيح والفأرة",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "اختر العميل",
 			"SELECT_PROJECT": "اختر المشروع",
@@ -4539,7 +4734,7 @@
 			"SELECT_DEFAULT_CDN": "اختر خادم CDN الافتراضي للتحديث",
 			"TOGGLE_UPDATE_LOCALLY": "تبديل لتحديث محلياً",
 			"LOCAL_SERVER": "الخادم المحلي",
-			"LOCAL_SERVER_NOTE": "يجب أن يحتوي الدليل المحدد بالتأكيد على ملف <strong>latest.yml</strong> و/أو <strong>latest-mac.yml</strong> بغية إجراء التحقق من التحديث.",
+			"LOCAL_SERVER_NOTE": "يجب أن يحتوي الدليل المحدد على ملف بيان التحديث الخاص بنظامك (Windows: <strong>latest-x64.yml</strong> أو <strong>latest-arm64.yml</strong>؛ Linux: <strong>latest-x64-linux.yml</strong> أو <strong>latest-arm64-linux-arm64.yml</strong>؛ macOS: <strong>latest-mac.yml</strong>) مع ملفات التحديث المدرجة فيه، بغية إجراء التحقق من التحديث.",
 			"OTHER_SETTINGS": "الإعدادات الأخرى",
 			"ALLOW_PRERELEASE_VERSIONS": "السماح بالإصدارات التجريبية المسبقة",
 			"CHECK_UPDATE_APP_VERSION": "تحقق وقم بتحديث نسخة التطبيق الخاصة بك",
@@ -4954,7 +5149,9 @@
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
-		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة",
+		"NO_TIME_TRACKED": "لم يتم تتبع أي وقت",
+		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
@@ -4980,6 +5177,16 @@
 		"BUFFER_AT_START": "التخزين المؤقت في البداية",
 		"BUFFER_AT_END": "المخزون في النهاية",
 		"BREAK_TIME": "وقت الراحة",
+		"DETAILS": "التفاصيل",
+		"PARTICIPANTS": "المشاركون",
+		"FORM_HINT": "حدّد موضوع الاجتماع وموعده ومن سينضم إليه.",
+		"DETAILS_HINT": "جدول الأعمال والمكان والملاحظات التي تظهر لكل المدعوين.",
+		"SCHEDULE": "الجدول الزمني",
+		"SCHEDULE_HINT": "اختر التاريخ والفترة الزمنية، مع وقت احتياطي واستراحة اختياريين.",
+		"BUFFER_TIME_HINT": "اترك وقتًا فارغًا قبل الاجتماع أو بعده.",
+		"BREAK_TIME_HINT": "أوقف الاجتماع لاستراحة قصيرة.",
+		"BREAK_START": "تبدأ الاستراحة في",
+		"PARTICIPANTS_HINT": "الأشخاص الذين يتلقون الدعوة.",
 		"ARE_YOU_SURE": "هل أنت متأكد؟ هذا الإجراء لا يمكن عكسه."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5024,7 +5231,9 @@
 		"CANCEL": "إلغاء الموعد",
 		"TIMEZONE": "منطقة زمنية الخاصة بك:",
 		"CHANGE": "(تغيير)",
+		"CHANGE_TIMEZONE": "تغيير",
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
+		"SELECT_EMPLOYEE_HINT": "اختر الشخص الذي تريد مقابلته، ثم اختر وقتًا يناسبك.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
 		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث",
@@ -5238,7 +5447,18 @@
 			"SYSTEM": "النظام",
 			"FILTERS": {
 				"TO": "إلى",
-				"TEMPLATE_LANGUAGE": "القالب / اللغة"
+				"TEMPLATE_LANGUAGE": "القالب / اللغة",
+				"RECIPIENT": "المستلم",
+				"TEMPLATE": "القالب",
+				"STATUS": "الحالة",
+				"ALL_RECIPIENTS": "كل المستلمين",
+				"ALL_TEMPLATES": "كل القوالب",
+				"ALL_STATUSES": "كل الحالات",
+				"SENT": "مُرسل",
+				"FAILED": "فشل",
+				"ARCHIVED": "مؤرشف",
+				"SHOWING": "عرض {{ count }} من {{ total }}",
+				"NO_MATCH": "لا توجد رسائل تطابق عوامل التصفية هذه."
 			}
 		}
 	},
@@ -5288,7 +5508,8 @@
 				"TERMS_AND_CONDITIONS": "البنود والشروط",
 				"AND": " و ",
 				"PRIVACY_POLICY": "سياسة الخصوصية"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "يجب أن تحتوي كلمة المرور على 4 أحرف على الأقل"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5298,6 +5519,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "ليس لديك حساب؟",
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
 		"OR_SIGN_IN_WITH": "أو قم بتسجيل الدخول بـ",
+		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {
 			"TITLE": "تسجيل الدخول بواسطة رمز سحري",

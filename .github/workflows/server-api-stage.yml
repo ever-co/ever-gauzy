@@ -151,10 +151,26 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
+
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
 
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -202,7 +218,10 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server
-        run: 'yarn build:gauzy-api-server:linux:release:gh:x64'
+        # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
+        # electron-builder default). yarn appends these flags to the script's last command, the
+        # electron-builder call. Override snap.publish only: a -c.publish override lands in the GitHub entry.
+        run: 'yarn build:gauzy-api-server:linux:release:gh:x64 -c.snap.publish.provider=snapStore -c.snap.publish.channels=edge'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -318,7 +337,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubicloud-standard-8-arm]
+        os: ["${{ vars.RUNNER_LINUX_ARM64 || 'ubuntu-24.04-arm' }}"]
 
     steps:
       - name: Check out Git repository
@@ -364,13 +383,60 @@ jobs:
             org.electronjs.Electron2.BaseApp//24.08
 
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v2
+        # Pin snapcraft 7.x: 8.0+ renamed the `snap` command to `pack`, but electron-builder's
+        # app-builder still invokes `snapcraft snap` (ERR_ELECTRON_BUILDER_CANNOT_EXECUTE). 7.x keeps
+        # the `snap` command and still supports the core22 base.
+        run: sudo snap install snapcraft --classic --channel=7.x/stable
+
+      # Pre-install snapcraft's build snaps WITH sudo. In host (destructive) mode snapcraft installs
+      # any build snap it is missing by running `snap install` as the unprivileged runner user, and
+      # on the arm64 images snapd intermittently refuses that: "error: access denied (try with sudo)"
+      # -> "Error installing snap 'gnome-3-28-1804'" -> ERR_ELECTRON_BUILDER_CANNOT_EXECUTE. Because
+      # it is intermittent, arm64 snap passed in May 2026, failed from June, and on 2026-09-23 failed
+      # and passed within the same hour with no change. With these already present snapcraft performs
+      # ZERO snap installs of its own, so the failing operation is never reached. This exact list was
+      # proven on branch exp/arm64-snap-snapcraft-version (runs 35895302909, 35895798132, 35896229973).
+      - name: Pre-install snapcraft build snaps (arm64)
+        run: sudo snap install core18 core20 core22 gtk-common-themes gnome-3-28-1804 gnome-42-2204
+
+      # On arm64 electron-builder has no template snap, so it builds WITHOUT one: snapcraft pulls
+      # stage-packages, and in host (destructive) mode that runs a bare `apt-get update`. As the
+      # runner user that fails with "Could not open lock file /var/lib/apt/lists/lock - open (13:
+      # Permission denied)" -> "Failed to refresh package list: failed to run apt update." (amd64 never
+      # hits this: it uses the template snap and runs no apt). This shim, first on PATH, runs ONLY
+      # snapcraft as root and then hands the files it wrote back to the runner user.
+      - name: Run snapcraft as root (arm64 host-mode snap)
+        run: |
+          shim_dir="$HOME/.local/snapcraft-root-shim"
+          mkdir -p "$shim_dir"
+          cat > "$shim_dir/snapcraft" <<'SH'
+          #!/bin/bash
+          sudo --preserve-env env PATH="$PATH" /snap/bin/snapcraft "$@"
+          rc=$?
+          sudo chown -R "$(id -u):$(id -g)" "$PWD" "$HOME/.cache" "$HOME/.local/state" 2>/dev/null || true
+          exit $rc
+          SH
+          chmod +x "$shim_dir/snapcraft"
+          echo "$shim_dir" >> "$GITHUB_PATH"
 
       - name: Install Multipass
         run: 'sudo snap install multipass'
 
+      - name: Use Python 3.11 for native rebuilds (Linux)
+        # node-gyp's gyp eval()-parses Electron 38's common.gypi; Python 3.12's stricter tokenizer
+        # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
+        # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
+        id: py311
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+
       - name: Fix node-gyp and Python
-        run: python3 -m pip install packaging setuptools
+        # Install build deps into, and point node-gyp at, the SAME 3.11 interpreter (not a stray python3).
+        run: |
+          "${{ steps.py311.outputs.python-path }}" -m pip install packaging setuptools
+          echo "npm_config_python=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
+          echo "PYTHON=${{ steps.py311.outputs.python-path }}" >> "$GITHUB_ENV"
 
       - name: Install latest version of NPM
         run: 'sudo npm install -g npm@11.6.2'
@@ -418,7 +484,10 @@ jobs:
         run: mkdir -p dist/packages
 
       - name: Build Server API
-        run: 'yarn build:gauzy-api-server:linux:release:gh:arm64'
+        # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
+        # electron-builder default). yarn appends these flags to the script's last command, the
+        # electron-builder call. Override snap.publish only: a -c.publish override lands in the GitHub entry.
+        run: 'yarn build:gauzy-api-server:linux:release:gh:arm64 -c.snap.publish.provider=snapStore -c.snap.publish.channels=edge'
         env:
           USE_HARD_LINKS: false
           USE_SYSTEM_FPM: true

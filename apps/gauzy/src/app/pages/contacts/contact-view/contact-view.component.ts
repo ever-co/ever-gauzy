@@ -36,6 +36,9 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	members: string[];
 	employees: IEmployee[] = [];
 
+	/** Tail of the queued member saves; see `updateOrganizationContactMembers`. */
+	private _membersUpdate: Promise<void> = Promise.resolve();
+
 	/** Entity type the record-side Documents tab attaches its links to. */
 	readonly documentEntity = BaseEntityEnum.OrganizationContact;
 
@@ -83,6 +86,24 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			.slice(0, 2)
 			.map((part: string) => part.charAt(0).toUpperCase())
 			.join('');
+	}
+
+	/**
+	 * The contact's country as a name ("France") rather than the ISO code the
+	 * record stores ("FR"), in the app's current language. Falls back to the code
+	 * for anything `Intl` cannot name.
+	 */
+	get countryName(): string {
+		const code = this.selectedContact?.contact?.country;
+		if (!code) {
+			return '';
+		}
+		try {
+			const locale = this.translateService?.currentLang || 'en';
+			return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
+		} catch {
+			return code;
+		}
 	}
 
 	private _init(id: string) {
@@ -146,16 +167,40 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 		this.updateOrganizationContactMembers();
 	}
 
-	public async updateOrganizationContactMembers() {
+	/**
+	 * Removes one member from the list, saving through the same path as the
+	 * picker and feeding the new selection back into it so the two agree.
+	 *
+	 * @param member
+	 */
+	removeMember(member: IEmployee) {
+		// Filter the member objects already held rather than rebuilding them from
+		// `employees`, which only lists active employees and would drop any
+		// inactive or archived members from the saved relation.
+		this.selectedMembers = (this.selectedMembers ?? []).filter((selected: IEmployee) => selected.id !== member.id);
+		this.members = this.selectedMembers.map((selected: IEmployee) => selected.id);
+		this.selectedEmployeeIds = this.members;
+		this.updateOrganizationContactMembers();
+	}
+
+	/**
+	 * Saves the members relation. Each call writes the whole list, so calls are
+	 * queued: an earlier request finishing late cannot overwrite a newer list.
+	 */
+	public updateOrganizationContactMembers(): Promise<void> {
 		const organizationContactData: IOrganizationContactCreateInput = {
 			name: this.selectedContact.name,
 			organizationId: this.selectedContact.organizationId,
 			id: this.selectedContact.id,
-			members: this.selectedMembers,
+			members: [...(this.selectedMembers ?? [])],
 			contactType: this.selectedContact.contactType
 		};
 
-		await this.organizationContactService.update(this.selectedContact.id, organizationContactData);
+		this._membersUpdate = this._membersUpdate
+			.catch(() => undefined)
+			.then(() => this.organizationContactService.update(this.selectedContact.id, organizationContactData))
+			.then(() => undefined);
+		return this._membersUpdate;
 	}
 
 	/**

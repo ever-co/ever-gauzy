@@ -816,6 +816,7 @@
 		"SKILLS": "Habilidades",
 		"PRIVACY": "Privacidade",
 		"SELECT_TIMEZONE": "Selecionar Fuso Horário",
+		"SELECT_TIMEZONE_HINT": "Os horários dos compromissos são exibidos neste fuso horário.",
 		"SHOW_AVERAGE_BONUS": "Mostrar Bônus Médio",
 		"SHOW_AVERAGE_INCOME": "Mostrar Renda Média",
 		"SHOW_PAYPERIOD": "Mostrar Período de Pagamento",
@@ -1154,10 +1155,59 @@
 		"APPLICATIONS": "Aplicações",
 		"OPEN_GA_BROWSER": "Abrir Gauzy no navegador.",
 		"START_SERVER": "Iniciar Servidor",
-		"STOP_SERVER": "Parar Servidor"
+		"STOP_SERVER": "Parar Servidor",
+		"DOCUMENTS": "Documentos",
+		"BILLING": "Faturamento",
+		"MONITORING": "Monitoramento",
+		"ADD_ITEM": "Adicionar {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Somente você",
+			"TENANT": "Todos neste tenant"
+		},
+		"UNSAVED_CHANGES": "Alterações não salvas",
+		"ACCOUNT": {
+			"TITLE": "Conta",
+			"DESCRIPTION": "A conta com a qual você entrou.",
+			"MANAGE": "Gerenciar perfil",
+			"ROLE": "Função",
+			"MEMBER_SINCE": "Membro desde"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferências",
+			"DESCRIPTION": "Como o aplicativo aparece e se comporta para você. As alterações são aplicadas imediatamente.",
+			"THEME": "Tema",
+			"THEME_HINT": "Esquema de cores de todo o aplicativo.",
+			"LANGUAGE": "Idioma",
+			"LANGUAGE_HINT": "Idioma dos menus, rótulos e mensagens.",
+			"LAYOUT": "Layout padrão",
+			"RESET_LAYOUTS": "Redefinir layouts das páginas",
+			"SAVE_ERROR": "Não foi possível salvar sua preferência.",
+			"LAYOUTS_RESET": "Layouts das páginas redefinidos para o seu padrão."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Imagem quadrada, com pelo menos 128 × 128 px.",
+			"NAME_HINT": "Exibido para todos os usuários deste tenant.",
+			"TENANT_ID": "ID do tenant",
+			"TENANT_ID_HINT": "Informe-o ao contatar o suporte ou ao usar a API.",
+			"COPY_ERROR": "Não foi possível copiar o ID do tenant.",
+			"TITLE": "Perfil do tenant",
+			"DESCRIPTION": "O nome e o logotipo deste tenant, exibidos para todos os usuários no seletor de espaços de trabalho e na barra lateral.",
+			"NAME": "Nome do tenant",
+			"NAME_PLACEHOLDER": "Digite o nome do tenant",
+			"NAME_REQUIRED": "O nome do tenant é obrigatório.",
+			"LOGO": "Logotipo do tenant",
+			"LOGO_CHANGE": "Clique para enviar um novo logotipo",
+			"LOGO_REMOVE": "Remover logotipo",
+			"LOGO_UPLOAD_ERROR": "Não foi possível enviar o logotipo.",
+			"CREATED_AT": "Criado em",
+			"SAVED": "Perfil do tenant salvo",
+			"SAVE_ERROR": "Não foi possível salvar o perfil do tenant.",
+			"LOAD_ERROR": "Não foi possível carregar o perfil do tenant."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "Interface do usuário",
 			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões.",
 			"OPTIONS": {
@@ -1752,6 +1802,19 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"EMPLOYEE_STATISTICS": "Estatísticas dos funcionários",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
+			"OF_INCOME": "{{ value }}% da receita",
+			"MARGIN": "Margem de {{ value }}%",
+			"BREAKDOWN": "Receita por funcionário",
+			"NO_DATA": "Nenhuma atividade financeira neste período",
+			"NO_DATA_HINT": "As receitas e despesas registradas neste período aparecerão aqui.",
+			"NO_EMPLOYEES": "Nenhum registro de funcionário neste período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor, selecione um mês e um funcionário no menu acima.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insira texto para usuários não autenticados.",
 		"CHARTS": {
@@ -1940,7 +2003,90 @@
 			"PREVIOUS": "Anterior"
 		},
 		"NOT_STARTED": "Não iniciado",
-		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc."
+		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc.",
+		"VIEW": {
+			"PERIOD": "Período",
+			"PERIODS": {
+				"THIS_WEEK": "Esta semana",
+				"THIS_MONTH": "Este mês",
+				"LAST_30_DAYS": "Últimos 30 dias"
+			},
+			"TABS": {
+				"OVERVIEW": "Visão geral",
+				"PROFILE": "Perfil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registrando tempo",
+				"ONLINE": "Online",
+				"AWAY": "Ausente",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Hora local",
+			"MEMBER_SINCE": "Membro desde",
+			"WEEKLY_LIMIT": "Limite semanal",
+			"WORKED_TODAY": "Trabalhado hoje",
+			"WORKED_PERIOD": "Trabalhado no período",
+			"ACTIVITY_META": "{{ value }} de atividade",
+			"AVG_ACTIVITY": "Atividade média",
+			"OPEN_TASKS": "Tarefas abertas",
+			"OPEN_TASKS_META": "{{ progress }} em andamento · {{ overdue }} atrasadas",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs semana passada",
+				"THIS_MONTH": "vs mês passado",
+				"LAST_30_DAYS": "vs 30 dias anteriores"
+			},
+			"HOURS_WORKED": "Horas trabalhadas",
+			"HOURS_META": "{{ total }} no total · {{ average }} por dia trabalhado",
+			"TRACKED": "Registrado",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Abrir folha de horas",
+			"PROJECTS": "Projetos",
+			"RECENT_SCREENSHOTS": "Capturas de tela recentes",
+			"VIEW_ALL": "Ver tudo",
+			"ASSIGNED_TASKS": "Tarefas atribuídas",
+			"COLUMNS": {
+				"TASK": "Tarefa",
+				"PROJECT": "Projeto",
+				"STATUS": "Status",
+				"DUE": "Prazo",
+				"TIME": "Tempo",
+				"NAME": "Nome",
+				"PRIORITY": "Prioridade"
+			},
+			"TOP_TASKS": "Tarefas mais trabalhadas",
+			"APPS_URLS": "Apps e URLs",
+			"NO_TIME": "Nenhum tempo registrado neste período",
+			"NO_TASKS": "Nenhuma tarefa atribuída",
+			"NO_APPS": "Nenhuma atividade de app ou URL neste período",
+			"NO_SCREENSHOTS": "Nenhuma captura de tela neste período",
+			"UNAVAILABLE": "Você não tem acesso a estes dados",
+			"PROFILE": {
+				"ABOUT": "Sobre",
+				"CONTACT": "Contato",
+				"SKILLS_TAGS": "Habilidades e tags",
+				"TIME_ZONE": "Fuso horário",
+				"NOT_PROVIDED": "Ainda não informado",
+				"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda"
+			},
+			"TASKS_HELP": "Tarefas das quais esta pessoa é membro. Escolha uma caixa para filtrar a lista.",
+			"TASK_FILTERS": {
+				"OPEN": "Abertas",
+				"PROGRESS": "Em andamento",
+				"OVERDUE": "Atrasadas",
+				"DONE": "Concluídas"
+			},
+			"DUE": {
+				"NONE": "Sem prazo",
+				"WAS_DUE": "Prazo era",
+				"OVERDUE_DAY": "1 dia de atraso",
+				"OVERDUE_DAYS": "{{ count }} dias de atraso",
+				"TODAY": "Vence hoje",
+				"TOMORROW": "Vence amanhã",
+				"IN_DAYS": "Em {{ count }} dias"
+			},
+			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Todos os objetivos",
@@ -2438,6 +2584,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Permitir que o funcionário saia do Aplicativo Agente. Quando desabilitado, a opção de saída será bloqueada no Aplicativo Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Permitir logout no aplicativo do agente",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permitir que o funcionário faça logout do Aplicativo Agente. Quando desabilitado, a opção de logout será bloqueada no Aplicativo Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Proteção de trabalhadores do EEE / Reino Unido ativa",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Para organizações e trabalhadores no EEE ou no Reino Unido, os trabalhadores podem sempre sair e terminar sessão no agente de desktop. Uma captura que o trabalhador não pode interromper é difícil de justificar ao abrigo do RGPD e do art. 8.º da CEDH, pelo que estas restrições não estão disponíveis aqui.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirmar a restrição de saída ou de término de sessão do agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Com esta restrição, o trabalhador não consegue impedir que o agente de desktop o capture. Confirme que avaliou esta medida como lícita e proporcional para estes trabalhadores e que assume a responsabilidade por ela. A sua confirmação fica registada na sua conta.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Rastrear atividade de teclado e mouse",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Habilitar o rastreamento completo da atividade de teclado e mouse, incluindo teclas pressionadas e movimentos exatos do mouse em todos os aplicativos desktop e do agente.",
 				"TRACK_ALL_DISPLAYS": "Rastrear todas as telas",
@@ -2709,7 +2859,10 @@
 		"ADDRESS": "Endereço",
 		"ADDRESS_2": "Endereço 2",
 		"MEMBERS": "Membros",
-		"BUDGET": "Orçamento"
+		"BUDGET": "Orçamento",
+		"PHOTO_HINT": "Clique ou solte uma imagem para enviar",
+		"SEARCH_EMPLOYEES": "Pesquise funcionários por nome ou e-mail",
+		"NO_MEMBERS": "Nenhum membro adicionado ainda"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas",
@@ -2742,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "O funcionário foi atualizado.",
 		"IMAGE_UPDATED": "A imagem foi atualizada.",
 		"FAIL_TO_UPDATE_IMAGE": "Atualização falhou.",
-		"ANONYMOUS": "Anônimo"
+		"ANONYMOUS": "Anônimo",
+		"ABOUT": "Sobre",
+		"INACTIVE": "Inativo",
+		"PER_HOUR": "/ hora",
+		"MEMBER_SINCE": "Membro desde",
+		"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda",
+		"NO_SKILLS": "Nenhuma habilidade listada",
+		"VIEW_COMPANY_PROFILE": "Ver perfil da empresa",
+		"EDIT": {
+			"NO_AWARDS": "Nenhum prêmio adicionado",
+			"ADD_AWARD": "Adicionar prêmio",
+			"PRIVACY_HELP": "Escolha quais detalhes os visitantes veem no perfil público."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Página de Gerenciamento de Propostas",
@@ -3697,9 +3862,28 @@
 		"DICTATION_KEY_REJECTED": "O provedor de voz rejeitou a chave de API. Atualize-a na página de configurações «Provedores de IA».",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "O provedor de voz rejeitou a chave de API — peça a um administrador para atualizá-la em Configurações → Provedores de IA.",
 		"DICTATION_OPEN_SETTINGS": "Abrir Provedores de IA",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "O nível gratuito de IA está com limite de solicitações no momento. Conecte sua própria conta OpenRouter ou configure outro provedor de IA para ter acesso sem interrupções.",
+		"RATE_LIMITED_OWN": "Seu provedor de IA está limitando as solicitações no momento. Verifique seu plano e seus limites com o provedor ou configure outro provedor de IA.",
+		"RATE_LIMIT_RETRY_IN": "Você pode tentar novamente em cerca de {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Abrir Provedores de IA",
+		"ERROR_NOT_CONFIGURED": "O chat de IA precisa de um provedor configurado. Adicione um na página de configurações «Provedores de IA».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "O chat de IA precisa de um provedor configurado — peça a um administrador para adicionar um em Configurações → Provedores de IA.",
+		"ERROR_PROVIDER_UNAVAILABLE": "O provedor de IA selecionado não pode responder agora. Verifique-o na página de configurações «Provedores de IA».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "O provedor de IA selecionado não pode responder agora — peça a um administrador para verificar Configurações → Provedores de IA.",
+		"ERROR_MODEL_UNAVAILABLE": "Este modelo não está disponível com a chave de API atual. Escolha outro na página de configurações «Provedores de IA».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Este modelo não está disponível com a chave de API atual — peça a um administrador para verificar Configurações → Provedores de IA.",
+		"ERROR_KEY_REJECTED": "O provedor de IA rejeitou a chave de API. Atualize-a na página de configurações «Provedores de IA».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "O provedor de IA rejeitou a chave de API — peça a um administrador para atualizá-la em Configurações → Provedores de IA.",
+		"ERROR_RATE_LIMITED": "O provedor de IA está limitando as solicitações.",
+		"RECORDING": "Gravando",
+		"PREVIEW": "Pré-visualização",
+		"PREVIEW_PAGE": "Página",
+		"PREVIEW_NEW_TAB": "Abrir em uma nova aba",
+		"PREVIEW_CLOSE": "Fechar pré-visualização",
+		"PREVIEW_UNAVAILABLE": "Não há pré-visualização disponível para este arquivo.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Abrir em Documentos",
+		"ATTACH_UPLOADING": "Enviando…",
+		"ATTACH_DOCUMENT": "Documento"
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",
@@ -3825,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Funções e Permissões",
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"ESTIMATE": "Estimativa",
-		"DASHBOARD": "Painel de Controle"
+		"DASHBOARD": "Painel de Controle",
+		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3923,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel de controle, Gerenciar Estatísticas dos Funcionários, Painel de Controle de Rastreamento de Tempo."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4442,6 +4630,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitorização ativa: tempo e atividade a ser registados",
+		"MONITORING_IDLE": "Agente inativo",
+		"MONITORING_TRAY_ACTIVE": "Monitorização ativa, a registar: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitorização em pausa: nada está a ser registado",
+		"MONITORING_CAPTURE_TIME": "tempo e aplicações ativas",
+		"MONITORING_CAPTURE_SCREENSHOTS": "capturas de ecrã",
+		"MONITORING_CAPTURE_INPUT": "atividade do teclado e do rato",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Selecionar cliente",
 			"SELECT_PROJECT": "Selecionar projeto",
@@ -4554,7 +4749,7 @@
 			"SELECT_DEFAULT_CDN": "Selecionar servidor CDN padrão para atualização",
 			"TOGGLE_UPDATE_LOCALLY": "Alternar para atualizar localmente",
 			"LOCAL_SERVER": "Servidor Local",
-			"LOCAL_SERVER_NOTE": "O diretório selecionado definitivamente deve conter o manifesto <strong>latest.yml</strong> e/ou <strong>latest-mac.yml</strong> para realizar a validação da atualização.",
+			"LOCAL_SERVER_NOTE": "O diretório selecionado deve conter o manifesto de atualização do seu sistema (Windows: <strong>latest-x64.yml</strong> ou <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> ou <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) e os arquivos de atualização nele listados, para realizar a validação da atualização.",
 			"OTHER_SETTINGS": "Outras Configurações",
 			"ALLOW_PRERELEASE_VERSIONS": "Permita versões de pré-lançamento.",
 			"CHECK_UPDATE_APP_VERSION": "Verifique e atualize a versão do seu aplicativo",
@@ -4969,7 +5164,9 @@
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
-		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)",
+		"NO_TIME_TRACKED": "Nenhum tempo registrado",
+		"MINUTES_TRACKED": "{{ minutes }} min registrados"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",
@@ -4995,6 +5192,16 @@
 		"BUFFER_AT_START": "Buffer no Início",
 		"BUFFER_AT_END": "Buffer no final",
 		"BREAK_TIME": "Hora do intervalo",
+		"DETAILS": "Detalhes",
+		"PARTICIPANTS": "Participantes",
+		"FORM_HINT": "Defina o assunto da reunião, quando ela acontece e quem participa.",
+		"DETAILS_HINT": "Pauta, local e notas visíveis para todos os convidados.",
+		"SCHEDULE": "Agenda",
+		"SCHEDULE_HINT": "Escolha a data e o horário, com intervalo de folga e pausa opcionais.",
+		"BUFFER_TIME_HINT": "Reserve tempo livre antes ou depois da reunião.",
+		"BREAK_TIME_HINT": "Pause a reunião para um breve intervalo.",
+		"BREAK_START": "A pausa começa às",
+		"PARTICIPANTS_HINT": "Pessoas que recebem o convite.",
 		"ARE_YOU_SURE": "Você tem certeza? Essa ação é irreversível."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5039,7 +5246,9 @@
 		"CANCEL": "Cancelar Agendamento",
 		"TIMEZONE": "Sua zona horária:",
 		"CHANGE": "Mudança",
+		"CHANGE_TIMEZONE": "Alterar",
 		"SELECT_EMPLOYEE_ERROR": "Por favor, selecione um funcionário.",
+		"SELECT_EMPLOYEE_HINT": "Escolha com quem você quer se reunir e depois um horário que funcione para você.",
 		"EXPIRED_OR_CANCELLED": "**Esta consulta expirou ou foi cancelada.",
 		"EMAIL_SENT": "**Um e-mail foi enviado para o anfitrião, bem como para todos os participantes desta reunião.",
 		"NO_ACTIVE_EVENT_TYPES": "Não há tipos de eventos ativos.",
@@ -5253,7 +5462,18 @@
 			"SYSTEM": "Sistema",
 			"FILTERS": {
 				"TO": "Para",
-				"TEMPLATE_LANGUAGE": "Modelo / Idioma"
+				"TEMPLATE_LANGUAGE": "Modelo / Idioma",
+				"RECIPIENT": "Destinatário",
+				"TEMPLATE": "Modelo",
+				"STATUS": "Estado",
+				"ALL_RECIPIENTS": "Todos os destinatários",
+				"ALL_TEMPLATES": "Todos os modelos",
+				"ALL_STATUSES": "Todos os estados",
+				"SENT": "Enviado",
+				"FAILED": "Falhou",
+				"ARCHIVED": "Arquivados",
+				"SHOWING": "A mostrar {{ count }} de {{ total }}",
+				"NO_MATCH": "Nenhum email corresponde a estes filtros."
 			}
 		}
 	},
@@ -5303,7 +5523,8 @@
 				"TERMS_AND_CONDITIONS": "Termos e Condições",
 				"AND": " e ",
 				"PRIVACY_POLICY": "Política de Privacidade"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "A senha deve conter pelo menos 4 caracteres"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5313,6 +5534,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Não tem uma conta?",
 		"FORGOT_PASSWORD_TITLE": "Esqueceu a senha?",
 		"OR_SIGN_IN_WITH": "Ou faça login com",
+		"SIGN_IN_WITH_EVER_ID": "Entrar com Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Entrar com Keycloak",
 		"FORGOT_EMAIL_TITLE": "Esqueceu o e-mail?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Entrar com um código mágico",

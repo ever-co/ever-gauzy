@@ -781,6 +781,32 @@ $card-hairline: 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 
     }
   }
 
+  // The tag picker (`ga-tags-color-input`, class `tags-select`). Same compact
+  // row as the entity selects; the checkbox and colour dot inside each row are
+  // drawn by the component itself. Selection is shown by the checkbox, so the
+  // selected row keeps only a light tint and the regular weight — a bold,
+  // tinted block per ticked tag made a multi-select read as a wall.
+  .ng-dropdown-panel.tags-select {
+    .ng-dropdown-panel-items {
+      padding: 3px;
+    }
+
+    .ng-dropdown-panel-items .ng-option {
+      display: flex !important;
+      align-items: center;
+      padding: 0.3125rem 0.5rem !important;
+      min-height: 1.75rem;
+      font-size: nb-theme(text-paragraph-2-font-size);
+      font-weight: 400;
+    }
+
+    .ng-dropdown-panel-items .ng-option.ng-option-selected,
+    .ng-dropdown-panel-items .ng-option.ng-option-selected:hover {
+      font-weight: 400;
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12)) !important;
+    }
+  }
+
   .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
@@ -1746,9 +1772,18 @@ angular2-smart-table {
     }
   }
 
+  // The row-action containers, kept on one line: the anchors inside them are
+  // inline, so in a narrow actions column they wrap and the pair stacks.
+  //
+  // `angular2-st-tbody-create-cancel` used to be listed here and matches nothing
+  // — the library has no such element. The two that do hold a PAIR of actions are
+  // the save/cancel of a row being edited and the create/cancel of the add row,
+  // which were therefore the only two that still stacked.
   angular2-st-actions,
   angular2-st-tbody-edit-delete,
-  angular2-st-tbody-create-cancel {
+  angular2-st-tbody-save-cancel,
+  angular2-st-thead-create-cancel {
     display: flex;
+    align-items: center;
   }
 }

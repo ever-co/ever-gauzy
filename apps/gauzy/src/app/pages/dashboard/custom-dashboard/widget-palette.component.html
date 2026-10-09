@@ -81,6 +81,25 @@
 								<nb-icon [icon]="item.icon"></nb-icon>
 								<span>{{ item.title }}</span>
 							</div>
+
+							<!--
+								CDK carries the placeholder into whichever list the pointer is
+								over, so the default one (a clone of this row) would be dropped
+								into the canvas GRID as a full-width palette entry. This is the
+								slot the widget is about to take instead.
+
+								The spans are THIS widget's registered footprint, not a fixed
+								guess: the slot is what the user aims at, so a preview of the
+								wrong size made the grid re-arrange the moment the real cell
+								replaced it. Inert here (the palette is not a grid), live once
+								CDK moves the node into the canvas.
+							-->
+							<div
+								class="palette-drop-slot"
+								*cdkDragPlaceholder
+								[style.grid-column]="'span ' + item.w"
+								[style.grid-row]="'span ' + item.h"
+							></div>
 						</button>
 					}
 				}

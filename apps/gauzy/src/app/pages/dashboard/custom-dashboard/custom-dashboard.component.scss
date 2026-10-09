@@ -15,7 +15,9 @@
 .custom-dashboard {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	// Matches the canvas' own grid gap, so the page reads as one rhythm rather
+	// than a loose stack wrapped around a tight grid.
+	gap: 0.75rem;
 	padding: 0 0.5rem 1rem 0;
 }
 
@@ -24,7 +26,7 @@
 .custom-dashboard__heading {
 	display: flex;
 	align-items: center;
-	min-height: 2.25rem;
+	min-height: 2rem;
 }
 
 .custom-dashboard__title {
@@ -76,7 +78,7 @@
 	// palette as a mostly-empty panel the length of a tall canvas; the palette
 	// pins itself instead (`widget-palette.component.scss`).
 	align-items: flex-start;
-	gap: 1rem;
+	gap: 0.75rem;
 }
 
 // Stack the palette under the canvas on narrow viewports

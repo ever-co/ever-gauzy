@@ -6,8 +6,15 @@ import { NbDialogRef } from '@nebular/theme';
     template: `
 		<nb-card class="center">
 		  <nb-card-header>
-		    <span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
 		    <h6 class="title">{{ 'FORM.CONFIRM' | translate }}</h6>
+		    <button
+		      type="button"
+		      class="cancel"
+		      [attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		      (click)="close()"
+		    >
+		      <i class="fas fa-times" aria-hidden="true"></i>
+		    </button>
 		  </nb-card-header>
 		  <nb-card-body>
 		    <span>
@@ -19,10 +26,10 @@ import { NbDialogRef } from '@nebular/theme';
 		      </span>
 		    </nb-card-body>
 		    <nb-card-footer>
-		      <button (click)="close()" status="basic" outline nbButton>
+		      <button (click)="close()" status="basic" ghost nbButton size="small">
 		        {{ 'BUTTONS.CANCEL' | translate }}
 		      </button>
-		      <button (click)="delete()" class="mr-3 ml-3" status="danger" nbButton>
+		      <button (click)="delete()" class="mr-3 ml-3" status="danger" nbButton size="small">
 		        {{ 'BUTTONS.OK' | translate }}
 		      </button>
 		    </nb-card-footer>

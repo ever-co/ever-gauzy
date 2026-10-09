@@ -1,7 +1,9 @@
 import { NgModule } from '@angular/core';
 import {
 	NbAccordionModule,
+	NbButtonModule,
 	NbCardModule,
+	NbIconModule,
 	NbLayoutModule,
 	NbListModule,
 	NbRouteTabsetModule,
@@ -38,6 +40,9 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		// The About panel puts the unbroken email / URL / fiscal string on a tooltip,
 		// so a value that wraps across lines can still be read (and copied) in one piece.
 		NbTooltipModule,
+		// The remove action on each member row.
+		NbButtonModule,
+		NbIconModule,
 		LeafletMapModule,
 		NbListModule,
 		SharedModule,

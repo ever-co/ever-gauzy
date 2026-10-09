@@ -58,6 +58,9 @@ spec:
                         value: 0.0.0.0
                       - name: DEMO
                         value: 'true'
+                      # Anonymous usage statistics stay off on Ever's own non-production deployments, so they never count as installations.
+                      - name: EVER_STATS_ENABLED
+                        value: 'false'
                       - name: NODE_ENV
                         value: 'development'
                       - name: ADMIN_PASSWORD_RESET

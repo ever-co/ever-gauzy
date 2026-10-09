@@ -815,6 +815,7 @@
 		"SKILLS": "Umiejętności",
 		"PRIVACY": "Prywatność",
 		"SELECT_TIMEZONE": "Wybierz strefę czasową",
+		"SELECT_TIMEZONE_HINT": "Godziny spotkań są wyświetlane w tej strefie czasowej.",
 		"SHOW_AVERAGE_BONUS": "Pokaż średnią premię",
 		"SHOW_AVERAGE_INCOME": "Pokaż średni dochód",
 		"SHOW_PAYPERIOD": "Pokaż okres płatności",
@@ -1153,10 +1154,59 @@
 		"APPLICATIONS": "Aplikacje",
 		"OPEN_GA_BROWSER": "Otwórz Gauzy w przeglądarce",
 		"START_SERVER": "Uruchom serwer",
-		"STOP_SERVER": "Zatrzymaj serwer"
+		"STOP_SERVER": "Zatrzymaj serwer",
+		"DOCUMENTS": "Dokumenty",
+		"BILLING": "Fakturacja",
+		"MONITORING": "Monitorowanie",
+		"ADD_ITEM": "Dodaj {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Tylko ty",
+			"TENANT": "Wszyscy w tym dzierżawcy"
+		},
+		"UNSAVED_CHANGES": "Niezapisane zmiany",
+		"ACCOUNT": {
+			"TITLE": "Konto",
+			"DESCRIPTION": "Konto, na które jesteś zalogowany.",
+			"MANAGE": "Zarządzaj profilem",
+			"ROLE": "Rola",
+			"MEMBER_SINCE": "Członek od"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferencje",
+			"DESCRIPTION": "Jak aplikacja wygląda i działa dla ciebie. Zmiany obowiązują natychmiast.",
+			"THEME": "Motyw",
+			"THEME_HINT": "Schemat kolorów całej aplikacji.",
+			"LANGUAGE": "Język",
+			"LANGUAGE_HINT": "Język menu, etykiet i komunikatów.",
+			"LAYOUT": "Domyślny układ",
+			"RESET_LAYOUTS": "Resetuj układy stron",
+			"SAVE_ERROR": "Nie udało się zapisać twojej preferencji.",
+			"LAYOUTS_RESET": "Układy stron przywrócono do domyślnego."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Kwadratowy obraz, co najmniej 128 × 128 px.",
+			"NAME_HINT": "Widoczne dla każdego użytkownika tego dzierżawcy.",
+			"TENANT_ID": "ID dzierżawcy",
+			"TENANT_ID_HINT": "Podaj je, kontaktując się z pomocą techniczną lub korzystając z API.",
+			"COPY_ERROR": "Nie udało się skopiować ID dzierżawcy.",
+			"TITLE": "Profil dzierżawcy",
+			"DESCRIPTION": "Nazwa i logo tego dzierżawcy, wyświetlane wszystkim użytkownikom w przełączniku obszarów roboczych i na pasku bocznym.",
+			"NAME": "Nazwa dzierżawcy",
+			"NAME_PLACEHOLDER": "Wprowadź nazwę dzierżawcy",
+			"NAME_REQUIRED": "Nazwa dzierżawcy jest wymagana.",
+			"LOGO": "Logo dzierżawcy",
+			"LOGO_CHANGE": "Kliknij, aby przesłać nowe logo",
+			"LOGO_REMOVE": "Usuń logo",
+			"LOGO_UPLOAD_ERROR": "Nie udało się przesłać logo.",
+			"CREATED_AT": "Utworzono",
+			"SAVED": "Profil dzierżawcy zapisany",
+			"SAVE_ERROR": "Nie udało się zapisać profilu dzierżawcy.",
+			"LOAD_ERROR": "Nie udało się wczytać profilu dzierżawcy."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interfejs",
 			"TITLE": "Interfejs użytkownika",
 			"DESCRIPTION": "Wybierz, którego interfejsu używają wszyscy użytkownicy tego najemcy dla stron dostępnych w obu wersjach.",
 			"OPTIONS": {
@@ -1751,6 +1801,19 @@
 		"TIME_TRACKING": "Śledzenie czasu",
 		"PROJECT_MANAGEMENT": "Zarządzanie projektem",
 		"EMPLOYEE_STATISTICS": "Statystyki pracowników",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Wśród {{ count }} pracowników",
+			"OF_INCOME": "{{ value }}% przychodów",
+			"MARGIN": "Marża {{ value }}%",
+			"BREAKDOWN": "Przychody według pracownika",
+			"NO_DATA": "Brak aktywności finansowej w tym okresie",
+			"NO_DATA_HINT": "Przychody i wydatki zarejestrowane w tym okresie pojawią się tutaj.",
+			"NO_EMPLOYEES": "Brak danych pracowników w tym okresie",
+			"SORT_BY": "Sortuj według {{ name }}",
+			"SORT_LABEL": "Sortuj według",
+			"SORT_ASCENDING": "Rosnąco",
+			"SORT_DESCENDING": "Malejąco"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Proszę wybrać miesiąc oraz pracownika z menu powyżej",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Wprowadź tekst dla nieuwierzytelnionych użytkowników",
 		"CHARTS": {
@@ -1939,7 +2002,90 @@
 			"PREVIOUS": "Poprzedni"
 		},
 		"NOT_STARTED": "Nie rozpoczęto",
-		"NOT_STARTED_HELP": "Rozpoczęcie pracy w dniu nie zostało ustawione dla tego pracownika. Pracownik nie będzie brany pod uwagę w rozliczeniach, podziale kosztów itp"
+		"NOT_STARTED_HELP": "Rozpoczęcie pracy w dniu nie zostało ustawione dla tego pracownika. Pracownik nie będzie brany pod uwagę w rozliczeniach, podziale kosztów itp",
+		"VIEW": {
+			"PERIOD": "Okres",
+			"PERIODS": {
+				"THIS_WEEK": "Ten tydzień",
+				"THIS_MONTH": "Ten miesiąc",
+				"LAST_30_DAYS": "Ostatnie 30 dni"
+			},
+			"TABS": {
+				"OVERVIEW": "Przegląd",
+				"PROFILE": "Profil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Rejestruje czas",
+				"ONLINE": "Online",
+				"AWAY": "Zaraz wracam",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Czas lokalny",
+			"MEMBER_SINCE": "Członek od",
+			"WEEKLY_LIMIT": "Limit tygodniowy",
+			"WORKED_TODAY": "Przepracowano dziś",
+			"WORKED_PERIOD": "Przepracowano w okresie",
+			"ACTIVITY_META": "{{ value }} aktywności",
+			"AVG_ACTIVITY": "Średnia aktywność",
+			"OPEN_TASKS": "Otwarte zadania",
+			"OPEN_TASKS_META": "{{ progress }} w toku · {{ overdue }} po terminie",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs poprzedni tydzień",
+				"THIS_MONTH": "vs poprzedni miesiąc",
+				"LAST_30_DAYS": "vs poprzednie 30 dni"
+			},
+			"HOURS_WORKED": "Przepracowane godziny",
+			"HOURS_META": "{{ total }} łącznie · {{ average }} na dzień pracy",
+			"TRACKED": "Śledzone",
+			"MANUAL": "Ręczne",
+			"OPEN_TIMESHEET": "Otwórz kartę czasu pracy",
+			"PROJECTS": "Projekty",
+			"RECENT_SCREENSHOTS": "Ostatnie zrzuty ekranu",
+			"VIEW_ALL": "Zobacz wszystko",
+			"ASSIGNED_TASKS": "Przypisane zadania",
+			"COLUMNS": {
+				"TASK": "Zadanie",
+				"PROJECT": "Projekt",
+				"STATUS": "Status",
+				"DUE": "Termin",
+				"TIME": "Czas",
+				"NAME": "Nazwa",
+				"PRIORITY": "Priorytet"
+			},
+			"TOP_TASKS": "Najczęściej realizowane zadania",
+			"APPS_URLS": "Aplikacje i adresy URL",
+			"NO_TIME": "Brak zarejestrowanego czasu w tym okresie",
+			"NO_TASKS": "Brak przypisanych zadań",
+			"NO_APPS": "Brak aktywności aplikacji lub URL w tym okresie",
+			"NO_SCREENSHOTS": "Brak zrzutów ekranu w tym okresie",
+			"UNAVAILABLE": "Nie masz dostępu do tych danych",
+			"PROFILE": {
+				"ABOUT": "O mnie",
+				"CONTACT": "Kontakt",
+				"SKILLS_TAGS": "Umiejętności i tagi",
+				"TIME_ZONE": "Strefa czasowa",
+				"NOT_PROVIDED": "Jeszcze nie podano",
+				"NO_DESCRIPTION": "Nie dodano jeszcze opisu"
+			},
+			"TASKS_HELP": "Zadania, w których ta osoba uczestniczy. Wybierz pole, aby przefiltrować listę.",
+			"TASK_FILTERS": {
+				"OPEN": "Otwarte",
+				"PROGRESS": "W toku",
+				"OVERDUE": "Po terminie",
+				"DONE": "Ukończone"
+			},
+			"DUE": {
+				"NONE": "Brak terminu",
+				"WAS_DUE": "Termin był",
+				"OVERDUE_DAY": "1 dzień po terminie",
+				"OVERDUE_DAYS": "{{ count }} dni po terminie",
+				"TODAY": "Termin dziś",
+				"TOMORROW": "Termin jutro",
+				"IN_DAYS": "Za {{ count }} dni"
+			},
+			"SHOWING": "Wyświetlono {{ shown }} z {{ total }} zadań",
+			"NO_TASKS_IN_VIEW": "Brak zadań w tym widoku"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Wszystkie cele",
@@ -2437,6 +2583,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Zezwól pracownikowi na wyjście z aplikacji agenta. Gdy wyłączone, opcja wyjścia zostanie zablokowana w aplikacji Agenta.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Zezwól na wylogowanie z aplikacji agenta",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Zezwól pracownikowi na wylogowanie z aplikacji agenta. Gdy wyłączone, opcja wylogowania zostanie zablokowana w aplikacji Agenta.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Ochrona pracowników z EOG / Wielkiej Brytanii aktywna",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "W organizacjach i dla pracowników z EOG lub Wielkiej Brytanii pracownicy zawsze mogą zamknąć agenta pulpitu i się z niego wylogować. Rejestrowania, którego pracownik nie może przerwać, trudno bronić na gruncie RODO i art. 8 EKPC, dlatego te ograniczenia nie są tu dostępne.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Potwierdź ograniczenie zamykania lub wylogowania z agenta",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Przy tym ograniczeniu pracownik nie może zatrzymać rejestrowania przez agenta pulpitu. Potwierdź, że oceniono to jako zgodne z prawem i proporcjonalne dla tych pracowników oraz że przyjmujesz za to odpowiedzialność. Twoje potwierdzenie zostanie zapisane na Twoim koncie.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Śledź aktywność klawiatury i myszy",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Włącz pełne śledzenie aktywności klawiatury i myszy, w tym naciśnięcia klawiszy i dokładne ruchy myszy we wszystkich aplikacjach desktopowych i agencie.",
 				"TRACK_ALL_DISPLAYS": "Śledź wszystkie ekrany",
@@ -2708,7 +2858,10 @@
 		"ADDRESS": "Adres",
 		"ADDRESS_2": "Adres drugiego miejsca pobytu",
 		"MEMBERS": "Członkowie",
-		"BUDGET": "Budżet"
+		"BUDGET": "Budżet",
+		"PHOTO_HINT": "Kliknij lub upuść obraz, aby go przesłać",
+		"SEARCH_EMPLOYEES": "Szukaj pracowników po imieniu lub e-mailu",
+		"NO_MEMBERS": "Nie dodano jeszcze członków"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Języki",
@@ -2741,7 +2894,19 @@
 		"EMPLOYEE_UPDATED": "Pracownik został zaktualizowany",
 		"IMAGE_UPDATED": "Obraz został zaktualizowany",
 		"FAIL_TO_UPDATE_IMAGE": "Aktualizacja nie powiodła się",
-		"ANONYMOUS": "Anonimowy"
+		"ANONYMOUS": "Anonimowy",
+		"ABOUT": "O mnie",
+		"INACTIVE": "Nieaktywny",
+		"PER_HOUR": "/ godz.",
+		"MEMBER_SINCE": "Członek od",
+		"NO_DESCRIPTION": "Nie dodano jeszcze opisu",
+		"NO_SKILLS": "Brak umiejętności",
+		"VIEW_COMPANY_PROFILE": "Zobacz profil firmy",
+		"EDIT": {
+			"NO_AWARDS": "Nie dodano jeszcze nagród",
+			"ADD_AWARD": "Dodaj nagrodę",
+			"PRIVACY_HELP": "Wybierz, które dane odwiedzający widzą w profilu publicznym."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Strona zarządzania propozycjami",
@@ -3696,9 +3861,28 @@
 		"DICTATION_KEY_REJECTED": "Dostawca głosu odrzucił swój klucz API. Zaktualizuj go na stronie ustawień „Dostawcy AI”.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Dostawca głosu odrzucił swój klucz API — poproś administratora o jego aktualizację w Ustawienia → Dostawcy AI.",
 		"DICTATION_OPEN_SETTINGS": "Otwórz Dostawców AI",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Darmowy pakiet AI osiągnął teraz limit zapytań. Połącz własne konto OpenRouter lub skonfiguruj innego dostawcę AI, aby korzystać bez przerw.",
+		"RATE_LIMITED_OWN": "Twój dostawca AI ogranicza teraz liczbę zapytań. Sprawdź swój plan i limity u dostawcy albo skonfiguruj innego dostawcę AI.",
+		"RATE_LIMIT_RETRY_IN": "Możesz spróbować ponownie za około {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Otwórz Dostawców AI",
+		"ERROR_NOT_CONFIGURED": "Czat AI wymaga skonfigurowanego dostawcy. Dodaj go na stronie ustawień „Dostawcy AI”.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "Czat AI wymaga skonfigurowanego dostawcy — poproś administratora o dodanie go w Ustawienia → Dostawcy AI.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Wybrany dostawca AI nie może teraz odpowiedzieć. Sprawdź go na stronie ustawień „Dostawcy AI”.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Wybrany dostawca AI nie może teraz odpowiedzieć — poproś administratora o sprawdzenie Ustawienia → Dostawcy AI.",
+		"ERROR_MODEL_UNAVAILABLE": "Ten model nie jest dostępny z bieżącym kluczem API. Wybierz inny na stronie ustawień „Dostawcy AI”.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Ten model nie jest dostępny z bieżącym kluczem API — poproś administratora o sprawdzenie Ustawienia → Dostawcy AI.",
+		"ERROR_KEY_REJECTED": "Dostawca AI odrzucił swój klucz API. Zaktualizuj go na stronie ustawień „Dostawcy AI”.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Dostawca AI odrzucił swój klucz API — poproś administratora o jego aktualizację w Ustawienia → Dostawcy AI.",
+		"ERROR_RATE_LIMITED": "Dostawca AI ogranicza liczbę zapytań.",
+		"RECORDING": "Nagrywanie",
+		"PREVIEW": "Podgląd",
+		"PREVIEW_PAGE": "Strona",
+		"PREVIEW_NEW_TAB": "Otwórz w nowej karcie",
+		"PREVIEW_CLOSE": "Zamknij podgląd",
+		"PREVIEW_UNAVAILABLE": "Podgląd tego pliku jest niedostępny.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Otwórz w Dokumentach",
+		"ATTACH_UPLOADING": "Przesyłanie…",
+		"ATTACH_DOCUMENT": "Dokument"
 	},
 	"HEADER_TITLE": {
 		"FOR": "dla",
@@ -3824,7 +4008,8 @@
 		"ROLES_PERMISSIONS": "Role i uprawnienia",
 		"TIME_TRACKING": "Śledzenie czasu",
 		"ESTIMATE": "Oszacowanie",
-		"DASHBOARD": "Panel nawigacyjny"
+		"DASHBOARD": "Panel nawigacyjny",
+		"DOCUMENTS": "Dokumenty"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3922,6 +4107,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Przejdź do kokpitu, Zarządzanie statystykami pracowników, Kokpit śledzenia czasu"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Centralne miejsce na dokumenty firmy: przesyłanie, strony wiki, przegląd i wiedza AI"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4441,6 +4629,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitorowanie aktywne: rejestrowany jest czas i aktywność",
+		"MONITORING_IDLE": "Agent bezczynny",
+		"MONITORING_TRAY_ACTIVE": "Monitorowanie aktywne, rejestrowane: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitorowanie wstrzymane: nic nie jest rejestrowane",
+		"MONITORING_CAPTURE_TIME": "czas i aktywne aplikacje",
+		"MONITORING_CAPTURE_SCREENSHOTS": "zrzuty ekranu",
+		"MONITORING_CAPTURE_INPUT": "aktywność klawiatury i myszy",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Wybierz klienta",
 			"SELECT_PROJECT": "Wybierz projekt",
@@ -4553,7 +4748,7 @@
 			"SELECT_DEFAULT_CDN": "Wybierz domyślny serwer CDN do aktualizacji",
 			"TOGGLE_UPDATE_LOCALLY": "Przełącznik do aktualizacji lokalnie",
 			"LOCAL_SERVER": "Lokalny serwer",
-			"LOCAL_SERVER_NOTE": "Wybrane katalogi powinny zawierać zdecydowanie plik <strong>latest.yml</strong> i/lub <strong>latest-mac.yml</strong> manifestu w celu przeprowadzenia walidacji aktualizacji",
+			"LOCAL_SERVER_NOTE": "Wybrany katalog musi zawierać manifest aktualizacji dla Twojego systemu (Windows: <strong>latest-x64.yml</strong> lub <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> lub <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) oraz wymienione w nim pliki aktualizacji w celu przeprowadzenia walidacji aktualizacji",
 			"OTHER_SETTINGS": "Inne ustawienia",
 			"ALLOW_PRERELEASE_VERSIONS": "Zezwól na wersje przedpremierowe",
 			"CHECK_UPDATE_APP_VERSION": "Sprawdź i zaktualizuj wersję swojej aplikacji",
@@ -4968,7 +5163,9 @@
 		"NO_SCREENSHOT": "Brak zrzutu ekranu",
 		"NO_SCREENSHOTS": "Brak zrzutów ekranu",
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres dat, pracownika lub projekt",
-		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}"
+		"SCREEN_SELECTED": "Liczba wybranych ekranów: {{ count }}",
+		"NO_TIME_TRACKED": "Brak zarejestrowanego czasu",
+		"MINUTES_TRACKED": "Zarejestrowano {{ minutes }} min"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -4994,6 +5191,16 @@
 		"BUFFER_AT_START": "Bufor na początku",
 		"BUFFER_AT_END": "Bufor na końcu",
 		"BREAK_TIME": "Przerwa",
+		"DETAILS": "Szczegóły",
+		"PARTICIPANTS": "Uczestnicy",
+		"FORM_HINT": "Określ temat spotkania, jego termin i uczestników.",
+		"DETAILS_HINT": "Agenda, miejsce i notatki widoczne dla wszystkich zaproszonych.",
+		"SCHEDULE": "Harmonogram",
+		"SCHEDULE_HINT": "Wybierz datę i przedział czasu, z opcjonalnym buforem i przerwą.",
+		"BUFFER_TIME_HINT": "Zostaw wolny czas przed spotkaniem lub po nim.",
+		"BREAK_TIME_HINT": "Przerwij spotkanie na krótką przerwę.",
+		"BREAK_START": "Przerwa zaczyna się o",
+		"PARTICIPANTS_HINT": "Osoby, które otrzymują zaproszenie.",
 		"ARE_YOU_SURE": "Jesteś pewien? Ta czynność jest nieodwracalna"
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -5038,7 +5245,9 @@
 		"CANCEL": "Anuluj wizytę",
 		"TIMEZONE": "Twój strefa czasowa:",
 		"CHANGE": "(Zmieniać)",
+		"CHANGE_TIMEZONE": "Zmień",
 		"SELECT_EMPLOYEE_ERROR": "Proszę wybrać pracownika",
+		"SELECT_EMPLOYEE_HINT": "Wybierz, z kim chcesz się spotkać, a potem dogodną godzinę.",
 		"EXPIRED_OR_CANCELLED": "To spotkanie wygasło lub zostało anulowane",
 		"EMAIL_SENT": "E-mail został wysłany do organizatora oraz wszystkich uczestników tego spotkania",
 		"NO_ACTIVE_EVENT_TYPES": "Nie ma aktywnych typów wydarzeń",
@@ -5252,7 +5461,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "Do",
-				"TEMPLATE_LANGUAGE": "Szablon/Język"
+				"TEMPLATE_LANGUAGE": "Szablon/Język",
+				"RECIPIENT": "Odbiorca",
+				"TEMPLATE": "Szablon",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "Wszyscy odbiorcy",
+				"ALL_TEMPLATES": "Wszystkie szablony",
+				"ALL_STATUSES": "Wszystkie statusy",
+				"SENT": "Wysłano",
+				"FAILED": "Niepowodzenie",
+				"ARCHIVED": "Zarchiwizowane",
+				"SHOWING": "Wyświetlono {{ count }} z {{ total }}",
+				"NO_MATCH": "Żadne e-maile nie pasują do tych filtrów."
 			}
 		}
 	},
@@ -5302,7 +5522,8 @@
 				"TERMS_AND_CONDITIONS": "Regulamin",
 				"AND": " oraz ",
 				"PRIVACY_POLICY": "Polityka prywatności"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Hasło powinno zawierać co najmniej 4 znaki"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5312,6 +5533,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Nie masz konta?",
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",
 		"OR_SIGN_IN_WITH": "Albo zaloguj się korzystając z",
+		"SIGN_IN_WITH_EVER_ID": "Zaloguj się przez Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Zaloguj się przez Keycloak",
 		"FORGOT_EMAIL_TITLE": "Zapomniałeś e-maila?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Zaloguj się za pomocą magicznego kodu",

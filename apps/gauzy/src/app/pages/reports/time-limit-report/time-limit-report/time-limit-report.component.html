@@ -21,15 +21,21 @@
 	</nb-card-header>
 	<nb-card-body class="report-body">
 		<div class="report-container">
-			<div class="table">
-				@if (loading) {
-					<div
-						class="time-logs row-table"
-						[nbSpinner]="loading"
-						[nbSpinnerSize]="'giant'"
-						[nbSpinnerStatus]="'primary'"
-					></div>
-				}
+			<!--
+				The spinner moved here from a sibling div that existed only while
+				loading. With the empty state below now drawing a skeleton of its own,
+				the two would have stacked a giant spinner on top of a skeleton; as an
+				overlay on whichever branch is showing it also covers a REFETCH, which
+				the old sibling could not - it was only rendered when the list was
+				empty to begin with. This is what both budget reports already do.
+			-->
+			<div
+				class="table"
+				[nbSpinner]="loading"
+				[nbSpinnerSize]="'giant'"
+				[nbSpinnerStatus]="'primary'"
+				[class.not-found]="!dailyData?.length"
+			>
 				@if (dailyData?.length > 0) {
 					@for (day of dailyData; track day) {
 						<nb-card class="card">
@@ -38,8 +44,15 @@
 							</nb-card-header>
 							<nb-card-body class="budget-container">
 								@if (day.employees?.length > 0) {
+									<!--
+										`font-weight-bold align-items-center` used to sit on the wrapper.
+										Both were redundant with the stylesheet — `.table-inner-wrapper`
+										already centres its items — and the bootstrap utility carries
+										`!important`, which pinned the column labels at 700 and made the
+										600 they are set in unreachable from SCSS.
+									-->
 									<div class="columns-header">
-										<div class="table-inner-wrapper font-weight-bold align-items-center">
+										<div class="table-inner-wrapper">
 											@if (duration === 'week') {
 												<ng-container [ngTemplateOutlet]="weeklyHeadings"></ng-container>
 											}
@@ -49,7 +62,7 @@
 										</div>
 									</div>
 								} @else {
-									<div class="ml-3">
+									<div class="report-empty-group">
 										{{ 'REPORT_PAGE.NO_EMPLOYEES_WORKED' | translate }}
 									</div>
 								}
@@ -79,15 +92,18 @@
 						</nb-card>
 					}
 				} @else {
-					<nb-card>
-						<nb-card-body>
-							<div class="row font-weight-bold py-5 align-items-center">
-								<div class="col text-center">
-									{{ 'REPORT_PAGE.NO_EMPLOYEES' | translate }}
-								</div>
-							</div>
-						</nb-card-body>
-					</nb-card>
+					<!--
+						Was a hand-rolled nb-card holding a bold, centred line of text -
+						the only report of the five not using the shared empty state, and
+						the only one with no notion of loading, so it announced "No
+						Employees" on the first frame of every visit before the request
+						had even been answered. `ngx-no-data-message` draws a skeleton
+						until the answer is in.
+					-->
+					<ngx-no-data-message
+						[loading]="loading"
+						[message]="'REPORT_PAGE.NO_EMPLOYEES' | translate"
+					></ngx-no-data-message>
 				}
 			</div>
 		</div>
@@ -200,8 +216,8 @@
 	<div class="responsive-table-row activity-column">
 		{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 	</div>
+	<!-- A stray literal `8` sat in front of this label and rendered as "8 Spent hours". -->
 	<div class="responsive-table-row spent-column">
-		8
 		{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
 	</div>
 	<div class="responsive-table-row remaining-column">

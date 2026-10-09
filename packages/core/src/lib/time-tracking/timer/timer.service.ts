@@ -756,6 +756,8 @@ export class TimerService {
 				// Builds an SQL query with specific where clauses.
 				sqlQuery.whereNotNull('startedAt');
 				sqlQuery.whereNotNull('stoppedAt');
+				// Raw knex skips MikroORM's soft-delete filter: a deleted log must not be picked as the last one
+				sqlQuery.whereNull('deletedAt');
 				sqlQuery.whereIn('employeeId', employeeIds);
 				sqlQuery.andWhere({
 					tenantId,

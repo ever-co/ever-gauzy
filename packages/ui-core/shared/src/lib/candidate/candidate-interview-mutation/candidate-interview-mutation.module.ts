@@ -23,6 +23,7 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { CandidateSelectModule } from '../selectors/candidate-select/candidate-select.module';
 import { CandidateCalendarInfoModule } from '../candidate-calendar-info/candidate-calendar-info.module';
+import { CandidateCriterionCardModule } from '../candidate-criterion-card/candidate-criterion-card.module';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
@@ -52,6 +53,7 @@ import { CandidatePersonalQualitiesComponent } from './interview-criterions/cand
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
+		CandidateCriterionCardModule,
 		TranslateModule.forChild()
 	],
 	exports: [

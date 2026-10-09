@@ -441,6 +441,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			tax2: tax2 ? tax2.originalValue : 0,
 			taxType: this.selectedInvoice.taxType,
 			tax2Type: this.selectedInvoice.tax2Type,
+			taxCalculationType: this.selectedInvoice.taxCalculationType,
 			terms: this.selectedInvoice.terms,
 			paid: this.selectedInvoice.paid,
 			totalValue: this.selectedInvoice.totalValue,
@@ -1165,6 +1166,20 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		}
 	}
 
+	/**
+	 * The API matches the invoice / due date filters with `Between(startDate, endDate)` and falls back to
+	 * the current month when it receives a plain date, so send the whole selected day as a UTC range.
+	 *
+	 * @param date The day picked in the search form
+	 */
+	private _toDayRange(date: Date | string): { startDate: string; endDate: string } {
+		const day = moment(date);
+		return {
+			startDate: toUTC(day.clone().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(day.clone().endOf('day')).format('YYYY-MM-DD HH:mm:ss')
+		};
+	}
+
 	search() {
 		const {
 			dueDate,
@@ -1181,22 +1196,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
 		}
 		if (invoiceDate) {
-			this.setFilter(
-				{
-					field: 'invoiceDate',
-					search: moment(invoiceDate).format('YYYY-MM-DD')
-				},
-				false
-			);
+			this.setFilter({ field: 'invoiceDate', search: this._toDayRange(invoiceDate) }, false);
 		}
 		if (dueDate) {
-			this.setFilter(
-				{
-					field: 'dueDate',
-					search: moment(dueDate).format('YYYY-MM-DD')
-				},
-				false
-			);
+			this.setFilter({ field: 'dueDate', search: this._toDayRange(dueDate) }, false);
 		}
 		if (totalValue) {
 			this.setFilter({ field: 'totalValue', search: totalValue }, false);

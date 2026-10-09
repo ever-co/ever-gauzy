@@ -457,7 +457,7 @@
                               </div>
                             </div>
                           </div>
-                          @if (form.get('taxType').value === 'PERCENT' && form.get('tax2Type').value === 'PERCENT') {
+                          @if (showTaxCalculationType) {
                             <div
                               class="row"
                               >
@@ -496,8 +496,22 @@
                   </form>
                   @if (shouldLoadTable) {
                     <div class="items">
+                      <div class="mb-2">
+                        <button
+                          type="button"
+                          nbButton
+                          status="success"
+                          size="small"
+                          [disabled]="loading || !!itemsTable.grid?.createFormShown"
+                          (click)="itemsTable.grid.showCreateForm()"
+                        >
+                          <nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+                          {{ 'BUTTONS.ADD' | translate }}
+                        </button>
+                      </div>
                       <div class="table-scroll-container custom-table">
                         <angular2-smart-table
+                          #itemsTable
                           [class.ga-table-loading]="loading"
                           style="cursor: pointer"
                           [settings]="settingsSmartTable"
@@ -524,11 +538,11 @@
                   }
                 </nb-card-body>
                 <nb-card-footer>
-                  <button size="small" status="basic" outline nbButton (click)="cancel()">
+                  <button size="small" status="basic" ghost class="cancel-action" nbButton (click)="cancel()">
                     {{ 'BUTTONS.CANCEL' | translate }}
                   </button>
                   <button
-                    class="gray"
+                    outline
                     (click)="addInvoice('DRAFT')"
                     size="small"
                     status="primary"
@@ -538,6 +552,7 @@
                     {{ 'BUTTONS.SAVE_AS_DRAFT' | translate }}
                   </button>
                   <button
+                    outline
                     (click)="sendToContact()"
                     status="success"
                     size="small"
@@ -547,6 +562,7 @@
                     {{ 'BUTTONS.SAVE_AND_SEND_CONTACT' | translate }}
                   </button>
                   <button
+                    class="primary-action"
                     (click)="sendViaEmail()"
                     status="success"
                     size="small"

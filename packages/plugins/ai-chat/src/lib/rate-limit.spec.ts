@@ -1,4 +1,10 @@
-import { isRateLimitError, rateLimitRetryAfter, buildRateLimitEnvelope, RATE_LIMIT_CODE } from './rate-limit';
+import {
+	isKeyRejectedError,
+	isRateLimitError,
+	rateLimitRetryAfter,
+	buildRateLimitEnvelope,
+	RATE_LIMIT_CODE
+} from './rate-limit';
 
 /**
  * A 429 arrives in three genuinely different shapes, and the free tier depends on recognizing all of
@@ -67,6 +73,39 @@ describe('rate-limit classification', () => {
 		it('returns undefined when the header is absent or not a number', () => {
 			expect(rateLimitRetryAfter({ statusCode: 429 })).toBeUndefined();
 			expect(rateLimitRetryAfter({ responseHeaders: { 'retry-after': 'soon' } })).toBeUndefined();
+		});
+	});
+
+	describe('isKeyRejectedError', () => {
+		/** The shape of the AI SDK's provider HTTP error. */
+		const apiCallError = (statusCode: number) => ({
+			name: 'AI_APICallError',
+			url: 'https://openrouter.ai/api/v1/chat/completions',
+			statusCode,
+			isRetryable: false
+		});
+
+		it('detects a provider 401/403, including one wrapped in a RetryError or a cause', () => {
+			expect(isKeyRejectedError(apiCallError(401))).toBe(true);
+			expect(isKeyRejectedError({ name: 'AI_RetryError', lastError: apiCallError(403) })).toBe(true);
+			expect(isKeyRejectedError(Object.assign(new Error('wrapped'), { cause: apiCallError(401) }))).toBe(true);
+		});
+
+		it('does NOT classify a tool error, whatever 401/403 it carries', () => {
+			// The SDK hands the mask a tool's raw thrown value — the user's permission, not the key.
+			expect(isKeyRejectedError({ statusCode: 403 })).toBe(false);
+			expect(isKeyRejectedError({ error: { code: 403 } })).toBe(false);
+			expect(isKeyRejectedError({ status: 403, message: 'Forbidden' })).toBe(false);
+			// An MCP transport error carries the MCP server's status in a top-level `code`.
+			expect(isKeyRejectedError({ name: 'StreamableHTTPError', code: 401 })).toBe(false);
+		});
+
+		it('does NOT classify other failures', () => {
+			expect(isKeyRejectedError(apiCallError(429))).toBe(false);
+			expect(isKeyRejectedError(apiCallError(500))).toBe(false);
+			expect(isKeyRejectedError({ code: 'ECONNREFUSED' })).toBe(false);
+			expect(isKeyRejectedError(new Error('boom'))).toBe(false);
+			expect(isKeyRejectedError(null)).toBe(false);
 		});
 	});
 

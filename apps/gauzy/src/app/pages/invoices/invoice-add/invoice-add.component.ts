@@ -40,6 +40,7 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { calculateInvoiceFormTotals, taxCalculationTypeMatters } from '../invoice-totals';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import {
 	InvoiceApplyTaxDiscountComponent,
@@ -67,6 +68,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	invoiceTypes = Object.values(InvoiceTypeEnum);
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
 	taxCalculationTypes = Object.values(TaxCalculationTypeEnum);
+
+	/** Whether the Simple/Compound choice changes the total for the selected tax types (and so is shown). */
+	get showTaxCalculationType(): boolean {
+		return taxCalculationTypeMatters(this.form?.get('taxType')?.value, this.form?.get('tax2Type')?.value);
+	}
 	smartTableSource = new LocalDataSource();
 	generatedTask: string;
 	organization: IOrganization;
@@ -200,6 +206,23 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		});
 	}
 
+	/**
+	 * A figure with the record’s currency in front of it, and nothing at all when
+	 * there is no figure yet.
+	 *
+	 * Every column’s prepare function also runs on the EMPTY add row, and it feeds
+	 * the inline editor as well as the cell — which is why an untouched add row used
+	 * to open with "BGN undefined" already typed into the price box and "BGN NaN" in
+	 * the total beside it.
+	 */
+	private formatMoney(value: any): string {
+		const amount = Number(value);
+		if (value === null || value === undefined || value === '' || !Number.isFinite(amount)) {
+			return '';
+		}
+		return `${this.currency.value} ${value}`;
+	}
+
 	loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
@@ -207,24 +230,26 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			actions: { add: false, edit: true, delete: true },
 			// The old '<i class="nb-*">' markup relied on Nebular's long-removed icon
 			// font, so every row action rendered as a bare colored dot. FontAwesome is
 			// loaded globally; native `title` (not nbTooltip) because these strings are
-			// injected via [innerHTML], where directives never bind.
+			// injected via [innerHTML], where directives never bind. The OUTLINE set
+			// (`far`), so the row actions read like the eva outline icons the rest of
+			// the app uses rather than the heavier solid glyphs.
 			add: {
-				addButtonContent: `<i class="fas fa-plus" aria-hidden="true" title="${this.getTranslation('BUTTONS.ADD')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.ADD')}</span>`,
-				createButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
-				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
+				createButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmCreate: true
 			},
 			edit: {
-				editButtonContent: `<i class="fas fa-edit" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
-				saveButtonContent: `<i class="fas fa-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
-				cancelButtonContent: `<i class="fas fa-times" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
+				editButtonContent: `<i class="far fa-pen-to-square" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
+				saveButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmSave: true
 			},
 			delete: {
-				deleteButtonContent: `<i class="fas fa-trash" aria-hidden="true" title="${this.getTranslation('BUTTONS.DELETE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.DELETE')}</span>`,
+				deleteButtonContent: `<i class="far fa-trash-can" aria-hidden="true" title="${this.getTranslation('BUTTONS.DELETE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.DELETE')}</span>`,
 				confirmDelete: true
 			},
 			columns: {}
@@ -317,7 +342,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+					return this.formatMoney(cell);
 				}
 			};
 			quantity = {
@@ -337,7 +362,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell) => {
-					return `${this.currency.value} ${cell}`;
+					return this.formatMoney(cell);
 				}
 			};
 			quantity = {
@@ -360,7 +385,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			addable: false,
 			editable: false,
 			valuePrepareFunction: (cell) => {
-				return `${this.currency.value} ${cell}`;
+				return this.formatMoney(cell);
 			},
 			isFilterable: false,
 			width: '13%'
@@ -418,6 +443,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			tax2,
 			taxType,
 			tax2Type,
+			taxCalculationType,
 			terms,
 			organizationContact,
 			tags
@@ -435,6 +461,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				tax2,
 				taxType,
 				tax2Type,
+				// Stored, so the edit page recalculates the total the way it was calculated here.
+				taxCalculationType,
 				terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
@@ -959,73 +987,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 
 	async calculateTotal() {
-		const discountValue =
-			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
-		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
-		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
-		const taxCalculationType = this.form.value.taxCalculationType;
-
-		let totalDiscount = 0;
-		let totalTax = 0;
-
 		const tableData = await this.smartTableSource.getAll();
 
-		for (const item of tableData) {
-			if (item.applyTax) {
-				switch (this.form.value.taxType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax / 100);
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax;
-						break;
-					default:
-						totalTax = 0;
-						break;
-				}
-				switch (this.form.value.tax2Type) {
-					case DiscountTaxTypeEnum.PERCENT:
-						if (taxCalculationType === TaxCalculationTypeEnum.COMPOSED) {
-							totalTax += (item.totalValue + totalTax) * (tax2 / 100);
-						} else {
-							totalTax += item.totalValue * (tax2 / 100);
-						}
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax2;
-						break;
-					default:
-						totalTax = 0;
-						break;
-				}
-			}
+		// See invoice-totals.ts: shared with the edit page, and where compound tax is worked out per item.
+		this.total = calculateInvoiceFormTotals(this.form.value, tableData, this.subtotal, this.discountAfterTax).total;
 
-			if (item.applyDiscount) {
-				switch (this.form.value.discountType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						if (!this.discountAfterTax) {
-							totalDiscount += item.totalValue * (+discountValue / 100);
-						}
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += +discountValue;
-						break;
-					default:
-						totalDiscount = 0;
-						break;
-				}
-			}
-		}
-
-		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
-			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
-		}
-
-		this.total = this.subtotal - totalDiscount + totalTax;
-
-		if (this.total < 0) {
-			this.total = 0;
-		}
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.smartTableSource.count()

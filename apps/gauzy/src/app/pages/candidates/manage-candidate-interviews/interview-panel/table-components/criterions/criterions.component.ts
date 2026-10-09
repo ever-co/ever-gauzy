@@ -22,6 +22,12 @@ import { Component, Input } from '@angular/core';
 			ul {
 				list-style-type: '- ';
 			}
+			ul,
+			li,
+			span {
+				font-size: 10px;
+				line-height: 0.875rem;
+			}
 		`
     ],
     standalone: false

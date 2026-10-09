@@ -325,6 +325,12 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// AuthController: acts on the session of the caller and nobody else
 	'AuthController.logout',
 	'AuthController.switchWorkspace',
+	// AuthZitadelController (auth-zitadel plugin): Ever ID account links of the caller only: each route requires a signed-in
+	// user (currentUserId() throws 401 without one) and ZitadelLinkService scopes every step to that user
+	'AuthZitadelController.link', // issues a link ticket bound to the caller (zitadel-link.service.ts createTicket)
+	'AuthZitadelController.linkConfirm', // pending link must belong to the caller (pendingFor), plus the e-mail code for same-address accounts
+	'AuthZitadelController.linkPreview', // reads the caller's own pending link (pendingFor rejects another user's key)
+	'AuthZitadelController.unlink', // findOwnLink(id, caller): another user's link id is a 404; the last sign-in method is a 409
 	// CommentController: user-owned: CommentService pins the author to the employee of the caller, and only a
 	// CHANGE_SELECTED_EMPLOYEE holder may edit or delete another employee comment
 	// (comment.service.ts:52, 125)

@@ -4,3 +4,4 @@ export * from './user.module';
 export * from './user.service';
 export * from './user.collection';
 export * from './default-protected-users';
+export * from './events';

@@ -1,0 +1,53 @@
+{
+	"MENU": "Anonymous usage statistics",
+	"TITLE": "Anonymous usage statistics",
+	"INTRO": "When the anonymous usage statistics are on, this installation sends Ever Platform an anonymous report once a day: the version, the modules switched on, how many tenants, users, employees and projects exist, and monthly totals per currency. Never a name, an e-mail address, a company, an address or an amount per record (on a small installation a month's total can equal a single invoice). The report is signed and follows a published schema.",
+	"SCHEMA_LINK": "Read the published schema",
+	"MANAGED": "Managed by the instance operator",
+	"MANAGED_DESCRIPTION": "The report covers the whole installation, so only the person who operates this installation can see it or change it here. It contains counts and totals only, as described by the published schema.",
+	"MANAGED_OPERATORS": "If you operate this installation: list your user id in EVER_OPERATOR_USER_IDS (or, for an account of the first tenant, its address in EVER_OPERATOR_EMAILS) to manage the statistics here, or set EVER_STATS_ENABLED=false to switch them off.",
+	"ERROR": "The settings could not be loaded. Please try again.",
+	"ENABLED": "Send anonymous usage statistics",
+	"STATE": {
+		"ON": "On",
+		"OFF": "Off (switched off in this page)"
+	},
+	"REASON": {
+		"config": "Nothing is sent: EVER_STATS_API_URL is set to an address that cannot be used (it must be https, or plain http to localhost, a private address or a container name, without a credential, query or fragment). Correct it and restart the API.",
+		"key_unreadable": "Nothing is sent: the statistics key cannot be read with the current ENCRYPTION_KEY or JWT_SECRET (they changed since it was stored). Use Reset instance identity below to make a new one."
+	},
+	"NEXT_SEND": "Next report",
+	"LAST_ATTEMPT": "Last attempt",
+	"INSTALL_SOURCE": "Installation type",
+	"COUNTRY": "Country",
+	"COUNTRY_UNDECLARED": "Not declared",
+	"DESTINATION": "Sent to",
+	"KEY_WARNING": {
+		"encryption_key_unset": "The statistics key is stored encrypted with JWT_SECRET. Set ENCRYPTION_KEY to protect it with its own key; it is stored again under it at the next start.",
+		"jwt_secret_default": "The statistics key is stored encrypted with a JWT_SECRET published in the Gauzy repository. Set ENCRYPTION_KEY (and a unique JWT_SECRET); it is stored again under it at the next start.",
+		"no_secret": "The statistics key is stored encrypted with a fixed value from the public source code, because neither ENCRYPTION_KEY nor JWT_SECRET was set when it was stored (DEMO=true, ALLOW_INSECURE_JWT_SECRET=true or development). Set ENCRYPTION_KEY: it is stored again under it at the next start."
+	},
+	"WHAT_IS_SENT": "What is sent",
+	"WHAT_IS_SENT_DESCRIPTION": "The report as it would be built now. Nothing is stored or sent when you look at it.",
+	"SHOW_PREVIEW": "Show the report",
+	"LAST_PAYLOAD": "Last payload",
+	"LAST_PAYLOAD_DESCRIPTION": "The exact bytes that were signed and sent last time. They are shown formatted for reading; Show the exact bytes shows them unchanged, as they were signed.",
+	"SHOW_RAW": "Show the exact bytes",
+	"SHOW_FORMATTED": "Show formatted",
+	"NO_LAST_PAYLOAD": "No report has been sent yet.",
+	"BYTES": "bytes",
+	"HTTP_STATUS": "HTTP status",
+	"SENT_AT": "Sent at",
+	"SEND_NOW": "Send now",
+	"SENT": "The report was sent.",
+	"SEND_FAILED": "The report was not accepted. The last attempt below says why.",
+	"SEND_SKIPPED": "Nothing was sent.",
+	"SEND_TOO_SOON": "Send now can be used once every 10 minutes.",
+	"RESET": "Reset instance identity",
+	"RESET_CONFIRM_TITLE": "Reset the identity of this installation?",
+	"RESET_CONFIRM_TEXT": "This installation gets a new anonymous id and a new statistics key. Ever Platform will count it as a new installation from the next report, and earlier reports can no longer be linked to it. Nothing else changes: the Ever Platform connection, if any, stays as it is.",
+	"RESET_CONFIRM": "Reset",
+	"RESET_DONE": "The identity was reset.",
+	"CANCEL": "Cancel",
+	"DISABLE_BY_ENV": "To remove this module entirely, set EVER_STATS_ENABLED=false and restart the API."
+}

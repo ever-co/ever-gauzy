@@ -64,20 +64,30 @@
   }
 }
 
-::ng-deep nb-route-tabset .route-tab .tab-link {
+// The Built-in / Marketplace strip, drawn like the `nb-tabset` strips elsewhere
+// in the app (Sales > Invoices: Browse / Search / History): text-only labels on
+// the 12px tab scale, the active one in the primary colour at 600 on the theme's
+// tab tint. The route tabset's own token is 14px and the page put a filled,
+// primary-coloured icon in front of each label, which no other strip has.
+//
+// Scoped to this host: the rule used to be a bare `::ng-deep`, which leaked onto
+// every `nb-route-tabset` in the app once this page had been opened. The extra
+// `.tab-link` outranks the global `nb-tabset-overrides()` rules.
+:host ::ng-deep nb-route-tabset .route-tabset .route-tab a.tab-link.tab-link {
   display: flex !important;
   border-radius: var(--border-radius) var(--border-radius) 0 0;
+  font-size: 12px;
+  // 14px, which with the 12px block padding gives the same 38px strip as Invoices.
+  line-height: 14px;
 
   nb-icon {
-    margin-bottom: unset;
-  }
-
-  svg {
-    fill: var(--text-primary-color);
+    display: none;
   }
 
   span {
     display: inline-block;
+    margin: 0;
+    line-height: 14px;
     text-transform: initial;
 
     &:first-letter {

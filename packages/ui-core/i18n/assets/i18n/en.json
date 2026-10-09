@@ -360,6 +360,14 @@
 		"LOADING_MORE": "Loading more..."
 	},
 	"FORM": {
+		"SECTIONS": {
+			"PROFILE": "Profile",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"HIRING": "Hiring",
+			"PHOTO": "Profile photo",
+			"PHOTO_HINT": "Optional. Click the photo to upload a square image of at least 256 × 256 px."
+		},
 		"USERNAME": "Username",
 		"PASSWORD": "Password",
 		"CONFIRM": "Confirm",
@@ -789,6 +797,10 @@
 			"PROJECT_URL": "Project url is invalid.",
 			"OPEN_SOURCE_PROJECT_URL": "Open source project url is invalid.",
 			"INVALID_IMAGE_URL": "Invalid image URL."
+		},
+		"VALIDATION": {
+			"REQUIRED": "This field is required",
+			"INVALID_URL": "Please enter a valid URL"
 		}
 	},
 	"POP_UPS": {
@@ -862,6 +874,7 @@
 		"SKILLS": "Skills",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Select Timezone",
+		"SELECT_TIMEZONE_HINT": "Appointment times are shown in this time zone.",
 		"SHOW_AVERAGE_BONUS": "Show Average Bonus",
 		"SHOW_AVERAGE_INCOME": "Show Average Income",
 		"SHOW_PAYPERIOD": "Show Pay Period",
@@ -1254,10 +1267,14 @@
 		"BILLING_CANCELLED": "Your subscription will end at the end of the current period.",
 		"BILLING_RESUMED": "Your subscription will continue.",
 		"BILLING_NO_SUBSCRIPTION": "This account has no subscription yet.",
+		"BILLING_VERIFY_EMAIL_TO_LINK": "Already paid? A subscription is connected to this workspace once you verify your email address. We sent the link to {{ email }}.",
+		"BILLING_VERIFY_EMAIL_TO_LINK_NOT_SENT": "Already paid? A subscription is connected to this workspace once you verify your email address ({{ email }}). Send yourself a verification link to do that.",
 		"BILLING_AVAILABLE_PLANS": "Available plans",
 		"BILLING_CURRENT": "Current",
 		"BILLING_SWITCH": "Switch to this plan",
 		"BILLING_PLAN_CHANGED": "Switched to {{ name }}.",
+		"BILLING_PAYMENT_METHOD_REQUIRED": "Add a payment method to switch to a paid plan. Opening the billing portal...",
+		"BILLING_PAYMENT_METHOD_REQUIRED_NO_PORTAL": "Add a payment method to switch to a paid plan. Open the billing portal from this page to add one, then switch again.",
 		"BILLING_PAYMENT_METHOD": "Payment method",
 		"BILLING_NO_CARD": "No card on file.",
 		"BILLING_INVOICES": "Invoices",
@@ -1505,12 +1522,16 @@
 				"NO_INTEGRATION_ID": "No Zapier integration ID was provided",
 				"START_AUTHORIZATION": "Please start the authorization process",
 				"INVALID_TOKEN": "Invalid token provided",
-				"TOKEN_NOT_FOUND": "Token not found"
+				"TOKEN_NOT_FOUND": "Token not found",
+				"AUTHORIZATION": "Failed to authorize with Zapier",
+				"INVALID_CALLBACK": "Invalid callback parameters. Check that authorization was completed correctly.",
+				"WEBHOOK_NOT_FOUND": "Webhook not found"
 			},
 			"SUCCESS": {
 				"SETTINGS_SAVED": "Zapier settings saved successfully",
 				"DELETE_WEBHOOK": "Webhook deleted successfully",
-				"CREATE_ZAP": "Zap created successfully"
+				"CREATE_ZAP": "Zap created successfully",
+				"AUTHORIZATION": "Successfully authorized with Zapier"
 			},
 			"TAB": {
 				"TRIGGERS": "Triggers",
@@ -1611,6 +1632,15 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"INSTALLATION": {
+				"INSTALLING": "Installing. Please wait...",
+				"NOT_CONNECTED": "GitHub was not connected",
+				"DEFAULT_ERROR": "The GitHub installation could not be connected.",
+				"REQUESTED": "Installation requested",
+				"REQUESTED_DESCRIPTION": "An owner of the GitHub account must approve the installation before it can be connected.",
+				"UPDATED": "Your GitHub installation was updated",
+				"CLOSE_WINDOW": "You can close this window."
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",
@@ -1710,7 +1740,9 @@
 				"PROJECT_ID_REQUIRED": "Project ID is required",
 				"LOAD_CONNECTIONS": "Failed to load connections",
 				"DELETE_CONNECTION": "Failed to delete connection",
-				"INVALID_CONNECTION": "Invalid connection data"
+				"INVALID_CONNECTION": "Invalid connection data",
+				"INTEGRATION_MISMATCH": "This connection belongs to a different integration",
+				"LOAD_MCP_SERVERS": "Failed to load MCP servers"
 			},
 			"SUCCESS": {
 				"AUTHORIZED": "Successfully authorized with Activepieces",
@@ -1948,16 +1980,19 @@
 			"DELETE_CONFIRM": "Are you sure you want to delete the dashboard \"{{ name }}\"? This cannot be undone.",
 			"EDIT_HINT": "Drag & drop widgets to rearrange them, or use the Manage Widget menu to show/hide widgets. Click Save to persist this layout.",
 			"DISCARD_CHANGES": "Discard unsaved changes?",
-			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?"
+			"DISCARD_CONFIRM": "You have unsaved layout changes. Switching dashboards will discard them. Continue?",
+			"IS_DEFAULT": "Default dashboard"
 		},
 		"BUILDER": {
-			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, use the grip to rearrange them, then click Save above.",
+			"EDIT_HINT": "Drag widgets from the panel on the right onto the canvas, drag a card to rearrange them, then click Save above.",
 			"UNSAVED_CHANGES": "Unsaved changes",
 			"HOST": {
 				"WIDGET_MENU": "Widget menu",
 				"CONFIGURE": "Configure",
 				"WIDTH": "Width",
 				"WIDTH_COLUMNS": "Width: {{ count }} columns",
+				"HEIGHT": "Height",
+				"HEIGHT_ROWS": "Height: {{ count }} rows",
 				"REMOVE": "Remove",
 				"RETRY": "Retry",
 				"LOADING": "Loading widget",
@@ -1974,7 +2009,7 @@
 				"HINT": "These settings apply to this widget only."
 			},
 			"CANVAS": {
-				"DRAG_HANDLE": "Drag to move this widget",
+				"DRAG_HANDLE": "Move this widget: drag the card, or use the arrow keys",
 				"EMPTY_TITLE": "Your canvas is empty",
 				"EMPTY_HINT": "Drag widgets from the panel on the right, or click one to add it.",
 				"EMPTY_HINT_READONLY": "Click \"Edit Dashboard\" to start adding widgets to this tab."
@@ -2237,6 +2272,19 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Across {{ count }} employees",
+			"OF_INCOME": "{{ value }}% of income",
+			"MARGIN": "{{ value }}% margin",
+			"BREAKDOWN": "Earnings by employee",
+			"NO_DATA": "No financial activity in this period",
+			"NO_DATA_HINT": "Income and expenses recorded for this date range will show up here.",
+			"NO_EMPLOYEES": "No employee records for this period",
+			"SORT_BY": "Sort by {{ name }}",
+			"SORT_LABEL": "Sort by",
+			"SORT_ASCENDING": "Ascending",
+			"SORT_DESCENDING": "Descending"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"CHARTS": {
@@ -2423,10 +2471,110 @@
 			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
-			"PREVIOUS": "Previous"
+			"PREVIOUS": "Previous",
+			"SUBTITLE": "Create an account and employment record for a new team member.",
+			"PROGRESS": "Progress",
+			"STEP_DETAILS": "Details",
+			"STEP_ADD_MORE": "Add more",
+			"STEP_CONFIRM": "Review",
+			"QUEUED": "{{ count }} queued",
+			"QUEUE_HINT": "Queued employees are created together when you finish.",
+			"READY_TITLE": "Employee ready",
+			"READY_HINT": "Add another employee now, or continue to review everyone before creating them.",
+			"REVIEW_TITLE": "Review employees",
+			"REVIEW_HINT": "These employees will be created in {{ organization }}.",
+			"EMPTY": "No employees to add yet.",
+			"CURRENT_ENTRY": "Current entry",
+			"DISCARD_ENTRY": "Discard entry",
+			"CONTINUE": "Continue",
+			"BACK": "Back",
+			"CREATE_EMPLOYEES": "Create employees ({{ count }})"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "Period",
+			"PERIODS": {
+				"THIS_WEEK": "This week",
+				"THIS_MONTH": "This month",
+				"LAST_30_DAYS": "Last 30 days"
+			},
+			"TABS": {
+				"OVERVIEW": "Overview",
+				"PROFILE": "Profile"
+			},
+			"PRESENCE": {
+				"TRACKING": "Tracking time",
+				"ONLINE": "Online",
+				"AWAY": "Away",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Local time",
+			"MEMBER_SINCE": "Member since",
+			"WEEKLY_LIMIT": "Weekly limit",
+			"WORKED_TODAY": "Worked today",
+			"WORKED_PERIOD": "Worked in period",
+			"ACTIVITY_META": "{{ value }} activity",
+			"AVG_ACTIVITY": "Average activity",
+			"OPEN_TASKS": "Open tasks",
+			"OPEN_TASKS_META": "{{ progress }} in progress · {{ overdue }} overdue",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs last week",
+				"THIS_MONTH": "vs last month",
+				"LAST_30_DAYS": "vs previous 30 days"
+			},
+			"HOURS_WORKED": "Hours worked",
+			"HOURS_META": "{{ total }} total · {{ average }} per working day",
+			"TRACKED": "Tracked",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Open timesheet",
+			"PROJECTS": "Projects",
+			"RECENT_SCREENSHOTS": "Recent screenshots",
+			"VIEW_ALL": "View all",
+			"ASSIGNED_TASKS": "Assigned tasks",
+			"COLUMNS": {
+				"TASK": "Task",
+				"PROJECT": "Project",
+				"STATUS": "Status",
+				"DUE": "Due",
+				"TIME": "Time",
+				"NAME": "Name",
+				"PRIORITY": "Priority"
+			},
+			"TOP_TASKS": "Most worked tasks",
+			"APPS_URLS": "Apps & URLs",
+			"NO_TIME": "No time tracked in this period",
+			"NO_TASKS": "No tasks assigned",
+			"NO_APPS": "No app or URL activity in this period",
+			"NO_SCREENSHOTS": "No screenshots in this period",
+			"UNAVAILABLE": "You don't have access to this data",
+			"PROFILE": {
+				"ABOUT": "About",
+				"CONTACT": "Contact",
+				"SKILLS_TAGS": "Skills & tags",
+				"TIME_ZONE": "Time zone",
+				"NOT_PROVIDED": "Not provided yet",
+				"NO_DESCRIPTION": "No description has been added yet"
+			},
+			"TASKS_HELP": "Tasks this person is a member of. Pick a box to filter the list.",
+			"TASK_FILTERS": {
+				"OPEN": "Open",
+				"PROGRESS": "In progress",
+				"OVERDUE": "Overdue",
+				"DONE": "Done"
+			},
+			"DUE": {
+				"NONE": "No due date",
+				"WAS_DUE": "Was due",
+				"OVERDUE_DAY": "1 day overdue",
+				"OVERDUE_DAYS": "{{ count }} days overdue",
+				"TODAY": "Due today",
+				"TOMORROW": "Due tomorrow",
+				"IN_DAYS": "In {{ count }} days"
+			},
+			"SHOWING": "Showing {{ shown }} of {{ total }} tasks",
+			"NO_TASKS_IN_VIEW": "No tasks in this view"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -2925,6 +3073,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Allow employee to exit from the Agent application. When disabled, the exit option will be blocked in the Agent app.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Allow Logout from Agent App",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Allow employee to logout from the Agent application. When disabled, the logout option will be blocked in the Agent app.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "EEA / UK worker protection active",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "For organizations and workers in the EEA or UK, workers can always exit and log out of the desktop agent. A capture that a worker cannot interrupt is hard to justify under GDPR and ECHR Art. 8, so these restrictions are not available here.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirm restricting agent exit or logout",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "With this restriction the worker cannot stop the desktop agent from capturing them. Confirm that you have assessed this as lawful and proportionate for this workforce and that you accept responsibility for it. Your confirmation is recorded against your account.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Track Keyboard & Mouse Activity",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Enable full keyboard and mouse activity tracking, including keystrokes and exact mouse movements in all desktop apps and agent.",
 				"TRACK_ALL_DISPLAYS": "Track All Displays",
@@ -3232,7 +3384,10 @@
 		"ADDRESS": "Address",
 		"ADDRESS_2": "Address 2",
 		"MEMBERS": "Members",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Click or drop an image to upload",
+		"SEARCH_EMPLOYEES": "Search employees by name or email",
+		"NO_MEMBERS": "No members added yet"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
@@ -3265,7 +3420,19 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "About",
+		"INACTIVE": "Inactive",
+		"PER_HOUR": "/ hour",
+		"MEMBER_SINCE": "Member since",
+		"NO_DESCRIPTION": "No description has been added yet",
+		"NO_SKILLS": "No skills listed yet",
+		"VIEW_COMPANY_PROFILE": "View company profile",
+		"EDIT": {
+			"NO_AWARDS": "No awards added yet",
+			"ADD_AWARD": "Add award",
+			"PRIVACY_HELP": "Choose which details visitors can see on the public profile."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
@@ -3427,7 +3594,8 @@
 		"ADD_NEW_TAG": "Add new Tag",
 		"TENANT_LEVEL": "Tenant level",
 		"TAGS_TYPE": "Tags type",
-		"TAGS_SELECT_TYPE": "Tag type"
+		"TAGS_SELECT_TYPE": "Tag type",
+		"TAGS_FETCH_FAILED": "Failed to fetch tag types"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -3630,7 +3798,12 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Main",
 		"INVENTORY": "Inventory",
-		"IMAGE_WAS_DELETED": "Image was deleted"
+		"IMAGE_WAS_DELETED": "Image was deleted",
+		"BROWSE": "Browse",
+		"COULD_NOT_CREATE_MERCHANT": "Could not create merchant",
+		"COULD_NOT_UPDATE_MERCHANT": "Could not update merchant",
+		"COULD_NOT_UPLOAD_IMAGE": "Could not upload image",
+		"ERROR": "Something went wrong"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -3766,7 +3939,7 @@
 		"EMPLOYEE": "Employee",
 		"DESCRIPTION": "Description",
 		"IS_DEFAULT": "Is Default",
-		"CONFIRM_DELETE": "Are you sure that, you want to delete",
+		"CONFIRM_DELETE": "Are you sure you want to delete this proposal template?",
 		"PROPOSAL_CREATE_MESSAGE": "Proposal template '{{ name }}' was added",
 		"PROPOSAL_EDIT_MESSAGE": "Proposal template '{{ name }}' was changed",
 		"PROPOSAL_DELETE_MESSAGE": "Proposal template '{{ name }}' was removed",
@@ -3865,7 +4038,8 @@
 		"DOCUMENTS": {
 			"NEW_PAGE": "New Page",
 			"UPLOAD": "Upload"
-		}
+		},
+		"VIEW_INVOICE": "View Invoice"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Accounting",
@@ -4070,7 +4244,8 @@
 			"CONFIRMATION_INVOICE": "Download this invoice ?",
 			"CONFIRMATION_ESTIMATE": "Download this estimate ?",
 			"INVOICE_DOWNLOAD": "Invoice downloaded",
-			"ESTIMATE_DOWNLOAD": "Estimate downloaded"
+			"ESTIMATE_DOWNLOAD": "Estimate downloaded",
+			"ERROR": "Download failed"
 		},
 		"EMAIL": {
 			"EMAIL_INVOICE": "Send this invoice by email ?",
@@ -4250,7 +4425,26 @@
 		"RETRY": "Retry",
 		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
 		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s.",
+		"OPEN_AI_SETTINGS": "Open AI Providers",
+		"ERROR_NOT_CONFIGURED": "AI chat needs a configured provider. Add one on the AI Providers settings page.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "AI chat needs a configured provider — ask an administrator to add one in Settings → AI Providers.",
+		"ERROR_PROVIDER_UNAVAILABLE": "The selected AI provider cannot answer right now. Check it on the AI Providers settings page.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "The selected AI provider cannot answer right now — ask an administrator to check Settings → AI Providers.",
+		"ERROR_MODEL_UNAVAILABLE": "This model is not available with the current API key. Choose another one on the AI Providers settings page.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "This model is not available with the current API key — ask an administrator to check Settings → AI Providers.",
+		"ERROR_KEY_REJECTED": "The AI provider rejected its API key. Update it on the AI Providers settings page.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "The AI provider rejected its API key — ask an administrator to update it in Settings → AI Providers.",
+		"ERROR_RATE_LIMITED": "The AI provider is rate limiting requests.",
+		"RECORDING": "Recording",
+		"PREVIEW": "Preview",
+		"PREVIEW_PAGE": "Page",
+		"PREVIEW_NEW_TAB": "Open in a new tab",
+		"PREVIEW_CLOSE": "Close preview",
+		"PREVIEW_UNAVAILABLE": "No preview is available for this file.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Open in Documents",
+		"ATTACH_UPLOADING": "Uploading…",
+		"ATTACH_DOCUMENT": "Document"
 	},
 	"HEADER_TITLE": {
 		"FOR": "for",
@@ -4320,7 +4514,8 @@
 			"MAXIMUM_LENGTH": "Maximum length exceeded 255 characters.",
 			"ARTICLE_DESC_REQUIRE": "Article description is require",
 			"ARTICLE_NAME_REQUIRE": "Name of the article is require."
-		}
+		},
+		"NO_MATCHING_ARTICLES": "No matching articles found"
 	},
 	"PROJECT_MANAGEMENT_PAGE": {
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "This tab will show project management charts and aggregated data.",
@@ -4380,7 +4575,8 @@
 		"ROLES_PERMISSIONS": "Roles & Permissions",
 		"TIME_TRACKING": "Time Tracking",
 		"ESTIMATE": "Estimate",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documents"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4478,6 +4674,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central hub for company documents: uploads, wiki pages, review, and AI knowledge"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4803,7 +5002,15 @@
 			"MODULE_CREATED": "Module created successfully!",
 			"MODULE_UPDATED": "Module updated successfully!",
 			"MODULE_SAVE_ERROR": "Failed to save the module. Please try again.",
-			"PASSWORD_REQUIRED": "Password is required."
+			"PASSWORD_REQUIRED": "Password is required.",
+			"ERROR_APPLYING_JOB": "Error while applying for the job, please try again",
+			"ERROR_DELETING_TIME_LOG": "Error while deleting the time log, please try again",
+			"ERROR_HIDING_JOB": "Error while hiding the job, please try again",
+			"GOAL_CREATION_ERROR": "Goal creation failed: {{ error }}",
+			"GOAL_CREATION_FAILED": "Goal could not be created",
+			"KPI_CREATION_FAILED": "KPI '{{ name }}' could not be created",
+			"MODULE_DELETED": "Module was removed",
+			"SETTINGS_UPDATE_ERROR": "Error while updating settings, please try again"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -5007,6 +5214,13 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoring Active: Capturing time and activity",
+		"MONITORING_IDLE": "Agent Idle",
+		"MONITORING_TRAY_ACTIVE": "Monitoring active, capturing: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitoring paused: nothing is being captured",
+		"MONITORING_CAPTURE_TIME": "time and active applications",
+		"MONITORING_CAPTURE_SCREENSHOTS": "screenshots",
+		"MONITORING_CAPTURE_INPUT": "keyboard and mouse activity",
 		"PLACEHOLDERS": {
 			"SELECT_CLIENT": "Select Client",
 			"SELECT_PROJECT": "Select Project",
@@ -5122,7 +5336,7 @@
 			"SELECT_DEFAULT_CDN": "Select default CDN server for update",
 			"TOGGLE_UPDATE_LOCALLY": "Toggle to update locally",
 			"LOCAL_SERVER": "Local Server",
-			"LOCAL_SERVER_NOTE": "Directory selected should contains definitely the <strong>latest.yml</strong> and/or <strong>latest-mac.yml</strong> manifest in order to make update validation",
+			"LOCAL_SERVER_NOTE": "The selected directory must contain the update manifest for your system (Windows: <strong>latest-x64.yml</strong> or <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> or <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) and the update files it lists, in order to validate the update",
 			"OTHER_SETTINGS": "Other Settings",
 			"ALLOW_PRERELEASE_VERSIONS": "Allow prerelease versions",
 			"CHECK_UPDATE_APP_VERSION": "Check & update your app version",
@@ -5546,7 +5760,9 @@
 		"NO_SCREENSHOT": "No Screenshot",
 		"NO_SCREENSHOTS": "No Screenshots",
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project.",
-		"SCREEN_SELECTED": "{{ count }} Screen(s) selected"
+		"SCREEN_SELECTED": "{{ count }} Screen(s) selected",
+		"NO_TIME_TRACKED": "No time tracked",
+		"MINUTES_TRACKED": "{{ minutes }} min tracked"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -5572,7 +5788,17 @@
 		"BUFFER_AT_START": "Buffer at Start",
 		"BUFFER_AT_END": "Buffer at End",
 		"BREAK_TIME": "Break Time",
-		"ARE_YOU_SURE": "Are you sure? This action is irreversible."
+		"ARE_YOU_SURE": "Are you sure? This action is irreversible.",
+		"FORM_HINT": "Set what the meeting is about, when it happens and who joins.",
+		"DETAILS": "Details",
+		"DETAILS_HINT": "Agenda, place and notes shown to everyone invited.",
+		"SCHEDULE": "Schedule",
+		"SCHEDULE_HINT": "Pick the date and time slot, with optional buffer and break.",
+		"BUFFER_TIME_HINT": "Keep free time before or after the meeting.",
+		"BREAK_TIME_HINT": "Pause the meeting for a short break.",
+		"BREAK_START": "Break starts at",
+		"PARTICIPANTS": "Participants",
+		"PARTICIPANTS_HINT": "People who receive the invitation."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
 		"EMPLOYEE": "Employee",
@@ -5616,7 +5842,9 @@
 		"CANCEL": "Cancel Appointment",
 		"TIMEZONE": "Your time zone:",
 		"CHANGE": "(Change)",
+		"CHANGE_TIMEZONE": "Change",
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
+		"SELECT_EMPLOYEE_HINT": "Choose who you want to meet, then pick a time that suits you.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
 		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
@@ -5786,7 +6014,52 @@
 		}
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Only you",
+			"TENANT": "Everyone in this tenant"
+		},
+		"UNSAVED_CHANGES": "Unsaved changes",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "The account you are signed in with.",
+			"MANAGE": "Manage profile",
+			"ROLE": "Role",
+			"MEMBER_SINCE": "Member since"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferences",
+			"DESCRIPTION": "How the app looks and behaves for you. Changes apply immediately.",
+			"THEME": "Theme",
+			"THEME_HINT": "Colour scheme of the whole app.",
+			"LANGUAGE": "Language",
+			"LANGUAGE_HINT": "Language of menus, labels and messages.",
+			"LAYOUT": "Default layout",
+			"RESET_LAYOUTS": "Reset page layouts",
+			"SAVE_ERROR": "Your preference could not be saved.",
+			"LAYOUTS_RESET": "Page layouts reset to your default."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Square image, at least 128 × 128 px.",
+			"NAME_HINT": "Shown to every user of this tenant.",
+			"TENANT_ID": "Tenant ID",
+			"TENANT_ID_HINT": "Quote it when contacting support or calling the API.",
+			"COPY_ERROR": "The tenant ID could not be copied.",
+			"TITLE": "Tenant profile",
+			"DESCRIPTION": "The name and logo of this tenant, shown in the workspace switcher and the sidebar for every user.",
+			"NAME": "Tenant name",
+			"NAME_PLACEHOLDER": "Enter the tenant name",
+			"NAME_REQUIRED": "The tenant name is required.",
+			"LOGO": "Tenant logo",
+			"LOGO_CHANGE": "Click to upload a new logo",
+			"LOGO_REMOVE": "Remove logo",
+			"LOGO_UPLOAD_ERROR": "The logo could not be uploaded.",
+			"CREATED_AT": "Created on",
+			"SAVED": "Tenant profile saved",
+			"SAVE_ERROR": "The tenant profile could not be saved.",
+			"LOAD_ERROR": "The tenant profile could not be loaded."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Interface",
 			"TITLE": "User interface",
 			"DESCRIPTION": "Choose which interface everyone in this tenant uses for pages that are available in both flavours.",
 			"OPTIONS": {
@@ -5877,7 +6150,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "Recipient",
+				"TEMPLATE": "Template",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "All recipients",
+				"ALL_TEMPLATES": "All templates",
+				"ALL_STATUSES": "All statuses",
+				"SENT": "Sent",
+				"FAILED": "Failed",
+				"ARCHIVED": "Archived",
+				"SHOWING": "Showing {{ count }} of {{ total }}",
+				"NO_MATCH": "No emails match these filters."
 			}
 		}
 	},
@@ -5928,8 +6212,10 @@
 				"TERMS_AND_CONDITIONS": "Terms & Conditions",
 				"AND": " and ",
 				"PRIVACY_POLICY": "Privacy Policy"
-			}
-		}
+			},
+			"PASSWORD_MIN_LENGTH": "Password must be at least 4 characters!"
+		},
+		"CONTINUE_TO_CHECKOUT": "Continue to checkout"
 	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
@@ -5938,6 +6224,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Or Sign In with",
+		"SIGN_IN_WITH_EVER_ID": "Sign in with Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Sign in with Keycloak",
 		"FORGOT_EMAIL_TITLE": "Forgot Email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Log in with a magic code.",
@@ -6095,7 +6383,8 @@
 			"EMAIL_MULTIPLE_WORKSPACE": "The email associated with multiple workspaces, please select one to continue",
 			"SELECT_WORKSPACE_FOR": "Select Workspace for",
 			"OPEN": "Open"
-		}
+		},
+		"EDIT_EMAIL": "Edit email"
 	},
 	"WORKSPACE_CREATE": {
 		"ACCOUNT_CREATION": {
@@ -6960,5 +7249,24 @@
 		},
 		"CHARACTERS": "{{count}} characters",
 		"WORDS": "{{count}} words"
+	},
+	"FAVORITES": {
+		"ERROR": {
+			"LOAD_FAILED": "Failed to load favorites"
+		}
+	},
+	"EMAIL_VERIFICATION": {
+		"NOTICE": "Please verify your email address. We sent a verification link to {{ email }}.",
+		"NOTICE_NOT_SENT": "Your email address {{ email }} is not verified yet. Send yourself a verification link to confirm it.",
+		"SEND": "Send verification email",
+		"RESEND": "Resend email",
+		"SENDING": "Sending…",
+		"SENT": "A verification link is on its way to {{ email }}.",
+		"RESEND_FAILED": "We could not send the email right now. Please try again in a few minutes.",
+		"TOO_MANY_REQUESTS": "Too many requests. Please wait a minute and try again.",
+		"DISMISS": "Dismiss",
+		"GO_TO_DASHBOARD": "Go to dashboard",
+		"GO_TO_LOGIN": "Go to login",
+		"CONNECTION_ERROR": "We could not reach the server to verify your email. Check your connection and open the link again."
 	}
 }

@@ -1,4 +1,4 @@
-// cspell:ignore googlegemini potrace wordmark
+// cspell:ignore googlegemini potrace wordmark mistralai elevenlabs deepgram
 
 /*
  * Bundled brand marks for the AI provider tiles.
@@ -16,6 +16,11 @@
  *   (https://creativecommons.org/publicdomain/zero/1.0/). Taken from v16.27.1,
  *   except OpenAI: that icon was dropped in v16, so it comes from v15.0.0.
  *   simple-icons ships no `xai`/`grok` slug, so Grok (xAI) reuses the `x` mark.
+ *   `mistralai`, `deepgram` and `elevenlabs` come from the same v16.27.1 set.
+ * - `groq`, `speaches`, `localai`, `whisper-cpp` and `openai-compatible` have
+ *   no mark in simple-icons, so they get generic glyphs drawn for this page
+ *   (a bolt, a microphone, a server, a waveform and a plug). These are
+ *   descriptive pictograms, not the projects' own logos.
  * - `gauzy-ai` is this repository's own logo — the very artwork the Integrations
  *   page renders (apps/api/src/assets/seed/integrations/gauzy-ai.svg). It is
  *   copied here instead of referenced, because that file is served by the API
@@ -41,6 +46,8 @@ export interface IProviderLogo {
 	readonly brandColor?: string;
 	/** Transform for the path group, when the source artwork needs one. */
 	readonly transform?: string;
+	/** `fill-rule` for the paths, for artwork whose cut-outs need `evenodd`. */
+	readonly fillRule?: 'nonzero' | 'evenodd';
 }
 
 /**
@@ -124,6 +131,78 @@ export const PROVIDER_LOGOS: Readonly<Record<string, IProviderLogo>> = {
 		viewBox: '0 0 24 24',
 		paths: [
 			'M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z'
+		]
+	},
+
+	// Mistral AI — keeps the simple-icons brand hex: the orange is the brand,
+	// and #FA520F clears 3:1 against the neutral tile in light and dark themes.
+	mistral: {
+		viewBox: '0 0 24 24',
+		brandColor: '#FA520F',
+		paths: [
+			'M17.143 3.429v3.428h-3.429v3.429h-3.428V6.857H6.857V3.43H3.43v13.714H0v3.428h10.286v-3.428H6.857v-3.429h3.429v3.429h3.429v-3.429h3.428v3.429h-3.428v3.428H24v-3.428h-3.43V3.429z'
+		]
+	},
+
+	// Deepgram. The brand hex (#13EF93) is a light green that fails the 3:1
+	// minimum on the light tile, so — as with OpenRouter — it inherits the theme.
+	deepgram: {
+		viewBox: '0 0 24 24',
+		paths: [
+			'M11.203 24H1.517a.364.364 0 0 1-.258-.62l6.239-6.275a.366.366 0 0 1 .259-.108h3.52c2.723 0 5.025-2.127 5.107-4.845a5.004 5.004 0 0 0-4.999-5.148H7.613v4.646c0 .2-.164.364-.365.364H.968a.365.365 0 0 1-.363-.364V.364C.605.164.768 0 .969 0h10.416c6.684 0 12.111 5.485 12.01 12.187C23.293 18.77 17.794 24 11.202 24z'
+		]
+	},
+
+	// ElevenLabs — the two bars, monochrome by design.
+	elevenlabs: {
+		viewBox: '0 0 24 24',
+		paths: ['M4.6035 0v24h4.9317V0zm9.8613 0v24h4.9317V0z']
+	},
+
+	// Groq — generic glyph (a bolt, for its low-latency inference).
+	groq: {
+		viewBox: '0 0 24 24',
+		paths: ['M13.5 2 4 14h7l-1.5 8L19 10h-7l1.5-8Z']
+	},
+
+	// Speaches — generic glyph (a microphone: a local speech-to-text server).
+	speaches: {
+		viewBox: '0 0 24 24',
+		paths: [
+			'M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4Z',
+			'M5 11a1 1 0 0 1 2 0 5 5 0 0 0 10 0 1 1 0 0 1 2 0 7 7 0 0 1-6 6.93V20h3a1 1 0 0 1 0 2H8a1 1 0 0 1 0-2h3v-2.07A7 7 0 0 1 5 11Z'
+		]
+	},
+
+	// LocalAI — generic glyph (a server: models run on the tenant's own box).
+	localai: {
+		viewBox: '0 0 24 24',
+		fillRule: 'evenodd',
+		paths: [
+			'M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM5.75 7a1.25 1.25 0 1 0 2.5 0 1.25 1.25 0 1 0-2.5 0ZM11 6.25h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1 0-1.5Z',
+			'M3 15a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM5.75 17a1.25 1.25 0 1 0 2.5 0 1.25 1.25 0 1 0-2.5 0ZM11 16.25h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1 0-1.5Z'
+		]
+	},
+
+	// whisper.cpp — generic glyph (a waveform: local speech-to-text).
+	'whisper-cpp': {
+		viewBox: '0 0 24 24',
+		paths: [
+			'M3 10a1 1 0 0 1 2 0v4a1 1 0 0 1-2 0Z',
+			'M7 7a1 1 0 0 1 2 0v10a1 1 0 0 1-2 0Z',
+			'M11 3a1 1 0 0 1 2 0v18a1 1 0 0 1-2 0Z',
+			'M15 6a1 1 0 0 1 2 0v12a1 1 0 0 1-2 0Z',
+			'M19 9a1 1 0 0 1 2 0v6a1 1 0 0 1-2 0Z'
+		]
+	},
+
+	// OpenAI-compatible — generic glyph (a plug: any endpoint speaking the API).
+	'openai-compatible': {
+		viewBox: '0 0 24 24',
+		paths: [
+			'M8 2a1 1 0 0 1 1 1v4H7V3a1 1 0 0 1 1-1Z',
+			'M16 2a1 1 0 0 1 1 1v4h-2V3a1 1 0 0 1 1-1Z',
+			'M5 8a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a7 7 0 0 1-6 6.93V21a1 1 0 0 1-2 0v-3.07A7 7 0 0 1 5 11Z'
 		]
 	}
 };

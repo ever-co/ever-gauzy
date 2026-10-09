@@ -8,42 +8,221 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<!-- ── Preferred UI (Angular vs React) ─────────────────────────────── -->
-		<section class="setting-section" [nbSpinner]="loading()" nbSpinnerStatus="primary" nbSpinnerSize="small">
-			<div class="setting-header">
-				<div class="setting-copy">
-					<h5 class="setting-title">{{ 'SETTINGS_GENERAL.PREFERRED_UI.TITLE' | translate }}</h5>
-					<p class="setting-description">{{ 'SETTINGS_GENERAL.PREFERRED_UI.DESCRIPTION' | translate }}</p>
-				</div>
-				@if (saving()) {
-					<span class="setting-status">{{ 'SETTINGS_GENERAL.PREFERRED_UI.SAVING' | translate }}</span>
+		<!-- ── Account + personal preferences (every user) ─────────────────── -->
+		<ga-general-personal-settings></ga-general-personal-settings>
+
+		<!-- ── Workspace (tenant name, logo, id) ───────────────────────────── -->
+		<!-- Only super administrators may change the tenant profile (PUT /tenant), so nobody
+		     else sees the group at all. -->
+		@if (canEditProfile()) {
+			<section
+				class="settings-group"
+				[nbSpinner]="profileLoading() || profileSaving()"
+				nbSpinnerStatus="primary"
+				nbSpinnerSize="small"
+			>
+				<header class="group-header">
+					<div>
+						<h5 class="group-title">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.TITLE' | translate }}</h5>
+						<p class="group-description">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.DESCRIPTION' | translate }}</p>
+					</div>
+					<span class="group-scope">
+						<nb-icon icon="people-outline"></nb-icon>
+						{{ 'SETTINGS_GENERAL.SCOPE.TENANT' | translate }}
+					</span>
+				</header>
+
+				@if (profileLoadFailed()) {
+					<p class="group-message">
+						<nb-icon icon="alert-circle-outline" status="danger"></nb-icon>
+						<span>{{ 'SETTINGS_GENERAL.TENANT_PROFILE.LOAD_ERROR' | translate }}</span>
+					</p>
+				} @else {
+					<form [formGroup]="profileForm" (ngSubmit)="onSaveProfile()">
+						<!-- Logo -->
+						<div class="setting-row">
+							<div class="row-copy">
+								<span class="row-label">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.LOGO' | translate }}</span>
+								<span class="row-hint">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.LOGO_HINT' | translate }}</span>
+							</div>
+							<div class="row-control auto">
+								@if (logoUrl()) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="tiny"
+										status="basic"
+										[disabled]="profileSaving()"
+										(click)="onRemoveLogo()"
+									>
+										{{ 'SETTINGS_GENERAL.TENANT_PROFILE.LOGO_REMOVE' | translate }}
+									</button>
+								}
+								<div
+									class="tenant-logo-frame"
+									[class.hover]="logoHover()"
+									[attr.title]="'SETTINGS_GENERAL.TENANT_PROFILE.LOGO_CHANGE' | translate"
+								>
+									@if (logoUrl()) {
+										<img [src]="logoUrl()" [alt]="'SETTINGS_GENERAL.TENANT_PROFILE.LOGO' | translate" />
+									} @else {
+										<nb-icon icon="image-outline" class="tenant-logo-empty"></nb-icon>
+									}
+									@if (!profileSaving()) {
+										<nb-icon icon="camera-outline" class="tenant-logo-camera"></nb-icon>
+										<ngx-image-uploader
+											[folder]="'tenant_logos'"
+											(changeHoverState)="logoHover.set($event)"
+											(uploadedImageAsset)="onLogoUploaded($event)"
+											(uploadImageAssetError)="onLogoUploadError()"
+										></ngx-image-uploader>
+									}
+								</div>
+							</div>
+						</div>
+
+						<!-- Name -->
+						<div class="setting-row">
+							<label class="row-copy" for="tenantNameInput">
+								<span class="row-label">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.NAME' | translate }}</span>
+								<span class="row-hint">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.NAME_HINT' | translate }}</span>
+							</label>
+							<div class="row-control">
+								<input
+									id="tenantNameInput"
+									nbInput
+									fieldSize="small"
+									formControlName="name"
+									[placeholder]="'SETTINGS_GENERAL.TENANT_PROFILE.NAME_PLACEHOLDER' | translate"
+									[status]="
+										(profileForm.controls.name.touched || profileForm.controls.name.dirty) &&
+										profileForm.controls.name.invalid
+											? 'danger'
+											: 'basic'
+									"
+								/>
+							</div>
+							@if (
+								(profileForm.controls.name.touched || profileForm.controls.name.dirty) &&
+								(profileForm.controls.name.hasError('required') || profileForm.controls.name.hasError('blank'))
+							) {
+								<span class="field-error">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.NAME_REQUIRED' | translate }}</span>
+							}
+						</div>
+
+						<!-- Tenant id -->
+						@if (tenant()?.id; as tenantId) {
+							<div class="setting-row">
+								<div class="row-copy">
+									<span class="row-label">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.TENANT_ID' | translate }}</span>
+									<span class="row-hint">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.TENANT_ID_HINT' | translate }}</span>
+								</div>
+								<div class="row-control auto">
+									<span class="row-value mono">{{ tenantId }}</span>
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="tiny"
+										status="basic"
+										[attr.aria-label]="'BUTTONS.COPY' | translate"
+										[attr.title]="(copied() ? 'BUTTONS.COPIED' : 'BUTTONS.COPY') | translate"
+										(click)="onCopyTenantId(tenantId)"
+									>
+										<nb-icon [icon]="copied() ? 'checkmark-outline' : 'copy-outline'"></nb-icon>
+									</button>
+								</div>
+							</div>
+						}
+
+						<!-- Created -->
+						@if (tenant()?.createdAt) {
+							<div class="setting-row">
+								<div class="row-copy">
+									<span class="row-label">{{ 'SETTINGS_GENERAL.TENANT_PROFILE.CREATED_AT' | translate }}</span>
+								</div>
+								<div class="row-control auto">
+									<span class="row-value">{{ tenant()?.createdAt | date: 'mediumDate' }}</span>
+								</div>
+							</div>
+						}
+
+						<footer class="group-footer">
+							@if (profileSaving()) {
+								<span class="group-status">{{ 'SETTINGS_GENERAL.PREFERRED_UI.SAVING' | translate }}</span>
+							} @else if (profileForm.dirty) {
+								<span class="group-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+							}
+							<button
+								type="button"
+								nbButton
+								ghost
+								size="small"
+								status="basic"
+								[disabled]="profileForm.pristine || profileSaving()"
+								(click)="onResetProfile()"
+							>
+								{{ 'BUTTONS.RESET' | translate }}
+							</button>
+							<button
+								type="submit"
+								nbButton
+								size="small"
+								status="primary"
+								[disabled]="profileForm.pristine || profileForm.invalid || profileSaving()"
+							>
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
+						</footer>
+					</form>
 				}
+			</section>
+		}
+
+		<!-- ── Preferred UI (Angular vs React) ─────────────────────────────── -->
+		<section class="settings-group" [nbSpinner]="loading()" nbSpinnerStatus="primary" nbSpinnerSize="small">
+			<header class="group-header">
+				<div>
+					<h5 class="group-title">{{ 'SETTINGS_GENERAL.PREFERRED_UI.TITLE' | translate }}</h5>
+					<p class="group-description">{{ 'SETTINGS_GENERAL.PREFERRED_UI.DESCRIPTION' | translate }}</p>
+				</div>
+				<span class="group-scope">
+					<nb-icon icon="people-outline"></nb-icon>
+					{{ 'SETTINGS_GENERAL.SCOPE.TENANT' | translate }}
+				</span>
+			</header>
+
+			<div class="setting-row">
+				<div class="row-copy">
+					<span class="row-label">{{ 'SETTINGS_GENERAL.PREFERRED_UI.LABEL' | translate }}</span>
+					<span class="row-hint">{{ 'SETTINGS_GENERAL.PREFERRED_UI.HINT' | translate }}</span>
+				</div>
+				<div class="row-control auto">
+					@if (saving()) {
+						<span class="row-hint">{{ 'SETTINGS_GENERAL.PREFERRED_UI.SAVING' | translate }}</span>
+					}
+					<!-- `nb-radio-group` silently drops children that are not `nb-radio`, so nothing else
+					     may be projected in here (see PR #9835). -->
+					<nb-radio-group
+						class="preferred-ui-options"
+						name="preferredUi"
+						[value]="preferredUi()"
+						[disabled]="!canEdit() || saving()"
+						(valueChange)="onPreferredUiChange($event)"
+					>
+						<nb-radio [value]="PreferredUiEnum.ANGULAR">
+							{{ 'SETTINGS_GENERAL.PREFERRED_UI.OPTIONS.ANGULAR' | translate }}
+						</nb-radio>
+						<nb-radio [value]="PreferredUiEnum.REACT">
+							{{ 'SETTINGS_GENERAL.PREFERRED_UI.OPTIONS.REACT' | translate }}
+						</nb-radio>
+					</nb-radio-group>
+				</div>
 			</div>
 
-			<!-- `nb-radio-group` silently drops children that are not `nb-radio`, so nothing else
-			     may be projected in here (see PR #9835). -->
-			<nb-radio-group
-				class="preferred-ui-options"
-				name="preferredUi"
-				[value]="preferredUi()"
-				[disabled]="!canEdit() || saving()"
-				(valueChange)="onPreferredUiChange($event)"
-			>
-				<nb-radio [value]="PreferredUiEnum.ANGULAR">
-					{{ 'SETTINGS_GENERAL.PREFERRED_UI.OPTIONS.ANGULAR' | translate }}
-				</nb-radio>
-				<nb-radio [value]="PreferredUiEnum.REACT">
-					{{ 'SETTINGS_GENERAL.PREFERRED_UI.OPTIONS.REACT' | translate }}
-				</nb-radio>
-			</nb-radio-group>
-
-			<p class="setting-hint">
-				<nb-icon icon="info-outline"></nb-icon>
-				<span>{{ 'SETTINGS_GENERAL.PREFERRED_UI.HINT' | translate }}</span>
-			</p>
-
 			@if (!canEdit()) {
-				<p class="setting-hint muted">
+				<p class="group-message">
 					<nb-icon icon="lock-outline"></nb-icon>
 					<span>{{ 'SETTINGS_GENERAL.PREFERRED_UI.READ_ONLY' | translate }}</span>
 				</p>

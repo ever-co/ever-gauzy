@@ -1,4 +1,11 @@
-import { BadRequestException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	Logger,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { MoreThanOrEqual } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -20,6 +27,9 @@ import { UserService } from './../user/user.service';
 import { FeatureService } from './../feature/feature.service';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import { JWT_ALGORITHMS } from './purpose-token';
+import { describeEmailSendError } from './../email-send/email-send-error';
+import { redactDatabaseError } from './../core/errors/database-error';
+import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -38,9 +48,9 @@ export class EmailConfirmationService {
 	 * @param user The user to send the verification email to.
 	 * @param integration Configuration for app integration.
 	 */
-	public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig) {
+	public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig): Promise<boolean> {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
-			return;
+			return false;
 		}
 
 		try {
@@ -52,31 +62,51 @@ export class EmailConfirmationService {
 				expiresIn: `${environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME}s`
 			});
 
-			// Override the default config by merging in the provided values.
-			const appIntegration = deepMerge(environment.appIntegrationConfig, integration);
+			// Override the default config by merging in the provided values - except a confirmation
+			// link on a host this deployment does not serve (see email-link-origin.ts).
+			const appIntegration = deepMerge(environment.appIntegrationConfig, this.withTrustedLinks(integration, id));
 
-			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
+			// The address is encoded: a raw `+` (plus addressing) reads back as a space, and the
+			// confirm request then fails e-mail validation, so those users could never verify by link.
+			const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${encodeURIComponent(
+				email
+			)}&token=${token}`;
 			const verificationCode = generateAlphaNumericCode();
 
 			// Update user's email token field and verification code
 			// Always set codeExpireAt — default to 7 days to match the environment module default
 			const verificationExpiry = environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
-			await this.userService.update(id, {
+			// Stored only while the account still holds the address this message goes to: the code
+			// endpoint matches a stored code against the CURRENT address, so a code for an address the
+			// user has just left must not be stored next to the new one (nor mailed out).
+			const stored = await this.userService.storeEmailVerificationCode(id, email, {
 				emailToken: await this.passwordHashService.hash(token),
 				code: verificationCode,
 				codeExpireAt: moment(new Date()).add(verificationExpiry, 'seconds').toDate()
 			});
+			if (!stored) {
+				this.logger.warn(
+					`Not sending the verification email for user ${id}: the account no longer holds that address`
+				);
+				return false;
+			}
 
-			// Send email verification link
+			// Send email verification link. Resolves false when the provider did not take the message;
+			// the send itself is logged and recorded in email_sent by EmailService.
 			return await this.emailService.emailVerification(user, verificationLink, verificationCode, appIntegration);
 		} catch (error) {
-			this.logger.error('Error while sending verification email', error?.stack);
+			this.logger.error(
+				`Error while preparing the verification email for user ${user?.id}: ${describeEmailSendError(error)}`
+			);
+			return false;
 		}
 	}
 
 	/**
 	 * Resend confirmation email link
 	 *
+	 * Rate limited by the controller. Reports a send the provider refused as 503, so the caller can
+	 * tell the user to try again instead of promising an email that is not coming.
 	 */
 	public async resendConfirmationLink(config: IAppIntegrationConfig) {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
@@ -87,14 +117,68 @@ export class EmailConfirmationService {
 			if (!!user.emailVerifiedAt) {
 				throw new BadRequestException('Your email is already verified.');
 			}
-			await this.sendEmailVerification(user, config);
+			const sent = await this.sendEmailVerification(user, config);
+			if (!sent) {
+				throw new ServiceUnavailableException(
+					'We could not send the verification email right now. Please try again in a few minutes.'
+				);
+			}
 			return new Object({
 				status: HttpStatus.OK,
 				message: `OK`
 			});
 		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			throw new BadRequestException(error?.message);
 		}
+	}
+
+	/**
+	 * Whether the signed-in user has verified their email, and whether a verification email that is
+	 * still valid has actually gone out to them.
+	 *
+	 * The web app used to tell every unverified user "We sent a verification link to ...". On a
+	 * deployment that switched verification on later, most unverified users never got one - they
+	 * signed up or were invited before it existed, or their link expired long ago - so the notice
+	 * promised an email nobody sent. `verificationEmailSent` lets it say "send me a link" instead.
+	 *
+	 * @returns `{ isEmailVerified, verificationEmailSent }` for the current user; both false when the
+	 * user cannot be found.
+	 */
+	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean; verificationEmailSent: boolean }> {
+		const user = await this.userService.getIfExists(RequestContext.currentUserId());
+		const isEmailVerified = !!user?.emailVerifiedAt;
+		if (!user || isEmailVerified) {
+			return { isEmailVerified, verificationEmailSent: false };
+		}
+		const since = moment(new Date()).subtract(this.verificationExpirySeconds(), 'seconds').toDate();
+		const verificationEmailSent = await this.emailService.hasSentVerificationEmail(user.id, user.email, since);
+		return { isEmailVerified, verificationEmailSent };
+	}
+
+	/**
+	 * How long a verification link and code stay valid, in seconds - 7 days when unset, matching the
+	 * environment module default and the expiry `sendEmailVerification` gives the link and code.
+	 */
+	private verificationExpirySeconds(): number {
+		return environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME || 86400 * 7;
+	}
+
+	/**
+	 * The caller's integration overrides, minus any link (above all the confirmation link, which
+	 * carries the verification token) on an origin this deployment does not serve: such a link is
+	 * replaced by the configured one. See {@link withAllowedEmailLinks} for why.
+	 *
+	 * @param integration The overrides supplied with the request.
+	 * @param userId Only for the log line.
+	 */
+	private withTrustedLinks(integration: IAppIntegrationConfig, userId: string): IAppIntegrationConfig {
+		return withAllowedEmailLinks(
+			integration,
+			warnRejectedEmailLink(this.logger, `the verification email of user ${userId}`)
+		);
 	}
 
 	/**
@@ -192,13 +276,24 @@ export class EmailConfirmationService {
 		if (!(await this.featureFlagService.isFeatureEnabled(FeatureEnum.FEATURE_EMAIL_VERIFICATION))) {
 			return;
 		}
+		// Recorded only while the account still holds the address that was confirmed. When it moved to
+		// another address in the meantime nothing is written, and that is not a success: by code, the
+		// code has already been used up, so answering OK would leave the user believing they are done.
+		let recorded = false;
 		try {
-			await this.userService.markEmailAsVerified(user['id']);
-		} finally {
-			return new Object({
-				status: HttpStatus.OK,
-				message: `OK`
-			});
+			recorded = await this.userService.markEmailAsVerified(user['id'], user.email);
+		} catch (error) {
+			this.logger.error(
+				`Could not record the e-mail confirmation of user ${user['id']}`,
+				redactDatabaseError(error)
+			);
 		}
+		if (!recorded) {
+			throw new BadRequestException('Failed to verify email.');
+		}
+		return new Object({
+			status: HttpStatus.OK,
+			message: `OK`
+		});
 	}
 }

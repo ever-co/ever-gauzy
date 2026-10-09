@@ -6,7 +6,8 @@ import { generateAlphaNumericCode } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum } from '../core/utils';
+import { freshTimestamp, MultiORMEnum } from '../core/utils';
+import { UNCONFIRMED_EMAIL_STATE } from '../user/email-change.util';
 import { EmailReset } from './email-reset.entity';
 import { UserEmailDTO } from '../user/dto';
 import { EmailResetCreateCommand } from './commands';
@@ -129,13 +130,18 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				});
 			}
 
-			// we only do update if all checks completed above
+			// we only do update if all checks completed above.
+			// The code was e-mailed to the new address, so entering it confirms that address: record a
+			// fresh confirmation instead of keeping the one made for the previous address, and drop any
+			// confirmation link or code that was issued for the previous address.
 			await this.userService.update(
 				{
 					id: record.userId
 				},
 				{
-					email: record.email
+					email: record.email,
+					...UNCONFIRMED_EMAIL_STATE,
+					emailVerifiedAt: freshTimestamp()
 				}
 			);
 		} finally {

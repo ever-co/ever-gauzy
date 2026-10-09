@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -39,7 +40,18 @@ import { WidgetConfigDialogComponent } from './widget-config-dialog.component';
 	selector: 'ga-custom-dashboard',
 	templateUrl: './custom-dashboard.component.html',
 	styleUrls: ['./custom-dashboard.component.scss'],
-	standalone: false
+	standalone: false,
+	/*
+	 * This host element IS the dashboard's scroll surface — `dashboard.component.scss`
+	 * gives `router-outlet ~ *` the `overflow-y: auto`, because the app layout's own
+	 * scroller is clamped so the header and footer stay put.
+	 *
+	 * `CdkDropList` only auto-scrolls the viewport and ancestors REGISTERED with
+	 * `ScrollDispatcher`, which is what `cdkScrollable` does. Without it, dragging a
+	 * widget towards the bottom of a canvas taller than the window simply stopped at
+	 * the fold: the page never scrolled, so the lower half was unreachable by drag.
+	 */
+	hostDirectives: [CdkScrollable]
 })
 export class CustomDashboardComponent extends TranslationBaseComponent implements OnInit {
 	/** The dashboard currently applied by the route guard. */

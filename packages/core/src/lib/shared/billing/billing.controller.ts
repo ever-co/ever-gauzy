@@ -4,7 +4,9 @@ import {
 	Body,
 	Controller,
 	Get,
+	HttpException,
 	HttpStatus,
+	Logger,
 	NotFoundException,
 	Post,
 	UseGuards
@@ -20,7 +22,8 @@ import {
 	BillingPaymentMethod,
 	BillingPlan,
 	BillingService,
-	BillingSubscription
+	BillingSubscription,
+	PaymentMethodRequiredError
 } from './billing.service';
 
 /**
@@ -42,6 +45,8 @@ import {
 @ApiTags('Billing')
 @Controller('/billing')
 export class BillingController {
+	private readonly logger = new Logger(BillingController.name);
+
 	constructor(
 		private readonly billingService: BillingService,
 		private readonly typeOrmTenantRepository: TypeOrmTenantRepository,
@@ -78,7 +83,7 @@ export class BillingController {
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	async plans(): Promise<BillingPlan[]> {
 		this.requireBillingEnabled();
-		return this.billingService.listPlans(EVER_PRODUCT_KEY);
+		return this.billingService.listPlans(this.productKey());
 	}
 
 	@ApiOperation({ summary: 'Switch the subscription to another plan' })
@@ -86,15 +91,20 @@ export class BillingController {
 	@Post('/subscription/change')
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	async changePlan(@Body() body: { lookupKey?: string }): Promise<BillingSubscription> {
+	async changePlan(@Body() body: { lookupKey?: string; returnUrl?: string }): Promise<BillingSubscription> {
 		const customerId = await this.requireCustomerId();
 		// 400, not 404: this controller uses 404 to mean "billing is not configured on this
 		// deployment", and reusing it for a missing field would make the two indistinguishable.
-		const lookupKey = body?.lookupKey?.trim();
+		const lookupKey = typeof body?.lookupKey === 'string' ? body.lookupKey.trim() : '';
 		if (!lookupKey) {
 			throw new BadRequestException('A plan must be supplied.');
 		}
-		return this.billingService.changePlan(customerId, lookupKey, EVER_PRODUCT_KEY);
+		try {
+			return await this.billingService.changePlan(customerId, lookupKey, this.productKey());
+		} catch (error) {
+			if (!(error instanceof PaymentMethodRequiredError)) throw error;
+			throw await this.paymentMethodRequired(customerId, body?.returnUrl);
+		}
 	}
 
 	@ApiOperation({ summary: 'Cancel at the end of the current period' })
@@ -157,6 +167,47 @@ export class BillingController {
 
 	/* ------------------------------------------------------------------ internals */
 
+	/**
+	 * 402 for an upgrade that nothing could pay for, with a customer-portal link to add a card.
+	 *
+	 * The portal is where the card is collected — the platform never renders a payment form — and its
+	 * "update payment method" feature makes the card the customer's invoice default, so the admin can
+	 * simply retry the switch on return. If the portal session cannot be created the 402 still stands;
+	 * the admin can open the portal from the page instead.
+	 */
+	private async paymentMethodRequired(customerId: string, returnUrl?: string): Promise<HttpException> {
+		let portalUrl: string | undefined;
+		try {
+			portalUrl = await this.billingService.createPortalSession(customerId, this.safeReturnUrl(returnUrl));
+		} catch (error) {
+			this.logger.warn(
+				`Could not open a billing portal session for a paid upgrade: ${
+					error instanceof Error ? error.message : String(error)
+				}`
+			);
+		}
+		return new HttpException(
+			{
+				statusCode: HttpStatus.PAYMENT_REQUIRED,
+				code: 'payment_method_required',
+				message:
+					'Add a payment method before switching to a paid plan. Your current plan has no card on file, ' +
+					'so the new plan could not be charged.',
+				...(portalUrl ? { portalUrl } : {})
+			},
+			HttpStatus.PAYMENT_REQUIRED
+		);
+	}
+
+	/** The Ever product this deployment sells (`BILLING_PRODUCT`, default `gauzy`). */
+	private productKey(): string {
+		const product = this.billingService.product;
+		if (!product) {
+			throw new NotFoundException('Billing is not available on this deployment.');
+		}
+		return product;
+	}
+
 	private requireBillingEnabled(): void {
 		if (!this.billingService.isBillingEnforced()) {
 			// Not a 403: on a self-hosted install this feature genuinely does not exist.
@@ -183,7 +234,13 @@ export class BillingController {
 		});
 
 		const customerId = tenant?.stripeCustomerId?.trim();
-		if (customerId) return customerId;
+		if (customerId) {
+			// A stored link to a customer who never subscribed to THIS product is treated as no link:
+			// that customer's invoices, card and subscriptions belong to another Ever product (and quite
+			// possibly another person), and nothing on these routes may show or act on them.
+			if (await this.billingService.isCustomerOfProduct(customerId)) return customerId;
+			throw new NotFoundException('This account is not linked to a billing customer.');
+		}
 
 		// No link yet. That is the normal state for someone who has just bought: onboarding refuses to
 		// make the link until the buyer has confirmed their email address, because an unconfirmed
@@ -221,9 +278,3 @@ export class BillingController {
 		return base;
 	}
 }
-
-/**
- * Which Ever product's plans this deployment offers. The catalog keys every price as
- * `ever_<product>_<hosting>_<tier>_<interval>`, and this platform is Gauzy.
- */
-const EVER_PRODUCT_KEY = 'gauzy';

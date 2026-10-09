@@ -158,23 +158,9 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	// dispatchClick: a leftover toastr/dialog backdrop over the toolbar otherwise swallows the click and
-	// the first confirmation (ConfirmComponent via the trash button's ngxConfirmDialog directive) never opens.
+	// dispatchClick: a leftover toastr/dialog backdrop over the toolbar otherwise swallows the click.
 	await waitForSpinnerGone();
 	await dispatchClick(JobsProposalsPage.deleteButtonCss);
-};
-
-export const confirmFirstDialogVisible = async () => {
-	// First of two delete dialogs: ConfirmComponent (ngx-confirm) opened by the trash ngxConfirmDialog.
-	await verifyElementIsVisible(JobsProposalsPage.confirmFirstDialogButtonCss);
-};
-
-export const clickConfirmFirstDialogButton = async () => {
-	// Click "Yes" (status="primary") on ConfirmComponent. Only this fires (confirm)="deleteProposalTemplate()",
-	// which then opens the SECOND dialog (DeleteConfirmationComponent). dispatchClick so the dialog's own
-	// fading cdk-overlay backdrop can't intercept the click.
-	await waitForSpinnerGone();
-	await dispatchClick(JobsProposalsPage.confirmFirstDialogButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -182,7 +168,7 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	// Second dialog: the DeleteConfirmation OK button (status="danger"); dispatch fires (click)=delete()
+	// DeleteConfirmation OK button (status="danger"); dispatch fires (click)=delete()
 	// directly so the dialog closes with 'ok' and the row is actually removed even under a fading backdrop.
 	await waitForSpinnerGone();
 	await dispatchClick(JobsProposalsPage.confirmDeleteButtonCss);

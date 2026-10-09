@@ -1,15 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DailyComponent } from './daily.component';
+import { DailyModule } from '../daily.module';
+import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG } from '@gauzy/ui-core/core';
 describe('DailyComponent', () => {
 	let component: DailyComponent;
 	let fixture: ComponentFixture<DailyComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [DailyComponent],
+			// Not standalone: import the NgModule that declares it, for the template's real scope.
+			imports: [DailyModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 	beforeEach(() => {
+		// In the app the page's route data sets this before the page renders; the template reads
+		// `(datePickerConfig$ | async).isSaveDatePicker`, which is null until something does.
+		TestBed.inject(DateRangePickerBuilderService).setDatePickerConfig(DEFAULT_DATE_PICKER_CONFIG);
 		fixture = TestBed.createComponent(DailyComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();

@@ -1,25 +1,30 @@
 <nb-card class="pdf-preview-card">
-  <nb-card-header class="d-flex">
-    @if (!isEstimate) {
-      <h5>
-        {{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_INVOICE' | translate }}
-      </h5>
-    }
-    @if (isEstimate) {
-      <h5>
-        {{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_ESTIMATE' | translate }}
-      </h5>
-    }
-  </nb-card-header>
-  <nb-card-body>
-    <ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
-  </nb-card-body>
-  <nb-card-footer class="text-right">
-    <button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
-      {{ 'BUTTONS.CANCEL' | translate }}
-    </button>
-    <button (click)="download()" status="success" nbButton>
-      {{ 'BUTTONS.DOWNLOAD' | translate }}
-    </button>
-  </nb-card-footer>
+	<nb-card-header>
+		<h5 class="title">
+			{{
+				(isEstimate
+					? 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_ESTIMATE'
+					: 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION_INVOICE'
+				) | translate
+			}}
+		</h5>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
+	</nb-card-header>
+	<nb-card-body>
+		<!-- The preview fills the body; the dialog, not the preview, decides how tall that is. -->
+		<div class="preview">
+			<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="closeDialog()" nbButton ghost status="basic" size="small">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="download()" status="success" nbButton size="small">
+			<nb-icon icon="download-outline"></nb-icon>
+			{{ 'BUTTONS.DOWNLOAD' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

@@ -43,6 +43,8 @@ const ORGANIZATION_EXPENSE = {
 describe('RecurringExpenseEditHandler (shared base)', () => {
 	let crudService: {
 		findOneByIdString: jest.Mock;
+		findOneByOptions: jest.Mock;
+		findAll: jest.Mock;
 		update: jest.Mock;
 		create: jest.Mock;
 	};
@@ -51,6 +53,8 @@ describe('RecurringExpenseEditHandler (shared base)', () => {
 	function arrange(storedExpense: Record<string, unknown> = ORGANIZATION_EXPENSE) {
 		crudService = {
 			findOneByIdString: jest.fn().mockResolvedValue(storedExpense),
+			findOneByOptions: jest.fn().mockResolvedValue(undefined),
+			findAll: jest.fn().mockResolvedValue({ items: [], total: 0 }),
 			update: jest.fn().mockResolvedValue({}),
 			create: jest.fn().mockResolvedValue({})
 		};
@@ -119,6 +123,24 @@ describe('RecurringExpenseEditHandler (shared base)', () => {
 			});
 
 			expect(crudService.create.mock.calls[0][0]).not.toHaveProperty('employeeId');
+		});
+	});
+
+	describe('an earlier-month edit with a conflicting sibling (REDUCE_CONFLICT)', () => {
+		it('waits for the final update and returns its result', async () => {
+			arrange({ ...ORGANIZATION_EXPENSE, startYear: 2027, startMonth: 6 });
+			crudService.findOneByOptions.mockResolvedValue({ id: 'sibling-1' });
+			const updated = { id: 'expense-1', startMonth: 3 };
+			crudService.update.mockImplementation(async (id: string) => (id === 'expense-1' ? updated : {}));
+
+			// This update used to be fired and forgotten: the request answered with an empty body before
+			// the start date was written, and a failure became an unhandled rejection.
+			const result = await edit({ startDateUpdateType: StartDateUpdateTypeEnum.REDUCE_CONFLICT });
+
+			expect(result).toBe(updated);
+			const [id, written] = crudService.update.mock.calls.at(-1);
+			expect(id).toBe('expense-1');
+			expect(written).toMatchObject({ startDay: 15, startMonth: 3, startYear: 2027, value: 99 });
 		});
 	});
 });

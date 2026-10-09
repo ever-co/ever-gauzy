@@ -1,0 +1,158 @@
+<!-- ── Account ─────────────────────────────────────────────────────────── -->
+<section class="settings-group">
+	<header class="group-header">
+		<div>
+			<h5 class="group-title">{{ 'SETTINGS_GENERAL.ACCOUNT.TITLE' | translate }}</h5>
+			<p class="group-description">{{ 'SETTINGS_GENERAL.ACCOUNT.DESCRIPTION' | translate }}</p>
+		</div>
+		<span class="group-scope">
+			<nb-icon icon="person-outline"></nb-icon>
+			{{ 'SETTINGS_GENERAL.SCOPE.PERSONAL' | translate }}
+		</span>
+	</header>
+
+	<div class="setting-row">
+		<div class="account">
+			<span class="account-avatar">
+				@if (user()?.imageUrl && !avatarFailed()) {
+					<img [src]="user()?.imageUrl" alt="" (error)="avatarFailed.set(true)" />
+				} @else {
+					{{ initials() }}
+				}
+			</span>
+			<span class="row-copy">
+				<span class="row-label">{{ fullName() }}</span>
+				@if (user()?.email && user()?.email !== fullName()) {
+					<span class="row-hint">{{ user()?.email }}</span>
+				}
+			</span>
+		</div>
+		<div class="row-control auto">
+			<a nbButton ghost size="small" status="basic" routerLink="/pages/auth/profile">
+				<nb-icon icon="edit-2-outline"></nb-icon>
+				{{ 'SETTINGS_GENERAL.ACCOUNT.MANAGE' | translate }}
+			</a>
+		</div>
+	</div>
+
+	@if (user()?.role?.name) {
+		<div class="setting-row">
+			<div class="row-copy">
+				<span class="row-label">{{ 'SETTINGS_GENERAL.ACCOUNT.ROLE' | translate }}</span>
+			</div>
+			<div class="row-control auto">
+				<span class="row-value">{{ 'USERS_PAGE.ROLE.' + user()?.role?.name | translate }}</span>
+			</div>
+		</div>
+	}
+
+	@if (user()?.createdAt) {
+		<div class="setting-row">
+			<div class="row-copy">
+				<span class="row-label">{{ 'SETTINGS_GENERAL.ACCOUNT.MEMBER_SINCE' | translate }}</span>
+			</div>
+			<div class="row-control auto">
+				<span class="row-value">{{ user()?.createdAt | date: 'mediumDate' }}</span>
+			</div>
+		</div>
+	}
+</section>
+
+<!-- ── Preferences ─────────────────────────────────────────────────────── -->
+<section class="settings-group">
+	<header class="group-header">
+		<div>
+			<h5 class="group-title">{{ 'SETTINGS_GENERAL.PREFERENCES.TITLE' | translate }}</h5>
+			<p class="group-description">{{ 'SETTINGS_GENERAL.PREFERENCES.DESCRIPTION' | translate }}</p>
+		</div>
+		<span class="group-scope">
+			<nb-icon icon="person-outline"></nb-icon>
+			{{ 'SETTINGS_GENERAL.SCOPE.PERSONAL' | translate }}
+		</span>
+	</header>
+
+	<div class="setting-row">
+		<label class="row-copy" for="generalThemeSelect">
+			<span class="row-label">{{ 'SETTINGS_GENERAL.PREFERENCES.THEME' | translate }}</span>
+			<span class="row-hint">{{ 'SETTINGS_GENERAL.PREFERENCES.THEME_HINT' | translate }}</span>
+		</label>
+		<div class="row-control">
+			<nb-select
+				id="generalThemeSelect"
+				size="small"
+				status="basic"
+				[selected]="currentTheme()"
+				(selectedChange)="onThemeChange($event)"
+			>
+				@for (theme of themes; track theme.value) {
+					<nb-option [value]="theme.value">{{ theme.name | translate }}</nb-option>
+				}
+			</nb-select>
+		</div>
+	</div>
+
+	<div class="setting-row">
+		<label class="row-copy" for="generalLanguageSelect">
+			<span class="row-label">{{ 'SETTINGS_GENERAL.PREFERENCES.LANGUAGE' | translate }}</span>
+			<span class="row-hint">{{ 'SETTINGS_GENERAL.PREFERENCES.LANGUAGE_HINT' | translate }}</span>
+		</label>
+		<div class="row-control">
+			<nb-select
+				id="generalLanguageSelect"
+				size="small"
+				status="basic"
+				[selected]="preferredLanguage()"
+				(selectedChange)="onLanguageChange($event)"
+			>
+				<nb-select-label>
+					@if (selectedLanguage(); as language) {
+						@if (flagUrl(language.code); as url) {
+							<img class="flag-icon" [src]="url" alt="" (error)="onFlagError($event)" />
+						}
+						{{ language.name | translate }}
+					}
+				</nb-select-label>
+				@for (language of languages(); track language.code) {
+					<nb-option [value]="language.code">
+						@if (flagUrl(language.code); as url) {
+							<img class="flag-icon" [src]="url" alt="" (error)="onFlagError($event)" />
+						}
+						{{ language.name | translate }}
+					</nb-option>
+				}
+			</nb-select>
+		</div>
+	</div>
+
+	<div class="setting-row">
+		<label class="row-copy" for="generalLayoutSelect">
+			<span class="row-label">{{ 'SETTINGS_GENERAL.PREFERENCES.LAYOUT' | translate }}</span>
+			<span class="row-hint">{{ 'SETTINGS_MENU.PREFERRED_LAYOUT_TOOLTIP' | translate }}</span>
+		</label>
+		<div class="row-control">
+			<nb-select
+				id="generalLayoutSelect"
+				size="small"
+				status="basic"
+				[selected]="preferredLayout()"
+				(selectedChange)="onLayoutChange($event)"
+			>
+				@for (layout of layouts; track layout) {
+					<nb-option [value]="layout">{{ 'SETTINGS_MENU.' + layout | translate }}</nb-option>
+				}
+			</nb-select>
+		</div>
+	</div>
+
+	<div class="setting-row">
+		<div class="row-copy">
+			<span class="row-label">{{ 'SETTINGS_GENERAL.PREFERENCES.RESET_LAYOUTS' | translate }}</span>
+			<span class="row-hint">{{ 'SETTINGS_MENU.RESET_LAYOUT_TOOLTIP' | translate }}</span>
+		</div>
+		<div class="row-control auto">
+			<button type="button" nbButton outline size="small" status="basic" (click)="onResetPageLayouts()">
+				{{ 'SETTINGS_MENU.RESET_LAYOUT' | translate }}
+			</button>
+		</div>
+	</div>
+</section>

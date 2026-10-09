@@ -6,7 +6,9 @@ import {
 	BadRequestException,
 	ForbiddenException,
 	Injectable,
+	Logger,
 	NotFoundException,
+	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
 import {
@@ -20,6 +22,7 @@ import {
 	DeleteResult,
 	MoreThan
 } from 'typeorm';
+import { EventBus } from '@nestjs/cqrs';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import {
@@ -30,6 +33,7 @@ import {
 	IUser,
 	IUserUiPreferences,
 	IUserUiPreferencesUpdateInput,
+	isEEAOrUKRegion,
 	LanguagesEnum,
 	PermissionsEnum,
 	RolesEnum,
@@ -42,12 +46,16 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum, parseFindOptionsRelations } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
+import { liftEmployeeAgentRestrictions } from '../employee/agent-exit-logout-restriction';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 import { validateUserDeletion } from './default-protected-users';
 import { assertUiPreferencesSize, mergeUiPreferences, sanitizeUiPreferencesPatch } from './ui-preferences.util';
+import { isEmailAddressChange, UNCONFIRMED_EMAIL_STATE } from './email-change.util';
+import { UserEmailChangedEvent } from './events/user-email-changed.event';
 import { PasswordHashService } from '../password-hash/password-hash.service';
 import {
 	assertRoleAssignmentAllowed,
@@ -92,7 +100,10 @@ export class UserService extends TenantAwareCrudService<User> {
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly _employeeService: EmployeeService,
 		private readonly _taskService: TaskService,
-		private readonly _passwordHashService: PasswordHashService
+		private readonly _passwordHashService: PasswordHashService,
+		// Optional: seeders and other contexts load UserModule without the global activity log module.
+		@Optional() private readonly _activityLogService?: ActivityLogService,
+		@Optional() private readonly _eventBus?: EventBus
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -212,30 +223,33 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * Marked email as verified for user
 	 *
 	 * @param id
-	 * @returns
+	 * @param email The address the confirmation was issued for. When given, the write only applies
+	 * while the account still holds that address, so a confirmation that completes just after the user
+	 * moved to another address is not recorded for the new one.
+	 * @returns whether the confirmation was recorded (false: the account no longer holds `email`).
 	 */
-	public async markEmailAsVerified(id: ID) {
+	public async markEmailAsVerified(id: ID, email?: string): Promise<boolean> {
+		const where = email === undefined ? { id } : { id, email };
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroOrmRepository.nativeUpdate(
-					{ id },
-					{
+				return (
+					(await this.mikroOrmRepository.nativeUpdate(where, {
 						emailVerifiedAt: freshTimestamp(),
 						emailToken: null,
 						code: null,
 						codeExpireAt: null
-					}
+					})) > 0
 				);
-			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.update(
-					{ id },
-					{
-						emailVerifiedAt: freshTimestamp(),
-						emailToken: null,
-						code: null,
-						codeExpireAt: null
-					}
-				);
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmRepository.update(where, {
+					emailVerifiedAt: freshTimestamp(),
+					emailToken: null,
+					code: null,
+					codeExpireAt: null
+				});
+				// Same reading as storeEmailVerificationCode: only a reported 0 means nothing was written.
+				return affected !== 0;
+			}
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -546,16 +560,144 @@ export class UserService extends TenantAwareCrudService<User> {
 				entity['hash'] = await this.getPasswordHash(entity['hash']);
 			}
 
+			// A new address starts unconfirmed: the stored confirmation (and any pending link or code)
+			// belongs to the previous mailbox. The address and the cleared confirmation are written
+			// together, in one UPDATE after the rest of the profile (see moveToUnconfirmedAddress), so
+			// the save leaves those columns alone.
+			const newEmail = entity.email;
+			const emailChanged = isEmailAddressChange(user.email, newEmail);
+			if (emailChanged) {
+				for (const column of ['email', ...Object.keys(UNCONFIRMED_EMAIL_STATE)]) {
+					delete entity[column];
+				}
+			}
+
 			// Save the updated user entity
 			await this.save(entity);
 
+			if (emailChanged) {
+				await this.moveToUnconfirmedAddress(id as ID, newEmail);
+			}
+
+			await this.liftAgentRestrictionsOnMoveIntoEEAOrUK(user, entity);
+
 			// Return the updated user
-			return await this.findOneByWhereOptions({
+			const updated = await this.findOneByWhereOptions({
 				id: id as string,
 				tenantId: RequestContext.currentTenantId()
 			});
+
+			if (emailChanged) {
+				this.publishEmailChanged(updated);
+			}
+
+			return updated;
 		} catch (error) {
 			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 * Moves a user to a new, not yet confirmed address: the address and the cleared confirmation
+	 * (with any pending link or code) are written in ONE UPDATE that always sets every listed column.
+	 *
+	 * Neither half can be left to another write. `save` cannot carry the reset: TypeORM only writes
+	 * the columns that differ from the row it read just before, so a link/code or a confirmation
+	 * stored for the previous address between that read and the write would survive next to the new
+	 * address. And a reset issued after the new address is already stored would also erase a link and
+	 * code a resend has meanwhile issued FOR the new address, so that message would arrive unusable.
+	 *
+	 * In one statement, a write for the previous address lands either before it (and is cleared by
+	 * it) or after it (and no longer matches: see storeEmailVerificationCode and markEmailAsVerified),
+	 * while a write for the new address can only land after it, and is kept.
+	 */
+	private async moveToUnconfirmedAddress(id: ID, email: string): Promise<void> {
+		const values = { email, ...UNCONFIRMED_EMAIL_STATE };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.nativeUpdate({ id }, values);
+				return;
+			case MultiORMEnum.TypeORM:
+				await this.typeOrmRepository.update({ id }, values);
+				return;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Stores a newly issued confirmation link and code — only while the account still holds the
+	 * address they are being sent to.
+	 *
+	 * The code endpoint matches a stored code against the account's CURRENT address. Written by id
+	 * alone, a code prepared for an address the user has just left would land next to the new address
+	 * and confirm it without anyone receiving mail there.
+	 *
+	 * Goes straight to the repositories for the same reason as {@link claimEmailVerificationCode}:
+	 * registration sends this from a public request, where `update()` with object criteria throws.
+	 *
+	 * @returns whether the link and code were stored (false: the account no longer holds `email`).
+	 */
+	async storeEmailVerificationCode(
+		id: ID,
+		email: string,
+		values: { emailToken: string; code: string; codeExpireAt: Date }
+	): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return (await this.mikroOrmUserRepository.nativeUpdate({ id, email } as any, values as any)) > 0;
+			case MultiORMEnum.TypeORM: {
+				const { affected } = await this.typeOrmUserRepository.update({ id, email }, values);
+				// The WHERE clause is the guarantee; the count only decides whether the e-mail goes out.
+				return affected !== 0;
+			}
+			default:
+				throw new Error(`ORM type not implemented: ${this.ormType}`);
+		}
+	}
+
+	/**
+	 * Asks for the confirmation e-mail of a user's new address (see {@link UserEmailChangedEvent}).
+	 * Never fails the profile update itself: the address is already saved as unconfirmed, and the user
+	 * can request the e-mail again from the verification notice.
+	 */
+	private publishEmailChanged(user: IUser): void {
+		if (!user?.id || !this._eventBus) {
+			return;
+		}
+		try {
+			this._eventBus.publish(new UserEmailChangedEvent(user));
+		} catch (error) {
+			new Logger(UserService.name).error(
+				`Could not request the confirmation e-mail for user ${user.id}: ${error?.message}`
+			);
+		}
+	}
+
+	/**
+	 * Issue #9873: a worker whose time zone moves into the EEA/UK must be able to exit and log out of
+	 * the desktop agent, so lift (and record) any restriction on their employee records. Never fails
+	 * the profile update itself.
+	 */
+	private async liftAgentRestrictionsOnMoveIntoEEAOrUK(previous: IUser, entity: User): Promise<void> {
+		const timeZone = entity?.timeZone;
+		if (!previous?.id || !timeZone || timeZone === previous.timeZone || !this._activityLogService) {
+			return;
+		}
+		if (!isEEAOrUKRegion({ timeZone }) || isEEAOrUKRegion({ timeZone: previous.timeZone })) {
+			return;
+		}
+		try {
+			await liftEmployeeAgentRestrictions(
+				this._employeeService,
+				this._activityLogService,
+				{ tenantId: RequestContext.currentTenantId(), userId: previous.id },
+				`the worker's time zone moved into the EEA/UK (${timeZone})`
+			);
+		} catch (error) {
+			new Logger(UserService.name).error(
+				`Could not lift agent exit/logout restrictions for user ${previous.id}: ${error?.message}`
+			);
 		}
 	}
 

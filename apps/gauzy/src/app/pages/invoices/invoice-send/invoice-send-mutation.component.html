@@ -1,69 +1,55 @@
-<nb-card class="pdf-preview-card card-scroll">
-  <nb-card-header>
-    <span class="cancel"
-      ><i class="fas fa-times" (click)="closeDialog()"></i
-    ></span>
-    <h5 class="title">
-      @if (!isEstimate) {
-        <span>{{
-          'INVOICES_PAGE.SEND.CONFIRMATION_INVOICE' | translate
-        }}</span>
-      }
-      @if (isEstimate) {
-        <span>{{
-          'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE' | translate
-        }}</span>
-      }
-      {{ invoice.toContact.name }} ?
-    </h5>
-  </nb-card-header>
-  <nb-card-body>
-    @if (!alreadySent) {
-      <span>
-        <ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
-      </span>
-    }
-    @if (alreadySent) {
-      <span>
-        @if (!isEstimate) {
-          <span>{{
-            'INVOICES_PAGE.SEND.ALREADY_SENT_INVOICE' | translate
-          }}</span>
-        }
-        @if (isEstimate) {
-          <span>{{
-            'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE' | translate
-          }}</span>
-        }
-        {{ invoice.toContact.name }}.
-      </span>
-    }
-  </nb-card-body>
-  <nb-card-footer class="text-left">
-    @if (!alreadySent) {
-      <button
-        (click)="closeDialog()"
-        outline
-        status="basic"
-        class="mr-3"
-        nbButton
-        >
-        {{ 'BUTTONS.CANCEL' | translate }}
-      </button>
-    }
-    @if (!alreadySent) {
-      <button (click)="send()" status="success" nbButton>
-        {{ 'BUTTONS.SEND' | translate }}
-      </button>
-    }
-    @if (alreadySent) {
-      <button
-        (click)="closeDialog()"
-        status="success"
-        nbButton
-        >
-        {{ 'BUTTONS.OK' | translate }}
-      </button>
-    }
-  </nb-card-footer>
+<nb-card class="pdf-preview-card" [class.sent-card]="alreadySent">
+	<nb-card-header>
+		<h5 class="title">
+			@if (!alreadySent) {
+			{{
+				(isEstimate
+					? 'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE'
+					: 'INVOICES_PAGE.SEND.CONFIRMATION_INVOICE'
+				) | translate
+			}}
+			{{ invoice.toContact?.name }} ?
+			} @else {
+			<!-- Already sent: the dialog states that, so its title says so rather than naming the page. -->
+			{{ 'INVOICES_PAGE.SEND.SENT' | translate }}
+			}
+		</h5>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
+	</nb-card-header>
+	<nb-card-body>
+		@if (!alreadySent) {
+		<!-- What is about to be sent; the dialog, not the preview, decides how tall it is. -->
+		<div class="preview">
+			<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
+		</div>
+		} @else {
+		<p class="sent-message">
+			{{
+				(isEstimate
+					? 'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE'
+					: 'INVOICES_PAGE.SEND.ALREADY_SENT_INVOICE'
+				) | translate
+			}}
+			{{ invoice.toContact?.name }}.
+		</p>
+		}
+	</nb-card-body>
+	<!-- `text-left` is the e2e hook for the confirm button; the row below aligns them. -->
+	<nb-card-footer class="text-left">
+		@if (!alreadySent) {
+		<button (click)="closeDialog()" nbButton ghost status="basic" size="small">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="send()" status="success" nbButton size="small">
+			<nb-icon icon="upload-outline"></nb-icon>
+			{{ 'BUTTONS.SEND' | translate }}
+		</button>
+		} @else {
+		<button (click)="closeDialog()" status="success" nbButton size="small">
+			{{ 'BUTTONS.OK' | translate }}
+		</button>
+		}
+	</nb-card-footer>
 </nb-card>

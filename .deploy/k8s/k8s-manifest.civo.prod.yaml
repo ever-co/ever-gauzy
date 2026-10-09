@@ -58,6 +58,12 @@ spec:
                         value: 0.0.0.0
                       - name: DEMO
                         value: 'false'
+                      # Anonymous usage statistics stay off on Ever's own cloud until they are switched on there deliberately.
+                      - name: EVER_STATS_ENABLED
+                        value: 'false'
+                      # Ever's own cloud: never reported as a self-hosted installation.
+                      - name: EVER_INSTALL_SOURCE
+                        value: 'cloud'
                       - name: NODE_ENV
                         value: 'production'
                       - name: ADMIN_PASSWORD_RESET

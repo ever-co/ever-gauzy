@@ -223,7 +223,7 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent impl
 			.deleteFeaturedImage(this.itemVariant.id)
 			.then((res) => {
 				this.image = null;
-				this.toastrService.success('INVENTORY_PAGE.IMAGE_DELETED');
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
 			})
 			.catch((err) => {
 				this.toastrService.danger('INVENTORY_PAGE.ERROR');

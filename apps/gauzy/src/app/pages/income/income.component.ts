@@ -230,6 +230,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '15%',
+					// Newest income first by default: without an initial sort the API answered in
+					// insertion order, so an edited record moved to the last page (#530).
+					sortDirection: 'desc',
 					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {

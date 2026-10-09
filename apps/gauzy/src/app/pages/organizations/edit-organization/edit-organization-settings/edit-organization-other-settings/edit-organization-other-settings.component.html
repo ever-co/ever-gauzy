@@ -18,8 +18,8 @@
 						[class.active]="isSectionExpanded($index)"
 						[attr.aria-expanded]="isSectionExpanded($index)"
 						[attr.aria-controls]="'settings-section-' + section.key"
-						[attr.aria-current]="isSectionExpanded($index) ? 'true' : null"
-						(click)="openSection($index)"
+						[attr.aria-current]="isCurrentSection($index) ? 'true' : null"
+						(click)="toggleSection($index)"
 					>
 						{{ section.label | translate }}
 					</button>
@@ -29,7 +29,7 @@
 	</aside>
 	<section class="fields-section">
 		<div class="accordion-section">
-			<nb-accordion #accordion>
+			<nb-accordion #accordion [multi]="true">
 				<nb-accordion-item #general id="settings-section-general" [expanded]="true">
 					<nb-accordion-item-header tabindex="-1">
 						{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
@@ -1057,7 +1057,7 @@
 											}}
 											<button
 												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO'
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO'
 														| translate
 												"
 												ghost
@@ -1081,7 +1081,7 @@
 											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS' | translate }}
 											<button
 												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TRACK_ALL_DISPLAYS_INFO'
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ALL_DISPLAYS_INFO'
 														| translate
 												"
 												ghost
@@ -1104,6 +1104,13 @@
 					</nb-accordion-item-header>
 					<nb-accordion-item-body #agentBody [hidden]="agentBody?.state === 'collapsed'">
 						<div class="fields time-tracker">
+							@if (isEEAOrUK) {
+								<div class="alert alert-info border border-info rounded p-3 mb-3">
+									<nb-icon icon="info-outline" status="info" class="mr-2"></nb-icon>
+									<strong>{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.EEA_UK_COMPLIANCE_NOTICE_TITLE' | translate }}</strong>
+									<span class="d-block text-muted small mt-1">{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.EEA_UK_COMPLIANCE_NOTICE_BODY' | translate }}</span>
+								</div>
+							}
 							<div class="row">
 								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
@@ -1116,7 +1123,7 @@
 											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT' | translate }}
 											<button
 												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_AGENT_APP_EXIT_INFO'
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_AGENT_APP_EXIT_INFO'
 														| translate
 												"
 												ghost
@@ -1143,7 +1150,7 @@
 											}}
 											<button
 												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_LOGOUT_FROM_AGENT_APP_INFO'
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_LOGOUT_FROM_AGENT_APP_INFO'
 														| translate
 												"
 												ghost

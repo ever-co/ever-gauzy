@@ -19,6 +19,7 @@ import {
 	CurrenciesEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
+	TaxCalculationTypeEnum,
 	IInvoiceEstimateHistory,
 	IPayment,
 	IInvoiceItem,
@@ -168,6 +169,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsEnum(DiscountTaxTypeEnum)
 	@MultiORMColumn({ nullable: true })
 	tax2Type: DiscountTaxTypeEnum;
+
+	/** How the second tax combines with the first. NULL (invoices made before it was stored) reads as SIMPLE. */
+	@ApiPropertyOptional({ type: () => String, enum: TaxCalculationTypeEnum })
+	@IsOptional()
+	@IsEnum(TaxCalculationTypeEnum)
+	@MultiORMColumn({ nullable: true })
+	taxCalculationType?: TaxCalculationTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)

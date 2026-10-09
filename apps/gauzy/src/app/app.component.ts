@@ -279,8 +279,18 @@ export class AppComponent implements OnInit, AfterViewInit {
 							this._dateRangePickerBuilderService.setDateRangePicker(dates);
 						}
 
-						// Set Date Range Picker Default Unit
-						const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
+						// Set Date Range Picker Default Unit.
+						// `dates.unitOfTime` is the EFFECTIVE unit the resolver settled on for this
+						// route: the route's own unit on pages that lock the picker, otherwise the
+						// URL's `unit_of_time` when the user picked one. Folding it in here makes the
+						// config the single source of truth, so the header picker reads the unit from
+						// the config instead of racing the URL for it.
+						const resolvedUnitOfTime = dates?.unitOfTime as IDatePickerConfig['unitOfTime'] | undefined;
+						const datePickerConfig: IDatePickerConfig = {
+							...DEFAULT_DATE_PICKER_CONFIG,
+							...datePicker,
+							...(resolvedUnitOfTime ? { unitOfTime: resolvedUnitOfTime } : {})
+						};
 						this._dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
 
 						// Create query parameters URL builder
