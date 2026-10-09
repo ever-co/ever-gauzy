@@ -14,20 +14,13 @@ import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
 import { LocalStore } from './desktop-store';
 import { metaData } from './desktop-wakatime';
-import {
-	ActivityWatchAfkService,
-	ActivityWatchChromeService,
-	ActivityWatchEdgeService,
-	ActivityWatchEventManager,
-	ActivityWatchEventTableList,
-	ActivityWatchFirefoxService,
-	ActivityWatchService,
-	ActivityWatchWindowService
-} from './integrations';
+import { ActivityWatchEventManager, ActivityWatchService } from './integrations';
 import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
 import { AuditLogHandler } from './audit';
+import { AsyncTimerSyncQueue, IAsyncTimerSyncQueueOptions, isAsyncTimerDataSyncEnabled } from './queues/async-timer-sync-queue';
+import { ITimerQueueJob, TimerQueueProcessor } from './queues/timer-queue-processor';
 
 // embedded-queue is required lazily inside processWithQueue() to avoid
 // loading it at module import time (before app.ready).
@@ -61,6 +54,12 @@ export default class TimerHandler {
 	private _activities = [];
 	private _offlineMode: IOfflineMode = DesktopOfflineModeHandler.instance;
 	private _timerService = new TimerService();
+	// Applies queue jobs to the local database, for the in-memory queue and the persistent one alike.
+	private readonly _queueProcessor = new TimerQueueProcessor(this._timerService, this._offlineMode);
+	// Persistent queue of the asynchronous timer data sync (`appSetting.asyncTimerDataSync`, off by default), or null
+	// for the in-memory queue. Decided once, on the first job, so a session never mixes the two queues: a change of
+	// the setting applies from the next start.
+	private _asyncTimerSync: Promise<AsyncTimerSyncQueue | null> | null = null;
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
 	private readonly _userService: UserService;
@@ -557,9 +556,9 @@ export default class TimerHandler {
 					timerId: lastTimerId,
 					timeLogId: timeLogId,
 					startedAt: startedAt,
-					activities: dataCollection.allActivities,
-					idsAw: dataCollection.idsAw,
-					idsWakatime: dataCollection.idsWakatime,
+					activities: dataCollection?.allActivities,
+					idsAw: dataCollection?.idsAw,
+					idsWakatime: dataCollection?.idsWakatime,
 					duration: durationNow,
 					activeWindow: null,
 					isAw: projectInfo.aw.isAw,
@@ -711,103 +710,63 @@ export default class TimerHandler {
 	}
 
 	private async ProcessQueueMessage(job, knex) {
-		await new Promise(async (resolve) => {
-			const windowService = new ActivityWatchWindowService();
+		try {
+			await this._queueProcessor.process(job.data, knex);
+		} catch (error) {
+			await this.auditQueueJobFailure(job?.data, error);
+		}
+	}
 
-			const typeJob = job.data.type;
+	private async auditQueueJobFailure(job: ITimerQueueJob, error) {
+		await this._auditLogHandler.timerAuditError(
+			`[ProcessQueueMessage] Failed to process queue job (type: ${job?.type}): ${error?.message ?? error}`
+		);
+	}
 
-			try {
-				switch (typeJob) {
-					case ActivityWatchEventTableList.WINDOW:
-						{
-							console.log('Processing Window Event');
-							await windowService.save(job.data.data);
-						}
-						break;
+	/*
+	 * The persistent queue when `appSetting.asyncTimerDataSync` is on, otherwise null (the in-memory queue).
+	 * With the setting off, jobs an earlier asynchronous session left behind are run first, so turning it off loses
+	 * nothing; without that session's file this is a no-op. If the persistent queue cannot be opened, the in-memory
+	 * queue is used.
+	 */
+	private asyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
+		this._asyncTimerSync ??= this.openAsyncTimerSync(knex);
+		return this._asyncTimerSync;
+	}
 
-					case ActivityWatchEventTableList.AFK:
-						{
-							console.log('Processing AFK Event');
-							const afkService = new ActivityWatchAfkService();
-							await afkService.save(job.data.data);
-						}
-						break;
-
-					case ActivityWatchEventTableList.CHROME:
-						{
-							console.log('Processing Chrome Event');
-							const chromeService = new ActivityWatchChromeService();
-							await chromeService.save(job.data.data);
-						}
-						break;
-
-					case ActivityWatchEventTableList.FIREFOX:
-						{
-							console.log('Processing Firefox Event');
-							const firefoxService = new ActivityWatchFirefoxService();
-							await firefoxService.save(job.data.data);
-						}
-						break;
-
-					case ActivityWatchEventTableList.EDGE:
-						{
-							console.log('Processing Edge Event');
-							const edgeService = new ActivityWatchEdgeService();
-							await edgeService.save(job.data.data);
-						}
-						break;
-
-					case 'remove-window-events':
-						console.log('Removing Window Events');
-						await windowService.clear();
-						break;
-
-					case 'remove-wakatime-events':
-						console.log('Removing Wakatime Events');
-						await metaData.removeActivity(knex, {
-							idsWakatime: job.data.data
-						});
-						break;
-
-					case 'update-duration-timer':
-						const pUpdate = {
-							id: job.data.data.id,
-							duration: job.data.data.duration,
-							...(this._offlineMode.enabled && { synced: false })
-						};
-
-						await this._timerService.update(new Timer(pUpdate));
-
-						break;
-
-					case 'update-timer-time-slot':
-						const pUpdateSlot = {
-							id: job.data.data.id,
-							timeslotId: job.data.data.timeSlotId,
-							timesheetId: job.data.data.timeSheetId
-						};
-
-						await this._timerService.update(new Timer(pUpdateSlot));
-
-
-						break;
-
-					default:
-						console.log('Unknown Job Type');
-						break;
-				}
-
-				resolve(true);
-			} catch (error) {
-				await this._auditLogHandler.timerAuditError(
-					`[ProcessQueueMessage] Failed to process queue job (type: ${job?.data?.type}): ${error?.message ?? error}`
-				);
-				resolve(false);
+	private async openAsyncTimerSync(knex): Promise<AsyncTimerSyncQueue | null> {
+		const options: IAsyncTimerSyncQueueOptions = {
+			processor: this._queueProcessor,
+			offlineMode: this._offlineMode,
+			onJobFailed: (job, error) => this.auditQueueJobFailure(job, error)
+		};
+		try {
+			if (isAsyncTimerDataSyncEnabled(LocalStore.getStore('appSetting'))) {
+				return new AsyncTimerSyncQueue(options).open(knex);
 			}
-		});
+			await AsyncTimerSyncQueue.flushLeftovers(knex, options);
+		} catch (error) {
+			await this._auditLogHandler.timerAuditError(
+				`[processWithQueue] Persistent timer queue unavailable, using the in-memory queue: ${error?.message ?? error}`
+			);
+		}
+		return null;
 	}
 
 	async processWithQueue(type, data, knex) {
+		const asyncTimerSync = await this.asyncTimerSync(knex);
+
+		if (asyncTimerSync) {
+			try {
+				return await asyncTimerSync.processWithQueue(type, data, knex);
+			} catch (error) {
+				// The job was not stored: run it on the in-memory queue below rather than lose it.
+				await this._auditLogHandler.timerAuditError(
+					`[processWithQueue] Could not store queue job (type: ${data?.type}), processing it in memory: ${error?.message ?? error}`
+				);
+			}
+		}
+
 		const queName = `${type}-${this.appName}`;
 		console.log(`processWithQueue Called for ${queName}`);
 
