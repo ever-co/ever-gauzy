@@ -119,11 +119,116 @@ export function toSearchText(value: unknown): string {
 	return String(value);
 }
 
-/** The separator run a template may join two placeholders with, at the start of some literal text. */
+/**
+ * The separator run a template may join two placeholders with, at the start of some literal text.
+ *
+ * Anchored at the start, and the whitespace and the separators it alternates between are disjoint, so
+ * the engine reads each character once and the expression cannot fail after it has started matching.
+ */
 const LEADING_SEPARATOR = /^(?:\s*[—–\-|,;:])+\s*/;
 
-/** The separator run a template may join two placeholders with, at the end of some literal text. */
-const TRAILING_SEPARATOR = /\s*(?:[—–\-|,;:]\s*)+$/;
+/** The characters a template joins two placeholders with. */
+const SEPARATOR_CHARACTERS = '—–-|,;:';
+
+/** A single whitespace character, as `\s` reads it — the class `String.prototype.trim` removes too. */
+const WHITESPACE_CHARACTER = /^\s$/;
+
+/**
+ * Replaces the separator run some literal text ends with by a single space.
+ *
+ * Exactly what `text.replace(/\s*(?:[—–\-|,;:]\s*)+$/, ' ')` returns: the longest suffix made only of
+ * whitespace and separators is replaced, provided it holds at least one separator; otherwise the text
+ * is returned as it is. The expression itself is not used because it is anchored only at the END — on
+ * literal text holding a long run of spaces or separators that is not at its end, the engine restarts
+ * at every character of the run and reads to the run's end each time, which is quadratic in a template
+ * an administrator writes. Walking back from the end reads each character of the suffix once.
+ *
+ * @param text Literal text of a template.
+ * @returns The text with its trailing separator run replaced by one space.
+ */
+function replaceTrailingSeparator(text: string): string {
+	let start = text.length;
+	let separated = false;
+
+	while (start > 0) {
+		const character = text[start - 1];
+
+		if (SEPARATOR_CHARACTERS.includes(character)) {
+			separated = true;
+		} else if (!WHITESPACE_CHARACTER.test(character)) {
+			break;
+		}
+
+		start -= 1;
+	}
+
+	return separated ? `${text.slice(0, start)} ` : text;
+}
+
+/** One `{{path}}` placeholder of a template. */
+interface ITemplatePlaceholder {
+	/** Where the placeholder's `{{` is. */
+	index: number;
+
+	/** The placeholder as written, from `{{` to `}}`. */
+	text: string;
+
+	/** The path it names. */
+	path: string;
+}
+
+/**
+ * Finds the `{{path}}` placeholders of a template, left to right.
+ *
+ * Exactly the matches of `/\{\{\s*([^}]+?)\s*\}\}/g`, read without the expression: the leading `\s*`
+ * and the lazy body overlap on whitespace, so on a template that opens `{{` and never closes it the
+ * engine retried every split of the whitespace at every position — polynomial in a template an
+ * administrator writes. A body holds no `}`, so a placeholder ends at the first `}` after its `{{`, and
+ * only when a second `}` follows it; the path is the body with its surrounding whitespace removed, and a
+ * body that is only whitespace keeps its last character, which is what the lazy group was left with.
+ *
+ * @param source The template.
+ * @returns The placeholders, in the order the template states them.
+ */
+function templatePlaceholders(source: string): ITemplatePlaceholder[] {
+	const placeholders: ITemplatePlaceholder[] = [];
+	let cursor = 0;
+
+	while (cursor < source.length) {
+		const open = source.indexOf('{{', cursor);
+
+		if (open < 0) {
+			break;
+		}
+
+		const close = source.indexOf('}', open + 2);
+
+		if (close < 0) {
+			// No `}` anywhere after this `{{`, so none after a later one either.
+			break;
+		}
+
+		if (close === open + 2) {
+			// `{{}`: an empty body. The next `{{` may start one character later.
+			cursor = open + 1;
+			continue;
+		}
+
+		if (source[close + 1] !== '}') {
+			// A lone `}`. Every `{{` before it ends its body at the same `}` and fails the same way.
+			cursor = close + 1;
+			continue;
+		}
+
+		const body = source.slice(open + 2, close);
+		const trimmed = body.trim();
+
+		placeholders.push({ index: open, text: source.slice(open, close + 2), path: trimmed || body.slice(-1) });
+		cursor = close + 2;
+	}
+
+	return placeholders;
+}
 
 /**
  * Fills a `{{path}}` template from a source row.
@@ -148,12 +253,12 @@ export function renderTemplate(template: string, row: SearchSourceRow): string {
 	const pieces: Array<{ text: string; placeholder: boolean }> = [];
 	let cursor = 0;
 
-	for (const match of source.matchAll(/\{\{\s*([^}]+?)\s*\}\}/g)) {
-		const at = match.index ?? 0;
+	for (const placeholder of templatePlaceholders(source)) {
+		const at = placeholder.index;
 
 		pieces.push({ text: source.slice(cursor, at), placeholder: false });
-		pieces.push({ text: toSearchText(readPath(row, match[1])), placeholder: true });
-		cursor = at + match[0].length;
+		pieces.push({ text: toSearchText(readPath(row, placeholder.path)), placeholder: true });
+		cursor = at + placeholder.text.length;
 	}
 
 	pieces.push({ text: source.slice(cursor), placeholder: false });
@@ -173,7 +278,7 @@ export function renderTemplate(template: string, row: SearchSourceRow): string {
 		}
 
 		if (emptied[index + 1]) {
-			text = text.replace(TRAILING_SEPARATOR, ' ');
+			text = replaceTrailingSeparator(text);
 		}
 
 		return text;

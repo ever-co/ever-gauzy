@@ -17,6 +17,27 @@ import { TypeOrmChannelDomainRepository } from './repository/type-orm-channel-do
 import { MikroOrmChannelDomainRepository } from './repository/mikro-orm-channel-domain.repository';
 
 /**
+ * Removes the run of dots a host ends with — the fully-qualified spelling `shop.example.com.`.
+ *
+ * Exactly what `value.replace(/\.+$/, '')` returns, without the expression: that pattern is not
+ * anchored at the start, so on a host carrying a long run of dots that is NOT at its end the engine
+ * restarts the run at every one of its dots and fails at the end each time — quadratic in the length of
+ * a value the request header supplies. A walk back from the end reads each character once.
+ *
+ * @param value The host, already lower-cased and stripped of its port.
+ * @returns The host without its trailing dots.
+ */
+function withoutTrailingDots(value: string): string {
+	let end = value.length;
+
+	while (end > 0 && value.charCodeAt(end - 1) === 0x2e /* . */) {
+		end -= 1;
+	}
+
+	return value.slice(0, end);
+}
+
+/**
  * Which channel an incoming request is for.
  *
  * **One question, one indexed read.** The channel-scope guard has to know the channel of a request
@@ -355,7 +376,7 @@ export class ChannelDomainService extends TenantAwareCrudService<ChannelDomain> 
 		const withoutScheme = raw.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
 		const hostOnly = withoutScheme.split(/[/?#]/)[0].split('@').pop() ?? '';
 		const withoutPort = hostOnly.replace(/:\d+$/, '');
-		const normalised = withoutPort.replace(/\.+$/, '');
+		const normalised = withoutTrailingDots(withoutPort);
 		const looksLikeHost = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(normalised);
 
 		if (!normalised || !looksLikeHost) {

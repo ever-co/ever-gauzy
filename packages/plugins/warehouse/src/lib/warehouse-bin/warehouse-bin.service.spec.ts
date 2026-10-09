@@ -1131,6 +1131,51 @@ describe('WarehouseBinService — creating a building by the rack (doc 09 §14.2
 		expect(fixture.tables.bin).toEqual([]);
 	});
 
+	it('reads the trailing number exactly as the expression it replaced did', async () => {
+		// The code used to be split with `/^(.*?)(\d+)$/`: the number is the longest run of digits the code
+		// ends with, a code that is all digits has an empty prefix, and `.` never crossed a line break.
+		const fixture = binFixture();
+
+		const allDigits = await fixture.service.createRange({
+			warehouseId: WAREHOUSE,
+			zoneId: 'zone-1',
+			from: '0099',
+			count: 2
+		});
+		const innerDigits = await fixture.service.createRange({
+			warehouseId: WAREHOUSE,
+			zoneId: 'zone-1',
+			from: 'R2-L3-07',
+			count: 2
+		});
+
+		expect(allDigits.map((bin) => bin.code)).toEqual(['0099', '0100']);
+		expect(innerDigits.map((bin) => bin.code)).toEqual(['R2-L3-07', 'R2-L3-08']);
+		await expect(
+			fixture.service.createRange({ warehouseId: WAREHOUSE, zoneId: 'zone-1', from: 'A\n01', count: 1 })
+		).rejects.toThrow(/carries no number to continue from/);
+		await expect(
+			fixture.service.createRange({ warehouseId: WAREHOUSE, zoneId: 'zone-1', from: 'A-01 ', count: 1 })
+		).rejects.toThrow(/carries no number to continue from/);
+	});
+
+	it('refuses a code with a long run of digits that is not at its end in linear time', async () => {
+		// The shape the lazy prefix was quadratic on: every character it grew by re-read the whole run.
+		const fixture = binFixture();
+		const started = Date.now();
+
+		await expect(
+			fixture.service.createRange({
+				warehouseId: WAREHOUSE,
+				zoneId: 'zone-1',
+				from: `${'0'.repeat(200_000)}x`,
+				count: 1
+			})
+		).rejects.toThrow(/carries no number to continue from/);
+		expect(Date.now() - started).toBeLessThan(1_000);
+		expect(fixture.tables.bin).toEqual([]);
+	});
+
 	it('refuses a range whose first code is already taken', async () => {
 		const fixture = binFixture({ bins: [binRow('taken', { code: 'A-01' })] });
 
