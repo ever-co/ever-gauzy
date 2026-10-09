@@ -161,6 +161,17 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
           df -h /
 
+      - name: Docker Hub images through Google's public mirror (Docker Hub falls back when it lacks one)
+        run: |
+          # The modes pull the same Docker Hub images in parallel from shared runner addresses, which
+          # Docker Hub rate-limits; every image of the audit is pinned by digest, so the mirror serves
+          # the same bytes.
+          cfg=/etc/docker/daemon.json
+          if [ -s "$cfg" ]; then current=$(cat "$cfg"); else current='{}'; fi
+          echo "$current" | jq '. + {"registry-mirrors": ["https://mirror.gcr.io"]}' | sudo tee "$cfg" > /dev/null
+          sudo systemctl restart docker
+          docker info --format '{{json .RegistryConfig.Mirrors}}'
+
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -185,7 +196,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          pull() { for attempt in 1 2 3; do docker pull -q "$1" && return 0; sleep $((attempt * 20)); done; return 1; }
+          pull() { for attempt in 1 2 3 4 5; do docker pull -q "$1" && return 0; sleep $((attempt * 20)); done; return 1; }
           # Docker Hub limits anonymous pulls per runner address, and the modes pull in parallel: sign
           # in for the pulls when the account is available (never on a fork), and sign out before
           # anything of the audit runs.
