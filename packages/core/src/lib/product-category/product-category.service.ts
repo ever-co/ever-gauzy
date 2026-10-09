@@ -737,8 +737,15 @@ function requestedParentId(entity: DeepPartial<ProductCategory>): ID | null | un
 	return undefined;
 }
 
-/** The editable members a payload states — `undefined` means "not stated" and is left out. */
-function editableColumns(entity: Partial<ProductCategory>): Record<string, unknown> {
+/**
+ * The editable members a payload states — `undefined` means "not stated" and is left out.
+ *
+ * The image may be stated as the `image` relation object rather than as `imageId`, which is what the
+ * delete-and-resave edit this replaced accepted (it saved the payload whole). The relation's id is
+ * therefore read as `imageId` when `imageId` itself is not stated, so a client that sends
+ * `image: { id }` — or `image: null` to clear it — keeps the edit it had.
+ */
+export function editableColumns(entity: Partial<ProductCategory>): Record<string, unknown> {
 	const payload = (entity ?? {}) as Record<string, unknown>;
 	const columns: Record<string, unknown> = {};
 
@@ -746,6 +753,10 @@ function editableColumns(entity: Partial<ProductCategory>): Record<string, unkno
 		if (payload[column] !== undefined) {
 			columns[column] = payload[column];
 		}
+	}
+
+	if (columns['imageId'] === undefined && payload['image'] !== undefined) {
+		columns['imageId'] = idOf(payload['image']);
 	}
 
 	return columns;
