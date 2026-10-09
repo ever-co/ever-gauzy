@@ -219,8 +219,14 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 				organizationId,
 				tenantId
 			});
-			// The saved template's grid thumbnail is now stale.
+			// The saved template's grid thumbnail is now stale. Drop any grid load still in
+			// flight (it may have fetched the template before the save landed) and, if the
+			// grid is open, load it again so the card shows what was saved.
+			this.gridRun++;
 			this.gridKey = null;
+			if (this.viewMode === 'grid') {
+				void this.loadGrid();
+			}
 			this.toastrService.success('ACCOUNTING_TEMPLATES_PAGE.SAVED', { templateName });
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -330,10 +336,8 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 	 * leaves that image unchanged.
 	 */
 	private async inlineAppImages(html: string): Promise<string> {
-		const sources = new Set<string>();
-		for (const match of html.matchAll(/<img\b[^>]*?\ssrc="([^"]+)"/gi)) {
-			sources.add(match[1]);
-		}
+		// Built in one expression and never changed afterwards.
+		const sources = new Set(Array.from(html.matchAll(/<img\b[^>]*?\ssrc="([^"]+)"/gi), (match) => match[1]));
 		let result = html;
 		for (const src of sources) {
 			if (src.startsWith('data:')) {
