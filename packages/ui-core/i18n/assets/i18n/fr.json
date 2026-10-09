@@ -5482,7 +5482,11 @@
 			"invoice": "Facture",
 			"estimate": "Estimation",
 			"receipt": "Reçu"
-		}
+		},
+		"VIEW_GRID": "Grille",
+		"VIEW_EDITOR": "Éditeur",
+		"FULL_PREVIEW": "Aperçu complet",
+		"SAVED": "Le modèle '{{ templateName }}' a été enregistré"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "S'inscrire",

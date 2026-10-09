@@ -5493,7 +5493,11 @@
 			"invoice": "Factura",
 			"estimate": "Estimado.",
 			"receipt": "Recibo"
-		}
+		},
+		"VIEW_GRID": "Cuadrícula",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Vista previa completa",
+		"SAVED": "La plantilla '{{ templateName }}' se ha guardado"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registrarse",

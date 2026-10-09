@@ -5491,7 +5491,11 @@
 			"invoice": "Factuur",
 			"estimate": "Schatting",
 			"receipt": "Ontvangstbewijs"
-		}
+		},
+		"VIEW_GRID": "Raster",
+		"VIEW_EDITOR": "Editor",
+		"FULL_PREVIEW": "Volledig voorbeeld",
+		"SAVED": "Sjabloon '{{ templateName }}' is opgeslagen"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Registreren",

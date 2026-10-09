@@ -5490,7 +5490,11 @@
 			"invoice": "Faktura",
 			"estimate": "Szacunek",
 			"receipt": "Paragon"
-		}
+		},
+		"VIEW_GRID": "Siatka",
+		"VIEW_EDITOR": "Edytor",
+		"FULL_PREVIEW": "Pełny podgląd",
+		"SAVED": "Szablon '{{ templateName }}' został zapisany"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Zarejestruj się",

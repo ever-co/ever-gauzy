@@ -5476,7 +5476,11 @@
 			"invoice": "فاتورة",
 			"estimate": "تقدير",
 			"receipt": "إيصال"
-		}
+		},
+		"VIEW_GRID": "شبكة",
+		"VIEW_EDITOR": "المحرر",
+		"FULL_PREVIEW": "معاينة كاملة",
+		"SAVED": "تم حفظ القالب '{{ templateName }}'"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "تسجيل",
