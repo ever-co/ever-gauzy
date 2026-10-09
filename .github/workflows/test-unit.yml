@@ -20,6 +20,11 @@ on:
   # So the suites can be exercised on demand from any branch that carries this file, without
   # waiting for a cascade to land on stage.
   workflow_dispatch:
+    inputs:
+      parallel:
+        description: 'Projects tested at once (nx --parallel). Lower it if a large branch runs out of memory.'
+        required: false
+        default: '2'
 
 concurrency:
   group: gauzy-unit-tests-${{ github.ref }}
@@ -113,4 +118,4 @@ jobs:
         #
         # `--parallel=2` rather than the nx default of 3: jest already forks per project, and this
         # fleet has a documented history of Node heap exhaustion when several suites run at once.
-        run: yarn nx run-many -t test --nxBail=false --parallel=2
+        run: yarn nx run-many -t test --nxBail=false --parallel=${{ inputs.parallel || '2' }}

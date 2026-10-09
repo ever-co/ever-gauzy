@@ -50,6 +50,12 @@ const transformIgnorePatterns = [
 module.exports = {
 	...nxPreset,
 	transformIgnorePatterns,
+	// A ts-jest worker keeps every module graph it compiled, so on the projects with hundreds of suites
+	// (core: 551) each worker grows to several GB, and `nx run-many --parallel=2` x (cores - 1) workers
+	// exhausted the 68 GiB unit-test runner (run 37932712666, OOM-killed at 67.4 GiB). Jest restarts a
+	// worker whose idle heap passes this limit between test files, which bounds the total without
+	// slowing the small projects.
+	workerIdleMemoryLimit: '2GB',
 	// The Nx resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
 	resolver: require.resolve('./jest.resolver.js'),
 	// ngx-daterangepicker-material (ui-core's date-range selector) imports `dayjs/esm` and its plugins
