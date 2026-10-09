@@ -42,7 +42,7 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 
 	let restore: () => void;
 	let deleted: string[];
-	let updated: { id: string; changes: Record<string, unknown> }[];
+	let updated: { id: unknown; changes: Record<string, unknown> }[];
 	let entitySubscriptionService: { deleteForEmployee: jest.Mock };
 	let service: OrganizationTeamEmployeeService;
 
@@ -70,7 +70,7 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			return row as never;
 		});
 		jest.spyOn(CrudService.prototype, 'update').mockImplementation(async (id, changes) => {
-			updated.push({ id: id as string, changes: changes as Record<string, unknown> });
+			updated.push({ id, changes: changes as Record<string, unknown> });
 			return {} as never;
 		});
 		jest.spyOn(CrudService.prototype, 'deleteMany').mockImplementation(async (ids) => {
@@ -130,7 +130,14 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		await editTeam(['manager-employee', 'member-employee'], []);
 
 		expect(deleted).toEqual([]);
-		expect(updated).toEqual([{ id: 'row-member', changes: { role: { id: 'role-manager' }, isManager: true } }]);
+		// TenantAwareCrudService.update scopes a write by id to the caller's tenant, so the statement
+		// names the member's row together with the tenant rather than the bare id.
+		expect(updated).toEqual([
+			{
+				id: { id: 'row-member', tenantId: manager.tenantId },
+				changes: { role: { id: 'role-manager' }, isManager: true }
+			}
+		]);
 	});
 
 	it('removes another member through DELETE /organization-team-employee/:id', async () => {
