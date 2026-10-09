@@ -2,12 +2,19 @@
 
 nb-card-body {
   width: 500px;
+  // The fixed width is a preferred size; without this the dialog overflowed the
+  // overlay on narrow viewports instead of shrinking with it.
+  max-width: 100%;
 }
 
 :host {
 
   nb-card,
   nb-card-body {
-    background-color: nb-theme(gauzy-card-1);
+    // Fallback because `gauzy-card-1` is not registered by material-light /
+    // material-dark: a `var()` with nothing to resolve to invalidates the whole
+    // declaration, and a background-color that falls back to its initial value
+    // is transparent, so the dialog showed the page through it.
+    background-color: var(--gauzy-card-1, var(--card-background-color));
   }
 }

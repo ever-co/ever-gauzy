@@ -3,6 +3,7 @@ import type { UIMessage } from 'ai';
 import { playgroundTheme as t } from '../../playground-theme';
 import { MarkdownContent } from '../MarkdownContent';
 import { ToolCallCard } from '../ToolCallCard';
+import { isBlankText } from '../ChatMessageItem';
 
 export interface PlaygroundChatMessageProps {
 	/** UI message (AI SDK 7) whose `parts` are rendered. */
@@ -75,7 +76,7 @@ export function PlaygroundChatMessage({ message, isStreaming, avatar, onApproval
 			<div style={columnStyle}>
 				{message.parts.map((part, index) => {
 					if (part.type === 'text') {
-						if (!part.text) return null;
+						if (isBlankText(part.text)) return null;
 						return (
 							<div style={bubbleStyle} key={`${message.id}-${index}`}>
 								{isUser ? (

@@ -67,90 +67,76 @@
 .results-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
-  padding: 1rem;
-  background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  backdrop-filter: saturate(180%) blur(8px);
-  box-shadow: var(--gauzy-shadow);
-  /* Prevent content jump when header sticks */
-  margin-top: -1px;
-  gap: 1rem;
+  // The page heading sits on the canvas, like `ngx-header-title` on the report
+  // pages — not in a box of its own above the box of results.
+  padding: 4px 0 0;
+  background: transparent;
+  border: none;
+  gap: 12px;
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
-    padding: 1rem;
+    gap: 12px;
   }
 
+  // An unfilled accent icon, the same as a report's KPI tile — not a gradient
+  // chip, which no other page in the app draws.
   .header-icon-container {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: calc(var(--border-radius) * 1.5);
-    background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: var(--gauzy-shadow);
+    height: 20px;
 
     nb-icon {
-      font-size: 1.5rem;
-      color: var(--text-control-color);
-    }
-
-    @media (max-width: 768px) {
-      width: 2rem;
-      height: 2rem;
-
-      nb-icon {
-        font-size: 1.25rem;
-      }
+      font-size: 20px;
+      color: var(--color-primary-default);
     }
   }
 
+  // The page title and its caption on the same scale as `ngx-header-title`
+  // and the breadcrumb under it on the report pages: 16px / 600, then 12px.
   .results-info {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 2px;
     flex: 1;
 
     .results-title {
       margin: 0;
-      font-size: 1.5rem;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 20px;
       color: var(--gauzy-text-color-1);
-      letter-spacing: -0.02em;
     }
 
     .results-stats {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 4px;
 
       .stats-icon {
-        font-size: 1rem;
-        color: var(--color-primary-default);
+        font-size: 14px;
+        color: var(--text-hint-color);
         flex-shrink: 0;
       }
 
       .stats-text {
-        font-size: 0.875rem;
-        color: var(--gauzy-text-color-2);
-        font-weight: 500;
+        font-size: 12px;
+        line-height: 16px;
+        font-weight: 400;
+        color: var(--text-hint-color);
+        font-variant-numeric: tabular-nums;
       }
     }
   }
 
   .results-actions {
     display: flex;
-    gap: 1rem;
+    gap: 8px;
     align-items: center;
     flex-shrink: 0;
 
@@ -160,45 +146,52 @@
 
     @media (max-width: 480px) {
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 8px;
+    }
+
+    // Nebular's `basic` filled button is near-white on the dark themes, which
+    // made the inactive view toggle and the Advanced button the brightest
+    // things on the page. Draw them as outlined secondary buttons instead; the
+    // active one keeps its `primary` fill.
+    button[nbButton].appearance-filled.status-basic {
+      background-color: transparent;
+      border-color: var(--border-basic-color-4);
+      color: var(--gauzy-text-color-1);
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint);
+      }
+    }
+
+    // The selected view. `nb-button-group` overwrites each button's `status`
+    // once when it first renders, so the button bound to `primary` came up
+    // `basic` and the current view was not marked until it was clicked. The
+    // `is-active` class is bound alongside and the group leaves it alone.
+    .view-toggle button[nbButton].appearance-filled.is-active {
+      background-color: var(--color-primary-default);
+      border-color: var(--color-primary-default);
+      color: var(--text-control-color);
     }
 
     .view-toggle {
-      border-radius: calc(var(--border-radius) * 2);
+      border-radius: var(--border-radius);
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 
       button {
         border-radius: 0;
-        transition: all 0.2s ease;
-
-        &:hover {
-          transform: scale(1.05);
-        }
 
         nb-icon {
-          font-size: 1.125rem;
+          font-size: 16px;
         }
       }
     }
 
     .filter-toggle-btn {
-      border-radius: calc(var(--border-radius) * 2);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      transition: all 0.2s ease;
-      gap: 0.5rem;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-      }
+      border-radius: var(--border-radius);
+      gap: 6px;
 
       nb-icon {
-        font-size: 1.125rem;
-      }
-
-      .btn-text {
-        font-weight: 600;
+        font-size: 16px;
       }
 
       @media (max-width: 480px) {
@@ -213,7 +206,7 @@
 .grid-view {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1rem;
+  gap: 12px;
   align-content: start;
 
   &.unavailable {
@@ -223,12 +216,12 @@
 
   @media (max-width: 1400px) {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 1.25rem;
+    gap: 12px;
   }
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.25rem;
+    gap: 12px;
   }
 
   @media (max-width: 992px) {
@@ -249,24 +242,11 @@
 .list-view {
   display: flex;
   flex-direction: column;
-  gap: 0;
 
-  @media (max-width: 768px) {
-    padding: 0.75rem;
-  }
-
+  // Each row is a bordered plugin card, so the list needs no divider of its
+  // own between them — that drew a second line under every card.
   .plugin {
-    border-bottom: 1px solid var(--border-basic-color-3);
-    transition: background 0.2s ease;
-
-    &:hover {
-      background: var(--gauzy-card-2);
-    }
-
-    &:last-child,
-    &.none {
-      border-bottom: none;
-    }
+    border-bottom: none;
   }
 }
 
@@ -279,14 +259,14 @@
   z-index: 10;
 
   .upload-fab {
-    background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-primary-600) 100%);
+    background: var(--color-primary-default);
     box-shadow: var(--gauzy-shadow);
     border-radius: 50%;
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     padding: 0;
     border: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -294,27 +274,21 @@
     gap: 0.25rem;
 
     nb-icon {
-      font-size: 28px;
+      font-size: 24px;
       color: var(--text-control-color);
     }
 
     .upload-progress {
-      font-size: 0.625rem;
-      font-weight: 700;
-      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-control-color);
       position: absolute;
       bottom: 0.5rem;
+      font-variant-numeric: tabular-nums;
     }
 
     &:hover:not(:disabled) {
-      transform: translateY(-4px) scale(1.08);
-      box-shadow:
-        0 10px 28px rgba(0, 0, 0, 0.3),
-        0 0 0 8px rgba(0, 0, 0, 0.05);
-    }
-
-    &:active:not(:disabled) {
-      transform: translateY(-2px) scale(1.05);
+      background: var(--color-primary-hover);
     }
 
     &:disabled {
@@ -351,22 +325,6 @@
 // Plugin Items
 .plugin {
   display: block;
-
-  // Grid view specific
-  .grid-view & {
-    border-bottom: none;
-    margin-bottom: 0;
-  }
-
-  // List view specific
-  .list-view & {
-    border-bottom: 1px solid var(--card-divider-color);
-
-    &:last-child,
-    &.none {
-      border-bottom: none;
-    }
-  }
 }
 
 /* Skeleton loader styles */
@@ -375,10 +333,10 @@
   justify-content: space-between;
   padding: 1rem;
   background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
+  border: 1px solid var(--border-basic-color-2);
+  border-radius: var(--border-radius);
   margin-bottom: 0.75rem;
-  box-shadow: var(--gauzy-shadow);
+  // Same as `.results-header` above — the border is the hairline.
 
   .plugin-details {
     flex: 1;
@@ -455,7 +413,7 @@
 
   .results-header {
     margin-bottom: 1rem;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
   }
 
   /* upload button adjustments handled above with fixed positioning */
@@ -514,14 +472,30 @@ nb-button-group {
     width: 100%;
   }
 
+  // The empty and loading states are drawn by `ngx-no-data-message`, whose
+  // panel edge is a 1px `box-shadow` ring. A ring paints OUTSIDE the box, and
+  // `.plugin-list` is `overflow: auto`, so all but the four rounded corners of
+  // it were clipped away — the stray corner marks around "No Data". A border
+  // paints inside the box and survives; the radius matches the filter panel.
+  .no-data ::ng-deep ngx-no-data-message > * {
+    box-shadow: none;
+    border: 1px solid var(--border-basic-color-2);
+    border-radius: var(--border-radius);
+  }
+
+  // The list is the scroll area only — no frame of its own. Each plugin card
+  // draws its own hairline, so a second card around them was a box in a box.
   .plugin-list {
-    border-radius: calc(var(--border-radius) * 2.25);
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
     overflow: auto;
     flex: 1;
     min-height: 0;
-    padding: 1rem;
-    background-color: var(--gauzy-card-2);
-    gap: 1rem;
+    padding: 0;
+    background-color: transparent;
+    gap: 12px;
 
     &.unavailable,
     &.loading {

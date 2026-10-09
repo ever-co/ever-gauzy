@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { sign, decode, JwtPayload } from 'jsonwebtoken';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ID, IEmployeeAppointment, IEmployeeAppointmentCreateInput } from '@gauzy/contracts';
-import { environment as env } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
+import { signPurposeToken, TokenPurposeEnum, verifyPurposeToken } from '../auth/purpose-token';
 import { TypeOrmEmployeeAppointmentRepository } from './repository/type-orm-employee-appointment.repository';
 import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
 import { EmployeeAppointment } from './employee-appointment.entity';
@@ -38,22 +37,60 @@ export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeA
 	}
 
 	/**
-	 * Signs an appointment ID using a JSON Web Token (JWT).
+	 * Signs an appointment ID using a JSON Web Token (JWT), for the reschedule link.
+	 *
+	 * The token is purpose-typed and expires, and it is only issued for an appointment the caller
+	 * can read. It used to be an untyped, non-expiring JWT_SECRET token over ANY id the caller
+	 * supplied, which other token consumers then accepted as their own (GHSA-28wv-vrxj-rp4q).
 	 *
 	 * @param id - The ID of the appointment to be signed.
 	 * @returns A signed JWT token containing the appointment ID.
 	 */
-	signAppointmentId(id: ID): string {
-		return sign({ appointmentId: id }, env.JWT_SECRET, {});
+	async signAppointmentId(id: ID): Promise<string> {
+		// Tenant-scoped lookup: throws when the appointment is not visible to the caller.
+		const appointment = await this.findOneByIdString(id);
+
+		return signPurposeToken(
+			TokenPurposeEnum.APPOINTMENT,
+			{ appointmentId: appointment.id, tenantId: appointment.tenantId },
+			{ expiresIn: EmployeeAppointmentService.getRescheduleTokenLifetime(appointment.endDateTime) }
+		);
 	}
 
 	/**
-	 * Decodes a signed appointment ID from a JSON Web Token (JWT).
+	 * Verifies a reschedule-link token and returns the appointment ID it names.
+	 *
+	 * Links issued before the token was typed carry no purpose and no expiry; they are still
+	 * accepted, but only when they name an appointment visible to the caller.
 	 *
 	 * @param token
-	 * @returns
+	 * @returns The appointment ID.
 	 */
-	decodeSignToken(token: string): JwtPayload | string {
-		return decode(token);
+	async decodeSignToken(token: string): Promise<ID> {
+		let appointmentId: string;
+		try {
+			({ appointmentId } = verifyPurposeToken<{ appointmentId: string }>(token, TokenPurposeEnum.APPOINTMENT, {
+				requiredClaims: ['appointmentId'],
+				allowLegacyUntyped: true
+			}));
+		} catch {
+			throw new BadRequestException('Invalid appointment token');
+		}
+
+		const appointment = await this.findOneByIdString(appointmentId);
+		return appointment.id;
+	}
+
+	/**
+	 * Reschedule links stay valid until a week after the appointment ends, and at least a day.
+	 *
+	 * @param endDateTime - When the appointment ends.
+	 * @returns The token lifetime in seconds.
+	 */
+	static getRescheduleTokenLifetime(endDateTime?: Date | string | null, now: number = Date.now()): number {
+		const DAY = 24 * 60 * 60;
+		const end = endDateTime ? new Date(endDateTime).getTime() : Number.NaN;
+		const untilWeekAfterEnd = Number.isFinite(end) ? Math.ceil((end - now) / 1000) + 7 * DAY : 0;
+		return Math.max(DAY, untilWeekAfterEnd);
 	}
 }

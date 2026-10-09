@@ -1,0 +1,59 @@
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="isEmpty()"
+	[skeletonRows]="4"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.ACCOUNTING_EMPLOYEE_STATISTICS.EMPTY"
+	(retry)="refresh()"
+>
+	<!--
+		A real <table>, unlike the page's stack of <div class="row">: the widget is
+		narrow and scrollable, so screen readers need the column headers to be
+		associated with the cells rather than sitting in a decorative header strip.
+	-->
+	<div class="employee-statistics">
+		<table class="employee-statistics-table">
+			<caption class="visually-hidden">
+				{{
+					'DASHBOARD_PAGE.BUILDER.WIDGETS.ACCOUNTING_EMPLOYEE_STATISTICS.TITLE' | translate
+				}}
+			</caption>
+			<thead>
+				<tr>
+					<th scope="col">{{ 'DASHBOARD_PAGE.DEVELOPER.EMPLOYEES' | translate }}</th>
+					<th scope="col" class="is-numeric">
+						{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}
+					</th>
+					<th scope="col" class="is-numeric">
+						{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}
+					</th>
+					<th scope="col" class="is-numeric">{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}</th>
+					@if (hasBonusType()) {
+						<th scope="col" class="is-numeric">{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}</th>
+					}
+				</tr>
+			</thead>
+			<tbody>
+				@for (row of rows(); track trackRow($index, row)) {
+					<tr>
+						<td class="is-employee">
+							<ngx-avatar
+								class="report-table"
+								[name]="row?.employee?.user?.name"
+								[src]="row?.employee?.user?.imageUrl"
+								[id]="row?.employee?.id"
+								[employee]="row?.employee"
+							></ngx-avatar>
+						</td>
+						<td class="is-numeric">{{ format(row?.income) }}</td>
+						<td class="is-numeric">{{ format(row?.expense) }}</td>
+						<td class="is-numeric">{{ format(row?.profit) }}</td>
+						@if (hasBonusType()) {
+							<td class="is-numeric">{{ format(row?.bonus) }}</td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+</ga-teams-widget-state>

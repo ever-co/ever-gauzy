@@ -33,6 +33,7 @@
 		</div>
 		} @if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && positions?.length) {
 		<ga-card-grid
+			[loading]="loading"
 			[totalItems]="pagination?.totalItems"
 			[settings]="settingsSmartTable"
 			[source]="positions"
@@ -75,7 +76,7 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button nbButton status="success" size="small" (click)="openDialog(addTemplate, false)">
+	<button nbButton class="action" status="success" size="small" (click)="openDialog(addTemplate, false)">
 		<nb-icon icon="plus-outline"> </nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>

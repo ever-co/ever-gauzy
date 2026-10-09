@@ -4,6 +4,7 @@ import { IDeal } from '@gauzy/contracts';
 @Component({
 	selector: 'ga-pipeline-deal-probability',
 	templateUrl: './pipeline-deal-probability.component.html',
+	styleUrls: ['./pipeline-deal-probability.component.scss'],
 	standalone: false
 })
 export class PipelineDealProbabilityComponent implements OnInit {

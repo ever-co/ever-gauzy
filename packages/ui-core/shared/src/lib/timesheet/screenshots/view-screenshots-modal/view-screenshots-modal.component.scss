@@ -1,99 +1,491 @@
 @use 'themes' as *;
-@use 'gauzy/_gauzy-table' as *;
+
+// The Recent Activities "View Info" popup: one time slot's activity, screenshots,
+// apps and time logs. A fixed header over a scrolling body, one inset for both,
+// one hairline between blocks, and 12px text everywhere but the title.
+$inset: 1.25rem;
+$gap: 0.75rem;
+$section-gap: 1rem;
+$icon-button-size: 1.75rem;
+$label-width: 5.5rem;
+$divider: 1px solid var(--gauzy-border-default-color);
+// The Recent Activities card's thumbnail and activity bar, as measured on the
+// dashboard at 1920px (the card's width flexes; this is its size there).
+$thumb-width: 15.625rem;
+$thumb-height: 8.125rem;
+$progress-height: 5px;
+$activity-bar-width: 6rem;
+// Below this the popup is narrower than its three thumbnails: the summary drops
+// under the title and the time-log fields go back to one pair per row.
+$compact-breakpoint: 52.5rem;
+
+@mixin text($size: 12px, $weight: 400, $color: var(--gauzy-text-color-1)) {
+	font-size: $size;
+	font-weight: $weight;
+	line-height: 1rem;
+	letter-spacing: 0;
+	color: $color;
+}
 
 :host {
 	display: block;
-	position: relative;
-	width: 700px;
-	margin: auto;
-	overflow: auto;
-	.close-button {
-		position: absolute;
-		top: 3px;
-		right: 5px;
-		z-index: 9;
+	// Three thumbnails and their gaps between the insets, plus the card's border.
+	width: calc(#{$thumb-width * 3 + $gap * 2 + $inset * 2} + 2px);
+	// The pane takes this width, so the popup is what has to give way on a phone.
+	max-width: calc(100vw - 2rem);
+
+	nb-card.slot-card {
+		margin: 0;
+		border: $divider;
+		background-color: var(--gauzy-card-1);
 	}
-  	.screenshot {
-		position: relative;
-		width: 150px;
-		object-fit: cover;
-		& .select-hidden {
-			display: none;
-			position: absolute;
-			right: 3px;
-			top: 3px;
+
+	// Title, summary, close on one row. The close button's own box provides the
+	// trailing inset.
+	nb-card-header.slot-header {
+		display: grid;
+		grid-template-areas: 'heading summary close';
+		grid-template-columns: minmax(0, 1fr) auto auto;
+		align-items: center;
+		column-gap: 1rem;
+		padding: 0.75rem 0.75rem 0.75rem $inset;
+		border-bottom: $divider;
+
+		@media (max-width: $compact-breakpoint) {
+			grid-template-areas:
+				'heading close'
+				'summary summary';
+			grid-template-columns: minmax(0, 1fr) auto;
+			row-gap: 0.75rem;
 		}
-		&:hover, &:focus {
-			& .select-hidden {
-				display: flex;
+	}
+
+	.close-button {
+		grid-area: close;
+	}
+
+	.slot-heading {
+		grid-area: heading;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+	}
+
+	.slot-title {
+		@include text(14px, 600);
+		line-height: 1.25rem;
+	}
+
+	.slot-subtitle {
+		@include text($color: var(--gauzy-text-color-2));
+		font-variant-numeric: tabular-nums;
+	}
+
+	// One square for the close button, the screenshot actions and the log actions.
+	.icon-button[nbButton] {
+		width: $icon-button-size;
+		height: $icon-button-size;
+		min-width: 0;
+		margin: 0;
+		// `!important` against Nebular's icon-only `[nbButton].size-small.icon-start
+		// .icon-end.appearance-ghost` padding (9px 7px), which out-ranks this rule and
+		// squeezed the 16px icon to 12px wide.
+		padding: 0 !important;
+
+		nb-icon {
+			width: 1rem;
+			height: 1rem;
+			margin: 0;
+			font-size: 1rem;
+		}
+
+		// The dialog focuses its first button (Close) on open, which drew Nebular's
+		// focus ring on a mouse click. The ring is kept for keyboard focus.
+		&:focus:not(:focus-visible):not(:hover) {
+			box-shadow: none;
+		}
+
+		&.appearance-ghost:focus:not(:focus-visible):not(:hover) {
+			border-color: transparent;
+			background-color: transparent;
+		}
+	}
+
+	nb-card-body.slot-body {
+		display: flex;
+		flex-direction: column;
+		gap: $section-gap;
+		padding: 1rem $inset;
+	}
+
+	// Member (permission-gated), Activity and Duration, a hairline between each.
+	.slot-summary {
+		grid-area: summary;
+		display: flex;
+		align-items: stretch;
+	}
+
+	// Items stretch to the tallest (the member chip's) and lay out from the top, so
+	// the three labels share one line.
+	.summary-item {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		gap: 0.25rem;
+		min-width: 0;
+		padding-inline: 1rem;
+
+		& + .summary-item {
+			border-inline-start: $divider;
+		}
+
+		// The header's column gap already separates the first item from the title.
+		&:first-child {
+			padding-inline-start: 0;
+		}
+
+		&:last-child {
+			padding-inline-end: 0.25rem;
+		}
+	}
+
+	.summary-label {
+		@include text($color: var(--gauzy-text-color-2));
+	}
+
+	// Each value row centred in the chip's height, so the values share a line too.
+	.summary-item > .summary-value,
+	.summary-item > .activity-meter,
+	.summary-item > ngx-avatar {
+		display: flex;
+		align-items: center;
+		// The member chip's rendered height.
+		min-height: 1.875rem;
+	}
+
+	.summary-value {
+		@include text(14px, 600);
+		line-height: 1.25rem;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.activity-meter {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+
+		nb-progress-bar {
+			flex: none;
+			width: $activity-bar-width;
+
+			// The card's bar: Nebular's tiny size is 16px here.
+			::ng-deep .progress-container {
+				height: $progress-height;
+				background-color: var(--gauzy-card-2);
 			}
 		}
-		& img {
+	}
+
+	.slot-section {
+		display: flex;
+		flex-direction: column;
+		gap: $gap;
+	}
+
+	.section-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.section-title {
+		@include text(12px, 600);
+		margin: 0;
+	}
+
+	.section-count {
+		@include text(11px, 600, var(--gauzy-text-color-2));
+		min-width: 1.25rem;
+		padding: 0.125rem 0.375rem;
+		border-radius: 9999px;
+		background: var(--gauzy-sidebar-background-3);
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+	}
+
+	// Fixed card-sized columns, three to a row at the popup's full width. They drop
+	// to fewer, and then shrink, only when the popup narrows on a small screen.
+	.screenshot-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(#{$thumb-width}, 100%), $thumb-width));
+		gap: $gap;
+	}
+
+	.screenshot {
+		display: flex;
+		flex-direction: column;
+		gap: 0.375rem;
+		min-width: 0;
+		margin: 0;
+	}
+
+	.screenshot-frame {
+		position: relative;
+		height: $thumb-height;
+		overflow: hidden;
+		border: $divider;
+		border-radius: var(--border-radius);
+		background: var(--gauzy-hover-tint);
+		cursor: zoom-in;
+
+		img {
+			display: block;
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
-			border-radius: var(--border-radius);
+			transition: transform 0.2s ease;
+
+			// The fallback picture for a missing screenshot, as the Recent Activities
+			// card shows it: whole, padded small and dimmed. `!important` on the opacity
+			// against the img directive's inline `opacity: 1`.
+			&.default-image {
+				box-sizing: border-box;
+				padding: 2.5rem;
+				object-fit: contain;
+				opacity: 0.35 !important;
+			}
 		}
-		nb-card {
-			background-color: var(--gauzy-card-1);
+
+		&:hover img {
+			transform: scale(1.03);
 		}
-		.info {
-			right: 36px;
-		}
-  	}
-	::ng-deep {
-		.progress-value {
-			span {
-				display: none;
+	}
+
+	// Shown on hover, and on keyboard focus so the buttons stay reachable.
+	.screenshot-actions {
+		position: absolute;
+		top: 0.375rem;
+		right: 0.375rem;
+		display: flex;
+		gap: 0.25rem;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+
+		// A dark backing in both themes, since it sits on the screenshot, not the card.
+		.icon-button[nbButton] {
+			width: 1.5rem;
+			height: 1.5rem;
+			border: none;
+			background-color: rgba(0, 0, 0, 0.6);
+			color: #fff;
+
+			&:hover {
+				background-color: rgba(0, 0, 0, 0.8);
+			}
+
+			nb-icon {
+				width: 0.875rem;
+				height: 0.875rem;
+				font-size: 0.875rem;
+
+				&:not(.status-danger) {
+					color: #fff;
+				}
 			}
 		}
 	}
-	.card {
-		background-color: var(--gauzy-card-2);
+
+	.screenshot-frame:hover .screenshot-actions,
+	.screenshot-actions:focus-within {
+		opacity: 1;
+	}
+
+	.screenshot.not-work-related .screenshot-frame {
+		border: 2px solid nb-theme(color-danger-500);
+	}
+
+	.screenshot-time {
+		@include text($color: var(--gauzy-text-color-2));
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+	}
+
+	// Title then chips on one row; a long list wraps inside its own column.
+	.slot-section.apps {
+		flex-direction: row;
+		align-items: center;
+
+		.app-list {
+			flex: 1 1 0;
+			min-width: 0;
+		}
+	}
+
+	.app-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.app-chip {
+		@include text(12px, 500);
+		padding: 0.25rem 0.625rem;
+		border: $divider;
+		border-radius: 9999px;
+		background: var(--gauzy-card-2);
+	}
+
+	.time-log {
+		overflow: hidden;
+		border: $divider;
 		border-radius: var(--border-radius);
-		border: unset;
+
+		& + .time-log {
+			margin-top: 0.25rem;
+		}
 	}
-	.caption {
+
+	// The action buttons' own boxes provide the trailing inset.
+	.time-log-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: $gap;
+		padding: 0.5rem 0.5rem 0.5rem 1rem;
+		border-bottom: $divider;
+		background: var(--gauzy-card-2);
+	}
+
+	.time-log-heading {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+
+	.time-log-range {
+		@include text(12px, 600);
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.time-log-duration {
+		@include text(12px, 600);
+		padding: 0.125rem 0.5rem;
+		border-radius: var(--border-radius);
+		background: var(--gauzy-sidebar-background-3);
+		font-variant-numeric: tabular-nums;
+	}
+
+	// Nebular positions a badge absolutely in a corner; here it sits in the line.
+	nb-badge.time-log-type {
+		position: static;
+		padding: 0.125rem 0.5rem;
+		border-radius: 9999px;
 		font-size: 11px;
-		font-weight: 400;
-		line-height: 11px;
-		letter-spacing: 0em;
-		color: var(--gauzy-text-color-2);
-	}
-	.badge {
-		color: var(--tag-filled-basic-text-color);
-		display: inline-block;
-		padding: 6px 4px;
-		background-color: var(--tag-filled-basic-background-color);
-		border-radius: 4px;
-		margin: 5px;
-	}
-	nb-badge {
-		position: relative;
-		font-size: 14px;
 		font-weight: 600;
-		padding: 2px 4px;
-		border-radius: calc(var(--border-radius) / 2);
+		line-height: 1rem;
+		letter-spacing: 0.02em;
 	}
-	nb-card-header,
-	nb-card-body,
-	nb-card-footer {
-		padding: 1rem;
+
+	.time-log-actions {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 0.25rem;
 	}
-	.subtitle {
-		font-size: 12px;
-		font-weight: 600;
-		line-height: 13px;
-		letter-spacing: -0.01em;
-		text-align: left;
-		margin-bottom: 10px;
-		color: var(--gauzy-text-color-2);
-	}
-	.screenshot {
-		&.danger-bordered {
-			img {
-				border: 2px solid nb-theme(color-danger-500) !important;
+
+	// Two label/value pairs to a row. Notes and Reason (`.wide`) start a row and run
+	// to its end, since free text needs the width.
+	.time-log-fields {
+		display: grid;
+		grid-template-columns: $label-width minmax(0, 1fr) $label-width minmax(0, 1fr);
+		align-items: center;
+		gap: 0.625rem $gap;
+		margin: 0;
+		padding: 0.75rem 1rem;
+
+		dt.wide {
+			grid-column: 1;
+		}
+
+		dd.wide {
+			grid-column: 2 / -1;
+		}
+
+		@media (max-width: $compact-breakpoint) {
+			grid-template-columns: $label-width minmax(0, 1fr);
+
+			dd.wide {
+				grid-column: 2;
 			}
 		}
-    }
+
+		dt {
+			@include text($color: var(--gauzy-text-color-2));
+		}
+
+		dd {
+			@include text;
+			margin: 0;
+			min-width: 0;
+			overflow-wrap: anywhere;
+		}
+
+		.source {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+
+		.version {
+			@include text(11px, 600, var(--gauzy-text-color-2));
+			padding: 0.0625rem 0.375rem;
+			border: $divider;
+			border-radius: 9999px;
+		}
+
+		.empty {
+			color: var(--gauzy-text-color-2);
+		}
+	}
+
+	// The client chip truncates at 110px for table cells; here it may use its column
+	// and ellipsises only past that. `!important` because the chip's own rule, four
+	// scoped selectors deep, out-ranks anything reachable from this component.
+	ngx-contact-links ::ng-deep .names-wrapper {
+		max-width: none !important;
+	}
+
+	// The project cell is sized for tables (28px logo, 14px name, member count).
+	ngx-project ::ng-deep .project-render {
+		align-items: center;
+		gap: 0.5rem;
+
+		img {
+			width: 1.25rem;
+			height: 1.25rem;
+			box-shadow: none;
+		}
+
+		.name {
+			font-size: 12px;
+			font-weight: 500;
+			line-height: 1rem;
+		}
+
+		.member {
+			display: none;
+		}
+	}
+
+	nb-alert.running-warning {
+		margin: 0 1rem 0.875rem;
+		padding: 0.5rem 0.75rem;
+		font-size: 12px;
+		line-height: 1rem;
+	}
 }

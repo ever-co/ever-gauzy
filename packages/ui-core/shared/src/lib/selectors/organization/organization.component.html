@@ -1,7 +1,82 @@
 @if (organizations) {
 <div>
+	<!--
+		The isOpen flag is REPORTED by ng-select through its open and close outputs. It must
+		never be fed back in through the isOpen input: doing so puts ng-select into its
+		_manualOpen mode, which early-returns out of open, close, _handleSpace and
+		_handleArrowDown. The control then stays in the tab order while being impossible to
+		operate. Measured against the sibling employee selector, which does not feed it back:
+
+		  opens on mousedown          organization 0 of 3      employee 3 of 3
+		  Enter, Space, ArrowDown     all fail                 all work
+		  Escape closes               never, stuck open 3 of 3 works
+
+		That is a WCAG 2.1.1 Level A failure. It also made this the only control in the app
+		needing a complete, well-formed click to open at all: because the searchable input
+		is driven from the same flag, the control is non-searchable while closed, so
+		mousedown took the toggle path, early-returned, and did nothing — leaving the
+		template's own click handler as the only way to open it.
+
+		The flag is still needed, since the searchable, addTag and close-class bindings all
+		read it, so it stays as a mirror FED BY ng-select rather than a second source of
+		truth fighting it. The gauzyOutside directive went away with the manual state:
+		ng-select dismisses itself on an outside click once it owns that state. Avoiding
+		that directive here is a bonus — it declares its output as an emitter of MouseEvent
+		but actually emits a boolean, and the old handler worked only because of the
+		mismatch.
+
+		Dismissal, measured after the change and identical to the employee selector:
+		clicking the control BODY while open lands in the search input and keeps it open,
+		clicking the ARROW closes it, and Escape, an outside click or picking an item all
+		close it too.
+
+		This element also carried three state classes, all of them now gone:
+
+		  [class.organization]="isOpen"
+		  [class.organization]="!isOpen"
+		  [class.close]="!isOpen"
+
+		The first two are one binding written twice, so `.organization` was really just
+		"always on" via whichever copy Angular applied last. Nothing outside this file
+		ever styled it.
+
+		`.close` is the damaging one. `bootstrap.css` is loaded globally (it is in the
+		app's `styles` list) and ships `.close` as a UTILITY for dismiss buttons:
+
+		  .close { float: right; font-size: 1.5rem; font-weight: 700; line-height: 1;
+		           color: #000; text-shadow: 0 1px 0 #fff; opacity: .5 }
+
+		So the control picked all of that up exactly while the dropdown was CLOSED and
+		shed it again on open, which is why the two states did not read as the same
+		widget. `text-shadow` is the one nothing in the app resets: it inherits down to
+		the label and paints a white copy of the text one pixel below it, so the closed
+		trigger looked doubled. `float: right` applies here too, since this ng-select is
+		a block-level child of a plain `<div>`. The `opacity: .5` was already being
+		clawed back by a `.organization.close { opacity: 1 }` rule in the stylesheet —
+		that rule went with these bindings, having nothing left to undo.
+
+		Nothing replaces them: `isOpen` still drives `searchable` and `addTag`, and a
+		stylesheet that wants the open state has ng-select's own `.ng-select-opened`.
+
+		Two classes ride on the element below purely so they reach the DROPDOWN PANEL.
+		With `appendTo` set, ng-select puts them there itself:
+
+		  [class]="appendToValue ? (ngClass() ? ngClass() : classes) : null"
+
+		and that copy is the only handle a stylesheet has on an appended panel — every one
+		of them is otherwise just `.ng-dropdown-panel`. `classes` is read once through
+		`HostAttributeToken('class')`, so it has to be a STATIC attribute; a `[class.x]`
+		binding never reaches the panel. `[ngClass]` REPLACES that fallback rather than
+		adding to it, which is why `panelClass` rebuilds both names.
+
+		`organization-entity-select` lets `_overrides.scss` right-align THIS panel: the
+		header's organization control sits too close to the right edge of the screen for a
+		left-anchored panel.
+	-->
 	<ng-select
 		#select
+		class="gauzy-entity-select organization-entity-select"
+		[ngClass]="panelClass"
 		[addTag]="(hasEditOrganization$ | async) && addTag && isOpen ? createNew : null"
 		[searchable]="isOpen"
 		[clearable]="false"
@@ -13,25 +88,22 @@
 		[placeholder]="'FORM.PLACEHOLDERS.SELECT_COMPANY' | translate"
 		[addTagText]="'FORM.PLACEHOLDERS.ADD_ORGANIZATION' | translate"
 		appendTo="body"
-		[isOpen]="isOpen"
-		(change)="onChange()"
-		(click)="isOpen = !isOpen"
-		[class.organization]="isOpen"
-		[class.organization]="!isOpen"
-		[class.close]="!isOpen"
-		gauzyOutside
-		(clickOutside)="onClickOutside($event)"
+		(open)="isOpen = true"
+		(close)="isOpen = false"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
 			@if (item.imageUrl) {
-			<img [src]="item.imageUrl" width="40" height="40" />
+			<img [src]="item.imageUrl" width="40" height="40" alt="" />
 			}
-			{{ item.name }}
+			<span>{{ item.name }}</span>
 		</ng-template>
 		<ng-template ng-label-tmp let-item="item">
-			<div class="selector-template">
+			<!-- The trigger is a fixed-width pill in the header band, so the name
+			     clips to an ellipsis; the title carries the untruncated one. The
+			     employee, project and team selectors each do the same. -->
+			<div class="selector-template" [title]="item?.name">
 				@if (item.imageUrl) {
-				<img height="25" width="25" [src]="item.imageUrl" />
+				<img height="25" width="25" [src]="item.imageUrl" alt="" />
 				}
 				<span>{{ item.name }}</span>
 			</div>

@@ -6,6 +6,7 @@ import { InviteStatusEnum } from '@gauzy/contracts';
 	selector: 'ga-invite-status-filter',
 	template: `
 		<ng-select
+		  appendTo="body"
 		  [clearable]="true"
 		  [closeOnSelect]="true"
 		  [placeholder]="'SM_TABLE.STATUS' | translate"

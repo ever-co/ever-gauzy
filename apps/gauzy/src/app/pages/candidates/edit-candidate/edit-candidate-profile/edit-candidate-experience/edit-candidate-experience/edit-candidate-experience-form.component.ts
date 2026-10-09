@@ -74,22 +74,28 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 
 	private async loadExperience() {
 		this.loading = true;
-		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const { items = [] } = await this.candidateExperienceService.getAll(
-			{
-				candidateId: this.candidateId,
-				organizationId,
-				tenantId
-			},
-			['organization']
-		);
-		this.experienceList = items;
-		this.sourceSmartTable.load(items);
-		this.setPagination({
-			...this.getPagination(),
-			totalItems: this.sourceSmartTable.count()
-		});
-		this.loading = false;
+		try {
+			const { id: organizationId, tenantId } = this.selectedOrganization;
+			const { items = [] } = await this.candidateExperienceService.getAll(
+				{
+					candidateId: this.candidateId,
+					organizationId,
+					tenantId
+				},
+				['organization']
+			);
+			this.experienceList = items;
+			this.sourceSmartTable.load(items);
+			this.setPagination({
+				...this.getPagination(),
+				totalItems: this.sourceSmartTable.count()
+			});
+		} catch (error) {
+			console.error('Error while retrieving candidate experience', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	editExperience(experience: ICandidateExperience) {

@@ -159,4 +159,6 @@ apps/server-api/src/assets/icons/menu
 !**/certs/**/README.md
 !**/certs/**/.gitkeep
 
+/graphify-out
+
 /Tempnx-console-tmp**/**

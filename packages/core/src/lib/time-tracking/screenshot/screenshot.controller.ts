@@ -20,7 +20,13 @@ import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
 import { BaseEntityEventTypeEnum } from '../../event-bus/base-entity-event';
 import { RequestContext } from './../../core/context';
-import { FileStorage, FileStorageFactory, UploadedFileStorage } from '../../core/file-storage';
+import {
+	assertNotMarkupContent,
+	FileStorage,
+	FileStorageFactory,
+	imageUploadFileFilter,
+	UploadedFileStorage
+} from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
@@ -66,7 +72,12 @@ export class ScreenshotController {
 		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
-			storage: () => FileStorageFactory.create('screenshots')
+			storage: () => FileStorageFactory.create('screenshots'),
+			// Screenshots land under `uploads/screenshots` and are served unauthenticated from
+			// `/public/<key>` with a Content-Type derived from the extension, so an `.svg`/`.html`
+			// upload would execute script in the app origin — the same stored-XSS vector fixed on the
+			// image-asset endpoint (GHSA-p334-cm7f-php5).
+			fileFilter: imageUploadFileFilter
 		})
 	)
 	async create(@Body() input: Screenshot, @UploadedFileStorage() file: UploadedFile) {
@@ -84,13 +95,29 @@ export class ScreenshotController {
 		const organizationId = input.organizationId;
 		const userId = RequestContext.currentUserId();
 
+		// Initialize file storage provider and process thumbnail
+		const provider = new FileStorage().getProvider();
+
+		// Retrieve file content from the file storage provider
+		const fileContent = await provider.getFile(file.key);
+
+		// Content-based validation: the multer fileFilter only inspects the client-controlled MIME type
+		// and filename, which can be spoofed. Re-check the actual stored bytes and reject markup that
+		// would execute as stored XSS when served from `/public/<key>` (GHSA-p334-cm7f-php5). This runs
+		// OUTSIDE the try/catch below, which swallows errors — a rejection must reach the client.
+		// The file is deleted because `/public` serves from disk whether or not a DB record is created.
 		try {
-			// Initialize file storage provider and process thumbnail
-			const provider = new FileStorage().getProvider();
+			assertNotMarkupContent(fileContent);
+		} catch (error) {
+			try {
+				await provider.deleteFile(file.key);
+			} catch {
+				this.logger.error('Error while deleting rejected screenshot from file storage provider');
+			}
+			throw error;
+		}
 
-			// Retrieve file content from the file storage provider
-			const fileContent = await provider.getFile(file.key);
-
+		try {
 			// Create temporary files for input and output of thumbnail processing
 			const inputFile = await tempFile('screenshot-thumb');
 			const outputFile = await tempFile('screenshot-thumb');

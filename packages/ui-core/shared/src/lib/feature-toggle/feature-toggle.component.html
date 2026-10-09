@@ -1,90 +1,70 @@
 <nb-card class="card-feature" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-  <nb-card-header>
-    @if (isOrganization) {
-      <header>
-        {{ 'FEATURE_PAGE.HEADER' | translate : { name: organization?.name } }}
-      </header>
-    } @else {
-      <header>
-        {{ 'FEATURE_PAGE.HEADER' | translate : { name: user?.tenant?.name } }}
-      </header>
-    }
-  </nb-card-header>
-  @if (!loading) {
-    <nb-card-body class="features">
-      <div class="mansory-layout">
-        @for (block of blocks$ | async; track block) {
-          @for (row of block; track row) {
-            <div class="shortcut-card">
-              <nb-card [status]="row?.status">
-                <nb-card-header class="p-3">
-                  <div class="row">
-                    <div class="col-6">
-                      @if (row?.icon) {
-                        <nb-icon [icon]="row?.icon"></nb-icon>
-                      }
-                      <span>
-                        {{ getTranslationFormat('SETTINGS_FEATURES.' + row?.name) | translate }}
-                      </span>
-                    </div>
-                    @if (row?.isPaid) {
-                      <div class="col-6">
-                        <button nbButton [status]="'basic'">
-                          {{ 'BUTTONS.BUY' | translate }}
-                        </button>
-                      </div>
-                    }
-                  </div>
-                </nb-card-header>
-                <nb-card-body class="border border-top-0 p-3">
-                  <div class="row">
-                    <div class="col-10">
-                      {{
-                      getTranslationFormat(
-                      'SETTINGS_FEATURES_DESCRIPTION' +
-                      '.' +
-                      row?.name +
-                      '.' +
-                      row?.description
-                      ) | translate
-                      }}
-                    </div>
-                    <div class="col-2">
-                      <nb-toggle
-                        [checked]="enabledFeature(row)"
-                        (checkedChange)="featureChanged($event, row)"
-                        labelPosition="start"
-                        status="basic"
-                      ></nb-toggle>
-                    </div>
-                  </div>
-                  @if (row?.children.length > 0) {
-                    <div class="row">
-                      <nb-list>
-                        @for (child of row?.children; track child) {
-                          <nb-list-item class="border-top">
-                            <nb-checkbox
-                              [checked]="enabledFeature(child)"
-                              (checkedChange)="featureChanged($event, child)"
-                              status="basic"
-                              >
-                              {{
-                              getTranslationFormat(
-                              'SETTINGS_FEATURES_TEXT' + '.' + row?.name + '.' + child?.name
-                              ) | translate
-                              }}
-                            </nb-checkbox>
-                          </nb-list-item>
-                        }
-                      </nb-list>
-                    </div>
-                  }
-                </nb-card-body>
-              </nb-card>
-            </div>
-          }
-        }
-      </div>
-    </nb-card-body>
-  }
+	<nb-card-header class="feature-page-header">
+		<h5 class="feature-page-title">
+			{{ 'FEATURE_PAGE.HEADER' | translate : { name: isOrganization ? organization?.name : user?.tenant?.name } }}
+		</h5>
+	</nb-card-header>
+	@if (!loading) {
+		<nb-card-body class="features">
+			<div class="feature-groups">
+				@for (block of blocks$ | async; track block) {
+					@for (row of block; track row) {
+						<section class="settings-group">
+							<!-- Feature: icon, name, description, master toggle -->
+							<header class="group-header">
+								@if (row?.icon) {
+									<span class="group-icon">
+										<nb-icon [icon]="featureIcon(row?.icon)"></nb-icon>
+									</span>
+								}
+								<div class="group-copy">
+									<h6 class="group-title">
+										{{ getTranslationFormat('SETTINGS_FEATURES.' + row?.name) | translate }}
+									</h6>
+									<p class="group-description">
+										{{
+											getTranslationFormat(
+												'SETTINGS_FEATURES_DESCRIPTION' + '.' + row?.name + '.' + row?.description
+											) | translate
+										}}
+									</p>
+								</div>
+								<div class="group-actions">
+									@if (row?.isPaid) {
+										<button nbButton ghost size="tiny" status="basic">
+											{{ 'BUTTONS.BUY' | translate }}
+										</button>
+									}
+									<nb-toggle
+										[checked]="enabledFeature(row)"
+										(checkedChange)="featureChanged($event, row)"
+										status="primary"
+									></nb-toggle>
+								</div>
+							</header>
+
+							<!-- Sub-features -->
+							@if (row?.children?.length > 0) {
+								@for (child of row?.children; track child) {
+									<div class="setting-row">
+										<nb-checkbox
+											[checked]="enabledFeature(child)"
+											(checkedChange)="featureChanged($event, child)"
+											status="primary"
+										>
+											{{
+												getTranslationFormat(
+													'SETTINGS_FEATURES_TEXT' + '.' + row?.name + '.' + child?.name
+												) | translate
+											}}
+										</nb-checkbox>
+									</div>
+								}
+							}
+						</section>
+					}
+				}
+			</div>
+		</nb-card-body>
+	}
 </nb-card>

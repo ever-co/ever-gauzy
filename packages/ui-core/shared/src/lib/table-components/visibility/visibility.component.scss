@@ -4,8 +4,12 @@
             color: var(--text-primary-color);
         }
 
+        // `--gauzy-text-color-2` is undefined in material-light /
+        // material-dark, and a var() with no fallback drops the declaration
+        // there, leaving the unchecked "Public" label the same color as the
+        // checked one. `--text-hint-color` is a Nebular token every theme has.
         div+span.text {
-            color: var(--gauzy-text-color-2);
+            color: var(--gauzy-text-color-2, var(--text-hint-color));
         }
     }
 }

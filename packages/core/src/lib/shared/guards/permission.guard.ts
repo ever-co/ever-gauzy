@@ -2,9 +2,7 @@ import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { verify } from 'jsonwebtoken';
 import { PERMISSIONS_METADATA } from '@gauzy/constants';
-import { environment as env } from '@gauzy/config';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { deduplicate, isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../core/context';
@@ -39,10 +37,10 @@ export class PermissionGuard extends BaseGuard implements CanActivate {
 			return true;
 		}
 
-		// Check user authorization
-		const token = RequestContext.currentToken();
-
-		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
+		// Identify the caller for the audit lines below from the request's DB-fresh user, never by
+		// decoding the bearer token again: its `role` claim is whatever the user was when it was issued.
+		const id = RequestContext.currentUserId();
+		const role = RequestContext.currentRoleName();
 
 		// Retrieve current role ID and tenant ID from RequestContext
 		const tenantId = RequestContext.currentTenantId();

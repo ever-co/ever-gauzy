@@ -208,7 +208,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Put('/:id')
 	@UseValidationPipe({ transform: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateCandidateDTO): Promise<ICandidate> {
-		return await this.commandBus.execute(new CandidateUpdateCommand({ id, ...entity }));
+		return await this.commandBus.execute(new CandidateUpdateCommand({ ...entity, id }));
 	}
 
 	/**

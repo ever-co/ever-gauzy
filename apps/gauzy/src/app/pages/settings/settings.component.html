@@ -1,1 +1,22 @@
-<router-outlet></router-outlet>
+<div class="settings-shell">
+	<!-- Settings menu (narrow column) -->
+	<nav class="settings-nav">
+		<span class="settings-nav-title">{{ 'MENU.SETTINGS' | translate }}</span>
+		<ul class="settings-nav-list">
+			@for (item of settingsMenuItems$ | async; track item.id) {
+			<li class="settings-nav-item">
+				<a class="settings-nav-link" [routerLink]="item.link" routerLinkActive="active">
+					@if (item.icon) {
+					<i [class]="item.icon"></i>
+					}
+					<span class="settings-nav-label">{{ item.title }}</span>
+				</a>
+			</li>
+			}
+		</ul>
+	</nav>
+	<!-- Selected settings page content -->
+	<div class="settings-content">
+		<router-outlet></router-outlet>
+	</div>
+</div>

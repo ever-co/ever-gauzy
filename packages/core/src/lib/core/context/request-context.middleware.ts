@@ -5,6 +5,30 @@ import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
 import { RequestContext } from './request-context';
 
+/**
+ * A trusted inbound `x-correlation-id` is echoed back verbatim and later interpolated into log
+ * lines (this middleware's own, and `packages/plugins/docs`'s queue logs) — an unvalidated value
+ * is a log-injection vector (CWE-117: a client-supplied `\n` could forge additional log lines) and
+ * a header-injection one (a raw CR/LF could smuggle extra response headers). Correlation ids this
+ * app generates are UUIDv4, so a generous but bounded allowlist (visible ASCII only — no space,
+ * tab, CR/LF or other control/non-ASCII bytes — capped well above a UUID's 36 characters for
+ * interop with whatever format an upstream proxy/load balancer already uses, e.g. dotted,
+ * colon-separated, base64 or braced-GUID ids) rejects control characters and unbounded input
+ * while still accepting any realistic legitimate value.
+ */
+const SAFE_CORRELATION_ID = /^[\x21-\x7E]{1,128}$/;
+
+/**
+ * Kubernetes probes hit /api/health every few seconds on every pod. Logging their start and end drowned
+ * the real requests, and with the Sentry logger each line was also a Sentry event (the bulk of the
+ * organisation's error quota), so health checks are not logged. Decided by path only: a User-Agent is
+ * set by the client, so trusting `kube-probe/*` would let any caller hide any request from these logs.
+ */
+export function isHealthCheckRequest(req: Pick<Request, 'originalUrl'>): boolean {
+	const path = (req.originalUrl ?? '').split('?')[0];
+	return path === '/api/health' || path.startsWith('/api/health/');
+}
+
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
 	private readonly logger = new Logger(RequestContextMiddleware.name);
@@ -26,17 +50,31 @@ export class RequestContextMiddleware implements NestMiddleware {
 	use(req: Request, res: Response, next: NextFunction) {
 		// Start a new context using the ClsService
 		this.clsService.run(() => {
-			const correlationId = req.headers['x-correlation-id'] as ID; // Retrieve the correlation ID from the request headers
-			const id = correlationId ?? uuidv4(); // If no correlation ID is provided, generate a new one
+			const inboundCorrelationId = req.headers['x-correlation-id'] as ID | undefined;
+			// A malformed/oversized/control-character-bearing value is treated the same as absent
+			// (generate one) rather than rejecting the request — the header is advisory, and this is
+			// the same fail-safe posture as trusting it at all in the first place.
+			const id =
+				typeof inboundCorrelationId === 'string' && SAFE_CORRELATION_ID.test(inboundCorrelationId)
+					? inboundCorrelationId
+					: uuidv4();
+
+			// Echo it back (TASK 9 — Unified Observability and Correlation IDs): previously this id
+			// was only ever readable server-side (via RequestContext.getContextId(), now also
+			// RequestContext.currentCorrelationId()). Without this header, a caller that did NOT send
+			// its own `x-correlation-id` had no way to learn the one the server generated, so it could
+			// never hand that id to support/logs to correlate its own request with server-side logs.
+			res.setHeader('x-correlation-id', String(id));
 
 			const context = new RequestContext({ id, req, res });
 			this.clsService.set(RequestContext.name, context);
 
 			// Build the full request URL
 			const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+			const logLifecycle = this.loggingEnabled && !isHealthCheckRequest(req);
 
 			// Log the start of the request if logging is enabled
-			if (this.loggingEnabled) {
+			if (logLifecycle) {
 				const contextId = RequestContext.getContextId();
 				this.logger.log(`Context ${contextId}: ${req.method} request to ${fullUrl} started.`);
 			}
@@ -46,7 +84,7 @@ export class RequestContextMiddleware implements NestMiddleware {
 
 			// Override the res.end function to log when the response finishes
 			res.end = (...args: any[]): Response => {
-				if (this.loggingEnabled) {
+				if (logLifecycle) {
 					const contextId = RequestContext.getContextId();
 					this.logger.log(
 						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with status ${res.statusCode}.`

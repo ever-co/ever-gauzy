@@ -1,0 +1,10 @@
+<ga-employee-chart-card
+	[type]="chartType()"
+	[data]="chartData()"
+	[options]="chartOptions()"
+	[loading]="loading()"
+	[error]="error()"
+	[requiresEmployee]="requiresEmployee()"
+	[empty]="isEmpty()"
+	(retry)="refresh()"
+></ga-employee-chart-card>

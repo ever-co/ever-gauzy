@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
 import {
@@ -35,6 +36,9 @@ export class OrganizationTeamJoinRequestController {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('validate')
+	// Public, unauthenticated verification of a six-character confirmation code. Without an explicit
+	// limit this inherited the global THROTTLE_LIMIT (60000/min), i.e. no limit at all.
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	@Public()
 	async validateJoinRequest(@Body() entity: ValidateJoinRequestDTO): Promise<IOrganizationTeamJoinRequest> {
@@ -66,6 +70,7 @@ export class OrganizationTeamJoinRequestController {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe()
 	@Public()
 	async create(
@@ -81,6 +86,8 @@ export class OrganizationTeamJoinRequestController {
 	 * @returns
 	 */
 	@HttpCode(HttpStatus.OK)
+	// Sends mail and mints a new code on every call: limited to stop both code churn and mail abuse.
+	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	@Post('resend-code')
 	@UseValidationPipe()
 	@Public()

@@ -1,50 +1,154 @@
 @use 'themes' as *;
-.tag-color {
-  position: unset;
-  display: inline-flex;
-  align-items: center;
-  width: 1rem;
-  height: 1rem;
-  margin-right: 10px;
-  margin-left: 10px;
+
+// ── One row of the tag dropdown ──────────────────────────────────────────────
+// The row's chrome — its fill, radius, padding, hover and selected tints — comes
+// from the shared `.ng-option` block in `_overrides.scss`, the same one every
+// other dropdown in the app uses. What lives here is only what is INSIDE the
+// row: the state box, the tag's colour and its name.
+//
+// It was a `d-flex align-items-center` with the spacing carried on the swatch as
+// `margin-left: 10px; margin-right: 10px`, so the row was indented by a margin
+// that belonged to something else and the three items had no consistent rhythm
+// between them. One gap, set once.
+.tag-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	// The name ellipsizes rather than the row growing: a flex item will not
+	// shrink below its own content unless its container says it may.
+	min-width: 0;
 }
 
+// The state box. Drawn rather than a native `<input type="checkbox">`: the
+// native box renders as a bright white square on the dark themes, and the
+// app-wide `input` rules kept treating it as a text field. The row, not the
+// box, is the click target (ng-select selects on the row's own click).
+.tag-check {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 0.875rem;
+	height: 0.875rem;
+	border-radius: 0.25rem;
+	box-shadow: inset 0 0 0 1px nb-theme(border-basic-color-5);
+	transition:
+		background-color 0.12s ease-in-out,
+		box-shadow 0.12s ease-in-out;
+
+	nb-icon {
+		font-size: 0.75rem;
+		width: 0.75rem;
+		height: 0.75rem;
+		color: nb-theme(text-control-color);
+	}
+
+	&--on {
+		background-color: nb-theme(color-primary-default);
+		box-shadow: none;
+	}
+}
+
+// The tag's colour: a dot with a soft halo in the same colour, so saturated
+// and pale tags (white "Verified", grey "Urgent") read with equal weight on
+// either theme. `--tag-color` is set per row from the tag's own colour.
+.tag-dot {
+	flex: none;
+	width: 0.5rem;
+	height: 0.5rem;
+	margin: 0 0.125rem;
+	border-radius: 50%;
+	background-color: var(--tag-color);
+	box-shadow:
+		0 0 0 3px color-mix(in srgb, var(--tag-color) 22%, transparent),
+		inset 0 0 0 1px rgba(126, 126, 143, 0.35);
+}
+
+// ── A selected tag, in the trigger ───────────────────────────────────────────
+// A tinted label rather than a solid fill. Tag colours are user-chosen and
+// fully saturated (pure red, yellow, black), so solid pills with white/black
+// text clashed with each other and with the dark surface. Every chip now has
+// the same weight: a light wash of the tag colour, a hairline ring in it, and
+// text mixed from the tag colour toward the theme's text colour — lighter on
+// dark themes, darker on light ones — so yellow and black stay readable on
+// either.
 .tag-label {
-  display: unset;
-  margin-right: 0;
-  border-radius: 2rem;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 13px;
-  letter-spacing: 0em;
-  padding: 3px 8px;
+	position: unset;
+	// `inline-block`, not flex: the name is a bare text node of `nb-badge`, and
+	// `text-overflow` only engages in a block container.
+	display: inline-block;
+	max-width: 100%;
+	margin: 0;
+	padding: 0.125rem 0.5rem;
+	// Same `badge-border-radius` as the tag chips in smart-table rows.
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: 500;
+	line-height: 1rem;
+	letter-spacing: 0em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	color: color-mix(in srgb, var(--tag-color) 55%, nb-theme(text-basic-color)) !important;
+	background-color: color-mix(in srgb, var(--tag-color) 14%, transparent) !important;
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tag-color) 40%, transparent);
+	// The chip removes the tag on click (`(click)="clear(item)"`).
+	cursor: pointer;
+
+	&:hover {
+		background-color: color-mix(in srgb, var(--tag-color) 24%, transparent) !important;
+	}
 }
 
-input {
-  box-shadow: unset;
-  height: unset;
+// The "+N" chip at the end of the row: the tags that did not fit. Neutral, so it
+// reads as a count and not as another tag.
+.tag-overflow {
+	display: inline-block;
+	padding: 0.125rem 0.375rem;
+	// A `<span>`, so unlike the chips beside it there is no badge radius to
+	// inherit — it resolves the same token by hand to sit on their corner.
+	border-radius: nb-theme(badge-border-radius);
+	background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+	color: var(--gauzy-text-color-2);
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: 600;
+	line-height: 1rem;
+	vertical-align: middle;
 }
+
 :host ::ng-deep {
-  .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-value {
-    background-color: transparent;
-    margin-right: 0;
-  }
-  .ng-select .ng-select-focused .ng-select-container {
-    &:hover,
-    &:focus,
-    &:active,
-    &:visited {
-      box-shadow: var(--gauzy-shadow) inset !important;
-    }
-  }
-  .ng-select .ng-select-container {
-    box-shadow: var(--gauzy-shadow) inset !important;
-  }
+	.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+		background-color: transparent;
+		// The gap between two chips, which the chips themselves no longer carry.
+		margin-right: 0.25rem;
+	}
+	.ng-select .ng-select-focused .ng-select-container {
+		&:hover,
+		&:focus,
+		&:active,
+		&:visited {
+			box-shadow: var(--gauzy-shadow) inset !important;
+		}
+	}
+	.ng-select .ng-select-container {
+		box-shadow: var(--gauzy-shadow) inset !important;
+	}
 }
+
+// The tag name inside a dropdown row. `_overrides.scss` lets an appended
+// `ng-dropdown-panel` grow to `max-content`, so without a cap here ONE
+// pathologically long tag name would decide the width of the whole popup. 20rem
+// is the cap: everything shorter shows in full, only a genuinely long name
+// is truncated with an ellipsis.
+//
+// `min-width: 0` because this span is a flex item, and a flex item's default
+// `min-width: auto` refuses to shrink below its own content — which is what
+// stopped `text-overflow` from ever engaging when the row WAS narrower than the
+// text. `overflow: hidden` (not just `overflow-x`) so the box is a genuine
+// ellipsis container; `white-space: nowrap` is inherited from `.ng-option`.
 .text {
-  overflow-x: hidden;
-  text-overflow: ellipsis;
+	min-width: 0;
+	max-width: 20rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }

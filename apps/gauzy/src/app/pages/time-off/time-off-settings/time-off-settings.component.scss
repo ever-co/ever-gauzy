@@ -1,1 +1,12 @@
 @forward '@shared/_pg-card';
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block Invoices carries: density tokens, the table surface, row
+// hover/selection, the tag-chip stack, the status pills, the pager and the
+// toolbar scale.
+//
+// The pager needed the `.pagination-container` wrapper the sibling list pages
+// already had — the template rendered a bare `<ngx-pagination>` into the card
+// body, so it was neither right-aligned nor compacted.
+@include ga-hub.list-page();

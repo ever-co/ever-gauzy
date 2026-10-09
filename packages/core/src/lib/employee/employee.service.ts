@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	ID,
@@ -14,12 +15,27 @@ import {
 import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
-import { getDateRangeFormat, MultiORMEnum } from './../core/utils';
+import { IPartialEntity } from './../core/crud/icrud.service';
+import { sanitizeRichHtml } from './../core/html-sanitizer';
+import {
+	flatten,
+	getDateRangeFormat,
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
+
+/**
+ * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
+ */
+const SORTABLE_COLUMNS = ['averageIncome', 'averageExpenses', 'averageBonus', 'isTrackingEnabled'] as const;
 
 @FavoriteService(BaseEntityEnum.Employee)
 @Injectable()
@@ -29,6 +45,23 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
+	}
+
+	/**
+	 * Creates (or, via the update command handlers, upserts) an employee record, sanitizing the
+	 * rich-text `description` HTML through the shared server-side allowlist before persisting.
+	 * `Employee.description` is rendered with `[innerHTML]` on the PUBLIC organization page, so
+	 * every write path must be sanitized (see `sanitizeRichHtml`).
+	 *
+	 * @param entity - The employee data to persist.
+	 * @returns The persisted employee.
+	 */
+	public async create(entity: IPartialEntity<Employee>): Promise<Employee> {
+		const input = entity as { description?: string };
+		if (typeof input.description === 'string') {
+			input.description = sanitizeRichHtml(input.description);
+		}
+		return await super.create(entity);
 	}
 
 	/**
@@ -515,6 +548,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @returns Promise containing paginated employees and total count
 	 */
 	public async pagination(options: BaseQueryDTO<any>): Promise<IPagination<IEmployee>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			// Retrieve the current tenant ID from the RequestContext
 			const tenantId = RequestContext.currentTenantId();
@@ -545,16 +582,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						if (isNotEmpty(mWhere.user)) {
 							const userOr: any[] = [];
 							if (isNotEmpty(mWhere.user.name)) {
-								const keywords: string[] = mWhere.user.name.split(' ');
+								const keywords: string[] = splitKeywords(mWhere.user.name);
 								keywords.forEach((keyword: string) => {
-									userOr.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
-									userOr.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
+									userOr.push(
+										{ user: { firstName: mikroOrmContains(keyword) } },
+										{ user: { lastName: mikroOrmContains(keyword) } }
+									);
 								});
 							}
 							if (isNotEmpty(mWhere.user.email)) {
-								const keywords: string[] = mWhere.user.email.split(' ');
+								const keywords: string[] = splitKeywords(mWhere.user.email);
 								keywords.forEach((keyword: string) => {
-									userOr.push({ user: { email: { $ilike: `%${keyword}%` } } });
+									userOr.push({ user: { email: mikroOrmContains(keyword) } });
 								});
 							}
 							if (userOr.length > 0) {
@@ -564,9 +603,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					}
 
 					const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mFilter, {
-						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
-						offset: options?.skip ? options.take * (options.skip - 1) : 0,
-						limit: options?.take || 10
+						...(options.relations ? { populate: flatten(options.relations) as any[] } : {}),
+						// An empty order (nothing valid requested) leaves the query unsorted, as before
+						orderBy: parseSortOrder(options.order, SORTABLE_COLUMNS),
+						// "Include deleted": turn off the soft-delete filter, as `withDeleted` does in the TypeORM branch
+						...(options.withDeleted ? { filters: { [SOFT_DELETABLE_FILTER]: false } } : {}),
+						offset: options.skip ? options.take * (options.skip - 1) : 0,
+						limit: options.take || 10
 					});
 					return { items: mItems.map((item) => this.serialize(item)), total: mTotal };
 
@@ -582,6 +625,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					query.setFindOptions({
 						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 						take: options && options.take ? options.take : 10,
+						order: parseSortOrder(options?.order, SORTABLE_COLUMNS),
 						select: {
 							// Selected fields for the Employee entity
 							id: true,
@@ -607,7 +651,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 							isAway: true,
 							isOnline: true
 						},
-						...(options && options.relations ? { relations: options.relations } : {}),
+						...(options && options.relations
+							? { relations: parseFindOptionsRelations(options.relations) }
+							: {}),
 						...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
 					});
 
@@ -661,7 +707,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 									const { user } = where;
 									if (isNotEmpty(user)) {
 										if (isNotEmpty(user.name)) {
-											const keywords: string[] = user.name.split(' ');
+											const keywords: string[] = splitKeywords(user.name);
 											keywords.forEach((keyword: string, index: number) => {
 												web.orWhere(
 													p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`),
@@ -678,7 +724,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 											});
 										}
 										if (isNotEmpty(user.email)) {
-											const keywords: string[] = user.email.split(' ');
+											const keywords: string[] = splitKeywords(user.email);
 											keywords.forEach((keyword: string, index: number) => {
 												web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
 													[`email_${index}`]: `%${keyword}%`

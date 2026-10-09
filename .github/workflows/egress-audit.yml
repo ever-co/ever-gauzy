@@ -1,0 +1,152 @@
+name: Egress audit
+# cspell:words corepack println DOTENV readdir nomock pcaps
+
+# Proves at runtime, with the published API image, what the anonymous usage statistics module may
+# send: nothing at all when it is switched off, and only the documented report when it is on. The
+# API runs with a throw-away PostgreSQL on Docker networks with no route out; CoreDNS is its only resolver and a
+# capture sees every connection attempt and DNS query from before the process starts. Modes
+# (tools/egress-audit/README.md):
+#
+#   off             EVER_STATS_ENABLED=false in the container environment: no Ever host looked
+#                   up, no connection attempt out, every statistics route 404
+#   off_env_file    the same switch written ONLY in the API's .env.local file
+#   positive_stats  module on against the mock platform: reports accepted (202), and no call
+#                   other than the statistics report
+#   control         positive_stats without the mock must FAIL, so a green run is not a blind one
+#
+# "Switched off in Settings" (module loaded, no call at all, Send now 409) is proven by the plugin
+# suite against the same mock platform in build.yml (build-api).
+#
+# The harness is the egress audit of the SDK's dev tools (`ever-egress-audit` of `@ever-co/connect-tools`,
+# the exact version the statistics plugin pins in its package.json), installed from npm for this run;
+# nothing of it is copied into this repository.
+#
+# Runs every day on the newest published develop API image (the demo image), and on demand with
+# any API image. The configuration comes from the default branch; no code of a pull request runs.
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'The Gauzy API image to audit'
+        required: true
+        default: 'ghcr.io/ever-co/gauzy-api-demo:latest'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AUDIT_CONFIG: tools/egress-audit/egress-audit.config.json
+  AUDIT_ARTIFACTS: egress-audit-artifacts
+
+jobs:
+  egress-audit:
+    name: egress-audit
+    # GitHub-hosted on purpose: the capture needs Docker with NET_RAW and NET_ADMIN.
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Free disk space for the API image
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install the harness (@ever-co/connect-tools, the version the statistics plugin pins)
+        run: |
+          version=$(node -p "require('./packages/plugins/ever-stats/package.json').devDependencies['@ever-co/connect-tools']")
+          npm install --prefix "$RUNNER_TEMP/egress-audit" --no-save --no-audit --no-fund --ignore-scripts "@ever-co/connect-tools@$version"
+          harness="$RUNNER_TEMP/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs"
+          node "$harness" --help > /dev/null
+          echo "EGRESS_AUDIT=$harness" >> "$GITHUB_ENV"
+
+      - name: Pull the API image
+        env:
+          IMAGE: ${{ github.event.inputs.image || 'ghcr.io/ever-co/gauzy-api-demo:latest' }}
+        run: |
+          docker pull "$IMAGE"
+          docker pull postgres:18-alpine
+          echo "GAUZY_API_IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          commit=$(docker image inspect "$IMAGE" --format '{{range .Config.Env}}{{println .}}{{end}}' | sed -n 's/^GAUZY_APP_COMMIT=//p')
+          echo "The image was built from commit ${commit:-<unknown>}." | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Write the API .env.local files of the modes, and a secret for this run
+        run: |
+          secret=$(openssl rand -hex 32)
+          echo "::add-mask::$secret"
+          echo "GAUZY_AUDIT_SECRET=$secret" >> "$GITHUB_ENV"
+          : > "$RUNNER_TEMP/api-empty.env"
+          printf 'EVER_STATS_ENABLED=false\n' > "$RUNNER_TEMP/api-stats-off.env"
+          df -h /
+
+      - name: 'off: EVER_STATS_ENABLED=false in the container environment'
+        if: ${{ !cancelled() }}
+        env:
+          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
+        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode off --artifacts "$AUDIT_ARTIFACTS" --verbose
+
+      - name: 'off_env_file: EVER_STATS_ENABLED=false only in the API .env.local file'
+        if: ${{ !cancelled() }}
+        env:
+          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-stats-off.env
+        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode off_env_file --artifacts "$AUDIT_ARTIFACTS" --verbose
+
+      - name: 'positive_stats: on, against the mock platform'
+        if: ${{ !cancelled() }}
+        env:
+          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
+        run: node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode positive_stats --artifacts "$AUDIT_ARTIFACTS" --verbose
+
+      - name: 'control: positive_stats without the mock platform must fail'
+        if: ${{ !cancelled() }}
+        env:
+          GAUZY_AUDIT_DOTENV: ${{ runner.temp }}/api-empty.env
+        run: |
+          set +e
+          node "$EGRESS_AUDIT" --config "$AUDIT_CONFIG" --mode positive_stats --no-mock --artifacts "$AUDIT_ARTIFACTS" --verbose
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "::error::without the mock platform the audit must report a violation (exit 1); it exited $code, so a green run could be a blind one"
+            exit 1
+          fi
+          echo "The control failed as it must (exit 1)."
+
+      - name: Summary
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs"), path = require("path");
+            const dir = process.env.AUDIT_ARTIFACTS;
+            const rows = ["| Mode | Exit | Violations | DNS queries | Connection attempts | Calls |", "|---|---|---|---|---|---|"];
+            for (const mode of fs.existsSync(dir) ? fs.readdirSync(dir).sort() : []) {
+              const file = path.join(dir, mode, "report.json");
+              if (!fs.existsSync(file)) continue;
+              const r = JSON.parse(fs.readFileSync(file, "utf8"));
+              const rules = Object.entries(r.summary.rules).map(([k, v]) => `${k}: ${v}`).join(", ") || "none";
+              rows.push(`| ${mode} | ${r.exit} | ${rules} | ${r.summary.dns_queries} | ${r.summary.connection_attempts} | ${r.summary.calls ? r.summary.calls.join(", ") || "none" : "-"} |`);
+            }
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Egress audit\n\n${rows.join("\n")}\n\nThe positive_stats-nomock row is the control and must exit 1.\n`);
+          '
+
+      - name: Upload the evidence (pcaps, DNS logs, reports)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: egress-audit
+          path: ${{ env.AUDIT_ARTIFACTS }}
+          retention-days: 14

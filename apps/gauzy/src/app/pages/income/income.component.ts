@@ -34,6 +34,7 @@ import {
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
+	IRecordViewSection,
 	IncomeExpenseAmountComponent,
 	IncomeMutationComponent,
 	InputFilterComponent,
@@ -62,6 +63,13 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	public selectedIncome: IIncome;
+
+	/*
+	 * Read-only View: an income entry is a small record, so it opens in the
+	 * right-side drawer rather than on a page of its own.
+	 */
+	public viewedIncome: IIncome;
+	public viewSections: IRecordViewSection[] = [];
 
 	public organization: IOrganization;
 	public incomes$: Subject<any> = this.subject$;
@@ -222,6 +230,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '15%',
+					// Newest income first by default: without an initial sort the API answered in
+					// insertion order, so an edited record moved to the last page (#530).
+					sortDirection: 'desc',
 					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -380,6 +391,59 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 	selectIncome({ isSelected, data }: { isSelected: boolean; data: IIncome }): void {
 		this.disableButton = !isSelected;
 		this.selectedIncome = isSelected ? data : null;
+	}
+
+	/**
+	 * Opens the read-only View of an income entry in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	viewIncome(selectedItem?: IIncome): void {
+		if (selectedItem) {
+			this.selectIncome({ isSelected: true, data: selectedItem });
+		}
+
+		const income = selectedItem ?? this.selectedIncome;
+		if (!income) {
+			return;
+		}
+
+		this.viewSections = this.buildViewSections();
+		this.viewedIncome = income;
+	}
+
+	closeView(): void {
+		this.viewedIncome = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer — the grid columns, read vertically.
+	 */
+	private buildViewSections(): IRecordViewSection[] {
+		return [
+			{
+				fields: [
+					{ label: 'SM_TABLE.DATE', key: 'valueDate', type: 'date' },
+					{ label: 'SM_TABLE.VALUE', key: 'amount', type: 'money' },
+					{ label: 'SM_TABLE.BONUS', key: 'isBonus', type: 'boolean' },
+					{ label: 'SM_TABLE.CONTACT', key: 'client.name' },
+					{
+						label: 'SM_TABLE.EMPLOYEE',
+						key: 'employee',
+						type: 'person',
+						// Same rule the grid applies: without this permission the
+						// employee column is removed, so the View must not show it either.
+						permission: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+					}
+				]
+			},
+			{
+				fields: [
+					{ label: 'SM_TABLE.NOTES', key: 'notes', type: 'multiline', wide: true },
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
+				]
+			}
+		];
 	}
 
 	/**
@@ -575,6 +639,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 	 * Clear selected item
 	 */
 	private _clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectIncome({ isSelected: false, data: null });
 	}
 

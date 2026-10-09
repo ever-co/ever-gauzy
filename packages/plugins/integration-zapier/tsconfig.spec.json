@@ -3,6 +3,20 @@
 	"compilerOptions": {
 		"outDir": "../../../dist/out-tsc",
 		"module": "commonjs",
+		// Mirrors `packages/core/tsconfig.spec.json`. It was added so the `transformIgnorePatterns` list
+		// in `jest.config.ts` would work for the ESM-only deps (like `uuid`) that importing `@gauzy/core`
+		// reaches, but ts-jest >= 29.3.2 (pinned 29.4.6) compiles `.js` under `node_modules`
+		// regardless, so that list no longer depends on it. It still applies to any repo-local `.js`.
+		"allowJs": true,
+		// Makes ts-jest transpile each file on its own instead of type-checking the whole program.
+		// Without it, importing anything that transitively reaches `@gauzy/core` (e.g. this package's
+		// own handlers, which import `TimerStartedEvent` from it) re-checks `@gauzy/core`'s SOURCE
+		// under this package's stricter `noPropertyAccessFromIndexSignature` setting and fails on
+		// unrelated `process.env.X` accesses in `packages/core/src/lib/bootstrap` — a cross-package
+		// tsconfig-strictness mismatch, not a real type error in this package's own code. The cost:
+		// specs here are NOT type-checked when Jest runs them, so a type error in one only shows up in
+		// an editor or a `tsc` run. Test-tooling-only; does not affect the production build.
+		"isolatedModules": true,
 		"types": ["jest", "node"]
 	},
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

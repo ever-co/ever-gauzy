@@ -16,7 +16,10 @@ export const AddTaskPage = {
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	selectTableFirstRowCss: 'tr.angular2-smart-row.selected',
 	tagsSelectCss: '#addTags',
-	tagsSelectOptionCss: '[type="checkbox"]',
+	// The tags ng-select option ITSELF, not the checkbox its template happens to render: '[type="checkbox"]'
+	// matched every checkbox on the page (grid row selectors included), and it is the option div that carries
+	// ng-select's (click)="toggleItem(item)". ':not(.ng-option-disabled)' is applied by the shared driver.
+	tagsSelectOptionCss: 'div.ng-option',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
 	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmEditTaskButtonCss: '',

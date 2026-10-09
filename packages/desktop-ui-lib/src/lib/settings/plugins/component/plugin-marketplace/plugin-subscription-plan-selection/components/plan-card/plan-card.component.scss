@@ -11,25 +11,28 @@
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
   height: 100%;
   min-height: 420px;
-  box-shadow: var(--gauzy-shadow);
   max-height: unset;
+  // `--gauzy-shadow` is dropped from EVERY state in this block. The card's own
+  // 1px border is what marks its edge — and it is the thing that changes colour
+  // per state — while on the dark canvas that token resolves to a 1px ring,
+  // which sat immediately outside the border as a second hairline in all four
+  // states. The state-specific 3px rings and lift blurs below are kept.
 
   &:hover:not(.disabled):not(.current-plan) {
     border-color: var(--color-primary-default);
     transform: translateY(-4px);
-    box-shadow: var(--gauzy-shadow), 0 10px 26px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
   }
 
   &:focus-visible {
     outline: 3px solid var(--color-primary-default);
     outline-offset: 4px;
-    box-shadow: var(--gauzy-shadow);
   }
 
   &.selected {
     border-color: var(--color-primary-default);
     background: linear-gradient(135deg, rgba(var(--color-primary-500-rgb, 51, 102, 255), 0.05), var(--gauzy-card-1));
-    box-shadow: var(--gauzy-shadow), 0 0 0 3px rgba(var(--color-primary-500-rgb, 51, 102, 255), 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-500-rgb, 51, 102, 255), 0.15);
     animation: selectedPulse 0.45s ease;
   }
 
@@ -37,7 +40,7 @@
     border-color: var(--color-success-default);
     background: linear-gradient(135deg, rgba(var(--color-success-500-rgb, 0, 214, 143), 0.08), var(--gauzy-card-1));
     cursor: not-allowed;
-    box-shadow: var(--gauzy-shadow), 0 0 0 3px rgba(0, 214, 143, 0.12);
+    box-shadow: 0 0 0 3px rgba(0, 214, 143, 0.12);
   }
 
   &.disabled {
@@ -47,7 +50,7 @@
     &:hover {
       transform: none;
       border-color: var(--border-basic-color-3);
-      box-shadow: var(--gauzy-shadow);
+      box-shadow: none;
     }
   }
 

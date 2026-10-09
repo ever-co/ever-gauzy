@@ -118,6 +118,7 @@
               <div class="table-scroll-container">
                 @if (dataLayoutStyle === 'TABLE') {
                   <angular2-smart-table
+                    [class.ga-table-loading]="loading"
                     style="cursor: pointer"
                     [settings]="settingsSmartTable"
                     [source]="sourceSmartTable"
@@ -131,6 +132,7 @@
             <nb-card-body>
               @if (dataLayoutStyle === 'CARDS_GRID') {
                 <ga-card-grid
+                  [loading]="loading"
                   [totalItems]="pagination?.totalItems"
                   [settings]="settingsSmartTable"
                   [source]="educationList"

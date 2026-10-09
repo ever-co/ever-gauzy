@@ -1,4 +1,5 @@
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 [nbButton].sharing.appearance-filled.status-primary {
   color: nb-theme(text-primary-color);
@@ -6,8 +7,87 @@
   background-color: nb-theme(color-primary-transparent-default);
 }
 
-:host {
-  nb-card-body {
-    height: calc($card-height - 0.5rem) !important;
+// ── Fitting the column ───────────────────────────────────────────────────────
+// REMOVED from here: `:host nb-card-body { height: calc($card-height - 0.5rem)
+// !important }`.
+//
+// `gauzy/_gauzy-cards` already gives the body that same chrome estimate, but as a
+// FLEX BASIS — `flex: 1 1 auto` then grows or shrinks it to whatever the card
+// actually has, so the estimate being a guess never mattered. Restating it at
+// page level with `!important` turned a starting point into a floor and a
+// ceiling. `/pages/tasks/dashboard`, which fits, pins that height only on its
+// `.project` variant; with none selected its body is a plain flex child, and that
+// is the whole difference.
+//
+// This page is routed straight into `nb-layout-column`, so unlike Inventory and
+// Projects its height chain was never broken — there is nothing else to do here.
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Same surface, same density, same pager and same button scale as Job Employees,
+// Payments, Invoices and the rest of the list pages.
+//
+// The action row defaults to the whole card header, which this page needs: its
+// toolbar sits in a bare `<div class="align-self-end">` with no container class,
+// and the "Equipment Sharing" button sits beside the title, outside the toolbar
+// altogether.
+@include ga-hub.list-page();
+
+// ── Cells that hard-code a box ───────────────────────────────────────────────
+// Table-scoped, not page-wide: `ga-card-grid` renders the very same components
+// for the card layout, where the full-size treatment belongs.
+:host .table-scroll-container ::ng-deep angular2-smart-table {
+  // The Image column is a 74x60 photo and stays one: only the cell padding around
+  // it goes back to what it was before the density pass.
+  @include ga-hub.thumbnail-row-padding();
+
+  // ── Equipment Name cell ────────────────────────────────────────────────────
+  // `ga-picture-name-tags` renders `<ngx-avatar class="report-table">`, and that
+  // context in `avatar.component.scss` pins a 20px image, a 12px name and an 8px
+  // gap inside a padded tinted pill. Sized off the shared `gauzy-people-*`
+  // tokens, so this column matches the people cells every other list page
+  // renders. Same treatment, and the same specificity notes, as Employees.
+  ngx-avatar.report-table {
+    .inner-wrapper.inner-wrapper {
+      gap: var(--gauzy-people-gap, 0.375rem);
+      @include nb-ltr(padding, 0.125rem 0.375rem 0.125rem 0.125rem);
+      @include nb-rtl(padding, 0.125rem 0.125rem 0.125rem 0.375rem);
+    }
+
+    .link-text.link-text {
+      font-size: var(--gauzy-people-font-size, 0.6875rem);
+      line-height: var(--gauzy-people-avatar-size, 1rem);
+    }
+
+    .image-container.image-container {
+      width: var(--gauzy-people-avatar-size, 1rem);
+      height: var(--gauzy-people-avatar-size, 1rem);
+
+      // SPECIFICITY: the avatar's own rule shims to `.report-table[_nghost]
+      // .image-container[_ngc] img[_ngc]` — (0,5,1) — which no readable
+      // combination of doubled classes here beats, so these two are `!important`,
+      // the same register that rule already uses for its own `border-radius`.
+      img {
+        width: var(--gauzy-people-avatar-size, 1rem) !important;
+        height: var(--gauzy-people-avatar-size, 1rem) !important;
+      }
+    }
+  }
+
+  // ── Auto Approve cell ──────────────────────────────────────────────────────
+  // A bare tick or cross. `nb-icon` defaults to 1.5rem, half a rem taller than
+  // the row's whole line box, so a column carrying nothing but a glyph was
+  // setting the height of every row it appeared in. Nebular sizes the icon
+  // entirely from `icon-*` tokens, so redefining them is the whole change — no
+  // override of its rules, and nothing to keep in step if that sheet moves.
+  ngx-auto-approve {
+    --icon-font-size: var(--gauzy-table-line-height, 1rem);
+    --icon-line-height: var(--gauzy-table-line-height, 1rem);
+    --icon-width: var(--gauzy-table-line-height, 1rem);
+    --icon-height: var(--gauzy-table-line-height, 1rem);
+
+    div {
+      display: flex;
+      align-items: center;
+    }
   }
 }

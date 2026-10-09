@@ -28,6 +28,15 @@ export interface PageRouteRegistryConfig extends Route {
 	loadChildren?: () => Promise<Type<any> | Routes> | Type<any> | Routes;
 
 	/**
+	 * Optional loadComponent function to load a standalone component lazily.
+	 * (Inherited from `Route`; restated here so registry consumers treat it as
+	 * a first-class navigation target — the registry MUST copy it onto the
+	 * generated route, or the route is invalid and Angular fails the whole
+	 * parent subtree with NG04014 at navigation time.)
+	 */
+	loadComponent?: Route['loadComponent'];
+
+	/**
 	 * Additional route configuration options.
 	 */
 	route?: Route;

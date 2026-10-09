@@ -7,10 +7,10 @@ import { ChangeLanguagePageData } from '../../../src/support/Base/pagedata/Chang
 // "+ Create" button text the app renders once that locale is active — both come from the page data,
 // so QA can add a locale to the Examples table without touching this glue.
 const languageCode: Record<string, number> = {
-	Bulgarian: ChangeLanguagePageData.codeBulgarian,
-	Russian: ChangeLanguagePageData.codeRussian,
-	Hebrew: ChangeLanguagePageData.codeHebrew,
-	English: ChangeLanguagePageData.codeEnglish
+	Bulgarian: ChangeLanguagePageData.flagBulgarian,
+	Russian: ChangeLanguagePageData.flagRussian,
+	Hebrew: ChangeLanguagePageData.flagHebrew,
+	English: ChangeLanguagePageData.flagEnglish
 };
 const translatedCreate: Record<string, string> = {
 	Bulgarian: ChangeLanguagePageData.Bulgarian,

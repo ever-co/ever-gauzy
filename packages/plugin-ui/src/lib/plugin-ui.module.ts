@@ -27,12 +27,14 @@ import {
 	IDeclarativeNavBuilder,
 	IDeclarativePageRouteRegistry,
 	IDeclarativePageTabRegistry,
+	IDeclarativeWidgetRegistry,
 	IPluginTranslateService,
 	IPluginPermissionChecker,
 	IPluginFeatureChecker,
 	PLUGIN_NAV_BUILDER,
 	PLUGIN_ROUTE_REGISTRY,
 	PLUGIN_TAB_REGISTRY,
+	PLUGIN_WIDGET_REGISTRY,
 	PLUGIN_TRANSLATE_SERVICE,
 	PLUGIN_PERMISSION_CHECKER,
 	PLUGIN_FEATURE_CHECKER
@@ -57,6 +59,8 @@ export interface PluginUiServices {
 	routeRegistry?: Type<IDeclarativePageRouteRegistry>;
 	/** Page-tab registry (bound to PLUGIN_TAB_REGISTRY). */
 	tabRegistry?: Type<IDeclarativePageTabRegistry>;
+	/** Dashboard widget registry (bound to PLUGIN_WIDGET_REGISTRY). */
+	widgetRegistry?: Type<IDeclarativeWidgetRegistry>;
 	/** Translate service for plugin translations (bound to PLUGIN_TRANSLATE_SERVICE). */
 	translateService?: Type<IPluginTranslateService>;
 	/** Permission checker for extension visibility (bound to PLUGIN_PERMISSION_CHECKER). */
@@ -70,6 +74,7 @@ const SERVICE_TOKEN_MAP: Record<keyof PluginUiServices, InjectionToken<any>> = {
 	navBuilder: PLUGIN_NAV_BUILDER,
 	routeRegistry: PLUGIN_ROUTE_REGISTRY,
 	tabRegistry: PLUGIN_TAB_REGISTRY,
+	widgetRegistry: PLUGIN_WIDGET_REGISTRY,
 	translateService: PLUGIN_TRANSLATE_SERVICE,
 	permissionChecker: PLUGIN_PERMISSION_CHECKER,
 	featureChecker: PLUGIN_FEATURE_CHECKER

@@ -100,12 +100,17 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent implement
 		}
 		this.keyResult.status = this.keyResultUpdateForm.value.newStatus;
 		try {
+			// The endpoint validates against `TenantOrganizationBaseDTO`, which requires the tenancy
+			// fields — without them the POST is rejected and the dialog can never be dismissed.
+			const { id: organizationId, tenantId } = this.store.selectedOrganization;
 			const update: IKeyResultUpdate = {
 				keyResultId: this.keyResult.id,
 				owner: this.keyResult.owner.id,
 				update: this.keyResult.update,
 				progress: this.keyResult.progress,
-				status: this.keyResult.status
+				status: this.keyResult.status,
+				organizationId,
+				tenantId
 			};
 			delete this.keyResult.updates;
 			await this.keyResultUpdateService.createUpdate(update).then(async (res) => {

@@ -1,0 +1,25 @@
+{
+	"product": "gauzy",
+	"compose": ["compose.egress-audit.yml"],
+	"project": "ever-audit-gauzy",
+	"subnet": "10.231.7.0/24",
+	"api_service": "api",
+	"process_services": ["api"],
+	"services": ["api"],
+	"health_url": "http://api:3000/api/health",
+	"health_timeout_s": 1200,
+	"module_routes": ["/api/ever-stats/status", "/api/ever-stats/last", "/api/ever-stats/state"],
+	"adapter": "adapter.mjs",
+	"wait_s": 120,
+	"allowed_external_hosts": [],
+	"modes": {
+		"off_env_file": {
+			"description": "Statistics switched off ONLY in the API's .env.local file (in the API's working directory), nothing about them in the container environment: the module is not loaded, no call, no Ever host looked up, every module route 404.",
+			"env": { "EVER_STATS_SEND_INTERVAL_S": "5" },
+			"mock": false,
+			"module_routes": "404",
+			"allowed_rows": [],
+			"required_rows": []
+		}
+	}
+}

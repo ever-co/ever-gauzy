@@ -7,13 +7,6 @@
 						{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
 					</ngx-header-title>
 				</h4>
-				@if (request?.startDate && request?.endDate) {
-					<ngx-date-range-title
-						[start]="request?.startDate"
-						[end]="request?.endDate"
-						[format]="'dddd, LL'"
-					></ngx-date-range-title>
-				}
 			</div>
 		</div>
 		<div class="row">
@@ -50,8 +43,15 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
+					<!--
+						The rows used to sit inside a bare `<ng-template class="table-template">`.
+						An ng-template with no structural directive and no ngTemplateOutlet is
+						never instantiated, so this branch rendered NOTHING - which is the
+						branch taken whenever the report has data. The page was blank exactly
+						when there was something to show, and only the empty state below ever
+						appeared.
+					-->
 					@if (dailyData?.length > 0) {
-						<ng-template class="table-template">
 							@for (day of dailyData; track day) {
 								<nb-card class="card">
 									<nb-card-header class="card-title">
@@ -167,9 +167,9 @@
 									</nb-card-body>
 								</nb-card>
 							}
-						</ng-template>
 					} @else {
 						<ngx-no-data-message
+							[loading]="loading"
 							[message]="'REPORT_PAGE.NO_DATA.MANUAL_ACTIVITY' | translate"
 						></ngx-no-data-message>
 					}

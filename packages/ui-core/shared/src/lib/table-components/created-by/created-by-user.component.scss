@@ -1,37 +1,52 @@
 @use 'themes' as *;
 
-$radius: nb-theme(button-rectangle-border-radius);
+// One person, styled off the same `gauzy-people-*` tokens as `ngx-people-list`
+// so a "Created By" cell and a "Members" cell read as the same thing. No box
+// and no border around the person — that framing is exactly what the people
+// columns were redesigned to drop.
+:host .avatar-container {
+	width: 100%;
+	min-width: 0;
 
-a {
-  cursor: pointer;
+	.avatar {
+		display: inline-flex;
+		align-items: center;
+		gap: nb-theme(gauzy-people-gap);
+		min-width: 0;
+		max-width: 100%;
+		color: nb-theme(text-basic-color);
+		font-size: nb-theme(gauzy-people-font-size);
+		line-height: nb-theme(gauzy-people-avatar-size);
+		text-decoration: none;
+
+		.names-wrapper {
+			// Truncates on width, so a short name is never clipped.
+			min-width: 0;
+			max-width: nb-theme(gauzy-people-name-max-width);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		img {
+			flex: 0 0 auto;
+			width: nb-theme(gauzy-people-avatar-size);
+			height: nb-theme(gauzy-people-avatar-size);
+			border-radius: 50%;
+			object-fit: cover;
+		}
+	}
 }
 
-:host .avatar-container {
-  width: 100%;
+// Only the creators that actually have an employee page to open are clickable.
+:host a.is-link {
+	cursor: pointer;
 
-  .avatar {
-    border: 2px solid nb-theme(border-basic-color-1);
-    background-color: nb-theme(color-primary-transparent-default);
-    color: nb-theme(text-primary-color);
-    @include nb-ltr(padding, 5px 14px 5px 7px);
-    @include nb-rtl(padding, 5px 7px 5px 14px);
-    border-radius: $radius;
-    gap: 8px;
-    display: flex;
-    align-items: center;
-    width: fit-content;
+	&:hover {
+		color: nb-theme(text-primary-color);
 
-    .names-wrapper {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 110px;
-    }
-
-    img {
-      width: 18px;
-      height: 18px;
-      border-radius: $radius;
-    }
-  }
+		.names-wrapper {
+			text-decoration: underline;
+		}
+	}
 }

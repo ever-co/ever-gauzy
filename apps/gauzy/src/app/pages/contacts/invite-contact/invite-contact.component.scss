@@ -2,10 +2,50 @@
 
 nb-card {
   width: 645px;
-  background-color: nb-theme(gauzy-card-1);
-  nb-card-header {
-    nb-icon.close {
-      cursor: pointer;
-    }
+  // 645px was a hard width with nothing to stop it, so below ~700px of viewport
+  // the dialog ran past both edges of the screen and took its footer with it.
+  max-width: calc(100vw - 3rem);
+  // `nb-theme(gauzy-card-1)` compiles to a bare `var(--gauzy-card-1)` — Nebular
+  // runs in CSS-custom-property mode here — and that key is not registered for
+  // `material-light` / `material-dark`, which are registered against Nebular's
+  // own material themes rather than against the gauzy default (themes.scss lines
+  // 501-554). An unresolvable `var()` takes the whole declaration with it, so on
+  // those two themes the dialog had no surface colour of its own at all.
+  background-color: var(--gauzy-card-1, var(--card-background-color));
+
+  /*
+   * REMOVED: `nb-card-header nb-icon.close { cursor: pointer }`.
+   * invite-contact.component.html has no `nb-icon` anywhere — the close control
+   * is `<span class="cancel"><i class="fas fa-times">`, and `_gauzy-dialogs`
+   * already gives every `i` in this component `cursor: pointer`.
+   */
+}
+
+/*
+ * Cancel, restated AFTER `_gauzy-dialogs` so it wins at equal specificity.
+ *
+ * That shared partial paints EVERY `[nbButton].appearance-outline.status-basic`
+ * a literal `rgba(245, 109, 88, 1)` orange, 2px wide, with an orange glow on
+ * hover. No theme in themes.scss holds that colour. Here it landed on the one
+ * button in the dialog that should be quietest: "Cancel" read louder than the
+ * invite action next to it, which the theme's action tokens draw as a restrained
+ * accent. So a hairline in the neutral border token, a muted label, and the same
+ * hover tint the rest of the app uses.
+ */
+:host [nbButton].appearance-outline.status-basic {
+  background-color: transparent;
+  border-width: 1px;
+  border-color: nb-theme(border-basic-color-4);
+  color: nb-theme(text-hint-color);
+
+  &:hover {
+    border-color: nb-theme(border-basic-color-5);
+    color: nb-theme(text-basic-color);
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   }
+}
+
+// The partial's orange hover glow, which no longer matches anything above.
+:host [nbButton].appearance-outline:hover {
+  box-shadow: none;
 }

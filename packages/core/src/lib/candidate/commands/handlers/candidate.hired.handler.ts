@@ -44,6 +44,7 @@ export class CandidateHiredHandler implements ICommandHandler<CandidateHiredComm
 			// Step 1: Create an employee for the respective candidate
 			const employee = await this.employeeService.create({
 				billRateValue: candidate.billRateValue,
+				minimumBillingRate: candidate.minimumBillingRate,
 				billRateCurrency: candidate.billRateCurrency,
 				reWeeklyLimit: candidate.reWeeklyLimit,
 				payPeriod: candidate.payPeriod,

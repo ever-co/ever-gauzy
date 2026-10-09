@@ -1,7 +1,5 @@
 {
-	"DASHBOARD_PAGE": {
-		"TABS": {
-			"REACT_TIME_TRACKING": "React Time Tracking"
-		}
+	"BUTTONS": {
+		"UNDO": "Undo"
 	}
 }

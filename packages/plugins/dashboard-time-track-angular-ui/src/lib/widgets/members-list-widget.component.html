@@ -1,0 +1,57 @@
+<gz-time-track-widget-state
+	[loading]="loading()"
+	[error]="errorMessage()"
+	[empty]="isEmpty()"
+	[emptyMessageKey]="emptyMessageKey()"
+	[skeletonRows]="4"
+	(retry)="refresh()"
+>
+	<div class="list-panel">
+		<div class="list-scroll">
+			<div class="list-head member-row">
+				<span class="cell-text">{{ 'TIMESHEET.MEMBER_INFO' | translate }}</span>
+				<span class="cell-text cell-center">{{ 'TIMESHEET.TODAY' | translate }}</span>
+				<span class="cell-text cell-center">{{ rangeColumnKey() | translate }}</span>
+			</div>
+
+			@for (member of rows(); track member.id) {
+				<div class="list-row member-row">
+					<ngx-avatar
+						class="avatar-dashboard"
+						size="sm"
+						[name]="member?.user?.name"
+						[src]="member?.user?.imageUrl"
+						[id]="member?.id"
+						[employee]="member"
+					></ngx-avatar>
+
+					<div class="member-metric">
+						<span class="metric-duration">{{ member?.todayTime?.duration || 0 | durationFormat }}</span>
+						<nb-badge
+							[status]="statusFor(member?.todayTime?.overall)"
+							[text]="activityLabel(member?.todayTime?.overall)"
+						></nb-badge>
+					</div>
+
+					<div class="member-week">
+						<div class="member-metric">
+							<span class="metric-duration">{{ member?.weekTime?.duration || 0 | durationFormat }}</span>
+							<nb-badge
+								[status]="statusFor(member?.weekTime?.overall)"
+								[text]="activityLabel(member?.weekTime?.overall)"
+							></nb-badge>
+						</div>
+
+						@if (showWeekGraph()) {
+							<div class="member-week-graph" [attr.aria-hidden]="true">
+								@for (bar of member.weekHourBars; track bar.day) {
+									<div class="bar-graph-entry" [style.height.%]="bar.duration"></div>
+								}
+							</div>
+						}
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+</gz-time-track-widget-state>

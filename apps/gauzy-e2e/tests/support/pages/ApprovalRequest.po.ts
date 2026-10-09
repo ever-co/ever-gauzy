@@ -2,7 +2,6 @@ import {
 	verifyElementIsVisible,
 	clickButton,
 	clickElementByText,
-	clickButtonByIndex,
 	clearField,
 	enterInput,
 	clickKeyboardBtnByKeycode,
@@ -16,8 +15,10 @@ import {
 	verifyByLength,
 	verifyTextNotExisting,
 	dispatchClick,
+	scopeGridTo,
 	waitForSpinnerGone
 } from '../util';
+import { controlText, selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ApprovalRequestPage } from '../../../src/support/Base/pageobjects/ApprovalRequestPageObject';
@@ -85,11 +86,20 @@ const gotoHashRoute = async (targetHash: string, header: string): Promise<void> 
 const ensureAllEmployeesSelected = async (): Promise<void> => {
 	const page = getPage();
 	try {
-		const selector = page.locator('ga-employee-selector.header-selector ng-select').first();
+		const control = 'ga-employee-selector.header-selector ng-select';
+		const selector = page.locator(control).first();
 		if (!(await selector.isVisible().catch(() => false))) return;
-		// Already showing "All Employees"? The selected/placeholder text lives inside the ng-select host, so
-		// its innerText contains "All Employees" when nothing narrower is picked — then this is a no-op.
-		const shownText = (await selector.innerText().catch(() => '')) || '';
+		// Already showing "All Employees"? Read the CLOSED CONTROL (.ng-select-container), not the
+		// <ng-select> host's innerText. The host's text also covers the open dropdown panel, in which
+		// "All Employees" is ALWAYS present as the leading pseudo-option — so an innerText check can be
+		// satisfied by the option list and this early-return fires while a specific employee is still
+		// selected. That silently skips the reset, leaves the header filter in place, and every
+		// verify-exists below then asserts against a getByEmployeeId()-filtered grid.
+		//
+		// (This particular selector sets appendTo="body", so the panel is out of the host today — but that
+		// is app-side markup, not something the spec controls. .ng-select-container is a sibling of the
+		// panel and is therefore correct either way, and it still covers the placeholder case.)
+		const shownText = await controlText(control);
 		if (shownText.includes('All Employees')) return;
 		// A specific employee is selected (pollution from an earlier spec). Open the ng-select and pick the
 		// "All Employees" pseudo-option. ng-select opens on mousedown and appends its panel to <body>, so the
@@ -238,14 +248,16 @@ export const selectTableRowVisible = async () => {
 // "row 0" is whatever the accumulated rows from earlier specs/runs put first — NOT necessarily our request.
 // Filtering by the unique faker name makes the subsequent row-0 selection / verify-exists order-independent.
 export const searchRequestByName = async (name) => {
-	const page = getPage();
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => undefined);
-	const filter = page.locator(ApprovalRequestPage.nameFilterInputCss).first();
-	await filter.fill(String(name)).catch(() => undefined);
-	// smart-table filtering is debounced; let the grid re-render down to the single match before selecting.
-	await page.waitForTimeout(1500);
-	await waitForSpinnerGone();
+	// The filter was NEVER APPLIED. The approvals grid's Name column has no custom filter component, so it
+	// renders angular2-smart-table's stock `input-filter`: `<input [value]="query" (change) (keyup)>`. That
+	// listens for 'change'/'keyup' and never for 'input' — the ONLY event Playwright's .fill() dispatches.
+	// So the old `filter.fill(name)` put text in the box and filtered nothing: every caller below
+	// (verifyRequestExists / verifyElementIsDeleted / selectTableRow) was silently still looking at an
+	// unfiltered, paginated page 1, i.e. exactly the pollution this helper was written to defeat.
+	// scopeGridTo → applySmartTableFilter fills AND dispatches the 'change' the component subscribes to,
+	// then reads the value back and retries if the debounced refetch clobbered it.
+	await getPage().waitForLoadState('networkidle').catch(() => undefined);
+	await scopeGridTo(ApprovalRequestPage.nameFilterInputCss, String(name));
 };
 
 export const selectTableRow = async (name) => {
@@ -372,12 +384,11 @@ export const waitMessageToHide = async () => {
 export const verifyApprovalPolicyExists = async (text) => {
 	// Filter the (server-side, paginated) policy grid to our uniquely-named policy first so it's guaranteed
 	// to render — an unfiltered page 1 may not include it once earlier specs/runs have created policies.
-	const page = getPage();
-	await waitForSpinnerGone();
-	const filter = page.locator(ApprovalRequestPage.policyNameFilterInputCss).first();
-	await filter.fill(String(text)).catch(() => undefined);
-	await page.waitForTimeout(1500); // server-side filter is debounced — let the refetch land
-	await waitForSpinnerGone();
+	// Via the shared helper rather than a bare .fill(): this column DOES use Gauzy's FormControl-based
+	// ga-input-filter-selector (so .fill() happened to work here), but that is a per-column implementation
+	// detail no spec should depend on — applySmartTableFilter drives both widgets and verifies the value
+	// survived the debounced refetch.
+	await scopeGridTo(ApprovalRequestPage.policyNameFilterInputCss, String(text));
 	await verifyText(ApprovalRequestPage.verifyApprovalPolicyCss, text);
 };
 
@@ -422,7 +433,15 @@ export const clickTagsDropdown = async () => {
 };
 
 export const selectTagFromDropdown = async (index) => {
-	await clickButtonByIndex(ApprovalRequestPage.tagsDropdownOption, index);
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(ApprovalRequestPage.addTagsDropdownCss, ApprovalRequestPage.tagsDropdownOption, index);
 };
 
 export const clickCardBody = async () => {

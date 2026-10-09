@@ -51,15 +51,18 @@ export const verifyLanguageOptionsVisible = async () => {
 };
 
 /**
- * Pick a language option BY CODE PREFIX ("EN " / "BG " / "RU " / "HE ").
+ * Pick a language option BY FLAG ASSET ("flags/gb.svg" / "flags/bg.svg" / …).
  *
- * The Cypress original selected by numeric index (Bulgarian=0, English=1, Hebrew=2, Russian=3),
- * assuming a fixed alphabetical order. The current app renders the option list in a DB-driven order
- * that is NOT guaranteed, so index selection is fragile — match on the language-code prefix instead
- * (the option text is "EN (English)", "BG (Български)", …). Robust and order-independent.
+ * The Cypress original selected by numeric index, then the migration matched the "EN (" code
+ * prefix. Options now render as "[flag] Name" with no code and a locale-dependent name, so the
+ * flag <img src> is the one locale-invariant, order-independent marker left (see
+ * ChangeLanguagePageData for the language→country mapping).
  */
-export const clickOnLanguageOption = async (codePrefix: string) => {
-	const option = getPage().locator(ChangeLanguage.languageOptionsCss).filter({ hasText: codePrefix }).first();
+export const clickOnLanguageOption = async (flagAsset: string) => {
+	const option = getPage()
+		.locator(ChangeLanguage.languageOptionsCss)
+		.filter({ has: getPage().locator(`img[src*="${flagAsset}"]`) })
+		.first();
 	await option.click({ force: true, timeout: defaultCommandTimeout });
 	// Selecting fires (selectedChange)->switchLanguage(), which re-renders the UI in the new locale and
 	// collapses the sidebar. Give the translation swap a beat before the caller asserts on the button.
@@ -89,7 +92,7 @@ export const resetToEnglish = async (englishWord: string) => {
 		await waitUntil(800);
 		await getPage()
 			.locator(ChangeLanguage.languageOptionsCss)
-			.filter({ hasText: 'EN ' })
+			.filter({ has: getPage().locator('img[src*="flags/gb.svg"]') })
 			.first()
 			.click({ force: true, timeout: defaultCommandTimeout });
 		await expect(createBtn).toContainText(englishWord, { timeout: defaultCommandTimeout });

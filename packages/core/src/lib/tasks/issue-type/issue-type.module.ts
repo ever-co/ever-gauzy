@@ -18,6 +18,7 @@ import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.r
 		CqrsModule
 	],
 	controllers: [IssueTypeController],
-	providers: [IssueTypeService, TypeOrmIssueTypeRepository, MikroOrmIssueTypeRepository, ...CommandHandlers]
+	providers: [IssueTypeService, TypeOrmIssueTypeRepository, MikroOrmIssueTypeRepository, ...CommandHandlers],
+	exports: [IssueTypeService]
 })
 export class IssueTypeModule {}

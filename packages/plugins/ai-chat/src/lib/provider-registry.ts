@@ -35,8 +35,11 @@ export class AiProviderRegistry {
 		return this.providers.get(id);
 	}
 
+	/** All registered providers, sorted by their `order` (unset sorts last). */
 	static list(): IAiChatProviderDefinition[] {
-		return [...this.providers.values()];
+		return [...this.providers.values()].sort(
+			(a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
+		);
 	}
 
 	static clear(): void {

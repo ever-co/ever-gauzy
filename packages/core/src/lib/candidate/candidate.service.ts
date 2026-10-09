@@ -4,12 +4,24 @@ import { ICandidateCreateInput, BaseEntityEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { MultiORMEnum } from './../core/utils';
+import {
+	flatten,
+	mikroOrmContains,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	parseSortOrder,
+	splitKeywords
+} from './../core/utils';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 import { FavoriteService } from '../core/decorators';
+
+/**
+ * Columns the candidates table can be sorted by. Any other `order` key from the query string is ignored.
+ */
+const SORTABLE_COLUMNS = ['appliedDate', 'hiredDate', 'rejectDate', 'status'] as const;
 
 @FavoriteService(BaseEntityEnum.Candidate)
 @Injectable()
@@ -44,6 +56,13 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 	 * @returns
 	 */
 	public async pagination(options: any) {
+		// This method builds its own query instead of going through the CRUD read methods, so the
+		// sink-level check in `CrudService` never runs for it. Assert the sensitive-relation table
+		// here too: every tenant-scoped entity exposes an `organization` relation, so a client-supplied
+		// `relations` reaches the protected rows from any entity, not only from the ones whose
+		// controller mounts `SensitiveRelationsInterceptor`.
+		this.assertRelationsPermitted(options);
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -64,14 +83,16 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 						if (isNotEmpty(where.user)) {
 							const userFilter: any[] = [];
 							if (isNotEmpty(where.user.name)) {
-								const keywords: string[] = where.user.name.split(' ');
+								const keywords: string[] = splitKeywords(where.user.name);
 								for (const keyword of keywords) {
-									userFilter.push({ user: { firstName: { $ilike: `%${keyword}%` } } });
-									userFilter.push({ user: { lastName: { $ilike: `%${keyword}%` } } });
+									userFilter.push(
+										{ user: { firstName: mikroOrmContains(keyword) } },
+										{ user: { lastName: mikroOrmContains(keyword) } }
+									);
 								}
 							}
 							if (isNotEmpty(where.user.email)) {
-								userFilter.push({ user: { email: { $ilike: `%${where.user.email}%` } } });
+								userFilter.push({ user: { email: mikroOrmContains(where.user.email) } });
 							}
 							if (userFilter.length > 0) {
 								mikroWhere.$or = userFilter;
@@ -80,7 +101,8 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 					}
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
-						...(options?.relations ? { populate: Object.keys(options.relations) as any[] } : {}),
+						...(options?.relations ? { populate: flatten(options.relations) as any[] } : {}),
+						orderBy: parseSortOrder(options?.order, SORTABLE_COLUMNS),
 						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0,
 						limit: options?.take || 10
 					});
@@ -92,17 +114,19 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 					query.setFindOptions({
 						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 						take: options && options.take ? options.take : 10,
+						order: parseSortOrder(options?.order, SORTABLE_COLUMNS),
 						...(options && options.relations
 							? {
-									relations: options.relations
-							  }
-							: {}),
-						...(options && options.join
-							? {
-									join: options.join
+									relations: parseFindOptionsRelations(options.relations)
 							  }
 							: {})
 					});
+					/**
+					 * The `join` find-option was removed in TypeORM v1 (passing it throws, which surfaced as a
+					 * blanket 400 for every paginated request). Declare the aliases the raw predicates below
+					 * rely on explicitly instead.
+					 */
+					query.leftJoin(`${query.alias}.user`, 'user');
 					query.where((qb: SelectQueryBuilder<Candidate>) => {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
@@ -146,7 +170,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 								new Brackets((web: WhereExpressionBuilder) => {
 									if (isNotEmpty(where.user)) {
 										if (isNotEmpty(where.user.name)) {
-											const keywords: string[] = where.user.name.split(' ');
+											const keywords: string[] = splitKeywords(where.user.name);
 											keywords.forEach((keyword: string, index: number) => {
 												web.orWhere(
 													p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`),
@@ -178,7 +202,8 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 				}
 			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Preserve the underlying reason, otherwise the client only ever sees `400 {}`.
+			throw new BadRequestException(error?.message ?? error);
 		}
 	}
 }

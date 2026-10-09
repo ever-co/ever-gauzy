@@ -1,0 +1,51 @@
+// Probability chip for the DEALS list.
+//
+// The template writes Bootstrap 4's `.badge-*` MODIFIER classes without the
+// `.badge` base class, and this component had no stylesheet of its own, so the
+// cell rendered as a full-width, square-cornered block with no padding, filled
+// with Bootstrap's own literals — #dc3545 / #ffc107 / #28a745 / #007bff — and
+// white text, identically in all eight themes.
+//
+// Re-drawn as the tinted chip the rest of the app uses. Colours come from the
+// `gauzy-action-*` accents defined in `themes.scss`; those are merged into
+// EVERY registered theme (in a light and a dark set), so a chip stays legible
+// on the white card and on the near-black one alike. The literals are only
+// `var()` fallbacks — see the note on `--gauzy-*` tokens in the sibling page
+// stylesheets — and carry the light-set values.
+.badge-danger,
+.badge-warning,
+.badge-success,
+.badge-primary {
+	// The template's own wrapper is `text-center` with a 5rem min-width; the chip
+	// itself is sized by its label, like every other status pill in the tables.
+	display: inline-block;
+	padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
+	border-radius: var(--gauzy-radius-sm, 0.375rem);
+	font-size: var(--gauzy-table-header-font-size, 0.75rem);
+	font-weight: 600;
+	line-height: var(--gauzy-table-header-line-height, 0.9375rem);
+	// The chip wraps as a whole rather than breaking "3 - Medium" over two lines.
+	white-space: nowrap;
+}
+
+.badge-danger {
+	color: var(--gauzy-action-danger-text, #dc2626);
+	background-color: var(--gauzy-action-danger-tint, rgba(220, 38, 38, 0.08));
+}
+
+.badge-warning {
+	color: var(--gauzy-action-warning-text, #b45309);
+	background-color: var(--gauzy-action-warning-tint, rgba(180, 83, 9, 0.08));
+}
+
+.badge-success {
+	color: var(--gauzy-action-success-text, #047857);
+	background-color: var(--gauzy-action-success-tint, rgba(4, 120, 87, 0.08));
+}
+
+// "Unknown" is the absence of a probability rather than a status of its own, so
+// it stays neutral instead of borrowing one of the accents.
+.badge-primary {
+	color: var(--text-hint-color);
+	background-color: var(--gauzy-card-2, rgba(126, 126, 143, 0.08));
+}

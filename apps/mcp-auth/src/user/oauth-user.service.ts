@@ -77,10 +77,18 @@ export class OAuthUserService {
 
 	/**
 	 * Get user information by user ID for MCP OAuth
-	 * Used by OAuth server to retrieve user details for token claims
+	 * Used by OAuth server to retrieve user details for token claims, and to re-check the account on
+	 * every `refresh_token` grant (GHSA-3cgp-wmrg-4fqg).
+	 *
+	 * `null` therefore means exactly one thing: no user with that id can sign in any more — the row
+	 * is gone, deactivated or archived. A lookup that could not be PERFORMED (database down, timeout)
+	 * is re-thrown rather than flattened into `null`, because the refresh grant answers `null` with
+	 * `invalid_grant`, which tells the client to discard a refresh token that is in fact still valid.
+	 * The callers turn the rejection into a retryable 503/500 instead.
 	 *
 	 * @param userId User ID
-	 * @returns User information or null if not found
+	 * @returns User information, or null when no active user has that id
+	 * @throws The underlying error when the lookup itself fails
 	 */
 	async getMcpUserInfo(userId: string): Promise<IUser | null> {
 		try {
@@ -89,7 +97,7 @@ export class OAuthUserService {
 			return user || null;
 		} catch (error) {
 			this.logger.error('Error retrieving MCP user info', (error as Error)?.stack || (error as Error)?.message);
-			return null;
+			throw error;
 		}
 	}
 }

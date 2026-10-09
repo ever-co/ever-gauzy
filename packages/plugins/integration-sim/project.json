@@ -10,7 +10,7 @@
 			"fallbackCurrentVersionResolver": "disk"
 		}
 	},
-	"tags": [],
+	"tags": ["type:plugin"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

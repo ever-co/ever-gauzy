@@ -21,6 +21,13 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
     standalone: false
 })
 export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {
+	/**
+	 * Prompt shown while nothing is selected. Left null so the template keeps
+	 * falling back to the generic "Task", for the call sites that render the
+	 * selector without a label of its own.
+	 */
+	@Input() placeholder: string | null = null;
+
 	private _multiple: boolean = false;
 	public get multiple(): boolean {
 		return this._multiple;

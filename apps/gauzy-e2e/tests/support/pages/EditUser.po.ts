@@ -1,4 +1,5 @@
 import {
+	applySmartTableFilter,
 	verifyElementIsVisible,
 	verifyElementIsVisibleByIndex,
 	clickButton,
@@ -11,8 +12,10 @@ import {
 	waitElementToHide,
 	clickByText,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone
 } from '../util';
+import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { EditUserPage } from '../../../src/support/Base/pageobjects/EditUserPageObject';
@@ -47,6 +50,13 @@ export const clickGridButton = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
+// Narrow the users grid to one full name so the user this spec created is the only data row on page 1.
+// The grid pages at 10 and the shared serial DB accumulates users, so without this the new user is
+// simply not rendered and both the by-name verify and the row click miss it (mirrors RemoveUser.po).
+export const filterByName = async (name: string) => {
+	await applySmartTableFilter(EditUserPage.nameFilterInputCss, name);
+};
+
 export const tableRowVisible = async () => {
 	await verifyElementIsVisibleByIndex(EditUserPage.selectTableRowCss, 0);
 };
@@ -60,7 +70,12 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async () => {
-	await clickButtonByIndex(EditUserPage.editButtonCss, 0);
+	// The action bar (ngx-gauzy-button-action) slides in over ~0.2s once a row is selected, so a
+	// coordinate click resolved mid-transition lands on whichever button occupies that spot at delivery
+	// time — the failing run's trace shows it hitting "Convert to employee" (its toast is in the trace)
+	// and the edit page never opening. Settle, dispatch straight at the Edit button, and confirm the
+	// edit page's tab strip rendered.
+	await dispatchClickWhenSettled(EditUserPage.editButtonCss, EditUserPage.orgTabButtonCss);
 };
 
 export const orgTabButtonVisible = async () => {
@@ -131,13 +146,22 @@ export const selectOrgDropdownVisible = async () => {
 };
 
 export const clickSelectOrgDropdown = async () => {
-	// nb-select opens on mousedown; a force coordinate-click is reliable here (no leftover dialog
-	// backdrop at this point — the add form just rendered inline). Best-effort: skip if the control
-	// isn't present (empty/closed add form) so we don't burn the 60s task timeout.
+	// Best-effort: skip if the control isn't present (empty/closed add form).
 	const select = getPage().locator(EditUserPage.selectOrgMultiSelectCss).first();
-	if (await select.isVisible().catch(() => false)) {
-		await clickButton(EditUserPage.selectOrgMultiSelectCss);
+	if (!(await select.isVisible().catch(() => false))) return;
+	// DISPATCH, not a coordinate click: the Organizations tab keeps re-rendering the add form while it
+	// settles (debounced showAddCard reset + org-list reload), so a retrying coordinate click sees
+	// "element was detached from the DOM, retrying" over and over and clickButton burns its full 60s
+	// task timeout before throwing. A dispatched click fires nb-select's own handler on whichever
+	// instance is attached right now, and stays best-effort — this whole add-organization sub-flow is
+	// a prerequisite, not the test (orgWasAdded gates everything after it).
+	const toggle = select.locator('button.select-button').first();
+	if ((await toggle.count().catch(() => 0)) > 0) {
+		await toggle.dispatchEvent('click').catch(() => {});
+	} else {
+		await select.dispatchEvent('click').catch(() => {});
 	}
+	await getPage().waitForTimeout(400);
 };
 
 export const clickSelectOrgDropdownOption = async () => {
@@ -230,7 +254,15 @@ export const clickTagsMultiSelect = async () => {
 };
 
 export const selectTagsFromDropdown = async (index: number) => {
-	await clickButtonByIndex(EditUserPage.tagsSelectOptionCss, index);
+	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
+	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
+	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
+	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
+	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
+	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
+	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
+	// half-succeed, and it can no longer kill the dialog on a slow list.
+	await selectNgOption(EditUserPage.tagsSelectCss, EditUserPage.tagsSelectOptionCss, index);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => {

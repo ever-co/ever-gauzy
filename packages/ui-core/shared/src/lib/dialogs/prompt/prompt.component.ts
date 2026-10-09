@@ -15,6 +15,8 @@ export interface PromptDialogOptions {
 	cancelText?: string;
 	placeholder?: string;
 	options?: InputOptions[];
+	/** Initial value of the input, e.g. the current name when renaming something. */
+	value?: string;
 }
 
 @Component({
@@ -35,7 +37,15 @@ export class PromptComponent implements OnInit {
 		});
 	}
 
-	ngOnInit() {}
+	/**
+	 * Seeds the input with the caller's initial value, so an "edit" style prompt
+	 * (rename, ...) does not force the user to retype what is already there.
+	 */
+	ngOnInit() {
+		if (this.data?.value) {
+			this.form.patchValue({ input: this.data.value });
+		}
+	}
 
 	close() {
 		this.dialogRef.close();

@@ -10,8 +10,25 @@ permissions:
   packages: write
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  # One group PER WORKFLOW (never a group shared across the six non-prod image builds:
+  # that shared `gauzy-docker-build` group did not queue them, it STARVED them — GitHub
+  # keeps exactly one pending run per group, so an unrelated workflow's run cancelled
+  # whichever run was waiting, and environments silently kept serving their old image).
+  #
+  # Within this workflow the newest commit wins, matching the prod image builds. The
+  # trade-off is deliberate: an intermediate version tag can end up without an image,
+  # which is inert here because demo/stage deploy from `:latest` and only the release
+  # that actually ships needs its own tagged image. The alternative — letting a
+  # superseded build run for three hours on a fleet where one install takes 2-3 h —
+  # delays the image that IS wanted by exactly that long.
+  group: gauzy-docker-build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+# docker/build-push-action uploads a build record artifact and a job summary for every build.
+# The record holds every build-arg value in plain text, and on a public repo anyone signed in to
+# GitHub can download it, so neither is produced. (BuildKit `secrets:` are never recorded.)
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
 
 jobs:
   gauzy-mcp-auth:
@@ -47,6 +64,10 @@ jobs:
             VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
             NX_BRANCH=${{ github.ref_name }}
+          # VERDACCIO_TOKEN is a BuildKit build SECRET, never a build-arg: build-args are recorded
+          # in the image config blob and these ghcr packages are public, so a build-arg is readable
+          # via `docker history`. See the header on .deploy/mcp*/Dockerfile.
+          secrets: |
             VERDACCIO_TOKEN=${{ secrets.VERDACCIO_TOKEN }}
 
       - name: Docker images list

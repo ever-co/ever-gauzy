@@ -4,12 +4,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
-import { Invoice } from './../../core/entities/internal';
+import { EstimateEmail, Invoice } from './../../core/entities/internal';
 import { PublicInvoiceController } from './public-invoice.controller';
 import { PublicInvoiceService } from './public-invoice.service';
 
 @Module({
-	imports: [CqrsModule, TypeOrmModule.forFeature([Invoice]), MikroOrmModule.forFeature([Invoice])],
+	imports: [
+		CqrsModule,
+		TypeOrmModule.forFeature([Invoice, EstimateEmail]),
+		MikroOrmModule.forFeature([Invoice, EstimateEmail])
+	],
 	controllers: [PublicInvoiceController],
 	providers: [PublicInvoiceService, ...QueryHandlers, ...CommandHandlers]
 })

@@ -1,0 +1,269 @@
+<div class="docs-settings" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<div class="docs-settings-header">
+		<h4>{{ 'DOCS.SETTINGS.TITLE' | translate }}</h4>
+		<p class="muted">{{ 'DOCS.SETTINGS.SUBTITLE' | translate }}</p>
+	</div>
+
+	<!-- Load error -->
+	<nb-card *ngIf="loadError" class="docs-settings-card">
+		<nb-card-body class="docs-settings-error">
+			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+			<span>{{ 'DOCS.SETTINGS.LOAD_ERROR' | translate }}</span>
+			<button nbButton size="small" (click)="load()">{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}</button>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- 1. AI knowledge status banner (GET /knowledge/status) -->
+	<nb-card *ngIf="knowledge" class="docs-settings-card">
+		<nb-card-header>{{ 'DOCS.SETTINGS.KNOWLEDGE_STATUS' | translate }}</nb-card-header>
+		<nb-card-body class="docs-knowledge-banner">
+			<div class="docs-knowledge-fact">
+				<nb-icon
+					[icon]="knowledge.vectorCapable ? 'checkmark-circle-2-outline' : 'alert-triangle-outline'"
+					[status]="knowledge.vectorCapable ? 'success' : 'warning'"
+				></nb-icon>
+				<span>
+					{{
+						(knowledge.vectorCapable
+							? 'DOCS.SETTINGS.VECTOR_CAPABLE'
+							: 'DOCS.SETTINGS.VECTOR_NOT_CAPABLE'
+						) | translate
+					}}
+				</span>
+			</div>
+			<div class="docs-knowledge-fact">
+				<nb-icon
+					[icon]="knowledge.embeddingProviderConfigured ? 'checkmark-circle-2-outline' : 'alert-triangle-outline'"
+					[status]="knowledge.embeddingProviderConfigured ? 'success' : 'warning'"
+				></nb-icon>
+				<span>
+					{{
+						(knowledge.embeddingProviderConfigured
+							? 'DOCS.SETTINGS.EMBEDDING_CONFIGURED'
+							: 'DOCS.SETTINGS.EMBEDDING_NOT_CONFIGURED'
+						) | translate
+					}}
+				</span>
+			</div>
+			<div class="docs-knowledge-fact" *ngIf="knowledge.embeddingModel">
+				<nb-icon icon="cube-outline"></nb-icon>
+				<span>{{ 'DOCS.SETTINGS.EMBEDDING_MODEL' | translate }}:</span>
+				<code>{{ knowledge.embeddingModel }}</code>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- 2. Organization defaults (PUT /settings) -->
+	<nb-card *ngIf="defaults as orgDefaults" class="docs-settings-card">
+		<nb-card-header>{{ 'DOCS.SETTINGS.DEFAULTS' | translate }}</nb-card-header>
+		<nb-card-body>
+			<ng-container *ngxPermissionsOnly="docsPermissions.manage; else defaultsReadonly">
+				<div class="docs-settings-row">
+					<nb-toggle
+						labelPosition="end"
+						[checked]="orgDefaults.importToKnowledgeDefault"
+						[disabled]="savingDefaults"
+						(checkedChange)="onImportDefaultToggle($event)"
+					>
+						{{ 'DOCS.SETTINGS.IMPORT_DEFAULT' | translate }}
+					</nb-toggle>
+					<div class="hint">{{ 'DOCS.UPLOAD.KNOWLEDGE_HINT' | translate }}</div>
+				</div>
+
+				<div class="docs-settings-row">
+					<nb-toggle
+						labelPosition="end"
+						[checked]="orgDefaults.autoClassify"
+						[disabled]="savingDefaults"
+						(checkedChange)="onAutoClassifyToggle($event)"
+					>
+						{{ 'DOCS.UPLOAD.AI_CLASSIFY_TOGGLE' | translate }}
+					</nb-toggle>
+					<div class="hint">{{ 'DOCS.UPLOAD.AI_CLASSIFY_HINT' | translate }}</div>
+				</div>
+
+				<div class="docs-settings-row">
+					<label class="label" for="docs-settings-default-visibility">
+						{{ 'DOCS.VISIBILITY.LABEL' | translate }}
+					</label>
+					<nb-select
+						id="docs-settings-default-visibility"
+						size="small"
+						[selected]="orgDefaults.defaultVisibility"
+						[disabled]="savingDefaults"
+						(selectedChange)="onDefaultVisibilityChange($event)"
+					>
+						<nb-option *ngFor="let visibility of visibilities" [value]="visibility">
+							{{ 'DOCS.VISIBILITY.' + visibility | translate }}
+						</nb-option>
+					</nb-select>
+					<div class="hint">{{ 'DOCS.VISIBILITY.HINT' | translate }}</div>
+				</div>
+			</ng-container>
+
+			<ng-template #defaultsReadonly>
+				<dl class="docs-settings-meta">
+					<dt>{{ 'DOCS.SETTINGS.IMPORT_DEFAULT' | translate }}</dt>
+					<dd>{{ orgDefaults.importToKnowledgeDefault ? '✓' : '—' }}</dd>
+					<dt>{{ 'DOCS.UPLOAD.AI_CLASSIFY_TOGGLE' | translate }}</dt>
+					<dd>{{ orgDefaults.autoClassify ? '✓' : '—' }}</dd>
+					<dt>{{ 'DOCS.VISIBILITY.LABEL' | translate }}</dt>
+					<dd>{{ 'DOCS.VISIBILITY.' + orgDefaults.defaultVisibility | translate }}</dd>
+				</dl>
+			</ng-template>
+		</nb-card-body>
+	</nb-card>
+
+	<!-- 3. Storage usage (P1 quota — DOCS_MANAGE only, spec 08 §5.7).
+	     Rendered only when the deployment actually reports usage. The permission gate
+	     wraps the whole card: nested inside it, a non-manager saw an empty card shell. -->
+	<ng-container *ngxPermissionsOnly="docsPermissions.manage">
+		<nb-card *ngIf="storage as usage" class="docs-settings-card">
+			<nb-card-header>{{ 'DOCS.SETTINGS.STORAGE' | translate }}</nb-card-header>
+			<nb-card-body>
+				<div class="docs-storage-line">
+					<ng-container *ngIf="usage.quotaBytes; else unlimitedQuota">
+						{{
+							'DOCS.SETTINGS.STORAGE_USED'
+								| translate
+									: { used: humanizeSize(usage.usedBytes), quota: humanizeSize(usage.quotaBytes) }
+						}}
+						<span class="docs-storage-percent">({{ storagePercent }}%)</span>
+					</ng-container>
+					<ng-template #unlimitedQuota>
+						{{ 'DOCS.SETTINGS.STORAGE_USED_UNLIMITED' | translate : { used: humanizeSize(usage.usedBytes) } }}
+					</ng-template>
+				</div>
+
+				<nb-progress-bar
+					*ngIf="usage.quotaBytes"
+					size="tiny"
+					[value]="storagePercent"
+					[status]="storageStatus"
+				></nb-progress-bar>
+
+				<p class="hint">
+					{{
+						(usage.quotaBytes ? 'DOCS.SETTINGS.STORAGE_HINT' : 'DOCS.SETTINGS.STORAGE_UNLIMITED_HINT')
+							| translate
+					}}
+				</p>
+				<p class="hint warn" *ngIf="storagePercent !== null && storagePercent >= 80">
+					{{ 'DOCS.SETTINGS.STORAGE_NEAR_LIMIT' | translate }}
+				</p>
+
+				<!-- The one writable quota field (`DocumentSettingsDTO.quotaBytes`). Edited in
+				     GiB, sent in bytes; 0 = unlimited for this organization. -->
+				<div class="docs-settings-row docs-storage-quota" *ngIf="canEditQuota">
+					<label class="label" for="docs-settings-quota">
+						{{ 'DOCS.SETTINGS.STORAGE_QUOTA' | translate }}
+					</label>
+					<div class="docs-storage-quota-field">
+						<input
+							id="docs-settings-quota"
+							nbInput
+							fieldSize="small"
+							type="number"
+							min="0"
+							step="0.5"
+							[(ngModel)]="quotaGib"
+							[disabled]="savingDefaults || savingQuota"
+						/>
+						<span class="docs-storage-quota-unit">{{ 'DOCS.SETTINGS.STORAGE_QUOTA_UNIT' | translate }}</span>
+						<button
+							nbButton
+							size="small"
+							status="primary"
+							[disabled]="!quotaDirty || savingDefaults || savingQuota"
+							(click)="saveQuota()"
+						>
+							{{ 'BUTTONS.SAVE' | translate }}
+						</button>
+					</div>
+					<div class="hint">{{ 'DOCS.SETTINGS.STORAGE_QUOTA_HINT' | translate }}</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</ng-container>
+
+	<!-- 4. Category catalog -->
+	<nb-card class="docs-settings-card">
+		<nb-card-header class="docs-settings-card-header">
+			<span>{{ 'DOCS.SETTINGS.CATEGORIES' | translate }}</span>
+			<button
+				*ngxPermissionsOnly="docsPermissions.manage"
+				nbButton
+				size="small"
+				status="primary"
+				(click)="createCategory()"
+			>
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{ 'DOCS.SETTINGS.CATEGORY_NEW' | translate }}
+			</button>
+		</nb-card-header>
+		<nb-card-body>
+			<p class="muted" *ngIf="!categories.length">{{ 'DOCS.SETTINGS.NO_CATEGORIES' | translate }}</p>
+
+			<table class="docs-category-table" *ngIf="categories.length">
+				<thead>
+					<tr>
+						<th>{{ 'DOCS.TABLE.COLUMNS.NAME' | translate }}</th>
+						<th>{{ 'DOCS.SETTINGS.CATEGORY_DESCRIPTION' | translate }}</th>
+						<th class="numeric">{{ 'DOCS.SETTINGS.CATEGORY_DOCUMENTS' | translate }}</th>
+						<th class="actions">{{ 'DOCS.TABLE.COLUMNS.ACTIONS' | translate }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor="let category of categories; trackBy: trackById">
+						<td>
+							<span class="docs-category-swatch" [style.background]="category.color || null"></span>
+							{{ category.name }}
+							<nb-badge
+								*ngIf="category.isSystem"
+								status="basic"
+								[text]="'DOCS.SETTINGS.CATEGORY_SYSTEM' | translate"
+							></nb-badge>
+						</td>
+						<td class="muted">{{ category.description || '—' }}</td>
+						<td class="numeric">{{ category.documentCount ?? 0 }}</td>
+						<!-- The cell always renders (column alignment); only the controls are gated. -->
+						<td class="actions">
+							<ng-container *ngxPermissionsOnly="docsPermissions.manage">
+							<button
+								nbButton
+								ghost
+								size="tiny"
+								(click)="editCategory(category)"
+								[nbTooltip]="'DOCS.SETTINGS.CATEGORY_EDIT' | translate"
+							>
+								<nb-icon icon="edit-outline"></nb-icon>
+							</button>
+							<button
+								nbButton
+								ghost
+								size="tiny"
+								[disabled]="categories.length < 2"
+								(click)="mergeCategory(category)"
+								[nbTooltip]="'DOCS.SETTINGS.CATEGORY_MERGE' | translate"
+							>
+								<nb-icon icon="shuffle-2-outline"></nb-icon>
+							</button>
+							<button
+								nbButton
+								ghost
+								size="tiny"
+								status="danger"
+								[disabled]="category.isSystem"
+								(click)="deleteCategory(category)"
+								[nbTooltip]="'DOCS.SETTINGS.CATEGORY_DELETE' | translate"
+							>
+								<nb-icon icon="trash-2-outline"></nb-icon>
+							</button>
+							</ng-container>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</nb-card-body>
+	</nb-card>
+</div>

@@ -1,0 +1,19 @@
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+}
+
+// Chart.js sizes its canvas from the parent box, so the parent must have a
+// height of its own — without this the doughnut collapses to zero on a canvas.
+.chart-container {
+	position: relative;
+	height: 100%;
+	width: 100%;
+	min-height: 160px;
+
+	canvas {
+		max-width: 100%;
+	}
+}

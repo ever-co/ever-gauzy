@@ -218,6 +218,11 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 					]
 				: { ...baseWhere, tenantId: IsNull() };
 		} else {
+			// A non-super-admin without a tenant context has nothing to list (a null tenantId used to be
+			// dropped from the where and listed EVERY tenant's clients).
+			if (!tenantId) {
+				return { items: [], total: 0 };
+			}
 			where = { ...baseWhere, tenantId };
 		}
 

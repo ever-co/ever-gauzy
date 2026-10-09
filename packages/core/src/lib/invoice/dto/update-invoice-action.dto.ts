@@ -38,4 +38,13 @@ export class UpdateInvoiceActionDTO {
     @IsOptional()
     @IsNumber()
     readonly amountDue: number;
+
+    /**
+     * Recipient the invoice/estimate has been sent to.
+     * The route whitelists the payload, so this must be declared to survive validation.
+     */
+    @ApiProperty({ type: () => String, readOnly: true })
+    @IsOptional()
+    @IsString()
+    readonly sentTo: string;
 }

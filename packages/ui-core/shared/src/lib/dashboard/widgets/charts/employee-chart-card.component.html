@@ -1,0 +1,59 @@
+@if (error()) {
+	<div class="chart-state is-error" role="alert">
+		<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+		<!-- The visible label is generic and the message is only in `title`, which
+			needs a hover. `aria-label` gives screen-reader, keyboard and touch users
+			the same detail. -->
+		<span
+			class="chart-state__text"
+			[title]="error()"
+			[attr.aria-label]="('DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate) + ': ' + error()"
+		>
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.ERROR' | translate }}
+		</span>
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="retry.emit()">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.RETRY' | translate }}
+		</button>
+	</div>
+} @else if (loading()) {
+	<!-- <output> carries an implicit `status` live region, so no explicit role. -->
+	<output
+		class="chart-skeleton"
+		aria-busy="true"
+		[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.WIDGETS.LOADING' | translate"
+	>
+		<!-- `span`, not `div`: `<output>` only accepts phrasing content. -->
+		<span class="skeleton-line skeleton-legend"></span>
+		<span class="skeleton-plot"></span>
+	</output>
+} @else if (requiresEmployee()) {
+	<!-- `aria-live` so the switch out of the loading state is announced: only the
+		error branch (`role="alert"`) and the skeleton (`<output>`) are otherwise,
+		and these two branches would change silently. -->
+	<div class="chart-state" aria-live="polite">
+		<nb-icon icon="person-outline"></nb-icon>
+		<!-- Shared with the HR KPI widgets: same condition, same wording. -->
+		<span class="chart-state__text">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE' | translate }}
+		</span>
+		<span class="chart-state__hint">
+			{{ 'DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE_HINT' | translate }}
+		</span>
+	</div>
+} @else if (empty()) {
+	<div class="chart-state" aria-live="polite">
+		<nb-icon icon="info-outline"></nb-icon>
+		<span class="chart-state__text">
+			{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+		</span>
+	</div>
+} @else {
+	<!--
+		Chart.js sizes a responsive canvas from its PARENT box, so this wrapper must
+		be the element that owns the height (and be `position: relative`). The canvas
+		itself carries no inline size on purpose.
+	-->
+	<div class="chart-container">
+		<canvas baseChart [type]="type()" [data]="chartData()" [options]="chartOptions()"></canvas>
+	</div>
+}

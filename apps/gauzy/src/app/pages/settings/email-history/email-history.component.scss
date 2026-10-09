@@ -1,233 +1,587 @@
 @use 'themes' as *;
 
-@include nb-install-component {
-  nb-card {
-    background-color: nb-theme(gauzy-card-2);
-  }
+/*
+ * Settings → Email History.
+ *
+ * An inbox: sent emails on the start side, the selected one on the end side.
+ * Same vocabulary as Settings → General / Features: 12px body, 500 titles /
+ * 400 everything else, gauzy-* surface tokens, hairline insets, no shadows.
+ */
 
-  nb-card-body {
-    padding: 0;
-    background-color: nb-theme(gauzy-card-2);
+$hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+$list-width: 20rem;
 
-    .email-list {
-      background-color: nb-theme(gauzy-card-3);
-      margin: 1rem;
-      padding: 14px 10px;
-      border-radius: nb-theme(border-radius);
-
-      nb-list-item {
-        padding: 5px 10px 5px 0;
-
-        .email-list-item {
-          background-color: nb-theme(gauzy-card-1);
-          width: fit-content;
-          border-radius: nb-theme(border-radius);
-          padding: 8px;
-
-          &.selected {
-            background-color: nb-theme(gauzy-background-transparent-1);
-          }
-
-          ::ng-deep ngx-avatar {
-            .inner-wrapper {
-              background-color: nb-theme(color-primary-transparent-100);
-              border-radius: nb-theme(button-rectangle-border-radius);
-              padding: 3px 9px 3px 3px;
-              display: flex;
-              flex-direction: row;
-              align-items: center;
-              width: fit-content;
-              font-size: 12px;
-              font-weight: 400;
-              line-height: 15px;
-              letter-spacing: 0em;
-              gap: 8px;
-
-              .image-container {
-                height: 20px;
-                width: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-
-                img[type='user'] {
-                  height: 18px;
-                  width: 18px;
-                }
-              }
-
-              .link-text {
-                color: nb-theme(text-primary-color);
-                font-weight: normal;
-              }
-            }
-          }
-
-          .email-details-item {
-            font-size: 12px;
-            font-weight: 400;
-            line-height: 15px;
-            letter-spacing: 0em;
-
-            b {
-              font-weight: 600;
-            }
-          }
-
-          .date {
-            font-size: 9px;
-            font-weight: 400;
-            line-height: 11px;
-            letter-spacing: 0em;
-            color: nb-theme(gauzy-text-color-2);
-            margin: 0.2rem 0 0.4rem 0;
-          }
-        }
-      }
-    }
-  }
-
-  .image-container {
-    @include nb-ltr(margin-right, 10px);
-    @include nb-rtl(margin-left, 10px);
-  }
-
-  h2 {
-    text-align: center;
-  }
-
-  .email-history {
-    &-header {
-      margin-bottom: 15px;
-    }
-
-    &-archive {
-      margin-top: 15px;
-    }
-
-    &-avatar {
-      width: 40px;
-      height: 100%;
-      border-radius: 50%;
-    }
-
-    &-to {
-      margin-left: 50px;
-      @include nb-ltr(margin-left, 50px);
-      @include nb-rtl(margin-right, 50px);
-    }
-  }
-
-  .content-container {
-    display: flex;
-
-    nb-list {
-      white-space: nowrap;
-      overflow: hidden;
-      min-width: 250px;
-      flex: none;
-      overflow-y: auto;
-      max-height: calc(100vh - 18.5rem);
-
-      nb-list-item {
-        cursor: pointer;
-
-        &:first-child {
-          border-top: none;
-        }
-
-        &:hover {
-          color: nb-theme(text-primary-color);
-        }
-
-        .email-list-item {
-          display: flex;
-          justify-content: center;
-          flex-direction: column;
-
-          span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            display: block;
-          }
-        }
-      }
-    }
-
-    .email-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
-      @include nb-ltr(margin, 1rem 1rem 1rem 0);
-      @include nb-rtl(margin, 1rem 0 1rem 1rem);
-      background-color: nb-theme(gauzy-card-1);
-      border-radius: nb-theme(border-radius);
-
-      .email-details {
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        background-color: nb-theme(gauzy-sidebar-background-4);
-        margin: -1rem;
-        padding: 1rem 1.5rem;
-        border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-
-        > span {
-          display: flex;
-
-          .col-fixed {
-            width: 90px;
-            display: block;
-          }
-        }
-      }
-    }
-  }
-
-  .filter-count {
-    margin-top: -1.5rem;
-  }
+// Same frame as Settings → Features: the card fills the page height and each pane
+// scrolls inside it, so no scrollbar lands on the page itself.
+.email-history-card {
+	height: calc(100vh - #{nb-theme(header-height)} - #{nb-theme(footer-height)} - 0.5rem);
+	min-height: 24rem;
+	margin-bottom: 0;
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
 }
 
-.custom-parent-email-content {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  overflow: auto;
-  max-height: calc(100vh - 26rem);
+.page-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
 }
 
-.email-content {
-  width: fit-content;
+nb-card-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 0.75rem;
+	min-height: 0;
+	padding: 1rem;
+	overflow: hidden;
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
+	// The panes stack on the card's own width, not the window's: the sidebar and the
+	// AI assistant panel can leave the card narrow on a wide screen.
+	container: email-history / inline-size;
 }
 
-:host .email-history-archive {
-  position: absolute;
-  top: 1rem;
-  @include nb-ltr(right, 2rem);
-  @include nb-rtl(left, 2rem);
-  display: flex;
-  gap: 8px;
+// ── Filters ──────────────────────────────────────────────────────────────
+$control-height: 2rem;
 
-  &[nbButton].appearance-outline.status-primary {
-    background-color: transparent;
-    border-width: 2px;
-    border-color: nb-theme(gauzy-background-transparent);
-  }
+.filter-bar {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem 1rem;
+	font-size: 0.75rem;
 }
 
-h4 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
+.filter-controls {
+	display: flex;
+	flex: 1 1 auto;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
 
-  .menu-setting {
-    font-weight: 400;
-  }
+.filter-select {
+	flex: 0 1 12rem;
+	min-width: 9rem;
+
+	&.recipient {
+		flex-basis: 15rem;
+	}
+
+	&.template {
+		flex-basis: 14rem;
+	}
+
+	&.status {
+		flex-basis: 9.5rem;
+	}
+}
+
+// ng-select ships its own white theme, loaded after the app styles, so the
+// trigger needs one step more specificity (the host) to take the app surface:
+// the recessed `background-basic-color-3`, near-black in the dark theme.
+:host ::ng-deep .filter-select.ng-select {
+	font-size: 0.75rem;
+
+	.ng-select-container {
+		min-height: $control-height;
+		height: $control-height;
+		border: 0;
+		border-radius: var(--gauzy-radius-sm, 0.5rem);
+		background-color: var(--background-basic-color-3);
+		box-shadow: inset 0 0 0 1px $hairline;
+		color: var(--text-basic-color);
+		cursor: pointer;
+
+		&:hover {
+			border: 0;
+			box-shadow: inset 0 0 0 1px var(--border-basic-color-5, $hairline);
+		}
+
+		.ng-value-container {
+			padding-inline-start: 0.625rem;
+
+			.ng-placeholder {
+				margin-left: 0 !important;
+				color: var(--text-hint-color);
+			}
+
+			.ng-value {
+				display: flex;
+				align-items: center;
+				gap: 0.375rem;
+				min-width: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			.ng-input {
+				padding-inline-start: 0.625rem;
+
+				input {
+					color: var(--text-basic-color);
+				}
+			}
+		}
+	}
+
+	&.ng-select-focused .ng-select-container,
+	&.ng-select-opened > .ng-select-container {
+		background-color: var(--background-basic-color-3);
+		box-shadow: inset 0 0 0 1px var(--color-primary-default) !important;
+	}
+
+	&.ng-select-filtered .ng-placeholder {
+		display: none;
+	}
+
+	.ng-arrow-wrapper .ng-arrow {
+		border-top-color: var(--text-hint-color);
+	}
+
+	.ng-clear-wrapper {
+		color: var(--text-hint-color);
+	}
+}
+
+// Sent = green, Failed = red; used in the Status select and its options.
+.status-dot {
+	display: inline-block;
+	flex: 0 0 auto;
+	width: 0.375rem;
+	height: 0.375rem;
+	margin-inline-end: 0.375rem;
+	border-radius: 50%;
+	background: var(--color-success-default);
+	vertical-align: middle;
+
+	&.failed {
+		background: var(--color-danger-default);
+	}
+}
+
+.archived-toggle {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	height: $control-height;
+	margin-inline-start: 0.25rem;
+
+	// The theme gives every `label` an 8px bottom margin, which lifted the switch above
+	// the selects' centre line. Without it the switch and its text sit on that line.
+	::ng-deep label {
+		margin: 0;
+	}
+
+	::ng-deep .text {
+		line-height: 1rem;
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: var(--text-basic-color);
+	}
+}
+
+.filter-summary {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.25rem;
+	color: var(--text-hint-color);
+	white-space: nowrap;
+}
+
+// Active filters: one quiet, removable label each — hairline, no fill.
+.active-filters {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+	margin-top: -0.25rem;
+	font-size: 0.75rem;
+}
+
+.filter-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	max-width: 20rem;
+	height: 1.5rem;
+	padding-inline: 0.5rem 0.125rem;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	background: var(--gauzy-card-1, var(--card-background-color));
+	box-shadow: inset 0 0 0 1px $hairline;
+
+	.chip-label {
+		flex: 0 0 auto;
+		color: var(--text-hint-color);
+	}
+
+	.chip-value {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--text-basic-color);
+	}
+
+	.chip-remove {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.25rem;
+		height: 1.25rem;
+		padding: 0;
+		border: 0;
+		border-radius: var(--gauzy-radius-sm, 0.5rem);
+		background: transparent;
+		color: var(--text-hint-color);
+		cursor: pointer;
+
+		&:hover,
+		&:focus-visible {
+			background: var(--gauzy-hover-tint, var(--background-basic-color-3));
+			color: var(--text-basic-color);
+		}
+
+		nb-icon {
+			font-size: 0.875rem;
+		}
+	}
+}
+
+.inbox {
+	display: flex;
+	flex: 1 1 auto;
+	gap: 1rem;
+	min-width: 0;
+	min-height: 0;
+
+	@container email-history (max-width: 46rem) {
+		flex-direction: column;
+		overflow: auto;
+	}
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	background: var(--gauzy-card-1, var(--card-background-color));
+	box-shadow: inset 0 0 0 1px $hairline;
+	font-size: 0.75rem;
+	color: var(--text-basic-color);
+}
+
+// ── Sent emails ──────────────────────────────────────────────────────────
+.email-list {
+	flex: 0 0 $list-width;
+
+	@container email-history (max-width: 46rem) {
+		flex: 0 0 auto;
+		max-height: 18rem;
+	}
+
+	// The infinite list watches its own scroll, so it has to be the scroller.
+	nb-list {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		background: transparent;
+	}
+}
+
+.email-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.625rem;
+	padding: 0.75rem 1rem;
+	border-top: 1px solid $hairline;
+	border-bottom: 0;
+	background: transparent;
+	// `nb-list-item` carries the theme's 15px list font; bring it back to the page's 12px.
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: var(--text-basic-color);
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+
+	&:first-child {
+		border-top: 0;
+	}
+
+	&:hover {
+		background: var(--gauzy-hover-tint, var(--background-basic-color-3));
+	}
+
+	&.selected {
+		background: var(--gauzy-hover-tint, var(--background-basic-color-3));
+
+		.row-sender {
+			color: var(--text-primary-color);
+		}
+	}
+}
+
+.row-avatar {
+	flex: 0 0 auto;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 50%;
+	object-fit: cover;
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
+}
+
+.row-copy {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+.row-line {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.row-sender,
+.row-subject,
+.row-to {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.row-sender {
+	flex: 1 1 auto;
+	font-weight: 500;
+}
+
+.row-date {
+	flex: 0 0 auto;
+	font-size: 0.625rem;
+	color: var(--text-hint-color);
+}
+
+.row-subject {
+	flex: 1 1 auto;
+}
+
+.row-failed {
+	flex: 0 0 auto;
+	align-self: center;
+	font-size: 0.875rem;
+}
+
+.row-to {
+	color: var(--text-hint-color);
+}
+
+// ── Selected email ───────────────────────────────────────────────────────
+.email-view {
+	flex: 1 1 auto;
+	// The details switch to one column on the preview's own width.
+	container: email-view / inline-size;
+
+	@container email-history (max-width: 46rem) {
+		flex: 0 0 auto;
+		min-height: 28rem;
+	}
+}
+
+// ── Mail header: sender + subject + actions, then the details ───────────
+.view-header {
+	flex: 0 0 auto;
+}
+
+.view-title-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+}
+
+.view-avatar {
+	flex: 0 0 auto;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	object-fit: cover;
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
+}
+
+.view-title {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+.view-subject {
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+}
+
+.view-sender {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+	line-height: 1rem;
+	color: var(--text-hint-color);
+
+	.sender-name {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+// Sent / Failed, as quiet text with the same dot as the Status filter.
+.view-status {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	padding-inline-start: 0.5rem;
+	border-inline-start: 1px solid $hairline;
+	color: var(--text-hint-color);
+
+	&.failed {
+		color: var(--color-danger-default);
+	}
+}
+
+.view-actions {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 0.375rem;
+}
+
+// Two columns of label / value pairs on the recessed surface; one column when narrow.
+// The details and the email preview below are two matching boxes: same recessed
+// surface, same hairline, same radius and side gutters.
+@mixin view-box {
+	margin-inline: 1rem;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
+	box-shadow: inset 0 0 0 1px $hairline;
+}
+
+.view-details {
+	@include view-box;
+	display: grid;
+	// The end column sizes to its values, so the date is never cut off; the addresses
+	// take whatever is left and truncate (full value in the tooltip).
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 0.25rem 1.5rem;
+	padding: 0.625rem 1rem;
+
+	@container email-view (max-width: 32rem) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.detail-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+	margin: 0;
+}
+
+.detail {
+	display: grid;
+	grid-template-columns: 4.5rem minmax(0, 1fr);
+	gap: 0.75rem;
+	line-height: 1.125rem;
+
+	dt {
+		font-weight: 400;
+		color: var(--text-hint-color);
+	}
+
+	dd {
+		margin: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		color: var(--text-basic-color);
+
+		&.empty {
+			color: var(--text-hint-color);
+		}
+	}
+}
+
+.view-body {
+	@include view-box;
+	flex: 1 1 auto;
+	min-height: 0;
+	margin-block: 0.75rem 1rem;
+	padding: 1rem;
+	overflow: auto;
+}
+
+// The stored HTML is an email, written for a mail client's white page: its headings
+// and copy carry their own dark colors, which vanish on the dark theme's card. Show
+// it on a white sheet in both themes, the way a mail client previews it.
+.email-paper {
+	max-width: 42rem;
+	margin: 0 auto;
+	padding: 1.5rem;
+	overflow-x: auto;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	background: #ffffff;
+	box-shadow: inset 0 0 0 1px $hairline;
+	color: #222b45;
+	font-size: 0.875rem;
+
+	// The global theme paints every `tr` with the card colour (`!important`), which turns
+	// the email's layout tables into a black box in the dark theme. Undo it inside the sheet only,
+	// and only on `tr`: an `!important` on table / td / th would also wipe the inline cell
+	// backgrounds (`style` / `bgcolor`) that custom email templates use.
+	::ng-deep tr {
+		background-color: transparent !important;
+	}
+
+	// Theme typography colours every `p` and heading with the theme text colour (near-white
+	// in the dark theme); let them take the email's own colour instead.
+	::ng-deep :is(p, .paragraph, h1, h2, h3, h4, h5, h6) {
+		color: inherit;
+	}
+}
+
+.empty-state {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 2rem;
+	color: var(--text-hint-color);
+
+	nb-icon {
+		font-size: 1.5rem;
+	}
+}
+
+// "Settings/" ahead of the page name, inside `ngx-header-title` — it inherits
+// that component's size, and only the weight makes it recede.
+.menu-setting {
+	font-weight: 400;
 }

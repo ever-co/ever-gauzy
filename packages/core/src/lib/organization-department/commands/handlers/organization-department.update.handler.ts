@@ -16,9 +16,6 @@ export class OrganizationDepartmentUpdateHandler implements ICommandHandler<Orga
 		const { id, input } = command;
 
 		//This will call save() with the id so that members[] also get saved accordingly
-		return this.organizationDepartmentService.create({
-			id,
-			...input
-		});
+		return this.organizationDepartmentService.create({ ...input, id });
 	}
 }

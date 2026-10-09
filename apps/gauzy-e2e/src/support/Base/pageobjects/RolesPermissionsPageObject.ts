@@ -16,7 +16,9 @@ export const RolesPermissionsPage = {
 	cardBodyContainerCss: 'nb-card-body.permission-items-col',
 	cardInputCss: 'input.native-input',
 	textCss: '.custom-permission-view strong',
-	rolesDropdownCss: 'input[placeholder="Select Role"]',
+	// Placeholder text follows FORM.PLACEHOLDERS.ROLE, which dropped its "Select " prefix when the
+	// combobox placeholders app-wide were reduced to the bare noun they ask for.
+	rolesDropdownCss: 'input[placeholder="Role"]',
 	// The role selector is now an nbAutocomplete (not nb-select); its options still render in a
 	// .option-list as <nb-option>, but the visible text is the RAW role enum value (SUPER_ADMIN,
 	// DATA_ENTRY, ...) — not the friendly label. selectRoleFromDropdown normalises the label to the

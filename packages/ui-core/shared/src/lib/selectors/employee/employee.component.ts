@@ -35,6 +35,7 @@ import {
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { TruncatePipe } from '../../pipes';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
+import { entitySelectPanelClass } from '../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -68,6 +69,28 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	@Input() placeholder: string;
 	@Input() defaultSelected: boolean = true;
 	@Input() showAllEmployeesOption: boolean = true;
+
+	/**
+	 * Extra class(es) for the DROPDOWN PANEL, not for this component.
+	 *
+	 * The header passes `header-entity-select` so its panels can be set in the header band's
+	 * text; see `.ng-dropdown-panel.header-entity-select` in `_overrides.scss`.
+	 */
+	@Input() dropdownClass: string;
+
+	/**
+	 * Accessible name for the inner combobox. A `<label>` next to this component
+	 * cannot name it (the host is not a form control), so pass the label text here.
+	 */
+	@Input() ariaLabel: string;
+
+	/**
+	 * The class list ng-select puts on its appended panel. See `entitySelectPanelClass()` for
+	 * why an appended panel needs the whole list rebuilt rather than added to.
+	 */
+	get panelClass(): string | null {
+		return entitySelectPanelClass(this.dropdownClass);
+	}
 
 	/**
 	 * Manages the selected date range.
@@ -321,6 +344,16 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 				'[error: bad name]'
 			);
 		}
+	}
+
+	/**
+	 * GET Full Name — the untruncated counterpart of `getShortenedName`.
+	 *
+	 * @param employee
+	 * @returns the employee's complete display name
+	 */
+	getFullName(employee: ISelectedEmployee): string {
+		return (employee?.fullName || [employee?.firstName, employee?.lastName].filter(Boolean).join(' ')).trim();
 	}
 
 	/**

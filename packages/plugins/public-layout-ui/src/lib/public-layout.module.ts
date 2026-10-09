@@ -23,7 +23,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
 import {
@@ -34,6 +33,7 @@ import {
 	LanguageSelectorModule,
 	ManageAppointmentModule,
 	MiscellaneousModule,
+	RichTextEditorModule,
 	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,
@@ -43,6 +43,7 @@ import {
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { COMPONENTS } from './components';
+import { SanitizeHtmlPipe } from './pipes';
 import { createPublicLayoutRoutes } from './public-layout.routes';
 
 // Nebular Modules
@@ -72,7 +73,6 @@ const NB_MODULES = [
  * Third Party Modules
  */
 const THIRD_PARTY_MODULES = [
-	CKEditorModule,
 	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forChild()
@@ -89,6 +89,7 @@ const FEATURE_MODULES = [
 	LanguageSelectorModule,
 	ManageAppointmentModule,
 	MiscellaneousModule,
+	RichTextEditorModule,
 	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,
@@ -100,7 +101,15 @@ const FEATURE_MODULES = [
 
 @NgModule({
 	declarations: [...COMPONENTS],
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
+	imports: [
+		RouterModule.forChild([]),
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
+		...FEATURE_MODULES,
+		// Standalone: the public pages render editor-authored HTML for anonymous visitors, so
+		// they sanitize it themselves instead of reaching for the shared `safeHtml` bypass.
+		SanitizeHtmlPipe
+	],
 	exports: [...COMPONENTS],
 	providers: [
 		LanguagesService,

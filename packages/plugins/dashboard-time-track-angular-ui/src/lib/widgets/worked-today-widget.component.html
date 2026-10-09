@@ -1,0 +1,9 @@
+<gz-time-track-counter-card
+	color="success"
+	[value]="todayDuration() | durationFormat"
+	[counterValue]="todayDuration()"
+	[total]="periodSeconds()"
+	[loading]="loading()"
+	[error]="errorMessage()"
+	(retry)="refresh()"
+></gz-time-track-counter-card>

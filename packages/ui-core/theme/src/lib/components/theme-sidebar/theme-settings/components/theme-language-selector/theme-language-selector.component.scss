@@ -45,3 +45,14 @@
   align-items: center;
   flex-wrap: wrap;
 }
+
+// Outside nb-install-component on purpose: nb-option content renders in the
+// overlay (outside the host element), where :host-scoped rules cannot reach.
+.flag-icon {
+  width: 1.125rem;
+  height: 0.75rem;
+  margin-inline-end: 0.375rem;
+  border-radius: 2px;
+  object-fit: cover;
+  vertical-align: middle;
+}

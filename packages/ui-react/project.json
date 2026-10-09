@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/ui-react/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:shared"],
 	"implicitDependencies": ["plugin-ui"],
 	"targets": {
 		"build": {

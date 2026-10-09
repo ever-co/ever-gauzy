@@ -43,6 +43,7 @@
     @if (dataLayoutStyle === 'TABLE') {
       <div class="table-scroll-container custom-table">
         <angular2-smart-table
+          [class.ga-table-loading]="loading"
           class="interviews-table"
           style="cursor: pointer"
           [settings]="settingsSmartTable"
@@ -59,6 +60,7 @@
     } @else {
       <div class="custom-grid">
         <ga-card-grid
+          [loading]="loading"
           [totalItems]="pagination?.totalItems"
           [settings]="settingsSmartTable"
           [source]="tableInterviewList"

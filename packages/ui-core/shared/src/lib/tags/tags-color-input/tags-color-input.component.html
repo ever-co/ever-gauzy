@@ -4,8 +4,10 @@
       {{ 'TAGS_PAGE.HEADER' | translate }}
     </label>
   }
+  <!-- `tags-select` is copied onto the body-appended panel; _overrides.scss sizes its rows -->
   <ng-select
     id="addTags"
+    class="tags-select"
     [items]="tags"
     [multiple]="multiple"
     bindLabel="name"
@@ -18,40 +20,51 @@
     [placeholder]="'MENU.TAGS' | translate"
     >
     <ng-template ng-option-tmp let-tag="item" let-tag$="item$">
-      <div class="d-flex align-items-center">
+      <div class="tag-option" [style.--tag-color]="background(tag.color)">
         @if (multiple) {
-          <input type="checkbox" [ngModel]="tag$.selected" />
+          <span class="tag-check" [class.tag-check--on]="tag$.selected" aria-hidden="true">
+            @if (tag$.selected) {
+              <nb-icon icon="checkmark-outline"></nb-icon>
+            }
+          </span>
         }
-        <nb-badge
-          [style.background]="background(tag.color)"
-          class="tag-color"
-        ></nb-badge>
+        <span class="tag-dot"></span>
         <span class="text">{{ tag.name }}</span>
       </div>
     </ng-template>
     <ng-template ng-multi-label-tmp let-tags="selectedTags" let-clear="clear">
-      @if (!!noOfTagsFits) {
+      <!--
+        `selectedTagsOverflow`, not `noOfTagsFits`. The count is 0 both before the
+        first measurement and when nothing fits, and those two want opposite
+        branches: unmeasured means "render them all", nothing-fits means "render
+        one and say how many are hidden". Only the overflow flag tells them apart.
+      -->
+      @if (selectedTagsOverflow) {
         @for (
           item of selectedTags
           | slice : 0 : noOfTagsFits || selectedTags.length
           ; track
           item) {
           <div class="ng-value">
-            <nb-badge class="tag-color tag-label" [style.background]="background(item.color)"
-            [style.color]="backgroundContrast(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
+            <nb-badge class="tag-color tag-label" [style.--tag-color]="background(item.color)" [text]="item.name" (click)="clear(item)"></nb-badge>
           </div>
         }
         @if (selectedTags && selectedTags.length > noOfTagsFits) {
           <div class="ng-value">
-            <span class="ng-value-label">...</span>
+            <!--
+              The overflow indicator. It was a literal "…", which says only that
+              something is hidden; the count says how much, which is the one thing
+              the row cannot show. `noOfTagsFits` is the number rendered above it,
+              so the difference is exactly what is not on screen.
+            -->
+            <span class="ng-value-label tag-overflow">+{{ selectedTags.length - noOfTagsFits }}</span>
           </div>
         }
       } @else {
         @for (item of selectedTags; track item) {
           <div class="ng-value">
             <nb-badge class="tag-color tag-label"
-              [style.background]="background(item.color)"
-              [style.color]="backgroundContrast(item.color)"
+              [style.--tag-color]="background(item.color)"
               [text]="item.name"
               (click)="clear(item)"
             ></nb-badge>

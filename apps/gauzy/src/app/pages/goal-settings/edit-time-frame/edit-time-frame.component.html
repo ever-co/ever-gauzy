@@ -1,18 +1,16 @@
 <nb-card>
-  <nb-card-header>
-    <div class="d-flex flex-column">
-      <span class="cancel"
-        ><i class="fas fa-times" (click)="closeDialog(null)"></i
-      ></span>
-      <h5 class="title">
-        {{
-        (timeFrame
-        ? 'GOALS_PAGE.SETTINGS.EDIT_TIME_FRAME_TITLE'
-        : 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE'
-        ) | translate
-        }}
-      </h5>
+  <nb-card-header class="header">
+    <div class="title">
+      {{
+      (timeFrame
+      ? 'GOALS_PAGE.SETTINGS.EDIT_TIME_FRAME_TITLE'
+      : 'GOALS_PAGE.SETTINGS.ADD_TIME_FRAME_TITLE'
+      ) | translate
+      }}
     </div>
+    <button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="closeDialog(null)">
+      <i class="fas fa-times" aria-hidden="true"></i>
+    </button>
   </nb-card-header>
   <nb-card-body>
     <div class="row">
@@ -25,7 +23,7 @@
         <nb-list>
           @for (timeFrame of preDefinedTimeFrames; track timeFrame) {
             <nb-list-item
-              style="cursor: pointer; font-weight: bold"
+              class="preset"
               (click)="updateTimeFrameValues(timeFrame, $event)"
               >
               {{ timeFrame.name }}
@@ -56,7 +54,6 @@
             <nb-select
               id="time-frame-status"
               fullWidth
-              filled
 						[status]="
 							timeFrameForm.value.status ===
 							timeFrameStatusEnum.ACTIVE
@@ -128,12 +125,12 @@
             </div>
           </div>
         </nb-card-body>
-        <nb-card-footer class="text-left">
+        <nb-card-footer class="footer">
           <button
-            class="mr-3"
             nbButton
+            ghost
             status="basic"
-            outline
+            size="small"
             (click)="closeDialog(null)"
             >
             {{ 'BUTTONS.CANCEL' | translate }}
@@ -142,6 +139,7 @@
             [disabled]="timeFrameForm.invalid"
             nbButton
             status="success"
+            size="small"
             (click)="saveTimeFrame()"
             >
             {{ 'BUTTONS.SAVE' | translate }}

@@ -32,8 +32,10 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		filterDate?: string
 	): Promise<IPagination<Expense>> {
 		if (filterDate) {
-			const startOfMonth = moment(moment(filterDate).startOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
-			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
+			// No string round-trip: the former 'hh' (12-hour) format turned 00:00 into 12:00 and 23:59:59
+			// into 11:59:59, so the range ran from noon on the 1st to noon on the last day.
+			const startOfMonth = moment(filterDate).startOf('month').toDate();
+			const endOfMonth = moment(filterDate).endOf('month').toDate();
 			return filter
 				? await this.findAll({
 						where: {

@@ -11,40 +11,32 @@
   </nb-card-header>
 
   <nb-card-body class="team-card">
-    @if (entityWithMembers.members && entityWithMembers.members.length > 0) {
-      <div>
-        @for (member of entityWithMembers.members; track member) {
-          <div class="name-container">
-            <div class="image-container">
-              <a href="/pages/employees/edit/{{ member.id }}/profile" target="_blank">
-                <img
-                  nbTooltip="{{ 'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE' | translate }}"
-                  [src]="member.user.imageUrl"
-                  />
-                </a>
-              </div>
-              <span
-                >{{ member.user.firstName }}
-                {{ member.user.lastName }}
-              </span>
-            </div>
-          }
-        </div>
-      }
+    <!--
+      Same people treatment as the grid columns (`ngx-people-list`), only
+      allowed to wrap and to name more people, because a card has the room.
+    -->
+    <ngx-people-list
+      class="members"
+      [people]="entityWithMembers.members"
+      [maxNames]="8"
+      [maxAvatars]="8"
+      [wrap]="true"
+      (selectPerson)="openMember($event)"
+    ></ngx-people-list>
 
-      <div class="button-container">
-        @if (visibleViewButton) {
-          <button nbButton class="mr-2" status="info" size="tiny" (click)="navigateContact(entityWithMembers)">
-            <nb-icon class="mr-1" icon="eye-outline"></nb-icon>
-            {{ 'BUTTONS.VIEW' | translate }}
-          </button>
-        }
-        <button nbButton class="mr-2" status="success" size="tiny" (click)="editEntity(entityWithMembers.id)">
-          <nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+    <div class="button-container">
+      @if (visibleViewButton) {
+        <button nbButton class="mr-2" status="info" size="tiny" (click)="navigateContact(entityWithMembers)">
+          <nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+          {{ 'BUTTONS.VIEW' | translate }}
         </button>
-        <button size="tiny" class="mr-2" nbButton (click)="removeEntity(entityWithMembers.id)" status="danger">
-          <nb-icon class="mr-2" icon="trash-2-outline"></nb-icon>{{ 'BUTTONS.DELETE' | translate }}
-        </button>
-      </div>
-    </nb-card-body>
-  </nb-card>
+      }
+      <button nbButton class="mr-2" status="success" size="tiny" (click)="editEntity(entityWithMembers.id)">
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+      </button>
+      <button size="tiny" class="mr-2" nbButton (click)="removeEntity(entityWithMembers.id)" status="danger">
+        <nb-icon class="mr-2" icon="trash-2-outline"></nb-icon>{{ 'BUTTONS.DELETE' | translate }}
+      </button>
+    </div>
+  </nb-card-body>
+</nb-card>

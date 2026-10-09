@@ -1,0 +1,85 @@
+@use './general-setting-layout' as *;
+
+:host {
+	display: block;
+}
+
+.general-settings {
+	@include general-setting-layout;
+
+	nb-card-body {
+		background: var(--gauzy-card-2, var(--background-basic-color-2));
+	}
+
+	// The personal groups live inside their own component host, so the next group here is the
+	// host's sibling, not a `.settings-group` sibling — give it the same gap explicitly.
+	ga-general-personal-settings {
+		display: block;
+
+		+ .settings-group {
+			margin-top: 1rem;
+		}
+	}
+
+	.preferred-ui-options {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1rem;
+	}
+
+	// ── Tenant logo ──────────────────────────────────────────────────────
+	.tenant-logo-frame {
+		position: relative;
+		display: flex;
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		width: 3rem;
+		height: 3rem;
+		overflow: hidden;
+		border-radius: var(--gauzy-radius-sm, 0.5rem);
+		background: var(--gauzy-card-2, var(--background-basic-color-2));
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+		cursor: pointer;
+
+		img {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+		}
+
+		.tenant-logo-empty {
+			font-size: 1.25rem;
+			color: var(--text-hint-color);
+		}
+
+		.tenant-logo-camera {
+			position: absolute;
+			inset: 0;
+			margin: auto;
+			font-size: 1rem;
+			opacity: 0;
+			transition: opacity 0.15s ease;
+		}
+
+		// The uploader is an invisible file input stretched over the whole frame.
+		ngx-image-uploader {
+			position: absolute;
+			inset: 0;
+			display: block;
+		}
+
+		&.hover {
+			background: var(--gauzy-hover-tint, var(--background-basic-color-3));
+
+			img,
+			.tenant-logo-empty {
+				opacity: 0.35;
+			}
+
+			.tenant-logo-camera {
+				opacity: 0.9;
+			}
+		}
+	}
+}

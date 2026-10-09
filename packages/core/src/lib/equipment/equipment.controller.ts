@@ -92,9 +92,6 @@ export class EquipmentController extends CrudController<Equipment> {
 	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateEquipmentDTO): Promise<IEquipment> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
-		return await this.equipmentService.create({
-			id,
-			...entity
-		});
+		return await this.equipmentService.create({ ...entity, id });
 	}
 }

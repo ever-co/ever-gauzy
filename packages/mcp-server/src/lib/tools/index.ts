@@ -19,6 +19,7 @@ export * from './pipelines';
 export * from './product-categories';
 export * from './products';
 export * from './projects';
+export * from './register-all-tools';
 export * from './reports';
 export * from './skills';
 export * from './tasks';

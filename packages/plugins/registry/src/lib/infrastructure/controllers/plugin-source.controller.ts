@@ -6,7 +6,8 @@ import {
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
-	UUIDValidationPipe
+	UUIDValidationPipe,
+	documentUploadFileFilter
 } from '@gauzy/core';
 import {
 	BadRequestException,
@@ -80,7 +81,10 @@ export class PluginSourceController {
 	@UseValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })
 	@UseInterceptors(
 		LazyAnyFileInterceptor({
-			storage: () => FileStorageFactory.create('plugins')
+			storage: () => FileStorageFactory.create('plugins'),
+			// Plugin archives land under /public with the client extension: refuse script-capable
+			// non-document types (GHSA-p334-cm7f-php5 class).
+			fileFilter: documentUploadFileFilter
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)

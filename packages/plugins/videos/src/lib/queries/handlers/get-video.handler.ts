@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { assertCallerOwnsUpload } from '@gauzy/core';
 import { VideosService } from '../../services/videos.service';
 import { IVideo } from '../../video.model';
 import { GetVideoQuery } from '../get-video.query';
@@ -29,7 +30,8 @@ export class GetVideoQueryHandler implements IQueryHandler<GetVideoQuery> {
 			throw new NotFoundException(`Video with ID ${id} not found.`);
 		}
 
-		// Step 3: Return the video entity
-		return video;
+		// Step 3: These records carry `uploadedById`, not `employeeId`, so the per-employee restriction in
+		// TenantAwareCrudService never applies and this read was scoped to the tenant alone.
+		return assertCallerOwnsUpload(video, `Video with ID ${id} not found.`);
 	}
 }

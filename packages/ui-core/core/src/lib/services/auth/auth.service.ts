@@ -9,6 +9,7 @@ import {
 	IUserRegistrationInput,
 	IUserSigninWorkspaceResponse,
 	IUserTokenInput,
+	ITermsAcceptanceDocument,
 	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -25,6 +26,25 @@ export class AuthService {
 
 	confirmEmail(body: IUserEmailInput & IUserTokenInput): Observable<Object> {
 		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify`, body);
+	}
+
+	/**
+	 * Whether the signed-in user still has to verify their email, and whether a still-valid
+	 * verification email has actually been sent to them. Answers 404 when the deployment has email
+	 * verification switched off. `verificationEmailSent` is absent on older APIs.
+	 */
+	getEmailVerificationStatus(): Observable<{ isEmailVerified: boolean; verificationEmailSent?: boolean }> {
+		return this.http.get<{ isEmailVerified: boolean; verificationEmailSent?: boolean }>(
+			`${API_PREFIX}/auth/email/verify/status`
+		);
+	}
+
+	/**
+	 * Email the signed-in user a new verification link (rate limited by the API). Sends no
+	 * overrides, so the link opens this app's own confirm-email page.
+	 */
+	resendEmailVerificationLink(): Observable<Object> {
+		return this.http.post<Object>(`${API_PREFIX}/auth/email/verify/resend-link`, {});
 	}
 
 	login(loginInput: IUserLoginInput): Observable<IAuthResponse> {
@@ -104,6 +124,20 @@ export class AuthService {
 
 	register(input: IUserRegistrationInput): Observable<IUser> {
 		return this.http.post<IUser>(`${API_PREFIX}/auth/register`, input);
+	}
+
+	/**
+	 * The legal documents a new account must accept, as currently published.
+	 *
+	 * Fetched rather than hard-coded so the version and the sha256 the user is
+	 * shown are the ones the server will accept — and so the object that gates
+	 * the submit button is the same object that gets posted back. Hard-coding a
+	 * version in the client is how a checkbox ends up meaning nothing.
+	 */
+	getRequiredTermsDocuments(locale?: string): Observable<ITermsAcceptanceDocument[]> {
+		return this.http.get<ITermsAcceptanceDocument[]>(`${API_PREFIX}/terms/required`, {
+			params: toParams(locale ? { locale } : {})
+		});
 	}
 
 	requestPassword(requestPasswordInput): Observable<{ id?: string; token?: string }> {

@@ -7,6 +7,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { InviteModule } from '../invite/invite.module';
 import { OrganizationTeamEmployee } from '../core/entities/internal';
 import { RoleModule } from '../role/role.module';
+import { LoginAttemptModule } from '../auth/login-attempt.module';
 import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
@@ -30,7 +31,8 @@ import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikr
 		OrganizationTeamEmployeeModule,
 		EmailSendModule,
 		InviteModule,
-		RoleModule
+		RoleModule,
+		LoginAttemptModule
 	],
 	controllers: [OrganizationTeamJoinRequestController],
 	providers: [OrganizationTeamJoinRequestService, TypeOrmOrganizationTeamJoinRequestRepository, MikroOrmOrganizationTeamJoinRequestRepository, ...CommandHandlers],

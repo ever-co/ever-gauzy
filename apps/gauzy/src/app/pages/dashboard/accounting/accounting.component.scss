@@ -1,122 +1,501 @@
 @use 'gauzy/_gauzy-cards' as *;
 
-.organization-employee-header {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-  gap: 1rem;
-}
+/*
+ * ── Accounting dashboard ─────────────────────────────────────────────────────
+ *
+ * Built on the Human Resources dashboard's vocabulary (`../human-resources`):
+ * the same KPI tile, the same panel, the same three type weights and the same
+ * gauzy-* tokens, so the two tabs read as one product. Reads top-down as: the
+ * organization's four totals → the same figures day by day → who they came from.
+ */
 
-:host .table-scrollable {
-  height: calc($default-card-height - 14rem);
-  overflow: auto;
-  @include nb-ltr(padding-right, 0.5rem);
-  @include nb-rtl(padding-left, 0.5rem);
-}
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$gap-xs: 0.25rem;
 
-.cash-flow-report {
-  margin: 1rem 0;
-}
+$kpi-min-width: 13.5rem;
 
-:host .setting-block {
-  &:hover {
-    box-shadow: unset;
-    background: var(--color-primary-transparent-100) !important;
-  }
+// Matches the HR panel header, which is sized off its chart-type switcher, so the
+// two tabs' panel titles sit on the same line when switching between them.
+$panel-header-height: 1.875rem + 2 * $gap-md;
 
-  &.sub-header {
-    @include nb-ltr(margin-right, 0.5rem);
-    @include nb-rtl(margin-left, 0.5rem);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    color: var(--gauzy-text-color-2) !important;
-    background: nb-theme(gauzy-card-3) !important;
-  }
-
-  box-shadow: var(--gauzy-shadow);
-  border-radius: $default-radius;
-  margin-bottom: 4px;
-  padding: 15px 20px;
-  background: nb-theme(gauzy-card-1) !important;
-
-  .block-content {
-    .block-info {
-      width: 100%;
-    }
-
-    .col {
-      display: flex;
-      align-items: center;
-    }
-
-    .image-container {
-      width: 70px;
-      height: 63px;
-      display: inline-flex;
-      justify-content: center;
-      margin-right: 15px;
-      margin-left: 15px;
-    }
-
-    img {
-      height: 100%;
-      width: 70px;
-      border-radius: var(--button-rectangle-border-radius);
-      object-fit: cover;
-    }
-
-    .row {
-      cursor: pointer;
-    }
-  }
-}
+$weight-strong: 600; // KPI values, and nothing else
+$weight-medium: 500; // titles, headings, secondary figures
+$weight-normal: 400; // labels, captions, chips
 
 :host {
-  nb-card {
-    background: nb-theme(background-basic-color-1);
-    box-shadow: 0px 6px 20px 0px rgb(0 0 0 / 5%);
-    margin-bottom: 0;
-  }
+	// `unset, auto`: the dashboard page owns the single scrollbar (see
+	// `../dashboard.component.scss`), so this card must not open a second one.
+	@include nb-card_overrides(unset, auto, 0 $default-radius $default-radius $default-radius);
 
-  .card-body {
-    @include nb-ltr(padding-right, 0.5rem);
-    @include nb-rtl(padding-left, 0.5rem);
-  }
+	// Must stay AFTER `nb-card_overrides`, which emits its own `:host nb-card`
+	// with `height: 100%` at the same specificity — the later block wins.
+	nb-card {
+		height: auto;
+	}
 
-  nb-card-header {
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 16px;
-    letter-spacing: -0.009em;
-    color: var(--gauzy-text-color-2);
-    padding-bottom: 0;
-  }
-
-  @include card_overrides(
-    auto,
-    unset,
-    0 $default-radius $default-radius $default-radius
-  );
-
-  .card,
-  .card-header:first-child {
-    border-radius: 0 $default-radius 0 0;
-  }
-
-  background-color: rgba(50, 50, 50, 0.02);
-
-  .card {
-    background-color: var(--gauzy-card-2);
-
-    .card-header {
-      background-color: unset;
-    }
-  }
+	nb-card,
+	nb-card-body {
+		background-color: var(--gauzy-card-2);
+	}
 }
-.body-header{
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.acc-header {
+	background-color: unset;
+}
+
+.acc-title-row {
+	display: flex;
+	align-items: center;
+	min-height: nb-theme(gauzy-page-title-row-height);
+
+	h4 {
+		margin: 0;
+	}
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+.acc-body {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+}
+
+/* ── KPI row ─────────────────────────────────────────────────────────────── */
+
+.kpi-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax($kpi-min-width, 1fr));
+	gap: $gap-md;
+}
+
+/*
+ * `--kpi-accent` is bound per tile from the component (`accentFor()`), from the same
+ * series colours the chart lines use, so a tile and its line always agree.
+ */
+.kpi {
+	--kpi-accent: var(--gauzy-text-color-2);
+
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-sm;
+	padding: $gap-md;
+	min-height: 4.25rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+	&.is-negative {
+		.kpi-value {
+			color: var(--gauzy-chart-negative);
+		}
+	}
+}
+
+.kpi-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: var(--gauzy-radius-sm);
+	color: var(--kpi-accent);
+
+	nb-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		font-size: 1.125rem;
+	}
+}
+
+.kpi-text {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	row-gap: 0.125rem;
+}
+
+.kpi-label {
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-normal;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	overflow-wrap: anywhere;
+}
+
+.kpi-value {
+	font-size: 0.75rem;
+	font-weight: $weight-strong;
+	line-height: 1rem;
+	letter-spacing: -0.01em;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+	// Wrap rather than ellipsis: a narrow tile must still show every digit
+	overflow-wrap: anywhere;
+}
+
+.kpi-meta {
+	font-size: 0.625rem;
+	line-height: 0.875rem;
+	color: var(--gauzy-text-color-2);
+	overflow-wrap: anywhere;
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
+}
+
+// Wraps on narrow panels: `.panel` clips overflow, so a header that could not wrap
+// would hide the sort controls instead of moving them to a second line.
+.panel-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-xs $gap-sm;
+	padding: $gap-xs $gap-md;
+	min-height: $panel-header-height;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
+}
+
+.panel-title {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	letter-spacing: -0.009em;
+	color: var(--gauzy-text-color-1);
+}
+
+.panel-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-xs;
+	min-width: 0;
+	margin-inline-start: auto;
+}
+
+.sort-label {
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+}
+
+.sort-select {
+	min-width: 8.5rem;
+}
+
+.panel-count {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.0625rem 0.375rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-hover-tint);
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.panel-body {
+	padding: $gap-md;
+	min-width: 0;
+}
+
+/*
+ * The panel owns the chart's height, as on the HR tab: Chart.js runs with
+ * `maintainAspectRatio: false`, so the legend row and the plot share one
+ * measured box and the canvas takes whatever the legend leaves.
+ */
+.panel--chart .panel-body {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-md;
+	height: 20rem;
+	min-height: 0;
+}
+
+.chart-wrap {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* Screen-reader only: the chart's daily values as a table. */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ── Breakdown table ─────────────────────────────────────────────────────── */
+
+/*
+ * Columns: rank · employee · the money columns · a chevron gutter. The rank and
+ * chevron tracks are fixed so every figure column starts on the same line in every row.
+ */
+.breakdown {
+	--breakdown-columns: 1.5rem minmax(10rem, 1.25fr) repeat(3, minmax(7rem, 1fr)) 1rem;
+
+	overflow-x: auto;
+
+	&--with-bonus {
+		--breakdown-columns: 1.5rem minmax(10rem, 1.25fr) repeat(4, minmax(7rem, 1fr)) 1rem;
+	}
+}
+
+.breakdown-row {
+	display: grid;
+	grid-template-columns: var(--breakdown-columns);
+	align-items: center;
+	gap: $gap-md;
+	min-width: 40rem;
+	padding: $gap-sm $gap-md;
+	font-size: 0.75rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	cursor: pointer;
+	transition: background-color 0.12s ease-in-out;
+
+	& + & {
+		border-top: 1px solid var(--gauzy-border-default-color);
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+
+		.breakdown-affordance {
+			opacity: 1;
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+
+		.breakdown-affordance {
+			opacity: 1;
+		}
+	}
+
+	&--head {
+		padding-block: 0.25rem;
+		background-color: var(--gauzy-card-2);
+		cursor: default;
+
+		&:hover {
+			background-color: var(--gauzy-card-2);
+		}
+	}
+
+	// The sums, closing the column: set on the page ground like the header so the
+	// table reads as bracketed, and in medium weight so it outranks the rows.
+	&--total {
+		font-weight: $weight-medium;
+		background-color: var(--gauzy-card-2);
+		cursor: default;
+
+		&:hover {
+			background-color: var(--gauzy-card-2);
+		}
+	}
+}
+
+.breakdown-cell {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+
+	&.is-amount {
+		justify-content: flex-start;
+		text-align: start;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+
+	&.is-muted {
+		color: var(--gauzy-text-color-2);
+	}
+
+	&.is-strong {
+		font-weight: $weight-medium;
+	}
+
+	&.is-negative {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+.breakdown-rank {
+	justify-content: flex-end;
+	font-size: nb-theme(text-caption-font-size);
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Income over its share of the organization total. */
+.breakdown-cell.is-income {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.125rem;
+}
+
+.share {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	width: 100%;
+	max-width: 7.5rem;
+}
+
+.share-track {
+	flex: 1 1 auto;
+	height: 0.25rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	overflow: hidden;
+}
+
+.share-fill {
+	display: block;
+	height: 100%;
+	border-radius: inherit;
+}
+
+.share-value {
+	flex: 0 0 2rem;
+	font-size: 0.625rem;
+	line-height: 0.875rem;
+	color: var(--gauzy-text-color-2);
+	text-align: end;
+	font-variant-numeric: tabular-nums;
+}
+
+.breakdown-affordance {
+	justify-content: flex-end;
+	color: var(--gauzy-text-color-2);
+	opacity: 0;
+	transition: opacity 0.12s ease-in-out;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+}
+
+/* Column heading: the HR breakdown's group-title treatment, as a sort toggle. */
+.sort {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-xs;
+	padding: $gap-xs 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+
+	&:hover,
+	&.is-active {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 2px;
+		border-radius: var(--gauzy-radius-sm);
+	}
+}
+
+.series-dot {
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+}
+
+.sort-icon {
+	width: 0.75rem;
+	height: 0.75rem;
+	font-size: 0.75rem;
+	opacity: 0;
+	transition: opacity 0.12s ease-in-out;
+
+	.sort:hover &,
+	.sort.is-active & {
+		opacity: 1;
+	}
+}
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+
+.acc-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: $gap-xs;
+	flex: 1 1 auto;
+	padding: 2.5rem $gap-lg;
+	text-align: center;
+
+	nb-icon {
+		width: 1.5rem;
+		height: 1.5rem;
+		font-size: 1.5rem;
+		margin-bottom: $gap-xs;
+		color: var(--gauzy-text-color-2);
+	}
+
+	.state-title {
+		margin: 0;
+		font-size: 0.75rem;
+		font-weight: $weight-medium;
+		color: var(--gauzy-text-color-1);
+	}
+
+	.state-hint {
+		margin: 0;
+		max-width: 22rem;
+		font-size: nb-theme(text-caption-font-size);
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.breakdown-row,
+	.breakdown-affordance,
+	.sort-icon {
+		transition: none;
+	}
 }

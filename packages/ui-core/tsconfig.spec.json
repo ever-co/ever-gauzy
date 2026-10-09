@@ -6,7 +6,20 @@
 		"target": "es2016",
 		"types": ["jest", "node"],
 		"moduleResolution": "bundler",
-		"isolatedModules": true
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		// Same mappings as tsconfig.lib.json. tsconfig.json points `@gauzy/ui-config` at the BUILT
+		// `dist/packages/ui-config`, which a test run does not have, and the Nx Jest resolver falls back
+		// to these paths for workspace packages — so 16 ui-core suites failed with "Cannot find module
+		// '@gauzy/ui-config'" before a single test ran.
+		"baseUrl": "../..",
+		"paths": {
+			"@gauzy/ui-core/*": ["./packages/ui-core/*/src/index.ts"],
+			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
+			"@gauzy/contracts": ["./packages/contracts/src/index.ts"],
+			"@gauzy/constants": ["./packages/constants/src/index.ts"]
+		}
 	},
 	"files": ["src/test-setup.ts"],
 	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]

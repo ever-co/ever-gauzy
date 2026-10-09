@@ -1,0 +1,57 @@
+/// Shared presentation for a legal document rendered from the bundled `@ever-co/legal` corpus.
+///
+/// Include this inside the scroll container of a legal page. The corpus emits a small, fixed set
+/// of tags — headings, paragraphs, lists, links and tables. Headings, paragraphs and list items
+/// are already styled by the pages themselves, so this mixin only covers the document header we
+/// render from the corpus index, and the tables the previous content provider never produced.
+@mixin legal-document {
+  .legal-doc__header {
+    margin-bottom: 1rem;
+  }
+
+  .legal-doc__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.375rem;
+    margin: 0;
+    padding-top: 0 !important;
+    color: var(--gauzy-text-color-2);
+    font-size: 12px;
+    font-weight: 400 !important;
+  }
+
+  .legal-doc__separator {
+    opacity: 0.5;
+  }
+
+  .legal-doc__body > :first-child {
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  table {
+    width: 100%;
+    margin: 12px 0;
+    border-collapse: collapse;
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  th,
+  td {
+    padding: 8px 10px;
+    border: 1px solid var(--gauzy-border-table);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--gauzy-text-color-1);
+    font-weight: 600;
+  }
+
+  td {
+    color: var(--gauzy-text-color-2);
+  }
+}

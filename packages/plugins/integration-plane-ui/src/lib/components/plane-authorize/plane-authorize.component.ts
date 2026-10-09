@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap, take } from 'rxjs';
 import { IntegrationEnum, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { IntegrationsService, IPlaneSetupResponse, PlaneService, Store } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, IntegrationsService, IPlaneSetupResponse, PlaneService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { INTEGRATION_PLANE_PAGE_LINK } from '../../integration-plane.routes';
 import { PlaneApiKeyDialogComponent } from '../api-key-dialog/api-key-dialog.component';
@@ -36,6 +36,7 @@ export class PlaneAuthorizeComponent extends TranslationBaseComponent implements
 	private readonly _planeService = inject(PlaneService);
 	private readonly _integrationsService = inject(IntegrationsService);
 	private readonly _dialogService = inject(NbDialogService);
+	private readonly _errorHandlingService = inject(ErrorHandlingService);
 
 	readonly organization = signal<IOrganization | null>(null);
 	readonly loading = signal<boolean>(false);
@@ -169,8 +170,9 @@ export class PlaneAuthorizeComponent extends TranslationBaseComponent implements
 					this.loading.set(false);
 					this._showApiKeyDialog(result.apiKey, result.apiSecret, result.integrationTenantId);
 				},
-				error: () => {
+				error: (error: HttpErrorResponse) => {
 					this.loading.set(false);
+					this._errorHandlingService.handleError(error);
 				}
 			});
 	}

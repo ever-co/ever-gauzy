@@ -15,6 +15,12 @@ export const OrganizationTeamsPage = {
 	tagsSelectCss: '.editable #addTags',
 	tagsSelectOptionCss: 'div.ng-option',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	// The Name column's filter input, addressed by COLUMN KEY (angular2-smart-table puts the key on the
+	// header cell) rather than by its translated placeholder. The teams grid is server-paginated at 10
+	// rows and this suite keeps adding teams to one shared DB, so both the row assertions and the row
+	// selection have to narrow the grid to this spec's team first — otherwise they only ever look at
+	// page 1 and fail once enough teams have accumulated.
+	nameFilterInputCss: 'th.angular2-smart-th.name input',
 	// Neutral, dialog-internal click target to dismiss an open ng-select panel without closing the
 	// nb-dialog itself (Escape would close the whole dialog; the page nb-card-body sits behind a backdrop).
 	cardBodyCss: '.editable h5.title',

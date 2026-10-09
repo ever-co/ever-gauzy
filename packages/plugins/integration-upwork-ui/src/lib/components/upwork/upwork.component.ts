@@ -57,12 +57,15 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit 
 	}
 
 	/**
+	 * Loads the Upwork integration's non-secret configuration state into the store.
 	 *
+	 * The tenant is no longer sent: the API takes it from the authenticated request context, so a
+	 * client can neither name another tenant nor learn anything about one (GHSA-3rqg-gpm9-gx84).
 	 */
 	private _getConfig() {
-		const { id: organizationId, tenantId } = this.organization();
+		const { id: organizationId } = this.organization();
 		const integrationId = this.integrationId();
-		this._upworkStore.getConfig({ integrationId, organizationId, tenantId }).pipe(untilDestroyed(this)).subscribe();
+		this._upworkStore.getConfig({ integrationId, organizationId }).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	/**

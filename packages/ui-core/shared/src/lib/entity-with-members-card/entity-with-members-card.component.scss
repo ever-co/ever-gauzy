@@ -9,7 +9,10 @@
 
     .members-count {
       font-size: 0.7em;
-      color: darkgray;
+      // `darkgray` (#a9a9a9) is a fixed CSS keyword: too light to read on the
+      // light themes' white card and no darker on the dark ones. `text-hint-color`
+      // is the muted-label token and is registered by all eight themes.
+      color: nb-theme(text-hint-color);
     }
   }
 
@@ -18,21 +21,9 @@
     flex-direction: column;
     justify-content: space-between;
 
-    .name-container {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-
-      .image-container {
-        width: 70px;
-        height: 50px;
-        display: flex;
-
-        img {
-          height: 100%;
-          max-width: 70px;
-        }
-      }
+    // Members are rendered by `ngx-people-list`, which owns its own metrics.
+    .members {
+      min-width: 0;
     }
 
     .button-container {

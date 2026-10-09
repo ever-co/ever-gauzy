@@ -1,44 +1,46 @@
-
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { ILegalDocument } from '../../models/legal-document.model';
 import { LegalService } from '../../providers/legal.service';
 
-export const TERM_AND_POLICY_ENDPOINT = 'https://www.iubenda.com/api/terms-and-conditions/7927924';
-
 @Component({
-    selector: 'ga-terms-conditions',
-    templateUrl: './terms-and-conditions.component.html',
-    styleUrls: ['./terms-and-conditions.component.scss'],
-    standalone: false
+	selector: 'ga-terms-conditions',
+	templateUrl: './terms-and-conditions.component.html',
+	styleUrls: ['./terms-and-conditions.component.scss'],
+	standalone: false
 })
 export class TermsAndConditionsComponent implements OnInit, OnDestroy {
+	/** Rendered HTML of the Terms of Service. Bundled with the application, never fetched. */
 	public term_and_policy: string;
 
-	constructor(private readonly legalService: LegalService, @Inject(DOCUMENT) private readonly _document: Document) {}
+	/** Metadata of the rendered document - title, version, effective date, publishing entity. */
+	public terms: ILegalDocument | null = null;
+
+	constructor(
+		private readonly legalService: LegalService,
+		private readonly translateService: TranslateService,
+		@Inject(DOCUMENT) private readonly _document: Document
+	) {}
 
 	ngOnInit(): void {
-		this.getTermJsonFromUrl(TERM_AND_POLICY_ENDPOINT);
+		this.loadTerms();
 		this._document.body.classList.add('term-container');
 	}
 
 	/**
-	 * Load Term from iubenda
+	 * Loads the Terms of Service from the corpus bundled into the application.
 	 *
-	 * @param url https://www.iubenda.com/api/terms-and-conditions/7927924
+	 * The text is vendored from `@ever-co/legal` at build time, so this is a synchronous lookup
+	 * that cannot fail because of a network problem or a lapsed third-party subscription.
 	 */
-	async getTermJsonFromUrl(url: string) {
-		try {
-			const data: any = await this.legalService.getContentFromFromUrl(url);
-			if (data?.content) {
-				this.term_and_policy = data.content;
-			}
-		} catch (error) {
-			console.error('Error fetching terms and conditions:', error);
-		}
+	private loadTerms(): void {
+		this.terms = this.legalService.getDocument('tos', this.translateService.currentLang);
+		this.term_and_policy = this.terms?.html ?? '';
 	}
 
 	/**
-	 * Remove class to body to hide terms and conditions
+	 * Remove class from body to hide terms and conditions
 	 */
 	ngOnDestroy() {
 		this._document.body.classList.remove('term-container');

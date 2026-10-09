@@ -1,6 +1,6 @@
 import { AccountingTemplateTypeEnum, IAccountingTemplateUpdateInput, LanguagesEnum } from "@gauzy/contracts";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum, IsNotEmpty } from "class-validator";
+import { IsEnum, IsNotEmpty, IsString } from "class-validator";
 import { TenantOrganizationBaseDTO } from "./../../core/dto";
 
 /**
@@ -19,5 +19,6 @@ export class SaveAccountingTemplateDTO extends TenantOrganizationBaseDTO
 
     @ApiProperty({ type: () => String, readOnly: true })
     @IsNotEmpty()
+    @IsString()
 	readonly mjml: string;
 }

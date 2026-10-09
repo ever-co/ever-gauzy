@@ -25,8 +25,14 @@ export class GetEmployeeJobStatisticsHandler implements IQueryHandler<GetEmploye
 
 		// Check for permission CHANGE_SELECTED_EMPLOYEE
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			// Filter by current employee ID if the permission is not present
-			options.where.id = RequestContext.currentEmployeeId();
+			// Filter by current employee ID if the permission is not present. A caller with no employee
+			// identity sees nothing — assigning null here used to drop the predicate and page through
+			// every employee of the tenant.
+			const employeeId = RequestContext.currentEmployeeId();
+			if (!employeeId) {
+				return { items: [], total: 0 };
+			}
+			options.where.id = employeeId;
 		}
 
 		// Use Promise.all for concurrent requests

@@ -1,12 +1,13 @@
 import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { assertCallerOwnsUpload } from '@gauzy/core';
 import { GetCamshotQuery } from '../get-camshot.query';
 import { ICamshot } from '../../models/camshot.model';
 import { CamshotService } from '../../services/camshot.service';
 
 @QueryHandler(GetCamshotQuery)
 export class GetCamshotQueryHandler implements IQueryHandler<GetCamshotQuery> {
-	constructor(private readonly camshotService: CamshotService) { }
+	constructor(private readonly camshotService: CamshotService) {}
 
 	/**
 	 * Handles the `GetCamshotQuery` to retrieve a camshot entity by its ID.
@@ -29,7 +30,8 @@ export class GetCamshotQueryHandler implements IQueryHandler<GetCamshotQuery> {
 			throw new NotFoundException(`Camshot with ID ${id} not found.`);
 		}
 
-		// Step 3: Return the camshot entity
-		return camshot;
+		// Step 3: These records carry `uploadedById`, not `employeeId`, so the per-employee restriction in
+		// TenantAwareCrudService never applies and this read was scoped to the tenant alone.
+		return assertCallerOwnsUpload(camshot, `Camshot with ID ${id} not found.`);
 	}
 }

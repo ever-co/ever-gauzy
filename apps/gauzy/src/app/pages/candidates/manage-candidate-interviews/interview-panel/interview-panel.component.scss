@@ -1,27 +1,7 @@
 @use 'gauzy/_gauzy-cards' as *;
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-overrides' as ga-overrides;
-
-:host .card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  width: 100%;
-  border: none;
-  padding: 0;
-  overflow: unset;
-  background-color: var(--gauzy-card-2);
-
-  &-filter {
-    padding-bottom: 1.5rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-}
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 .card-header {
   background: unset;
@@ -30,6 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 1rem;
 
   .btn {
     display: flex;
@@ -40,71 +21,42 @@
 }
 
 .select {
-  width: 18rem;
+  width: 15rem;
 }
-:host .card-container {
-  display: flex;
-  flex-wrap: wrap;
 
-  .card-body {
-    width: 100%;
-    max-width: 300px;
-    .card-header {
-      padding: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+// Compact filter row: 32px select, 12px labels, 16px checkboxes
+:host .card-header {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 
-      &-badge {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-      }
-      .header-container {
-        text-align: center;
-      }
+  // The checkbox group is a `.btn` (a legacy class name), so Bootstrap gives it
+  // button padding and margin that made the row 46px tall around a 32px select
+  .header .btn {
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  ::ng-deep .header {
+    nb-select .select-button {
+      min-height: 2rem !important;
+      height: 2rem;
+      padding-top: 0;
+      padding-bottom: 0;
+      // `!important`: the empty state carries `.placeholder`, whose font rule is more specific
+      font-size: 0.75rem !important;
     }
 
-    .interview-card {
-      display: flex;
-      flex-direction: column;
-      padding: 0.5rem;
-
-      .name-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-
-        &:hover {
-          cursor: pointer;
-          color: #3366ff;
-        }
-
-        .image-container {
-          width: 70px;
-          height: 50px;
-          display: flex;
-          justify-content: center;
-          @include nb-ltr(margin-right, 10px);
-          @include nb-rtl(margin-left, 10px);
-
-          img {
-            height: 100%;
-            max-width: 70px;
-          }
-        }
+    nb-checkbox {
+      .text {
+        font-size: 0.75rem;
+        font-weight: 500;
       }
-      .team-members {
-        margin-bottom: 0.5rem;
-      }
-    }
 
-    .button-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: auto;
-      flex-wrap: wrap;
+      .custom-checkbox {
+        width: 1rem;
+        height: 1rem;
+      }
     }
   }
 }
@@ -112,47 +64,17 @@
   margin: 0.2rem;
 }
 
-.badge-warning {
-  background-color: #fa0;
-}
-
-.badge-primary {
-  background-color: #0095ff;
-}
-
-.badge {
-  text-align: center;
-  padding: 5px;
-  margin-left: 0.2rem;
-}
-.client-info {
-  padding: 0px 12px;
-  display: flex;
-  flex-direction: column;
-  .info-line {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    font-size: 0.7em;
-    color: darkgray;
-    .info-value {
-      display: flex;
-      justify-content: flex-end;
-      text-align: end;
-      .info-list-item:not(:last-child)::after {
-        content: ',';
-        @include nb-ltr(margin-right, 5px);
-        @include nb-rtl(margin-left, 5px);
-      }
-    }
-    .criterions {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      text-align: end;
-    }
-  }
-}
+// REMOVED: `.card-container` (with `.interview-card`, `.image-container`,
+// `.name-container:hover { color: #3366ff }`), `.client-info` (with
+// `.info-line { color: darkgray }`), the bare `.badge` box and the
+// `.badge-warning` / `.badge-primary` fills `#fa0` / `#0095ff`.
+//
+// All dead, but not because the names are unused — `.card-header` and
+// `.card-body` DO appear in this template. They were nested inside
+// `:host .card-container`, and nothing here is a `.card-container`, so the
+// nested rules never matched. The grid view renders through `<ga-card-grid>`,
+// whose markup these styles cannot reach anyway: they are view-encapsulated to
+// this component's own template.
 
 :host {
   @include card-overrides(unset, calc($default-card-height), $default-radius);
@@ -183,7 +105,56 @@
   height: 100%;
 }
 
+:host .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  border: none;
+  padding: 0;
+  overflow: unset;
+  // The Interviews page card already paints --gauzy-card-2; a second layer here
+  // made this tab a different colour from the calendar tab
+  background-color: transparent;
+  // Same height as the Criterions tab (`.add-criterion` in interview-criterions):
+  // the table fills the space under the filters and scrolls inside it, instead of
+  // stopping at the default card body height with empty space below.
+  height: calc(100vh - 16.5rem);
+  min-height: 0;
+
+  &-filter {
+    padding-bottom: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .card-body.interview-panel {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .table-scroll-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
 :host .interview-panel {
   @include nb-ltr(padding-right, 0.5rem !important);
   @include nb-rtl(padding-left, 0.5rem !important);
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// The same block the Candidates list this page sits beside now carries: density
+// tokens, the table surface, row hover/selection, the tag-chip stack, the status
+// pills, the pager and the toolbar scale.
+//
+// `$actions` is `.card-header` rather than `nb-card-header`: this component's
+// root IS an `nb-card-body`, and its action row is a plain div inside it.
+@include ga-hub.list-page('.card-header');

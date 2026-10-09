@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/ai-chat-react-ui/src",
 	"prefix": "gz",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": ["plugin-ui", "ui-react", "ui-react-components", "ui-core"],
 	"targets": {
 		"build": {

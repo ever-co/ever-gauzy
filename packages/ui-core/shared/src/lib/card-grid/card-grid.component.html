@@ -64,6 +64,16 @@
 	</div>
 } @else {
 	<div class="no-data">
-		<ngx-no-data-message [message]="getNoDataMessage()"></ngx-no-data-message>
+		<!--
+			`loading` reaches the empty state instead of short-circuiting here, so
+			the placeholder it draws is card-shaped and the "no records" copy only
+			appears once the page says the request is done.
+		-->
+		<ngx-no-data-message
+			[message]="getNoDataMessage()"
+			[loading]="loading"
+			variant="cards"
+			[skeletonRows]="skeletonCards"
+		></ngx-no-data-message>
 	</div>
 }

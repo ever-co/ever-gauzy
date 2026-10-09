@@ -30,15 +30,47 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 	 */
 	public async execute(command: InviteAcceptCommand) {
 		try {
-			const { input, languageCode } = command;
+			const { languageCode } = command;
+			// Work on a copy: the command's input is the caller's (readonly) DTO, and everything below
+			// deletes from it and pins fields on its nested `user`. The copy is two levels deep on
+			// purpose — those are the only levels written to — and a missing `user` is left missing
+			// so the pin below still fails instead of registering an account with no user at all.
+			const input = {
+				...command.input,
+				...(command.input.user && { user: { ...command.input.user } })
+			} as typeof command.input;
 			const { email, token, code } = input;
+
+			// Drop the fields the INVITE owns before anything downstream reads them. The HTTP entry
+			// point whitelists the body with `AcceptInviteDTO`, but this command is also reachable
+			// through the command bus, and `AuthService.register` spreads what it is handed into
+			// repository `create()` calls: a top-level `id` there is a primary key, which turns the
+			// employee `save()` into an UPDATE of somebody else's row, and `featureAsEmployee`
+			// self-provisions an employee profile that `/auth/register` only lets an admin create.
+			// `inviteId` and `organizationId` are re-set from the invitation a few lines below and
+			// in each sub-handler, so removing them here cannot break a legitimate accept.
+			const inviteOwnedFields = input as unknown as Record<string, unknown>;
+			for (const field of [
+				'id',
+				'featureAsEmployee',
+				'organizationId',
+				'createdByUserId',
+				'isImporting',
+				'sourceId'
+			]) {
+				delete inviteOwnedFields[field];
+			}
 
 			let invite: IInvite;
 
-			// Validate invite by token or code
-			if (typeof input === 'object' && 'email' in input && 'token' in input) {
+			// Validate invite by token or code.
+			//
+			// Discriminate on the VALUE, not on key presence: with a validated DTO in front of this
+			// handler the class may declare both properties, and `'token' in input` would then take
+			// the token branch for a code-only acceptance (the Ever Teams flow) and fail it.
+			if (email && token) {
 				invite = await this.inviteService.validateByToken({ email, token });
-			} else if (typeof input === 'object' && 'email' in input && 'code' in input) {
+			} else if (email && code) {
 				invite = await this.inviteService.validateByCode({ email, code });
 			}
 			if (!invite) {
@@ -47,10 +79,25 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 
 			// Assign role to user
 			const { id: inviteId } = invite;
-			const { role } = await this.inviteService.findOneByIdString(inviteId, {
-				relations: { role: true }
+			const { role, tenant, tenantId } = await this.inviteService.findOneByIdString(inviteId, {
+				relations: { role: true, tenant: true }
 			});
+			// Pin BOTH the relation and its foreign key to the role stored on the invite. The request
+			// body is attacker-controlled on this @Public() route, and the flat `roleId` column wins
+			// over the `role` relation when the user row is persisted — so setting only `role` here
+			// would let an invitee accept with `user.roleId` of any role (e.g. SUPER_ADMIN).
 			input['user']['role'] = role;
+			input['user']['roleId'] = role.id;
+			// The account is created for the INVITED address (the one the token/code was validated
+			// against) — never for a different, auto-verified address supplied in the body.
+			input['user']['email'] = invite.email;
+			// The INVITE decides which tenant the account is created in. `AuthService.register` reads
+			// `input.user.tenant`, which is body-supplied on this @Public() route — leaving it in place
+			// let an invitee for tenant A register into tenant B by naming B's tenant in the payload.
+			if (tenant || tenantId) {
+				input['user']['tenant'] = tenant ?? { id: tenantId };
+				input['user']['tenantId'] = tenant?.id ?? tenantId;
+			}
 			input['inviteId'] = inviteId;
 
 			// Invite accept for employee, candidate & user

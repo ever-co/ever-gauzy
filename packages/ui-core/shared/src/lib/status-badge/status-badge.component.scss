@@ -1,15 +1,64 @@
+// The pill is normally the tallest thing in its smart-table cell, so its height
+// is what the row pays for it. Sized from the shared table-density tokens
+// (`$gauzy-density` in `themes.scss`, `density-tokens()` in
+// `gauzy/_gauzy-table-hub.scss`) so a status column costs a row about one line
+// box, the same as a plain text column. Literals are CSS-var fallbacks, for the
+// layouts that render this component outside a table.
 div {
-  border-radius: 0.25rem;
-  align-content: center;
+  // Was `--gauzy-radius-sm` (0.375rem) — the control radius, which is right for
+  // a 2rem button and much too round for a pill barely half that tall: the
+  // corners met in the middle of each short edge and "Sent" sat in a lozenge.
+  // `--gauzy-table-badge-radius` is the small-box step below it.
+  border-radius: var(--gauzy-table-badge-radius, 0.25rem);
   display: flex;
+  // Was `align-content`, which only does anything on a MULTI-LINE flex
+  // container (`flex-wrap: wrap`); this one is single-line, so the declaration
+  // was inert and the text was centred only by the fixed height happening to
+  // match its line box. `align-items` is the single-line property, and it is
+  // what actually centres the text now that padding, not height, sets the box.
+  align-items: center;
   justify-content: center;
   width: 100%;
-  height: 23px;
-  font-size: 12px;
+  // `height` → `min-height` + real padding. The old fixed height was the reason
+  // there was no vertical padding to give: with the app-wide `border-box` reset,
+  // padding inside a pinned height comes OUT of the text's own box rather than
+  // adding to the pill, so any padding added alongside it would have cropped the
+  // text instead of framing it. As a floor it still guarantees a uniform pill
+  // down the column when a status string is unusually short.
+  min-height: var(--gauzy-table-badge-height, 1.25rem);
+  // The inset is what the box has LEFT after the text, not a figure of its own —
+  // and that is the whole point. `--gauzy-table-badge-height` is the contract
+  // ("a status pill costs a row exactly one line box and no more"), but
+  // `min-height` is a floor and cannot hold a ceiling: a flat
+  // `--gauzy-table-badge-padding-y` on top of the line below added up to more
+  // than the token on every page that sets `density-tokens()` — 0.8125rem of line
+  // plus 2 × 0.1875rem came to 19px inside a 16px contract, so a status column
+  // stood ~3px taller than the plain-text columns next to it and set the height
+  // of the row.
+  //
+  // Derived, so the pill lands ON the contract in both worlds instead of near it:
+  // 16px on a density page, 20px on the app-wide defaults, text centred in either
+  // by the `align-items` above. Should a caller ever set a line TALLER than the
+  // box, the difference goes negative and CSS clamps a negative `calc()` on
+  // `padding` to zero, so the pill simply grows off `min-height` instead.
+  //
+  // `--gauzy-table-badge-padding-y` is deliberately NOT read here. It stays for
+  // the badge-shaped boxes that pin no height of their own (Tasks, Help Center,
+  // the pipeline stage chips), which is where a free-standing inset still means
+  // something; this component is the one the height contract is written for.
+  padding-block: calc(
+    (var(--gauzy-table-badge-height, 1.25rem) - var(--gauzy-table-header-line-height, 0.9375rem)) / 2
+  );
+  // The horizontal inset is the chips' own, so a status pill and a tag chip in
+  // adjacent columns hold their text at the same distance from the edge. It only
+  // shows when a cell is narrow enough for the pill to hug its text — the
+  // `width: 100%` above otherwise stretches it to the column.
+  padding-inline: var(--gauzy-table-chip-padding-x, 0.3125rem);
+  font-size: var(--gauzy-table-header-font-size, 0.75rem);
   font-weight: 600;
-  line-height: 15px;
+  line-height: var(--gauzy-table-header-line-height, 0.9375rem);
   letter-spacing: 0em;
-  text-align: left;
+  text-align: center;
 }
 
 .badge {

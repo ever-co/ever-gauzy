@@ -8,6 +8,11 @@ services:
       replicas: 2
     environment:
       API_HOST: '0.0.0.0'
+      # This shape is fronted by Cloudflare (see nginx.*.pre.cloudflare.conf), so the real client address
+      # arrives in CF-Connecting-IP. Without this every client shares the Cloudflare edge address and
+      # therefore one rate-limit bucket. Set it to false if the origin is reachable other than through
+      # Cloudflare, since the header is client-writable there (GHSA-86mw-2crg-vmhc).
+      THROTTLE_TRUST_CF_CONNECTING_IP: '${THROTTLE_TRUST_CF_CONNECTING_IP:-true}'
       DEMO: '${DEMO}'
       NODE_ENV: '${NODE_ENV}'
       ADMIN_PASSWORD_RESET: '${ADMIN_PASSWORD_RESET}'

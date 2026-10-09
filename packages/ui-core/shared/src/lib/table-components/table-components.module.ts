@@ -33,6 +33,7 @@ import { IncomeExpenseAmountComponent } from './income-amount/income-amount.comp
 import { InvoiceTotalValueComponent } from './invoice-total-value/invoice-total-value.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
 import { OrganizationWithTagsComponent } from './organization-with-tags/organization-with-tags.component';
+import { PeopleListComponent } from './people-list/people-list.component';
 import { PhoneUrlComponent } from './phone-url/phone-url.component';
 import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
 import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
@@ -92,6 +93,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		NumberEditorComponent,
 		EmployeeLinkEditorComponent,
 		OrganizationWithTagsComponent,
+		PeopleListComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,
 		ProjectComponent,
@@ -136,6 +138,7 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		NumberEditorComponent,
 		NonEditableNumberEditorComponent,
 		OrganizationWithTagsComponent,
+		PeopleListComponent,
 		PhoneUrlComponent,
 		PictureNameTagsComponent,
 		ProjectComponent,

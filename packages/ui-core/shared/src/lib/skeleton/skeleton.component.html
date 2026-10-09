@@ -1,0 +1,16 @@
+<div
+	class="ga-skeleton"
+	[class.ga-skeleton--table]="variant === 'table'"
+	[class.ga-skeleton--cards]="variant === 'cards'"
+	role="status"
+	aria-busy="true"
+	[attr.aria-label]="'SM_TABLE.NO_DATA.LOADING' | translate"
+>
+	@for (row of rowIndexes; track row) {
+		<div class="ga-skeleton__row">
+			@for (bar of barIndexes; track bar) {
+				<span class="ga-skeleton__bar"></span>
+			}
+		</div>
+	}
+</div>

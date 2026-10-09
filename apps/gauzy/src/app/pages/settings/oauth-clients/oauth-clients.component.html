@@ -1,7 +1,11 @@
 <nb-card class="oauth-clients-card">
 	<nb-card-header class="header">
 		<div>
-			<h5>{{ 'OAUTH_CLIENTS.TITLE' | translate }}</h5>
+			<h5>
+				<ngx-header-title [allowEmployee]="false">
+					{{ 'OAUTH_CLIENTS.TITLE' | translate }}
+				</ngx-header-title>
+			</h5>
 			<p class="subtitle">{{ 'OAUTH_CLIENTS.SUBTITLE' | translate }}</p>
 		</div>
 		<button type="button" nbButton status="primary" (click)="openCreateDialog()">

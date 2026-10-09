@@ -7,6 +7,7 @@ import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-e
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import {
 	EditEmployeeContactComponent,
+	EditEmployeeDocumentsComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
@@ -16,7 +17,8 @@ import {
 	EditEmployeeProjectsComponent,
 	EditEmployeeRatesComponent
 } from './edit-employee/edit-employee-profile';
-import { EmployeeResolver } from './employee.resolver';
+import { EmployeeResolver, EmployeeViewResolver } from './employee.resolver';
+import { ViewEmployeeComponent } from './view-employee/view-employee.component';
 
 const selectors = {
 	team: false,
@@ -47,6 +49,22 @@ const routes: Routes = [
 				date: false
 			}
 		}
+	},
+	{
+		// Read-only View. An employee is a large record, so it gets a page rather
+		// than a drawer; the guard is the same one that gates the Manage Employees
+		// list it is opened from, so it shows nothing new.
+		path: 'view/:id',
+		component: ViewEmployeeComponent,
+		canActivate: [PermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
+				redirectTo: '/pages/dashboard'
+			},
+			selectors
+		},
+		resolve: { employee: EmployeeViewResolver }
 	},
 	{
 		path: 'edit/:id',
@@ -122,6 +140,15 @@ const routes: Routes = [
 			{
 				path: 'settings',
 				component: EditEmployeeOtherSettingsComponent,
+				data: { selectors }
+			},
+			{
+				// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Deliberately
+				// NOT permission-guarded here: the panel gates itself on DOCS_READ +
+				// FEATURE_DOCUMENTS, and a route guard would redirect the whole
+				// employee page to the dashboard instead of hiding one tab.
+				path: 'documents',
+				component: EditEmployeeDocumentsComponent,
 				data: { selectors }
 			}
 		]

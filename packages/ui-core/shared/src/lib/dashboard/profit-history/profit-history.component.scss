@@ -14,3 +14,11 @@ nb-card-header {
 nb-card.profit-history {
   	width: 645px;
 }
+
+// Inline (dashboard-builder widget) usage: the card fills whatever cell the user
+// resized the widget to, instead of the dialog's fixed width — which would
+// overflow a narrow canvas column horizontally.
+nb-card.profit-history.inline {
+	width: 100%;
+	height: 100%;
+}

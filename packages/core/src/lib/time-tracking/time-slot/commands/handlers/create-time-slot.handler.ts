@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
@@ -63,6 +63,13 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		if (!hasChangeEmployeePermission || (isEmpty(employeeId) && RequestContext.currentEmployeeId())) {
 			// Assign current employeeId if not provided in the request payload
 			employeeId = RequestContext.currentEmployeeId();
+		}
+
+		// A time slot always belongs to an employee (NOT NULL column). Fail here rather than later:
+		// an empty id used to be dropped from the employee lookup below, which then resolved the
+		// FIRST employee of the tenant and built the slot in that employee's organization.
+		if (isEmpty(employeeId)) {
+			throw new BadRequestException('Employee context is required to create a time slot');
 		}
 
 		/*

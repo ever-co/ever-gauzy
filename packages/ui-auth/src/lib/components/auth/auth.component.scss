@@ -7,12 +7,41 @@
     border: none;
   }
 
+  // `100vw` (here and on `.body` below) is the FULL viewport including the
+  // vertical scrollbar gutter. The register screen is taller than most viewports,
+  // so as soon as its scrollbar appeared these two bands were wider than the space
+  // left for them and the whole auth shell picked up a horizontal scrollbar it
+  // never needed. They already span their column, so `100%` is both correct and
+  // scrollbar-safe.
   & .header {
+    background: transparent;
     border-bottom: none;
-    padding-top: 24px;
-    padding-left: 30px;
-    padding-right: 30px;
-    width: 100vw;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    padding-left: 24px;
+    padding-right: 24px;
+    width: 100%;
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+    @include mobile-screen {
+      display: none;
+    }
+  }
+  & .header.register,
+  & .header.login {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: rgb(18 18 20 / 0%);
+    border-bottom: none;
+    padding: 14px 24px;
+    height: 68px;
+    flex: 0 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -23,26 +52,27 @@
   }
   & .card {
     margin-bottom: 0;
-    height: 100%;
+    height: 100vh;
+    max-height: 100vh;
     width: 100%;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     @include mobile-screen {
       height: auto;
+      max-height: none;
     }
   }
-  // Set --header-height on :root or the nb-card-header element to match the
-  // actual rendered header size. Override per-breakpoint as needed, e.g.:
-  //   @media (max-width: 490px) { :root { --header-height: 0px; } }
-  // The fallback of 70px matches the current desktop header height.
   & .body {
-    width: 100vw;
-    height: 100%;
-    min-height: calc(100vh - var(--header-height, 70px));
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 16px;
+    padding-bottom: 16px;
     @include mobile-screen {
       padding-left: 10px;
       padding-right: 10px;
@@ -51,6 +81,7 @@
       align-items: center;
     }
     & .auth-block {
+      margin: auto 0;
       min-width: 100%;
       display: flex;
       justify-content: center;
@@ -66,10 +97,18 @@
   }
 }
 .back-link {
-  border: 1px solid lightgray;
+  // Was the CSS named colour `lightgray` (#d3d3d3): a ring bright enough to be
+  // the loudest thing in the auth header on the dark themes, and a dead-flat
+  // hairline that ignores the theme on the light ones.
+  border: 1px solid nb-theme(border-basic-color-3);
   border-radius: 50%;
-  padding: 15px;
+  padding: 10px;
+  display: inline-flex;
   transition: all 0.3s ease;
+  & nb-icon {
+    width: 18px;
+    height: 18px;
+  }
   &:hover {
     -webkit-box-shadow: 5px 5px 30px -10px rgba(0, 0, 0, 0.3);
     box-shadow: 5px 5px 30px -10px rgba(0, 0, 0, 0.3);
@@ -95,7 +134,18 @@
     display: none;
   }
 }
-.register {
+// The register/login header is `position: fixed`, so it no longer reserves its
+// own 68px in the card's flex column. Pay that height back here so the form
+// starts where it did before instead of sliding under the theme switch.
+.body.register,
+.body.login {
+  padding-top: 68px + 16px;
+  @include mobile-screen {
+    padding-top: 16px;
+  }
+}
+
+.body.register {
   background: $register-background-light-color;
 }
 

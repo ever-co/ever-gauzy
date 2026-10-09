@@ -4,7 +4,12 @@
 		"outDir": "../../../dist/out-tsc",
 		"module": "commonjs",
 		"moduleResolution": "node16",
-		"types": ["jest", "node"]
+		"types": ["jest", "node"],
+		"esModuleInterop": true,
+		"noImplicitAny": false,
+		"strictNullChecks": false,
+		"strictBindCallApply": false,
+		"noFallthroughCasesInSwitch": false
 	},
-	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
+	"include": ["jest.config.ts", "src/test-setup.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
 }

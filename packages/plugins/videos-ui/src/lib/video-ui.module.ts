@@ -16,7 +16,7 @@ import {
 	NbSpinnerModule,
 	NbTabsetModule
 } from '@nebular/theme';
-import { provideEffects, provideEffectsManager } from '@ngneat/effects-ng';
+import { provideEffects } from '@ngneat/effects-ng';
 import { TranslateModule } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
 import { VideoEffects } from './+state/video.effect';
@@ -98,7 +98,16 @@ import { SoundshotPlayerSkeletonComponent } from './shared/ui/soundshot/soundsho
 		NgOptimizedImage
 	],
 	providers: [
-		provideEffectsManager(),
+		// 🛑 Do NOT call provideEffectsManager() here. `@ngneat/effects-ng` documents it as
+		// "Must be called at the root level" — it runs `initEffects()`, which creates the effects
+		// manager and subscribes it to the GLOBAL `actions` stream. The app root already provides
+		// it (apps/gauzy/src/app/bootstrap.module.ts). This module is lazy-loaded via
+		// `loadChildren` (apps/gauzy .../employees/activity/activity.module.ts), so providing the
+		// manager again stood up a SECOND manager on the same stream that re-entered synchronously
+		// on first navigation to the videos route and pegged the main thread — before any HTTP, so
+		// every unit test passed while the route was unreachable in a browser. A feature module
+		// contributes ONLY its effects via provideEffects(); the manager is the root's job. This is
+		// the same defect fixed in @gauzy/plugin-docs-ui (see docs-ui.module.effects-manager.spec.ts).
 		provideEffects(VideoEffects, CamshotEffects, SoundshotEffects),
 		VideoQuery,
 		VideoStore,

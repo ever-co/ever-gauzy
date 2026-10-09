@@ -25,10 +25,16 @@
           [cdkDragData]="stage"
           >
           <nb-accordion-item-header>
+            <!--
+              `danger`, not `warning`: this deletes a stage, and every other
+              delete control in the app is red. Amber reads as "careful" and put
+              this button in a different colour language from the trash icons
+              beside every other list.
+            -->
             <button
               nbButton
               size="tiny"
-              status="warning"
+              status="danger"
               type="button"
 						(click)="
 							isAdding &&

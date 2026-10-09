@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts';
+import { IOrganization, IOrganizationCreateInput, ITenant, IUser } from '@gauzy/contracts';
 import {
 	AuthService,
 	EmployeesService,
@@ -10,7 +10,9 @@ import {
 	OrganizationsService,
 	Store,
 	TenantService,
-	UsersService
+	UsersService,
+	clearRememberedCheckoutSession,
+	readRememberedCheckoutSession
 } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
@@ -57,7 +59,7 @@ export class TenantOnboardingComponent implements OnInit, OnDestroy {
 		this.loading = true;
 
 		try {
-			const tenant = await this._tenantService.create({ name: organization.name });
+			const tenant = await this.resolveTenant(organization);
 			this.user = await this._usersService.getMe(['tenant']);
 			this._store.user = this.user;
 
@@ -74,6 +76,9 @@ export class TenantOnboardingComponent implements OnInit, OnDestroy {
 				this._router.navigate(['/onboarding/complete']);
 			} catch (error) {
 				console.error('Error while creating organization:', error);
+				// The form is now also shown to a user who already has a tenant, who may lack ALL_ORG_EDIT:
+				// tell them why nothing happened instead of only logging it
+				this._errorHandlingService.handleError(error);
 			}
 		} catch (error) {
 			console.error('Error while creating tenant:', error);
@@ -82,6 +87,32 @@ export class TenantOnboardingComponent implements OnInit, OnDestroy {
 		} finally {
 			this.loading = false;
 		}
+	}
+
+	/**
+	 * Returns the tenant the organization is created in.
+	 *
+	 * POST /tenant refuses a user who already has a tenant ("Tenant already exists", #8734), e.g. the super
+	 * admin created with the default tenant on a fresh install. Such a user only needs the organization, in
+	 * their existing tenant; everyone else gets a new tenant as before.
+	 *
+	 * @param {IOrganizationCreateInput} organization - The organization being created (names a new tenant).
+	 */
+	private async resolveTenant(organization: IOrganizationCreateInput): Promise<ITenant> {
+		if (this._store.user?.tenantId) {
+			return await this._tenantService.getCurrent();
+		}
+
+		// A buyer who came from the shared checkout brought their Stripe Checkout Session through the
+		// register form. Sending it here lets the API link the new tenant to their Stripe customer
+		// straight away (after verifying it with Stripe) instead of waiting for a confirmed email.
+		const stripeCheckoutSessionId = readRememberedCheckoutSession();
+		const tenant = await this._tenantService.create({
+			name: organization.name,
+			...(stripeCheckoutSessionId ? { stripeCheckoutSessionId } : {})
+		});
+		clearRememberedCheckoutSession();
+		return tenant;
 	}
 
 	/**

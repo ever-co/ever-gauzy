@@ -1,6 +1,16 @@
-import { Component, ElementRef, effect, inject, viewChild, afterNextRender, DestroyRef, signal, Type } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
+import {
+	Component,
+	effect,
+	inject,
+	viewChild,
+	afterNextRender,
+	DestroyRef,
+	Injector,
+	signal,
+	Type
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NbLayoutComponent, NbLayoutDirectionService, NbSidebarService } from '@nebular/theme';
 import { ChatSidebarService, LayoutService, NavigationBuilderService, Store } from '@gauzy/ui-core/core';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
@@ -29,6 +39,8 @@ export class OneColumnLayoutComponent {
 	private readonly layoutService = inject(LayoutService);
 	private readonly themeLanguageSelectorService = inject(ThemeLanguageSelectorService);
 	private readonly destroyRef = inject(DestroyRef);
+	private readonly directionService = inject(NbLayoutDirectionService);
+	private readonly injector = inject(Injector);
 
 	/** User signal for template — derived from store observable. */
 	readonly user = toSignal(this.store.user$);
@@ -74,50 +86,210 @@ export class OneColumnLayoutComponent {
 
 		this.themeLanguageSelectorService.initialize();
 
-		// Track the chat sidebar HOST width (flex-computed: normal, maximized
-		// or collapsed) and mirror it to --gz-chat-live-width so the fixed
-		// .main-container always matches the space the host reserves.
-		effect(() => {
-			const hostRef = this.chatSidebarHost();
-			this.chatHostResizeObserver?.disconnect();
-			this.chatHostResizeObserver = undefined;
-			if (!hostRef || typeof ResizeObserver === 'undefined') return;
-			const host = hostRef.nativeElement as HTMLElement;
-			const apply = () => host.style.setProperty('--gz-chat-live-width', `${host.getBoundingClientRect().width}px`);
-			this.chatHostResizeObserver = new ResizeObserver(apply);
-			this.chatHostResizeObserver.observe(host);
-			apply();
-		});
+		// No ResizeObserver mirroring the chat width any more: the panel takes its width straight from
+		// `--gz-chat-width` (the persisted user width), so there is a single source of truth and
+		// nothing that can go stale. See one-column.layout.scss.
 
 		// Runs only in the browser, after the first render — replaces ngAfterViewInit + isPlatformBrowser
 		afterNextRender(() => {
 			this.windowModeBlockScrollService.register(this.layout());
+			this.observeHeaderHeight();
+			this.observeHeaderBand();
 		});
 
 		this.destroyRef.onDestroy(() => {
+			// Flipped FIRST: the settle passes schedule rAF/timeout ticks (up to 400ms
+			// out) that outlive the component. The guard makes every late tick inert —
+			// without it a post-destroy tick re-enters apply, constructs a fresh
+			// ResizeObserver no cleanup path ever disconnects, and keeps writing the
+			// --gz-* vars for a layout that no longer exists.
+			this.destroyed = true;
 			this.navigationBuilderService.clearSidebars();
 			this.navigationBuilderService.clearActionBars();
-			this.chatHostResizeObserver?.disconnect();
+			this.headerResizeObserver?.disconnect();
+			this.bandResizeObserver?.disconnect();
+			this.menuClassObserver?.disconnect();
+			if (this.bandOnResize) window.removeEventListener('resize', this.bandOnResize);
 		});
 	}
 
-	/** The chat sidebar host element (present only while the chat renders). */
-	readonly chatSidebarHost = viewChild<ElementRef<HTMLElement>>('chatSidebarHost');
+	/** Set on destroy; gates the delayed settle ticks (see onDestroy above). */
+	private destroyed = false;
+
+	private headerResizeObserver?: ResizeObserver;
 
 	/**
-	 * Horizontal padding the fixed header needs on the given side so its
-	 * content moves aside for the expanded chat column instead of being
-	 * covered by it. Null when the chat is collapsed, docked to the other
-	 * side, or maximized (maximized covers the header band entirely).
+	 * Publish the header's REAL rendered height as `--gz-header-height`.
+	 *
+	 * Nebular's `--header-height` is a theme CONSTANT (4.5rem = 72px). The header
+	 * is content-driven, so it does not always agree: measured at 1600x950 it
+	 * renders 98px, and anything anchored to the constant then sits ~26px too
+	 * high and tucks under the real header. That is what put the Quick Settings
+	 * panel behind the header — it is not visible at 4.5rem-tall headers, which
+	 * is why it survived review.
+	 *
+	 * The principle: measure the box the browser actually produced, rather than restating a
+	 * constant that the layout is free to exceed.
 	 */
-	chatHeaderPad(side: 'start' | 'end'): number | null {
-		const chat = this.chatSidebarService;
-		return chat.available() && chat.expanded() && !chat.maximized() && chat.position() === side
-			? chat.width()
-			: null;
+	private observeHeaderHeight(): void {
+		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+		let observed: HTMLElement | null = null;
+		const apply = () => {
+			if (this.destroyed) return;
+			// Queried FRESH and re-observed on identity change: `@if (user())`
+			// re-creates `nb-layout-header` across auth transitions, and an
+			// observer captured once ends up watching a DETACHED node — the var
+			// freezes at the last pre-detach height. Measured live: the var held
+			// 88px while the re-created header rendered 98px once the demo
+			// banner appeared, and everything anchored to it (the chat column's
+			// top edge) tucked 10px under the band.
+			const header = document.querySelector('nb-layout-header') as HTMLElement | null;
+			if (!header) return;
+			if (header !== observed) {
+				this.headerResizeObserver?.disconnect();
+				this.headerResizeObserver = new ResizeObserver(apply);
+				this.headerResizeObserver.observe(header);
+				observed = header;
+			}
+			document.documentElement.style.setProperty(
+				'--gz-header-height',
+				`${Math.round(header.getBoundingClientRect().height)}px`
+			);
+		};
+		this.applyHeaderHeight = apply;
+		// The re-creation trigger itself: settle over the render the `user()`
+		// flip causes (idempotent re-applies are free; the ResizeObserver only
+		// covers the node it is attached to, never the swap).
+		effect(
+			() => {
+				this.user();
+				requestAnimationFrame(apply);
+				setTimeout(apply, 120);
+				setTimeout(apply, 400);
+			},
+			{ injector: this.injector }
+		);
+		apply();
 	}
 
-	private chatHostResizeObserver?: ResizeObserver;
+	/** Re-applied from the band observer's settle ticks — see observeHeaderBand. */
+	private applyHeaderHeight?: () => void;
+
+	private bandResizeObserver?: ResizeObserver;
+
+	/**
+	 * Publish where the fixed HEADER BAND begins and ends, as `--gz-band-left` /
+	 * `--gz-band-right`: from the nav menu sidebar's trailing edge to the layout's far edge. The
+	 * band runs OVER the chat column (the chat sits below it at z 1039, its top at
+	 * `--gz-header-height`), so unlike the old `--gz-canvas-left/right` — which measured
+	 * `nb-layout-column`, i.e. the edge AFTER menu + chat — the band depends only on the menu
+	 * sidebar's geometry. That is the point: the header chasing the chat's edge at 60Hz is where
+	 * the whole staleness-bug class came from (see 536fa7fced), and a band that ignores chat state
+	 * has nothing to go stale against.
+	 *
+	 * MEASURED, not derived from Nebular's width tokens: collapse, compaction and window-mode
+	 * centring all move the real edges, and the derivation going wrong is what killed the previous
+	 * design. Measuring the layout container (rather than assuming 0/viewport edges) keeps the
+	 * >1920px centred window mode correct for free. The menu block is every in-flow sidebar on the
+	 * leading side — `menu-sidebar` today, `user-workspace` if a layout ever renders it (none does
+	 * currently) — attributed to left or right by which container edge it hugs, so RTL (menu at the
+	 * trailing edge) falls out of the same arithmetic.
+	 */
+	private observeHeaderBand(): void {
+		if (typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+		let observedMenuHost: HTMLElement | null = null;
+		const apply = () => {
+			if (this.destroyed) return;
+			// Queried FRESH on every call — a captured node can go stale across layout re-renders,
+			// and a stale node measures its old box while looking perfectly alive.
+			const container = document.querySelector('nb-layout .layout .layout-container') as HTMLElement | null;
+			if (!container) return;
+
+			// Re-homed on identity change, the same freshness rule the header-height
+			// observer follows: `@if (user())` creates the menu sidebar AFTER a cold
+			// first pass (nothing to observe yet) and REPLACES it across auth
+			// transitions (the old host detaches while the observers keep watching
+			// it). Both cases land here via the settle ticks below.
+			const menuHost = document.querySelector('nb-sidebar.menu-sidebar') as HTMLElement | null;
+			if (menuHost !== observedMenuHost) {
+				this.bandResizeObserver?.disconnect();
+				this.menuClassObserver?.disconnect();
+				if (menuHost) {
+					this.bandResizeObserver = new ResizeObserver(apply);
+					this.bandResizeObserver.observe(menuHost);
+					// A ResizeObserver fires on SIZE, and Nebular's expand/compact/collapse
+					// are stamped onto the sidebar host as CLASSES — a MutationObserver on
+					// that attribute fires on every state change no matter which observer
+					// mechanism is having a bad day. (Same belt-and-braces pattern
+					// 536fa7fced added for the chat host, re-aimed at the menu.)
+					if (typeof MutationObserver !== 'undefined') {
+						this.menuClassObserver = new MutationObserver(applySettled);
+						this.menuClassObserver.observe(menuHost, { attributes: true, attributeFilter: ['class'] });
+					}
+				}
+				observedMenuHost = menuHost;
+			}
+			const containerRect = container.getBoundingClientRect();
+			let left = containerRect.left;
+			let right = window.innerWidth - containerRect.right;
+			const blocks = Array.from(
+				document.querySelectorAll('nb-sidebar.menu-sidebar, nb-sidebar.user-workspace')
+			) as HTMLElement[];
+			for (const block of blocks) {
+				const rect = block.getBoundingClientRect();
+				if (rect.width <= 0) continue; // collapsed → width 0, contributes nothing
+				// Nearer the container's leading edge → it insets the band's left; RTL puts the
+				// menu at the trailing edge, where it insets the band's right instead.
+				const onLeft = rect.left - containerRect.left <= containerRect.right - rect.right;
+				if (onLeft) left = Math.max(left, rect.right);
+				else right = Math.max(right, window.innerWidth - rect.left);
+			}
+			const root = document.documentElement.style;
+			root.setProperty('--gz-band-left', `${Math.round(left)}px`);
+			root.setProperty('--gz-band-right', `${Math.round(right)}px`);
+		};
+		// The menu sidebar animates its collapse/compaction, so a single measurement lands
+		// mid-animation and freezes the header at a stale inset. Settle over the transition:
+		// idempotent style writes make the extra ticks free. The header height rides along —
+		// anything that reflows the band (menu state, window size, direction) can wrap or
+		// unwrap it, and the chat column's top edge hangs off that var.
+		const applySettled = () => {
+			const applyAll = () => {
+				apply();
+				this.applyHeaderHeight?.();
+			};
+			requestAnimationFrame(applyAll);
+			setTimeout(applyAll, 120);
+			setTimeout(applyAll, 400);
+		};
+
+		// The menu's own box does not change when the window does, so track that too.
+		window.addEventListener('resize', apply);
+		this.bandOnResize = apply;
+
+		// The sidebar's own CREATION is invisible to the observers above — they are
+		// attached to the host, not to its parent. `@if (user())` is the creation
+		// trigger, so settle over the render it causes: the ticks re-enter `apply`,
+		// which re-homes the observers onto the freshly created host and re-measures.
+		effect(
+			() => {
+				this.user();
+				applySettled();
+			},
+			{ injector: this.injector }
+		);
+		// An RTL flip moves the menu to the other edge WITHOUT resizing it, so neither observer
+		// above fires — watch the direction change directly.
+		this.directionService
+			.onDirectionChange()
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(() => applySettled());
+		apply();
+	}
+
+	private menuClassObserver?: MutationObserver;
+
+	private bandOnResize?: () => void;
 
 	/**
 	 * Toggles the expansion state of the sidebar.

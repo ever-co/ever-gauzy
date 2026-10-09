@@ -7,7 +7,8 @@ import {
 	RequestContext,
 	TenantPermissionGuard,
 	UseValidationPipe,
-	UUIDValidationPipe
+	UUIDValidationPipe,
+	documentUploadFileFilter
 } from '@gauzy/core';
 import {
 	BadRequestException,
@@ -84,7 +85,10 @@ export class PluginManagementController {
 	})
 	@UseInterceptors(
 		LazyAnyFileInterceptor({
-			storage: () => FileStorageFactory.create('plugins')
+			storage: () => FileStorageFactory.create('plugins'),
+			// Plugin archives land under /public with the client extension: refuse script-capable
+			// non-document types (GHSA-p334-cm7f-php5 class).
+			fileFilter: documentUploadFileFilter
 		})
 	)
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
@@ -188,7 +192,10 @@ export class PluginManagementController {
 	})
 	@UseInterceptors(
 		LazyAnyFileInterceptor({
-			storage: () => FileStorageFactory.create('plugins')
+			storage: () => FileStorageFactory.create('plugins'),
+			// Plugin archives land under /public with the client extension: refuse script-capable
+			// non-document types (GHSA-p334-cm7f-php5 class).
+			fileFilter: documentUploadFileFilter
 		})
 	)
 	@Permissions(PermissionsEnum.PLUGIN_UPDATE)

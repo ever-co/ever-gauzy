@@ -1,0 +1,36 @@
+@use 'themes' as *;
+
+// The "delete all data" queue progress indicator.
+//
+// The markup is Bootstrap's (`.progress` > `.progress-bar`) and bootstrap.css is
+// loaded globally, so both boxes were taking Bootstrap's own constants: a #e9ecef
+// track and a #007bff fill. That is a light-grey rail with a blue bar on all eight
+// themes — near-invisible on the near-black ones, and the only blue on a page whose
+// every other control is danger-red. Same geometry, theme tokens for the colours.
+.queue-progress {
+	max-width: 32rem;
+
+	.queue-progress-label {
+		display: block;
+		margin-bottom: 0.5rem;
+		font-size: nb-theme(text-label-font-size);
+		color: nb-theme(text-hint-color);
+	}
+
+	// `background-basic-color-3` rather than one of the `gauzy-*` surface tokens:
+	// the latter are only registered on default/cosmic/corporate/dark, so on the
+	// two material themes the track would resolve to an undefined custom property
+	// and the rail would simply vanish.
+	.progress {
+		height: 0.5rem;
+		border-radius: nb-theme(border-radius);
+		background-color: nb-theme(background-basic-color-3);
+		overflow: hidden;
+	}
+
+	.progress-bar {
+		height: 100%;
+		background-color: nb-theme(color-danger-default);
+		transition: width 0.3s ease;
+	}
+}

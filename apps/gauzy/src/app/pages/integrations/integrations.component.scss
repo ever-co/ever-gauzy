@@ -30,8 +30,11 @@
       }
 
       &:hover {
+        // No `--gauzy-shadow` here: the button already draws a 1px border, and
+        // on the dark canvas that token is a ring, so hovering added a second
+        // hairline just outside the first. The fill change plus the 1px lift
+        // are the hover state.
         background-color: var(--gauzy-card-1);
-        box-shadow: var(--gauzy-shadow);
         transform: translateY(-1px);
       }
 
@@ -49,11 +52,15 @@
 }
 
 
+// Search + filter strip, separated from the integration tiles by a hairline.
+// The 38px of padding under the controls plus 37px of margin under the rule left
+// 75px of empty band across the page — two off-by-one magic numbers from before
+// the density pass, not a deliberate rhythm. One rem either side of the rule.
 .integration-filters {
   display: flex;
-  margin-bottom: 37px;
+  margin-bottom: 1rem;
   box-shadow: 0 1px 0 0 var(--gauzy-border-default-color);
-  padding-bottom: 38px;
+  padding-bottom: 1rem;
 }
 
 .group-select {
@@ -79,7 +86,11 @@ a.disabled {
     display: flex;
     padding: 15px;
     margin: 0 1rem 1rem 0;
-    box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
+    // Was the literal `0 1px 1px 0 rgb(0 0 0 / 15%)` — a hand-copied duplicate
+    // of the light-theme `--gauzy-shadow`, so these tiles kept a black drop
+    // shadow (i.e. no visible edge at all) on the dark canvas. Reading the token
+    // keeps light identical and gives dark the shared hairline.
+    box-shadow: var(--gauzy-shadow);
     border-radius: 8px;
     position: relative;
     background-color: var(--gauzy-card-1);
@@ -104,16 +115,26 @@ img {
   overflow: hidden;
 }
 
+// The "coming soon" corner ribbon.
+//
+// Its top gradient stop already read `--text-primary-color`, but the bottom stop
+// and both fold triangles were literal purples (`rgb(101,105,223)` /
+// `rgb(103,63,189)`) sampled from the default theme's accent. Anywhere the accent
+// is not that purple — the material themes ship a different primary entirely —
+// the ribbon faded from the theme colour into a stray blue-violet and folded back
+// in a third colour again. All three now come from the same primary ramp, so the
+// ribbon is one colour family in every theme. The white label stays literal: it
+// sits on a saturated fill, not on a theme surface.
 .coming-soon {
   position: absolute;
   width: 130px;
   transform: rotate(45deg);
   top: 25px;
   right: -27px;
-  background: linear-gradient(var(--text-primary-color), rgb(101, 105, 223) 100%);
+  background: linear-gradient(var(--color-primary-500), var(--color-primary-600) 100%);
   box-shadow: #000 0px 3px 10px -5px;
   line-height: 25px;
-  color: rgb(255, 255, 255);
+  color: #fff;
   font-size: 10px;
   font-weight: bold;
   text-transform: uppercase;
@@ -124,10 +145,10 @@ img {
     position: absolute;
     left: 0px;
     top: 100%;
-    border-left: 3px solid rgb(103, 63, 189);
+    border-left: 3px solid var(--color-primary-700);
     border-right: 3px solid transparent;
     border-bottom: 3px solid transparent;
-    border-top: 3px solid rgb(103, 63, 189);
+    border-top: 3px solid var(--color-primary-700);
   }
 
   &::after {
@@ -136,9 +157,9 @@ img {
     right: 0px;
     top: 100%;
     border-left: 3px solid transparent;
-    border-right: 3px solid rgb(103, 63, 189);
+    border-right: 3px solid var(--color-primary-700);
     border-bottom: 3px solid transparent;
-    border-top: 3px solid rgb(103, 63, 189);
+    border-top: 3px solid var(--color-primary-700);
   }
 }
 
@@ -166,13 +187,10 @@ img {
     @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
   }
 
+  // Size/weight come from the shared card-title step in `styles/_overrides.scss`;
+  // only the colour and the RTL alignment are this page's business.
   h4 {
     color: var(--gauzy-text-color-1);
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 30px;
-    letter-spacing: 0em;
-    text-align: left;
     @include nb-ltr(text-align, left);
     @include nb-rtl(text-align, right);
   }
@@ -209,6 +227,7 @@ nb-option {
   width: fit-content;
 
   button {
-    box-shadow: 0 1px 1px 0 rgb(0 0 0 / 15%);
+    // Same hand-copied light-theme literal as `.list-item` above.
+    box-shadow: var(--gauzy-shadow);
   }
 }

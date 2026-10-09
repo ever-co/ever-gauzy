@@ -14,15 +14,76 @@ import {
 	lastAssistantMessageIsCompleteWithToolCalls
 } from 'ai';
 import { useInjector } from '@gauzy/ui-react';
-import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
+import {
+	AI_CHAT_KEY_REJECTED_CODE,
+	AI_CHAT_RATE_LIMIT_CODE,
+	AI_CHAT_SETTINGS_PATH,
+	AiChatErrorCode,
+	PermissionsEnum,
+	type IAiChatRateLimitEnvelope,
+	type IAiSpeechErrorBody
+} from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { executeClientTool, isClientTool } from '../chat-client-tools';
 import { useAngularSignal } from '../use-angular-signal';
+import { useChatTranslate } from '../use-chat-translate';
 import { ChatMessageList } from './ChatMessageList';
-import { ChatInput } from './ChatInput';
+import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
+import { DocsAttachPicker } from './DocsAttachPicker';
+import { AttachmentPreview, type IPreviewableAttachment } from './AttachmentPreview';
+import { AttachmentCard } from './AttachmentCard';
+import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
+import { useChatTooltips } from '../use-chat-tooltips';
 import { chatTheme } from '../chat-theme';
+import { chatMarkdownCss } from '../chat-markdown-css';
+
+/**
+ * What the docs upload endpoint answers with (the slice this panel reads).
+ * Mirrored rather than imported: `IDocumentUploadResponse` lives in the backend docs plugin,
+ * which must not be pulled into the browser bundle.
+ */
+interface IDocsUploadResponseSlice {
+	results?: { document?: { id?: string; name?: string; kind?: string } }[];
+	rejected?: { fileName?: string; message?: string }[];
+	message?: string;
+}
+
+/**
+ * What the error bar renders for a failed turn: a translated line, and — when the fix lives on the
+ * AI Providers page — where to send the user.
+ */
+interface ChatErrorView {
+	message: string;
+	/** Present when the problem is fixed on the AI Providers settings page. */
+	settingsPath?: string;
+	/** The provider at fault, when known — its configure view opens directly (`?provider=`). */
+	providerId?: string;
+}
+
+/**
+ * The structured slice of a failed turn, when the server sent one.
+ *
+ * Both channels arrive as `error.message`: a refused request carries the HTTP body (`DefaultChatTransport`
+ * throws `new Error(await response.text())`), a mid-stream failure carries the error-text envelope.
+ * Anything that does not parse is a plain failure.
+ */
+function parseChatError(error: Error | undefined): { code?: string; providerId?: string; settingsPath?: string } {
+	if (!error?.message) return {};
+	try {
+		const parsed = JSON.parse(error.message);
+		if (!parsed || typeof parsed !== 'object') return {};
+		return {
+			code: typeof parsed.code === 'string' ? parsed.code : undefined,
+			providerId: typeof parsed.providerId === 'string' ? parsed.providerId : undefined,
+			settingsPath: typeof parsed.settingsPath === 'string' ? parsed.settingsPath : undefined
+		};
+	} catch {
+		return {};
+	}
+}
 
 /**
  * Client-generated conversation id (UUID v4, crypto-secure).
@@ -50,6 +111,7 @@ export function AiChatPanel() {
 	const injector = useInjector();
 	const store = useMemo(() => injector.get(Store), [injector]);
 	const chatSidebar = useMemo(() => injector.get(ChatSidebarService), [injector]);
+	const t = useChatTranslate(injector);
 	const [input, setInput] = useState('');
 
 	// Conversation persistence: a client-generated id sent with every turn;
@@ -60,12 +122,42 @@ export function AiChatPanel() {
 	const [history, setHistory] = useState<IChatHistoryItem[]>([]);
 	const [historyLoading, setHistoryLoading] = useState(false);
 
+	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
+	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
+	// Documents is asynchronous, so no id exists yet when the upload returns).
+	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
+	const [attachments, setAttachments] = useState<IPreviewableAttachment[]>([]);
+	/** The attachment open in the preview overlay, if any. */
+	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
+	/**
+	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
+	 * attachment, in order — so a card on a SENT message can still preview from memory. Cleared with
+	 * the panel; history reloads fall back to the Documents copy.
+	 */
+	const sentFilesRef = useRef(new Map<string, (File | undefined)[]>());
+	/**
+	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
+	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
+	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
+	 */
+	const pendingSentFilesRef = useRef<{ text: string; files: (File | undefined)[] } | null>(null);
+	const [showAttachPicker, setShowAttachPicker] = useState(false);
+	const [isAttaching, setIsAttaching] = useState(false);
+	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
+	const [uploadingName, setUploadingName] = useState<string | null>(null);
+	const [attachmentError, setAttachmentError] = useState<string | null>(null);
+
 	// Docking / maximize state comes straight from the Angular
 	// ChatSidebarService signals — they also change outside this panel
 	// (e.g. collapsing clears maximized), so a live bridge is required.
 	const dockSide = useAngularSignal(injector, chatSidebar.position);
 	const isMaximized = useAngularSignal(injector, chatSidebar.maximized);
+	// True in the detached window (`/ai-chat/window`): there is no sidebar to
+	// dock, maximize, resize or collapse there, so those controls are dropped.
+	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
 	const rootRef = useRef<HTMLDivElement>(null);
+	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
+	useChatTooltips(rootRef);
 
 	const authHeaders = useCallback(
 		(): Record<string, string> => ({
@@ -74,6 +166,97 @@ export function AiChatPanel() {
 			...(store.organizationId ? { 'Organization-Id': store.organizationId } : {})
 		}),
 		[store]
+	);
+
+	/**
+	 * The tenant/organization scope the Documents endpoints require IN THE REQUEST ITSELF —
+	 * `where[organizationId]` on the list, an `organizationId` part in the upload body. The
+	 * Tenant-Id/Organization-Id HEADERS do not satisfy those DTO validators
+	 * (`TenantOrganizationBaseDTO`), which is exactly how the picker first shipped broken:
+	 * every request answered 400 and the UI misread it as "Documents unavailable".
+	 */
+	const attachScope = useCallback(
+		(): { organizationId?: string; tenantId?: string } => ({
+			...(store.organizationId ? { organizationId: store.organizationId } : {}),
+			...(store.tenantId ? { tenantId: store.tenantId } : {})
+		}),
+		[store]
+	);
+
+	/**
+	 * May this user open the AI Providers settings page?
+	 *
+	 * Chat only requires AI_CHAT_ACCESS, but the settings route is guarded by AI_CHAT_SETTINGS — so
+	 * navigating a chat-only user there would silently bounce them to the settings index.
+	 */
+	const canOpenAiSettings = useCallback(
+		() =>
+			(store.userRolePermissions ?? []).some(
+				(rolePermission) =>
+					rolePermission.permission === PermissionsEnum.AI_CHAT_SETTINGS && rolePermission.enabled
+			),
+		[store]
+	);
+
+	/**
+	 * Send a dictation take to the server for transcription.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header: the browser has to set it, because only
+	 * it knows the multipart boundary. Setting it by hand produces a body the server cannot parse.
+	 *
+	 * A failure throws a {@link DictationError} carrying the server's `code` and `settingsPath` (a
+	 * 503 body is `{ message, code, settingsPath }`), so the input can render an actionable,
+	 * translated message with a link to the AI Providers page instead of the raw server sentence.
+	 */
+	const transcribeAudio = useCallback(
+		async (audio: Blob): Promise<string> => {
+			const form = new FormData();
+			form.append('file', audio, 'dictation');
+			const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/transcribe`, {
+				method: 'POST',
+				headers: authHeaders(),
+				body: form
+			});
+			if (!response.ok) {
+				// The server's message names the actual problem — no speech-capable provider, a
+				// rejected key — so it is worth more to the user than a status code; the code is what
+				// lets the UI say WHERE to fix it.
+				const body = await response
+					.json()
+					.then((parsed: Partial<IAiSpeechErrorBody> | null) => parsed ?? {})
+					.catch(() => ({}) as Partial<IAiSpeechErrorBody>);
+				const message =
+					typeof body.message === 'string' && body.message.trim()
+						? body.message
+						: `Transcription failed (HTTP ${response.status})`;
+				throw new DictationError(message, {
+					code: typeof body.code === 'string' ? body.code : undefined,
+					settingsPath: typeof body.settingsPath === 'string' ? body.settingsPath : undefined,
+					status: response.status
+				});
+			}
+			const body = (await response.json()) as { text?: string };
+			return body.text ?? '';
+		},
+		[authHeaders]
+	);
+
+	/**
+	 * Open the AI Providers settings page from a dictation or chat error, when this user may.
+	 *
+	 * Passed to the input as `onOpenAiSettings` ONLY when the user holds `AI_CHAT_SETTINGS` — the
+	 * input then shows an "Open AI Providers" action; without it, the message tells the user to ask
+	 * an administrator instead of offering a link that would bounce them to the settings index.
+	 * With a `providerId`, that provider's configure view opens rather than the list.
+	 */
+	const openAiSettings = useCallback(
+		(settingsPath?: string, providerId?: string) => {
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH, providerId ? { provider: providerId } : undefined)
+				.catch(() => undefined);
+		},
+		[injector]
 	);
 
 	const transport = useMemo(
@@ -86,6 +269,15 @@ export function AiChatPanel() {
 		[authHeaders]
 	);
 
+	/**
+	 * Indirection for the stream error handler.
+	 *
+	 * `useChat`'s `onError` needs `setMessages`, which `useChat` itself returns — a cycle. The ref is
+	 * assigned right after the hook, and `onError` can only fire once a request is in flight, so it
+	 * is always populated by the time it is read.
+	 */
+	const handleStreamErrorRef = useRef<((error: unknown) => void) | null>(null);
+
 	const chat = useChat({
 		transport,
 		// Resume the agent loop once all client tool results / approvals are in.
@@ -94,7 +286,11 @@ export function AiChatPanel() {
 			lastAssistantMessageIsCompleteWithApprovalResponses(options),
 		// Client ("canvas") tools run here, in the browser.
 		onToolCall: ({ toolCall }) => {
-			const { toolName, toolCallId, input: toolInput } = toolCall as {
+			const {
+				toolName,
+				toolCallId,
+				input: toolInput
+			} = toolCall as {
 				toolName: string;
 				toolCallId: string;
 				input: unknown;
@@ -102,9 +298,7 @@ export function AiChatPanel() {
 			if (!isClientTool(toolName)) return;
 			// Deliberately not awaited — awaiting inside onToolCall deadlocks the stream.
 			executeClientTool(injector, toolName, toolInput)
-				.then((output) =>
-					chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never })
-				)
+				.then((output) => chat.addToolOutput({ tool: toolName as never, toolCallId, output: output as never }))
 				.catch((error: unknown) =>
 					chat.addToolOutput({
 						state: 'output-error',
@@ -113,20 +307,175 @@ export function AiChatPanel() {
 						errorText: error instanceof Error ? error.message : String(error)
 					})
 				);
-		}
+		},
+		onError: (streamError: unknown) => handleStreamErrorRef.current?.(streamError)
 	});
 
 	const { messages, sendMessage, status, stop, error, regenerate, setMessages, addToolApprovalResponse } = chat;
 
+	/**
+	 * The settings page has been opened for a rate limit already this session.
+	 *
+	 * Every rate limit gets the explanatory message, but the canvas is only taken over ONCE — hitting
+	 * a free-tier limit repeatedly is normal, and yanking the user's page away each time would be its
+	 * own bug.
+	 */
+	const rateLimitPageOpenedRef = useRef(false);
+
+	/**
+	 * Turn a rate-limited turn into something the user can act on.
+	 *
+	 * The server sends a JSON envelope through the stream's error channel (the only channel that
+	 * exists for this) and masks everything else as a generic string, so anything that does not parse
+	 * as our envelope is left to the existing error bar.
+	 */
+	handleStreamErrorRef.current = (streamError: unknown) => {
+		const raw = streamError instanceof Error ? streamError.message : String(streamError ?? '');
+		let envelope: IAiChatRateLimitEnvelope | null = null;
+		try {
+			const parsed = JSON.parse(raw);
+			if (parsed?.code === AI_CHAT_RATE_LIMIT_CODE) envelope = parsed as IAiChatRateLimitEnvelope;
+		} catch {
+			// Not our envelope — a normal error, already handled by the error bar.
+		}
+		if (!envelope) return;
+
+		// On the shared free key the user can fix this themselves; on their OWN key they cannot, so
+		// telling them to "connect your account" would be wrong.
+		const onSharedKey = envelope.credentialSource === 'platform';
+		const wait = envelope.retryAfterSeconds
+			? t('AI_ASSISTANT.RATE_LIMIT_RETRY_IN', 'You can try again in about {{seconds}}s.').replace(
+					'{{seconds}}',
+					String(envelope.retryAfterSeconds)
+				)
+			: '';
+		const notice = onSharedKey
+			? t(
+					'AI_ASSISTANT.RATE_LIMITED_SHARED',
+					'The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.'
+				)
+			: t(
+					'AI_ASSISTANT.RATE_LIMITED_OWN',
+					'Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.'
+				);
+
+		// Rendered as a normal assistant message so it flows through the existing markdown renderer
+		// with no new UI. It is client-only and deliberately not persisted: it describes the state of
+		// this attempt, not part of the conversation.
+		setMessages((current) => [
+			...(current as never[]),
+			{
+				id: `rate-limit-${Date.now()}`,
+				role: 'assistant',
+				parts: [{ type: 'text', text: [notice, wait].filter(Boolean).join(' ') }]
+			} as never
+		]);
+
+		if (!onSharedKey || rateLimitPageOpenedRef.current) return;
+		rateLimitPageOpenedRef.current = true;
+		// Only navigate if the user could actually do anything there: the chat needs AI_CHAT_ACCESS
+		// while the settings route is guarded by AI_CHAT_SETTINGS, so a chat-only user would just be
+		// bounced to the settings index. The message above already tells them what to ask for.
+		if (!canOpenAiSettings()) return;
+		void injector
+			.get(AgentPageBridgeService)
+			.openPage('/pages/settings/ai', { provider: envelope.providerId })
+			.catch(() => undefined);
+	};
+
+	/**
+	 * The error bar's content for the current failure.
+	 *
+	 * A failure whose fix lives on the AI Providers page says so with a link — straight to the
+	 * provider at fault when the server named one — rather than "Something went wrong." A user
+	 * without `AI_CHAT_SETTINGS` gets the "ask an administrator" wording instead, since the link
+	 * would only bounce them to the settings index.
+	 */
+	const errorView = useMemo((): ChatErrorView | null => {
+		if (!error) return null;
+		const { code, providerId, settingsPath: sentPath } = parseChatError(error);
+		const settingsPath = sentPath || AI_CHAT_SETTINGS_PATH;
+		const canOpen = canOpenAiSettings();
+		const actionable = (key: string, fallback: string, askAdminKey: string, askAdminFallback: string) =>
+			canOpen
+				? { message: t(key, fallback), settingsPath, providerId }
+				: { message: t(askAdminKey, askAdminFallback) };
+
+		switch (code) {
+			case AiChatErrorCode.NOT_CONFIGURED:
+				return actionable(
+					'AI_ASSISTANT.ERROR_NOT_CONFIGURED',
+					'AI chat needs a configured provider. Add one on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_NOT_CONFIGURED_ASK_ADMIN',
+					'AI chat needs a configured provider — ask an administrator to add one in Settings → AI Providers.'
+				);
+			case AiChatErrorCode.PROVIDER_UNAVAILABLE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_PROVIDER_UNAVAILABLE',
+					'The selected AI provider cannot answer right now. Check it on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN',
+					'The selected AI provider cannot answer right now — ask an administrator to check Settings → AI Providers.'
+				);
+			case AiChatErrorCode.MODEL_UNAVAILABLE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_MODEL_UNAVAILABLE',
+					'This model is not available with the current API key. Choose another one on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_MODEL_UNAVAILABLE_ASK_ADMIN',
+					'This model is not available with the current API key — ask an administrator to check Settings → AI Providers.'
+				);
+			case AI_CHAT_KEY_REJECTED_CODE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_KEY_REJECTED',
+					'The AI provider rejected its API key. Update it on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_KEY_REJECTED_ASK_ADMIN',
+					'The AI provider rejected its API key — ask an administrator to update it in Settings → AI Providers.'
+				);
+			case AI_CHAT_RATE_LIMIT_CODE:
+				// The full explanation is already in the thread (see handleStreamErrorRef); the bar
+				// only names the problem and carries the link.
+				return actionable(
+					'AI_ASSISTANT.ERROR_RATE_LIMITED',
+					'The AI provider is rate limiting requests.',
+					'AI_ASSISTANT.ERROR_RATE_LIMITED',
+					'The AI provider is rate limiting requests.'
+				);
+			default:
+				return { message: t('AI_ASSISTANT.ERROR', 'Something went wrong.') };
+		}
+	}, [error, t, canOpenAiSettings]);
+
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;
 
-	const handleSubmit = useCallback(() => {
-		const text = input.trim();
-		if (!text || isBusy) return;
-		setInput('');
-		void sendMessage({ text });
-	}, [input, isBusy, sendMessage]);
+	/**
+	 * Send a message.
+	 *
+	 * `override` exists for dictation: the transcript is handed straight here rather than being read
+	 * back out of `input`. `setInput` is asynchronous, so auto-send fired immediately after it would
+	 * otherwise submit the PRE-dictation text — an empty draft sending nothing, a non-empty one
+	 * sending only what was typed before the user spoke.
+	 */
+	const handleSubmit = useCallback(
+		(override?: string) => {
+			const text = (override ?? input).trim();
+			if (!text || isBusy) return;
+			setInput('');
+			// Attachments ride along as a plain preamble rather than as a hidden channel: the
+			// assistant's `docs_read` tool takes a document id, so naming the ids in the turn is
+			// what lets it actually open what the user attached. Cleared on send — an attachment
+			// belongs to the message it was attached to, not to the conversation.
+			const preamble = buildAttachmentPreamble(attachments);
+			const messageText = preamble ? `${preamble}\n\n${text}` : text;
+			// In attachment order — the same order the preamble lists them, so a card's index on the
+			// sent message finds its own file.
+			if (attachments.some((attachment) => attachment.file)) {
+				pendingSentFilesRef.current = { text: messageText, files: attachments.map((attachment) => attachment.file) };
+			}
+			setAttachments([]);
+			void sendMessage({ text: messageText });
+		},
+		[attachments, input, isBusy, sendMessage]
+	);
 
 	const handleNewChat = useCallback(() => {
 		void stop();
@@ -134,6 +483,7 @@ export function AiChatPanel() {
 		conversationIdRef.current = newConversationId();
 		setActiveConversationId(conversationIdRef.current);
 		setShowHistory(false);
+		setPreviewAttachment(null);
 	}, [stop, setMessages]);
 
 	const handleApprovalResponse = useCallback(
@@ -143,11 +493,207 @@ export function AiChatPanel() {
 		[addToolApprovalResponse]
 	);
 
+	/**
+	 * Open a Documents citation chip.
+	 *
+	 * Routed through `AgentPageBridgeService` (the same bridge the `open_page` canvas tool uses)
+	 * rather than through an `<a href>`: the citation url is an in-app path, so navigating with
+	 * the Angular router keeps the SPA — and this chat panel with its in-flight turn — alive.
+	 */
+	const handleOpenCitation = useCallback(
+		(citation: { url?: string }) => {
+			if (!citation?.url) return;
+			void injector
+				.get(AgentPageBridgeService)
+				.openPage(citation.url)
+				.catch(() => undefined);
+		},
+		[injector]
+	);
+
+	/**
+	 * Upload a file the user picked and attach it to this conversation — ID FIRST.
+	 *
+	 * The upload goes straight to the Documents feature (`source: CHAT`), which answers
+	 * synchronously with the created document — so the chip carries a `documentId` and the
+	 * assistant can `docs_read` the file in the very message it was attached to. The previous
+	 * design uploaded to chat-local storage and relied on the Documents plugin capturing an
+	 * event LATER: the chip was name-only, and the preamble sent the assistant to `docs_search`
+	 * — which can never find a chat capture (they are deliberately never auto-indexed), and a
+	 * file the sniffer rejected got a chip anyway while the capture silently dropped it.
+	 *
+	 * The chat-local endpoint remains as the FALLBACK for installs where Documents is absent,
+	 * disabled, or the user lacks `DOCS_CREATE` (403/404 from the docs route) — there the docs
+	 * tools do not exist either, so a name-only mention is the honest ceiling.
+	 *
+	 * `FormData` deliberately WITHOUT a Content-Type header — the browser has to set it, because
+	 * only it knows the multipart boundary (the same rule as dictation above).
+	 */
+	const handleAttachFile = useCallback(
+		async (file: File): Promise<void> => {
+			setIsAttaching(true);
+			setUploadingName(file.name);
+			setAttachmentError(null);
+			try {
+				const docsForm = new FormData();
+				docsForm.append('files', file, file.name);
+				docsForm.append('source', 'CHAT');
+				// Required by UploadDocumentsDTO (TenantOrganizationBaseDTO): the org must be in the
+				// BODY — headers alone fail validation with "organizationId must be a UUID".
+				const scope = attachScope();
+				if (scope.organizationId) docsForm.append('organizationId', scope.organizationId);
+				if (scope.tenantId) docsForm.append('tenantId', scope.tenantId);
+				const docsResponse = await fetch(`${environment.API_BASE_URL}/api/plugins/docs/documents/upload`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: docsForm
+				});
+
+				if (docsResponse.ok) {
+					const body = (await docsResponse.json().catch(() => null)) as IDocsUploadResponseSlice | null;
+					const document = body?.results?.[0]?.document;
+					if (document?.id) {
+						setAttachments((current) => [
+							...current,
+							{
+								documentId: document.id,
+								name: document.name || file.name,
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {}),
+								file
+							}
+						]);
+						return;
+					}
+					// Three distinct 2xx outcomes, told apart so the user is never told "rejected"
+					// about a file the server may in fact have created:
+					// a genuine per-file rejection carries the server's reason; a body that did not
+					// parse, or one with no readable document id, is a response-shape problem — the
+					// document may exist, so point at the Documents page rather than blaming the file.
+					const rejection = body?.rejected?.[0];
+					if (rejection) {
+						throw new Error(
+							rejection.message || `${t('AI_ASSISTANT.ATTACH_REJECTED', 'The file was rejected')}: ${file.name}`
+						);
+					}
+					throw new Error(
+						`${t(
+							'AI_ASSISTANT.ATTACH_RESPONSE_UNREADABLE',
+							'The upload response could not be read — check the Documents page before retrying'
+						)}: ${file.name}`
+					);
+				}
+
+				// Not-found / forbidden = the Documents feature is not available to this user or
+				// install — fall back to chat-local storage. Anything else is a real failure.
+				if (docsResponse.status !== 403 && docsResponse.status !== 404) {
+					const detail = await docsResponse
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${docsResponse.status})`);
+				}
+
+				const form = new FormData();
+				form.append('file', file, file.name);
+				if (conversationIdRef.current) {
+					form.append('conversationId', conversationIdRef.current);
+				}
+				const response = await fetch(`${environment.API_BASE_URL}/api/ai-chat/attachments`, {
+					method: 'POST',
+					headers: authHeaders(),
+					body: form
+				});
+				if (!response.ok) {
+					const detail = await response
+						.json()
+						.then((body: { message?: string }) => body?.message)
+						.catch(() => undefined);
+					throw new Error(detail || `Attachment failed (HTTP ${response.status})`);
+				}
+				const saved = (await response.json()) as { name?: string };
+				setAttachments((current) => [...current, { name: saved?.name || file.name, file }]);
+			} catch (attachError) {
+				setAttachmentError(attachError instanceof Error ? attachError.message : String(attachError));
+			} finally {
+				setIsAttaching(false);
+				setUploadingName(null);
+			}
+		},
+		[authHeaders, attachScope]
+	);
+
+	/** Attach an existing document by id — what makes `docs_read` able to open exactly that one. */
+	const handlePickDocument = useCallback((document: { id: string; name: string; kind?: string }) => {
+		setAttachments((current) => [
+			...current,
+			{
+				documentId: document.id,
+				name: document.name,
+				// Carried so the chip (and the one rebuilt from history) links a PAGE to its page
+				// editor route rather than the file browser.
+				...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+			}
+		]);
+		setShowAttachPicker(false);
+	}, []);
+
+	/**
+	 * Preview an attachment chip — staged or on a sent message. A sent chip is rebuilt from the
+	 * message text, so it gets back the `File` uploaded this session when there is one.
+	 */
+	const handlePreviewAttachment = useCallback((attachment: IPreviewableAttachment) => {
+		setShowAttachPicker(false);
+		setPreviewAttachment(attachment);
+	}, []);
+
+	// Bind the files of the message just sent to its id, once the message appears. Matched by its
+	// exact text, newest first, so a rate-limit notice or an assistant reply landing in between
+	// cannot claim them.
+	useEffect(() => {
+		const pending = pendingSentFilesRef.current;
+		if (!pending) return;
+		for (let index = messages.length - 1; index >= 0; index--) {
+			const message = messages[index];
+			if (message.role !== 'user') continue;
+			const firstText = message.parts.find((part) => part.type === 'text') as { text?: string } | undefined;
+			if (firstText?.text === pending.text) {
+				sentFilesRef.current.set(message.id, pending.files);
+				pendingSentFilesRef.current = null;
+				return;
+			}
+		}
+	}, [messages]);
+
+	/** The `File` uploaded this session for card `index` of a sent message (thumbnail, size, preview). */
+	const resolveAttachmentFile = useCallback(
+		(messageId: string, index: number) => sentFilesRef.current.get(messageId)?.[index],
+		[]
+	);
+
+	/** "Open in Documents" from the preview — the same deep link the attachment chips use. */
+	const handleOpenAttachmentInDocuments = useCallback(
+		(attachment: IStagedAttachment) => {
+			if (!attachment.documentId) return;
+			setPreviewAttachment(null);
+			handleOpenCitation({
+				url:
+					attachment.kind === 'PAGE'
+						? `/pages/documents/page/${attachment.documentId}`
+						: `/pages/documents?id=${attachment.documentId}`
+			});
+		},
+		[handleOpenCitation]
+	);
+
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
 	const handleMoveSide = useCallback(() => chatSidebar.togglePosition(), [chatSidebar]);
 
 	const handleToggleMaximize = useCallback(() => chatSidebar.toggleMaximized(), [chatSidebar]);
+
+	// Opens the chat in its own browser window and closes the docked panel,
+	// so the conversation is never live in two places at once.
+	const handleDetach = useCallback(() => chatSidebar.detach(), [chatSidebar]);
 
 	// ── Drag-to-resize (grip on the canvas-facing edge) ──────────
 	// Window listeners are tracked in a ref so a drag interrupted by
@@ -190,7 +736,7 @@ export function AiChatPanel() {
 		setHistoryLoading(true);
 		fetch(conversationsUrl, { headers: authHeaders() })
 			.then((response) => (response.ok ? response.json() : []))
-			.then((items) => setHistory(Array.isArray(items) ? items : items?.items ?? []))
+			.then((items) => setHistory(Array.isArray(items) ? items : (items?.items ?? [])))
 			.catch(() => setHistory([]))
 			.finally(() => setHistoryLoading(false));
 	}, [conversationsUrl, authHeaders]);
@@ -247,12 +793,25 @@ export function AiChatPanel() {
 		display: 'flex',
 		alignItems: 'center',
 		gap: 8,
-		padding: '8px 12px',
+		padding: '10px 10px 10px 13px',
 		borderBottom: `1px solid ${chatTheme.border}`,
 		flexShrink: 0,
 		color: chatTheme.textPrimary,
 		fontSize: chatTheme.fontSizeBase,
-		fontWeight: 600
+		fontWeight: chatTheme.fontWeightSemibold,
+		letterSpacing: '-0.005em',
+		// Drives the `@container` rule that drops the button words on a narrow
+		// panel — the labels are the point, but not at the cost of clipping.
+		containerType: 'inline-size'
+	};
+
+	// The title yields space before anything else: at 300px (the minimum panel
+	// width) the controls matter more than the full word "Assistant".
+	const headerTitleStyle: CSSProperties = {
+		minWidth: 0,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		whiteSpace: 'nowrap'
 	};
 
 	const headerBtnStyle: CSSProperties = {
@@ -261,7 +820,7 @@ export function AiChatPanel() {
 		justifyContent: 'center',
 		width: 26,
 		height: 26,
-		borderRadius: 6,
+		borderRadius: chatTheme.controlRadius,
 		border: 'none',
 		backgroundColor: 'transparent',
 		color: chatTheme.textSecondary,
@@ -270,12 +829,29 @@ export function AiChatPanel() {
 		transition: `all ${chatTheme.transitionSpeed} ease`
 	};
 
+	// "New chat" and "History" are the two controls people go looking for, so
+	// they carry their name instead of hiding behind a glyph.
+	const headerBtnLabelledStyle: CSSProperties = {
+		...headerBtnStyle,
+		width: 'auto',
+		gap: 5,
+		padding: '0 8px',
+		fontFamily: 'inherit',
+		fontSize: '0.6875rem',
+		fontWeight: chatTheme.fontWeightMedium,
+		letterSpacing: '0.01em',
+		whiteSpace: 'nowrap'
+	};
+
 	const bodyStyle: CSSProperties = {
 		flex: 1,
 		display: 'flex',
 		flexDirection: 'column',
 		overflow: 'hidden',
-		minWidth: 0
+		minWidth: 0,
+		// The positioning context for the history and attach-picker overlays: `inset: 0` must
+		// resolve against the BODY, so an overlay can never cover the panel's own header row.
+		position: 'relative'
 	};
 
 	const resizeHandleStyle: CSSProperties = {
@@ -283,21 +859,22 @@ export function AiChatPanel() {
 		top: 0,
 		bottom: 0,
 		[dockSide === 'start' ? 'right' : 'left']: 0,
-		width: 6,
+		width: 8,
 		cursor: 'col-resize',
 		zIndex: 6,
 		// A touch drag on the grip must resize, not scroll/zoom the page.
 		touchAction: 'none',
-		// Invisible until hovered — then a subtle accent strip.
+		// A faint grip is always drawn (see `.gz-ai-chat-resize::after`); the
+		// accent strip only lights up on hover.
 		background: 'transparent'
 	};
 
 	return (
 		<div ref={rootRef} style={containerStyle}>
-			{/* Inline keyframes + width containment for streamed markdown:
-			    wide content (code blocks, tables) must scroll inside its own
-			    box instead of stretching the narrow panel and squeezing the
-			    input row. */}
+			{/* Keyframes, the shared markdown sheet, and every state inline styles
+			    cannot express (hover, focus, ::placeholder). Wide streamed content
+			    (code blocks, tables) scrolls inside its own box here rather than
+			    stretching the narrow panel and squeezing the input row. */}
 			<style>{`
 				@keyframes fadeIn {
 					from { opacity: 0; transform: translateY(4px); }
@@ -307,21 +884,150 @@ export function AiChatPanel() {
 					0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
 					40% { transform: scale(1); opacity: 1; }
 				}
-				.gz-ai-chat-markdown { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
-				.gz-ai-chat-markdown pre {
-					max-width: 100%; overflow-x: auto; white-space: pre;
-					font-size: 0.75rem; border-radius: 8px;
+
+				${chatMarkdownCss}
+
+				/* Tool steps. The row is the expander, so the label carries the affordance:
+				   accent coloured, underlined on hover, like every other link here. */
+				.gz-ai-chat-tool-label { transition: color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-tool-row:hover .gz-ai-chat-tool-label { text-decoration: underline; }
+				.gz-ai-chat-tool-row:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+					border-radius: 4px;
 				}
-				.gz-ai-chat-markdown code { overflow-wrap: anywhere; }
-				.gz-ai-chat-markdown table {
-					display: block; max-width: 100%; width: fit-content;
-					overflow-x: auto; font-size: 0.75rem;
+
+				/* Attachment cards. The card opens the preview; the corner ✕ shows on hover or
+				   keyboard focus, and always on touch screens, which have no hover. */
+				.gz-ai-chat-attachment-card {
+					transition: border-color ${chatTheme.transitionSpeed} ease, background-color ${chatTheme.transitionSpeed} ease;
 				}
-				.gz-ai-chat-markdown img, .gz-ai-chat-markdown video { max-width: 100%; height: auto; }
+				.gz-ai-chat-attachment-card:hover {
+					border-color: ${chatTheme.inputFocusBorder} !important;
+					background-color: color-mix(in srgb, currentColor 7%, transparent) !important;
+				}
+				.gz-ai-chat-attachment-card:focus-visible,
+				.gz-ai-chat-attachment-remove:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				.gz-ai-chat-attachment-remove {
+					opacity: 0;
+					transition: opacity ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-attachment:hover .gz-ai-chat-attachment-remove,
+				.gz-ai-chat-attachment:focus-within .gz-ai-chat-attachment-remove { opacity: 1; }
+				.gz-ai-chat-attachment-remove:hover { color: inherit !important; }
+				@media (hover: none) {
+					.gz-ai-chat-attachment-remove { opacity: 1; }
+				}
+
+				/* Attachment chips on a user message. */
+				.gz-ai-chat-user-chip { transition: background-color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-user-chip:hover { background-color: rgba(255, 255, 255, 0.26) !important; }
+
+				/* ── Composer ─────────────────────────────────────────────────────
+				   The placeholder tone and every hover/focus state live here: inline
+				   styles can express neither, so the composer read as flat and inert. */
+				.gz-ai-chat-textarea::placeholder {
+					color: ${chatTheme.inputPlaceholder};
+					opacity: 1;
+				}
+				.gz-ai-chat-tool-btn {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-tool-btn:hover:not(:disabled):not([aria-disabled='true']):not([aria-pressed='true']) {
+					background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-tool-btn:focus-visible,
+				.gz-ai-chat-send-btn:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				.gz-ai-chat-send-btn {
+					transition: background-color ${chatTheme.transitionSpeed} ease, transform ${chatTheme.transitionSpeed} ease,
+						filter ${chatTheme.transitionSpeed} ease, opacity ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-send-btn:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.08); }
+				.gz-ai-chat-send-btn:active:not(:disabled) { transform: scale(0.96); }
+				.gz-ai-chat-send-btn:disabled { cursor: default; }
+
+				/* Dictation, in the composer's action row: round Cancel / Done at the trailing edge,
+				   a turning ring on the mic while the take is transcribed. */
+				@keyframes gzRecSpin { to { transform: rotate(360deg); } }
+				.gz-ai-chat-rec-spinner { animation: gzRecSpin 0.8s linear infinite; }
+				.gz-ai-chat-rec-switch { transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-rec-switch:hover { background-color: color-mix(in srgb, currentColor 8%, transparent) !important; color: inherit !important; }
+				.gz-ai-chat-rec-cancel {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-rec-cancel:hover {
+					background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-rec-done { transition: filter ${chatTheme.transitionSpeed} ease, transform ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-rec-done:hover { filter: brightness(1.1); transform: scale(1.05); }
+				.gz-ai-chat-rec-done:active { transform: scale(0.96); }
+				.gz-ai-chat-rec-switch:focus-visible,
+				.gz-ai-chat-rec-cancel:focus-visible,
+				.gz-ai-chat-rec-done:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				@media (prefers-reduced-motion: reduce) {
+					.gz-ai-chat-rec-spinner { animation-duration: 2s; }
+					.gz-ai-chat-rec-done:hover, .gz-ai-chat-rec-done:active { transform: none; }
+				}
+				/* A narrow panel keeps the switch but drops its label; the title still names it. */
+				@container (max-width: 340px) {
+					.gz-ai-chat-rec-switch .gz-ai-chat-rec-switch-label { display: none; }
+				}
+
+				/* Panel header controls. Inline styles cannot express :hover, so these
+				   buttons gave no feedback at all and read as decoration. */
+				.gz-ai-chat-head-btn:hover {
+					background-color: color-mix(in srgb, currentColor 12%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-head-btn:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 1px;
+					color: inherit !important;
+				}
+
+				/* Under ~380px the words would clip: keep the icons, drop the labels.
+				   title + aria-label still name every control. */
+				@container (max-width: 380px) {
+					.gz-ai-chat-btn-label { display: none; }
+					.gz-ai-chat-head-btn.gz-labelled {
+						padding: 0 !important; width: 26px !important; gap: 0 !important;
+					}
+				}
+
+				/* Drag-to-resize edge. It was a fully transparent 6px strip that showed
+				   itself only once the cursor happened to land on it, so nobody found
+				   the resize: draw a faint permanent grip, and light it on hover. */
+				.gz-ai-chat-resize::after {
+					content: '';
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+					width: 2px;
+					height: 28px;
+					border-radius: 2px;
+					background: color-mix(in srgb, currentColor 22%, transparent);
+					transition: height 0.15s ease, background-color 0.15s ease;
+					pointer-events: none;
+				}
 				.gz-ai-chat-resize:hover { background: rgba(51, 102, 255, 0.35) !important; }
+				.gz-ai-chat-resize:hover::after { height: 48px; background: rgba(255, 255, 255, 0.8); }
 			`}</style>
 
-			{/* Header: title + new chat + collapse */}
+			{/* Header: title + history + new chat + dock/maximize/collapse.
+			    History and New chat carry their names — they were unlabelled
+			    glyphs, which is why people asked whether history existed. */}
 			<div style={headerStyle}>
 				<svg
 					width="14"
@@ -332,13 +1038,28 @@ export function AiChatPanel() {
 					strokeWidth="2"
 					strokeLinecap="round"
 					strokeLinejoin="round"
+					style={{ flexShrink: 0 }}
+					aria-hidden="true"
 				>
-					<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+					{/* The robot — the same glyph as the sidebar's AI assistant launcher. */}
+					<path d="M12 8V4H8" />
+					<rect width="16" height="12" x="4" y="8" rx="2" />
+					<path d="M2 14h2" />
+					<path d="M20 14h2" />
+					<path d="M15 13v2" />
+					<path d="M9 13v2" />
 				</svg>
-				<span>AI Assistant</span>
+				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
-				<span style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
-					<button onClick={openHistory} style={headerBtnStyle} title="History" aria-label="Conversation history">
+				<span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
+					<button
+						type="button"
+						onClick={openHistory}
+						className="gz-ai-chat-head-btn gz-labelled"
+						style={headerBtnLabelledStyle}
+						title={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+						aria-label={t('AI_ASSISTANT.HISTORY_HINT', 'Browse saved conversations')}
+					>
 						<svg
 							width="13"
 							height="13"
@@ -348,17 +1069,21 @@ export function AiChatPanel() {
 							strokeWidth="2"
 							strokeLinecap="round"
 							strokeLinejoin="round"
+							style={{ flexShrink: 0 }}
 						>
 							<circle cx="12" cy="12" r="10" />
 							<polyline points="12 6 12 12 16 14" />
 						</svg>
+						<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.HISTORY', 'History')}</span>
 					</button>
 					{hasMessages && (
 						<button
+							type="button"
 							onClick={handleNewChat}
-							style={headerBtnStyle}
-							title="New conversation"
-							aria-label="New conversation"
+							className="gz-ai-chat-head-btn gz-labelled"
+							style={headerBtnLabelledStyle}
+							title={t('AI_ASSISTANT.NEW_CHAT_HINT', 'Start a new conversation')}
+							aria-label={t('AI_ASSISTANT.NEW_CHAT_HINT', 'Start a new conversation')}
 						>
 							<svg
 								width="13"
@@ -369,186 +1094,374 @@ export function AiChatPanel() {
 								strokeWidth="2"
 								strokeLinecap="round"
 								strokeLinejoin="round"
+								style={{ flexShrink: 0 }}
 							>
 								<path d="M12 20h9" />
 								<path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z" />
 							</svg>
+							<span className="gz-ai-chat-btn-label">{t('AI_ASSISTANT.NEW_CHAT', 'New chat')}</span>
 						</button>
 					)}
-					<button
-						onClick={handleMoveSide}
-						style={headerBtnStyle}
-						title={dockSide === 'start' ? 'Dock chat to the right side' : 'Dock chat to the left side'}
-						aria-label={dockSide === 'start' ? 'Dock chat to the right side' : 'Dock chat to the left side'}
-					>
-						{/* Arrow pointing toward the side the chat will move to */}
-						{dockSide === 'start' ? (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+					{/* Dock side / maximize / detach / close all describe the DOCKED
+					    panel — in the detached window there is no sidebar to move,
+					    grow or close, so the whole cluster is dropped there. */}
+					{!isDetachedView && (
+						<>
+							<button
+								type="button"
+								onClick={handleMoveSide}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={
+									dockSide === 'start'
+										? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
+										: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
+								}
+								aria-label={
+									dockSide === 'start'
+										? t('AI_ASSISTANT.DOCK_RIGHT', 'Dock to the right')
+										: t('AI_ASSISTANT.DOCK_LEFT', 'Dock to the left')
+								}
 							>
-								<line x1="3" y1="12" x2="15" y2="12" />
-								<polyline points="10 7 15 12 10 17" />
-								<line x1="20" y1="4" x2="20" y2="20" />
-							</svg>
-						) : (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+								{/* Arrow pointing toward the side the chat will move to */}
+								{dockSide === 'start' ? (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<line x1="3" y1="12" x2="15" y2="12" />
+										<polyline points="10 7 15 12 10 17" />
+										<line x1="20" y1="4" x2="20" y2="20" />
+									</svg>
+								) : (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<line x1="21" y1="12" x2="9" y2="12" />
+										<polyline points="14 7 9 12 14 17" />
+										<line x1="4" y1="4" x2="4" y2="20" />
+									</svg>
+								)}
+							</button>
+							<button
+								type="button"
+								onClick={handleToggleMaximize}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={
+									isMaximized
+										? t('AI_ASSISTANT.RESTORE', 'Restore width')
+										: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
+								}
+								aria-label={
+									isMaximized
+										? t('AI_ASSISTANT.RESTORE', 'Restore width')
+										: t('AI_ASSISTANT.MAXIMIZE', 'Maximize')
+								}
+								aria-pressed={isMaximized}
 							>
-								<line x1="21" y1="12" x2="9" y2="12" />
-								<polyline points="14 7 9 12 14 17" />
-								<line x1="4" y1="4" x2="4" y2="20" />
-							</svg>
-						)}
-					</button>
-					<button
-						onClick={handleToggleMaximize}
-						style={headerBtnStyle}
-						title={isMaximized ? 'Restore chat width' : 'Maximize chat (hide the page)'}
-						aria-label={isMaximized ? 'Restore chat width' : 'Maximize chat'}
-					>
-						{isMaximized ? (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+								{isMaximized ? (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polyline points="4 14 10 14 10 20" />
+										<polyline points="20 10 14 10 14 4" />
+										<line x1="14" y1="10" x2="21" y2="3" />
+										<line x1="3" y1="21" x2="10" y2="14" />
+									</svg>
+								) : (
+									<svg
+										width="13"
+										height="13"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polyline points="15 3 21 3 21 9" />
+										<polyline points="9 21 3 21 3 15" />
+										<line x1="21" y1="3" x2="14" y2="10" />
+										<line x1="3" y1="21" x2="10" y2="14" />
+									</svg>
+								)}
+							</button>
+							<button
+								type="button"
+								onClick={handleDetach}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={t('AI_ASSISTANT.DETACH', 'Open in a new window')}
+								aria-label={t('AI_ASSISTANT.DETACH', 'Open in a new window')}
 							>
-								<polyline points="4 14 10 14 10 20" />
-								<polyline points="20 10 14 10 14 4" />
-								<line x1="14" y1="10" x2="21" y2="3" />
-								<line x1="3" y1="21" x2="10" y2="14" />
-							</svg>
-						) : (
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
+								{/* A window with an arrow leaving it — the chat moves out of
+								    the page and into a window of its own. */}
+								<svg
+									width="13"
+									height="13"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+									<polyline points="15 3 21 3 21 9" />
+									<line x1="10" y1="14" x2="21" y2="3" />
+								</svg>
+							</button>
+							<button
+								type="button"
+								onClick={handleCollapse}
+								className="gz-ai-chat-head-btn"
+								style={headerBtnStyle}
+								title={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
+								aria-label={t('AI_ASSISTANT.CLOSE', 'Close AI Assistant')}
 							>
-								<polyline points="15 3 21 3 21 9" />
-								<polyline points="9 21 3 21 3 15" />
-								<line x1="21" y1="3" x2="14" y2="10" />
-								<line x1="3" y1="21" x2="10" y2="14" />
-							</svg>
-						)}
-					</button>
-					<button
-						onClick={handleCollapse}
-						style={headerBtnStyle}
-						title="Collapse chat"
-						aria-label="Collapse chat"
-					>
-						<svg
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<polyline points="15 18 9 12 15 6" />
-						</svg>
-					</button>
+								{/* The chevron points the way the panel actually leaves — it used
+								    to point left even when the chat was docked on the right. */}
+								<svg
+									width="14"
+									height="14"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									{dockSide === 'start' ? (
+										<polyline points="15 18 9 12 15 6" />
+									) : (
+										<polyline points="9 18 15 12 9 6" />
+									)}
+								</svg>
+							</button>
+						</>
+					)}
 				</span>
 			</div>
 
-			{/* Conversation history overlay */}
-			{showHistory && (
-				<ChatHistoryPanel
-					items={history}
-					loading={historyLoading}
-					activeId={activeConversationId}
-					onSelect={handleSelectConversation}
-					onDelete={handleDeleteConversation}
-					onClose={() => setShowHistory(false)}
-				/>
-			)}
-
-			{/* Chat body — fills remaining height */}
+			{/* Chat body — fills remaining height. The overlays mount INSIDE it so they cover the
+			    conversation area only, never the panel's own header (which stays operable — the
+			    user can still collapse/detach while a picker is open). */}
 			<div style={bodyStyle}>
+				{/* Conversation history overlay */}
+				{showHistory && (
+					<ChatHistoryPanel
+						items={history}
+						loading={historyLoading}
+						activeId={activeConversationId}
+						translate={t}
+						onSelect={handleSelectConversation}
+						onDelete={handleDeleteConversation}
+						onClose={() => setShowHistory(false)}
+					/>
+				)}
+
+				{/* "Attach from Documents" overlay */}
+				{showAttachPicker && (
+					<DocsAttachPicker
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onPick={handlePickDocument}
+						onClose={() => setShowAttachPicker(false)}
+					/>
+				)}
+				{/* Attachment preview overlay — same slot as the picker, above the conversation. */}
+				{previewAttachment && (
+					<AttachmentPreview
+						attachment={previewAttachment}
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onOpenInDocuments={handleOpenAttachmentInDocuments}
+						onClose={() => setPreviewAttachment(null)}
+					/>
+				)}
 				{hasMessages ? (
-					<ChatMessageList messages={messages} status={status} onApprovalResponse={handleApprovalResponse} />
+					<ChatMessageList
+						messages={messages}
+						status={status}
+						onApprovalResponse={handleApprovalResponse}
+						onOpenCitation={handleOpenCitation}
+						onPreviewAttachment={handlePreviewAttachment}
+						resolveAttachmentFile={resolveAttachmentFile}
+						translate={t}
+					/>
 				) : (
-					<ChatWelcome />
+					<ChatWelcome translate={t} />
 				)}
 
 				{/* Error bar */}
-				{error && (
+				{errorView && (
 					<div
+						role="alert"
 						style={{
-							padding: '6px 12px',
-							backgroundColor: 'rgba(255, 61, 113, 0.15)',
+							padding: '8px 12px',
+							backgroundColor: 'rgba(255, 61, 113, 0.12)',
 							color: chatTheme.red,
 							fontSize: chatTheme.fontSizeSmall,
+							lineHeight: 1.5,
 							borderTop: `1px solid ${chatTheme.border}`,
 							display: 'flex',
-							alignItems: 'center',
-							gap: 6
+							alignItems: 'flex-start',
+							gap: 7
 						}}
 					>
 						<span>⚠</span>
-						<span>Something went wrong.</span>
+						<span style={{ flex: 1 }}>
+							{errorView.message}
+							{/* The fix lives on the AI Providers page: link to it — to the provider at
+							    fault when known — rather than naming a page the user then has to find. */}
+							{errorView.settingsPath && (
+								<>
+									{' '}
+									<button
+										type="button"
+										onClick={() => openAiSettings(errorView.settingsPath, errorView.providerId)}
+										style={{
+											background: 'none',
+											border: 'none',
+											color: chatTheme.accent,
+											cursor: 'pointer',
+											textDecoration: 'underline',
+											fontSize: chatTheme.fontSizeSmall,
+											fontWeight: chatTheme.fontWeightMedium,
+											fontFamily: 'inherit',
+											padding: 0
+										}}
+									>
+										{t('AI_ASSISTANT.OPEN_AI_SETTINGS', 'Open AI Providers')}
+									</button>
+								</>
+							)}
+						</span>
 						<button
+							type="button"
 							onClick={() => regenerate()}
 							style={{
+								flexShrink: 0,
 								background: 'none',
 								border: 'none',
 								color: chatTheme.accent,
 								cursor: 'pointer',
 								textDecoration: 'underline',
 								fontSize: chatTheme.fontSizeSmall,
+								fontWeight: chatTheme.fontWeightMedium,
+								fontFamily: 'inherit',
 								padding: 0
 							}}
 						>
-							Retry
+							{t('AI_ASSISTANT.RETRY', 'Retry')}
 						</button>
 					</div>
 				)}
 
-				{/* Input area */}
+				{/* Input area. Escape closes the docked panel; in the detached window
+				    it must do nothing — collapse() persists the docked state for the
+				    next page load, and there is no panel here to close. */}
+				{/* An attachment that failed — the staged cards themselves live inside the composer. */}
+				{attachmentError && (
+					<div
+						role="alert"
+						style={{
+							padding: '8px 12px 0',
+							color: chatTheme.red,
+							fontSize: chatTheme.fontSizeSmall,
+							lineHeight: 1.5
+						}}
+					>
+						{attachmentError}
+					</div>
+				)}
+
 				<ChatInput
 					value={input}
 					isBusy={isBusy}
+					translate={t}
 					onChange={setInput}
 					onSubmit={handleSubmit}
 					onStop={() => void stop()}
-					onEscape={handleCollapse}
+					onEscape={isDetachedView ? undefined : handleCollapse}
+					onTranscribe={transcribeAudio}
+					onOpenAiSettings={canOpenAiSettings() ? openAiSettings : undefined}
+					onAttachFile={handleAttachFile}
+					onAttachFromDocuments={() => {
+						setAttachmentError(null);
+						setShowAttachPicker(true);
+					}}
+					isAttaching={isAttaching}
+					attachmentsSlot={
+						attachments.length > 0 || uploadingName ? (
+							<div
+								style={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: 8,
+									// Room for the corner ✕, which sits outside each card.
+									padding: '6px 6px 4px 2px'
+								}}
+							>
+								{attachments.map((attachment, index) => (
+									<AttachmentCard
+										key={`${attachment.documentId ?? attachment.name}-${index}`}
+										attachment={attachment}
+										translate={t}
+										onOpen={() => handlePreviewAttachment(attachment)}
+										onRemove={() =>
+											setAttachments((current) =>
+												current.filter((_entry, entryIndex) => entryIndex !== index)
+											)
+										}
+									/>
+								))}
+								{uploadingName && (
+									<AttachmentCard attachment={{ name: uploadingName }} pending translate={t} />
+								)}
+							</div>
+						) : null
+					}
+					composingFor={activeConversationId}
 				/>
 			</div>
 
-			{/* Drag-to-resize grip on the canvas-facing edge */}
-			{!isMaximized && (
+			{/* Drag-to-resize grip on the canvas-facing edge. The detached window
+			    is resized by the OS window chrome, not by this grip. */}
+			{!isMaximized && !isDetachedView && (
 				<div
 					className="gz-ai-chat-resize"
 					style={resizeHandleStyle}
 					onPointerDown={handleResizeStart}
 					role="separator"
 					aria-orientation="vertical"
-					aria-label="Resize chat panel"
+					title={t('AI_ASSISTANT.RESIZE', 'Drag to resize')}
+					aria-label={t('AI_ASSISTANT.RESIZE', 'Drag to resize')}
 				/>
 			)}
 		</div>

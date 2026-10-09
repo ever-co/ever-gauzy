@@ -1,126 +1,97 @@
-<div [formGroup]="parentFormGroup">
-	<div [class.row]="enableHelperText">
-		<div [class.col-md-7]="enableHelperText">
-			<label for="key-result-type" class="label mt-3">
-				{{ 'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE' | translate }}
-			</label>
-			<nb-select (selectedChange)="taskTypeValidators()" id="key-result-type" fullWidth formControlName="type">
-				@for (type of keyResultTypeEnum | keyvalue; track type.key) {
-				<nb-option [hidden]="isTypeHidden(type.value)" [value]="type.value">
-					{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
-				</nb-option>
-				}
-			</nb-select>
-		</div>
-		@if (enableHelperText) {
-		<div class="col-md-5 position-relative mt-3"></div>
-		}
+<!-- The type, and whatever that type needs, as sibling fields: each carries `kr-field` so the dialog around
+     them can place them on its own grid. They used to sit one per bootstrap row, each with an empty
+     five-column spacer beside it, which is what made this picker a stack of half-width rows. -->
+<div class="kr-type-fields" [formGroup]="parentFormGroup">
+	<div class="kr-field kr-field-type">
+		<label for="key-result-type" class="label">
+			{{ 'KEY_RESULT_PAGE.FORM.LABELS.KEY_RESULT_TYPE' | translate }}
+		</label>
+		<nb-select (selectedChange)="taskTypeValidators()" id="key-result-type" fullWidth formControlName="type">
+			@for (type of keyResultTypeEnum | keyvalue; track type.key) {
+			<nb-option [hidden]="isTypeHidden(type.value)" [value]="type.value">
+				{{ 'KEY_RESULT_PAGE.TYPE.' + type.key | translate }}
+			</nb-option>
+			}
+		</nb-select>
 	</div>
 
 	@if (parentFormGroup.value.type === keyResultTypeEnum.TASK) {
-	<div [class.row]="enableHelperText">
-		<div [class.col-md-7]="enableHelperText">
-			<div class="row">
-				<div class="col-md-12">
-					<label class="label mt-3" for="project-selector">{{
-						'KEY_RESULT_PAGE.FORM.LABELS.SELECT_PROJECT' | translate
-					}}</label>
-					<ga-project-selector id="project-selector" formControlName="projectId"> </ga-project-selector>
-				</div>
-				<div class="col-md-12">
-					<label class="label mt-3" for="task-selector">{{
-						'KEY_RESULT_PAGE.FORM.LABELS.SELECT_TASK' | translate
-					}}</label>
-					<ga-task-selector
-						id="task-selector"
-						formControlName="taskId"
-						[projectId]="parentFormGroup.value.projectId"
-					>
-					</ga-task-selector>
-				</div>
-			</div>
-		</div>
-		@if (enableHelperText) {
-		<div class="col-md-5 position-relative mt-3"></div>
+	<div class="kr-field kr-field-project">
+		<label class="label" for="project-selector">
+			{{ 'KEY_RESULT_PAGE.FORM.LABELS.SELECT_PROJECT' | translate }}
+		</label>
+		<ga-project-selector id="project-selector" formControlName="projectId"></ga-project-selector>
+	</div>
+	<div class="kr-field kr-field-task">
+		<label class="label" for="task-selector">
+			{{ 'KEY_RESULT_PAGE.FORM.LABELS.SELECT_TASK' | translate }}
+		</label>
+		<ga-task-selector
+			id="task-selector"
+			formControlName="taskId"
+			[projectId]="parentFormGroup.value.projectId"
+		></ga-task-selector>
+	</div>
+	}
+
+	@if (parentFormGroup.value.type === keyResultTypeEnum.KPI) {
+	<div class="kr-field kr-field-kpi">
+		<label for="kpi" class="label">
+			{{ 'KEY_RESULT_PAGE.FORM.LABELS.SELECT_KPI' | translate }}
+		</label>
+		@if (KPIs?.length) {
+		<nb-select id="kpi" fullWidth formControlName="kpiId">
+			@for (kpi of KPIs; track kpi.id) {
+			<nb-option [value]="kpi.id">
+				{{ kpi.name }}
+			</nb-option>
+			}
+		</nb-select>
+		} @else {
+		<!-- No KPI to pick yet: an empty slot where the select will be, rather than a filled primary button. -->
+		<button type="button" id="kpi" class="add-inline" (click)="openEditKPI()">
+			<i class="fas fa-plus" aria-hidden="true"></i>
+			{{ 'BUTTONS.ADD_KPI' | translate }}
+		</button>
 		}
 	</div>
 	}
 
-	<div [class.row]="enableHelperText">
-		<div [class.col-md-7]="enableHelperText">
-			@if (parentFormGroup.value.type === keyResultTypeEnum.KPI) {
-			<div>
-				<label for="kpi" class="label mt-3">
-					{{ 'KEY_RESULT_PAGE.FORM.LABELS.SELECT_KPI' | translate }}
-				</label>
-				@if (KPIs.length > 0) {
-				<nb-select id="kpi" fullWidth formControlName="kpiId">
-					@for (kpi of KPIs; track kpi.id) {
-					<nb-option [value]="kpi.id">
-						{{ kpi.name }}
-					</nb-option>
-					}
-				</nb-select>
-				} @else {
-				<p>
-					<button nbButton status="primary" id="kpi" (click)="openEditKPI()">
-						{{ 'BUTTONS.ADD_KPI' | translate }}
-					</button>
-				</p>
-				}
-			</div>
-			}
-		</div>
-		@if (enableHelperText) {
-		<div class="col-md-5 position-relative mt-3"></div>
-		}
-	</div>
-
 	@if ( parentFormGroup.value.type === keyResultTypeEnum.NUMERICAL || parentFormGroup.value.type ===
 	keyResultTypeEnum.CURRENCY ) {
-	<div [class.row]="enableHelperText">
-		<div [class.col-md-7]="enableHelperText">
-			<div class="row mt-2">
-				<div class="col-md-4">
-					<label for="initial-value" class="label">
-						{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}
-					</label>
-					<input
-						type="number"
-						[min]="0"
-						id="initial-value"
-						nbInput
-						fullWidth
-						formControlName="initialValue"
-						placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}"
-					/>
-				</div>
-				<div class="col-md-4">
-					<label for="target-value" class="label">
-						{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}
-					</label>
-					<input
-						class="d-flex space-between"
-						type="number"
-						id="target-value"
-						nbInput
-						[min]="0"
-						fullWidth
-						formControlName="targetValue"
-						placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}"
-					/>
-				</div>
-				<div class="col-md-4">
-					<ga-goal-custom-unit-select
-						[parentFormGroup]="parentFormGroup"
-						[numberUnits]="numberUnits"
-					></ga-goal-custom-unit-select>
-				</div>
-			</div>
-		</div>
-		@if (enableHelperText) {
-		<div class="col-md-5 position-relative mt-3"></div>
-		}
+	<div class="kr-field kr-field-initial">
+		<label for="initial-value" class="label">
+			{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}
+		</label>
+		<input
+			type="number"
+			[min]="0"
+			id="initial-value"
+			nbInput
+			fullWidth
+			formControlName="initialValue"
+			placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.INITIAL_VALUE' | translate }}"
+		/>
+	</div>
+	<div class="kr-field kr-field-target">
+		<label for="target-value" class="label">
+			{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}
+		</label>
+		<input
+			type="number"
+			id="target-value"
+			nbInput
+			[min]="0"
+			fullWidth
+			formControlName="targetValue"
+			placeholder="{{ 'KEY_RESULT_PAGE.FORM.LABELS.TARGET_VALUE' | translate }}"
+		/>
+	</div>
+	<div class="kr-field kr-field-unit">
+		<ga-goal-custom-unit-select
+			[parentFormGroup]="parentFormGroup"
+			[numberUnits]="numberUnits"
+		></ga-goal-custom-unit-select>
 	</div>
 	}
 </div>

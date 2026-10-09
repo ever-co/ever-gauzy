@@ -18,7 +18,7 @@
                 <p>{{ trigger.description }}</p>
               </div>
               <div class="endpoint-actions">
-                <button nbButton status="primary" size="small" outline (click)="openTriggerDetails()">
+                <button nbButton type="button" status="primary" size="small" outline (click)="openTriggerDetails(trigger)">
                   {{ 'BUTTONS.VIEW' | translate }}
                 </button>
               </div>
@@ -34,3 +34,16 @@
     }
   </nb-card-body>
 </nb-card>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each trigger that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedTrigger"
+  heading="INTEGRATIONS.ZAPIER_PAGE.TRIGGERS.TITLE"
+  [subtitle]="viewedTrigger?.name"
+  (closed)="closeView()"
+>
+  @if (viewedTrigger) {
+    <ngx-record-view [record]="viewedTrigger" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

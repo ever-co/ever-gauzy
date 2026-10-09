@@ -1,18 +1,81 @@
-div > div {
-  &:first-child {
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
-  &:last-child {
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 15px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
+// ── A pipeline's stages, as chips on one line box ────────────────────────────
+//
+// WHAT THIS REPLACES: a bare `div > div` block setting 12px/15px on each of the
+// two lines the template emits per stage — a name line and a description line —
+// with the stages themselves left as plain blocks, stacked. So the cell cost the
+// row 30px PER STAGE and nothing capped it: a pipeline with five stages made a
+// 150px row, in a table whose other three columns are a string, a string and a
+// 1rem status pill. It was the one cell on this page that read no density tokens
+// at all, and the only reason a Pipelines row did not measure what an Invoices
+// row does.
+//
+// The treatment is the app's existing answer to "several small labels in one
+// cell" — the tag chips `ga-notes-with-tags` renders — rather than anything new:
+// the same `--gauzy-table-chip-*` scale, the same `--gauzy-table-badge-*` box,
+// so a stage chip and the status pill in the very next column are drawn alike.
+//
+// Chips WRAP rather than truncating to one line with an overflow count (the
+// `ngx-people-list` treatment). A pipeline's stages are the payload of this
+// column — the thing the row is read for — so a tall-ish cell on a pipeline with
+// many stages is the honest outcome; what is fixed is that each stage now costs
+// one chip instead of two full-size text lines.
+//
+// Plain custom properties with literal fallbacks, no `@use 'themes'`: this sheet
+// had no imports and needs none, and the tokens reach it by inheritance from the
+// page's `:host` the same way every other cell renderer here is sized.
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gauzy-table-chip-gap, 0.125rem);
+  min-width: 0;
+}
+
+// One stage. `inline-flex` with a baseline cross-axis so the name and its
+// description sit on the same line inside the chip instead of stacking.
+:host > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  max-width: 100%;
+  min-width: 0;
+  min-height: var(--gauzy-table-badge-height, 1rem);
+  padding-block: var(--gauzy-table-badge-padding-y, 0.1875rem);
+  padding-inline: var(--gauzy-table-chip-padding-x, 0.3125rem);
+  border-radius: var(--gauzy-table-badge-radius, 0.25rem);
+  background: var(--gauzy-sidebar-background-3, rgba(126, 126, 143, 0.1));
+}
+
+// The stage name, and the description after it. Both truncate on WIDTH, so a
+// short one renders in full and only a genuinely long one picks up an ellipsis —
+// a stage name is short and a description is not, and it is the description that
+// would otherwise push the chip past the column.
+:host > div > div {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--gauzy-table-chip-font-size, 0.625rem);
+  line-height: var(--gauzy-table-chip-line-height, 0.75rem);
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+:host > div > div:first-child {
+  flex: 0 1 auto;
+  font-weight: 600;
+}
+
+// `:nth-child(2)`, not `:last-child`. The template now emits the description
+// element only when the stage has a non-blank one (a `display: none` on `:empty`
+// used to do that job, which leant on a zero-length interpolation text node still
+// counting as empty and could not catch a whitespace-only description at all).
+// With the node genuinely absent, the NAME is both first and last child, and a
+// `:last-child` rule at this same specificity would come after the `:first-child`
+// one above and paint every description-less stage muted and unbolded.
+:host > div > div:nth-child(2) {
+  flex: 1 1 auto;
+  max-width: 12rem;
+  font-weight: 400;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
 }

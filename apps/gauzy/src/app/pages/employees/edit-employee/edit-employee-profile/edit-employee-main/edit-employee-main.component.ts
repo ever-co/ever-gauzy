@@ -15,16 +15,41 @@ import { EmployeeStore, ErrorHandlingService } from '@gauzy/ui-core/core';
 @Component({
     selector: 'ga-edit-employee-main',
     templateUrl: './edit-employee-main.component.html',
-    styleUrls: [
-        '../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-        './edit-employee-main.component.scss'
-    ],
+    styleUrls: ['./edit-employee-main.component.scss'],
     standalone: false
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	hoverState: boolean;
 	selectedEmployee: IEmployee;
+
+	avatarFailed = false;
+
+	get workState(): 'active' | 'ended' | 'not-started' | null {
+		const employee = this.selectedEmployee;
+		if (!employee) return null;
+		if (employee.endWork) return 'ended';
+		return employee.startedWorkOn ? 'active' : 'not-started';
+	}
+
+	get hasEmploymentFacts(): boolean {
+		const employee = this.selectedEmployee;
+		return !!(employee?.employeeLevel || employee?.startedWorkOn || employee?.endWork);
+	}
+
+	get hasRateFacts(): boolean {
+		const employee = this.selectedEmployee;
+		return !!(
+			employee?.payPeriod ||
+			(employee?.billRateCurrency && employee?.billRateValue != null) ||
+			employee?.reWeeklyLimit != null
+		);
+	}
+
+	get hasJobFacts(): boolean {
+		const employee = this.selectedEmployee;
+		return employee?.jobSuccess != null || employee?.totalJobs != null;
+	}
 
 	/*
 	 * Employee Main Mutation Form
@@ -84,6 +109,18 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image) {
+				this.avatarFailed = false;
+				// The store round-trip does come back here — userForm$ drives the user
+				// update, whose `finally` refetches the employee and re-emits
+				// selectedEmployee$, which re-runs _initializeFormValue. But that is a
+				// whole request away, and `imageUrl` is what the <img> binds to, so
+				// patch it now rather than showing the old avatar until the reload
+				// lands. `imageId` goes with it: submitForm() posts the form value, so
+				// saving before the reload would otherwise revert to the old asset.
+				this.form.patchValue({
+					imageId: image.id,
+					imageUrl: image.fullUrl || image.url
+				});
 				// Update user form data in store (assuming updateUserForm is async)
 				await this._employeeStore.updateUserForm({
 					imageId: image.id,
@@ -124,6 +161,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	 * @param employee - The employee whose data will be used to initialize the form.
 	 */
 	private _initializeFormValue(employee: IEmployee) {
+		this.avatarFailed = false;
 		// Patch the form with the employee's user data
 		this.form.patchValue({
 			username: employee.user.username,

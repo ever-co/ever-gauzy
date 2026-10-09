@@ -8,12 +8,19 @@ import { GauzyButtonActionModule } from '../gauzy-button-action/gauzy-button-act
 import { NoDataMessageModule } from './no-data-message/no-data-message.module';
 import { PaginationComponent } from './pagination/pagination.component';
 import { PaginationV2Component } from './pagination/pagination-v2/pagination-v2.component';
+import { SmartTableSettlingDirective } from './smart-table-loading/smart-table-settling.directive';
+import { SmartTableFilterToggleDirective } from './smart-table-filters/smart-table-filter-toggle.directive';
 
 // Components
 const COMPONENTS = [PaginationComponent, PaginationV2Component];
 
+// Attach by element selector to every `angular2-smart-table` in scope, so the
+// "still loading, not empty" fix and the collapsed-filters toggle land on every
+// grid without a template change.
+const DIRECTIVES = [SmartTableSettlingDirective, SmartTableFilterToggleDirective];
+
 @NgModule({
-	declarations: [...COMPONENTS],
+	declarations: [...COMPONENTS, ...DIRECTIVES],
 	imports: [
 		NbToggleModule,
 		NbIconModule,
@@ -25,7 +32,7 @@ const COMPONENTS = [PaginationComponent, PaginationV2Component];
 		GauzyButtonActionModule,
 		NoDataMessageModule
 	],
-	exports: [Angular2SmartTableModule, GauzyButtonActionModule, NoDataMessageModule, ...COMPONENTS],
+	exports: [Angular2SmartTableModule, GauzyButtonActionModule, NoDataMessageModule, ...COMPONENTS, ...DIRECTIVES],
 	providers: []
 })
 export class SmartDataViewLayoutModule {}

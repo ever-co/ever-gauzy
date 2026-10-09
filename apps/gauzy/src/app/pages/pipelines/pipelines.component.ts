@@ -185,8 +185,15 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	 * Sets up the initial view configuration and subscribes to changes in the component layout.
 	 */
 	setView() {
-		// Set the default view component name to PROPOSALS
-		this.viewComponentName = ComponentEnum.PROPOSALS;
+		// `PIPELINES`, not `PROPOSALS`. This page registered itself under the
+		// Proposals key, and `job-proposal-ui`'s own proposal page registers the
+		// SAME key — so the two shared one stored layout preference. Setting
+		// Proposals to the card view silently switched Pipelines to `ga-card-grid`
+		// as well, which is why this page could render as cards while every style
+		// written for its table was correct and simply never applied; toggling the
+		// layout on either page also moved the other. `ComponentEnum.PIPELINES` was
+		// declared for this page and, until now, referenced nowhere.
+		this.viewComponentName = ComponentEnum.PIPELINES;
 
 		// Subscribe to changes in the component layout
 		this.store

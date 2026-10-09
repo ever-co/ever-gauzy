@@ -1,12 +1,21 @@
 // Forward themes so files importing this also get nb-theme() etc.
 @forward '../themes';
 @use '../themes' as *;
+@use 'rich-text-editor' as *;
 
 $default-box-shadow-inset: var(--gauzy-shadow) inset;
 $default-height: 42px;
 $default-radius: nb-theme(border-radius);
 $default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
 $default-box-shadow: var(--gauzy-shadow);
+
+// Mirrors packages/ui-core/static/styles/gauzy/_gauzy-overrides.scss (keep the values identical). This app
+// lists its own styles dir ahead of ui-core's in `stylePreprocessorOptions.includePaths`, so this file shadows
+// that one: shared ui-core component sheets that `@use 'gauzy/_gauzy-overrides'` (e.g.
+// time-tracker.component.scss) bind to this copy and fail the build with "Undefined variable" unless the tokens
+// they read are defined here as well. The app's own tokens above are left as they are.
+$control-hairline: inset 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+$control-padding-x: 1rem;
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
   .ng-select {
@@ -188,82 +197,13 @@ $default-box-shadow: var(--gauzy-shadow);
 * Override nb-stepper
 */
 
-/*
-* Begin
-* Override ck-editor
-*/
-@mixin ck-editor() {
-  ckeditor .cke_top.cke_reset_all {
-    background-color: var(--gauzy-sidebar-background-4);
-    border-radius: var(--border-radius);
-  }
-
-  ckeditor .cke_chrome {
-    border: none;
-    border-radius: var(--border-radius);
-    padding: 12px;
-    box-shadow: var(--gauzy-shadow) inset;
-    background: var(--gauzy-card-1);
-    width: calc(100% - 20px) !important;
-  }
-
-  ckeditor .cke_top {
-    border-bottom: none;
-  }
-
-  ckeditor .cke_inner.cke_reset {
-    border-radius: var(--border-radius);
-  }
-
-  ckeditor .cke_bottom {
-    border: none;
-    border-radius: var(--border-radius);
-    background-color: var(--gauzy-sidebar-background-4);
-  }
-
-  ckeditor .cke_inner {
-    background: transparent;
-  }
-
-  .nb-theme-gauzy-light {
-    ckeditor .cke_button_icon {
-      filter: brightness(0) invert(0);
-    }
-  }
-
-  .nb-theme-gauzy-dark {
-    ckeditor .cke_button_icon {
-      filter: brightness(0) invert(1);
-    }
-  }
-
-  ckeditor {
-    a.cke_button_off:hover,
-    a.cke_button_on,
-    a.cke_button_off:focus,
-    a.cke_button_off:active {
-      background: var(--gauzy-card-1);
-      border: none;
-      border-radius: var(--border-radius);
-    }
-  }
-
-  ckeditor .cke_button_label {
-    color: var(--text-basic-color);
-  }
-}
-
-/*
-* End
-*/
-
 @mixin gauzy-overrides() {
   @include nb-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include text-inputs-overrides;
   @include ng-select-overrides($default-height, $default-radius, $default-box-shadow-inset);
   @include nb-stepper;
   @include full-calendar();
-  @include ck-editor();
+  @include rich-text-editor();
   @include input-appearance(42px, var(--gauzy-card-1));
   @include nb-tabset-overrides;
 }

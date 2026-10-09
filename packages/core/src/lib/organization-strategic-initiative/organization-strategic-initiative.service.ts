@@ -382,8 +382,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): boolean {
 		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
-		// Steward can always view
-		if (stewardId === employeeId) {
+		// Steward can always view — only when there IS a steward and a caller identity (both may be
+		// null: an unassigned initiative viewed by a non-employee user must not match on null === null).
+		if (stewardId && employeeId && stewardId === employeeId) {
 			return true;
 		}
 
@@ -451,8 +452,9 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 	): Promise<boolean> {
 		const { visibilityScope, stewardId } = organizationStrategicInitiative;
 
-		// Steward and creator can always view
-		if (stewardId === employeeId) {
+		// Steward and creator can always view — only when there IS a steward and a caller identity
+		// (an unassigned initiative viewed by a non-employee user must not match on null === null).
+		if (stewardId && employeeId && stewardId === employeeId) {
 			return true;
 		}
 
@@ -514,6 +516,13 @@ export class OrganizationStrategicInitiativeService extends TenantAwareCrudServi
 		employeeId: ID
 	): Promise<boolean> {
 		try {
+			// No employee identity, no team membership — same answer the batch path
+			// (getEmployeeTeamIds / canViewOrganizationStrategicInitiativeSync) gives. An empty
+			// employeeId used to be dropped from the membership query, turning the check into
+			// "any active member exists in a linked team".
+			if (!employeeId) {
+				return false;
+			}
 			// Load the organization strategic initiative with its projects and their teams
 			const organizationStrategicInitiativeWithProjects = await this.findOneByOptions({
 				where: { id: organizationStrategicInitiative.id },

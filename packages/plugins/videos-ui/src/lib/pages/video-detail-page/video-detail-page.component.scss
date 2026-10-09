@@ -4,9 +4,26 @@
   display: flex;
   gap: 1rem;
 
+  // The side tabs used to be held open by `.list { min-width: 416px }` — a floor
+  // the layout column cannot honour once the AI chat takes up to 860px of the
+  // row, so the page overflowed the canvas. The 416px is now the tabset's
+  // PREFERRED size: the player takes whatever is left (`flex: 1 1 0%` instead of
+  // its `w-100`, whose 100% basis competed with the tabs for the same room), and
+  // only when the row is narrower than the tabs does the tabset give way.
+  // Nothing inside keeps a floor of its own.
+  > plug-video {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+
+  > nb-tabset {
+    flex: 0 1 416px;
+    min-width: 0;
+  }
+
   .list {
     overflow-y: auto;
-    min-width: 416px;
+    min-width: 0;
     height: 100%;
   }
 
@@ -33,6 +50,14 @@
 @media (max-width: 1435px) {
   .custom-card-body {
     flex-direction: column;
+
+    // Stacked, the flex axis is vertical: the row-mode bases above would turn
+    // into heights (a 0-height player, a 416px-tall tabset), so both go back to
+    // content-sized here.
+    > plug-video,
+    > nb-tabset {
+      flex: 0 0 auto;
+    }
 
     .list {
       min-height: -webkit-fill-available;

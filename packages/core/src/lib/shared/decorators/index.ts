@@ -3,3 +3,4 @@ export * from './roles.decorator';
 export * from './language.decorator';
 export * from './user.decorator';
 export * from './trim.decorator';
+export * from './organization-policy-target.decorator';

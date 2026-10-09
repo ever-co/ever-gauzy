@@ -20,7 +20,7 @@ providers with built-in failover, budgets and usage analytics.
 | Id                                    | Label            |
 | ------------------------------------- | ---------------- |
 | `anthropic/claude-sonnet-5` (default) | Claude Sonnet 5  |
-| `anthropic/claude-opus-4.8`           | Claude Opus 4.8  |
+| `anthropic/claude-opus-5`           | Claude Opus 5  |
 | `openai/gpt-5.5`                      | GPT-5.5          |
 | `google/gemini-3.5-flash`             | Gemini 3.5 Flash |
 

@@ -22,20 +22,27 @@
   @include nb-rtl(padding-right, 1rem);
 }
 
+// Same empty state as the page-level one in `candidate-statistic.component.scss`
+// and now from the same tokens. `#e5e5e5` is a fixed light hairline and
+// `#909cb4` a fixed blue-grey: on the near-black canvas the border vanished and
+// the caption fought the neutral text ramp. The radius and gap were missing
+// here too, so the two empty states did not match even on the light themes.
 .no-data {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px #e5e5e5 solid;
+  gap: 0.5rem;
   height: 150px;
+  border: 1px solid nb-theme(border-basic-color-3);
+  border-radius: nb-theme(border-radius);
 
   &-text {
-    color: #909cb4;
+    color: nb-theme(text-hint-color);
   }
 
   &-icon {
     font-size: 1.5rem !important;
-    color: #909cb4;
+    color: nb-theme(text-hint-color);
   }
 }

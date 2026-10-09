@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/dashboard-time-track-angular-ui/src",
 	"prefix": "gz",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": ["contracts", "ui-config", "ui-core", "plugin-ui"],
 	"targets": {
 		"build": {

@@ -23,7 +23,9 @@ export const ensureEnglishLanguage = async () => {
 
 	// Already English? Nothing to do.
 	const langBtn = page.locator(languageButton).nth(0);
-	if (((await langBtn.textContent().catch(() => '')) || '').includes('EN ')) {
+	// Trigger renders "[flag] Name"; when English is active the app locale is English,
+	// so the caption is always the word "English".
+	if (((await langBtn.textContent().catch(() => '')) || '').includes('English')) {
 		return;
 	}
 
@@ -33,10 +35,11 @@ export const ensureEnglishLanguage = async () => {
 		await page.locator(settingsBtn).first().click({ force: true });
 		await page.waitForTimeout(1500);
 	}
-	// Open language dropdown (index 0) and pick the English option ("EN (...)").
+	// Open language dropdown (index 0) and pick the English option by its flag asset —
+	// the option text is locale-dependent now that the "EN (...)" code prefix is gone.
 	await page.locator(languageButton).nth(0).click({ force: true });
 	await page.waitForTimeout(1200);
-	await page.locator(optionCss).filter({ hasText: 'EN ' }).first().click();
+	await page.locator(optionCss).filter({ has: page.locator('img[src*="flags/gb.svg"]') }).first().click();
 	await page.waitForTimeout(2000);
 };
 

@@ -1,12 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, In, Raw } from 'typeorm';
-import { ID, IOrganizationContact, IOrganizationContactFindInput, IPagination, BaseEntityEnum } from '@gauzy/contracts';
+import {
+	ID,
+	IOrganizationContact,
+	IOrganizationContactFindInput,
+	IPagination,
+	BaseEntityEnum,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { isNotEmpty } from '@gauzy/utils';
 import { MultiORMEnum } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationContact } from './organization-contact.entity';
+import { resolveOrganizationContactEmployeeRelations } from './organization-contact-relations';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
@@ -94,17 +102,34 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * Get All Organization By Employee
 	 */
 	async getOrganizationContactByEmployee(data: any) {
-		const { relations, findInput } = data;
-		const { employeeId, organizationId, contactType } = findInput;
+		const { findInput } = data;
+		const { organizationId, contactType } = findInput;
+
+		// This branch builds its own joins, so it never reaches the sensitive-relation check the
+		// CrudService read methods run. The table is asserted here, as the sibling hand-rolled services
+		// do, and only allowlisted direct relations may be joined at all (GHSA-c3cj-m3xm-7j5h).
+		this.assertRelationsPermitted({ relations: data.relations });
+		const relations = resolveOrganizationContactEmployeeRelations(data.relations);
 
 		// Get current user ID and tenant ID from the request context
 		const createdByUserId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() ?? findInput.tenantId;
 
+		// A caller may only list the contacts of another employee when they can act for other employees;
+		// everyone else is pinned to their own employee record, whatever the query names.
+		const employeeId = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			? findInput.employeeId
+			: RequestContext.currentEmployeeId();
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
+				// Never emit `members: { id: null }` — that would match contacts WITHOUT members.
+				const $or: any[] = [{ createdByUserId }];
+				if (employeeId) {
+					$or.unshift({ members: { id: employeeId } });
+				}
 				const where: any = {
-					$or: [{ members: { id: employeeId } }, { createdByUserId }],
+					$or,
 					contactType,
 					tenantId,
 					...(organizationId ? { organizationId } : {})
@@ -118,22 +143,19 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 			case MultiORMEnum.TypeORM:
 			default: {
 				const query = this.typeOrmRepository.createQueryBuilder('organization_contact');
-				if (relations.length > 0) {
-					relations.forEach((relation: string) => {
-						if (relation.indexOf('.') !== -1) {
-							const alias = relation.split('.').slice(-1)[0];
-							query.leftJoinAndSelect(`${relation}`, alias);
-						} else {
-							const alias = relation;
-							query.leftJoinAndSelect(`${query.alias}.${relation}`, alias);
-						}
-					});
+				for (const relation of relations) {
+					query.leftJoinAndSelect(`${query.alias}.${relation}`, relation);
+				}
+				// The member filter below needs the `members` alias even when the caller did not ask for it.
+				if (!relations.includes('members')) {
+					query.leftJoin(`${query.alias}.members`, 'members');
 				}
 				query.where(
 					new Brackets((subQuery) => {
-						subQuery
-							.where('members.id =:employeeId', { employeeId })
-							.orWhere(`${query.alias}.createdByUserId = :createdByUserId`, { createdByUserId });
+						subQuery.where(`${query.alias}.createdByUserId = :createdByUserId`, { createdByUserId });
+						if (employeeId) {
+							subQuery.orWhere('members.id = :employeeId', { employeeId });
+						}
 					})
 				);
 

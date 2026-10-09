@@ -18,7 +18,6 @@ export class KeyresultTypeSelectComponent {
 	@Input() orgId: string;
 	@Input() KPIs: Array<IKPI>;
 	@Input() numberUnits: string[];
-	@Input() enableHelperText = true;
 
 	keyResultTypeEnum = KeyResultTypeEnum;
 

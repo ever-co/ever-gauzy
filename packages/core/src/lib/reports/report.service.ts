@@ -25,6 +25,10 @@ export class ReportService extends CrudService<Report> {
 	 * @returns A promise that resolves to an object containing paginated report items and total count.
 	 */
 	public async findAllReports(filter?: any): Promise<IPagination<Report>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(filter);
+
 		console.time(`ReportService.findAll took seconds`);
 		// Extract organizationId and tenantId from filter
 		const { organizationId } = filter;

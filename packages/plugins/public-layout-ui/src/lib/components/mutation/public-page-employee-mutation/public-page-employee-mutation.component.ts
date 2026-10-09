@@ -5,7 +5,6 @@ import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular';
 import {
 	IEmployee,
 	ISkill,
@@ -26,7 +25,6 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,10 +43,21 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[] = [];
 	showAddAward: boolean;
-	ckConfig: CKEditor4.Config = {
-		...ckEditorConfig,
-		height: '200'
-	};
+
+	/** The dialog's sections, in tab order: an id, its i18n title and its icon. */
+	readonly tabs = [
+		{ id: 'account', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT', icon: 'person-outline' },
+		{ id: 'employment', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT', icon: 'briefcase-outline' },
+		{ id: 'rates', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES', icon: 'pricetags-outline' },
+		{ id: 'awards', title: 'POP_UPS.AWARDS', icon: 'award-outline' },
+		{ id: 'privacy', title: 'POP_UPS.PRIVACY', icon: 'shield-outline' }
+	] as const;
+	/**
+	 * The selected section. Panes are hidden, not destroyed, when another is
+	 * selected: the tags and skills inputs read their initial value from the
+	 * employee, so re-creating them would drop a selection made before switching.
+	 */
+	activeTab: 'account' | 'employment' | 'rates' | 'awards' | 'privacy' = 'account';
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,

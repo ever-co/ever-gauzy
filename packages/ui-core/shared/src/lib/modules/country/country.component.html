@@ -5,11 +5,11 @@
 		</label>
 		<ng-select
 			#select
+			class="form-field-select"
 			[items]="countries$ | async"
 			(clear)="select.blur()"
 			[clearable]="false"
 			(change)="onOptionChange($event); select.blur()"
-			size="medium"
 			[placeholder]="placeholder || 'FORM.PLACEHOLDERS.COUNTRY' | translate"
 			[(ngModel)]="country"
 			[searchFn]="searchCountry"

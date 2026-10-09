@@ -18,7 +18,7 @@
                 <p>{{ action.description }}</p>
               </div>
               <div class="endpoint-actions">
-                <button nbButton status="primary" size="small" outline (click)="openActionDetails()">
+                <button nbButton type="button" status="primary" size="small" outline (click)="openActionDetails(action)">
                   {{ 'BUTTONS.VIEW' | translate }}
                 </button>
               </div>
@@ -34,3 +34,16 @@
     }
   </nb-card-body>
 </nb-card>
+
+<!-- Read-only View. The projected content is gated here (not inside the drawer)
+     so the record renderer is built fresh for each action that is opened. -->
+<ngx-record-view-drawer
+  [open]="!!viewedAction"
+  heading="INTEGRATIONS.ZAPIER_PAGE.ACTIONS.TITLE"
+  [subtitle]="viewedAction?.name"
+  (closed)="closeView()"
+>
+  @if (viewedAction) {
+    <ngx-record-view [record]="viewedAction" [sections]="viewSections"></ngx-record-view>
+  }
+</ngx-record-view-drawer>

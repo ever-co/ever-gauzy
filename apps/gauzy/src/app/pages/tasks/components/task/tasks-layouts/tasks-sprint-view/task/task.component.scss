@@ -8,9 +8,19 @@ nb-card {
 	margin-bottom: 8px;
 }
 
+// Selecting a card used to REPLACE the body's `--gauzy-shadow` with a bare
+// `-6px 0 0 0 rgba(0 0 0 / 10%)` bar. Two problems on the dark themes, where
+// `--gauzy-shadow` is the 1px hairline ring that gives the card its only edge:
+// the ring disappeared the moment a card was selected, and the replacement is a
+// 10 %-black bar drawn on a near-black canvas, i.e. no marker at all. Compose
+// the two instead, and paint the bar with the token the rest of the app uses
+// for a current row. `--gauzy-shadow` carries a literal fallback because the two
+// material themes register no gauzy tokens at all, and an unresolvable var()
+// anywhere in the list would drop the whole declaration — bar included.
 .selected {
 	background-color: var(--gauzy-sidebar-background-3);
-	box-shadow: -6px 0 0 0 rgba(0 0 0 / 10%);
+	box-shadow: -6px 0 0 0 var(--gauzy-active-tint, rgba(126, 126, 143, 0.2)),
+		var(--gauzy-shadow, 0 0 0 1px var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18)));
 }
 
 .view {

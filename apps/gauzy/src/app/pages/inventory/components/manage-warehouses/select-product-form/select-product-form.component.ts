@@ -12,7 +12,7 @@ import { SelectedRowComponent } from '../../inventory-table-components/selected-
 import { tap } from 'rxjs/operators';
 import { debounceTime } from 'rxjs';
 import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
-import { Store } from '@gauzy/ui-core/core';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
 
 export interface SelectedRowEvent {
 	data: IProductTranslated;
@@ -45,7 +45,8 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 		public dialogRef: NbDialogRef<any>,
 		private store: Store,
 		readonly translateService: TranslateService,
-		private http: HttpClient
+		private http: HttpClient,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -83,27 +84,33 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 
 	async loadSettings() {
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization || { id: '' };
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization || { id: '' };
 
-		const data =
-			'data=' +
-			JSON.stringify({
-				relations: ['productType', 'productCategory', 'featuredImage', 'variants'],
-				findInput: { organizationId, tenantId }
+			const data =
+				'data=' +
+				JSON.stringify({
+					relations: ['productType', 'productCategory', 'featuredImage', 'variants'],
+					findInput: { organizationId, tenantId }
+				});
+			const { activePage, itemsPerPage } = this.getPagination();
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: this.PRODUCTS_URL + data,
+				dataKey: 'items',
+				totalKey: 'total',
+				perPage: 'per_page',
+				pagerPageKey: 'page'
 			});
-		const { activePage, itemsPerPage } = this.getPagination();
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: this.PRODUCTS_URL + data,
-			dataKey: 'items',
-			totalKey: 'total',
-			perPage: 'per_page',
-			pagerPageKey: 'page'
-		});
-		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-		await this.smartTableSource.getElements();
-		this.setPagination({ ...this.getPagination(), totalItems: this.smartTableSource.count() });
-		this.loading = false;
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+			await this.smartTableSource.getElements();
+			this.setPagination({ ...this.getPagination(), totalItems: this.smartTableSource.count() });
+		} catch (error) {
+			console.error('Error while retrieving products', error);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	async loadSmartTable() {

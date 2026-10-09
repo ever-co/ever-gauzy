@@ -1,16 +1,16 @@
 <nb-card class="main">
-  <nb-card-header>
-    <span class="cancel">
-      <i class="fas fa-times" (click)="cancel()"></i>
-    </span>
-    <h5 class="title">
+  <nb-card-header class="header">
+    <div class="title">
       {{
       (payment
       ? 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT'
       : 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT'
       ) | translate
       }}
-    </h5>
+    </div>
+    <span class="cancel">
+      <i class="fas fa-times" (click)="cancel()"></i>
+    </span>
   </nb-card-header>
   <nb-card-body class="body">
     <form [formGroup]="form">
@@ -181,12 +181,11 @@
           </div>
         </form>
       </nb-card-body>
-      <nb-card-footer class="text-left">
+      <nb-card-footer class="footer">
         <button
           status="basic"
-          outline
+          ghost
           size="small"
-          class="mr-3"
           nbButton
           (click)="cancel()"
           >

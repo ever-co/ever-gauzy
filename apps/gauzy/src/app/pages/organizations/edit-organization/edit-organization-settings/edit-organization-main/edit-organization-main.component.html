@@ -1,144 +1,240 @@
 <div class="content main">
-	<div class="organization-container">
-		<div class="organization-photo ml-4">
-			<ngx-image-uploader
-				[folder]="'organization_avatars'"
-				(changeHoverState)="hoverState = $event"
-				(uploadedImageAsset)="updateImageAsset($event)"
-				(uploadImageAssetError)="handleImageUploadError($event)"
-			></ngx-image-uploader>
-			<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
-			<img
-				[src]="form.get('imageUrl').value"
-				alt="Organization Photo"
-				(mouseenter)="hoverState = true"
-				(mouseleave)="hoverState = false"
-			/>
-		</div>
-		<h6 class="employees-count-text mt-2">
-			{{ employeesCount }}
-			{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
-		</h6>
-	</div>
-	<form class="main-form" [formGroup]="form">
-		<div class="fields">
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<label class="label" for="nameInput">
-							{{ 'FORM.LABELS.NAME' | translate }}
-						</label>
-						<input
-							fullWidth
-							id="nameInput"
-							type="text"
-							nbInput
-							formControlName="name"
-							[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
-						/>
+	<section class="org__panel org__panel--identity">
+		<header class="org__head">
+			<div class="org__avatar" [class.org__avatar--hover]="hoverState">
+				<ngx-image-uploader
+					[folder]="'organization_avatars'"
+					(changeHoverState)="hoverState = $event"
+					(uploadedImageAsset)="updateImageAsset($event)"
+					(uploadImageAssetError)="handleImageUploadError($event)"
+				></ngx-image-uploader>
+
+				@if (form?.get('imageUrl')?.value && !avatarFailed) {
+					<img
+						class="org__avatar-image"
+						[src]="form.get('imageUrl').value"
+						alt="Organization Photo"
+						(error)="avatarFailed = true"
+					/>
+				} @else {
+					<div class="org__avatar-image org__avatar-image--empty">
+						<nb-icon icon="briefcase-outline"></nb-icon>
 					</div>
-				</div>
-				<div class="col">
-					<span>
-						<ga-currency formControlName="currency" (optionChange)="currencyChanged($event)"></ga-currency>
-					</span>
+				}
+
+				<span class="org__avatar-scrim" aria-hidden="true"></span>
+				<span class="org__avatar-badge" aria-hidden="true">
+					<nb-icon icon="camera-outline"></nb-icon>
+				</span>
+			</div>
+
+			<div class="org__identity">
+				<div class="org__name">{{ organization?.name }}</div>
+
+				@if (organization?.officialName; as officialName) {
+					<div class="org__legal-name">{{ officialName }}</div>
+				}
+
+				@if (organization?.short_description; as blurb) {
+					<p class="org__blurb">{{ blurb }}</p>
+				}
+
+				<div class="org__chips">
+					@if (organization?.isActive) {
+						<span class="org__chip org__chip--success">
+							{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
+						</span>
+					}
+					@if (organization?.isArchived || organization?.isActive === false) {
+						<span class="org__chip org__chip--warning">
+							{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
+						</span>
+					}
+					@if (organization?.isDefault) {
+						<span class="org__chip org__chip--info">
+							{{ 'FORM.LABELS.DEFAULT' | translate }}
+						</span>
+					}
 				</div>
 			</div>
-			<div class="row">
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label" for="officialNameInput">
-							{{ 'FORM.LABELS.OFFICIAL_NAME' | translate }}
-						</label>
-						<input
-							fullWidth
-							id="officialNameInput"
-							type="text"
-							nbInput
-							formControlName="officialName"
-							[placeholder]="'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate"
-						/>
-					</div>
+		</header>
+
+		@if (organization) {
+			<div class="org__facts">
+				<section class="org__group">
+					<dl class="org__stats">
+						<div class="org__stat">
+							<dt>{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}</dt>
+							<dd>{{ employeesCount }}</dd>
+						</div>
+						@if (organization.timeZone; as timeZone) {
+							<div class="org__stat">
+								<dt>{{ 'TIMESHEET.TIME_ZONE' | translate }}</dt>
+								<dd>{{ timeZone }}</dd>
+							</div>
+						}
+						@if (organization.startWeekOn; as startWeekOn) {
+							<div class="org__stat">
+								<dt>{{ 'FORM.LABELS.START_WEEK_ON' | translate }}</dt>
+								<dd>{{ startWeekOn | titlecase }}</dd>
+							</div>
+						}
+						@if (organization.dateFormat; as dateFormat) {
+							<div class="org__stat">
+								<dt>{{ 'FORM.LABELS.DATE_FORMAT' | translate }}</dt>
+								<dd>{{ dateFormat }}</dd>
+							</div>
+						}
+						@if (organization.timeFormat; as timeFormat) {
+							<div class="org__stat">
+								<dt>{{ 'FORM.LABELS.TIME_FORMAT' | translate }}</dt>
+								<dd>{{ timeFormat }}</dd>
+							</div>
+						}
+					</dl>
+				</section>
+
+				@if (hasBonusFacts) {
+					<section class="org__group">
+						<h6 class="org__group-title">{{ 'SM_TABLE.BONUS' | translate }}</h6>
+						<dl class="org__stats">
+							@if (organization.bonusType; as bonusType) {
+								<div class="org__stat">
+									<dt>{{ 'FORM.LABELS.TYPE_OF_BONUS' | translate }}</dt>
+									<dd>{{ bonusType | replace: '_' : ' ' | titlecase }}</dd>
+								</div>
+							}
+							@if (organization.bonusPercentage != null) {
+								<div class="org__stat">
+									<dt>{{ 'FORM.LABELS.BONUS_PERCENTAGE' | translate }}</dt>
+									<dd>{{ organization.bonusPercentage }}%</dd>
+								</div>
+							}
+						</dl>
+					</section>
+				}
+			</div>
+		}
+	</section>
+
+	<section class="org__panel org__panel--form">
+		<form class="org__form" [formGroup]="form">
+			<div class="org__fields">
+				<div class="form-group">
+					<label class="label" for="nameInput">
+						{{ 'FORM.LABELS.NAME' | translate }}
+					</label>
+					<input
+						fullWidth
+						id="nameInput"
+						type="text"
+						nbInput
+						formControlName="name"
+						[placeholder]="'FORM.PLACEHOLDERS.NAME' | translate"
+					/>
 				</div>
-				<div class="col-6">
-					<div class="form-group tax-form-group">
-						<label class="label" for="taxIdInput">
-							{{ 'FORM.LABELS.TAX_ID' | translate }}
-						</label>
-						<input
-							fullWidth
-							id="taxIdInput"
-							type="text"
-							nbInput
-							formControlName="taxId"
-							[placeholder]="'FORM.PLACEHOLDERS.TAX_ID' | translate"
-						/>
-					</div>
+
+				<ga-currency
+					class="org__field"
+					formControlName="currency"
+					(optionChange)="currencyChanged($event)"
+				></ga-currency>
+
+				<div class="form-group">
+					<label class="label" for="officialNameInput">
+						{{ 'FORM.LABELS.OFFICIAL_NAME' | translate }}
+					</label>
+					<input
+						fullWidth
+						id="officialNameInput"
+						type="text"
+						nbInput
+						formControlName="officialName"
+						[placeholder]="'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="label" for="taxIdInput">
+						{{ 'FORM.LABELS.TAX_ID' | translate }}
+					</label>
+					<input
+						fullWidth
+						id="taxIdInput"
+						type="text"
+						nbInput
+						formControlName="taxId"
+						[placeholder]="'FORM.PLACEHOLDERS.TAX_ID' | translate"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="label" for="profileLinkInput">
+						{{ 'FORM.LABELS.PROFILE_LINK' | translate }}
+					</label>
+					<input
+						fullWidth
+						id="profileLinkInput"
+						type="text"
+						nbInput
+						formControlName="profile_link"
+						[placeholder]="'FORM.PLACEHOLDERS.PROFILE_LINK' | translate"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="label" for="website">
+						{{ 'FORM.LABELS.WEBSITE' | translate }}
+					</label>
+					<input
+						nbInput
+						fullWidth
+						id="website"
+						[placeholder]="'FORM.PLACEHOLDERS.WEBSITE' | translate"
+						formControlName="website"
+					/>
+				</div>
+
+				<div class="form-group">
+					<label class="label" for="registrationDate">
+						{{ 'FORM.LABELS.REGISTRATION_DATE' | translate }}
+					</label>
+					<input
+						nbInput
+						fullWidth
+						id="registrationDate"
+						[placeholder]="'FORM.PLACEHOLDERS.REGISTRATION_DATE' | translate"
+						[nbDatepicker]="registrationDate"
+						formControlName="registrationDate"
+					/>
+					<nb-datepicker #registrationDate></nb-datepicker>
+				</div>
+
+				<div class="form-group">
+					<ga-tags-color-input
+						[selectedTags]="form.get('tags').value"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isOrgLevel]="true"
+					></ga-tags-color-input>
 				</div>
 			</div>
-			<div class="row">
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label" for="profileLinkInput">
-							{{ 'FORM.LABELS.PROFILE_LINK' | translate }}
-						</label>
-						<input
-							fullWidth
-							id="profileLinkInput"
-							type="text"
-							nbInput
-							formControlName="profile_link"
-							[placeholder]="'FORM.PLACEHOLDERS.PROFILE_LINK' | translate"
-						/>
-					</div>
-				</div>
-				<div class="col-6">
-					<div class="form-group">
-						<ga-tags-color-input
-							[selectedTags]="form.get('tags').value"
-							(selectedTagsEvent)="selectedTagsEvent($event)"
-							[isOrgLevel]="true"
-						></ga-tags-color-input>
-					</div>
-				</div>
+
+			<!--
+				Stays a `div.actions`: the Location and Settings tabs use the same wrapper,
+				and ManageOrganizationPageObject drives all three through the one
+				`div.actions > button[status="success"]` selector.
+			-->
+			<div class="actions org__actions">
+				<button
+					type="button"
+					[disabled]="form.invalid"
+					(click)="updateOrganizationSettings()"
+					nbButton
+					status="success"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
 			</div>
-			<div class="row">
-				<div class="col-6">
-					<div class="form-group registration-form-group">
-						<label class="label" for="registrationDate">
-							{{ 'FORM.LABELS.REGISTRATION_DATE' | translate }}
-						</label>
-						<input
-							nbInput
-							fullWidth
-							id="registrationDate"
-							[placeholder]="'FORM.PLACEHOLDERS.REGISTRATION_DATE' | translate"
-							[nbDatepicker]="registrationDate"
-							formControlName="registrationDate"
-						/>
-						<nb-datepicker #registrationDate></nb-datepicker>
-					</div>
-				</div>
-				<div class="col-6">
-					<div class="form-group">
-						<label class="label" for="website">
-							{{ 'FORM.LABELS.WEBSITE' | translate }}
-						</label>
-						<input
-							nbInput
-							fullWidth
-							id="website"
-							[placeholder]="'FORM.PLACEHOLDERS.WEBSITE' | translate"
-							formControlName="website"
-						/>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="actions">
-			<button [disabled]="form.invalid" (click)="updateOrganizationSettings()" nbButton status="success">
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
-	</form>
+		</form>
+	</section>
 </div>

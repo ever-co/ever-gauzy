@@ -21,11 +21,23 @@ export class LayoutSelectorComponent implements OnInit {
 	public readonly componentLayoutStyle = signal<ComponentLayoutStyleEnum | undefined>(undefined);
 
 	ngOnInit() {
-		this.store.componentLayoutMap$
+		const componentName = this.componentName();
+		if (!componentName) {
+			return;
+		}
+		// `componentLayout$`, not the raw map: the map only holds a key once the
+		// user has explicitly toggled THIS page, so reading it directly left both
+		// buttons inactive on every page nobody had ever switched — and on any
+		// page whose `ComponentEnum` key changed, which strands the old entry.
+		// Meanwhile the page itself renders the effective layout (per-component
+		// override, then the user's preferred layout, then `SYSTEM_DEFAULT_LAYOUT`),
+		// so the two disagreed. This is the same stream the pages subscribe to,
+		// which is what keeps the highlight on whatever is actually on screen.
+		this.store
+			.componentLayout$(componentName)
 			.pipe(untilDestroyed(this))
-			.subscribe((componentLayoutMap: Map<string, ComponentLayoutStyleEnum>) => {
-				const dataLayout = componentLayoutMap.get(this.componentName());
-				this.componentLayoutStyle.set(dataLayout);
+			.subscribe((componentLayout: ComponentLayoutStyleEnum) => {
+				this.componentLayoutStyle.set(componentLayout);
 			});
 	}
 

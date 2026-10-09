@@ -1,0 +1,109 @@
+<div
+	class="dashboard-canvas"
+	[class.editing]="editing"
+	cdkDropList
+	cdkDropListOrientation="mixed"
+	[id]="dropListId"
+	[cdkDropListData]="placements"
+	[cdkDropListConnectedTo]="connectedTo"
+	[cdkDropListDisabled]="!editing"
+	(cdkDropListDropped)="onDrop($event)"
+>
+	@for (placement of placements; track placement.instanceId) {
+		<!--
+			SPANS ONLY — never `grid-column: x / span w`.
+
+			CDK's mixed-orientation sort shows the new position by MOVING THE
+			PLACEHOLDER NODE between the cells (`MixedSortStrategy.sort` does
+			nothing else). Pinning each cell to an absolute column/row made DOM
+			order irrelevant to where anything rendered, so dragging produced no
+			movement whatsoever — the placeholder was reordered underneath a grid
+			that ignored it. Letting the grid auto-place in DOM order is what makes
+			the drag visible, and `flowLayout` computes the same arrangement for
+			`placement.x`/`y` when it is persisted.
+		-->
+		<div
+			class="canvas-cell"
+			[class.is-editing]="editing"
+			[class.hidden-widget]="placement.hidden"
+			[style.grid-column]="'span ' + placement.w"
+			[style.grid-row]="'span ' + placement.h"
+			cdkDrag
+			[cdkDragData]="placement"
+			[cdkDragDisabled]="!editing"
+		>
+			<!--
+				The slot the widget will land in. It is the element CDK moves around
+				the grid while dragging, so it carries the dragged cell's footprint
+				and nothing else.
+			-->
+			<div
+				class="canvas-drop-placeholder"
+				*cdkDragPlaceholder
+				[style.grid-column]="'span ' + placement.w"
+				[style.grid-row]="'span ' + placement.h"
+			></div>
+
+			<!--
+				A chip, not CDK's default clone of the whole cell: a cloned chart or
+				table is a large translucent card that covers the slot being aimed
+				at (and renders blank, since a cloned <canvas> keeps no bitmap).
+			-->
+			<div class="canvas-drag-chip" *cdkDragPreview>
+				<nb-icon [icon]="iconFor(placement)"></nb-icon>
+				<span>{{ titleFor(placement) | translate }}</span>
+			</div>
+
+			@if (editing) {
+				<!--
+					No `cdkDragHandle`: with one, ONLY this 16px rail could start a
+					drag, and grabbing the card — what everyone actually tries — did
+					nothing. Without it the whole cell is the drag surface, and the
+					kebab still opens on click because CDK needs 5px of movement
+					before it treats a press as a drag.
+
+					The rail stays because dragging is pointer-only: it is the
+					focusable control that answers the arrow keys, which is the one
+					way to rearrange the canvas without a mouse.
+				-->
+				<button
+					type="button"
+					class="drag-handle"
+					[attr.aria-label]="'DASHBOARD_PAGE.BUILDER.CANVAS.DRAG_HANDLE' | translate"
+					[nbTooltip]="'DASHBOARD_PAGE.BUILDER.CANVAS.DRAG_HANDLE' | translate"
+					(keydown.arrowLeft)="moveBy(placement, -1, $event)"
+					(keydown.arrowUp)="moveBy(placement, -1, $event)"
+					(keydown.arrowRight)="moveBy(placement, 1, $event)"
+					(keydown.arrowDown)="moveBy(placement, 1, $event)"
+				>
+					<nb-icon icon="move-outline"></nb-icon>
+				</button>
+			}
+
+			<ga-dashboard-widget-host
+				[placement]="placement"
+				[editing]="editing"
+				(removed)="onRemove(placement)"
+				(configureRequested)="onConfigure(placement)"
+				(resized)="onResize(placement, $event)"
+			></ga-dashboard-widget-host>
+		</div>
+	}
+
+	<!-- Empty state: the key call to action of the builder -->
+	@if (!placements.length) {
+		<div class="canvas-empty">
+			<nb-icon class="canvas-empty__icon" icon="grid-outline"></nb-icon>
+			<h4 class="canvas-empty__title">
+				{{ 'DASHBOARD_PAGE.BUILDER.CANVAS.EMPTY_TITLE' | translate }}
+			</h4>
+			<p class="canvas-empty__hint">
+				@if (editing) {
+					{{ 'DASHBOARD_PAGE.BUILDER.CANVAS.EMPTY_HINT' | translate }}
+				} @else {
+					{{ 'DASHBOARD_PAGE.BUILDER.CANVAS.EMPTY_HINT_READONLY' | translate }}
+				}
+			</p>
+		</div>
+	}
+</div>

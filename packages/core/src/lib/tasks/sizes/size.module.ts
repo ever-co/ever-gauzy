@@ -18,6 +18,7 @@ import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.rep
 		RolePermissionModule
 	],
 	controllers: [TaskSizeController],
-	providers: [TaskSizeService, TypeOrmTaskSizeRepository, MikroOrmTaskSizeRepository, ...CommandHandlers]
+	providers: [TaskSizeService, TypeOrmTaskSizeRepository, MikroOrmTaskSizeRepository, ...CommandHandlers],
+	exports: [TaskSizeService]
 })
 export class TaskSizeModule {}

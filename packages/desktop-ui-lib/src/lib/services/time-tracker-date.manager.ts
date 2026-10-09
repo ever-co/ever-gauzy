@@ -37,6 +37,17 @@ export class TimeTrackerDateManager {
 		return moment().startOf('day').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
+	/**
+	 * Start of the day `days` days before today, in the same UTC-shifted format as `startToday`.
+	 */
+	public static startOfDaysAgo(days: number): string {
+		return moment()
+			.subtract(days, 'days')
+			.startOf('day')
+			.subtract(this.utcOffset, 'minutes')
+			.format('YYYY-MM-DD HH:mm:ss');
+	}
+
 	public static get endToday(): string {
 		return moment().endOf('day').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}

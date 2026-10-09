@@ -12,6 +12,7 @@ import { OrganizationTeamsService, Store } from '@gauzy/ui-core/core';
     selector: 'ga-organization-team-select-filter',
     template: `
 		<ng-select
+		  appendTo="body"
 		  [clearable]="true"
 		  [closeOnSelect]="true"
 		  [placeholder]="'TASKS_PAGE.SELECT' | translate"

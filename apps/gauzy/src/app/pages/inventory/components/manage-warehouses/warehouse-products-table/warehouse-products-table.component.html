@@ -9,17 +9,20 @@
   </div>
   <div class="table-scroll-container">
     <angular2-smart-table
+      [class.ga-table-loading]="loading"
       style="cursor: pointer"
       [settings]="settingsSmartTable"
       [source]="smartTableSource"
       (userRowSelect)="selectWarehouse($event)"
     ></angular2-smart-table>
   </div>
-  @if (smartTableSource) {
-    <ngx-pagination
-      [source]="smartTableSource"
-    ></ngx-pagination>
-  }
+  <div class="pagination-container">
+    @if (smartTableSource) {
+      <ngx-pagination
+        [source]="smartTableSource"
+      ></ngx-pagination>
+    }
+  </div>
 </nb-card-body>
 
 <ng-template #visible>

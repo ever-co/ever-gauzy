@@ -29,8 +29,20 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 		const { employeeId, hours } = command;
 		const tenantId = RequestContext.currentTenantId();
 
-		// Determine total work hours, calculate if not provided
-		const totalWorkHours = (await this.calculateTotalWorkHours(employeeId, tenantId)) || hours;
+		// Determine total work hours, falling back to the provided value only when it could not be calculated.
+		// A calculated total of 0 is a legitimate result (an employee with no time logs yet); `||` discarded it
+		// and fell through to the optional `hours`, which no caller passes. `Math.floor(undefined)` is NaN, and
+		// TypeORM writes NaN into the statement as a bare SQL literal that drivers reject
+		// ("no such column: NaN" on SQLite), failing the whole enclosing request — creating a
+		// manual time log, among others.
+		const calculated = await this.calculateTotalWorkHours(employeeId, tenantId);
+		const totalWorkHours = Number.isFinite(calculated) ? calculated : hours;
+
+		// Nothing meaningful to store
+		if (!Number.isFinite(totalWorkHours)) {
+			return;
+		}
+
 		console.log('Updated Employee Total Worked Hours: %s', Math.floor(totalWorkHours));
 
 		// Update employee's total worked hours
@@ -53,20 +65,21 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 				const knex = this.mikroOrmTimeLogRepository.getKnex();
 				const sumQuery = this.getSumQuery('time_log');
 
+				// Raw knex skips MikroORM's soft-delete filter: deleted time logs must not count
 				result = await knex('time_log')
 					.withSchema(knex.userParams.schema)
-					.innerJoin('time_slot_time_logs', 'time_slot_time_logs.timeLogId', 'time_log.id')
-					.innerJoin('time_slot', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 					.select(knex.raw(`${sumQuery} as duration`))
 					.where({ 'time_log.employeeId': employeeId, 'time_log.tenantId': tenantId })
+					.whereNull('time_log.deletedAt')
 					.first();
 				break;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
 				// Create a query builder for the TimeLog entity
+				// No join on the time slots: the sum is over each time log's own start / stop, and joining its
+				// slots repeated every log once per slot (a 1h log with six 10-minute slots counted as 6h).
 				const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-				query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 
 				// Get the sum of durations between startedAt and stoppedAt
 				const sumQuery = this.getSumQuery(query.alias);
@@ -137,7 +150,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 								THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, \`${logQueryAlias}\`.\`stoppedAt\`)
 								ELSE 0
 							END
-						) AS DECIMAL(10, 6)
+						) AS DECIMAL(20, 6)
 					)
 				`);
 				break;

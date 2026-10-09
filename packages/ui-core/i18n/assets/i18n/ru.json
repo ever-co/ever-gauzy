@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ADD_NEW": "Добавить новый",
 		"ADD": "Добавить",
+		"NEW": "Новый",
 		"CREATE": "Создать",
 		"REGISTER": "Регистрация",
 		"CHANGE_PASSWORD": "Изменить пароль",
@@ -401,12 +402,12 @@
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
-			"SELECT_EQUIPMENT": "Выберите оборудование",
-			"SELECT_SHARE_REQUEST_DATE": "Выберите дату запроса",
-			"SELECT_SHARE_START_DATE": "Выберите дату начала",
-			"SELECT_SHARE_END_DATE": "Выберите дату окончания",
-			"SELECT_EMPLOYEE": "Выберите сотрудника",
-			"SELECT_TEAM": "Выберите команду",
+			"SELECT_EQUIPMENT": "Оборудование",
+			"SELECT_SHARE_REQUEST_DATE": "Дата запроса",
+			"SELECT_SHARE_START_DATE": "Дата начала",
+			"SELECT_SHARE_END_DATE": "Дата окончания",
+			"SELECT_EMPLOYEE": "Сотрудник",
+			"SELECT_TEAM": "Команда",
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
 			"REGISTRATION_DATE": "Дата регистрации",
@@ -454,7 +455,7 @@
 			"OPEN_SOURCE_PROJECT_URL": "URL проекта с открытым исходным кодом",
 			"EMPLOYEE_LEVEL": "Уровень сотрудника",
 			"UNIT": "Единица измерения",
-			"SELECT_EXISTING_OBJECTIVE": "Выбрать существующую цель",
+			"SELECT_EXISTING_OBJECTIVE": "Существующая цель",
 			"LENGTH": "Длина",
 			"DATE_START": "Начальная дата",
 			"END_DATE": "Дата окончания",
@@ -501,7 +502,7 @@
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
 			"PHONE_NUMBER": "номер телефона",
-			"DEFAULT": "Выбрать по умолчанию",
+			"DEFAULT": "По умолчанию",
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Название компании",
@@ -550,7 +551,7 @@
 			"BILL_RATE": "Ставка счета / час",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
 			"EMAILS": "Введите адрес электронной почты и нажмите Enter",
-			"ROLE": "Выберите роль",
+			"ROLE": "Роль",
 			"PROJECTS": "Выберите проекты",
 			"CHOOSE_FORMAT": "Выберите формат",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
@@ -560,8 +561,8 @@
 			"ALIGN_LOGO_TO": "Выровнять логотип по",
 			"DEPARTMENTS": "Департаменты",
 			"TEAMS": "Команды",
-			"NUMBER_FORMAT": "Выберите формат чисел",
-			"REGIONS": "Выберите регион",
+			"NUMBER_FORMAT": "Формат чисел",
+			"REGIONS": "Регион",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
@@ -570,15 +571,15 @@
 			"ADD_REMOVE_TEAMS": "Добавить или удалить команды",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
 			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
-			"ADD_REMOVE_INTERVIEWER": "Выбрать интервьюера",
+			"ADD_REMOVE_INTERVIEWER": "Интервьюер",
 			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
-			"SELECT_CURRENCY": "Выберите валюту",
-			"TYPE_OF_BONUS": "Выберите тип бонуса",
+			"SELECT_CURRENCY": "Валюта",
+			"TYPE_OF_BONUS": "Тип бонуса",
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
@@ -589,13 +590,13 @@
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
 			"ORGANIZATIONS": "Выберите организации",
-			"ORGANIZATION": "Выберите организацию",
+			"ORGANIZATION": "Организация",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"OWNER": "Владелец",
 			"TASK_VIEW_MODE": "Режим просмотра задач",
-			"SELECT_STATUS": "Выберите статус",
+			"SELECT_STATUS": "Статус",
 			"LINKEDIN": "LinkedIn",
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Инстаграмма",
@@ -655,7 +656,7 @@
 				"LATITUDE": "Широта",
 				"LONGITUDE": "Долгота"
 			},
-			"SELECT_EXPENSE": "Выберите расход",
+			"SELECT_EXPENSE": "Расход",
 			"ADD_TITLE": "Добавить заголовок",
 			"ALL_PROJECTS": "Все проекты",
 			"ALL_TEAMS": "Все команды",
@@ -665,16 +666,16 @@
 			"GAUZY_API_SECRET": "Секрет искусственного интеллекта Гази",
 			"OPEN_AI_API_SECRET_KEY": "Открыть секретный ключ ИИ",
 			"OPEN_AI_ORGANIZATION_ID": "Открыть идентификатор организации AI",
-			"SELECT_COMPANY": "Выберите компанию",
+			"SELECT_COMPANY": "Компания",
 			"TYPE_SEARCH_REQUEST": "Введите ваш запрос на поиск...",
-			"SELECT_ICON": "Выберите иконку",
+			"SELECT_ICON": "Иконка",
 			"SELECT": "Выбрать",
 			"SPRINT_LENGTH": "Длина спринта",
 			"SPRINT_START_DATE": "Дата начала спринта",
 			"SPRINT_END_DATE": "Дата окончания спринта",
 			"SPRINT_GOAL": "Цель спринта",
 			"POLICY_NAME": "Название Политики",
-			"SELECT_DATE": "Выберите дату",
+			"SELECT_DATE": "Дата",
 			"DAYS_UNTIL_DUE": "Дней до окончания",
 			"TEMPLATES": "Шаблоны",
 			"INVOICE_TEMPLATE": "Шаблон счета",
@@ -692,8 +693,8 @@
 			"LINKEDIN_ID": "LinkedIn ID",
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
-			"AUTO_SYNC_TAG": "Select Auto-sync Label",
-			"SELECT_PROJECT": "Select Project",
+			"AUTO_SYNC_TAG": "Auto-sync Label",
+			"SELECT_PROJECT": "Project",
 			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Включить поиск вакансий и анализ соответствия",
 			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Включить анализ производительности сотрудников",
 			"STANDARD_WORK_HOURS_PER_DAY": "Введите количество стандартных рабочих часов в день (например, 8)"
@@ -823,6 +824,7 @@
 		"SKILLS": "Навыки",
 		"PRIVACY": "Приватность",
 		"SELECT_TIMEZONE": "Выберите часовой пояс",
+		"SELECT_TIMEZONE_HINT": "Время встреч отображается в этом часовом поясе.",
 		"SHOW_AVERAGE_BONUS": "Показать средний бонус",
 		"SHOW_AVERAGE_INCOME": "Показать средний доход",
 		"SHOW_PAYPERIOD": "Показать платный период",
@@ -840,6 +842,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Вы должны быть сотрудником, чтобы иметь возможность отслеживать время, создавать раздельные расходы и использовать другие функции, связанные с сотрудниками."
 	},
 	"MENU": {
+		"BREADCRUMB": "Навигационная цепочка",
 		"PIPELINES": "Трубопроводы",
 		"DASHBOARD": "Приборная доска",
 		"DASHBOARDS": "Рабочие столы",
@@ -1160,7 +1163,71 @@
 		"APPLICATIONS": "Заявления",
 		"OPEN_GA_BROWSER": "Открыть Gauzy в браузере",
 		"START_SERVER": "Запустить сервер",
-		"STOP_SERVER": "Остановить сервер"
+		"STOP_SERVER": "Остановить сервер",
+		"DOCUMENTS": "Документы",
+		"BILLING": "Биллинг",
+		"MONITORING": "Мониторинг",
+		"ADD_ITEM": "Добавить {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Только вы",
+			"TENANT": "Все в этом тенанте"
+		},
+		"UNSAVED_CHANGES": "Несохранённые изменения",
+		"ACCOUNT": {
+			"TITLE": "Аккаунт",
+			"DESCRIPTION": "Аккаунт, под которым вы вошли.",
+			"MANAGE": "Управление профилем",
+			"ROLE": "Роль",
+			"MEMBER_SINCE": "Участник с"
+		},
+		"PREFERENCES": {
+			"TITLE": "Настройки",
+			"DESCRIPTION": "Как приложение выглядит и работает для вас. Изменения применяются сразу.",
+			"THEME": "Тема",
+			"THEME_HINT": "Цветовая схема всего приложения.",
+			"LANGUAGE": "Язык",
+			"LANGUAGE_HINT": "Язык меню, подписей и сообщений.",
+			"LAYOUT": "Макет по умолчанию",
+			"RESET_LAYOUTS": "Сбросить макеты страниц",
+			"SAVE_ERROR": "Не удалось сохранить настройку.",
+			"LAYOUTS_RESET": "Макеты страниц сброшены к значению по умолчанию."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Квадратное изображение, не меньше 128 × 128 px.",
+			"NAME_HINT": "Видно всем пользователям этого тенанта.",
+			"TENANT_ID": "ID тенанта",
+			"TENANT_ID_HINT": "Укажите его при обращении в поддержку или вызове API.",
+			"COPY_ERROR": "Не удалось скопировать ID тенанта.",
+			"TITLE": "Профиль тенанта",
+			"DESCRIPTION": "Название и логотип этого тенанта, которые все пользователи видят в переключателе рабочих пространств и на боковой панели.",
+			"NAME": "Название тенанта",
+			"NAME_PLACEHOLDER": "Введите название тенанта",
+			"NAME_REQUIRED": "Название тенанта обязательно.",
+			"LOGO": "Логотип тенанта",
+			"LOGO_CHANGE": "Нажмите, чтобы загрузить новый логотип",
+			"LOGO_REMOVE": "Удалить логотип",
+			"LOGO_UPLOAD_ERROR": "Не удалось загрузить логотип.",
+			"CREATED_AT": "Создан",
+			"SAVED": "Профиль тенанта сохранён",
+			"SAVE_ERROR": "Не удалось сохранить профиль тенанта.",
+			"LOAD_ERROR": "Не удалось загрузить профиль тенанта."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "Интерфейс",
+			"TITLE": "Пользовательский интерфейс",
+			"DESCRIPTION": "Выберите, какой интерфейс используют все пользователи этого тенанта для страниц, доступных в обоих вариантах.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (по умолчанию)",
+				"REACT": "React (новый)"
+			},
+			"HINT": "Действует для всего тенанта на любом устройстве. Сейчас панель учёта времени доступна в обоих интерфейсах; другие страницы появятся позже.",
+			"READ_ONLY": "Только администраторы тенанта могут изменить эту настройку.",
+			"SAVING": "Сохранение…",
+			"SAVED": "Предпочтение интерфейса сохранено",
+			"SAVE_ERROR": "Не удалось сохранить предпочтение интерфейса."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -1194,7 +1261,9 @@
 		"CARDS_GRID": "Сетка карт",
 		"SPRINT_VIEW": "Просмотр спринта",
 		"QUICK_SETTINGS": "Быстрые настройки",
-		"NO_LAYOUT": "Нет доступного макета данных"
+		"NO_LAYOUT": "Нет доступного макета данных",
+		"PREFERENCES": "Предпочтения",
+		"SUPPORT": "Поддержка"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Что нового?",
@@ -1276,7 +1345,7 @@
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"TITLE": "Hubstaff",
-			"SELECT_ORGANIZATION": "Выберите организацию",
+			"SELECT_ORGANIZATION": "Организация",
 			"SYNCED_PROJECTS": "Проекты синхронизированы",
 			"SETTINGS_UPDATED": "Обновлены настройки интеграции",
 			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
@@ -1297,7 +1366,7 @@
 			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи.",
 			"CONTRACTS": "Контракты",
 			"SYNCED_CONTRACTS": "Синхронизированные контракты",
-			"SELECT_DATE": "Выберите дату",
+			"SELECT_DATE": "Дата",
 			"ONLY_CONTRACTS": "Только контракты",
 			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
@@ -1519,7 +1588,7 @@
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
-			"SELECT_REPOSITORY": "Select repository",
+			"SELECT_REPOSITORY": "Repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
 			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
@@ -1709,7 +1778,7 @@
 				"ACTIVE_TITLE": "Активные триггеры событий",
 				"DESCRIPTION": "Настройте автоматические триггеры рабочих процессов. При возникновении события на платформе связанный рабочий процесс SIM будет выполнен автоматически.",
 				"EVENT": "Событие",
-				"SELECT_EVENT": "Выберите событие",
+				"SELECT_EVENT": "Событие",
 				"WORKFLOW_ID": "ID рабочего процесса",
 				"WORKFLOW_ID_PLACEHOLDER": "Введите ID рабочего процесса SIM для запуска",
 				"ADD": "Добавить",
@@ -1752,7 +1821,7 @@
 		"COMING_SOON": "Скоро появится",
 		"RE_INTEGRATE": "Переинтегрировать",
 		"SETTINGS": "Настройки",
-		"SELECT_GROUPS": "Выберите группы",
+		"SELECT_GROUPS": "Группы",
 		"FILTER_INTEGRATIONS": "Фильтровать интеграцию",
 		"SEARCH_INTEGRATIONS": "Интеграции поиска",
 		"PAID": "Оплачено",
@@ -1784,6 +1853,19 @@
 		"TIME_TRACKING": "Время отслеживания",
 		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "По {{ count }} сотрудникам",
+			"OF_INCOME": "{{ value }}% от дохода",
+			"MARGIN": "Маржа {{ value }}%",
+			"BREAKDOWN": "Доход по сотрудникам",
+			"NO_DATA": "Нет финансовой активности за этот период",
+			"NO_DATA_HINT": "Доходы и расходы за этот период появятся здесь.",
+			"NO_EMPLOYEES": "Нет данных о сотрудниках за этот период",
+			"SORT_BY": "Сортировать по {{ name }}",
+			"SORT_LABEL": "Сортировать по",
+			"SORT_ASCENDING": "По возрастанию",
+			"SORT_DESCENDING": "По убыванию"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
 		"CHARTS": {
@@ -1970,7 +2052,90 @@
 			"PREVIOUS": "Предыдущий"
 		},
 		"NOT_STARTED": "Не начато",
-		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
+		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д.",
+		"VIEW": {
+			"PERIOD": "Период",
+			"PERIODS": {
+				"THIS_WEEK": "Эта неделя",
+				"THIS_MONTH": "Этот месяц",
+				"LAST_30_DAYS": "Последние 30 дней"
+			},
+			"TABS": {
+				"OVERVIEW": "Обзор",
+				"PROFILE": "Профиль"
+			},
+			"PRESENCE": {
+				"TRACKING": "Учитывает время",
+				"ONLINE": "В сети",
+				"AWAY": "Отошёл",
+				"OFFLINE": "Не в сети"
+			},
+			"LOCAL_TIME": "Местное время",
+			"MEMBER_SINCE": "Работает с",
+			"WEEKLY_LIMIT": "Недельный лимит",
+			"WORKED_TODAY": "Отработано сегодня",
+			"WORKED_PERIOD": "Отработано за период",
+			"ACTIVITY_META": "{{ value }} активности",
+			"AVG_ACTIVITY": "Средняя активность",
+			"OPEN_TASKS": "Открытые задачи",
+			"OPEN_TASKS_META": "{{ progress }} в работе · {{ overdue }} просрочено",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "к прошлой неделе",
+				"THIS_MONTH": "к прошлому месяцу",
+				"LAST_30_DAYS": "к предыдущим 30 дням"
+			},
+			"HOURS_WORKED": "Отработанные часы",
+			"HOURS_META": "{{ total }} всего · {{ average }} в рабочий день",
+			"TRACKED": "Отслежено",
+			"MANUAL": "Вручную",
+			"OPEN_TIMESHEET": "Открыть табель",
+			"PROJECTS": "Проекты",
+			"RECENT_SCREENSHOTS": "Последние скриншоты",
+			"VIEW_ALL": "Показать все",
+			"ASSIGNED_TASKS": "Назначенные задачи",
+			"COLUMNS": {
+				"TASK": "Задача",
+				"PROJECT": "Проект",
+				"STATUS": "Статус",
+				"DUE": "Срок",
+				"TIME": "Время",
+				"NAME": "Название",
+				"PRIORITY": "Приоритет"
+			},
+			"TOP_TASKS": "Самые трудоёмкие задачи",
+			"APPS_URLS": "Приложения и URL",
+			"NO_TIME": "За этот период время не учтено",
+			"NO_TASKS": "Нет назначенных задач",
+			"NO_APPS": "Нет активности приложений или URL за этот период",
+			"NO_SCREENSHOTS": "Нет скриншотов за этот период",
+			"UNAVAILABLE": "У вас нет доступа к этим данным",
+			"PROFILE": {
+				"ABOUT": "О сотруднике",
+				"CONTACT": "Контакты",
+				"SKILLS_TAGS": "Навыки и теги",
+				"TIME_ZONE": "Часовой пояс",
+				"NOT_PROVIDED": "Пока не указано",
+				"NO_DESCRIPTION": "Описание ещё не добавлено"
+			},
+			"TASKS_HELP": "Задачи, в которых участвует этот сотрудник. Выберите блок, чтобы отфильтровать список.",
+			"TASK_FILTERS": {
+				"OPEN": "Открытые",
+				"PROGRESS": "В работе",
+				"OVERDUE": "Просроченные",
+				"DONE": "Выполненные"
+			},
+			"DUE": {
+				"NONE": "Без срока",
+				"WAS_DUE": "Срок был",
+				"OVERDUE_DAY": "Просрочено на 1 день",
+				"OVERDUE_DAYS": "Просрочено на {{ count }} дн.",
+				"TODAY": "Срок сегодня",
+				"TOMORROW": "Срок завтра",
+				"IN_DAYS": "Через {{ count }} дн."
+			},
+			"SHOWING": "Показано {{ shown }} из {{ total }} задач",
+			"NO_TASKS_IN_VIEW": "Нет задач в этом представлении"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Все цели",
@@ -1986,6 +2151,7 @@
 		"EXPECTED": "Ожидается",
 		"UPDATES": "Обновления",
 		"UPDATE": "Обновить",
+		"ALIGNMENTS": "Выравнивания",
 		"COMMENTS": "Комментарии",
 		"KEY_RESULTS": "Ключевые результаты",
 		"GROUP_BY": "Группировать по",
@@ -2002,6 +2168,8 @@
 		"GOAL_TEMPLATES": "Шаблоны целей",
 		"CREATE_NEW_MENU": "Создать новый",
 		"CREATE_FROM_PRESET": "Создать из пресета",
+		"SELECT_A_PRESET": "Выберите пресет",
+		"ADDITIONAL_DETAILS": "Дополнительные сведения",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Сотрудники",
 			"TEAMS": "Команды",
@@ -2031,7 +2199,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Нет ключевых результатов для отображения.",
 			"NO_UPDATES": "Пока нет обновлений.",
-			"NO_ALIGNMENT": "Пока нет выравниваний."
+			"NO_ALIGNMENT": "Пока нет выравниваний.",
+			"NO_PROGRESS_DATA": "Пока нет данных о прогрессе для графика."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Организация",
@@ -2157,9 +2326,9 @@
 				"STATUS": "Статус",
 				"WEIGHT": "Вес",
 				"TYPE": "Тип",
-				"SELECT_PROJECT": "Выбрать проект",
-				"SELECT_TASK": "Выберите задачу",
-				"SELECT_KPI": "Выберите KPI",
+				"SELECT_PROJECT": "Проект",
+				"SELECT_TASK": "Задача",
+				"SELECT_KPI": "KPI",
 				"ASSIGN_AS_OBJECTIVE": "Назначить как цель"
 			},
 			"PLACEHOLDERS": {
@@ -2462,6 +2631,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Разрешить сотруднику выходить из приложения агента. При отключении опция выхода будет заблокирована.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Разрешить выход из учётной записи в приложении агента",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Разрешить сотруднику выходить из своей учётной записи в приложении агента. При отключении эта возможность будет заблокирована.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Защита работников в ЕЭЗ / Великобритании включена",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Для организаций и работников в ЕЭЗ или Великобритании работники всегда могут закрыть десктоп-агент и выйти из него. Сбор данных, который работник не может прервать, трудно обосновать в рамках GDPR и ст. 8 ЕКПЧ, поэтому эти ограничения здесь недоступны.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Подтвердите ограничение закрытия или выхода из агента",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "При этом ограничении работник не может остановить сбор данных десктоп-агентом. Подтвердите, что вы оценили это как законное и соразмерное для этих работников и принимаете ответственность. Ваше подтверждение будет записано в вашей учётной записи.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Отслеживать активность клавиатуры и мыши",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Включить полное отслеживание активности клавиатуры и мыши, включая нажатия клавиш и точные движения мыши во всех настольных приложениях и агенте.",
 				"TRACK_ALL_DISPLAYS": "Отслеживать все дисплеи",
@@ -2484,6 +2657,8 @@
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
 				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Частота скриншотов",
 				"SCREENSHOT_FREQUENCY_INFO": "Укажите частоту обновления или временные интервалы синхронизации.",
 				"RANDOM_SCREENSHOT": "Случайный скриншот",
@@ -2573,7 +2748,7 @@
 			"TIME_OFF_POLICY_VIEW": "Просмотреть политику отпуска",
 			"TIME_OFF_POLICY_EDIT": "Редактировать политику отпуска",
 			"TIME_OFF_POLICY_DELETE": "Удалить политику отпуска",
-			"SELECT_EMPLOYEE": "Выбрать сотрудника",
+			"SELECT_EMPLOYEE": "Сотрудник",
 			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
 			"CHANGE_SELECTED_CANDIDATE": "Изменить выбранный Кандидат",
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
@@ -2715,7 +2890,10 @@
 		"ADDRESS": "Адрес",
 		"ADDRESS_2": "Адрес 2",
 		"MEMBERS": "Члены Комитета",
-		"BUDGET": "Бюджет"
+		"BUDGET": "Бюджет",
+		"PHOTO_HINT": "Нажмите или перетащите изображение для загрузки",
+		"SEARCH_EMPLOYEES": "Ищите сотрудников по имени или email",
+		"NO_MEMBERS": "Участники ещё не добавлены"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Языки",
@@ -2748,7 +2926,19 @@
 		"EMPLOYEE_UPDATED": "Сотрудник обновлен.",
 		"IMAGE_UPDATED": "Изображение обновлено.",
 		"FAIL_TO_UPDATE_IMAGE": "Не удалось обновить.",
-		"ANONYMOUS": "Анонимный"
+		"ANONYMOUS": "Анонимный",
+		"ABOUT": "О сотруднике",
+		"INACTIVE": "Неактивен",
+		"PER_HOUR": "/ час",
+		"MEMBER_SINCE": "Работает с",
+		"NO_DESCRIPTION": "Описание ещё не добавлено",
+		"NO_SKILLS": "Навыки пока не указаны",
+		"VIEW_COMPANY_PROFILE": "Профиль компании",
+		"EDIT": {
+			"NO_AWARDS": "Награды ещё не добавлены",
+			"ADD_AWARD": "Добавить награду",
+			"PRIVACY_HELP": "Выберите, какие данные посетители видят в публичном профиле."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
@@ -2840,12 +3030,12 @@
 		"ADD_HOLIDAYS": "Добавить выходные",
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
 		"HOLIDAY_NAME": "Название выходного дня",
-		"SELECT_EMPLOYEES": "Выберите сотрудников",
+		"SELECT_EMPLOYEES": "Сотрудники",
 		"SETTINGS": "Настройки",
 		"EDI": "Редактировать запись отключения времени",
-		"SELECT_HOLIDAY_NAME": "Выберите название праздника",
+		"SELECT_HOLIDAY_NAME": "Название праздника",
 		"ADD_OR_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
-		"SELECT_TIME_OFF_POLICY": "Выберите политику ожидания",
+		"SELECT_TIME_OFF_POLICY": "Политика ожидания",
 		"ADD_A_DESCRIPTION": "Добавить описание",
 		"DESCRIPTION": "Описание",
 		"START_DATE": "Дата начала",
@@ -2910,7 +3100,7 @@
 		"ADD_NEW_TAG": "Добавить новый тег",
 		"TENANT_LEVEL": "Уровень владельца",
 		"TAGS_TYPE": "Тип тегов",
-		"TAGS_SELECT_TYPE": "Выберите тип тега"
+		"TAGS_SELECT_TYPE": "Тип тега"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
@@ -3236,8 +3426,8 @@
 		"PROPOSAL_TEMPLATE": "Шаблон предложения",
 		"EDIT_PROPOSAL_TEMPLATE": "Редактировать шаблон предложения",
 		"ADD_PROPOSAL_TEMPLATE": "Добавить шаблон предложения",
-		"SELECT_PROPOSAL_TEMPLATE": "Выберите шаблон предложения",
-		"SELECT_EMPLOYEE": "Выберите сотрудника",
+		"SELECT_PROPOSAL_TEMPLATE": "Шаблон предложения",
+		"SELECT_EMPLOYEE": "Сотрудник",
 		"NAME": "Имя",
 		"CONTENT": "Содержание",
 		"EMPLOYEE": "Сотрудник",
@@ -3337,7 +3527,11 @@
 		"STOP_TIMER": "Остановить таймер",
 		"TIME_LOG": "Журнал времени",
 		"VIEW_APPOINTMENTS": "Просмотреть встречи",
-		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени"
+		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Новая страница",
+			"UPLOAD": "Загрузить"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Бухгалтерия",
@@ -3345,7 +3539,8 @@
 		"PROJECT_MANAGEMENT": "Управление проектами",
 		"JOBS": "Работа",
 		"CONTACTS": "Контакты",
-		"TIME_TRACKING": "Учет времени"
+		"TIME_TRACKING": "Учет времени",
+		"DOCUMENTS": "Документы"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
@@ -3396,6 +3591,9 @@
 		"BROWSE": "Обзор",
 		"COMMENT": "Комментарий",
 		"COMMENTS": "Комментарии",
+		"COMMENT_PLACEHOLDER": "Напишите комментарий…",
+		"NO_COMMENTS": "Комментариев пока нет",
+		"NO_COMMENTS_HINT": "Комментарии появляются здесь, начиная с новых.",
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
 		"ESTIMATE_NUMBER": "Расчетный номер",
@@ -3433,10 +3631,10 @@
 		"EDIT_ESTIMATE": "Изменить оценку",
 		"VIEW_INVOICE": "Просмотр счета",
 		"VIEW_ESTIMATE": "Посмотреть оценку",
-		"SELECT_EMPLOYEE": "Выбрать сотрудника",
-		"SELECT_PROJECT": "Выбрать проект",
-		"SELECT_TASK": "Выберите задачу",
-		"SELECT_PRODUCT": "Выберите продукт",
+		"SELECT_EMPLOYEE": "Сотрудник",
+		"SELECT_PROJECT": "Проект",
+		"SELECT_TASK": "Задача",
+		"SELECT_PRODUCT": "Продукт",
 		"INVALID_DATES": "Неверные даты",
 		"INVOICE_NUMBER_DUPLICATE": "Номер счета уже существует",
 		"DISCOUNT_TYPE": "Тип скидки",
@@ -3498,12 +3696,12 @@
 			"BY_PRODUCTS": "По товарам",
 			"BY_EXPENSES": "По расходам",
 			"DETAILED_ITEMS": "Подробные элементы",
-			"SELECT_INVOICE_TYPE": "Выберите тип счета",
-			"SELECT_ESTIMATE_TYPE": "Выберите тип оценки",
-			"SELECT_PROJECTS": "Выберите проекты",
-			"SELECT_TASKS": "Выберите задачи",
-			"SELECT_PRODUCTS": "Выберите товары",
-			"SELECT_EXPENSES": "Выберите расходы"
+			"SELECT_INVOICE_TYPE": "Тип счета",
+			"SELECT_ESTIMATE_TYPE": "Тип оценки",
+			"SELECT_PROJECTS": "Проекты",
+			"SELECT_TASKS": "Задачи",
+			"SELECT_PRODUCTS": "Товары",
+			"SELECT_EXPENSES": "Расходы"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
@@ -3588,7 +3786,7 @@
 			"NO_PAYMENTS_RECORDED": "Платежей нет",
 			"LEFT_TO_PAY": "Слева для оплаты",
 			"PAYMENT_METHOD": "Способ оплаты",
-			"SELECT_INVOICE": "Выберите счет",
+			"SELECT_INVOICE": "Счет",
 			"PAYMENT_AMOUNT_ADDED": "Оплата {{ amount }} {{ currency }} добавлена",
 			"PAYMENT": "Оплата",
 			"BANK_TRANSFER": "Банковский перевод",
@@ -3654,12 +3852,67 @@
 		"TAGS": "Теги"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Выбрать сотрудника",
-		"SELECT_A_DATE": "Выберите дату",
-		"SELECT_AN_ORGANIZATION": "Выберите организацию",
-		"SELECT_PROJECT": "Выбрать проект",
-		"SELECT_TEAM": "Выберите команду",
-		"AI_CHAT": "ИИ-чат"
+		"SELECT_EMPLOYEE": "Сотрудник",
+		"SELECT_A_DATE": "Дата",
+		"SELECT_AN_ORGANIZATION": "Организация",
+		"SELECT_PROJECT": "Проект",
+		"SELECT_TEAM": "Команда",
+		"AI_CHAT": "ИИ-чат",
+		"COLLAPSE_SIDEBAR": "Свернуть боковую панель",
+		"EXPAND_SIDEBAR": "Развернуть боковую панель"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "ИИ-ассистент",
+		"OPEN": "Открыть ИИ-ассистента",
+		"CLOSE": "Закрыть ИИ-ассистента",
+		"HISTORY": "История",
+		"HISTORY_HINT": "Просмотр сохранённых бесед",
+		"HISTORY_CLOSE": "Закрыть историю",
+		"HISTORY_EMPTY": "Сохранённых бесед пока нет.",
+		"NEW_CHAT": "Новый чат",
+		"NEW_CHAT_HINT": "Начать новую беседу",
+		"DELETE_CONVERSATION": "Удалить беседу",
+		"LOADING": "Загрузка…",
+		"DOCK_LEFT": "Закрепить слева",
+		"DOCK_RIGHT": "Закрепить справа",
+		"MAXIMIZE": "Развернуть",
+		"RESTORE": "Восстановить ширину",
+		"COLLAPSE": "Свернуть",
+		"RESIZE": "Потяните, чтобы изменить ширину",
+		"WELCOME_SUBTITLE": "Спросите что угодно о вашем рабочем пространстве, задачах или проектах.",
+		"PLACEHOLDER": "Введите сообщение…",
+		"SEND": "Отправить сообщение",
+		"STOP": "Остановить генерацию",
+		"ERROR": "Что-то пошло не так.",
+		"RETRY": "Повторить",
+		"DICTATION_FAILED": "Не удалось расшифровать запись.",
+		"DICTATION_NOT_CONFIGURED": "Для диктовки нужен голосовой провайдер. Добавьте его на странице настроек «Провайдеры ИИ».",
+		"DICTATION_ASK_ADMIN": "Для диктовки нужен голосовой провайдер — попросите администратора добавить его в Настройки → Провайдеры ИИ.",
+		"DICTATION_KEY_REJECTED": "Голосовой провайдер отклонил API-ключ. Обновите его на странице настроек «Провайдеры ИИ».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Голосовой провайдер отклонил API-ключ — попросите администратора обновить его в Настройки → Провайдеры ИИ.",
+		"DICTATION_OPEN_SETTINGS": "Открыть Провайдеры ИИ",
+		"RATE_LIMITED_SHARED": "Бесплатный тариф ИИ сейчас превысил лимит запросов. Подключите свой аккаунт OpenRouter или настройте другого провайдера ИИ для бесперебойной работы.",
+		"RATE_LIMITED_OWN": "Ваш провайдер ИИ сейчас ограничивает запросы. Проверьте тариф и лимиты у провайдера или настройте другого провайдера ИИ.",
+		"RATE_LIMIT_RETRY_IN": "Повторить можно примерно через {{seconds}} с.",
+		"OPEN_AI_SETTINGS": "Открыть Провайдеры ИИ",
+		"ERROR_NOT_CONFIGURED": "Для ИИ-чата нужен настроенный провайдер. Добавьте его на странице настроек «Провайдеры ИИ».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "Для ИИ-чата нужен настроенный провайдер — попросите администратора добавить его в Настройки → Провайдеры ИИ.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Выбранный провайдер ИИ сейчас не может ответить. Проверьте его на странице настроек «Провайдеры ИИ».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Выбранный провайдер ИИ сейчас не может ответить — попросите администратора проверить Настройки → Провайдеры ИИ.",
+		"ERROR_MODEL_UNAVAILABLE": "Эта модель недоступна с текущим API-ключом. Выберите другую на странице настроек «Провайдеры ИИ».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Эта модель недоступна с текущим API-ключом — попросите администратора проверить Настройки → Провайдеры ИИ.",
+		"ERROR_KEY_REJECTED": "Провайдер ИИ отклонил свой API-ключ. Обновите его на странице настроек «Провайдеры ИИ».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Провайдер ИИ отклонил свой API-ключ — попросите администратора обновить его в Настройки → Провайдеры ИИ.",
+		"ERROR_RATE_LIMITED": "Провайдер ИИ ограничивает запросы.",
+		"RECORDING": "Запись",
+		"PREVIEW": "Предпросмотр",
+		"PREVIEW_PAGE": "Страница",
+		"PREVIEW_NEW_TAB": "Открыть в новой вкладке",
+		"PREVIEW_CLOSE": "Закрыть предпросмотр",
+		"PREVIEW_UNAVAILABLE": "Предпросмотр для этого файла недоступен.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Открыть в Документах",
+		"ATTACH_UPLOADING": "Загрузка…",
+		"ATTACH_DOCUMENT": "Документ"
 	},
 	"HEADER_TITLE": {
 		"FOR": "для",
@@ -3672,6 +3925,21 @@
 		"REDIRECT_TO_HOME": "Вы будете перенаправлены на домашнюю страницу в ближайшее время"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Найдите документацию, получите ответы и свяжитесь с командой Gauzy.",
+		"DOCUMENTATION": "Документация",
+		"DOCUMENTATION_DESC": "Руководства и справочник по каждой функции Gauzy.",
+		"FAQ": "Частые вопросы",
+		"FAQ_DESC": "Ответы на самые частые вопросы.",
+		"SUPPORT_CHAT": "Чат поддержки",
+		"SUPPORT_CHAT_DESC": "Свяжитесь с нашей командой поддержки.",
+		"REPORT_ISSUE": "Сообщить о проблеме",
+		"REPORT_ISSUE_DESC": "Нашли ошибку? Создайте issue на GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Исходный код, релизы и обсуждения.",
+		"WEBSITE": "Сайт Gauzy",
+		"WEBSITE_DESC": "Узнайте больше о платформе Gauzy.",
+		"ABOUT_LINK": "О Gauzy",
+		"ABOUT_LINK_DESC": "Сведения о версии, лицензия и ссылки.",
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASE": "База знаний",
 		"CHOSE_ICON": "Выберите значок для установки",
@@ -3714,20 +3982,20 @@
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "На этой вкладке будут показаны диаграммы управления проектами и агрегированные данные.",
 		"PROJECT_MODULE": {
 			"PROJECT": "Проект",
-			"SELECT_PROJECT": "Выбрать проект",
+			"SELECT_PROJECT": "Проект",
 			"STATUS": "Статус",
 			"TEAM_MEMBERS": "Члены команды",
 			"TEAMS": "Команды",
-			"SELECT_TEAMS": "Выбрать команды",
+			"SELECT_TEAMS": "Команды",
 			"CHOOSE_TEAMS": "Выберите команды",
 			"NAME": "Имя",
 			"ENTER_NAME": "Введите имя",
 			"PARENT_MODULE": "Родительский модуль",
-			"SELECT_PARENT": "Выбрать родительский модуль",
+			"SELECT_PARENT": "Родительский модуль",
 			"START_DATE": "Дата начала",
-			"SELECT_START_DATE": "Выбрать дату начала",
+			"SELECT_START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
-			"SELECT_END_DATE": "Выбрать дату окончания",
+			"SELECT_END_DATE": "Дата окончания",
 			"DESCRIPTION": "Описание",
 			"IS_FAVORITE": "Избранное"
 		}
@@ -3764,7 +4032,8 @@
 		"ROLES_PERMISSIONS": "Роли и Разрешения",
 		"TIME_TRACKING": "Время отслеживания",
 		"ESTIMATE": "Оценить",
-		"DASHBOARD": "Приборная доска"
+		"DASHBOARD": "Приборная доска",
+		"DOCUMENTS": "Документы"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3862,6 +4131,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Перейти к панели инструментов, управлять статистикой сотрудников, отслеживать время"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Единый центр документов компании: загрузки, вики-страницы, проверка и знания для ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3976,6 +4248,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Все права защищены.",
+		"DESCRIPTION": "Ever® Gauzy™ — открытая платформа управления бизнесом для совместной экономики и экономики по требованию: ERP, CRM, HRM, ATS и управление проектами со встроенным учётом времени.",
+		"LICENSE": "Открытый исходный код, распространяется по лицензии",
+		"VERSION_DETAILS": "Сведения о версии",
+		"VERSION_MISMATCH": "Веб-приложение и API собраны из разных коммитов — возможно, идёт развёртывание.",
+		"WEB_APP": "Веб-приложение",
+		"API": "API",
+		"UNTAGGED": "сборка без тега",
+		"API_UNAVAILABLE": "Версия API недоступна",
+		"LEARN_MORE": "Подробнее",
 		"ABOUT": "О нас"
 	},
 	"FOOTER": {
@@ -4367,16 +4649,30 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Мониторинг активен: записываются время и активность",
+		"MONITORING_IDLE": "Агент неактивен",
+		"MONITORING_TRAY_ACTIVE": "Мониторинг активен, записывается: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Мониторинг приостановлен: ничего не записывается",
+		"MONITORING_CAPTURE_TIME": "время и активные приложения",
+		"MONITORING_CAPTURE_SCREENSHOTS": "снимки экрана",
+		"MONITORING_CAPTURE_INPUT": "активность клавиатуры и мыши",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Выберите клиента",
+			"SELECT_PROJECT": "Выберите проект",
+			"SELECT_TEAM": "Выберите команду",
+			"SELECT_TASK": "Выберите задачу",
+			"DESCRIPTION": "Добавьте описание"
+		},
 		"IS_BILLABLE": "Оплачивается",
 		"STOP_TIMER": "Остановить таймер",
 		"START_TIMER": "Запустить таймер",
 		"TIMER": "Таймер",
 		"MANUAL": "Ручной",
 		"MANUAL_NOT_ALLOW": "Ручное время не разрешено",
-		"SELECT_PROJECT": "Выбрать проект",
-		"SELECT_TASK": "Выберите задачу",
-		"SELECT_CLIENT": "Выберите клиента",
-		"SELECT_TEAM": "Выберите команду",
+		"SELECT_PROJECT": "Проект",
+		"SELECT_TASK": "Задача",
+		"SELECT_CLIENT": "Клиент",
+		"SELECT_TEAM": "Команда",
 		"DATE": "Дата",
 		"START_TIME": "Время начала",
 		"END_TIME": "Конец времени",
@@ -4465,13 +4761,13 @@
 			"AUTOMATIC_UPDATE_CHECK": "Автоматическая проверка обновлений",
 			"ENABLE_AUTOMATIC_UPDATE_LABEL": "Включить автоматическую проверку обновлений, чтобы выполнить запрос для проверки наличия новой версии и уведомить",
 			"SET_UPDATE_INTERVAL_DURATION": "Установить интервал проверки обновлений",
-			"SELECT_DELAY": "Выбрать задержку",
+			"SELECT_DELAY": "Задержка",
 			"ENABLE_AUTOMATIC_UPDATE": "Включить автоматическое обновление",
 			"UPDATE_SERVER": "Сервер обновлений",
 			"SELECT_DEFAULT_CDN": "Выбрать сервер CDN по умолчанию для обновления",
 			"TOGGLE_UPDATE_LOCALLY": "Переключить обновление локально",
 			"LOCAL_SERVER": "Локальный сервер",
-			"LOCAL_SERVER_NOTE": "Выбранная директория должна содержать последние манифесты <strong>latest.yml</strong> и/или <strong>latest-mac.yml</strong>, чтобы выполнить проверку обновления",
+			"LOCAL_SERVER_NOTE": "Выбранная директория должна содержать манифест обновления для вашей системы (Windows: <strong>latest-x64.yml</strong> или <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> или <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) и перечисленные в нём файлы обновления, чтобы выполнить проверку обновления",
 			"OTHER_SETTINGS": "Другие настройки",
 			"ALLOW_PRERELEASE_VERSIONS": "Разрешить предварительные версии",
 			"CHECK_UPDATE_APP_VERSION": "Проверить и обновить версию приложения",
@@ -4736,11 +5032,11 @@
 		"SUBMIT_SUCCESS": "Таблица времени успешно отправлена",
 		"UNSUBMIT_SUCCESS": "Таблица времени успешно отменена",
 		"DELETE_TIMELOG": "Вы уверены, что хотите удалить Timelog?",
-		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"SELECT_EMPLOYEE": "Сотрудник",
 		"ALL_EMPLOYEE": "Все сотрудники",
-		"SELECT_SOURCE": "Выберите источник",
-		"SELECT_ACTIVITY_LEVEL": "Выберите уровень активности",
-		"SELECT_LOG_TYPE": "Выберите тип журнала",
+		"SELECT_SOURCE": "Источник",
+		"SELECT_ACTIVITY_LEVEL": "Уровень активности",
+		"SELECT_LOG_TYPE": "Тип журнала",
 		"ADD_TIME_LOGS": "Добавить журнал времени",
 		"EDIT_TIME_LOGS": "Редактировать журналы времени",
 		"VIEW_TIME_LOGS": "Журналы времени",
@@ -4836,7 +5132,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Скриншот",
 			"OF": "из",
-			"TIME_LOG": "Журнал времени"
+			"TIME_LOG": "Журнал времени",
+			"TAKEN_AT": "Скриншот сделан в {{ time }}",
+			"POSITION": "Скриншот {{ position }} из {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Предупреждение. Таймер запущен, вы можете удалить только скриншоты, если вы остановите таймер или встроенный таймер",
 		"DELETE_CONFIRM": "Вы уверены, что хотите удалить эти скриншоты и журнал времени?",
@@ -4885,7 +5183,9 @@
 		"NO_SCREENSHOT": "Нет скриншота",
 		"NO_SCREENSHOTS": "Нет скриншотов",
 		"NO_RECORD_FOUND": "Записи не найдены. Пожалуйста, выберите диапазон дат, сотрудник или проект.",
-		"SCREEN_SELECTED": "Выбрано: {{count}}"
+		"SCREEN_SELECTED": "Выбрано: {{count}}",
+		"NO_TIME_TRACKED": "Время не отслежено",
+		"MINUTES_TRACKED": "Отслежено {{ minutes }} мин"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
@@ -4911,6 +5211,16 @@
 		"BUFFER_AT_START": "Буфер в начале",
 		"BUFFER_AT_END": "Буфер в конце",
 		"BREAK_TIME": "Время остановки",
+		"DETAILS": "Подробности",
+		"PARTICIPANTS": "Участники",
+		"FORM_HINT": "Укажите тему встречи, когда она проходит и кто в ней участвует.",
+		"DETAILS_HINT": "Повестка, место и заметки, видимые всем приглашённым.",
+		"SCHEDULE": "Расписание",
+		"SCHEDULE_HINT": "Выберите дату и время, при необходимости с буфером и перерывом.",
+		"BUFFER_TIME_HINT": "Оставить свободное время до или после встречи.",
+		"BREAK_TIME_HINT": "Прервать встречу на короткий перерыв.",
+		"BREAK_START": "Перерыв начинается в",
+		"PARTICIPANTS_HINT": "Люди, которые получат приглашение.",
 		"ARE_YOU_SURE": "Вы уверены? Это действие необратимо."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4955,7 +5265,9 @@
 		"CANCEL": "Отменить назначение",
 		"TIMEZONE": "Ваш часовой пояс:",
 		"CHANGE": "(Изменение)",
+		"CHANGE_TIMEZONE": "Изменить",
 		"SELECT_EMPLOYEE_ERROR": "Пожалуйста, выберите сотрудника.",
+		"SELECT_EMPLOYEE_HINT": "Выберите, с кем хотите встретиться, а затем удобное для вас время.",
 		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания.",
 		"NO_ACTIVE_EVENT_TYPES": "Нет активных типов событий",
@@ -5038,9 +5350,9 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Создать сделку | Пипелина: '{{ name }}'",
-		"SELECT_STAGE": "Выбрать этап",
+		"SELECT_STAGE": "Этап",
 		"PROBABILITY": "Вероятность",
-		"SELECT_CLIENT": "Выберите клиента"
+		"SELECT_CLIENT": "Клиент"
 	},
 	"DIALOG": {
 		"CONFIRM": "Подтвердить",
@@ -5148,14 +5460,27 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "Кому",
-				"TEMPLATE_LANGUAGE": "Шаблон/Язык"
+				"TEMPLATE_LANGUAGE": "Шаблон/Язык",
+				"RECIPIENT": "Получатель",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Все получатели",
+				"ALL_TEMPLATES": "Все шаблоны",
+				"ALL_STATUSES": "Все статусы",
+				"SENT": "Отправлено",
+				"FAILED": "Ошибка",
+				"ARCHIVED": "Архивные",
+				"SHOWING": "Показано {{ count }} из {{ total }}",
+				"NO_MATCH": "Нет писем, соответствующих этим фильтрам."
 			}
 		}
 	},
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Обслуживание",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Политика конфиденциальности",
-		"TERMS_AND_CONDITIONS": "Условия использования"
+		"TERMS_AND_CONDITIONS": "Условия использования",
+		"DOCUMENT_VERSION": "Версия {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "Действует с {{ date }}"
 	},
 	"LOADING": "Загрузка, пожалуйста удерживайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
@@ -5196,7 +5521,8 @@
 				"TERMS_AND_CONDITIONS": "Условиями использования",
 				"AND": " и ",
 				"PRIVACY_POLICY": "Политикой конфиденциальности"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "Пароль должен содержать не менее 4 символов"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5206,6 +5532,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "У вас нет учетной записи?",
 		"FORGOT_PASSWORD_TITLE": "Забыли пароль?",
 		"OR_SIGN_IN_WITH": "Или войдите с",
+		"SIGN_IN_WITH_EVER_ID": "Войти через Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Войти через Keycloak",
 		"FORGOT_EMAIL_TITLE": "Забыли адрес электронной почты?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магическим кодом",
@@ -5305,7 +5633,15 @@
 		"HOTKEYS": "Горячие клавиши",
 		"HELP": "Помогите",
 		"SIGN_OUT": "Выйти",
-		"PROFILE": "Профиль"
+		"PROFILE": "Профиль",
+		"ACCOUNT": "Аккаунт",
+		"PREFERENCES": "Предпочтения",
+		"DOWNLOAD_APPS": "Скачать приложения",
+		"DOWNLOAD_MACOS": "Скачать для macOS",
+		"DOWNLOAD_WINDOWS": "Скачать для Windows",
+		"DOWNLOAD_LINUX": "Скачать для Linux",
+		"DOWNLOAD_MOBILE": "Скачать мобильное приложение",
+		"DOWNLOAD_BROWSER_EXTENSION": "Скачать расширение для браузера"
 	},
 	"WORKSPACES": {
 		"MENUS": {
@@ -5443,7 +5779,7 @@
 				"REQUIRED": "Обязателен"
 			},
 			"TYPE": "Тип плагина",
-			"TYPE_PLACEHOLDER": "Выберите тип плагина",
+			"TYPE_PLACEHOLDER": "Тип плагина",
 			"TYPES": {
 				"DESKTOP": "Десктоп",
 				"WEB": "Веб",

@@ -61,7 +61,13 @@ export const OrganizationPublicPage = {
 	// #visible template). Scope to the plus icon so a leaked success button elsewhere can't match first.
 	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	verifyOrganizationCss: 'div.d-block',
-	countryDropdownCss: 'ga-country div.form-group nb-select',
+	// <ga-country> renders an ng-select (appendTo="body"), not an nb-select — mirrors
+	// AddOrganizationPageObject, which was migrated when the control changed while this copy was not.
+	countryDropdownCss: 'ga-country ng-select',
+	// ...and its options therefore live in the body-level ng-dropdown-panel, not in an nb-option list.
+	// The shared dropdownOptionCss above stays '.option-list nb-option' because the bonus-type /
+	// start-of-week / date-type / region / number-format / date-format controls really are nb-selects.
+	countryDropdownOptionCss: 'ng-dropdown-panel .ng-option',
 	cityInputCss: '#cityInput',
 	postCodeInputCss: '#postcodeInput',
 	streetInputCss: '#addressInput',

@@ -64,4 +64,8 @@
 nav {
     display: flex;
     justify-content: space-between;
+
+    > div {
+        margin-left: auto;
+    }
 }

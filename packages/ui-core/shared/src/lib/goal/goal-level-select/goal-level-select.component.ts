@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -22,8 +22,17 @@ export class GoalLevelSelectComponent {
 	@Input() orgName: string;
 	@Input() enableHelperText = false;
 	@Input() alignedGoal = false;
+	/** The field under the pointer or holding focus (`'objective-level'`, `-owner`, `-lead`), `''` when none. */
+	@Output() helperTextChange = new EventEmitter<string>();
 
 	goalLevelEnum = GoalLevelEnum;
+
+	/**
+	 * The field the pointer is over and the field holding keyboard focus, tracked apart: held in one value,
+	 * ending either interaction cleared the help while the other was still on the field.
+	 */
+	private hoveredField = '';
+	private focusedField = '';
 
 	constructor(private readonly organizationTeamsService: OrganizationTeamsService, private readonly store: Store) {}
 
@@ -36,6 +45,38 @@ export class GoalLevelSelectComponent {
 				tenantId
 			})
 		).items;
+	}
+
+	/** Records the field the pointer moved onto, or `''` when it left one, then shows whichever help wins. */
+	hoverHelper(field: string) {
+		this.hoveredField = field;
+		this.showHelper(this.currentField());
+	}
+
+	/** Records the field that took keyboard focus, or `''` when it lost it, then shows whichever help wins. */
+	focusHelper(field: string) {
+		this.focusedField = field;
+		this.showHelper(this.currentField());
+	}
+
+	/**
+	 * The field the help should be on. The pointer wins while it is over a field, so hovering one field while
+	 * another holds focus still reads as it did; the help falls back to the focused field and only clears
+	 * once both interactions have ended.
+	 */
+	private currentField(): string {
+		return this.hoveredField || this.focusedField;
+	}
+
+	/**
+	 * Shows the given field's help beside it when this component draws the help itself, and reports the
+	 * field either way, for a dialog that draws the help in a column of its own.
+	 */
+	showHelper(field: string) {
+		if (this.enableHelperText) {
+			this.helperText = field;
+		}
+		this.helperTextChange.emit(field);
 	}
 
 	selectEmployee(event, control) {

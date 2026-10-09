@@ -5,7 +5,7 @@ describe('CamshotItemSkeletonComponent', () => {
 	let fixture: ComponentFixture<CamshotItemSkeletonComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [CamshotItemSkeletonComponent]
+			declarations: [CamshotItemSkeletonComponent]
 		}).compileComponents();
 		fixture = TestBed.createComponent(CamshotItemSkeletonComponent);
 		component = fixture.componentInstance;

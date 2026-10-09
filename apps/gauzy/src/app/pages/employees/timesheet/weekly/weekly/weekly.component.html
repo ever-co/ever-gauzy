@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card class="weekly-card">
   <nb-card-header class="p-0">
     <div class="filters">
       <div class="add-button">
@@ -137,6 +137,7 @@
         </div>
       } @else {
         <ngx-no-data-message
+          [loading]="loading"
           [message]="'TIMESHEET.NO_DATA.WEEKLY_TIMESHEET' | translate"
         ></ngx-no-data-message>
       }

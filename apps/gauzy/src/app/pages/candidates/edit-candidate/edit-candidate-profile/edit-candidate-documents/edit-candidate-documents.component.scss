@@ -46,24 +46,29 @@ input {
   margin: 0 0 8px;
 }
 
+// Secondary caption under a document name. `grey` (#808080) measures 3.5:1 on
+// the light card and is the wrong hue on the neutral dark ramp; `text-hint-color`
+// is the app's own muted step and is tuned per theme.
 .document-data {
   font-size: 12px;
-  color: grey;
+  color: nb-theme(text-hint-color);
 }
 
+// The download glyph — the theme's link colour rather than a literal blue.
 .doc-icon {
-  color: #3365ff !important;
+  color: nb-theme(text-primary-color) !important;
 }
 
 .header {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  border-color: 1px solid black;
+  // (dropped `border-color: 1px solid black` — `border-color` takes a colour,
+  // not a border shorthand, so the declaration was invalid and discarded.)
 }
 
 .documents-card-container {
-  background-color: rgba(126, 126, 143, 0.05);
+  background-color: var(--gauzy-sidebar-background-4);
   border-radius: nb-theme(border-radius);
   padding: 1rem;
 }

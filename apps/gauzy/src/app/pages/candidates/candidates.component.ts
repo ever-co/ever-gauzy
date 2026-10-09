@@ -255,13 +255,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		this.sourceSmartTable = new ServerDataSource(this.http, {
 			endPoint: API_PREFIX + '/candidate/pagination',
 			relations: ['user', 'source', 'tags'],
-			join: {
-				alias: 'candidate',
-				leftJoin: {
-					user: 'candidate.user'
-				},
-				...(this.filters.join ? this.filters.join : {})
-			},
 			where: {
 				organizationId,
 				tenantId,

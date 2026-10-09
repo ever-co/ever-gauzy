@@ -1,7 +1,7 @@
 import { Controller, UseGuards, HttpStatus, Get, Query, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetActivitiesInput, ReportGroupFilterEnum, PermissionsEnum, IActivity } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard, EmployeeTrackedDataGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
 import { ActivityService } from './activity.service';
@@ -37,6 +37,7 @@ export class ActivityController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, the request parameters may contain errors'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getActivities(@Query() options: ActivityQueryDTO): Promise<IActivity[]> {
@@ -63,6 +64,7 @@ export class ActivityController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, the request parameters may contain errors'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/daily')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getDailyActivities(@Query() options: ActivityQueryDTO) {
@@ -87,6 +89,7 @@ export class ActivityController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, the request parameters may contain errors'
 	})
+	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('/report')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async getDailyActivitiesReport(@Query() options: ActivityQueryDTO) {

@@ -1,12 +1,27 @@
 import { environment } from '@gauzy/config';
 
 import { AiChatPlugin } from '@gauzy/plugin-ai-chat';
+import { AuthKeycloakPlugin, isKeycloakEnabled } from '@gauzy/plugin-auth-keycloak';
+import { AuthZitadelPlugin, isZitadelEnabled } from '@gauzy/plugin-auth-zitadel';
 import { AiProviderAnthropicPlugin } from '@gauzy/plugin-ai-provider-anthropic';
 import { AiProviderOpenAiPlugin } from '@gauzy/plugin-ai-provider-openai';
 import { AiProviderOpenRouterPlugin } from '@gauzy/plugin-ai-provider-openrouter';
 import { AiProviderVercelGatewayPlugin } from '@gauzy/plugin-ai-provider-vercel-gateway';
 import { AiProviderGauzyAiPlugin } from '@gauzy/plugin-ai-provider-gauzy-ai';
+import { AiProviderGeminiPlugin } from '@gauzy/plugin-ai-provider-gemini';
+import { AiProviderGrokPlugin } from '@gauzy/plugin-ai-provider-grok';
+import { AiProviderGroqPlugin } from '@gauzy/plugin-ai-provider-groq';
+import { AiProviderMistralPlugin } from '@gauzy/plugin-ai-provider-mistral';
+import { AiProviderDeepgramPlugin } from '@gauzy/plugin-ai-provider-deepgram';
+import { AiProviderElevenLabsPlugin } from '@gauzy/plugin-ai-provider-elevenlabs';
+import { AiProviderSpeachesPlugin } from '@gauzy/plugin-ai-provider-speaches';
+import { AiProviderLocalAiPlugin } from '@gauzy/plugin-ai-provider-localai';
+import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cpp';
+import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
+import { DocsPlugin } from '@gauzy/plugin-docs';
+import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-connect';
+import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
@@ -16,6 +31,7 @@ import { IntegrationZapierPlugin } from '@gauzy/plugin-integration-zapier';
 import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activepieces';
 import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
+import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -42,6 +58,24 @@ export const plugins = [
 	// Includes the PostHogPlugin based on the presence of PostHog configuration.
 	...(posthog?.posthogEnabled && posthog?.posthogKey ? [PosthogPlugin] : []),
 
+	// Ever ID as an additional sign-in method. Off unless ZITADEL_ENABLED=true; when off it is not
+	// loaded at all (no route, no timer, no outbound request).
+	...(isZitadelEnabled() ? [AuthZitadelPlugin] : []),
+
+	// Keycloak as an additional sign-in method. Off unless KEYCLOAK_ENABLED=true and a Keycloak client
+	// id and secret are set; when off it is not loaded at all.
+	...(isKeycloakEnabled() ? [AuthKeycloakPlugin] : []),
+
+	// Anonymous usage statistics (one signed report a day: counts and monthly totals, never a name or a
+	// record). On unless EVER_STATS_ENABLED=false; when off it is not loaded at all (no route, no timer,
+	// no outbound request). Any other value keeps it on and is logged once.
+	...(isEverStatsEnabled(process.env, (message) => console.warn(message)) ? [EverStatsPlugin] : []),
+
+	// Ever Platform connection (connect code, organization links, consented integrations). Off unless
+	// EVER_CONNECT_ENABLED=true; when off it is not loaded at all (no route, no timer, no outbound
+	// request). Any other value keeps it off and is logged once.
+	...(isEverConnectEnabled(process.env, (message) => console.warn(message)) ? [EverConnectPlugin] : []),
+
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({
 		config: {
@@ -60,6 +94,22 @@ export const plugins = [
 	AiProviderVercelGatewayPlugin,
 	// Gauzy AI provider is registered but chat is not routed through it yet (see plugin README).
 	AiProviderGauzyAiPlugin,
+	AiProviderGeminiPlugin,
+	AiProviderGrokPlugin,
+	// OpenAI-compatible cloud providers with chat + speech-to-text (dictation).
+	AiProviderGroqPlugin,
+	AiProviderMistralPlugin,
+	// LOCAL / self-hosted providers (no API key needed): Speaches + whisper.cpp are voice-only,
+	// LocalAI and the generic OpenAI-compatible endpoint do chat + voice.
+	AiProviderSpeachesPlugin,
+	AiProviderLocalAiPlugin,
+	AiProviderWhisperCppPlugin,
+	AiProviderOpenAiCompatiblePlugin,
+	// Cloud speech-to-text only providers (voice / dictation).
+	AiProviderDeepgramPlugin,
+	AiProviderElevenLabsPlugin,
+	// Documents hub plugin — registered after the AI chat/provider plugins so the provider registry is populated first.
+	DocsPlugin,
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
 	// Indicates the inclusion or intention to use the IntegrationActivepiecesPlugin in the codebase.
@@ -78,6 +128,7 @@ export const plugins = [
 	IntegrationUpworkPlugin,
 	// Indicates the inclusion or intention to use the IntegrationPlanePlugin in the codebase.
 	IntegrationPlanePlugin,
+	IntegrationEverAsyncPlugin,
 	// Indicates the inclusion or intention to use the IntegrationSimPlugin in the codebase.
 	IntegrationSimPlugin,
 	// Indicates the inclusion or intention to use the IntegrationZapierPlugin in the codebase.

@@ -10,6 +10,10 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 			:host {
 				display: flex;
 			}
+			/* Status pill in a smart-table cell. Sized from the shared
+			   table-density tokens ($gauzy-density in themes.scss); the
+			   literals are CSS-var fallbacks only. 'align-items: center'
+			   below is what makes the explicit height safe to shrink. */
 			.badge {
 				display: flex;
 				flex-direction: row;
@@ -17,11 +21,12 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 				align-items: center;
 				position: relative;
 				width: fit-content;
-				height: 1.5rem;
-				padding: 4px 8px;
-				font-size: 12px;
+				height: var(--gauzy-table-badge-height, 1.25rem);
+				padding: var(--gauzy-table-chip-padding-y, 0.0625rem) var(--gauzy-table-chip-padding-x, 0.375rem);
+				white-space: nowrap;
+				font-size: var(--gauzy-table-header-font-size, 0.75rem);
 				font-weight: 600;
-				line-height: 15px;
+				line-height: var(--gauzy-table-header-line-height, 0.9375rem);
 				letter-spacing: 0em;
 				text-align: left;
 			}

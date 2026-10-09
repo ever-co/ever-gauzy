@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsUUID } from "class-validator";
-import { IEmployee, IManualTimeInput } from "@gauzy/contracts";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
+import { ID, IEmployee, IManualTimeInput } from "@gauzy/contracts";
 import { IsBeforeDate } from "./../../../shared/validators";
 import { TenantOrganizationBaseDTO } from "./../../../core/dto";
 
@@ -33,4 +33,57 @@ export class ManualTimeLogDTO extends TenantOrganizationBaseDTO implements IManu
     @IsNotEmpty()
     @IsUUID()
     employeeId: IEmployee['id'];
+
+    /*
+     * The fields below are what the web and desktop clients send besides the dates (the edit-time-log
+     * modal and the timer's `timerConfig`). They are declared so the routes can run with
+     * `whitelist: true`, which keeps everything else (id, isRunning, timesheetId, relation objects)
+     * out of the time log (GHSA-6qvm-3wg4-26w4). Ids are validated as strings, not UUIDs, because the
+     * clients send them as-is and an empty value must not start failing.
+     */
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    projectId?: ID;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    taskId?: ID;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    organizationContactId?: ID;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    organizationTeamId?: ID;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    reason?: string;
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @IsBoolean()
+    isBillable?: boolean;
+
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
+    @IsOptional()
+    @IsArray()
+    tags?: string[];
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsString()
+    version?: string;
 }

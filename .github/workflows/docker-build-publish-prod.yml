@@ -9,6 +9,20 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `packages: write` is required: these jobs log in to ghcr.io with GITHUB_TOKEN and push
+# image tags + the :buildcache layer cache. Everything else stays read-only.
+permissions:
+  contents: read
+  packages: write
+
+# docker/build-push-action uploads a build record artifact and a job summary for every build.
+# The record holds every build-arg value in plain text, and on a public repo anyone signed in to
+# GitHub can download it, so neither is produced. (BuildKit `secrets:` are never recorded.)
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+
 jobs:
   gauzy-api:
     runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
@@ -52,6 +66,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -153,6 +168,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}
@@ -256,6 +272,7 @@ jobs:
           cache-to: type=inline
           build-args: |
             NODE_ENV=production
+            VERDACCIO_REGISTRY=${{ vars.VERDACCIO_REGISTRY }}
             DEMO=false
             NX_BRANCH=${{ github.ref_name }}
             GAUZY_APP_VERSION=${{ steps.relver.outputs.version }}

@@ -19,6 +19,17 @@ import { EmailTemplateService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ToastrService } from '@gauzy/ui-core/core';
 
+/**
+ * Themes whose canvas is dark, so the Ace editors have to load a dark syntax theme.
+ *
+ * Matched by NAME rather than by the theme's `base`: `cosmic` and `material-dark` are
+ * both dark yet declare `base: 'default'` (see `theme.material-dark.ts`), so `base` says
+ * nothing about the canvas. The list previously stopped at `dark`/`cosmic`, which is why
+ * `gauzy-dark` — the app's own dark theme — fell through to the light `sqlserver` theme
+ * and rendered both editors as white blocks on a near-black page.
+ */
+const DARK_CANVAS_THEMES: ReadonlySet<string> = new Set(['dark', 'cosmic', 'gauzy-dark', 'material-dark']);
+
 @UntilDestroy({ checkProperties: true })
 @Component({
     templateUrl: './email-templates.component.html',
@@ -90,18 +101,10 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		this.themeService
 			.getJsTheme()
 			.pipe(untilDestroyed(this))
-			.subscribe(({ name }: { name: 'dark' | 'cosmic' | 'corporate' | 'default' }) => {
-				switch (name) {
-					case 'dark':
-					case 'cosmic':
-						this.emailEditor.setTheme('tomorrow_night');
-						this.subjectEditor.setTheme('tomorrow_night');
-						break;
-					default:
-						this.emailEditor.setTheme('sqlserver');
-						this.subjectEditor.setTheme('sqlserver');
-						break;
-				}
+			.subscribe(({ name }: { name: string }) => {
+				const editorTheme = DARK_CANVAS_THEMES.has(name) ? 'tomorrow_night' : 'sqlserver';
+				this.emailEditor.setTheme(editorTheme);
+				this.subjectEditor.setTheme(editorTheme);
 			});
 
 		const editorOptions = {

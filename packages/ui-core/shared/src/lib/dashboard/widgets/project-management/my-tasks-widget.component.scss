@@ -1,0 +1,39 @@
+@use 'themes' as *;
+
+.task-row {
+	display: grid;
+	// completion dot | status + title
+	grid-template-columns: 12px minmax(0, 1fr);
+	align-items: start;
+	gap: 0.5rem;
+}
+
+// The legacy row hard coded `#6e49e8` for this dot, which reads wrong against
+// the dark themes; the primary accent is the same colour in the default theme
+// and follows every other one.
+.task-dot {
+	width: 12px;
+	height: 12px;
+	// Optically centres the dot against the first line of the status label.
+	margin-top: 0.2rem;
+	border: 1px solid var(--color-primary-default);
+	border-radius: 50%;
+
+	&.checked {
+		background-color: var(--color-primary-default);
+	}
+}
+
+.task-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	min-width: 0;
+}
+
+// The raw status value, exactly as the legacy panel renders it: task statuses
+// have no translation keys, so anything else here would be invented English.
+.task-status {
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+}

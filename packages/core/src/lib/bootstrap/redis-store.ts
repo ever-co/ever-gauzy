@@ -2,6 +2,7 @@ import * as expressSession from 'express-session';
 import { createClient } from 'redis';
 import RedisStore from 'connect-redis';
 import { environment } from '@gauzy/config';
+import { redactUrlCredentials, redactUrlErrorInput } from '../core/util/redact-credentials';
 
 /**
  * Sets up the Redis client with connection options and logs key events.
@@ -30,6 +31,25 @@ function createRedisClient(options: any) {
 }
 
 /**
+ * Wraps the session middleware so it is skipped for health probe routes.
+ *
+ * Probe requests carry no cookies, so with `saveUninitialized: true` every probe
+ * would create a brand-new session, and — with the Redis store — express-session
+ * defers the response until the session write settles. That would silently couple
+ * the dependency-free liveness endpoint (`GET /api/health/live`) to Redis
+ * availability (a Redis outage would hang the response past the probe timeout and
+ * get healthy pods killed) and grows garbage session keys on every readiness probe.
+ * Health routes never use sessions, so skipping is safe.
+ *
+ * @param middleware - The configured express-session middleware.
+ * @returns A middleware that bypasses session handling for `/api/health*` routes.
+ */
+function skipSessionForHealthRoutes(middleware: any) {
+	return (req: any, res: any, next: any) =>
+		req.path === '/api/health' || req.path.startsWith('/api/health/') ? next() : middleware(req, res, next);
+}
+
+/**
  * Configures session store with Redis or falls back to in-memory session management.
  *
  * @param app - The Express application instance.
@@ -52,7 +72,8 @@ export async function configureRedisSession(app: any): Promise<void> {
 					return `${redisProtocol}://${auth}${REDIS_HOST}:${REDIS_PORT}`;
 				})();
 
-			console.log('REDIS_URL: ', url);
+			// Never log the raw URL: it carries the Redis password in its userinfo section.
+			console.log('REDIS_URL: ', redactUrlCredentials(url));
 
 			const parsedUrl = new URL(url);
 			const isTls = parsedUrl.protocol === 'rediss:';
@@ -93,7 +114,7 @@ export async function configureRedisSession(app: any): Promise<void> {
 				// Ping Redis
 				console.log('Redis Session Store Client Sessions Ping: ', await redisClient.ping());
 			} catch (error) {
-				console.error('Failed to connect to Redis:', error);
+				console.error('Failed to connect to Redis:', redactUrlErrorInput(error));
 			}
 
 			const redisStore = new RedisStore({
@@ -102,33 +123,37 @@ export async function configureRedisSession(app: any): Promise<void> {
 			});
 
 			app.use(
-				expressSession({
-					store: redisStore,
-					secret: environment.EXPRESS_SESSION_SECRET,
-					resave: false, // Required for lightweight session keep alive (touch)
-					saveUninitialized: true,
-					// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
-					// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
-					cookie: { secure: 'auto' }
-				})
+				skipSessionForHealthRoutes(
+					expressSession({
+						store: redisStore,
+						secret: environment.EXPRESS_SESSION_SECRET,
+						resave: false, // Required for lightweight session keep alive (touch)
+						saveUninitialized: true,
+						// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
+						// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
+						cookie: { secure: 'auto' }
+					})
+				)
 			);
 
 			redisWorked = true;
 		} catch (error) {
-			console.error('Failed to initialize Redis session store:', error);
+			console.error('Failed to initialize Redis session store:', redactUrlErrorInput(error));
 		}
 	}
 
 	if (!redisWorked) {
 		app.use(
-			expressSession({
-				secret: environment.EXPRESS_SESSION_SECRET,
-				resave: true, // Required as MemoryStore doesn't support `touch` method
-				saveUninitialized: true,
-				// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
-				// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
-				cookie: { secure: 'auto' }
-			})
+			skipSessionForHealthRoutes(
+				expressSession({
+					secret: environment.EXPRESS_SESSION_SECRET,
+					resave: true, // Required as MemoryStore doesn't support `touch` method
+					saveUninitialized: true,
+					// 'auto' sets the Secure flag only over HTTPS: on (prod/stage/demo run behind the proxy with
+					// `trust proxy` enabled in bootstrap) and off on plain-HTTP local dev so sessions keep working there.
+					cookie: { secure: 'auto' }
+				})
+			)
 		);
 	}
 }

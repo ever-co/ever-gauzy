@@ -1,1 +1,26 @@
 @use 'gauzy/_gauzy-dialogs' as *;
+@use '../invoice-dialog' as *;
+
+// The public link dialog on the shared invoice-dialog frame: what the link
+// does, the link itself in a read-only field, and Copy beside Cancel.
+.public-link-dialog {
+  width: min(calc(100vw - 2rem), 30rem);
+}
+
+:host {
+  @include invoice-dialog();
+
+  .hint {
+    margin: 0 0 0.875rem;
+    font-size: 12px;
+    line-height: 1.125rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  // A link is for copying, not typing: it reads as a filled field, and the
+  // pointer says so.
+  input[nbInput][readonly] {
+    cursor: text;
+    text-overflow: ellipsis;
+  }
+}

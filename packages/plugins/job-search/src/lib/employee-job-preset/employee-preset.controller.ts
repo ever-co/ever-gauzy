@@ -3,15 +3,14 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
-	IEmployeePresetInput,
 	IEmployeeUpworkJobsSearchCriterion,
 	IGetMatchingCriterions,
 	IJobPreset
 } from '@gauzy/contracts';
-import { UUIDValidationPipe } from '@gauzy/core';
+import { UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
-import { SaveJobPresetCriterionDTO } from './dto';
+import { SaveEmployeePresetDTO, SaveJobPresetCriterionDTO } from './dto';
 
 @ApiTags('EmployeeJobPreset')
 @Controller('/job-preset/employee')
@@ -112,7 +111,8 @@ export class EmployeePresetController {
 		description: 'Record not found'
 	})
 	@Post('/')
-	async saveEmployeePreset(@Body() request: IEmployeePresetInput): Promise<IJobPreset[]> {
+	@UseValidationPipe({ whitelist: true })
+	async saveEmployeePreset(@Body() request: SaveEmployeePresetDTO): Promise<IJobPreset[]> {
 		return await this.jobPresetService.saveEmployeePreset(request);
 	}
 

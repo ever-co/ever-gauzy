@@ -1,0 +1,121 @@
+// The frame every invoice / estimate dialog shares: a header row carrying the
+// title and a close button, 12px labels over 2rem controls, and a footer whose
+// buttons sit on the trailing edge — the same scale as the payment, KPI and
+// goals dialogs. Included by the Download, Send, Email, Internal note and
+// Public link dialogs, which were five variations on a 16px title with a close
+// icon above it and an orange outline Cancel on the leading edge.
+//
+// Every custom property carries a fallback: `--gauzy-*` is undefined in
+// material-light / material-dark, where a `var()` without one is dropped.
+$invoice-dialog-control-height: 2rem;
+$invoice-dialog-font-size: 12px;
+$invoice-dialog-padding-x: 0.75rem;
+$invoice-dialog-inset: 1rem;
+$invoice-dialog-divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$invoice-dialog-muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+$invoice-dialog-text: var(--gauzy-text-color-1, inherit);
+
+/// The shared dialog chrome. Include inside a component's `:host`.
+@mixin invoice-dialog() {
+  nb-card {
+    // Fallback required: `--gauzy-card-1` is undefined in material-light and
+    // material-dark, and a `var()` with no fallback drops the declaration.
+    background-color: var(--gauzy-card-1, var(--card-background-color));
+    margin: 0;
+  }
+
+  // Title and close on one line; the close used to sit stacked above the title,
+  // as a bare `<i>` no keyboard could reach.
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem $invoice-dialog-inset;
+    border-bottom: $invoice-dialog-divider;
+
+    .title,
+    h5,
+    h6 {
+      margin: 0;
+      font-size: $invoice-dialog-font-size;
+      font-weight: 600;
+      line-height: 1rem;
+      color: $invoice-dialog-text;
+    }
+  }
+
+  // A real button, so the close is reachable from the keyboard and named for a
+  // screen reader; the browser's button chrome is stripped so it still reads as
+  // the bare icon it was.
+  .cancel {
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    padding: 0.25rem;
+    border: 0;
+    background: none;
+    line-height: 1;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid nb-theme(color-primary-default);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+  }
+
+  nb-card-body {
+    padding: $invoice-dialog-inset;
+    font-size: $invoice-dialog-font-size;
+    line-height: 1.125rem;
+    color: $invoice-dialog-text;
+  }
+
+  ::ng-deep label.label {
+    display: block;
+    margin: 0 0 0.375rem;
+    font-size: $invoice-dialog-font-size;
+    font-weight: 600;
+    line-height: 1rem;
+    color: $invoice-dialog-muted;
+  }
+
+  input[nbInput],
+  textarea[nbInput] {
+    font-size: $invoice-dialog-font-size;
+    line-height: 1rem;
+  }
+
+  input[nbInput] {
+    height: $invoice-dialog-control-height;
+    // `!important` against the shared `dialog()` mixin (`gauzy/_gauzy-dialogs`),
+    // which pins every input and select in a dialog to a 2.375rem `min-height`
+    // with `!important` of its own.
+    min-height: $invoice-dialog-control-height !important;
+    padding: 0 $invoice-dialog-padding-x;
+  }
+
+  textarea[nbInput] {
+    display: block;
+    padding: 0.5rem $invoice-dialog-padding-x;
+  }
+
+  // Buttons on the trailing edge, Cancel quiet beside the primary action. The
+  // footers keep `.text-left`, which the e2e suite scopes the confirm button
+  // to; it sets `text-align` only, which the flex row here overrides.
+  nb-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem $invoice-dialog-inset;
+    border-top: $invoice-dialog-divider;
+
+    // `!important` against bootstrap's own `.mr-3` / `.ml-3`, which several of
+    // these buttons carry and which would stack on the row's gap.
+    button {
+      margin: 0 !important;
+    }
+  }
+}

@@ -117,14 +117,15 @@ const ActivityLogRelationsSchema = z
 // ===== BASE SCHEMAS =====
 
 // Base entity schema with common fields
+// API / MCP JSON payloads use ISO datetime strings (JSON Schema cannot represent Date)
 const BaseEntitySchema = z.object({
 	id: z.string().uuid().readonly().optional(),
-	createdAt: z.date().readonly().optional(),
-	updatedAt: z.date().readonly().optional(),
-	deletedAt: z.date().nullable().readonly().optional(),
+	createdAt: z.string().datetime({ offset: true }).readonly().optional(),
+	updatedAt: z.string().datetime({ offset: true }).readonly().optional(),
+	deletedAt: z.string().datetime({ offset: true }).nullable().readonly().optional(),
 	isActive: z.boolean().optional().default(true),
 	isArchived: z.boolean().optional().default(false),
-	archivedAt: z.date().nullable().optional(),
+	archivedAt: z.string().datetime({ offset: true }).nullable().optional(),
 	// User action tracking
 	createdByUserId: z.string().uuid().readonly().optional(),
 	updatedByUserId: z.string().uuid().readonly().optional(),

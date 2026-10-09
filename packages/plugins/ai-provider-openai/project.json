@@ -12,7 +12,7 @@
 			]
 		}
 	},
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": [
 		"constants",
 		"contracts",

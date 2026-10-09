@@ -1,0 +1,37 @@
+// No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
+// `nb-card`, its header and the body padding. This component only fills that body.
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cash-flow-chart {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+
+  // `ngx-line-chart` is reused as-is, but it was written for report PAGES and
+  // pins its plot to a fixed 400px. A canvas cell is whatever height the user
+  // resized it to, so the plot is re-bound to the cell here — the only override,
+  // and purely about layout: colours, options and behaviour stay the chart
+  // component's.
+  //
+  // Anchored on `.cash-flow-chart` (which keeps its own `_ngcontent` attribute,
+  // unlike everything after `::ng-deep`) on purpose. The chart's own rule
+  // compiles to `[_nghost-x] .chart[_ngcontent-x]` — three attribute/class
+  // components — so the intuitive `:host ::ng-deep ngx-line-chart .chart` scores
+  // LOWER and the 400px would silently win. Nesting it here scores higher
+  // without resorting to `!important`.
+  ::ng-deep ngx-line-chart {
+    display: block;
+    height: 100%;
+
+    .chart {
+      height: 100%;
+      min-height: 0;
+    }
+  }
+}

@@ -4,9 +4,9 @@ import {
 	IOrganizationContact,
 	ContactOrganizationInviteStatus,
 	RolesEnum,
-	ID
+	ID,
+	IUser
 } from '@gauzy/contracts';
-import { User } from '../../../user/user.entity';
 import { UserService } from '../../../user/user.service';
 import { InviteOrganizationContactCommand } from '../invite.organization-contact.command';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
@@ -102,21 +102,37 @@ export class InviteOrganizationContactHandler
 	 * This function is used to make sure we are not sending an invitation email to a user that
 	 * exists for the same tenant.
 	 *
+	 * Despite its name and its `tenantId` argument, this check used to run the GLOBAL
+	 * `getUserByEmail` lookup and ignore the tenant entirely, so a user of ANY OTHER tenant holding
+	 * the contact's address answered "already exists". That was both a cross-tenant existence
+	 * oracle — the caller learns, from a distinguishable error, that some unrelated tenant has an
+	 * account with that email — and a functional bug, because it blocked a perfectly legitimate
+	 * contact invitation.
+	 *
 	 * @param email Email address of the user to check
 	 * @param tenantId Tenant id of the contact organization
 	 */
-	private async userExistsForSameTenant(email: string, tenantId: ID) {
-		let user: User;
-		try {
-			user = await this.userService.getUserByEmail(email);
-		} catch (error) {}
+	private async userExistsForSameTenant(email: string, tenantId: ID): Promise<boolean> {
+		// Fail closed: without a tenant there is no "same tenant" to compare against, and the
+		// tenant-scoped lookup would answer `null` for everything. Refuse rather than let an
+		// unscoped invitation through.
+		if (!tenantId) {
+			throw new InternalServerErrorException(
+				'Cannot invite an organization contact without a tenant context.'
+			);
+		}
+
+		// No try/catch here on purpose: a lookup that FAILS is not a lookup that found nobody. Letting
+		// the error propagate keeps this duplicate-user guard fail-closed instead of sending the
+		// invitation because the database was unreachable.
+		const user: IUser | null = await this.userService.getUserByEmailInTenant(email, tenantId);
 
 		if (!user) {
 			return false;
 		}
 
-		// TODO: Once tenantId is stored in user properly
-		// return user.tenantId === tenantId;
-		return true;
+		// The lookup is already tenant-scoped; comparing again keeps the invariant local and
+		// visible, so a future change to the lookup cannot silently widen this check.
+		return user.tenantId === tenantId;
 	}
 }

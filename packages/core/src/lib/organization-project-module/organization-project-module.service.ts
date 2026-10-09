@@ -28,8 +28,9 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
+import { sanitizeRichHtml } from './../core/html-sanitizer';
 import { RequestContext } from '../core/context';
-import { MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations, parseFindOptionsSelect } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -68,6 +69,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	 * @returns The created organization project module.
 	 */
 	async create(entity: IOrganizationProjectModuleCreateInput): Promise<IOrganizationProjectModule> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof entity.description === 'string') {
+			entity.description = sanitizeRichHtml(entity.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 		const employeeId = RequestContext.currentEmployeeId();
 		const currentRoleId = RequestContext.currentRoleId();
@@ -132,10 +137,14 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		id: ID,
 		entity: IOrganizationProjectModuleUpdateInput
 	): Promise<IOrganizationProjectModule | UpdateResult> {
+		// Sanitize the rich-text description HTML through the shared server-side allowlist.
+		if (typeof entity.description === 'string') {
+			entity.description = sanitizeRichHtml(entity.description);
+		}
 		const tenantId = RequestContext.currentTenantId() ?? entity.tenantId;
 
 		try {
-			const { memberIds, managerIds, organizationId, tasks = [] } = entity;
+			const { memberIds, managerIds, tasks = [] } = entity;
 
 			// Retrieve existing module
 			const existingProjectModule = await this.findOneByIdString(id, {
@@ -145,6 +154,11 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			if (!existingProjectModule) {
 				throw new BadRequestException('Module not found');
 			}
+
+			// The member lookups below are scoped by organization: use the module's own organization
+			// when the (partial) update body does not carry one, never a null (a null used to be
+			// dropped from the where and let employees of any organization of the tenant be added).
+			const organizationId = entity.organizationId ?? existingProjectModule.organizationId;
 
 			// Update members and managers if applicable
 			if (Array.isArray(memberIds) || Array.isArray(managerIds)) {
@@ -218,6 +232,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	async getEmployeeProjectModules(
 		options: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			const { where } = options;
 			const { name, status, organizationId, projectId, members } = where;
@@ -241,7 +259,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
+					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name as string);
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -333,6 +351,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	async findTeamProjectModules(
 		options: BaseQueryDTO<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			const { where } = options;
 			const { name, status, teams = [], organizationId, projectId, members } = where;
@@ -359,7 +381,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					}
 					if (isNotEmpty(projectId)) mikroWhere.projectId = projectId;
 					if (isNotEmpty(status)) mikroWhere.status = status;
-					if (isNotEmpty(name)) mikroWhere.name = { $ilike: `%${name}%` };
+					if (isNotEmpty(name)) mikroWhere.name = mikroOrmContains(name as string);
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						limit: options?.take || 10,
@@ -483,7 +505,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					if (isNotEmpty(options?.projectId)) mikroWhere.projectId = options.projectId;
 					if (isNotEmpty(options?.status)) mikroWhere.status = options.status;
-					if (isNotEmpty(options?.name)) mikroWhere.name = { $ilike: `%${options.name}%` };
+					if (isNotEmpty(options?.name)) mikroWhere.name = mikroOrmContains(options.name);
 					if (isNotEmpty(options?.organizationSprintId))
 						mikroWhere.organizationSprints = { id: options.organizationSprintId };
 					if (isNotEmpty(options?.organizationTeamId)) mikroWhere.teams = { id: options.organizationTeamId };

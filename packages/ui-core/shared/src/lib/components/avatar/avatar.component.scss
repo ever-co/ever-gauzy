@@ -2,7 +2,12 @@
 
 @mixin common {
   .inner-wrapper {
-    border-radius: var(--button-rectangle-border-radius);
+    // Deliberately a STADIUM, not the button radius. This is the avatar+name
+    // chip (tinted in the report-table and workspace contexts), and a chip whose
+    // height equals its content is meant to read as fully round — it only
+    // tracked `button-rectangle-border-radius` because that token happened to be
+    // 2rem. Pinned so it survives that token joining the small radius scale.
+    border-radius: 9999px;
     align-items: center;
     overflow: hidden;
     display: flex;
@@ -50,18 +55,19 @@
     }
     .status-indicator {
       position: absolute;
-      width: 10px;
-      height: 10px;
-      border-radius: 8px;
-      border: 2px solid #ebebeb;
-      right: 0;
-      top: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 2px solid var(--gauzy-card-1);
+      right: -1px;
+      bottom: -1px;
+      top: auto;
 
       &.online {
-        background-color: #4caf50; /* Green for online */
+        background-color: var(--color-success-default);
       }
       &.offline {
-        background-color: #f44336; /* Red for offline */
+        background-color: var(--gauzy-text-color-2);
       }
     }
   }
@@ -160,12 +166,15 @@
   }
 
   &.activity {
+    // A 28px avatar under a 2rem radius was a CIRCLE; say so explicitly rather
+    // than leaving it to depend on the button token still being larger than the
+    // box it is applied to.
     .image-container {
       width: 28px;
-      border-radius: var(--button-rectangle-border-radius) !important;
+      border-radius: 50% !important;
 
       img {
-        border-radius: var(--button-rectangle-border-radius) !important;
+        border-radius: 50% !important;
         width: 28px;
         height: 28px;
       }

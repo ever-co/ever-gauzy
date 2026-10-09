@@ -1,11 +1,19 @@
-import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	NotAcceptableException,
+	NotFoundException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult, FindOptionsWhere } from 'typeorm';
 import { chain, pluck } from 'underscore';
 import {
 	IManualTimeInput,
 	PermissionsEnum,
 	IDateRange,
+	IGetTimeLogConflictInput,
 	IGetTimeLogReportInput,
 	ITimeLog,
 	TimeLogType,
@@ -37,7 +45,13 @@ import {
 	TimeLogDeleteCommand,
 	TimeLogUpdateCommand
 } from './commands';
-import { getDateRangeFormat, getDaysBetweenDates, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
+import {
+	getDateRangeFormat,
+	getDaysBetweenDates,
+	MultiORMEnum,
+	parseFindOptionsRelations,
+	resolveTimeZone
+} from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
@@ -65,11 +79,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Time logs are personal: a caller without CHANGE_SELECTED_EMPLOYEE and without an employee record
+	 * of their own (a custom role holding TIME_TRACKER, say) must not fall back to the tenant-wide scope
+	 * of the CRUD reads and deletes (GHSA-6qvm-3wg4-26w4). They match nothing instead.
+	 */
+	protected findConditionsWithoutOwnEmployee(): FindOptionsWhere<TimeLog> {
+		return this.neverMatchingEmployeeCondition();
+	}
+
+	/**
 	 * Retrieves time logs based on the provided input.
 	 * @param request The input parameters for fetching time logs.
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(request);
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const where = await this.buildMikroOrmTimeLogWhere(request);
@@ -139,6 +166,21 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				return timeLogs;
 			}
 		}
+	}
+
+	/**
+	 * The days a report covers and the time zone its rows are grouped by, resolved together.
+	 *
+	 * They have to come from one and the same zone: the day list is what the response is keyed by, so a
+	 * grouping key built in another zone lands in a bucket nobody reads. A request that names no zone falls
+	 * back to the server zone rather than formatting an undefined moment.
+	 *
+	 * @param request The report input.
+	 * @returns The day list and the zone that produced it.
+	 */
+	private reportDateRange(request: IGetTimeLogReportInput): { days: string[]; timeZone: string } {
+		const timeZone = resolveTimeZone(request.timeZone);
+		return { days: getDaysBetweenDates(request.startDate, request.endDate, timeZone), timeZone };
 	}
 
 	/**
@@ -215,9 +257,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
@@ -294,9 +335,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -304,9 +343,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		// Group time logs by date and calculate tracked, manual, idle, and resumed durations
 		const byDate = chain(logs)
@@ -448,9 +486,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				logs = await query.getMany();
@@ -485,8 +521,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of owed amount report data.
 	 */
 	async getOwedAmountReport(request: IGetTimeLogReportInput): Promise<IAmountOwedReport[]> {
-		// Extract timezone from the request
-		const { timeZone } = request;
+		// The zone the rows are grouped by; a request without one would format an undefined moment
+		const timeZone = resolveTimeZone(request.timeZone);
 
 		let timeLogs: ITimeLog[];
 
@@ -539,9 +575,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				timeLogs = await query.getMany();
@@ -636,9 +670,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				timeLogs = await query.getMany();
@@ -646,9 +678,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -753,9 +784,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				});
 				// Apply additional conditions to the query based on request filters
-				query.where((qb: SelectQueryBuilder<TimeLog>) => {
-					this.getFilterTimeLogQuery(qb, request);
-				});
+				await this.getFilterTimeLogQuery(query, request);
 
 				// Execute the query and retrieve time logs
 				timeLogs = await query.getMany();
@@ -763,9 +792,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timeZone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
+		// The days the report covers, and the zone its rows are grouped by
+		const { days, timeZone } = this.reportDateRange(request);
 
 		// Process time log data and calculate time limits for each employee and date
 		const byDate: any = chain(timeLogs)
@@ -832,83 +860,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
-				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
-
-				// Step 1: Get distinct project IDs that match the filters
-				let projectQuery = knex('organization_project')
-					.innerJoin('time_log', 'organization_project.id', 'time_log.projectId')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select('organization_project.id as id')
-					.where('organization_project.tenantId', tenantId)
-					.andWhere('organization_project.organizationId', organizationId)
-					.andWhere('employee.tenantId', tenantId)
-					.andWhere('employee.organizationId', organizationId)
-					.andWhere('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.groupBy('organization_project.id');
-
-				if (isNotEmpty(employeeIds)) {
-					projectQuery = projectQuery.whereIn('employee.id', employeeIds);
-					projectQuery = projectQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					projectQuery = projectQuery.whereIn('time_log.projectId', projectIds);
-				}
-
-				const matchedProjects = await projectQuery;
-				const matchedProjectIds = matchedProjects.map((r: any) => r.id);
-
-				if (matchedProjectIds.length === 0) {
-					organizationProjects = [];
-					break;
-				}
-
-				// Step 2: Get project details
-				const projectRows = await knex('organization_project')
-					.select('id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount')
-					.whereIn('id', matchedProjectIds);
-
-				// Step 3: Get timeLogs with employee data for these projects
-				let timeLogQuery = knex('time_log')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select(
-						'time_log.id as id',
-						'time_log.duration as duration',
-						'time_log.projectId as projectId',
-						'time_log.employeeId as employeeId',
-						'employee.billRateValue as employee_billRateValue'
-					)
-					.where('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.whereIn('time_log.projectId', matchedProjectIds);
-
-				if (isNotEmpty(employeeIds)) {
-					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-
-				const timeLogRows = await timeLogQuery;
-
-				// Step 4: Group timeLogs by projectId and attach to projects
-				const timeLogsByProject: Record<string, any[]> = {};
-				for (const row of timeLogRows) {
-					const pid = row.projectId;
-					if (!timeLogsByProject[pid]) timeLogsByProject[pid] = [];
-					timeLogsByProject[pid].push({
-						id: row.id,
-						duration: row.duration,
-						employee: { billRateValue: row.employee_billRateValue }
-					});
-				}
-
-				organizationProjects = projectRows.map((proj: any) => ({
-					...proj,
-					timeLogs: timeLogsByProject[proj.id] || []
-				}));
+				organizationProjects = await this.getMikroOrmBudgetTargets(
+					{
+						table: 'organization_project',
+						timeLogKey: 'projectId',
+						columns: ['id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount']
+					},
+					{ tenantId, organizationId, employeeIds, projectIds, startDate, endDate }
+				);
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -1036,6 +995,91 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * MikroORM side of the project / client budget reports: the budget targets (projects or contacts) that
+	 * have time logged in the range, each with those time logs and the employee bill rate.
+	 *
+	 * Raw knex bypasses MikroORM's soft-delete filter, so every table read excludes soft-deleted rows itself,
+	 * as TypeORM's query builder does in the other branch.
+	 */
+	private async getMikroOrmBudgetTargets(
+		target: { table: string; timeLogKey: string; columns: string[] },
+		filters: {
+			tenantId: string;
+			organizationId: string;
+			employeeIds: string[];
+			projectIds: string[];
+			startDate: Date | string;
+			endDate: Date | string;
+		}
+	): Promise<any[]> {
+		const { table, timeLogKey, columns } = target;
+		const { tenantId, organizationId, employeeIds, projectIds, startDate, endDate } = filters;
+		const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
+		const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
+
+		// Time logs of the tenant / organization in the range, from non-deleted employees
+		const scopeTimeLogs = (query: any) => {
+			query = query
+				.where('time_log.tenantId', tenantId)
+				.andWhere('time_log.organizationId', organizationId)
+				.andWhere('time_log.startedAt', '>=', start)
+				.andWhere('time_log.startedAt', '<', end)
+				.whereNull('time_log.deletedAt')
+				.whereNull('employee.deletedAt');
+			if (isNotEmpty(employeeIds)) query = query.whereIn('time_log.employeeId', employeeIds);
+			if (isNotEmpty(projectIds)) query = query.whereIn('time_log.projectId', projectIds);
+			return query;
+		};
+
+		// Step 1: Distinct targets with matching time logs
+		const matched = await scopeTimeLogs(
+			knex(table)
+				.innerJoin('time_log', `${table}.id`, `time_log.${timeLogKey}`)
+				.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+				.select(`${table}.id as id`)
+				.andWhere(`${table}.tenantId`, tenantId)
+				.andWhere(`${table}.organizationId`, organizationId)
+				.andWhere('employee.tenantId', tenantId)
+				.andWhere('employee.organizationId', organizationId)
+				.whereNull(`${table}.deletedAt`)
+				.groupBy(`${table}.id`)
+		);
+		const matchedIds = matched.map((row: any) => row.id);
+		if (matchedIds.length === 0) {
+			return [];
+		}
+
+		// Step 2: Target details
+		const rows = await knex(table).select(...columns).whereIn('id', matchedIds).whereNull('deletedAt');
+
+		// Step 3: Their time logs with the employee bill rate
+		const timeLogRows = await scopeTimeLogs(
+			knex('time_log')
+				.innerJoin('employee', 'time_log.employeeId', 'employee.id')
+				.select(
+					'time_log.id as id',
+					'time_log.duration as duration',
+					`time_log.${timeLogKey} as targetId`,
+					'employee.billRateValue as employee_billRateValue'
+				)
+				.whereIn(`time_log.${timeLogKey}`, matchedIds)
+		);
+
+		// Step 4: Attach the time logs to their target
+		const timeLogsByTarget: Record<string, any[]> = {};
+		for (const row of timeLogRows) {
+			const timeLogs = timeLogsByTarget[row.targetId] || [];
+			timeLogs.push({
+				id: row.id,
+				duration: row.duration,
+				employee: { billRateValue: row.employee_billRateValue }
+			});
+			timeLogsByTarget[row.targetId] = timeLogs;
+		}
+		return rows.map((row: any) => ({ ...row, timeLogs: timeLogsByTarget[row.id] || [] }));
+	}
+
+	/**
 	 * Calculate client budget limit report for a given organization contact.
 	 * @param organizationContact The organization contact for which to calculate the budget limit report.
 	 * @returns The client budget limit report.
@@ -1048,86 +1092,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const knex = (this.mikroOrmTimeLogRepository as any).getKnex();
-				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
-
-				// Step 1: Get distinct contact IDs that match the filters
-				let contactQuery = knex('organization_contact')
-					.innerJoin('time_log', 'organization_contact.id', 'time_log.organizationContactId')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select('organization_contact.id as id')
-					.where('organization_contact.tenantId', tenantId)
-					.andWhere('organization_contact.organizationId', organizationId)
-					.andWhere('employee.tenantId', tenantId)
-					.andWhere('employee.organizationId', organizationId)
-					.andWhere('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.groupBy('organization_contact.id');
-
-				if (isNotEmpty(employeeIds)) {
-					contactQuery = contactQuery.whereIn('employee.id', employeeIds);
-					contactQuery = contactQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					contactQuery = contactQuery.whereIn('time_log.projectId', projectIds);
-				}
-
-				const matchedContacts = await contactQuery;
-				const matchedContactIds = matchedContacts.map((r: any) => r.id);
-
-				if (matchedContactIds.length === 0) {
-					organizationContacts = [];
-					break;
-				}
-
-				// Step 2: Get contact details
-				const contactRows = await knex('organization_contact')
-					.select('id', 'name', 'budget', 'budgetType')
-					.whereIn('id', matchedContactIds);
-
-				// Step 3: Get timeLogs with employee data for these contacts
-				let timeLogQuery = knex('time_log')
-					.innerJoin('employee', 'time_log.employeeId', 'employee.id')
-					.select(
-						'time_log.id as id',
-						'time_log.duration as duration',
-						'time_log.organizationContactId as organizationContactId',
-						'time_log.employeeId as employeeId',
-						'employee.billRateValue as employee_billRateValue'
-					)
-					.where('time_log.tenantId', tenantId)
-					.andWhere('time_log.organizationId', organizationId)
-					.andWhere('time_log.startedAt', '>=', start)
-					.andWhere('time_log.startedAt', '<', end)
-					.whereIn('time_log.organizationContactId', matchedContactIds);
-
-				if (isNotEmpty(employeeIds)) {
-					timeLogQuery = timeLogQuery.whereIn('time_log.employeeId', employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					timeLogQuery = timeLogQuery.whereIn('time_log.projectId', projectIds);
-				}
-
-				const timeLogRows = await timeLogQuery;
-
-				// Step 4: Group timeLogs by contactId and attach to contacts
-				const timeLogsByContact: Record<string, any[]> = {};
-				for (const row of timeLogRows) {
-					const cid = row.organizationContactId;
-					if (!timeLogsByContact[cid]) timeLogsByContact[cid] = [];
-					timeLogsByContact[cid].push({
-						id: row.id,
-						duration: row.duration,
-						employee: { billRateValue: row.employee_billRateValue }
-					});
-				}
-
-				organizationContacts = contactRows.map((contact: any) => ({
-					...contact,
-					timeLogs: timeLogsByContact[contact.id] || []
-				}));
+				organizationContacts = await this.getMikroOrmBudgetTargets(
+					{
+						table: 'organization_contact',
+						timeLogKey: 'organizationContactId',
+						columns: ['id', 'name', 'budget', 'budgetType']
+					},
+					{ tenantId, organizationId, employeeIds, projectIds, startDate, endDate }
+				);
 				break;
 			}
 			case MultiORMEnum.TypeORM:
@@ -1272,6 +1244,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// Fail closed for a caller who may not act for other employees and has no employee record of
+		// their own: there is no personal scope to narrow to, and every filter below is optional, so the
+		// query would return the whole organization (GHSA-6qvm-3wg4-26w4). The CRUD reads already match
+		// nothing in that state (findConditionsWithoutOwnEmployee); these hand-built report queries
+		// never reach that hook, so they carry the same rule here.
+		if (!hasChangeSelectedEmployeePermission && !user.employeeId) {
+			query.andWhere('1 = 0');
+			return query;
+		}
+
 		// Filters records based on the timesheetId.
 		if (isNotEmpty(request.timesheetId)) {
 			const { timesheetId } = request;
@@ -1401,6 +1383,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// Fail closed for a caller with neither the permission nor an employee record. See the TypeORM
+		// branch in getFilterTimeLogQuery.
+		if (!hasChangeSelectedEmployeePermission && !user.employeeId) {
+			return { id: { $in: [] } };
+		}
+
 		const where: any = { tenantId, organizationId };
 
 		if (isNotEmpty(request.timesheetId)) {
@@ -1443,6 +1431,79 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * Returns the time logs of an employee that overlap a date range, for a REQUEST-BORNE input.
+	 *
+	 * `GET /timesheet/time-log/conflict` used to hand the caller's query straight to
+	 * `IGetConflictTimeLogCommand`, which uses `employeeId` and `organizationId` verbatim. The route
+	 * only requires the TIME_TRACKER permission — which the default EMPLOYEE role holds — so any
+	 * employee could name a colleague's employee id and read that colleague's time logs (start/stop
+	 * times, description, source, plus any joined relation) over any date range they liked.
+	 *
+	 * This wrapper puts the same authorization the report and delete paths already use in front of
+	 * it, and is the ONLY entry point the controller should use. `addManualTime`, `updateManualTime`
+	 * and the timer service keep executing the command directly: their `employeeId` has already been
+	 * forced to the caller's own by `TimeLogBodyTransformPipe`.
+	 *
+	 * @param input The validated conflict query.
+	 * @returns The conflicting time logs the caller is allowed to see.
+	 */
+	async getConflictTimeLogs(input: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
+		// Fail closed. The tenant is never taken from the caller's query here: the command falls
+		// back to `input.tenantId` when the context has none, which on a request would be a
+		// caller-chosen tenant.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException('A tenant context is required to read conflicting time logs');
+		}
+
+		const { employeeId } = input;
+		if (!employeeId) {
+			throw new ForbiddenException('An employee is required to read conflicting time logs');
+		}
+
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// `currentEmployeeId()` returns null for CHANGE_SELECTED_EMPLOYEE holders by design, so
+			// it is only meaningful in this branch; fall back to the user's own employee id.
+			const currentEmployeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+
+			// Own logs are always readable. Otherwise the caller has to actually manage that
+			// employee — the same check `getFilterTimeLogQuery` and `deleteTimeLogs` apply. A caller
+			// with no employee identity at all matches neither and is refused.
+			const isOwnEmployee = !!currentEmployeeId && String(currentEmployeeId) === String(employeeId);
+			if (!isOwnEmployee && !(await this._managedEmployeeService.canManageEmployees([employeeId], []))) {
+				throw new ForbiddenException('You do not have permission to read time logs for this employee');
+			}
+		}
+
+		return await this.commandBus.execute(new IGetConflictTimeLogCommand({ ...input, tenantId }));
+	}
+
+	/**
+	 * Loads the employee a manual time log is written for, inside the caller's tenant.
+	 *
+	 * The raw repository has no tenant scoping, and an undefined id would be dropped from the where
+	 * clause and match an arbitrary employee, so both a missing id and a missing tenant fail closed
+	 * (GHSA-6qvm-3wg4-26w4).
+	 *
+	 * @param employeeId - The employee from the request.
+	 * @param tenantId - The caller's tenant.
+	 * @returns The employee, with its organization.
+	 */
+	private async findEmployeeInTenant(employeeId: ID, tenantId: ID): Promise<IEmployee> {
+		const employee =
+			employeeId && tenantId
+				? await this.typeOrmEmployeeRepository.findOne({
+						where: { id: employeeId, tenantId },
+						relations: { organization: true }
+					})
+				: null;
+		if (!employee) {
+			throw new NotFoundException('The employee was not found');
+		}
+		return employee;
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
@@ -1450,8 +1511,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
-			const { employeeId, startedAt, stoppedAt, organizationId } = request;
+			const tenantId = RequestContext.currentTenantId();
+			const { employeeId, startedAt, stoppedAt } = request;
 
 			// Validate input
 			if (!startedAt || !stoppedAt) {
@@ -1459,10 +1520,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
-				where: { id: employeeId },
-				relations: { organization: true }
-			});
+			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
+
+			// The organization is the EMPLOYEE's, not the body's. The policy consulted right below is
+			// `employee.organization`'s, so honouring a different organizationId of the same tenant would
+			// judge the write by one organization's rules and then persist it — log, slots and timesheet —
+			// under another's. The body value is only a fallback for an employee without an organization.
+			const organizationId = employee.organizationId ?? request.organizationId;
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
@@ -1502,10 +1566,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Create the new time log entry
-			return await this.commandBus.execute(new TimeLogCreateCommand(request));
+			return await this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }));
 		} catch (error) {
-			// Handle exceptions appropriately
-			throw new BadRequestException('Failed to add manual time log');
+			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new BadRequestException(`Failed to add manual time log: ${error?.message ?? error}`);
 		}
 	}
 
@@ -1518,8 +1585,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async updateManualTime(id: ID, request: IManualTimeInput): Promise<ITimeLog> {
 		try {
-			const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
-			const { startedAt, stoppedAt, employeeId, organizationId } = request;
+			const tenantId = RequestContext.currentTenantId();
+			const { startedAt, stoppedAt, employeeId } = request;
 
 			// Validate input
 			if (!startedAt || !stoppedAt) {
@@ -1527,10 +1594,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
-				where: { id: employeeId },
-				relations: { organization: true }
-			});
+			const employee: IEmployee = await this.findEmployeeInTenant(employeeId, tenantId);
+
+			// The employee's organization, never the body's — see `addManualTime`. Here it also decides
+			// which rows count as conflicting, i.e. which time slots this call is allowed to delete.
+			const organizationId = employee.organizationId ?? request.organizationId;
 
 			// Check if future dates are allowed for the organization
 			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
@@ -1579,8 +1647,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Retrieve the updated time log entry
 			return await this.findOneByIdString(id);
 		} catch (error) {
-			// Handle exceptions appropriately
-			throw new BadRequestException('Failed to update manual time log');
+			// Never swallow the reason (same blanket catch as `addManualTime`).
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new BadRequestException(`Failed to update manual time log: ${error?.message ?? error}`);
 		}
 	}
 

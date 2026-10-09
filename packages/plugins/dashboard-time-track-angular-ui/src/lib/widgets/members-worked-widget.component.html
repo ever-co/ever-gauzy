@@ -1,0 +1,9 @@
+<gz-time-track-counter-card
+	color="info"
+	[value]="membersWorked().toString()"
+	[counterValue]="membersWorked()"
+	[total]="totalEmployees()"
+	[loading]="loading()"
+	[error]="errorMessage()"
+	(retry)="refresh()"
+></gz-time-track-counter-card>

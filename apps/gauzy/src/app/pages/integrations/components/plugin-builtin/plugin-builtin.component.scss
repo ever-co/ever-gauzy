@@ -3,82 +3,71 @@
   height: 100%;
 }
 
+// One toolbar row — search, the two selects and Clear — above the grid, rather
+// than the search on a line of its own and the filters on a second one. The
+// container wraps, so everything after the toolbar takes a full row of its own.
 .builtin-container {
   display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
   overflow-y: auto;
   overflow-x: hidden;
   height: 100%;
+  box-sizing: border-box;
   background: var(--gauzy-card-2);
+
+  > .loading-state,
+  > .empty-state,
+  > .integrations-grid {
+    flex: 0 0 100%;
+    margin-top: 8px;
+  }
 }
 
 .builtin-search {
-  margin-bottom: 1rem;
+  flex: 1 1 280px;
+  max-width: 360px;
 
   nb-form-field {
     width: 100%;
-    max-width: 480px;
   }
 }
 
 .builtin-filters {
   display: flex;
-  align-items: flex-end;
-  gap: 1rem;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
   flex-wrap: wrap;
-  margin-bottom: 1.5rem;
 
   nb-select {
     min-width: 180px;
-    flex: 1 1 180px;
-    max-width: 260px;
+    flex: 0 1 220px;
+  }
+
+  // A secondary, outlined action — not a red button. Clearing filters is not
+  // destructive, and red is kept for what is.
+  button[nbButton].status-danger.size-small {
+    background-color: transparent;
+    border-color: var(--border-basic-color-4);
+    color: var(--text-hint-color);
+
+    &:hover {
+      background-color: var(--gauzy-hover-tint);
+      color: var(--gauzy-text-color-1);
+    }
   }
 }
 
-.builtin-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.5rem;
-  background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
-  box-shadow: var(--gauzy-shadow);
-
-  .header-icon-container {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: calc(var(--border-radius) * 1.5);
-    background: linear-gradient(135deg, var(--color-primary-default) 0%, var(--color-info-default) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: var(--gauzy-shadow);
-
-    nb-icon {
-      font-size: 1.5rem;
-      color: var(--text-control-color);
-    }
-  }
-
-  .header-info {
-    flex: 1;
-
-    .header-title {
-      margin: 0 0 0.25rem;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--gauzy-text-color-1);
-    }
-
-    .header-subtitle {
-      margin: 0;
-      font-size: 0.875rem;
-      color: var(--gauzy-text-color-2);
-    }
+// The search and select text on the report filters' 13px.
+:host ::ng-deep {
+  .builtin-search input.input-full-width,
+  .builtin-filters nb-select .select-button {
+    font-size: 13px;
   }
 }
 
@@ -97,68 +86,83 @@
   justify-content: center;
   flex: 1;
   min-height: 200px;
-  gap: 1rem;
-  color: var(--gauzy-text-color-2);
+  gap: 8px;
+  color: var(--text-hint-color);
 
   .empty-icon {
-    font-size: 3rem;
-    opacity: 0.4;
+    font-size: 24px;
   }
 
   p {
     margin: 0;
-    font-size: 0.9375rem;
+    font-size: 12px;
+    line-height: 16px;
   }
 }
 
 .integrations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px;
 
   @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
   }
 }
 
+// A compact tile: a logo well, then the name. One hairline, the standard
+// radius, and a border-colour hover — no lift.
 .integration-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
   background: var(--gauzy-card-1);
-  border: 1px solid var(--border-basic-color-3);
-  border-radius: calc(var(--border-radius) * 1.5);
+  border: 1px solid var(--border-basic-color-2);
+  border-radius: var(--border-radius);
+  padding: 8px;
+  gap: 8px;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
   position: relative;
 
   &.clickable {
     cursor: pointer;
 
     &:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--gauzy-shadow);
-      border-color: var(--color-primary-300);
+      border-color: var(--color-primary-default);
     }
 
-    &:focus {
+    &:focus-visible {
       outline: 2px solid var(--color-primary-default);
       outline-offset: 2px;
     }
   }
 
   &.coming-soon {
-    opacity: 0.6;
     cursor: default;
+
+    // Mute the logo, not the whole card: the name stays readable and the
+    // "Coming soon" label says why it cannot be opened.
+    .card-logo img {
+      filter: grayscale(1);
+      opacity: 0.45;
+    }
+
+    .card-name {
+      color: var(--text-hint-color);
+    }
   }
 }
 
+// The vendor logos are artwork in their own colours, and two of them (Gauzy AI,
+// GitHub) are black — invisible on the dark card. A light, neutral well shows
+// every one of them as its vendor intended, in both themes.
 .card-logo {
   width: 100%;
-  padding-top: 75%; /* 4:3 aspect ratio */
+  height: 96px;
   position: relative;
-  background: var(--background-basic-color-2);
+  border-radius: calc(var(--border-radius) - 4px);
+  background: var(--color-basic-200);
+  overflow: hidden;
 
   img {
     position: absolute;
@@ -166,48 +170,59 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 1rem;
+    padding: 16px 20px;
   }
 
+  // A small label in the corner of the well instead of a grey sheet over the
+  // logo. It may wrap, and is held inside the well's padding: the well clips its
+  // overflow, and a longer translation (Polish: "Niedługo będzie dostępne") would
+  // otherwise run off the edge of a narrow card and be cut.
   .coming-soon-overlay {
     position: absolute;
-    inset: 0;
-    background: var(--color-basic-transparent-500);
+    top: 6px;
+    right: 6px;
+    left: 6px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
 
     span {
-      color: var(--text-control-color);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-align: center;
-      padding: 0.25rem 0.5rem;
-      background: var(--color-basic-transparent-400);
-      border-radius: var(--border-radius);
+      max-width: 100%;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 14px;
+      padding: 1px 6px;
+      border-radius: calc(var(--border-radius) * 0.5);
+      background: var(--color-basic-800);
+      color: var(--color-basic-100);
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: right;
     }
   }
 }
 
 .card-body {
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: 0 4px 2px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-  border-top: 1px solid var(--border-basic-color-3);
-  background: var(--gauzy-card-1);
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 20px;
 
   .card-name {
-    font-size: 0.8125rem;
+    font-size: 13px;
     font-weight: 600;
+    line-height: 18px;
     color: var(--gauzy-text-color-1);
-    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 100%;
+    min-width: 0;
     text-transform: capitalize;
+  }
+
+  nb-tag {
+    flex-shrink: 0;
   }
 }

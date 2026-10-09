@@ -1,6 +1,7 @@
 @use 'gauzy/_gauzy-table' as *;
 @use 'gauzy/_gauzy-cards' as *;
 @use '@shared/_pg-card' as *;
+@use 'gauzy/_gauzy-table-hub' as ga-hub;
 
 :host {
   .header-title-with-back {
@@ -17,3 +18,12 @@
     @include nb-rtl(margin, 0 20px 0 0);
   }
 }
+
+// ── The canonical list-page block ────────────────────────────────────────────
+// Density tokens, the table surface, row hover/selection, the tag-chip stack,
+// the status pills, the pager's `<nav><ul><li>` and the toolbar scale — the same
+// block Invoices carries. Markup is the standard list shape
+// (`nb-card-header` > `ngx-gauzy-button-action`, a `.table-scroll-container` and
+// a `.pagination-container`), so the default `$actions` selector reaches the
+// toolbar and the layout selector beside it.
+@include ga-hub.list-page();

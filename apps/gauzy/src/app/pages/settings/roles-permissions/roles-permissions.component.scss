@@ -9,7 +9,10 @@
   width: fit-content;
   color: nb-theme(color-danger-default);
   padding-right: 10px;
-  font-weight: 600px;
+  // Was `600px`. `font-weight` takes a number, not a length, so the declaration
+  // was invalid and dropped at parse time — the "Create new role" / "Delete
+  // existing role" lines have been rendering at the inherited weight ever since.
+  font-weight: 600;
 }
 
 .delete {
@@ -33,38 +36,81 @@
   }
 }
 
-h4 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
-
-  .menu-setting {
-    font-weight: 400;
-  }
-}
-
 :host .col-12 {
   @include nb-ltr(padding-right, 8px !important);
   @include nb-rtl(padding-left, 8px !important);
 }
 
+// "Settings/" ahead of the page name, inside `ngx-header-title`. Size is
+// INHERITED from that component so the prefix and the page name stay one line
+// of text — it used to restate 24px and came out larger than the name it
+// qualifies. Only the weight makes it recede.
 .menu-setting {
-  font-size: 24px;
   font-weight: 400;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
+}
+
+// The General / Administration pair. Same failure mode as Accounting Templates
+// and Email Templates, and the same rule pair causes it: a RIGID
+// `height: calc(100vh - 18.75rem)` here, plus `overflow: unset` on this page's
+// `nb-card-body` (below) in place of Nebular's `auto`. The card's height is then
+// that constant plus the header, the body padding and the role/search filter
+// row, which together come to more than 18.75rem — the card ends up taller than
+// the content column, and since neither the body nor `.settings-content` nor
+// Nebular's `.columns` clips, the excess paints down over the in-flow footer.
+//
+// The content pane is already short by the footer's height, so fill it instead
+// of re-deriving it: the frame below hands this box whatever is left and it
+// keeps scrolling the two permission panels internally, exactly as the constant
+// intended.
+//
+// `height: 100%` is what makes that chain definite. This page is a CHILD of the
+// settings shell (see settings.routes.ts), so it renders inside
+// `.settings-content`, which is `height: 100%` of `.settings-shell` — it is NOT
+// the `nb-layout-column > router-outlet + *` element that styles/_overrides.scss
+// hands a flex height to. Without this the host would be auto-height and
+// `.content` would grow to the full permission list instead of scrolling. The
+// Monitoring settings page pins its host the same way for the same reason.
+// NOTE: `display: flex` on this host DOES NOT APPLY. `pages.component.scss` has
+// `::ng-deep router-outlet + * { display: block }`, and `::ng-deep` leaks it into
+// nested outlets, so it matches this page's host inside the settings shell at
+// specificity (0,1,1) — beating a component's own `:host` (0,1,0). Verified with
+// CDP `CSS.getMatchedStylesForNode`. Left declared because it is correct where
+// that rule does not apply, but nothing may DEPEND on it.
+//
+// The frame therefore rests on `height: 100%` here plus `height: 100%` on the
+// root `> nb-card`: a block box with a definite height resolves a percentage
+// height on its child, so the flex chain begins one level down.
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  > nb-card {
+    flex: 1 1 auto;
+    // Definite height, not just a flex basis — the host is forced to
+    // `display: block`, so `flex: 1 1 auto` alone does nothing here.
+    height: 100%;
+    min-height: 0;
+
+    > nb-card-body {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+  }
 }
 
 .content {
-  height: calc(100vh - 18.75rem);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 0;
   border-radius: nb-theme(border-radius);
 }
 
+// One label per permission row. The `<small>` description this used to style was
+// bound to the same translation key as the `<strong>` above it, so it is gone from
+// the template — and with it the 5px gap that was only there to separate the two.
 .custom-permission-view {
   display: flex;
   flex-direction: column;
@@ -76,16 +122,6 @@ h4 {
     letter-spacing: 0em;
     text-align: left;
     color: nb-theme(gauzy-text-color-1);
-    margin-bottom: 5px;
-  }
-
-  small {
-    font-size: 11px;
-    font-weight: 400;
-    line-height: 13px;
-    letter-spacing: 0em;
-    text-align: left;
-    color: nb-theme(gauzy-text-color-2);
   }
 }
 

@@ -34,6 +34,7 @@ import {
 	AuthRefreshGuard,
 	PermissionGuard,
 	RegisterAuthorizationGuard,
+	SubscriptionRequiredGuard,
 	TenantPermissionGuard
 } from './../shared/guards';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
@@ -127,7 +128,10 @@ export class AuthController {
 	})
 	@Post('/register')
 	@Public()
-	@UseGuards(RegisterAuthorizationGuard)
+	// Order matters: RegisterAuthorizationGuard authenticates an admin creating a user and sets
+	// request.user, which SubscriptionRequiredGuard then reads to let that case through without
+	// demanding a subscription. SubscriptionRequiredGuard is inert unless STRIPE_SECRET_KEY is set.
+	@UseGuards(RegisterAuthorizationGuard, SubscriptionRequiredGuard)
 	@UseValidationPipe({ whitelist: true, transform: true })
 	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async register(

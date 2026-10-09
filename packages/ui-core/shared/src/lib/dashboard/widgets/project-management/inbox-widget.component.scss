@@ -1,0 +1,9 @@
+// The widget is created by `*ngComponentOutlet` inside the host's card body, so
+// its element is an inline box by default; the state component asks for
+// `height: 100%` and would collapse without a real box to measure.
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+}

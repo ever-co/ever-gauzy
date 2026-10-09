@@ -1,0 +1,37 @@
+@use 'themes' as *;
+
+// Teams share the people-list metrics so the two halves of an
+// "Employee / Teams" cell line up and cost the row the same height.
+.teams {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: nb-theme(gauzy-people-gap);
+	min-width: 0;
+	line-height: nb-theme(gauzy-people-avatar-size);
+}
+
+.team {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.25rem;
+	min-width: 0;
+	color: nb-theme(text-basic-color);
+	font-size: nb-theme(gauzy-people-font-size);
+}
+
+.team-name {
+	min-width: 0;
+	max-width: nb-theme(gauzy-people-name-max-width);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+// Member count, deliberately quiet — the team name is the payload.
+.team-count {
+	flex: 0 0 auto;
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(gauzy-people-initials-font-size);
+	font-weight: 600;
+}

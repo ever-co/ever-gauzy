@@ -79,7 +79,7 @@
 					id="input-email"
 					pattern=".+@.+\..+"
 					[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
-					fieldSize="large"
+					fieldSize="medium"
 					autofocus
 					[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
 					[required]="getConfigValue('forms.validation.email.required')"
@@ -116,7 +116,7 @@
 						[type]="showPassword ? 'text' : 'password'"
 						id="input-password"
 						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
-						fieldSize="large"
+						fieldSize="medium"
 						[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
 						[required]="getConfigValue('forms.validation.password.required')"
 						[minlength]="getConfigValue('forms.validation.password.minLength')"
@@ -188,7 +188,7 @@
 					nbButton
 					fullWidth
 					status="primary"
-					size="large"
+					size="medium"
 					class="submit-btn"
 					[disabled]="submitted || !form.valid"
 					[class.btn-pulse]="submitted"
@@ -208,19 +208,20 @@
 			<ngx-social-links></ngx-social-links>
 		</section>
 		<div class="hr-div-soft"></div>
-		<section class="another-action" aria-label="Sign In Workspace">
-			{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}
-			<a class="text-link" routerLink="/auth/login-workspace">
-				{{ 'WORKSPACES.FIND_WORKSPACE' | translate }}
-			</a>
-		</section>
-
-		<section class="another-action" aria-label="Register">
-			{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
-			<a class="text-link" routerLink="/auth/register">
-				{{ 'BUTTONS.REGISTER' | translate }}
-			</a>
-		</section>
+		<div class="another-actions">
+			<section class="another-action" aria-label="Sign In Workspace">
+				{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}
+				<a class="text-link" routerLink="/auth/login-workspace">
+					{{ 'WORKSPACES.FIND_WORKSPACE' | translate }}
+				</a>
+			</section>
+			<section class="another-action" aria-label="Register">
+				{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
+				<a class="text-link" routerLink="/auth/register">
+					{{ 'BUTTONS.REGISTER' | translate }}
+				</a>
+			</section>
+		</div>
 	</div>
 	<div class="features-wrapper">
 		@if (!electronService?.isElectron && isDemo) {

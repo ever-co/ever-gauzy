@@ -1,39 +1,55 @@
 @use 'themes' as *;
 
-:host .form {
-  width: 45rem;
+.form {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: stretch;
-  padding-bottom: 1.5rem;
+  gap: 0.75rem;
+  width: 100%;
+}
 
-  &-block {
-    width: 48%;
-    border: 1px #e4e9f2 solid;
-    padding: 1rem;
+.panel-heading h6 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: nb-theme(text-basic-color);
+}
 
-    .placeholder {
-      color: var(--gauzy-text-color-1);
-      font-family: Open Sans, sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      line-height: 1rem;
-      text-align: center;
-    }
+// Two hairline panels, side by side; stacked when narrow
+.form-blocks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+
+  @media (max-width: 575.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.form-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: var(--gauzy-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+  .block-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    color: nb-theme(text-hint-color);
   }
 
-  &-blocks {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: stretch;
+  ::ng-deep nb-checkbox .text {
+    font-size: 0.75rem;
+    font-weight: 400;
   }
 
-  &-title {
-    color: #8f9bb3;
-    font-size: 15px;
-    @include nb-ltr(padding, 0 0 5px 5px);
-    @include nb-rtl(padding, 0 5px 5px 0);
+  .placeholder {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: nb-theme(text-hint-color);
   }
 }

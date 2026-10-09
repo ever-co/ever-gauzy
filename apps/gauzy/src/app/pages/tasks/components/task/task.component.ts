@@ -28,6 +28,8 @@ import {
 	HashNumberPipe,
 	InputFilterComponent,
 	IPaginationBase,
+	IRecordViewSection,
+	IRecordViewStatus,
 	NotesWithTagsComponent,
 	OrganizationTeamFilterComponent,
 	PaginationFilterBaseComponent,
@@ -44,6 +46,8 @@ import {
 	ITask,
 	PermissionsEnum,
 	TaskListTypeEnum,
+	TaskPriorityEnum,
+	TaskStatusEnum,
 	IFavorite,
 	BaseEntityEnum
 } from '@gauzy/contracts';
@@ -70,6 +74,17 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	myTasks$: Observable<ITask[]> = this._myTaskStore.myTasks$;
 	teamTasks$: Observable<ITask[]> = this._teamTaskStore.tasks$;
 	selectedTask: ITask;
+
+	/*
+	 * Read-only View: a task is a small record, so it opens in the right-side
+	 * drawer rather than on a page of its own. One wiring serves all three task
+	 * pages (dashboard / me / team) — they share this component and toolbar.
+	 */
+	viewedTask: ITask;
+	viewSections: IRecordViewSection[] = [];
+	/** Shared by the drawer header's lozenge and the Details status row. */
+	viewStatus: IRecordViewStatus;
+
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -169,7 +184,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				taskNumber: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ID'),
 					type: 'string',
-					width: '10%',
+					// Fixed so values like #GAU-7777 fit on one line; the nowrap
+					// itself is a scoped rule in task.component.scss.
+					width: '90px',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -201,6 +218,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'custom',
+					width: '25%',
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent,
 					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
@@ -228,6 +246,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
+					// One of the few columns that declared no width, so `table-layout:
+					// auto` sized it against neighbours that demand far more min-content
+					// room (Project's logo + name, Creator's avatar + name, the Members
+					// people list) and it came out narrower than its own header. The
+					// content is a fixed-width formatted date rather than a share of the
+					// table, so this is px like `taskNumber` above, not a percentage:
+					// enough for "Created At" plus its sort arrow on one line at the
+					// header token size, with the `ll` date sitting under it.
+					width: '110px',
 					isFilterable: false,
 					renderComponent: CreatedAtComponent,
 					componentInitFunction: (instance: CreatedAtComponent, cell: Cell) => {
@@ -583,6 +610,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		}
 		let dialog;
 		if (this.isTasksPage()) {
+		// Whatever the drawer is showing no longer matches the selection.
+		this.closeView();
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
 					selectedTask: this.selectedTask
@@ -712,6 +741,207 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.selectedTask = isSelected ? data : null;
 	}
 
+	/** Drawer heading follows the page flavour (dashboard / me / team). */
+	get viewHeadingKey(): string {
+		if (this.isMyTasksPage()) {
+			return 'TASKS_PAGE.MY_TASK_HEADER';
+		}
+		if (this.isTeamTaskPage()) {
+			return 'TASKS_PAGE.TEAM_TASKS_HEADER';
+		}
+		return 'TASKS_PAGE.HEADER';
+	}
+
+	/**
+	 * Opens the read-only View of a task in the right-side drawer.
+	 *
+	 * @param selectedItem - Row the action was invoked from, when it came from the grid.
+	 */
+	viewTask(selectedItem?: ITask): void {
+		if (selectedItem) {
+			this.selectTask({ isSelected: true, data: selectedItem });
+		}
+
+		const task = selectedItem ?? this.selectedTask;
+		if (!task) {
+			return;
+		}
+
+		this.viewStatus = this.toStatus(task);
+		this.viewSections = this.buildViewSections(task);
+		this.viewedTask = task;
+	}
+
+	closeView(): void {
+		this.viewedTask = null;
+	}
+
+	/**
+	 * Field descriptor for the drawer. Key, title, project and status are in the
+	 * projected header; everything else is a Details panel of people then
+	 * planning, the description as prose, and the created / updated stamps.
+	 */
+	private buildViewSections(task: ITask): IRecordViewSection[] {
+		// `taskNumber` is a server-side virtual column (prefix + number), absent
+		// from ITask — the same shape the grid's valuePrepareFunction reads.
+		const { parent } = task as any;
+		const isOverdue =
+			!!task.dueDate && !TaskComponent.isFinished(task) && new Date(task.dueDate).getTime() < Date.now();
+		const parentLabel = parent?.taskNumber
+			? [this._hashNumberPipe.transform(parent.taskNumber), parent.title].filter(Boolean).join('  ')
+			: null;
+
+		return [
+			{
+				title: 'BUTTONS.DETAILS',
+				icon: 'info-outline',
+				collapsible: true,
+				fields: [
+					// People
+					{ label: 'TASKS_PAGE.TASK_MEMBERS', key: 'members', type: 'people', icon: 'people-outline', showWhenEmpty: true },
+					{ label: 'TASKS_PAGE.TASK_TEAMS', key: 'teams', type: 'teams', icon: 'briefcase-outline' },
+					{ label: 'TASKS_PAGE.TASKS_CREATOR', key: 'createdByUser', type: 'person', icon: 'edit-2-outline' },
+					// Planning
+					{
+						label: 'TASKS_PAGE.TASKS_STATUS',
+						type: 'status',
+						value: this.viewStatus,
+						icon: 'checkmark-circle-2-outline',
+						divider: true
+					},
+					{
+						label: 'TASKS_PAGE.TASK_PRIORITY',
+						type: 'status',
+						value: this.toPriority(task),
+						icon: 'flag-outline',
+						showWhenEmpty: true
+					},
+					{ label: 'TASKS_PAGE.TASK_SIZE', type: 'status', value: this.toSize(task), icon: 'maximize-outline' },
+					{
+						label: 'TASKS_PAGE.DUE_DATE',
+						key: 'dueDate',
+						type: 'date',
+						icon: 'calendar-outline',
+						tone: isOverdue ? 'danger' : undefined,
+						showWhenEmpty: true
+					},
+					{ label: 'TASKS_PAGE.ESTIMATE', value: this.formatEstimate(task.estimate), icon: 'clock-outline' },
+					{ label: 'SPRINTS_PAGE.SPRINT', key: 'organizationSprint.name', icon: 'flash-outline' },
+					{ label: 'TASKS_PAGE.TASKS_PROJECT', key: 'project.name', icon: 'folder-outline' },
+					{ label: 'TASKS_PAGE.PARENT_TASK', value: parentLabel, icon: 'corner-left-up-outline' },
+					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', icon: 'pricetags-outline', showWhenEmpty: true }
+				]
+			},
+			{
+				title: 'TASKS_PAGE.TASKS_DESCRIPTION',
+				icon: 'file-text-outline',
+				variant: 'plain',
+				fields: [
+					{
+						label: 'TASKS_PAGE.TASKS_DESCRIPTION',
+						key: 'description',
+						type: 'markdown',
+						hideLabel: true,
+						showWhenEmpty: true
+					}
+				]
+			},
+			{
+				variant: 'meta',
+				fields: [
+					{ label: 'SM_TABLE.CREATED_AT', key: 'createdAt', type: 'datetime', icon: 'plus-circle-outline' },
+					{ label: 'SM_TABLE.LAST_UPDATED', key: 'updatedAt', type: 'datetime', icon: 'refresh-outline' }
+				]
+			}
+		];
+	}
+
+	/**
+	 * Whether the task is in a terminal state, so a past due date is no longer a
+	 * problem. A tenant status carries its own `isDone` flag; otherwise either the
+	 * enum value or the status row's name may say it, in any casing ("Done",
+	 * "Completed", "cancelled").
+	 */
+	private static isFinished(task: ITask): boolean {
+		if (task.taskStatus?.isDone) {
+			return true;
+		}
+		const finished = new Set<string>([TaskStatusEnum.COMPLETED, TaskStatusEnum.DONE, TaskStatusEnum.CANCELLED]);
+		const normalize = (value?: string) => value?.trim().toLowerCase().replace(/\s+/g, '-');
+		return [task.status, task.taskStatus?.name].some((value) => finished.has(normalize(value)));
+	}
+
+	/**
+	 * Status for the header lozenge and the Details row. Text prefers the named
+	 * relation the list already loads; the tenant's own colour wins over the tone.
+	 */
+	private toStatus(task: ITask): IRecordViewStatus {
+		const raw = task.taskStatus?.name || task.status;
+		if (!raw) {
+			return null;
+		}
+		// A standard status arrives as its enum slug ('in-progress'); a tenant one is already a name.
+		const text = raw.replace(/-/g, ' ');
+		const color = task.taskStatus?.color;
+		switch (task.status) {
+			case TaskStatusEnum.COMPLETED:
+			case TaskStatusEnum.DONE:
+				return { text, color, tone: 'success' };
+			case TaskStatusEnum.BLOCKED:
+			case TaskStatusEnum.CANCELLED:
+				return { text, color, tone: 'danger' };
+			case TaskStatusEnum.IN_PROGRESS:
+			case TaskStatusEnum.READY_FOR_REVIEW:
+			case TaskStatusEnum.IN_REVIEW:
+				return { text, color, tone: 'info' };
+			default:
+				return { text, color, tone: 'basic' };
+		}
+	}
+
+	private toPriority(task: ITask): IRecordViewStatus {
+		const text = task.taskPriority?.name || task.priority;
+		if (!text) {
+			return null;
+		}
+		const color = task.taskPriority?.color;
+		switch (task.priority) {
+			case TaskPriorityEnum.URGENT:
+				return { text, color, tone: 'danger', icon: 'arrowhead-up-outline' };
+			case TaskPriorityEnum.HIGH:
+				return { text, color, tone: 'warning', icon: 'arrow-upward-outline' };
+			case TaskPriorityEnum.LOW:
+				return { text, color, tone: 'success', icon: 'arrow-downward-outline' };
+			default:
+				return { text, color, tone: 'info', icon: 'minus-outline' };
+		}
+	}
+
+	private toSize(task: ITask): IRecordViewStatus {
+		const text = task.taskSize?.name || task.size;
+		return text ? { text, color: task.taskSize?.color, tone: 'primary' } : null;
+	}
+
+	/**
+	 * Estimate is stored as seconds (see createTaskDialog); decompose it the way
+	 * the task dialogs do — days / hours / minutes — skipping the zero parts.
+	 */
+	private formatEstimate(estimate: number): string {
+		if (!estimate) {
+			return null;
+		}
+		const days = Math.floor(estimate / (24 * 60 * 60));
+		const hours = Math.floor((estimate % (24 * 60 * 60)) / (60 * 60));
+		const minutes = Math.floor((estimate % (60 * 60)) / 60);
+		return [
+			days ? `${days} ${this.getTranslation('TASKS_PAGE.ESTIMATE_DAYS')}` : null,
+			hours ? `${hours} ${this.getTranslation('TASKS_PAGE.ESTIMATE_HOURS')}` : null,
+			minutes ? `${minutes} ${this.getTranslation('TASKS_PAGE.ESTIMATE_MINUTES')}` : null
+		]
+			.filter(Boolean)
+			.join(' ');
+	}
+
 	isTasksPage() {
 		return this.viewComponentName === ComponentEnum.ALL_TASKS;
 	}
@@ -746,6 +976,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	 * Clear selected item
 	 */
 	clearItem() {
+		// The list is about to be reloaded, so whatever the drawer is showing is
+		// about to go stale — close it rather than leave a detached record open.
+		this.closeView();
 		this.selectTask({
 			isSelected: false,
 			data: null

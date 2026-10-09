@@ -38,7 +38,11 @@
             <label class="label" for="client">
               {{ 'PIPELINE_DEAL_CREATE_PAGE.SELECT_CLIENT' | translate }}
             </label>
-            <nb-select formControlName="clientId" placeholder="Clients" [selected]="selectedClient">
+            <nb-select
+              formControlName="clientId"
+              [placeholder]="'FORM.PLACEHOLDERS.CLIENTS' | translate"
+              [selected]="selectedClient"
+              >
               @for (client of clients$ | async; track client) {
                 <nb-option [value]="client.id">
                   {{ client.name }}

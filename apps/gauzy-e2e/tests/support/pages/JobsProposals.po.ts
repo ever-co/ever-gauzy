@@ -12,8 +12,10 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { JobsProposalsPage } from '../../../src/support/Base/pageobjects/JobsProposalsPageObject';
 
-// CKEditor wysiwyg iframe — content is entered into the editor body, not the <ckeditor> host.
-const ckeditorIframeCss = 'iframe[class="cke_wysiwyg_frame cke_reset"]';
+// Shared ga-rich-text-editor (TipTap v3) editable — a plain contenteditable div in the MAIN frame
+// (no iframe: the legacy editor's wysiwyg iframe is gone). Content is entered into the
+// .ProseMirror editable, not the <ga-rich-text-editor> host.
+const richTextEditorCss = 'ga-rich-text-editor .ProseMirror';
 
 export const addButtonVisible = async () => {
 	await verifyElementIsVisible(JobsProposalsPage.addButtonCss);
@@ -78,10 +80,13 @@ export const contentInputVisible = async () => {
 };
 
 export const enterContentInputData = async (data) => {
-	// Content is a CKEditor4 widget — the [formcontrolname="content"] host is not fillable.
-	// Type into the editor body inside its wysiwyg iframe (content is optional, so this never
-	// blocks Save, but we still populate it to mirror the intended flow).
-	await getPage().frameLocator(ckeditorIframeCss).first().locator('body').fill(String(data));
+	// Content is a ga-rich-text-editor — the [formcontrolname="content"] host is not fillable.
+	// Fill the .ProseMirror contenteditable instead (content is optional, so this never blocks
+	// Save, but we still populate it to mirror the intended flow). ProseMirror consumes the
+	// native input events, so the CVA syncs the bound form control.
+	const editable = getPage().locator(richTextEditorCss).first();
+	await editable.waitFor({ state: 'visible', timeout: 8000 });
+	await editable.fill(String(data));
 };
 
 export const saveButtonVisible = async () => {
@@ -153,23 +158,9 @@ export const deleteButtonVisible = async () => {
 };
 
 export const clickDeleteButton = async () => {
-	// dispatchClick: a leftover toastr/dialog backdrop over the toolbar otherwise swallows the click and
-	// the first confirmation (ConfirmComponent via the trash button's ngxConfirmDialog directive) never opens.
+	// dispatchClick: a leftover toastr/dialog backdrop over the toolbar otherwise swallows the click.
 	await waitForSpinnerGone();
 	await dispatchClick(JobsProposalsPage.deleteButtonCss);
-};
-
-export const confirmFirstDialogVisible = async () => {
-	// First of two delete dialogs: ConfirmComponent (ngx-confirm) opened by the trash ngxConfirmDialog.
-	await verifyElementIsVisible(JobsProposalsPage.confirmFirstDialogButtonCss);
-};
-
-export const clickConfirmFirstDialogButton = async () => {
-	// Click "Yes" (status="primary") on ConfirmComponent. Only this fires (confirm)="deleteProposalTemplate()",
-	// which then opens the SECOND dialog (DeleteConfirmationComponent). dispatchClick so the dialog's own
-	// fading cdk-overlay backdrop can't intercept the click.
-	await waitForSpinnerGone();
-	await dispatchClick(JobsProposalsPage.confirmFirstDialogButtonCss);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -177,7 +168,7 @@ export const confirmDeleteButtonVisible = async () => {
 };
 
 export const clickConfirmDeleteButton = async () => {
-	// Second dialog: the DeleteConfirmation OK button (status="danger"); dispatch fires (click)=delete()
+	// DeleteConfirmation OK button (status="danger"); dispatch fires (click)=delete()
 	// directly so the dialog closes with 'ok' and the row is actually removed even under a fading backdrop.
 	await waitForSpinnerGone();
 	await dispatchClick(JobsProposalsPage.confirmDeleteButtonCss);

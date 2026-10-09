@@ -4,7 +4,11 @@ import { DeleteResult } from 'typeorm';
 import { ID, IAiProviderCredential, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import { AiProviderCredentialService } from './ai-provider-credential.service';
-import { CreateAiProviderCredentialDTO, UpdateAiProviderCredentialDTO } from './dto';
+import {
+	ConnectAiProviderCredentialDTO,
+	CreateAiProviderCredentialDTO,
+	UpdateAiProviderCredentialDTO
+} from './dto';
 
 /**
  * Per-tenant BYOK ("bring your own key") AI provider credential endpoints.
@@ -52,6 +56,27 @@ export class AiProviderCredentialController {
 	@Post('/')
 	async upsert(@Body() entity: CreateAiProviderCredentialDTO): Promise<IAiProviderCredential> {
 		return await this.aiProviderCredentialService.upsert(entity);
+	}
+
+	/**
+	 * Complete a provider "Connect" flow (e.g. OpenRouter PKCE): the backend
+	 * exchanges the authorization code + PKCE verifier for an API key and
+	 * stores it as the tenant's credential — the key never reaches the browser.
+	 *
+	 * @param entity - Provider id + PKCE code/verifier from the provider callback.
+	 * @returns The persisted credential with a masked API key.
+	 */
+	@ApiOperation({ summary: "Complete a provider Connect flow and store the tenant's credential." })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Connected: the exchanged API key was stored (returned masked).'
+	})
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Provider unknown or does not support Connect.' })
+	@ApiResponse({ status: HttpStatus.BAD_GATEWAY, description: 'The provider rejected or failed the exchange.' })
+	@UseValidationPipe({ whitelist: true })
+	@Post('/connect')
+	async connect(@Body() entity: ConnectAiProviderCredentialDTO): Promise<IAiProviderCredential> {
+		return await this.aiProviderCredentialService.connectExchange(entity);
 	}
 
 	/**

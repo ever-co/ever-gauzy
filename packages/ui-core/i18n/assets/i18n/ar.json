@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "إضافة مستخدم موجود",
 		"ADD_NEW": "إضافة جديدة",
 		"ADD": "إضافة",
+		"NEW": "جديد",
 		"CREATE": "أنشئ",
 		"REGISTER": "تسجيل",
 		"CHANGE_PASSWORD": "تغيير كلمة المرور",
@@ -402,12 +403,12 @@
 			"DOCUMENT_NAME": "اسم المستند",
 			"FEEDBACK_DESCRIPTION": "وصف التعليقات",
 			"EMAIL_INVITATION": "أدخل البريد الإلكتروني لإرسال الدعوة",
-			"SELECT_EQUIPMENT": "اختر المعدات",
-			"SELECT_SHARE_REQUEST_DATE": "اختر تاريخ الطلب",
-			"SELECT_SHARE_START_DATE": "حدد تاريخ البدء",
-			"SELECT_SHARE_END_DATE": "حدد تاريخ الانتهاء",
-			"SELECT_EMPLOYEE": "اختر الموظف",
-			"SELECT_TEAM": "اختر الفريق",
+			"SELECT_EQUIPMENT": "المعدات",
+			"SELECT_SHARE_REQUEST_DATE": "تاريخ الطلب",
+			"SELECT_SHARE_START_DATE": "تاريخ البدء",
+			"SELECT_SHARE_END_DATE": "تاريخ الانتهاء",
+			"SELECT_EMPLOYEE": "الموظف",
+			"SELECT_TEAM": "الفريق",
 			"ENABLE_DISABLE_FUTURE_DATE": "تمكين/تعطيل التواريخ المستقبلية",
 			"ALLOW_FUTURE_DATE": "السماح بالتبديل إلى فترات مستقبلية",
 			"REGISTRATION_DATE": "تاريخ التسجيل",
@@ -455,7 +456,7 @@
 			"OPEN_SOURCE_PROJECT_URL": "رابط المشروع مفتوح المصدر",
 			"EMPLOYEE_LEVEL": "مستوى الموظف",
 			"UNIT": "وحدة",
-			"SELECT_EXISTING_OBJECTIVE": "اختر الهدف الموجود",
+			"SELECT_EXISTING_OBJECTIVE": "الهدف الموجود",
 			"LENGTH": "الطول",
 			"DATE_START": "تاريخ البدء",
 			"END_DATE": "تاريخ الانتهاء",
@@ -495,7 +496,7 @@
 		"PLACEHOLDERS": {
 			"NAME": "الاسم",
 			"PHONE_NUMBER": "رقم الهاتف",
-			"DEFAULT": "اختر الافتراضي",
+			"DEFAULT": "الافتراضي",
 			"FIRST_NAME": "الاسم الأول",
 			"LAST_NAME": "الاسم الأخير",
 			"COMPANY_NAME": "اسم الشركة",
@@ -545,7 +546,7 @@
 			"BILL_RATE_MIN": "أدنى سعر للفوترة (لكل ساعة)",
 			"RECURRING_WEEKLY_LIMIT": "الحد الأسبوعي المتكرر (بالساعات)",
 			"EMAILS": "أدخل عنوان البريد الإلكتروني واضغط على Enter",
-			"ROLE": "اختر الدور",
+			"ROLE": "الدور",
 			"PROJECTS": "اختر المشاريع",
 			"CHOOSE_FORMAT": "اختر التنسيق",
 			"CHOOSE_TIME_ZONE": "اختر المنطقة الزمنية",
@@ -555,23 +556,23 @@
 			"ALIGN_LOGO_TO": "محاذاة الشعار إلى",
 			"DEPARTMENTS": "الإدارات",
 			"TEAMS": "الفِرَق",
-			"NUMBER_FORMAT": "اختر تنسيق الأرقام",
-			"REGIONS": "اختر المنطقة",
+			"NUMBER_FORMAT": "تنسيق الأرقام",
+			"REGIONS": "المنطقة",
 			"REMOVE_IMAGE": "إزالة الصورة",
 			"UPLOADER_PLACEHOLDER": "صورة",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "رابط الموقع",
 			"ADD_REMOVE_EMPLOYEES": "إضافة أو إزالة الموظفين",
 			"ADD_REMOVE_CANDIDATE": "إضافة مرشح",
 			"ADD_REMOVE_EMPLOYEE": "أضف المقابل   \n",
-			"ADD_REMOVE_INTERVIEWER": "اختر المقابل.",
+			"ADD_REMOVE_INTERVIEWER": "المقابل",
 			"ADD_REMOVE_CANDIDATES": "إضافة أو إزالة المرشحين",
 			"ADD_REMOVE_USERS": "أضف أو ازل المستخدمين",
 			"ADD_REMOVE_ORGANIZATIONS": "إضافة أو إزالة المؤسسات",
 			"ADD_ORGANIZATIONS": "إضافة المنظمات",
 			"DATE": "تاريخ",
 			"VALUE": "القيمة",
-			"SELECT_CURRENCY": "اختر العملة",
-			"TYPE_OF_BONUS": "اختر نوع العلاوة",
+			"SELECT_CURRENCY": "العملة",
+			"TYPE_OF_BONUS": "نوع العلاوة",
 			"BONUS_PERCENTAGE": "نسبة المكافأة",
 			"ENABLE_INVITES": "تفعيل الدعوات",
 			"INVITE_EXPIRY_PERIOD": "الدعوات صالحة حتى",
@@ -582,13 +583,13 @@
 			"EMPLOYMENT_TYPES": "نوع التوظيف",
 			"REGISTRATION_DATE": "تاريخ تسجيل المنظمة",
 			"ORGANIZATIONS": "اختر المؤسسات",
-			"ORGANIZATION": "اختر المنظمة",
+			"ORGANIZATION": "المنظمة",
 			"DOCUMENT_NAME": "اسم المستند",
 			"FEEDBACK_DESCRIPTION": "وصف التعليقات",
 			"PREFERRED_LANGUAGE": "اللغة المفضلة",
 			"OWNER": "المالك",
 			"TASK_VIEW_MODE": "وضع عرض المهمة",
-			"SELECT_STATUS": "اختر الحالة",
+			"SELECT_STATUS": "الحالة",
 			"LINKEDIN": "لينكدإن",
 			"FACEBOOK": "فيسبوك",
 			"INSTAGRAM": "انستغرام",
@@ -648,7 +649,7 @@
 				"LATITUDE": "خط العرض",
 				"LONGITUDE": "خط الطول"
 			},
-			"SELECT_EXPENSE": "اختر المصروفات",
+			"SELECT_EXPENSE": "المصروفات",
 			"ADD_TITLE": "إضافة العنوان",
 			"ALL_PROJECTS": "جميع المشاريع",
 			"ALL_TEAMS": "كل الفرق",
@@ -656,16 +657,16 @@
 			"UPWORK_SECRET": "سرّ أبورك",
 			"GAUZY_API_KEY": "مفتاح Gauzy AI",
 			"GAUZY_API_SECRET": "سر Gauzy AI",
-			"SELECT_COMPANY": "اختر الشركة",
+			"SELECT_COMPANY": "الشركة",
 			"TYPE_SEARCH_REQUEST": "اكتب طلب البحث الخاص بك هنا...",
-			"SELECT_ICON": "اختر الأيقونة",
+			"SELECT_ICON": "الأيقونة",
 			"SELECT": "اختر",
 			"SPRINT_LENGTH": "مدة السبرينت",
 			"SPRINT_START_DATE": "تاريخ بدء السبرنت",
 			"SPRINT_END_DATE": "تاريخ انتهاء السبرنت",
 			"SPRINT_GOAL": "هدف السبرنت",
 			"POLICY_NAME": "اسم السياسة",
-			"SELECT_DATE": "اختر التاريخ",
+			"SELECT_DATE": "التاريخ",
 			"DAYS_UNTIL_DUE": "أيام حتى الاستحقاق",
 			"TEMPLATES": "قوالب",
 			"INVOICE_TEMPLATE": "قالب الفاتورة",
@@ -814,6 +815,7 @@
 		"SKILLS": "المهارات",
 		"PRIVACY": "الخصوصية",
 		"SELECT_TIMEZONE": "اختر المنطقة الزمنية",
+		"SELECT_TIMEZONE_HINT": "تُعرض أوقات المواعيد بهذه المنطقة الزمنية.",
 		"SHOW_AVERAGE_BONUS": "عرض المكافأة المتوسطة",
 		"SHOW_AVERAGE_INCOME": "عرض الدخل المتوسط",
 		"SHOW_PAYPERIOD": "عرض فترة الدفع",
@@ -831,6 +833,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "يجب أن تكون موظفًا لتتمكن من تتبع الوقت وإنشاء مصروفات مشتركة واستخدام ميزات أخرى تتعلق بالموظفين."
 	},
 	"MENU": {
+		"BREADCRUMB": "مسار التنقل",
 		"PIPELINES": "خطوط الأنابيب",
 		"DASHBOARD": "لوحة القيادة",
 		"DASHBOARDS": "لوحات القيادة",
@@ -1151,7 +1154,71 @@
 		"APPLICATIONS": "تطبيقات",
 		"OPEN_GA_BROWSER": "افتح Gauzy في المتصفح",
 		"START_SERVER": "تشغيل الخادم",
-		"STOP_SERVER": "توقف الخادم"
+		"STOP_SERVER": "توقف الخادم",
+		"DOCUMENTS": "المستندات",
+		"BILLING": "الفوترة",
+		"MONITORING": "المراقبة",
+		"ADD_ITEM": "إضافة {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "أنت فقط",
+			"TENANT": "كل من في هذا المستأجر"
+		},
+		"UNSAVED_CHANGES": "تغييرات غير محفوظة",
+		"ACCOUNT": {
+			"TITLE": "الحساب",
+			"DESCRIPTION": "الحساب الذي سجّلت الدخول به.",
+			"MANAGE": "إدارة الملف الشخصي",
+			"ROLE": "الدور",
+			"MEMBER_SINCE": "عضو منذ"
+		},
+		"PREFERENCES": {
+			"TITLE": "التفضيلات",
+			"DESCRIPTION": "كيف يبدو التطبيق ويتصرف بالنسبة لك. تُطبَّق التغييرات فورًا.",
+			"THEME": "السمة",
+			"THEME_HINT": "نظام ألوان التطبيق بأكمله.",
+			"LANGUAGE": "اللغة",
+			"LANGUAGE_HINT": "لغة القوائم والتسميات والرسائل.",
+			"LAYOUT": "التخطيط الافتراضي",
+			"RESET_LAYOUTS": "إعادة تعيين تخطيطات الصفحات",
+			"SAVE_ERROR": "تعذّر حفظ تفضيلك.",
+			"LAYOUTS_RESET": "تمت إعادة تخطيطات الصفحات إلى الافتراضي."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "صورة مربعة، 128 × 128 بكسل على الأقل.",
+			"NAME_HINT": "يظهر لكل مستخدمي هذا المستأجر.",
+			"TENANT_ID": "معرّف المستأجر",
+			"TENANT_ID_HINT": "اذكره عند التواصل مع الدعم أو استدعاء الواجهة البرمجية.",
+			"COPY_ERROR": "تعذّر نسخ معرّف المستأجر.",
+			"TITLE": "ملف المستأجر",
+			"DESCRIPTION": "اسم هذا المستأجر وشعاره، ويظهران في مبدّل مساحات العمل والشريط الجانبي لكل المستخدمين.",
+			"NAME": "اسم المستأجر",
+			"NAME_PLACEHOLDER": "أدخل اسم المستأجر",
+			"NAME_REQUIRED": "اسم المستأجر مطلوب.",
+			"LOGO": "شعار المستأجر",
+			"LOGO_CHANGE": "انقر لرفع شعار جديد",
+			"LOGO_REMOVE": "إزالة الشعار",
+			"LOGO_UPLOAD_ERROR": "تعذّر رفع الشعار.",
+			"CREATED_AT": "تاريخ الإنشاء",
+			"SAVED": "تم حفظ ملف المستأجر",
+			"SAVE_ERROR": "تعذّر حفظ ملف المستأجر.",
+			"LOAD_ERROR": "تعذّر تحميل ملف المستأجر."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "الواجهة",
+			"TITLE": "واجهة المستخدم",
+			"DESCRIPTION": "اختر الواجهة التي يستخدمها جميع أعضاء هذا المستأجر للصفحات المتاحة بكلا النوعين.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (افتراضي)",
+				"REACT": "React (جديد)"
+			},
+			"HINT": "ينطبق على المستأجر بأكمله وعلى كل الأجهزة. حاليًا لوحة تتبع الوقت متاحة بكلتا الواجهتين؛ وستتبعها صفحات أخرى.",
+			"READ_ONLY": "يمكن لمسؤولي المستأجر فقط تغيير هذا الإعداد.",
+			"SAVING": "جارٍ الحفظ…",
+			"SAVED": "تم حفظ تفضيل الواجهة",
+			"SAVE_ERROR": "تعذر حفظ تفضيل الواجهة."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "الثيمات",
@@ -1185,7 +1252,9 @@
 		"CARDS_GRID": "شبكة البطاقات",
 		"SPRINT_VIEW": "عرض السبرينت",
 		"QUICK_SETTINGS": "الإعدادات السريعة",
-		"NO_LAYOUT": "No data layout available"
+		"NO_LAYOUT": "لا يوجد تخطيط بيانات متاح",
+		"PREFERENCES": "التفضيلات",
+		"SUPPORT": "الدعم"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "ما الجديد؟",
@@ -1267,7 +1336,7 @@
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "إجمالي المعاملات المصروفة التي تمت بنجاح: {{ totalExpenses }}. إجمالي المعاملات الداخلة التي تمت بنجاح: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
 			"TITLE": "هابستاف",
-			"SELECT_ORGANIZATION": "اختر المؤسسة",
+			"SELECT_ORGANIZATION": "المؤسسة",
 			"SYNCED_PROJECTS": "المشاريع المتزامنة",
 			"SETTINGS_UPDATED": "تم تحديث الإعدادات للتكامل",
 			"SYNCED_ENTITIES": "الكيانات المتزامنة تلقائياً",
@@ -1288,7 +1357,7 @@
 			"NEXT_STEP_INFO": "سيتم نقلك إلى Upwork لمنح إذن لـ Gauzy.",
 			"CONTRACTS": "عقود",
 			"SYNCED_CONTRACTS": "عقود متزامنة",
-			"SELECT_DATE": "اختر التاريخ",
+			"SELECT_DATE": "التاريخ",
 			"ONLY_CONTRACTS": "فقط عقود",
 			"CONTRACTS_RELATED_DATA": "تزامن كيانات العقود ذات الصلة",
 			"DATE_RANGE_PLACEHOLDER": "اختر تاريخًا بين",
@@ -1667,7 +1736,7 @@
 				"ACTIVE_TITLE": "مشغلات الأحداث النشطة",
 				"DESCRIPTION": "تكوين مشغلات سير العمل التلقائية. عند حدوث حدث في المنصة، سيتم تنفيذ سير عمل SIM المعين تلقائياً.",
 				"EVENT": "الحدث",
-				"SELECT_EVENT": "اختر حدثاً",
+				"SELECT_EVENT": "حدث",
 				"WORKFLOW_ID": "معرف سير العمل",
 				"WORKFLOW_ID_PLACEHOLDER": "أدخل معرف سير عمل SIM للتشغيل",
 				"ADD": "إضافة",
@@ -1710,7 +1779,7 @@
 		"COMING_SOON": "قريبًا",
 		"RE_INTEGRATE": "إعادة الاندماج",
 		"SETTINGS": "الإعدادات",
-		"SELECT_GROUPS": "اختر مجموعات",
+		"SELECT_GROUPS": "مجموعات",
 		"FILTER_INTEGRATIONS": "ترشيح التكاملات",
 		"SEARCH_INTEGRATIONS": "البحث في التكاملات",
 		"PAID": "مدفوع",
@@ -1732,6 +1801,19 @@
 		"TIME_TRACKING": "تتبع الوقت",
 		"PROJECT_MANAGEMENT": "إدارة المشاريع",
 		"EMPLOYEE_STATISTICS": "إحصاءات الموظفين",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "عبر {{ count }} موظفين",
+			"OF_INCOME": "{{ value }}% من الإيرادات",
+			"MARGIN": "هامش {{ value }}%",
+			"BREAKDOWN": "الأرباح حسب الموظف",
+			"NO_DATA": "لا يوجد نشاط مالي في هذه الفترة",
+			"NO_DATA_HINT": "ستظهر هنا الإيرادات والمصروفات المسجلة لهذا النطاق الزمني.",
+			"NO_EMPLOYEES": "لا توجد سجلات للموظفين في هذه الفترة",
+			"SORT_BY": "الترتيب حسب {{ name }}",
+			"SORT_LABEL": "ترتيب حسب",
+			"SORT_ASCENDING": "تصاعدي",
+			"SORT_DESCENDING": "تنازلي"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "يرجى تحديد شهر وموظف من القائمة أعلاه",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "أدخل النص للمستخدمين غير المصادق عليهم",
 		"CHARTS": {
@@ -1920,7 +2002,90 @@
 			"PREVIOUS": "السابق"
 		},
 		"NOT_STARTED": "لم يبدأ بعد",
-		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ."
+		"NOT_STARTED_HELP": "لم يتم تحديد تاريخ بدء العمل لهذا الموظف. لن يتم اعتبار الموظف في الحسابات أو تقاسم المصاريف ، إلخ.",
+		"VIEW": {
+			"PERIOD": "الفترة",
+			"PERIODS": {
+				"THIS_WEEK": "هذا الأسبوع",
+				"THIS_MONTH": "هذا الشهر",
+				"LAST_30_DAYS": "آخر 30 يومًا"
+			},
+			"TABS": {
+				"OVERVIEW": "نظرة عامة",
+				"PROFILE": "الملف الشخصي"
+			},
+			"PRESENCE": {
+				"TRACKING": "يسجّل الوقت",
+				"ONLINE": "متصل",
+				"AWAY": "بعيد",
+				"OFFLINE": "غير متصل"
+			},
+			"LOCAL_TIME": "الوقت المحلي",
+			"MEMBER_SINCE": "عضو منذ",
+			"WEEKLY_LIMIT": "الحد الأسبوعي",
+			"WORKED_TODAY": "عمل اليوم",
+			"WORKED_PERIOD": "عمل خلال الفترة",
+			"ACTIVITY_META": "نشاط {{ value }}",
+			"AVG_ACTIVITY": "متوسط النشاط",
+			"OPEN_TASKS": "المهام المفتوحة",
+			"OPEN_TASKS_META": "{{ progress }} قيد التنفيذ · {{ overdue }} متأخرة",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "مقارنة بالأسبوع الماضي",
+				"THIS_MONTH": "مقارنة بالشهر الماضي",
+				"LAST_30_DAYS": "مقارنة بالـ 30 يومًا السابقة"
+			},
+			"HOURS_WORKED": "ساعات العمل",
+			"HOURS_META": "{{ total }} إجمالي · {{ average }} لكل يوم عمل",
+			"TRACKED": "مسجّل",
+			"MANUAL": "يدوي",
+			"OPEN_TIMESHEET": "فتح سجل الدوام",
+			"PROJECTS": "المشاريع",
+			"RECENT_SCREENSHOTS": "لقطات الشاشة الأخيرة",
+			"VIEW_ALL": "عرض الكل",
+			"ASSIGNED_TASKS": "المهام المسندة",
+			"COLUMNS": {
+				"TASK": "المهمة",
+				"PROJECT": "المشروع",
+				"STATUS": "الحالة",
+				"DUE": "الاستحقاق",
+				"TIME": "الوقت",
+				"NAME": "الاسم",
+				"PRIORITY": "الأولوية"
+			},
+			"TOP_TASKS": "أكثر المهام عملًا",
+			"APPS_URLS": "التطبيقات والروابط",
+			"NO_TIME": "لم يُسجَّل وقت في هذه الفترة",
+			"NO_TASKS": "لا توجد مهام مسندة",
+			"NO_APPS": "لا يوجد نشاط للتطبيقات أو الروابط في هذه الفترة",
+			"NO_SCREENSHOTS": "لا توجد لقطات شاشة في هذه الفترة",
+			"UNAVAILABLE": "ليس لديك صلاحية الوصول إلى هذه البيانات",
+			"PROFILE": {
+				"ABOUT": "نبذة",
+				"CONTACT": "التواصل",
+				"SKILLS_TAGS": "المهارات والوسوم",
+				"TIME_ZONE": "المنطقة الزمنية",
+				"NOT_PROVIDED": "لم يُحدَّد بعد",
+				"NO_DESCRIPTION": "لم يُضف وصف بعد"
+			},
+			"TASKS_HELP": "المهام التي يشارك فيها هذا الشخص. اختر مربعًا لتصفية القائمة.",
+			"TASK_FILTERS": {
+				"OPEN": "مفتوحة",
+				"PROGRESS": "قيد التنفيذ",
+				"OVERDUE": "متأخرة",
+				"DONE": "منجزة"
+			},
+			"DUE": {
+				"NONE": "بلا موعد نهائي",
+				"WAS_DUE": "كان مستحقًا",
+				"OVERDUE_DAY": "متأخرة يومًا واحدًا",
+				"OVERDUE_DAYS": "متأخرة {{ count }} أيام",
+				"TODAY": "مستحقة اليوم",
+				"TOMORROW": "مستحقة غدًا",
+				"IN_DAYS": "خلال {{ count }} أيام"
+			},
+			"SHOWING": "عرض {{ shown }} من {{ total }} مهمة",
+			"NO_TASKS_IN_VIEW": "لا توجد مهام في هذا العرض"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "جميع الأهداف",
@@ -1936,6 +2101,7 @@
 		"EXPECTED": "متوقع",
 		"UPDATES": "التحديثات",
 		"UPDATE": "تحديث",
+		"ALIGNMENTS": "الاستقامات",
 		"COMMENTS": "تعليقات",
 		"KEY_RESULTS": "نتائج رئيسية",
 		"GROUP_BY": "تجميع حسب",
@@ -1952,6 +2118,8 @@
 		"GOAL_TEMPLATES": "قوالب الأهداف",
 		"CREATE_NEW_MENU": "إنشاء جديد",
 		"CREATE_FROM_PRESET": "إنشاء من الضبط المسبق",
+		"SELECT_A_PRESET": "اختر ضبطًا مسبقًا",
+		"ADDITIONAL_DETAILS": "تفاصيل إضافية",
 		"OWNERSHIP": {
 			"EMPLOYEES": "الموظفون",
 			"TEAMS": "الفِرَق",
@@ -1981,7 +2149,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "لا توجد نتائج مفتاحية لعرضها.",
 			"NO_UPDATES": "لا توجد تحديثات حتى الآن.",
-			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن."
+			"NO_ALIGNMENT": "لا توجد استقامات حتى الآن.",
+			"NO_PROGRESS_DATA": "لا توجد بيانات تقدّم لرسمها بعد."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "المنظمة",
@@ -2107,9 +2276,9 @@
 				"STATUS": "الحالة",
 				"WEIGHT": "الوزن",
 				"TYPE": "نوع",
-				"SELECT_PROJECT": "اختر المشروع",
-				"SELECT_TASK": "اختر المهمة",
-				"SELECT_KPI": "اختر مؤشر الأداء الرئيسي (KPI)",
+				"SELECT_PROJECT": "المشروع",
+				"SELECT_TASK": "المهمة",
+				"SELECT_KPI": "مؤشر الأداء الرئيسي (KPI)",
 				"ASSIGN_AS_OBJECTIVE": "تعيين كهدف"
 			},
 			"PLACEHOLDERS": {
@@ -2414,6 +2583,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "السماح للموظف بالخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار الخروج في تطبيق العميل.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "السماح بتسجيل الخروج من تطبيق العميل",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "السماح للموظف بتسجيل الخروج من تطبيق العميل. عند التعطيل، سيتم حظر خيار تسجيل الخروج في تطبيق العميل.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "حماية العاملين في المنطقة الاقتصادية الأوروبية / المملكة المتحدة مفعّلة",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "بالنسبة للمؤسسات والعاملين في المنطقة الاقتصادية الأوروبية أو المملكة المتحدة، يمكن للعاملين دائمًا الخروج من وكيل سطح المكتب وتسجيل الخروج منه. يصعب تبرير التسجيل الذي لا يستطيع العامل إيقافه بموجب اللائحة العامة لحماية البيانات والمادة 8 من الاتفاقية الأوروبية لحقوق الإنسان، لذا فإن هذه القيود غير متاحة هنا.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "تأكيد تقييد الخروج من الوكيل أو تسجيل الخروج منه",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "مع هذا القيد لا يستطيع العامل إيقاف تسجيل وكيل سطح المكتب له. أكّد أنك قيّمت ذلك على أنه قانوني ومتناسب لهؤلاء العاملين وأنك تتحمل المسؤولية عنه. يُسجَّل تأكيدك على حسابك.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "تتبع نشاط لوحة المفاتيح والماوس",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "تمكين تتبع كامل لنشاط لوحة المفاتيح والماوس، بما في ذلك ضغطات المفاتيح وحركات الماوس الدقيقة في جميع تطبيقات سطح المكتب والوكيل.",
 				"TRACK_ALL_DISPLAYS": "تتبع جميع الشاشات",
@@ -2440,6 +2613,8 @@
 				"DELETE_IDLE_TIME_INFO": "تفعيل - ستقوم النظام بحذف الوقت الخامل.\nتعطيل - لن يقوم النظام بحذف الوقت الخامل.",
 				"ALLOW_SCREEN_CAPTURE": "السماح بالتقاط الشاشة",
 				"ALLOW_SCREEN_CAPTURE_INFO": "تمكين - سيقوم المؤقت بأخذ لقطة للشاشة. تعطيل - سيعمل المؤقت دون أخذ لقطة للشاشة لجميع أعضاء المنظمة.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "السماح للموظفين برؤية بياناتهم المتعقبة",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "تمكين - يمكن للموظفين رؤية لقطات الشاشة والنشاط وسجل التطبيقات/الروابط وسجلات الوقت الخاصة بهم.",
 				"SCREENSHOT_FREQUENCY": "تردد التقاط الشاشة",
 				"SCREENSHOT_FREQUENCY_INFO": "حدد تردد التحديث أو فواصل الزمن للتزامن.",
 				"RANDOM_SCREENSHOT": "لقطة شاشة عشوائية",
@@ -2530,7 +2705,7 @@
 			"TIME_OFF_POLICY_VIEW": "View Time Off Policy",
 			"TIME_OFF_POLICY_EDIT": "Edit Time Off Policy",
 			"TIME_OFF_POLICY_DELETE": "Delete Time Off Policy",
-			"SELECT_EMPLOYEE": "تحديد الموظف",
+			"SELECT_EMPLOYEE": "الموظف",
 			"CHANGE_SELECTED_EMPLOYEE": "تغيير الموظف المحدد",
 			"CHANGE_SELECTED_CANDIDATE": "تغيير المرشح المحدد",
 			"CHANGE_SELECTED_ORGANIZATION": "تغيير المنظمة المحددة",
@@ -2669,7 +2844,10 @@
 		"ADDRESS": "عنوان",
 		"ADDRESS_2": "العنوان 2",
 		"MEMBERS": "أعضاء",
-		"BUDGET": "الميزانية"
+		"BUDGET": "الميزانية",
+		"PHOTO_HINT": "انقر أو أفلت صورة لرفعها",
+		"SEARCH_EMPLOYEES": "ابحث عن الموظفين بالاسم أو البريد الإلكتروني",
+		"NO_MEMBERS": "لم تتم إضافة أعضاء بعد"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "اللغات",
@@ -2702,7 +2880,19 @@
 		"EMPLOYEE_UPDATED": "تم تحديث الموظف.",
 		"IMAGE_UPDATED": "تم تحديث الصورة.",
 		"FAIL_TO_UPDATE_IMAGE": "فشل التحديث.",
-		"ANONYMOUS": "مجهول"
+		"ANONYMOUS": "مجهول",
+		"ABOUT": "نبذة",
+		"INACTIVE": "غير نشط",
+		"PER_HOUR": "/ ساعة",
+		"MEMBER_SINCE": "عضو منذ",
+		"NO_DESCRIPTION": "لم يُضف وصف بعد",
+		"NO_SKILLS": "لا توجد مهارات مدرجة بعد",
+		"VIEW_COMPANY_PROFILE": "عرض ملف الشركة",
+		"EDIT": {
+			"NO_AWARDS": "لم تُضف جوائز بعد",
+			"ADD_AWARD": "إضافة جائزة",
+			"PRIVACY_HELP": "اختر التفاصيل التي يراها الزوار في الملف العام."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "صفحة إدارة الاقتراحات",
@@ -2794,12 +2984,12 @@
 		"ADD_HOLIDAYS": "إضافة العطلات",
 		"DISPLAY_HOLIDAYS": "عرض العطلات",
 		"HOLIDAY_NAME": "اسم العطلة",
-		"SELECT_EMPLOYEES": "اختر الموظفين",
+		"SELECT_EMPLOYEES": "الموظفين",
 		"SETTINGS": "الإعدادات",
 		"EDI": "تعديل سجل إجازة الوقت",
-		"SELECT_HOLIDAY_NAME": "اختر اسم العطلة",
+		"SELECT_HOLIDAY_NAME": "اسم العطلة",
 		"ADD_OR_REMOVE_EMPLOYEES": "إضافة أو إزالة الموظفين",
-		"SELECT_TIME_OFF_POLICY": "اختر سياسة الإجازات",
+		"SELECT_TIME_OFF_POLICY": "سياسة الإجازات",
 		"ADD_A_DESCRIPTION": "أضف وصفًا",
 		"DESCRIPTION": "الوصف",
 		"START_DATE": "تاريخ البدء",
@@ -2864,7 +3054,7 @@
 		"ADD_NEW_TAG": "إضافة وسم جديد",
 		"TENANT_LEVEL": "مستوى المستأجر",
 		"TAGS_TYPE": "نوع العلامات",
-		"TAGS_SELECT_TYPE": "اختر نوع العلامات"
+		"TAGS_SELECT_TYPE": "نوع العلامات"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "مهارات"
@@ -3196,8 +3386,8 @@
 		"PROPOSAL_TEMPLATE": "قالب الاقتراح",
 		"EDIT_PROPOSAL_TEMPLATE": "تعديل قالب الاقتراح",
 		"ADD_PROPOSAL_TEMPLATE": "إضافة قالب الاقتراح",
-		"SELECT_PROPOSAL_TEMPLATE": "اختر قالب الاقتراح",
-		"SELECT_EMPLOYEE": "اختيار الموظف",
+		"SELECT_PROPOSAL_TEMPLATE": "قالب الاقتراح",
+		"SELECT_EMPLOYEE": "الموظف",
 		"NAME": "الاسم",
 		"CONTENT": "المحتوى",
 		"EMPLOYEE": "موظف",
@@ -3298,7 +3488,11 @@
 		"STOP_TIMER": "إيقاف المؤقت",
 		"TIME_LOG": "سجل الوقت",
 		"VIEW_APPOINTMENTS": "عرض المواعيد",
-		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت"
+		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت",
+		"DOCUMENTS": {
+			"NEW_PAGE": "صفحة جديدة",
+			"UPLOAD": "رفع"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "المحاسبة",
@@ -3306,7 +3500,8 @@
 		"PROJECT_MANAGEMENT": "إدارة المشروع",
 		"JOBS": "الوظائف",
 		"CONTACTS": "جهات الاتصال",
-		"TIME_TRACKING": "تتبع الوقت"
+		"TIME_TRACKING": "تتبع الوقت",
+		"DOCUMENTS": "المستندات"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "الاسم الأول",
@@ -3352,6 +3547,9 @@
 		"BROWSE": "تصفح",
 		"COMMENT": "تعليق",
 		"COMMENTS": "تعليقات",
+		"COMMENT_PLACEHOLDER": "اكتب تعليقًا…",
+		"NO_COMMENTS": "لا توجد تعليقات بعد",
+		"NO_COMMENTS_HINT": "تظهر التعليقات هنا، الأحدث أولاً.",
 		"HEADER": "الفواتير",
 		"INVOICE_NUMBER": "رقم الفاتورة",
 		"ESTIMATE_NUMBER": "رقم التقدير",
@@ -3389,10 +3587,10 @@
 		"EDIT_ESTIMATE": "تحرير التقدير",
 		"VIEW_INVOICE": "عرض الفاتورة",
 		"VIEW_ESTIMATE": "عرض التقدير",
-		"SELECT_EMPLOYEE": "اختر الموظف",
-		"SELECT_PROJECT": "اختر المشروع",
-		"SELECT_TASK": "اختر المهمة",
-		"SELECT_PRODUCT": "اختر المنتج",
+		"SELECT_EMPLOYEE": "الموظف",
+		"SELECT_PROJECT": "المشروع",
+		"SELECT_TASK": "المهمة",
+		"SELECT_PRODUCT": "المنتج",
 		"INVALID_DATES": "تواريخ غير صالحة",
 		"INVOICE_NUMBER_DUPLICATE": "رقم الفاتورة موجود بالفعل",
 		"DISCOUNT_TYPE": "نوع الخصم",
@@ -3454,12 +3652,12 @@
 			"BY_PRODUCTS": "حسب المنتجات",
 			"BY_EXPENSES": "حسب المصروفات",
 			"DETAILED_ITEMS": "بنود مفصلة",
-			"SELECT_INVOICE_TYPE": "اختر نوع الفاتورة",
-			"SELECT_ESTIMATE_TYPE": "اختر نوع التقدير",
-			"SELECT_PROJECTS": "اختر المشاريع",
-			"SELECT_TASKS": "اختر المهام",
-			"SELECT_PRODUCTS": "اختر المنتجات",
-			"SELECT_EXPENSES": "اختر المصروفات"
+			"SELECT_INVOICE_TYPE": "نوع الفاتورة",
+			"SELECT_ESTIMATE_TYPE": "نوع التقدير",
+			"SELECT_PROJECTS": "المشاريع",
+			"SELECT_TASKS": "المهام",
+			"SELECT_PRODUCTS": "المنتجات",
+			"SELECT_EXPENSES": "المصروفات"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "رقم البند",
@@ -3544,7 +3742,7 @@
 			"NO_PAYMENTS_RECORDED": "لا يوجد سجل للمدفوعات",
 			"LEFT_TO_PAY": "المتبقي للدفع",
 			"PAYMENT_METHOD": "طريقة الدفع",
-			"SELECT_INVOICE": "اختر فاتورة",
+			"SELECT_INVOICE": "فاتورة",
 			"PAYMENT_AMOUNT_ADDED": "تمت إضافة دفعة بمبلغ {{ amount }} {{ currency }}",
 			"PAYMENT": "الدفع",
 			"BANK_TRANSFER": "تحويل بنكي",
@@ -3610,12 +3808,67 @@
 		"TAGS": "العلامات"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "اختر موظف",
-		"SELECT_A_DATE": "اختر تاريخًا",
-		"SELECT_AN_ORGANIZATION": "اختر مؤسسة",
-		"SELECT_PROJECT": "اختر مشروعًا",
-		"SELECT_TEAM": "اختر فريقًا",
-		"AI_CHAT": "دردشة الذكاء الاصطناعي"
+		"SELECT_EMPLOYEE": "موظف",
+		"SELECT_A_DATE": "تاريخ",
+		"SELECT_AN_ORGANIZATION": "مؤسسة",
+		"SELECT_PROJECT": "مشروع",
+		"SELECT_TEAM": "فريق",
+		"AI_CHAT": "دردشة الذكاء الاصطناعي",
+		"COLLAPSE_SIDEBAR": "طي الشريط الجانبي",
+		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "مساعد الذكاء الاصطناعي",
+		"OPEN": "فتح مساعد الذكاء الاصطناعي",
+		"CLOSE": "إغلاق مساعد الذكاء الاصطناعي",
+		"HISTORY": "السجل",
+		"HISTORY_HINT": "تصفح المحادثات المحفوظة",
+		"HISTORY_CLOSE": "إغلاق السجل",
+		"HISTORY_EMPTY": "لا توجد محادثات محفوظة بعد.",
+		"NEW_CHAT": "محادثة جديدة",
+		"NEW_CHAT_HINT": "بدء محادثة جديدة",
+		"DELETE_CONVERSATION": "حذف المحادثة",
+		"LOADING": "جارٍ التحميل…",
+		"DOCK_LEFT": "إرساء إلى اليسار",
+		"DOCK_RIGHT": "إرساء إلى اليمين",
+		"MAXIMIZE": "تكبير",
+		"RESTORE": "استعادة العرض",
+		"COLLAPSE": "طي",
+		"RESIZE": "اسحب لتغيير العرض",
+		"WELCOME_SUBTITLE": "اسألني أي شيء عن مساحة عملك أو مهامك أو مشاريعك.",
+		"PLACEHOLDER": "اكتب رسالة…",
+		"SEND": "إرسال الرسالة",
+		"STOP": "إيقاف التوليد",
+		"ERROR": "حدث خطأ ما.",
+		"RETRY": "إعادة المحاولة",
+		"DICTATION_FAILED": "تعذّر تفريغ التسجيل.",
+		"DICTATION_NOT_CONFIGURED": "يحتاج الإملاء إلى مزوّد صوت. أضف واحدًا في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"DICTATION_ASK_ADMIN": "يحتاج الإملاء إلى مزوّد صوت — اطلب من المسؤول إضافة واحد في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"DICTATION_KEY_REJECTED": "رفض مزوّد الصوت مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الصوت مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"DICTATION_OPEN_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
+		"RATE_LIMITED_SHARED": "الفئة المجانية للذكاء الاصطناعي بلغت حد الطلبات حاليًا. اربط حسابك الخاص في OpenRouter أو اضبط مزوّد ذكاء اصطناعي آخر للاستخدام دون انقطاع.",
+		"RATE_LIMITED_OWN": "مزوّد الذكاء الاصطناعي لديك يحدّ من الطلبات حاليًا. تحقّق من خطتك وحدودك لدى المزوّد، أو اضبط مزوّد ذكاء اصطناعي آخر.",
+		"RATE_LIMIT_RETRY_IN": "يمكنك المحاولة مرة أخرى بعد نحو {{seconds}} ثانية.",
+		"OPEN_AI_SETTINGS": "فتح مزوّدي الذكاء الاصطناعي",
+		"ERROR_NOT_CONFIGURED": "تحتاج دردشة الذكاء الاصطناعي إلى مزوّد مُعَدّ. أضف واحدًا في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "تحتاج دردشة الذكاء الاصطناعي إلى مزوّد مُعَدّ — اطلب من المسؤول إضافة واحد في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_PROVIDER_UNAVAILABLE": "لا يستطيع مزوّد الذكاء الاصطناعي المحدد الرد الآن. تحقّق منه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "لا يستطيع مزوّد الذكاء الاصطناعي المحدد الرد الآن — اطلب من المسؤول التحقق من الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_MODEL_UNAVAILABLE": "هذا النموذج غير متاح بمفتاح API الحالي. اختر نموذجًا آخر في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "هذا النموذج غير متاح بمفتاح API الحالي — اطلب من المسؤول التحقق من الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_KEY_REJECTED": "رفض مزوّد الذكاء الاصطناعي مفتاح API الخاص به. حدّثه في صفحة إعدادات «مزوّدو الذكاء الاصطناعي».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "رفض مزوّد الذكاء الاصطناعي مفتاح API الخاص به — اطلب من المسؤول تحديثه في الإعدادات ← مزوّدو الذكاء الاصطناعي.",
+		"ERROR_RATE_LIMITED": "مزوّد الذكاء الاصطناعي يحدّ من الطلبات.",
+		"RECORDING": "جارٍ التسجيل",
+		"PREVIEW": "معاينة",
+		"PREVIEW_PAGE": "صفحة",
+		"PREVIEW_NEW_TAB": "فتح في علامة تبويب جديدة",
+		"PREVIEW_CLOSE": "إغلاق المعاينة",
+		"PREVIEW_UNAVAILABLE": "لا تتوفر معاينة لهذا الملف.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "فتح في المستندات",
+		"ATTACH_UPLOADING": "جارٍ الرفع…",
+		"ATTACH_DOCUMENT": "مستند"
 	},
 	"HEADER_TITLE": {
 		"FOR": "لـ",
@@ -3628,6 +3881,21 @@
 		"REDIRECT_TO_HOME": "سيتم توجيهك إلى الصفحة الرئيسية قريباً"
 	},
 	"HELP_PAGE": {
+		"INTRO": "اعثر على الوثائق واحصل على إجابات وتواصل مع فريق Gauzy.",
+		"DOCUMENTATION": "الوثائق",
+		"DOCUMENTATION_DESC": "أدلة ومراجع لكل ميزة في Gauzy.",
+		"FAQ": "الأسئلة الشائعة",
+		"FAQ_DESC": "إجابات على الأسئلة الأكثر شيوعًا.",
+		"SUPPORT_CHAT": "دردشة الدعم",
+		"SUPPORT_CHAT_DESC": "تحدث مع فريق الدعم لدينا.",
+		"REPORT_ISSUE": "الإبلاغ عن مشكلة",
+		"REPORT_ISSUE_DESC": "وجدت خطأ؟ افتح مشكلة على GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "الكود المصدري والإصدارات والنقاشات.",
+		"WEBSITE": "موقع Gauzy",
+		"WEBSITE_DESC": "اعرف المزيد عن منصة Gauzy.",
+		"ABOUT_LINK": "حول Gauzy",
+		"ABOUT_LINK_DESC": "تفاصيل الإصدار والترخيص والروابط.",
 		"HELP": "مساعدة",
 		"KNOWLEDGE_BASE": "قاعدة المعرفة",
 		"CHOSE_ICON": "اختر أيقونة للتعيين",
@@ -3676,20 +3944,20 @@
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "سيعرض هذا الجدول الرسوم البيانية لإدارة المشروع والبيانات المجمعة.",
 		"PROJECT_MODULE": {
 			"PROJECT": "مشروع",
-			"SELECT_PROJECT": "اختر مشروعًا",
+			"SELECT_PROJECT": "مشروع",
 			"STATUS": "الحالة",
 			"TEAM_MEMBERS": "أعضاء الفريق",
 			"TEAMS": "فرق",
-			"SELECT_TEAMS": "اختر الفرق",
+			"SELECT_TEAMS": "الفرق",
 			"CHOOSE_TEAMS": "اختيار الفرق",
 			"NAME": "الاسم",
 			"ENTER_NAME": "أدخل الاسم",
 			"PARENT_MODULE": "الوحدة الأصلية",
-			"SELECT_PARENT": "اختر الوحدة الأصلية",
+			"SELECT_PARENT": "الوحدة الأصلية",
 			"START_DATE": "تاريخ البدء",
-			"SELECT_START_DATE": "اختر تاريخ البدء",
+			"SELECT_START_DATE": "تاريخ البدء",
 			"END_DATE": "تاريخ الانتهاء",
-			"SELECT_END_DATE": "اختر تاريخ الانتهاء",
+			"SELECT_END_DATE": "تاريخ الانتهاء",
 			"DESCRIPTION": "الوصف",
 			"IS_FAVORITE": "مفضل"
 		}
@@ -3726,7 +3994,8 @@
 		"ROLES_PERMISSIONS": "الأدوار والصلاحيات",
 		"TIME_TRACKING": "تتتبع الوقت",
 		"ESTIMATE": "تقدير",
-		"DASHBOARD": "لوحة القيادة"
+		"DASHBOARD": "لوحة القيادة",
+		"DOCUMENTS": "المستندات"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3824,6 +4093,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "اذهب إلى لوحة التحكم ، إدارة إحصاءات الموظفين ، لوحة تتبع الوقت"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "مركز موحّد لمستندات الشركة: التحميلات وصفحات الويكي والمراجعة ومعرفة الذكاء الاصطناعي"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3938,6 +4210,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "‏Copyright © 2019-{{year}}, Ever Co. LTD. جميع الحقوق محفوظة.",
+		"DESCRIPTION": "‏Ever® Gauzy™ هي منصة مفتوحة لإدارة الأعمال للاقتصادات التعاونية وعند الطلب والتشاركية — ERP وCRM وHRM وATS وإدارة المشاريع مع تتبع الوقت المدمج.",
+		"LICENSE": "مفتوحة المصدر، صادرة بموجب ترخيص",
+		"VERSION_DETAILS": "تفاصيل الإصدار",
+		"VERSION_MISMATCH": "تم بناء تطبيق الويب وواجهة API من commits مختلفة — قد يكون هناك نشر قيد التنفيذ.",
+		"WEB_APP": "تطبيق الويب",
+		"API": "API",
+		"UNTAGGED": "إصدار بدون وسم",
+		"API_UNAVAILABLE": "إصدار API غير متاح",
+		"LEARN_MORE": "اعرف المزيد",
 		"ABOUT": "حول"
 	},
 	"FOOTER": {
@@ -4333,16 +4615,30 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "المراقبة نشطة: يتم تسجيل الوقت والنشاط",
+		"MONITORING_IDLE": "الوكيل خامل",
+		"MONITORING_TRAY_ACTIVE": "المراقبة نشطة، يتم تسجيل: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "المراقبة متوقفة مؤقتًا: لا يتم تسجيل أي شيء",
+		"MONITORING_CAPTURE_TIME": "الوقت والتطبيقات النشطة",
+		"MONITORING_CAPTURE_SCREENSHOTS": "لقطات الشاشة",
+		"MONITORING_CAPTURE_INPUT": "نشاط لوحة المفاتيح والفأرة",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "اختر العميل",
+			"SELECT_PROJECT": "اختر المشروع",
+			"SELECT_TEAM": "اختر الفريق",
+			"SELECT_TASK": "اختر المهمة",
+			"DESCRIPTION": "أضف وصفًا"
+		},
 		"IS_BILLABLE": "هل يمكن تفريض رسوم؟",
 		"STOP_TIMER": "أوقف المؤقت",
 		"START_TIMER": "بدء المؤقت",
 		"TIMER": "المؤقت",
 		"MANUAL": "دليل",
 		"MANUAL_NOT_ALLOW": "الوقت اليدوي غير مسموح به",
-		"SELECT_PROJECT": "اختر المشروع",
-		"SELECT_TASK": "اختر المهمة",
-		"SELECT_CLIENT": "اختر العميل",
-		"SELECT_TEAM": "اختر الفريق",
+		"SELECT_PROJECT": "المشروع",
+		"SELECT_TASK": "المهمة",
+		"SELECT_CLIENT": "العميل",
+		"SELECT_TEAM": "الفريق",
 		"DATE": "التاريخ",
 		"START_TIME": "وقت البدء",
 		"END_TIME": "وقت الانتهاء",
@@ -4432,13 +4728,13 @@
 			"AUTOMATIC_UPDATE_CHECK": "فحص التحديث التلقائي",
 			"ENABLE_AUTOMATIC_UPDATE_LABEL": "تمكين التحقق التلقائي من التحديث، من أجل تشغيل طلب للتحقق مما إذا كانت هناك نسخة جديدة متاحة وإشعار المستخدم بها.",
 			"SET_UPDATE_INTERVAL_DURATION": "تعيين مدة فحص التحديثات المتكررة",
-			"SELECT_DELAY": "اختر التأخير",
+			"SELECT_DELAY": "التأخير",
 			"ENABLE_AUTOMATIC_UPDATE": "تمكين التحديث التلقائي",
 			"UPDATE_SERVER": "مُحدِّث الخادم",
 			"SELECT_DEFAULT_CDN": "اختر خادم CDN الافتراضي للتحديث",
 			"TOGGLE_UPDATE_LOCALLY": "تبديل لتحديث محلياً",
 			"LOCAL_SERVER": "الخادم المحلي",
-			"LOCAL_SERVER_NOTE": "يجب أن يحتوي الدليل المحدد بالتأكيد على ملف <strong>latest.yml</strong> و/أو <strong>latest-mac.yml</strong> بغية إجراء التحقق من التحديث.",
+			"LOCAL_SERVER_NOTE": "يجب أن يحتوي الدليل المحدد على ملف بيان التحديث الخاص بنظامك (Windows: <strong>latest-x64.yml</strong> أو <strong>latest-arm64.yml</strong>؛ Linux: <strong>latest-x64-linux.yml</strong> أو <strong>latest-arm64-linux-arm64.yml</strong>؛ macOS: <strong>latest-mac.yml</strong>) مع ملفات التحديث المدرجة فيه، بغية إجراء التحقق من التحديث.",
 			"OTHER_SETTINGS": "الإعدادات الأخرى",
 			"ALLOW_PRERELEASE_VERSIONS": "السماح بالإصدارات التجريبية المسبقة",
 			"CHECK_UPDATE_APP_VERSION": "تحقق وقم بتحديث نسخة التطبيق الخاصة بك",
@@ -4703,11 +4999,11 @@
 		"SUBMIT_SUCCESS": "تم تقديم الجدول الزمني بنجاح",
 		"UNSUBMIT_SUCCESS": "تم إلغاء تقديم بطاقة الزمن بنجاح",
 		"DELETE_TIMELOG": "هل أنت متأكد أنك تريد حذف سجل الوقت؟",
-		"SELECT_EMPLOYEE": "اختر الموظف",
+		"SELECT_EMPLOYEE": "الموظف",
 		"ALL_EMPLOYEE": "جميع الموظفين",
-		"SELECT_SOURCE": "اختر المصدر",
-		"SELECT_ACTIVITY_LEVEL": "اختر مستوى النشاط",
-		"SELECT_LOG_TYPE": "اختر نوع السجل",
+		"SELECT_SOURCE": "المصدر",
+		"SELECT_ACTIVITY_LEVEL": "مستوى النشاط",
+		"SELECT_LOG_TYPE": "نوع السجل",
 		"ADD_TIME_LOGS": "أضف سجلات الوقت",
 		"EDIT_TIME_LOGS": "تحرير سجلات الوقت",
 		"VIEW_TIME_LOGS": "سجلات الوقت",
@@ -4802,7 +5098,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "لقطات الشاشة",
 			"OF": "من",
-			"TIME_LOG": "سجل الوقت"
+			"TIME_LOG": "سجل الوقت",
+			"TAKEN_AT": "لقطة شاشة التُقطت في {{ time }}",
+			"POSITION": "لقطة الشاشة {{ position }} من {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "تحذير. المؤقت يعمل، يمكنك إزالة اللقطات فقط إذا توقف المؤقت أو من داخل تطبيق المؤقت.",
 		"DELETE_CONFIRM": "هل أنت متأكد من حذف هذه اللقطات وسجل الوقت؟",
@@ -4851,7 +5149,9 @@
 		"NO_SCREENSHOT": "لا توجد لقطة شاشة",
 		"NO_SCREENSHOTS": "لا توجد لقطات شاشة",
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
-		"SCREEN_SELECTED": "{{ count }} شاشة محددة"
+		"SCREEN_SELECTED": "{{ count }} شاشة محددة",
+		"NO_TIME_TRACKED": "لم يتم تتبع أي وقت",
+		"MINUTES_TRACKED": "تم تتبع {{ minutes }} دقيقة"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
@@ -4877,6 +5177,16 @@
 		"BUFFER_AT_START": "التخزين المؤقت في البداية",
 		"BUFFER_AT_END": "المخزون في النهاية",
 		"BREAK_TIME": "وقت الراحة",
+		"DETAILS": "التفاصيل",
+		"PARTICIPANTS": "المشاركون",
+		"FORM_HINT": "حدّد موضوع الاجتماع وموعده ومن سينضم إليه.",
+		"DETAILS_HINT": "جدول الأعمال والمكان والملاحظات التي تظهر لكل المدعوين.",
+		"SCHEDULE": "الجدول الزمني",
+		"SCHEDULE_HINT": "اختر التاريخ والفترة الزمنية، مع وقت احتياطي واستراحة اختياريين.",
+		"BUFFER_TIME_HINT": "اترك وقتًا فارغًا قبل الاجتماع أو بعده.",
+		"BREAK_TIME_HINT": "أوقف الاجتماع لاستراحة قصيرة.",
+		"BREAK_START": "تبدأ الاستراحة في",
+		"PARTICIPANTS_HINT": "الأشخاص الذين يتلقون الدعوة.",
 		"ARE_YOU_SURE": "هل أنت متأكد؟ هذا الإجراء لا يمكن عكسه."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4921,7 +5231,9 @@
 		"CANCEL": "إلغاء الموعد",
 		"TIMEZONE": "منطقة زمنية الخاصة بك:",
 		"CHANGE": "(تغيير)",
+		"CHANGE_TIMEZONE": "تغيير",
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
+		"SELECT_EMPLOYEE_HINT": "اختر الشخص الذي تريد مقابلته، ثم اختر وقتًا يناسبك.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
 		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث",
@@ -5007,9 +5319,9 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "إنشاء صفقة | خط الأنابيب: '{{ name }}'",
-		"SELECT_STAGE": "اختر المرحلة",
+		"SELECT_STAGE": "المرحلة",
 		"PROBABILITY": "احتمالية",
-		"SELECT_CLIENT": "اختر العميل"
+		"SELECT_CLIENT": "العميل"
 	},
 	"DIALOG": {
 		"CONFIRM": "تأكيد",
@@ -5135,14 +5447,27 @@
 			"SYSTEM": "النظام",
 			"FILTERS": {
 				"TO": "إلى",
-				"TEMPLATE_LANGUAGE": "القالب / اللغة"
+				"TEMPLATE_LANGUAGE": "القالب / اللغة",
+				"RECIPIENT": "المستلم",
+				"TEMPLATE": "القالب",
+				"STATUS": "الحالة",
+				"ALL_RECIPIENTS": "كل المستلمين",
+				"ALL_TEMPLATES": "كل القوالب",
+				"ALL_STATUSES": "كل الحالات",
+				"SENT": "مُرسل",
+				"FAILED": "فشل",
+				"ARCHIVED": "مؤرشف",
+				"SHOWING": "عرض {{ count }} من {{ total }}",
+				"NO_MATCH": "لا توجد رسائل تطابق عوامل التصفية هذه."
 			}
 		}
 	},
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ الصيانة",
 	"LEGAL": {
 		"PRIVACY_POLICY": "سياسة الخصوصية",
-		"TERMS_AND_CONDITIONS": "الشروط والأحكام"
+		"TERMS_AND_CONDITIONS": "الشروط والأحكام",
+		"DOCUMENT_VERSION": "الإصدار {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "سارية اعتباراً من {{ date }}"
 	},
 	"LOADING": "تحميل، يرجى الانتظار...",
 	"ACCOUNTING_TEMPLATES_PAGE": {
@@ -5183,7 +5508,8 @@
 				"TERMS_AND_CONDITIONS": "البنود والشروط",
 				"AND": " و ",
 				"PRIVACY_POLICY": "سياسة الخصوصية"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "يجب أن تحتوي كلمة المرور على 4 أحرف على الأقل"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5193,6 +5519,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "ليس لديك حساب؟",
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
 		"OR_SIGN_IN_WITH": "أو قم بتسجيل الدخول بـ",
+		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {
 			"TITLE": "تسجيل الدخول بواسطة رمز سحري",
@@ -5293,7 +5621,15 @@
 		"HOTKEYS": "مفاتيح الاختصار",
 		"HELP": "مساعدة",
 		"SIGN_OUT": "تسجيل الخروج",
-		"PROFILE": "الملف الشخصي"
+		"PROFILE": "الملف الشخصي",
+		"ACCOUNT": "الحساب",
+		"PREFERENCES": "التفضيلات",
+		"DOWNLOAD_APPS": "تنزيل التطبيقات",
+		"DOWNLOAD_MACOS": "التنزيل لنظام macOS",
+		"DOWNLOAD_WINDOWS": "التنزيل لنظام Windows",
+		"DOWNLOAD_LINUX": "التنزيل لنظام Linux",
+		"DOWNLOAD_MOBILE": "تنزيل تطبيق الهاتف المحمول",
+		"DOWNLOAD_BROWSER_EXTENSION": "تنزيل إضافة المتصفح"
 	},
 	"WORKSPACES": {
 		"MENUS": {
@@ -5431,7 +5767,7 @@
 				"REQUIRED": "مطلوب"
 			},
 			"TYPE": "نوع الإضافة",
-			"TYPE_PLACEHOLDER": "اختر نوع الإضافة",
+			"TYPE_PLACEHOLDER": "نوع الإضافة",
 			"TYPES": {
 				"DESKTOP": "سطح المكتب",
 				"WEB": "ويب",

@@ -40,6 +40,13 @@ export interface IRecurringExpenseEditInput {
 	value: number;
 	currency: string;
 	startDateUpdateType?: string;
+	/**
+	 * Only meaningful for employee recurring expenses (organization recurring expenses never set
+	 * this). Must stay distinguishable from "not provided": `null` means "switch to All
+	 * Employees" and has to reach the update, while `undefined` means the caller didn't touch
+	 * this field at all and the existing employee assignment should be left alone. See #8889.
+	 */
+	employeeId?: string | null;
 }
 
 export interface IRecurringExpenseDeleteInput {

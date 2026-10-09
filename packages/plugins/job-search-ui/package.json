@@ -38,7 +38,6 @@
 		"@ngx-translate/core": "^17.0.0",
 		"@ngx-translate/http-loader": "^17.0.0",
 		"angular2-smart-table": "^4.1.1",
-		"ckeditor4-angular": "4.0.1",
 		"ng2-file-upload": "^9.0.0",
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^19.0.0",

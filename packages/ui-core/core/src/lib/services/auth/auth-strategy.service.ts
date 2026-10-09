@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { IAuthResponse, IUser, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
+import {
+	IAuthResponse,
+	ITermsAcceptanceClaim,
+	ITermsAcceptanceDocument,
+	IUser,
+	IUserLoginInput,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { NbAuthResult, NbAuthStrategy, NbAuthStrategyClass } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
@@ -11,7 +18,9 @@ import { Store } from '../store/store.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
 import { AuthService } from './auth.service';
+import { isCheckoutSessionId } from './checkout-session';
 import { ElectronService } from './electron.service';
+import { readRegisterError } from './register-error';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -106,6 +115,31 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	/**
+	 * Turn "the box is ticked" plus "this is what was displayed" into the claims
+	 * the API records.
+	 *
+	 * Returns `null` when the box was not ticked or when the form never received
+	 * the published documents — both are cases where there is nothing truthful to
+	 * record, and submitting anyway is precisely the bug this replaces. Callers
+	 * surface that as a validation failure rather than registering silently.
+	 */
+	private buildTermsClaims(
+		accepted: boolean | undefined,
+		documents: ITermsAcceptanceDocument[] | undefined
+	): ITermsAcceptanceClaim[] | null {
+		if (!accepted || !isNotEmpty(documents)) {
+			return null;
+		}
+
+		return documents.map(({ documentId, version, sha256, locale }) => ({
+			documentId,
+			version,
+			sha256,
+			locale
+		}));
+	}
+
+	/**
 	 *
 	 * @param data
 	 * @returns
@@ -118,10 +152,30 @@ export class AuthStrategy extends NbAuthStrategy {
 			confirmPassword,
 			tenant,
 			tags,
+			terms,
+			termsDocuments,
+			stripeCheckoutSessionId,
 			preferredLanguage = LanguagesEnum.ENGLISH
 		} = data;
 		if (password !== confirmPassword) {
 			return of(new NbAuthResult(false, null, null, ["The passwords don't match."]));
+		}
+
+		// The register form gates its submit button on `terms`, and this
+		// destructuring used to drop the value on the floor: the payload built
+		// below never mentioned it, so the user saw a checkbox and the database
+		// got nothing. `termsDocuments` carries the identity of the exact text
+		// that was displayed next to it — document id, version and sha256, as
+		// published by the server — so the acceptance can be recorded as
+		// evidence rather than as an assertion.
+		const termsClaims = this.buildTermsClaims(terms, termsDocuments);
+
+		if (!termsClaims) {
+			return of(
+				new NbAuthResult(false, null, null, [
+					'Please accept the Terms and Conditions and the Privacy Policy to continue.'
+				])
+			);
 		}
 
 		/**
@@ -137,7 +191,11 @@ export class AuthStrategy extends NbAuthStrategy {
 				preferredLanguage
 			},
 			password,
-			confirmPassword
+			confirmPassword,
+			terms: termsClaims,
+			// The buyer's completed Stripe Checkout Session, when they came from the shared checkout.
+			// Only a well-formed id is sent; the API verifies it with Stripe.
+			...(isCheckoutSessionId(stripeCheckoutSessionId) ? { stripeCheckoutSessionId } : {})
 		};
 		return this.authService.register(register).pipe(
 			switchMap((res: IUser | any) => {
@@ -152,8 +210,12 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 			}),
 			catchError((err) => {
+				// Show what the API told the person (e.g. "A subscription is required…") instead of the
+				// generic default. The response stays on the result, so the register form can read
+				// `checkoutUrl` from it and offer the way to the checkout.
+				const { messages } = readRegisterError(err);
 				return of(
-					new NbAuthResult(false, err, false, AuthStrategy.config.register.defaultErrors, [
+					new NbAuthResult(false, err, false, messages ?? AuthStrategy.config.register.defaultErrors, [
 						AuthStrategy.config.register.defaultErrors
 					])
 				);

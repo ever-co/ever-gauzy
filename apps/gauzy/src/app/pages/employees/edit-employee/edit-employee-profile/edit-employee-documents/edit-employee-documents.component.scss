@@ -1,0 +1,17 @@
+@use '@shared/employee-tab-panel' as *;
+
+:host {
+  @include employee-tab-host;
+  // Local to this tab: the links panel carries no padding of its own.
+  padding: 1rem;
+
+  > gz-document-links-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+  }
+
+  ::ng-deep gz-document-links-panel > .docs-links-panel {
+    flex: 1 0 auto;
+  }
+}

@@ -1,10 +1,11 @@
-import { Controller, HttpStatus, Post, Body, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, UseInterceptors, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ImportStatusEnum, ImportTypeEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { ImportService } from './import.service';
+import { generateImportArchiveFileName } from './import-archive-file-name';
 import { RequestContext } from '../../core/context';
-import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
+import { archiveUploadFileFilter, FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { ImportHistoryCreateCommand } from '../import-history';
@@ -16,6 +17,8 @@ import * as path from 'node:path';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.IMPORT_ADD)
 @Controller('/import')
 export class ImportController {
+	private readonly logger = new Logger(ImportController.name);
+
 	constructor(private readonly _importService: ImportService, private readonly _commandBus: CommandBus) {}
 
 	/**
@@ -28,8 +31,14 @@ export class ImportController {
 		FileInterceptor('file', {
 			storage: new FileStorage().storage({
 				dest: path.join('import'),
-				prefix: 'import'
-			})
+				prefix: 'import',
+				// An unguessable dotfile name: the archive is a tenant dump that is kept for re-download
+				// through an authorized route, never at a public URL. See generateImportArchiveFileName().
+				filename: () => generateImportArchiveFileName()
+			}),
+			// The import format is a ZIP of CSVs; the local provider keeps the client's extension and
+			// the file lands under /public, so anything else is refused before it is stored.
+			fileFilter: archiveUploadFileFilter
 		})
 	)
 	@ApiOperation({ summary: 'Imports templates records.' })
@@ -51,13 +60,21 @@ export class ImportController {
 			tenantId: RequestContext.currentTenantId()
 		};
 
+		/**
+		 * 🛑 The extraction directory belongs to THIS request and is removed in the `finally`.
+		 *
+		 * It used to be a field on the singleton `ImportService`, always resolving to the same
+		 * `<assetPublicPath>/import/csv` path: concurrent imports read one another's CSVs, and the
+		 * cleanup sat inside the `try` so a failed import left a full tenant dump readable at
+		 * `GET /public/import/csv/<table>.csv` with no authentication at all (GHSA-g235-c4fm-4fc7).
+		 */
+		let extractPath: string;
+
 		try {
-			/** */
-			await this._importService.registerAllRepositories();
-			await this._importService.unzipAndParse(key, importType === ImportTypeEnum.CLEAN);
-			await this._importService.addCurrentUserToImportedOrganizations();
-			this._importService.removeExtractedFiles();
-			/** */
+			extractPath = await this._importService.createExtractDirectory();
+			await this._importService.unzipAndParse(extractPath, key, importType === ImportTypeEnum.CLEAN);
+			await this._importService.addCurrentUserToImportedOrganizations(extractPath);
+
 			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
@@ -65,14 +82,17 @@ export class ImportController {
 				})
 			);
 		} catch (error) {
-			/** */
-			console.log('Error while creating import history', error);
+			this.logger.error('Error while importing tenant data', error?.stack ?? String(error));
 			return await this._commandBus.execute(
 				new ImportHistoryCreateCommand({
 					...history,
 					status: ImportStatusEnum.FAILED
 				})
 			);
+		} finally {
+			// Only the extraction directory is removed. The uploaded archive is kept on purpose: the
+			// Import page re-downloads it through the authorized `GET /import/history/:id/download`.
+			await this._importService.removeExtractedFiles(extractPath);
 		}
 	}
 }

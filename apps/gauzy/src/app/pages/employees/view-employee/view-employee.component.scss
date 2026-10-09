@@ -1,0 +1,1364 @@
+@use 'gauzy/_gauzy-cards' as *;
+
+/*
+ * ── Employee page ────────────────────────────────────────────────────────────
+ *
+ * A member page in the manner of Hubstaff's: a profile header (avatar with a
+ * presence dot, name, role, contract facts), underline tabs, then the Overview
+ * — one divided summary strip, hairline panels, and real tables with header
+ * rows. Paints only with the shared gauzy-* tokens, so every registered theme
+ * and both canvases follow without a per-theme branch.
+ */
+
+$gap-xl: 1.5rem;
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$gap-xs: 0.25rem;
+
+$grid-breakpoint: 64rem;
+$control-height: 1.875rem;
+
+$weight-strong: 600; // summary figures
+$weight-medium: 500; // titles, names, table figures
+$weight-normal: 400; // labels, captions, chips
+
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+// The page frame is bounded to the viewport, so the content scrolls inside the
+// card body while the profile header and tabs stay put.
+nb-card {
+	height: 100%;
+	margin-bottom: 0;
+	background-color: var(--gauzy-card-1);
+}
+
+/* ── Profile header ──────────────────────────────────────────────────────── */
+
+.ev-header {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	padding-bottom: 0;
+	background-color: var(--gauzy-card-1);
+}
+
+.profile-row {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-md;
+	min-width: 0;
+}
+
+// Back sits beside Edit, centred on the button row rather than on the avatar.
+.back {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+
+	// The shared button carries a 1.5rem trailing margin for its usual spot
+	// before a page title; here the actions row's gap spaces it, and it takes
+	// the Edit button's height so the two read as one group.
+	// Qualified past the shared rule, which is direction-scoped (`[dir=ltr] :host
+	// .main button`) and outranks a plain `.main button`.
+	.profile-actions & ::ng-deep .main button.appearance-outline {
+		margin: 0;
+		width: 2rem;
+		height: 2rem;
+	}
+}
+
+.avatar {
+	--presence: var(--gauzy-text-color-2);
+
+	position: relative;
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.5rem;
+	height: 3.5rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-active-tint);
+
+	img {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+}
+
+.avatar-initials {
+	font-size: 1rem;
+	font-weight: $weight-medium;
+	letter-spacing: 0.02em;
+	color: var(--gauzy-text-color-1);
+}
+
+// Presence sits on the avatar's edge, ringed in the surface colour so it reads
+// against any photo.
+.avatar-dot {
+	position: absolute;
+	right: 0.0625rem;
+	bottom: 0.0625rem;
+	width: 0.875rem;
+	height: 0.875rem;
+	border-radius: 50%;
+	background-color: var(--presence);
+	box-shadow: 0 0 0 2px var(--gauzy-card-1);
+}
+
+.presence-tracking,
+.presence-online {
+	--presence: var(--gauzy-chart-revenue);
+}
+
+.presence-away {
+	--presence: var(--gauzy-chart-expenses);
+}
+
+.presence-offline {
+	--presence: color-mix(in srgb, var(--gauzy-text-color-2) 55%, transparent);
+}
+
+.profile-text {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-xs;
+	flex: 1 1 auto;
+	min-width: 0;
+	padding-top: 0.125rem;
+}
+
+.profile-name-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $gap-sm;
+	min-width: 0;
+}
+
+.profile-name {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: $weight-medium;
+	line-height: 1.5rem;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+}
+
+.presence-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.presence-dot {
+	width: 0.4375rem;
+	height: 0.4375rem;
+	border-radius: 50%;
+	background-color: var(--presence);
+}
+
+.profile-sub {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-xs $gap-md;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.profile-email {
+	color: inherit;
+	text-decoration: none;
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+		text-decoration: underline;
+	}
+}
+
+.profile-traits {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $gap-xs;
+	margin-top: 0.125rem;
+}
+
+.chip,
+.task-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	padding: 0.0625rem 0.4375rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-hover-tint);
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-normal;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+	max-width: 14rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.status-chip {
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	background-color: transparent;
+
+	&.tone-success {
+		color: var(--gauzy-chart-revenue);
+	}
+
+	&.tone-danger {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+.profile-actions {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	margin-top: 0.5rem;
+}
+
+/* Facts strip: five term/value pairs separated by hairlines. */
+.facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	margin: 0;
+	border: $hairline;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-2);
+	overflow: hidden;
+
+	// Each fact draws a hairline on its leading edge; the first one in every row
+	// falls outside the strip and is clipped, so wrapped rows divide cleanly too.
+	.fact {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		min-width: 0;
+		padding: $gap-sm $gap-md;
+		box-shadow: -1px 0 0 0 var(--gauzy-border-default-color);
+	}
+
+	dt {
+		margin: 0;
+		font-size: nb-theme(text-caption-font-size);
+		font-weight: $weight-normal;
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+
+	dd {
+		display: flex;
+		align-items: baseline;
+		flex-wrap: wrap;
+		gap: 0 $gap-xs;
+		margin: 0;
+		font-size: 0.75rem;
+		font-weight: $weight-medium;
+		line-height: 1.25rem;
+		color: var(--gauzy-text-color-1);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.fact-meta {
+		font-size: 0.6875rem;
+		font-weight: $weight-normal;
+		color: var(--gauzy-text-color-2);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+/* ── Tabs + period ───────────────────────────────────────────────────────── */
+
+.tab-row {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: $gap-sm $gap-lg;
+	border-bottom: $hairline;
+}
+
+.tabs {
+	display: flex;
+	gap: $gap-lg;
+}
+
+.tab {
+	position: relative;
+	padding: $gap-sm 0.125rem 0.625rem;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+	transition: color 0.12s ease-in-out;
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset-inline: 0;
+		bottom: -1px;
+		height: 2px;
+		border-radius: 2px 2px 0 0;
+		background-color: transparent;
+	}
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 2px;
+	}
+
+	&.is-active {
+		color: nb-theme(color-primary-500);
+
+		&::after {
+			background-color: nb-theme(color-primary-500);
+		}
+	}
+}
+
+.period {
+	display: flex;
+	align-items: center;
+	gap: $gap-md;
+	padding-bottom: $gap-sm;
+}
+
+.period-range {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-xs;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+}
+
+.period-switcher {
+	min-width: 9rem;
+
+	::ng-deep .select-button {
+		min-height: $control-height;
+		height: $control-height;
+		padding-block: 0;
+		font-size: 0.75rem;
+		font-weight: $weight-normal;
+	}
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+
+nb-card-body.ev-body {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	overflow-y: auto;
+	padding-top: $gap-lg;
+	background-color: var(--gauzy-card-2);
+}
+
+// The Overview's tab panel: lays its blocks out with the body's own rhythm, so
+// wrapping them for the tab semantics does not change the page.
+.tab-pane {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+}
+
+/* ── Summary strip ───────────────────────────────────────────────────────── */
+
+.summary {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
+}
+
+.summary-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1875rem;
+	min-width: 0;
+	padding: $gap-md $gap-lg;
+	// A hairline on the leading edge of every cell; the strip's own inset ring
+	// hides the first one, so cells that wrap onto a new row still divide cleanly.
+	box-shadow: -1px 0 0 0 var(--gauzy-border-default-color);
+}
+
+.summary-label {
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.summary-value {
+	font-size: 1.125rem;
+	font-weight: $weight-strong;
+	line-height: 1.5rem;
+	letter-spacing: -0.01em;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.summary-meta,
+.delta {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.1875rem;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	&.is-negative {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+// Direction is carried by the arrow and the sign of the words; colour repeats it.
+.delta {
+	b {
+		font-weight: $weight-medium;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&--up b,
+	&--up nb-icon {
+		color: var(--gauzy-chart-revenue);
+	}
+
+	&--down b,
+	&--down nb-icon {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+.delta-label {
+	margin-inline-start: 0.125rem;
+}
+
+/* ── Grid + panels ───────────────────────────────────────────────────────── */
+
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+	gap: $gap-lg;
+	align-items: start;
+
+	@media screen and (max-width: $grid-breakpoint) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	min-width: 0;
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
+}
+
+.panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $gap-sm;
+	min-height: 3rem;
+	padding: $gap-sm $gap-lg;
+	border-bottom: $hairline;
+}
+
+.panel-heading {
+	display: flex;
+	flex-direction: column;
+	gap: 0.0625rem;
+	min-width: 0;
+}
+
+.panel-title {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.panel-caption {
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.panel-link {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-xs;
+	padding: $gap-xs $gap-sm;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	font: inherit;
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	color: var(--gauzy-action-info-text);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.12s ease-in-out;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 1px;
+	}
+}
+
+.panel-body {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: $gap-lg;
+
+	// Tables run edge to edge; their cells carry the padding.
+	&--flush {
+		padding: 0;
+	}
+}
+
+// The panel owns the chart's height, so the canvas fills one measured box.
+.panel--chart .panel-body {
+	display: flex;
+	flex-direction: column;
+	height: 18rem;
+	min-height: 0;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+
+.data-table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: var(--gauzy-text-color-1);
+
+	th,
+	td {
+		padding: 0.5rem $gap-sm;
+		text-align: start;
+		vertical-align: middle;
+
+		&:first-child {
+			padding-inline-start: $gap-lg;
+		}
+
+		&:last-child {
+			padding-inline-end: $gap-lg;
+		}
+	}
+
+	th {
+		font-size: 0.6875rem;
+		font-weight: $weight-medium;
+		line-height: 1rem;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+		color: var(--gauzy-text-color-2);
+		background-color: var(--gauzy-card-2);
+		border-bottom: $hairline;
+		white-space: nowrap;
+	}
+
+	td {
+		border-bottom: $hairline;
+	}
+
+	tbody tr:last-child td {
+		border-bottom: 0;
+	}
+
+	tbody tr {
+		transition: background-color 0.12s ease-in-out;
+
+		&:hover {
+			background-color: var(--gauzy-hover-tint);
+		}
+	}
+
+	.num {
+		text-align: end;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+		width: 6.5rem;
+	}
+
+	.col-share {
+		width: 3.75rem;
+	}
+
+	.col-project {
+		width: 26%;
+	}
+}
+
+.cell-main {
+	min-width: 0;
+}
+
+.cell-title {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cell-meta {
+	display: block;
+	font-size: 0.6875rem;
+	line-height: 0.875rem;
+	color: var(--gauzy-text-color-2);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cell-muted {
+	color: var(--gauzy-text-color-2);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.cell-strong {
+	font-weight: $weight-medium;
+}
+
+// One hue for magnitude: the bar's length is the only thing it encodes.
+.bar-track {
+	display: block;
+	height: 0.25rem;
+	margin-top: 0.3125rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	overflow: hidden;
+}
+
+.bar {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	background-color: var(--gauzy-chart-profit);
+}
+
+// Text stays in the text tokens; the dot carries the status colour.
+.task-status {
+	max-width: 100%;
+
+	&::before {
+		content: '';
+		flex: 0 0 auto;
+		width: 0.375rem;
+		height: 0.375rem;
+		border-radius: 50%;
+		background-color: color-mix(in srgb, var(--gauzy-text-color-2) 55%, transparent);
+	}
+
+	&.group-progress::before {
+		background-color: var(--gauzy-chart-profit);
+	}
+
+	&.group-blocked::before {
+		background-color: var(--gauzy-chart-negative);
+	}
+
+	&.group-done::before {
+		background-color: var(--gauzy-chart-revenue);
+	}
+}
+
+/* ── Assigned tasks ──────────────────────────────────────────────────────── */
+
+// Title on one side, the segmented filter on the other; wraps under the title
+// when the panel is too narrow for both.
+.panel-header--wrap {
+	flex-wrap: wrap;
+	row-gap: $gap-sm;
+}
+
+.title-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.25rem;
+	height: 1.125rem;
+	margin-inline-start: 0.375rem;
+	padding: 0 0.375rem;
+	border-radius: 999px;
+	background-color: var(--gauzy-hover-tint);
+	font-size: 0.6875rem;
+	font-weight: $weight-medium;
+	line-height: 1;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+	vertical-align: 0.0625rem;
+}
+
+/*
+ * Segmented control: one hairline track, the selected segment lifted onto the
+ * card surface. The count rides inside each segment so a view and its size
+ * read as one thing.
+ */
+.segmented {
+	display: inline-flex;
+	gap: 0.125rem;
+	padding: 0.125rem;
+	border-radius: calc(var(--gauzy-radius-sm) + 0.125rem);
+	background-color: var(--gauzy-card-2);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.segment {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	height: 1.625rem;
+	padding: 0 0.625rem;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	font: inherit;
+	font-size: 0.75rem;
+	font-weight: $weight-normal;
+	line-height: 1;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 1px;
+	}
+
+	// The selected view in the theme's primary purple — the colour of the
+	// header's Create button — shared with the active tab, so every "you are
+	// here" on the page reads alike.
+	&.is-active {
+		background-color: nb-theme(color-primary-transparent-100);
+		box-shadow: inset 0 0 0 1px nb-theme(color-primary-500);
+		font-weight: $weight-medium;
+		color: nb-theme(color-primary-500);
+
+		.segment-count:not(.is-alert) {
+			color: nb-theme(color-primary-500);
+		}
+	}
+}
+
+.segment-count {
+	font-size: 0.6875rem;
+	font-weight: $weight-medium;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+
+	// Only a non-zero overdue count is worth colouring.
+	&.is-alert {
+		color: var(--gauzy-action-danger-text);
+	}
+}
+
+.task-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.task-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: start;
+	column-gap: $gap-md;
+	padding: 0.625rem $gap-lg;
+	border-bottom: $hairline;
+	transition: background-color 0.12s ease-in-out;
+
+	&:last-child {
+		border-bottom: 0;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+}
+
+// Status as a ring: hollow while not started, filled once work is under way.
+.task-dot {
+	--dot: color-mix(in srgb, var(--gauzy-text-color-2) 70%, transparent);
+
+	width: 0.625rem;
+	height: 0.625rem;
+	margin-top: 0.3125rem;
+	border-radius: 50%;
+	box-shadow: inset 0 0 0 2px var(--dot);
+
+	&.group-progress {
+		--dot: var(--gauzy-chart-profit);
+		background: conic-gradient(var(--dot) 0 50%, transparent 50% 100%);
+	}
+
+	&.group-blocked {
+		--dot: var(--gauzy-chart-negative);
+		background-color: var(--dot);
+	}
+
+	&.group-done {
+		--dot: var(--gauzy-chart-revenue);
+		background-color: var(--dot);
+	}
+}
+
+.task-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1875rem;
+	min-width: 0;
+}
+
+.task-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+}
+
+// Key · project · status · priority, separated by middle dots.
+.task-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	min-width: 0;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.task-key {
+	font-weight: $weight-medium;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.01em;
+}
+
+.task-meta-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.1875rem;
+	min-width: 0;
+	white-space: nowrap;
+}
+
+// A middle dot between neighbours, never before the first.
+.task-meta > * + *::before {
+	content: '·';
+	margin: 0 0.375rem;
+}
+
+// Priority in words with an arrow; colour only repeats what the arrow says.
+.task-priority {
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	&.priority-urgent {
+		color: var(--gauzy-action-danger-text);
+	}
+
+	&.priority-high nb-icon {
+		color: var(--gauzy-chart-expenses);
+	}
+}
+
+.task-due {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.1875rem;
+	min-width: 6rem;
+	text-align: end;
+	white-space: nowrap;
+}
+
+.task-due-date {
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	font-variant-numeric: tabular-nums;
+
+	.task-due:not(:has(.task-due-relative)) & {
+		font-weight: $weight-normal;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.task-due-relative {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.1875rem;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	.is-overdue & {
+		color: var(--gauzy-action-danger-text);
+		font-weight: $weight-medium;
+	}
+
+	.is-soon & {
+		color: var(--gauzy-chart-expenses);
+		font-weight: $weight-medium;
+	}
+}
+
+.table-footer {
+	margin: 0;
+	padding: $gap-sm $gap-lg;
+	border-top: $hairline;
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.state--compact {
+	min-height: 5rem;
+}
+
+/* ── Screenshots ─────────────────────────────────────────────────────────── */
+
+// Never narrower than the card's own `min-width` (189px,
+// screenshots-item.component.scss), the same floor the dashboard's carousel uses.
+.screenshots {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(189px, 1fr));
+	gap: $gap-md;
+}
+
+.screenshot {
+	display: block;
+	min-width: 0;
+}
+
+/*
+ * The screenshot cards, styled exactly as the Time Tracking dashboard's Recent
+ * Activities styles them (`time-tracking.component.scss`, the `ngx-screenshots-item`
+ * block): a hairline ring on the card surface with a soft hover shadow, a faded
+ * placeholder, a slim activity bar without the percentage printed inside it, and
+ * compact time / date / activity lines. Keep the two in step.
+ */
+.screenshots ::ng-deep ngx-screenshots-item {
+	.card {
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+		background-color: var(--gauzy-card-1);
+		min-width: 0;
+		max-width: none;
+
+		&:hover {
+			box-shadow:
+				inset 0 0 0 1px var(--gauzy-border-default-color),
+				0 8px 20px -12px rgba(0, 0, 0, 0.45);
+		}
+
+		&.danger-bordered {
+			box-shadow: none;
+		}
+	}
+
+	nb-progress-bar .progress-value span {
+		display: none;
+	}
+
+	nb-progress-bar.size-tiny .progress-container {
+		height: 5px;
+	}
+
+	.image-container {
+		background-color: var(--gauzy-hover-tint) !important;
+	}
+
+	.image-container img.default-image {
+		box-sizing: border-box !important;
+		padding: 2.5rem !important;
+		opacity: 0.35 !important;
+	}
+
+	.slot-info {
+		padding: 0.75rem !important;
+
+		.time-span {
+			margin-top: 0 !important;
+			margin-bottom: 0.5rem !important;
+		}
+
+		.inline-time-span {
+			font-size: nb-theme(gauzy-table-header-font-size);
+			font-weight: 600;
+			line-height: 1.125rem;
+			color: var(--gauzy-text-color-1);
+			font-variant-numeric: tabular-nums;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.caption {
+			margin-top: 0.125rem !important;
+			line-height: 1rem;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.activity-count {
+			margin-top: 0.375rem !important;
+			font-size: nb-theme(gauzy-table-header-font-size);
+			line-height: 1rem;
+			color: var(--gauzy-text-color-2);
+			font-variant-numeric: tabular-nums;
+		}
+	}
+}
+
+/* ── Profile tab ─────────────────────────────────────────────────────────── */
+
+// Record on the left, the ways to reach the person on the right — the layout
+// HR tools use for a person page. Stacks into one column on narrow screens.
+.profile {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+	gap: $gap-lg;
+	align-items: start;
+
+	@media screen and (max-width: $grid-breakpoint) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.profile-main,
+.profile-side {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	min-width: 0;
+}
+
+.panel-title--icon {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-sm;
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.field-label {
+	display: block;
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-normal;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+}
+
+.field-value {
+	display: block;
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: $weight-normal;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+}
+
+.field-link {
+	display: block;
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-action-info-text);
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+// Two columns of label-over-value, so a short record reads as a form summary
+// rather than one long list.
+.field-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+	gap: $gap-lg $gap-xl;
+	margin: 0;
+
+	.field {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1875rem;
+		min-width: 0;
+	}
+}
+
+.about-lead {
+	margin: 0 0 $gap-sm;
+	font-size: 0.875rem;
+	font-weight: $weight-medium;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+}
+
+.about-body {
+	font-size: 0.8125rem;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+	overflow-wrap: anywhere;
+
+	::ng-deep {
+		p {
+			margin: 0 0 $gap-sm;
+		}
+
+		> :last-child {
+			margin-bottom: 0;
+		}
+
+		a {
+			color: var(--gauzy-action-info-text);
+		}
+
+		ul,
+		ol {
+			margin: 0 0 $gap-sm;
+			padding-inline-start: 1.25rem;
+		}
+	}
+}
+
+.not-provided {
+	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	font-style: italic;
+	color: var(--gauzy-text-color-2);
+}
+
+.chip-groups {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-md;
+}
+
+.chip-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+
+.chip-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+}
+
+// Skill and tag chips keep text in the text tokens; the swatch carries the colour.
+.chip--swatch {
+	padding: 0.125rem 0.5rem;
+	font-size: 0.75rem;
+	color: var(--gauzy-text-color-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	background-color: transparent;
+}
+
+.swatch {
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--gauzy-text-color-2);
+}
+
+.side-list {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-md;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.side-item {
+	display: flex;
+	align-items: flex-start;
+	gap: $gap-md;
+	min-width: 0;
+
+	> nb-icon {
+		flex: 0 0 auto;
+		width: 1rem;
+		height: 1rem;
+		margin-top: 0.5rem;
+		font-size: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.side-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.0625rem;
+	min-width: 0;
+}
+
+.address {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	font-size: 0.8125rem;
+	font-style: normal;
+	line-height: 1.375rem;
+	color: var(--gauzy-text-color-1);
+}
+
+/* ── Empty / unavailable ─────────────────────────────────────────────────── */
+
+.state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: $gap-xs;
+	height: 100%;
+	min-height: 7rem;
+	padding: $gap-lg;
+	text-align: center;
+
+	nb-icon {
+		width: 1.25rem;
+		height: 1.25rem;
+		font-size: 1.25rem;
+		color: var(--gauzy-text-color-2);
+	}
+
+	p {
+		margin: 0;
+		font-size: nb-theme(text-caption-font-size);
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.tab,
+	.panel-link,
+	.data-table tbody tr {
+		transition: none;
+	}
+}
+
+/* ── Narrow viewports ────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 36rem) {
+	.profile-row {
+		flex-wrap: wrap;
+	}
+
+	.profile-actions {
+		width: 100%;
+		margin-top: 0;
+	}
+
+	.data-table .col-project {
+		display: none;
+	}
+
+	.segmented {
+		width: 100%;
+		overflow-x: auto;
+	}
+}

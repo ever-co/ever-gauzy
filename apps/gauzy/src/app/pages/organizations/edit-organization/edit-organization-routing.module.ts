@@ -19,6 +19,9 @@ const routes: Routes = [
 		component: EditOrganizationComponent,
 		canActivate: [PermissionsGuard],
 		data: {
+			// The tabset identifier for the route, read by `EditOrganizationSettingsComponent`
+			// and handed to `gz-dynamic-tabs` — the same wiring the employee edit page uses.
+			tabsetId: 'organization-edit-page',
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_EDIT],
 				redirectTo

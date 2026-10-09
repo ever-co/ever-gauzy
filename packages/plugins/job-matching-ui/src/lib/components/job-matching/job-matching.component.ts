@@ -38,6 +38,14 @@ import { I18nService, TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	standalone: false
 })
 export class JobMatchingComponent extends TranslationBaseComponent implements OnInit {
+	/**
+	 * Stable permission array for `*ngxPermissionsOnly`.
+	 * 🛑 Never inline the literal in the binding: a new array on every change-detection
+	 * cycle makes ngx-permissions re-validate forever under default change detection,
+	 * which pins the main thread and the view never finishes rendering.
+	 */
+	public readonly permGateOrgJobMatchingViewAllOrgView = Object.freeze(['ORG_JOB_MATCHING_VIEW', 'ALL_ORG_VIEW']) as string[];
+
 	public criterionForm = {
 		jobSource: JobPostSourceEnum.UPWORK,
 		jobPresetId: null

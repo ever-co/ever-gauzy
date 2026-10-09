@@ -1,0 +1,46 @@
+@use 'themes' as *;
+
+// Card and row chrome live in `team-summary-card.component.scss` and
+// `team-member-row.component.scss` — this widget only owns the masonry those
+// pieces are laid out in.
+:host {
+	display: block;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+}
+
+// A grid rather than the legacy `column-count: 2` masonry: CSS columns would
+// slice a team card across a column break, and a canvas widget is resized to any
+// of 4/6/8/12 columns where two hard-coded columns turn into unreadable slivers.
+.team-overview {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	// `align-items: start` so a team with two members does not stretch to the
+	// height of the tallest card in its row.
+	align-items: start;
+	gap: 0.75rem;
+	height: 100%;
+	overflow-y: auto;
+	padding-right: 0.25rem;
+}
+
+.team-overview-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.team-overview-members {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.team-overview-empty {
+	padding: 0.5rem;
+	color: nb-theme(text-hint-color);
+	font-size: nb-theme(text-caption-font-size);
+}

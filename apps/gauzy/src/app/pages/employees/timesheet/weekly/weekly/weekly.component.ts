@@ -221,7 +221,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 			.pipe(
 				filter((log: ITimeLog) => !!log),
 				tap((log: ITimeLog) =>
-					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(log.startedAt))
+					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(log.startedAt), this.timeZoneService.currentTimeZone)
 				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -269,7 +269,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		dialogRef.onClose
 			.pipe(
 				filter((timeLog) => !!timeLog), // Ensure valid timeLog
-				tap((timeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt))), // Refresh the date range picker
+				tap((timeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt), this.timeZoneService.currentTimeZone)), // Refresh the date range picker
 				tap(() => this.subject$.next(true)), // Notify observers of changes
 				untilDestroyed(this) // Cleanup when the component is destroyed
 			)

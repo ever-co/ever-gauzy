@@ -2,6 +2,43 @@ const fs = require('fs');
 const simpleGit = require('simple-git');
 const git = simpleGit();
 
+// Windows Authenticode: engage electron-updater publisher verification ONLY when a publisher name
+// is provided (i.e. a publicly-trusted certificate is configured via WIN_CSC_LINK in CI). With no
+// publisher name, electron-updater skips signature verification, so unsigned or self-signed interim
+// builds are never stranded. Signing itself is driven by WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD env.
+function applyWindowsSigning(pkg) {
+	const publisherName = process.env.WINDOWS_PUBLISHER_NAME;
+	if (!publisherName) return;
+
+	pkg.build = pkg.build || {};
+	pkg.build.win = pkg.build.win || {};
+
+	// Preferred path: Azure Artifact Signing (formerly Trusted Signing). Engaged only when a
+	// certificate profile name is supplied, i.e. the Azure identity validation has completed and
+	// a profile exists. electron-builder authenticates with AZURE_TENANT_ID / AZURE_CLIENT_ID /
+	// AZURE_CLIENT_SECRET from the environment (DefaultAzureCredential).
+	const certificateProfileName = process.env.AZURE_CERT_PROFILE_NAME;
+	if (certificateProfileName) {
+		pkg.build.win.azureSignOptions = {
+			...(pkg.build.win.azureSignOptions || {}),
+			publisherName,
+			endpoint: process.env.AZURE_CODE_SIGNING_ENDPOINT || 'https://eus.codesigning.azure.net/',
+			codeSigningAccountName: process.env.AZURE_CODE_SIGNING_ACCOUNT || 'ever',
+			certificateProfileName
+		};
+		// Azure signing supersedes the PFX/signtool path; drop it so only one signer is configured.
+		delete pkg.build.win.signtoolOptions;
+		return;
+	}
+
+	// Fallback: PFX via WIN_CSC_LINK / WIN_CSC_KEY_PASSWORD (signtool).
+	pkg.build.win.signtoolOptions = {
+		...(pkg.build.win.signtoolOptions || {}),
+		publisherName,
+		rfc3161TimeStampServer: "http://timestamp.digicert.com"
+	};
+}
+
 async function getLatestTag(repoURL) {
 	try {
 		// Fetch remote tags
@@ -62,6 +99,17 @@ async function getTagForCommit(repoURL, sha) {
 // exist (e.g. every develop merge creates one). Falls back to the latest tag for
 // builds of untagged commits (e.g. ad-hoc pushes to 'temp').
 async function getBuildTag(repoURL) {
+	// The check-release-tag gate resolves the release tag of the promoted commit - including
+	// merge-commit promotions, where the tag points at the merge parent (the promoted branch
+	// tip) rather than at GITHUB_SHA itself - and hands it down via GAUZY_RELEASE_TAG.
+	const gateTag = (process.env.GAUZY_RELEASE_TAG || '').trim();
+	if (gateTag) {
+		if (/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(gateTag)) {
+			console.log('Using release tag resolved by the check-release-tag gate:', gateTag);
+			return gateTag;
+		}
+		console.warn(`Ignoring GAUZY_RELEASE_TAG '${gateTag}' - not a vX.Y.Z release tag`);
+	}
 	try {
 		const sha = process.env.GITHUB_SHA || (await git.revparse(['HEAD'])).trim();
 		const tagAtCommit = await getTagForCommit(repoURL, sha);
@@ -123,13 +171,6 @@ module.exports.serverapi = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -139,17 +180,11 @@ module.exports.serverapi = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server-api/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server-api/src/package.json');
@@ -205,13 +240,6 @@ module.exports.server = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -221,17 +249,11 @@ module.exports.server = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server/src/package.json');
@@ -287,13 +309,6 @@ module.exports.servermcp = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -303,17 +318,11 @@ module.exports.servermcp = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/server-mcp/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/server-mcp/src/package.json');
@@ -369,13 +378,6 @@ module.exports.desktop = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -385,17 +387,11 @@ module.exports.desktop = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/desktop/src/package.json');
@@ -451,13 +447,6 @@ module.exports.desktopTimer = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${timerAppName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -467,17 +456,11 @@ module.exports.desktopTimer = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${timerAppName}`,
-					acl: 'public-read'
 				}
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/desktop-timer/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/desktop-timer/src/package.json');
@@ -533,13 +516,6 @@ module.exports.agent = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'prerelease'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}-pre`,
-					acl: 'public-read'
 				}
 			];
 		} else {
@@ -549,17 +525,11 @@ module.exports.agent = async (isProd) => {
 					repo: appRepoName,
 					owner: appRepoOwner,
 					releaseType: 'release'
-				},
-				{
-					provider: 'spaces',
-					name: 'ever',
-					region: 'sfo3',
-					path: `/${appName}`,
-					acl: 'public-read'
 				}
 			];
 		}
 
+		applyWindowsSigning(package);
 		fs.writeFileSync('./apps/agent/src/package.json', JSON.stringify(package, null, 2));
 
 		let updated = require('../apps/agent/src/package.json');

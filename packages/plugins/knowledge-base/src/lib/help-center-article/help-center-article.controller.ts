@@ -1,12 +1,30 @@
 import { PermissionsEnum, IHelpCenterArticle, ID, IPagination, IHelpCenterArticleFiltering } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put, Patch, Res, Query, Req } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Patch,
+	Post,
+	Put,
+	Query,
+	Req,
+	Res,
+	UseGuards,
+	UsePipes
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
 import { Response, Request } from 'express';
 import {
 	Permissions,
+	AbstractValidationPipe,
 	CrudController,
+	TenantOrganizationBaseDTO,
 	TenantPermissionGuard,
 	PermissionGuard,
 	UseValidationPipe,
@@ -119,15 +137,12 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@ApiOperation({ summary: 'Upload binary description (octet-stream)' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Binary saved.' })
 	@HttpCode(HttpStatus.OK)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Put(':id/binary-description')
-	async uploadBinaryDescription(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Req() req: Request
-	): Promise<void> {
+	async uploadBinaryDescription(@Param('id', UUIDValidationPipe) id: string, @Req() req: Request): Promise<void> {
 		const binary = await this.helpCenterArticleService.readBinaryStream(req);
-		await this.commandBus.execute(
-			new HelpCenterUpdateArticleCommand(id, { descriptionBinary: binary as any })
-		);
+		await this.commandBus.execute(new HelpCenterUpdateArticleCommand(id, { descriptionBinary: binary as any }));
 	}
 
 	/**
@@ -140,19 +155,22 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@ApiOperation({ summary: 'Atomic update of all description fields (binary + HTML + JSON)' })
 	@ApiResponse({ status: HttpStatus.OK, description: 'Description updated.' })
 	@HttpCode(HttpStatus.OK)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Patch(':id/description')
 	async patchDescription(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: { descriptionBinary?: string; descriptionHtml?: string; descriptionJson?: any }
 	): Promise<void> {
 		await this.helpCenterArticleService.updateDescriptionFields(id, {
-			descriptionBinary: body.descriptionBinary
-				? Buffer.from(body.descriptionBinary, 'base64')
-				: undefined,
+			descriptionBinary: body.descriptionBinary ? Buffer.from(body.descriptionBinary, 'base64') : undefined,
 			descriptionHtml: body.descriptionHtml,
-			descriptionJson: body.descriptionJson !== undefined
-				? (typeof body.descriptionJson === 'string' ? body.descriptionJson : JSON.stringify(body.descriptionJson))
-				: undefined
+			descriptionJson:
+				body.descriptionJson !== undefined
+					? typeof body.descriptionJson === 'string'
+						? body.descriptionJson
+						: JSON.stringify(body.descriptionJson)
+					: undefined
 		});
 	}
 
@@ -196,6 +214,8 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
 	async update(
@@ -203,5 +223,55 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		@Body() updateInput: UpdateHelpCenterArticleDTO
 	): Promise<void> {
 		return await this.commandBus.execute(new HelpCenterUpdateArticleCommand(id, updateInput));
+	}
+
+	/**
+	 * DELETE Help Center Article By Id
+	 *
+	 * Overrides the inherited `CrudController.delete()` route only to attach the permission gate:
+	 * `PermissionGuard` authorizes any route that carries no `@Permissions` metadata, so an
+	 * inherited handler is reachable by every member of the tenant until it is gated here. This is
+	 * the route the Angular Help Center uses to delete an article.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The record has been successfully deleted' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
+	@Delete(':id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
+		return super.delete(id);
+	}
+
+	/**
+	 * SOFT DELETE Help Center Article By Id
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<HelpCenterArticle> {
+		return super.softRemove(id, ...options);
+	}
+
+	/**
+	 * RESTORE a soft-deleted Help Center Article By Id
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<HelpCenterArticle> {
+		return super.softRecover(id, ...options);
 	}
 }

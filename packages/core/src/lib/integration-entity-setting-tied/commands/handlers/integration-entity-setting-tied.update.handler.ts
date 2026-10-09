@@ -18,6 +18,6 @@ export class IntegrationEntitySettingTiedUpdateHandler
 		const { input, integrationId } = command;
 
 		await this._integrationTenantService.findOneByIdString(integrationId);
-		return await this._integrationEntitySettingTiedService.bulkUpdateOrCreate(input);
+		return await this._integrationEntitySettingTiedService.bulkUpdateOrCreate(integrationId, input);
 	}
 }

@@ -5,7 +5,7 @@ import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauz
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
@@ -13,10 +13,54 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 
+/**
+ * Relations a tag can be attached to, with the join alias and the `*_counter` field the tags page sums
+ * into the usage count: [relation property, join alias, counter name].
+ */
+export const TAG_USAGE_COUNTERS: ReadonlyArray<readonly [string, string, string]> = [
+	['candidates', 'candidate', 'candidate_counter'],
+	['employees', 'employee', 'employee_counter'],
+	['employeeLevels', 'employeeLevel', 'employee_level_counter'],
+	['equipments', 'equipment', 'equipment_counter'],
+	['eventTypes', 'eventType', 'event_type_counter'],
+	['expenses', 'expense', 'expense_counter'],
+	['incomes', 'income', 'income_counter'],
+	['integrations', 'integration', 'integration_counter'],
+	['invoices', 'invoice', 'invoice_counter'],
+	['merchants', 'merchant', 'merchant_counter'],
+	['organizations', 'organization', 'organization_counter'],
+	['organizationContacts', 'organizationContact', 'organization_contact_counter'],
+	['organizationDepartments', 'organizationDepartment', 'organization_department_counter'],
+	['organizationEmploymentTypes', 'organizationEmploymentType', 'organization_employment_type_counter'],
+	['expenseCategories', 'expenseCategory', 'expense_category_counter'],
+	['organizationPositions', 'organizationPosition', 'organization_position_counter'],
+	['organizationProjects', 'organizationProject', 'organization_project_counter'],
+	['organizationTeams', 'organizationTeam', 'organization_team_counter'],
+	['organizationVendors', 'organizationVendor', 'organization_vendor_counter'],
+	['payments', 'payment', 'payment_counter'],
+	['products', 'product', 'product_counter'],
+	['requestApprovals', 'requestApproval', 'request_approval_counter'],
+	['tasks', 'task', 'task_counter'],
+	['users', 'user', 'user_counter'],
+	['warehouses', 'warehouse', 'warehouse_counter']
+];
+
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
 	constructor(typeOrmTagRepository: TypeOrmTagRepository, mikroOrmTagRepository: MikroOrmTagRepository) {
 		super(typeOrmTagRepository, mikroOrmTagRepository);
+	}
+
+	/**
+	 * Case-insensitive "contains" filters on name / color / description for the MikroORM tag queries
+	 * (`$ilike` is PostgreSQL-only, see `mikroOrmContains`).
+	 */
+	private mikroOrmTextFilters(fields: Record<string, string | undefined>): Record<string, unknown> {
+		const filters: Record<string, unknown> = {};
+		for (const [field, value] of Object.entries(fields)) {
+			if (isNotEmpty(value)) filters[field] = mikroOrmContains(value);
+		}
+		return filters;
 	}
 
 	/**
@@ -27,6 +71,13 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @returns A pagination object containing the filtered tags and total count.
 	 */
 	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
+		// This method builds its own query instead of going through the CRUD read methods, so the
+		// sink-level check in `CrudService` never runs for it. Assert the sensitive-relation table
+		// here too: every tenant-scoped entity exposes an `organization` relation, so a client-supplied
+		// `relations` reaches the protected rows from any entity, not only from the ones whose
+		// controller mounts `SensitiveRelationsInterceptor`.
+		this.assertRelationsPermitted({ relations });
+
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = input;
 
@@ -38,9 +89,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					isSystem: false
 				};
 				if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-				if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
-				if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
-				if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+				Object.assign(where, this.mikroOrmTextFilters({ name, color, description }));
 
 				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 					populate: relations as any[]
@@ -79,6 +128,11 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		input: ITagFindInput,
 		relations: string[] | FindOptionsRelations<Tag> = []
 	): Promise<IPagination<ITag>> {
+		// See findTagsByLevel: this method builds its own query and never reaches the CRUD sink, so the
+		// sensitive-relation table has to be asserted here. `GET /api/tags` is the cheapest route to
+		// the protected rows — the controller declares no permission at all.
+		this.assertRelationsPermitted({ relations });
+
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -91,17 +145,21 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						isSystem: false
 					};
 					if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-					if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
-					if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
-					if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+					Object.assign(where, this.mikroOrmTextFilters({ name, color, description }));
 
+					// Always load tagType: tagTypeName below is derived from it, whatever the caller asked for
+					const requested = Array.isArray(relations) ? relations : Object.keys(relations);
+					const populate = new Set([...requested, 'tagType']);
 					const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
-						populate: (Array.isArray(relations) ? relations : Object.keys(relations)) as any[]
+						populate: [...populate] as any[]
 					});
 
 					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 					const serialized = await Promise.all(items.map(async (item: any) => {
-						const s = this.serialize(item);
+						// `tagTypeName` is not a Tag column: the TypeORM branch adds it as a raw select alias
+						const s: Tag & { tagTypeName?: string | null } = this.serialize(item);
+						// Same field the TypeORM branch selects; the tags page shows it in its Type column
+						s.tagTypeName = s.tagType?.type ?? null;
 						if (s.icon) s.fullIconUrl = await store.getProviderInstance().url(s.icon);
 						return s;
 					}));
@@ -120,31 +178,9 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 					// Left join all relational tables with tag table
 					query.leftJoin(`${query.alias}.tagType`, 'tagType');
-					query.leftJoin(`${query.alias}.candidates`, 'candidate');
-					query.leftJoin(`${query.alias}.employees`, 'employee');
-					query.leftJoin(`${query.alias}.employeeLevels`, 'employeeLevel');
-					query.leftJoin(`${query.alias}.equipments`, 'equipment');
-					query.leftJoin(`${query.alias}.eventTypes`, 'eventType');
-					query.leftJoin(`${query.alias}.expenses`, 'expense');
-					query.leftJoin(`${query.alias}.incomes`, 'income');
-					query.leftJoin(`${query.alias}.integrations`, 'integration');
-					query.leftJoin(`${query.alias}.invoices`, 'invoice');
-					query.leftJoin(`${query.alias}.merchants`, 'merchant');
-					query.leftJoin(`${query.alias}.organizations`, 'organization');
-					query.leftJoin(`${query.alias}.organizationContacts`, 'organizationContact');
-					query.leftJoin(`${query.alias}.organizationDepartments`, 'organizationDepartment');
-					query.leftJoin(`${query.alias}.organizationEmploymentTypes`, 'organizationEmploymentType');
-					query.leftJoin(`${query.alias}.expenseCategories`, 'expenseCategory');
-					query.leftJoin(`${query.alias}.organizationPositions`, 'organizationPosition');
-					query.leftJoin(`${query.alias}.organizationProjects`, 'organizationProject');
-					query.leftJoin(`${query.alias}.organizationTeams`, 'organizationTeam');
-					query.leftJoin(`${query.alias}.organizationVendors`, 'organizationVendor');
-					query.leftJoin(`${query.alias}.payments`, 'payment');
-					query.leftJoin(`${query.alias}.products`, 'product');
-					query.leftJoin(`${query.alias}.requestApprovals`, 'requestApproval');
-					query.leftJoin(`${query.alias}.tasks`, 'task');
-					query.leftJoin(`${query.alias}.users`, 'user');
-					query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
+					for (const [relation, alias] of TAG_USAGE_COUNTERS) {
+						query.leftJoin(`${query.alias}.${relation}`, alias);
+					}
 
 					// Custom Entity Fields: Add left joins for each custom field if they exist
 					if (customFields.length > 0) {
@@ -159,57 +195,22 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					query.select(`${query.alias}.*`);
 
 					query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
-					// Add the select statement for counting, and cast it to integer
-					query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
-					query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
-					query.addSelect(p(`CAST(COUNT("employeeLevel"."id") AS INTEGER)`), `employee_level_counter`);
-					query.addSelect(p(`CAST(COUNT("equipment"."id") AS INTEGER)`), `equipment_counter`);
-					query.addSelect(p(`CAST(COUNT("eventType"."id") AS INTEGER)`), `event_type_counter`);
-					query.addSelect(p(`CAST(COUNT("expense"."id") AS INTEGER)`), `expense_counter`);
-					query.addSelect(p(`CAST(COUNT("income"."id") AS INTEGER)`), `income_counter`);
-					query.addSelect(p(`CAST(COUNT("integration"."id") AS INTEGER)`), `integration_counter`);
-					query.addSelect(p(`CAST(COUNT("invoice"."id") AS INTEGER)`), `invoice_counter`);
-					query.addSelect(p(`CAST(COUNT("merchant"."id") AS INTEGER)`), `merchant_counter`);
-					query.addSelect(p(`CAST(COUNT("organization"."id") AS INTEGER)`), `organization_counter`);
-					query.addSelect(
-						p(`CAST(COUNT("organizationContact"."id") AS INTEGER)`),
-						`organization_contact_counter`
-					);
-					query.addSelect(
-						p(`CAST(COUNT("organizationDepartment"."id") AS INTEGER)`),
-						`organization_department_counter`
-					);
-					query.addSelect(
-						p(`CAST(COUNT("organizationEmploymentType"."id") AS INTEGER)`),
-						`organization_employment_type_counter`
-					);
-					query.addSelect(p(`CAST(COUNT("expenseCategory"."id") AS INTEGER)`), `expense_category_counter`);
-					query.addSelect(
-						p(`CAST(COUNT("organizationPosition"."id") AS INTEGER)`),
-						`organization_position_counter`
-					);
-					query.addSelect(
-						p(`CAST(COUNT("organizationProject"."id") AS INTEGER)`),
-						`organization_project_counter`
-					);
-					query.addSelect(p(`CAST(COUNT("organizationTeam"."id") AS INTEGER)`), `organization_team_counter`);
-					query.addSelect(
-						p(`CAST(COUNT("organizationVendor"."id") AS INTEGER)`),
-						`organization_vendor_counter`
-					);
-					query.addSelect(p(`CAST(COUNT("payment"."id") AS INTEGER)`), `payment_counter`);
-					query.addSelect(p(`CAST(COUNT("product"."id") AS INTEGER)`), `product_counter`);
-					query.addSelect(p(`CAST(COUNT("requestApproval"."id") AS INTEGER)`), `request_approval_counter`);
-					query.addSelect(p(`CAST(COUNT("task"."id") AS INTEGER)`), `task_counter`);
-					query.addSelect(p(`CAST(COUNT("user"."id") AS INTEGER)`), `user_counter`);
-					query.addSelect(p(`CAST(COUNT("warehouse"."id") AS INTEGER)`), `warehouse_counter`);
+					// Add the select statement for counting, and cast it to integer. DISTINCT is required: the
+					// relations are all LEFT JOINed at once, so each count would otherwise be multiplied by the
+					// matches of every other relation (2 employees + 3 tasks counted 6 + 6).
+					for (const [, alias, counter] of TAG_USAGE_COUNTERS) {
+						query.addSelect(p(`CAST(COUNT(DISTINCT "${alias}"."id") AS INTEGER)`), counter);
+					}
 
 					// Custom Entity Fields: Add select statements for each custom field if they exist
 					if (customFields.length > 0) {
 						customFields.forEach((field) => {
 							if (field.relationType === 'many-to-many') {
 								const selectionAliasName = `${field.name}_counter`;
-								query.addSelect(`CAST(COUNT(${field.name}.id) AS INTEGER)`, selectionAliasName);
+								query.addSelect(
+									`CAST(COUNT(DISTINCT ${field.name}.id) AS INTEGER)`,
+									selectionAliasName
+								);
 							}
 						});
 					}

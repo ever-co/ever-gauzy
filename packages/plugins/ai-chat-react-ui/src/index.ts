@@ -13,14 +13,27 @@ export { AiChatReactUiPlugin } from './lib/ai-chat-react-ui.plugin';
 
 // Angular bridge components
 export { AiChatSidebarComponent } from './lib/ai-chat-sidebar.component';
+export { AiChatWindowComponent } from './lib/ai-chat-window.component';
 export { PlaygroundPageComponent } from './lib/playground-page.component';
 export { PlaygroundChatSidebarComponent } from './lib/playground-chat-sidebar.component';
 
 // Providers — register the AI Chat in the layout's dedicated chat sidebar slot
 export { provideAiChatSidebar } from './lib/provide-ai-chat-sidebar';
 
+// Chat availability (permission + backend configuration) — shared by the
+// sidebar registration and the AI Providers settings page
+export {
+	AiChatAvailabilityService,
+	type AiChatUnavailableReason,
+	type IAiChatAvailability
+} from './lib/ai-chat-availability.service';
+
 // Route config
 export { PLAYGROUND_PATH, PLAYGROUND_ROUTE } from './lib/playground.routes';
+
+// Detached chat window routes — wired into the app's ROOT routes so the window
+// renders without the /pages shell (nav menu sidebar, header, footer)
+export { AI_CHAT_WINDOW_PATH, AI_CHAT_WINDOW_ROUTES } from './lib/ai-chat-window.routes';
 
 // AI Providers (BYOK) settings page — component, service, and route config
 export {
@@ -40,6 +53,10 @@ export {
 	ChatWelcome,
 	MarkdownContent
 } from './lib/components';
+
+// i18n bridge — lets React components read the same ngx-translate bundles the
+// Angular side uses (chat chrome lives in the core `AI_ASSISTANT.*` namespace)
+export { useChatTranslate, passthroughChatTranslate, type ChatTranslate } from './lib/use-chat-translate';
 
 // Theme tokens
 export { chatTheme } from './lib/chat-theme';

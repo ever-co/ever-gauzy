@@ -95,7 +95,11 @@ nb-card-footer {
 
 .product-photo {
   width: 100%;
-  background-color: white;
+  // Was a literal `white`: with no featured image yet, this well is the visible
+  // surface, so on the dark themes it rendered as a bright white slab in the
+  // middle of a near-black form. `--gauzy-card-1` is the panel colour, i.e. what
+  // every other empty box on this page already resolves to.
+  background-color: var(--gauzy-card-1);
   overflow: hidden;
   position: relative;
 
@@ -129,14 +133,6 @@ nb-card-footer {
     top: calc(50% - 68px / 2);
     left: calc(50% - 68px / 2);
   }
-}
-
-h5 {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 30px;
-  letter-spacing: 0em;
-  text-align: left;
 }
 
 nb-tab {

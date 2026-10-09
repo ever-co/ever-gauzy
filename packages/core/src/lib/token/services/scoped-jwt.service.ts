@@ -29,7 +29,11 @@ export class ScopedJwtService implements IJwtService {
 	async verify(token: string): Promise<ITokenPayload> {
 		let decoded: ITokenPayload;
 		try {
-			decoded = (await this.jwtService.verifyAsync(token, { secret: this.secret })) as ITokenPayload;
+			decoded = (await this.jwtService.verifyAsync(token, {
+				secret: this.secret,
+				// Our tokens are only ever signed with HS256; never accept another algorithm.
+				algorithms: ['HS256']
+			})) as ITokenPayload;
 		} catch (error) {
 			if (error instanceof TokenExpiredError) {
 				throw new UnauthorizedException('Token has expired');

@@ -1,0 +1,10 @@
+<!--
+	The panel renders nothing without DOCS_READ or with FEATURE_DOCUMENTS off, so the
+	tab body is simply empty on a deployment that does not run the Documents feature.
+-->
+<gz-document-links-panel
+	*ngIf="selectedEmployee"
+	[entity]="documentEntity"
+	[entityId]="selectedEmployee.id"
+	[entityLabel]="employeeName"
+></gz-document-links-panel>

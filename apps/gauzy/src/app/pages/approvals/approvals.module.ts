@@ -18,6 +18,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
+	RecordViewModule,
 	RequestApprovalMutationModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
@@ -43,6 +44,7 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 		NbRadioModule,
 		ApprovalsRoutingModule,
 		SharedModule,
+		RecordViewModule,
 		RequestApprovalMutationModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),

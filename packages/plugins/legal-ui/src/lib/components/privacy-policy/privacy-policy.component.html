@@ -1,2 +1,35 @@
-<div [innerHtml]="privacy_policy" class="privacy__policy"></div>
-<div [innerHtml]="cookie_policy" class="cookie__policy"></div>
+<section class="privacy__policy" *ngIf="showPrivacy">
+	<header class="legal-doc__header" *ngIf="privacy">
+		<h1 class="legal-doc__title">{{ privacy.title }}</h1>
+		<p class="legal-doc__meta">
+			<span class="legal-doc__product">{{ privacy.productName }}</span>
+			<span class="legal-doc__separator" aria-hidden="true">&middot;</span>
+			<span class="legal-doc__version">
+				{{ 'LEGAL.DOCUMENT_VERSION' | translate: { version: privacy.version } }}
+			</span>
+			<span class="legal-doc__separator" aria-hidden="true">&middot;</span>
+			<span class="legal-doc__effective-date">
+				{{ 'LEGAL.DOCUMENT_EFFECTIVE_DATE' | translate: { date: privacy.effectiveDate } }}
+			</span>
+		</p>
+	</header>
+	<div class="legal-doc__body" [innerHtml]="privacy_policy"></div>
+</section>
+
+<section class="cookie__policy" *ngIf="showCookies">
+	<header class="legal-doc__header" *ngIf="cookies">
+		<h1 class="legal-doc__title">{{ cookies.title }}</h1>
+		<p class="legal-doc__meta">
+			<span class="legal-doc__product">{{ cookies.productName }}</span>
+			<span class="legal-doc__separator" aria-hidden="true">&middot;</span>
+			<span class="legal-doc__version">
+				{{ 'LEGAL.DOCUMENT_VERSION' | translate: { version: cookies.version } }}
+			</span>
+			<span class="legal-doc__separator" aria-hidden="true">&middot;</span>
+			<span class="legal-doc__effective-date">
+				{{ 'LEGAL.DOCUMENT_EFFECTIVE_DATE' | translate: { date: cookies.effectiveDate } }}
+			</span>
+		</p>
+	</header>
+	<div class="legal-doc__body" [innerHtml]="cookie_policy"></div>
+</section>

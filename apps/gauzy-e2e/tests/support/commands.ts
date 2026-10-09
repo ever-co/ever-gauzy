@@ -68,7 +68,17 @@ export const CustomCommands = {
 			}
 		});
 		await getPage()
-			.locator('h4.card-header-title:has-text("Tags")')
+			// Anchored to the CLASS, not to the element carrying it. The heading used
+			// to be `<h4 class="card-header-title">`; moving the page actions up onto
+			// the title line needed the heading in a block of its own, so it became
+			// `<div class="card-header-title"><h4>`. `h4.card-header-title` then
+			// matched nothing — on every page, since this helper is shared — and all
+			// four shards failed here rather than on anything they were testing.
+			//
+			// Scoped to the main card because this page renders a second header for
+			// the tag-type filter rail, and an unscoped `:has-text("Tags")` is a
+			// substring match.
+			.locator('nb-card.tags-component .card-header-title:has-text("Tags")')
 			.first()
 			.waitFor({ state: 'visible', timeout: 30000 });
 		await organizationTagsUserPage.gridButtonVisible();
@@ -276,8 +286,10 @@ export const CustomCommands = {
 		await manageEmployeesPage.enterUsernameData(username);
 		await manageEmployeesPage.employeeEmailInputVisible();
 		await manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
-		await manageEmployeesPage.dateInputVisible();
-		await manageEmployeesPage.enterDateData();
+		// Employee-dialog-scoped: the bare [formcontrolname="startedWorkOn"] also matches the invite
+		// dialog's field whenever that dialog is still mounted (strict-mode violation).
+		await manageEmployeesPage.employeeDateInputVisible();
+		await manageEmployeesPage.enterEmployeeDateData();
 		await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
 		await manageEmployeesPage.passwordInputVisible();
 		await manageEmployeesPage.enterPasswordInputData(password);
@@ -290,6 +302,13 @@ export const CustomCommands = {
 		} catch {
 			/* no tag seeded — employee tags are optional */
 		}
+		// The tag itself is optional, but the DIALOG is not: driving an ng-select that turns out to sit
+		// BEHIND the modal delivers its coordinate clicks onto the cdk-overlay-backdrop, and NbDialog's
+		// closeOnBackdropClick (default true) then dismisses the whole form. Assert the dialog survived
+		// so that failure is reported HERE, with its real cause, instead of being swallowed by the
+		// clickCardBody() catch below and resurfacing 60s later as "#inputImageUrl not found". This can
+		// only ever fire on a run that was already doomed — every line after it needs this same dialog.
+		await getPage().locator('ga-employee-mutation').first().waitFor({ state: 'visible', timeout: 10_000 });
 		await manageEmployeesPage.clickCardBody().catch(() => undefined);
 		await manageEmployeesPage.imageInputVisible();
 		await manageEmployeesPage.enterImageDataUrl(validImg);
@@ -480,11 +499,11 @@ export const CustomCommands = {
 		await loginPage.verifyLoginText();
 	},
 	getIframeBody: (index: number) => {
-		// CKEditor iframe; Playwright addresses frames via frameLocator.
-		return getPage()
-			.frameLocator('iframe.cke_wysiwyg_frame.cke_reset')
-			.nth(index)
-			.locator('body');
+		// Legacy name kept for compatibility: the rich-text editor is now the shared
+		// <ga-rich-text-editor> (TipTap v3) whose editable is a plain contenteditable div
+		// (.ProseMirror) in the MAIN frame — no iframe traversal (the legacy editor's
+		// wysiwyg iframe is gone). Returns the nth editor's editable root on the page.
+		return getPage().locator('ga-rich-text-editor .ProseMirror').nth(index);
 	},
 	loginAsEmployee: async (loginPage: any, dashboardPage: any, empEmail: string, empPassword: string) => {
 		await loginPage.verifyLoginText();

@@ -8,6 +8,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	BaseEntityEnum,
 	IInvoice,
 	IOrganizationContact,
 	IInvoiceItem,
@@ -20,12 +21,14 @@ import {
 	IOrganizationProject,
 	ITask,
 	IProduct,
-	IExpense
+	IExpense,
+	TaxCalculationTypeEnum
 } from '@gauzy/contracts';
 import { compareDate, distinctUntilChange, extractNumber } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { calculateInvoiceFormTotals, taxCalculationTypeMatters } from '../invoice-totals';
 import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
@@ -59,6 +62,12 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	form: UntypedFormGroup;
 	invoice: IInvoice;
 	organization: IOrganization;
+
+	/**
+	 * Entity type the record-side Documents panel attaches to. An estimate is an
+	 * `Invoice` row with `isEstimate` set, so both share one `DocumentLink.entity`.
+	 */
+	public readonly documentEntity = BaseEntityEnum.Invoice;
 	itemsToDelete: string[] = [];
 	invoiceItems: IInvoiceItem[] = [];
 	selectedOrganizationContact: IOrganizationContact;
@@ -69,6 +78,12 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	loading: boolean;
 	selectedLanguage: string;
 	discountTaxTypes = Object.values(DiscountTaxTypeEnum);
+	taxCalculationTypes = Object.values(TaxCalculationTypeEnum);
+
+	/** Whether the Simple/Compound choice changes the total for the selected tax types (and so is shown). */
+	get showTaxCalculationType(): boolean {
+		return taxCalculationTypeMatters(this.form?.get('taxType')?.value, this.form?.get('tax2Type')?.value);
+	}
 	isRemainingAmount: string;
 	alreadyPaid: number;
 	amountDue: number;
@@ -87,6 +102,17 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	}
 	get isEstimate() {
 		return this._isEstimate;
+	}
+
+	/**
+	 * Label persisted into `DocumentLink.metadata.label` when a document is attached,
+	 * so the Documents hub can name this record without re-fetching it.
+	 *
+	 * @param invoice The invoice being edited.
+	 * @returns The invoice number prefixed with `#`, falling back to the id.
+	 */
+	documentLabel(invoice: IInvoice): string {
+		return `#${invoice?.invoiceNumber ?? invoice?.id}`;
 	}
 
 	constructor(
@@ -209,6 +235,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			discountType: [],
 			taxType: [],
 			tax2Type: [],
+			taxCalculationType: [TaxCalculationTypeEnum.SIMPLE],
 			tags: []
 		});
 	}
@@ -228,34 +255,66 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			discountType: invoice.discountType,
 			taxType: invoice.taxType,
 			tax2Type: invoice.tax2Type,
+			// Invoices saved before the type was stored have none: they were always recalculated as SIMPLE.
+			taxCalculationType: invoice.taxCalculationType ?? TaxCalculationTypeEnum.SIMPLE,
 			tags: invoice.tags
 		});
 		this.form.updateValueAndValidity();
+	}
+
+	/**
+	 * A figure with the record’s currency in front of it, and nothing at all when
+	 * there is no figure yet.
+	 *
+	 * Every column’s prepare function also runs on the EMPTY add row, and it feeds
+	 * the inline editor as well as the cell — which is why an untouched add row used
+	 * to open with "BGN undefined" already typed into the price box and "BGN NaN" in
+	 * the total beside it.
+	 */
+	private formatMoney(value: any): string {
+		const amount = Number(value);
+		if (value === null || value === undefined || value === '' || !Number.isFinite(amount)) {
+			return '';
+		}
+		return `${this.currency.value} ${value}`;
 	}
 
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
-			mode: 'external',
+			// No `mode: 'external'` (the default is 'inline'). In external mode the
+			// library stops acting on the Add, Edit and Delete TRIGGERS itself and
+			// emits `create` / `edit` / `delete` for the host to handle. This form
+			// bound only `edit` — so the add button opened no row and the row's own
+			// delete button did nothing, while the `createConfirm` and `deleteConfirm`
+			// handlers below, both written against the inline flow (they resolve the
+			// grid's deferred), could never be reached. Inline is what those handlers
+			// expect and what the Add form beside this one has always run.
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			actions: { add: false, edit: true, delete: true },
+			// The old '<i class="nb-*">' markup relied on Nebular's long-removed icon
+			// font, so every row action rendered as a bare colored dot. FontAwesome is
+			// loaded globally; native `title` (not nbTooltip) because these strings are
+			// injected via [innerHTML], where directives never bind. The OUTLINE set
+			// (`far`), so the row actions read like the eva outline icons the rest of
+			// the app uses rather than the heavier solid glyphs.
 			add: {
-				addButtonContent: '<i class="nb-plus"></i>',
-				createButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
+				createButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmCreate: true
 			},
 			edit: {
-				editButtonContent: '<i class="nb-edit"></i>',
-				saveButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
+				editButtonContent: `<i class="far fa-pen-to-square" aria-hidden="true" title="${this.getTranslation('BUTTONS.EDIT')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.EDIT')}</span>`,
+				saveButtonContent: `<i class="far fa-circle-check" aria-hidden="true" title="${this.getTranslation('BUTTONS.SAVE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.SAVE')}</span>`,
+				cancelButtonContent: `<i class="far fa-circle-xmark" aria-hidden="true" title="${this.getTranslation('BUTTONS.CANCEL')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.CANCEL')}</span>`,
 				confirmSave: true
 			},
 			delete: {
-				deleteButtonContent: '<i class="nb-trash"></i>',
+				deleteButtonContent: `<i class="far fa-trash-can" aria-hidden="true" title="${this.getTranslation('BUTTONS.DELETE')}"></i><span class="sr-only">${this.getTranslation('BUTTONS.DELETE')}</span>`,
 				confirmDelete: true
 			},
 			columns: {}
@@ -345,7 +404,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (value: IInvoiceItem['price']) => {
-					return `${this.currency.value} ${value}`;
+					return this.formatMoney(value);
 				}
 			};
 			quantity = {
@@ -365,7 +424,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+					return this.formatMoney(cell);
 				}
 			};
 			quantity = {
@@ -389,7 +448,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			editable: false,
 			valuePrepareFunction: (value: IInvoiceItem['totalValue'], cell: Cell) => {
 				const row = cell.getRow().getData();
-				return `${this.currency.value} ${row.quantity * row.price}`;
+				return this.formatMoney(row.quantity * row.price);
 			},
 			isFilterable: false,
 			width: '13%'
@@ -424,14 +483,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				}
 			};
 		}
-	}
-
-	/**
-	 *
-	 * @param event
-	 */
-	onEditRowSelect({ row }) {
-		row.isInEditing = true;
 	}
 
 	private async _loadOrganizationData() {
@@ -481,6 +532,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
+				taxCalculationType: invoiceData.taxCalculationType,
 				terms: invoiceData.terms,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
@@ -642,6 +694,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				tax2: invoiceData.tax2,
 				taxType: invoiceData.taxType,
 				tax2Type: invoiceData.tax2Type,
+				taxCalculationType: invoiceData.taxCalculationType,
 				terms: invoiceData.terms,
 				paid: false,
 				totalValue: +this.total.toFixed(2),
@@ -760,66 +813,9 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	async calculateTotal() {
 		const tableData = await this.smartTableSource.getAll();
 
-		const discountValue =
-			this.form.value.discountValue && this.form.value.discountValue > 0 ? this.form.value.discountValue : 0;
-		const tax = this.form.value.tax && this.form.value.tax > 0 ? this.form.value.tax : 0;
-		const tax2 = this.form.value.tax2 && this.form.value.tax2 > 0 ? this.form.value.tax2 : 0;
-
-		let totalDiscount = 0;
-		let totalTax = 0;
-
-		for (const item of tableData) {
-			if (item.applyTax) {
-				switch (this.form.value.taxType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax / 100);
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax;
-						break;
-					default:
-						totalTax = 0;
-						break;
-				}
-				switch (this.form.value.tax2Type) {
-					case DiscountTaxTypeEnum.PERCENT:
-						totalTax += item.totalValue * (+tax2 / 100);
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalTax += +tax2;
-						break;
-					default:
-						totalTax = 0;
-						break;
-				}
-			}
-
-			if (item.applyDiscount) {
-				switch (this.form.value.discountType) {
-					case DiscountTaxTypeEnum.PERCENT:
-						if (!this.discountAfterTax) {
-							totalDiscount += item.totalValue * (+discountValue / 100);
-						}
-						break;
-					case DiscountTaxTypeEnum.FLAT_VALUE:
-						totalDiscount += +discountValue;
-						break;
-					default:
-						totalDiscount = 0;
-						break;
-				}
-			}
-		}
-
-		if (this.discountAfterTax && this.form.value.discountType === DiscountTaxTypeEnum.PERCENT) {
-			totalDiscount = (this.subtotal + totalTax) * (+discountValue / 100);
-		}
-
-		this.total = this.subtotal - totalDiscount + totalTax;
-
-		if (this.total < 0) {
-			this.total = 0;
-		}
+		// See invoice-totals.ts, shared with the add page. The form carries the stored calculation type, so a
+		// compound invoice keeps its total when edited.
+		this.total = calculateInvoiceFormTotals(this.form.value, tableData, this.subtotal, this.discountAfterTax).total;
 
 		this.alreadyPaid = +this.invoice.alreadyPaid;
 		this.amountDue = +this.total - +this.alreadyPaid;
@@ -901,7 +897,10 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			this.itemsToDelete.push(event.data.id);
 		}
 		this.subtotal -= +event.data.quantity * +event.data.price;
-		//await event.confirm.resolve(event.data);
+		// Resolving the grid's deferred is what removes the row; the id above is
+		// what deletes it server-side when the form is saved. Same two steps as the
+		// Add form, where this line was never commented out.
+		await event.confirm.resolve(event.data);
 		await this.calculateTotal();
 	}
 

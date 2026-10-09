@@ -83,14 +83,14 @@
   <div class="mt-3">
     <div class="description">
       <span class="subtitle">{{ 'TIMESHEET.TODO' | translate }} : </span>
-      {{ timeLog?.task ? timeLog?.task?.title : ('TIMESHEET.NO_TODO' | translate) }}
+      <span class="value">{{ timeLog?.task ? timeLog?.task?.title : ('TIMESHEET.NO_TODO' | translate) }}</span>
     </div>
   </div>
   @if (timeLog?.description) {
     <div class="mt-3">
       <div class="description">
         <span class="subtitle">{{ 'TIMESHEET.NOTES' | translate }} : </span>
-        {{ timeLog?.description }}
+        <span class="value">{{ timeLog?.description }}</span>
       </div>
     </div>
   }
@@ -98,7 +98,7 @@
     <div class="mt-3">
       <div class="description">
         <span class="subtitle">{{ 'TIMESHEET.REASON' | translate }} : </span>
-        {{ timeLog?.reason }}
+        <span class="value">{{ timeLog?.reason }}</span>
       </div>
     </div>
   }

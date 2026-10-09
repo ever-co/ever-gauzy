@@ -47,6 +47,10 @@ export interface IDesktopSecret {
 	secret: {
 		jwt: string;
 		refresh_token: string;
+		/** JWT_VERIFICATION_TOKEN_SECRET of the local API (email-confirmation tokens). Generated per install. */
+		verification_token?: string;
+		/** EXPRESS_SESSION_SECRET of the local API. Generated per install. */
+		session?: string;
 	}
 }
 

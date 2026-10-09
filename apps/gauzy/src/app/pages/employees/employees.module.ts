@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import {
 	NbAccordionModule,
 	NbActionsModule,
-	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
@@ -17,7 +16,6 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
@@ -45,6 +43,9 @@ import {
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseMutationModule,
+	RecordViewModule,
+	ScreenshotsItemModule,
+	RichTextEditorModule,
 	SharedModule,
 	SkillsInputModule,
 	TableComponentsModule,
@@ -54,6 +55,7 @@ import {
 } from '@gauzy/ui-core/shared';
 import {
 	EditEmployeeContactComponent,
+	EditEmployeeDocumentsComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeHiringComponent,
 	EditEmployeeLocationComponent,
@@ -76,9 +78,15 @@ import {
 	EmployeeTimeTrackingStatusComponent
 } from './table-components';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
+import { ViewEmployeeComponent } from './view-employee/view-employee.component';
+import { EmployeeHoursChartComponent } from './view-employee/employee-hours-chart/employee-hours-chart.component';
+import { BaseChartDirective } from 'ng2-charts';
+import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 const COMPONENTS = [
 	EmployeesComponent,
+	ViewEmployeeComponent,
+	EmployeeHoursChartComponent,
 	EmployeeBonusComponent,
 	EmployeeAverageIncomeComponent,
 	EmployeeAverageExpensesComponent,
@@ -96,15 +104,15 @@ const COMPONENTS = [
 	EditEmployeeLocationComponent,
 	EditEmployeeEmploymentComponent,
 	EditEmployeeNetworksComponent,
-	EditEmployeeOtherSettingsComponent
+	EditEmployeeOtherSettingsComponent,
+	EditEmployeeDocumentsComponent
 ];
 
 @NgModule({
 	imports: [
-		CKEditorModule,
+		RichTextEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
-		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
 		NbCheckboxModule,
@@ -123,6 +131,8 @@ const COMPONENTS = [
 		TranslateModule.forChild(),
 		EmployeesRoutingModule,
 		SharedModule,
+		RecordViewModule,
+		ScreenshotsItemModule,
 		TableComponentsModule,
 		EmployeeMutationModule,
 		EmployeeEndWorkModule,
@@ -143,7 +153,11 @@ const COMPONENTS = [
 		SmartDataViewLayoutModule,
 		CardGridModule,
 		TimeZoneSelectorModule,
-		DynamicTabsModule
+		DynamicTabsModule,
+		BaseChartDirective,
+		// Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
+		// imported directly — the Documents hub module is never pulled in here.
+		DocumentLinksPanelComponent
 	],
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]

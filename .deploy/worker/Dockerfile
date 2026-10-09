@@ -72,6 +72,12 @@ COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
+COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
+COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
+COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
+COPY --chown=node:node packages/plugins/ever-stats/package.json ./packages/plugins/ever-stats/
+COPY --chown=node:node packages/plugins/ever-connect/package.json ./packages/plugins/ever-connect/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -91,6 +97,17 @@ COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packag
 COPY --chown=node:node packages/plugins/ai-provider-openrouter/package.json ./packages/plugins/ai-provider-openrouter/
 COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json ./packages/plugins/ai-provider-vercel-gateway/
 COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
+COPY --chown=node:node packages/plugins/ai-provider-gemini/package.json ./packages/plugins/ai-provider-gemini/
+COPY --chown=node:node packages/plugins/ai-provider-grok/package.json ./packages/plugins/ai-provider-grok/
+COPY --chown=node:node packages/plugins/ai-provider-groq/package.json ./packages/plugins/ai-provider-groq/
+COPY --chown=node:node packages/plugins/ai-provider-mistral/package.json ./packages/plugins/ai-provider-mistral/
+COPY --chown=node:node packages/plugins/ai-provider-deepgram/package.json ./packages/plugins/ai-provider-deepgram/
+COPY --chown=node:node packages/plugins/ai-provider-elevenlabs/package.json ./packages/plugins/ai-provider-elevenlabs/
+COPY --chown=node:node packages/plugins/ai-provider-speaches/package.json ./packages/plugins/ai-provider-speaches/
+COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packages/plugins/ai-provider-localai/
+COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
+COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
+COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
 
 # We do not build Wakatime plugin here, because it is used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -109,12 +126,13 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
     sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
     elif [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
@@ -122,7 +140,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi && \
-    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts && \
     yarn postinstall.manual && \
     yarn cache clean && \
     rm -f .npmrc .yarnrc
@@ -173,6 +191,12 @@ COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages
 COPY --chown=node:node packages/plugins/integration-make-com/package.json ./packages/plugins/integration-make-com/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
+COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
+COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
+COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
+COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
+COPY --chown=node:node packages/plugins/ever-stats/package.json ./packages/plugins/ever-stats/
+COPY --chown=node:node packages/plugins/ever-connect/package.json ./packages/plugins/ever-connect/
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
@@ -192,6 +216,17 @@ COPY --chown=node:node packages/plugins/ai-provider-openai/package.json ./packag
 COPY --chown=node:node packages/plugins/ai-provider-openrouter/package.json ./packages/plugins/ai-provider-openrouter/
 COPY --chown=node:node packages/plugins/ai-provider-vercel-gateway/package.json ./packages/plugins/ai-provider-vercel-gateway/
 COPY --chown=node:node packages/plugins/ai-provider-gauzy-ai/package.json ./packages/plugins/ai-provider-gauzy-ai/
+COPY --chown=node:node packages/plugins/ai-provider-gemini/package.json ./packages/plugins/ai-provider-gemini/
+COPY --chown=node:node packages/plugins/ai-provider-grok/package.json ./packages/plugins/ai-provider-grok/
+COPY --chown=node:node packages/plugins/ai-provider-groq/package.json ./packages/plugins/ai-provider-groq/
+COPY --chown=node:node packages/plugins/ai-provider-mistral/package.json ./packages/plugins/ai-provider-mistral/
+COPY --chown=node:node packages/plugins/ai-provider-deepgram/package.json ./packages/plugins/ai-provider-deepgram/
+COPY --chown=node:node packages/plugins/ai-provider-elevenlabs/package.json ./packages/plugins/ai-provider-elevenlabs/
+COPY --chown=node:node packages/plugins/ai-provider-speaches/package.json ./packages/plugins/ai-provider-speaches/
+COPY --chown=node:node packages/plugins/ai-provider-localai/package.json ./packages/plugins/ai-provider-localai/
+COPY --chown=node:node packages/plugins/ai-provider-whisper-cpp/package.json ./packages/plugins/ai-provider-whisper-cpp/
+COPY --chown=node:node packages/plugins/ai-provider-openai-compatible/package.json ./packages/plugins/ai-provider-openai-compatible/
+COPY --chown=node:node packages/plugins/docs/package.json ./packages/plugins/docs/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -207,12 +242,13 @@ COPY --chown=node:node patches ./patches
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-    if [ -n "$VERDACCIO_REGISTRY" ]; then \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
     echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
     echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
     sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
     sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
     elif [ -n "$VERDACCIO_TOKEN" ]; then \
+    echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
     echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
     echo "registry=https://packages.ever.co/" >> .npmrc && \
     echo "always-auth=true" >> .npmrc && \
@@ -220,7 +256,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
     sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
     sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
     fi && \
-    yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts --production && \
+    yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts --production && \
     yarn postinstall.manual && \
     yarn cache clean && \
     rm -f .npmrc .yarnrc
@@ -353,6 +389,12 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/integration-make-com/node_modules ./node_modules/@gauzy/plugin-integration-make-com/ && \
     cp -r /mnt/packages/plugins/integration-sim/node_modules ./node_modules/@gauzy/plugin-integration-sim/ && \
     cp -r /mnt/packages/plugins/integration-plane/node_modules ./node_modules/@gauzy/plugin-integration-plane/ && \
+    if [ -d /mnt/packages/plugins/integration-ever-async/node_modules ]; then cp -r /mnt/packages/plugins/integration-ever-async/node_modules ./node_modules/@gauzy/plugin-integration-ever-async/; fi && \
+    if [ -d /mnt/packages/plugins/auth-keycloak/node_modules ]; then cp -r /mnt/packages/plugins/auth-keycloak/node_modules ./node_modules/@gauzy/plugin-auth-keycloak/; fi && \
+    if [ -d /mnt/packages/plugins/auth-zitadel/node_modules ]; then cp -r /mnt/packages/plugins/auth-zitadel/node_modules ./node_modules/@gauzy/plugin-auth-zitadel/; fi && \
+    if [ -d /mnt/packages/plugins/ever-instance/node_modules ]; then cp -r /mnt/packages/plugins/ever-instance/node_modules ./node_modules/@gauzy/plugin-ever-instance/; fi && \
+    if [ -d /mnt/packages/plugins/ever-stats/node_modules ]; then cp -r /mnt/packages/plugins/ever-stats/node_modules ./node_modules/@gauzy/plugin-ever-stats/; fi && \
+    if [ -d /mnt/packages/plugins/ever-connect/node_modules ]; then cp -r /mnt/packages/plugins/ever-connect/node_modules ./node_modules/@gauzy/plugin-ever-connect/; fi && \
     cp -r /mnt/packages/plugins/integration-upwork/node_modules ./node_modules/@gauzy/plugin-integration-upwork/ && \
     cp -r /mnt/packages/plugins/integration-zapier/node_modules ./node_modules/@gauzy/plugin-integration-zapier/ && \
     cp -r /mnt/packages/plugins/jitsu-analytics/node_modules ./node_modules/@gauzy/plugin-jitsu-analytics/ && \
@@ -371,7 +413,18 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     cp -r /mnt/packages/plugins/ai-provider-openai/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai/ && \
     cp -r /mnt/packages/plugins/ai-provider-openrouter/node_modules ./node_modules/@gauzy/plugin-ai-provider-openrouter/ && \
     cp -r /mnt/packages/plugins/ai-provider-vercel-gateway/node_modules ./node_modules/@gauzy/plugin-ai-provider-vercel-gateway/ && \
-    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/
+    cp -r /mnt/packages/plugins/ai-provider-gauzy-ai/node_modules ./node_modules/@gauzy/plugin-ai-provider-gauzy-ai/ && \
+    cp -r /mnt/packages/plugins/ai-provider-gemini/node_modules ./node_modules/@gauzy/plugin-ai-provider-gemini/ && \
+    cp -r /mnt/packages/plugins/ai-provider-grok/node_modules ./node_modules/@gauzy/plugin-ai-provider-grok/ && \
+    cp -r /mnt/packages/plugins/ai-provider-groq/node_modules ./node_modules/@gauzy/plugin-ai-provider-groq/ && \
+    cp -r /mnt/packages/plugins/ai-provider-mistral/node_modules ./node_modules/@gauzy/plugin-ai-provider-mistral/ && \
+    cp -r /mnt/packages/plugins/ai-provider-deepgram/node_modules ./node_modules/@gauzy/plugin-ai-provider-deepgram/ && \
+    cp -r /mnt/packages/plugins/ai-provider-elevenlabs/node_modules ./node_modules/@gauzy/plugin-ai-provider-elevenlabs/ && \
+    cp -r /mnt/packages/plugins/ai-provider-speaches/node_modules ./node_modules/@gauzy/plugin-ai-provider-speaches/ && \
+    cp -r /mnt/packages/plugins/ai-provider-localai/node_modules ./node_modules/@gauzy/plugin-ai-provider-localai/ && \
+    cp -r /mnt/packages/plugins/ai-provider-whisper-cpp/node_modules ./node_modules/@gauzy/plugin-ai-provider-whisper-cpp/ && \
+    cp -r /mnt/packages/plugins/ai-provider-openai-compatible/node_modules ./node_modules/@gauzy/plugin-ai-provider-openai-compatible/ && \
+    cp -r /mnt/packages/plugins/docs/node_modules ./node_modules/@gauzy/plugin-docs/
 
 RUN mkdir /import && chown node:node /import && touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
     chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/

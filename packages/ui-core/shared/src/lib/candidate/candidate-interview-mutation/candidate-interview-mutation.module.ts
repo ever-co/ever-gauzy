@@ -15,14 +15,15 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { CKEditorModule } from 'ckeditor4-angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { CandidateTechnologiesService } from '@gauzy/ui-core/core';
+import { RichTextEditorModule } from '../../rich-text-editor/rich-text-editor.module';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { CandidateSelectModule } from '../selectors/candidate-select/candidate-select.module';
 import { CandidateCalendarInfoModule } from '../candidate-calendar-info/candidate-calendar-info.module';
+import { CandidateCriterionCardModule } from '../candidate-criterion-card/candidate-criterion-card.module';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
@@ -42,7 +43,7 @@ import { CandidatePersonalQualitiesComponent } from './interview-criterions/cand
 		NbCheckboxModule,
 		NbCardModule,
 		NbInputModule,
-		CKEditorModule,
+		RichTextEditorModule,
 		NbButtonModule,
 		NbRadioModule,
 		NbIconModule,
@@ -52,6 +53,7 @@ import { CandidatePersonalQualitiesComponent } from './interview-criterions/cand
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
+		CandidateCriterionCardModule,
 		TranslateModule.forChild()
 	],
 	exports: [

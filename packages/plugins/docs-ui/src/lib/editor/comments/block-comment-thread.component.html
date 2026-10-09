@@ -1,0 +1,115 @@
+<div class="gz-block-comments" [nbSpinner]="loading" nbSpinnerStatus="primary">
+	<!-- Load failure — same retry affordance as the detail panel's thread. -->
+	<div class="gz-block-comments-error" *ngIf="loadError">
+		<span>{{ 'DOCS.COMMENTS.LOAD_ERROR' | translate }}</span>
+		<button nbButton size="tiny" status="primary" type="button" (click)="reload()">
+			{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
+		</button>
+	</div>
+
+	<!-- Nothing anchored anywhere, and no block picked. -->
+	<p class="muted" *ngIf="!loading && !loadError && !threads.length">
+		{{ 'DOCS.COMMENTS.BLOCK_EMPTY' | translate }}
+	</p>
+
+	<section class="gz-block-thread" *ngFor="let thread of threads; trackBy: trackThread">
+		<header class="gz-block-thread-head">
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				type="button"
+				[disabled]="thread.detached"
+				(click)="focusBlock(thread)"
+			>
+				<nb-icon icon="pin-outline"></nb-icon>
+				{{ 'DOCS.COMMENTS.BLOCK_THREAD' | translate }}
+			</button>
+			<nb-badge *ngIf="thread.openCount" status="info" [text]="thread.openCount.toString()"></nb-badge>
+			<!-- The anchored block was deleted; the thread stays readable (spec 05 §8). -->
+			<span class="gz-block-detached" *ngIf="thread.detached">
+				{{ 'DOCS.EDITOR.COMMENT.DETACHED' | translate }}
+			</span>
+		</header>
+
+		<ul class="gz-block-comments-list">
+			<li *ngFor="let node of thread.nodes; trackBy: trackNode">
+				<ng-container *ngTemplateOutlet="commentBlock; context: { $implicit: node.comment }"></ng-container>
+				<ul class="gz-block-comment-replies" *ngIf="node.replies.length">
+					<li *ngFor="let reply of node.replies; trackBy: trackComment">
+						<ng-container *ngTemplateOutlet="commentBlock; context: { $implicit: reply }"></ng-container>
+					</li>
+				</ul>
+			</li>
+		</ul>
+	</section>
+
+	<!-- Composer — a comment always belongs to a specific block, so it needs one in focus. -->
+	<div class="gz-block-composer" *ngIf="blockId && canComment">
+		<textarea
+			#composerInput
+			nbInput
+			fullWidth
+			fieldSize="small"
+			rows="3"
+			[value]="draft"
+			[disabled]="posting"
+			[placeholder]="'DOCS.COMMENTS.PLACEHOLDER' | translate"
+			[attr.aria-label]="'DOCS.COMMENTS.PLACEHOLDER' | translate"
+			(input)="onInput($event)"
+			(keydown)="onKeyDown($event)"
+			(blur)="closeMentions()"
+		></textarea>
+
+		<ul
+			class="gz-block-mentions"
+			*ngIf="mentionsOpen && suggestions.length"
+			role="listbox"
+			[attr.aria-label]="'DOCS.COMMENTS.MENTION_ARIA' | translate"
+		>
+			<li *ngFor="let candidate of suggestions; let index = index">
+				<button
+					type="button"
+					role="option"
+					[attr.aria-selected]="index === activeIndex"
+					[class.active]="index === activeIndex"
+					(mousedown)="pick(candidate, $event)"
+				>
+					<nb-icon icon="person-outline"></nb-icon>
+					<span>{{ candidate.label }}</span>
+				</button>
+			</li>
+		</ul>
+
+		<div class="gz-block-composer-actions">
+			<span class="gz-block-hint">{{ 'DOCS.COMMENTS.MENTION_HINT' | translate }}</span>
+			<button nbButton status="primary" size="tiny" type="button" [disabled]="!canSubmit" (click)="post()">
+				{{ 'DOCS.COMMENTS.POST' | translate }}
+			</button>
+		</div>
+	</div>
+
+	<p class="muted" *ngIf="blockId && !canComment">{{ 'DOCS.COMMENTS.NO_EMPLOYEE_RECORD' | translate }}</p>
+	<p class="muted" *ngIf="!blockId && threads.length">{{ 'DOCS.COMMENTS.BLOCK_PICK_HINT' | translate }}</p>
+</div>
+
+<!-- One comment: author, date, body, resolve toggle. -->
+<ng-template #commentBlock let-comment>
+	<article class="gz-block-comment" [class.resolved]="comment.resolved">
+		<header class="gz-block-comment-head">
+			<span class="gz-block-comment-author">{{ authorLabel(comment) }}</span>
+			<span class="gz-block-comment-date">{{ comment.createdAt | date : 'short' }}</span>
+			<nb-badge
+				*ngIf="comment.resolved"
+				status="success"
+				[text]="'DOCS.COMMENTS.RESOLVED' | translate"
+			></nb-badge>
+		</header>
+		<p class="gz-block-comment-body">{{ body(comment) }}</p>
+		<div class="gz-block-comment-actions" *ngIf="canResolve(comment)">
+			<button nbButton ghost size="tiny" type="button" [disabled]="isBusy(comment)" (click)="toggleResolved(comment)">
+				{{ (comment.resolved ? 'DOCS.COMMENTS.REOPEN' : 'DOCS.COMMENTS.RESOLVE') | translate }}
+			</button>
+		</div>
+	</article>
+</ng-template>

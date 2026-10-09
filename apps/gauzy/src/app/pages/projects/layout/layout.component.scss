@@ -1,9 +1,58 @@
 @use 'themes' as *;
 
+// ── Passing the column's height through ──────────────────────────────────────
+// This component is the `/pages/organization/projects` shell: its whole template
+// is a `<router-outlet>`, and the list, create and edit pages render into it.
+//
+// `styles/_overrides.scss` hands the routed page the viewport-bounded height the
+// content column already has — but with `nb-layout-column > router-outlet + *`,
+// a DIRECT-child selector, so on a nested route it lands on THIS component and
+// stops. Below it the page had no definite height for `nb-card { height: 100% }`
+// to resolve against, the card collapsed to its content, and the table inside it
+// came out short of the card — which is what made its scrollbar short too.
+//
+// WHY NOT `:host { display: flex }`, which is the obvious way to hand a flex
+// height on: it cannot win. `pages.component.scss` carries
+// `:host ::ng-deep router-outlet + * { display: block }`, which shims to
+// `[_nghost-pages] router-outlet + *` — (0,1,1) — and reaches EVERY routed
+// component in the app, this one included. A component's own `:host` is
+// `[_nghost-x]`, (0,1,0), and loses. So this host stays `display: block` whatever
+// this file says.
+//
+// What the host DOES get from that same `_overrides` rule is `flex: 1 1 auto` —
+// a different property, so nothing overrides it — which makes its own height
+// definite. A percentage resolves against that perfectly well, and unlike a flex
+// child it does not care what the parent's `display` ended up being. So the
+// routed page simply takes 100% of the shell.
+//
+// `::ng-deep` is required and is not a leak: the routed component is a SIBLING of
+// `<router-outlet>` in the DOM but belongs to a different component, so it
+// carries none of this template's `_ngcontent` attribute and a plain
+// `router-outlet + *` would shim to a selector matching nothing. Leading with
+// `:host` keeps the rule inside this shell.
 :host {
-	nb-card {
-		nb-card-body {
-			overflow: unset;
-		}
+	// Releases the automatic minimum size (a flex item refuses to shrink below its
+	// content), so the page fits the column instead of driving it. Deliberately no
+	// `display` here: see the note above.
+	min-height: 0;
+	min-width: 0;
+
+	// The routed page's card scrolls in its own table container, so the body must
+	// not clip what that container hangs outside it (the sticky head, a dropdown).
+	nb-card nb-card-body {
+		overflow: unset;
 	}
+}
+
+:host ::ng-deep router-outlet {
+	display: none;
+}
+
+// No `display` set, so this neither fights nor is fought by the
+// `pages.component` rule above — `height` and `min-height` are ours alone.
+:host ::ng-deep router-outlet + * {
+	height: 100%;
+	min-height: 0;
+	min-width: 0;
+	max-width: 100%;
 }

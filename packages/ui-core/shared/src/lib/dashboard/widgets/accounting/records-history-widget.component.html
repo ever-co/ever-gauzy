@@ -1,0 +1,15 @@
+<!--
+	`empty` carries the "no employee selected" case only: once an employee IS in
+	scope the wrapped table renders its own "no records" message, so a second empty
+	state here would hide it.
+-->
+<ga-teams-widget-state
+	[loading]="loading()"
+	[error]="error()"
+	[empty]="requiresEmployee()"
+	[skeletonRows]="5"
+	emptyMessageKey="DASHBOARD_PAGE.BUILDER.WIDGETS.HR.NO_EMPLOYEE"
+	(retry)="refresh()"
+>
+	<ngx-records-history [type]="historyType" [records]="records()"></ngx-records-history>
+</ga-teams-widget-state>

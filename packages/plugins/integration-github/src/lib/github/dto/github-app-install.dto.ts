@@ -1,6 +1,6 @@
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
 /**
@@ -28,12 +28,24 @@ export class GithubOAuthDTO extends TenantOrganizationBaseDTO implements IGithub
 export class GithubInstallStateDTO extends TenantOrganizationBaseDTO {}
 
 /**
+ * The only accepted spelling of a GitHub App installation id: a positive decimal integer with no
+ * sign, leading zeros or whitespace (GitHub ids are 64-bit, so at most 20 digits).
+ *
+ * The cross-tenant uniqueness check compares `settingsValue` as an exact string, so '0123', '123 '
+ * or '+123' would otherwise bind installation 123 a second time under a different spelling
+ * (GHSA-4rwq-65wh-45h4). With a single canonical form the stored value equals `String(id)`,
+ * which is also what the webhook routing compares against.
+ */
+export const GITHUB_INSTALLATION_ID_PATTERN = /^[1-9]\d{0,19}$/;
+
+/**
  *
  */
 export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	@ApiPropertyOptional({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
+	@Matches(GITHUB_INSTALLATION_ID_PATTERN, { message: 'installation_id must be a valid GitHub App installation id' })
 	readonly installation_id: string;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -52,4 +64,17 @@ export class GithubAppInstallDTO implements IGithubAppInstallInput {
 	@IsString()
 	@Matches(/^[a-f0-9]{64}$/, { message: 'state must be a valid GitHub installation nonce' })
 	readonly state: string;
+
+	/** Signed proof, issued by the post-install callback, that this flow may bind this installation. */
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Matches(/^\d{13}\.[a-f0-9]{64}$/, { message: 'install_proof must be a valid installation proof' })
+	readonly install_proof?: string;
+
+	/** Why the callback issued no proof; only chooses the wording of the refusal. */
+	@ApiPropertyOptional({ enum: ['no_code', 'not_entitled', 'unverifiable'] })
+	@IsOptional()
+	@IsIn(['no_code', 'not_entitled', 'unverifiable'])
+	readonly install_check?: 'no_code' | 'not_entitled' | 'unverifiable';
 }

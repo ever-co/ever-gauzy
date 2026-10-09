@@ -4,7 +4,6 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CKEditor4 } from 'ckeditor4-angular';
 import { NbDateService } from '@nebular/theme';
 import moment from 'moment';
 import {
@@ -26,7 +25,6 @@ import {
 	ToastrService,
 	UrlPatternValidator
 } from '@gauzy/ui-core/core';
-import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,7 +37,6 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 	proposalTemplate: IEmployeeProposalTemplate;
 	proposalTemplateId: ID;
 	organization: IOrganization;
-	ckConfig: CKEditor4.Config = ckEditorConfig;
 	selectedEmployee: IEmployee;
 	minDate: Date;
 

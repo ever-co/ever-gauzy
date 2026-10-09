@@ -5,3 +5,87 @@
     background-color: var(--gauzy-card-2);
   }
 }
+
+// Page title and breadcrumb at 12px, the size of every other piece of text on
+// the timesheet tabs. The title reads `--gauzy-page-title-font-size` in both
+// `ngx-header-title` and the global card-header heading rule, so the token is
+// overridden for this header only; the breadcrumb sets its own 0.6875rem (11px).
+:host > nb-card > nb-card-header {
+  --gauzy-page-title-font-size: 12px;
+
+  ::ng-deep .ga-breadcrumb-item {
+    font-size: 12px;
+  }
+}
+
+// Hands the page frame's height down to the routed tab, so each tab's card fills
+// the screen down to the footer instead of stopping wherever its own
+// `calc(100vh - …)` estimate of the chrome above it ran out. Those heights are
+// only a flex basis now: the chain below grows or shrinks them to the room
+// actually left.
+//
+// `nb-route-tabset`'s template is the strip followed by a bare
+// `<router-outlet>`, so the tab component is a SIBLING of the strip inside that
+// host — which is why the chain can be closed here, once, for Daily, Weekly,
+// Calendar and Approvals alike. Same chain as the dashboard and organization
+// settings pages.
+//
+// The host itself CANNOT be the flex container: `pages.component.scss` sets
+// `display: block` on every `router-outlet + *` from a (0,1,1) selector, which
+// beats this `:host` (0,1,0) — see `projects/layout/layout.component.scss`. What
+// the host does get, from the page frame in `styles/_overrides.scss`, is
+// `flex: 1 1 auto` inside the content column, i.e. a definite height. So the
+// card takes 100% of it, and the flex chain starts one level down.
+:host {
+  min-height: 0;
+
+  > nb-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+
+    > nb-card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+  }
+}
+
+:host ::ng-deep gz-dynamic-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  > nb-route-tabset {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+
+    > .route-tabset {
+      flex: 0 0 auto;
+    }
+
+    // The outlet element is an anchor for the routed view, never a box of its
+    // own; without this it takes a share of the column as a flex item.
+    > router-outlet {
+      display: none;
+    }
+
+    > router-outlet ~ * {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+
+      > nb-card {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+    }
+  }
+}

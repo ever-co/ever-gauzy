@@ -2,5 +2,8 @@ export {
 	ChatSidebarService,
 	MIN_CHAT_WIDTH,
 	MAX_CHAT_WIDTH,
-	type IChatSidebarConfig
+	CHAT_DETACHED_WINDOW_PATH,
+	type IChatSidebarConfig,
+	type IChatSidebarState,
+	type ChatSidebarPosition
 } from './chat-sidebar.service';

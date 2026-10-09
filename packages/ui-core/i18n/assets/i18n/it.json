@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "Aggiungi Utente Esistente",
 		"ADD_NEW": "Aggiungi nuovo",
 		"ADD": "Aggiungi",
+		"NEW": "Nuovo",
 		"CREATE": "Creare",
 		"REGISTER": "Registrazione",
 		"CHANGE_PASSWORD": "Cambia password",
@@ -403,12 +404,12 @@
 			"DOCUMENT_NAME": "Nome del documento",
 			"FEEDBACK_DESCRIPTION": "Descrizione del feedback",
 			"EMAIL_INVITATION": "Inserisci l'email per inviare l'invito",
-			"SELECT_EQUIPMENT": "Seleziona l'attrezzatura",
-			"SELECT_SHARE_REQUEST_DATE": "Seleziona data di richiesta",
-			"SELECT_SHARE_START_DATE": "Seleziona data di inizio",
-			"SELECT_SHARE_END_DATE": "Seleziona data di fine",
-			"SELECT_EMPLOYEE": "Seleziona dipendente",
-			"SELECT_TEAM": "Seleziona squadra",
+			"SELECT_EQUIPMENT": "Attrezzatura",
+			"SELECT_SHARE_REQUEST_DATE": "Data di richiesta",
+			"SELECT_SHARE_START_DATE": "Data di inizio",
+			"SELECT_SHARE_END_DATE": "Data di fine",
+			"SELECT_EMPLOYEE": "Dipendente",
+			"SELECT_TEAM": "Squadra",
 			"ENABLE_DISABLE_FUTURE_DATE": "Abilita/Disabilita date future",
 			"ALLOW_FUTURE_DATE": "Consenti di passare a periodi futuri",
 			"REGISTRATION_DATE": "Data di registrazione",
@@ -456,7 +457,7 @@
 			"OPEN_SOURCE_PROJECT_URL": "URL del progetto open-source",
 			"EMPLOYEE_LEVEL": "Livello dell'impiegato",
 			"UNIT": "Unità",
-			"SELECT_EXISTING_OBJECTIVE": "Seleziona l'obiettivo esistente",
+			"SELECT_EXISTING_OBJECTIVE": "Obiettivo esistente",
 			"LENGTH": "Lunghezza",
 			"DATE_START": "Data di inizio",
 			"END_DATE": "Data di fine",
@@ -496,7 +497,7 @@
 		"PLACEHOLDERS": {
 			"NAME": "Nome",
 			"PHONE_NUMBER": "Numero di telefono",
-			"DEFAULT": "Seleziona Predefinito",
+			"DEFAULT": "Predefinito",
 			"FIRST_NAME": "Nome di battesimo",
 			"LAST_NAME": "Cognome",
 			"COMPANY_NAME": "Nome dell'azienda",
@@ -546,7 +547,7 @@
 			"BILL_RATE_MIN": "Tariffa minima di fatturazione (per ora)",
 			"RECURRING_WEEKLY_LIMIT": "Limite settimanale ricorrente (ore)",
 			"EMAILS": "Digita un indirizzo email e premi invio",
-			"ROLE": "Seleziona Ruolo",
+			"ROLE": "Ruolo",
 			"PROJECTS": "Scegli Progetti",
 			"CHOOSE_FORMAT": "Scegliere il formato",
 			"CHOOSE_TIME_ZONE": "Scegliere il fuso orario",
@@ -556,23 +557,23 @@
 			"ALIGN_LOGO_TO": "Allineare il logo a",
 			"DEPARTMENTS": "Dipartimenti",
 			"TEAMS": "Squadre",
-			"NUMBER_FORMAT": "Seleziona il formato del numero",
-			"REGIONS": "Seleziona la regione",
+			"NUMBER_FORMAT": "Formato del numero",
+			"REGIONS": "Regione",
 			"REMOVE_IMAGE": "Rimuovi immagine",
 			"UPLOADER_PLACEHOLDER": "Immagine",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Aggiungi o Rimuovi dipendenti",
 			"ADD_REMOVE_CANDIDATE": "Aggiungi Candidato",
 			"ADD_REMOVE_EMPLOYEE": "Aggiungi intervistatore",
-			"ADD_REMOVE_INTERVIEWER": "Seleziona intervistatore",
+			"ADD_REMOVE_INTERVIEWER": "Intervistatore",
 			"ADD_REMOVE_CANDIDATES": "Aggiungi o Rimuovi Candidati",
 			"ADD_REMOVE_USERS": "Aggiungi o Rimuovi Utenti",
 			"ADD_REMOVE_ORGANIZATIONS": "Aggiungi o Rimuovi Organizzazioni",
 			"ADD_ORGANIZATIONS": "Aggiungi Organizzazioni",
 			"DATE": "Data",
 			"VALUE": "Valore",
-			"SELECT_CURRENCY": "Seleziona valuta",
-			"TYPE_OF_BONUS": "Seleziona il tipo di bonus",
+			"SELECT_CURRENCY": "Valuta",
+			"TYPE_OF_BONUS": "Tipo di bonus",
 			"BONUS_PERCENTAGE": "Percentuale di bonus",
 			"ENABLE_INVITES": "Abilita inviti",
 			"INVITE_EXPIRY_PERIOD": "Inviti validi fino a",
@@ -583,13 +584,13 @@
 			"EMPLOYMENT_TYPES": "Tipo di occupazione",
 			"REGISTRATION_DATE": "Data di registrazione dell'organizzazione",
 			"ORGANIZATIONS": "Scegli le Organizzazioni",
-			"ORGANIZATION": "Seleziona l'organizzazione",
+			"ORGANIZATION": "Organizzazione",
 			"DOCUMENT_NAME": "Nome del documento",
 			"FEEDBACK_DESCRIPTION": "Descrizione del feedback",
 			"PREFERRED_LANGUAGE": "Lingua preferita",
 			"OWNER": "Proprietario",
 			"TASK_VIEW_MODE": "Modalità visualizzazione attività",
-			"SELECT_STATUS": "Seleziona stato",
+			"SELECT_STATUS": "Stato",
 			"LINKEDIN": "LinkedIn",
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
@@ -649,7 +650,7 @@
 				"LATITUDE": "Latitudine",
 				"LONGITUDE": "Longitudine"
 			},
-			"SELECT_EXPENSE": "Seleziona Spesa",
+			"SELECT_EXPENSE": "Spesa",
 			"ADD_TITLE": "Aggiungi titolo",
 			"ALL_PROJECTS": "Tutti i progetti",
 			"ALL_TEAMS": "Tutti i team",
@@ -657,16 +658,16 @@
 			"UPWORK_SECRET": "Segreto di Upwork",
 			"GAUZY_API_KEY": "Gauzy AI Key",
 			"GAUZY_API_SECRET": "Gauzy AI Segreto",
-			"SELECT_COMPANY": "Seleziona azienda",
+			"SELECT_COMPANY": "Azienda",
 			"TYPE_SEARCH_REQUEST": "Digita qui la tua richiesta di ricerca..",
-			"SELECT_ICON": "Seleziona icona",
+			"SELECT_ICON": "Icona",
 			"SELECT": "Seleziona",
 			"SPRINT_LENGTH": "Durata dello sprint",
 			"SPRINT_START_DATE": "Data di inizio dello sprint",
 			"SPRINT_END_DATE": "Data di fine sprint",
 			"SPRINT_GOAL": "Obiettivo di sprint",
 			"POLICY_NAME": "Nome della politica",
-			"SELECT_DATE": "Seleziona data",
+			"SELECT_DATE": "Data",
 			"DAYS_UNTIL_DUE": "Giorni fino alla scadenza",
 			"TEMPLATES": "Modelli",
 			"INVOICE_TEMPLATE": "Modello di fattura",
@@ -815,6 +816,7 @@
 		"SKILLS": "Abilità",
 		"PRIVACY": "Privacy",
 		"SELECT_TIMEZONE": "Seleziona fuso orario",
+		"SELECT_TIMEZONE_HINT": "Gli orari degli appuntamenti sono mostrati in questo fuso orario.",
 		"SHOW_AVERAGE_BONUS": "Mostra Bonus Medio",
 		"SHOW_AVERAGE_INCOME": "Mostra il reddito medio",
 		"SHOW_PAYPERIOD": "Mostra il periodo di pagamento",
@@ -832,6 +834,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Devi essere un dipendente per poter registrare il tempo, creare spese suddivise e utilizzare altre funzioni legate ai dipendenti"
 	},
 	"MENU": {
+		"BREADCRUMB": "Percorso di navigazione",
 		"PIPELINES": "Tubature",
 		"DASHBOARD": "Dashboard",
 		"DASHBOARDS": "Dashboard",
@@ -1152,7 +1155,71 @@
 		"APPLICATIONS": "Applicazioni",
 		"OPEN_GA_BROWSER": "Apri Gauzy nel browser",
 		"START_SERVER": "Avvia il server",
-		"STOP_SERVER": "Arresta il server"
+		"STOP_SERVER": "Arresta il server",
+		"DOCUMENTS": "Documenti",
+		"BILLING": "Fatturazione",
+		"MONITORING": "Monitoraggio",
+		"ADD_ITEM": "Aggiungi {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Solo tu",
+			"TENANT": "Tutti in questo tenant"
+		},
+		"UNSAVED_CHANGES": "Modifiche non salvate",
+		"ACCOUNT": {
+			"TITLE": "Account",
+			"DESCRIPTION": "L'account con cui hai effettuato l'accesso.",
+			"MANAGE": "Gestisci profilo",
+			"ROLE": "Ruolo",
+			"MEMBER_SINCE": "Membro dal"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferenze",
+			"DESCRIPTION": "Aspetto e comportamento dell'app per te. Le modifiche si applicano subito.",
+			"THEME": "Tema",
+			"THEME_HINT": "Combinazione di colori dell'intera app.",
+			"LANGUAGE": "Lingua",
+			"LANGUAGE_HINT": "Lingua di menu, etichette e messaggi.",
+			"LAYOUT": "Layout predefinito",
+			"RESET_LAYOUTS": "Reimposta i layout delle pagine",
+			"SAVE_ERROR": "Impossibile salvare la tua preferenza.",
+			"LAYOUTS_RESET": "Layout delle pagine reimpostati al tuo predefinito."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Immagine quadrata, almeno 128 × 128 px.",
+			"NAME_HINT": "Mostrato a tutti gli utenti di questo tenant.",
+			"TENANT_ID": "ID del tenant",
+			"TENANT_ID_HINT": "Indicalo quando contatti il supporto o chiami l'API.",
+			"COPY_ERROR": "Impossibile copiare l'ID del tenant.",
+			"TITLE": "Profilo del tenant",
+			"DESCRIPTION": "Il nome e il logo di questo tenant, mostrati a tutti gli utenti nel selettore degli spazi di lavoro e nella barra laterale.",
+			"NAME": "Nome del tenant",
+			"NAME_PLACEHOLDER": "Inserisci il nome del tenant",
+			"NAME_REQUIRED": "Il nome del tenant è obbligatorio.",
+			"LOGO": "Logo del tenant",
+			"LOGO_CHANGE": "Fai clic per caricare un nuovo logo",
+			"LOGO_REMOVE": "Rimuovi logo",
+			"LOGO_UPLOAD_ERROR": "Impossibile caricare il logo.",
+			"CREATED_AT": "Creato il",
+			"SAVED": "Profilo del tenant salvato",
+			"SAVE_ERROR": "Impossibile salvare il profilo del tenant.",
+			"LOAD_ERROR": "Impossibile caricare il profilo del tenant."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "Interfaccia",
+			"TITLE": "Interfaccia utente",
+			"DESCRIPTION": "Scegli quale interfaccia usano tutti gli utenti di questo tenant per le pagine disponibili in entrambe le versioni.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (predefinito)",
+				"REACT": "React (nuovo)"
+			},
+			"HINT": "Si applica a tutto il tenant, su ogni dispositivo. Oggi la dashboard di monitoraggio del tempo è disponibile in entrambe le interfacce; seguiranno altre pagine.",
+			"READ_ONLY": "Solo gli amministratori del tenant possono modificare questa impostazione.",
+			"SAVING": "Salvataggio…",
+			"SAVED": "Preferenza dell'interfaccia salvata",
+			"SAVE_ERROR": "Impossibile salvare la preferenza dell'interfaccia."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temi",
@@ -1186,7 +1253,9 @@
 		"CARDS_GRID": "Griglia di carte",
 		"SPRINT_VIEW": "Vista della sprint",
 		"QUICK_SETTINGS": "Impostazioni rapide",
-		"NO_LAYOUT": "Nessun layout di dati disponibile"
+		"NO_LAYOUT": "Nessun layout di dati disponibile",
+		"PREFERENCES": "Preferenze",
+		"SUPPORT": "Supporto"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "Cosa c'è di nuovo?",
@@ -1268,7 +1337,7 @@
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Le transazioni di spese totali sono riuscite: {{ totalExpenses }}. Le transazioni di entrate totali sono riuscite: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"TITLE": "Hubstaff",
-			"SELECT_ORGANIZATION": "Seleziona Organizzazione",
+			"SELECT_ORGANIZATION": "Organizzazione",
 			"SYNCED_PROJECTS": "Progetti sincronizzati",
 			"SETTINGS_UPDATED": "Impostazioni aggiornate per l'integrazione",
 			"SYNCED_ENTITIES": "Entità automaticamente sincronizzate",
@@ -1289,7 +1358,7 @@
 			"NEXT_STEP_INFO": "Successivamente sarai reindirizzato su Upwork per concedere l'autorizzazione a Gauzy",
 			"CONTRACTS": "Contratti",
 			"SYNCED_CONTRACTS": "Contratti sincronizzati",
-			"SELECT_DATE": "Seleziona una data",
+			"SELECT_DATE": "Data",
 			"ONLY_CONTRACTS": "Solo contratti",
 			"CONTRACTS_RELATED_DATA": "Entità correlate dei contratti sincronizzati",
 			"DATE_RANGE_PLACEHOLDER": "Scegli una data compresa tra",
@@ -1668,7 +1737,7 @@
 				"ACTIVE_TITLE": "Trigger degli eventi attivi",
 				"DESCRIPTION": "Configura trigger automatici dei flussi di lavoro. Quando si verifica un evento della piattaforma, il flusso di lavoro SIM associato verrà eseguito automaticamente.",
 				"EVENT": "Evento",
-				"SELECT_EVENT": "Seleziona un evento",
+				"SELECT_EVENT": "Evento",
 				"WORKFLOW_ID": "ID del flusso di lavoro",
 				"WORKFLOW_ID_PLACEHOLDER": "Inserisci l'ID del flusso di lavoro SIM da attivare",
 				"ADD": "Aggiungi",
@@ -1711,7 +1780,7 @@
 		"COMING_SOON": "Prossimamente",
 		"RE_INTEGRATE": "Reintegrare",
 		"SETTINGS": "Impostazioni",
-		"SELECT_GROUPS": "Seleziona Gruppi",
+		"SELECT_GROUPS": "Gruppi",
 		"FILTER_INTEGRATIONS": "Filtra le integrazioni",
 		"SEARCH_INTEGRATIONS": "Integrazioni di ricerca",
 		"PAID": "Pagato",
@@ -1733,6 +1802,19 @@
 		"TIME_TRACKING": "Rilevamento del tempo",
 		"PROJECT_MANAGEMENT": "Gestione del progetto",
 		"EMPLOYEE_STATISTICS": "Statistiche dei dipendenti",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Su {{ count }} dipendenti",
+			"OF_INCOME": "{{ value }}% delle entrate",
+			"MARGIN": "Margine del {{ value }}%",
+			"BREAKDOWN": "Entrate per dipendente",
+			"NO_DATA": "Nessuna attività finanziaria in questo periodo",
+			"NO_DATA_HINT": "Le entrate e le spese registrate in questo periodo appariranno qui.",
+			"NO_EMPLOYEES": "Nessun dato dei dipendenti per questo periodo",
+			"SORT_BY": "Ordina per {{ name }}",
+			"SORT_LABEL": "Ordina per",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Per favore, seleziona un mese e un dipendente dal menu sopra",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Inserisci il testo per gli utenti non autenticati",
 		"CHARTS": {
@@ -1921,7 +2003,90 @@
 			"PREVIOUS": "Precedente"
 		},
 		"NOT_STARTED": "Non ancora iniziato",
-		"NOT_STARTED_HELP": "La data di inizio del lavoro non è stata fissata per questo dipendente. Il dipendente non sarà preso in considerazione nel calcolo dei conti, la suddivisione delle spese, ecc"
+		"NOT_STARTED_HELP": "La data di inizio del lavoro non è stata fissata per questo dipendente. Il dipendente non sarà preso in considerazione nel calcolo dei conti, la suddivisione delle spese, ecc",
+		"VIEW": {
+			"PERIOD": "Periodo",
+			"PERIODS": {
+				"THIS_WEEK": "Questa settimana",
+				"THIS_MONTH": "Questo mese",
+				"LAST_30_DAYS": "Ultimi 30 giorni"
+			},
+			"TABS": {
+				"OVERVIEW": "Panoramica",
+				"PROFILE": "Profilo"
+			},
+			"PRESENCE": {
+				"TRACKING": "Sta registrando il tempo",
+				"ONLINE": "Online",
+				"AWAY": "Assente",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Ora locale",
+			"MEMBER_SINCE": "Membro dal",
+			"WEEKLY_LIMIT": "Limite settimanale",
+			"WORKED_TODAY": "Lavorato oggi",
+			"WORKED_PERIOD": "Lavorato nel periodo",
+			"ACTIVITY_META": "{{ value }} di attività",
+			"AVG_ACTIVITY": "Attività media",
+			"OPEN_TASKS": "Attività aperte",
+			"OPEN_TASKS_META": "{{ progress }} in corso · {{ overdue }} in ritardo",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs settimana scorsa",
+				"THIS_MONTH": "vs mese scorso",
+				"LAST_30_DAYS": "vs 30 giorni precedenti"
+			},
+			"HOURS_WORKED": "Ore lavorate",
+			"HOURS_META": "{{ total }} in totale · {{ average }} per giorno lavorativo",
+			"TRACKED": "Registrato",
+			"MANUAL": "Manuale",
+			"OPEN_TIMESHEET": "Apri foglio ore",
+			"PROJECTS": "Progetti",
+			"RECENT_SCREENSHOTS": "Screenshot recenti",
+			"VIEW_ALL": "Vedi tutto",
+			"ASSIGNED_TASKS": "Attività assegnate",
+			"COLUMNS": {
+				"TASK": "Attività",
+				"PROJECT": "Progetto",
+				"STATUS": "Stato",
+				"DUE": "Scadenza",
+				"TIME": "Tempo",
+				"NAME": "Nome",
+				"PRIORITY": "Priorità"
+			},
+			"TOP_TASKS": "Attività più lavorate",
+			"APPS_URLS": "App e URL",
+			"NO_TIME": "Nessun tempo registrato in questo periodo",
+			"NO_TASKS": "Nessuna attività assegnata",
+			"NO_APPS": "Nessuna attività di app o URL in questo periodo",
+			"NO_SCREENSHOTS": "Nessuno screenshot in questo periodo",
+			"UNAVAILABLE": "Non hai accesso a questi dati",
+			"PROFILE": {
+				"ABOUT": "Informazioni",
+				"CONTACT": "Contatti",
+				"SKILLS_TAGS": "Competenze e tag",
+				"TIME_ZONE": "Fuso orario",
+				"NOT_PROVIDED": "Non ancora indicato",
+				"NO_DESCRIPTION": "Non è stata ancora aggiunta una descrizione"
+			},
+			"TASKS_HELP": "Attività di cui questa persona fa parte. Scegli un riquadro per filtrare l’elenco.",
+			"TASK_FILTERS": {
+				"OPEN": "Aperte",
+				"PROGRESS": "In corso",
+				"OVERDUE": "In ritardo",
+				"DONE": "Completate"
+			},
+			"DUE": {
+				"NONE": "Nessuna scadenza",
+				"WAS_DUE": "Scadeva",
+				"OVERDUE_DAY": "1 giorno di ritardo",
+				"OVERDUE_DAYS": "{{ count }} giorni di ritardo",
+				"TODAY": "Scade oggi",
+				"TOMORROW": "Scade domani",
+				"IN_DAYS": "Tra {{ count }} giorni"
+			},
+			"SHOWING": "{{ shown }} di {{ total }} attività mostrate",
+			"NO_TASKS_IN_VIEW": "Nessuna attività in questa vista"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Tutti gli obiettivi",
@@ -1937,6 +2102,7 @@
 		"EXPECTED": "Previsto/Aspettato",
 		"UPDATES": "Aggiornamenti",
 		"UPDATE": "Aggiornamento",
+		"ALIGNMENTS": "Allineamenti",
 		"COMMENTS": "Commenti",
 		"KEY_RESULTS": "Risultati chiave",
 		"GROUP_BY": "Raggruppa per",
@@ -1953,6 +2119,8 @@
 		"GOAL_TEMPLATES": "Modelli di obiettivi",
 		"CREATE_NEW_MENU": "Creare Nuovo",
 		"CREATE_FROM_PRESET": "Crea da preset",
+		"SELECT_A_PRESET": "Seleziona un preset",
+		"ADDITIONAL_DETAILS": "Dettagli aggiuntivi",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Impiegati",
 			"TEAMS": "Squadre",
@@ -1982,7 +2150,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Nessun risultato chiave da visualizzare",
 			"NO_UPDATES": "Ancora nessun aggiornamento",
-			"NO_ALIGNMENT": "Nessun allineamento ancora"
+			"NO_ALIGNMENT": "Nessun allineamento ancora",
+			"NO_PROGRESS_DATA": "Nessun dato di progresso da rappresentare"
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organizzazione",
@@ -2108,9 +2277,9 @@
 				"STATUS": "Stato",
 				"WEIGHT": "Peso",
 				"TYPE": "Tipo",
-				"SELECT_PROJECT": "Seleziona progetto",
-				"SELECT_TASK": "Seleziona attività",
-				"SELECT_KPI": "Seleziona KPI",
+				"SELECT_PROJECT": "Progetto",
+				"SELECT_TASK": "Attività",
+				"SELECT_KPI": "KPI",
 				"ASSIGN_AS_OBJECTIVE": "Assegna come obiettivo"
 			},
 			"PLACEHOLDERS": {
@@ -2415,6 +2584,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Consenti al dipendente di uscire dall'applicazione Agente. Quando disabilitato, l'opzione di uscita sarà bloccata nell'app Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Consenti logout dall'app Agent",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Consenti al dipendente di disconnettersi dall'applicazione Agente. Quando disabilitato, l'opzione di logout sarà bloccata nell'app Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Protezione dei lavoratori SEE / Regno Unito attiva",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Per organizzazioni e lavoratori nel SEE o nel Regno Unito, i lavoratori possono sempre uscire e disconnettersi dall'agente desktop. Una registrazione che il lavoratore non può interrompere è difficile da giustificare ai sensi del GDPR e dell'art. 8 CEDU, quindi queste restrizioni non sono disponibili qui.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Conferma la limitazione di uscita o disconnessione dall'agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Con questa limitazione il lavoratore non può impedire all'agente desktop di registrarlo. Conferma di aver valutato questa misura come lecita e proporzionata per questi lavoratori e di assumertene la responsabilità. La conferma viene registrata sul tuo account.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Traccia Attività Tastiera e Mouse",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Abilita il tracciamento completo dell'attività di tastiera e mouse, inclusi i tasti premuti e i movimenti esatti del mouse in tutte le app desktop e agente.",
 				"TRACK_ALL_DISPLAYS": "Traccia tutti i display",
@@ -2438,6 +2611,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durata del dialogo di conto alla rovescia di prova dell'attività, rappresenta un determinato numero di minuti dati per dimostrare l'attività",
 				"ENABLE_DETECTION_INACTIVITY": "Abilita il rilevamento dell'inattività dei dipendenti",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequenza degli screenshot",
 				"SCREENSHOT_FREQUENCY_INFO": "Specificare la frequenza di aggiornamento o gli intervalli di sincronizzazione temporale.",
 				"RANDOM_SCREENSHOT": "Screenshot casuale",
@@ -2536,7 +2711,7 @@
 			"TIME_OFF_POLICY_VIEW": "Visualizza Politica di Ferie",
 			"TIME_OFF_POLICY_EDIT": "Modifica Politica di Ferie",
 			"TIME_OFF_POLICY_DELETE": "Elimina Politica di Ferie",
-			"SELECT_EMPLOYEE": "Seleziona dipendente",
+			"SELECT_EMPLOYEE": "Dipendente",
 			"CHANGE_SELECTED_EMPLOYEE": "Cambia Dipendente Selezionato",
 			"CHANGE_SELECTED_CANDIDATE": "Cambia candidato selezionato",
 			"CHANGE_SELECTED_ORGANIZATION": "Cambia Organizzazione Selezionata",
@@ -2684,7 +2859,10 @@
 		"ADDRESS": "Indirizzo",
 		"ADDRESS_2": "Indirizzo 2",
 		"MEMBERS": "Membri",
-		"BUDGET": "Budget"
+		"BUDGET": "Budget",
+		"PHOTO_HINT": "Fai clic o trascina un'immagine per caricarla",
+		"SEARCH_EMPLOYEES": "Cerca dipendenti per nome o email",
+		"NO_MEMBERS": "Nessun membro aggiunto"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Lingue",
@@ -2717,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "L'impiegato è stato aggiornato",
 		"IMAGE_UPDATED": "L'immagine è stata aggiornata",
 		"FAIL_TO_UPDATE_IMAGE": "Aggiornamento fallito",
-		"ANONYMOUS": "Anonimo"
+		"ANONYMOUS": "Anonimo",
+		"ABOUT": "Informazioni",
+		"INACTIVE": "Inattivo",
+		"PER_HOUR": "/ ora",
+		"MEMBER_SINCE": "Membro dal",
+		"NO_DESCRIPTION": "Non è stata ancora aggiunta una descrizione",
+		"NO_SKILLS": "Nessuna competenza indicata",
+		"VIEW_COMPANY_PROFILE": "Vedi profilo aziendale",
+		"EDIT": {
+			"NO_AWARDS": "Nessun premio aggiunto",
+			"ADD_AWARD": "Aggiungi premio",
+			"PRIVACY_HELP": "Scegli quali dettagli i visitatori vedono nel profilo pubblico."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Pagina di gestione delle proposte",
@@ -2809,12 +2999,12 @@
 		"ADD_HOLIDAYS": "Aggiungi le festività",
 		"DISPLAY_HOLIDAYS": "Mostra le festività",
 		"HOLIDAY_NAME": "Nome festività",
-		"SELECT_EMPLOYEES": "Seleziona dipendenti",
+		"SELECT_EMPLOYEES": "Dipendenti",
 		"SETTINGS": "Impostazioni",
 		"EDI": "Modifica il record di tempo libero",
-		"SELECT_HOLIDAY_NAME": "Seleziona il nome della festività",
+		"SELECT_HOLIDAY_NAME": "Nome della festività",
 		"ADD_OR_REMOVE_EMPLOYEES": "Aggiungi o Rimuovi Dipendenti",
-		"SELECT_TIME_OFF_POLICY": "Seleziona la politica di assenza per ferie",
+		"SELECT_TIME_OFF_POLICY": "Politica di assenza per ferie",
 		"ADD_A_DESCRIPTION": "Aggiungi una descrizione",
 		"DESCRIPTION": "Descrizione",
 		"START_DATE": "Data di inizio",
@@ -2879,7 +3069,7 @@
 		"ADD_NEW_TAG": "Aggiungi nuovo Tag",
 		"TENANT_LEVEL": "Livello dell'inquilino",
 		"TAGS_TYPE": "Tipo di tag",
-		"TAGS_SELECT_TYPE": "Seleziona il tipo di tag"
+		"TAGS_SELECT_TYPE": "Tipo di tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Abilità"
@@ -3211,8 +3401,8 @@
 		"PROPOSAL_TEMPLATE": "Modello di proposta",
 		"EDIT_PROPOSAL_TEMPLATE": "Modifica Modello di Proposta",
 		"ADD_PROPOSAL_TEMPLATE": "Aggiungi modello di proposta",
-		"SELECT_PROPOSAL_TEMPLATE": "Seleziona il modello di proposta",
-		"SELECT_EMPLOYEE": "Seleziona dipendente",
+		"SELECT_PROPOSAL_TEMPLATE": "Modello di proposta",
+		"SELECT_EMPLOYEE": "Dipendente",
 		"NAME": "Nome",
 		"CONTENT": "Contenuto",
 		"EMPLOYEE": "Dipendente",
@@ -3313,7 +3503,11 @@
 		"STOP_TIMER": "Arresta timer",
 		"TIME_LOG": "Registro del tempo",
 		"VIEW_APPOINTMENTS": "Visualizza appuntamenti",
-		"VIEW_TIME_ACTIVITY": "Visualizza attività temporale"
+		"VIEW_TIME_ACTIVITY": "Visualizza attività temporale",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nuova pagina",
+			"UPLOAD": "Carica"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilità",
@@ -3321,7 +3515,8 @@
 		"PROJECT_MANAGEMENT": "Gestione del progetto",
 		"JOBS": "Lavori",
 		"CONTACTS": "Contatti",
-		"TIME_TRACKING": "Monitoraggio del tempo"
+		"TIME_TRACKING": "Monitoraggio del tempo",
+		"DOCUMENTS": "Documenti"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome",
@@ -3367,6 +3562,9 @@
 		"BROWSE": "Sfoglia",
 		"COMMENT": "Commento",
 		"COMMENTS": "Commenti",
+		"COMMENT_PLACEHOLDER": "Scrivi un commento…",
+		"NO_COMMENTS": "Nessun commento finora",
+		"NO_COMMENTS_HINT": "I commenti compaiono qui, dal più recente.",
 		"HEADER": "Fatture",
 		"INVOICE_NUMBER": "Numero di fattura",
 		"ESTIMATE_NUMBER": "Numero di stima",
@@ -3404,10 +3602,10 @@
 		"EDIT_ESTIMATE": "Modifica Preventivo",
 		"VIEW_INVOICE": "Visualizza fattura",
 		"VIEW_ESTIMATE": "Visualizza preventivo",
-		"SELECT_EMPLOYEE": "Seleziona Dipendente",
-		"SELECT_PROJECT": "Seleziona Progetto",
-		"SELECT_TASK": "Seleziona compito",
-		"SELECT_PRODUCT": "Seleziona Prodotto",
+		"SELECT_EMPLOYEE": "Dipendente",
+		"SELECT_PROJECT": "Progetto",
+		"SELECT_TASK": "Compito",
+		"SELECT_PRODUCT": "Prodotto",
 		"INVALID_DATES": "Date non valide",
 		"INVOICE_NUMBER_DUPLICATE": "Il numero di fattura esiste già",
 		"DISCOUNT_TYPE": "Tipo di sconto",
@@ -3469,12 +3667,12 @@
 			"BY_PRODUCTS": "Per Prodotti",
 			"BY_EXPENSES": "Per Spese",
 			"DETAILED_ITEMS": "Voci dettagliate",
-			"SELECT_INVOICE_TYPE": "Seleziona un tipo di fattura",
-			"SELECT_ESTIMATE_TYPE": "Seleziona un tipo di stima",
-			"SELECT_PROJECTS": "Seleziona progetti",
-			"SELECT_TASKS": "Seleziona compiti",
-			"SELECT_PRODUCTS": "Seleziona prodotti",
-			"SELECT_EXPENSES": "Seleziona spese"
+			"SELECT_INVOICE_TYPE": "Tipo di fattura",
+			"SELECT_ESTIMATE_TYPE": "Tipo di stima",
+			"SELECT_PROJECTS": "Progetti",
+			"SELECT_TASKS": "Compiti",
+			"SELECT_PRODUCTS": "Prodotti",
+			"SELECT_EXPENSES": "Spese"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Numero articolo",
@@ -3559,7 +3757,7 @@
 			"NO_PAYMENTS_RECORDED": "Nessun pagamento registrato",
 			"LEFT_TO_PAY": "Da pagare",
 			"PAYMENT_METHOD": "Metodo di pagamento",
-			"SELECT_INVOICE": "Seleziona fattura",
+			"SELECT_INVOICE": "Fattura",
 			"PAYMENT_AMOUNT_ADDED": "Pagamento di {{ amount }} {{ currency }} aggiunto",
 			"PAYMENT": "Pagamento",
 			"BANK_TRANSFER": "Bonifico bancario",
@@ -3625,12 +3823,67 @@
 		"TAGS": "Tag"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Seleziona dipendente",
-		"SELECT_A_DATE": "Seleziona una data",
-		"SELECT_AN_ORGANIZATION": "Seleziona un'organizzazione",
-		"SELECT_PROJECT": "Seleziona progetto",
-		"SELECT_TEAM": "Seleziona squadra",
-		"AI_CHAT": "Chat IA"
+		"SELECT_EMPLOYEE": "Dipendente",
+		"SELECT_A_DATE": "Data",
+		"SELECT_AN_ORGANIZATION": "Organizzazione",
+		"SELECT_PROJECT": "Progetto",
+		"SELECT_TEAM": "Squadra",
+		"AI_CHAT": "Chat IA",
+		"COLLAPSE_SIDEBAR": "Comprimi la barra laterale",
+		"EXPAND_SIDEBAR": "Espandi la barra laterale"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "Assistente IA",
+		"OPEN": "Apri l'assistente IA",
+		"CLOSE": "Chiudi l'assistente IA",
+		"HISTORY": "Cronologia",
+		"HISTORY_HINT": "Sfoglia le conversazioni salvate",
+		"HISTORY_CLOSE": "Chiudi la cronologia",
+		"HISTORY_EMPTY": "Nessuna conversazione salvata.",
+		"NEW_CHAT": "Nuova chat",
+		"NEW_CHAT_HINT": "Avvia una nuova conversazione",
+		"DELETE_CONVERSATION": "Elimina conversazione",
+		"LOADING": "Caricamento…",
+		"DOCK_LEFT": "Ancora a sinistra",
+		"DOCK_RIGHT": "Ancora a destra",
+		"MAXIMIZE": "Ingrandisci",
+		"RESTORE": "Ripristina la larghezza",
+		"COLLAPSE": "Comprimi",
+		"RESIZE": "Trascina per ridimensionare",
+		"WELCOME_SUBTITLE": "Chiedimi qualsiasi cosa sul tuo spazio di lavoro, sulle attività o sui progetti.",
+		"PLACEHOLDER": "Scrivi un messaggio…",
+		"SEND": "Invia messaggio",
+		"STOP": "Interrompi la generazione",
+		"ERROR": "Si è verificato un errore.",
+		"RETRY": "Riprova",
+		"DICTATION_FAILED": "Impossibile trascrivere la registrazione.",
+		"DICTATION_NOT_CONFIGURED": "La dettatura richiede un provider vocale. Aggiungine uno nella pagina impostazioni «Provider IA».",
+		"DICTATION_ASK_ADMIN": "La dettatura richiede un provider vocale: chiedi a un amministratore di aggiungerne uno in Impostazioni → Provider IA.",
+		"DICTATION_KEY_REJECTED": "Il provider vocale ha rifiutato la sua chiave API. Aggiornala nella pagina impostazioni «Provider IA».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Il provider vocale ha rifiutato la sua chiave API: chiedi a un amministratore di aggiornarla in Impostazioni → Provider IA.",
+		"DICTATION_OPEN_SETTINGS": "Apri Provider IA",
+		"RATE_LIMITED_SHARED": "Il piano IA gratuito ha raggiunto il limite di richieste. Collega il tuo account OpenRouter o configura un altro provider IA per un accesso senza interruzioni.",
+		"RATE_LIMITED_OWN": "Il tuo provider IA sta limitando le richieste in questo momento. Controlla il tuo piano e i limiti con il provider, oppure configura un altro provider IA.",
+		"RATE_LIMIT_RETRY_IN": "Puoi riprovare tra circa {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Apri Provider IA",
+		"ERROR_NOT_CONFIGURED": "La chat IA richiede un provider configurato. Aggiungine uno nella pagina impostazioni «Provider IA».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "La chat IA richiede un provider configurato: chiedi a un amministratore di aggiungerne uno in Impostazioni → Provider IA.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Il provider IA selezionato non può rispondere al momento. Controllalo nella pagina impostazioni «Provider IA».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Il provider IA selezionato non può rispondere al momento: chiedi a un amministratore di controllare Impostazioni → Provider IA.",
+		"ERROR_MODEL_UNAVAILABLE": "Questo modello non è disponibile con la chiave API attuale. Scegline un altro nella pagina impostazioni «Provider IA».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Questo modello non è disponibile con la chiave API attuale: chiedi a un amministratore di controllare Impostazioni → Provider IA.",
+		"ERROR_KEY_REJECTED": "Il provider IA ha rifiutato la sua chiave API. Aggiornala nella pagina impostazioni «Provider IA».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Il provider IA ha rifiutato la sua chiave API: chiedi a un amministratore di aggiornarla in Impostazioni → Provider IA.",
+		"ERROR_RATE_LIMITED": "Il provider IA sta limitando le richieste.",
+		"RECORDING": "Registrazione",
+		"PREVIEW": "Anteprima",
+		"PREVIEW_PAGE": "Pagina",
+		"PREVIEW_NEW_TAB": "Apri in una nuova scheda",
+		"PREVIEW_CLOSE": "Chiudi anteprima",
+		"PREVIEW_UNAVAILABLE": "Nessuna anteprima disponibile per questo file.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Apri in Documenti",
+		"ATTACH_UPLOADING": "Caricamento…",
+		"ATTACH_DOCUMENT": "Documento"
 	},
 	"HEADER_TITLE": {
 		"FOR": "per",
@@ -3643,6 +3896,21 @@
 		"REDIRECT_TO_HOME": "Sarai reindirizzato alla pagina principale presto"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Trova la documentazione, ottieni risposte e contatta il team dietro Gauzy.",
+		"DOCUMENTATION": "Documentazione",
+		"DOCUMENTATION_DESC": "Guide e riferimenti per ogni funzionalità di Gauzy.",
+		"FAQ": "FAQ",
+		"FAQ_DESC": "Risposte alle domande più frequenti.",
+		"SUPPORT_CHAT": "Chat di supporto",
+		"SUPPORT_CHAT_DESC": "Chatta con il nostro team di supporto.",
+		"REPORT_ISSUE": "Segnala un problema",
+		"REPORT_ISSUE_DESC": "Hai trovato un bug? Apri una issue su GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Codice sorgente, release e discussioni.",
+		"WEBSITE": "Sito web di Gauzy",
+		"WEBSITE_DESC": "Scopri di più sulla piattaforma Gauzy.",
+		"ABOUT_LINK": "Informazioni su Gauzy",
+		"ABOUT_LINK_DESC": "Dettagli della versione, licenza e link.",
 		"HELP": "Aiuto",
 		"KNOWLEDGE_BASE": "Base di conoscenza",
 		"CHOSE_ICON": "Scegli un'icona da impostare",
@@ -3691,20 +3959,20 @@
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Questa scheda mostrerà grafici di gestione del progetto e dati aggregati",
 		"PROJECT_MODULE": {
 			"PROJECT": "Progetto",
-			"SELECT_PROJECT": "Seleziona un progetto",
+			"SELECT_PROJECT": "Progetto",
 			"STATUS": "Stato",
 			"TEAM_MEMBERS": "Membri del team",
 			"TEAMS": "Squadre",
-			"SELECT_TEAMS": "Seleziona squadre",
+			"SELECT_TEAMS": "Squadre",
 			"CHOOSE_TEAMS": "Scegli squadre",
 			"NAME": "Nome",
 			"ENTER_NAME": "Inserisci il nome",
 			"PARENT_MODULE": "Modulo genitore",
-			"SELECT_PARENT": "Seleziona modulo genitore",
+			"SELECT_PARENT": "Modulo genitore",
 			"START_DATE": "Data di inizio",
-			"SELECT_START_DATE": "Seleziona data di inizio",
+			"SELECT_START_DATE": "Data di inizio",
 			"END_DATE": "Data di fine",
-			"SELECT_END_DATE": "Seleziona data di fine",
+			"SELECT_END_DATE": "Data di fine",
 			"DESCRIPTION": "Descrizione",
 			"IS_FAVORITE": "Preferito"
 		}
@@ -3741,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Ruoli e autorizzazioni",
 		"TIME_TRACKING": "Registrare il tempo",
 		"ESTIMATE": "Stima",
-		"DASHBOARD": "Dashboard"
+		"DASHBOARD": "Dashboard",
+		"DOCUMENTS": "Documenti"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3839,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Vai alla dashboard, Gestisci le statistiche degli dipendenti, Dashboard di tracciamento del tempo"
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Hub centrale per i documenti aziendali: caricamenti, pagine wiki, revisione e conoscenza IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3953,6 +4225,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Tutti i diritti riservati.",
+		"DESCRIPTION": "Ever® Gauzy™ è una piattaforma aperta di gestione aziendale per le economie collaborative, on-demand e della condivisione — ERP, CRM, HRM, ATS e gestione progetti con rilevazione del tempo integrata.",
+		"LICENSE": "Open source, rilasciato sotto licenza",
+		"VERSION_DETAILS": "Dettagli della versione",
+		"VERSION_MISMATCH": "L'app web e l'API sono state compilate da commit diversi — potrebbe essere in corso un deployment.",
+		"WEB_APP": "App web",
+		"API": "API",
+		"UNTAGGED": "build senza tag",
+		"API_UNAVAILABLE": "Versione API non disponibile",
+		"LEARN_MORE": "Scopri di più",
 		"ABOUT": "A proposito"
 	},
 	"FOOTER": {
@@ -4348,16 +4630,30 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitoraggio attivo: vengono registrati tempo e attività",
+		"MONITORING_IDLE": "Agente inattivo",
+		"MONITORING_TRAY_ACTIVE": "Monitoraggio attivo, registrazione di: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitoraggio in pausa: non viene registrato nulla",
+		"MONITORING_CAPTURE_TIME": "tempo e applicazioni attive",
+		"MONITORING_CAPTURE_SCREENSHOTS": "screenshot",
+		"MONITORING_CAPTURE_INPUT": "attività di tastiera e mouse",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Seleziona cliente",
+			"SELECT_PROJECT": "Seleziona progetto",
+			"SELECT_TEAM": "Seleziona squadra",
+			"SELECT_TASK": "Seleziona attività",
+			"DESCRIPTION": "Aggiungi una descrizione"
+		},
 		"IS_BILLABLE": "È fatturabile",
 		"STOP_TIMER": "Fermare il timer",
 		"START_TIMER": "Avvia cronometro",
 		"TIMER": "Timer",
 		"MANUAL": "Manuale",
 		"MANUAL_NOT_ALLOW": "Il tempo manuale non è consentito",
-		"SELECT_PROJECT": "Seleziona Progetto",
-		"SELECT_TASK": "Seleziona attività",
-		"SELECT_CLIENT": "Seleziona il Cliente",
-		"SELECT_TEAM": "Seleziona squadra",
+		"SELECT_PROJECT": "Progetto",
+		"SELECT_TASK": "Attività",
+		"SELECT_CLIENT": "Cliente",
+		"SELECT_TEAM": "Squadra",
 		"DATE": "Data",
 		"START_TIME": "Ora di inizio",
 		"END_TIME": "Ora di fine",
@@ -4447,13 +4743,13 @@
 			"AUTOMATIC_UPDATE_CHECK": "Controllo automatico degli aggiornamenti",
 			"ENABLE_AUTOMATIC_UPDATE_LABEL": "Abilita il controllo automatico degli aggiornamenti, al fine di eseguire una richiesta per verificare se è disponibile una nuova versione e notificarne",
 			"SET_UPDATE_INTERVAL_DURATION": "Imposta la durata dell'intervallo di controllo degli aggiornamenti",
-			"SELECT_DELAY": "Seleziona il Ritardo",
+			"SELECT_DELAY": "Ritardo",
 			"ENABLE_AUTOMATIC_UPDATE": "Abilita l'aggiornamento automatico",
 			"UPDATE_SERVER": "Server di Aggiornamento",
 			"SELECT_DEFAULT_CDN": "Seleziona il server CDN predefinito per l'aggiornamento",
 			"TOGGLE_UPDATE_LOCALLY": "Attiva per aggiornamento locale",
 			"LOCAL_SERVER": "Server locale",
-			"LOCAL_SERVER_NOTE": "La directory selezionata deve contenere sicuramente il manifesto <strong>latest.yml</strong> e/o <strong>latest-mac.yml</strong> per poter validare l'aggiornamento",
+			"LOCAL_SERVER_NOTE": "La directory selezionata deve contenere il manifesto di aggiornamento del tuo sistema (Windows: <strong>latest-x64.yml</strong> o <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> o <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) e i file di aggiornamento in esso elencati, per poter validare l'aggiornamento",
 			"OTHER_SETTINGS": "Altre impostazioni",
 			"ALLOW_PRERELEASE_VERSIONS": "Consentire versioni di anteprima",
 			"CHECK_UPDATE_APP_VERSION": "Verifica e aggiorna la versione della tua app",
@@ -4718,11 +5014,11 @@
 		"SUBMIT_SUCCESS": "Timesheet inviata con successo",
 		"UNSUBMIT_SUCCESS": "Timesheet inviato con successo",
 		"DELETE_TIMELOG": "Sei sicuro di voler eliminare il registro del tempo?",
-		"SELECT_EMPLOYEE": "Seleziona dipendente",
+		"SELECT_EMPLOYEE": "Dipendente",
 		"ALL_EMPLOYEE": "Tutti gli impiegati",
-		"SELECT_SOURCE": "Seleziona Origine",
-		"SELECT_ACTIVITY_LEVEL": "Seleziona il livello di attività",
-		"SELECT_LOG_TYPE": "Seleziona il tipo di registrazione",
+		"SELECT_SOURCE": "Origine",
+		"SELECT_ACTIVITY_LEVEL": "Livello di attività",
+		"SELECT_LOG_TYPE": "Tipo di registrazione",
 		"ADD_TIME_LOGS": "Aggiungi registri di tempo",
 		"EDIT_TIME_LOGS": "Modifica i registri di tempo",
 		"VIEW_TIME_LOGS": "Registri del tempo",
@@ -4817,7 +5113,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Screenshot",
 			"OF": "di",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Screenshot acquisito alle {{ time }}",
+			"POSITION": "Screenshot {{ position }} di {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Avviso. Il cronometro è in esecuzione, è possibile rimuovere solo gli screenshot se si interrompe il cronometro o dall'app Timer interna",
 		"DELETE_CONFIRM": "Sei sicuro di voler eliminare queste schermate e il registro del tempo?",
@@ -4866,7 +5164,9 @@
 		"NO_SCREENSHOT": "Nessuna schermata",
 		"NO_SCREENSHOTS": "Nessuna schermata",
 		"NO_RECORD_FOUND": "Nessun record trovato. Seleziona un intervallo di date, un dipendente o un progetto",
-		"SCREEN_SELECTED": "{{ count }} Schermata/e selezionata/e"
+		"SCREEN_SELECTED": "{{ count }} Schermata/e selezionata/e",
+		"NO_TIME_TRACKED": "Nessun tempo registrato",
+		"MINUTES_TRACKED": "{{ minutes }} min registrati"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Creiamo la tua prima organizzazione",
@@ -4892,6 +5192,16 @@
 		"BUFFER_AT_START": "Buffer all'inizio",
 		"BUFFER_AT_END": "Buffer alla fine",
 		"BREAK_TIME": "Pausa",
+		"DETAILS": "Dettagli",
+		"PARTICIPANTS": "Partecipanti",
+		"FORM_HINT": "Indica l'argomento della riunione, quando si svolge e chi partecipa.",
+		"DETAILS_HINT": "Ordine del giorno, luogo e note visibili a tutti gli invitati.",
+		"SCHEDULE": "Programma",
+		"SCHEDULE_HINT": "Scegli la data e la fascia oraria, con margine e pausa facoltativi.",
+		"BUFFER_TIME_HINT": "Lascia del tempo libero prima o dopo la riunione.",
+		"BREAK_TIME_HINT": "Sospendi la riunione per una breve pausa.",
+		"BREAK_START": "La pausa inizia alle",
+		"PARTICIPANTS_HINT": "Le persone che ricevono l'invito.",
 		"ARE_YOU_SURE": "Sei sicuro? Questa azione è irreversibile"
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4936,7 +5246,9 @@
 		"CANCEL": "Annulla appuntamento",
 		"TIMEZONE": "La tua zona oraria:",
 		"CHANGE": "Cambiare",
+		"CHANGE_TIMEZONE": "Cambia",
 		"SELECT_EMPLOYEE_ERROR": "Seleziona un dipendente, per favore",
+		"SELECT_EMPLOYEE_HINT": "Scegli chi vuoi incontrare, poi un orario che ti va bene.",
 		"EXPIRED_OR_CANCELLED": "Questo appuntamento è scaduto o è stato annullato",
 		"EMAIL_SENT": "È stata inviata un'email all'host oltre che a tutti i partecipanti per questa riunione",
 		"NO_ACTIVE_EVENT_TYPES": "Non ci sono tipi di eventi attivi",
@@ -5022,9 +5334,9 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Creare Affare | Pipeline: '{{ name }}'",
-		"SELECT_STAGE": "Seleziona stadio",
+		"SELECT_STAGE": "Stadio",
 		"PROBABILITY": "Probabilità",
-		"SELECT_CLIENT": "Seleziona cliente"
+		"SELECT_CLIENT": "Cliente"
 	},
 	"DIALOG": {
 		"CONFIRM": "Conferma",
@@ -5150,14 +5462,27 @@
 			"SYSTEM": "Sistema",
 			"FILTERS": {
 				"TO": "A",
-				"TEMPLATE_LANGUAGE": "Modello/Lingua"
+				"TEMPLATE_LANGUAGE": "Modello/Lingua",
+				"RECIPIENT": "Destinatario",
+				"TEMPLATE": "Modello",
+				"STATUS": "Stato",
+				"ALL_RECIPIENTS": "Tutti i destinatari",
+				"ALL_TEMPLATES": "Tutti i modelli",
+				"ALL_STATUSES": "Tutti gli stati",
+				"SENT": "Inviata",
+				"FAILED": "Non riuscita",
+				"ARCHIVED": "Archiviate",
+				"SHOWING": "{{ count }} di {{ total }} visualizzate",
+				"NO_MATCH": "Nessuna email corrisponde a questi filtri."
 			}
 		}
 	},
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Manutenzione",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Politica sulla privacy",
-		"TERMS_AND_CONDITIONS": "Termini e condizioni"
+		"TERMS_AND_CONDITIONS": "Termini e condizioni",
+		"DOCUMENT_VERSION": "Versione {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "In vigore dal {{ date }}"
 	},
 	"LOADING": "Caricamento in corso, attendere per favore...",
 	"ACCOUNTING_TEMPLATES_PAGE": {
@@ -5198,7 +5523,8 @@
 				"TERMS_AND_CONDITIONS": "Termini e condizioni",
 				"AND": " e ",
 				"PRIVACY_POLICY": "Informativa sulla privacy"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "La password deve contenere almeno 4 caratteri"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5208,6 +5534,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Non hai un account?",
 		"FORGOT_PASSWORD_TITLE": "Password dimenticata?",
 		"OR_SIGN_IN_WITH": "O accedi con",
+		"SIGN_IN_WITH_EVER_ID": "Accedi con Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Accedi con Keycloak",
 		"FORGOT_EMAIL_TITLE": "Hai dimenticato l'email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Accedi con un codice magico",
@@ -5308,7 +5636,15 @@
 		"HOTKEYS": "Tasti di scelta rapida",
 		"HELP": "Aiuto",
 		"SIGN_OUT": "Esci",
-		"PROFILE": "Profilo"
+		"PROFILE": "Profilo",
+		"ACCOUNT": "Account",
+		"PREFERENCES": "Preferenze",
+		"DOWNLOAD_APPS": "Scarica le app",
+		"DOWNLOAD_MACOS": "Scarica per macOS",
+		"DOWNLOAD_WINDOWS": "Scarica per Windows",
+		"DOWNLOAD_LINUX": "Scarica per Linux",
+		"DOWNLOAD_MOBILE": "Scarica l'app mobile",
+		"DOWNLOAD_BROWSER_EXTENSION": "Scarica l'estensione del browser"
 	},
 	"WORKSPACES": {
 		"MENUS": {
@@ -5446,7 +5782,7 @@
 				"REQUIRED": "Obbligatorio"
 			},
 			"TYPE": "Tipo di plugin",
-			"TYPE_PLACEHOLDER": "Seleziona il tipo di plugin",
+			"TYPE_PLACEHOLDER": "Tipo di plugin",
 			"TYPES": {
 				"DESKTOP": "Desktop",
 				"WEB": "Web",

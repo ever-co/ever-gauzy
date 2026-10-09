@@ -17,7 +17,16 @@ export const GoalsPage = {
 	// ['', Validators.required]); without picking one the Save button stays disabled and no goal is
 	// created. The seed always provides active future time frames (Annual-<year> + quarters), so the
 	// select renders options under `.option-list nb-option`.
+	// NOTE: `#objective-deadline` is TWO different controls in edit-objective.component.html — an
+	// nb-select when the organization has time frames, and a plain "Add Time Frame" button when it has
+	// none (the id is reused). Goals.po handles both.
 	deadlineDropdownCss: '#objective-deadline',
+	// EditTimeFrameComponent, opened by that button (and reused by the Goals settings page).
+	timeFrameDialogCss: 'ga-edit-time-frame',
+	timeFrameNameInputCss: 'ga-edit-time-frame #time-frame-title',
+	timeFrameStartDateCss: 'ga-edit-time-frame #start-date',
+	timeFrameEndDateCss: 'ga-edit-time-frame #end-date',
+	timeFrameSaveButtonCss: 'ga-edit-time-frame nb-card-footer > button[status="success"]',
 	// The selectable key-result ROW inside the expanded accordion body — clicking it fires
 	// onClickKeyResult, which selects the key result so the toolbar swaps to the key-result actions
 	// (View / Edit / Weight%). The "Add new Key Result" body button is a sibling without this class.
@@ -45,6 +54,13 @@ export const GoalsPage = {
 	weightTypeButtonCss: '.gauzy-button-container button.action:has(i.fa-percentage)',
 	weightParameterDropdownCss: '#key-result-weight',
 	saveDeadlineButtonCss: 'div.d-flex > button[status="success"]',
+	// The key-result UPDATE dialog (ga-keyresult-update) opens ON TOP of the key-result DETAILS dialog
+	// (ga-keyresult-details), so both are mounted at once and the bare footer / `div.d-flex` selectors
+	// above are ambiguous. Scope each control to its own dialog component.
+	keyResultUpdateDialogCss: 'ga-keyresult-update',
+	keyResultUpdateConfirmCss: 'ga-keyresult-update nb-card-footer > button[status="success"]',
+	keyResultDetailsDialogCss: 'ga-keyresult-details',
+	keyResultDetailsSaveCss: 'ga-keyresult-details div.d-flex > button[status="success"]',
 	progressBarCss: '.goals-container nb-progress-bar',
 	verifyGoalCss: '.goals-container nb-accordion-item-header',
 	// POLLUTION RESILIENCE: the shared seed/serial run can carry objectives from earlier specs, so a

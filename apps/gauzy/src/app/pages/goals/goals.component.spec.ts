@@ -5,7 +5,8 @@ describe('GoalsComponent', () => {
 	let fixture: ComponentFixture<GoalsComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [GoalsComponent],
+			// Standalone: it is imported, not declared.
+			imports: [GoalsComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});

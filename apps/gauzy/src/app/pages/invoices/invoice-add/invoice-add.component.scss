@@ -7,27 +7,36 @@ $shadow: 0 0 0 nb-theme(button-outline-width)
       $alpha: 0.1
     ),
   inset nb-theme(button-outline-focus-inset-shadow-length) transparent;
-[nbButton].gen.appearance-outline.status-basic {
-  background-color: #ffffff;
-  border-color: transparent;
+
+// Apply the green treatment only when enabled.
+[nbButton].gen.appearance-outline.status-basic:not(:disabled):not(.btn-disabled) {
+  background-color: transparent;
+  border-color: rgba(
+    $color: $green,
+    $alpha: 0.4
+  );
   box-shadow: $shadow;
   border-width: 2px;
   color: $green;
   &:hover {
-    border-color: transparent;
+    border-color: $green;
   }
 }
-[nbButton].gen.appearance-outline:hover {
+[nbButton].gen.appearance-outline:not(:disabled):not(.btn-disabled):hover {
   box-shadow: $shadow;
 }
-[nbButton].gen.appearance-outline:focus:not(:hover):not(:active) {
+[nbButton].gen.appearance-outline:not(:disabled):not(.btn-disabled):focus:not(:hover):not(:active) {
   box-shadow: unset;
 }
 
-[nbButton].gen.appearance-outline.status-basic[disabled],
-[nbButton].appearance-outline.status-basic.btn-disabled {
-  background-color: nb-theme(button-outline-basic-disabled-background-color);
-  border-color: nb-theme(button-outline-basic-disabled-border-color);
-  color: nb-theme(button-outline-basic-disabled-text-color);
-  box-shadow: unset;
+// Override the shared dialog's red outline treatment, including its hover rule.
+:host [nbButton].gen.appearance-outline.status-basic:disabled,
+:host [nbButton].gen.appearance-outline.status-basic.btn-disabled {
+  background-color: rgba(128, 128, 128, 0.08);
+  border-color: rgba(128, 128, 128, 0.25);
+  color: var(--text-hint-color, #8f9bb3);
+  opacity: 0.6;
+  box-shadow: none;
+  pointer-events: none;
+  cursor: default;
 }

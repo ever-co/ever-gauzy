@@ -1,0 +1,21 @@
+// No card chrome here on purpose: `ga-dashboard-widget-host` already renders the
+// `nb-card`, its header and the body padding. This component only fills that body.
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+// `ga-profit-history-selector` brings its own `nb-card` (it was written as a
+// dialog) and switches to a fluid width through its own `.inline` modifier. All
+// that is left here is making it fill the cell and keeping its table's overflow
+// inside the widget, so a long report never widens the canvas.
+ga-profit-history-selector {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}

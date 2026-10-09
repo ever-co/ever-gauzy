@@ -15,6 +15,10 @@ export const OrganizationTagsPage = {
 	cancelDeleteTagButtonCss: 'nb-card-footer > button[status="basic"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyTagCss: 'angular2-smart-table tbody',
-	filterNameInputCss: '[placeholder="Name"]',
+	// The Name column's filter input, addressed by COLUMN KEY (angular2-smart-table puts the key on the
+	// header cell) rather than by placeholder — the placeholder is the translated column title, so it
+	// stops matching as soon as a spec switches the UI language. The tags grid paginates at 10 and the
+	// suite accumulates tags, so every row assertion has to filter through this first.
+	filterNameInputCss: 'th.angular2-smart-th.name input',
 	firstTableCellTagCss: 'tbody > tr.angular2-smart-row:first-of-type > td:first-of-type'
 };

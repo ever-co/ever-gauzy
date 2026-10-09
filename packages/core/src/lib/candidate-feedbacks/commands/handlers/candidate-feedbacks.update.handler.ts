@@ -34,9 +34,6 @@ export class FeedbackUpdateHandler implements ICommandHandler<FeedbackUpdateComm
 	}
 
 	public async update(id: string, entity: ICandidateFeedbackCreateInput): Promise<ICandidateFeedback> {
-		return this.candidateFeedbackService.create({
-			id,
-			...entity
-		});
+		return this.candidateFeedbackService.create({ ...entity, id });
 	}
 }

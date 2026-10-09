@@ -5,7 +5,7 @@
 		[clearable]="true"
 		[items]="tasks"
 		[(ngModel)]="taskId"
-		[placeholder]="'TIMER_TRACKER.SELECT_TASK' | translate"
+		[placeholder]="placeholder ?? ('TIMER_TRACKER.SELECT_TASK' | translate)"
 		bindValue="id"
 		bindLabel="title"
 		appendTo="body"

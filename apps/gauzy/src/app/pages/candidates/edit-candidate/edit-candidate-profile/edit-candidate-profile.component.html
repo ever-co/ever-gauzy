@@ -3,19 +3,24 @@
     <div class="card-header-title">
       <ngx-back-navigation></ngx-back-navigation>
       <h4>
-        {{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.HEADER' | translate }}
-        @if (selectedCandidate?.user?.name) {
-          <span>{{ selectedCandidate?.user?.name }}</span>
-        }
-        @if (selectedCandidate?.user?.username) {
-          <span>
-            @if (selectedCandidate?.user.name) {
-              ({{ selectedCandidate?.user.username }})
-            } @else {
-              '{{ selectedCandidate?.user.username }}'
-            }
-          </span>
-        }
+        <!-- Routed through `ngx-header-title` like every other page in this
+             area: that is what renders the breadcrumb trail under the heading,
+             which this page had no way to show. -->
+        <ngx-header-title [allowEmployee]="false">
+          {{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.HEADER' | translate }}
+          @if (selectedCandidate?.user?.name) {
+            <span>{{ selectedCandidate?.user?.name }}</span>
+          }
+          @if (selectedCandidate?.user?.username) {
+            <span>
+              @if (selectedCandidate?.user.name) {
+                ({{ selectedCandidate?.user.username }})
+              } @else {
+                '{{ selectedCandidate?.user.username }}'
+              }
+            </span>
+          }
+        </ngx-header-title>
       </h4>
     </div>
     <div class="notification" (click)="interviewInfo()">

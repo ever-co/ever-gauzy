@@ -1,5 +1,13 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
-import { SelectQueryBuilder, UpdateResult } from 'typeorm';
+import {
+	BadRequestException,
+	ForbiddenException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { isUUID } from 'class-validator';
 import {
 	ID,
 	IDailyPlan,
@@ -14,7 +22,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
 import { RequestContext } from '../../core/context/request-context';
-import { MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
+import { LegacyFindOneOptions, MultiORMEnum, parseFindOptionsRelations } from '../../core/utils';
 import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
@@ -125,6 +133,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getAllPlans(options: BaseQueryDTO<DailyPlan>, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+
 		try {
 			const { where } = options;
 			const tenantId = RequestContext.currentTenantId() ?? where?.tenantId;
@@ -205,6 +217,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
 	async getTeamDailyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		// Builds its own query, so the check in the CRUD read methods never runs: assert the
+		// sensitive-relation table on the client-supplied relations before anything is loaded.
+		this.assertRelationsPermitted(options);
+		await this.assertCanReadTeamPlans(options?.where?.organizationTeamId);
+
 		try {
 			// Apply optional find options if provided
 			const { where, relations = [] } = options || {};
@@ -262,6 +279,40 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Refuses a team read unless the caller belongs to that team.
+	 *
+	 * A caller with CHANGE_SELECTED_EMPLOYEE still reads any team, or the whole organization when no team
+	 * is named, and so does an organization-wide viewer without an employee record, the same exception
+	 * `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. Anyone else must name a team they are an
+	 * active member or manager of.
+	 *
+	 * @param organizationTeamId - The team named in the request's `where`, as the client sent it
+	 * @throws ForbiddenException when the caller may not read that team's plans
+	 */
+	private async assertCanReadTeamPlans(organizationTeamId: unknown): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+
+		if (!employeeId && RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return;
+		}
+
+		// A repeated or nested query value is not a string, and a malformed id would make the uuid
+		// comparison fail: both are refused here instead of reaching the membership query.
+		const isMember =
+			typeof organizationTeamId === 'string' &&
+			isUUID(organizationTeamId) &&
+			(await this._managedEmployeeService.isMemberOfTeam(employeeId, organizationTeamId));
+
+		if (!isMember) {
+			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
+		}
+	}
+
+	/**
 	 * Retrieves daily plans for the current employee based on given pagination options.
 	 *
 	 * @param options Pagination options for fetching daily plans.
@@ -307,25 +358,38 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				relations: { tasks: true }
 			});
 		} else {
-			// User is potentially a manager → Check access first
-			// Step 1: Fetch minimal data to get organizationTeamId
-			const planTeamInfo = await this.findOneByOptions({
-				where: {
-					id: planId,
-					employeeId,
-					tenantId,
-					organizationId
-				}
-			});
+			// User is potentially a manager → Check access first.
+			// Step 1: Fetch minimal data to get the plan's owner, team and organization.
+			// This read must run without the automatic employee filter: for a caller without
+			// CHANGE_SELECTED_EMPLOYEE that filter overrides `employeeId` with the caller's own id, so a
+			// plan owned by anyone else would never be found and the manager check below could never run.
+			// The bypass covers this single read only; access is decided before anything is returned.
+			const { success, record: planTeamInfo } = await this.withoutEmployeeFilter(() =>
+				this.findOneOrFailByOptions({
+					where: {
+						id: planId,
+						employeeId,
+						tenantId,
+						organizationId
+					}
+				})
+			);
 
-			// Step 2: Check if current user can manage this employee in this team
+			// Step 2: Check if current user can manage the plan's owner in the plan's team.
+			// The owner and the organization come from the stored plan, not from the request body, so
+			// the check stays anchored to the record itself.
 			// Note: We throw the same generic error whether the plan doesn't exist or the user lacks permission
 			// to avoid leaking information about which plan IDs exist in the system
 			const canManage =
-				planTeamInfo &&
-				(await this._managedEmployeeService.canManageEmployee(employeeId, planTeamInfo.organizationTeamId));
+				success &&
+				!!planTeamInfo &&
+				(await this._managedEmployeeService.canManageEmployee(
+					planTeamInfo.employeeId ?? employeeId,
+					planTeamInfo.organizationTeamId,
+					planTeamInfo.organizationId ?? organizationId
+				));
 
-			if (!planTeamInfo || !canManage) {
+			if (!canManage) {
 				throw new NotFoundException('Daily plan not found or you do not have permission to access it');
 			}
 
@@ -347,6 +411,67 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		}
 
 		return dailyPlan;
+	}
+
+	/**
+	 * Deletes a daily plan the caller owns or manages.
+	 *
+	 * The inherited implementation narrows the criteria to the caller's own employeeId, so a manager
+	 * deleting a member's plan matched no row and the route answered 200 with `{ affected: 0 }`.
+	 *
+	 * @param criteria - The plan id, or find conditions when called internally
+	 * @param options - Additional find options forwarded to the base implementation
+	 * @returns The delete result
+	 * @throws NotFoundException if the plan does not exist or the caller may not act on its owner
+	 * @throws BadRequestException if an id is given together with additional where conditions
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<DailyPlan>,
+		options?: LegacyFindOneOptions<DailyPlan>
+	): Promise<DeleteResult> {
+		// Only the route passes a plain id. Anything else keeps the inherited behaviour, so the bypass
+		// below can never combine with a condition object and widen the deletion to the whole tenant.
+		if (typeof criteria !== 'string') {
+			return await super.delete(criteria, options);
+		}
+
+		// The inherited implementation merges options.where over the criteria, so a where carrying an id
+		// would replace the one authorized below and delete another plan inside the bypass. No caller
+		// needs that combination, so it is refused rather than silently narrowed.
+		if (options?.where) {
+			throw new BadRequestException('Deleting a daily plan by id does not accept where conditions');
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+
+		// This read must run without the automatic employee filter, otherwise a plan owned by anyone
+		// else is never found and the check below could never run. It covers this single read only.
+		const { success, record: plan } = await this.withoutEmployeeFilter(() =>
+			this.findOneOrFailByOptions({ where: { id: criteria, tenantId } })
+		);
+
+		// The owner, the team and the organization come from the stored plan, never from the request.
+		// The error does not say whether the plan exists, so plan ids stay unguessable.
+		const canManage =
+			success &&
+			!!plan &&
+			(await this._managedEmployeeService.canManageEmployee(
+				plan.employeeId,
+				plan.organizationTeamId,
+				plan.organizationId
+			));
+
+		if (!canManage) {
+			throw new NotFoundException('Daily plan not found or you do not have permission to access it');
+		}
+
+		const result = await this.withoutEmployeeFilter(() => super.delete(criteria, options));
+
+		if (!result.affected) {
+			throw new NotFoundException('Daily plan not found');
+		}
+
+		return result;
 	}
 
 	/**
@@ -435,6 +560,18 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, plansIds, organizationId, organizationTeamId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
+
+			// The employee comes from the request body, so the caller must be allowed to act on them.
+			// The message matches the not-found case below, so a probe cannot tell the two apart.
+			const canManage = await this._managedEmployeeService.canManageEmployee(
+				employeeId,
+				organizationTeamId,
+				organizationId
+			);
+
+			if (!canManage) {
+				throw new BadRequestException('Daily plans not found');
+			}
 
 			// Initial query for finding daily plans
 			let dailyPlansToUpdate: DailyPlan[];

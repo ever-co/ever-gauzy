@@ -1,4 +1,4 @@
-import { memo, type CSSProperties } from 'react';
+import { memo, type ComponentProps, type CSSProperties, type ReactNode } from 'react';
 import { Streamdown } from 'streamdown';
 import { chatTheme } from '../chat-theme';
 
@@ -6,6 +6,24 @@ export interface MarkdownContentProps {
 	content: string;
 	/** True while this message is still streaming in. */
 	isStreaming?: boolean;
+}
+
+type MarkdownListItemProps = Record<string, unknown> & {
+	className?: string;
+	children?: ReactNode;
+};
+
+function MarkdownListItem({ className, children, node: _node, ...props }: MarkdownListItemProps) {
+	const listItemClassName = className
+		?.split(/\s+/)
+		.filter((className) => className !== 'py-1')
+		.join(' ');
+
+	return (
+		<li {...(props as ComponentProps<'li'>)} className={listItemClassName || undefined}>
+			{children}
+		</li>
+	);
 }
 
 /**
@@ -22,15 +40,17 @@ export interface MarkdownContentProps {
  */
 export const MarkdownContent = memo(function MarkdownContent({ content, isStreaming }: MarkdownContentProps) {
 	const style: CSSProperties = {
-		fontSize: chatTheme.fontSizeBase,
-		lineHeight: 1.6,
+		fontSize: chatTheme.fontSizeMessage,
+		lineHeight: chatTheme.lineHeightMessage,
 		color: 'inherit',
 		wordBreak: 'break-word'
 	};
 
 	return (
 		<div style={style} className="gz-ai-chat-markdown">
-			<Streamdown mode={isStreaming ? 'streaming' : 'static'}>{content}</Streamdown>
+			<Streamdown mode={isStreaming ? 'streaming' : 'static'} components={{ li: MarkdownListItem }}>
+				{content}
+			</Streamdown>
 		</div>
 	);
 });

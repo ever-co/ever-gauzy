@@ -85,8 +85,8 @@ When('I add a new employee', async () => {
 	await manageEmployeesPage.enterUsernameData(username);
 	await manageEmployeesPage.employeeEmailInputVisible();
 	await manageEmployeesPage.enterEmployeeEmailData(employeeEmail);
-	await manageEmployeesPage.dateInputVisible();
-	await manageEmployeesPage.enterDateData();
+	await manageEmployeesPage.employeeDateInputVisible();
+	await manageEmployeesPage.enterEmployeeDateData();
 	await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
 	await manageEmployeesPage.passwordInputVisible();
 	await manageEmployeesPage.enterPasswordInputData(password);
@@ -113,6 +113,9 @@ When('I add a new employee', async () => {
 	await manageEmployeesPage.lastStepButtonVisible();
 	await manageEmployeesPage.clickLastStepButton();
 	await manageEmployeesPage.waitMessageToHide();
+	// Same pollution guard the edit/end-work/delete steps below already use: the employees grid pages
+	// at 10 and the seed alone brings 18 employees, so the one just added is not on page 1.
+	await manageEmployeesPage.searchEmployeeByName(`${firstName} ${lastName}`);
 	await manageEmployeesPage.verifyEmployeeExists(`${firstName} ${lastName}`);
 });
 

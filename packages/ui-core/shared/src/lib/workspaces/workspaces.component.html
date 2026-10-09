@@ -15,10 +15,11 @@
 </div>
 }
 
-<!-- Workspaces list -->
-@for (workspace of workspaces$ | async; track workspace; let i = $index) {
+<!-- Workspaces available to switch to — the active one is shown by the
+     switcher above, so it is deliberately absent here. -->
+@for (workspace of otherWorkspaces$ | async; track workspace.id) {
 <div>
-	<div [class.selected]="selected?.id === workspace.id" class="workspace-item">
+	<div class="workspace-item">
 		<div class="img-container">
 			<img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
 			@if (workspace.isOnline) {

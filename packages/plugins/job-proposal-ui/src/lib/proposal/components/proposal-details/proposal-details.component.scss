@@ -57,12 +57,6 @@ nb-badge {
     display: block;
   }
 }
-h4 {
-  font-size: 24px;
-  font-weight: 500;
-  line-height: 30px;
-  letter-spacing: 0em;
-}
 
 :host {
   @include nb-card-overrides(
@@ -147,5 +141,40 @@ h4 {
     flex-direction: column;
     align-items: flex-start;
     padding: 10px;
+  }
+}
+
+// ── Type scale ───────────────────────────────────────────────────────────────
+// The detail cards were titled with `h6` at the theme's heading size over 1rem
+// body copy, so "Job Post URL" read as loud as the page title and each card was
+// mostly padding. The same 12px set the rest of the app's records use.
+:host {
+  .main-content {
+    font-size: 12px;
+    line-height: 1rem;
+  }
+
+  h6.role {
+    margin: 0 0 0.5rem;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+  }
+
+  nb-card.custom {
+    margin: 0;
+
+    // The cards sat in a `row` of bootstrap columns with their own margins; the
+    // grid gap is what spaces them now.
+    & + nb-card.custom {
+      margin-top: 0.75rem;
+    }
+  }
+
+  .name,
+  .identity {
+    font-size: 12px;
+    line-height: 1rem;
   }
 }

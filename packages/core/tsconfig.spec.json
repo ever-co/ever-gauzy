@@ -3,7 +3,14 @@
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"module": "commonjs",
+		// Added so the ESM `transformIgnorePatterns` list (now in the root `jest.preset.js`) would work:
+		// older ts-jest handed a `.js` file back UNCHANGED when `allowJs` was false, so the ESM-only
+		// `htmlparser2` build behind `sanitize-html` reached Jest as raw ESM and both HTML
+		// sanitization suites failed to load. ts-jest >= 29.3.2 (pinned 29.4.6) compiles `.js` under
+		// `node_modules` regardless, so the list no longer depends on this; it still applies to any
+		// repo-local `.js`. `checkJs` stays off — nothing here is type-checked as JavaScript.
+		"allowJs": true,
 		"types": ["jest", "node"]
 	},
-	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
+	"include": ["jest.config.ts", "src/**/*.test.ts", "src/**/*.spec.ts", "src/**/testing/**/*.ts", "src/**/*.d.ts"]
 }

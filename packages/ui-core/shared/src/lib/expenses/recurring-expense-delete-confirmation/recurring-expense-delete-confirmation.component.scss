@@ -2,6 +2,9 @@
 
 :host {
     nb-card {
-        background-color: nb-theme(gauzy-card-1);
+        // Fallback because `gauzy-card-1` is not registered by material-light /
+        // material-dark, where a `var()` with nothing to resolve to invalidates
+        // the declaration and left this confirmation dialog transparent.
+        background-color: var(--gauzy-card-1, var(--card-background-color));
     }
 }

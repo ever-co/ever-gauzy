@@ -7,6 +7,8 @@
 		"types": ["jest", "node"],
 		"moduleResolution": "bundler",
 		"isolatedModules": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"jsx": "react-jsx"
 	},
 	"files": ["src/test-setup.ts"],

@@ -1,0 +1,10 @@
+<gz-time-track-counter-card
+	color="success"
+	[captionKey]="captionKey()"
+	[value]="weekDuration() | durationFormat"
+	[counterValue]="weekDuration()"
+	[total]="periodSeconds()"
+	[loading]="loading()"
+	[error]="errorMessage()"
+	(retry)="refresh()"
+></gz-time-track-counter-card>

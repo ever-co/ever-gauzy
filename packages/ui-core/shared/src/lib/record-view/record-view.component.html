@@ -1,0 +1,232 @@
+<!-- Projected block above the sections — a page's own header (e.g. a task's key, title, status). -->
+<ng-content select="[recordViewHeader]"></ng-content>
+
+<!-- Sections by variant: panel = framed card (title as header, optionally a toggle);
+     plain = heading + content, for long-form text; meta = small muted stamps. -->
+@for (section of resolved; track $index; let index = $index) {
+	@switch (section.variant) {
+		@case ('panel') {
+			<section class="record-panel" [class.is-collapsed]="collapsed.has(index)">
+				@if (section.title) {
+					@if (section.collapsible) {
+						<button
+							type="button"
+							class="record-panel-header is-toggle"
+							(click)="toggle(index)"
+							[attr.aria-expanded]="!collapsed.has(index)"
+						>
+							<ng-container *ngTemplateOutlet="sectionTitle; context: { $implicit: section }"></ng-container>
+							<nb-icon class="record-panel-chevron" icon="chevron-down-outline"></nb-icon>
+						</button>
+					} @else {
+						<div class="record-panel-header">
+							<ng-container *ngTemplateOutlet="sectionTitle; context: { $implicit: section }"></ng-container>
+						</div>
+					}
+				}
+				@if (!collapsed.has(index)) {
+					<dl class="record-rows">
+						<ng-container *ngTemplateOutlet="sectionRows; context: { $implicit: section }"></ng-container>
+					</dl>
+				}
+			</section>
+		}
+
+		@case ('plain') {
+			<section class="record-plain">
+				@if (section.title) {
+					<h6 class="record-plain-title">
+						<ng-container *ngTemplateOutlet="sectionTitle; context: { $implicit: section }"></ng-container>
+					</h6>
+				}
+				<dl class="record-rows">
+					<ng-container *ngTemplateOutlet="sectionRows; context: { $implicit: section }"></ng-container>
+				</dl>
+			</section>
+		}
+
+		@case ('meta') {
+			<footer class="record-meta">
+				@for (row of section.rows; track $index) {
+					<ng-container *ngTemplateOutlet="guarded; context: { $implicit: row, view: metaItem }"></ng-container>
+				}
+			</footer>
+		}
+	}
+}
+
+<ng-template #sectionTitle let-section>
+	<span class="record-section-title">
+		@if (section.icon) {
+			<nb-icon [icon]="section.icon"></nb-icon>
+		}
+		{{ section.title | translate }}
+	</span>
+</ng-template>
+
+<ng-template #sectionRows let-section>
+	@for (row of section.rows; track $index) {
+		<ng-container *ngTemplateOutlet="guarded; context: { $implicit: row, view: recordRow }"></ng-container>
+	}
+</ng-template>
+
+<!--
+	The one place a row's `permission` is checked — every section variant renders
+	its rows through here. A row may narrow the record's own guard, never widen it.
+-->
+<ng-template #guarded let-row let-view="view">
+	@if (row.field.permission) {
+		<ng-template [ngxPermissionsOnly]="row.field.permission">
+			<ng-container *ngTemplateOutlet="view; context: { $implicit: row }"></ng-container>
+		</ng-template>
+	} @else {
+		<ng-container *ngTemplateOutlet="view; context: { $implicit: row }"></ng-container>
+	}
+</ng-template>
+
+<ng-template #metaItem let-row>
+	<span class="record-meta-item">
+		@if (row.field.icon) {
+			<nb-icon [icon]="row.field.icon"></nb-icon>
+		}
+		{{ row.field.label | translate }}
+		<ng-container *ngTemplateOutlet="recordValue; context: { $implicit: row }"></ng-container>
+	</span>
+</ng-template>
+
+<ng-template #recordRow let-row>
+	<div
+		class="record-row"
+		[class.wide]="row.field.wide"
+		[class.no-label]="row.field.hideLabel"
+		[class.has-divider]="row.field.divider"
+	>
+		@if (!row.field.hideLabel) {
+			<dt class="record-label">
+				@if (row.field.icon) {
+					<nb-icon [icon]="row.field.icon"></nb-icon>
+				}
+				<span>{{ row.field.label | translate }}</span>
+			</dt>
+		}
+		<dd class="record-value" [class]="row.field.tone ? 'tone-text-' + row.field.tone : ''">
+			<ng-container *ngTemplateOutlet="recordValue; context: { $implicit: row }"></ng-container>
+		</dd>
+	</div>
+</ng-template>
+
+<ng-template #recordValue let-row>
+	@if (row.isEmpty) {
+		<span class="record-empty">{{ placeholder }}</span>
+	} @else {
+		@switch (row.type) {
+			@case ('tags') {
+				<ga-only-tags [rowData]="row.tagsHost"></ga-only-tags>
+			}
+			@case ('people') {
+				<ul class="record-people">
+					@for (person of row.people; track person.id || person.name) {
+						<li>
+							@if (person.employee) {
+								<button type="button" class="record-chip is-link" [title]="person.name" (click)="openEmployee(person)">
+									<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+									<span class="record-chip-name">{{ person.name }}</span>
+								</button>
+							} @else {
+								<span class="record-chip" [title]="person.name">
+									<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+									<span class="record-chip-name">{{ person.name }}</span>
+								</span>
+							}
+						</li>
+					}
+				</ul>
+			}
+			@case ('teams') {
+				<span class="record-wrap">
+					@for (team of row.teams; track team.name) {
+						<span class="record-tag">
+							{{ team.name }}
+							@if (team.count) {
+								<span class="record-tag-count">{{ team.count }}</span>
+							}
+						</span>
+					}
+				</span>
+			}
+			@case ('person') {
+				<span class="record-person">
+					<ng-container *ngTemplateOutlet="avatar; context: { $implicit: row.person }"></ng-container>
+					<span class="record-person-name">{{ row.person.name }}</span>
+				</span>
+			}
+			@case ('status') {
+				<span
+					class="record-status"
+					[class]="'tone-' + (row.value.tone || 'basic')"
+					[style.--status-color]="row.value.color"
+				>
+					@if (row.value.icon) {
+						<nb-icon class="record-status-icon" [icon]="row.value.icon"></nb-icon>
+					} @else {
+						<span class="record-status-dot"></span>
+					}
+					<span class="record-status-text">{{ row.value.text }}</span>
+				</span>
+			}
+			@case ('badge') {
+				<ga-status-badge [value]="row.value"></ga-status-badge>
+			}
+			@case ('money') {
+				<ga-income-amount [value]="row.value" [rowData]="record"></ga-income-amount>
+			}
+			@case ('date') {
+				{{ row.value | dateFormat }}
+			}
+			@case ('datetime') {
+				{{ row.value | dateTimeFormat }}
+			}
+			@case ('boolean') {
+				{{ (row.value ? 'BUTTONS.YES' : 'BUTTONS.NO') | translate }}
+			}
+			@case ('email') {
+				<a class="record-link" [href]="'mailto:' + row.value">{{ row.value }}</a>
+			}
+			@case ('phone') {
+				<a class="record-link" [href]="'tel:' + row.value">{{ row.value }}</a>
+			}
+			@case ('link') {
+				<a class="record-link" [href]="row.field.href || row.value" target="_blank" rel="noopener noreferrer">{{
+					row.value
+				}}</a>
+			}
+			@case ('html') {
+				<div class="record-rich" [innerHTML]="row.value"></div>
+			}
+			@case ('markdown') {
+				<div class="record-rich" [innerHTML]="row.html"></div>
+			}
+			@case ('multiline') {
+				<div class="record-multiline">{{ row.value }}</div>
+			}
+			@default {
+				{{ row.value }}
+			}
+		}
+	}
+</ng-template>
+
+<ng-template #avatar let-person>
+	@if (person.imageUrl && !brokenImages.has(person.imageUrl)) {
+		<img
+			class="record-avatar"
+			[src]="person.imageUrl"
+			[alt]="person.name"
+			(error)="brokenImages.add(person.imageUrl)"
+		/>
+	} @else {
+		<span class="record-avatar record-avatar-initials" [style.--avatar-hue]="person.hue" aria-hidden="true">{{
+			person.initials
+		}}</span>
+	}
+</ng-template>

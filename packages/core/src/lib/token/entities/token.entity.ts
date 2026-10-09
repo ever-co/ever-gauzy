@@ -11,6 +11,7 @@ import {
 	MultiORMManyToOne
 } from '../../core/decorators/entity';
 import { BaseEntity, User } from '../../core/entities/internal';
+import { ExportRedacted } from '../../export-import/export-redact.decorator';
 import { IToken, ITokenConfig, ITokenHealthReport, TokenStatus } from '../interfaces';
 
 @Index(['tokenHash'], { unique: true })
@@ -25,6 +26,7 @@ export class Token extends BaseEntity implements IToken {
 		description: 'Hashed token value for secure storage and lookup',
 		example: 'a3f8b9c2d1e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0'
 	})
+	@ExportRedacted({ blank: true })
 	@IsString()
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: false })
 	tokenHash: string;

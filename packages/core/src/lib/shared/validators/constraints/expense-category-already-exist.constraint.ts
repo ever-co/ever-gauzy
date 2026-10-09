@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ILike, Not } from 'typeorm';
+import { Not } from 'typeorm';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { RequestContext } from '../../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
@@ -41,24 +41,31 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 
 			// Convert the name to lowercase for case-insensitive comparison
 			const normalizedName = name.toLowerCase();
+			const isUpdate = args.targetName === 'UpdateExpenseCategoryDTO' && !!object.id;
 
-			const queryConditions = { name: normalizedName, organizationId, tenantId };
-
-			if (args.targetName === 'UpdateExpenseCategoryDTO' && object.id) {
-				queryConditions['id'] = Not(object.id); // Exclude current category from the check
-			}
+			// Load the organization's categories and compare names here rather than with a LIKE query:
+			// LIKE treats `%` / `_` (and `\` on PostgreSQL) as pattern characters, its case folding depends on
+			// the database (SQLite only folds ASCII), and `$ilike` is PostgreSQL-only in MikroORM.
+			const isSameName = (category: { name?: string }) => category.name?.toLowerCase() === normalizedName;
 
 			switch (ormType) {
-				case MultiORMEnum.MikroORM:
-					return !(await this.mikroOrmExpenseCategoryRepository.findOneOrFail({
-						...queryConditions,
-						name: { $ilike: normalizedName }
-					}));
-				case MultiORMEnum.TypeORM:
-					return !(await this.typeOrmExpenseCategoryRepository.findOneByOrFail({
-						...queryConditions,
-						name: ILike(normalizedName)
-					}));
+				case MultiORMEnum.MikroORM: {
+					// MikroORM operators (`$ne`), not TypeORM's `Not()`, which MikroORM does not understand
+					const categories = await this.mikroOrmExpenseCategoryRepository.find({
+						organizationId,
+						tenantId,
+						...(isUpdate ? { id: { $ne: object.id } } : {})
+					});
+					return !categories.some(isSameName);
+				}
+				case MultiORMEnum.TypeORM: {
+					const categories = await this.typeOrmExpenseCategoryRepository.findBy({
+						organizationId,
+						tenantId,
+						...(isUpdate ? { id: Not(object.id) } : {})
+					});
+					return !categories.some(isSameName);
+				}
 				default:
 					throw new Error(`Not implemented for ${ormType}`);
 			}

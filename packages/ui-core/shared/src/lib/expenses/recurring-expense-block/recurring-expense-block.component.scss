@@ -1,28 +1,76 @@
 @use 'var' as *;
 
+// ── One row of a ruled list, not a card ──────────────────────────────────────
+// This component used to draw each expense as a CARD — its own `gauzy-card-1`
+// fill, its own radius, an 8px bottom margin and a flat 84px height for four
+// short values, about three table rows' worth. Both pages that render it
+// (Employees > Recurring Expenses and Organization > Recurring Expenses, which
+// share one stylesheet) put a band of column labels above the list and a bounded
+// surface around the pair, so a stack of floating cards was a second set of
+// surfaces drawn on top of the first.
+//
+// Every metric below now comes from the shared table-density tokens, which those
+// pages set on their own `:host` and which INHERIT into this component — the
+// same way `ngx-people-list` and `ngx-created-by-user` size themselves, and the
+// reason nothing here has to be reached with `::ng-deep`. Literals are the
+// CSS-var fallbacks, for any future caller that sets no tokens.
+//
+// The three page-level keys (`--gauzy-recurring-row-inset` and the two
+// `--gauzy-recurring-col*`) are declared in
+// `recurring-expense-employee.component.scss`. They exist because the column
+// LABELS live in that template and the VALUES live in this one, and a literal
+// would otherwise have to be written twice, in two files, and kept in step by
+// hand — which is exactly how 42px, 11rem and 17.5rem came to be spelled out in
+// both places.
 :host .setting-block {
-
-  border-radius: nb-theme(border-radius);
-  margin-bottom: 8px;
-  background-color: nb-theme(gauzy-card-1) !important;
-
-  &.block {
-    box-shadow: -6px 0px 0px 0px rgba(0, 0, 0, 0.15);
-  }
+  border-radius: 0;
+  margin-bottom: 0;
+  // Transparent, not `gauzy-card-1`: that is the page surface's own fill, and
+  // painting it again per row is what made each expense read as a separate card.
+  //
+  // `!important` STAYS, and not for the reason the old `gauzy-card-1` carried it.
+  // `nb-overrides()` paints `.setting-block` `background-basic-color-2` with
+  // `!important` of its own (_overrides.scss), and that rule is global — no
+  // encapsulation attribute to out-rank, and `!important` beats any specificity
+  // this component can reach from inside. Drop it here and every row goes back to
+  // being a filled card, which is the whole thing this block undoes.
+  background-color: transparent !important;
 
   .setting-row {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     width: 100%;
-    height: 84px;
-    background-color: nb-theme(gauzy-card-1);
-    border-radius: nb-theme(border-radius);
-    @include nb-ltr(padding, 0.75rem 0 0.75rem 0.75rem);
-    @include nb-rtl(padding, 0.75rem 0.75rem 0.75rem 0);
+    // Was a flat `height: 84px`. The row is as tall as its content plus the cell
+    // padding every other list row in the app uses, and no taller.
+    padding-block: var(--gauzy-table-cell-padding-y, 0.1875rem);
+    padding-inline: var(--gauzy-table-cell-padding-x, 0.4375rem);
+    background-color: transparent;
+    border-radius: 0;
+    font-size: var(--gauzy-table-font-size, 0.6875rem);
+    line-height: var(--gauzy-table-line-height, 1rem);
+    // The rule between rows, drawn INSIDE the row's box so nothing moves — the
+    // list needs one now that the cards and the gaps between them are gone.
+    box-shadow: inset 0 -1px 0 0 var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+    // The selection rail, reserved at rest so selecting a row cannot shift it.
+    // It was a 6px shadow hung OUTSIDE the card's leading edge, which on a row
+    // sitting flush inside a surface would paint over that surface's own ring.
+    border-inline-start: 3px solid transparent;
 
-    &:hover,
+    // `:hover` and `.active` used to share one fill, so pointing at any row made
+    // it look exactly as selected as the row that really was. The two shared
+    // density tokens are the app-wide hover / current pair and — unlike
+    // `gauzy-sidebar-background-3` — are registered by all eight themes.
+    &:hover:not(.active) {
+      background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    }
+
     &.active {
-      background-color: nb-theme(gauzy-sidebar-background-3);
+      background-color: var(--gauzy-active-tint, rgba(126, 126, 143, 0.2));
+      // The rail that used to hang off `.setting-block.block`, moved onto the
+      // edge reserved above. Both classes are driven by the same `selected`
+      // input, so this marks exactly the rows the old rule did.
+      border-inline-start-color: nb-theme(color-primary-default);
     }
   }
 
@@ -35,7 +83,9 @@
     display: flex;
     height: 84px;
     align-items: center;
-    background-color: #333;
+    // Was `#333` with `#d7d9de` labels, i.e. a dark slab hard-coded for one
+    // theme. `background-basic-color-3` is a recessed surface in every theme.
+    background-color: nb-theme(background-basic-color-3);
     justify-content: space-evenly;
     overflow: hidden;
     transition: width 0.2s ease-in;
@@ -49,11 +99,11 @@
       cursor: pointer;
 
       ::ng-deep svg {
-        fill: rgb(127, 127, 127);
+        fill: nb-theme(text-hint-color);
       }
 
       span {
-        color: #d7d9de;
+        color: nb-theme(text-hint-color);
         font-size: 10px;
         opacity: 0.6;
       }
@@ -71,8 +121,11 @@
     justify-content: space-between;
     align-items: center;
     width: fit-content;
-    @include nb-ltr(padding-left, 42px);
-    @include nb-rtl(padding-right, 42px);
+    // Was 42px — room for a selection rail and for the settings fly-out further
+    // down, which are 3px and `display: none` respectively. Shared with the
+    // column labels above the list, which is why it is a page-level property.
+    @include nb-ltr(padding-left, var(--gauzy-recurring-row-inset, 0.5rem));
+    @include nb-rtl(padding-right, var(--gauzy-recurring-row-inset, 0.5rem));
 
     .expense {
       display: flex;
@@ -80,15 +133,18 @@
       align-items: center;
       width: 100%;
 
+      // Both widths are page-level properties for the same reason as the inset:
+      // the labels heading these columns are in the page's template, and cannot
+      // be allowed to drift from the values under them.
       .block-item {
-        width: 11rem;
+        width: var(--gauzy-recurring-col, 8rem);
         display: flex;
         justify-content: flex-start;
         align-items: center;
       }
 
       .block-item-big {
-        width: 17.5rem;
+        width: var(--gauzy-recurring-col-big, 12rem);
         display: flex;
         justify-content: flex-start;
         align-items: center;
@@ -96,26 +152,42 @@
     }
 
     span {
-      color: nb-theme(gauzy-text-color-1);
-      font-size: 14px;
+      // Fallback: `gauzy-text-color-1` is not registered by material-light /
+      // material-dark, and without one the declaration is dropped there.
+      color: var(--gauzy-text-color-1, var(--text-basic-color));
+      font-size: var(--gauzy-table-font-size, 0.6875rem);
     }
 
     .block-amount {
-      width: 130px;
+      // The 130px box and the 24px trailing pad both predate the column widths
+      // above; the amount sits in a `.block-item` already, so between them all
+      // they did was hold it 24px off that column's trailing edge.
+      width: auto;
       display: flex;
       align-items: center;
-      @include nb-ltr(padding-right, 24px);
-      @include nb-rtl(padding-left, 24px);
-      font-size: 14px;
+      gap: 0.25rem;
+      font-size: var(--gauzy-table-font-size, 0.6875rem);
       font-weight: 400;
-      line-height: 17px;
+      line-height: var(--gauzy-table-line-height, 1rem);
       letter-spacing: 0em;
       cursor: pointer;
+
+      // The split-expense marker. `nb-icon` defaults to 1.5rem, half a rem
+      // taller than the line box this row is built around, so the one glyph
+      // would have set the height of every row that carries it.
+      nb-icon {
+        width: var(--gauzy-table-header-font-size, 0.75rem);
+        height: var(--gauzy-table-header-font-size, 0.75rem);
+        font-size: var(--gauzy-table-header-font-size, 0.75rem);
+      }
     }
   }
 
+  // The per-row settings fly-out. It is deliberately hidden — the same edit /
+  // history / delete actions live in the page toolbar — and the rules below only
+  // survive so the panel can be brought back. Removed a `display: flex` that was
+  // declared here and overruled by the `display: none` lower in the same block.
   .block-panel {
-    display: flex;
     justify-content: space-between;
     align-items: center;
     width: 240px;
@@ -152,8 +224,31 @@
   }
 }
 
-@media screen and (max-width: 1438px) {
-  .setting-block {
-    width: fit-content;
-  }
+// ── The row inside its scroll port ──────────────────────────────────────────
+// The values sit on fixed column widths, so the list can still outrun a narrow
+// viewport and scroll sideways. `.table-scroll` on the page is that port — it
+// carries `overflow: auto`, which is both axes.
+//
+// This was `@media (max-width: 1438px) { .setting-block { width: fit-content } }`.
+// That was fine while each row was a free-standing card: a card narrower than the
+// port simply sat there. It is not fine now that the row carries a hairline, a
+// hover fill and a selection rail, because all three stop where the row's box
+// does — a row left at the port's width would have its rule and its hover tint
+// end at the fold, with the columns you scrolled to reach sitting on nothing.
+//
+// `max-content` so the row is as wide as its own columns, `min-width: 100%` so a
+// short row still spans the port. Unconditional, and the breakpoint goes with it:
+// 1438px was a guess at the width these columns need, and this pair measures it
+// instead — which also means it keeps holding now that the columns are sized off
+// the density tokens rather than at the 57rem the old literals added up to.
+//
+// On the HOST rather than on `.setting-block`, so there is one width in the
+// chain rather than two: the host is a flex item of the page's `.table-scroll`
+// column, and an explicit `width` on a flex item is what opts it out of the
+// `stretch` that would otherwise pin it to the port. `.setting-block` is then an
+// ordinary block child and fills it.
+:host {
+  display: block;
+  width: max-content;
+  min-width: 100%;
 }

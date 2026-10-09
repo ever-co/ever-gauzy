@@ -6,7 +6,6 @@ import {
 	DialogConfirmInstallDownload,
 	DialogConfirmUpgradeDownload,
 	DialogLocalUpdate,
-	DigitalOceanCdn,
 	GithubCdn
 } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
@@ -25,16 +24,34 @@ export class DesktopUpdater {
 	private _gauzyWindow: BrowserWindow;
 	private _config: IUpdaterConfig;
 	private _automaticUpdate: AutomaticUpdate;
+	private _answeredVersions = new Set<string>();
+	/** The update dialog now showing on the gauzy window, if any: only one is shown at a time. */
+	private _openDialog: Promise<any> = null;
 
 	constructor(config: IUpdaterConfig) {
 		this._updateContext = new UpdateContext();
-		this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(config));
 		this._updateServer = new DesktopLocalUpdateServer();
 		this._strategy = new GithubCdn(new CdnUpdate(config));
+		// The DigitalOcean Spaces CDN update feed (ever.sfo3.cdn.digitaloceanspaces.com) was
+		// decommissioned; GitHub Releases is the only live feed. Default the active strategy to
+		// GitHub so no install is stranded on the dead CDN — including apps that never call
+		// checkUpdate() explicitly (e.g. agent) and rely solely on the automatic update loop.
+		this._updateContext.strategy = this._strategy;
 		this._automaticUpdate = new AutomaticUpdate(this._updateContext, this.settingWindow);
 		this._config = config;
 		this._mainProcess();
 		this._updaterProcess();
+		// GithubCdn resolves its feed URL asynchronously in initialize(); start the automatic
+		// update loop only after that completes so the first check targets a valid feed.
+		void this._startAutomaticUpdate();
+	}
+
+	private async _startAutomaticUpdate(): Promise<void> {
+		try {
+			await this._strategy.initialize();
+		} catch (error) {
+			console.log('Error initializing default update strategy:', error);
+		}
 		this._automaticUpdate.start();
 	}
 
@@ -79,11 +96,11 @@ export class DesktopUpdater {
 		});
 
 		ipcMain.on('change_update_strategy', async (event, args) => {
-			if (args.github) {
+			if (args.github || args.digitalOcean) {
+				// The DigitalOcean Spaces CDN feed is dead; route the (deprecated) digitalOcean
+				// option to the live GitHub feed as well so the toggle can never select it.
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
-			} else if (args.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 			if (!args.local) {
 				try {
@@ -115,32 +132,45 @@ export class DesktopUpdater {
 		});
 
 		ipcMain.on('automatic_update_setting', (event, args) => {
-			const { isEnabled, automaticUpdateDelay } = args;
-			isEnabled ? (this._automaticUpdate.delay = automaticUpdateDelay) : this._automaticUpdate.stop();
+			// The settings page sends the delay as `delay`; `automaticUpdateDelay` is still accepted.
+			const { isEnabled, delay, automaticUpdateDelay } = args ?? {};
+			isEnabled ? (this._automaticUpdate.delay = delay ?? automaticUpdateDelay) : this._automaticUpdate.stop();
 		});
 	}
 
 	private _updaterProcess(): void {
-		autoUpdater.once('update-available', async (info: UpdateInfo) => {
+		// Every check looks up the newest release again, so offer each new version once: not a
+		// version already answered in this run, and not while an update dialog (this one or the
+		// install prompt) is still showing; the next check offers it again.
+		autoUpdater.on('update-available', async (info: UpdateInfo) => {
 			const setting = LocalStore.getStore('appSetting');
 			if (setting && !setting.automaticUpdate) return;
-			const dialog = new DialogConfirmUpgradeDownload(
-				new DesktopDialog(
-					process.env.DESCRIPTION,
-					TranslateService.instant('TIMER_TRACKER.DIALOG.UPDATE_READY'),
-					this._gauzyWindow
-				)
-			);
-			dialog.options = {
-				...dialog.options,
-				detail: TranslateService.instant('TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE', {
-					next: info.version,
-					current: app.getVersion()
-				})
-			};
-			const button = await dialog.show();
-			if (button?.response === 0) {
-				this._updateContext.update();
+			if (this._openDialog || this._answeredVersions.has(info.version)) return;
+			try {
+				const dialog = new DialogConfirmUpgradeDownload(
+					new DesktopDialog(
+						process.env.DESCRIPTION,
+						TranslateService.instant('TIMER_TRACKER.DIALOG.UPDATE_READY'),
+						this._gauzyWindow
+					)
+				);
+				dialog.options = {
+					...dialog.options,
+					detail: TranslateService.instant('TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE', {
+						next: info.version,
+						current: app.getVersion()
+					})
+				};
+				this._openDialog = dialog.show();
+				const button = await this._openDialog;
+				this._answeredVersions.add(info.version);
+				if (button?.response === 0) {
+					this._updateContext.update();
+				}
+			} catch (e) {
+				console.log('Error on showing the update dialog:', e);
+			} finally {
+				this._openDialog = null;
 			}
 		});
 
@@ -150,6 +180,8 @@ export class DesktopUpdater {
 				type: 'update_downloaded'
 			});
 			if (setting && !setting.automaticUpdate) return;
+			// Wait until an open "new version" dialog is answered instead of opening on top of it.
+			while (this._openDialog) await this._openDialog.catch(() => undefined);
 			const dialog = new DialogConfirmInstallDownload(
 				new DesktopDialog(
 					process.env.DESCRIPTION,
@@ -160,7 +192,15 @@ export class DesktopUpdater {
 			dialog.options.detail = TranslateService.instant('TIMER_TRACKER.DIALOG.HAS_BEEN_DOWNLOADED', {
 				version: event.version
 			});
-			const button = await dialog.show();
+			let button: any;
+			try {
+				this._openDialog = dialog.show();
+				button = await this._openDialog;
+			} catch (e) {
+				console.log('Error on showing the install dialog:', e);
+			} finally {
+				this._openDialog = null;
+			}
 			if (button?.response === 0) {
 				this._settingWindow?.webContents?.send?.('setting_page_ipc', {
 					type: '_logout_quit_install_'
@@ -218,11 +258,12 @@ export class DesktopUpdater {
 		const settings: any = LocalStore.getStore('appSetting');
 
 		if (settings && settings.cdnUpdater) {
-			if (settings.cdnUpdater.github) {
+			// GitHub Releases is the only live feed. A persisted `digitalOcean: true` (the old
+			// shipped default) would otherwise pin the install to the dead DigitalOcean Spaces
+			// CDN, so resolve both options to GitHub.
+			if (settings.cdnUpdater.github || settings.cdnUpdater.digitalOcean) {
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
-			} else if (settings.cdnUpdater.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 		}
 

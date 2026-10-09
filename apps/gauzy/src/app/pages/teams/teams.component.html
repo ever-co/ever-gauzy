@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card>
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
@@ -16,10 +16,11 @@
 			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		@if (dataLayoutStyle === componentLayoutStyleEnum.TABLE) {
 		<div class="table-scroll-container">
 			<angular2-smart-table
+				[class.ga-table-loading]="loading"
 				style="cursor: pointer"
 				[settings]="smartTableSettings"
 				[source]="smartTableSource"
@@ -33,6 +34,7 @@
 		</div>
 		} @else if (dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID) {
 		<ga-card-grid
+			[loading]="loading"
 			[totalItems]="pagination?.totalItems"
 			[settings]="smartTableSettings"
 			[source]="teams"
@@ -102,7 +104,7 @@
 		[employees]="employees"
 		[team]="selectedTeam"
 		[projects]="projects"
-		(canceled)="clearItem()"
+		(canceled)="closeDialog()"
 		(addOrEditTeam)="addOrEditTeam($event)"
 	></ga-teams-mutation>
 </ng-template>

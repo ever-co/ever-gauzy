@@ -1,54 +1,40 @@
 <nb-card class="pdf-preview-card">
-  <nb-card-header>
-    <span class="cancel"
-      ><i class="fas fa-times" (click)="cancel()"></i
-    ></span>
-    <h5 class="title">
-      @if (!isEstimate) {
-        <span>{{
-          'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
-        }}</span>
-      }
-      @if (isEstimate) {
-        <span>{{
-          'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate
-        }}</span>
-      }
-    </h5>
-  </nb-card-header>
-  <nb-card-body class="invoice-email-body">
-    <ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
-    @if (form) {
-      <form [formGroup]="form">
-        <div class="row">
-          <div class="form-group col-12">
-            <label for="email" class="label">{{
-              'FORM.EMAIL' | translate
-            }}</label>
-            <textarea
-              type="text"
-              nbInput
-              fullWidth
-              formControlName="email"
-              id="email"
-              placeholder="{{ 'FORM.EMAIL' | translate }}"
-            ></textarea>
-          </div>
-        </div>
-      </form>
-    }
-  </nb-card-body>
-  <nb-card-footer class="text-left">
-    <button status="basic" outline class="mr-3" nbButton (click)="cancel()">
-      {{ 'BUTTONS.CANCEL' | translate }}
-    </button>
-    <button
-      (click)="sendEmail()"
-      status="success"
-      [disabled]="form.invalid"
-      nbButton
-      >
-      {{ 'BUTTONS.SEND' | translate }}
-    </button>
-  </nb-card-footer>
+	<nb-card-header>
+		<h5 class="title">
+			{{ (isEstimate ? 'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' : 'INVOICES_PAGE.EMAIL.EMAIL_INVOICE') | translate }}
+		</h5>
+		<button type="button" class="cancel" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="cancel()">
+			<i class="fas fa-times" aria-hidden="true"></i>
+		</button>
+	</nb-card-header>
+	<!-- `invoice-email-body` is the e2e hook for this dialog. The address sits beside the preview rather than
+	     under it, where a full-height preview pushed it past the bottom of the sheet. -->
+	<nb-card-body class="invoice-email-body">
+		<div class="preview">
+			<ga-invoice-pdf [invoice]="invoice"></ga-invoice-pdf>
+		</div>
+		@if (form) {
+		<form class="email-form" [formGroup]="form">
+			<label for="email" class="label">{{ 'FORM.EMAIL' | translate }}</label>
+			<textarea
+				type="text"
+				nbInput
+				fullWidth
+				formControlName="email"
+				id="email"
+				placeholder="{{ 'FORM.EMAIL' | translate }}"
+			></textarea>
+		</form>
+		}
+	</nb-card-body>
+	<!-- `text-left` is the e2e hook for the confirm button; the row below aligns them. -->
+	<nb-card-footer class="text-left">
+		<button nbButton ghost status="basic" size="small" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="sendEmail()" status="success" [disabled]="form.invalid" nbButton size="small">
+			<nb-icon icon="email-outline"></nb-icon>
+			{{ 'BUTTONS.SEND' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

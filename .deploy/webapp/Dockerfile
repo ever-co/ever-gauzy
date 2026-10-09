@@ -56,6 +56,7 @@ COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/auth/package.json ./packages/auth/
 COPY --chown=node:node packages/core/package.json ./packages/core/
 COPY --chown=node:node packages/plugin/package.json ./packages/plugin/
+COPY --chown=node:node packages/scheduler/package.json ./packages/scheduler/
 COPY --chown=node:node packages/plugin-ui/package.json ./packages/plugin-ui/
 COPY --chown=node:node packages/ui-react/package.json ./packages/ui-react/
 COPY --chown=node:node packages/ui-react-components/package.json ./packages/ui-react-components/
@@ -74,7 +75,12 @@ COPY --chown=node:node packages/plugins/integration-zapier-ui/package.json ./pac
 COPY --chown=node:node packages/plugins/integration-zapier/package.json ./packages/plugins/integration-zapier/
 COPY --chown=node:node packages/plugins/integration-sim/package.json ./packages/plugins/integration-sim/
 COPY --chown=node:node packages/plugins/integration-plane/package.json ./packages/plugins/integration-plane/
+COPY --chown=node:node packages/plugins/integration-ever-async/package.json ./packages/plugins/integration-ever-async/
 COPY --chown=node:node packages/plugins/integration-plane-ui/package.json ./packages/plugins/integration-plane-ui/
+COPY --chown=node:node packages/plugins/integration-ever-async-ui/package.json ./packages/plugins/integration-ever-async-ui/
+COPY --chown=node:node packages/plugins/auth-zitadel-ui/package.json ./packages/plugins/auth-zitadel-ui/
+COPY --chown=node:node packages/plugins/ever-stats-ui/package.json ./packages/plugins/ever-stats-ui/
+COPY --chown=node:node packages/plugins/ever-connect-ui/package.json ./packages/plugins/ever-connect-ui/
 COPY --chown=node:node packages/plugins/integration-sim-ui/package.json ./packages/plugins/integration-sim-ui/
 COPY --chown=node:node packages/plugins/integration-activepieces/package.json ./packages/plugins/integration-activepieces/
 COPY --chown=node:node packages/plugins/integration-activepieces-ui/package.json ./packages/plugins/integration-activepieces-ui/
@@ -104,6 +110,7 @@ COPY --chown=node:node packages/plugins/registry/package.json ./packages/plugins
 COPY --chown=node:node packages/plugins/dashboard-time-track-angular-ui/package.json ./packages/plugins/dashboard-time-track-angular-ui/
 COPY --chown=node:node packages/plugins/dashboard-time-track-react-ui/package.json ./packages/plugins/dashboard-time-track-react-ui/
 COPY --chown=node:node packages/plugins/ai-chat-react-ui/package.json ./packages/plugins/ai-chat-react-ui/
+COPY --chown=node:node packages/plugins/docs-ui/package.json ./packages/plugins/docs-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
 COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
@@ -123,15 +130,30 @@ COPY --chown=node:node patches ./patches
 # skipped). Registry rewrite, install and .npmrc/.yarnrc cleanup happen in ONE RUN so the
 # token never persists in any layer.
 # Must be without --production because we need dev deps installed.
+#
+# This image's final stage is `FROM nginx:alpine` and copies nothing but the compiled
+# Angular bundle out of `build` — no Node runtime, no database. `better-sqlite3` and
+# `bcrypt` exist only inside these throwaway stages, so the postinstall guard that
+# normally fails a build when a native package produces no binary must not apply here:
+# it would reject an image over a package the image never ships. It fired for real when
+# a transient `unofficial-builds.nodejs.org` header fetch stopped node-gyp mid-compile
+# and took the stage web image down with it.
+#
+# The api and worker images deliberately leave this unset and keep the strict default —
+# the api sets `ENV DB_TYPE=better-sqlite3`, so a missing binary there is fatal at runtime
+# and the build SHOULD stop.
+ENV REQUIRE_NATIVE_BINARIES=""
+
 ARG VERDACCIO_REGISTRY=""
 RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	VERDACCIO_TOKEN="$(cat /run/secrets/VERDACCIO_TOKEN 2>/dev/null || true)" && \
-	if [ -n "$VERDACCIO_REGISTRY" ]; then \
+	if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
 	echo "registry=${VERDACCIO_REGISTRY}" >> .npmrc && \
 	echo "registry \"${VERDACCIO_REGISTRY}\"" >> .yarnrc && \
 	sed -i "s|https://registry.yarnpkg.com|${VERDACCIO_REGISTRY%/}|g" yarn.lock && \
 	sed -i "s|https://registry.npmjs.org|${VERDACCIO_REGISTRY%/}|g" yarn.lock; \
 	elif [ -n "$VERDACCIO_TOKEN" ]; then \
+	echo "Internal Verdaccio VIP not in use (VERDACCIO_REGISTRY unset, or its probe failed) - installing through the public packages.ever.co route, which is known to truncate large tarballs mid-stream." && \
 	echo "//packages.ever.co/:_authToken=${VERDACCIO_TOKEN}" >> .npmrc && \
 	echo "registry=https://packages.ever.co/" >> .npmrc && \
 	echo "always-auth=true" >> .npmrc && \
@@ -139,7 +161,7 @@ RUN --mount=type=secret,id=VERDACCIO_TOKEN,uid=1000 \
 	sed -i 's|https://registry.yarnpkg.com|https://packages.ever.co|g' yarn.lock && \
 	sed -i 's|https://registry.npmjs.org|https://packages.ever.co|g' yarn.lock; \
 	fi && \
-	yarn install --network-timeout 1000000 --frozen-lockfile --ignore-scripts && \
+	yarn install --network-timeout 1000000 --network-concurrency 4 --frozen-lockfile --ignore-scripts && \
 	yarn postinstall.manual && \
 	yarn cache clean && \
 	rm -f .npmrc .yarnrc

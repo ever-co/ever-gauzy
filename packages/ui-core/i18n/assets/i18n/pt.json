@@ -4,6 +4,7 @@
 		"ADD_EXISTING_USER": "Adicionar usuário existente",
 		"ADD_NEW": "Adicionar Novo",
 		"ADD": "Adicionar",
+		"NEW": "Novo",
 		"CREATE": "Criar",
 		"REGISTER": "Registre-se.",
 		"CHANGE_PASSWORD": "Alterar Senha",
@@ -403,12 +404,12 @@
 			"DOCUMENT_NAME": "Nome do documento",
 			"FEEDBACK_DESCRIPTION": "Descrição do feedback",
 			"EMAIL_INVITATION": "Digite o e-mail para enviar o convite.",
-			"SELECT_EQUIPMENT": "Selecionar equipamentos",
-			"SELECT_SHARE_REQUEST_DATE": "Selecionar data de solicitação",
-			"SELECT_SHARE_START_DATE": "Selecione a data de início",
-			"SELECT_SHARE_END_DATE": "Selecionar data de término.",
-			"SELECT_EMPLOYEE": "Selecionar funcionário",
-			"SELECT_TEAM": "Selecione a equipe",
+			"SELECT_EQUIPMENT": "Equipamentos",
+			"SELECT_SHARE_REQUEST_DATE": "Data de solicitação",
+			"SELECT_SHARE_START_DATE": "Data de início",
+			"SELECT_SHARE_END_DATE": "Data de término",
+			"SELECT_EMPLOYEE": "Funcionário",
+			"SELECT_TEAM": "Equipe",
 			"ENABLE_DISABLE_FUTURE_DATE": "Ativar/Desativar datas futuras",
 			"ALLOW_FUTURE_DATE": "Permitir a troca para períodos futuros.",
 			"REGISTRATION_DATE": "Data de Registro",
@@ -456,7 +457,7 @@
 			"OPEN_SOURCE_PROJECT_URL": "URL do Projeto de Código Aberto",
 			"EMPLOYEE_LEVEL": "Nível do funcionário",
 			"UNIT": "Unidade",
-			"SELECT_EXISTING_OBJECTIVE": "Selecionar Objetivo Existente",
+			"SELECT_EXISTING_OBJECTIVE": "Objetivo Existente",
 			"LENGTH": "Comprimento",
 			"DATE_START": "Data de início",
 			"END_DATE": "Data de término",
@@ -496,7 +497,7 @@
 		"PLACEHOLDERS": {
 			"NAME": "Nome",
 			"PHONE_NUMBER": "Número de telefone",
-			"DEFAULT": "Selecionar Padrão",
+			"DEFAULT": "Padrão",
 			"FIRST_NAME": "Primeiro Nome",
 			"LAST_NAME": "Último nome",
 			"COMPANY_NAME": "Nome da empresa",
@@ -546,7 +547,7 @@
 			"BILL_RATE_MIN": "Tarifa mínima de cobrança (por hora)",
 			"RECURRING_WEEKLY_LIMIT": "Limite semanal recorrente (horas)",
 			"EMAILS": "Digite um endereço de email e pressione enter.",
-			"ROLE": "Selecionar função",
+			"ROLE": "Função",
 			"PROJECTS": "Escolha Projetos",
 			"CHOOSE_FORMAT": "Escolher Formato",
 			"CHOOSE_TIME_ZONE": "Escolha o Fuso Horário",
@@ -556,23 +557,23 @@
 			"ALIGN_LOGO_TO": "Alinhar Logotipo.",
 			"DEPARTMENTS": "Departamentos",
 			"TEAMS": "Equipes",
-			"NUMBER_FORMAT": "Selecione o Formato de Número.",
-			"REGIONS": "Selecionar Região.",
+			"NUMBER_FORMAT": "Formato de Número",
+			"REGIONS": "Região",
 			"REMOVE_IMAGE": "Remover imagem",
 			"UPLOADER_PLACEHOLDER": "Imagem",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL (Uniform Resource Locator) é um endereço utilizado para localizar um recurso na internet. Ele consiste em uma sequência de caracteres que identifica a localização de um recurso específico, como um site, uma página da web, um arquivo, uma imagem, um vídeo, entre outros. Os URLs são compostos por diferentes partes, como o protocolo de comunicação utilizado (como HTTP ou HTTPS), o domínio (que é o endereço principal do site), o caminho (que indica a localização específica do recurso) e, opcionalmente, parâmetros adicionais. Os URLs são amplamente utilizados para acessar e compartilhar recursos na internet.",
 			"ADD_REMOVE_EMPLOYEES": "Adicionar ou Remover Funcionários",
 			"ADD_REMOVE_CANDIDATE": "Adicionar Candidato",
 			"ADD_REMOVE_EMPLOYEE": "Adicionar entrevistador",
-			"ADD_REMOVE_INTERVIEWER": "Selecionar entrevistador",
+			"ADD_REMOVE_INTERVIEWER": "Entrevistador",
 			"ADD_REMOVE_CANDIDATES": "Adicionar ou Remover Candidatos",
 			"ADD_REMOVE_USERS": "Adicionar ou Remover Usuários",
 			"ADD_REMOVE_ORGANIZATIONS": "Adicionar ou remover Organizações",
 			"ADD_ORGANIZATIONS": "Adicionar Organizações",
 			"DATE": "Data",
 			"VALUE": "Valor",
-			"SELECT_CURRENCY": "Selecione Moeda",
-			"TYPE_OF_BONUS": "Selecionar tipo de bônus",
+			"SELECT_CURRENCY": "Moeda",
+			"TYPE_OF_BONUS": "Tipo de bônus",
 			"BONUS_PERCENTAGE": "Percentagem de bónus",
 			"ENABLE_INVITES": "Habilitar convites",
 			"INVITE_EXPIRY_PERIOD": "Convidações válidas até",
@@ -583,13 +584,13 @@
 			"EMPLOYMENT_TYPES": "Tipo de Emprego",
 			"REGISTRATION_DATE": "Data de Registro da Organização",
 			"ORGANIZATIONS": "Escolha Organizações",
-			"ORGANIZATION": "Selecionar Organização",
+			"ORGANIZATION": "Organização",
 			"DOCUMENT_NAME": "Nome do documento",
 			"FEEDBACK_DESCRIPTION": "Descrição do feedback",
 			"PREFERRED_LANGUAGE": "Idioma preferido",
 			"OWNER": "Proprietário",
 			"TASK_VIEW_MODE": "Modo de visualização de tarefas",
-			"SELECT_STATUS": "Selecione o Estado",
+			"SELECT_STATUS": "Estado",
 			"LINKEDIN": "LinkedIn",
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
@@ -649,7 +650,7 @@
 				"LATITUDE": "Latitude",
 				"LONGITUDE": "Longitude é uma medida angular que especifica a localização de um ponto em relação ao meridiano prime (geralmente o Meridiano de Greenwich), que é um meridiano de referência. É medida em graus (°) e varia de 0° a 180° a leste e de 0° a 180° a oeste. A longitude é usada juntamente com a latitude para determinar a coordenada geográfica precisa de um ponto na Terra."
 			},
-			"SELECT_EXPENSE": "Selecionar despesa",
+			"SELECT_EXPENSE": "Despesa",
 			"ADD_TITLE": "Adicionar título",
 			"ALL_PROJECTS": "Todos os projetos",
 			"ALL_TEAMS": "Todos os times",
@@ -657,16 +658,16 @@
 			"UPWORK_SECRET": "Segredo do Upwork",
 			"GAUZY_API_KEY": "Chave Gauzy AI",
 			"GAUZY_API_SECRET": "Gauzy AI Secreto.",
-			"SELECT_COMPANY": "Selecionar Empresa",
+			"SELECT_COMPANY": "Empresa",
 			"TYPE_SEARCH_REQUEST": "Digite sua solicitação de pesquisa aqui...",
-			"SELECT_ICON": "Selecionar Ícone",
+			"SELECT_ICON": "Ícone",
 			"SELECT": "Selecione",
 			"SPRINT_LENGTH": "Duração do Sprint",
 			"SPRINT_START_DATE": "Data de início do sprint",
 			"SPRINT_END_DATE": "Data final do sprint",
 			"SPRINT_GOAL": "Meta de sprint",
 			"POLICY_NAME": "Nome da Política",
-			"SELECT_DATE": "Selecione a Data",
+			"SELECT_DATE": "Data",
 			"DAYS_UNTIL_DUE": "Dias até o vencimento",
 			"TEMPLATES": "Modelos",
 			"INVOICE_TEMPLATE": "Modelo de fatura",
@@ -815,6 +816,7 @@
 		"SKILLS": "Habilidades",
 		"PRIVACY": "Privacidade",
 		"SELECT_TIMEZONE": "Selecionar Fuso Horário",
+		"SELECT_TIMEZONE_HINT": "Os horários dos compromissos são exibidos neste fuso horário.",
 		"SHOW_AVERAGE_BONUS": "Mostrar Bônus Médio",
 		"SHOW_AVERAGE_INCOME": "Mostrar Renda Média",
 		"SHOW_PAYPERIOD": "Mostrar Período de Pagamento",
@@ -832,6 +834,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Você precisa ser um funcionário para poder rastrear o tempo, criar despesas divididas e usar outras funcionalidades relacionadas a outros funcionários."
 	},
 	"MENU": {
+		"BREADCRUMB": "Trilha de navegação",
 		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Painel de Controle",
 		"DASHBOARDS": "Painéis de controle",
@@ -1152,7 +1155,71 @@
 		"APPLICATIONS": "Aplicações",
 		"OPEN_GA_BROWSER": "Abrir Gauzy no navegador.",
 		"START_SERVER": "Iniciar Servidor",
-		"STOP_SERVER": "Parar Servidor"
+		"STOP_SERVER": "Parar Servidor",
+		"DOCUMENTS": "Documentos",
+		"BILLING": "Faturamento",
+		"MONITORING": "Monitoramento",
+		"ADD_ITEM": "Adicionar {{ name }}"
+	},
+	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Somente você",
+			"TENANT": "Todos neste tenant"
+		},
+		"UNSAVED_CHANGES": "Alterações não salvas",
+		"ACCOUNT": {
+			"TITLE": "Conta",
+			"DESCRIPTION": "A conta com a qual você entrou.",
+			"MANAGE": "Gerenciar perfil",
+			"ROLE": "Função",
+			"MEMBER_SINCE": "Membro desde"
+		},
+		"PREFERENCES": {
+			"TITLE": "Preferências",
+			"DESCRIPTION": "Como o aplicativo aparece e se comporta para você. As alterações são aplicadas imediatamente.",
+			"THEME": "Tema",
+			"THEME_HINT": "Esquema de cores de todo o aplicativo.",
+			"LANGUAGE": "Idioma",
+			"LANGUAGE_HINT": "Idioma dos menus, rótulos e mensagens.",
+			"LAYOUT": "Layout padrão",
+			"RESET_LAYOUTS": "Redefinir layouts das páginas",
+			"SAVE_ERROR": "Não foi possível salvar sua preferência.",
+			"LAYOUTS_RESET": "Layouts das páginas redefinidos para o seu padrão."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Imagem quadrada, com pelo menos 128 × 128 px.",
+			"NAME_HINT": "Exibido para todos os usuários deste tenant.",
+			"TENANT_ID": "ID do tenant",
+			"TENANT_ID_HINT": "Informe-o ao contatar o suporte ou ao usar a API.",
+			"COPY_ERROR": "Não foi possível copiar o ID do tenant.",
+			"TITLE": "Perfil do tenant",
+			"DESCRIPTION": "O nome e o logotipo deste tenant, exibidos para todos os usuários no seletor de espaços de trabalho e na barra lateral.",
+			"NAME": "Nome do tenant",
+			"NAME_PLACEHOLDER": "Digite o nome do tenant",
+			"NAME_REQUIRED": "O nome do tenant é obrigatório.",
+			"LOGO": "Logotipo do tenant",
+			"LOGO_CHANGE": "Clique para enviar um novo logotipo",
+			"LOGO_REMOVE": "Remover logotipo",
+			"LOGO_UPLOAD_ERROR": "Não foi possível enviar o logotipo.",
+			"CREATED_AT": "Criado em",
+			"SAVED": "Perfil do tenant salvo",
+			"SAVE_ERROR": "Não foi possível salvar o perfil do tenant.",
+			"LOAD_ERROR": "Não foi possível carregar o perfil do tenant."
+		},
+		"PREFERRED_UI": {
+			"LABEL": "Interface",
+			"TITLE": "Interface do usuário",
+			"DESCRIPTION": "Escolha qual interface todos neste locatário usam para páginas disponíveis em ambas as versões.",
+			"OPTIONS": {
+				"ANGULAR": "Angular (padrão)",
+				"REACT": "React (novo)"
+			},
+			"HINT": "Aplica-se a todo o locatário, em todos os dispositivos. Hoje o painel de controle de tempo está disponível em ambas as interfaces; mais páginas virão.",
+			"READ_ONLY": "Somente administradores do locatário podem alterar esta configuração.",
+			"SAVING": "Salvando…",
+			"SAVED": "Preferência de interface salva",
+			"SAVE_ERROR": "Não foi possível salvar a preferência de interface."
+		}
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Temas",
@@ -1186,7 +1253,9 @@
 		"CARDS_GRID": "Grade de Cartões",
 		"SPRINT_VIEW": "Sprint View",
 		"QUICK_SETTINGS": "Configurações rápidas",
-		"NO_LAYOUT": "Nenhum layout de dados disponível"
+		"NO_LAYOUT": "Nenhum layout de dados disponível",
+		"PREFERENCES": "Preferências",
+		"SUPPORT": "Suporte"
 	},
 	"CHANGELOG_MENU": {
 		"HEADER": "O que há de novo?",
@@ -1268,7 +1337,7 @@
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total de transações de despesas bem sucedidas: {{ totalExpenses }}. Total de transações de receitas bem sucedidas: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
 			"TITLE": "Hubstaff é uma plataforma de gestão de equipe remota que permite às empresas monitorar a produtividade e o progresso do trabalho de seus funcionários. Com recursos como rastreamento de tempo, capturas de tela aleatórias e análise de atividades, o Hubstaff ajuda as empresas a garantir que sua equipe esteja trabalhando de forma eficiente. Além disso, o Hubstaff também permite que os funcionários registrem suas horas de trabalho e solicitem pagamento de forma fácil e conveniente. Com sua interface intuitiva e recursos abrangentes, o Hubstaff é uma solução confiável para empresas que desejam gerenciar suas equipes remotas com eficiência.",
-			"SELECT_ORGANIZATION": "Selecione Organização",
+			"SELECT_ORGANIZATION": "Organização",
 			"SYNCED_PROJECTS": "Projetos sincronizados",
 			"SETTINGS_UPDATED": "Configurações atualizadas para integração",
 			"SYNCED_ENTITIES": "Entidades sincronizadas automaticamente",
@@ -1289,7 +1358,7 @@
 			"NEXT_STEP_INFO": "Em seguida, você será redirecionado para o Upwork para conceder permissão ao Gauzy.",
 			"CONTRACTS": "Contratos",
 			"SYNCED_CONTRACTS": "Contratos Sincronizados",
-			"SELECT_DATE": "Selecionar Data",
+			"SELECT_DATE": "Data",
 			"ONLY_CONTRACTS": "Somente Contratos",
 			"CONTRACTS_RELATED_DATA": "Entidades relacionadas aos contratos sincronizados",
 			"DATE_RANGE_PLACEHOLDER": "Escolha uma data entre",
@@ -1668,7 +1737,7 @@
 				"ACTIVE_TITLE": "Gatilhos de eventos ativos",
 				"DESCRIPTION": "Configure gatilhos automáticos de fluxos de trabalho. Quando um evento da plataforma ocorrer, o fluxo de trabalho SIM associado será executado automaticamente.",
 				"EVENT": "Evento",
-				"SELECT_EVENT": "Selecionar um evento",
+				"SELECT_EVENT": "Evento",
 				"WORKFLOW_ID": "ID do fluxo de trabalho",
 				"WORKFLOW_ID_PLACEHOLDER": "Insira o ID do fluxo de trabalho SIM para acionar",
 				"ADD": "Adicionar",
@@ -1711,7 +1780,7 @@
 		"COMING_SOON": "Em breve",
 		"RE_INTEGRATE": "Reintegrar",
 		"SETTINGS": "Configurações",
-		"SELECT_GROUPS": "Selecionar Grupos",
+		"SELECT_GROUPS": "Grupos",
 		"FILTER_INTEGRATIONS": "Integrações de filtro",
 		"SEARCH_INTEGRATIONS": "Integrações de busca",
 		"PAID": "Pago",
@@ -1733,6 +1802,19 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"EMPLOYEE_STATISTICS": "Estatísticas dos funcionários",
+		"ACCOUNTING_VIEW": {
+			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
+			"OF_INCOME": "{{ value }}% da receita",
+			"MARGIN": "Margem de {{ value }}%",
+			"BREAKDOWN": "Receita por funcionário",
+			"NO_DATA": "Nenhuma atividade financeira neste período",
+			"NO_DATA_HINT": "As receitas e despesas registradas neste período aparecerão aqui.",
+			"NO_EMPLOYEES": "Nenhum registro de funcionário neste período",
+			"SORT_BY": "Ordenar por {{ name }}",
+			"SORT_LABEL": "Ordenar por",
+			"SORT_ASCENDING": "Crescente",
+			"SORT_DESCENDING": "Decrescente"
+		},
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Por favor, selecione um mês e um funcionário no menu acima.",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insira texto para usuários não autenticados.",
 		"CHARTS": {
@@ -1921,7 +2003,90 @@
 			"PREVIOUS": "Anterior"
 		},
 		"NOT_STARTED": "Não iniciado",
-		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc."
+		"NOT_STARTED_HELP": "O trabalho começou, mas não há uma data definida para este funcionário. O funcionário não será considerado nas contas, divisão de despesas, etc.",
+		"VIEW": {
+			"PERIOD": "Período",
+			"PERIODS": {
+				"THIS_WEEK": "Esta semana",
+				"THIS_MONTH": "Este mês",
+				"LAST_30_DAYS": "Últimos 30 dias"
+			},
+			"TABS": {
+				"OVERVIEW": "Visão geral",
+				"PROFILE": "Perfil"
+			},
+			"PRESENCE": {
+				"TRACKING": "Registrando tempo",
+				"ONLINE": "Online",
+				"AWAY": "Ausente",
+				"OFFLINE": "Offline"
+			},
+			"LOCAL_TIME": "Hora local",
+			"MEMBER_SINCE": "Membro desde",
+			"WEEKLY_LIMIT": "Limite semanal",
+			"WORKED_TODAY": "Trabalhado hoje",
+			"WORKED_PERIOD": "Trabalhado no período",
+			"ACTIVITY_META": "{{ value }} de atividade",
+			"AVG_ACTIVITY": "Atividade média",
+			"OPEN_TASKS": "Tarefas abertas",
+			"OPEN_TASKS_META": "{{ progress }} em andamento · {{ overdue }} atrasadas",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "vs semana passada",
+				"THIS_MONTH": "vs mês passado",
+				"LAST_30_DAYS": "vs 30 dias anteriores"
+			},
+			"HOURS_WORKED": "Horas trabalhadas",
+			"HOURS_META": "{{ total }} no total · {{ average }} por dia trabalhado",
+			"TRACKED": "Registrado",
+			"MANUAL": "Manual",
+			"OPEN_TIMESHEET": "Abrir folha de horas",
+			"PROJECTS": "Projetos",
+			"RECENT_SCREENSHOTS": "Capturas de tela recentes",
+			"VIEW_ALL": "Ver tudo",
+			"ASSIGNED_TASKS": "Tarefas atribuídas",
+			"COLUMNS": {
+				"TASK": "Tarefa",
+				"PROJECT": "Projeto",
+				"STATUS": "Status",
+				"DUE": "Prazo",
+				"TIME": "Tempo",
+				"NAME": "Nome",
+				"PRIORITY": "Prioridade"
+			},
+			"TOP_TASKS": "Tarefas mais trabalhadas",
+			"APPS_URLS": "Apps e URLs",
+			"NO_TIME": "Nenhum tempo registrado neste período",
+			"NO_TASKS": "Nenhuma tarefa atribuída",
+			"NO_APPS": "Nenhuma atividade de app ou URL neste período",
+			"NO_SCREENSHOTS": "Nenhuma captura de tela neste período",
+			"UNAVAILABLE": "Você não tem acesso a estes dados",
+			"PROFILE": {
+				"ABOUT": "Sobre",
+				"CONTACT": "Contato",
+				"SKILLS_TAGS": "Habilidades e tags",
+				"TIME_ZONE": "Fuso horário",
+				"NOT_PROVIDED": "Ainda não informado",
+				"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda"
+			},
+			"TASKS_HELP": "Tarefas das quais esta pessoa é membro. Escolha uma caixa para filtrar a lista.",
+			"TASK_FILTERS": {
+				"OPEN": "Abertas",
+				"PROGRESS": "Em andamento",
+				"OVERDUE": "Atrasadas",
+				"DONE": "Concluídas"
+			},
+			"DUE": {
+				"NONE": "Sem prazo",
+				"WAS_DUE": "Prazo era",
+				"OVERDUE_DAY": "1 dia de atraso",
+				"OVERDUE_DAYS": "{{ count }} dias de atraso",
+				"TODAY": "Vence hoje",
+				"TOMORROW": "Vence amanhã",
+				"IN_DAYS": "Em {{ count }} dias"
+			},
+			"SHOWING": "Mostrando {{ shown }} de {{ total }} tarefas",
+			"NO_TASKS_IN_VIEW": "Nenhuma tarefa nesta visão"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "Todos os objetivos",
@@ -1937,6 +2102,7 @@
 		"EXPECTED": "Esperado",
 		"UPDATES": "Atualizações",
 		"UPDATE": "Atualizar",
+		"ALIGNMENTS": "Alinhamentos",
 		"COMMENTS": "Comentários",
 		"KEY_RESULTS": "Resultados Chave",
 		"GROUP_BY": "Agrupe por",
@@ -1953,6 +2119,8 @@
 		"GOAL_TEMPLATES": "Modelos de Objetivos",
 		"CREATE_NEW_MENU": "Criar Novo",
 		"CREATE_FROM_PRESET": "Criar a partir de um predefinido",
+		"SELECT_A_PRESET": "Selecionar um predefinido",
+		"ADDITIONAL_DETAILS": "Detalhes adicionais",
 		"OWNERSHIP": {
 			"EMPLOYEES": "Funcionários",
 			"TEAMS": "Equipes",
@@ -1982,7 +2150,8 @@
 		"MESSAGE": {
 			"NO_KEY_RESULT": "Não há resultados-chave para exibir.",
 			"NO_UPDATES": "Ainda não há atualizações.",
-			"NO_ALIGNMENT": "Ainda não há alinhamentos."
+			"NO_ALIGNMENT": "Ainda não há alinhamentos.",
+			"NO_PROGRESS_DATA": "Ainda não há dados de progresso para o gráfico."
 		},
 		"LEVELS": {
 			"ORGANIZATION": "Organização",
@@ -2108,9 +2277,9 @@
 				"STATUS": "Estado",
 				"WEIGHT": "Peso",
 				"TYPE": "Digite",
-				"SELECT_PROJECT": "Selecione Projeto",
-				"SELECT_TASK": "Selecione a tarefa.",
-				"SELECT_KPI": "Selecionar Indicadores-chave de Desempenho (KPI)",
+				"SELECT_PROJECT": "Projeto",
+				"SELECT_TASK": "Tarefa",
+				"SELECT_KPI": "Indicadores-chave de Desempenho (KPI)",
 				"ASSIGN_AS_OBJECTIVE": "Atribuir como objetivo."
 			},
 			"PLACEHOLDERS": {
@@ -2415,6 +2584,10 @@
 				"ALLOW_AGENT_APP_EXIT_INFO": "Permitir que o funcionário saia do Aplicativo Agente. Quando desabilitado, a opção de saída será bloqueada no Aplicativo Agente.",
 				"ALLOW_LOGOUT_FROM_AGENT_APP": "Permitir logout no aplicativo do agente",
 				"ALLOW_LOGOUT_FROM_AGENT_APP_INFO": "Permitir que o funcionário faça logout do Aplicativo Agente. Quando desabilitado, a opção de logout será bloqueada no Aplicativo Agente.",
+				"EEA_UK_COMPLIANCE_NOTICE_TITLE": "Proteção de trabalhadores do EEE / Reino Unido ativa",
+				"EEA_UK_COMPLIANCE_NOTICE_BODY": "Para organizações e trabalhadores no EEE ou no Reino Unido, os trabalhadores podem sempre sair e terminar sessão no agente de desktop. Uma captura que o trabalhador não pode interromper é difícil de justificar ao abrigo do RGPD e do art. 8.º da CEDH, pelo que estas restrições não estão disponíveis aqui.",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_TITLE": "Confirmar a restrição de saída ou de término de sessão do agente",
+				"RESTRICT_AGENT_ACKNOWLEDGEMENT_BODY": "Com esta restrição, o trabalhador não consegue impedir que o agente de desktop o capture. Confirme que avaliou esta medida como lícita e proporcional para estes trabalhadores e que assume a responsabilidade por ela. A sua confirmação fica registada na sua conta.",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY": "Rastrear atividade de teclado e mouse",
 				"TRACK_KEYBOARD_MOUSE_ACTIVITY_INFO": "Habilitar o rastreamento completo da atividade de teclado e mouse, incluindo teclas pressionadas e movimentos exatos do mouse em todos os aplicativos desktop e do agente.",
 				"TRACK_ALL_DISPLAYS": "Rastrear todas as telas",
@@ -2438,6 +2611,8 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duração do diálogo de contagem regressiva da prova de atividade, representa a quantidade de minutos dada para comprovar a atividade.",
 				"ENABLE_DETECTION_INACTIVITY": "Permitir a detecção da inatividade do funcionário",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Ativado - o sistema detectará a inatividade e exibirá um aviso. Desativado - nenhum aviso será exibido quando um funcionário estiver inativo.",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA": "Allow Employees to see their tracked data",
+				"ALLOW_EMPLOYEE_SEE_TRACKED_DATA_INFO": "Enable - Employees can see their own screenshots, activity, app/URL history, and time logs.",
 				"SCREENSHOT_FREQUENCY": "Frequência de Capturas de Tela",
 				"SCREENSHOT_FREQUENCY_INFO": "Especifique a frequência de atualização ou os intervalos de tempo para sincronização.",
 				"RANDOM_SCREENSHOT": "Captura de Tela Aleatória",
@@ -2536,7 +2711,7 @@
 			"TIME_OFF_POLICY_VIEW": "Ver Política de Folga",
 			"TIME_OFF_POLICY_EDIT": "Editar Política de Folga",
 			"TIME_OFF_POLICY_DELETE": "Excluir Política de Folga",
-			"SELECT_EMPLOYEE": "Selecionar funcionário",
+			"SELECT_EMPLOYEE": "Funcionário",
 			"CHANGE_SELECTED_EMPLOYEE": "Alterar Funcionário Selecionado",
 			"CHANGE_SELECTED_CANDIDATE": "Mudança de Candidato Selecionado",
 			"CHANGE_SELECTED_ORGANIZATION": "Alterar Organização Selecionada",
@@ -2684,7 +2859,10 @@
 		"ADDRESS": "Endereço",
 		"ADDRESS_2": "Endereço 2",
 		"MEMBERS": "Membros",
-		"BUDGET": "Orçamento"
+		"BUDGET": "Orçamento",
+		"PHOTO_HINT": "Clique ou solte uma imagem para enviar",
+		"SEARCH_EMPLOYEES": "Pesquise funcionários por nome ou e-mail",
+		"NO_MEMBERS": "Nenhum membro adicionado ainda"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas",
@@ -2717,7 +2895,19 @@
 		"EMPLOYEE_UPDATED": "O funcionário foi atualizado.",
 		"IMAGE_UPDATED": "A imagem foi atualizada.",
 		"FAIL_TO_UPDATE_IMAGE": "Atualização falhou.",
-		"ANONYMOUS": "Anônimo"
+		"ANONYMOUS": "Anônimo",
+		"ABOUT": "Sobre",
+		"INACTIVE": "Inativo",
+		"PER_HOUR": "/ hora",
+		"MEMBER_SINCE": "Membro desde",
+		"NO_DESCRIPTION": "Nenhuma descrição foi adicionada ainda",
+		"NO_SKILLS": "Nenhuma habilidade listada",
+		"VIEW_COMPANY_PROFILE": "Ver perfil da empresa",
+		"EDIT": {
+			"NO_AWARDS": "Nenhum prêmio adicionado",
+			"ADD_AWARD": "Adicionar prêmio",
+			"PRIVACY_HELP": "Escolha quais detalhes os visitantes veem no perfil público."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Página de Gerenciamento de Propostas",
@@ -2809,12 +2999,12 @@
 		"ADD_HOLIDAYS": "Adicionar Feriados",
 		"DISPLAY_HOLIDAYS": "Mostrar feriados",
 		"HOLIDAY_NAME": "Nome do feriado",
-		"SELECT_EMPLOYEES": "Selecionar Funcionários",
+		"SELECT_EMPLOYEES": "Funcionários",
 		"SETTINGS": "Configurações",
 		"EDI": "Editar registro de tempo livre.",
-		"SELECT_HOLIDAY_NAME": "Selecionar nome da férias",
+		"SELECT_HOLIDAY_NAME": "Nome da férias",
 		"ADD_OR_REMOVE_EMPLOYEES": "Adicionar ou remover funcionários",
-		"SELECT_TIME_OFF_POLICY": "Selecione a Política de Licença",
+		"SELECT_TIME_OFF_POLICY": "Política de Licença",
 		"ADD_A_DESCRIPTION": "Adicione uma descrição",
 		"DESCRIPTION": "Descrição",
 		"START_DATE": "Data de início",
@@ -2879,7 +3069,7 @@
 		"ADD_NEW_TAG": "Adicionar nova Tag",
 		"TENANT_LEVEL": "Nível do inquilino",
 		"TAGS_TYPE": "Tipo de etiquetas",
-		"TAGS_SELECT_TYPE": "Selecionar tipo de tag"
+		"TAGS_SELECT_TYPE": "Tipo de tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Habilidades"
@@ -3211,8 +3401,8 @@
 		"PROPOSAL_TEMPLATE": "Modelo de proposta",
 		"EDIT_PROPOSAL_TEMPLATE": "Editar modelo de proposta",
 		"ADD_PROPOSAL_TEMPLATE": "Adicionar Modelo de Proposta.",
-		"SELECT_PROPOSAL_TEMPLATE": "Selecionar Modelo de Proposta",
-		"SELECT_EMPLOYEE": "Selecionar funcionário",
+		"SELECT_PROPOSAL_TEMPLATE": "Modelo de Proposta",
+		"SELECT_EMPLOYEE": "Funcionário",
 		"NAME": "Nome",
 		"CONTENT": "Conteúdo",
 		"EMPLOYEE": "Funcionário",
@@ -3313,7 +3503,11 @@
 		"STOP_TIMER": "Parar Temporizador",
 		"TIME_LOG": "Registo de Tempo",
 		"VIEW_APPOINTMENTS": "Ver compromissos",
-		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo"
+		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo",
+		"DOCUMENTS": {
+			"NEW_PAGE": "Nova página",
+			"UPLOAD": "Carregar"
+		}
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilidade",
@@ -3321,7 +3515,8 @@
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"JOBS": "Empregos",
 		"CONTACTS": "Contatos",
-		"TIME_TRACKING": "Rastreamento de Tempo"
+		"TIME_TRACKING": "Rastreamento de Tempo",
+		"DOCUMENTS": "Documentos"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome próprio",
@@ -3367,6 +3562,9 @@
 		"BROWSE": "Navegar",
 		"COMMENT": "Comentário",
 		"COMMENTS": "Comentários",
+		"COMMENT_PLACEHOLDER": "Escreva um comentário…",
+		"NO_COMMENTS": "Ainda sem comentários",
+		"NO_COMMENTS_HINT": "Os comentários aparecem aqui, os mais recentes primeiro.",
 		"HEADER": "Faturas",
 		"INVOICE_NUMBER": "Número da fatura",
 		"ESTIMATE_NUMBER": "Número de estimativa",
@@ -3404,10 +3602,10 @@
 		"EDIT_ESTIMATE": "Editar Orçamento",
 		"VIEW_INVOICE": "Visualizar Fatura",
 		"VIEW_ESTIMATE": "Ver estimativa",
-		"SELECT_EMPLOYEE": "Selecione o funcionário",
-		"SELECT_PROJECT": "Selecionar Projeto",
-		"SELECT_TASK": "Selecionar Tarefa",
-		"SELECT_PRODUCT": "Selecionar Produto",
+		"SELECT_EMPLOYEE": "Funcionário",
+		"SELECT_PROJECT": "Projeto",
+		"SELECT_TASK": "Tarefa",
+		"SELECT_PRODUCT": "Produto",
 		"INVALID_DATES": "Datas inválidas",
 		"INVOICE_NUMBER_DUPLICATE": "Número de fatura já existe",
 		"DISCOUNT_TYPE": "Tipo de Desconto",
@@ -3469,12 +3667,12 @@
 			"BY_PRODUCTS": "Subprodutos",
 			"BY_EXPENSES": "Por Despesas",
 			"DETAILED_ITEMS": "Itens Detalhados",
-			"SELECT_INVOICE_TYPE": "Selecione um tipo de fatura",
-			"SELECT_ESTIMATE_TYPE": "Selecione um tipo de estimativa",
-			"SELECT_PROJECTS": "Selecionar projetos",
-			"SELECT_TASKS": "Selecionar tarefas",
-			"SELECT_PRODUCTS": "Selecionar produtos",
-			"SELECT_EXPENSES": "Selecione despesas."
+			"SELECT_INVOICE_TYPE": "Tipo de fatura",
+			"SELECT_ESTIMATE_TYPE": "Tipo de estimativa",
+			"SELECT_PROJECTS": "Projetos",
+			"SELECT_TASKS": "Tarefas",
+			"SELECT_PRODUCTS": "Produtos",
+			"SELECT_EXPENSES": "Despesas"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Número do item",
@@ -3559,7 +3757,7 @@
 			"NO_PAYMENTS_RECORDED": "Nenhum pagamento registrado",
 			"LEFT_TO_PAY": "Falta pagar.",
 			"PAYMENT_METHOD": "Método de Pagamento",
-			"SELECT_INVOICE": "Selecionar Fatura",
+			"SELECT_INVOICE": "Fatura",
 			"PAYMENT_AMOUNT_ADDED": "Pagamento de {{ amount }} {{ currency }} adicionado",
 			"PAYMENT": "Pagamento",
 			"BANK_TRANSFER": "Transferência bancária",
@@ -3625,12 +3823,67 @@
 		"TAGS": "Tags"
 	},
 	"HEADER": {
-		"SELECT_EMPLOYEE": "Selecionar Funcionário",
-		"SELECT_A_DATE": "Selecionar uma Data",
-		"SELECT_AN_ORGANIZATION": "Selecionar uma Organização",
-		"SELECT_PROJECT": "Selecionar Projeto",
-		"SELECT_TEAM": "Selecionar Equipe",
-		"AI_CHAT": "Chat de IA"
+		"SELECT_EMPLOYEE": "Funcionário",
+		"SELECT_A_DATE": "Data",
+		"SELECT_AN_ORGANIZATION": "Organização",
+		"SELECT_PROJECT": "Projeto",
+		"SELECT_TEAM": "Equipe",
+		"AI_CHAT": "Chat de IA",
+		"COLLAPSE_SIDEBAR": "Recolher a barra lateral",
+		"EXPAND_SIDEBAR": "Expandir a barra lateral"
+	},
+	"AI_ASSISTANT": {
+		"TITLE": "Assistente de IA",
+		"OPEN": "Abrir o assistente de IA",
+		"CLOSE": "Fechar o assistente de IA",
+		"HISTORY": "Histórico",
+		"HISTORY_HINT": "Ver as conversas salvas",
+		"HISTORY_CLOSE": "Fechar o histórico",
+		"HISTORY_EMPTY": "Ainda não há conversas salvas.",
+		"NEW_CHAT": "Nova conversa",
+		"NEW_CHAT_HINT": "Iniciar uma nova conversa",
+		"DELETE_CONVERSATION": "Excluir conversa",
+		"LOADING": "Carregando…",
+		"DOCK_LEFT": "Encaixar à esquerda",
+		"DOCK_RIGHT": "Encaixar à direita",
+		"MAXIMIZE": "Maximizar",
+		"RESTORE": "Restaurar a largura",
+		"COLLAPSE": "Recolher",
+		"RESIZE": "Arraste para redimensionar",
+		"WELCOME_SUBTITLE": "Pergunte qualquer coisa sobre o seu espaço de trabalho, tarefas ou projetos.",
+		"PLACEHOLDER": "Digite uma mensagem…",
+		"SEND": "Enviar mensagem",
+		"STOP": "Parar a geração",
+		"ERROR": "Algo deu errado.",
+		"RETRY": "Tentar novamente",
+		"DICTATION_FAILED": "Não foi possível transcrever a gravação.",
+		"DICTATION_NOT_CONFIGURED": "A ditação precisa de um provedor de voz. Adicione um na página de configurações «Provedores de IA».",
+		"DICTATION_ASK_ADMIN": "A ditação precisa de um provedor de voz — peça a um administrador para adicionar um em Configurações → Provedores de IA.",
+		"DICTATION_KEY_REJECTED": "O provedor de voz rejeitou a chave de API. Atualize-a na página de configurações «Provedores de IA».",
+		"DICTATION_KEY_REJECTED_ASK_ADMIN": "O provedor de voz rejeitou a chave de API — peça a um administrador para atualizá-la em Configurações → Provedores de IA.",
+		"DICTATION_OPEN_SETTINGS": "Abrir Provedores de IA",
+		"RATE_LIMITED_SHARED": "O nível gratuito de IA está com limite de solicitações no momento. Conecte sua própria conta OpenRouter ou configure outro provedor de IA para ter acesso sem interrupções.",
+		"RATE_LIMITED_OWN": "Seu provedor de IA está limitando as solicitações no momento. Verifique seu plano e seus limites com o provedor ou configure outro provedor de IA.",
+		"RATE_LIMIT_RETRY_IN": "Você pode tentar novamente em cerca de {{seconds}} s.",
+		"OPEN_AI_SETTINGS": "Abrir Provedores de IA",
+		"ERROR_NOT_CONFIGURED": "O chat de IA precisa de um provedor configurado. Adicione um na página de configurações «Provedores de IA».",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "O chat de IA precisa de um provedor configurado — peça a um administrador para adicionar um em Configurações → Provedores de IA.",
+		"ERROR_PROVIDER_UNAVAILABLE": "O provedor de IA selecionado não pode responder agora. Verifique-o na página de configurações «Provedores de IA».",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "O provedor de IA selecionado não pode responder agora — peça a um administrador para verificar Configurações → Provedores de IA.",
+		"ERROR_MODEL_UNAVAILABLE": "Este modelo não está disponível com a chave de API atual. Escolha outro na página de configurações «Provedores de IA».",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Este modelo não está disponível com a chave de API atual — peça a um administrador para verificar Configurações → Provedores de IA.",
+		"ERROR_KEY_REJECTED": "O provedor de IA rejeitou a chave de API. Atualize-a na página de configurações «Provedores de IA».",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "O provedor de IA rejeitou a chave de API — peça a um administrador para atualizá-la em Configurações → Provedores de IA.",
+		"ERROR_RATE_LIMITED": "O provedor de IA está limitando as solicitações.",
+		"RECORDING": "Gravando",
+		"PREVIEW": "Pré-visualização",
+		"PREVIEW_PAGE": "Página",
+		"PREVIEW_NEW_TAB": "Abrir em uma nova aba",
+		"PREVIEW_CLOSE": "Fechar pré-visualização",
+		"PREVIEW_UNAVAILABLE": "Não há pré-visualização disponível para este arquivo.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Abrir em Documentos",
+		"ATTACH_UPLOADING": "Enviando…",
+		"ATTACH_DOCUMENT": "Documento"
 	},
 	"HEADER_TITLE": {
 		"FOR": "para",
@@ -3643,6 +3896,21 @@
 		"REDIRECT_TO_HOME": "Será redirecionado para a página inicial em breve"
 	},
 	"HELP_PAGE": {
+		"INTRO": "Encontre documentação, obtenha respostas e fale com a equipe por trás do Gauzy.",
+		"DOCUMENTATION": "Documentação",
+		"DOCUMENTATION_DESC": "Guias e referência para cada funcionalidade do Gauzy.",
+		"FAQ": "Perguntas frequentes",
+		"FAQ_DESC": "Respostas às perguntas mais frequentes.",
+		"SUPPORT_CHAT": "Chat de suporte",
+		"SUPPORT_CHAT_DESC": "Converse com nossa equipe de suporte.",
+		"REPORT_ISSUE": "Relatar um problema",
+		"REPORT_ISSUE_DESC": "Encontrou um bug? Abra uma issue no GitHub.",
+		"GITHUB": "GitHub",
+		"GITHUB_DESC": "Código-fonte, versões e discussões.",
+		"WEBSITE": "Site do Gauzy",
+		"WEBSITE_DESC": "Saiba mais sobre a plataforma Gauzy.",
+		"ABOUT_LINK": "Sobre o Gauzy",
+		"ABOUT_LINK_DESC": "Detalhes da versão, licença e links.",
 		"HELP": "Ajuda.",
 		"KNOWLEDGE_BASE": "Base de conhecimento",
 		"CHOSE_ICON": "Escolha o ícone para definir.",
@@ -3691,20 +3959,20 @@
 		"THIS_TAB_WILL_SHOW_PROJECT_MANAGEMENT_CHARTS_AND_AGGREGATED_DATA": "Esta aba mostrará gráficos de gerenciamento de projetos e dados agregados.",
 		"PROJECT_MODULE": {
 			"PROJECT": "Projeto",
-			"SELECT_PROJECT": "Selecionar um projeto",
+			"SELECT_PROJECT": "Projeto",
 			"STATUS": "Status",
 			"TEAM_MEMBERS": "Membros da equipe",
 			"TEAMS": "Equipes",
-			"SELECT_TEAMS": "Selecionar equipes",
+			"SELECT_TEAMS": "Equipes",
 			"CHOOSE_TEAMS": "Escolher equipes",
 			"NAME": "Nome",
 			"ENTER_NAME": "Insira o nome",
 			"PARENT_MODULE": "Módulo pai",
-			"SELECT_PARENT": "Selecionar módulo pai",
+			"SELECT_PARENT": "Módulo pai",
 			"START_DATE": "Data de início",
-			"SELECT_START_DATE": "Selecionar data de início",
+			"SELECT_START_DATE": "Data de início",
 			"END_DATE": "Data de término",
-			"SELECT_END_DATE": "Selecionar data de término",
+			"SELECT_END_DATE": "Data de término",
 			"DESCRIPTION": "Descrição",
 			"IS_FAVORITE": "Favorito"
 		}
@@ -3741,7 +4009,8 @@
 		"ROLES_PERMISSIONS": "Funções e Permissões",
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"ESTIMATE": "Estimativa",
-		"DASHBOARD": "Painel de Controle"
+		"DASHBOARD": "Painel de Controle",
+		"DOCUMENTS": "Documentos"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -3839,6 +4108,9 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Ir para o painel de controle, Gerenciar Estatísticas dos Funcionários, Painel de Controle de Rastreamento de Tempo."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Central de documentos da empresa: uploads, páginas wiki, revisão e conhecimento de IA"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -3953,6 +4225,16 @@
 		}
 	},
 	"ABOUT_PAGE": {
+		"COPYRIGHT": "Copyright © 2019-{{year}}, Ever Co. LTD. Todos os direitos reservados.",
+		"DESCRIPTION": "Ever® Gauzy™ é uma plataforma aberta de gestão empresarial para economias colaborativas, sob demanda e compartilhadas — ERP, CRM, HRM, ATS e gestão de projetos com controle de tempo integrado.",
+		"LICENSE": "Código aberto, lançado sob a licença",
+		"VERSION_DETAILS": "Detalhes da versão",
+		"VERSION_MISMATCH": "O aplicativo web e a API foram compilados a partir de commits diferentes — uma implantação pode estar em andamento.",
+		"WEB_APP": "Aplicativo web",
+		"API": "API",
+		"UNTAGGED": "build sem tag",
+		"API_UNAVAILABLE": "Versão da API indisponível",
+		"LEARN_MORE": "Saiba mais",
 		"ABOUT": "Sobre"
 	},
 	"FOOTER": {
@@ -4348,16 +4630,30 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"MONITORING_ACTIVE": "Monitorização ativa: tempo e atividade a ser registados",
+		"MONITORING_IDLE": "Agente inativo",
+		"MONITORING_TRAY_ACTIVE": "Monitorização ativa, a registar: {{captures}}",
+		"MONITORING_TRAY_PAUSED": "Monitorização em pausa: nada está a ser registado",
+		"MONITORING_CAPTURE_TIME": "tempo e aplicações ativas",
+		"MONITORING_CAPTURE_SCREENSHOTS": "capturas de ecrã",
+		"MONITORING_CAPTURE_INPUT": "atividade do teclado e do rato",
+		"PLACEHOLDERS": {
+			"SELECT_CLIENT": "Selecionar cliente",
+			"SELECT_PROJECT": "Selecionar projeto",
+			"SELECT_TEAM": "Selecionar equipe",
+			"SELECT_TASK": "Selecionar tarefa",
+			"DESCRIPTION": "Adicionar uma descrição"
+		},
 		"IS_BILLABLE": "É cobrável.",
 		"STOP_TIMER": "Parar cronômetro",
 		"START_TIMER": "Iniciar cronômetro",
 		"TIMER": "Temporizador",
 		"MANUAL": "Manual",
 		"MANUAL_NOT_ALLOW": "Tempo manual não permitido",
-		"SELECT_PROJECT": "Selecionar Projeto",
-		"SELECT_TASK": "Selecionar Tarefa",
-		"SELECT_CLIENT": "Selecionar Cliente",
-		"SELECT_TEAM": "Selecionar equipe",
+		"SELECT_PROJECT": "Projeto",
+		"SELECT_TASK": "Tarefa",
+		"SELECT_CLIENT": "Cliente",
+		"SELECT_TEAM": "Equipe",
 		"DATE": "Data",
 		"START_TIME": "Hora de Início",
 		"END_TIME": "Fim do Tempo",
@@ -4447,13 +4743,13 @@
 			"AUTOMATIC_UPDATE_CHECK": "Verificação de Atualização Automática",
 			"ENABLE_AUTOMATIC_UPDATE_LABEL": "Ative a verificação automática de atualizações, a fim de executar uma solicitação para verificar se uma nova versão está disponível e notificar.",
 			"SET_UPDATE_INTERVAL_DURATION": "Defina a duração do intervalo de verificação de atualização.",
-			"SELECT_DELAY": "Selecionar Atraso",
+			"SELECT_DELAY": "Atraso",
 			"ENABLE_AUTOMATIC_UPDATE": "Ativar Atualização Automática",
 			"UPDATE_SERVER": "Servidor de atualização",
 			"SELECT_DEFAULT_CDN": "Selecionar servidor CDN padrão para atualização",
 			"TOGGLE_UPDATE_LOCALLY": "Alternar para atualizar localmente",
 			"LOCAL_SERVER": "Servidor Local",
-			"LOCAL_SERVER_NOTE": "O diretório selecionado definitivamente deve conter o manifesto <strong>latest.yml</strong> e/ou <strong>latest-mac.yml</strong> para realizar a validação da atualização.",
+			"LOCAL_SERVER_NOTE": "O diretório selecionado deve conter o manifesto de atualização do seu sistema (Windows: <strong>latest-x64.yml</strong> ou <strong>latest-arm64.yml</strong>; Linux: <strong>latest-x64-linux.yml</strong> ou <strong>latest-arm64-linux-arm64.yml</strong>; macOS: <strong>latest-mac.yml</strong>) e os arquivos de atualização nele listados, para realizar a validação da atualização.",
 			"OTHER_SETTINGS": "Outras Configurações",
 			"ALLOW_PRERELEASE_VERSIONS": "Permita versões de pré-lançamento.",
 			"CHECK_UPDATE_APP_VERSION": "Verifique e atualize a versão do seu aplicativo",
@@ -4718,11 +5014,11 @@
 		"SUBMIT_SUCCESS": "Timesheet enviada com sucesso",
 		"UNSUBMIT_SUCCESS": "Timesheet desativado com sucesso.",
 		"DELETE_TIMELOG": "Você tem certeza de que deseja excluir o Timelog?",
-		"SELECT_EMPLOYEE": "Selecionar Funcionário",
+		"SELECT_EMPLOYEE": "Funcionário",
 		"ALL_EMPLOYEE": "Todos os funcionários",
-		"SELECT_SOURCE": "Selecionar Origem",
-		"SELECT_ACTIVITY_LEVEL": "Selecione o nível de atividade",
-		"SELECT_LOG_TYPE": "Selecionar Tipo de Registro",
+		"SELECT_SOURCE": "Origem",
+		"SELECT_ACTIVITY_LEVEL": "Nível de atividade",
+		"SELECT_LOG_TYPE": "Tipo de Registro",
 		"ADD_TIME_LOGS": "Adicionar registros de tempo.",
 		"EDIT_TIME_LOGS": "Editar registros de tempo",
 		"VIEW_TIME_LOGS": "Registros de Tempo",
@@ -4817,7 +5113,9 @@
 		"SCREENSHOTS": {
 			"SCREENSHOTS": "Capturas de tela",
 			"OF": "da",
-			"TIME_LOG": "TimeLog"
+			"TIME_LOG": "TimeLog",
+			"TAKEN_AT": "Captura de tela feita às {{ time }}",
+			"POSITION": "Captura de tela {{ position }} de {{ total }}"
 		},
 		"RUNNING_TIMER_WARNING": "Aviso. O cronômetro está em execução, você só pode remover capturas de tela se parar o cronômetro ou dentro do aplicativo Timer.",
 		"DELETE_CONFIRM": "Você tem certeza de que quer deletar essas capturas de tela e registros de tempo?",
@@ -4866,7 +5164,9 @@
 		"NO_SCREENSHOT": "Sem captura de tela.",
 		"NO_SCREENSHOTS": "Sem capturas de tela",
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto.",
-		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)"
+		"SCREEN_SELECTED": "{{ count }} Tela(s) selecionada(s)",
+		"NO_TIME_TRACKED": "Nenhum tempo registrado",
+		"MINUTES_TRACKED": "{{ minutes }} min registrados"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",
@@ -4892,6 +5192,16 @@
 		"BUFFER_AT_START": "Buffer no Início",
 		"BUFFER_AT_END": "Buffer no final",
 		"BREAK_TIME": "Hora do intervalo",
+		"DETAILS": "Detalhes",
+		"PARTICIPANTS": "Participantes",
+		"FORM_HINT": "Defina o assunto da reunião, quando ela acontece e quem participa.",
+		"DETAILS_HINT": "Pauta, local e notas visíveis para todos os convidados.",
+		"SCHEDULE": "Agenda",
+		"SCHEDULE_HINT": "Escolha a data e o horário, com intervalo de folga e pausa opcionais.",
+		"BUFFER_TIME_HINT": "Reserve tempo livre antes ou depois da reunião.",
+		"BREAK_TIME_HINT": "Pause a reunião para um breve intervalo.",
+		"BREAK_START": "A pausa começa às",
+		"PARTICIPANTS_HINT": "Pessoas que recebem o convite.",
 		"ARE_YOU_SURE": "Você tem certeza? Essa ação é irreversível."
 	},
 	"EMPLOYEE_SCHEDULES_MODAL": {
@@ -4936,7 +5246,9 @@
 		"CANCEL": "Cancelar Agendamento",
 		"TIMEZONE": "Sua zona horária:",
 		"CHANGE": "Mudança",
+		"CHANGE_TIMEZONE": "Alterar",
 		"SELECT_EMPLOYEE_ERROR": "Por favor, selecione um funcionário.",
+		"SELECT_EMPLOYEE_HINT": "Escolha com quem você quer se reunir e depois um horário que funcione para você.",
 		"EXPIRED_OR_CANCELLED": "**Esta consulta expirou ou foi cancelada.",
 		"EMAIL_SENT": "**Um e-mail foi enviado para o anfitrião, bem como para todos os participantes desta reunião.",
 		"NO_ACTIVE_EVENT_TYPES": "Não há tipos de eventos ativos.",
@@ -5022,9 +5334,9 @@
 	},
 	"PIPELINE_DEAL_CREATE_PAGE": {
 		"HEADER": "Criar negócio | Pipeline: '{{ name }}'",
-		"SELECT_STAGE": "Selecionar Estágio",
+		"SELECT_STAGE": "Estágio",
 		"PROBABILITY": "Probabilidade",
-		"SELECT_CLIENT": "Selecionar Cliente"
+		"SELECT_CLIENT": "Cliente"
 	},
 	"DIALOG": {
 		"CONFIRM": "Confirmar",
@@ -5150,14 +5462,27 @@
 			"SYSTEM": "Sistema",
 			"FILTERS": {
 				"TO": "Para",
-				"TEMPLATE_LANGUAGE": "Modelo / Idioma"
+				"TEMPLATE_LANGUAGE": "Modelo / Idioma",
+				"RECIPIENT": "Destinatário",
+				"TEMPLATE": "Modelo",
+				"STATUS": "Estado",
+				"ALL_RECIPIENTS": "Todos os destinatários",
+				"ALL_TEMPLATES": "Todos os modelos",
+				"ALL_STATUSES": "Todos os estados",
+				"SENT": "Enviado",
+				"FAILED": "Falhou",
+				"ARCHIVED": "Arquivados",
+				"SHOWING": "A mostrar {{ count }} de {{ total }}",
+				"NO_MATCH": "Nenhum email corresponde a estes filtros."
 			}
 		}
 	},
 	"GAUZY_MAINTENANCE": "{{ companySite }} @ Manutenção",
 	"LEGAL": {
 		"PRIVACY_POLICY": "Política de Privacidade",
-		"TERMS_AND_CONDITIONS": "Termos e Condições"
+		"TERMS_AND_CONDITIONS": "Termos e Condições",
+		"DOCUMENT_VERSION": "Versão {{ version }}",
+		"DOCUMENT_EFFECTIVE_DATE": "Em vigor desde {{ date }}"
 	},
 	"LOADING": "A carregar, por favor aguarde...",
 	"ACCOUNTING_TEMPLATES_PAGE": {
@@ -5198,7 +5523,8 @@
 				"TERMS_AND_CONDITIONS": "Termos e Condições",
 				"AND": " e ",
 				"PRIVACY_POLICY": "Política de Privacidade"
-			}
+			},
+			"PASSWORD_MIN_LENGTH": "A senha deve conter pelo menos 4 caracteres"
 		}
 	},
 	"LOGIN_PAGE": {
@@ -5208,6 +5534,8 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Não tem uma conta?",
 		"FORGOT_PASSWORD_TITLE": "Esqueceu a senha?",
 		"OR_SIGN_IN_WITH": "Ou faça login com",
+		"SIGN_IN_WITH_EVER_ID": "Entrar com Ever ID",
+		"SIGN_IN_WITH_KEYCLOAK": "Entrar com Keycloak",
 		"FORGOT_EMAIL_TITLE": "Esqueceu o e-mail?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Entrar com um código mágico",
@@ -5308,7 +5636,15 @@
 		"HOTKEYS": "Atalhos de teclado",
 		"HELP": "Ajuda",
 		"SIGN_OUT": "Sair",
-		"PROFILE": "Perfil"
+		"PROFILE": "Perfil",
+		"ACCOUNT": "Conta",
+		"PREFERENCES": "Preferências",
+		"DOWNLOAD_APPS": "Baixar aplicativos",
+		"DOWNLOAD_MACOS": "Baixar para macOS",
+		"DOWNLOAD_WINDOWS": "Baixar para Windows",
+		"DOWNLOAD_LINUX": "Baixar para Linux",
+		"DOWNLOAD_MOBILE": "Baixar o aplicativo móvel",
+		"DOWNLOAD_BROWSER_EXTENSION": "Baixar a extensão do navegador"
 	},
 	"WORKSPACES": {
 		"MENUS": {
@@ -5446,7 +5782,7 @@
 				"REQUIRED": "Obrigatório"
 			},
 			"TYPE": "Tipo de plugin",
-			"TYPE_PLACEHOLDER": "Selecione o tipo de plugin",
+			"TYPE_PLACEHOLDER": "Tipo de plugin",
 			"TYPES": {
 				"DESKTOP": "Desktop",
 				"WEB": "Web",

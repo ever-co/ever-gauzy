@@ -1,7 +1,15 @@
 <div class="avatar-container">
   @if (rowData?.createdByUser; as createdByUser) {
-    <a class="avatar" [nbTooltip]="createdByUser.name" (click)="edit(createdByUser.id)">
-      <img class="img" type="createdByUser" [src]="createdByUser.imageUrl" />
+    <a
+      class="avatar"
+      [class.is-link]="!!employeeId(createdByUser)"
+      [nbTooltip]="createdByUser.name"
+      (click)="edit(createdByUser)"
+    >
+      @if (createdByUser.imageUrl) {
+        <!-- Without the guard an avatar-less creator renders a broken-image icon. -->
+        <img class="img" type="createdByUser" [src]="createdByUser.imageUrl" [alt]="createdByUser.name" />
+      }
       <div class="names-wrapper">{{ createdByUser.name }}</div>
     </a>
   } @else {

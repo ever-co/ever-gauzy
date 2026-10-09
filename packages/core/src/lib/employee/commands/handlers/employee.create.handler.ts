@@ -7,6 +7,7 @@ import { RequestContext } from './../../../core/context';
 import { AuthService } from '../../../auth/auth.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { EmployeeService } from '../../employee.service';
+import { assertNoAgentRestrictionOnCreate } from '../../agent-exit-logout-restriction';
 import { EmployeeCreateCommand } from '../employee.create.command';
 import { EmailService } from './../../../email-send/email.service';
 import { UserCreateCommand } from './../../../user/commands';
@@ -35,6 +36,8 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
 		const { input, originUrl = environment.clientBaseUrl } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
+		// Issue #9873: exit/logout can only be restricted on an existing employee, with an acknowledgement.
+		assertNoAgentRestrictionOnCreate(input);
 		const { organizationId } = input;
 
 		if (isEmpty(input.userId)) {
@@ -114,7 +117,11 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			const user = await this._commandBus.execute(
 				new UserCreateCommand({
 					...input.user,
+					// The role is decided here, server-side. Pin BOTH role fields to it: the spread above can
+					// carry a body `user.roleId` (or a string `user.role`), which would otherwise sit next to the
+					// trusted role and could be what gets persisted (GHSA-x4mv-fhwj-g3rp).
 					role,
+					roleId: role?.id,
 					hash: passwordHash,
 					preferredLanguage: languageCode,
 					preferredComponentLayout: ComponentLayoutStyleEnum.TABLE

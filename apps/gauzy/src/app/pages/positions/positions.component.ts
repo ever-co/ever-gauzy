@@ -263,33 +263,39 @@ export class PositionsComponent extends PaginationFilterBaseComponent implements
 			return;
 		}
 		this.loading = true;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
-		const { activePage, itemsPerPage } = this.getPagination();
+		try {
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
+			const { activePage, itemsPerPage } = this.getPagination();
 
-		const res = await this.organizationPositionsService.getAll(
-			{
-				organizationId,
-				tenantId
-			},
-			['tags']
-		);
-		if (res) {
-			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this.smartTableSource.load(res.items);
-			if (this._isGridLayout) {
-				this._loadGridLayoutData();
-			} else this.positions = res.items;
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.smartTableSource.count()
-			});
-			if (this.positions.length <= 0) {
-				this.positionsExist = false;
-			} else {
-				this.positionsExist = true;
+			const res = await this.organizationPositionsService.getAll(
+				{
+					organizationId,
+					tenantId
+				},
+				['tags']
+			);
+			if (res) {
+				this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+				this.smartTableSource.load(res.items);
+				if (this._isGridLayout) {
+					this._loadGridLayoutData();
+				} else this.positions = res.items;
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.smartTableSource.count()
+				});
+				if (this.positions.length <= 0) {
+					this.positionsExist = false;
+				} else {
+					this.positionsExist = true;
+				}
+				this.emptyListInvoke();
 			}
-			this.emptyListInvoke();
+		} catch (error) {
+			console.error('Error while retrieving organization positions', error);
+			this.toastrService.danger(error);
+		} finally {
 			this.loading = false;
 		}
 	}

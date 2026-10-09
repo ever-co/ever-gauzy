@@ -18,6 +18,25 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	}
 
 	/**
+	 * The employee the caller is acting as, for a caller who may only act on their own screenshots.
+	 *
+	 * A caller without `CHANGE_SELECTED_EMPLOYEE` and without an employee identity owns no screenshots, so
+	 * there is nothing they may delete. Returning a null id instead would drop the ownership predicate and
+	 * leave the whole organization deletable.
+	 *
+	 * @returns The current employee ID.
+	 * @throws ForbiddenException when the request carries no employee identity.
+	 */
+	private ownEmployeeIdOrFail(): ID {
+		const employeeId = RequestContext.currentEmployeeId();
+
+		if (!employeeId) {
+			throw new ForbiddenException('You do not have permission to delete this screenshot.');
+		}
+		return employeeId;
+	}
+
+	/**
 	 * Delete screenshot by ID
 	 *
 	 * @param id - The ID of the screenshot to delete
@@ -42,7 +61,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 					const where: any = { id, tenantId, organizationId };
 
 					if (!hasChangeSelectedEmployeePermission) {
-						const employeeId = RequestContext.currentEmployeeId();
+						const employeeId = this.ownEmployeeIdOrFail();
 						where.timeSlot = { employeeId, tenantId, organizationId };
 					}
 
@@ -64,10 +83,12 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 					// Restrict by employeeId if the user doesn't have permission
 					if (!hasChangeSelectedEmployeePermission) {
 						// Get the current employee ID from the request context
-						const employeeId = RequestContext.currentEmployeeId();
+						const employeeId = this.ownEmployeeIdOrFail();
 
-						// Join the timeSlot table and filter by employeeId, tenantId, and organizationId
-						query.leftJoin(
+						// An INNER join, because a LEFT join keeps the row when its ON clause does not match:
+						// the ownership condition would then never remove anything and any member of the
+						// organization could delete any colleague's screenshot.
+						query.innerJoin(
 							`${query.alias}.timeSlot`,
 							'time_slot',
 							'time_slot.employeeId = :employeeId AND time_slot.tenantId = :tenantId AND time_slot.organizationId = :organizationId',

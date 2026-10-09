@@ -128,6 +128,8 @@
                         <button
                           nbButton
                           [status]="filterForm.get('sortDirection')?.value === 'asc' ? 'primary' : 'basic'"
+                          [class.is-active]="filterForm.get('sortDirection')?.value === 'asc'"
+                          [attr.aria-pressed]="filterForm.get('sortDirection')?.value === 'asc'"
                           (click)="filterForm.patchValue({sortDirection: 'asc'})"
                           nbTooltip="Ascending"
                           size="small">
@@ -136,6 +138,8 @@
                         <button
                           nbButton
                           [status]="filterForm.get('sortDirection')?.value === 'desc' ? 'primary' : 'basic'"
+                          [class.is-active]="filterForm.get('sortDirection')?.value === 'desc'"
+                          [attr.aria-pressed]="filterForm.get('sortDirection')?.value === 'desc'"
                           (click)="filterForm.patchValue({sortDirection: 'desc'})"
                           nbTooltip="Descending"
                           size="small">

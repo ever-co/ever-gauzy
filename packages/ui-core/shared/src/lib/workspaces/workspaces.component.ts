@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { debounceTime, filter, tap, catchError, finalize, map } from 'rxjs/operators';
-import { Observable, EMPTY, of } from 'rxjs';
+import { Observable, EMPTY, of, combineLatest } from 'rxjs';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +21,16 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	public selectedWorkspace$: Observable<IWorkSpace> = this.store.selectedWorkspace$;
 	public loading$: Observable<boolean> = this.store.workspacesLoading$;
 	public error$: Observable<string | null> = this.store.workspacesError$;
+
+	/**
+	 * The workspaces this panel offers to SWITCH TO. The active one is already
+	 * named by the switcher that opens this panel, so listing it again read as a
+	 * duplicate entry rather than as "you are here".
+	 */
+	public otherWorkspaces$: Observable<IWorkSpace[]> = combineLatest([
+		this.store.workspaces$,
+		this.store.selectedWorkspace$
+	]).pipe(map(([workspaces, selected]) => (workspaces ?? []).filter((workspace) => workspace.id !== selected?.id)));
 
 	public selected: IWorkSpace;
 	public contextMenus: NbMenuItem[];

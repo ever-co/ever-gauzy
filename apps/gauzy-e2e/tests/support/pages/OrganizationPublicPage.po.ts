@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import {
+	applySmartTableFilter,
 	clearField,
 	clickButton,
 	clickByText,
@@ -12,7 +13,8 @@ import {
 	waitUntil,
 	clickButtonByIndex,
 	verifyText,
-	getLastElement
+	getLastElement,
+	dispatchClickWhenSettled
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationPublicPage } from '../../../src/support/Base/pageobjects/OrganizationPublicPagePageObject';
@@ -35,8 +37,10 @@ export const organizationNameFilterInputVisible = async () => {
 };
 
 export const enterOrganizationNameFilterInputData = async (name: string) => {
-	await enterInput(OrganizationPublicPage.nameFilterInputCss, name);
-	await waitUntil(2000);
+	// The plain enterInput() (.fill()) left the grid unfiltered — see applySmartTableFilter — so the
+	// freshly created organization stayed off page 1 and the profile-link flow silently fell into its
+	// best-effort catch.
+	await applySmartTableFilter(OrganizationPublicPage.nameFilterInputCss, name);
 };
 
 export const verifyOrganizationNameTableRowContains = async (text: string) => {
@@ -320,7 +324,18 @@ export const addBtnExists = async () => {
 };
 
 export const addBtnClick = async () => {
-	await clickButton(OrganizationPublicPage.addButtonCss);
+	// Confirm the mutation dialog actually mounted rather than assuming the click landed. The grid card
+	// is `[nbSpinner]="loading"` and the toolbar sits inside ngx-gauzy-button-action's slide-in, so a
+	// coordinate click issued ~800ms after the hash navigation can be delivered to the overlay instead
+	// of the button. Nothing downstream notices: the next step is `clearField(organizationNameField)`,
+	// which then burns the full 24s actionTimeout waiting for an input that was never opened.
+	//
+	// The sibling page object driving this same dialog (AddOrganization.po.ts) already confirms; this
+	// copy was simply never updated.
+	await dispatchClickWhenSettled(
+		OrganizationPublicPage.addButtonCss,
+		OrganizationPublicPage.organizationNameFieldCss
+	);
 };
 
 export const verifyOrganisationNameField = async () => {
@@ -365,7 +380,8 @@ export const clickCountryDropdown = async () => {
 };
 
 export const selectCountryFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
+	// ng-select options, not nb-select options — see countryDropdownOptionCss.
+	await clickElementByText(OrganizationPublicPage.countryDropdownOptionCss, text);
 };
 
 export const cityInputVisible = async () => {

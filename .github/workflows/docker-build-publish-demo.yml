@@ -8,8 +8,33 @@ on:
     types: [completed]
 
 concurrency:
-  group: ${{ github.event.workflow_run.head_branch }}-${{ github.workflow }}
+  # One group PER WORKFLOW (never a group shared across the six non-prod image builds:
+  # that shared `gauzy-docker-build` group did not queue them, it STARVED them — GitHub
+  # keeps exactly one pending run per group, so an unrelated workflow's run cancelled
+  # whichever run was waiting, and environments silently kept serving their old image).
+  #
+  # Within this workflow the newest commit wins, matching the prod image builds. The
+  # trade-off is deliberate: an intermediate version tag can end up without an image,
+  # which is inert here because demo/stage deploy from `:latest` and only the release
+  # that actually ships needs its own tagged image. The alternative — letting a
+  # superseded build run for three hours on a fleet where one install takes 2-3 h —
+  # delays the image that IS wanted by exactly that long.
+  group: gauzy-docker-build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# Least-privilege scope for the automatic GITHUB_TOKEN.
+# `packages: write` is required: these jobs log in to ghcr.io with GITHUB_TOKEN and push
+# image tags + the :buildcache layer cache. Everything else stays read-only.
+permissions:
+  contents: read
+  packages: write
+
+# docker/build-push-action uploads a build record artifact and a job summary for every build.
+# The record holds every build-arg value in plain text, and on a public repo anyone signed in to
+# GitHub can download it, so neither is produced. (BuildKit `secrets:` are never recorded.)
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
 
 jobs:
   gauzy-api:
@@ -26,10 +51,21 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
+          # Version shown in the app footer. Resolution order:
+          #   1. a tag pointing AT this exact commit  -> "v111.32.3"      (a real release)
+          #   2. otherwise `git describe --long`       -> "v111.32.3-4-gbb20466"
+          #      i.e. 4 commits after v111.32.3, at bb20466 — unambiguous, and it can never be
+          #      mistaken for the release itself.
+          #   3. no tags reachable at all             -> "" (footer falls back to the commit)
+          #
+          # 🛑 Do NOT use a bare `git describe --abbrev=0` fallback here. It prints the nearest
+          # ancestor tag with nothing to mark the distance, so an untagged build renders as if it
+          # WERE that release. That is what made web and api look like two different versions
+          # (v111.32.2 vs v111.32.3) while they were simply mid-roll on adjacent commits.
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
-          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0); fi
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --long 2>/dev/null || echo ""); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Release version: $VERSION"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -142,10 +178,21 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
+          # Version shown in the app footer. Resolution order:
+          #   1. a tag pointing AT this exact commit  -> "v111.32.3"      (a real release)
+          #   2. otherwise `git describe --long`       -> "v111.32.3-4-gbb20466"
+          #      i.e. 4 commits after v111.32.3, at bb20466 — unambiguous, and it can never be
+          #      mistaken for the release itself.
+          #   3. no tags reachable at all             -> "" (footer falls back to the commit)
+          #
+          # 🛑 Do NOT use a bare `git describe --abbrev=0` fallback here. It prints the nearest
+          # ancestor tag with nothing to mark the distance, so an untagged build renders as if it
+          # WERE that release. That is what made web and api look like two different versions
+          # (v111.32.2 vs v111.32.3) while they were simply mid-roll on adjacent commits.
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
-          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0); fi
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --long 2>/dev/null || echo ""); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Release version: $VERSION"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -258,10 +305,21 @@ jobs:
       - name: Resolve release version
         id: relver
         run: |
+          # Version shown in the app footer. Resolution order:
+          #   1. a tag pointing AT this exact commit  -> "v111.32.3"      (a real release)
+          #   2. otherwise `git describe --long`       -> "v111.32.3-4-gbb20466"
+          #      i.e. 4 commits after v111.32.3, at bb20466 — unambiguous, and it can never be
+          #      mistaken for the release itself.
+          #   3. no tags reachable at all             -> "" (footer falls back to the commit)
+          #
+          # 🛑 Do NOT use a bare `git describe --abbrev=0` fallback here. It prints the nearest
+          # ancestor tag with nothing to mark the distance, so an untagged build renders as if it
+          # WERE that release. That is what made web and api look like two different versions
+          # (v111.32.2 vs v111.32.3) while they were simply mid-roll on adjacent commits.
           VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]' | sort -V | tail -1)
-          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --abbrev=0); fi
+          if [ -z "$VERSION" ]; then VERSION=$(git describe --tags --long 2>/dev/null || echo ""); fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Release version: $VERSION"
+          echo "Release version: ${VERSION:-<none>}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

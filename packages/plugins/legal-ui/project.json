@@ -4,7 +4,7 @@
 	"sourceRoot": "packages/plugins/legal-ui/src",
 	"prefix": "lib",
 	"projectType": "library",
-	"tags": [],
+	"tags": ["type:plugin"],
 	"implicitDependencies": ["ui-core", "ui-config"],
 	"targets": {
 		"build": {

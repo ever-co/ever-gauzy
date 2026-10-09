@@ -87,8 +87,10 @@ When('I add a new deadline to the key result', async () => {
 	await goalsPage.clickAddDeadlineButton();
 	await goalsPage.updatedValueInputVisible();
 	await goalsPage.enterUpdatedValueData(1);
-	await goalsPage.confirmButtonVisible();
-	await goalsPage.clickConfirmButton();
+	// Dialog-scoped: the update dialog is stacked on the details dialog, so the generic confirm/save
+	// selectors are ambiguous and were leaving both overlays open over the toolbar the next step needs.
+	await goalsPage.confirmUpdateKeyResultVisible();
+	await goalsPage.clickConfirmUpdateKeyResult();
 	await goalsPage.saveDeadlineButtonVisible();
 	await goalsPage.clickSaveDeadlineButton();
 });
@@ -136,8 +138,27 @@ When('I delete the goal', async () => {
 	await goalsPage.confirmButtonVisible();
 	await goalsPage.clickConfirmButton();
 	await goalsPage.waitMessageToHide();
+	// Reload so the objectives grid re-queries after the delete. The old flow followed this with an
+	// UNCONDITIONAL CustomCommands.login — a Cypress-era assumption that a reload drops the session.
+	// It does not: the app restores it and CustomCommands.login's own `goto('/')` redirects straight
+	// to the dashboard, so the login form never renders and the helper just burned its 24s waiting for
+	// `h2#title`. (This step is only now reachable, so the stale assumption had never been exercised.)
+	// Wait for the reload to settle into EITHER state, then re-login only if we really were logged out.
 	await getPage().reload();
-	await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	await getPage()
+		.locator('h2#title, nb-layout-header')
+		.first()
+		.waitFor({ state: 'visible', timeout: 60_000 })
+		.catch(() => {});
+	if (
+		await getPage()
+			.locator('h2#title')
+			.first()
+			.isVisible()
+			.catch(() => false)
+	) {
+		await CustomCommands.login(loginPage, LoginPageData, dashboardPage);
+	}
 	await getPage().goto('/#/pages/goals');
 	// Scope the verify-deleted to OUR goal name: the shared seed can carry objectives from earlier
 	// specs/runs, so a blanket empty-grid check would be flaky.

@@ -14,7 +14,8 @@ export interface DashboardRefreshedPayload {
 }
 
 /**
- * Emitted when the React Time Tracking dashboard data is refreshed.
+ * Emitted every time the React Time Tracking dashboard (re)loads its counters — on selection
+ * changes, manual Refresh, the 5-minute auto-refresh and when a hidden widget is re-shown.
  * Other plugins can listen to this event to react to data changes.
  *
  * @example
@@ -36,15 +37,16 @@ export const DashboardRefreshedEvent = definePluginEvent<DashboardRefreshedPaylo
  * Payload for widget visibility toggle events.
  */
 export interface WidgetVisibilityPayload {
+	/** `widget:<position>` (0–5, counter widgets) or `window:<position>` (0–5, windows). */
 	widgetId: string;
 	visible: boolean;
 }
 
 /**
- * Emitted when a widget's visibility is toggled via settings.
+ * Emitted when a widget's or window's visibility is toggled from the "Manage widgets" popover.
  */
 export const WidgetVisibilityChangedEvent = definePluginEvent<WidgetVisibilityPayload>(
 	'dashboard-time-track-react-ui',
 	'dashboard-time-track-react-ui:widget-visibility-changed',
-	'Emitted when a dashboard widget is shown or hidden.'
+	'Emitted when a dashboard widget or window is shown or hidden.'
 );

@@ -87,10 +87,10 @@ const cardBody = (card: 'general' | 'admin') =>
  */
 export const waitForPermissionsLoaded = async () => {
 	// Let the getRolePermissions XHR for the freshly-selected role settle, then wait out the reload
-	// spinner. The toggle COUNT is constant (152 GENERAL + 23 ADMIN) across roles, so a count-only poll
-	// can pass on the PREVIOUS role's still-rendered inputs; the per-toggle checked assertions in
-	// verifyStateInCard auto-retry (24s) against the live value, which is what actually converges once
-	// loadPermissions() has repainted enabledPermissions for the new role.
+	// spinner. The toggle COUNT is constant across roles (it is the catalog size, not the role's
+	// permissions), so a count-only poll can pass on the PREVIOUS role's still-rendered inputs; the
+	// per-toggle checked assertions in verifyStateInCard auto-retry (24s) against the live value, which
+	// is what actually converges once loadPermissions() has repainted enabledPermissions for the new role.
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await getPage()
 		.locator('nb-spinner')
@@ -103,6 +103,31 @@ export const waitForPermissionsLoaded = async () => {
 };
 
 /**
+ * Wait until the card's toggle count settles on one of `accepted`, and return which one.
+ *
+ * This is the catalog guard. The caller derives `accepted` from PermissionGroups, so a permission
+ * added to / removed from the catalog fails HERE, naming the drift, instead of silently shifting every
+ * later index and failing on an unrelated toggle 27 rows down (which is exactly what the AI_CHAT_*
+ * insertion did). The ADMINISTRATION card legitimately has two valid sizes — the component drops
+ * ACCESS_DELETE_ALL_DATA when environment.DEMO is on — so the caller passes both and uses the return
+ * value to pick the matching permission list.
+ */
+export const resolveCardToggleCount = async (card: 'general' | 'admin', accepted: number[]): Promise<number> => {
+	const toggles = cardBody(card).locator(RolesPermissionsPage.cardInputCss);
+	let count = -1;
+	for (let attempt = 0; attempt < 40; attempt++) {
+		count = await toggles.count();
+		if (accepted.includes(count)) return count;
+		await getPage().waitForTimeout(500);
+	}
+	throw new Error(
+		`The ${card.toUpperCase()} permission card rendered ${count} toggles; expected ${accepted.join(' or ')}. ` +
+			`The permission catalog (PermissionGroups in packages/contracts role-permission.model.ts) changed — ` +
+			`update ENABLED_PERMISSIONS in roles-permissions.steps.ts for every role.`
+	);
+};
+
+/**
  * Assert the checked state of the permission toggle at `index` WITHIN the given card.
  *
  * Replaces the old absolute-index verifyState: the toggle catalog (PermissionGroups in
@@ -110,13 +135,14 @@ export const waitForPermissionsLoaded = async () => {
  * two cards, so a single running index across both is no longer meaningful. Indexing within each card
  * (GENERAL then ADMINISTRATION) tracks the live, ordered toggle lists. `state` is the cypress-style
  * fragment 'be.checked' / 'not.checked'. The toggles are decorative <input> elements (disabled for
- * read-only roles), so we assert their checked property directly.
+ * read-only roles), so we assert their checked property directly. `label` names the role + permission
+ * so a failure reads "SUPER_ADMIN GENERAL[41] ORG_INVITE_VIEW" instead of a bare index.
  */
-export const verifyStateInCard = async (card: 'general' | 'admin', index: number, state: string) => {
+export const verifyStateInCard = async (card: 'general' | 'admin', index: number, state: string, label?: string) => {
 	const input = cardBody(card).locator(RolesPermissionsPage.cardInputCss).nth(index);
 	if (state.includes('not')) {
-		await expect(input).not.toBeChecked();
+		await expect(input, label).not.toBeChecked();
 	} else {
-		await expect(input).toBeChecked();
+		await expect(input, label).toBeChecked();
 	}
 };

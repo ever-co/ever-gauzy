@@ -5,7 +5,8 @@ import { loadEnv } from './load-env';
 async function bootstrap() {
 	loadEnv();
 	const { registerPluginConfig } = await import('@gauzy/core');
-	await registerPluginConfig({});
+	const { plugins } = await import('./plugins');
+	await registerPluginConfig({ plugins });
 
 	const { AppModule } = await import('./app/app.module');
 

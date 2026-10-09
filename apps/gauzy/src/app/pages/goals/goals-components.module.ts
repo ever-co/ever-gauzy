@@ -13,7 +13,8 @@ import {
 	NbProgressBarModule,
 	NbTabsetModule,
 	NbActionsModule,
-	NbLayoutModule
+	NbLayoutModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -61,6 +62,9 @@ import { BaseChartDirective } from 'ng2-charts';
 		NbTabsetModule,
 		NbActionsModule,
 		NbLayoutModule,
+		// `<nb-toggle formControlName="…">` in edit-keyresults and keyresult-update; without this the
+		// toggles have no value accessor at all (NG01203) and cannot be operated.
+		NbToggleModule,
 		SharedModule,
 		GoalSettingsModule,
 		GoalCustomUnitModule,

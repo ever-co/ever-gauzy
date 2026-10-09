@@ -1,6 +1,7 @@
 import { ChildProcessFactory, Observer } from '../utils';
 import { BrowserWindow } from 'electron';
 import { ServerConfig } from '../../config';
+import { redactSecretsForLog } from '../../config/desktop-secrets';
 import { Timeout } from '../../decorators';
 
 export abstract class ServerTask {
@@ -76,7 +77,12 @@ export abstract class ServerTask {
 		return new Promise<void>((resolve, reject) => {
 			try {
 				// Log process creation details
-				console.log('Creating process with processPath:', this.processPath, 'args:', JSON.stringify(this.args));
+				console.log(
+					'Creating process with processPath:',
+					this.processPath,
+					'args:',
+					JSON.stringify(redactSecretsForLog(this.args))
+				);
 
 				const service = ChildProcessFactory.createProcess(this.processPath, this.args, signal);
 				console.log('Service created successfully');

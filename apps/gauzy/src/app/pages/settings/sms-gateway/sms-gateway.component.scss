@@ -1,16 +1,23 @@
+// `@forward` re-exports the features sheet downstream; it does NOT put that
+// sheet's imports in scope here. With no `@use` of the theme module `nb-theme`
+// was not a Sass function, and Sass passes an unknown function through as plain
+// CSS — so all four declarations below reached the browser as the literal text
+// `nb-theme(gauzy-card-2)` and were dropped as invalid. The card surfaces and the
+// body's bottom radii on SMS Gateway (and on File Storage, which forwards this
+// file) have never been painted.
+@use 'themes' as *;
 @forward '../feature/feature.component';
 
+// NOTE: a `.content` rule used to sit inside this block — a near-white fill on a
+// `calc(100vh - 18rem)` box, for an empty `<div class="content"></div>` that the
+// template renders under the provider toggles and never puts anything in. It has
+// been invisible all this time only because of the missing `@use` above; with the
+// theme function working it would have become a page-tall blank panel. The empty
+// div goes with it (see sms-gateway.component.html).
 :host {
     nb-card,
     nb-card-body {
         background-color: nb-theme(gauzy-card-2);
-
-        .content {
-            background-color: nb-theme(gauzy-card-4);
-            height: calc(100vh - 18rem);
-            width: 100%;
-            border-radius: nb-theme(border-radius);
-        }
     }
 
     nb-card-body {

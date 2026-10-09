@@ -9,10 +9,10 @@
         padding-top: 5px;
 
         .logo-wrapper {
-            min-width: 28px;
-            min-height: 28px;
-            width: 28px;
-            height: 28px;
+            min-width: 24px;
+            min-height: 24px;
+            width: 24px;
+            height: 24px;
             @include nb-rtl(margin-left, 10px);
             @include nb-ltr(margin-right, 10px);
 
@@ -31,22 +31,32 @@
             overflow: hidden;
 
             .main-header {
-                font-size: 14px;
+                font-size: 12px;
                 font-style: normal;
                 font-weight: 600;
-                line-height: 17px;
+                line-height: 15px;
                 letter-spacing: 0em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
 
+            // The member count is a CAPTION under the project name, but it set no
+            // colour of its own, so it inherited `text-basic-color` from the table
+            // row and came out at the same full-strength white as the name above
+            // it — two lines of equal weight where only one is the subject.
+            //
+            // `gauzy-text-color-2` is the same token the avatar chip's own
+            // `.caption` uses. The two components sit side by side in every one of
+            // these tables, each a title over a secondary line, so they now read as
+            // one pattern instead of disagreeing about which of the two matters.
             .employees-count {
                 font-size: 11px;
                 font-style: normal;
                 font-weight: 400;
                 line-height: 13px;
                 letter-spacing: 0em;
+                color: var(--gauzy-text-color-2);
             }
         }
     }

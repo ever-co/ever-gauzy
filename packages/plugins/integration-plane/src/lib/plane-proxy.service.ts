@@ -2,6 +2,7 @@ import * as http from 'node:http';
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { environment } from '@gauzy/config';
+import { isAccessTokenPayload, JWT_ALGORITHMS } from '@gauzy/core';
 import { verify } from 'jsonwebtoken';
 import { mountPlaneProxy, MountPlaneProxyResult } from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneIntegrationService } from './plane-integration.service';
@@ -184,10 +185,17 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	 */
 	private getDefaultProxyConfig() {
 		const baseUrl = environment.baseUrl || 'http://localhost:3000';
+		// Shared mode: pre-auth bootstrap requests (auth/email-check, login) carry no
+		// tenant, so this default config is what authenticates the proxy's internal
+		// email-check call. Empty strings here would SHADOW the proxy's own
+		// GAUZY_API_KEY/GAUZY_API_SECRET env fallback ('' is not nullish), so resolve
+		// the env pair explicitly — otherwise every shared-mode login degrades to the
+		// magic-code flow. The pair is tenant-scoped and only ever grants the
+		// email-existence check (ApiKeyAuthGuard sets tenantId only; single guarded route).
 		return {
 			externalBaseApiUrl: `${baseUrl}/api`,
-			apiKey: '',
-			apiSecret: '',
+			apiKey: process.env['GAUZY_API_KEY'] || '',
+			apiSecret: process.env['GAUZY_API_SECRET'] || '',
 			clientBaseUrl: process.env['PLANE_CLIENT_BASE_URL'] || 'http://localhost:3001',
 			clientAdminUrl: process.env['PLANE_CLIENT_ADMIN_URL'] || 'http://localhost:3002',
 			clientSpaceUrl: process.env['PLANE_CLIENT_SPACE_URL'] || 'http://localhost:3003'
@@ -278,7 +286,12 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		try {
-			const payload = verify(token, jwtSecret) as { tenantId?: string };
+			const payload = verify(token, jwtSecret, { algorithms: JWT_ALGORITHMS }) as { tenantId?: string };
+			// Only an access token is a session; other JWT_SECRET-signed tokens (invoice share,
+			// estimate, ...) carry a tenantId too (GHSA-28wv-vrxj-rp4q).
+			if (!isAccessTokenPayload(payload)) {
+				return undefined;
+			}
 			return payload.tenantId || undefined;
 		} catch (error) {
 			this.logger.debug(
@@ -345,7 +358,14 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		try {
-			const payload = verify(token, jwtSecret) as { tenantId?: string };
+			const payload = verify(token, jwtSecret, { algorithms: JWT_ALGORITHMS }) as { tenantId?: string };
+
+			// Only an access token authenticates a proxy request; other JWT_SECRET-signed tokens
+			// (invoice share, estimate, ...) carry a tenantId too (GHSA-28wv-vrxj-rp4q).
+			if (!isAccessTokenPayload(payload)) {
+				throw new Error('Bearer token is not an access token');
+			}
+
 			const tokenTenantId = payload.tenantId;
 
 			if (!tokenTenantId) {

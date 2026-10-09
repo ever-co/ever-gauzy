@@ -22,6 +22,6 @@ export class IntegrationEntitySettingUpdateOrCreateHandler implements ICommandHa
 		const { input, integrationId } = command;
 
 		await this._integrationTenantService.findOneByIdString(integrationId);
-		return await this._integrationEntitySettingService.bulkUpdateOrCreate(input);
+		return await this._integrationEntitySettingService.bulkUpdateOrCreate(integrationId, input);
 	}
 }

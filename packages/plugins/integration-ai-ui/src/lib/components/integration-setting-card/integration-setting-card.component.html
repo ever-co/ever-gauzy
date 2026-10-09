@@ -8,7 +8,7 @@
 							<header>{{ title }}</header>
 						</div>
 						<div class="col-6 text-right">
-							<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+							<ng-template [ngxPermissionsOnly]="integrationEditPermission">
 								@if (isIntegrationAISettingsEdit) {
 									<button
 										status="basic"
@@ -63,7 +63,7 @@
 }
 
 <ng-template let-settings let-isEdit="isEdit" #settingTemplate>
-	<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+	<ng-template [ngxPermissionsOnly]="integrationEditPermission">
 		@for (setting of settings; track setting) {
 			<div class="integration-row">
 				<div class="integration-label-container">

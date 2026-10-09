@@ -46,11 +46,8 @@ div {
     white-space: nowrap;
     flex: 1;
   }
-  &.selected .img-container {
-    border: 2px solid var(--color-primary-default);
-    mix-blend-mode: multiply;
-    border-radius: 0.5rem;
-  }
+  // No `.selected` treatment: the active workspace is named by the switcher
+  // above this panel and is filtered out of the list below it.
 }
 
 .add-workspace-container {

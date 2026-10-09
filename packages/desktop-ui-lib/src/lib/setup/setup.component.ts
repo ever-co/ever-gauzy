@@ -206,6 +206,8 @@ export class SetupComponent implements OnInit, OnDestroy {
 		enable: false
 	};
 
+	// Empty unless the build sets DESKTOP_JWT_*: the main process then generates random per-install
+	// secrets before it starts the local API (ensureDesktopSecrets, GHSA-39j7-x845-4w3c).
 	secretConfig: IDesktopSecret = {
 		secret: {
 			jwt: this._environment.JWT_SECRET,

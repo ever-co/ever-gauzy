@@ -15,7 +15,17 @@ export const ProposalsPage = {
 	tagsDropdownOption: 'div.ng-option',
 	saveProposalButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
-	detailsButtonCss: '.gauzy-button-container button.action.primary:has-text("Details")',
+	// #9975 removed the toolbar's duplicate "Details" button: the View button — previously an
+	// `underConstruction` placeholder — took over `(click)="details(selectedItem)"` and is now the only
+	// way into the proposal details page. It is `class="action secondary"` and sits under
+	// ngxPermissionsOnly="ORG_PROPOSALS_VIEW" rather than in the EDIT block. The old
+	// `button.action.primary:has-text("Details")` matches ZERO elements — absent, not hidden. Keeping
+	// the historical key name so the page-object/step names stay stable.
+	// No text match: `action secondary` occurs exactly ONCE in proposal.component.html (the View
+	// button), so the class pair alone identifies it and the selector cannot be broken by a language
+	// change — unlike a `:has-text("View")` qualifier, which this suite's language-switching scenarios
+	// would invalidate.
+	detailsButtonCss: '.gauzy-button-container button.action.secondary',
 	// On the proposal DETAILS page the Edit button lives in nb-card-header (NOT .gauzy-button-container),
 	// so the old .gauzy-button-container-scoped selector never matched there.
 	editProposalButtonCss: 'button.action.primary:has-text("Edit")',

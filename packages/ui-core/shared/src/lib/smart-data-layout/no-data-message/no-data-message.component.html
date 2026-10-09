@@ -1,4 +1,14 @@
-<nb-card class="p-0 no-data-found">
+@if (showSkeleton) {
+	<ngx-skeleton [variant]="variant" [rows]="skeletonRows"></ngx-skeleton>
+}
+<!--
+	Deliberately toggled with a class rather than wrapped in the `@else` above:
+	`<ng-content>` inside an embedded view is projected once, so call sites that
+	pass a `[message]` template (daily timesheet, help center) would lose it the
+	moment the branch swapped. Keeping the card in the DOM and hiding it costs
+	nothing and keeps projection stable.
+-->
+<nb-card class="p-0 no-data-found" [class.is-hidden]="showSkeleton">
 	<nb-card-body>
 		<div class="row align-items-center h-100">
 			<div class="col-12">

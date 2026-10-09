@@ -1,7 +1,9 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	clickButton,
 	clickButtonByIndex,
+	clickWhenEnabled,
 	enterInput,
 	getLastElement,
 	verifyElementIsVisible,
@@ -41,7 +43,7 @@ const openDropdown = async (selector: string) => {
 		if (dispatched) {
 			try {
 				await getPage()
-					.locator('div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option')
+					.locator('div.ng-option:not(.ng-option-disabled), .ng-dropdown-panel .ng-option:not(.ng-option-disabled), .option-list nb-option, .cdk-overlay-container nb-option')
 					.first()
 					.waitFor({ state: 'visible', timeout: 5000 });
 				return;
@@ -55,8 +57,10 @@ const openDropdown = async (selector: string) => {
 
 // Option panels (ng-select .ng-option / nb-select nb-option) live in overlays that can sit under the
 // same spinner stacking context — dispatch the click on the matching option via DOM.
+// ':not(.ng-option-disabled)' is load-bearing: ng-select renders its own 'No items found' / 'Loading…'
+// rows with the same ng-option class, so an index/text pick could land on a placeholder ng-select ignores.
 const OPTION_SELECTOR =
-	'div.ng-option, .ng-dropdown-panel .ng-option, .option-list nb-option, .cdk-overlay-container nb-option';
+	'div.ng-option:not(.ng-option-disabled), .ng-dropdown-panel .ng-option:not(.ng-option-disabled), .option-list nb-option, .cdk-overlay-container nb-option';
 
 const clickOptionByText = async (text: string) => {
 	for (let attempt = 0; attempt < 5; attempt++) {
@@ -78,7 +82,10 @@ const clickOptionByText = async (text: string) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
-	return false;
+	// Fail closed. Returning false let the caller carry on with the value never
+	// committed, so the spec died later somewhere unrelated — the same swallowed
+	// failure this file is meant to remove.
+	throw new Error(`No selectable option matching "${text}" appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
 // Stepper forward/confirm buttons are subject to the same overlay; click the currently-visible matching
@@ -107,6 +114,9 @@ const clickFormButtonByText = async (texts: string[]) => {
 		if (clicked) return true;
 		await getPage().waitForTimeout(500);
 	}
+	// Deliberately returns a boolean rather than throwing: unlike a dropdown value that
+	// never committed, an absent form button is a legitimate branch for the callers here
+	// (they fall back to another submit path).
 	return false;
 };
 
@@ -136,10 +146,33 @@ export const enterConfirmPass = async (data) => {
 
 export const clickTermAndConditionCheckBox = async () => {
 	await clickButton(RegisterPage.termAndConditionCheckboxCss);
+	// Prove the toggle landed. The submit button's `[disabled]` reads `user.terms`, so a swallowed
+	// checkbox click would otherwise only ever show up as a submit that quietly never fires.
+	await expect(getPage().locator(RegisterPage.termAndConditionInputCss).first()).toBeChecked({
+		timeout: 24_000
+	});
 };
 
 export const clickRegisterButton = async () => {
-	await clickButton(RegisterPage.registerButtonCss);
+	// register.component.html: `[disabled]="submitted || !form.valid || !user.terms"`. The terms
+	// checkbox is clicked immediately before this, and `user.terms` only reaches the binding on
+	// Angular's next change-detection pass — so the button is still `disabled` for a few frames. A
+	// {force:true} click is DROPPED outright on a disabled button (force skips the actionability
+	// check, not the browser's own rule), which is why the run then died 60s later in the NEXT step
+	// on `locator.fill … waiting for locator('#nameInput')`. Wait for it to be genuinely enabled and
+	// click for real.
+	await clickWhenEnabled(RegisterPage.registerButtonCss);
+	// ...then prove the submit took. AuthStrategy.register() chains into login() and redirects to '/',
+	// which pages.component forwards to /onboarding/tenant — either way we leave /auth/register. Poll
+	// the URL directly rather than waitForURL so this does not depend on hash-router navigations being
+	// reported as navigation events. Without this assertion a dropped click stays invisible here and
+	// surfaces a minute later somewhere unrelated.
+	await expect
+		.poll(() => getPage().url().includes('/auth/register'), {
+			timeout: 60_000,
+			message: 'Register submit did not take — still on /auth/register after clicking Register'
+		})
+		.toBe(false);
 };
 
 export const verifyOrganisationNameField = async () => {

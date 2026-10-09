@@ -1,0 +1,49 @@
+@use 'themes' as *;
+
+// No card chrome here: `ga-dashboard-widget-host` owns the `nb-card`, its header
+// and the body padding. This component only fills that body.
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+ * Grid, not a flex column, on purpose: the chart card sizes itself with
+ * `height: 100%`, which resolves against a GRID AREA but not against the
+ * flex-resolved height of a flex item. `minmax(0, 1fr)` is what lets that area
+ * shrink below the chart's intrinsic size instead of pushing the toolbar out.
+ */
+.chart-switcher {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.5rem;
+  height: 100%;
+  min-height: 0;
+
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  &__label {
+    color: nb-theme(text-hint-color);
+    font-size: nb-theme(text-caption-font-size);
+    white-space: nowrap;
+  }
+
+  &__select {
+    cursor: pointer;
+    // Narrow enough to leave the plot the width it needs at 4 columns, wide
+    // enough that "Stacked Bar" does not wrap.
+    min-width: 8.5rem;
+    width: fit-content;
+  }
+
+  &__chart {
+    min-height: 0;
+  }
+}

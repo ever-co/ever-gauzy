@@ -1,0 +1,9 @@
+<gz-time-track-counter-card
+	[captionKey]="captionKey()"
+	[progress]="true"
+	[value]="weekActivity() + '%'"
+	[counterValue]="weekActivity()"
+	[loading]="loading()"
+	[error]="errorMessage()"
+	(retry)="refresh()"
+></gz-time-track-counter-card>

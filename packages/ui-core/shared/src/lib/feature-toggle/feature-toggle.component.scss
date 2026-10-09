@@ -1,77 +1,146 @@
 @use 'themes' as *;
 
+/*
+ * Settings → Features (tenant + organization tabs).
+ *
+ * Same vocabulary as Settings → General: each feature is a "group" — a titled
+ * panel with a hairline inset, its sub-features listed as rows below. 12px body,
+ * 500 titles / 400 everything else, gauzy-* surface tokens, no shadows.
+ */
+
+$hairline: var(--gauzy-border-default-color, var(--border-basic-color-3));
+
 :host {
-    header {
-        font-size: 18px;
-        font-weight: 600;
-        line-height: 30px;
-        letter-spacing: 0em;
-    }
+	// Takes the height the Features tab set hands down, so the list below scrolls inside
+	// the card. The host stays a block: `pages.component` forces `display: block` on every
+	// `router-outlet + *`, so the card fills it with `height: 100%` rather than flex.
+	display: block;
+	flex: 1 1 auto;
+	min-height: 0;
 
-    nb-card {
-        background-color: nb-theme(gauzy-card-2);
-    }
+	nb-card.card-feature {
+		height: 100%;
+		min-height: 0;
+		margin: 0;
+		padding: 0;
+		border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+		background: var(--gauzy-card-2, var(--background-basic-color-2));
+	}
 
-    nb-card.card-feature {
-        height: calc(100vh - 16.5rem);
-        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-        padding: 0;
-        margin: 0;
-    }
+	// Sits on the same surface as the groups below — one canvas under the tab strip.
+	.feature-page-header {
+		padding: 1rem 1rem 0;
+		border-bottom: 0;
+		background: var(--gauzy-card-2, var(--background-basic-color-2));
+	}
 
-    nb-card-body.features {
-        overflow: auto;
+	.feature-page-title {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 500;
+		line-height: 1.25rem;
+	}
 
-        nb-card {
-            background-color: unset;
-
-            nb-card-body {
-                border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-                color: nb-theme(gauzy-text-color-2);
-
-                nb-list-item {
-                    nb-checkbox ::ng-deep {
-                        span.checked+span.text {
-                            color: nb-theme(text-primary-color);
-                        }
-                    }
-
-                    nb-checkbox ::ng-deep {
-                        span+span.text {
-                            color: nb-theme(gauzy-text-color-2);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-.mansory-layout {
-  -webkit-column-count: 2;
-  -moz-column-count: 2;
-  column-count: 2;
-}
-.shortcut-card {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-  -webkit-transition: 1s ease all;
-  transition: 1s ease all;
-  box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  margin-bottom: 1rem;
+	nb-card-body.features {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: auto;
+		padding: 1rem 1rem 0;
+		background: var(--gauzy-card-2, var(--background-basic-color-2));
+	}
 }
 
-@media only screen and (max-width: 1200px) {
-  .mansory-layout {
-    -moz-column-count: 1;
-    -webkit-column-count: 1;
-    column-count: 1;
-  }
+// Two balanced columns on wide screens, one below. CSS columns keep the uneven
+// groups packed; `break-inside` stops a group from splitting across columns.
+.feature-groups {
+	column-count: 2;
+	column-gap: 1rem;
+
+	@media (max-width: 1200px) {
+		column-count: 1;
+	}
 }
-@media only screen and (min-width: 1680px) {
-  .mansory-layout {
-    width: calc(100% - 5rem);
-  }
+
+.settings-group {
+	display: inline-block;
+	width: 100%;
+	margin-bottom: 1rem;
+	break-inside: avoid;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	background: var(--gauzy-card-1, var(--card-background-color));
+	box-shadow: inset 0 0 0 1px $hairline;
+	font-size: 0.75rem;
+	color: var(--text-basic-color);
+}
+
+.group-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 0.875rem 1rem 0.75rem;
+}
+
+// Neutral, unfilled icon in a hairline frame — one quiet accent, not a colour per feature.
+.group-icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--gauzy-radius-sm, 0.5rem);
+	color: var(--text-hint-color);
+	background: var(--gauzy-card-2, var(--background-basic-color-2));
+	box-shadow: inset 0 0 0 1px $hairline;
+
+	nb-icon {
+		font-size: 1rem;
+	}
+}
+
+.group-copy {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.group-title {
+	margin: 0;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.25rem;
+}
+
+// `p` element: Nebular's paragraph typography would otherwise win over the group's 12px.
+.group-description {
+	margin: 0.125rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: var(--text-hint-color);
+}
+
+.group-actions {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 1.25rem;
+}
+
+.setting-row {
+	display: flex;
+	align-items: center;
+	padding: 0.5rem 1rem;
+	border-top: 1px solid $hairline;
+
+	nb-checkbox ::ng-deep .text {
+		font-size: 0.75rem;
+		font-weight: 400;
+		line-height: 1.125rem;
+		color: var(--text-basic-color);
+	}
+
+	// Unchecked sub-features recede; enabled ones read at full strength.
+	nb-checkbox ::ng-deep span:not(.checked) + .text {
+		color: var(--text-hint-color);
+	}
 }

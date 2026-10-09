@@ -1,5 +1,15 @@
 import { formatDate } from '@angular/common';
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	ElementRef,
+	OnDestroy,
+	OnInit,
+	QueryList,
+	ViewChild,
+	ViewChildren
+} from '@angular/core';
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap, debounceTime, map } from 'rxjs/operators';
@@ -36,7 +46,9 @@ import {
 	IOrganization,
 	RegionsEnum,
 	WeekDaysEnum,
-	IOrganizationTaskSetting
+	IOrganizationTaskSetting,
+	AgentExitLogoutField,
+	isEEAOrUKRegion
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import {
@@ -45,7 +57,9 @@ import {
 	OrganizationTaskSettingService,
 	OrganizationsService,
 	Store,
-	ToastrService
+	ToastrService,
+	applyEEAUKFormRestrictions,
+	bindAgentRestrictionListeners
 } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
@@ -63,6 +77,29 @@ export class EditOrganizationOtherSettingsComponent
 	public get isTrackInactivity(): boolean {
 		return this.form.get('allowTrackInactivity').value;
 	}
+
+	public get isEEAOrUK(): boolean {
+		if (!this.organization) return false;
+		return isEEAOrUKRegion({
+			regionCode: this.form.get('regionCode')?.value || this.organization.regionCode,
+			timeZone: this.form.get('timeZone')?.value || this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
+	}
+
+	/**
+	 * A restriction this organization already had while already in EEA/UK: shown as stored, so an
+	 * unrelated save does not silently lift it (it is reported for deliberate review instead).
+	 */
+	private keepExistingAgentRestriction = (field: AgentExitLogoutField): boolean =>
+		this.organization?.[field] === false &&
+		isEEAOrUKRegion({
+			regionCode: this.organization.regionCode,
+			timeZone: this.organization.timeZone,
+			country: this.organization.contact?.country
+		});
+
+	public acknowledgeAgentExitLogoutRestriction: boolean = false;
 
 	public organization: IOrganization;
 	public organizationTaskSetting: IOrganizationTaskSetting;
@@ -159,7 +196,8 @@ export class EditOrganizationOtherSettingsComponent
 			allowAgentAppExit: [true],
 			allowLogoutFromAgentApp: [true],
 			trackKeyboardMouseActivity: [false],
-			trackAllDisplays: [true]
+			trackAllDisplays: [true],
+			allowEmployeeToSeeTrackedData: [true]
 		});
 	}
 
@@ -167,20 +205,6 @@ export class EditOrganizationOtherSettingsComponent
 	 * Organization Task Setting
 	 */
 	public taskSettingForm: UntypedFormGroup = EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this._fb);
-
-	/**
-	 * Nebular Accordion Item Components
-	 */
-	@ViewChild('general') general: NbAccordionItemComponent;
-	@ViewChild('design') design: NbAccordionItemComponent;
-	@ViewChild('accounting') accounting: NbAccordionItemComponent;
-	@ViewChild('bonus') bonus: NbAccordionItemComponent;
-	@ViewChild('invites') invites: NbAccordionItemComponent;
-	@ViewChild('dateLimit') dateLimit: NbAccordionItemComponent;
-	@ViewChild('agent') agent: NbAccordionItemComponent;
-	@ViewChild('timer') timer: NbAccordionItemComponent;
-	@ViewChild('integrations') integrations: NbAccordionItemComponent;
-	@ViewChild('taskSetting') taskSetting: NbAccordionItemComponent;
 
 	/**
 	 * Nebular Accordion Main Component
@@ -191,6 +215,86 @@ export class EditOrganizationOtherSettingsComponent
 			this.accordion = content;
 			this._cdr.detectChanges();
 		}
+	}
+
+	/**
+	 * The aside index, in the same order as the accordion items it points at. The
+	 * two lists are matched by position, so a section added to the accordion has to
+	 * be added here at the same index.
+	 */
+	readonly settingsSections: { key: string; label: string }[] = [
+		{ key: 'general', label: 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' },
+		{ key: 'design', label: 'ORGANIZATIONS_PAGE.EDIT.DESIGN' },
+		{ key: 'accounting', label: 'ORGANIZATIONS_PAGE.EDIT.ACCOUNTING' },
+		{ key: 'bonus', label: 'ORGANIZATIONS_PAGE.EDIT.BONUS' },
+		{ key: 'invites', label: 'ORGANIZATIONS_PAGE.EDIT.INVITE' },
+		{ key: 'dateLimit', label: 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' },
+		{ key: 'timer', label: 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' },
+		{ key: 'agent', label: 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AGENT_SETTINGS' },
+		{ key: 'taskSetting', label: 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' },
+		{ key: 'integrations', label: 'ORGANIZATIONS_PAGE.EDIT.INTEGRATIONS' }
+	];
+
+	@ViewChildren(NbAccordionItemComponent) private accordionItems: QueryList<NbAccordionItemComponent>;
+
+	@ViewChildren(NbAccordionItemComponent, { read: ElementRef })
+	private accordionItemElements: QueryList<ElementRef<HTMLElement>>;
+
+	/**
+	 * Whether the section at this position is open.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	isSectionExpanded(index: number): boolean {
+		return !!this.accordionItems?.get(index)?.expanded;
+	}
+
+	/**
+	 * The section last opened from the aside (General, open on load, to begin with). Several
+	 * sections can be open at once, so being open no longer singles one out: `aria-current` marks
+	 * this one only, while `aria-expanded` reports every open section.
+	 */
+	private currentSectionIndex = 0;
+
+	/**
+	 * Whether the section at this position is the one the aside last took the user to, and is
+	 * still open.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	isCurrentSection(index: number): boolean {
+		return index === this.currentSectionIndex && this.isSectionExpanded(index);
+	}
+
+	/**
+	 * Toggle a settings section from the aside and bring it into view when opened.
+	 *
+	 * @param index position in `settingsSections`
+	 */
+	toggleSection(index: number): void {
+		const item = this.accordionItems?.get(index);
+		if (!item) {
+			return;
+		}
+		item.toggle();
+		if (!item.expanded) {
+			return;
+		}
+		this.currentSectionIndex = index;
+		setTimeout(() => {
+			// A second click may have closed it again before this runs.
+			if (!item.expanded) {
+				return;
+			}
+			this.accordionItemElements?.get(index)?.nativeElement?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start'
+			});
+			const header = this.accordionItemElements
+				?.get(index)
+				?.nativeElement?.querySelector('nb-accordion-item-header') as HTMLElement | null;
+			header?.focus();
+		}, 0);
 	}
 
 	static buildTaskSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {
@@ -298,7 +402,18 @@ export class EditOrganizationOtherSettingsComponent
 		const regionCode = <FormControl>this.form.get('regionCode');
 		regionCode.valueChanges
 			.pipe(
-				tap((value: IOrganization['regionCode']) => (this.regionCode = value)),
+				tap((value: IOrganization['regionCode']) => {
+					this.regionCode = value;
+					applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		const timeZone = <FormControl>this.form.get('timeZone');
+		timeZone.valueChanges
+			.pipe(
+				tap(() => applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -388,6 +503,15 @@ export class EditOrganizationOtherSettingsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		bindAgentRestrictionListeners(
+			this.form,
+			() => this.isEEAOrUK,
+			(field) => this.organization?.[field],
+			this.translateService,
+			untilDestroyed(this),
+			() => (this.acknowledgeAgentExitLogoutRestriction = true)
+		);
 	}
 
 	/**
@@ -443,7 +567,17 @@ export class EditOrganizationOtherSettingsComponent
 		const { id: organizationId, name } = this.organization;
 
 		try {
-			const organization: IOrganization = await this._organizationService.update(organizationId, this.form.value);
+			// `form.value` leaves out disabled controls, which is what keeps e.g. a disabled
+			// `bonusPercentage` from being saved as null. The agent exit/logout toggles are the
+			// exception: in EEA/UK they are disabled AND forced on, and that value must be sent.
+			const { allowAgentAppExit, allowLogoutFromAgentApp } = this.form.getRawValue();
+			const organization: IOrganization = await this._organizationService.update(organizationId, {
+				...this.form.value,
+				allowAgentAppExit,
+				allowLogoutFromAgentApp,
+				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
+			});
+			this.acknowledgeAgentExitLogoutRestriction = false;
 
 			// Update the organization in the store
 			this._organizationEditStore.organizationAction = {
@@ -765,6 +899,7 @@ export class EditOrganizationOtherSettingsComponent
 		if (!this.organization) {
 			return;
 		}
+		this.acknowledgeAgentExitLogoutRestriction = false;
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 
@@ -773,6 +908,9 @@ export class EditOrganizationOtherSettingsComponent
 			fiscalStartDate: this.organization.fiscalStartDate, // Apply specific formatting/transformation if needed
 			fiscalEndDate: this.organization.fiscalEndDate // Apply specific formatting/transformation if needed
 		});
+
+		applyEEAUKFormRestrictions(this.form, this.isEEAOrUK, this.keepExistingAgentRestriction);
+
 		this.form.updateValueAndValidity();
 
 		const {
