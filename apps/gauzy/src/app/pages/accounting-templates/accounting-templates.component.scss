@@ -670,10 +670,8 @@ $editor-dark: (
   box-shadow: inset 0 0 0 1px $hairline;
 }
 
-// The rendered template is a document written for a white page: its headings and
-// copy carry their own dark colors, which vanished on the dark theme's card (the old
-// page forced the theme text colour on every element to work around it). Show it on
-// a white sheet in both themes, the same sheet as the Email Templates preview.
+// The rendered invoice / estimate / receipt, on a sheet that follows the app theme:
+// the card surface and theme text colour in light mode and in dark mode.
 .template-paper {
   max-width: 42rem;
   min-height: 100%;
@@ -681,23 +679,32 @@ $editor-dark: (
   padding: 1.5rem;
   overflow-x: auto;
   border-radius: $radius;
-  background: #ffffff;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
   box-shadow: inset 0 0 0 1px $hairline;
-  color: #222b45;
+  color: var(--text-basic-color);
   font-size: 0.875rem;
 
-  // The global theme paints every `tr` with the card colour (`!important`), which turns
-  // the template's layout tables into a black box in the dark theme. Undo it inside the
-  // sheet only, and only on `tr`: an `!important` on table / td / th would also wipe the
-  // inline cell backgrounds (`style` / `bgcolor`) that custom templates use.
+  // The global theme paints every `tr` with the card colour (`!important`); keep the
+  // sheet's own surface showing through the template's layout tables instead.
   ::ng-deep tr {
     background-color: transparent !important;
   }
 
-  // Theme typography colours every `p` and heading with the theme text colour
-  // (near-white in the dark theme); let them take the template's own colour instead.
-  ::ng-deep :is(p, .paragraph, h1, h2, h3, h4, h5, h6) {
-    color: inherit;
+  // Follow the app theme. MJML writes `color: #000000` inline on every text block, so
+  // only `!important` lets the theme text colour through — without it the invoice stays
+  // black on the dark sheet. Links keep the theme's link colour.
+  ::ng-deep * {
+    color: var(--text-basic-color) !important;
+  }
+
+  ::ng-deep a {
+    color: var(--text-primary-color, var(--color-primary-default)) !important;
+  }
+
+  // The seeded templates rule their item rows with a light grey (#ecedee) that glares
+  // on the dark sheet; draw any inline border in the theme's hairline instead.
+  ::ng-deep [style*='border'] {
+    border-color: $hairline !important;
   }
 }
 
