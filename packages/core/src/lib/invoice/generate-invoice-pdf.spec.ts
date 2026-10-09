@@ -1,4 +1,5 @@
 import { CurrencyPosition, DiscountTaxTypeEnum, InvoiceTypeEnum } from '@gauzy/contracts';
+import * as moment from 'moment';
 import { generateInvoicePdfDefinition } from './generate-invoice-pdf';
 import { generateInvoicePaymentPdfDefinition } from './generate-invoice-payment-pdf';
 
@@ -132,9 +133,22 @@ describe('generateInvoicePdfDefinition', () => {
 
 describe('generateInvoicePaymentPdfDefinition', () => {
 	const payments = [
-		{ amount: 3, createdByUser: { name: 'Jane' }, note: null, overdue: false },
-		{ amount: 5, createdByUser: { name: 'Joe' }, note: 'wire', overdue: true }
+		{
+			amount: 3,
+			paymentDate: new Date('2026-10-05T12:00:00Z'),
+			createdByUser: { name: 'Jane' },
+			note: null,
+			overdue: false
+		},
+		{
+			amount: 5,
+			paymentDate: new Date('2026-10-20T12:00:00Z'),
+			createdByUser: { name: 'Joe' },
+			note: 'wire',
+			overdue: true
+		}
 	] as any[];
+	const formatted = (date: Date) => moment(date).format('YYYY-MM-DD');
 
 	it('renders each payment, the total value and the total paid with the organization currency position', async () => {
 		const right = await generateInvoicePaymentPdfDefinition(
@@ -156,5 +170,36 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 			translatedText
 		);
 		expect(texts(left)).toEqual(expect.arrayContaining(['USD 3', 'USD 5', 'USD 108', 'USD 8']));
+	});
+
+	it('prints each payment\'s own date under "Payment Date", and the due date only in the header', async () => {
+		const doc = await generateInvoicePaymentPdfDefinition(
+			invoice(),
+			payments,
+			organization(),
+			contact,
+			8,
+			translatedText
+		);
+		const all = texts(doc);
+
+		expect(all).toEqual(
+			expect.arrayContaining([formatted(payments[0].paymentDate), formatted(payments[1].paymentDate)])
+		);
+		expect(all.filter((text) => text === formatted(invoice().dueDate))).toHaveLength(1);
+	});
+
+	it('falls back to the recording date when a payment carries no payment date', async () => {
+		const createdAt = new Date('2026-10-07T12:00:00Z');
+		const doc = await generateInvoicePaymentPdfDefinition(
+			invoice(),
+			[{ ...payments[0], paymentDate: undefined, createdAt }],
+			organization(),
+			contact,
+			3,
+			translatedText
+		);
+
+		expect(texts(doc)).toContain(formatted(createdAt));
 	});
 });

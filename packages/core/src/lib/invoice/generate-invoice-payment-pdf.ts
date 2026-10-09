@@ -19,7 +19,8 @@ export async function generateInvoicePaymentPdfDefinition(
 
 	for (const payment of payments) {
 		const currentPayment = [
-			`${moment(invoice.dueDate).format(organization.dateFormat)}`,
+			// The column is headed "Payment Date": print the payment's own date, not the invoice due date.
+			`${moment(payment.paymentDate ?? payment.createdAt).format(organization.dateFormat)}`,
 			amount(payment.amount),
 			`${payment.createdByUser.name}`,
 			`${payment.note ? payment.note : '-'}`,
