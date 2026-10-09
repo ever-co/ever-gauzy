@@ -26,7 +26,7 @@ import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
 import { Expense } from './expense.entity';
-import { ExpenseService } from './expense.service';
+import { ExpenseService, IExpenseStatistics } from './expense.service';
 import { FindSplitExpenseQuery } from './queries';
 
 /**
@@ -337,6 +337,38 @@ export class ExpenseResolver {
 		});
 
 		return this.splitRows(employee.id, filterDate);
+	}
+
+	/**
+	 * The expense report's figures as exact totals: per currency, and per day, employee and project.
+	 *
+	 * The read `GET /expense/statistics` performs, through the same service method and under the same view
+	 * grant. That method reads the rows the report route reads — the same reader, so the same window (the
+	 * current week when none is stated), the same narrowing and the same rule that a caller without
+	 * `CHANGE_SELECTED_EMPLOYEE` reads only their own expenses — and sums them as exact decimals per currency.
+	 * The organization is the credential's, as on every read of this resolver; the route takes it from its
+	 * validated query string.
+	 */
+	@Query('expenseStatistics')
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	async expenseStatistics(
+		@Args('startDate', { type: () => Date, nullable: true }) startDate?: Date,
+		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
+		@Args('employeeIds', { type: () => [ID], nullable: true }) employeeIds?: Id[],
+		@Args('projectIds', { type: () => [ID], nullable: true }) projectIds?: Id[],
+		@Args('categoryId', { type: () => ID, nullable: true }) categoryId?: Id,
+		@Args('onlyMe', { type: () => Boolean, nullable: true }) onlyMe?: boolean
+	): Promise<IExpenseStatistics> {
+		return await this.expenseService.getStatistics({
+			tenantId: RequestContext.currentTenantId() ?? undefined,
+			organizationId: RequestContext.currentOrganizationId() ?? undefined,
+			...(startDate ? { startDate } : {}),
+			...(endDate ? { endDate } : {}),
+			...(employeeIds ? { employeeIds } : {}),
+			...(projectIds ? { projectIds } : {}),
+			...(categoryId ? { categoryId } : {}),
+			...(onlyMe === undefined || onlyMe === null ? {} : { onlyMe })
+		});
 	}
 
 	/**

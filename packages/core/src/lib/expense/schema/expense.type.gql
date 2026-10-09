@@ -363,3 +363,56 @@ input UpdateExpenseInput {
 	"The facets attached to the cost, by identifier. The pivot is written from these."
 	tagIds: [ID!]
 }
+
+"""
+One total of expense amounts: how many rows, and their exact sum, in one currency.
+"""
+type ExpenseTotal {
+	"The currency every amount in this total is denominated in."
+	currency: String!
+	"How many expenses the total sums."
+	count: Int!
+	"The exact sum of their amounts."
+	amount: Decimal!
+}
+
+"""
+One day's total in one currency. `date` is the UTC calendar day of the expenses' value date.
+"""
+type ExpenseDailyTotal {
+	"The day, `YYYY-MM-DD`."
+	date: String!
+	currency: String!
+	count: Int!
+	amount: Decimal!
+}
+
+"""
+One employee's or one project's total in one currency. `id` is null for the expenses that name none.
+"""
+type ExpenseGroupTotal {
+	"The employee or the project, or null for the expenses that name none."
+	id: ID
+	currency: String!
+	count: Int!
+	amount: Decimal!
+}
+
+"""
+The expense report's figures as exact totals.
+
+Every list is per currency as well as per its own key, because adding amounts denominated in different
+currencies produces a number that means nothing. `daily` names only the days that have expenses.
+"""
+type ExpenseStatistics {
+	"How many expenses the selectors select."
+	count: Int!
+	"The totals per currency."
+	totals: [ExpenseTotal!]!
+	"The totals per day and currency, oldest day first."
+	daily: [ExpenseDailyTotal!]!
+	"The totals per employee and currency."
+	byEmployee: [ExpenseGroupTotal!]!
+	"The totals per project and currency."
+	byProject: [ExpenseGroupTotal!]!
+}
