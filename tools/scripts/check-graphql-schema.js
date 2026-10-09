@@ -94,7 +94,7 @@ function main(argv) {
 	// is the case the message below describes.
 	const previous = resolvePreviousSnapshot(repositoryRoot, options);
 	results.push(
-		previous.text !== undefined
+		previous.text !== undefined || previous.introduced
 			? pass('baseline', previous.detail)
 			: previous.requested
 				? failure('baseline', previous.detail)
@@ -197,6 +197,23 @@ function resolvePreviousSnapshot(repositoryRoot, options) {
 		}
 	}
 
+	// A named base that resolves to a commit but carries no snapshot is the change that INTRODUCES the
+	// snapshot — the first time the schema is a published contract — so there is no earlier contract it
+	// could break. That is not the same as a base that could not be read (an unfetched ref, a typo), which
+	// stays a failure below: only a revision git can show, and that provably lacks the file, counts.
+	if (requested) {
+		for (const ref of candidates) {
+			if (revisionExists(repositoryRoot, ref)) {
+				return {
+					introduced: true,
+					detail:
+						`${ref} has no ${SNAPSHOT_PATH}: this change introduces the snapshot, so there is no ` +
+						'earlier published contract to compare it with. The next change is compared against this one.'
+				};
+			}
+		}
+	}
+
 	return {
 		requested,
 		detail: requested
@@ -206,6 +223,14 @@ function resolvePreviousSnapshot(repositoryRoot, options) {
 			: `No earlier snapshot of ${SNAPSHOT_PATH} exists at ${candidates.join(', ')}, so there is nothing to ` +
 			  'compare against. This is expected while the snapshot is being introduced.'
 	};
+}
+
+function revisionExists(repositoryRoot, ref) {
+	const result = spawnSync('git', ['-C', repositoryRoot, 'rev-parse', '--verify', '--quiet', `${ref}^{commit}`], {
+		encoding: 'utf8'
+	});
+
+	return result.status === 0;
 }
 
 function showFileAtRevision(repositoryRoot, ref, file) {

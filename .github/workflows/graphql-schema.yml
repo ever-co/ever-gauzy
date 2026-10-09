@@ -84,12 +84,20 @@ jobs:
         run: .github/scripts/restore-node-modules.sh
 
       - name: Fetch the base revision
-        # Only a pull request has a base to compare with, and only its snapshot matters.
-        if: github.event_name == 'pull_request'
+        # A pull request is compared with the branch it targets. A push is compared with the commit it moved
+        # the branch FROM: comparing a push with origin/<branch> compared the commit with itself, so on the
+        # push trigger (the only one enabled) the classification could never find a change.
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
         run: |
-          git fetch --no-tags --depth=1 origin \
-            "+refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=1 origin "$BEFORE"
+          fi
 
       - name: Regenerate the committed schema snapshot
         run: yarn nx run core:graphql-snapshot
@@ -104,8 +112,19 @@ jobs:
 
       - name: Check the deprecation contract and classify the change
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+          ALLOW_BREAKING: ${{ contains(github.event.pull_request.labels.*.name, 'schema-breaking-change') && '--allow-breaking' || '' }}
         run: |
-          node tools/scripts/check-graphql-schema.js \
-            --base "origin/${{ github.base_ref || 'develop' }}" \
-            --require-classification \
-            ${{ contains(github.event.pull_request.labels.*.name, 'schema-breaking-change') && '--allow-breaking' || '' }}
+          # A base that resolves but has no snapshot yet is the change that introduces it, which the script
+          # reports as a pass; a base that cannot be read at all still fails the gate.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            BASE="origin/$BASE_REF"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            BASE="$BEFORE"
+          else
+            BASE="origin/develop"
+          fi
+          node tools/scripts/check-graphql-schema.js --base "$BASE" --require-classification $ALLOW_BREAKING
