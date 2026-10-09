@@ -46,7 +46,10 @@ export interface AccountingTemplateCard {
 @Component({
     templateUrl: './accounting-templates.component.html',
     styleUrls: ['./accounting-templates.component.scss'],
-    standalone: false
+    standalone: false,
+    // Asks the settings shell for a definite height (see settings.component.scss), so
+    // the card fills the content area and the panes scroll instead of the page.
+    host: { class: 'settings-page-fill' }
 })
 export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDestroy {
 	previewTemplate: SafeHtml;
@@ -62,6 +65,8 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 	private gridKey: string;
 	/** Bumped on every grid load and on destroy; responses from an older load are dropped. */
 	private gridRun = 0;
+
+	private editorResizeObserver: ResizeObserver;
 
 	private readonly dialogService = inject(NbDialogService);
 	private readonly toastrService = inject(ToastrService);
@@ -133,6 +138,14 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 		};
 
 		this.templateEditor.getEditor().setOptions(editorOptions);
+
+		// Ace sizes its rows from the box it measures, once. The frame settles after that
+		// (fonts, the preview filling in, the grid toggle, window resizes), and Ace kept
+		// drawing a handful of rows at the top of a much taller frame. Re-measure whenever
+		// the box changes size.
+		const editorElement = this.templateEditor.getEditor().container;
+		this.editorResizeObserver = new ResizeObserver(() => this.templateEditor?.getEditor().resize());
+		this.editorResizeObserver.observe(editorElement);
 	}
 
 	async getTemplate() {
@@ -216,8 +229,6 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 		this.viewMode = mode;
 		if (mode === 'grid') {
 			void this.loadGrid();
-		} else {
-			this.resizeEditor();
 		}
 	}
 
@@ -303,13 +314,9 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 		this.dialogService.open(dialog, { closeOnBackdropClick: true, hasScroll: false });
 	}
 
-	/** Ace measures its box when shown; it was hidden while the grid was up. */
-	private resizeEditor() {
-		setTimeout(() => this.templateEditor?.getEditor().resize());
-	}
-
 	ngOnDestroy() {
 		// Stops a grid load still running: it checks the run between requests.
 		this.gridRun++;
+		this.editorResizeObserver?.disconnect();
 	}
 }
