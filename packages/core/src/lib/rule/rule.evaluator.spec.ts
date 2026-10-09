@@ -194,16 +194,18 @@ describe('matchesRule', () => {
 
 		it('does not match, records why, and never runs the pattern', () => {
 			// `(a|a)+` matches `aaaa` — so before the evaluator screened it, this rule matched, and on
-			// `aaaa…a!` it backtracked through 2^n attempts on the event loop.
-			const hostile = rule({ attribute: 'sku', operator: RuleOperator.MATCHES, value: '(a|a)+' });
+			// `aaaa…a!` it backtracked through 2^n attempts on the event loop. The control compiles the pattern
+			// exactly as the evaluator did before it screened it.
+			const pattern = '(a|a)+';
+			const hostile = rule({ attribute: 'sku', operator: RuleOperator.MATCHES, value: pattern });
 			const trace = { unresolvedAttributes: [] as string[], coercionFailures: [] as string[] };
 
-			expect(new RegExp('^(?:(a|a)+)$').test('aaaa')).toBe(true);
+			expect(new RegExp(`^(?:${pattern})$`).test('aaaa')).toBe(true);
 			runs.mockClear();
 
 			expect(matchesRule(hostile, { sku: 'aaaa' }, trace)).toBe(false);
 			expect(trace.coercionFailures).toEqual(['sku']);
-			expect(patternsRun()).not.toContain('^(?:(a|a)+)$');
+			expect(patternsRun()).not.toContain(`^(?:${pattern})$`);
 			// Negation cannot turn a refused pattern into a match: the verdict is reached first.
 			expect(matchesRule({ ...hostile, isNegated: true }, { sku: 'aaaa' })).toBe(false);
 		});

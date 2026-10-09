@@ -325,7 +325,8 @@ describe('PaymentWebhookEventService — what may never be stored (doc 10 §8.9,
 		// and no full account number, so the body is refused — as a refusal, never as a silent drop, so a
 		// caller that tries to send one learns immediately that this platform cannot receive it.
 		const fixture = webhookFixture();
-		const quoted = String(member).replace(/[.[\]]/g, '\\$&');
+		// Every metacharacter is escaped, the backslash included, so the member is matched as the text it is.
+		const quoted = String(member).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 		await expect(
 			fixture.service.intake(callback({ payload: { id: 'evt_1', ...payload } }) as never)

@@ -171,7 +171,11 @@ function readCounted(source: string): CountedNode {
 
 		index += 1;
 
-		return atomOf(character === '.' ? '.' : character.replace(/[{}]/, '\\$&'));
+		// `.` is the one atom here that is not a literal, and it is handed over as it is. Any other
+		// character is a literal, so every metacharacter is escaped — a lone `{` or `}` above all, which
+		// the one-character pattern would otherwise read as the start of a quantifier. Escaping a character
+		// that is not a metacharacter is never done, so `d` stays the letter and does not become `\d`.
+		return atomOf(character === '.' ? '.' : character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 	};
 
 	const readQuantifier = (atom: CountedNode): CountedNode => {
