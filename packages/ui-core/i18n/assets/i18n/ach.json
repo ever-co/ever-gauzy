@@ -4794,7 +4794,18 @@
 			"SYSTEM": "crwdns9842:0crwdne9842:0",
 			"FILTERS": {
 				"TO": "crwdns9844:0crwdne9844:0",
-				"TEMPLATE_LANGUAGE": "crwdns9846:0crwdne9846:0"
+				"TEMPLATE_LANGUAGE": "crwdns9846:0crwdne9846:0",
+				"RECIPIENT": "Recipient",
+				"TEMPLATE": "Template",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "All recipients",
+				"ALL_TEMPLATES": "All templates",
+				"ALL_STATUSES": "All statuses",
+				"SENT": "Sent",
+				"FAILED": "Failed",
+				"ARCHIVED": "Archived",
+				"SHOWING": "Showing {{ count }} of {{ total }}",
+				"NO_MATCH": "No emails match these filters."
 			}
 		}
 	},

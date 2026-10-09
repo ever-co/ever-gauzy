@@ -5458,7 +5458,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "zu",
-				"TEMPLATE_LANGUAGE": "Vorlage/Sprache"
+				"TEMPLATE_LANGUAGE": "Vorlage/Sprache",
+				"RECIPIENT": "Empfänger",
+				"TEMPLATE": "Vorlage",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "Alle Empfänger",
+				"ALL_TEMPLATES": "Alle Vorlagen",
+				"ALL_STATUSES": "Alle Status",
+				"SENT": "Gesendet",
+				"FAILED": "Fehlgeschlagen",
+				"ARCHIVED": "Archiviert",
+				"SHOWING": "{{ count }} von {{ total }} angezeigt",
+				"NO_MATCH": "Keine E-Mails entsprechen diesen Filtern."
 			}
 		}
 	},

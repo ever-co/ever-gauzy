@@ -5447,7 +5447,18 @@
 			"SYSTEM": "النظام",
 			"FILTERS": {
 				"TO": "إلى",
-				"TEMPLATE_LANGUAGE": "القالب / اللغة"
+				"TEMPLATE_LANGUAGE": "القالب / اللغة",
+				"RECIPIENT": "المستلم",
+				"TEMPLATE": "القالب",
+				"STATUS": "الحالة",
+				"ALL_RECIPIENTS": "كل المستلمين",
+				"ALL_TEMPLATES": "كل القوالب",
+				"ALL_STATUSES": "كل الحالات",
+				"SENT": "مُرسل",
+				"FAILED": "فشل",
+				"ARCHIVED": "مؤرشف",
+				"SHOWING": "عرض {{ count }} من {{ total }}",
+				"NO_MATCH": "لا توجد رسائل تطابق عوامل التصفية هذه."
 			}
 		}
 	},

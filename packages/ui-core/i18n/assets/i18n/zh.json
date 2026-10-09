@@ -5462,7 +5462,18 @@
 			"SYSTEM": "系统",
 			"FILTERS": {
 				"TO": "要",
-				"TEMPLATE_LANGUAGE": "模板/语言"
+				"TEMPLATE_LANGUAGE": "模板/语言",
+				"RECIPIENT": "收件人",
+				"TEMPLATE": "模板",
+				"STATUS": "状态",
+				"ALL_RECIPIENTS": "所有收件人",
+				"ALL_TEMPLATES": "所有模板",
+				"ALL_STATUSES": "所有状态",
+				"SENT": "已发送",
+				"FAILED": "失败",
+				"ARCHIVED": "已归档",
+				"SHOWING": "显示 {{ count }} / {{ total }}",
+				"NO_MATCH": "没有符合这些筛选条件的邮件。"
 			}
 		}
 	},

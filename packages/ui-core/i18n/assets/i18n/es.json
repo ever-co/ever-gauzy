@@ -5464,7 +5464,18 @@
 			"SYSTEM": "Sistema",
 			"FILTERS": {
 				"TO": "Para",
-				"TEMPLATE_LANGUAGE": "Plantilla/Idioma"
+				"TEMPLATE_LANGUAGE": "Plantilla/Idioma",
+				"RECIPIENT": "Destinatario",
+				"TEMPLATE": "Plantilla",
+				"STATUS": "Estado",
+				"ALL_RECIPIENTS": "Todos los destinatarios",
+				"ALL_TEMPLATES": "Todas las plantillas",
+				"ALL_STATUSES": "Todos los estados",
+				"SENT": "Enviado",
+				"FAILED": "Fallido",
+				"ARCHIVED": "Archivados",
+				"SHOWING": "Mostrando {{ count }} de {{ total }}",
+				"NO_MATCH": "Ningún correo coincide con estos filtros."
 			}
 		}
 	},

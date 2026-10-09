@@ -5453,7 +5453,18 @@
 			"SYSTEM": "Système",
 			"FILTERS": {
 				"TO": "A",
-				"TEMPLATE_LANGUAGE": "Modèle/Langue"
+				"TEMPLATE_LANGUAGE": "Modèle/Langue",
+				"RECIPIENT": "Destinataire",
+				"TEMPLATE": "Modèle",
+				"STATUS": "Statut",
+				"ALL_RECIPIENTS": "Tous les destinataires",
+				"ALL_TEMPLATES": "Tous les modèles",
+				"ALL_STATUSES": "Tous les statuts",
+				"SENT": "Envoyé",
+				"FAILED": "Échec",
+				"ARCHIVED": "Archivés",
+				"SHOWING": "{{ count }} sur {{ total }} affichés",
+				"NO_MATCH": "Aucun e-mail ne correspond à ces filtres."
 			}
 		}
 	},

@@ -5461,7 +5461,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "Do",
-				"TEMPLATE_LANGUAGE": "Szablon/Język"
+				"TEMPLATE_LANGUAGE": "Szablon/Język",
+				"RECIPIENT": "Odbiorca",
+				"TEMPLATE": "Szablon",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "Wszyscy odbiorcy",
+				"ALL_TEMPLATES": "Wszystkie szablony",
+				"ALL_STATUSES": "Wszystkie statusy",
+				"SENT": "Wysłano",
+				"FAILED": "Niepowodzenie",
+				"ARCHIVED": "Zarchiwizowane",
+				"SHOWING": "Wyświetlono {{ count }} z {{ total }}",
+				"NO_MATCH": "Żadne e-maile nie pasują do tych filtrów."
 			}
 		}
 	},

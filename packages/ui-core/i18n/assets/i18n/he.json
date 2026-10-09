@@ -5453,7 +5453,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "נמען",
+				"TEMPLATE": "תבנית",
+				"STATUS": "סטטוס",
+				"ALL_RECIPIENTS": "כל הנמענים",
+				"ALL_TEMPLATES": "כל התבניות",
+				"ALL_STATUSES": "כל הסטטוסים",
+				"SENT": "נשלח",
+				"FAILED": "נכשל",
+				"ARCHIVED": "בארכיון",
+				"SHOWING": "מוצגים {{ count }} מתוך {{ total }}",
+				"NO_MATCH": "אין הודעות דוא\"ל התואמות למסננים אלה."
 			}
 		}
 	},

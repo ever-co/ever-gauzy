@@ -5490,7 +5490,18 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "До",
-				"TEMPLATE_LANGUAGE": "Шаблон/Език"
+				"TEMPLATE_LANGUAGE": "Шаблон/Език",
+				"RECIPIENT": "Получател",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Всички получатели",
+				"ALL_TEMPLATES": "Всички шаблони",
+				"ALL_STATUSES": "Всички статуси",
+				"SENT": "Изпратен",
+				"FAILED": "Неуспешен",
+				"ARCHIVED": "Архивирани",
+				"SHOWING": "Показани {{ count }} от {{ total }}",
+				"NO_MATCH": "Няма имейли, отговарящи на тези филтри."
 			}
 		}
 	},

@@ -6150,7 +6150,18 @@
 			"SYSTEM": "System",
 			"FILTERS": {
 				"TO": "To",
-				"TEMPLATE_LANGUAGE": "Template/Language"
+				"TEMPLATE_LANGUAGE": "Template/Language",
+				"RECIPIENT": "Recipient",
+				"TEMPLATE": "Template",
+				"STATUS": "Status",
+				"ALL_RECIPIENTS": "All recipients",
+				"ALL_TEMPLATES": "All templates",
+				"ALL_STATUSES": "All statuses",
+				"SENT": "Sent",
+				"FAILED": "Failed",
+				"ARCHIVED": "Archived",
+				"SHOWING": "Showing {{ count }} of {{ total }}",
+				"NO_MATCH": "No emails match these filters."
 			}
 		}
 	},
