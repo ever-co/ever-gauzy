@@ -5295,7 +5295,8 @@
 			"payment-receipt": "付款收据",
 			"reject-candidate": "拒绝候选人"
 		},
-		"HTML_EDITOR": "HTML编辑器"
+		"HTML_EDITOR": "HTML编辑器",
+		"FULL_PREVIEW": "完整预览"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "管道",

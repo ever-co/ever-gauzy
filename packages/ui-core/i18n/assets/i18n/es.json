@@ -5297,7 +5297,8 @@
 			"payment-receipt": "Recibo de pago",
 			"reject-candidate": "Rechazar Candidato"
 		},
-		"HTML_EDITOR": "Editor HTML"
+		"HTML_EDITOR": "Editor HTML",
+		"FULL_PREVIEW": "Vista previa completa"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Tuberías.",

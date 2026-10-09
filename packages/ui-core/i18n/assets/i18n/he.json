@@ -5304,7 +5304,8 @@
 			"payment-receipt": "קבלת תשלום",
 			"reject-candidate": "לדחות את המועמד"
 		},
-		"HTML_EDITOR": "HTML Editor"
+		"HTML_EDITOR": "HTML Editor",
+		"FULL_PREVIEW": "תצוגה מלאה"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",

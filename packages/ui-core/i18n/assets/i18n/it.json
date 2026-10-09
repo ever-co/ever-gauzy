@@ -5295,7 +5295,8 @@
 			"payment-receipt": "Ricevuta di pagamento",
 			"reject-candidate": "Rifiuta Candidato"
 		},
-		"HTML_EDITOR": "Editor di HTML"
+		"HTML_EDITOR": "Editor di HTML",
+		"FULL_PREVIEW": "Anteprima completa"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipeline",
