@@ -1,6 +1,7 @@
 /**
  * The wire contract of the anonymous usage statistics (`ever.stats.v1`), in one place.
  */
+import { STATS_HEADERS as SDK_STATS_HEADERS } from '@ever-co/connect-sdk';
 
 /** The one outbound call of this plugin: `POST {EVER_STATS_API_URL}/v1/stats/reports`. */
 export const STATS_REPORTS_PATH = '/v1/stats/reports';
@@ -8,11 +9,14 @@ export const STATS_REPORTS_PATH = '/v1/stats/reports';
 /** The default Ever Platform API origin. */
 export const DEFAULT_STATS_API_URL = 'https://api.ever.co';
 
+/** The signature prefix and the largest report body, from the SDK. */
+export { MAX_STATS_REPORT_BYTES, STATS_SIGNATURE_PREFIX } from '@ever-co/connect-sdk';
+
 /**
  * The report endpoint's signature headers (the statistics public key, the signature, the key id),
- * the signature prefix and the largest report body, from the SDK.
+ * from the SDK: its names (`key`, `signature`, `key_id`) and this module's own `keyId`.
  */
-export { MAX_STATS_REPORT_BYTES, STATS_HEADERS, STATS_SIGNATURE_PREFIX } from '@ever-co/connect-sdk';
+export const STATS_HEADERS = Object.freeze({ ...SDK_STATS_HEADERS, keyId: SDK_STATS_HEADERS.key_id });
 
 /** The schema id every report carries. */
 export const STATS_SCHEMA_ID = 'ever.stats.v1';
@@ -37,7 +41,7 @@ export const STATS_LEASE_MS = 15 * 60 * 1000;
 
 /**
  * The published schema, for operators and reviewers: the file in the public Ever Platform SDK
- * repository, at the commit this plugin's copy (`src/lib/schema/`) was taken from.
+ * repository, at the release of `@ever-co/connect-contracts` this plugin pins (ts-v1.0.0-rc.3).
  */
 export const STATS_SCHEMA_URL =
 	'https://github.com/ever-co/ever-connect-sdk/blob/a9844bd44c9fdb4d7f8be404b88331e578d8180c/contracts/schemas/ever.stats.v1.json';

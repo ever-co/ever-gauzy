@@ -73,6 +73,13 @@ function problemSummary(status: number, body: unknown): string {
 	return [`http_${status}`, code, path, fieldCode].filter(Boolean).join(':').slice(0, 255);
 }
 
+/** Bytes Ever Platform would refuse (the SDK's checks): nothing is sent; only codes and field names are kept. */
+function refusedBeforeSending(error: StatsValidationError): StatsSendOutcome {
+	const first = error.errors[0];
+	const path = first ? redactStatsPath(first.path) || '(body)' : '(body)';
+	return { kind: 'dropped', status: error.status, error: `http_${error.status}:${error.code}:${path}:${first?.code ?? 'type'}`.slice(0, 255) };
+}
+
 /**
  * The one outbound call of the anonymous usage statistics: `POST {EVER_STATS_API_URL}/v1/stats/reports`
  * with exactly the stored bytes, the statistics public key and the signature. No credential, no
@@ -109,13 +116,8 @@ export class EverStatsSender {
 		try {
 			headers = this.headers(bytes, signer, productVersion);
 		} catch (error) {
-			if (error instanceof StatsValidationError) {
-				// Ever Platform would refuse these bytes: nothing is sent.
-				const first = error.errors[0];
-				const path = first ? redactStatsPath(first.path) || '(body)' : '(body)';
-				return { kind: 'dropped', status: error.status, error: `http_${error.status}:${error.code}:${path}:${first?.code ?? 'type'}`.slice(0, 255) };
-			}
-			throw error;
+			if (!(error instanceof StatsValidationError)) throw error;
+			return refusedBeforeSending(error);
 		}
 		let response: Response;
 		try {

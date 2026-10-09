@@ -14,12 +14,15 @@ call its mode does not allow.
 
 ## The harness
 
-The harness is the egress audit of the Ever Platform SDK's dev tools, the `ever-egress-audit` of
-[`@ever-co/connect-tools`](https://www.npmjs.com/package/@ever-co/connect-tools) (Apache-2.0), with its
-mock platform. It is not copied here: the workflow installs the exact version the statistics plugin
-pins (`devDependencies` of `packages/plugins/ever-stats/package.json`) from npm for the run. The
-config sets a private `subnet`, so the mock's address on the sealed network (`__MOCK_URL__`) is a
-local address the module accepts over plain http.
+The harness is the egress audit of the Ever Platform SDK's dev tools, the
+`ever-egress-audit` of [`@ever-co/connect-tools`][connect-tools] (Apache-2.0),
+with its mock platform. It is not copied here: the workflow installs the exact
+version the statistics plugin pins (`devDependencies` of
+`packages/plugins/ever-stats/package.json`) from npm for the run. The config
+pins the sealed network to a fixed private `subnet`, so the mock's address on
+it (`__MOCK_URL__`) is a local address the module accepts over plain http.
+
+[connect-tools]: https://www.npmjs.com/package/@ever-co/connect-tools
 
 This directory holds only Gauzy's inputs:
 
@@ -50,7 +53,8 @@ which `build-api` runs on every develop push.
 
 `.github/workflows/egress-audit.yml` runs it on a GitHub-hosted runner every day on the newest
 published develop API image, and on demand (`gh workflow run egress-audit.yml -f image=<image>`).
-Locally, with Docker and the workspace installed (`@ever-co/connect-tools` is a devDependency):
+Locally, with Docker and the workspace installed (`@ever-co/connect-tools` is
+a devDependency):
 
 ```sh
 : > /tmp/api-empty.env

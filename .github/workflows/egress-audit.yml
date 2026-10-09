@@ -69,7 +69,7 @@ jobs:
       - name: Install the harness (@ever-co/connect-tools, the version the statistics plugin pins)
         run: |
           version=$(node -p "require('./packages/plugins/ever-stats/package.json').devDependencies['@ever-co/connect-tools']")
-          npm install --prefix "$RUNNER_TEMP/egress-audit" --no-save --no-audit --no-fund "@ever-co/connect-tools@$version"
+          npm install --prefix "$RUNNER_TEMP/egress-audit" --no-save --no-audit --no-fund --ignore-scripts "@ever-co/connect-tools@$version"
           harness="$RUNNER_TEMP/egress-audit/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs"
           node "$harness" --help > /dev/null
           echo "EGRESS_AUDIT=$harness" >> "$GITHUB_ENV"

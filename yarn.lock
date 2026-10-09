@@ -5949,26 +5949,27 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
-"@ever-co/connect-contracts@1.0.0-rc.2":
-  version "1.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/@ever-co/connect-contracts/-/connect-contracts-1.0.0-rc.2.tgz#8b573fc17726b557232ce0bfd9c300bfb7f9b216"
-  integrity sha512-ySytfwpXX9L8aDptJKgKlSxYmUKIQuZb+o5lmLc50M2BzJAtU8JX9ca6rSpeaeNZbc+Ezri1ThlG3Qzg6xskfA==
+"@ever-co/connect-contracts@1.0.0-rc.3":
+  version "1.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-contracts/-/connect-contracts-1.0.0-rc.3.tgz#56a7593937f3ad8286c85027cb7b2b8c7521db2b"
+  integrity sha512-XXDbkPA+ixWuS46qLq0UYZIKE2dAwdAs6adkX5fsJkeo9Gui7rkme3siQOSYypk6W5v0k82eQQe7dZD2KrAsSQ==
 
-"@ever-co/connect-sdk@1.0.0-rc.2":
-  version "1.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/@ever-co/connect-sdk/-/connect-sdk-1.0.0-rc.2.tgz#d41ef475755b19b8c8490838df3c00779f34cb8c"
-  integrity sha512-wVHoL/dwmlQtvCYWwxpddNhtxV/uNxtI+A9fQAnwfhgROYTcgWPXJu4J6qnnwAqq2pGPP4Qr9e0+F7tdDX2uZg==
+"@ever-co/connect-sdk@1.0.0-rc.3":
+  version "1.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-sdk/-/connect-sdk-1.0.0-rc.3.tgz#336fc45b9b37f4ea96215961e66aa6c54553863b"
+  integrity sha512-jIVMbje4ewcVuEY5ab+PU9R/fYwuJ/9HxLMrFiBdeeK5CGidfC8w+EGZDrTQGD15B2/kH16aauLp4ll65bw3uw==
   dependencies:
-    "@ever-co/connect-contracts" "1.0.0-rc.2"
+    "@ever-co/connect-contracts" "1.0.0-rc.3"
     ajv "8.20.0"
 
-"@ever-co/connect-tools@1.0.0-rc.2":
-  version "1.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/@ever-co/connect-tools/-/connect-tools-1.0.0-rc.2.tgz#679511153097fcdbdd4fd85a915b7f9545875b23"
-  integrity sha512-jVXH1TBEoQMnhuLIErpaGBZgIWjeFdLreCs0eahDbgn/z5RL3isy6BKjMltNojNaY32rewGVTbZbaGYM8B+RLA==
+"@ever-co/connect-tools@1.0.0-rc.3":
+  version "1.0.0-rc.3"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-tools/-/connect-tools-1.0.0-rc.3.tgz#64fa30ab0f67cddf5daa9c8d3002aacf43628d7a"
+  integrity sha512-2RhgkdwM3tviiU4MocWrp4L1iObrth9tg9A/nsW7SNH5cZsR7i5000yo8zRlul/86SdtNJpR1lt9NSli6utpMg==
   dependencies:
     ajv "8.20.0"
     ajv-formats "3.0.1"
+    playwright-core "1.62.1"
     yaml "2.9.1"
 
 "@ever-co/legal@^0.1.0":
@@ -38768,6 +38769,11 @@ playwright-core@1.61.1:
   version "1.61.1"
   resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.61.1.tgz#3c99841307efbbabc9d724c41a88c914705d15fc"
   integrity sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==
+
+playwright-core@1.62.1:
+  version "1.62.1"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.62.1.tgz#120f67a19181bfd183c60fa903c0d99330b56785"
+  integrity sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==
 
 playwright@1.61.1:
   version "1.61.1"
