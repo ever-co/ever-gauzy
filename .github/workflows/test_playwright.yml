@@ -477,9 +477,12 @@ jobs:
         shell: bash
         # Poll both ports, but FAIL FAST if a server process has crashed (forever -> STOPPED)
         # instead of waiting out the whole window. Web is a static server (instant); the API seeds
-        # a fresh DB (~5-7 min: migrations + seedDefault), so a 10-min cap is ample.
+        # a fresh DB (migrations + seedDefault). That took ~5-7 min when the cap was set at 10 min, but
+        # the seed has grown: on 2026-10-08/09 every shard was still seeding (~10 min in) when the cap
+        # hit (stage runs 37763321450, 37883190996), so the suite never ran. 20 min still fits the
+        # job's 120-min ceiling (~25 min fixed cost + the 75-min test step cap).
         run: |
-          deadline=$((SECONDS + 600))   # 10 min hard cap
+          deadline=$((SECONDS + 1200))   # 20 min hard cap
           while (( SECONDS < deadline )); do
             api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3001/api || true)
             web=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:4200 || true)
