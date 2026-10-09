@@ -76,6 +76,9 @@ export class TenantOnboardingComponent implements OnInit, OnDestroy {
 				this._router.navigate(['/onboarding/complete']);
 			} catch (error) {
 				console.error('Error while creating organization:', error);
+				// The form is now also shown to a user who already has a tenant, who may lack ALL_ORG_EDIT:
+				// tell them why nothing happened instead of only logging it
+				this._errorHandlingService.handleError(error);
 			}
 		} catch (error) {
 			console.error('Error while creating tenant:', error);
