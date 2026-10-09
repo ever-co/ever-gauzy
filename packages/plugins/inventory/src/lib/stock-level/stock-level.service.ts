@@ -29,7 +29,7 @@ import {
 	versionExpectationOf
 } from '@gauzy/core';
 import { StockMovement } from './../stock-movement/stock-movement.entity';
-import { StockMovementType } from './../inventory.enums';
+import { StockMovementReferenceType, StockMovementType, StockReasonCode } from './../inventory.enums';
 import { InventoryErrorCode, invariantViolation, inventoryError } from './../inventory.errors';
 import {
 	IAppliedMovement,
@@ -493,6 +493,20 @@ export class StockLevelService {
 	 * rather than a half-corrected set, and every correction moves the aggregate its level hangs from by
 	 * the same delta, so a product-level row stays the sum of its variant rows.
 	 *
+	 * **A level with no ledger at all is adopted, not zeroed.** The ledger is the truth only for what it
+	 * has recorded. A level that holds stock while not one movement names it predates the ledger — the
+	 * platform's warehouse quantities were written long before this package existed, and its own quantity
+	 * route still writes them without a movement — so "the sum of its movements" is not a fact about that
+	 * stock, it is the absence of one. Correcting such a level to that empty sum would destroy real stock
+	 * on the first run. Its quantity is instead recorded as the level's **opening balance**: one movement,
+	 * `quantityBefore = 0` and `quantityAfter =` the level's quantity, of the shape doc 09 §4.3 states for
+	 * "an opening balance is recorded for a level with no history" (`RECEIPT` against `MIGRATION`, reason
+	 * `OPENING_BALANCE`; a negative pre-ledger level is an `ADJUSTMENT`). The level row is not written, so
+	 * its version does not move, and the report lists it with `quantityAfter` equal to `quantityBefore`
+	 * while `ledgerQuantity` says the ledger held nothing — which is how a reader tells an adoption from a
+	 * correction. The ledger and the level then agree, so a second run reports nothing. The count is read
+	 * under the level's row lock, so two runs cannot both adopt the same level.
+	 *
 	 * @param filter which level rows the run walks, and how many.
 	 * @param expectation the version the request accepted, when it accepted one. A run that corrects one
 	 * level honours it; a run that walks many states why it cannot, and the per-row compare-and-set
@@ -523,6 +537,22 @@ export class StockLevelService {
 				const ledgerQuantity = await this.ledgerQuantityOf(manager, warehouseId, level.variantId);
 
 				if (ledgerQuantity === quantityBefore) {
+					continue;
+				}
+
+				// No movement names this level, so its quantity predates the ledger rather than disagreeing
+				// with it: record that quantity as the opening balance instead of correcting it to nothing.
+				if ((await this.ledgerMovementCountOf(manager, warehouseId, level.variantId)) === 0) {
+					await this.adoptOpeningBalance(manager, locked ?? level, warehouseId, quantityBefore);
+
+					corrections.push({
+						levelId: level.id,
+						warehouseId,
+						variantId: level.variantId,
+						quantityBefore,
+						ledgerQuantity,
+						quantityAfter: quantityBefore
+					});
 					continue;
 				}
 
@@ -628,6 +658,65 @@ export class StockLevelService {
 			.getRawOne();
 
 		return Number(raw?.total ?? 0);
+	}
+
+	/**
+	 * Counts the movements that name a level's location and variant.
+	 *
+	 * A sum of zero cannot tell a level whose movements cancel out from a level that has none, and the two
+	 * are opposite cases for a reconciliation: the first disagrees with its ledger, the second predates it.
+	 * The count is the only thing that separates them. It is read on the run's own transaction, after the
+	 * level's row lock, so it cannot change underneath the decision it informs.
+	 */
+	private async ledgerMovementCountOf(manager: EntityManager, warehouseId: ID, variantId: ID): Promise<number> {
+		return await manager.count(StockMovement, { where: { warehouseId, variantId } as any });
+	}
+
+	/**
+	 * Records the quantity a level already holds as its opening balance in the ledger.
+	 *
+	 * The level row is left exactly as it is: the stock is real, and what was missing is the ledger row that
+	 * explains it. The movement is the one doc 09 §4.3 states for "an opening balance is recorded for a level
+	 * with no history", stamped with the level's own scope like every other movement this engine writes, and
+	 * naming the level as its document because no other document caused it.
+	 *
+	 * @param manager the transaction the run holds.
+	 * @param level the level row as it was read under its lock.
+	 * @param warehouseId the location the level is held at.
+	 * @param quantity the quantity the level holds, which becomes its opening balance.
+	 */
+	private async adoptOpeningBalance(
+		manager: EntityManager,
+		level: WarehouseProductVariant,
+		warehouseId: ID,
+		quantity: number
+	): Promise<void> {
+		const scope = await this.scopeOfLevel(manager, level);
+		const reserved = Number(level.reservedQuantity ?? 0);
+
+		const movement = manager.create(StockMovement, {
+			tenantId: scope.tenantId,
+			organizationId: scope.organizationId,
+			warehouseId,
+			warehouseProductVariantId: level.id,
+			warehouseProductId: level.warehouseProductId,
+			variantId: level.variantId,
+			// A receipt brings stock in; a level that was already below zero before the ledger existed (an
+			// unlimited or backordered one) is a correction rather than an arrival.
+			type: quantity >= 0 ? StockMovementType.RECEIPT : StockMovementType.ADJUSTMENT,
+			quantity,
+			quantityBefore: 0,
+			quantityAfter: quantity,
+			reservedBefore: reserved,
+			reservedAfter: reserved,
+			referenceType: StockMovementReferenceType.MIGRATION,
+			referenceId: level.id,
+			reason: StockReasonCode.OPENING_BALANCE,
+			note: 'Opening balance adopted by a reconciliation: the level held stock that no movement recorded.',
+			occurredAt: new Date()
+		} as any);
+
+		await manager.save(StockMovement, movement);
 	}
 
 	/**
