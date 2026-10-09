@@ -89,4 +89,23 @@ describe('TaskService.findTeamTasks (MikroORM) — employee scoping', () => {
 			expect(createQueryBuilder).not.toHaveBeenCalled();
 		});
 	});
+
+	describe('an ALL_ORG_VIEW holder without an employee record', () => {
+		it('keeps the organization-wide team tasks on MikroORM, without picking an employee', async () => {
+			({ restore } = asTenantUser(noEmployee, { permissions: [PermissionsEnum.ALL_ORG_VIEW] }));
+
+			await teamTasks({ id: 'someone-else' });
+
+			expect(findAndCount).toHaveBeenCalledTimes(1);
+			expect(where()).not.toHaveProperty('teams');
+		});
+
+		it('reaches the query on TypeORM', async () => {
+			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+			({ restore } = asTenantUser(noEmployee, { permissions: [PermissionsEnum.ALL_ORG_VIEW] }));
+
+			await expect(teamTasks()).rejects.toThrow();
+			expect(createQueryBuilder).toHaveBeenCalled();
+		});
+	});
 });

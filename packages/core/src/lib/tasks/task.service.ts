@@ -788,8 +788,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						employeeId = isNotEmpty(members) && isNotEmpty(members['id']) ? members['id'] : null;
 					}
 					// A caller who may not act for other employees and has no employee record belongs to no
-					// team: without this, the missing filter listed every team task of the organization.
-					if (!canChangeEmployee && !isNotEmpty(employeeId)) {
+					// team: without this, the missing filter listed every team task of the organization. An
+					// organization-wide viewer keeps the access their role gives them (same carve-out as
+					// ManagedEmployeeService.filterAccessibleEmployeeIds, #10249).
+					if (
+						!canChangeEmployee &&
+						!isNotEmpty(employeeId) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
+					) {
 						return { items: [], total: 0 };
 					}
 					if (isNotEmpty(employeeId)) {
@@ -823,10 +829,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					} = where;
 					const { organizationId, projectId, members } = where;
 
-					// See the MikroORM branch: no employee record and no CHANGE_SELECTED_EMPLOYEE means no team
+					// See the MikroORM branch: no employee record and no CHANGE_SELECTED_EMPLOYEE means no team,
+					// unless the caller is an organization-wide viewer
 					if (
 						!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-						!isNotEmpty(RequestContext.currentEmployeeId())
+						!isNotEmpty(RequestContext.currentEmployeeId()) &&
+						!RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)
 					) {
 						return { items: [], total: 0 };
 					}
