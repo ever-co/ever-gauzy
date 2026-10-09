@@ -252,7 +252,111 @@ describe('PersistentQueue', () => {
 		});
 	});
 
+	describe('settle', () => {
+		it('waits for the jobs stored before the call, not for the ones queued after it', async () => {
+			const queue = openQueue();
+			const first = gate();
+			const later = gate();
+			const seen: string[] = [];
+			queue.register<string>('timer', async (job) => {
+				if (job === 'before') await first.opened;
+				if (job === 'after') await later.opened;
+				seen.push(job);
+			});
+			await queue.enqueue('timer', 'before');
+
+			let settled: boolean | undefined;
+			const settling = queue.settle(2_000).then((result) => (settled = result));
+			await queue.enqueue('timer', 'after');
+			await sleep(30);
+			expect(settled).toBeUndefined();
+
+			first.open();
+			await settling;
+			// "after" is still held: settle did not wait for it.
+			expect(settled).toBe(true);
+			expect(seen).toEqual(['before']);
+			later.open();
+			expect(await queue.drain()).toBe(true);
+		});
+
+		it('gives up after the timeout while an earlier job is still running', async () => {
+			const queue = openQueue();
+			const held = gate();
+			queue.register('timer', () => held.opened);
+			await queue.enqueue('timer', 1);
+
+			expect(await queue.settle(50)).toBe(false);
+			expect(queue.isIdle()).toBe(false);
+			held.open();
+			expect(await queue.drain()).toBe(true);
+			expect(queue.isIdle()).toBe(true);
+		});
+	});
+
+	describe('canRun', () => {
+		it('keeps jobs stored while a queue may not run, and runs them in order once it may', async () => {
+			const queue = openQueue();
+			let online = false;
+			const seen: number[] = [];
+			queue.register<number>(
+				'upload',
+				async (n) => {
+					seen.push(n);
+				},
+				{ canRun: () => online, recheckMs: 10 }
+			);
+			await queue.enqueue('upload', 1);
+			await queue.enqueue('upload', 2);
+			await sleep(50);
+			expect(seen).toEqual([]);
+			expect(queue.pending('upload')).toBe(2);
+
+			online = true;
+			await until(() => seen.length === 2);
+			expect(seen).toEqual([1, 2]);
+		});
+	});
+
 	describe('close', () => {
+		it('stores or rejects a job queued while it closes, never leaves it pending', async () => {
+			const queue = openQueue();
+			const seen: number[] = [];
+			queue.register<number>('timer', async (n) => {
+				seen.push(n);
+			});
+
+			const outcome = queue.enqueue('timer', 1).then(
+				() => 'stored',
+				(error: Error) => error.message
+			);
+			await queue.close();
+
+			const settled = await Promise.race([outcome, sleep(1_000).then(() => 'still pending')]);
+			expect(settled).not.toBe('still pending');
+		});
+
+		it('does not leave a rejection unhandled when completing a job throws', async () => {
+			jest.spyOn(console, 'error').mockImplementation(() => undefined);
+			const unhandled = jest.fn();
+			process.on('unhandledRejection', unhandled);
+			try {
+				const queue = openQueue();
+				queue.register('timer', async () => undefined);
+				// A throwing 'task_finish' listener makes better-queue's completion callback throw.
+				(queue as any).queues.get('timer').queue.on('task_finish', () => {
+					throw new Error('listener failed');
+				});
+
+				await queue.enqueue('timer', 1);
+				await sleep(50);
+
+				expect(unhandled).not.toHaveBeenCalled();
+			} finally {
+				process.off('unhandledRejection', unhandled);
+			}
+		});
+
 		it('refuses new work once closed', async () => {
 			const queue = openQueue();
 			queue.register('timer', async () => undefined);
