@@ -107,7 +107,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { SubscriptionBillingPeriod, SubscriptionStatus } from '../subscription.types';

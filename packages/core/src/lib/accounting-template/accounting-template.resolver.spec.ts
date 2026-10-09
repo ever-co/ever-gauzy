@@ -198,15 +198,6 @@ function permissionOfField(field: string): unknown {
 	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
 }
 
-/** The guards one resolver field runs under: the class's chain plus whatever the field restates. */
-function guardsOfField(field: string): unknown[] {
-	const fields = AccountingTemplateResolver.prototype as unknown as Record<string, object>;
-	const declared = Reflect.getMetadata('__guards__', AccountingTemplateResolver) ?? [];
-	const restated = Reflect.getMetadata('__guards__', fields[field]) ?? [];
-
-	return Array.from(new Set([...declared, ...restated]));
-}
-
 describe('AccountingTemplateResolver — the SDL declares the capabilities the REST routes serve', () => {
 	it('declares the connection, the node, the count, the resolved lookup and the preview', () => {
 		expect(rootFields('Query')).toEqual(

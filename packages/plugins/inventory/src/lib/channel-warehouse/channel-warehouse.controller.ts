@@ -12,7 +12,7 @@ import { InventoryPermission } from './../inventory.permissions';
 import { isQueryFlagSet } from './../inventory.query';
 import { ChannelWarehouse } from './channel-warehouse.entity';
 import { ChannelWarehouseService } from './channel-warehouse.service';
-import { AssignChannelWarehouseDTO, ChannelWarehouseDTO, ChannelWarehouseQueryDTO  } from './dto';
+import { AssignChannelWarehouseDTO, ChannelWarehouseQueryDTO  } from './dto';
 
 /**
  * The channel-assignment resource.

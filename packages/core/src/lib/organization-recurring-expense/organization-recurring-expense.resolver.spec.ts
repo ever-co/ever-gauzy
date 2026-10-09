@@ -327,15 +327,6 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'recoverOrganizationRecurringExpense', route: 'softRecover' }
 ];
 
-/** The write fields, whose delegations are asserted one by one below. */
-const WRITES = [
-	'createOrganizationRecurringExpense',
-	'updateOrganizationRecurringExpense',
-	'deleteOrganizationRecurringExpense',
-	'softDeleteOrganizationRecurringExpense',
-	'recoverOrganizationRecurringExpense'
-];
-
 /**
  * The gate, over a scripted cache and a scripted feature service.
  *

@@ -17,8 +17,7 @@ import { OrderLineInvoice } from '../order-line-invoice/order-line-invoice.entit
 import { OrderLineInvoiceService } from '../order-line-invoice/order-line-invoice.service';
 import { OrderLineService } from '../order-line/order-line.service';
 import { ORDER_PERMISSIONS } from '../order.permissions';
-import { OrderLineInvoiceDirection, OrderLineKind } from '../order.types';
-import { ILineInvoicePosition } from '../order.types';
+import { ILineInvoicePosition, OrderLineInvoiceDirection, OrderLineKind } from '../order.types';
 
 /** The link as the schema declares it. */
 interface IOrderLineInvoiceInput {

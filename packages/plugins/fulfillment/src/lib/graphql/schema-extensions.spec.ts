@@ -1,4 +1,4 @@
-import { DocumentNode, FieldDefinitionNode, InputValueDefinitionNode, ObjectTypeDefinitionNode } from 'graphql';
+import { FieldDefinitionNode, InputValueDefinitionNode, ObjectTypeDefinitionNode } from 'graphql';
 import { fulfillmentSchemaExtensions } from './schema-extensions';
 
 /**

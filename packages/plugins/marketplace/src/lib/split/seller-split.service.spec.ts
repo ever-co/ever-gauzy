@@ -76,7 +76,7 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { BadRequestException } from '@nestjs/common';
-import { CommissionBasis, CommissionSource, CurrencyCode, SellerTransactionKind, SellerTransactionStatus } from '@gauzy/contracts';
+import { CommissionBasis, CurrencyCode, SellerTransactionKind, SellerTransactionStatus } from '@gauzy/contracts';
 import { Money, RequestContext } from '@gauzy/core';
 import { SellerCommissionService } from '../commission/seller-commission.service';
 import { Seller } from '../seller/seller.entity';

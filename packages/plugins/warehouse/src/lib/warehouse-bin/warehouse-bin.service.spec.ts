@@ -173,7 +173,7 @@ jest.mock('@gauzy/core', () => {
 			}
 
 			let actualVersion: number | null = null;
-			let exists = true;
+			let exists: boolean;
 
 			try {
 				const row = await service.findOneByIdString(options.id);

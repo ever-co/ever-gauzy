@@ -18,7 +18,7 @@ import {
 	CreateStockTransferDTO,
 	ReceiveStockTransferDTO,
 	ShipStockTransferDTO,
-	StockTransferDTO, StockTransferQueryDTO,
+	StockTransferQueryDTO,
 	UpdateStockTransferDTO
  } from './dto';
 

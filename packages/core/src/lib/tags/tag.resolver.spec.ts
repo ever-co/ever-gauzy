@@ -15,7 +15,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { RequestContext } from '../core/context';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { TagController } from './tag.controller';
 import { TagResolver } from './tag.resolver';
 import { TagListCommand } from './commands';

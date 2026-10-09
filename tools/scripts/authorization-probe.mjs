@@ -323,7 +323,7 @@ function finish() {
 	return failed === 0 ? 0 : 1;
 }
 
-let exitCode = 1;
+let exitCode;
 try {
 	exitCode = await main();
 } catch (error) {

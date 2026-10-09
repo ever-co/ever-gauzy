@@ -113,7 +113,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
 	Organization,
 	OrganizationVendor,

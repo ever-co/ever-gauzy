@@ -703,7 +703,7 @@ export class OrderReturnService extends TenantAwareCrudService<OrderReturn> {
 		// conditional write returned — before the event after it, which can still throw.
 		const steps: IReceiptSteps = { linesTouched: false, orderLineMoves: [], posted: [], headerWritten: false };
 		let plan: IOrderReturnReceiptPlan[] = [];
-		let settlement = { received: '0', outstanding: '0' };
+		let settlement: { received: string; outstanding: string };
 		let version: number;
 
 		try {

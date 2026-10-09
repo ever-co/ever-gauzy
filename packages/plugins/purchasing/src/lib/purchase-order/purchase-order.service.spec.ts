@@ -116,7 +116,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import {
 	Organization,
 	OrganizationVendor,

@@ -184,7 +184,6 @@ import { Logger, NotFoundException } from '@nestjs/common';
 import { CronExpression } from '@nestjs/schedule';
 import { FindOperator, In, IsNull, LessThanOrEqual, MoreThan } from 'typeorm';
 import {
-	AdjustmentOwnerType,
 	AddressType,
 	FulfillmentStatus,
 	OrderChangeActionType,
@@ -192,8 +191,7 @@ import {
 	OrderChangeType,
 	OrderPaymentStatus,
 	OrderStatus,
-	OrderTransactionType,
-	TaxLineOwnerType
+	OrderTransactionType
 } from '@gauzy/contracts';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChangeActionService } from '../order-change-action/order-change-action.service';

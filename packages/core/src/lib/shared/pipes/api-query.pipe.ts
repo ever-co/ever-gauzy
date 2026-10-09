@@ -214,7 +214,7 @@ export class ApiQueryPipe implements PipeTransform<ApiQueryDTO | undefined, ApiQ
 		if (!query.withDeleted || !this.withDeletedPermission) {
 			return;
 		}
-		let allowed = false;
+		let allowed: boolean;
 		try {
 			allowed = RequestContext.hasPermission(this.withDeletedPermission);
 		} catch {

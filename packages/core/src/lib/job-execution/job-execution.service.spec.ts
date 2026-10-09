@@ -65,7 +65,6 @@ jest.mock('../core/context/request-context', () => ({
 }));
 
 import { JobExecutionStatus, JobTrigger } from '@gauzy/contracts';
-import { JobExecution } from './job-execution.entity';
 import { JobExecutionService } from './job-execution.service';
 
 const JOB = 'measurement-audit';

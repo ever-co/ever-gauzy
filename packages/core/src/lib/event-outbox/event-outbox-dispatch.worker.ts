@@ -90,7 +90,7 @@ export class EventOutboxDispatchWorker extends QueueWorkerHost {
 			`Dispatching the event outbox, requested at ${job.data?.requestedAt ?? 'an unrecorded moment'}`
 		);
 
-		let claimed: EventOutbox[] = [];
+		let claimed: EventOutbox[];
 
 		try {
 			claimed = await this.eventOutboxService.claimBatch({

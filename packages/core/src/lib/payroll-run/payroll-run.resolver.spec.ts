@@ -246,15 +246,6 @@ function permissionOfField(field: string): unknown {
 	return Reflect.getMetadata(PERMISSIONS_METADATA, fields[field]);
 }
 
-/** The guards one resolver field runs under: the class's chain plus whatever the field restates. */
-function guardsOfField(field: string): unknown[] {
-	const fields = PayrollRunResolver.prototype as unknown as Record<string, object>;
-	const declared = Reflect.getMetadata('__guards__', PayrollRunResolver) ?? [];
-	const restated = Reflect.getMetadata('__guards__', fields[field]) ?? [];
-
-	return Array.from(new Set([...declared, ...restated]));
-}
-
 describe('PayrollRunResolver — the SDL declares the capabilities the REST routes serve', () => {
 	it('declares the connection, the node and the two computed reads', () => {
 		expect(rootFields('Query')).toEqual(

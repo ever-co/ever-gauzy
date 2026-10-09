@@ -634,7 +634,7 @@ export class OperationService extends CrudService<Operation> {
 		if (failure) {
 			// A failed step is assumed to have applied nothing, so only the steps that completed are
 			// compensated — the backwards walk is the runtime's job, never the step's.
-			operation = await this.beginCompensation(operation, failure);
+			await this.beginCompensation(operation, failure);
 
 			return { operation: await this.compensate(operationId, { ownerId, leaseMs }), executedSteps, finished: true };
 		}

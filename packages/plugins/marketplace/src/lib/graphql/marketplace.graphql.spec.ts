@@ -2390,7 +2390,7 @@ describe('the marketplace GraphQL contribution', () => {
 		);
 
 		it('states, on every one of the ten, the permission its own route states', () => {
-			for (const { field, method, route, controller } of LIFECYCLE) {
+			for (const { method, route, controller } of LIFECYCLE) {
 				// The override is asserted to be there before the two readings are compared, because that is
 				// what makes the route's own metadata the thing being mirrored rather than the inherited
 				// handler's silence — the silence these overrides exist to replace.

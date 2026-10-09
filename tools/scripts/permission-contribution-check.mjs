@@ -262,7 +262,7 @@ for (const name of PACKAGES) {
 	let checked = 0;
 	let reusedCount = 0;
 
-	for (const [mapName, entry] of maps) reusedCount += entry.reused.size;
+	for (const [, entry] of maps) reusedCount += entry.reused.size;
 
 	for (const use of uses) {
 		const map = maps.get(use.map);

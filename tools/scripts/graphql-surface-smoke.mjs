@@ -94,14 +94,12 @@ function fieldsOf(source) {
 	const fields = [];
 	const lines = source.split('\n');
 	let inQuery = false;
-	let depth = 0;
 	let current = null;
 	let body = '';
 
 	for (const line of lines) {
 		if (/^extend type Query\s*\{/.test(line)) {
 			inQuery = true;
-			depth = 1;
 			continue;
 		}
 

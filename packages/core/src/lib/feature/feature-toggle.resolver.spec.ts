@@ -29,7 +29,7 @@ import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { FeatureFlagGuard,  } from '../shared/guards';
 import { FeatureModule } from './feature.module';
 import { FeatureOrganizationService } from './feature-organization.service';
 import { FeatureService } from './feature.service';

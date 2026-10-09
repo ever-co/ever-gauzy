@@ -50,7 +50,6 @@ jest.mock('../core/context/request-context', () => ({
 }));
 
 import { CONTACT_LOCKOUT_POLICY } from '@gauzy/contracts';
-import { ContactCredential } from './contact-credential.entity';
 import { ContactCredentialService } from './contact-credential.service';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';

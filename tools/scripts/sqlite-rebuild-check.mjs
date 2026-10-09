@@ -29,7 +29,7 @@
  * It exits 0 when every rebuild is guarded and no definition names a backup, and 1 otherwise.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

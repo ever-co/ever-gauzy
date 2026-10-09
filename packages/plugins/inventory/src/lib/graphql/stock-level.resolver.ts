@@ -6,7 +6,7 @@
  * resolver is schema-first, matching the platform’s existing resolvers: the schema literal declares
  * the types and this class binds them to the service.
  */
-import { Args, Int, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver, Subscription } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';

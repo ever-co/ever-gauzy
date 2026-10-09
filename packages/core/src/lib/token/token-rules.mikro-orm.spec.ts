@@ -25,7 +25,6 @@ import { join } from 'node:path';
 
 const TIMEOUT = 15 * 60 * 1000;
 
-const TENANT = '6e000000-0000-4000-8000-000000000001';
 const USER = '6e000000-0000-4000-8000-000000000002';
 const TOKEN_TYPE = 'refresh_token';
 const DAY = 24 * 60 * 60 * 1000;

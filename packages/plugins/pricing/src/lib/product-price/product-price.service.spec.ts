@@ -33,7 +33,6 @@ const GROUP_VIP = '00000000-0000-4000-8000-000000000041';
 
 /** The programme's frozen clock: nothing here may depend on the wall clock. */
 const AT = new Date('2026-01-15T12:00:00.000Z');
-const LATER = new Date('2026-06-01T00:00:00.000Z');
 const EARLIER = new Date('2025-12-01T00:00:00.000Z');
 
 /** One `price_list` row, as the resolution reads it. */

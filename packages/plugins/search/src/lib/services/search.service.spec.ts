@@ -383,7 +383,6 @@ function searchFixture(
 		secret_ledger: [...(seed.secrets ?? [sourceRow('s1', { sku: 'SKU-S1', name: 'Blue widget ledger' })])],
 		search_document: [] as Row[]
 	};
-	const permissions = new Set(seed.permissions ?? [VISIBLE]);
 
 	const targets: Row = {
 		product_variant: { name: 'ProductVariant' },

@@ -144,7 +144,6 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { OrderReturnStatus } from '../returns.types';
-import { OrderReturn } from '../order-return/order-return.entity';
 import { OrderReturnLineService } from './order-return-line.service';
 
 /**

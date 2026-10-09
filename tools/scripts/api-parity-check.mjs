@@ -31,9 +31,8 @@
 'use strict';
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(HERE, '..', '..');
@@ -353,7 +352,7 @@ const summary = [];
 for (const name of PACKAGES) {
 	const dir = join(PLUGINS_DIR, name);
 
-	let exists = true;
+	let exists;
 	try {
 		exists = statSync(dir).isDirectory();
 	} catch {

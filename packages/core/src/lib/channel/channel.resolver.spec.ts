@@ -7,7 +7,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BadRequestException, ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
+import { ExecutionContext, HttpException, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema } from 'graphql';
 import { ChannelStatus, PermissionsEnum } from '@gauzy/contracts';

@@ -131,7 +131,6 @@ jest.mock(
 
 import { RequestContext } from '@gauzy/core';
 import { StockMovementType, StockMovementReferenceType } from '../inventory.enums';
-import { StockMovement } from './stock-movement.entity';
 import { StockMovementService } from './stock-movement.service';
 
 /**
