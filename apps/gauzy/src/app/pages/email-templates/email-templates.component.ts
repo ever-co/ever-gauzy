@@ -30,6 +30,19 @@ import { ToastrService } from '@gauzy/ui-core/core';
  */
 const DARK_CANVAS_THEMES: ReadonlySet<string> = new Set(['dark', 'cosmic', 'gauzy-dark', 'material-dark']);
 
+/** How many templates the grid fetches and renders at once. */
+const GRID_CONCURRENCY = 4;
+
+export type EmailTemplatesViewMode = 'grid' | 'editor';
+
+/** One tile of the template grid: the rendered subject and a thumbnail of the body. */
+export interface EmailTemplateCard {
+	name: EmailTemplateEnum;
+	subject: SafeHtml | null;
+	html: SafeHtml | null;
+	failed: boolean;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
     templateUrl: './email-templates.component.html',
@@ -43,6 +56,13 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 	public previewEmail: SafeHtml;
 	public previewSubject: SafeHtml;
 	public organization: IOrganization;
+
+	public viewMode: EmailTemplatesViewMode = 'editor';
+	public gridCards: EmailTemplateCard[] = [];
+	/** Organization + language the grid was last loaded for, so toggling back does not refetch. */
+	private gridKey: string;
+	/** Bumped on every grid load; responses from an older load are dropped. */
+	private gridRun = 0;
 
 	/**
 	 * Email Template Mutation Form
@@ -78,6 +98,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 			.pipe(
 				debounceTime(200),
 				tap(() => this.getTemplate()),
+				tap(() => this.viewMode === 'grid' && this.loadGrid()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -164,6 +185,100 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(html);
 	}
 
+	setViewMode(mode: EmailTemplatesViewMode) {
+		if (this.viewMode === mode) {
+			return;
+		}
+		this.viewMode = mode;
+		if (mode === 'grid') {
+			this.loadGrid();
+		} else {
+			this.resizeEditors();
+		}
+	}
+
+	/** Template picked from the dropdown: show it in the editor. */
+	onTemplatePicked() {
+		this.subject$.next(true);
+		this.setViewMode('editor');
+	}
+
+	/** Grid card clicked: select that template and switch to the editor. */
+	openTemplate(name: EmailTemplateEnum) {
+		if (this.form.get('name').value !== name) {
+			this.form.patchValue({ name });
+			this.subject$.next(true);
+		}
+		this.setViewMode('editor');
+	}
+
+	/**
+	 * Fetches every template for the current organization + language and renders its
+	 * subject and body, a few at a time. Cards fill in as their previews arrive.
+	 */
+	async loadGrid() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { languageCode = LanguagesEnum.ENGLISH } = this.form.getRawValue();
+		const key = `${organizationId}:${languageCode}`;
+		if (key === this.gridKey) {
+			return;
+		}
+		this.gridKey = key;
+		const run = ++this.gridRun;
+
+		this.gridCards = this.templates.map((name) => ({
+			name: name as EmailTemplateEnum,
+			subject: null,
+			html: null,
+			failed: false
+		}));
+
+		const queue = [...this.gridCards];
+		const worker = async () => {
+			while (queue.length && run === this.gridRun) {
+				const card = queue.shift();
+				try {
+					const { subject, template } = await this.emailTemplateService.getTemplate({
+						languageCode,
+						name: card.name,
+						organizationId,
+						tenantId
+					});
+					const [{ html: subjectHtml }, { html: bodyHtml }] = await Promise.all([
+						this.emailTemplateService.generateTemplatePreview(subject),
+						this.emailTemplateService.generateTemplatePreview(template)
+					]);
+					if (run !== this.gridRun) {
+						return;
+					}
+					card.subject = this.sanitizer.sanitize(SecurityContext.HTML, subjectHtml);
+					// Rendered inside a sandboxed iframe, so the email's own <style> blocks
+					// stay out of the page.
+					card.html = this.sanitizer.bypassSecurityTrustHtml(bodyHtml);
+				} catch {
+					card.failed = true;
+				}
+			}
+		};
+		await Promise.all(Array.from({ length: GRID_CONCURRENCY }, worker));
+		// A failed load may be retried by toggling the grid again.
+		if (run === this.gridRun && this.gridCards.some((card) => card.failed)) {
+			this.gridKey = null;
+		}
+	}
+
+	/** Ace measures its box when shown; it was hidden while the grid was up. */
+	private resizeEditors() {
+		setTimeout(() => {
+			this.emailEditor?.getEditor().resize();
+			this.subjectEditor?.getEditor().resize();
+		});
+	}
+
 	/**
 	 * Opens the rendered email at full size, so long templates can be read without
 	 * scrolling inside the side-by-side preview pane.
@@ -190,6 +305,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 				organizationId,
 				tenantId
 			});
+			// The saved template's grid thumbnail is now stale.
+			this.gridKey = null;
 			this.toastrService.success('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
 				templateName: this.getTranslation('EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' + this.form.get('name').value)
 			});

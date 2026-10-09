@@ -38,7 +38,7 @@
               fullWidth
               formControlName="name"
               [placeholder]="'EMAIL_TEMPLATES_PAGE.LABELS.TEMPLATE_NAME' | translate"
-              (selectedChange)="subject$.next(true)"
+              (selectedChange)="onTemplatePicked()"
             >
               @for (name of templates; track name) {
                 <nb-option [value]="name">
@@ -47,9 +47,32 @@
               }
             </nb-select>
           </div>
+          <div class="view-toggle" role="group">
+            <button
+              type="button"
+              class="view-toggle-option"
+              [class.active]="viewMode === 'grid'"
+              [attr.aria-pressed]="viewMode === 'grid'"
+              (click)="setViewMode('grid')"
+            >
+              <nb-icon icon="grid-outline"></nb-icon>
+              {{ 'EMAIL_TEMPLATES_PAGE.VIEW_GRID' | translate }}
+            </button>
+            <button
+              type="button"
+              class="view-toggle-option"
+              [class.active]="viewMode === 'editor'"
+              [attr.aria-pressed]="viewMode === 'editor'"
+              (click)="setViewMode('editor')"
+            >
+              <nb-icon icon="code-outline"></nb-icon>
+              {{ 'EMAIL_TEMPLATES_PAGE.VIEW_EDITOR' | translate }}
+            </button>
+          </div>
           <button
             type="button"
             class="save-button"
+            [hidden]="viewMode === 'grid'"
             nbButton
             size="small"
             status="success"
@@ -61,7 +84,43 @@
           </button>
         </div>
 
-        <div class="workspace">
+        <!-- ── Template grid ───────────────────────────────────────────── -->
+        @if (viewMode === 'grid') {
+          <div class="template-grid">
+            @for (card of gridCards; track card.name) {
+              <button
+                type="button"
+                class="template-card"
+                [class.active]="card.name === form.get('name').value"
+                (click)="openTemplate(card.name)"
+              >
+                <div class="template-thumb">
+                  @if (card.html) {
+                    <iframe
+                      class="template-thumb-frame"
+                      tabindex="-1"
+                      sandbox=""
+                      aria-hidden="true"
+                      [srcdoc]="card.html"
+                    ></iframe>
+                  } @else {
+                    <div class="template-thumb-placeholder" [class.failed]="card.failed">
+                      <nb-icon [icon]="card.failed ? 'alert-circle-outline' : 'email-outline'"></nb-icon>
+                    </div>
+                  }
+                </div>
+                <div class="template-meta">
+                  <span class="template-name">
+                    {{ 'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' + card.name | translate }}
+                  </span>
+                  <span class="template-subject" [innerHtml]="card.subject || '—'"></span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+
+        <div class="workspace" [hidden]="viewMode === 'grid'">
           <!-- ── Editor ──────────────────────────────────────────────── -->
           <section class="pane editor-pane">
             <header class="pane-header">
