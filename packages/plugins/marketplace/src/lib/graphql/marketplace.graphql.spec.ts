@@ -964,9 +964,10 @@ const SELLER_WRITES: ReadonlyArray<{
 		route: 'create',
 		permission: PermissionsEnum.SELLERS_CREATE,
 		service: 'createSeller',
-		// The route hands over no scope, and neither does this. `createSeller` accepts one and never reads
-		// it, so a field that invented one would be the only difference between the two protocols — and a
-		// difference that refuses a caller the other surface served is as much a divergence as one that
+		// The route hands over no scope, and neither does this. `createSeller` reads one only to bind a
+		// seller's own person to its party, and the guard attaches a staff scope to a request that names no
+		// seller, so a field that invented one would be the only difference between the two protocols — and
+		// a difference that refuses a caller the other surface served is as much a divergence as one that
 		// serves a caller the other refused.
 		call: () => [CREATE_SELLER]
 	},

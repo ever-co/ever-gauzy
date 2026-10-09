@@ -74,13 +74,34 @@ export class SellerService extends TenantAwareCrudService<Seller> {
 	/**
 	 * Creates a seller account in `DRAFT`.
 	 *
+	 * A seller's own person (a scope that is not staff) acts through one party, so the account it applies
+	 * for is bound to that party: a party it does not state is taken from the scope, and a different one
+	 * is refused. A staff scope, or none, may name any party of the organization. Neither delivered route
+	 * hands a scope over today — `SellerAccessGuard` attaches a staff scope to a request that names no
+	 * seller — so this is the contract a self-service application path inherits rather than a change to
+	 * either route.
+	 *
 	 * @param input The seller as the caller supplied it.
 	 * @param scope The caller's seller scope, when the caller is a seller's own person applying.
 	 * @returns The created seller.
 	 * @throws BadRequestException when no party is named.
+	 * @throws ForbiddenException when a seller's own person names a party other than its own, or its
+	 * scope names no party at all.
 	 * @throws ConflictException when the party or the code is already bound in this organization.
 	 */
 	async createSeller(input: Partial<Seller>, scope?: ISellerScope): Promise<Seller> {
+		if (scope && !scope.staff) {
+			const own = scope.contactId;
+
+			if (!own || (input.contactId && String(input.contactId) !== String(own))) {
+				throw new ForbiddenException(
+					"A seller's own person may only apply for the party it acts through."
+				);
+			}
+
+			input = { ...input, contactId: own };
+		}
+
 		if (!input.contactId) {
 			throw new BadRequestException('A seller must be bound to an organization contact.');
 		}

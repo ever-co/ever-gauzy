@@ -374,6 +374,41 @@ describe('SellerService — creating an account (doc 20 §2.6, §8.1)', () => {
 		expect(fixture.appended).toEqual([]);
 	});
 
+	it("binds an application by a seller's own person to the party that person acts through", async () => {
+		// The scope is documented as the case of "a seller's own person applying": such a caller acts
+		// through one party, so the account it opens is bound to that party and to no other one.
+		const fixture = sellerFixture({ sellers: [] });
+		const own = { sellerId: SELLER, contactId: 'contact-own', staff: false };
+
+		await expect(
+			fixture.service.createSeller({ contactId: 'contact-other', code: 'SELLER-2' } as never, own as never)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(fixture.tables.seller.filter((row) => row.code === 'SELLER-2')).toEqual([]);
+		expect(fixture.appended).toEqual([]);
+
+		const bound = await fixture.service.createSeller({ code: 'SELLER-3' } as never, own as never);
+		expect(bound).toMatchObject({ contactId: 'contact-own', code: 'SELLER-3' });
+
+		// A scope that names no party has nothing to bind the application to.
+		await expect(
+			fixture.service.createSeller({ contactId: 'contact-own', code: 'SELLER-4' } as never, {
+				sellerId: SELLER,
+				staff: false
+			} as never)
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('leaves a staff application, and one with no scope, to name any party of the organization', async () => {
+		const fixture = sellerFixture({ sellers: [] });
+
+		await expect(
+			fixture.service.createSeller({ contactId: 'contact-1', code: 'SELLER-5' } as never, { staff: true } as never)
+		).resolves.toMatchObject({ contactId: 'contact-1' });
+		await expect(
+			fixture.service.createSeller({ contactId: 'contact-2', code: 'SELLER-6' } as never)
+		).resolves.toMatchObject({ contactId: 'contact-2' });
+	});
+
 	it('lets any other failure through rather than reporting it as a duplicate', async () => {
 		const fixture = sellerFixture({ sellers: [] }, { failCreateWith: new Error('the database is down') });
 
