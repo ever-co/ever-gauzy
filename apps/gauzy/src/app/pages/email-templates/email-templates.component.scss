@@ -540,3 +540,71 @@ $editor-dark: (
     color: inherit;
   }
 }
+
+// ── Full-size preview popup ─────────────────────────────────────────────
+.full-preview-button {
+  margin-inline-start: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+}
+
+// Declared in this component's template, so the encapsulated styles still reach
+// it inside the dialog overlay.
+.full-preview-card {
+  display: flex;
+  flex-direction: column;
+  width: min(56rem, calc(100vw - 2rem));
+  height: calc(100vh - 4rem);
+  margin: 0;
+  border-radius: $radius;
+}
+
+.full-preview-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.full-preview-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.full-preview-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-basic-color);
+}
+
+.full-preview-subject {
+  display: flex;
+  gap: 0.375rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-basic-color);
+}
+
+.full-preview-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+  overflow: auto;
+  background: var(--gauzy-card-2, var(--background-basic-color-2));
+}
+
+.full-preview-paper {
+  max-width: 48rem;
+  min-height: auto;
+}
