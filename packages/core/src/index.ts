@@ -110,6 +110,10 @@ export { FeatureOrganizationService } from './lib/feature/feature-organization.s
 // sources (`@gauzy/core/src/lib/feature/...`), which only the workspace's own layout resolves. The module
 // imports `@gauzy/contracts` and nothing else, so exporting it here adds no edge to the kernel's graph.
 export { FEATURE_GRAPHQL } from './lib/feature/graphql-feature.code';
+// The kernel's `Decimal` scalar, so a package's code-first `@Field()` can name the type its SDL serves instead of
+// restating an amount as a `Float` (tools/scripts/money-type-check.mjs). The module imports the decimal kernel and
+// graphql-js only.
+export { DecimalScalar } from './lib/graphql/scalars/decimal.scalar';
 export { RoleAuthorizationService, RoleModule, RoleService } from './lib/role';
 export { RolePermissionModule, RolePermissionService } from './lib/role-permission';
 // The approval machinery is public API for the same reason as `FeatureModule` above: a package that

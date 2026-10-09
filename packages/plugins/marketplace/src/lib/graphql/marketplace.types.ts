@@ -19,6 +19,7 @@ import {
 	TaxCollectionMode,
 	TaxRegistrationScheme
 } from '@gauzy/contracts';
+import { DecimalScalar } from '@gauzy/core';
 import { SellerOfferingBulkOperation } from '../seller-offering/seller-offering.bulk';
 import type { IBulkSellerOfferingItemResult } from '../seller-offering/seller-offering.bulk';
 
@@ -145,7 +146,7 @@ export class SellerType {
 	@Field(() => String, { nullable: true })
 	payoutCurrency?: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	payoutThreshold: number;
 
 	@Field(() => Float)
@@ -212,13 +213,13 @@ export class SellerStatementLineType {
 	@Field(() => String, { nullable: true })
 	description?: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	grossAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	commissionAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	netAmount: number;
 
 	@Field(() => String)
@@ -240,13 +241,13 @@ export class SellerStatementType {
 	@Field(() => Date, { nullable: true })
 	to?: Date;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	openingBalance: number;
 
 	@Field(() => [SellerStatementLineType])
 	lines: SellerStatementLineType[];
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	closingBalance: number;
 
 	@Field(() => Float)
@@ -280,10 +281,10 @@ export class SellerTransactionType {
 	@Field(() => String)
 	currency: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	grossAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	taxAmount: number;
 
 	@Field(() => Float)
@@ -295,16 +296,16 @@ export class SellerTransactionType {
 	@Field(() => CommissionBasis)
 	commissionBasis: CommissionBasis;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	commissionBasisAmount: number;
 
 	@Field(() => Float)
 	commissionRate: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	commissionAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	netAmount: number;
 
 	@Field(() => Date)
@@ -344,7 +345,7 @@ export class SellerOfferingType {
 	@Field(() => OfferingCondition)
 	condition: OfferingCondition;
 
-	@Field(() => Float, { nullable: true })
+	@Field(() => DecimalScalar, { nullable: true })
 	priceAmount?: number;
 
 	@Field(() => String, { nullable: true })
@@ -393,16 +394,16 @@ export class SellerPayoutType {
 	@Field(() => String)
 	currency: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	netAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	feeAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	reserveAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	paidAmount: number;
 
 	@Field(() => Boolean)
@@ -430,7 +431,7 @@ export class SellerPayoutLineType {
 	@Field(() => ID)
 	sellerTransactionId: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	amount: number;
 
 	@Field(() => String)
@@ -455,20 +456,20 @@ export class SellerSettlementType {
 	@Field(() => String)
 	currency: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	grossAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	commissionAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	feeAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	netAmount: number;
 
 	/** The platform's lines less the reported net; zero when the two agree. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	discrepancyAmount: number;
 
 	@Field(() => Date, { nullable: true })
@@ -484,13 +485,13 @@ export class SellerSplitReconciliationType {
 	@Field(() => String)
 	currency: string;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	capturedAmount: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	sumNet: number;
 
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	sumCommission: number;
 
 	@Field(() => Float)
@@ -603,11 +604,11 @@ export class SellerPayoutRunResultType {
 	currency: string;
 
 	/** The settleable balance the run saw. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	balance: number;
 
 	/** The amount the reserve policy withheld at this run. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	reserveAmount: number;
 
 	/** What was payable after the reserve and the hold window. */
@@ -637,7 +638,7 @@ export class SellerSettlementDifferenceType {
 	transactionId: string;
 
 	/** The net that row carries: the platform's side of the comparison. */
-	@Field(() => Float)
+	@Field(() => DecimalScalar)
 	platformNet: number;
 }
 
