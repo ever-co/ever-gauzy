@@ -1,5 +1,4 @@
 import { CurrencyPosition, DiscountTaxTypeEnum, InvoiceTypeEnum } from '@gauzy/contracts';
-import * as moment from 'moment';
 import { generateInvoicePdfDefinition } from './generate-invoice-pdf';
 import { generateInvoicePaymentPdfDefinition } from './generate-invoice-payment-pdf';
 
@@ -64,8 +63,8 @@ const translatedText = {
 	onTime: 'On time'
 };
 
-const organization = (currencyPosition?: string) =>
-	({ name: 'Ever Co', dateFormat: 'YYYY-MM-DD', currencyPosition } as any);
+const organization = (currencyPosition?: string, timeZone = 'UTC') =>
+	({ name: 'Ever Co', dateFormat: 'YYYY-MM-DD', currencyPosition, timeZone } as any);
 const contact = { name: 'ACME' } as any;
 
 const invoice = (overrides: Record<string, any> = {}) =>
@@ -148,7 +147,6 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 			overdue: true
 		}
 	] as any[];
-	const formatted = (date: Date) => moment(date).format('YYYY-MM-DD');
 
 	it('renders each payment, the total value and the total paid with the organization currency position', async () => {
 		const right = await generateInvoicePaymentPdfDefinition(
@@ -183,10 +181,33 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 		);
 		const all = texts(doc);
 
-		expect(all).toEqual(
-			expect.arrayContaining([formatted(payments[0].paymentDate), formatted(payments[1].paymentDate)])
+		expect(all).toEqual(expect.arrayContaining(['2026-10-05', '2026-10-20']));
+		expect(all.filter((text) => text === '2026-10-31')).toHaveLength(1);
+	});
+
+	it('formats the dates as calendar days of the organization time zone', async () => {
+		// 5 October picked in a UTC+2 browser is stored as the previous day, 22:00 UTC.
+		const payment = { ...payments[0], paymentDate: new Date('2026-10-04T22:00:00Z') };
+
+		const paris = await generateInvoicePaymentPdfDefinition(
+			invoice(),
+			[payment],
+			organization(undefined, 'Europe/Paris'),
+			contact,
+			3,
+			translatedText
 		);
-		expect(all.filter((text) => text === formatted(invoice().dueDate))).toHaveLength(1);
+		expect(texts(paris)).toContain('2026-10-05');
+
+		const utc = await generateInvoicePaymentPdfDefinition(
+			invoice(),
+			[payment],
+			organization(undefined, 'UTC'),
+			contact,
+			3,
+			translatedText
+		);
+		expect(texts(utc)).toContain('2026-10-04');
 	});
 
 	it('falls back to the recording date when a payment carries no payment date', async () => {
@@ -200,6 +221,6 @@ describe('generateInvoicePaymentPdfDefinition', () => {
 			translatedText
 		);
 
-		expect(texts(doc)).toContain(formatted(createdAt));
+		expect(texts(doc)).toContain('2026-10-07');
 	});
 });
