@@ -160,6 +160,182 @@ nb-card-body {
   }
 }
 
+// ── View toggle ─────────────────────────────────────────────────────────
+// Segmented Grid | Editor switch, same 2rem recessed surface as the pickers.
+.view-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: $control-height;
+  padding: 0.125rem;
+  border-radius: $radius;
+  background-color: var(--background-basic-color-3);
+  box-shadow: inset 0 0 0 1px $hairline;
+}
+
+.view-toggle-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: calc(#{$radius} - 0.125rem);
+  background: transparent;
+  color: var(--text-hint-color);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  cursor: pointer;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: var(--text-basic-color);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--color-primary-default);
+  }
+
+  &.active {
+    background: var(--gauzy-card-1, var(--background-basic-color-1));
+    box-shadow: inset 0 0 0 1px $hairline;
+    color: var(--text-basic-color);
+    font-weight: 500;
+  }
+}
+
+// `display` on these classes would otherwise beat the `hidden` attribute.
+.workspace[hidden],
+.save-button[hidden] {
+  display: none !important;
+}
+
+// ── Template grid ───────────────────────────────────────────────────────
+.template-grid {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  grid-auto-rows: max-content;
+  gap: 0.75rem;
+  min-height: 0;
+  overflow: auto;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: $radius;
+  background: var(--gauzy-card-1, var(--background-basic-color-1));
+  box-shadow: inset 0 0 0 1px $hairline;
+  color: inherit;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px var(--border-basic-color-5, $hairline);
+
+    .template-meta {
+      background: var(--gauzy-hover-tint, transparent);
+    }
+  }
+
+  &:focus-visible,
+  &.active {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--color-primary-default);
+  }
+}
+
+// A 640px-wide render of the email shrunk to fit, top-aligned like a mail client's
+// first screen. Inset by 1px so the card's hairline stays visible around it.
+$thumb-width: 640px;
+$thumb-scale: 0.34;
+
+.template-thumb {
+  position: relative;
+  flex: 0 0 auto;
+  height: 11rem;
+  margin: 1px 1px 0;
+  overflow: hidden;
+  border-radius: calc(#{$radius} - 1px) calc(#{$radius} - 1px) 0 0;
+  background: #ffffff;
+}
+
+.template-thumb-frame {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: $thumb-width;
+  height: calc(11rem / #{$thumb-scale});
+  margin-left: calc(#{$thumb-width} / -2);
+  border: 0;
+  transform: scale($thumb-scale);
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.template-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--background-basic-color-2);
+  color: var(--text-hint-color);
+
+  nb-icon {
+    font-size: 1.5rem;
+    opacity: 0.5;
+  }
+
+  &:not(.failed) {
+    animation: template-thumb-pulse 1.2s ease-in-out infinite;
+  }
+
+  &.failed nb-icon {
+    color: var(--color-danger-default);
+  }
+}
+
+@keyframes template-thumb-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.template-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  padding: 0.5rem 0.75rem 0.625rem;
+  border-top: 1px solid $hairline;
+}
+
+.template-name {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-basic-color);
+}
+
+.template-subject {
+  overflow: hidden;
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-hint-color);
+}
+
 // ── Workspace ───────────────────────────────────────────────────────────
 .workspace {
   display: grid;
