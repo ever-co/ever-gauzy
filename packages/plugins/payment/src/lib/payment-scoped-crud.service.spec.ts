@@ -139,13 +139,22 @@ class ScopedRow {
 	@DeleteDateColumn({ nullable: true })
 	@Property({ type: 'datetime', nullable: true })
 	deletedAt?: Date | null;
+
+	/**
+	 * Read only by `RefundService.softRemove`, which retires a refund only from a status that moved no
+	 * money (FAILED or CANCELED); the other seven services read nothing of it. Seeded FAILED so the
+	 * refund service is held to the same tenancy cases as the rest.
+	 */
+	@Column({ type: 'varchar', nullable: true })
+	@Property({ type: 'string', nullable: true })
+	status?: string | null;
 }
 
 /** The three rows every case starts from. */
 const SEED: ScopedRow[] = [
-	{ id: OWN, tenantId: TENANT_A, organizationId: ORGANIZATION_A, deletedAt: null },
-	{ id: FOREIGN_TENANT, tenantId: TENANT_B, organizationId: ORGANIZATION_B, deletedAt: null },
-	{ id: FOREIGN_ORGANIZATION, tenantId: TENANT_A, organizationId: ORGANIZATION_A2, deletedAt: null }
+	{ id: OWN, tenantId: TENANT_A, organizationId: ORGANIZATION_A, deletedAt: null, status: 'FAILED' },
+	{ id: FOREIGN_TENANT, tenantId: TENANT_B, organizationId: ORGANIZATION_B, deletedAt: null, status: 'FAILED' },
+	{ id: FOREIGN_ORGANIZATION, tenantId: TENANT_A, organizationId: ORGANIZATION_A2, deletedAt: null, status: 'FAILED' }
 ];
 
 type AnyScoped = PaymentScopedCrudService<any>;
