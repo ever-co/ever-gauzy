@@ -338,7 +338,8 @@ describe('PaymentProviderService — what a registration may not be (doc 10 §8.
 		// "Credential handling"). The walk is recursive and case-insensitive, so `apiKey`, `api_key` and
 		// `payment.apiKey` are one name.
 		const fixture = providerFixture();
-		const quoted = String(member).replace(/[.[\]]/g, '\\$&');
+		// Every metacharacter is escaped, the backslash included, so the member is matched as the text it is.
+		const quoted = String(member).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 		await expect(
 			fixture.service.createProvider({ code: 'card-primary', name: 'Card', configuration } as never)

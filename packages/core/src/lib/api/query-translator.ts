@@ -163,11 +163,32 @@ function typeOrmCondition(op: FilterOperator, value: unknown, negate: boolean): 
 	}
 }
 
-/** Assigns a value at a dotted path, creating the intermediate objects. */
+/**
+ * The refusal for a path segment that names the prototype chain rather than a field.
+ *
+ * `__proto__` is the one key an assignment cannot create: writing it replaces an object's prototype,
+ * and reading it returns `Object.prototype`, so the next write — or the `Object.assign` that merges two
+ * conditions on one relation — would land on every object in the process. No field is called that, so
+ * the path is refused outright rather than skipped: dropping a filter condition would widen the result.
+ */
+function prototypePathRefused(path: readonly string[]): ApiQueryError {
+	return new ApiQueryError('VALIDATION_FAILED', `"${path.join('.')}" is not a field path.`, {
+		path: path.join('.')
+	});
+}
+
+/**
+ * Assigns a value at a dotted path, creating the intermediate objects.
+ *
+ * @throws ApiQueryError `VALIDATION_FAILED` when a segment is `__proto__`; see {@link prototypePathRefused}.
+ */
 function setPath(target: Record<string, unknown>, path: readonly string[], value: unknown): Record<string, unknown> {
 	let node = target;
 	for (let index = 0; index < path.length - 1; index += 1) {
 		const segment = path[index];
+		if (segment === '__proto__') {
+			throw prototypePathRefused(path);
+		}
 		const next = node[segment];
 		if (!next || typeof next !== 'object') {
 			node[segment] = {};
@@ -175,6 +196,9 @@ function setPath(target: Record<string, unknown>, path: readonly string[], value
 		node = node[segment] as Record<string, unknown>;
 	}
 	const last = path[path.length - 1];
+	if (last === '__proto__') {
+		throw prototypePathRefused(path);
+	}
 	const existing = node[last];
 	// Two conditions on the same relation share one relation object; two conditions on the same field
 	// cannot, and silently keeping one of them would drop half the filter.

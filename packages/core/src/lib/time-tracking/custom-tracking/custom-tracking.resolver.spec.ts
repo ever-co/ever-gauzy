@@ -222,13 +222,15 @@ function inputBody(name: string): string {
 }
 
 /**
- * A member declaration as a pattern, with the list brackets escaped and the spacing left free.
+ * A member declaration as a pattern, with every metacharacter escaped and the spacing left free.
  *
  * The brackets are escaped rather than matched as written: an unescaped `[TrackingSessionPayload!]` is a
- * character class, which is a pattern that matches a string it was never meant to describe.
+ * character class, which is a pattern that matches a string it was never meant to describe. The rest of
+ * the metacharacters, the backslash included, are escaped for the same reason, and every space — not
+ * only the first — is the free spacing.
  */
 function member(member: string): RegExp {
-	return new RegExp(member.replace(/[[\]]/g, '\\$&').replace(' ', '\\s*'));
+	return new RegExp(member.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s*'));
 }
 
 /** The handlers of the controller, as functions, inherited ones included. */

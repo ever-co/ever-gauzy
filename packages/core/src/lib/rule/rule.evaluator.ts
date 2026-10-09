@@ -8,7 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { compareDecimalStrings, normalizeDecimalString } from '../money/decimal';
 import { RULE_MAX_MATCH_INPUT } from './rule.pattern-safety';
-import { RULE_MATCHES_PATTERN_OPTIONS, describePattern } from './rule.validator';
+import { RULE_MATCHES_PATTERN_OPTIONS, sanitizeRegExp } from './rule.validator';
 
 /**
  * The platform's rule evaluator.
@@ -315,14 +315,16 @@ function compilePattern(pattern: string): RegExp | null {
 	}
 
 	let compiled: RegExp | null = null;
-	const verdict = describePattern(pattern, RULE_MATCHES_PATTERN_OPTIONS);
+	// The source comes from the analysis or not at all: `sanitizeRegExp` hands back the anchored form only
+	// for a pattern it accepted.
+	const verdict = sanitizeRegExp(pattern, RULE_MATCHES_PATTERN_OPTIONS);
 
-	if (verdict.safe) {
+	if (verdict.source !== undefined) {
 		try {
 			// Anchored, and without flags — which is what `RULE_MATCHES_PATTERN_OPTIONS` tells the analysis:
 			// a rule states that the attribute *matches* the pattern, not that the pattern occurs
 			// somewhere inside it.
-			compiled = new RegExp(`^(?:${pattern})$`);
+			compiled = new RegExp(verdict.source);
 		} catch {
 			compiled = null;
 		}

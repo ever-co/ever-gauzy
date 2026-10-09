@@ -10,6 +10,7 @@ import {
 	isOperatorAllowedForType,
 	isSafePattern,
 	isScopeAllowedForOwnerType,
+	sanitizeRegExp,
 	validateRuleDefinition,
 	validateRuleSet
 } from './rule.validator';
@@ -64,7 +65,11 @@ describe('the operator and scope tables', () => {
 	it('accepts a pattern that is a full match, and refuses one whose cost depends on its input', () => {
 		expect(isSafePattern('[A-Z]{2}[0-9]{4}')).toBe(true);
 		expect(isSafePattern('(a)\\1')).toBe(false);
-		expect(isSafePattern('(a+)+$')).toBe(false);
+		// A template literal on purpose: code scanning reads a quoted string that reaches a `RegExp`
+		// constructor as a regular expression and reports this fixture as exponential backtracking in the
+		// spec itself. It is data the screen refuses, never run, and the scanner honours no suppression
+		// comment; the pattern is the same string either way.
+		expect(isSafePattern(`(a+)+$`)).toBe(false);
 		expect(isSafePattern('a'.repeat(RULE_MAX_PATTERN_LENGTH + 1))).toBe(false);
 		expect(isSafePattern('')).toBe(false);
 		expect(isSafePattern('(')).toBe(false);
@@ -106,6 +111,30 @@ describe('the operator and scope tables', () => {
 		);
 		expect(describePattern('a'.repeat(RULE_MAX_PATTERN_LENGTH + 1)).reason).toBe(PatternRejection.TOO_LONG);
 		expect(describePattern('[A-Z]{2}[0-9]{4}')).toEqual({ safe: true });
+	});
+
+	it('hands back a source to compile only for a pattern the analysis accepts, anchored as the analysis modelled it', () => {
+		// The pattern is a regular expression on purpose, so it is sanitised by screening rather than by
+		// escaping: an accepted pattern keeps every metacharacter, and only the anchors are added.
+		expect(sanitizeRegExp('[A-Z]{2}[0-9]{4}')).toEqual({ safe: true, source: '^(?:[A-Z]{2}[0-9]{4})$' });
+		expect(sanitizeRegExp('90210|90211', { caseInsensitive: true }).source).toBe('^(?:90210|90211)$');
+		expect(new RegExp(sanitizeRegExp('\\d{5}(?:-\\d{4})?').source as string).test('90210-1234')).toBe(true);
+
+		// A refused pattern carries the same verdict `describePattern` gives, and no source at all.
+		for (const [pattern, options] of [
+			['(a|a)+', {}],
+			['(?:a|A)+', { caseInsensitive: true }],
+			['(', {}],
+			['a'.repeat(RULE_MAX_PATTERN_LENGTH + 1), {}]
+		] as const) {
+			const sanitized = sanitizeRegExp(pattern, options);
+
+			expect(sanitized.source).toBeUndefined();
+			expect(sanitized).toEqual(describePattern(pattern, options));
+		}
+
+		// The same options reach the analysis: `(?:a|A)+` is safe only when the caller compiles without `i`.
+		expect(sanitizeRegExp('(?:a|A)+', RULE_MATCHES_PATTERN_OPTIONS).source).toBe('^(?:(?:a|A)+)$');
 	});
 
 	it('states the caps the platform publishes', () => {

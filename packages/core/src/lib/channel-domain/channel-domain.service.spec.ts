@@ -222,6 +222,32 @@ describe('ChannelDomainService — one stored form for a hostname', () => {
 		expect(service.normaliseHostname('  shop.example.com  ')).toBe('shop.example.com');
 	});
 
+	it('removes every trailing dot and no other, as the expression it replaced did', () => {
+		// The trailing dots used to be removed with `/\.+$/`; they are now removed by walking back from the
+		// end. The cases below are what that expression answered, so the two cannot have drifted.
+		const { service } = world();
+
+		expect(service.normaliseHostname('shop.example.com...')).toBe('shop.example.com');
+		expect(service.normaliseHostname('shop.example.com.:8443')).toBe('shop.example.com');
+		expect(service.normaliseHostname('https://shop.example.com../path')).toBe('shop.example.com');
+		// Only the run at the end goes: a dot inside the host is part of it, so `a..b` is still refused.
+		expect(service.normaliseHostname('shop..example.com', false)).toBe('');
+		// A host that is nothing but dots normalises to nothing, which is a refusal.
+		expect(service.normaliseHostname('....', false)).toBe('');
+	});
+
+	it('answers in linear time on a long run of dots that is not at the end', () => {
+		// The shape the unanchored `/\.+$/` was quadratic on: every dot of the run starts a new attempt that
+		// reads to the end of the run and fails there. Measured on Node: 50 000 dots took 4 s and 200 000
+		// took 109 s. The walk from the end stops at the first character that is not a dot.
+		const { service } = world();
+		const hostile = `${'.'.repeat(200_000)}x`;
+		const started = Date.now();
+
+		expect(service.normaliseHostname(hostile, false)).toBe('');
+		expect(Date.now() - started).toBeLessThan(1_000);
+	});
+
 	it('refuses a value that is not a hostname', async () => {
 		const { service } = world();
 

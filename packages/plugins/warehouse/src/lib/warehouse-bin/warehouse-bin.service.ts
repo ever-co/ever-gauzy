@@ -221,15 +221,15 @@ export class WarehouseBinService extends TenantAwareCrudService<WarehouseBin> {
 			throw new BadRequestException('A bin range must create at least one bin.');
 		}
 
-		const match = /^(.*?)(\d+)$/.exec(input.from ?? '');
+		const split = splitTrailingNumber(input.from ?? '');
 
-		if (!match) {
+		if (!split) {
 			throw new BadRequestException(
 				`The code "${input.from}" carries no number to continue from, so a range cannot be generated.`
 			);
 		}
 
-		const [, prefix, digits] = match;
+		const { prefix, digits } = split;
 		const start = Number.parseInt(digits, 10);
 		const bins: WarehouseBin[] = [];
 
@@ -1841,6 +1841,41 @@ interface IPlacementCorrection {
 
 /** A decimal quantity, as a metadata snapshot may state one. */
 const SNAPSHOT_QUANTITY_PATTERN = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
+
+/** The characters `.` does not match in an expression compiled without the `s` flag. */
+const LINE_TERMINATORS = ['\n', '\r', '\u2028', '\u2029'];
+
+/**
+ * Splits a bin code into the text before its trailing number and the number's digits.
+ *
+ * Exactly what `/^(.*?)(\d+)$/.exec(code)` captured: the lazy prefix leaves the longest run of ASCII
+ * digits the code ends with, and `.` refuses a line terminator anywhere in the prefix. The expression
+ * itself is not used because, on a code holding a long run of digits that is not at its end, the engine
+ * re-reads the run once for every character the lazy prefix grows by — quadratic in a value the
+ * request supplies. Walking back from the end reads each digit once.
+ *
+ * @param code The first code of a range.
+ * @returns The prefix and the digits, or undefined when the code does not end with a digit.
+ */
+function splitTrailingNumber(code: string): { prefix: string; digits: string } | undefined {
+	let start = code.length;
+
+	while (start > 0 && code.charCodeAt(start - 1) >= 0x30 && code.charCodeAt(start - 1) <= 0x39) {
+		start -= 1;
+	}
+
+	if (start === code.length) {
+		return undefined;
+	}
+
+	const prefix = code.slice(0, start);
+
+	if (LINE_TERMINATORS.some((terminator) => prefix.includes(terminator))) {
+		return undefined;
+	}
+
+	return { prefix, digits: code.slice(start) };
+}
 
 /**
  * @param bins What the bins of a run hold, by bin.
