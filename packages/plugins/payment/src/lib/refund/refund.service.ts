@@ -7,10 +7,10 @@ import {
 	Optional
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Repository, SaveOptions } from 'typeorm';
 import * as chalk from 'chalk';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
-import { BaseEvent, EventBus, Money, Payment, readAffectedRows } from '@gauzy/core';
+import { BaseEvent, EventBus, LegacyFindOneOptions, Money, Payment, readAffectedRows } from '@gauzy/core';
 import { Refund } from './refund.entity';
 import { TypeOrmRefundRepository } from './repository/type-orm-refund.repository';
 import { MikroOrmRefundRepository } from './repository/mikro-orm-refund.repository';
@@ -28,6 +28,12 @@ import { PaymentCaptureService } from '../payment-capture/payment-capture.servic
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundLineService } from '../refund-line/refund-line.service';
 import { PaymentRefundedEvent, RefundCreatedEvent } from '../events';
+
+/**
+ * The statuses a refund may be retired from: the two that moved no money and never will. See
+ * `RefundService.softRemove`.
+ */
+const RETIRABLE_REFUND_STATUSES: readonly RefundStatus[] = Object.freeze([RefundStatus.FAILED, RefundStatus.CANCELED]);
 
 /**
  * Money given back.
@@ -448,6 +454,37 @@ export class RefundService extends PaymentScopedCrudService<Refund> {
 		} as never);
 
 		return this.findRefundOrFail(id);
+	}
+
+	/**
+	 * Retires a refund recoverably — only one that never moved money and never will.
+	 *
+	 * **A retired refund drops out of every read, and the refundable figure is one of them.** That figure
+	 * is the captures of the payment minus {@link sumSucceededForPayment}, which reads the succeeded
+	 * refunds through the ordinary, soft-delete-filtered read. Retiring a `SUCCEEDED` refund therefore
+	 * handed the money it gave back to the next refund as refundable again, and the same payment could be
+	 * paid back twice. A `PENDING` refund is not retired either: it may still be in flight at the
+	 * provider, a callback that settles it would no longer find it, and `cancelRefund` is the act that
+	 * withdraws it. What remains — `FAILED` and `CANCELED` — moved nothing, and retiring one changes no
+	 * figure. `13` §11.4 keeps `refund` "soft delete only; no hard delete through the API", so this is the
+	 * one way a refund leaves the reads, on both surfaces: `DELETE /refunds/:id`, `DELETE /refunds/:id/soft`
+	 * and the `softDeleteRefund` field all reach it.
+	 *
+	 * @param id The refund to retire.
+	 * @param options Find options, forwarded to the scoped kernel read.
+	 * @param saveOptions The kernel's save options, forwarded unchanged.
+	 * @returns The retired refund.
+	 * @throws NotFoundException when the refund is not in the caller's organization.
+	 * @throws BadRequestException with `REFUND_NOT_RETIRABLE` when the refund succeeded or is still pending.
+	 */
+	public async softRemove(id: ID, options?: LegacyFindOneOptions<Refund>, saveOptions?: SaveOptions): Promise<Refund> {
+		const refund = await this.findRefundOrFail(id);
+
+		if (!RETIRABLE_REFUND_STATUSES.includes(refund.status as RefundStatus)) {
+			throw new BadRequestException('REFUND_NOT_RETIRABLE');
+		}
+
+		return super.softRemove(id, options, saveOptions);
 	}
 
 	/**

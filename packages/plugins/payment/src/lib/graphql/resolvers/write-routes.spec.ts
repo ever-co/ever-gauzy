@@ -18,8 +18,9 @@
  *   reaches.
  * - **Seven must not be mirrored** — `REFUSED`, and each refusal is cited where it is made. Two capture
  *   routes reach a service method that **always throws** `PAYMENT_CAPTURE_APPEND_ONLY`; three
- *   webhook-event routes write or rewrite the record of a callback the provider signed; and two hard
- *   deletes destroy a money row that `13` §11.4 puts beyond the API's reach. A field that can only refuse
+ *   webhook-event routes write or rewrite the record of a callback the provider signed; and two deletes
+ *   name a money row that `13` §11.4 puts beyond the API's reach — the capture's always refuses, and the
+ *   refund's retires the row (as `softDeleteRefund` does) rather than erasing it. A field that can only refuse
  *   is not a capability, which is the reasoning the marketplace wave used for its four always-405 routes.
  * - **Bucket three is empty, and that is an assertion rather than an omission.** No flagged route here is a
  *   pivot or a child row reached through a parent's or a sibling's field: this package has no `add*` /
@@ -43,14 +44,13 @@
  *   surfaces refuse identically. `PaymentSessionController.update` was mis-wired the same way and is
  *   repaired with it, because the field this wave delivers there is only a mirror if its route reaches the
  *   same method.
- * - **`DELETE /refund-reasons/:id`** reaches the inherited hard `delete` while the field
- *   `deleteRefundReason` reaches `RefundReasonService.deactivateReason`. Those are two different acts
- *   behind one name, and **this wave does not change it**: making a route named "delete" stop deleting is
- *   a semantics decision rather than a bug fix. It is recorded below as an owner decision, with the two
- *   sentences it falsifies — the controller's "a reason that is finished with is deactivated rather than
- *   deleted" and the resolver's "There is no hard delete" — each false of the route it sits beside, and
- *   with the third fact that `DELETE /refunds/:id` hard-deletes a money record against `13` §11.4 naming
- *   `refund` in its "no hard delete through the API" row.
+ * - **`DELETE /refund-reasons/:id`** reached the inherited hard `delete` while the field
+ *   `deleteRefundReason` reached `RefundReasonService.deactivateReason` — two different acts behind one
+ *   name, which falsified both the controller's "a reason that is finished with is deactivated rather than
+ *   deleted" and the resolver's "There is no hard delete". **The route now deactivates**, as the field
+ *   does, and `DELETE /refunds/:id` — which hard-deleted a money record against `13` §11.4 naming
+ *   `refund` in its "no hard delete through the API" row — now retires the refund through
+ *   `RefundService.softRemove`, as `softDeleteRefund` does. Both are pinned below.
  *
  * **Nothing is doubled here but the services.** The controllers are the real ones, the resolvers are the
  * real ones, `CrudController` behind them is restated in the shape the kernel declares it, and the
@@ -602,9 +602,11 @@ const REFUSED: {
 	{ controller: PaymentWebhookEventController, resource: 'PaymentWebhookEvent', route: 'update', expects: 'updatePaymentWebhookEvent', served: ['reprocessPaymentWebhookEvent', 'softDeletePaymentWebhookEvent', 'recoverPaymentWebhookEvent'] },
 	{ controller: PaymentWebhookEventController, resource: 'PaymentWebhookEvent', route: 'delete', expects: 'deletePaymentWebhookEvent', served: ['reprocessPaymentWebhookEvent', 'softDeletePaymentWebhookEvent', 'recoverPaymentWebhookEvent'] },
 	// `13` §11.4 names `refund` in the row it keeps: "**Indefinite** | **Soft delete only (`deletedAt`); no
-	// hard delete through the API**", and this route reaches the inherited hard `delete`, because
-	// `RefundService` declares no `delete` of its own. `17` §3.2's payment row names `softDeleteRefund` and
-	// `recoverRefund` and no `deleteRefund`, which is the same statement made by the design.
+	// hard delete through the API**", and `17` §3.2's payment row names `softDeleteRefund` and
+	// `recoverRefund` and no `deleteRefund`, which is the same statement made by the design. The route used to
+	// reach the inherited hard `delete`; it now retires the refund through `RefundService.softRemove` — the
+	// method `softDeleteRefund` reaches — so what it is for is answered by that field, and no `deleteRefund`
+	// is declared.
 	{ controller: RefundController, resource: 'Refund', route: 'delete', expects: 'deleteRefund', served: ['createRefund', 'updateRefund', 'approveRefund', 'cancelRefund', 'softDeleteRefund', 'recoverRefund'] },
 	// The collection's hard delete is the weakest refusal of the seven and is flagged as one. `05` §12.2
 	// forbids it conditionally — "a collection is created before any session and is never hard-deleted
@@ -1374,8 +1376,8 @@ describe('the fifteen flagged routes — four buckets, none of them left unread'
 
 	it('counts the two routes the audit credited to a same-named field as its own blind spot', () => {
 		// Neither of these two is in the instrument's fifteen, because a field of the expected name exists —
-		// which is exactly the blindness the assignment comparison cannot see through. The refund one is
-		// repaired by this wave and the reason one is an owner decision, so both are pinned here.
+		// which is exactly the blindness the assignment comparison cannot see through. Both are repaired — the
+		// refund's update by the wave that wrote this suite, the reason's delete since — and both are pinned.
 		expect(FLAGGED).not.toContain('updateRefund');
 		expect(FLAGGED).not.toContain('deleteRefundReason');
 
@@ -1389,22 +1391,22 @@ describe('the fifteen flagged routes — four buckets, none of them left unread'
 });
 
 /**
- * The owner decision this wave records rather than makes.
+ * The two deletes that destroyed what the design keeps, repaired.
  *
- * `DELETE /refund-reasons/:id` reaches the inherited hard `delete`, and the field
- * `deleteRefundReason` reaches `RefundReasonService.deactivateReason`. Two sentences in this package are
- * each false of the route beside them: the controller's own docstring says "a reason that is finished with
- * is deactivated rather than deleted: the reporting that groups by it has to keep resolving", and the
- * resolver's says "There is no hard delete". Both describe the field and neither describes the route. The
- * third fact is the one that makes it more than a naming complaint: `DELETE /refunds/:id` hard-deletes a
- * money record, while `13` §11.4 names `refund` in its "no hard delete through the API" row.
+ * `DELETE /refund-reasons/:id` reached the inherited hard `delete`, while the field `deleteRefundReason`
+ * reached `RefundReasonService.deactivateReason`: the controller's own docstring says "a reason that is
+ * finished with is deactivated rather than deleted: the reporting that groups by it has to keep resolving",
+ * and the resolver's says "There is no hard delete". The route now reaches the method the field reaches.
  *
- * The divergence is asserted so that a later wave meets it deliberately rather than by discovering it, and
- * nothing here changes either route: making a route named "delete" stop deleting is a semantics decision,
- * not a bug fix.
+ * `DELETE /refunds/:id` hard-deleted a money record, while `13` §11.4 names `refund` in its "no hard delete
+ * through the API" row. The route now retires the refund through `RefundService.softRemove` — the method the
+ * `softDeleteRefund` field and the `DELETE /refunds/:id/soft` route reach — which keeps the row and refuses
+ * a refund that succeeded or is still pending (`refund.service.spec.ts` holds that rule).
+ *
+ * Neither controller can reach the hard `delete` any more, and the controls below say so on the same stubs.
  */
-describe('the refund-reason delete — recorded, not repaired', () => {
-	it('reaches the inherited hard delete, while the field of that name deactivates', async () => {
+describe('the refund and refund-reason deletes — nothing the design keeps is erased', () => {
+	it('deactivates a reason on DELETE, through the method the field of that name reaches', async () => {
 		const reason: Row = {
 			delete: jest.fn().mockResolvedValue({ affected: 1 }),
 			deactivateReason: jest.fn().mockResolvedValue({ id: ID, isActive: false })
@@ -1412,29 +1414,41 @@ describe('the refund-reason delete — recorded, not repaired', () => {
 		const controller = new RefundReasonController(reason as never) as Row;
 		const resolver = new RefundReasonResolver(reason as never) as Row;
 
-		await controller.delete(ID);
-		await resolver.deleteRefundReason(ID);
+		const restAnswer = await controller.delete(ID);
+		const graphAnswer = await resolver.deleteRefundReason(ID);
 
-		// Two acts behind one name: the route removes the row, the field keeps it and clears `isActive`.
-		expect(reason.delete).toHaveBeenCalledTimes(1);
-		expect(reason.delete).toHaveBeenCalledWith(ID);
-		expect(reason.deactivateReason).toHaveBeenCalledTimes(1);
-		expect(reason.deactivateReason).toHaveBeenCalledWith(ID);
+		// One act behind one name: both surfaces keep the row and clear `isActive`.
+		expect(reason.deactivateReason).toHaveBeenCalledTimes(2);
+		expect(reason.deactivateReason).toHaveBeenNthCalledWith(1, ID);
+		expect(reason.deactivateReason).toHaveBeenNthCalledWith(2, ID);
+		expect(restAnswer).toEqual({ id: ID, isActive: false });
+		expect(graphAnswer).toMatchObject({ deleted: true, refundReason: { isActive: false } });
+		// CONTROL: the hard delete is not reached.
+		expect(reason.delete).not.toHaveBeenCalled();
 	});
 
-	it('reports the deletion as a deletion and the deactivation as a deactivation', async () => {
-		const reason: Row = {
+	it('retires a refund on DELETE, through the method softDeleteRefund reaches, and never hard-deletes it', async () => {
+		const refund: Row = {
 			delete: jest.fn().mockResolvedValue({ affected: 1 }),
-			deactivateReason: jest.fn().mockResolvedValue({ id: ID, isActive: false })
+			softRemove: jest.fn().mockResolvedValue({ id: ID, deletedAt: new Date(0) })
 		};
-		const resolver = new RefundReasonResolver(reason as never) as Row;
+		const controller = new RefundController(refund as never) as Row;
 
-		// The field's own payload says `deleted: true` while the row it carries is still there and merely
-		// inactive, which is the shape a reader of the schema cannot distinguish from a removal.
-		await expect(resolver.deleteRefundReason(ID)).resolves.toMatchObject({
-			deleted: true,
-			refundReason: { isActive: false }
-		});
+		await expect(controller.delete(ID)).resolves.toEqual({ id: ID, deletedAt: new Date(0) });
+
+		expect(refund.softRemove).toHaveBeenCalledTimes(1);
+		expect(refund.softRemove).toHaveBeenCalledWith(ID);
+		// CONTROL: the hard delete is not reached.
+		expect(refund.delete).not.toHaveBeenCalled();
+	});
+
+	it('keeps both routes under the permission they stated before', () => {
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(RefundController).delete)).toEqual([
+			PaymentPermission.REFUNDS_CREATE
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, handlersOf(RefundReasonController).delete)).toEqual([
+			PaymentPermission.REFUNDS_CREATE
+		]);
 	});
 });
 

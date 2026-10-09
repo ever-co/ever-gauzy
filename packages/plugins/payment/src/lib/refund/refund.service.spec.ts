@@ -60,6 +60,17 @@ jest.mock('@gauzy/core', () => {
 		async delete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.delete(criteria);
 		}
+
+		/** The kernel's recoverable retirement: the row is read inside the criteria it is handed and stamped. */
+		async softRemove(id: any, options: any = {}): Promise<any> {
+			const record = await this.typeOrmRepository.findOneBy({ ...(options?.where ?? {}), id });
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return this.typeOrmRepository.save({ ...record, deletedAt: new Date() });
+		}
 	}
 
 	return {
@@ -991,6 +1002,69 @@ describe('RefundService — approving, cancelling and failing (doc 10 §9.4, §9
 		await expect(fixture.service.findRefundOrFail('nope')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.approveRefund('theirs')).rejects.toBeInstanceOf(NotFoundException);
 		await expect(fixture.service.findRefunds()).resolves.toMatchObject({ total: 0 });
+	});
+});
+
+/**
+ * Retiring a refund (`DELETE /refunds/:id`, `DELETE /refunds/:id/soft`, `softDeleteRefund`).
+ *
+ * A retired refund drops out of every read, and the refundable figure — the captures minus
+ * `sumSucceededForPayment` — is one of them. Retiring a `SUCCEEDED` refund therefore made the money it gave
+ * back refundable a second time, and `DELETE /refunds/:id` used to go further and erase the row. A
+ * `PENDING` refund may still be in flight at the provider, and `cancelRefund` is what withdraws it. Only a
+ * refund that moved no money — `FAILED` or `CANCELED` — can be retired, and it is kept, not erased.
+ */
+describe('RefundService — retiring a refund never reopens money that went back (13 §11.4)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('refuses to retire a succeeded refund, which would make its money refundable again', async () => {
+		const fixture = refundFixture({
+			refunds: [refundRow('settled', { amount: '100', status: RefundStatus.SUCCEEDED })]
+		});
+
+		await expect(fixture.service.softRemove('settled')).rejects.toThrow(/REFUND_NOT_RETIRABLE/);
+
+		expect(fixture.tables.refund[0].deletedAt).toBeUndefined();
+		expect(await fixture.service.sumSucceededForPayment(PAYMENT)).toBe('100');
+		// The capture is fully refunded, so a second refund of the same money is still refused.
+		await expect(fixture.service.createRefund(refundInput({ amount: '1' }) as never)).rejects.toThrow(
+			/REFUND_AMOUNT_EXCEEDS_CAPTURED/
+		);
+	});
+
+	it('refuses to retire a pending refund, which is withdrawn by cancelling it', async () => {
+		const fixture = refundFixture({ refunds: [refundRow('pending')] });
+
+		await expect(fixture.service.softRemove('pending')).rejects.toThrow(/REFUND_NOT_RETIRABLE/);
+		expect(fixture.tables.refund[0].deletedAt).toBeUndefined();
+	});
+
+	it.each([RefundStatus.FAILED, RefundStatus.CANCELED])(
+		'retires a %s refund by stamping it, and keeps the row',
+		async (status) => {
+			const fixture = refundFixture({ refunds: [refundRow('done', { status })] });
+
+			const retired = await fixture.service.softRemove('done');
+
+			expect(retired.deletedAt).toBeInstanceOf(Date);
+			expect(fixture.tables.refund).toHaveLength(1);
+			expect(fixture.tables.refund[0]).toMatchObject({ id: 'done', status });
+		}
+	);
+
+	it('reports another organization’s refund as missing rather than retiring it', async () => {
+		const fixture = refundFixture({
+			refunds: [refundRow('theirs', { status: RefundStatus.CANCELED, organizationId: OTHER_ORG })]
+		});
+
+		await expect(fixture.service.softRemove('theirs')).rejects.toBeInstanceOf(NotFoundException);
+		expect(fixture.tables.refund[0].deletedAt).toBeUndefined();
 	});
 });
 
