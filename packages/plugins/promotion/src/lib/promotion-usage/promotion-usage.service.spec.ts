@@ -113,8 +113,97 @@ function criteriaOf(criteria: unknown): Record<string, unknown> {
 	return (criteria ?? {}) as Record<string, unknown>;
 }
 
-function serviceUnderTest(rows: IUsageRow[]) {
+function serviceUnderTest(rows: IUsageRow[], dialect: 'postgres' | 'sqlite' = 'postgres') {
+	/** The rows held `FOR UPDATE`, each with the promise that settles when its holder's transaction ends. */
+	const rowLocks = new Map<string, Promise<void>>();
+	const acquire = async (key: string, held: Array<() => void>): Promise<void> => {
+		while (rowLocks.has(key)) {
+			await rowLocks.get(key);
+		}
+
+		let release: () => void = () => undefined;
+		rowLocks.set(key, new Promise<void>((resolve) => (release = resolve)));
+		held.push(() => {
+			rowLocks.delete(key);
+			release();
+		});
+	};
+
+	/**
+	 * The manager a transaction hands its work: a `pessimistic_write` read holds the row until the
+	 * transaction ends under `postgres`, as `FOR UPDATE` does; under `sqlite` no row lock is taken and two
+	 * transactions run side by side, which leaves the conditional write as the only guard. Every write is
+	 * undone when the work throws, and reads hand back detached copies, as TypeORM does.
+	 */
+	const transactional = (undo: Array<() => void>, held: Array<() => void>) => ({
+		connection: { options: { type: dialect } },
+		createQueryBuilder: () => {
+			let where: Record<string, unknown> = {};
+			let locked = false;
+			const builder = {
+				where: (conditions: Record<string, unknown>) => {
+					where = conditions;
+
+					return builder;
+				},
+				setLock: (mode: string) => {
+					locked = mode === 'pessimistic_write';
+
+					return builder;
+				},
+				getOne: async () => {
+					const target = rows.find((one) => matches(one, where));
+
+					if (locked && target) {
+						await acquire(target.id, held);
+					}
+
+					const row = rows.find((one) => matches(one, where));
+
+					return row ? { ...row } : null;
+				}
+			};
+
+			return builder;
+		},
+		findOne: async (_entity: unknown, options: { where?: Record<string, unknown> }) => {
+			const row = rows.find((one) => matches(one, options?.where));
+
+			return row ? { ...row } : null;
+		},
+		update: async (_entity: unknown, criteria: Record<string, unknown>, partial: Partial<IUsageRow>) => {
+			const row = rows.find((one) => matches(one, criteria));
+
+			if (!row) {
+				return { affected: 0 };
+			}
+
+			const before = { ...row };
+
+			Object.assign(row, partial);
+			undo.push(() => Object.assign(row, before));
+
+			return { affected: 1 };
+		}
+	});
+
 	const repository = {
+		manager: {
+			transaction: async <T>(work: (manager: unknown) => Promise<T>): Promise<T> => {
+				const undo: Array<() => void> = [];
+				const held: Array<() => void> = [];
+
+				try {
+					return await work(transactional(undo, held));
+				} catch (error) {
+					undo.reverse().forEach((step) => step());
+
+					throw error;
+				} finally {
+					held.forEach((release) => release());
+				}
+			}
+		},
 		find: async (options?: { where?: Record<string, unknown> | Array<Record<string, unknown>> }) =>
 			rows.filter((row) => matches(row, options?.where)),
 		findOne: async (options?: { where?: Record<string, unknown> }) =>
@@ -341,5 +430,61 @@ describe('PromotionUsageService — the behaviour each defect was found by', () 
 		expect(Money.of(rows[0].amount, 'USD').add(Money.of(result.reverted, 'USD')).toStorageString()).toBe(
 			'25.000000'
 		);
+	});
+});
+
+/**
+ * Two reversals of one redemption at the same moment (PR #10254 review, the sibling of "Gift cards can
+ * spend twice").
+ *
+ * A reversal read the registered benefit, computed the residual and wrote it back as an absolute amount
+ * with no lock: two partial returns of one order reverted together both read the whole benefit, and the
+ * second write erased the first one's reduction. Each race runs on a storage that honours `FOR UPDATE`
+ * (`postgres`) and on one that takes no row lock (`sqlite`).
+ */
+describe('PromotionUsageService — concurrent reversals of one redemption', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it.each(['postgres', 'sqlite'] as const)(
+		'measures each of two overlapping partial reversals against what the other left (%s)',
+		async (dialect) => {
+			const { rows, service } = serviceUnderTest(
+				[usage({ id: 'usage-1', orderId: ORDER, amount: '100.000000', status: PromotionUsageStatus.REGISTERED })],
+				dialect
+			);
+
+			const [first, second] = await Promise.all([
+				service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.PROPORTIONAL, '0.5'),
+				service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.PROPORTIONAL, '0.5')
+			]);
+
+			// Half of 100, then half of what is left: what went back and what the customer keeps add up to
+			// what was registered, and the row says what the two reversals left.
+			const returned = Money.of(first.reverted, 'USD').add(Money.of(second.reverted, 'USD'));
+
+			expect(returned.toStorageString()).toBe('75.000000');
+			expect(Money.of(rows[0].amount, 'USD').toStorageString()).toBe('25.000000');
+			expect(returned.add(Money.of(rows[0].amount, 'USD')).toStorageString()).toBe('100.000000');
+		}
+	);
+
+	it.each(['postgres', 'sqlite'] as const)('reverts a whole redemption once when two reversals race (%s)', async (dialect) => {
+		const { rows, service } = serviceUnderTest(
+			[usage({ id: 'usage-1', orderId: ORDER, amount: '25.000000', status: PromotionUsageStatus.REGISTERED })],
+			dialect
+		);
+
+		const results = await Promise.all([
+			service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.ALWAYS),
+			service.revert(PROMOTION, ORDER, RevertOnReturnPolicy.ALWAYS)
+		]);
+
+		expect(results.map((result) => result.reverted).sort()).toEqual(['0', '25']);
+		expect(rows[0].status).toBe(PromotionUsageStatus.REVERTED);
 	});
 });

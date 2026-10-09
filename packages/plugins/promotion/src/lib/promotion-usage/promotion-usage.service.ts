@@ -1,7 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { DecimalString, ID, IPagination } from '@gauzy/contracts';
 import {
 	Money,
+	readAffectedRows,
 	RequestContext,
 	compareDecimalStrings,
 	normalizeDecimalString,
@@ -12,6 +15,12 @@ import { TypeOrmPromotionUsageRepository } from './repository/type-orm-promotion
 import { MikroOrmPromotionUsageRepository } from './repository/mikro-orm-promotion-usage.repository';
 import { IPromotionUsage, PromotionUsageStatus, RevertOnReturnPolicy } from '../promotion.types';
 import { TenantScopedCrudService } from '../shared/tenant-scoped-crud.service';
+
+/** How many times a reversal is decided again when another writer moved the redemption first. */
+const REVERT_ATTEMPTS = 3;
+
+/** A conditional write on a redemption that matched no row: another writer moved it first. */
+class PromotionUsageMovedError extends Error {}
 
 /**
  * The redemption ledger: one row per application of a promotion.
@@ -151,11 +160,58 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 		policy: RevertOnReturnPolicy = RevertOnReturnPolicy.PROPORTIONAL,
 		returnedShare: DecimalString | number = 1
 	): Promise<{ reverted: DecimalString; usage: IPromotionUsage | null }> {
-		const usage = await this.typeOrmPromotionUsageRepository.findOneBy({
-			promotionId,
-			orderId,
-			...this.scope
-		});
+		const share = this.clampedShare(policy, returnedShare);
+
+		// **Decided on the redemption as it stands under its row lock, and written conditionally on it.**
+		// The residual used to be computed from a read taken before any lock and written back as an absolute
+		// amount: two partial returns of one order reverted at the same moment both read the whole benefit,
+		// and the second write erased the first one's reduction, so the row said the customer kept more than
+		// the two reversals left them while both reported what they returned to the budget.
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await this.typeOrmPromotionUsageRepository.manager.transaction((manager: EntityManager) =>
+					this.revertOn(manager, promotionId, orderId, share)
+				);
+			} catch (error) {
+				if (!(error instanceof PromotionUsageMovedError)) {
+					throw error;
+				}
+
+				if (attempt >= REVERT_ATTEMPTS) {
+					throw new ConflictException(
+						`PROMOTION_USAGE_CONFLICT: the redemption of promotion '${promotionId}' on order '${orderId}' was moved by another write on each of ${REVERT_ATTEMPTS} attempts, so nothing was written. Try again.`
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * One attempt of {@link revert}, on the transaction it opened.
+	 *
+	 * The redemption is read `FOR UPDATE` on Postgres and MySQL (SQLite's single writer is its lock), and
+	 * the write names the amount and the status it read among its criteria, so a reversal decided on a
+	 * figure another one has since moved changes nothing and is decided again.
+	 *
+	 * @param manager The open transaction.
+	 * @param promotionId The promotion whose redemption is being reverted.
+	 * @param orderId The order the redemption belongs to.
+	 * @param share The share of the registered benefit that goes back.
+	 * @returns What was reverted, and the row as the reversal left it.
+	 * @throws PromotionUsageMovedError when the conditional write matched no row.
+	 */
+	private async revertOn(
+		manager: EntityManager,
+		promotionId: ID,
+		orderId: ID,
+		share: DecimalString
+	): Promise<{ reverted: DecimalString; usage: IPromotionUsage | null }> {
+		const query = manager
+			.createQueryBuilder(PromotionUsage, 'usage')
+			.where({ promotionId, orderId, ...this.readScope } as never);
+		const usage = this.takesRowLocks(manager)
+			? await query.setLock('pessimistic_write').getOne()
+			: await query.getOne();
 
 		if (!usage) {
 			throw new NotFoundException('PROMOTION_NOT_FOUND: no redemption of this promotion on that order.');
@@ -166,7 +222,6 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 		}
 
 		const registered = Money.of(usage.amount, usage.currency);
-		const share = this.clampedShare(policy, returnedShare);
 
 		// A proportional reversal is an allocation of the registered amount rather than a multiplication
 		// by a fraction: the two parts are whole minor units and sum back to the whole exactly, so the
@@ -188,18 +243,34 @@ export class PromotionUsageService extends TenantScopedCrudService<PromotionUsag
 		const reverted = normalizeDecimalString(revertedPart.amount);
 		const residual = normalizeDecimalString(residualPart.amount);
 
-		if (revertedPart.equals(registered)) {
-			await this.update(usage.id, { status: PromotionUsageStatus.REVERTED } as never);
-		} else {
-			// A partial reversal keeps the row registered and reduces the recorded benefit, so the
-			// residue stays attributable to the units the customer kept.
-			await this.update(usage.id, { amount: residual } as never);
+		const written = await manager.update(
+			PromotionUsage,
+			{ id: usage.id, amount: usage.amount, status: usage.status, ...this.readScope } as never,
+			(revertedPart.equals(registered)
+				? { status: PromotionUsageStatus.REVERTED }
+				: // A partial reversal keeps the row registered and reduces the recorded benefit, so the
+				  // residue stays attributable to the units the customer kept.
+				  { amount: residual }) as never
+		);
+
+		if (readAffectedRows(written) === 0) {
+			throw new PromotionUsageMovedError();
 		}
 
 		return {
 			reverted,
-			usage: await this.typeOrmPromotionUsageRepository.findOneBy({ id: usage.id, ...this.scope })
+			usage: (await manager.findOne(PromotionUsage, { where: { id: usage.id } as never })) as IPromotionUsage | null
 		};
+	}
+
+	/**
+	 * @param manager The open transaction.
+	 * @returns Whether the dialect behind it has row locks to take; SQLite's single writer is its lock.
+	 */
+	private takesRowLocks(manager: EntityManager): boolean {
+		const type = manager.connection?.options?.type as string | undefined;
+
+		return type === DatabaseTypeEnum.postgres || type === DatabaseTypeEnum.mysql;
 	}
 
 	/**
