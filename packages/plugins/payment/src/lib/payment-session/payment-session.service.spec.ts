@@ -91,6 +91,9 @@ jest.mock('@gauzy/core', () => {
 			}
 		},
 		Money: jest.requireActual('@gauzy/core/src/lib/money/money').Money,
+		// The platform's own affected-row reader, which the composed collection service decides its
+		// conditional writes with.
+		readAffectedRows: jest.requireActual('@gauzy/core/src/lib/database/database.helper').readAffectedRows,
 		BaseEvent: class {},
 		EventBus: class {},
 		Payment: class Payment {},
@@ -105,6 +108,22 @@ jest.mock('@gauzy/core', () => {
 		}
 	};
 });
+
+/**
+ * The affected-row reader above asks the configuration which dialect is in play, and the configuration
+ * reads the process environment at import time; there is none here.
+ */
+jest.mock('@gauzy/config', () => ({
+	isMySQL: () => false,
+	isPostgres: () => false,
+	DatabaseTypeEnum: {
+		mongodb: 'mongodb',
+		sqlite: 'sqlite',
+		betterSqlite3: 'better-sqlite3',
+		postgres: 'postgres',
+		mysql: 'mysql'
+	}
+}));
 
 import { NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
@@ -202,7 +221,50 @@ function repository(tables: Record<string, Row[]>, tableName: string) {
 			return String(row[field] ?? '') === String(expected ?? '');
 		});
 
+	/**
+	 * The manager the composed collection service opens its transaction on: the entity-keyed reads and
+	 * the conditional write it makes, against this table, with every write undone when the work throws.
+	 * A conditional write is a WHERE, so every member of its criteria has to hold for the row to change.
+	 */
+	const manager = {
+		transaction: async (run: (transactional: any) => Promise<any>) => {
+			const undo: Array<() => void> = [];
+
+			try {
+				return await run({
+					findOne: async (_entity: unknown, options: any = {}) => {
+						const row = rows().find((one) => matches(one, options.where));
+
+						return row ? { ...row } : null;
+					},
+					update: async (_entity: unknown, criteria: any, partial: Row) => {
+						const row = rows().find((one) => matches(one, criteria ?? {}));
+
+						if (!row) {
+							return { affected: 0 };
+						}
+
+						const before = { ...row };
+
+						Object.assign(row, partial);
+						undo.push(() => {
+							Object.keys(row).forEach((key) => delete row[key]);
+							Object.assign(row, before);
+						});
+
+						return { affected: 1 };
+					}
+				});
+			} catch (error) {
+				undo.reverse().forEach((step) => step());
+
+				throw error;
+			}
+		}
+	};
+
 	return {
+		manager,
 		metadata: { tableName, hasColumnWithPropertyPath: () => false },
 		find: async (options: any = {}) => rows().filter((row) => matches(row, options.where)),
 		findOneBy: async (where: Row) => rows().find((row) => matches(row, where)) ?? null,

@@ -137,6 +137,7 @@ import { FindOperator } from 'typeorm';
 import { Payment, RequestContext } from '@gauzy/core';
 import { PaymentCapture } from '../payment-capture/payment-capture.entity';
 import { PaymentCaptureService } from '../payment-capture/payment-capture.service';
+import { PaymentCollection } from '../payment-collection/payment-collection.entity';
 import { PaymentCollectionService } from '../payment-collection/payment-collection.service';
 import { RefundStatus } from '../payment.types';
 import { RefundLine } from '../refund-line/refund-line.entity';
@@ -207,7 +208,9 @@ const ENTITY_TABLES = new Map<unknown, keyof ITables>([
 	// both: a capture row that outlived a refused compare-and-swap on the payment would be a ledger
 	// entry for money the payment does not account for.
 	[PaymentCapture, 'payment_capture'],
-	[Payment, 'payment']
+	[Payment, 'payment'],
+	// The collection moves on the same transaction as the payment and the capture or refund that move it.
+	[PaymentCollection, 'payment_collection']
 ]);
 
 /**

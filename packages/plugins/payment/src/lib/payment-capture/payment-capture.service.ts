@@ -68,6 +68,13 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 	 * entry for money the payment does not account for. Inside one transaction neither can outlive the
 	 * other.
 	 *
+	 * **The collection moves in that same transaction.** It used to be written after the commit, by a
+	 * read-and-replace of its running total: a collection that then refused the capture left a committed
+	 * capture behind a request that reported failure, and two overlapping captures of one collection both
+	 * read the same total, so the second write erased the first one's increment. The collection is now
+	 * read under its row lock, checked against its ceiling and written conditionally on the totals it
+	 * read, on this transaction (see `PaymentCollectionService.recordCapture`).
+	 *
 	 * @param input The capture to record.
 	 * @returns The stored capture.
 	 * @throws NotFoundException when the payment is not in the caller's organization.
@@ -145,7 +152,7 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 				});
 			}
 
-			return manager.save(
+			const saved = await manager.save(
 				PaymentCapture,
 				manager.create(PaymentCapture, {
 					...input,
@@ -156,11 +163,17 @@ export class PaymentCaptureService extends PaymentScopedCrudService<PaymentCaptu
 					...this.scope
 				} as never)
 			);
-		});
 
-		if (payment.paymentCollectionId) {
-			await this.paymentCollectionService.recordCapture(payment.paymentCollectionId, amount.amount);
-		}
+			if (payment.paymentCollectionId) {
+				// The collection moves on this same transaction, under its row lock and conditionally on
+				// the totals it read, so the payment, the capture and the collection agree or all three
+				// roll back: a collection that refuses the capture (its own ceiling, measured under the
+				// lock) takes the payment's new total and the capture row back with it.
+				await this.paymentCollectionService.recordCapture(payment.paymentCollectionId, amount.amount, manager);
+			}
+
+			return saved;
+		});
 
 		await this.publish(
 			new PaymentCapturedEvent(
