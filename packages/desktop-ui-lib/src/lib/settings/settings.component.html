@@ -185,6 +185,7 @@
 						<nb-card>
 							<nb-card-body>
 								<nb-select
+									[placeholder]="'TIMER_TRACKER.SETTINGS.PRIMARY_DISPLAY' | translate"
 									[(ngModel)]="screenshotNotificationDisplayId"
 									(ngModelChange)="selectNotificationDisplay($event)"
 								>

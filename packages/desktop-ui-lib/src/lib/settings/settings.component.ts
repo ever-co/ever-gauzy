@@ -841,6 +841,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				});
 				break;
 			}
+			case 'displays_changed': {
+				this._ngZone.run(() => this.loadNotificationDisplays());
+				break;
+			}
 			case 'show_about': {
 				this._ngZone.run(() => {
 					this._dialogService.open(AboutComponent);
@@ -884,8 +888,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	/**
-	 * Lists the connected displays for the notification display setting. A display that is later
-	 * disconnected is handled in the main process, which falls back to the primary display.
+	 * Lists the connected displays for the notification display setting. Reloaded whenever the main
+	 * process reports a display change. A chosen display that is later disconnected is handled in the
+	 * main process, which falls back to the primary display.
 	 */
 	async loadNotificationDisplays(): Promise<void> {
 		try {

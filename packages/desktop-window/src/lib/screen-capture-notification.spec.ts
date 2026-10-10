@@ -112,6 +112,20 @@ describe('ScreenCaptureNotification placement', () => {
 			expect(browserWindow.setPosition).toHaveBeenLastCalledWith(1920 - (310 + 16), 16);
 		});
 
+		it('takes effect on the next show() when it changes, without a new window', () => {
+			otherDisplays = [secondary];
+			const notification = new ScreenCaptureNotification();
+
+			appSetting = { screenshotNotificationDisplayId: 2 };
+			notification.show();
+			expect(browserWindow.setPosition).toHaveBeenLastCalledWith(1920 + 2560 - (310 + 16), 16);
+
+			// Back to the default
+			appSetting = { screenshotNotificationDisplayId: null };
+			notification.show();
+			expect(browserWindow.setPosition).toHaveBeenLastCalledWith(1920 - (310 + 16), 16);
+		});
+
 		it('is the primary display when nothing was chosen', () => {
 			otherDisplays = [secondary];
 			appSetting = { screenshotNotificationDisplayId: null };
