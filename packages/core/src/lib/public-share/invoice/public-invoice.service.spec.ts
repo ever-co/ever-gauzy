@@ -28,7 +28,8 @@ const InvoiceSchema = new EntitySchema({
 		token: { type: 'text', nullable: true },
 		tenantId: { type: 'varchar', nullable: true },
 		organizationId: { type: 'varchar', nullable: true },
-		status: { type: 'varchar', nullable: true }
+		status: { type: 'varchar', nullable: true },
+		internalNote: { type: 'text', nullable: true }
 	}
 });
 
@@ -109,6 +110,18 @@ describe('PublicInvoiceService.findOneByConditions (GET, GHSA-28wv-vrxj-rp4q)', 
 	it('returns the invoice for its stored share token', async () => {
 		const token = await storedToken(VICTIM.id);
 		await expect(service.findOneByConditions({ id: VICTIM.id, token })).resolves.toMatchObject({ id: VICTIM.id });
+	});
+
+	it('never serves the internal note to the share-link holder — CONTROL: the stored row carries one', async () => {
+		await invoices.update(VICTIM.id, { internalNote: 'Margin 40% - do not discount' });
+		const token = await storedToken(VICTIM.id);
+
+		expect((await invoices.findOneBy({ id: VICTIM.id })).internalNote).toBe('Margin 40% - do not discount');
+
+		const served = await service.findOneByConditions({ id: VICTIM.id, token });
+
+		expect(served).toMatchObject({ id: VICTIM.id, status: 'SENT' });
+		expect(served).not.toHaveProperty('internalNote');
 	});
 
 	it('keeps accepting a link mailed before share tokens were typed (it equals the stored token)', async () => {

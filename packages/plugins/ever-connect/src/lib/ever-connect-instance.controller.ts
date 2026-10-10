@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesEnum } from '@gauzy/contracts';
 import { RoleGuard, Roles } from '@gauzy/core';
 import { ConnectResult, EverConnectConnectionService } from './ever-connect-connection.service';
+import { EntitlementImportResult, EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService, IntegrationView } from './ever-connect-integration-state.service';
 import type { RequestWithUser } from './ever-connect-request';
 import { EverConnectStore } from './ever-connect.store';
@@ -38,7 +39,8 @@ export class EverConnectInstanceController {
 	constructor(
 		private readonly connection: EverConnectConnectionService,
 		private readonly states: EverConnectIntegrationStateService,
-		private readonly store: EverConnectStore
+		private readonly store: EverConnectStore,
+		private readonly entitlements: EverConnectEntitlementService
 	) {}
 
 	/**
@@ -142,6 +144,24 @@ export class EverConnectInstanceController {
 			throw new BadRequestException('accepted must be true or false');
 		}
 		return this.states.accept(key, body.accepted, request.user?.id ?? null);
+	}
+
+	/**
+	 * Imports a downloaded entitlement document, for an installation without a route to Ever Platform:
+	 * `{ "jws": "<the document>" }` (at most 16 KiB). The checks of a refresh apply; the document must
+	 * name this installation or one of its organization links. 409 when not connected, 422 when refused.
+	 */
+	@Post('entitlement/import')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	async importEntitlement(
+		@Req() request: RequestWithUser,
+		@Body() body: { jws?: unknown }
+	): Promise<EntitlementImportResult> {
+		return this.entitlements.importDocument(body?.jws, {
+			actorLabel: 'operator',
+			actorUserId: request.user?.id ?? null
+		});
 	}
 
 	/** The installation's public address, once "Installation address" is enabled: `{ "url": "https://…" }`. */

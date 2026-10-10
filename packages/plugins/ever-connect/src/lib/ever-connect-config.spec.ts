@@ -41,7 +41,7 @@ describe('readEverConnectConfig', () => {
 			returnUrl: null,
 			returnUnusable: false,
 			issuer: null,
-			loopback: false
+			localPlatform: false
 		});
 	});
 
@@ -98,17 +98,23 @@ describe('readEverConnectConfig', () => {
 		expect(deniedByEnv(readEverConnectConfig({ EVER_CONNECT_INTEGRATIONS_DENY: '*' }), 'webhooks')).toBe(true);
 	});
 
-	it('the test issuer and root keys are honoured for a loopback platform only', () => {
+	it('the test issuer and root keys are honoured for a local or private platform address only', () => {
 		const env = { EVER_PLATFORM_ISSUER: 'https://mock-platform.test' };
 		expect(readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'http://127.0.0.1:18081' })).toMatchObject({
 			issuer: 'https://mock-platform.test',
-			loopback: true
+			localPlatform: true
+		});
+		// The egress audit's mock platform: a fixed address of a private range on its sealed network.
+		expect(readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'http://10.231.7.252:8080' })).toMatchObject({
+			issuer: 'https://mock-platform.test',
+			localPlatform: true
 		});
 		const warn = jest.fn();
 		expect(
-			readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'http://192.168.1.20:8080' }, warn)
-		).toMatchObject({ issuer: null, loopback: false });
-		expect(warn.mock.calls.map(([message]) => message).join(' ')).toMatch(/loopback/);
+			readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'https://203.0.113.10' }, warn)
+		).toMatchObject({ issuer: null, localPlatform: false });
+		expect(warn.mock.calls.map(([message]) => message).join(' ')).toMatch(/local or private/);
+		expect(readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'http://192.168.1.20:8080' }).localPlatform).toBe(true);
 		expect(readEverConnectConfig({ ...env, EVER_PLATFORM_API_URL: 'https://api-dev.ever.co' }).issuer).toBeNull();
 	});
 
@@ -123,11 +129,14 @@ describe('readEverConnectConfig', () => {
 		);
 	});
 
-	it('the return address is the web app origin (https, or http on a local host); nothing else', () => {
+	it('the return address is the Ever Platform page of the web app (https, or http on a local host); nothing else', () => {
 		expect(readEverConnectConfig({ CLIENT_BASE_URL: 'https://app.example.test/' })).toMatchObject({
 			returnOrigin: 'https://app.example.test',
-			returnUrl: 'https://app.example.test/'
+			returnUrl: 'https://app.example.test/#/pages/integrations/ever-connect'
 		});
+		expect(readEverConnectConfig({ CLIENT_BASE_URL: 'https://example.test/gauzy/' }).returnUrl).toBe(
+			'https://example.test/gauzy/#/pages/integrations/ever-connect'
+		);
 		expect(readEverConnectConfig({ CLIENT_BASE_URL: 'http://localhost:4200' }).returnOrigin).toBe(
 			'http://localhost:4200'
 		);

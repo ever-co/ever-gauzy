@@ -5311,7 +5311,10 @@
 			"payment-receipt": "Квитанция об оплате",
 			"reject-candidate": "Отклонить кандидата"
 		},
-		"HTML_EDITOR": "HTML-редактор"
+		"HTML_EDITOR": "HTML-редактор",
+		"FULL_PREVIEW": "Полный просмотр",
+		"VIEW_GRID": "Сетка",
+		"VIEW_EDITOR": "Редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Трубопроводы",
@@ -5361,37 +5364,192 @@
 		"QUICK_ACTIONS": "Быстрые действия"
 	},
 	"SETTINGS_FILE_STORAGE": {
-		"FILE_PROVIDER": "Поставщик файлов",
+		"FILE_PROVIDER": "Провайдер файлов",
+		"SHOW_SECRET": "Показать секрет",
+		"HIDE_SECRET": "Скрыть секрет",
+		"SUMMARY": {
+			"TITLE": "Текущая конфигурация",
+			"DESCRIPTION": "Последние сохранённые настройки — используются для новых загрузок.",
+			"PROVIDER": "Провайдер",
+			"BUCKET": "Бакет / имя облака",
+			"REGION": "Регион",
+			"ENDPOINT": "Эндпоинт",
+			"CREDENTIALS": "Учётные данные",
+			"CREDENTIALS_SAVED": "Сохранены",
+			"CREDENTIALS_INCOMPLETE": "Неполные",
+			"CREDENTIALS_NONE": "Не заданы",
+			"CREDENTIALS_NOT_NEEDED": "Не требуются",
+			"SERVER_DEFAULT": "Настройки сервера по умолчанию"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Где получить ключи",
+			"LOCAL": {
+				"NAME": "Локальный диск",
+				"DESCRIPTION": "файлы сохраняются в файловой системе сервера API."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "файлы сохраняются в бакет AWS S3. Используйте ключ доступа IAM с правами на чтение и запись в бакет."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-совместимое облачное хранилище. Учётные данные проверяются в Wasabi при сохранении."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "хостинг изображений и видео. Имя облака и API-ключи находятся в консоли Cloudinary в разделе API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-совместимое объектное хранилище с необязательным CDN. Создайте ключ доступа Spaces в панели управления DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Локальное хранилище",
+			"WHERE": "Загруженные файлы записываются в файловую систему сервера API.",
+			"NO_CONFIG": "Настраивать нечего — локальное хранилище работает сразу.",
+			"WARNING": "Файлы будут потеряны, если сервер переразвернуть без постоянного тома, и они не разделяются между несколькими экземплярами API. В продакшене используйте облачного провайдера."
+		},
+		"CHECK": {
+			"BUTTON": "Проверить конфигурацию",
+			"OK": "Все обязательные поля заполнены, URL-адреса корректны. Сами ключи проверяет только провайдер.",
+			"OK_LOCAL": "Локальному хранилищу не нужна настройка.",
+			"OK_SERVER_DEFAULTS": "Ничего не упущено. Эти пустые поля берутся из конфигурации сервера:",
+			"MISSING": "Не заполнено:",
+			"INVALID_URL": "Некорректный http(s) URL:",
+			"HTTPS_REQUIRED": "Нужен https:// — ключи отправляются на этот адрес:"
+		},
 		"S3": {
 			"HEADER": "Конфигурация S3",
+			"SUBTITLE": "Храните загруженные файлы в бакете Amazon S3.",
+			"SECTIONS": {
+				"CREDENTIALS": "Учётные данные",
+				"CREDENTIALS_HINT": "Ключ доступа IAM с правами на чтение и запись в бакет.",
+				"BUCKET": "Бакет",
+				"BUCKET_HINT": "Куда записываются загруженные файлы."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Открытая часть пары ключей.",
+				"SECRET_ACCESS_KEY": "Показывается только один раз — при создании ключа. Сохранённые значения возвращаются замаскированными.",
+				"REGION": "Регион AWS, в котором находится бакет, например us-east-1 или eu-west-1.",
+				"BUCKET": "Имя бакета точно как в консоли S3."
+			},
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID ключа доступа",
 				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
 				"REGION": "Регион",
-				"BUCKET": "Ведро"
+				"BUCKET": "Бакет"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "ID ключа доступа",
 				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
 				"REGION": "Регион",
-				"BUCKET": "Ведро"
+				"BUCKET": "Бакет"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Configuration",
+			"HEADER": "Конфигурация Wasabi",
+			"SUBTITLE": "Храните загруженные файлы в бакете Wasabi через его S3-совместимый API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Учётные данные",
+				"CREDENTIALS_HINT": "Пара ключей доступа из консоли Wasabi.",
+				"BUCKET": "Бакет и эндпоинт",
+				"BUCKET_HINT": "Куда записываются загруженные файлы.",
+				"OPTIONS": "Параметры"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Открытая часть пары ключей.",
+				"SECRET_ACCESS_KEY": "Показывается только один раз — при создании ключа. Сохранённые значения возвращаются замаскированными.",
+				"REGION": "Регион бакета, например us-east-1 или eu-central-1.",
+				"SERVICE_URL": "S3-эндпоинт этого региона.",
+				"BUCKET": "Строчные буквы, цифры, точки и дефисы. Имена уникальны во всём Wasabi.",
+				"FORCE_PATH_STYLE": "Адресовать файлы как эндпоинт/бакет/файл вместо бакет.эндпоинт/файл. Оставьте включённым, если вам не нужны virtual-hosted URL."
+			},
+			"SUGGESTED_ENDPOINT": "Эндпоинт для этого региона:",
+			"USE_SUGGESTION": "Использовать",
+			"SAVE_NOTE": "При сохранении Gauzy создаёт бакет в Wasabi с этими учётными данными. Если Wasabi отклонит запрос, настройки не сохранятся.",
 			"LABELS": {
 				"ACCESS_KEY_ID": "ID ключа доступа",
 				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
 				"REGION": "Регион",
-				"BUCKET": "Ведро",
-				"SERVICE_URL": "URL-адрес сервиса"
+				"BUCKET": "Бакет",
+				"SERVICE_URL": "URL сервиса",
+				"FORCE_PATH_STYLE": "URL в стиле пути"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "ID ключа доступа",
 				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
 				"REGION": "Регион",
-				"BUCKET": "Ведро",
-				"SERVICE_URL": "URL-адрес сервиса"
+				"BUCKET": "Бакет",
+				"SERVICE_URL": "URL сервиса"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Конфигурация Cloudinary",
+			"SUBTITLE": "Храните загруженные файлы в Cloudinary и отдавайте их через его сеть доставки.",
+			"SECTIONS": {
+				"ACCOUNT": "Аккаунт",
+				"ACCOUNT_HINT": "Все три значения есть в консоли Cloudinary в разделе API Keys.",
+				"DELIVERY": "Доставка",
+				"DELIVERY_HINT": "Как формируются ссылки на загруженные файлы."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Имя, показанное вверху консоли Cloudinary.",
+				"ACCESS_API_KEY": "Идентифицирует аккаунт; используется вместе с API-секретом.",
+				"ACCESS_API_SECRET": "Сохранённые значения возвращаются замаскированными.",
+				"DELIVERY_URL": "Базовый адрес ссылок. Оставьте https://res.cloudinary.com, если не используете свой домен.",
+				"SECURE": "Формировать ссылки с https://. Оставьте True."
+			},
+			"LABELS": {
+				"CLOUD_NAME": "Имя облака",
+				"ACCESS_API_KEY": "API-ключ",
+				"ACCESS_API_SECRET": "API-секрет",
+				"DELIVERY_URL": "URL доставки",
+				"SECURE": "Защищённое соединение (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Имя облака",
+				"ACCESS_API_KEY": "API-ключ",
+				"ACCESS_API_SECRET": "API-секрет",
+				"DELIVERY_URL": "URL доставки",
+				"SECURE": "Защищённое соединение (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Конфигурация DigitalOcean",
+			"SUBTITLE": "Храните загруженные файлы в DigitalOcean Space через его S3-совместимый API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Учётные данные",
+				"CREDENTIALS_HINT": "Ключ доступа Spaces из панели управления DigitalOcean.",
+				"BUCKET": "Space и эндпоинт",
+				"BUCKET_HINT": "Куда записываются загруженные файлы.",
+				"OPTIONS": "Параметры"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Открытая часть пары ключей.",
+				"SECRET_ACCESS_KEY": "Показывается только один раз — при создании ключа. Сохранённые значения возвращаются замаскированными.",
+				"SERVICE_URL": "Эндпоинт дата-центра вашего Space, например https://fra1.digitaloceanspaces.com.",
+				"REGION": "Всегда us-east-1, как требует Spaces; дата-центр определяется эндпоинтом.",
+				"BUCKET": "Имя Space.",
+				"CDN_URL": "Необязательно. CDN-эндпоинт Space, если CDN включён.",
+				"FORCE_PATH_STYLE": "Адресовать файлы как эндпоинт/space/файл вместо space.эндпоинт/файл."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID ключа доступа",
+				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+				"REGION": "Регион",
+				"BUCKET": "Бакет",
+				"SERVICE_URL": "URL сервиса",
+				"CDN_URL": "URL CDN",
+				"FORCE_PATH_STYLE": "URL в стиле пути"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID ключа доступа",
+				"SECRET_ACCESS_KEY": "Секретный ключ доступа",
+				"REGION": "Регион",
+				"BUCKET": "Бакет",
+				"SERVICE_URL": "URL сервиса",
+				"CDN_URL": "URL CDN"
 			}
 		}
 	},
@@ -5489,7 +5647,11 @@
 			"invoice": "Счет",
 			"estimate": "Оценить",
 			"receipt": "Квитанция"
-		}
+		},
+		"VIEW_GRID": "Сетка",
+		"VIEW_EDITOR": "Редактор",
+		"FULL_PREVIEW": "Полный просмотр",
+		"SAVED": "Шаблон '{{ templateName }}' сохранён"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",

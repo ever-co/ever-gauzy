@@ -21,6 +21,7 @@
  * `TypeError: baseConfig is not iterable` and every `nx lint <project>` failed.
  */
 const nx = require('@nx/eslint-plugin');
+const everPlatformBoundary = require('./tools/ever-platform/import-boundary.cjs');
 
 // Files ESLint should never look at. Replaces the legacy root `.eslintrc.json`'s
 // `"ignorePatterns": ["**/*"]`, which disabled linting for the entire workspace.
@@ -50,6 +51,17 @@ const globalIgnores = {
 	]
 };
 
+// The import boundary of the optional Ever Platform modules (`@gauzy/plugin-ever-*`): only the
+// modules and the two plugin lists import them, through their entry points; the rules are in
+// tools/ever-platform/import-boundary.cjs, which the CI check (check-import-boundary.mjs) reads too.
+// A rule of its own, so a project config's `no-restricted-imports` never replaces it.
+const everPlatformImportBoundary = {
+	name: 'gauzy/ever-platform-import-boundary',
+	files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts', '**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
+	plugins: { 'ever-platform': everPlatformBoundary.plugin },
+	rules: { 'ever-platform/import-boundary': 'error' }
+};
+
 module.exports = [
 	// Registers the `@nx` plugin namespace (enforce-module-boundaries, dependency-checks,
 	// nx-plugin-checks) that the project configs rely on.
@@ -58,6 +70,8 @@ module.exports = [
 	...nx.configs['flat/javascript'],
 
 	globalIgnores,
+
+	everPlatformImportBoundary,
 
 	{
 		files: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts', '**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],

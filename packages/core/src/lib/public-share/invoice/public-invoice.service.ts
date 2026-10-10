@@ -55,7 +55,7 @@ export class PublicInvoiceService {
 
 		try {
 			// Get invoice
-			return await this.typeOrmInvoiceRepository.findOneOrFail({
+			let invoice = await this.typeOrmInvoiceRepository.findOneOrFail({
 				select: {
 					tenant: {
 						name: true,
@@ -128,6 +128,12 @@ export class PublicInvoiceService {
 				},
 				...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 			});
+
+			// `select` above names relations only, so TypeORM selects every invoice column. The internal note is
+			// written for the organization, never for whoever holds the share link, so it is not served here.
+			delete invoice.internalNote;
+
+			return invoice;
 		} catch {
 			throw new ForbiddenException();
 		}
