@@ -585,6 +585,12 @@ export const orderSchemaExtensions = gql`
 		e-mail goes; \`delivery\` says which.
 		"""
 		sendOrderQuote(id: ID!, version: Int, idempotencyKey: String): OrderQuoteSendPayload!
+		"""
+		Records the buyer's acceptance of an order's quote — the estimate's own accept flag — and confirms the
+		order through its lifecycle: a draft is placed, then confirmed. Requires the approve grant, because it
+		confirms the order.
+		"""
+		acceptOrderQuote(id: ID!, version: Int): Order!
 		"Create a change: the only way a placed order is modified."
 		requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
 		"""

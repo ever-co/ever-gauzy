@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	ConflictException,
 	ForbiddenException,
+	HttpStatus,
 	Inject,
 	Injectable,
 	InternalServerErrorException,
@@ -10,7 +11,14 @@ import {
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { EstimateStatusTypesEnum, ID, OrderStatus, PermissionsEnum } from '@gauzy/contracts';
-import { RequestContext, addDecimalStrings, compareDecimalStrings, subtractDecimalStrings } from '@gauzy/core';
+import {
+	ApiErrorCode,
+	ApiException,
+	RequestContext,
+	addDecimalStrings,
+	compareDecimalStrings,
+	subtractDecimalStrings
+} from '@gauzy/core';
 import { Order } from '../order/order.entity';
 import { OrderService } from '../order/order.service';
 import {
@@ -356,6 +364,74 @@ export class OrderInvoicingService {
 		};
 	}
 
+	/**
+	 * Records the buyer's acceptance of an order's quote and confirms the order.
+	 *
+	 * The estimate is marked accepted — the finance document's own accept flag — and the order is moved to
+	 * `CONFIRMED` **through the order's own lifecycle**: a draft is placed first (`DRAFT -> PENDING`, the move
+	 * `placeOrder` makes, with its number and stock commitment) and then confirmed (`PENDING -> CONFIRMED`, the
+	 * move the approve route makes), because `DRAFT -> CONFIRMED` is not a move the state machine contains.
+	 * Every rule those moves carry applies: an order with nothing to sell is not placed, and an order whose
+	 * money question is open or that has a change awaiting approval is not confirmed.
+	 *
+	 * **The answer is recorded first, and the order follows it.** The buyer's acceptance is a fact once it is
+	 * given; the order's moves are version-predicated writes that can be refused — by another writer, or by a
+	 * rule. A refused move leaves the quote accepted and the order where the moves stopped, and the same call
+	 * made again (with the order's new version) completes it, because an estimate already accepted is not
+	 * answered twice.
+	 *
+	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The confirmed order.
+	 * @throws ForbiddenException when the caller lacks `ESTIMATES_EDIT`.
+	 * @throws NotFoundException when the order is not the caller's.
+	 * @throws ConflictException with `ORDER_QUOTE_NOT_ANSWERABLE`, `ORDER_QUOTE_NOT_SENT`,
+	 * `ORDER_QUOTE_DECLINED` or `ORDER_QUOTE_VOID`.
+	 * @throws BadRequestException with `ORDER_STATUS_TRANSITION_INVALID` or `ORDER_EMPTY` when the order's
+	 * lifecycle refuses the move.
+	 * @throws ServiceUnavailableException with `ORDER_INVOICING_UNAVAILABLE` when no invoicing capability is
+	 * registered.
+	 */
+	public async acceptQuote(orderId: ID, expectation: OrderVersionExpectation = ANY_ORDER_VERSION): Promise<Order> {
+		this.assertDocumentGrant(PermissionsEnum.ESTIMATES_EDIT, 'the answer to a quote');
+
+		const order = await this.readOrder(orderId);
+		const { invoicing, quote } = await this.answerableQuote(order);
+
+		if (quote.isAccepted === false || quote.status === EstimateStatusTypesEnum.REJECTED) {
+			throw new ConflictException({
+				message: `The quote for order ${order.number} was declined; send a new quote to make another offer.`,
+				code: 'ORDER_QUOTE_DECLINED',
+				details: { orderId: order.id, quoteInvoiceId: quote.invoiceId }
+			});
+		}
+
+		const heldTo = this.heldTo(order, expectation);
+
+		if (quote.isAccepted !== true) {
+			await invoicing.answerEstimate(quote.invoiceId, true);
+			await this.historyService.record(
+				order.id,
+				'ORDER_QUOTE_ACCEPTED',
+				'Quote accepted',
+				{ quoteInvoiceId: quote.invoiceId, quoteNumber: quote.invoiceNumber ?? null },
+				scopeOfOrderRow(order)
+			);
+		}
+
+		// A draft is placed first, under the version the caller stated; the confirmation is then held to the
+		// version the placement produced, so nothing can land between the two moves.
+		let confirmUnder = heldTo;
+
+		if (order.status === OrderStatus.DRAFT) {
+			const placed = await this.orderService.place(order.id, { quoteInvoiceId: quote.invoiceId }, heldTo);
+
+			confirmUnder = { wildcard: false, versions: [Number(placed.version)] };
+		}
+
+		return this.orderService.confirm(order.id, 'STAFF', confirmUnder);
+	}
+
 	/*
 	|--------------------------------------------------------------------------
 	| The document
@@ -502,15 +578,79 @@ export class OrderInvoicingService {
 	}
 
 	/**
-	 * The version an order write is held to.
+	 * The version an order write is held to — checked against the order as read, before anything is written.
+	 *
+	 * The verbs here write a finance document before the order's own conditional update, so a version that
+	 * is already stale is refused at once rather than discovered by the update after a document was issued
+	 * for it. The conditional update still decides the race that remains between this read and that write.
 	 *
 	 * @param order The order as this service read it.
 	 * @param expectation The version the caller stated.
 	 * @returns The caller's statement; or, when the caller stated none, the version this service read — so a
 	 * write decided from that read cannot land on an order another writer has moved since.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the caller stated versions the order is not at.
 	 */
 	private heldTo(order: Order, expectation: OrderVersionExpectation): OrderVersionExpectation {
-		return expectation?.wildcard ? { wildcard: false, versions: [Number(order.version)] } : expectation;
+		if (!expectation || expectation.wildcard) {
+			return { wildcard: false, versions: [Number(order.version)] };
+		}
+
+		const stated = (expectation.versions ?? []).map(Number);
+
+		if (stated.length && !stated.includes(Number(order.version))) {
+			throw new ApiException(
+				HttpStatus.CONFLICT,
+				ApiErrorCode.ENTITY_VERSION_CONFLICT,
+				'The record changed since you read it. Read it again and reapply your change.',
+				{ expectedVersion: stated.length === 1 ? stated[0] : stated, actualVersion: Number(order.version) }
+			);
+		}
+
+		return expectation;
+	}
+
+	/**
+	 * The order's quote, when the order is in a state that can answer one.
+	 *
+	 * @param order The order.
+	 * @returns The invoicing capability, and the quote as it reads it.
+	 * @throws ConflictException with `ORDER_QUOTE_NOT_ANSWERABLE` when the order is past quoting,
+	 * `ORDER_QUOTE_NOT_SENT` when it has no quote, and `ORDER_QUOTE_VOID` when its quote was voided.
+	 * @throws ServiceUnavailableException with `ORDER_INVOICING_UNAVAILABLE`.
+	 */
+	private async answerableQuote(
+		order: Order
+	): Promise<{ invoicing: IOrderInvoicingPort; quote: IOrderInvoiceDocumentState }> {
+		if (!ORDER_QUOTABLE_STATUSES.includes(order.status)) {
+			const reason = NOT_QUOTABLE[order.status] ?? `an order in ${order.status} has no open quote`;
+
+			throw new ConflictException({
+				message: `Order ${order.number} is ${order.status}, so its quote can no longer be answered: ${reason}.`,
+				code: 'ORDER_QUOTE_NOT_ANSWERABLE',
+				details: { orderId: order.id, status: order.status, reason, answerable: ORDER_QUOTABLE_STATUSES }
+			});
+		}
+
+		const invoicing = this.requireInvoicing();
+		const quote = order.quoteInvoiceId ? await invoicing.read(order.quoteInvoiceId) : null;
+
+		if (!quote || !quote.isEstimate) {
+			throw new ConflictException({
+				message: `Order ${order.number} has no quote to answer; send one first.`,
+				code: 'ORDER_QUOTE_NOT_SENT',
+				details: { orderId: order.id, quoteInvoiceId: order.quoteInvoiceId ?? null }
+			});
+		}
+
+		if (quote.status === EstimateStatusTypesEnum.VOID) {
+			throw new ConflictException({
+				message: `The quote for order ${order.number} was voided, so it can no longer be answered.`,
+				code: 'ORDER_QUOTE_VOID',
+				details: { orderId: order.id, quoteInvoiceId: quote.invoiceId }
+			});
+		}
+
+		return { invoicing, quote };
 	}
 
 	/**

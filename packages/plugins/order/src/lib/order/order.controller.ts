@@ -296,6 +296,34 @@ export class OrderController extends CrudController<Order> {
 	}
 
 	/**
+	 * Records the buyer's acceptance of an order's quote and confirms the order.
+	 *
+	 * The estimate is marked accepted, and the order moves to `CONFIRMED` through its own lifecycle — a draft
+	 * is placed first, then confirmed — never by writing the status. The grant is the approve route's,
+	 * `ORDERS_APPROVE`, because accepting a quote confirms the order exactly as that route does; recording
+	 * the answer on the estimate also requires the finance module's own `ESTIMATES_EDIT`, which the service
+	 * checks. Like the approve route it states no retry scope: a repeat finds the order confirmed and is
+	 * refused rather than applied twice.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The confirmed order.
+	 */
+	@ApiOperation({ summary: 'Accept the quote of an order, confirming the order' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Quote accepted and order confirmed' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order has no open quote to accept, or its quote was declined or voided'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
+	@Post(':id/quote/accept')
+	@HttpCode(HttpStatus.OK)
+	async acceptQuote(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
+		return this.invoicingService.acceptQuote(id, versionExpectationOf(request));
+	}
+
+	/**
 	 * Recomputes an order's totals from its lines and the money ledgers.
 	 *
 	 * @param id The order.

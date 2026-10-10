@@ -235,7 +235,9 @@ export class OrderService extends TenantAwareCrudService<Order> {
 	 */
 	public async place(
 		orderId: ID,
-		placedWith: { cartId?: ID; idempotencyKey?: string } = {},
+		// What the placement is attributed to: the cart it came from and the retry key it was made under on
+		// the checkout path, or the quote whose acceptance placed it.
+		placedWith: { cartId?: ID; idempotencyKey?: string; quoteInvoiceId?: ID } = {},
 		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
 	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);

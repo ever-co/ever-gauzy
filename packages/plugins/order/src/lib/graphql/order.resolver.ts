@@ -361,6 +361,28 @@ export class OrderResolver {
 	}
 
 	/**
+	 * Records the buyer's acceptance of an order's quote and confirms the order.
+	 *
+	 * The mirror of `POST /orders/:id/quote/accept`: the same service method, the same grant — the approve
+	 * route's, because it confirms the order — and the same versioned resource; like `confirmOrder`, no retry
+	 * scope.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The confirmed order.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_APPROVE)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'acceptOrderQuote' })
+	async acceptOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.acceptQuote(id, versionExpectationOf(context?.req));
+	}
+
+	/**
 	 * Recomputes an order.
 	 *
 	 * @param id The order.
