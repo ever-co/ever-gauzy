@@ -2,8 +2,8 @@ import type * as BetterSqlite3 from 'better-sqlite3';
 import { randomUUID } from 'crypto';
 
 export class QueueStore {
-	private db: BetterSqlite3.Database;
-	private tableName: string;
+	protected db: BetterSqlite3.Database;
+	protected tableName: string;
 
 	constructor(options: { path: string; tableName?: string }) {
 		this.tableName = options.tableName || 'task';
@@ -87,7 +87,7 @@ export class QueueStore {
 		}
 	}
 
-	private lockRows(n: number, orderBy: string): string {
+	protected lockRows(n: number, orderBy: string): string {
 		const lockId = randomUUID();
 		const txn = this.db.transaction(() => {
 			const result = this.db
