@@ -81,7 +81,8 @@
 				></file-provider-selector>
 
 				<!-- What the selected provider is, and where its keys come from -->
-				@if (fileStorageProvider) {
+				<!-- (Local has its own card saying the same, so no line above it.) -->
+				@if (fileStorageProvider && fileStorageProvider !== FileStorageProviderEnum.LOCAL) {
 					<p class="provider-info">
 						<nb-icon icon="info-outline"></nb-icon>
 						<span>
@@ -180,117 +181,157 @@
 
 <!-- Local Storage Template: nothing to configure, explain where files go -->
 <ng-template #localStorageTemplate>
-	<nb-card>
-		<nb-card-header>
-			<h6>{{ 'SETTINGS_FILE_STORAGE.LOCAL.HEADER' | translate }}</h6>
+	<nb-card class="provider-card">
+		<nb-card-header class="provider-card-header">
+			<span class="provider-mark" aria-hidden="true">
+				<nb-icon icon="hard-drive-outline"></nb-icon>
+			</span>
+			<div class="provider-heading">
+				<h6>{{ 'SETTINGS_FILE_STORAGE.LOCAL.HEADER' | translate }}</h6>
+				<p class="provider-subtitle">{{ 'SETTINGS_FILE_STORAGE.LOCAL.WHERE' | translate }}</p>
+			</div>
 		</nb-card-header>
-		<nb-card-body>
-			<ul class="local-notes">
-				<li>
-					<nb-icon icon="hard-drive-outline"></nb-icon>
-					<span>{{ 'SETTINGS_FILE_STORAGE.LOCAL.WHERE' | translate }}</span>
-				</li>
-				<li>
-					<nb-icon icon="settings-2-outline"></nb-icon>
-					<span>{{ 'SETTINGS_FILE_STORAGE.LOCAL.NO_CONFIG' | translate }}</span>
-				</li>
-				<li>
-					<nb-icon icon="alert-circle-outline"></nb-icon>
-					<span>{{ 'SETTINGS_FILE_STORAGE.LOCAL.WARNING' | translate }}</span>
-				</li>
-			</ul>
+		<nb-card-body class="provider-form">
+			<div class="local-status">
+				<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
+				<span>{{ 'SETTINGS_FILE_STORAGE.LOCAL.NO_CONFIG' | translate }}</span>
+			</div>
+			<div class="local-callout" role="note">
+				<nb-icon icon="alert-triangle-outline" status="warning"></nb-icon>
+				<span>{{ 'SETTINGS_FILE_STORAGE.LOCAL.WARNING' | translate }}</span>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
 
 <!-- S3 Storage Configuration Template -->
 <ng-template #s3StorageFormTemplate let-group="group">
-	<nb-card [formGroup]="group">
-		<nb-card-header>
-			<h6>
-				{{ 'SETTINGS_FILE_STORAGE.S3.HEADER' | translate }}
-			</h6>
-		</nb-card-header>
-		<nb-card-body [formGroupName]="FileStorageProviderEnum.S3">
-			<div class="form-group row">
-				<label class="label col-xl-2 col-3" for="aws_access_key_id">
-					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="aws_access_key_id"
-						name="aws_access_key_id"
-						formControlName="aws_access_key_id"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
-					/>
-				</div>
+	<nb-card [formGroup]="group" class="provider-card">
+		<nb-card-header class="provider-card-header">
+			<span class="provider-mark" aria-hidden="true">
+				<nb-icon icon="cloud-upload-outline"></nb-icon>
+			</span>
+			<div class="provider-heading">
+				<h6>{{ 'SETTINGS_FILE_STORAGE.S3.HEADER' | translate }}</h6>
+				<p class="provider-subtitle">{{ 'SETTINGS_FILE_STORAGE.S3.SUBTITLE' | translate }}</p>
 			</div>
-			<div class="form-group row">
-				<label class="label col-xl-2 col-3" for="aws_secret_access_key">
-					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<nb-form-field>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.S3" class="provider-form">
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.S3.SECTIONS.CREDENTIALS' | translate }}</span>
+					<span class="section-hint">{{ 'SETTINGS_FILE_STORAGE.S3.SECTIONS.CREDENTIALS_HINT' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="aws_access_key_id">
+							{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.ACCESS_KEY_ID' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.S3.HINTS.ACCESS_KEY_ID' | translate }}</span>
+					</div>
+					<div class="field-control">
 						<input
-							id="aws_secret_access_key"
-							name="aws_secret_access_key"
-							formControlName="aws_secret_access_key"
+							id="aws_access_key_id"
+							name="aws_access_key_id"
+							formControlName="aws_access_key_id"
 							nbInput
 							fullWidth
-							class="w-100"
-							[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
-							[type]="revealed['aws_secret_access_key'] ? 'text' : 'password'"
-							autocomplete="new-password"
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
 						/>
-						<button
-							type="button"
-							nbSuffix
-							nbButton
-							ghost
-							size="small"
-							(click)="toggleSecret('aws_secret_access_key')"
-							[attr.aria-label]="(revealed['aws_secret_access_key'] ? 'SETTINGS_FILE_STORAGE.HIDE_SECRET' : 'SETTINGS_FILE_STORAGE.SHOW_SECRET') | translate"
-						>
-							<nb-icon [icon]="revealed['aws_secret_access_key'] ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
-						</button>
-					</nb-form-field>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="aws_default_region">
-					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="aws_default_region"
-						name="aws_default_region"
-						formControlName="aws_default_region"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' | translate"
-					/>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="aws_secret_access_key">
+							{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.SECRET_ACCESS_KEY' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.S3.HINTS.SECRET_ACCESS_KEY' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<nb-form-field>
+							<input
+								id="aws_secret_access_key"
+								name="aws_secret_access_key"
+								formControlName="aws_secret_access_key"
+								nbInput
+								fullWidth
+								fieldSize="small"
+								class="mono"
+								spellcheck="false"
+								[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
+								[type]="revealed['aws_secret_access_key'] ? 'text' : 'password'"
+								autocomplete="new-password"
+							/>
+							<button
+								type="button"
+								nbSuffix
+								nbButton
+								ghost
+								size="tiny"
+								(click)="toggleSecret('aws_secret_access_key')"
+								[attr.aria-label]="(revealed['aws_secret_access_key'] ? 'SETTINGS_FILE_STORAGE.HIDE_SECRET' : 'SETTINGS_FILE_STORAGE.SHOW_SECRET') | translate"
+							>
+								<nb-icon [icon]="revealed['aws_secret_access_key'] ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+							</button>
+						</nb-form-field>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="aws_bucket">
-					{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="aws_bucket"
-						name="aws_bucket"
-						formControlName="aws_bucket"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' | translate"
-					/>
+			</section>
+
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.S3.SECTIONS.BUCKET' | translate }}</span>
+					<span class="section-hint">{{ 'SETTINGS_FILE_STORAGE.S3.SECTIONS.BUCKET_HINT' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="aws_default_region">
+							{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.REGION' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.S3.HINTS.REGION' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="aws_default_region"
+							name="aws_default_region"
+							formControlName="aws_default_region"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' | translate"
+						/>
+					</div>
 				</div>
-			</div>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="aws_bucket">
+							{{ 'SETTINGS_FILE_STORAGE.S3.LABELS.BUCKET' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.S3.HINTS.BUCKET' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="aws_bucket"
+							name="aws_bucket"
+							formControlName="aws_bucket"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' | translate"
+						/>
+					</div>
+				</div>
+			</section>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -497,242 +538,356 @@
 
 <!-- Cloudinary Storage Configuration Template -->
 <ng-template #cloudinaryStorageFormTemplate let-group="group">
-	<nb-card [formGroup]="group">
-		<nb-card-header>
-			<h6>
-				{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HEADER' | translate }}
-			</h6>
+	<nb-card [formGroup]="group" class="provider-card">
+		<nb-card-header class="provider-card-header">
+			<span class="provider-mark" aria-hidden="true">
+				<nb-icon icon="image-outline"></nb-icon>
+			</span>
+			<div class="provider-heading">
+				<h6>{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HEADER' | translate }}</h6>
+				<p class="provider-subtitle">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.SUBTITLE' | translate }}</p>
+			</div>
 		</nb-card-header>
-		<nb-card-body [formGroupName]="FileStorageProviderEnum.CLOUDINARY">
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="cloudinary_cloud_name">
-					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.CLOUD_NAME' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="cloudinary_cloud_name"
-						name="cloudinary_cloud_name"
-						formControlName="cloudinary_cloud_name"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.CLOUD_NAME' | translate"
-					/>
-				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="cloudinary_api_key">
-					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_KEY' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="cloudinary_api_key"
-						name="cloudinary_api_key"
-						formControlName="cloudinary_api_key"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY' | translate"
-					/>
-				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="cloudinary_api_secret">
-					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_SECRET' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<nb-form-field>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.CLOUDINARY" class="provider-form">
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.SECTIONS.ACCOUNT' | translate }}</span>
+					<span class="section-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.SECTIONS.ACCOUNT_HINT' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="cloudinary_cloud_name">
+							{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.CLOUD_NAME' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HINTS.CLOUD_NAME' | translate }}</span>
+					</div>
+					<div class="field-control">
 						<input
-							id="cloudinary_api_secret"
-							name="cloudinary_api_secret"
-							formControlName="cloudinary_api_secret"
+							id="cloudinary_cloud_name"
+							name="cloudinary_cloud_name"
+							formControlName="cloudinary_cloud_name"
 							nbInput
 							fullWidth
-							class="w-100"
-							[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET' | translate"
-							[type]="revealed['cloudinary_api_secret'] ? 'text' : 'password'"
-							autocomplete="new-password"
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.CLOUD_NAME' | translate"
 						/>
-						<button
-							type="button"
-							nbSuffix
-							nbButton
-							ghost
+					</div>
+				</div>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="cloudinary_api_key">
+							{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_KEY' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HINTS.ACCESS_API_KEY' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="cloudinary_api_key"
+							name="cloudinary_api_key"
+							formControlName="cloudinary_api_key"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY' | translate"
+						/>
+					</div>
+				</div>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="cloudinary_api_secret">
+							{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.ACCESS_API_SECRET' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HINTS.ACCESS_API_SECRET' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<nb-form-field>
+							<input
+								id="cloudinary_api_secret"
+								name="cloudinary_api_secret"
+								formControlName="cloudinary_api_secret"
+								nbInput
+								fullWidth
+								fieldSize="small"
+								class="mono"
+								spellcheck="false"
+								[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET' | translate"
+								[type]="revealed['cloudinary_api_secret'] ? 'text' : 'password'"
+								autocomplete="new-password"
+							/>
+							<button
+								type="button"
+								nbSuffix
+								nbButton
+								ghost
+								size="tiny"
+								(click)="toggleSecret('cloudinary_api_secret')"
+								[attr.aria-label]="(revealed['cloudinary_api_secret'] ? 'SETTINGS_FILE_STORAGE.HIDE_SECRET' : 'SETTINGS_FILE_STORAGE.SHOW_SECRET') | translate"
+							>
+								<nb-icon [icon]="revealed['cloudinary_api_secret'] ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+							</button>
+						</nb-form-field>
+					</div>
+				</div>
+			</section>
+
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.SECTIONS.DELIVERY' | translate }}</span>
+					<span class="section-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.SECTIONS.DELIVERY_HINT' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="cloudinary_delivery_url">
+							{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HINTS.DELIVERY_URL' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="cloudinary_delivery_url"
+							name="cloudinary_delivery_url"
+							formControlName="cloudinary_delivery_url"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							type="url"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL' | translate"
+						/>
+					</div>
+				</div>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="cloudinary_api_secure">
+							{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.SECURE' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.HINTS.SECURE' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<nb-select
+							id="cloudinary_api_secure"
+							name="cloudinary_api_secure"
+							formControlName="cloudinary_api_secure"
+							fullWidth
 							size="small"
-							(click)="toggleSecret('cloudinary_api_secret')"
-							[attr.aria-label]="(revealed['cloudinary_api_secret'] ? 'SETTINGS_FILE_STORAGE.HIDE_SECRET' : 'SETTINGS_FILE_STORAGE.SHOW_SECRET') | translate"
+							[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE' | translate"
 						>
-							<nb-icon [icon]="revealed['cloudinary_api_secret'] ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
-						</button>
-					</nb-form-field>
+							@for (secure of secureOptions; track secure) {
+								<nb-option [value]="secure.value">
+									{{ secure.label | titlecase }}
+								</nb-option>
+							}
+						</nb-select>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="cloudinary_delivery_url">
-					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.DELIVERY_URL' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="cloudinary_delivery_url"
-						name="cloudinary_delivery_url"
-						formControlName="cloudinary_delivery_url"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL' | translate"
-					/>
-				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="cloudinary_api_secure">
-					{{ 'SETTINGS_FILE_STORAGE.CLOUDINARY.LABELS.SECURE' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<nb-select
-						id="cloudinary_api_secure"
-						name="cloudinary_api_secure"
-						formControlName="cloudinary_api_secure"
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE' | translate"
-					>
-						@for (secure of secureOptions; track secure) {
-							<nb-option [value]="secure.value">
-								{{ secure.label | titlecase }}
-							</nb-option>
-						}
-					</nb-select>
-				</div>
-			</div>
+			</section>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
 
 <!-- DigitalOcean Storage Configuration Template -->
 <ng-template #digitalOceanStorageFormTemplate let-group="group">
-	<nb-card [formGroup]="group">
-		<nb-card-header>
-			<h6>{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HEADER' | translate }}</h6>
-		</nb-card-header>
-		<nb-card-body [formGroupName]="FileStorageProviderEnum.DIGITALOCEAN">
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="digitalocean_access_key_id">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.ACCESS_KEY_ID' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						name="digitalocean_access_key_id"
-						formControlName="digitalocean_access_key_id"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
-					/>
-				</div>
+	<nb-card [formGroup]="group" class="provider-card">
+		<nb-card-header class="provider-card-header">
+			<span class="provider-mark" aria-hidden="true">
+				<nb-icon icon="globe-2-outline"></nb-icon>
+			</span>
+			<div class="provider-heading">
+				<h6>{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HEADER' | translate }}</h6>
+				<p class="provider-subtitle">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.SUBTITLE' | translate }}</p>
 			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="digitalocean_secret_access_key">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SECRET_ACCESS_KEY' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<nb-form-field>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.DIGITALOCEAN" class="provider-form">
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.SECTIONS.CREDENTIALS' | translate }}</span>
+					<span class="section-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.SECTIONS.CREDENTIALS_HINT' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_access_key_id">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.ACCESS_KEY_ID' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.ACCESS_KEY_ID' | translate }}</span>
+					</div>
+					<div class="field-control">
 						<input
-							id="digitalocean_secret_access_key"
-							name="digitalocean_secret_access_key"
-							formControlName="digitalocean_secret_access_key"
+							id="digitalocean_access_key_id"
+							name="digitalocean_access_key_id"
+							formControlName="digitalocean_access_key_id"
 							nbInput
 							fullWidth
-							class="w-100"
-							[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
-							[type]="revealed['digitalocean_secret_access_key'] ? 'text' : 'password'"
-							autocomplete="new-password"
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
 						/>
-						<button
-							type="button"
-							nbSuffix
-							nbButton
-							ghost
-							size="small"
-							(click)="toggleSecret('digitalocean_secret_access_key')"
-							[attr.aria-label]="(revealed['digitalocean_secret_access_key'] ? 'SETTINGS_FILE_STORAGE.HIDE_SECRET' : 'SETTINGS_FILE_STORAGE.SHOW_SECRET') | translate"
-						>
-							<nb-icon [icon]="revealed['digitalocean_secret_access_key'] ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
-						</button>
-					</nb-form-field>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-sm-3 col-xl-2" for="digitalocean_default_region">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.REGION' | translate }}
-				</label>
-				<div class="col-sm-9 col-xl-4">
-					<input
-						id="digitalocean_default_region"
-						name="digitalocean_default_region"
-						formControlName="digitalocean_default_region"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.REGION' | translate"
-					/>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_secret_access_key">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SECRET_ACCESS_KEY' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.SECRET_ACCESS_KEY' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<nb-form-field>
+							<input
+								id="digitalocean_secret_access_key"
+								name="digitalocean_secret_access_key"
+								formControlName="digitalocean_secret_access_key"
+								nbInput
+								fullWidth
+								fieldSize="small"
+								class="mono"
+								spellcheck="false"
+								[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
+								[type]="revealed['digitalocean_secret_access_key'] ? 'text' : 'password'"
+								autocomplete="new-password"
+							/>
+							<button
+								type="button"
+								nbSuffix
+								nbButton
+								ghost
+								size="tiny"
+								(click)="toggleSecret('digitalocean_secret_access_key')"
+								[attr.aria-label]="(revealed['digitalocean_secret_access_key'] ? 'SETTINGS_FILE_STORAGE.HIDE_SECRET' : 'SETTINGS_FILE_STORAGE.SHOW_SECRET') | translate"
+							>
+								<nb-icon [icon]="revealed['digitalocean_secret_access_key'] ? 'eye-off-outline' : 'eye-outline'"></nb-icon>
+							</button>
+						</nb-form-field>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="digitalocean_service_url">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="digitalocean_service_url"
-						name="digitalocean_service_url"
-						formControlName="digitalocean_service_url"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SERVICE_URL' | translate"
-					/>
+			</section>
+
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.SECTIONS.BUCKET' | translate }}</span>
+					<span class="section-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.SECTIONS.BUCKET_HINT' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_service_url">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.SERVICE_URL' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="digitalocean_service_url"
+							name="digitalocean_service_url"
+							formControlName="digitalocean_service_url"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							type="url"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SERVICE_URL' | translate"
+						/>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="digitalocean_cdn_url">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="digitalocean_cdn_url"
-						name="digitalocean_cdn_url"
-						formControlName="digitalocean_cdn_url"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.CDN_URL' | translate"
-					/>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_default_region">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.REGION' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.REGION' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="digitalocean_default_region"
+							name="digitalocean_default_region"
+							formControlName="digitalocean_default_region"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.REGION' | translate"
+						/>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="digitalocean_s3_bucket">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<input
-						id="digitalocean_s3_bucket"
-						name="digitalocean_s3_bucket"
-						formControlName="digitalocean_s3_bucket"
-						nbInput
-						fullWidth
-						class="w-100"
-						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.BUCKET' | translate"
-					/>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_s3_bucket">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.BUCKET' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="digitalocean_s3_bucket"
+							name="digitalocean_s3_bucket"
+							formControlName="digitalocean_s3_bucket"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.BUCKET' | translate"
+						/>
+					</div>
 				</div>
-			</div>
-			<div class="form-group row">
-				<label class="label col-3 col-xl-2" for="digitalocean_s3_force_path_style">
-					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.FORCE_PATH_STYLE' | translate }}
-				</label>
-				<div class="col-9 col-xl-4">
-					<nb-toggle formControlName="digitalocean_s3_force_path_style" status="primary"></nb-toggle>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_cdn_url">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.CDN_URL' | translate }}</span>
+					</div>
+					<div class="field-control">
+						<input
+							id="digitalocean_cdn_url"
+							name="digitalocean_cdn_url"
+							formControlName="digitalocean_cdn_url"
+							nbInput
+							fullWidth
+							fieldSize="small"
+							class="mono"
+							type="url"
+							autocomplete="off"
+							spellcheck="false"
+							[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.CDN_URL' | translate"
+						/>
+					</div>
 				</div>
-			</div>
+			</section>
+
+			<section class="provider-section">
+				<header class="section-header">
+					<span class="section-title">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.SECTIONS.OPTIONS' | translate }}</span>
+				</header>
+				<div class="field-row">
+					<div class="field-copy">
+						<label class="field-label" for="digitalocean_s3_force_path_style">
+							{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.FORCE_PATH_STYLE' | translate }}
+						</label>
+						<span class="field-hint">{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HINTS.FORCE_PATH_STYLE' | translate }}</span>
+					</div>
+					<div class="field-control toggle">
+						<nb-toggle
+							id="digitalocean_s3_force_path_style"
+							formControlName="digitalocean_s3_force_path_style"
+							status="primary"
+						></nb-toggle>
+					</div>
+				</div>
+			</section>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
