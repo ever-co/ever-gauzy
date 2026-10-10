@@ -48,6 +48,8 @@ export const cartSchemaExtensions = gql`
 		abandonedAt: DateTime
 		externalId: String
 		metadata: JSON
+		"The guest-access token, in plaintext. Answered once, by createCart; null on every read, because the cart stores only its digest."
+		token: String
 		lines: [CartLine!]
 		shippingMethods: [CartShippingMethod!]
 		promotions: [CartPromotion!]
@@ -281,7 +283,7 @@ export const cartSchemaExtensions = gql`
 		carts(status: String, customerId: ID, email: String, page: PageInput, withDeleted: Boolean): CartConnection!
 		"Read one cart with its lines, delivery choices and promotions."
 		cart(id: ID!): Cart
-		"Read the cart a buyer token names."
+		"Read the cart a guest-access token names, within the caller's tenant; null when none carries it. The token is the one createCart answered with."
 		cartByToken(token: String!): Cart
 		"List checkout sessions."
 		checkoutSessions(cartId: ID, status: String, page: PageInput, withDeleted: Boolean): CheckoutSessionConnection!

@@ -32,6 +32,7 @@ import {
 	normalizeDecimalString
 } from '@gauzy/core';
 import { CommerceCart } from './commerce-cart.entity';
+import { digestCartToken, issueCartToken } from './cart-token';
 import { CommerceCartLine } from '../commerce-cart-line/commerce-cart-line.entity';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
 import { CommerceCartShippingMethod } from '../commerce-cart-shipping-method/commerce-cart-shipping-method.entity';
@@ -183,12 +184,13 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 	}
 
 	/**
-	 * Creates a cart.
+	 * Creates a cart and issues its guest-access token.
 	 *
 	 * @param entity The cart to create.
-	 * @returns The created cart, with its (empty) totals already computed.
+	 * @returns The created cart, with its (empty) totals already computed and its guest-access token in
+	 * `token` — the one answer that carries it.
 	 */
-	public async create(entity: DeepPartial<CommerceCart>): Promise<CommerceCart> {
+	public async create(entity: DeepPartial<CommerceCart>): Promise<CommerceCart & { token: string }> {
 		if (!entity.channelId) {
 			throw new BadRequestException('CART_CHANNEL_REQUIRED: a cart belongs to a sales channel.');
 		}
@@ -210,9 +212,76 @@ export class CommerceCartService extends TenantAwareCrudService<CommerceCart> {
 		// still gets it and existing rows are untouched.
 		entity.currencyDecimals = entity.currencyDecimals ?? this.decimalsOf(entity.currency as CurrencyCode);
 
-		const cart = await super.create(entity);
+		// The guest-access token. Only its digest is written, and the token itself is put on this answer
+		// and nowhere else: a caller that loses it cannot read it back, because nothing stores it. Anything
+		// the caller sent under either name is overwritten rather than trusted — a caller that chose its
+		// own token would have chosen one somebody else can guess.
+		const token = issueCartToken();
 
-		return this.recalculate(cart.id, 'CART_CREATED');
+		delete (entity as Record<string, unknown>)['token'];
+		entity.tokenHash = digestCartToken(token);
+
+		const cart = await super.create(entity);
+		const created = await this.recalculate(cart.id, 'CART_CREATED');
+
+		return Object.assign(this.withoutTokenHash(created), { token });
+	}
+
+	/**
+	 * Reads the cart a guest-access token names, within the caller's tenant.
+	 *
+	 * The token is hashed and the digest looked up, so the plaintext is never compared, logged or
+	 * stored, and a database that leaked would not yield a token that works. The lookup **fails closed**:
+	 * with no tenant in context there is nothing to scope it by, and an unscoped lookup by a bearer token
+	 * is a cross-tenant read, so it answers nothing instead. The tenant is stated in the `where` as well
+	 * as merged in by the base class, which is the guard that survives a future caller that assembles the
+	 * criteria by hand.
+	 *
+	 * @param token The plaintext token the create answered with.
+	 * @returns The cart with its lines, delivery choices and promotions, or null when no cart of the
+	 * caller's tenant carries that token.
+	 */
+	public async findByToken(token: string): Promise<CommerceCart | null> {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId || typeof token !== 'string' || token.trim() === '') {
+			return null;
+		}
+
+		try {
+			const cart = await this.findOneByOptions({
+				where: { tokenHash: digestCartToken(token), tenantId } as FindOptionsWhere<CommerceCart>,
+				relations: ['lines', 'shippingMethods', 'promotions']
+			});
+
+			return this.withoutTokenHash(cart);
+		} catch (error) {
+			// The read raises on a miss (`CrudService.findOneByOptions`); a miss is this method's ordinary
+			// answer, and anything else — the store being down — is not one and is raised as it came.
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * A cart as the two token paths answer it: without the digest, whatever the read loaded.
+	 *
+	 * Neither ORM hands the digest out — TypeORM does not select it and MikroORM does not serialize it —
+	 * so this is belt and braces on the two answers that sit next to the token, where a digest beside the
+	 * token it was computed from would be the one place both halves were on one page.
+	 *
+	 * @param cart The cart as it was read.
+	 * @returns The same cart, without `tokenHash`.
+	 */
+	private withoutTokenHash(cart: CommerceCart): CommerceCart {
+		if (cart && 'tokenHash' in cart) {
+			delete cart.tokenHash;
+		}
+
+		return cart;
 	}
 
 	/**

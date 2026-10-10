@@ -1,8 +1,10 @@
 import { CreateCartTables1791000000200 } from './migrations/1791000000200-CreateCartTables';
 import { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-AddCartVersionColumn';
+import { AddCartTokenHashColumn1791000000630 } from './migrations/1791000000630-AddCartTokenHashColumn';
 
 export { CreateCartTables1791000000200 } from './migrations/1791000000200-CreateCartTables';
 export { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-AddCartVersionColumn';
+export { AddCartTokenHashColumn1791000000630 } from './migrations/1791000000630-AddCartTokenHashColumn';
 
 /**
  * The plugin's migration set, in run order.
@@ -16,4 +18,8 @@ export { AddCartVersionColumn1791000000570 } from './migrations/1791000000570-Ad
  * The array lives here rather than beside the migration classes so that every file in the
  * `migrations/` directory is a migration and nothing else.
  */
-export const ALL_CART_MIGRATIONS = [CreateCartTables1791000000200, AddCartVersionColumn1791000000570];
+export const ALL_CART_MIGRATIONS = [
+	CreateCartTables1791000000200,
+	AddCartVersionColumn1791000000570,
+	AddCartTokenHashColumn1791000000630
+];

@@ -87,6 +87,17 @@ jest.mock('@gauzy/core', () => {
 			return record;
 		}
 
+		/** A miss raises, exactly as the kernel's read does — which is what the token lookup turns into null. */
+		async findOneByOptions(options: any = {}): Promise<any> {
+			const record = await this.typeOrmRepository.findOne(options);
+
+			if (!record) {
+				throw new NotFoundException('The requested record was not found');
+			}
+
+			return record;
+		}
+
 		async create(entity: any): Promise<any> {
 			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
 		}
@@ -139,6 +150,8 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseDTO: class {},
 		MikroOrmBaseEntityRepository: class {},
 		ColumnIndex: decorator,
+		// The export mark the cart's token digest carries; nothing is exported here.
+		ExportRedacted: decorator,
 		MultiORMColumn: decorator,
 		MultiORMEntity: decorator,
 		MultiORMOneToMany: decorator,
@@ -195,7 +208,9 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
+import { createHash } from 'node:crypto';
 import { AdjustmentOwnerType, CommerceCartStatus, CommerceCheckoutSessionStatus, TaxLineOwnerType } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
 import { CommerceCartService } from './commerce-cart.service';
 import { CommerceCartLineService } from '../commerce-cart-line/commerce-cart-line.service';
 import { CommerceCartPromotionService } from '../commerce-cart-promotion/commerce-cart-promotion.service';
@@ -1647,5 +1662,145 @@ describe('CommerceCartService — the versioned write', () => {
 
 		expect(abandoned.status).toBe(CommerceCartStatus.ABANDONED);
 		expect(tables.commerce_cart[0].version).toBe(Number(cart.version) + 1);
+	});
+});
+
+/**
+ * The guest-access token.
+ *
+ * A buyer who did not sign in reaches the cart they built by the token its create answered with, so the
+ * token is a bearer secret and the suite pins the four things that keep it one: it is random and long
+ * enough not to be guessed, it is answered once and stored only as a digest, it opens the cart it was
+ * issued for and nothing else, and it opens nothing at all outside the tenant that issued it — or when
+ * there is no tenant to scope the lookup by.
+ *
+ * The in-memory double stamps no tenant on a create (the base class's merge is the part of the kernel
+ * it leaves out), so each cart here states its tenant in the create; what the suite asserts is the lookup
+ * the service issues, which names the tenant itself.
+ */
+describe('CommerceCartService — the guest-access token', () => {
+	/** The digest a token is stored as, computed here rather than through the service's own helper. */
+	const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest('hex');
+
+	/** Puts a caller of one tenant in context, or none at all. */
+	const asTenant = (tenantId: string | null) => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(tenantId);
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('answers the token once, on the create, and stores only its digest', async () => {
+		asTenant('tenant-1');
+		const { service, tables } = cartFixture();
+
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		const row = tables.commerce_cart[0];
+
+		// 32 random bytes, base64url: 43 characters of [A-Za-z0-9_-], which is 256 bits.
+		expect(cart.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+		// At rest: the digest, and the token nowhere in the row.
+		expect(row.tokenHash).toBe(sha256(cart.token));
+		expect(row).not.toHaveProperty('token');
+		expect(JSON.stringify(row)).not.toContain(cart.token);
+		// The answer carries the token and not the digest beside it.
+		expect(cart).not.toHaveProperty('tokenHash');
+
+		// No read answers it again.
+		const read = await service.findOneWithContent(cart.id);
+
+		expect(read).not.toHaveProperty('token');
+	});
+
+	it('issues every cart a token of its own', async () => {
+		asTenant('tenant-1');
+		const { service, tables } = cartFixture();
+
+		const first = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		const second = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+
+		expect(first.token).not.toBe(second.token);
+		expect(tables.commerce_cart[0].tokenHash).not.toBe(tables.commerce_cart[1].tokenHash);
+	});
+
+	it('overwrites a token or a digest the caller tried to choose', async () => {
+		// A token a caller chose is one somebody else can guess, so neither name is taken from the body.
+		asTenant('tenant-1');
+		const { service, tables } = cartFixture();
+
+		const cart = await service.create({
+			channelId: 'channel-1',
+			currency: 'USD',
+			tenantId: 'tenant-1',
+			token: 'chosen',
+			tokenHash: sha256('chosen')
+		} as any);
+
+		expect(cart.token).not.toBe('chosen');
+		expect(tables.commerce_cart[0].tokenHash).toBe(sha256(cart.token));
+		expect(await service.findByToken('chosen')).toBeNull();
+	});
+
+	it('finds the cart its token names, with its content and without the digest', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+
+		await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		await service.addLine(cart.id, { variantId: 'v1', title: 'A', quantity: 2, unitPrice: 10 });
+
+		const found = await service.findByToken(cart.token);
+
+		expect(found?.id).toBe(cart.id);
+		expect(found?.lines).toHaveLength(1);
+		expect(found).not.toHaveProperty('tokenHash');
+		expect(found).not.toHaveProperty('token');
+	});
+
+	it('answers null for a token no cart carries', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+		const token = cart.token;
+		// One character off is a different digest, not a near miss.
+		const altered = `${token.slice(0, -1)}${token.endsWith('A') ? 'B' : 'A'}`;
+
+		expect(await service.findByToken(altered)).toBeNull();
+		expect(await service.findByToken('not-a-token')).toBeNull();
+		expect(await service.findByToken('')).toBeNull();
+		expect(await service.findByToken(undefined as any)).toBeNull();
+		// The control: the right token, in the same fixture, does find it.
+		expect((await service.findByToken(token))?.id).toBe(cart.id);
+	});
+
+	it('does not open another tenant’s cart with that tenant’s own token', async () => {
+		asTenant('tenant-2');
+		const { service } = cartFixture();
+		const theirs = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-2' });
+
+		asTenant('tenant-1');
+
+		expect(await service.findByToken(theirs.token)).toBeNull();
+
+		// The control: the same token, asked by its own tenant, opens it.
+		asTenant('tenant-2');
+
+		expect((await service.findByToken(theirs.token))?.id).toBe(theirs.id);
+	});
+
+	it('fails closed with no tenant in context, even for the right token', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+		const cart = await service.create({ channelId: 'channel-1', currency: 'USD', tenantId: 'tenant-1' });
+
+		asTenant(null);
+
+		expect(await service.findByToken(cart.token)).toBeNull();
+	});
+
+	it('raises a failure of the store rather than answering it as a miss', async () => {
+		asTenant('tenant-1');
+		const { service } = cartFixture();
+
+		jest.spyOn(service, 'findOneByOptions').mockRejectedValue(new Error('the store is unreachable'));
+
+		await expect(service.findByToken('any-token')).rejects.toThrow('the store is unreachable');
 	});
 });

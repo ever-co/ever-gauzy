@@ -5,6 +5,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	NotFoundException,
 	Param,
 	Post,
 	Put,
@@ -69,8 +70,13 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	 * the first attempt. No version is required of the caller — there is no cart to have read yet — and
 	 * the created cart's version is published in the response for the writes that follow.
 	 *
+	 * The answer carries the cart's guest-access `token`, and it is the only answer that does: the cart
+	 * stores the token's digest, never the token. A retry under the same key is answered from the record of
+	 * the first attempt and so carries the same token — that replay is how a client that lost the first
+	 * answer gets its token back, and it lasts only as long as the key's own retention.
+	 *
 	 * @param entity The cart to create.
-	 * @returns The created cart, with its totals computed.
+	 * @returns The created cart, with its totals computed and its guest-access token.
 	 */
 	@ApiOperation({ summary: 'Create a cart' })
 	@ApiResponse({ status: HttpStatus.CREATED, description: 'Cart created' })
@@ -81,6 +87,35 @@ export class CommerceCartController extends CrudController<CommerceCart> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateCommerceCartDTO): Promise<ICommerceCart> {
 		return this.commerceCartService.create(entity);
+	}
+
+	/**
+	 * Reads the cart a guest-access token names.
+	 *
+	 * The token is the one the create answered with; the cart stores only its digest, and the service
+	 * looks that digest up inside the caller's tenant, answering nothing when there is no tenant to scope
+	 * it by. The grant is the one the cart's read route runs under — the class-level `CARTS_VIEW` — because
+	 * this is the same read addressed by another key. The `cartByToken` field answers the same lookup.
+	 *
+	 * Declared before `:id` for the reader rather than for the router: the path has two segments, so the
+	 * one-segment `:id` route could not match it in either order.
+	 *
+	 * @param token The plaintext token.
+	 * @returns The cart, with its lines, delivery choices and promotions.
+	 * @throws NotFoundException when no cart of the caller's tenant carries that token.
+	 */
+	@ApiOperation({ summary: 'Find a cart by its guest-access token' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Cart found' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No cart carries that token' })
+	@Get('by-token/:token')
+	async findByToken(@Param('token') token: string): Promise<ICommerceCart> {
+		const cart = await this.commerceCartService.findByToken(token);
+
+		if (!cart) {
+			throw new NotFoundException('CART_NOT_FOUND: no cart carries that token.');
+		}
+
+		return cart;
 	}
 
 	/**

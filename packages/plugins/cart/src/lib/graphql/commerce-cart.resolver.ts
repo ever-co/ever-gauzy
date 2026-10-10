@@ -127,10 +127,31 @@ export class CommerceCartResolver {
 	}
 
 	/**
+	 * Reads the cart a guest-access token names.
+	 *
+	 * The route it mirrors is `GET /carts/by-token/:token`: the same service lookup — the token hashed and
+	 * its digest looked up inside the caller's tenant, nothing at all without one — under the same grant,
+	 * the class-level `CARTS_VIEW` the route also runs under. A miss is the row's absence, so the field
+	 * answers null where the route answers 404, which is how the `cart` field beside it is declared too.
+	 *
+	 * @param token The plaintext token `createCart` answered with.
+	 * @returns The cart with its lines, delivery choices and promotions, or null when no cart of the
+	 * caller's tenant carries that token.
+	 */
+	@Versioned({ resource: CommerceCartService, write: false })
+	@Query(() => Object, { name: 'cartByToken', nullable: true })
+	async cartByToken(@Args('token', { type: () => String }) token: string): Promise<CommerceCart | null> {
+		return this.commerceCartService.findByToken(token);
+	}
+
+	/**
 	 * Creates a cart.
 	 *
+	 * The answer is the one place the cart's guest-access `token` is ever read: the cart stores its digest,
+	 * so `Cart.token` is null on every other field that answers a cart.
+	 *
 	 * @param input The cart to create.
-	 * @returns The created cart.
+	 * @returns The created cart, carrying its guest-access token.
 	 */
 	@Permissions(CART_PERMISSIONS.CARTS_EDIT)
 	@Idempotent({ scope: 'cart.create', required: false, resourceType: 'cart' })

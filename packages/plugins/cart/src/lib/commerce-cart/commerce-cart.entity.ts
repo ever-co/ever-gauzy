@@ -4,6 +4,7 @@ import { CommerceCartStatus, ICommerceCart, ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	ColumnNumericTransformerPipe,
+	ExportRedacted,
 	JsonColumn,
 	MultiORMColumn,
 	MultiORMEntity,
@@ -26,6 +27,7 @@ import { MikroOrmCommerceCartRepository } from './repository/mikro-orm-commerce-
  * makes a cart re-priceable: dropping the cache and recomputing it can never disagree with the
  * ledgers, because the ledgers are what it is computed from.
  */
+@ColumnIndex('UQ_commerce_cart_token_hash', ['tokenHash'], { unique: true, where: '"tokenHash" IS NOT NULL' })
 @MultiORMEntity('commerce_cart', { mikroOrmRepository: () => MikroOrmCommerceCartRepository })
 export class CommerceCart extends TenantOrganizationBaseEntity implements ICommerceCart {
 	/**
@@ -317,6 +319,23 @@ export class CommerceCart extends TenantOrganizationBaseEntity implements IComme
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	externalId?: string;
+
+	/**
+	 * The SHA-256 digest of the cart's guest-access token — never the token itself.
+	 *
+	 * The token is issued when the cart is created and answered once, by that create; `cartByToken` and
+	 * `GET /carts/by-token/:token` hash what they are given and look this column up within the caller's
+	 * tenant. Storing the digest is what keeps a database read, a backup or an export from yielding a token
+	 * that opens a cart. Null on a cart created before tokens existed, which therefore has none.
+	 *
+	 * The column is no part of any read: TypeORM leaves it out of every `SELECT` (`select: false`), MikroORM
+	 * leaves it out of every serialized row (`hidden`), the export writes it blank, and no DTO or GraphQL
+	 * input declares it, so the validation pipe strips it from any body that tries to set it.
+	 */
+	// a digest of a bearer token that opens a cart — blank, because a digest is not useful to an import
+	@ExportRedacted({ blank: true })
+	@MultiORMColumn({ type: 'varchar', length: 64, nullable: true, select: false, hidden: true })
+	tokenHash?: string;
 
 	/*
 	|--------------------------------------------------------------------------

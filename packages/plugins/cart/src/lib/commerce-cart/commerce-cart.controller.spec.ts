@@ -93,6 +93,8 @@ jest.mock('@gauzy/core', () => {
 		MultiORMManyToOne: decorator,
 		JsonColumn: decorator,
 		ColumnIndex: decorator,
+		// The export mark the cart's token digest carries; nothing is exported here.
+		ExportRedacted: decorator,
 		ColumnNumericTransformerPipe: class {},
 		Idempotent: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotent.decorator').Idempotent,
 		IDEMPOTENT_METADATA_KEY: jest.requireActual('@gauzy/core/src/lib/idempotency/idempotency.policy')
