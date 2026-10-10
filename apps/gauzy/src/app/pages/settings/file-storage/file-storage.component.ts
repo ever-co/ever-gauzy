@@ -36,7 +36,8 @@ interface IProviderFieldMap {
 	 * Not so for Wasabi: saving validates the submitted values alone.
 	 */
 	serverFallback: boolean;
-	urls: { control: string; label: string }[];
+	/** URL fields; `httpsOnly` where credentials are sent to that address (Wasabi validation). */
+	urls: { control: string; label: string; httpsOnly?: boolean }[];
 	docsUrl: string;
 }
 
@@ -67,7 +68,9 @@ const PROVIDER_FIELDS: Partial<Record<FileStorageProviderEnum, IProviderFieldMap
 			{ control: 'wasabi_aws_service_url', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' },
 			{ control: 'wasabi_aws_bucket', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.BUCKET' }
 		],
-		urls: [{ control: 'wasabi_aws_service_url', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL' }],
+		urls: [
+			{ control: 'wasabi_aws_service_url', label: 'SETTINGS_FILE_STORAGE.WASABI.LABELS.SERVICE_URL', httpsOnly: true }
+		],
 		serverFallback: false,
 		docsUrl: 'https://docs.wasabi.com/'
 	},
@@ -149,6 +152,8 @@ export interface IFileStorageSummary {
 export interface IFileStorageCheck {
 	missing: string[];
 	invalidUrls: string[];
+	/** Valid http:// URLs where https:// is required. */
+	insecureUrls: string[];
 	serverDefaults: string[];
 }
 
@@ -285,10 +290,12 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 	 * If no settings are available, uses the default file storage provider from the environment.
 	 *
 	 * @param patchForm - false to refresh only the saved settings and summary, leaving the form as edited.
+	 *   Even when true, the form is left alone if it was edited while the request was pending.
 	 */
 	async getSetting(patchForm: boolean = true): Promise<void> {
 		try {
 			this.loading = true; // Set loading state to true while fetching settings
+			const formBeforeFetch = JSON.stringify(this.form.getRawValue());
 
 			// Fetch tenant settings
 			const settings = (this.settings = await this._tenantService.getSettings());
@@ -301,7 +308,8 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 			const fileStorageProvider = isNotEmpty(settings)
 				? settings.fileStorageProvider
 				: defaultFileStorageProvider;
-			if (patchForm) {
+			// An edit made while the request was pending wins over the fetched values.
+			if (patchForm && JSON.stringify(this.form.getRawValue()) === formBeforeFetch) {
 				this.setFileStorageProvider(fileStorageProvider);
 			}
 			this.summary = this.buildSummary(fileStorageProvider || defaultFileStorageProvider, settings);
@@ -326,6 +334,7 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 		// must not be overwritten by the refresh that follows.
 		const submitted = JSON.stringify(this.form.getRawValue());
 		const editedSinceSubmit = () => JSON.stringify(this.form.getRawValue()) !== submitted;
+		let saved = false;
 
 		try {
 			// Extract the file storage provider and settings from the form data
@@ -354,6 +363,7 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 			// Saves the tenant settings and displays a success message upon successful saving.
 			await this._tenantService.saveSettings(settings);
+			saved = true;
 			if (!editedSinceSubmit()) {
 				this.form.markAsPristine(); // clears the footer's "Unsaved changes"
 			}
@@ -363,12 +373,10 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 			this._toastrService.danger('An error occurred while saving settings. Please try again.');
 		} finally {
 			this.saving = false;
-			if (editedSinceSubmit()) {
-				// Keep the newer edits in the form; only refresh what the summary shows as saved.
-				this.getSetting(false);
-			} else {
-				this.subject$.next(true);
-			}
+			// Reload what is saved. Patch it into the form only after a successful save of exactly
+			// what the form holds: a failed save keeps the attempted values for correction, and
+			// newer edits are never overwritten (getSetting re-checks when the fetch resolves).
+			this.getSetting(saved && !editedSinceSubmit());
 		}
 	}
 
@@ -429,14 +437,14 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 	/**
 	 * Check the selected provider's configuration in the browser: every URL field holds an http(s)
-	 * URL, and every field is filled — or, for providers that fall back to the server's own
+	 * URL (https where keys are sent to it), and every field is filled — or, for providers that fall back to the server's own
 	 * configuration, list the empty ones as left to it. Nothing is sent to the server; Wasabi
 	 * credentials are still verified by the API when the settings are saved.
 	 */
 	checkConfiguration(): void {
 		const fields = PROVIDER_FIELDS[this.fileStorageProvider as FileStorageProviderEnum];
 		if (!fields) {
-			this.check = { missing: [], invalidUrls: [], serverDefaults: [] };
+			this.check = { missing: [], invalidUrls: [], insecureUrls: [], serverDefaults: [] };
 			return;
 		}
 
@@ -445,14 +453,22 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 		const empty = fields.required.filter(({ control }) => isBlank(values[control])).map(({ label }) => label);
 
-		const invalidUrls = fields.urls
-			.filter(({ control }) => !isBlank(values[control]) && !this.isHttpUrl(`${values[control]}`.trim()))
+		const filledUrls = fields.urls.filter(({ control }) => !isBlank(values[control]));
+		const invalidUrls = filledUrls
+			.filter(({ control }) => !this.isHttpUrl(`${values[control]}`.trim()))
+			.map(({ label }) => label);
+		// The keys are signed into requests to this address: plain http would expose them.
+		const insecureUrls = filledUrls
+			.filter(({ control, httpsOnly }) => {
+				const value = `${values[control]}`.trim();
+				return httpsOnly && this.isHttpUrl(value) && new URL(value).protocol !== 'https:';
+			})
 			.map(({ label }) => label);
 
 		// Where the API falls back to the server's configuration, an empty field is a choice, not an error.
 		this.check = fields.serverFallback
-			? { missing: [], invalidUrls, serverDefaults: empty }
-			: { missing: empty, invalidUrls, serverDefaults: [] };
+			? { missing: [], invalidUrls, insecureUrls, serverDefaults: empty }
+			: { missing: empty, invalidUrls, insecureUrls, serverDefaults: [] };
 	}
 
 	/**

@@ -149,8 +149,8 @@
 
 				<!-- Result of "Check configuration" (browser-side only) -->
 				@if (check) {
-					<div class="check-result" [class.ok]="!check.missing.length && !check.invalidUrls.length">
-						@if (!check.missing.length && !check.invalidUrls.length) {
+					<div class="check-result" [class.ok]="!check.missing.length && !check.invalidUrls.length && !check.insecureUrls.length">
+						@if (!check.missing.length && !check.invalidUrls.length && !check.insecureUrls.length) {
 							<nb-icon icon="checkmark-circle-2-outline" status="success"></nb-icon>
 							@if (check.serverDefaults.length) {
 								<!-- Empty fields the API fills from the server's own configuration -->
@@ -185,6 +185,14 @@
 									<div>
 										{{ 'SETTINGS_FILE_STORAGE.CHECK.INVALID_URL' | translate }}
 										@for (label of check.invalidUrls; track label; let last = $last) {
+											<strong>{{ label | translate }}</strong>{{ last ? '' : ', ' }}
+										}
+									</div>
+								}
+								@if (check.insecureUrls.length) {
+									<div>
+										{{ 'SETTINGS_FILE_STORAGE.CHECK.HTTPS_REQUIRED' | translate }}
+										@for (label of check.insecureUrls; track label; let last = $last) {
 											<strong>{{ label | translate }}</strong>{{ last ? '' : ', ' }}
 										}
 									</div>
