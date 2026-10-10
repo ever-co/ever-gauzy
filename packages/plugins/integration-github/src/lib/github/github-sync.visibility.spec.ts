@@ -11,6 +11,9 @@ describe('isPublicRepositoryTask', () => {
 
 	it('makes the task of a public repository public', () => {
 		expect(isPublicRepositoryTask({ private: false })).toBe(true);
-		expect(isPublicRepositoryTask({})).toBe(true);
+	});
+
+	it('keeps the task private when the repository visibility is unknown', () => {
+		expect(isPublicRepositoryTask({})).toBe(false);
 	});
 });

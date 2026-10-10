@@ -37,13 +37,13 @@ import { GithubRepositoryService } from './repository/github-repository.service'
 import { IntegrationSyncGithubRepositoryIssueCommand } from './repository/issue/commands';
 
 /**
- * Whether the task that mirrors an issue is public: exactly when its repository is.
+ * Whether the task that mirrors an issue is public: only when its repository is known to be public.
  *
  * The flag used to be set to `repository.private` itself, so issues of a private repository became public
- * tasks, and those of a public repository private ones.
+ * tasks, and those of a public repository private ones. An unknown visibility fails closed (private).
  */
 export function isPublicRepositoryTask(repository: { private?: boolean }): boolean {
-	return !repository.private;
+	return repository.private === false;
 }
 
 @Injectable()
