@@ -33,9 +33,14 @@ describe('EmployeeNotificationService reads are limited to the receiver', () => 
 		countBy = jest.spyOn(CrudService.prototype, 'countBy').mockResolvedValue(0);
 		findOneByIdString = jest.spyOn(CrudService.prototype, 'findOneByIdString').mockResolvedValue({} as never);
 		service = new EmployeeNotificationService(
-			// The entity has receiverEmployeeId / sentByEmployeeId but no employeeId column
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'employee_notification', hasColumnWithPropertyPath: () => false } } as any,
+			// The entity has tenantId and receiverEmployeeId / sentByEmployeeId, but no employeeId column
+			{
+				metadata: {
+					tableName: 'employee_notification',
+					hasColumnWithPropertyPath: (column: string) => column !== 'employeeId'
+				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,6 +81,14 @@ describe('EmployeeNotificationService reads are limited to the receiver', () => 
 		const where = whereOf(findAll) as Array<Record<string, unknown>>;
 		expect(where).toHaveLength(2);
 		expect(where.every((clause) => clause.receiverEmployeeId === 'employee-me')).toBe(true);
+	});
+
+	it('an empty OR where becomes the receiver alone', async () => {
+		({ restore } = asTenantUser(employee));
+
+		await service.findAll({ where: [] });
+
+		expect(whereOf(findAll)).toMatchObject({ receiverEmployeeId: 'employee-me' });
 	});
 
 	it('a CHANGE_SELECTED_EMPLOYEE holder reads what the client asked for', async () => {

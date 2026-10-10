@@ -78,10 +78,12 @@ export class EmployeeNotificationService extends TenantAwareCrudService<Employee
 	private scopeToReceiver<F extends LegacyFindOneOptions<EmployeeNotification>>(filter?: F): F {
 		const scope = this.receiverScope();
 		const where = filter?.where;
-		return {
-			...filter,
-			where: Array.isArray(where) ? where.map((clause) => ({ ...clause, ...scope })) : { ...where, ...scope }
-		} as F;
+		// An empty OR list has no clause to carry the receiver: it becomes the receiver alone
+		const scoped =
+			Array.isArray(where) && where.length > 0
+				? where.map((clause) => ({ ...clause, ...scope }))
+				: { ...(Array.isArray(where) ? {} : where), ...scope };
+		return { ...filter, where: scoped } as F;
 	}
 
 	public async findAll(
