@@ -153,6 +153,18 @@ const PAIRS: IPair[] = [
 		call: (resolver, context) => resolver.generateOrderInvoice(ID, 3, 'retry-key-1', context),
 		invoke: (controller, request) => controller.invoice(ID, request),
 		declaration: 'generateOrderInvoice(id: ID!, version: Int, idempotencyKey: String): Order!'
+	},
+	{
+		field: 'sendOrderQuote',
+		route: 'sendQuote',
+		path: ':id/quote/send',
+		permission: ORDER_PERMISSIONS.ORDERS_EDIT,
+		scope: 'order.quote.send',
+		service: 'invoicing',
+		method: 'sendQuote',
+		call: (resolver, context) => resolver.sendOrderQuote(ID, 3, 'retry-key-1', context),
+		invoke: (controller, request) => controller.sendQuote(ID, request),
+		declaration: 'sendOrderQuote(id: ID!, version: Int, idempotencyKey: String): OrderQuoteSendPayload!'
 	}
 ];
 
@@ -247,4 +259,32 @@ describe('The order’s document and approval verbs — one capability, two surf
 			expect(print(orderSchemaExtensions)).toContain(pair.declaration);
 		}
 	);
+});
+
+describe('The quote payload states what the service answers', () => {
+	it('declares the order, its version, the estimate and the delivery, with nothing typed as money', () => {
+		const schema = print(orderSchemaExtensions);
+		const body = (type: string) =>
+			schema.slice(schema.indexOf(`type ${type} {`), schema.indexOf('}', schema.indexOf(`type ${type} {`)));
+
+		for (const member of [
+			'order: Order!',
+			'version: Int!',
+			'quoteInvoiceId: ID!',
+			'quoteNumber: Int!',
+			'delivery: OrderQuoteDelivery!'
+		]) {
+			expect({ member, declared: body('OrderQuoteSendPayload').includes(member) }).toEqual({
+				member,
+				declared: true
+			});
+		}
+
+		for (const member of ['sent: Boolean!', 'recipient: String', 'reason: String']) {
+			expect({ member, declared: body('OrderQuoteDelivery').includes(member) }).toEqual({
+				member,
+				declared: true
+			});
+		}
+	});
 });

@@ -9,13 +9,15 @@ import {
 	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
-import { ID, OrderStatus, PermissionsEnum } from '@gauzy/contracts';
+import { EstimateStatusTypesEnum, ID, OrderStatus, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext, addDecimalStrings, compareDecimalStrings, subtractDecimalStrings } from '@gauzy/core';
 import { Order } from '../order/order.entity';
 import { OrderService } from '../order/order.service';
 import {
 	ANY_ORDER_VERSION,
+	IOrderEstimateDelivery,
 	IOrderInvoiceDocument,
+	IOrderInvoiceDocumentState,
 	IOrderInvoiceDocumentItem,
 	IOrderInvoiceIssued,
 	IOrderInvoicingPort,
@@ -52,6 +54,40 @@ export const ORDER_INVOICEABLE_STATUSES: OrderStatus[] = [
 	OrderStatus.PROCESSING,
 	OrderStatus.COMPLETED
 ];
+
+/**
+ * Why each status an order cannot be quoted in is refused.
+ *
+ * A quote is an offer the buyer answers before the order is agreed: a draft, or an order placed and not yet
+ * confirmed. Accepting it is what confirms the order, so an order that is already confirmed, worked or
+ * closed has nothing left to offer.
+ */
+const NOT_QUOTABLE: Partial<Record<OrderStatus, string>> = {
+	[OrderStatus.REQUIRES_ACTION]:
+		'the order is placed and waiting on its payment, and a quote is an offer made before the order is agreed',
+	[OrderStatus.CONFIRMED]: 'the order is already agreed — a quote is an offer the buyer answers before that',
+	[OrderStatus.PROCESSING]: 'the order is already agreed and being worked',
+	[OrderStatus.COMPLETED]: 'the order is complete',
+	[OrderStatus.CANCELED]: 'a cancelled order is not offered to anyone',
+	[OrderStatus.ARCHIVED]: 'an archived order is read-only'
+};
+
+/** The statuses an order may be quoted in: before it is agreed. */
+export const ORDER_QUOTABLE_STATUSES: OrderStatus[] = [OrderStatus.DRAFT, OrderStatus.PENDING];
+
+/** What sending an order's quote answers. */
+export interface IOrderQuoteSent {
+	/** The order, stamped with its quote. */
+	order: Order;
+	/** The order's version, also published as the response's `ETag`. */
+	version: number;
+	/** The estimate the quote is. */
+	quoteInvoiceId: ID;
+	/** The estimate's number. */
+	quoteNumber: number;
+	/** Whether the estimate e-mail went, to whom, and when it did not, why. */
+	delivery: IOrderEstimateDelivery;
+}
 
 /**
  * The bridge from an order to the accounting documents that bill it.
@@ -202,6 +238,122 @@ export class OrderInvoicingService {
 		);
 
 		return invoiced;
+	}
+
+	/**
+	 * Sends the buyer a quote for an order: the platform's own estimate, built from the order, e-mailed with
+	 * its accept and decline links.
+	 *
+	 * **Sending always quotes the order as it stands.** The estimate is built afresh from the order's figures
+	 * and the order's `quoteInvoiceId` is moved to it; an earlier quote the buyer has not answered is voided as
+	 * superseded, so there is never more than one open offer for one order. One the buyer declined is left as
+	 * it is, because it records the buyer's answer.
+	 *
+	 * **The quote is recorded whether or not the e-mail goes.** The estimate and the stamp are the write; the
+	 * e-mail is a delivery of it, and an installation with no mail server must still be able to quote — so a
+	 * send that could not be made is reported in `delivery` rather than failing the write, and the quote can
+	 * be sent again.
+	 *
+	 * @param orderId The order.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The order, the estimate the quote is, and whether the e-mail went.
+	 * @throws ForbiddenException when the caller lacks `ESTIMATES_EDIT`.
+	 * @throws NotFoundException when the order is not the caller's.
+	 * @throws ConflictException with `ORDER_NOT_QUOTABLE`, `ORDER_ALREADY_INVOICED` or
+	 * `ORDER_QUOTE_ALREADY_ACCEPTED`.
+	 * @throws BadRequestException with `ORDER_EMPTY` when no line can be quoted.
+	 * @throws ServiceUnavailableException with `ORDER_INVOICING_UNAVAILABLE` when no invoicing capability is
+	 * registered.
+	 */
+	public async sendQuote(
+		orderId: ID,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<IOrderQuoteSent> {
+		this.assertDocumentGrant(PermissionsEnum.ESTIMATES_EDIT, 'a quote');
+
+		const order = await this.readOrder(orderId);
+
+		if (!ORDER_QUOTABLE_STATUSES.includes(order.status)) {
+			const reason = NOT_QUOTABLE[order.status] ?? `an order in ${order.status} cannot be quoted`;
+
+			throw new ConflictException({
+				message: `Order ${order.number} is ${order.status} and cannot be quoted: ${reason}.`,
+				code: 'ORDER_NOT_QUOTABLE',
+				details: { orderId: order.id, status: order.status, reason, quotable: ORDER_QUOTABLE_STATUSES }
+			});
+		}
+
+		if (order.invoiceId) {
+			throw new ConflictException({
+				message: `Order ${order.number} is already invoiced by ${order.invoiceId}, so it is past being quoted.`,
+				code: 'ORDER_ALREADY_INVOICED',
+				details: { orderId: order.id, invoiceId: order.invoiceId }
+			});
+		}
+
+		const invoicing = this.requireInvoicing();
+		const heldTo = this.heldTo(order, expectation);
+		const previous = order.quoteInvoiceId ? await invoicing.read(order.quoteInvoiceId) : null;
+
+		if (previous?.isAccepted === true) {
+			throw new ConflictException({
+				message: `The quote for order ${order.number} was accepted; the accepted quote is the agreement, and a new one is not sent over it.`,
+				code: 'ORDER_QUOTE_ALREADY_ACCEPTED',
+				details: { orderId: order.id, quoteInvoiceId: previous.invoiceId }
+			});
+		}
+
+		const { document } = await this.documentOf(order, true);
+		const issued = await invoicing.issue(document);
+		let quoted: Order;
+
+		try {
+			quoted = await this.totalsService.recompute(order.id, 'QUOTE_SENT', {
+				expectation: heldTo,
+				patch: { quoteInvoiceId: issued.invoiceId }
+			});
+		} catch (error) {
+			await this.withdraw(
+				issued,
+				[],
+				`Voided: the order write it was issued for was refused (order ${order.number}).`
+			);
+
+			throw error;
+		}
+
+		const superseded = previous && this.isOpenEstimate(previous) ? previous.invoiceId : undefined;
+
+		if (superseded) {
+			const reason = `Voided: superseded by quote ${issued.invoiceNumber} for order ${order.number}.`;
+
+			await invoicing.voidDocument(superseded, reason).catch(() => undefined);
+		}
+
+		const delivery = await this.deliver(invoicing, issued.invoiceId, order.email);
+
+		await this.historyService.record(
+			order.id,
+			'ORDER_QUOTE_SENT',
+			'Quote sent',
+			{
+				quoteInvoiceId: issued.invoiceId,
+				quoteNumber: issued.invoiceNumber,
+				supersededQuoteInvoiceId: superseded ?? null,
+				sent: delivery.sent,
+				recipient: delivery.recipient ?? null,
+				reason: delivery.reason ?? null
+			},
+			scopeOfOrderRow(order)
+		);
+
+		return {
+			order: quoted,
+			version: Number(quoted.version),
+			quoteInvoiceId: issued.invoiceId,
+			quoteNumber: issued.invoiceNumber,
+			delivery
+		};
 	}
 
 	/*
@@ -359,6 +511,42 @@ export class OrderInvoicingService {
 	 */
 	private heldTo(order: Order, expectation: OrderVersionExpectation): OrderVersionExpectation {
 		return expectation?.wildcard ? { wildcard: false, versions: [Number(order.version)] } : expectation;
+	}
+
+	/**
+	 * @param estimate An estimate as the invoicing capability reads it.
+	 * @returns Whether the buyer has yet to answer it and it still stands.
+	 */
+	private isOpenEstimate(estimate: IOrderInvoiceDocumentState): boolean {
+		return (
+			(estimate.isAccepted === null || estimate.isAccepted === undefined) &&
+			estimate.status !== EstimateStatusTypesEnum.VOID &&
+			estimate.status !== EstimateStatusTypesEnum.REJECTED
+		);
+	}
+
+	/**
+	 * Sends an estimate, reporting rather than raising.
+	 *
+	 * @param invoicing The invoicing capability.
+	 * @param invoiceId The estimate.
+	 * @param recipient The buyer's e-mail, when the order carries one.
+	 * @returns Whether the e-mail went, to whom, and when it did not, why.
+	 */
+	private async deliver(
+		invoicing: IOrderInvoicingPort,
+		invoiceId: ID,
+		recipient: string | undefined
+	): Promise<IOrderEstimateDelivery> {
+		if (!recipient) {
+			return { sent: false, reason: 'NO_RECIPIENT' };
+		}
+
+		try {
+			return await invoicing.sendEstimate(invoiceId, recipient);
+		} catch {
+			return { sent: false, recipient, reason: 'EMAIL_NOT_PREPARED' };
+		}
 	}
 
 	/**

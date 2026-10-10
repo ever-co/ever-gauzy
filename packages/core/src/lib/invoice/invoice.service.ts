@@ -17,6 +17,19 @@ import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
+/**
+ * What sending a document by e-mail did.
+ *
+ * `reason` names the step that failed when the message was not sent: the estimate e-mail record or the
+ * organization could not be prepared, the PDF could not be generated, or the mail transport refused it.
+ */
+export interface IInvoiceEmailOutcome {
+	/** Whether the message was handed to the mail transport. */
+	sent: boolean;
+	/** The step that failed, when it was not. */
+	reason?: 'EMAIL_NOT_PREPARED' | 'DOCUMENT_NOT_GENERATED' | 'EMAIL_NOT_SENT';
+}
+
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(
@@ -107,6 +120,18 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		}
 	}
 
+	/**
+	 * Sends an invoice or an estimate to a recipient, with the document attached as a PDF.
+	 *
+	 * A failure is logged and never raised — the route answers an accepted status whatever happened, and
+	 * that is unchanged. What the method now also does is **say** what happened: a caller that records a
+	 * document and then sends it (an order's quote) has to be able to report the send's outcome without
+	 * failing the write it already made, and a send that answered nothing could only be reported as
+	 * "attempted". The reason is a fixed code rather than the transport's own text, which can carry the
+	 * mail server's details.
+	 *
+	 * @returns Whether the message was handed to the mail transport, and when it was not, which step failed.
+	 */
 	async sendEmail(
 		languageCode: LanguagesEnum,
 		email: string,
@@ -115,17 +140,19 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		isEstimate: boolean,
 		origin: string,
 		organizationId: string
-	) {
+	): Promise<IInvoiceEmailOutcome> {
 		try {
 			//create estimate email record
 			const estimateEmail = await this.estimateEmailService.createEstimateEmail(invoiceId, email);
 			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+			let step: IInvoiceEmailOutcome['reason'] = 'DOCUMENT_NOT_GENERATED';
 			try {
 				//generate estimate/invoice pdf and attached in email
 				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				if (!buffer) throw new Error('PDF generation failed');
 				const base64 = buffer?.toString('base64');
 
+				step = 'EMAIL_NOT_SENT';
 				await this.emailService.emailInvoice(
 					languageCode,
 					email,
@@ -137,11 +164,17 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					origin,
 					organization
 				);
+
+				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
+
+				return { sent: false, reason: step };
 			}
 		} catch (error) {
 			console.log(`Error while creating estimate email for invoice ${invoiceId}: %s`, error?.message);
+
+			return { sent: false, reason: 'EMAIL_NOT_PREPARED' };
 		}
 	}
 

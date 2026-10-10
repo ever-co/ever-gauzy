@@ -40,7 +40,7 @@ import { OrderHistoryService } from '../order-history/order-history.service';
 import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
-import { OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
+import { IOrderQuoteSent, OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
 import { CreateOrderChangeDTO } from '../order-change/dto';
 import { CreateOrderCreditLineDTO } from '../order-credit-line/dto';
 
@@ -262,6 +262,37 @@ export class OrderController extends CrudController<Order> {
 	@HttpCode(HttpStatus.OK)
 	async invoice(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrder> {
 		return this.invoicingService.generateInvoice(id, versionExpectationOf(request));
+	}
+
+	/**
+	 * Sends the buyer a quote for an order.
+	 *
+	 * The quote is the platform's own estimate, built from the order as it stands and linked through the
+	 * order's `quoteInvoiceId`; an earlier quote the buyer has not answered is voided as superseded. It is
+	 * e-mailed through the platform's estimate e-mail, and the send's outcome is reported in `delivery`
+	 * rather than failing the write: an installation with no mail server can still quote, and the quote
+	 * can be sent again.
+	 *
+	 * The route states the order grant; the estimate also requires the finance module's own
+	 * `ESTIMATES_EDIT`, which the service checks.
+	 *
+	 * @param id The order.
+	 * @param request The request, which carries the version the caller read the order at.
+	 * @returns The order, the estimate the quote is, and whether the e-mail went.
+	 */
+	@ApiOperation({ summary: 'Send the buyer a quote for an order' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Quote recorded; `delivery` says whether the e-mail went' })
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The order is past quoting, is invoiced, or its quote was already accepted'
+	})
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.quote.send', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Post(':id/quote/send')
+	@HttpCode(HttpStatus.OK)
+	async sendQuote(@Param('id', UUIDValidationPipe) id: string, @Req() request: Request): Promise<IOrderQuoteSent> {
+		return this.invoicingService.sendQuote(id, versionExpectationOf(request));
 	}
 
 	/**

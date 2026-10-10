@@ -14,7 +14,11 @@ jest.mock('@gauzy/core', () => {
 		TenantOrganizationBaseEntity: class {},
 		MikroOrmBaseEntityRepository: class {},
 		MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
-		RequestContext: { currentTenantId: () => 'tenant-1' },
+		RequestContext: {
+			currentTenantId: () => 'tenant-1',
+			getLanguageCode: () => 'de',
+			currentRequest: () => ({ headers: { origin: 'https://app.example.com' } })
+		},
 		wrapSerialize: (entity: unknown) => entity,
 		versionExpectationOf: () => undefined,
 		ColumnIndex: decorator,
@@ -39,6 +43,7 @@ function financeService(overrides: Record<string, unknown> = {}) {
 		})),
 		findOneByIdString: jest.fn(),
 		update: jest.fn(async () => ({ affected: 1 })),
+		sendEmail: jest.fn(async () => ({ sent: true })),
 		...overrides
 	};
 }
@@ -206,5 +211,55 @@ describe('OrderInvoicingAdapter — the order’s document, written by the platf
 			status: InvoiceStatusTypesEnum.VOID,
 			internalNote: 'Voided: superseded.'
 		});
+	});
+});
+
+describe('OrderInvoicingAdapter.sendEstimate — the platform’s estimate e-mail, reported rather than raised', () => {
+	const ESTIMATE = { id: 'invoice-42', invoiceNumber: 42, organizationId: 'organization-1', isEstimate: true };
+
+	it('sends through the finance service with the caller’s language and origin, and marks the estimate sent', async () => {
+		const finance = financeService({ findOneByIdString: jest.fn(async () => ESTIMATE) });
+
+		const delivery = await new OrderInvoicingAdapter(finance as never).sendEstimate(
+			'invoice-42',
+			'buyer@example.com'
+		);
+
+		expect(delivery).toEqual({ sent: true, recipient: 'buyer@example.com' });
+		expect(finance.sendEmail).toHaveBeenCalledWith(
+			'de',
+			'buyer@example.com',
+			42,
+			'invoice-42',
+			true,
+			'https://app.example.com',
+			'organization-1'
+		);
+		expect(finance.update).toHaveBeenCalledWith('invoice-42', { status: 'SENT', sentTo: 'buyer@example.com' });
+	});
+
+	it('reports the step that failed, and leaves the estimate as it was', async () => {
+		const finance = financeService({
+			findOneByIdString: jest.fn(async () => ESTIMATE),
+			sendEmail: jest.fn(async () => ({ sent: false, reason: 'EMAIL_NOT_SENT' }))
+		});
+
+		await expect(
+			new OrderInvoicingAdapter(finance as never).sendEstimate('invoice-42', 'buyer@example.com')
+		).resolves.toEqual({ sent: false, recipient: 'buyer@example.com', reason: 'EMAIL_NOT_SENT' });
+		expect(finance.update).not.toHaveBeenCalled();
+	});
+
+	it('never raises: an estimate it cannot read is reported as not prepared', async () => {
+		const finance = financeService({
+			findOneByIdString: jest.fn(async () => {
+				throw new NotFoundException();
+			})
+		});
+
+		await expect(
+			new OrderInvoicingAdapter(finance as never).sendEstimate('invoice-42', 'buyer@example.com')
+		).resolves.toEqual({ sent: false, recipient: 'buyer@example.com', reason: 'EMAIL_NOT_PREPARED' });
+		expect(finance.sendEmail).not.toHaveBeenCalled();
 	});
 });

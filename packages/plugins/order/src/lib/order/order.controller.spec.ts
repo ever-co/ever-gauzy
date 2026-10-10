@@ -283,6 +283,7 @@ describe('OrderController — retry safety (the idempotency kernel)', () => {
 			place: { scope: 'order.place' },
 			cancel: { scope: 'order.cancel' },
 			invoice: { scope: 'order.invoice' },
+			sendQuote: { scope: 'order.quote.send' },
 			createChange: { scope: 'order.change.create' },
 			confirmChange: { scope: 'order.change.confirm', required: true }
 		};

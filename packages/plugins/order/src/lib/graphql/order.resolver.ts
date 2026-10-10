@@ -21,7 +21,7 @@ import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChangeService } from '../order-change/order-change.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
 import { OrderHistoryService } from '../order-history/order-history.service';
-import { OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
+import { IOrderQuoteSent, OrderInvoicingService } from '../order-invoicing/order-invoicing.service';
 import { OrderLineService } from '../order-line/order-line.service';
 import { OrderShippingMethodService } from '../order-shipping-method/order-shipping-method.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
@@ -334,6 +334,30 @@ export class OrderResolver {
 		@Context() context?: any
 	): Promise<Order> {
 		return this.invoicingService.generateInvoice(id, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Sends the buyer a quote for an order.
+	 *
+	 * The mirror of `POST /orders/:id/quote/send`: the same service method, the same grant, the same retry
+	 * scope and the same versioned resource. The payload says whether the estimate e-mail went, because the
+	 * quote is recorded whether or not it did.
+	 *
+	 * @param id The order.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, the estimate the quote is, and whether the e-mail went.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.quote.send', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'sendOrderQuote' })
+	async sendOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<IOrderQuoteSent> {
+		return this.invoicingService.sendQuote(id, versionExpectationOf(context?.req));
 	}
 
 	/**
