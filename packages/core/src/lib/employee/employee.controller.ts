@@ -36,6 +36,7 @@ import {
 } from './commands';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ManagedEmployeeService } from './managed-employee.service';
 import {
 	EmployeeBulkInputDTO,
 	CreateEmployeeDTO,
@@ -54,7 +55,11 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/employee')
 export class EmployeeController extends CrudController<Employee> {
-	constructor(private readonly _employeeService: EmployeeService, private readonly _commandBus: CommandBus) {
+	constructor(
+		private readonly _employeeService: EmployeeService,
+		private readonly _commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService
+	) {
 		super(_employeeService);
 	}
 
@@ -225,10 +230,30 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid query parameters. Please check your input.'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'Without an organization-wide view, organizationTeamId must be a team the caller belongs to.'
+	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
 	@Get('/members')
 	@UseValidationPipe()
 	async getMembers(@Query() options: FindMembersInputDTO): Promise<IPagination<IEmployee>> {
+		// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, only covers the caller's own teams: findMembers
+		// filters by team only when one is given, so without this check it returns the whole organization.
+		// isMemberOfTeam fails closed on a missing team id or a caller without an employee record.
+		const hasOrganizationWideView = RequestContext.hasAnyPermission([
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		]);
+		if (
+			!hasOrganizationWideView &&
+			!(await this._managedEmployeeService.isMemberOfTeam(
+				RequestContext.currentEmployeeId(),
+				options.organizationTeamId
+			))
+		) {
+			throw new ForbiddenException('You can only list the members of a team you belong to.');
+		}
 		return await this._employeeService.findMembers(options);
 	}
 
