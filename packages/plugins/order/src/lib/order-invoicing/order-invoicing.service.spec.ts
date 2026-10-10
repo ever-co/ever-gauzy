@@ -138,6 +138,7 @@ import { ConflictException, ForbiddenException, NotFoundException, ServiceUnavai
 import {
 	AdjustmentOwnerType,
 	FulfillmentStatus,
+	OrderChangeStatus,
 	OrderPaymentStatus,
 	OrderStatus,
 	PermissionsEnum,
@@ -152,6 +153,7 @@ import { OrderSummaryService } from '../order-summary/order-summary.service';
 import { OrderTotalsService } from '../order-totals/order-totals.service';
 import { OrderTransactionService } from '../order-transaction/order-transaction.service';
 import { OrderService } from '../order/order.service';
+import { OrderStateMachine } from '../order-state-machine/order-state-machine';
 import { OrderLineInvoiceDirection, OrderLineKind } from '../order.types';
 import { OrderInvoicingService } from './order-invoicing.service';
 
@@ -305,6 +307,12 @@ function invoicingPort() {
 			Object.assign(documents.get(invoiceId) ?? {}, { status: 'SENT', sentTo: recipient });
 
 			return { sent: true, recipient };
+		}),
+		answerEstimate: jest.fn(async (invoiceId: string, accepted: boolean) => {
+			Object.assign(documents.get(invoiceId) ?? {}, {
+				isAccepted: accepted,
+				status: accepted ? 'ACCEPTED' : 'REJECTED'
+			});
 		})
 	};
 }
@@ -388,6 +396,8 @@ function fixture(options: { order?: Record<string, unknown>; port?: boolean } = 
 		[`${AdjustmentOwnerType.ORDER_LINE}:line-1`]: [{ amount: -0.05, isTaxInclusive: false }]
 	};
 
+	// The changes the order has open: a change awaiting approval holds a confirmation back.
+	const openChanges: any[] = [];
 	const repo = (table: TableName) => repository(tables, table);
 	const typeOrmOrderRepository = repo('order');
 	const orderWriter = {
@@ -418,7 +428,7 @@ function fixture(options: { order?: Record<string, unknown>; port?: boolean } = 
 		new OrderAddressService(repo('order_address') as never, {} as never),
 		shippingService,
 		historyService,
-		{ findOpenForOrder: jest.fn(async () => []) } as never,
+		{ findOpenForOrder: jest.fn(async () => openChanges) } as never,
 		{ allocate: jest.fn() } as never
 	);
 	const port = invoicingPort();
@@ -431,7 +441,7 @@ function fixture(options: { order?: Record<string, unknown>; port?: boolean } = 
 		options.port === false ? undefined : (port as never)
 	);
 
-	return { service, tables, port, register, outbox, order: () => tables.order[0] };
+	return { service, tables, port, register, outbox, openChanges, order: () => tables.order[0] };
 }
 
 /** The timeline of the fixture order. */
@@ -627,14 +637,16 @@ describe('OrderInvoicingService.generateInvoice — the invoice that bills an or
 		});
 	});
 
-	it('voids the document and withdraws the links when the stated version is stale, and answers the conflict', async () => {
+	it('refuses a stated version the order has moved past before issuing anything, with the conflict', async () => {
 		const built = fixture();
 
 		await expect(built.service.generateInvoice('order-1', at(2))).rejects.toMatchObject({
-			code: 'ENTITY_VERSION_CONFLICT'
+			code: 'ENTITY_VERSION_CONFLICT',
+			status: 409
 		});
 
-		expect(built.port.documents.get('invoice-101')).toMatchObject({ status: 'VOID' });
+		// Refused from the read, so no document had to be issued and then voided for it.
+		expect(built.port.issue).not.toHaveBeenCalled();
 		expect(built.register.links).toEqual([]);
 		expect(built.order()).toMatchObject({ version: 3 });
 		expect(built.order().invoiceId).toBeUndefined();
@@ -660,8 +672,13 @@ describe('OrderInvoicingService.generateInvoice — the invoice that bills an or
 			code: 'ENTITY_VERSION_CONFLICT'
 		});
 
+		// The document issued for the refused stamp is voided — it keeps its number — and the links recorded for
+		// it are withdrawn, so neither the finance list nor the line register bills the order twice.
 		expect(built.order()).toMatchObject({ invoiceId: 'invoice-from-elsewhere', version: 4 });
 		expect(built.port.voidDocument).toHaveBeenCalledWith('invoice-201', expect.stringMatching(/refused/));
+		expect(built.register.record).toHaveBeenCalledTimes(2);
+		expect(built.register.links).toEqual([]);
+		expect(timelineOf(built)).toEqual([]);
 	});
 });
 
@@ -805,7 +822,7 @@ describe('OrderInvoicingService.sendQuote — the estimate an order is offered w
 		expect(built.port.sendEstimate).not.toHaveBeenCalled();
 	});
 
-	it('voids the new estimate and sends nothing when the stated version is stale; the earlier quote stands', async () => {
+	it('refuses a stale stated version before issuing anything; the earlier quote stands', async () => {
 		const built = fixture({ order: { status: OrderStatus.DRAFT, quoteInvoiceId: 'quote-open' } });
 		built.port.documents.set('quote-open', { isEstimate: true, isAccepted: null, status: 'SENT' });
 
@@ -813,10 +830,28 @@ describe('OrderInvoicingService.sendQuote — the estimate an order is offered w
 			code: 'ENTITY_VERSION_CONFLICT'
 		});
 
-		expect(built.port.documents.get('invoice-101')).toMatchObject({ status: 'VOID' });
+		expect(built.port.issue).not.toHaveBeenCalled();
 		expect(built.port.documents.get('quote-open')).toMatchObject({ status: 'SENT' });
 		expect(built.port.sendEstimate).not.toHaveBeenCalled();
 		expect(built.order()).toMatchObject({ quoteInvoiceId: 'quote-open', version: 3 });
+	});
+
+	it('voids the new estimate and sends nothing when another writer moves the order first', async () => {
+		const built = fixture({ order: { status: OrderStatus.DRAFT, quoteInvoiceId: 'quote-open' } });
+		built.port.documents.set('quote-open', { isEstimate: true, isAccepted: null, status: 'SENT' });
+		const issue = built.port.issue.getMockImplementation() as (document: any) => Promise<any>;
+		built.port.issue.mockImplementationOnce(async (document: any) => {
+			Object.assign(built.order(), { version: 4 });
+
+			return issue(document);
+		});
+
+		await expect(built.service.sendQuote('order-1')).rejects.toMatchObject({ code: 'ENTITY_VERSION_CONFLICT' });
+
+		expect(built.port.documents.get('invoice-101')).toMatchObject({ status: 'VOID' });
+		expect(built.port.documents.get('quote-open')).toMatchObject({ status: 'SENT' });
+		expect(built.port.sendEstimate).not.toHaveBeenCalled();
+		expect(built.order()).toMatchObject({ quoteInvoiceId: 'quote-open', version: 4 });
 	});
 
 	it('answers ORDER_INVOICING_UNAVAILABLE when no invoicing capability is registered', async () => {
@@ -824,5 +859,154 @@ describe('OrderInvoicingService.sendQuote — the estimate an order is offered w
 
 		await expect(built.service.sendQuote('order-1', at(3))).rejects.toBeInstanceOf(ServiceUnavailableException);
 		expect(built.order().version).toBe(3);
+	});
+});
+
+describe('OrderInvoicingService.acceptQuote — the buyer accepts, and the order is confirmed through its lifecycle', () => {
+	/** An order of the given status with an open quote. */
+	const quoted = (status: OrderStatus, quote: Record<string, unknown> = {}) => {
+		const built = fixture({ order: { status, isDraft: status === OrderStatus.DRAFT, quoteInvoiceId: 'quote-1' } });
+
+		built.port.documents.set('quote-1', {
+			isEstimate: true,
+			isAccepted: null,
+			status: 'SENT',
+			invoiceNumber: 77,
+			...quote
+		});
+
+		return built;
+	};
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('marks the estimate accepted, then places and confirms a draft — DRAFT -> PENDING -> CONFIRMED', async () => {
+		const built = quoted(OrderStatus.DRAFT);
+		const transition = jest.spyOn(OrderStateMachine, 'transition');
+
+		const confirmed = await built.service.acceptQuote('order-1', at(3));
+
+		expect(built.port.answerEstimate).toHaveBeenCalledWith('quote-1', true);
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: true, status: 'ACCEPTED' });
+
+		// The status moved only through the state machine, one row of its table at a time — never straight
+		// from DRAFT to CONFIRMED, which is not a move the table contains.
+		expect(transition.mock.calls.map(([from, to]) => [from.status, to])).toEqual([
+			[OrderStatus.DRAFT, OrderStatus.PENDING],
+			[OrderStatus.PENDING, OrderStatus.CONFIRMED]
+		]);
+		expect(confirmed).toMatchObject({ status: OrderStatus.CONFIRMED, isDraft: false, version: 5 });
+		expect(built.tables.order_summary.map((row: any) => [row.version, row.reason])).toEqual([
+			[4, 'PLACED'],
+			[5, 'CONFIRMED']
+		]);
+		expect(timelineOf(built)).toEqual(['ORDER_QUOTE_ACCEPTED', 'ORDER_PLACED', 'ORDER_CONFIRMED']);
+		// The placement says what placed it, and each move announces itself as the lifecycle's own moves do.
+		expect(
+			built.outbox.append.mock.calls.map(([, event]: any[]) => [event.name, event.data.quoteInvoiceId])
+		).toEqual([
+			['order.placed', 'quote-1'],
+			['order.confirmed', undefined]
+		]);
+	});
+
+	it('confirms a placed order directly — PENDING -> CONFIRMED — under the version the caller stated', async () => {
+		const built = quoted(OrderStatus.PENDING);
+
+		const confirmed = await built.service.acceptQuote('order-1', at(3));
+
+		expect(confirmed).toMatchObject({ status: OrderStatus.CONFIRMED, version: 4 });
+		expect(built.tables.order_summary.map((row: any) => row.reason)).toEqual(['CONFIRMED']);
+	});
+
+	it('leaves the order where the lifecycle stopped it, and completes on a retry without answering twice', async () => {
+		const built = quoted(OrderStatus.DRAFT);
+		// A change awaiting approval holds the confirmation back: the state machine refuses PENDING -> CONFIRMED.
+		built.openChanges.push({ id: 'change-1', status: OrderChangeStatus.REQUESTED });
+
+		await expect(built.service.acceptQuote('order-1', at(3))).rejects.toMatchObject({
+			response: { code: 'ORDER_STATUS_TRANSITION_INVALID' }
+		});
+
+		// The buyer's answer stands, and the order stopped at PENDING — placed, not confirmed.
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: true });
+		expect(built.order()).toMatchObject({ status: OrderStatus.PENDING, version: 4 });
+
+		// Once the change is decided, the same call completes the move.
+		built.openChanges.length = 0;
+		await expect(built.service.acceptQuote('order-1', at(4))).resolves.toMatchObject({
+			status: OrderStatus.CONFIRMED,
+			version: 5
+		});
+		expect(built.port.answerEstimate).toHaveBeenCalledTimes(1);
+		expect(timelineOf(built).filter((action: string) => action === 'ORDER_QUOTE_ACCEPTED')).toHaveLength(1);
+	});
+
+	it('refuses a stale version with the conflict before the answer is recorded, leaving the order unmoved', async () => {
+		const built = quoted(OrderStatus.PENDING);
+
+		await expect(built.service.acceptQuote('order-1', at(2))).rejects.toMatchObject({
+			code: 'ENTITY_VERSION_CONFLICT'
+		});
+		expect(built.order()).toMatchObject({ status: OrderStatus.PENDING, version: 3 });
+		expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		expect(built.port.documents.get('quote-1')).toMatchObject({ isAccepted: null });
+	});
+
+	it('refuses an order with no quote, with a declined quote and with a voided quote — each with 409 and nothing moved', async () => {
+		const unsent = fixture({ order: { status: OrderStatus.DRAFT } });
+		await expect(unsent.service.acceptQuote('order-1', at(3))).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'ORDER_QUOTE_NOT_SENT' }
+		});
+
+		const declined = quoted(OrderStatus.DRAFT, { isAccepted: false, status: 'REJECTED' });
+		await expect(declined.service.acceptQuote('order-1', at(3))).rejects.toMatchObject({
+			response: { code: 'ORDER_QUOTE_DECLINED' }
+		});
+
+		const voided = quoted(OrderStatus.DRAFT, { status: 'VOID' });
+		await expect(voided.service.acceptQuote('order-1', at(3))).rejects.toMatchObject({
+			response: { code: 'ORDER_QUOTE_VOID' }
+		});
+
+		for (const built of [unsent, declined, voided]) {
+			expect(built.order()).toMatchObject({ status: OrderStatus.DRAFT, version: 3 });
+			expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		}
+	});
+
+	it.each([OrderStatus.CONFIRMED, OrderStatus.CANCELED, OrderStatus.REQUIRES_ACTION])(
+		'refuses an order in %s, whose quote can no longer be answered, with 409',
+		async (status) => {
+			const built = quoted(status);
+
+			await expect(built.service.acceptQuote('order-1', at(3))).rejects.toMatchObject({
+				status: 409,
+				response: { code: 'ORDER_QUOTE_NOT_ANSWERABLE', details: { status } }
+			});
+			expect(built.port.answerEstimate).not.toHaveBeenCalled();
+		}
+	);
+
+	it('requires the estimate grant, does not find another tenant’s order, and needs the invoicing capability', async () => {
+		const forbidden = quoted(OrderStatus.DRAFT);
+		mockCaller.permissions = new Set([PermissionsEnum.INVOICES_EDIT]);
+		await expect(forbidden.service.acceptQuote('order-1', at(3))).rejects.toBeInstanceOf(ForbiddenException);
+
+		mockCaller.permissions = new Set([PermissionsEnum.ESTIMATES_EDIT]);
+		const foreign = quoted(OrderStatus.DRAFT);
+		mockCaller.tenantId = 'tenant-2';
+		await expect(foreign.service.acceptQuote('order-1', at(3))).rejects.toBeInstanceOf(NotFoundException);
+
+		mockCaller.tenantId = 'tenant-1';
+		const unbound = fixture({ order: { status: OrderStatus.DRAFT, quoteInvoiceId: 'quote-1' }, port: false });
+		await expect(unbound.service.acceptQuote('order-1', at(3))).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+		for (const built of [forbidden, foreign, unbound]) {
+			expect(built.order()).toMatchObject({ status: OrderStatus.DRAFT, version: 3 });
+		}
+		expect(forbidden.port.answerEstimate).not.toHaveBeenCalled();
+		expect(foreign.port.answerEstimate).not.toHaveBeenCalled();
 	});
 });

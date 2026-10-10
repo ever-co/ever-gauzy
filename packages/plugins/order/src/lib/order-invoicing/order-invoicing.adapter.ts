@@ -187,6 +187,23 @@ export class OrderInvoicingAdapter implements IOrderInvoicingPort {
 	}
 
 	/**
+	 * Records the buyer's answer on the estimate.
+	 *
+	 * The answer is the finance document's own accept flag — `isAccepted`, which is what the finance
+	 * module's estimate route and its public accept link write — with the estimate status that goes with it,
+	 * so the estimate list shows the answer the order acted on.
+	 *
+	 * @param invoiceId The estimate.
+	 * @param accepted True when the buyer accepted it, false when they declined it.
+	 */
+	public async answerEstimate(invoiceId: ID, accepted: boolean): Promise<void> {
+		await this.invoiceService.update(invoiceId, {
+			isAccepted: accepted,
+			status: accepted ? EstimateStatusTypesEnum.ACCEPTED : EstimateStatusTypesEnum.REJECTED
+		} as never);
+	}
+
+	/**
 	 * Sends an estimate through the platform's estimate e-mail, and marks it sent when it went.
 	 *
 	 * The message is the one the finance screens send: the estimate's PDF, and the accept and decline links

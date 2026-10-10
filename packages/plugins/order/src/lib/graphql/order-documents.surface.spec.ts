@@ -165,6 +165,18 @@ const PAIRS: IPair[] = [
 		call: (resolver, context) => resolver.sendOrderQuote(ID, 3, 'retry-key-1', context),
 		invoke: (controller, request) => controller.sendQuote(ID, request),
 		declaration: 'sendOrderQuote(id: ID!, version: Int, idempotencyKey: String): OrderQuoteSendPayload!'
+	},
+	{
+		field: 'acceptOrderQuote',
+		route: 'acceptQuote',
+		path: ':id/quote/accept',
+		// It confirms the order, so it states the approve route's grant — and, like that route, no retry scope.
+		permission: ORDER_PERMISSIONS.ORDERS_APPROVE,
+		service: 'invoicing',
+		method: 'acceptQuote',
+		call: (resolver, context) => resolver.acceptOrderQuote(ID, 3, context),
+		invoke: (controller, request) => controller.acceptQuote(ID, request),
+		declaration: 'acceptOrderQuote(id: ID!, version: Int): Order!'
 	}
 ];
 

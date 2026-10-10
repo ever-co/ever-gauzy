@@ -263,3 +263,18 @@ describe('OrderInvoicingAdapter.sendEstimate — the platform’s estimate e-mai
 		expect(finance.sendEmail).not.toHaveBeenCalled();
 	});
 });
+
+describe('OrderInvoicingAdapter.answerEstimate — the buyer’s answer, on the estimate itself', () => {
+	it('writes the finance document’s own accept flag and the status that goes with it', async () => {
+		const finance = financeService();
+		const adapter = new OrderInvoicingAdapter(finance as never);
+
+		await adapter.answerEstimate('invoice-42', true);
+		await adapter.answerEstimate('invoice-43', false);
+
+		expect(finance.update.mock.calls).toEqual([
+			['invoice-42', { isAccepted: true, status: 'ACCEPTED' }],
+			['invoice-43', { isAccepted: false, status: 'REJECTED' }]
+		]);
+	});
+});

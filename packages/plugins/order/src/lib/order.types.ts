@@ -343,6 +343,15 @@ export interface IOrderInvoicingPort {
 	 * @returns Whether the message was handed to the mail transport, and when it was not, why.
 	 */
 	sendEstimate(invoiceId: ID, recipient: string): Promise<IOrderEstimateDelivery>;
+
+	/**
+	 * Records the buyer's answer to an estimate on the estimate itself: the finance document's own accept
+	 * flag, and the estimate status that goes with it.
+	 *
+	 * @param invoiceId The estimate.
+	 * @param accepted True when the buyer accepted it, false when they declined it.
+	 */
+	answerEstimate(invoiceId: ID, accepted: boolean): Promise<void>;
 }
 
 /** What sending an estimate to the buyer did. */

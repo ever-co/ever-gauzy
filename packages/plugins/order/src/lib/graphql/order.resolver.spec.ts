@@ -138,6 +138,7 @@ const MIRRORED: Array<{ route: any; mutation: any }> = [
 	{ route: OrderController.prototype.recalculate, mutation: OrderResolver.prototype.recalculateOrder },
 	{ route: OrderController.prototype.invoice, mutation: OrderResolver.prototype.generateOrderInvoice },
 	{ route: OrderController.prototype.sendQuote, mutation: OrderResolver.prototype.sendOrderQuote },
+	{ route: OrderController.prototype.acceptQuote, mutation: OrderResolver.prototype.acceptOrderQuote },
 	{ route: OrderController.prototype.createChange, mutation: OrderResolver.prototype.requestOrderEdit },
 	{ route: OrderController.prototype.declineChange, mutation: OrderChangeResolver.prototype.declineOrderChange },
 	{ route: OrderController.prototype.cancelChange, mutation: OrderChangeResolver.prototype.cancelOrderChange }
