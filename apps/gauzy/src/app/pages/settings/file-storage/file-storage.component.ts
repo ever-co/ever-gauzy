@@ -324,6 +324,7 @@ export class FileStorageComponent extends TranslationBaseComponent implements On
 
 			// Saves the tenant settings and displays a success message upon successful saving.
 			await this._tenantService.saveSettings(settings);
+			this.form.markAsPristine(); // clears the footer's "Unsaved changes"
 			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
 			console.error('Error while submitting tenant settings:', error);

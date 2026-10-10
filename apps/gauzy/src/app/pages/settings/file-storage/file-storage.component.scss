@@ -65,9 +65,32 @@
         nb-card-footer {
             background-color: nb-theme(gauzy-card-2);
             padding-top: 0;
+        }
 
-            nb-icon {
-                font-size: 1rem;
+        // Action bar: same shape as Settings > General's group footer — status
+        // text pushed to the start, small buttons grouped on the end, hairline above.
+        nb-card-footer.form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+
+            .form-status {
+                margin-inline-end: auto;
+                font-size: 0.75rem;
+                color: var(--text-hint-color);
+            }
+
+            button[nbButton] {
+                margin: 0;
+                text-transform: none;
+
+                nb-icon {
+                    font-size: 1rem;
+                }
             }
         }
     }

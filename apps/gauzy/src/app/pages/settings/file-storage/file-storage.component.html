@@ -166,13 +166,19 @@
 					</div>
 				}
 			</nb-card-body>
-			<nb-card-footer>
-				<button type="submit" class="mr-2" nbButton status="success">
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-				<button type="button" nbButton status="basic" outline (click)="checkConfiguration()">
-					<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+			<!-- Same action bar as Settings > General: status on the start side, the quiet
+			     action then the primary one on the end side, small buttons. -->
+			<nb-card-footer class="form-actions">
+				@if (form.dirty) {
+					<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+				}
+				<button type="button" nbButton ghost size="small" status="basic" (click)="checkConfiguration()">
+					<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
 					{{ 'SETTINGS_FILE_STORAGE.CHECK.BUTTON' | translate }}
+				</button>
+				<button type="submit" nbButton size="small" status="primary" [disabled]="loading">
+					<nb-icon icon="save-outline"></nb-icon>
+					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</nb-card-footer>
 		</nb-card>
