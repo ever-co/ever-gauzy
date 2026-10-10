@@ -94,17 +94,20 @@ jest.mock('./desktop-wakatime', () => ({ metaData: { getActivity: jest.fn(async 
 
 /** Stands in for the ActivityWatch event tables: saved by queue jobs, read and reset when a time slot is built. */
 const activityTable = {
-	rows: [] as Array<{ eventId: number; timerId: number }>,
+	rows: [] as Array<{ eventId: number; timerId: number; table?: string }>,
 	held: null as Promise<void> | null
 };
 jest.mock('./integrations', () => {
-	const service = class {
-		save = jest.fn(async (events: Array<{ eventId: number; timerId: number }>) => {
-			if (activityTable.held) await activityTable.held;
-			activityTable.rows.push(...events);
-		});
-		clear = jest.fn(async () => undefined);
-	};
+	const service = (table: string) =>
+		class {
+			save = jest.fn(async (events: Array<{ eventId: number; timerId: number }>) => {
+				if (activityTable.held) await activityTable.held;
+				activityTable.rows.push(...events.map((event) => ({ ...event, table })));
+			});
+			clear = jest.fn(async () => {
+				activityTable.rows = activityTable.rows.filter((row) => row.table !== table);
+			});
+		};
 	return {
 		ActivityWatchEventTableList: {
 			AFK: 'afk_events',
@@ -113,11 +116,11 @@ jest.mock('./integrations', () => {
 			FIREFOX: 'firefox_events',
 			EDGE: 'edge_events'
 		},
-		ActivityWatchWindowService: service,
-		ActivityWatchAfkService: service,
-		ActivityWatchChromeService: service,
-		ActivityWatchFirefoxService: service,
-		ActivityWatchEdgeService: service,
+		ActivityWatchWindowService: service('window_events'),
+		ActivityWatchAfkService: service('afk_events'),
+		ActivityWatchChromeService: service('chrome_events'),
+		ActivityWatchFirefoxService: service('firefox_events'),
+		ActivityWatchEdgeService: service('edge_events'),
 		ActivityWatchEventManager: { collectActivities: jest.fn() },
 		ActivityWatchService: class {
 			isConnected = true;
@@ -198,6 +201,10 @@ const window = { webContents: { send: jest.fn() } } as any;
 const duration = (id: number, ms: number) => ({ type: 'update-duration-timer', data: { id, duration: ms } });
 const windowEvents = (timerId: number, ...eventIds: number[]) => ({
 	type: 'window_events',
+	data: eventIds.map((eventId) => ({ eventId, timerId }))
+});
+const afkEvents = (timerId: number, ...eventIds: number[]) => ({
+	type: 'afk_events',
 	data: eventIds.map((eventId) => ({ eventId, timerId }))
 });
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -418,6 +425,28 @@ describe('TimerHandler', () => {
 			expect(timerService.syncedOf(1)).toBe(true);
 		});
 
+		it('applies what a previous run left stored before offline sync reads the timers', async () => {
+			offlineMode.enabled = true;
+			const stuck = await crashedSession(duration(1, 1000));
+			stuck.release();
+
+			// Next start, back online, before any job of the session: offline sync settles the stored jobs first.
+			offlineMode.enabled = false;
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+
+			expect(await handler.settleQueuedTimerJobs(knex, 2_000)).toBe(true);
+			expect(timerService.writes).toContainEqual(expect.objectContaining({ id: 1, duration: 1000 }));
+			expect(timerService.syncedOf(1)).toBeUndefined();
+		});
+
+		it('does not wait for anything with the in-memory queue', async () => {
+			const handler = newHandler();
+
+			expect(await handler.settleQueuedTimerJobs(knex, 50)).toBe(true);
+			expect(fs.readdirSync(userData)).toEqual([]);
+		});
+
 		it('still marks a timer unsynced as soon as a duration is queued offline', async () => {
 			appSetting = { asyncTimerDataSync: true };
 			offlineMode.enabled = true;
@@ -456,6 +485,65 @@ describe('TimerHandler', () => {
 			expect((await slot).activities).toEqual([{ eventId: 1 }, { eventId: 2 }]);
 			const next = await handler.getAllActivities(knex, moment());
 			expect(next.activities).toEqual([]);
+		});
+
+		it('keeps an activity save that outlasts the time slot’s wait out of the next slot', async () => {
+			appSetting = {
+				asyncTimerDataSync: true,
+				SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer',
+				timer: { updatePeriod: 1 }
+			};
+			const handler = newHandler();
+			handler.lastTimer = { id: 7 };
+			let release: () => void = () => undefined;
+			activityTable.held = new Promise<void>((resolve) => (release = resolve));
+			await handler.processWithQueue('gauzy-queue', windowEvents(7, 1), knex);
+
+			// The save is still waiting when the slot gives up on it (5 s) and resets the tables…
+			const slot = await handler.getAllActivities(knex, moment().subtract(1, 'minute'));
+			expect(slot.activities).toEqual([]);
+			expect(audit.timerAuditError).toHaveBeenCalledWith(
+				expect.stringContaining('[getAllActivities] Activity queued before this time slot was not written')
+			);
+
+			// …and only lands afterwards: the reset runs behind it, so the next slot does not carry it.
+			activityTable.held = null;
+			release();
+			expect(await (await asyncQueueOf(handler)).drain()).toBe(true);
+			expect(activityTable.rows).toEqual([]);
+			const next = await handler.getAllActivities(knex, moment());
+			expect(next.activities).toEqual([]);
+		}, 20_000);
+	});
+
+	describe('activity resets', () => {
+		it('empties only the named tables, behind the saves queued before the reset', async () => {
+			appSetting = { asyncTimerDataSync: true };
+			const handler = newHandler();
+			let release: () => void = () => undefined;
+			activityTable.held = new Promise<void>((resolve) => (release = resolve));
+			await handler.processWithQueue('gauzy-queue', afkEvents(7, 1), knex);
+
+			await handler.clearActivityEvents(knex, ['afk_events' as any]);
+			activityTable.held = null;
+			release();
+			await handler.processWithQueue('gauzy-queue', windowEvents(7, 2), knex);
+			expect(await (await asyncQueueOf(handler)).drain()).toBe(true);
+
+			expect(activityTable.rows).toEqual([{ eventId: 2, timerId: 7, table: 'window_events' }]);
+		});
+
+		it('empties the tables right away with the in-memory queue, as before', async () => {
+			const handler = newHandler();
+			await handler.processWithQueue('gauzy-queue', windowEvents(7, 1), knex);
+			await handler.processWithQueue('gauzy-queue', afkEvents(7, 2), knex);
+
+			await handler.clearActivityEvents(knex, ['afk_events' as any]);
+			expect(activityTable.rows).toEqual([{ eventId: 1, timerId: 7, table: 'window_events' }]);
+
+			await handler.clearActivityEvents(knex);
+			expect(activityTable.rows).toEqual([]);
+			expect(fs.readdirSync(userData)).toEqual([]);
 		});
 	});
 

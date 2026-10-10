@@ -13,6 +13,7 @@ let userData = '';
 jest.mock('electron', () => ({ app: { getPath: () => userData } }), { virtual: true });
 
 let eventSaves: Array<{ table: string; events: unknown }> = [];
+let tableClears: string[] = [];
 const windowClears = jest.fn(async () => undefined);
 jest.mock('../integrations', () => {
 	const tables = {
@@ -27,7 +28,10 @@ jest.mock('../integrations', () => {
 			save = async (events: unknown) => {
 				eventSaves.push({ table, events });
 			};
-			clear = windowClears;
+			clear = async () => {
+				tableClears.push(table);
+				await windowClears();
+			};
 		};
 	return {
 		ActivityWatchEventTableList: tables,
@@ -44,6 +48,7 @@ jest.mock('../desktop-wakatime', () => ({ metaData: { removeActivity: (...args: 
 
 jest.mock('../offline', () => ({ Timer: jest.requireActual('../offline/models/timer.model').Timer }));
 
+import { PersistentQueue } from '@gauzy/desktop-activity';
 import { AsyncTimerSyncQueue, ASYNC_TIMER_SYNC_QUEUE_FILE, isAsyncTimerDataSyncEnabled } from './async-timer-sync-queue';
 import { ITimerQueueJob, TimerQueueProcessor } from './timer-queue-processor';
 
@@ -91,6 +96,7 @@ const duration = (id: number, ms: number): ITimerQueueJob => ({ type: 'update-du
 
 beforeEach(() => {
 	eventSaves.length = 0;
+	tableClears = [];
 	windowClears.mockClear();
 	removeActivity.mockClear();
 	jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -177,6 +183,24 @@ describe('TimerQueueProcessor', () => {
 		expect(removeActivity).toHaveBeenCalledWith(knex, { idsWakatime: [3, 4] });
 	});
 
+	it('empties the named event tables, or all five when none is named', async () => {
+		const processor = new TimerQueueProcessor(fakeTimerService() as any, fakeOfflineMode());
+
+		await processor.process({ type: 'clear-activity-events', data: { tables: ['afk_events'] } }, knex);
+		expect(tableClears).toEqual(['afk_events']);
+
+		tableClears = [];
+		await processor.process({ type: 'clear-activity-events', data: {} }, knex);
+		expect(tableClears.sort()).toEqual(['afk_events', 'chrome_events', 'edge_events', 'firefox_events', 'window_events']);
+	});
+
+	it('fails a reset when a table could not be emptied, so the queue retries it', async () => {
+		const processor = new TimerQueueProcessor(fakeTimerService() as any, fakeOfflineMode());
+		windowClears.mockRejectedValueOnce(new Error('SQLITE_BUSY: database is locked'));
+
+		await expect(processor.process({ type: 'clear-activity-events' }, knex)).rejects.toThrow('SQLITE_BUSY');
+	});
+
 	it('lets a failure reach the caller', async () => {
 		const timers = fakeTimerService();
 		timers.failures = 1;
@@ -258,6 +282,26 @@ describe('AsyncTimerSyncQueue', () => {
 			{ ms: 1000, synced: undefined },
 			{ ms: 2000, synced: undefined }
 		]);
+	});
+
+	it('never marks a timer unsynced from a stored duration, even one stored without the flag', async () => {
+		// A duration job written to the file as-is (no `markUnsynced`, as an earlier build stored it), left by a crash.
+		const raw = new PersistentQueue({ dbPath: path.join(userData, ASYNC_TIMER_SYNC_QUEUE_FILE) });
+		let release: () => void = () => undefined;
+		const stuck = new Promise<void>((resolve) => (release = resolve));
+		raw.register('gauzy-queue', () => stuck);
+		await raw.enqueue('gauzy-queue', duration(1, 1000));
+		await raw.close(20);
+		release();
+
+		// Next start, offline: the timer was uploaded in between, so running the job must not mark it again.
+		const timers = fakeTimerService();
+		const { queue } = openQueue(timers, fakeOfflineMode(true));
+		queue.open(knex);
+
+		expect(await queue.drain()).toBe(true);
+		expect(timers.writes).toEqual([expect.objectContaining({ id: 1, duration: 1000 })]);
+		expect(timers.writes[0].synced).toBeUndefined();
 	});
 
 	it('settles: waits for the jobs queued so far before what reads the database', async () => {

@@ -16,7 +16,13 @@ export enum TimerQueueJobType {
 	UPDATE_DURATION = 'update-duration-timer',
 	UPDATE_TIME_SLOT = 'update-timer-time-slot',
 	REMOVE_WINDOW_EVENTS = 'remove-window-events',
-	REMOVE_WAKATIME_EVENTS = 'remove-wakatime-events'
+	REMOVE_WAKATIME_EVENTS = 'remove-wakatime-events',
+	/**
+	 * Empties ActivityWatch event tables (`data.tables`, all five when absent). Queued only by the persistent queue, so
+	 * that a reset runs after the event saves queued before it: run directly, a save still waiting in the queue would
+	 * be written after the reset and land in the next time slot.
+	 */
+	CLEAR_ACTIVITY_EVENTS = 'clear-activity-events'
 }
 
 /** A job of the desktop timer queue: `{ type, data }`, as passed to `TimerHandler.processWithQueue`. */
@@ -37,7 +43,7 @@ export interface IDurationJobData {
 	markUnsynced?: boolean;
 }
 
-type TEventService = { save(events: IDesktopEvent | IDesktopEvent[]): Promise<void> };
+type TEventService = { save(events: IDesktopEvent | IDesktopEvent[]): Promise<void>; clear(): Promise<void> };
 
 const EVENT_SERVICES: Record<ActivityWatchEventTableList, new () => TEventService> = {
 	[ActivityWatchEventTableList.WINDOW]: ActivityWatchWindowService,
@@ -73,6 +79,9 @@ export class TimerQueueProcessor {
 				await metaData.removeActivity(knex, { idsWakatime: job.data });
 				return;
 
+			case TimerQueueJobType.CLEAR_ACTIVITY_EVENTS:
+				return this.clearActivityEvents(job.data?.tables);
+
 			case TimerQueueJobType.UPDATE_DURATION:
 				return this.updateDuration(job.data);
 
@@ -96,6 +105,18 @@ export class TimerQueueProcessor {
 	 */
 	public markTimerUnsynced(id: number): Promise<void> {
 		return this.timerService.update(new Timer({ id, synced: false }));
+	}
+
+	/** Empties the named event tables (all five when none is named). Throws when one could not be emptied, so the job is retried. */
+	private async clearActivityEvents(tables?: ActivityWatchEventTableList[]): Promise<void> {
+		const names = tables?.length ? tables : (Object.keys(EVENT_SERVICES) as ActivityWatchEventTableList[]);
+		const results = await Promise.allSettled(
+			names.filter((name) => EVENT_SERVICES[name]).map((name) => new EVENT_SERVICES[name]().clear())
+		);
+		const failed = results.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+		if (failed) {
+			throw failed.reason;
+		}
 	}
 
 	private updateDuration({ id, duration, markUnsynced }: IDurationJobData): Promise<void> {

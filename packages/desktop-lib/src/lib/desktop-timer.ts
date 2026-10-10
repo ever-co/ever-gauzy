@@ -14,13 +14,18 @@ import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
 import { LocalStore } from './desktop-store';
 import { metaData } from './desktop-wakatime';
-import { ActivityWatchEventManager, ActivityWatchService } from './integrations';
+import { ActivityWatchEventManager, ActivityWatchEventTableList, ActivityWatchService } from './integrations';
 import { IOfflineMode } from './interfaces';
 import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { logger } from '@gauzy/desktop-core';
 import { AuditLogHandler } from './audit';
-import { AsyncTimerSyncQueue, IAsyncTimerSyncQueueOptions, isAsyncTimerDataSyncEnabled } from './queues/async-timer-sync-queue';
-import { ITimerQueueJob, TimerQueueProcessor } from './queues/timer-queue-processor';
+import {
+	AsyncTimerSyncQueue,
+	DEFAULT_TIMER_QUEUE,
+	IAsyncTimerSyncQueueOptions,
+	isAsyncTimerDataSyncEnabled
+} from './queues/async-timer-sync-queue';
+import { ITimerQueueJob, TimerQueueJobType, TimerQueueProcessor } from './queues/timer-queue-processor';
 
 // embedded-queue is required lazily inside processWithQueue() to avoid
 // loading it at module import time (before app.ready).
@@ -96,7 +101,7 @@ export default class TimerHandler {
 	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
 		this._activities = [];
 
-		await this._activityWatchService.clearAllEvents();
+		await this.clearActivityEvents(knex);
 
 		this._eventCounter.start();
 		this._activeWindow.start();
@@ -364,7 +369,7 @@ export default class TimerHandler {
 			console.log('Get All Activities Start for:', lastTimeSlot);
 			const dataCollection = await this.activitiesCollection(knex, lastTimeSlot);
 			console.log('Get All Activities End for:', lastTimeSlot);
-			const result = await this.takeScreenshotActivities(lastTimeSlot, dataCollection);
+			const result = await this.takeScreenshotActivities(lastTimeSlot, dataCollection, knex);
 			console.log('Get All Activities Result');
 			return result;
 		} catch (error) {
@@ -467,7 +472,7 @@ export default class TimerHandler {
 		}
 	}
 
-	async takeScreenshotActivities(lastTimeSlot, dataCollection) {
+	async takeScreenshotActivities(lastTimeSlot, dataCollection, knex?) {
 		console.log('Take Screenshot Activities Start:', lastTimeSlot);
 
 		const now = moment();
@@ -595,7 +600,7 @@ export default class TimerHandler {
 			this._eventCounter.reset();
 			console.log('Event Counter Reset');
 
-			await this._activityWatchService.clearAllEvents();
+			await this.clearActivityEvents(knex);
 			console.log('Cleared All Events');
 
 			this._activities = [];
@@ -773,6 +778,46 @@ export default class TimerHandler {
 		} catch {
 			return false;
 		}
+	}
+
+	/*
+	 * Empties the ActivityWatch event tables (`tables`, all five when absent). With the asynchronous sync the reset is a job
+	 * of the timer queue, behind the event saves queued before it: a save still waiting there (a retry, a busy database)
+	 * past the wait a time slot allows is then written before the reset rather than after it, so it can never surface in
+	 * the next time slot. With the in-memory queue, or when the job cannot be stored, the tables are emptied right away,
+	 * as before.
+	 */
+	public async clearActivityEvents(knex?, tables?: ActivityWatchEventTableList[]): Promise<void> {
+		const queue = await this.asyncTimerSync(knex);
+		if (queue) {
+			try {
+				await queue.processWithQueue(
+					DEFAULT_TIMER_QUEUE,
+					{ type: TimerQueueJobType.CLEAR_ACTIVITY_EVENTS, data: tables?.length ? { tables } : {} },
+					knex
+				);
+				return;
+			} catch (error) {
+				await this._auditLogHandler.timerAuditError(
+					`[clearActivityEvents] Could not queue the activity reset, emptying the tables now: ${error?.message ?? error}`
+				);
+			}
+		}
+		if (!tables?.length) {
+			await this._activityWatchService.clearAllEvents();
+			return;
+		}
+		await this._queueProcessor.process({ type: TimerQueueJobType.CLEAR_ACTIVITY_EVENTS, data: { tables } }, knex);
+	}
+
+	/*
+	 * For offline sync, before it reads what to upload: resolves once the timer jobs stored so far — those an earlier run
+	 * left behind included — have been applied to the local database, so it uploads the timers as they end up rather
+	 * than as they were before a stored duration update ran (false after `timeoutMs`). Always true with the in-memory
+	 * queue, which is not waited for, as before.
+	 */
+	public settleQueuedTimerJobs(knex, timeoutMs: number): Promise<boolean> {
+		return this.settleTimerJobs(knex, timeoutMs);
 	}
 
 	/*

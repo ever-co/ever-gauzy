@@ -110,8 +110,23 @@ export class AsyncTimerSyncQueue {
 	/** One processor per queue name, each with its own table. */
 	private ensureQueue(name: string): void {
 		if (!this.queue.has(name)) {
-			this.queue.register<ITimerQueueJob>(name, (job) => this.options.processor.process(job, this.knex));
+			this.queue.register<ITimerQueueJob>(name, (job) =>
+				this.options.processor.process(AsyncTimerSyncQueue.asStored(job), this.knex)
+			);
 		}
+	}
+
+	/**
+	 * A stored duration update runs with `markUnsynced: false` whatever the file says. `prepare` writes that flag on every
+	 * job it stores, but a job stored without it (by an earlier build) would otherwise fall back to the offline mode of
+	 * the moment it runs — after a restart, possibly once offline sync has uploaded the timer — and have it uploaded
+	 * again.
+	 */
+	private static asStored(job: ITimerQueueJob): ITimerQueueJob {
+		if (job?.type !== TimerQueueJobType.UPDATE_DURATION || !job.data || job.data.markUnsynced === false) {
+			return job;
+		}
+		return { ...job, data: { ...job.data, markUnsynced: false } };
 	}
 
 	/**
