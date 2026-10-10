@@ -91,19 +91,30 @@ export class ManagedEmployeeService {
 			if (isNotEmpty(managed.teamIds) || isNotEmpty(managed.projectIds)) {
 				const managedEmployeeIds = await this.getMembersOfTeamsAndProjects(managed.teamIds, managed.projectIds);
 
-				// Filter requested employeeIds to only include managed employees, or take all of them
-				const accessibleEmployeeIds = isNotEmpty(requestedEmployeeIds)
-					? requestedEmployeeIds.filter((id) => managedEmployeeIds.includes(id))
-					: managedEmployeeIds;
-
-				// An empty list would drop the employee predicate and read every employee of the selected teams or
-				// projects, so a selection with no managed employee in it matches nothing instead.
-				return isNotEmpty(accessibleEmployeeIds) ? accessibleEmployeeIds : [NO_ACCESSIBLE_EMPLOYEE_ID];
+				return this.keepManagedEmployeeIds(requestedEmployeeIds, managedEmployeeIds);
 			}
 		}
 
 		// Case 5: User is not a manager → Access only to themselves
 		return [currentEmployeeId];
+	}
+
+	/**
+	 * Keeps the requested employeeIds that are managed employees, or all managed employees when none were requested.
+	 *
+	 * An empty list would drop the employee predicate and read every employee of the selected teams or projects,
+	 * so a selection with no managed employee in it returns an id that matches nothing instead.
+	 *
+	 * @param requestedEmployeeIds - The employeeIds requested by the client
+	 * @param managedEmployeeIds - The members of the teams and projects the user manages
+	 * @returns The accessible employeeIds, or [NO_ACCESSIBLE_EMPLOYEE_ID] when none is left
+	 */
+	private keepManagedEmployeeIds(requestedEmployeeIds: ID[], managedEmployeeIds: ID[]): ID[] {
+		const accessibleEmployeeIds = isNotEmpty(requestedEmployeeIds)
+			? requestedEmployeeIds.filter((id) => managedEmployeeIds.includes(id))
+			: managedEmployeeIds;
+
+		return isNotEmpty(accessibleEmployeeIds) ? accessibleEmployeeIds : [NO_ACCESSIBLE_EMPLOYEE_ID];
 	}
 
 	/**
