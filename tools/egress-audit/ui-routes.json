@@ -307,7 +307,116 @@
     },
     {
       "path": "/pages/candidates",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:250",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:27",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:41",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:63",
+      "redirect_to": "account",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/account",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:68",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/documents",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:116",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/employment",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:176",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/experience",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:104",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/feedbacks",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:128",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/hiring",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:164",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/history",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:140",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/interview",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:188",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/location",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:152",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/rates",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:80",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/edit/:id/profile/tasks",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:92",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/interviews",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:226",
+      "redirect_to": "calendar",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/interviews/calendar",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:231",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/interviews/criterion",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:255",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/interviews/interview_panel",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:243",
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/invites",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:202",
+      "guards": [
+        "InviteGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/candidates/statistic",
+      "file": "apps/gauzy/src/app/pages/candidates/candidates-routing.module.ts:269",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
@@ -348,7 +457,7 @@
     },
     {
       "path": "/pages/contacts/visitors",
-      "file": "apps/gauzy/src/app/pages/contacts/contacts-routing.module.ts:20",
+      "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
       "source": "router"
     },
     {
@@ -782,7 +891,7 @@
     },
     {
       "path": "/pages/goals/reports",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:478",
+      "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
       "source": "router"
     },
     {
@@ -992,7 +1101,7 @@
     },
     {
       "path": "/pages/organization/expense-recurring",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:412",
+      "file": "apps/gauzy/src/app/pages/expense-recurring/expense-recurring-routing.module.ts:7",
       "source": "router"
     },
     {
@@ -1095,32 +1204,32 @@
     },
     {
       "path": "/pages/organizations",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:269",
+      "file": "apps/gauzy/src/app/pages/organizations/organizations-routing.module.ts:12",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
       "path": "/pages/organizations/edit/:id",
-      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
-      "source": "manual",
-      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts:36",
+      "redirect_to": "main",
+      "source": "router"
     },
     {
       "path": "/pages/organizations/edit/:id/location",
-      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
-      "source": "manual",
-      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts:54",
+      "source": "router"
     },
     {
       "path": "/pages/organizations/edit/:id/main",
-      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
-      "source": "manual",
-      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts:41",
+      "source": "router"
     },
     {
       "path": "/pages/organizations/edit/:id/settings",
-      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts",
-      "source": "manual",
-      "note": "organization edit pages under /pages/organizations/edit (OrganizationsRoutingModule loadChildren); the generator lists them under /pages/users only, where UsersModule also mounts them by importing OrganizationsModule"
+      "file": "apps/gauzy/src/app/pages/organizations/edit-organization/edit-organization-routing.module.ts:67",
+      "source": "router"
     },
     {
       "path": "/pages/playground",
@@ -1130,7 +1239,7 @@
     },
     {
       "path": "/pages/projects",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:143",
+      "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
       "source": "router"
     },
     {
@@ -1141,7 +1250,7 @@
     },
     {
       "path": "/pages/reports/accounting",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:531",
+      "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
       "source": "router"
     },
     {
@@ -1166,7 +1275,7 @@
     },
     {
       "path": "/pages/reports/daily-limits",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:562",
+      "file": "apps/gauzy/src/app/pages/reports/time-limit-report/time-limit-report-routing.module.ts:8",
       "source": "router"
     },
     {
@@ -1212,17 +1321,93 @@
     },
     {
       "path": "/pages/sales/estimates",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:174",
+      "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
       "source": "router"
     },
     {
       "path": "/pages/sales/invoices",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:181",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:23",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/add",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:37",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/edit/:id",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:48",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/estimates",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:95",
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/estimates/add",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:108",
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/estimates/edit/:id",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:124",
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/estimates/view/:id",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:134",
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/payments/:id",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:167",
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/received-estimates",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:153",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/received-invoices",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:59",
+      "guards": [
+        "PermissionsGuard"
+      ],
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/recurring",
+      "file": "packages/ui-core/shared/src/lib/work-in-progress/work-in-progress.routes.ts:12",
+      "source": "router"
+    },
+    {
+      "path": "/pages/sales/invoices/view/:id",
+      "file": "apps/gauzy/src/app/pages/invoices/invoices-routing.module.ts:73",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {
       "path": "/pages/sales/payments",
-      "file": "apps/gauzy/src/app/pages/pages.routes.ts:190",
+      "file": "apps/gauzy/src/app/pages/payments/payments-routing.module.ts:9",
+      "guards": [
+        "PermissionsGuard"
+      ],
       "source": "router"
     },
     {

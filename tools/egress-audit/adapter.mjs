@@ -9,7 +9,8 @@
 // - every mode: sign in as the seeded Super Admin and hand the browser the ids it needs for the
 //   routes that carry one (never a token).
 // - loaded_off: the Super Admin (the instance operator) switches the statistics off in Settings.
-// - browser leg: sign in through the real sign-in page, and keep checking that the session holds.
+// - browser leg: sign in through the real sign-in page (the harness checks that the sign-in holds:
+//   a route that ends on the sign-in page faults the walk).
 
 import { randomBytes } from 'node:crypto';
 
@@ -64,18 +65,6 @@ const routeOf = (url) => new URL(url).hash.split('?')[0] || '/';
  * renders around a "not found", which is all the walk needs (what it renders and what it calls).
  */
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
-
-/**
- * Whether the web app holds a session: its persisted store (localStorage `_gauzyStore`) has a token.
- * Runs in the page.
- */
-const HAS_SESSION = () => {
-	try {
-		return Boolean(JSON.parse(window.localStorage.getItem('_gauzyStore') || '{}')?.persist?.token);
-	} catch {
-		return false;
-	}
-};
 
 /** Every statistics route, with the method the settings page (or the paired Ever Teams) uses. */
 const STATS_ROUTES = [
@@ -200,12 +189,11 @@ export default {
 	},
 
 	/**
-	 * Browser leg: the signed-out pages first (SIGNED_OUT_ROUTES), then the real sign-in page. The web app routes in the URL fragment (`/#/auth/login`),
-	 * so the config's web_url ends in `/#` and every route is opened as `/#/<route>`.
-	 *
-	 * The session is checked during the whole walk: the web app keeps its token in its persisted
-	 * store (localStorage `_gauzyStore`, `persist.token`), and a walk that lost it (a sign-out, a token refused) closes the page, so every
-	 * route after that faults instead of passing on the sign-in page.
+	 * Browser leg: the signed-out pages first (SIGNED_OUT_ROUTES), then the real sign-in page. The web
+	 * app routes in the URL fragment (`/#/auth/login`): the config says `"ui_routing": "hash"`, so
+	 * `ctx.baseUrl` is the web app's address with `/#` and `ctx.baseUrl + route` opens a route. The
+	 * sign-in page is `ui_sign_in_route`, and the harness faults every route that ends on it, so a
+	 * walk that lost its session never passes there.
 	 */
 	async uiLogin(page, ctx) {
 		const origin = new URL(ctx.baseUrl).origin;
@@ -231,28 +219,7 @@ export default {
 			ctx.log(`adapter: the sign-in did not complete at ${routeOf(page.url())}; the page reads: ${text.split(/\s/).filter(Boolean).join(' ').slice(0, 300)}`);
 			throw error;
 		}
-		const signedIn = await page
-			.waitForFunction(HAS_SESSION, undefined, { timeout: 30_000 })
-			.then(() => true)
-			.catch(() => false);
-		if (!signedIn) throw new Error('the sign-in page left no session (no token in the web app store)');
 		ctx.log(`adapter: signed in, landed on ${routeOf(page.url())}`);
-
-		const watch = setInterval(async () => {
-			if (page.isClosed()) return clearInterval(watch);
-			let held = true;
-			try {
-				held = await page.evaluate(HAS_SESSION);
-			} catch {
-				return; // a navigation in flight; the next tick reads again
-			}
-			if (!held) {
-				clearInterval(watch);
-				ctx.log(`adapter: the session did not hold (no token at ${routeOf(page.url())}): closing the page, so the rest of the walk faults`);
-				await page.close().catch(() => {});
-			}
-		}, 2000);
-		watch.unref?.();
 	},
 
 	/** Route parameters: the seeded ids where the seed has one, an unknown id elsewhere. */

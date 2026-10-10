@@ -5949,23 +5949,23 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
-"@ever-co/connect-contracts@1.0.0-rc.3":
-  version "1.0.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@ever-co/connect-contracts/-/connect-contracts-1.0.0-rc.3.tgz#56a7593937f3ad8286c85027cb7b2b8c7521db2b"
-  integrity sha512-XXDbkPA+ixWuS46qLq0UYZIKE2dAwdAs6adkX5fsJkeo9Gui7rkme3siQOSYypk6W5v0k82eQQe7dZD2KrAsSQ==
+"@ever-co/connect-contracts@1.0.0-rc.6":
+  version "1.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-contracts/-/connect-contracts-1.0.0-rc.6.tgz#bb0ecbbdfddbc3b2add076d65902d7d34b62bee7"
+  integrity sha512-7X48urJswXyEJPWhsmZGHoZIZj9B5UUAn8lGxr6aacS+6YBhTEWj4CXCjUWakvJQsjJqjkTbIXvTN/HpbEmm7w==
 
-"@ever-co/connect-sdk@1.0.0-rc.3":
-  version "1.0.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@ever-co/connect-sdk/-/connect-sdk-1.0.0-rc.3.tgz#336fc45b9b37f4ea96215961e66aa6c54553863b"
-  integrity sha512-jIVMbje4ewcVuEY5ab+PU9R/fYwuJ/9HxLMrFiBdeeK5CGidfC8w+EGZDrTQGD15B2/kH16aauLp4ll65bw3uw==
+"@ever-co/connect-sdk@1.0.0-rc.6":
+  version "1.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-sdk/-/connect-sdk-1.0.0-rc.6.tgz#85ccbfcd672a7519d5dc0975414ea2b8ed5235b4"
+  integrity sha512-9+cQIGFInc56gkEPsBgjF2vMrKAjUFdx7IRc7lW9k1f2V19q7QG49fq39wvUVApLkzrRkOnqltH0R6q5sFU4Kg==
   dependencies:
-    "@ever-co/connect-contracts" "1.0.0-rc.3"
+    "@ever-co/connect-contracts" "1.0.0-rc.6"
     ajv "8.20.0"
 
-"@ever-co/connect-tools@1.0.0-rc.3":
-  version "1.0.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@ever-co/connect-tools/-/connect-tools-1.0.0-rc.3.tgz#64fa30ab0f67cddf5daa9c8d3002aacf43628d7a"
-  integrity sha512-2RhgkdwM3tviiU4MocWrp4L1iObrth9tg9A/nsW7SNH5cZsR7i5000yo8zRlul/86SdtNJpR1lt9NSli6utpMg==
+"@ever-co/connect-tools@1.0.0-rc.6":
+  version "1.0.0-rc.6"
+  resolved "https://registry.yarnpkg.com/@ever-co/connect-tools/-/connect-tools-1.0.0-rc.6.tgz#2d39adc10fff4138b55d6d5bd251b0a2450a2deb"
+  integrity sha512-cKDNtgPshRzeEiI0fu2ClfamrPMZ2ZViyNV41JhT88MkhhD3RssgjNTFw8Ur81QtHseU+C8w4KHfGchN4iJ9Zg==
   dependencies:
     ajv "8.20.0"
     ajv-formats "3.0.1"
