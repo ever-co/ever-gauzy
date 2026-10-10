@@ -70,6 +70,25 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
+	 * GET the roles a team manager can give to team members (EMPLOYEE and MANAGER).
+	 * A narrow read-only route, so team managers get these roles while `GET /roles` and
+	 * role administration stay reserved to CHANGE_ROLES_PERMISSIONS.
+	 *
+	 * @returns The EMPLOYEE and MANAGER roles of the current tenant.
+	 */
+	@ApiOperation({ summary: 'Find roles assignable to team members.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found team assignable roles.',
+		type: Role
+	})
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD)
+	@Get('team-assignable')
+	async findTeamAssignable(): Promise<IPagination<IRole>> {
+		return await this.roleService.findTeamAssignableRoles();
+	}
+
+	/**
 	 * GET roles for specific tenant
 	 *
 	 * @returns
