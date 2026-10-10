@@ -84,7 +84,7 @@ export function dependencyFiles(root) {
 		}
 	};
 	walk('');
-	return files.sort();
+	return files.sort((a, b) => a.localeCompare(b));
 }
 
 /** The ever-co repository a dependency specification installs from, or null. */
