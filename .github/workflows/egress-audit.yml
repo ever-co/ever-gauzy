@@ -20,6 +20,20 @@ name: Egress audit
 #                   the settings page's status request seen from the browser
 #   control         positive_stats without the mock platform must FAIL, so a green run is not a
 #                   blind one
+#   every_trigger   both modules on against the mock platform and every trigger of every call
+#                   exercised: the calls made are exactly the Gauzy rows of the contract this
+#                   release makes (docs/ever-platform/outbound-calls.md), row for row
+#   connect_off_sign_in_on  the connection off and the Ever ID sign-in plugin on with an issuer on
+#                   an Ever host: the issuer is left unused, nothing looked up or sent, in both legs
+#   entitlement_ladder  entitlement documents in grace, paused, issued in the future (refused) and
+#                   slightly ahead (accepted): the ladder follows, Gauzy's own routes answer the
+#                   same at every step, only the connection's documented calls are made
+#   static-bundle   the built web app of the image names no Ever host the baseline does not have
+#
+# The static checks run on every pull request that touches code (no install but the harness):
+# Ever hosts named outside the modules (tools/egress-audit/static-hostnames.mjs, a baseline that may
+# only shrink), the modules' import boundary (tools/ever-platform/check-import-boundary.mjs and its
+# ESLint rule), and the generated list of outbound calls (tools/ever-platform/outbound-calls.mjs).
 #
 # The harness is the egress audit of the SDK's dev tools (`ever-egress-audit` of
 # `@ever-co/connect-tools`), installed with `npm ci` from tools/egress-audit/package-lock.json;
@@ -51,6 +65,11 @@ on:
       - 'packages/plugin-ui/**'
       - 'packages/plugins/*-ui/**'
       - 'tools/ever-platform/**'
+      - 'docs/ever-platform/**'
+      - 'packages/**'
+      - 'apps/**'
+      - 'eslint.config.js'
+      - '.env.sample'
       - '**/package.json'
       - '**/yarn.lock'
       - '.github/workflows/**'
@@ -74,7 +93,7 @@ env:
   # harness or route generator): the baseline may then gain entries for those routes, and only for
   # links it already excused on other routes (tools/egress-audit/check-baseline-rewalk.mjs). The next
   # change sets it back to 'false'.
-  BASELINE_REWALK: 'true'
+  BASELINE_REWALK: 'false'
 
 jobs:
   inputs:
@@ -122,6 +141,30 @@ jobs:
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag
           fi
+
+      - name: No Ever host named outside the Ever Platform modules beyond the baseline (sources)
+        run: node --test tools/egress-audit/static-hostnames.test.mjs
+
+      - name: The baseline of Ever hosts in the sources only shrinks
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git show "origin/$BASE_REF:$AUDIT_DIR/static-hostnames.baseline.json" > "$RUNNER_TEMP/static-hostnames.base.json" 2> /dev/null || : > "$RUNNER_TEMP/static-hostnames.base.json"
+          node tools/egress-audit/static-hostnames.mjs --check-shrink "$RUNNER_TEMP/static-hostnames.base.json"
+
+      - name: The import boundary of the Ever Platform modules (scanner and ESLint rule)
+        env:
+          ESLINT_PREFIX: ${{ runner.temp }}/eslint
+          EVER_BOUNDARY_ESLINT_REQUIRED: 'true'
+        run: |
+          # The workspace's ESLint and parser majors, without a workspace install (exact versions,
+          # no scripts, outside the checkout).
+          npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund --prefix "$ESLINT_PREFIX" eslint@9.39.2 @typescript-eslint/parser@8.69.0
+          node --test tools/ever-platform/import-boundary.test.mjs
+
+      - name: The list of outbound calls is the pinned contract's, and everything that repeats it agrees
+        run: node --test tools/ever-platform/outbound-calls.test.mjs
 
       - name: No dependency on a private ever-co repository (the default branch must build for anyone)
         if: ${{ github.event_name != 'pull_request' || github.base_ref == 'develop' }}
@@ -177,6 +220,18 @@ jobs:
             args: --no-mock
             dotenv: api-empty.env
             expect: 1
+          - mode: every_trigger
+            run: every_trigger
+            dotenv: api-empty.env
+            expect: 0
+          - mode: connect_off_sign_in_on
+            run: connect_off_sign_in_on
+            dotenv: api-empty.env
+            expect: 0
+          - mode: entitlement_ladder
+            run: entitlement_ladder
+            dotenv: api-empty.env
+            expect: 0
     steps:
       - name: Free disk space for the images
         run: |
@@ -305,3 +360,36 @@ jobs:
           name: egress-audit-${{ matrix.mode }}
           path: ${{ env.AUDIT_ARTIFACTS }}
           retention-days: 14
+
+  static-bundle:
+    name: egress-audit (static-bundle)
+    needs: inputs
+    if: ${{ !cancelled() && needs.inputs.result == 'success' && needs.inputs.outputs.audit == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+
+      - name: Install the harness (tools/egress-audit/package-lock.json)
+        run: npm ci --prefix "$AUDIT_DIR" --ignore-scripts --no-audit --no-fund
+
+      - name: The built web app names no Ever host beyond the baseline
+        # bash with pipefail, so the scan's exit code survives the tee.
+        shell: bash
+        env:
+          WEBAPP_IMAGE: ${{ github.event.inputs.webapp_image || 'ghcr.io/ever-co/gauzy-webapp-demo:latest' }}
+        run: |
+          for attempt in 1 2 3 4 5; do docker pull -q "$WEBAPP_IMAGE" && break; sleep $((attempt * 20)); done
+          echo "The web app image is $(docker image inspect "$WEBAPP_IMAGE" --format '{{index .RepoDigests 0}}')." | tee -a "$GITHUB_STEP_SUMMARY"
+          id=$(docker create "$WEBAPP_IMAGE")
+          docker cp "$id:/srv/gauzy" "$RUNNER_TEMP/webapp"
+          docker rm "$id" > /dev/null
+          node tools/egress-audit/static-hostnames.mjs --bundle "$RUNNER_TEMP/webapp" | tee -a "$GITHUB_STEP_SUMMARY"
