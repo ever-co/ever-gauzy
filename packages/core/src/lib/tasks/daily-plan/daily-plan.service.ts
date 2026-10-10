@@ -51,8 +51,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns The created or updated DailyPlan
 	 */
 	async createDailyPlan(partialEntity: IDailyPlanCreateInput): Promise<IDailyPlan> {
+		const { employeeId, organizationId, organizationTeamId, taskId } = partialEntity;
+
+		// The owner comes from the request body, so the rule for updating or deleting a plan applies here too.
+		// It runs before the employee lookup, so a refusal does not reveal whether that employee exists.
+		if (!(await this._managedEmployeeService.canManageEmployee(employeeId, organizationTeamId, organizationId))) {
+			throw new ForbiddenException('You can only create daily plans for yourself or for employees you manage.');
+		}
+
 		try {
-			const { employeeId, organizationId, organizationTeamId, taskId } = partialEntity;
 			const tenantId = RequestContext.currentTenantId() ?? partialEntity.tenantId;
 
 			const dailyPlanDate = new Date(partialEntity.date).toISOString().split('T')[0];
@@ -140,6 +147,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		const organizationTeamId = await this.resolveReadableTeam(options, employeeId);
 
 		try {
 			const { where } = options;
@@ -152,6 +160,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						organizationId: where?.organizationId
 					};
 					if (employeeId) mikroWhere.employeeId = employeeId;
+					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						...(options?.relations ? { populate: options.relations as any[] } : {})
@@ -186,6 +195,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 					if (employeeId) {
 						query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					}
+
+					if (organizationTeamId) {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
 					}
 
 					// Retrieve results and total count
@@ -224,7 +239,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
-		await this.assertCanReadTeamPlans(options?.where?.organizationTeamId);
+		// The query below already filters on the team from `where`, which is the one checked here.
+		await this.resolveReadableTeam(options);
 
 		try {
 			// Apply optional find options if provided
@@ -283,37 +299,50 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * Refuses a team read unless the caller belongs to that team.
+	 * Refuses a plan read unless the caller belongs to the team it names, and returns the team the read
+	 * must then be limited to.
 	 *
-	 * A caller with CHANGE_SELECTED_EMPLOYEE still reads any team, or the whole organization when no team
-	 * is named, and so does an organization-wide viewer without an employee record, the same exception
-	 * `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. Anyone else must name a team they are an
-	 * active member or manager of.
+	 * A caller with CHANGE_SELECTED_EMPLOYEE skips the membership check and reads any team, or the whole
+	 * organization when no team is named, and so does an organization-wide viewer without an employee
+	 * record, the same exception `ManagedEmployeeService.filterAccessibleEmployeeIds` makes. An employee
+	 * reading their own plans skips it too. A team these callers name still limits the read, so both ORM
+	 * branches return the same plans. Anyone else must name a team they are an active member or manager of.
 	 *
-	 * @param organizationTeamId - The team named in the request's `where`, as the client sent it
-	 * @throws ForbiddenException when the caller may not read that team's plans
+	 * @param options - The request's query options, whose `where` names the team as the client sent it
+	 * @param ownerId - The employee whose plans are read, when the route is limited to one
+	 * @returns The team to filter on, or undefined when no usable team was named and the caller needs none
+	 * @throws ForbiddenException when the caller may not read those plans
 	 */
-	private async assertCanReadTeamPlans(organizationTeamId: unknown): Promise<void> {
+	private async resolveReadableTeam(options: BaseQueryDTO | undefined, ownerId?: ID): Promise<ID | undefined> {
+		const organizationTeamId: unknown = options?.where?.organizationTeamId;
+
+		// A repeated or nested query value is not a string, and a malformed id would make the uuid
+		// comparison fail: neither names a team, so neither reaches the membership query.
+		const requestedTeamId =
+			typeof organizationTeamId === 'string' && isUUID(organizationTeamId) ? organizationTeamId : undefined;
+
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return;
+			return requestedTeamId;
 		}
 
 		const employeeId = RequestContext.currentEmployeeId();
 
 		if (!employeeId && RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
-			return;
+			return requestedTeamId;
 		}
 
-		// A repeated or nested query value is not a string, and a malformed id would make the uuid
-		// comparison fail: both are refused here instead of reaching the membership query.
+		if (employeeId && ownerId === employeeId) {
+			return requestedTeamId;
+		}
+
 		const isMember =
-			typeof organizationTeamId === 'string' &&
-			isUUID(organizationTeamId) &&
-			(await this._managedEmployeeService.isMemberOfTeam(employeeId, organizationTeamId));
+			!!requestedTeamId && (await this._managedEmployeeService.isMemberOfTeam(employeeId, requestedTeamId));
 
 		if (!isMember) {
 			throw new ForbiddenException('You can only read the daily plans of a team you belong to.');
 		}
+
+		return requestedTeamId;
 	}
 
 	/**
@@ -323,7 +352,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise resolving to daily plans for the current employee.
 	 */
 	async getMyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
-		const currentEmployeeId = RequestContext.currentEmployeeId();
+		// Read from the user: `currentEmployeeId()` is null for a CHANGE_SELECTED_EMPLOYEE holder even when
+		// they have an employee record, and this route only ever reads the caller's own plans.
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+
+		// A caller without an employee record owns no plans. Passing no owner on would read the whole
+		// organization for the callers that skip the team check.
+		if (!currentEmployeeId) {
+			return { items: [], total: 0 };
+		}
 
 		// Fetch daily plans for the current employee
 		return await this.getAllPlans(options, currentEmployeeId);
@@ -712,6 +749,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of plans and total count
 	 */
 	async getDailyPlansByTask(options: BaseQueryDTO, taskId: ID): Promise<IPagination<IDailyPlan>> {
+		const organizationTeamId = await this.resolveReadableTeam(options);
+
 		try {
 			const { where } = options;
 			const { organizationId } = where;
@@ -724,6 +763,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						organizationId,
 						tasks: { id: taskId }
 					};
+					if (organizationTeamId) mikroWhere.organizationTeamId = organizationTeamId;
 
 					const [items, total] = await this.mikroOrmRepository.findAndCount(mikroWhere, {
 						populate: ['employee', 'tasks', 'employee.user'] as any[]
@@ -743,6 +783,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					// Conditions
 					query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 					query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+					if (organizationTeamId) {
+						query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
+					}
 
 					query.andWhere((qb: SelectQueryBuilder<any>) => {
 						const subQuery = qb.subQuery();
