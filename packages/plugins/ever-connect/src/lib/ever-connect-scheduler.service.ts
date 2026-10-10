@@ -56,6 +56,7 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	private feedAbort: AbortController | null = null;
 	private running = false;
 	private feedFailures = 0;
+	private entitlementFileImported = false;
 	private readonly subscriptions: Subscription[] = [];
 	/** Events handled by this process (their ids), so a page read twice is handled once. */
 	private readonly seen = new Set<string>();
@@ -99,6 +100,11 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		if (this.running) return;
 		this.running = true;
 		this.feedFailures = 0;
+		// EVER_ENTITLEMENT_FILE: imported once per process, when the connection first starts.
+		if (!this.entitlementFileImported) {
+			this.entitlementFileImported = true;
+			this.entitlements.importFromEnvFile().catch(() => undefined);
+		}
 		this.scheduleHeartbeat(FIRST_HEARTBEAT_DELAY_MS);
 		this.scheduleFeed(0);
 	}

@@ -312,7 +312,17 @@ export class EverConnectStore {
 		await this.sql.update(LINK, { ...values, ...extra, updatedAt: this.now() }, { linkId });
 	}
 
-	/** Removes a link row that was never completed (its Gauzy record could not be written). */
+	/** Updates a link only while it still matches `where` (compare and set); answers whether it did. */
+	async updateLinkIf(
+		linkId: string,
+		values: Partial<Record<keyof LinkRecord, unknown>>,
+		where: Partial<Record<keyof LinkRecord, unknown>>
+	): Promise<boolean> {
+		const changed = await this.sql.update(LINK, { ...values, updatedAt: this.now() }, { ...where, linkId } as Row);
+		return changed !== 0;
+	}
+
+		/** Removes a link row that was never completed (its Gauzy record could not be written). */
 	async deleteLink(linkId: string): Promise<void> {
 		await this.sql.run(`DELETE FROM ${this.sql.q(LINK)} WHERE ${this.sql.q('linkId')} = ${this.sql.ph(1)}`, [linkId]);
 	}
