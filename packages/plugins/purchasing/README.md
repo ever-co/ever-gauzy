@@ -96,6 +96,13 @@ inventory capability, injected under `PURCHASING_INVENTORY`. A good unit is a
 unchanged, and reversing a receipt is a `WRITE_OFF` of exactly what the receipt
 added. Put-away — a line that names a bin — goes through the same seam.
 
+The damaged units are recorded as an event (`eventOnly`): they never enter the
+level or any bin. A reversal takes the good units out of the position the
+receipt put them in — the line's bin, or the receiving area when it names none —
+and is refused as `RECEIPT_STOCK_MOVED`, writing nothing, when that position no
+longer holds them (relocated, put away or picked since): the operator moves the
+units back, or adjusts them, and reverses again.
+
 **A receipt, a further line and a reversal are each one transaction.** The
 orders they touch are locked first (always in id order), then the order lines'
 counters are claimed against their ceilings, the receipt and its lines written,

@@ -157,6 +157,7 @@ import {
 	PurchasingCodes,
 	StockMovementKind
 } from '../purchasing.types';
+import { negateQuantity, sumQuantity } from '../purchasing.quantity';
 import { VendorProductTermService } from '../vendor-product-term/vendor-product-term.service';
 import { PurchaseOrderLineService } from '../purchase-order-line/purchase-order-line.service';
 import { PurchaseOrderLine } from '../purchase-order-line/purchase-order-line.entity';
@@ -443,6 +444,16 @@ interface IMovement {
 	referenceType: string;
 	referenceId: string;
 	batchNumber?: string;
+	binId?: string;
+	eventOnly?: boolean;
+}
+
+/** A move between two positions of the location that the warehouse made itself, outside purchasing. */
+interface IRelocation {
+	variantId: string;
+	fromBinId?: string;
+	toBinId?: string;
+	quantity: string;
 }
 
 /** One put-away, as the ledger capability saw it. */
@@ -480,6 +491,8 @@ function receiptFixture(
 		dialect?: 'postgres' | 'sqlite';
 		failMovement?: boolean;
 		crashAt?: string;
+		/** What the ledger already holds, for a fixture that continues another one's history. */
+		ledger?: { movements?: IMovement[]; putAways?: IPutAway[] };
 	} = {}
 ) {
 	const dialect = options.dialect ?? 'postgres';
@@ -737,8 +750,56 @@ function receiptFixture(
 			return { [keys[0]]: options.setting };
 		}
 	};
-	const movements: IMovement[] = [];
-	const putAways: IPutAway[] = [];
+	const movements: IMovement[] = [...(options.ledger?.movements ?? [])];
+	const putAways: IPutAway[] = [...(options.ledger?.putAways ?? [])];
+	const relocations: IRelocation[] = [];
+
+	/**
+	 * What one position of the location holds of a variant, derived as the ledger derives it: the sum of
+	 * what was recorded at it. A movement is recorded at its bin, or at the unaddressed position when it
+	 * names none; an event-only movement moves nothing; a put-away leaves the unaddressed position for its
+	 * bin; a relocation leaves one position for another.
+	 *
+	 * @param variantId The variant.
+	 * @param binId The bin, or none for the unaddressed position.
+	 * @returns The position's balance.
+	 */
+	const positionBalance = (variantId: string, binId?: string | null): string => {
+		const at = (candidate?: string | null) => String(candidate ?? '') === String(binId ?? '');
+		const parts: string[] = [];
+
+		for (const movement of movements) {
+			if (movement.variantId === variantId && at(movement.binId) && !movement.eventOnly) {
+				parts.push(movement.quantity);
+			}
+		}
+
+		for (const walk of putAways) {
+			if (walk.variantId === variantId && at(undefined)) {
+				parts.push(negateQuantity(walk.quantity));
+			}
+			if (walk.variantId === variantId && at(walk.binId)) {
+				parts.push(walk.quantity);
+			}
+		}
+
+		for (const move of relocations) {
+			if (move.variantId === variantId && at(move.fromBinId)) {
+				parts.push(negateQuantity(move.quantity));
+			}
+			if (move.variantId === variantId && at(move.toBinId)) {
+				parts.push(move.quantity);
+			}
+		}
+
+		return sumQuantity(parts);
+	};
+
+	/** What the level holds of a variant: every position together, as the ledger's invariant states. */
+	const levelOf = (variantId: string): string =>
+		sumQuantity([
+			...movements.filter((movement) => movement.variantId === variantId && !movement.eventOnly).map((movement) => movement.quantity)
+		]);
 	const inventory =
 		options.withLedger === false
 			? undefined
@@ -762,7 +823,10 @@ function receiptFixture(
 						transaction?.onRollback?.(() => putAways.splice(putAways.indexOf(request), 1));
 
 						return { transferOutMovementId: 'out-1', transferInMovementId: 'in-1' };
-					}
+					},
+					// Read as the ledger reads it on the caller's transaction: it counts what that transaction wrote.
+					readPositionBalance: async (query: { variantId: string; binId?: string | null }) =>
+						positionBalance(query.variantId, query.binId)
 			  };
 	const receiptRepository = repository(tables, 'goods_receipt', { onWrite: writeTo });
 
@@ -787,6 +851,12 @@ function receiptFixture(
 		movements,
 		putAways,
 		settingsAsked,
+		/** What a position of the location holds of a variant: a bin, or none for the unaddressed position. */
+		position: (variantId: string, binId?: string) => Number(positionBalance(variantId, binId)),
+		/** What the location holds of a variant, all positions together. */
+		level: (variantId: string) => Number(levelOf(variantId)),
+		/** A move the warehouse makes itself, between two positions of the location. */
+		relocate: (move: IRelocation) => relocations.push(move),
 		/** The next process: the stopped one is gone, and nothing it held is held any more. */
 		restart: () => {
 			crash.stopped = false;
@@ -2042,8 +2112,10 @@ describe('GoodsReceiptService — a receipt or a reversal interrupted half way, 
 			receipts: posting.tables.goods_receipt.map((row) => ({ ...row })),
 			receiptLines: posting.tables.goods_receipt_line.map((row) => ({ ...row })),
 			lines: posting.tables.purchase_order_line.map((row) => ({ ...row })),
-			orders: posting.tables.purchase_order.map((row) => ({ ...row }))
+			orders: posting.tables.purchase_order.map((row) => ({ ...row })),
+			ledger: { movements: posting.movements.map((row) => ({ ...row })), putAways: posting.putAways.map((row) => ({ ...row })) }
 		});
+		const writeOffs = () => fixture.movements.filter((movement) => movement.kind === StockMovementKind.WRITE_OFF);
 
 		await expect(fixture.service.reverse(receipt.id, 'wrong delivery')).rejects.toThrow(/PROCESS_STOPPED/);
 
@@ -2055,15 +2127,170 @@ describe('GoodsReceiptService — a receipt or a reversal interrupted half way, 
 		const reversed = await fixture.service.reverse(receipt.id, 'wrong delivery');
 
 		expect(reversed).toMatchObject({ status: GoodsReceiptStatus.CANCELED, version: 2 });
-		expect(fixture.movements.map((movement) => [movement.kind, movement.quantity])).toEqual([
+		expect(writeOffs().map((movement) => [movement.kind, movement.quantity])).toEqual([
 			[StockMovementKind.WRITE_OFF, '-4.000000']
 		]);
 		expect(Number(fixture.orderLine(ORDER_LINE)?.receivedQuantity)).toBe(0);
 		expect(fixture.order()).toMatchObject({ status: PurchaseOrderStatus.SENT });
+		expect(fixture.level(VARIANT)).toBe(0);
 
 		// And a second retry finds it done.
 		await fixture.service.reverse(receipt.id, 'wrong delivery');
 
-		expect(fixture.movements).toHaveLength(1);
+		expect(writeOffs()).toHaveLength(1);
+	});
+});
+
+/**
+ * Where a reversal takes the units from (PR #10254 review: "Canceled goods remain in bins").
+ *
+ * A receipt line that names a bin has its units put away into it in the receipt's own transaction, and
+ * the reversal wrote its `WRITE_OFF` with no bin: cancelling six units put into a bin took the location
+ * to zero while the bin still reported six (and the unaddressed position minus six). The reversal now
+ * takes the units out of the position the receipt put them in. Units that moved on since are not
+ * written off from somewhere else: the reversal is refused, whole, with `RECEIPT_STOCK_MOVED`. Damaged
+ * units are an event that never entered the level or any bin.
+ */
+describe('GoodsReceiptService — the position a reversal takes the units from', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(RECEIVER);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('takes the units of a binned line back out of its bin, leaving every position and the level at nothing', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6', warehouseBinId: 'bin-1' }]
+		});
+
+		expect(fixture.position(VARIANT, 'bin-1')).toBe(6);
+		expect(fixture.position(VARIANT)).toBe(0);
+
+		await fixture.service.reverse(receipt.id, 'wrong delivery');
+
+		expect(fixture.movements.find((movement) => movement.kind === StockMovementKind.WRITE_OFF)).toMatchObject({
+			binId: 'bin-1',
+			quantity: '-6.000000'
+		});
+		expect(fixture.position(VARIANT, 'bin-1')).toBe(0);
+		expect(fixture.position(VARIANT)).toBe(0);
+		expect(fixture.level(VARIANT)).toBe(0);
+	});
+
+	it('takes the units of an unbinned line back out of the receiving area', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6' }]
+		});
+
+		await fixture.service.reverse(receipt.id);
+
+		const writeOff = fixture.movements.find((movement) => movement.kind === StockMovementKind.WRITE_OFF);
+
+		expect(writeOff?.binId).toBeUndefined();
+		expect(fixture.position(VARIANT)).toBe(0);
+		expect(fixture.level(VARIANT)).toBe(0);
+	});
+
+	it('handles a receipt with a binned and an unbinned line, each from its own position', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [
+				{ purchaseOrderLineId: ORDER_LINE, quantity: '4', warehouseBinId: 'bin-1' },
+				{ purchaseOrderLineId: SECOND_ORDER_LINE, quantity: '3' }
+			]
+		});
+
+		await fixture.service.reverse(receipt.id);
+
+		expect(fixture.position(VARIANT, 'bin-1')).toBe(0);
+		expect(fixture.position(VARIANT)).toBe(0);
+		expect(fixture.position(SECOND_VARIANT)).toBe(0);
+		expect(fixture.level(VARIANT)).toBe(0);
+		expect(fixture.level(SECOND_VARIANT)).toBe(0);
+	});
+
+	it('records damaged units as an event that never enters the level, and a reversal leaves them out of it', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6', damagedQuantity: '2', warehouseBinId: 'bin-1' }]
+		});
+
+		expect(fixture.movements.find((movement) => movement.kind === StockMovementKind.DAMAGE)).toMatchObject({
+			quantity: '2.000000',
+			eventOnly: true
+		});
+		expect(fixture.level(VARIANT)).toBe(6);
+
+		await fixture.service.reverse(receipt.id);
+
+		expect(fixture.level(VARIANT)).toBe(0);
+		expect(fixture.position(VARIANT, 'bin-1')).toBe(0);
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '0.000000', damagedQuantity: '0.000000' });
+	});
+
+	it('refuses to reverse a receipt part of whose bin was moved elsewhere since, and writes nothing', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6', warehouseBinId: 'bin-1' }]
+		});
+
+		// The warehouse moved four of the six to another bin.
+		fixture.relocate({ variantId: VARIANT, fromBinId: 'bin-1', toBinId: 'bin-2', quantity: '4.000000' });
+
+		const refusal = await fixture.service.reverse(receipt.id).catch((thrown) => thrown);
+
+		expect(String(refusal?.message)).toContain('RECEIPT_STOCK_MOVED');
+		expect(refusal.getResponse()).toMatchObject({
+			code: 'RECEIPT_STOCK_MOVED',
+			details: { binId: 'bin-1', held: '2.000000', required: '6.000000' }
+		});
+		expect(fixture.tables.goods_receipt[0].status).toBe(GoodsReceiptStatus.POSTED);
+		expect(fixture.movements.map((movement) => movement.kind)).toEqual([StockMovementKind.RECEIPT]);
+		expect(fixture.position(VARIANT, 'bin-1')).toBe(2);
+		expect(fixture.position(VARIANT, 'bin-2')).toBe(4);
+		expect(fixture.orderLine(ORDER_LINE)).toMatchObject({ receivedQuantity: '6.000000' });
+	});
+
+	it('refuses to reverse an unbinned receipt whose units were put away into a bin since', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6' }]
+		});
+
+		fixture.relocate({ variantId: VARIANT, toBinId: 'bin-3', quantity: '6.000000' });
+
+		await expect(fixture.service.reverse(receipt.id)).rejects.toThrow(/RECEIPT_STOCK_MOVED/);
+
+		expect(fixture.tables.goods_receipt[0].status).toBe(GoodsReceiptStatus.POSTED);
+		expect(fixture.position(VARIANT, 'bin-3')).toBe(6);
+		expect(fixture.position(VARIANT)).toBe(0);
+	});
+
+	it('reverses once the moved units are back where the receipt put them', async () => {
+		const fixture = receiptFixture();
+		const receipt = await fixture.service.receive({
+			purchaseOrderId: ORDER,
+			lines: [{ purchaseOrderLineId: ORDER_LINE, quantity: '6', warehouseBinId: 'bin-1' }]
+		});
+
+		fixture.relocate({ variantId: VARIANT, fromBinId: 'bin-1', toBinId: 'bin-2', quantity: '4.000000' });
+		await expect(fixture.service.reverse(receipt.id)).rejects.toThrow(/RECEIPT_STOCK_MOVED/);
+
+		fixture.relocate({ variantId: VARIANT, fromBinId: 'bin-2', toBinId: 'bin-1', quantity: '4.000000' });
+		await fixture.service.reverse(receipt.id);
+
+		expect(fixture.position(VARIANT, 'bin-1')).toBe(0);
+		expect(fixture.position(VARIANT, 'bin-2')).toBe(0);
+		expect(fixture.level(VARIANT)).toBe(0);
 	});
 });
