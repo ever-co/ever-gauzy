@@ -383,6 +383,30 @@ export class OrderResolver {
 	}
 
 	/**
+	 * Records the buyer's refusal of an order's quote, leaving the order where it is.
+	 *
+	 * The mirror of `POST /orders/:id/quote/decline`: the same service method, the same grant and the same
+	 * versioned resource, and the reason the route's body carries as an argument — the shape
+	 * `declineOrderChange` already has.
+	 *
+	 * @param id The order.
+	 * @param reason Why the buyer declined.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The order, in the status it was in.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'declineOrderQuote' })
+	async declineOrderQuote(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('reason', { type: () => String, nullable: true }) reason?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Context() context?: any
+	): Promise<Order> {
+		return this.invoicingService.declineQuote(id, reason, versionExpectationOf(context?.req));
+	}
+
+	/**
 	 * Recomputes an order.
 	 *
 	 * @param id The order.

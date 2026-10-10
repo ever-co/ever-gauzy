@@ -591,6 +591,11 @@ export const orderSchemaExtensions = gql`
 		confirms the order.
 		"""
 		acceptOrderQuote(id: ID!, version: Int): Order!
+		"""
+		Records the buyer's refusal of an order's quote — the estimate is marked declined — and leaves the order
+		where it is: a draft stays a draft. The order's version advances, because its quote is no longer open.
+		"""
+		declineOrderQuote(id: ID!, reason: String, version: Int): Order!
 		"Create a change: the only way a placed order is modified."
 		requestOrderEdit(input: RequestOrderEditInput!): OrderChange!
 		"""
