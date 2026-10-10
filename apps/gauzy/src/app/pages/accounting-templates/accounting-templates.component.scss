@@ -691,14 +691,18 @@ $editor-dark: (
     background-color: transparent !important;
   }
 
-  // Follow the app theme. MJML writes `color: #000000` inline on every text block, so
-  // only `!important` lets the theme text colour through — without it the invoice stays
-  // black on the dark sheet. Links keep the theme's link colour.
-  ::ng-deep * {
+  // Follow the app theme. MJML writes its default `color:#000000` inline on every text
+  // block, so only `!important` lets the theme text colour through — without it the
+  // invoice stays black on the dark sheet. Only that default is replaced: a colour the
+  // user writes into the template is kept, as it will appear in the sent document. The
+  // leading `;` keeps `background-color:#000000` out. Links without their own colour
+  // take the theme's link colour.
+  ::ng-deep [style^='color:#000000'],
+  ::ng-deep [style*=';color:#000000'] {
     color: var(--text-basic-color) !important;
   }
 
-  ::ng-deep a {
+  ::ng-deep a:not([style*='color']) {
     color: var(--text-primary-color, var(--color-primary-default)) !important;
   }
 
@@ -749,7 +753,10 @@ $editor-dark: (
 }
 
 
+// Block, not the component-wide flex column on `nb-card-body`: a long document would
+// otherwise shrink inside it and scroll in a second, nested scrollbar.
 .full-preview-body {
+  display: block;
   flex: 1 1 auto;
   min-height: 0;
   padding: 1rem;

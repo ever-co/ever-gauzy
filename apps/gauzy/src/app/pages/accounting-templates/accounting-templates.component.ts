@@ -383,7 +383,8 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 	 *
 	 * The thumbnail lives in a sandboxed iframe, out of reach of the page's styles, so the
 	 * theme's colours are resolved here and written into the document as a style block.
-	 * `!important` beats the `color: #000000` MJML writes inline on every text block.
+	 * `!important` beats the default `color:#000000` MJML writes inline on every text block;
+	 * colours the user wrote into the template are left alone, as in the Template Preview.
 	 */
 	private themeThumbnail(source: string): string {
 		const styles = getComputedStyle(document.body);
@@ -395,8 +396,9 @@ export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDe
 		const link = token('--text-primary-color', text);
 		const hairline = token('--gauzy-border-default-color', token('--border-basic-color-3', '#e4e9f2'));
 		const style =
-			`<style>html,body{background:${surface} !important;}` +
-			`*{color:${text} !important;}a{color:${link} !important;}` +
+			`<style>html,body{background:${surface} !important;color:${text};}` +
+			`[style^="color:#000000"],[style*=";color:#000000"]{color:${text} !important;}` +
+			`a:not([style*="color"]){color:${link} !important;}` +
 			`[style*="border"]{border-color:${hairline} !important;}</style>`;
 		return source.includes('</head>') ? source.replace('</head>', style + '</head>') : style + source;
 	}
