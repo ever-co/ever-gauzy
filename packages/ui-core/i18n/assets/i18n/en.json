@@ -5891,7 +5891,10 @@
 			"payment-receipt": "Payment Receipt",
 			"reject-candidate": "Reject Candidate"
 		},
-		"HTML_EDITOR": "HTML Editor"
+		"HTML_EDITOR": "HTML Editor",
+		"FULL_PREVIEW": "Full preview",
+		"VIEW_GRID": "Grid",
+		"VIEW_EDITOR": "Editor"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Pipelines",

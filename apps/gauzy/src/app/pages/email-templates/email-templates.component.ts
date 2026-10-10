@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, SecurityContext, TemplateRef, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmailTemplateEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
-import { NbThemeService } from '@nebular/theme';
+import { NbDialogService, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import 'brace';
@@ -30,6 +30,20 @@ import { ToastrService } from '@gauzy/ui-core/core';
  */
 const DARK_CANVAS_THEMES: ReadonlySet<string> = new Set(['dark', 'cosmic', 'gauzy-dark', 'material-dark']);
 
+/** How many templates the grid fetches and renders at once. */
+const GRID_CONCURRENCY = 4;
+
+export type EmailTemplatesViewMode = 'grid' | 'editor';
+
+/** One tile of the template grid: the rendered subject and a thumbnail of the body. */
+export interface EmailTemplateCard {
+	name: EmailTemplateEnum;
+	subject: SafeHtml | null;
+	/** Raw rendered email; only ever written into a sandboxed iframe by `SandboxedSrcdocDirective`. */
+	html: string | null;
+	failed: boolean;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
     templateUrl: './email-templates.component.html',
@@ -43,6 +57,13 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 	public previewEmail: SafeHtml;
 	public previewSubject: SafeHtml;
 	public organization: IOrganization;
+
+	public viewMode: EmailTemplatesViewMode = 'editor';
+	public gridCards: EmailTemplateCard[] = [];
+	/** Organization + language the grid was last loaded for, so toggling back does not refetch. */
+	private gridKey: string;
+	/** Bumped on every grid load; responses from an older load are dropped. */
+	private gridRun = 0;
 
 	/**
 	 * Email Template Mutation Form
@@ -67,7 +88,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly emailTemplateService: EmailTemplateService,
-		private readonly themeService: NbThemeService
+		private readonly themeService: NbThemeService,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -77,6 +99,11 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 			.pipe(
 				debounceTime(200),
 				tap(() => this.getTemplate()),
+				tap(() => {
+					if (this.viewMode === 'grid') {
+						void this.loadGrid();
+					}
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -163,6 +190,112 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(html);
 	}
 
+	setViewMode(mode: EmailTemplatesViewMode) {
+		if (this.viewMode === mode) {
+			return;
+		}
+		this.viewMode = mode;
+		if (mode === 'grid') {
+			void this.loadGrid();
+		} else {
+			this.resizeEditors();
+		}
+	}
+
+	/** Template picked from the dropdown: show it in the editor. */
+	onTemplatePicked() {
+		this.subject$.next(true);
+		this.setViewMode('editor');
+	}
+
+	/** Grid card clicked: select that template and switch to the editor. */
+	openTemplate(name: EmailTemplateEnum) {
+		if (this.form.get('name').value !== name) {
+			this.form.patchValue({ name });
+			this.subject$.next(true);
+		}
+		this.setViewMode('editor');
+	}
+
+	/**
+	 * Fetches every template for the current organization + language and renders its
+	 * subject and body, a few at a time. Cards fill in as their previews arrive.
+	 */
+	async loadGrid() {
+		if (!this.organization) {
+			return;
+		}
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+		const { languageCode = LanguagesEnum.ENGLISH } = this.form.getRawValue();
+		const key = `${organizationId}:${languageCode}`;
+		if (key === this.gridKey) {
+			return;
+		}
+		this.gridKey = key;
+		const run = ++this.gridRun;
+
+		this.gridCards = this.templates.map((name) => ({
+			name: name as EmailTemplateEnum,
+			subject: null,
+			html: null,
+			failed: false
+		}));
+
+		const cards = this.gridCards;
+		// Index of the next card to load, shared by the workers.
+		let next = 0;
+		const worker = async () => {
+			while (next < cards.length && run === this.gridRun) {
+				const card = cards[next++];
+				try {
+					const { subject, template } = await this.emailTemplateService.getTemplate({
+						languageCode,
+						name: card.name,
+						organizationId,
+						tenantId
+					});
+					// The page may have been left, or the grid reloaded, while this was in flight.
+					if (run !== this.gridRun) {
+						return;
+					}
+					const [{ html: subjectHtml }, { html: bodyHtml }] = await Promise.all([
+						this.emailTemplateService.generateTemplatePreview(subject),
+						this.emailTemplateService.generateTemplatePreview(template)
+					]);
+					if (run !== this.gridRun) {
+						return;
+					}
+					card.subject = this.sanitizer.sanitize(SecurityContext.HTML, subjectHtml);
+					card.html = bodyHtml;
+				} catch {
+					card.failed = true;
+				}
+			}
+		};
+		await Promise.all(Array.from({ length: GRID_CONCURRENCY }, worker));
+		// A failed load may be retried by toggling the grid again.
+		if (run === this.gridRun && this.gridCards.some((card) => card.failed)) {
+			this.gridKey = null;
+		}
+	}
+
+	/** Ace measures its box when shown; it was hidden while the grid was up. */
+	private resizeEditors() {
+		setTimeout(() => {
+			this.emailEditor?.getEditor().resize();
+			this.subjectEditor?.getEditor().resize();
+		});
+	}
+
+	/**
+	 * Opens the rendered email at full size, so long templates can be read without
+	 * scrolling inside the side-by-side preview pane.
+	 */
+	openFullPreview(dialog: TemplateRef<unknown>) {
+		this.dialogService.open(dialog, { closeOnBackdropClick: true, hasScroll: false });
+	}
+
 	selectedLanguage(event) {
 		this.form.patchValue({
 			languageCode: event.code
@@ -181,6 +314,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 				organizationId,
 				tenantId
 			});
+			// The saved template's grid thumbnail is now stale.
+			this.gridKey = null;
 			this.toastrService.success('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
 				templateName: this.getTranslation('EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' + this.form.get('name').value)
 			});
@@ -189,5 +324,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent implements
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		// Stops any grid load still running: its workers check the run between requests.
+		this.gridRun++;
+	}
 }
