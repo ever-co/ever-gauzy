@@ -354,6 +354,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async getMyPlans(options: BaseQueryDTO<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 
+		// A caller without an employee record owns no plans. Passing no owner on would read the whole
+		// organization for the callers that skip the team check.
+		if (!currentEmployeeId) {
+			return { items: [], total: 0 };
+		}
+
 		// Fetch daily plans for the current employee
 		return await this.getAllPlans(options, currentEmployeeId);
 	}
