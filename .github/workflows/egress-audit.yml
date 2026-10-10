@@ -116,7 +116,8 @@ jobs:
           if [ "$BASELINE_REWALK" = "true" ]; then
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag || echo "(the walk opens new routes: the entries they added are checked next)"
-            node tools/egress-audit/check-baseline-rewalk.mjs --base "origin/$BASE_REF"
+            git show "origin/$BASE_REF:$AUDIT_DIR/ui-baseline.json" > "$RUNNER_TEMP/ui-baseline.base.json"
+            node tools/egress-audit/check-baseline-rewalk.mjs --base-file "$RUNNER_TEMP/ui-baseline.base.json"
           else
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "origin/$BASE_REF" --config "$AUDIT_CONFIG" $flag
