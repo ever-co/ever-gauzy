@@ -26,23 +26,29 @@ const OWNER = 'ever-co';
 const REPO = '([A-Za-z0-9._-]+)';
 /** A dependency specification that installs from an ever-co GitHub repository (whole value). */
 const SPEC_FORMS = [
-	new RegExp(`^github:${OWNER}/${REPO}`),
-	new RegExp(`^${OWNER}/${REPO}(?:#.*)?$`),
-	new RegExp(`^git\\+https://(?:[^@/\\s]+@)?github\\.com/${OWNER}/${REPO}`),
-	new RegExp(`^https://(?:[^@/\\s]+@)?github\\.com/${OWNER}/${REPO}\\.git(?:#.*)?$`),
-	new RegExp(`^git\\+ssh://git@github\\.com[:/]${OWNER}/${REPO}`),
-	new RegExp(`^git@github\\.com:${OWNER}/${REPO}`),
-	new RegExp(`^git://github\\.com/${OWNER}/${REPO}`)
-];
-/** The same forms inside a yarn.lock line (entry specs like `"pkg@github:ever-co/x#ref"`, `resolved` URLs). */
+	String.raw`^github:${OWNER}/${REPO}`,
+	String.raw`^${OWNER}/${REPO}(?:#.*)?$`,
+	String.raw`^git\+https://(?:[^@/\s]+@)?github\.com/${OWNER}/${REPO}`,
+	String.raw`^https://(?:[^@/\s]+@)?github\.com/${OWNER}/${REPO}\.git(?:#.*)?$`,
+	String.raw`^git\+ssh://git@github\.com[:/]${OWNER}/${REPO}`,
+	String.raw`^git@github\.com:${OWNER}/${REPO}`,
+	String.raw`^git://github\.com/${OWNER}/${REPO}`
+].map((source) => new RegExp(source));
+/**
+ * The same forms inside a yarn.lock line (entry specs like `"pkg@github:ever-co/x#ref"`, `resolved` URLs).
+ * The shorthand counts only after a quote, a space or the line start: `"@ever-co/<package>"` is an npm
+ * scope, never a repository.
+ */
 const LOCK_FORMS = [
-	new RegExp(`github:${OWNER}/${REPO}`, 'g'),
-	new RegExp(`git\\+https://(?:[^@/\\s"]+@)?github\\.com/${OWNER}/${REPO}`, 'g'),
-	new RegExp(`git\\+ssh://git@github\\.com[:/]${OWNER}/${REPO}`, 'g'),
-	new RegExp(`git://github\\.com/${OWNER}/${REPO}`, 'g'),
-	new RegExp(`https://(?:codeload\\.)?github\\.com/${OWNER}/${REPO}(?:\\.git|/tar\\.gz/)`, 'g')
-];
-const USES = new RegExp(`^\\s*-?\\s*uses:\\s*["']?${OWNER}/${REPO}`);
+	String.raw`github:${OWNER}/${REPO}`,
+	String.raw`git\+https://(?:[^@/\s"]+@)?github\.com/${OWNER}/${REPO}`,
+	String.raw`git\+ssh://git@github\.com[:/]${OWNER}/${REPO}`,
+	String.raw`git@github\.com:${OWNER}/${REPO}`,
+	String.raw`(?:^|[\s"'])${OWNER}/${REPO}(?=[#\s"':]|$)`,
+	String.raw`git://github\.com/${OWNER}/${REPO}`,
+	String.raw`https://(?:codeload\.)?github\.com/${OWNER}/${REPO}(?:\.git|/tar\.gz/)`
+].map((source) => new RegExp(source, 'g'));
+const USES = new RegExp(String.raw`^\s*-?\s*uses:\s*["']?${OWNER}/${REPO}`);
 const DEPENDENCY_FIELDS = [
 	'dependencies',
 	'devDependencies',
@@ -96,33 +102,39 @@ function dependencyValues(manifest) {
 	return values;
 }
 
-/** Every reference to an ever-co repository in one file: [{repo, file, line}]. */
-export function findRefs(text, file) {
-	let refs = [];
-	if (file.endsWith('package.json')) {
-		let manifest;
-		try {
-			manifest = JSON.parse(text);
-		} catch {
-			return refs;
-		}
-		for (const [, value] of dependencyValues(manifest)) {
-			const repo = repoOfSpec(value);
-			if (repo) refs.push({ repo, file, line: lineOf(text, JSON.stringify(value)) });
-		}
-		return refs;
+/** The references of a package.json: its dependency values that install from an ever-co repository. */
+function manifestRefs(text, file) {
+	let manifest;
+	try {
+		manifest = JSON.parse(text);
+	} catch {
+		return [];
 	}
-	const lines = text.split('\n');
-	for (const [index, line] of lines.entries()) {
-		if (file.endsWith('yarn.lock')) {
-			for (const form of LOCK_FORMS)
-				for (const match of line.matchAll(form)) refs.push({ repo: normalise(match[1]), file, line: index + 1 });
-		} else {
-			const match = USES.exec(line);
-			if (match) refs.push({ repo: normalise(match[1]), file, line: index + 1 });
-		}
+	let refs = [];
+	for (const [, value] of dependencyValues(manifest)) {
+		const repo = repoOfSpec(value);
+		if (repo) refs.push({ repo, file, line: lineOf(text, JSON.stringify(value)) });
 	}
 	return refs;
+}
+
+/** The references of a yarn.lock line. */
+function lockRefs(line, file, lineNumber) {
+	let refs = [];
+	for (const form of LOCK_FORMS)
+		for (const match of line.matchAll(form)) refs.push({ repo: normalise(match[1]), file, line: lineNumber });
+	return refs;
+}
+
+/** Every reference to an ever-co repository in one file: [{repo, file, line}]. */
+export function findRefs(text, file) {
+	if (file.endsWith('package.json')) return manifestRefs(text, file);
+	const lockfile = file.endsWith('yarn.lock');
+	return text.split('\n').flatMap((line, index) => {
+		if (lockfile) return lockRefs(line, file, index + 1);
+		const match = USES.exec(line);
+		return match ? [{ repo: normalise(match[1]), file, line: index + 1 }] : [];
+	});
 }
 
 /**

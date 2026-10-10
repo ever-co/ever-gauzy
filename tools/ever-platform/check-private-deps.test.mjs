@@ -78,6 +78,23 @@ test('yarn.lock entries and workflow uses are found; other workflow text is not'
 		findRefs(lock, 'yarn.lock').map((r) => r.repo),
 		['nestjs-axios', 'nestjs-axios']
 	);
+	const moreLock = [
+		'"x@git@github.com:ever-co/ssh-repo.git":',
+		'  resolved "git@github.com:ever-co/ssh-repo.git#abc"',
+		'"y@ever-co/short#main":',
+		'  version "1.0.0"',
+		'  dependencies:',
+		'    "@ever-co/connect-contracts" "1.0.0-rc.3"'
+	].join('\n');
+	assert.deepEqual(
+		[...new Set(findRefs(moreLock, 'yarn.lock').map((r) => r.repo))].sort(),
+		['ssh-repo']
+	);
+	// The shorthand after a quote or a space counts; an npm scope never does.
+	assert.deepEqual(
+		findRefs('"y" "ever-co/short#main"', 'yarn.lock').map((r) => r.repo),
+		['short']
+	);
 	const workflow = [
 		'      - uses: ever-co/five/.github/actions/x@abc',
 		'        uses: ever-co/six@v1',
