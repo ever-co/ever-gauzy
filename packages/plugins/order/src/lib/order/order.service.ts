@@ -1,4 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	Inject,
+	Injectable,
+	Logger,
+	NotFoundException,
+	Optional,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import {
 	AddressType,
@@ -16,7 +25,13 @@ import { SequenceService, TenantAwareCrudService } from '@gauzy/core';
 import { Order } from './order.entity';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
-import { ANY_ORDER_VERSION, ORDER_EVENTS, OrderVersionExpectation } from '../order.types';
+import {
+	ANY_ORDER_VERSION,
+	IOrderApprovalPort,
+	ORDER_APPROVAL,
+	ORDER_EVENTS,
+	OrderVersionExpectation
+} from '../order.types';
 import { OrderAddress } from '../order-address/order-address.entity';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChange } from '../order-change/order-change.entity';
@@ -32,6 +47,16 @@ import { OrderTotalsService } from '../order-totals/order-totals.service';
 
 /** The series every order number is allocated from. */
 const ORDER_SEQUENCE_KEY = 'ORDER';
+
+/** What requesting an order's approval answers: the order, and the approval request filed for it. */
+export interface IOrderApprovalRequested {
+	/** The order, placed and awaiting a decision. */
+	order: Order;
+	/** The order's version, also published as the response's `ETag`. */
+	version: number;
+	/** The `request_approval` row the decision is recorded on. */
+	approvalId: ID;
+}
 
 /**
  * The order aggregate's service.
@@ -64,6 +89,8 @@ const ORDER_SEQUENCE_KEY = 'ORDER';
  */
 @Injectable()
 export class OrderService extends TenantAwareCrudService<Order> {
+	private readonly logger = new Logger(OrderService.name);
+
 	constructor(
 		readonly typeOrmOrderRepository: TypeOrmOrderRepository,
 		readonly mikroOrmOrderRepository: MikroOrmOrderRepository,
@@ -73,7 +100,14 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		private readonly shippingMethodService: OrderShippingMethodService,
 		private readonly historyService: OrderHistoryService,
 		private readonly changeService: OrderChangeService,
-		private readonly sequenceService: SequenceService
+		private readonly sequenceService: SequenceService,
+		/**
+		 * The platform's approval machinery. Optional: it is bound by the installation that serves the routes
+		 * (`OrderPlatformAdaptersModule`), and the worker that hosts this module for its sweeps binds nothing.
+		 */
+		@Optional()
+		@Inject(ORDER_APPROVAL)
+		private readonly approvals?: IOrderApprovalPort
 	) {
 		super(typeOrmOrderRepository, mikroOrmOrderRepository);
 	}
@@ -237,7 +271,7 @@ export class OrderService extends TenantAwareCrudService<Order> {
 		orderId: ID,
 		// What the placement is attributed to: the cart it came from and the retry key it was made under on
 		// the checkout path, or the quote whose acceptance placed it.
-		placedWith: { cartId?: ID; idempotencyKey?: string; quoteInvoiceId?: ID } = {},
+		placedWith: { cartId?: ID; idempotencyKey?: string; quoteInvoiceId?: ID; approvalRequested?: boolean } = {},
 		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
 	): Promise<Order> {
 		const order = await this.findOneByIdString(orderId);
@@ -334,6 +368,12 @@ export class OrderService extends TenantAwareCrudService<Order> {
 
 		await this.historyService.record(order.id, 'ORDER_CONFIRMED', 'Order confirmed', {}, scopeOfOrderRow(order));
 
+		// A staff member's confirmation is the approval a buyer's request was waiting for, so the request is
+		// decided with it. A system confirmation — the checkout path — was never held for approval.
+		if (actor === 'STAFF') {
+			await this.settleApprovals(order, true);
+		}
+
 		return confirmed;
 	}
 
@@ -383,7 +423,150 @@ export class OrderService extends TenantAwareCrudService<Order> {
 			scopeOfOrderRow(order)
 		);
 
+		// A cancelled order will not be approved, so a request still awaiting a decision is refused with it.
+		await this.settleApprovals(order, false);
+
 		return cancelled;
+	}
+
+	/**
+	 * Places a buyer's draft order for a staff member's approval.
+	 *
+	 * **The order lifecycle has no "awaiting approval" status**, so none is invented: the state machine moves
+	 * a draft to `PENDING`, and `PENDING` is exactly the status a staff confirmation (`POST /orders/:id/approve`,
+	 * `confirmOrder`) moves on from — the `REQUIRES_ACTION` status is the money question's, not an approver's.
+	 * Requesting approval is therefore the move `placeOrder` makes (`DRAFT -> PENDING`, through `place`, with
+	 * its number, its stock commitment, its event and its timeline entry) **plus** an approval request filed
+	 * against the order through the platform's approval machinery (`request_approval`, type `SALES_ORDER`), so
+	 * the decision is recorded where every other approval on the platform is. A staff member approves it with
+	 * the existing approve route, whose confirmation decides the request; a cancellation refuses it.
+	 *
+	 * **A placed order that has no open request may file one.** That is the recovery path as much as a feature:
+	 * the request is filed after the order's write, because the order is the record whose version decides the
+	 * outcome, so a request that could not be filed leaves a placed order that the same call made again
+	 * completes. Its write — no move, a summary row that records `APPROVAL_REQUESTED` — is version-predicated
+	 * like the placement.
+	 *
+	 * @param orderId The order.
+	 * @param note The buyer's note to the approver.
+	 * @param expectation The version the caller read the order at.
+	 * @returns The placed order, and the approval request filed for it.
+	 * @throws NotFoundException when the order is not the caller's.
+	 * @throws ConflictException with `ORDER_APPROVAL_NOT_REQUESTABLE` when the order is past placing, and
+	 * `ORDER_APPROVAL_ALREADY_REQUESTED` when a request is already awaiting a decision.
+	 * @throws ServiceUnavailableException with `ORDER_APPROVAL_UNAVAILABLE` when no approval machinery is
+	 * registered — before the order moves.
+	 */
+	public async requestApproval(
+		orderId: ID,
+		note?: string,
+		expectation: OrderVersionExpectation = ANY_ORDER_VERSION
+	): Promise<IOrderApprovalRequested> {
+		const order = await this.findOneByIdString(orderId);
+
+		if (!order) {
+			throw new NotFoundException(`ORDER_NOT_FOUND: no order exists with id ${orderId}.`);
+		}
+
+		if (order.status !== OrderStatus.DRAFT && order.status !== OrderStatus.PENDING) {
+			const reason =
+				order.status === OrderStatus.REQUIRES_ACTION
+					? 'the order is placed and waiting on its payment, not on an approver'
+					: `an order in ${order.status} is already past the decision an approval is asked for`;
+
+			throw new ConflictException({
+				message: `Order ${order.number} is ${order.status}, so its approval cannot be requested: ${reason}.`,
+				code: 'ORDER_APPROVAL_NOT_REQUESTABLE',
+				details: {
+					orderId: order.id,
+					status: order.status,
+					reason,
+					requestable: [OrderStatus.DRAFT, OrderStatus.PENDING]
+				}
+			});
+		}
+
+		if (!this.approvals) {
+			throw new ServiceUnavailableException(
+				'ORDER_APPROVAL_UNAVAILABLE: the approval capability is not registered in this process, so an order cannot be placed for approval.'
+			);
+		}
+
+		let placed: Order;
+
+		if (order.status === OrderStatus.DRAFT) {
+			placed = await this.place(order.id, { approvalRequested: true }, expectation);
+		} else {
+			const open = await this.approvals.findOpen(order.id);
+
+			if (open) {
+				throw new ConflictException({
+					message: `Order ${order.number} already awaits a decision on approval request ${open.approvalId}.`,
+					code: 'ORDER_APPROVAL_ALREADY_REQUESTED',
+					details: { orderId: order.id, approvalId: open.approvalId }
+				});
+			}
+
+			placed = await this.totalsService.recompute(order.id, 'APPROVAL_REQUESTED', {
+				expectation: expectation?.wildcard
+					? { wildcard: false, versions: [Number(order.version)] }
+					: expectation
+			});
+		}
+
+		const { approvalId } = await this.approvals.requestApproval({
+			orderId: order.id,
+			organizationId: order.organizationId,
+			name: `Order ${placed.number ?? order.number}`,
+			amount: placed.grandTotal,
+			currency: placed.currency ?? order.currency,
+			note
+		});
+
+		await this.historyService.record(
+			order.id,
+			'ORDER_APPROVAL_REQUESTED',
+			'Approval requested',
+			{ approvalId, note: note ?? null },
+			scopeOfOrderRow(order)
+		);
+
+		return { order: placed, version: Number(placed.version), approvalId };
+	}
+
+	/**
+	 * Decides the order's approval requests that still await a decision, when the approval machinery is
+	 * registered.
+	 *
+	 * It runs after the order's own write has committed, and it never fails that write: the order's status is
+	 * the fact, and a request left undecided by a failure here is a row an approver can still decide, which is
+	 * logged rather than turned into a refusal of a confirmation that already happened.
+	 *
+	 * @param order The order.
+	 * @param approved True on a confirmation, false on a cancellation.
+	 */
+	private async settleApprovals(order: Order, approved: boolean): Promise<void> {
+		if (!this.approvals) {
+			return;
+		}
+
+		try {
+			const settled = await this.approvals.settle(order.id, approved);
+
+			if (settled > 0) {
+				await this.historyService.record(
+					order.id,
+					approved ? 'ORDER_APPROVAL_APPROVED' : 'ORDER_APPROVAL_REFUSED',
+					approved ? 'Approval granted' : 'Approval refused',
+					{ requests: settled },
+					scopeOfOrderRow(order)
+				);
+			}
+		} catch (error) {
+			this.logger.warn(
+				`ORDER_APPROVAL_SETTLE_FAILED: order ${order.id} was ${approved ? 'confirmed' : 'cancelled'} and its approval request could not be decided: ${(error as Error)?.message}`
+			);
+		}
 	}
 
 	/**

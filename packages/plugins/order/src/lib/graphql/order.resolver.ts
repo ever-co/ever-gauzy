@@ -16,7 +16,7 @@ import {
 	versionExpectationOf
 } from '@gauzy/core';
 import { FeatureFlag } from '@gauzy/common';
-import { OrderService } from '../order/order.service';
+import { IOrderApprovalRequested, OrderService } from '../order/order.service';
 import { OrderAddressService } from '../order-address/order-address.service';
 import { OrderChangeService } from '../order-change/order-change.service';
 import { OrderCreditLineService } from '../order-credit-line/order-credit-line.service';
@@ -253,6 +253,31 @@ export class OrderResolver {
 		@Context() context?: any
 	): Promise<Order> {
 		return this.orderService.place(id, {}, versionExpectationOf(context?.req));
+	}
+
+	/**
+	 * Places a buyer's draft order for a staff member's approval.
+	 *
+	 * The mirror of `POST /orders/:id/request-approval`: the same service method, the same grant, the same
+	 * retry scope and the same versioned resource, and the note the route's body carries as an argument.
+	 *
+	 * @param id The order.
+	 * @param note The buyer's note to the approver.
+	 * @param context The GraphQL context, whose request carries the version the caller stated.
+	 * @returns The placed order, and the approval request filed for it.
+	 */
+	@Permissions(ORDER_PERMISSIONS.ORDERS_EDIT)
+	@Idempotent({ scope: 'order.approval.request', required: false, resourceType: 'order' })
+	@Versioned({ resource: OrderService })
+	@Mutation(() => Object, { name: 'requestOrderApproval' })
+	async requestOrderApproval(
+		@Args('id', { type: () => ID }) id: string,
+		@Args('note', { type: () => String, nullable: true }) note?: string,
+		@Args('version', { type: () => Int, nullable: true }) version?: number,
+		@Args('idempotencyKey', { type: () => String, nullable: true }) idempotencyKey?: string,
+		@Context() context?: any
+	): Promise<IOrderApprovalRequested> {
+		return this.orderService.requestApproval(id, note, versionExpectationOf(context?.req));
 	}
 
 	/**

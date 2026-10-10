@@ -10,11 +10,12 @@ import { gql } from 'graphql-tag';
  * Money is `Decimal`, never `Float`: the value is the exact decimal string a `numeric(20,6)` column
  * carries, so a value read over GraphQL and the same value read over REST are string-identical.
  *
- * The root fields declared here are the ones this package resolves. The invoice and quote mutations are
- * resolved here too: the documents themselves are core invoice rows (an estimate, for a quote), issued
- * through the port the installation binds to the core invoice service, and a process that binds nothing
- * answers those fields with the domain's own `ORDER_INVOICING_UNAVAILABLE` rather than with a field that
- * does not exist.
+ * The root fields declared here are the ones this package resolves. The invoice, quote and approval
+ * mutations are resolved here too: the documents themselves are core invoice rows (an estimate, for a
+ * quote) and the approval is a core `request_approval` row, each reached through a port the installation
+ * binds to the core service, and a process that binds nothing answers those fields with the domain's own
+ * `ORDER_INVOICING_UNAVAILABLE` / `ORDER_APPROVAL_UNAVAILABLE` rather than with a field that does not
+ * exist.
  */
 export const orderSchemaExtensions = gql`
 	"An order: the immutable commercial record."
@@ -570,6 +571,13 @@ export const orderSchemaExtensions = gql`
 		archiveOrder(id: ID!, version: Int): Order!
 		placeOrder(id: ID!, version: Int, idempotencyKey: String): Order!
 		confirmOrder(id: ID!, version: Int): Order!
+		"""
+		Places a buyer's draft order for a staff member's approval: the move \`placeOrder\` makes (DRAFT to
+		PENDING), plus an approval request filed against the order through the platform's approval machinery.
+		A staff member approves it with \`confirmOrder\`, which decides the request; a cancellation refuses it.
+		A placed order with no open request may also file one.
+		"""
+		requestOrderApproval(id: ID!, note: String, version: Int, idempotencyKey: String): OrderApprovalRequestPayload!
 		recalculateOrder(id: ID!, version: Int): Order!
 		"""
 		Issues the invoice that bills an order — the platform's own invoice, one item per billable line and per
@@ -706,6 +714,16 @@ export const orderSchemaExtensions = gql`
 		amount: Decimal!
 		"Currency of the amount; checked against the order the line belongs to."
 		currency: String!
+	}
+
+	"What requesting an order's approval did: the order, placed, and the approval request filed for it."
+	type OrderApprovalRequestPayload {
+		"The order, placed and awaiting a decision."
+		order: Order!
+		"The order's version after the request: the version the next write states back."
+		version: Int!
+		"The approval request the decision is recorded on."
+		approvalId: ID!
 	}
 
 	"What sending an order's quote did: the order, the estimate the quote is, and whether the e-mail went."
