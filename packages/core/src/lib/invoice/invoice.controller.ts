@@ -22,7 +22,7 @@ import { I18nLang } from 'nestjs-i18n';
 import { PermissionsEnum, IInvoice, LanguagesEnum, IPagination } from '@gauzy/contracts';
 import { CrudController, FindOptionsQueryDTO, BaseQueryDTO } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { InvoiceService } from './invoice.service';
+import { IInvoiceStatistics, InvoiceService } from './invoice.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -35,7 +35,13 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
-import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceActionDTO, UpdateInvoiceDTO } from './dto';
+import {
+	CreateInvoiceDTO,
+	InvoiceStatisticsQueryDTO,
+	UpdateEstimateInvoiceDTO,
+	UpdateInvoiceActionDTO,
+	UpdateInvoiceDTO
+} from './dto';
 
 @ApiTags('Invoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -80,6 +86,29 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Get('highest')
 	async findHighestInvoiceNumber(): Promise<Invoice> {
 		return await this.invoiceService.getHighestInvoiceNumber();
+	}
+
+	/**
+	 * GET one organization's invoice statistics: the count, and the exact totals per currency and per status.
+	 *
+	 * Scoped to the caller's tenant and the organization the query names (checked against the caller's
+	 * memberships); `isEstimate=true` totals the estimates instead. Money is a decimal string per currency.
+	 *
+	 * @param options The organization and the estimate switch.
+	 * @returns The count and the totals.
+	 */
+	@ApiOperation({ summary: "One organization's invoice count and exact totals per currency and status." })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The statistics.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid query.' })
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get('statistics')
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getStatistics(@Query() options: InvoiceStatisticsQueryDTO): Promise<IInvoiceStatistics> {
+		return await this.invoiceService.getStatistics({
+			tenantId: options.tenantId,
+			organizationId: options.organizationId,
+			isEstimate: options.isEstimate
+		});
 	}
 
 	/**

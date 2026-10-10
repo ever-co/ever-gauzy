@@ -7,7 +7,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Reflector } from '@nestjs/core';
@@ -153,6 +153,16 @@ const ROWS = [
 ];
 
 /** The resolver, over a scripted service and command bus. */
+/** What a scripted statistics read answers with. */
+const STATISTICS = {
+	count: 2,
+	totals: [{ currency: 'USD', count: 2, totalValue: '250.5' }],
+	byStatus: [
+		{ status: 'SENT', currency: 'USD', count: 1, totalValue: '120.5' },
+		{ status: 'FULLY_PAID', currency: 'USD', count: 1, totalValue: '130' }
+	]
+};
+
 function surfaces() {
 	const invoiceService = {
 		findAll: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
@@ -160,7 +170,8 @@ function surfaces() {
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		getHighestInvoiceNumber: jest.fn().mockResolvedValue({ max: '2' }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-05-01T10:00:00.000Z') }),
-		softRecover: jest.fn().mockResolvedValue(ROWS[0])
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
+		getStatistics: jest.fn().mockResolvedValue(STATISTICS)
 	};
 	const commandBus = {
 		execute: jest.fn((command: any) =>
@@ -364,6 +375,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'invoice', route: 'findById' },
 	{ field: 'invoiceCount', route: 'getCount' },
 	{ field: 'highestInvoiceNumber', route: 'findHighestInvoiceNumber' },
+	{ field: 'invoiceStatistics', route: 'getStatistics' },
 	{ field: 'downloadInvoicePdf', route: 'downloadInvoicePdf' },
 	{ field: 'downloadInvoicePaymentPdf', route: 'downloadInvoicePaymentPdf' },
 	{ field: 'createInvoice', route: 'create' },
@@ -378,7 +390,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 ];
 
 /** The read fields, which carry the view permission, and the write fields, which carry the edit one. */
-const READS = ['invoices', 'invoice', 'invoiceCount', 'highestInvoiceNumber'];
+const READS = ['invoices', 'invoice', 'invoiceCount', 'highestInvoiceNumber', 'invoiceStatistics'];
 
 /** The write fields, whose commands are asserted one by one below. */
 const WRITES = [
@@ -421,7 +433,15 @@ describe('InvoiceResolver — the SDL declares the capabilities the REST routes 
 		// question, so the surface states it once: a second root field for the paginated spelling would
 		// be a second surface that could disagree with this one.
 		expect(ownedRootFields('Query')).toEqual(
-			['invoices', 'invoice', 'invoiceCount', 'highestInvoiceNumber', 'downloadInvoicePdf', 'downloadInvoicePaymentPdf'].sort()
+			[
+				'invoices',
+				'invoice',
+				'invoiceCount',
+				'highestInvoiceNumber',
+				'invoiceStatistics',
+				'downloadInvoicePdf',
+				'downloadInvoicePaymentPdf'
+			].sort()
 		);
 		expect(ownedRootFields('Mutation')).toEqual(
 			[
@@ -522,6 +542,102 @@ describe('InvoiceResolver — the SDL declares the capabilities the REST routes 
 		for (const [field, args] of WRITE_ARGS) {
 			expect(fieldArgs('Mutation', field)).toEqual(args);
 		}
+	});
+});
+
+describe('InvoiceResolver — one organization’s statistics, scoped and exact', () => {
+	it('declares the statistics read with exact totals per currency and per status', () => {
+		expect(printed).toMatch(/invoiceStatistics\(isEstimate: Boolean\): InvoiceStatistics!/);
+		expect(typeBody('InvoiceCurrencyTotal')).toMatch(/totalValue: Decimal!/);
+		expect(typeBody('InvoiceStatusTotal')).toMatch(/totalValue: Decimal!/);
+		expect(typeBody('InvoiceStatusTotal')).toMatch(/status: String\n/);
+		expect(printed).not.toMatch(/type InvoiceStatistics \{[^}]*Float/);
+	});
+
+	it('reads through the same service method the route calls, with the credential’s scope', async () => {
+		const { resolver, invoiceService } = surfaces();
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
+		try {
+			expect(await resolver.invoiceStatistics()).toBe(STATISTICS);
+			expect(invoiceService.getStatistics).toHaveBeenCalledWith({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				isEstimate: false
+			});
+
+			await resolver.invoiceStatistics(true);
+			expect(invoiceService.getStatistics).toHaveBeenLastCalledWith(
+				expect.objectContaining({ isEstimate: true })
+			);
+
+			const controller = new InvoiceController(invoiceService as never, {} as never);
+			await controller.getStatistics({ organizationId: ORGANIZATION, isEstimate: true } as never);
+			expect(invoiceService.getStatistics).toHaveBeenLastCalledWith({
+				tenantId: undefined,
+				organizationId: ORGANIZATION,
+				isEstimate: true
+			});
+		} finally {
+			tenant.mockRestore();
+			organization.mockRestore();
+		}
+	});
+});
+
+describe('InvoiceService.getStatistics — the organization’s documents, never the platform’s', () => {
+	/** The method over a scripted tenant-scoped CRUD read. */
+	function reader(rows: unknown[]) {
+		const service = Object.create(InvoiceService.prototype) as InvoiceService;
+		const find = jest.fn().mockResolvedValue(rows);
+		(service as unknown as { find: jest.Mock }).find = find;
+
+		return { service, find };
+	}
+
+	it('reads the named organization through the tenant-scoped read, invoices unless estimates are asked', async () => {
+		const { service, find } = reader([]);
+
+		await service.getStatistics({ organizationId: ORGANIZATION });
+		expect(find).toHaveBeenCalledWith({
+			where: { organizationId: ORGANIZATION, isEstimate: false },
+			select: { id: true, status: true, currency: true, totalValue: true }
+		});
+
+		await service.getStatistics({ organizationId: ORGANIZATION, isEstimate: true });
+		expect(find).toHaveBeenLastCalledWith(
+			expect.objectContaining({ where: { organizationId: ORGANIZATION, isEstimate: true } })
+		);
+	});
+
+	it('totals exactly per currency and per status, never across currencies', async () => {
+		const { service } = reader([
+			{ id: '1', status: 'SENT', currency: 'USD', totalValue: 0.1 },
+			{ id: '2', status: 'SENT', currency: 'USD', totalValue: '0.2' },
+			{ id: '3', status: 'FULLY_PAID', currency: 'EUR', totalValue: 99.99 },
+			{ id: '4', status: null, currency: 'EUR', totalValue: null }
+		]);
+
+		const statistics = await service.getStatistics({ organizationId: ORGANIZATION });
+
+		expect(statistics.count).toBe(4);
+		expect(statistics.totals).toEqual([
+			{ currency: 'USD', count: 2, totalValue: '0.3' },
+			{ currency: 'EUR', count: 2, totalValue: '99.99' }
+		]);
+		expect(statistics.byStatus).toEqual([
+			{ status: 'SENT', currency: 'USD', count: 2, totalValue: '0.3' },
+			{ status: 'FULLY_PAID', currency: 'EUR', count: 1, totalValue: '99.99' },
+			{ status: null, currency: 'EUR', count: 1, totalValue: '0' }
+		]);
+	});
+
+	it('refuses to run without an organization rather than totalling the whole tenant', async () => {
+		const { service, find } = reader([]);
+
+		await expect(service.getStatistics({})).rejects.toBeInstanceOf(BadRequestException);
+		expect(find).not.toHaveBeenCalled();
 	});
 });
 

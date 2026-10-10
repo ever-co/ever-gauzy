@@ -309,6 +309,7 @@ export const environment: IEnvironment = {
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
 	gauzySeedPath: process.env.GAUZY_SEED_PATH,
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	reportCatalogueAuthoring: process.env.REPORT_CATALOGUE_AUTHORING_ENABLED === 'true',
 	electronResourcesPath: process.env.ELECTRON_RESOURCES_PATH,
 
 	/**

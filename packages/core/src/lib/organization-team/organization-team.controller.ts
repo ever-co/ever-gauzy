@@ -22,7 +22,12 @@ import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO, DeleteQueryDTO } from './../shared/dto';
 import { GetOrganizationTeamStatisticQuery } from './queries';
-import { CreateOrganizationTeamDTO, OrganizationTeamStatisticDTO, UpdateOrganizationTeamDTO } from './dto';
+import {
+	AddOrganizationTeamMemberDTO,
+	CreateOrganizationTeamDTO,
+	OrganizationTeamStatisticDTO,
+	UpdateOrganizationTeamDTO
+} from './dto';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamService } from './organization-team.service';
 import { OrganizationTeamCreateCommand } from './commands';
@@ -190,6 +195,37 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Body() entity: UpdateOrganizationTeamDTO
 	): Promise<IOrganizationTeam> {
 		return await this._organizationTeamService.update(id, entity);
+	}
+
+	/**
+	 * Add one employee to a team, or change whether that member manages it.
+	 *
+	 * The single-member spelling of `PUT /:id`'s member sets: the service reads the team's members, adds this
+	 * one and hands the whole set to the same edit, so the same permission applies here and the same rules
+	 * decide who may edit which team. An employee outside the organization is refused.
+	 *
+	 * @param id The team.
+	 * @param entity The organization, the employee and optionally the manager flag.
+	 * @returns The team.
+	 */
+	@ApiOperation({ summary: 'Add one employee to an organization team.' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The team.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such team or employee in this organization.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller may not edit this team.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	@Post('/:id/members')
+	@UseValidationPipe({ whitelist: true })
+	async addMember(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: AddOrganizationTeamMemberDTO
+	): Promise<IOrganizationTeam> {
+		return await this._organizationTeamService.addMember(id, {
+			organizationId: entity.organizationId,
+			tenantId: entity.tenantId,
+			employeeId: entity.employeeId,
+			isManager: entity.isManager
+		});
 	}
 
 	/**

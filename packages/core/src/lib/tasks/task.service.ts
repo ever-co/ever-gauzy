@@ -1,5 +1,5 @@
 import { EventBus } from '@nestjs/cqrs';
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus, HttpException, NotFoundException } from '@nestjs/common';
 import {
 	IsNull,
 	SelectQueryBuilder,
@@ -1085,6 +1085,66 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			console.log(`Error fetching max task number: ${error.message}`, error.stack);
 			throw new HttpException({ message: 'Failed to get the max task number', error }, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	/**
+	 * One task of the caller's tenant and organization, by its human key: the project prefix and the number.
+	 *
+	 * The key is what a person reads off a board or types into a link (`FUL-12`), and the create handler is
+	 * what writes it: the prefix is the first three characters of the project's name and the number is one
+	 * above that project's highest. So the number is unique within a project, but the prefix is not unique
+	 * across projects — "Gauzy" and "Gauzy Teams" both file under `Gau`. A caller that states the project
+	 * reads exactly one row; a caller that does not and hits two is refused rather than handed whichever
+	 * row the store returned first, because a node read that silently picks one is a wrong answer with no
+	 * way to tell it is one.
+	 *
+	 * The tenant is the credential's and the organization is the one the caller names (the REST twin
+	 * validates it against the caller's memberships, the GraphQL field reads it from the credential), so the
+	 * read can never reach another organization's board.
+	 *
+	 * @param options The tenant and organization, the prefix and number, and optionally the project.
+	 * @returns The task.
+	 * @throws NotFoundException when no task carries that key in the caller's scope.
+	 * @throws BadRequestException when the prefix and number name more than one task and no project was stated.
+	 */
+	public async findByNumber(options: {
+		tenantId?: ID;
+		organizationId?: ID;
+		prefix: string;
+		number: number;
+		projectId?: ID | null;
+	}): Promise<Task> {
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+		const { organizationId, prefix, number, projectId } = options;
+
+		// Both scope members are required: an absent one would drop out of the criterion and widen the read
+		// to every organization of the tenant, or to every tenant.
+		if (!tenantId || !organizationId) {
+			throw new BadRequestException('TASK_SCOPE_REQUIRED: a task is read by its number within one organization.');
+		}
+
+		const where: FindOptionsWhere<Task> = {
+			tenantId,
+			organizationId,
+			prefix,
+			number,
+			...(isNotEmpty(projectId) ? { projectId } : {})
+		} as FindOptionsWhere<Task>;
+
+		// Two rows are enough to tell "one" from "more than one"; reading the rest would only cost.
+		const rows = await this.find({ where, take: 2 } as never);
+
+		if (rows.length === 0) {
+			throw new NotFoundException(`TASK_NOT_FOUND: no task ${prefix}-${number} in this organization.`);
+		}
+
+		if (rows.length > 1) {
+			throw new BadRequestException(
+				`TASK_NUMBER_AMBIGUOUS: more than one project files tasks under ${prefix}-${number}; state the project.`
+			);
+		}
+
+		return rows[0];
 	}
 
 	/**

@@ -105,6 +105,17 @@ extend type Mutation {
 	Puts a withdrawn role back.
 	"""
 	recoverRole(id: ID!): Role!
+
+	"""
+	Creates, in the caller's own tenant, every default role the tenant does not hold, and answers the
+	roles it created — none when the tenant already holds them all.
+
+	Mirrors `POST /roles/bulk`, the bulk write tenant onboarding performs, restricted to the credential's
+	tenant: there is no argument, so no caller can write roles into another tenant. `SUPER_ADMIN` only.
+	A withdrawn default role is left for `recoverRole` rather than duplicated, and a created role starts
+	with no permission rows.
+	"""
+	bulkCreateTenantRoles: [Role!]!
 }
 
 input CreateRoleInput {

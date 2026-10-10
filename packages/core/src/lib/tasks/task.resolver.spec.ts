@@ -7,7 +7,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -17,6 +17,7 @@ import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TaskController } from './task.controller';
 import { TaskResolver } from './task.resolver';
+import { TaskService } from './task.service';
 import { TaskCreateCommand, TaskUpdateCommand } from './commands';
 
 /**
@@ -97,6 +98,9 @@ function surfaces() {
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		getMaxTaskNumberByProject: jest.fn().mockResolvedValue(12),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
+		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-03-02T10:00:00.000Z') }),
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
+		findByNumber: jest.fn().mockResolvedValue(ROWS[0]),
 		unassignEmployeeFromTeamTasks: jest.fn().mockResolvedValue(undefined)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
@@ -204,9 +208,13 @@ const ROUTE_OF_FIELD: ReadonlyArray<readonly [string, string]> = [
 	['task', 'findById'],
 	['taskCount', 'getCount'],
 	['taskMaxNumber', 'getMaxTaskNumberByProject'],
+	['taskByNumber', 'findByNumber'],
 	['createTask', 'create'],
 	['updateTask', 'update'],
 	['deleteTask', 'delete'],
+	// The pair the controller inherits from the CRUD base without overriding it.
+	['softDeleteTask', 'softRemove'],
+	['recoverTask', 'softRecover'],
 	['unassignEmployeeFromTeamTasks', 'deleteEmployeeFromTasks']
 ];
 
@@ -223,15 +231,29 @@ describe('TaskResolver — the SDL declares the capabilities the REST routes ser
 				'tasksByView',
 				'task',
 				'taskCount',
-				'taskMaxNumber'
+				'taskMaxNumber',
+				'taskByNumber'
 			])
 		);
 	});
 
 	it('declares one mutation per delivered write route', () => {
 		expect(rootFields('Mutation')).toEqual(
-			expect.arrayContaining(['createTask', 'updateTask', 'deleteTask', 'unassignEmployeeFromTeamTasks'])
+			expect.arrayContaining([
+				'createTask',
+				'updateTask',
+				'deleteTask',
+				'softDeleteTask',
+				'recoverTask',
+				'unassignEmployeeFromTeamTasks'
+			])
 		);
+	});
+
+	it('declares the node read by key as nullable, and the soft-delete pair as answering the row', () => {
+		expect(printed).toMatch(/taskByNumber\(prefix: String!, number: Int!, projectId: ID\): Task\n/);
+		expect(printed).toMatch(/softDeleteTask\(id: ID!\): Task!/);
+		expect(printed).toMatch(/recoverTask\(id: ID!\): Task!/);
 	});
 
 	it('declares the connection, its edges, its filters and its sorts', () => {
@@ -440,6 +462,79 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 		expect(taskService.unassignEmployeeFromTeamTasks).toHaveBeenCalledWith(EMPLOYEE, TEAM);
 	});
 
+	it('retires and restores a task through the service methods the inherited routes call', async () => {
+		const { resolver, taskService } = surfaces();
+
+		const retired = await resolver.softDeleteTask(PICKING);
+		expect(taskService.softRemove).toHaveBeenCalledWith(PICKING);
+		expect(retired.deletedAt).toBeInstanceOf(Date);
+
+		expect(await resolver.recoverTask(PICKING)).toBe(ROWS[0]);
+		expect(taskService.softRecover).toHaveBeenCalledWith(PICKING);
+	});
+
+	it('lets a refused retirement through rather than answering a row it did not retire', async () => {
+		const { resolver, taskService } = surfaces();
+		const miss = new NotFoundException('An error occurred during soft removal');
+		taskService.softRemove.mockRejectedValueOnce(miss);
+		taskService.softRecover.mockRejectedValueOnce(miss);
+
+		await expect(resolver.softDeleteTask(EXCEPTION)).rejects.toBe(miss);
+		await expect(resolver.recoverTask(EXCEPTION)).rejects.toBe(miss);
+	});
+
+	it('reads a task by its key within the credential’s organization', async () => {
+		const { resolver, taskService } = surfaces();
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
+		try {
+			expect(await resolver.taskByNumber('FUL', 12)).toBe(ROWS[0]);
+			expect(taskService.findByNumber).toHaveBeenCalledWith({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				prefix: 'FUL',
+				number: 12,
+				projectId: null
+			});
+
+			await resolver.taskByNumber('FUL', 12, PROJECT);
+			expect(taskService.findByNumber).toHaveBeenLastCalledWith(expect.objectContaining({ projectId: PROJECT }));
+		} finally {
+			tenant.mockRestore();
+			organization.mockRestore();
+		}
+	});
+
+	it('answers null for a key no task carries, and lets an ambiguous key through as a refusal', async () => {
+		const { resolver, taskService } = surfaces();
+		taskService.findByNumber.mockRejectedValueOnce(new NotFoundException());
+		expect(await resolver.taskByNumber('FUL', 404)).toBeNull();
+
+		const ambiguous = new BadRequestException('TASK_NUMBER_AMBIGUOUS');
+		taskService.findByNumber.mockRejectedValueOnce(ambiguous);
+		await expect(resolver.taskByNumber('Gau', 1)).rejects.toBe(ambiguous);
+	});
+
+	it('serves the same read over REST, with the organization and project from the validated query', async () => {
+		const taskService = { findByNumber: jest.fn().mockResolvedValue(ROWS[0]) };
+		const controller = new TaskController(taskService as never, {} as never);
+
+		expect(
+			await controller.findByNumber({ prefix: 'FUL', number: 12 }, {
+				organizationId: ORGANIZATION,
+				projectId: PROJECT
+			} as never)
+		).toBe(ROWS[0]);
+		expect(taskService.findByNumber).toHaveBeenCalledWith({
+			tenantId: undefined,
+			organizationId: ORGANIZATION,
+			projectId: PROJECT,
+			prefix: 'FUL',
+			number: 12
+		});
+	});
+
 	it('surfaces a refusal as a 4xx that is not a 404', async () => {
 		const { resolver, taskService } = surfaces();
 		const refusal = new Error('TASK_NOT_EDITABLE: the task could not be written.');
@@ -503,7 +598,11 @@ describe('TaskResolver — the guard stack and the permission are the controller
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.ORG_TASK_EDIT
 		]);
-		for (const field of ['tasks', 'myTasks', 'task', 'taskCount', 'taskMaxNumber', 'tasksByView']) {
+		// The inherited soft-delete pair runs under the class-level grant, because the controller does not
+		// override either route to state a narrower one.
+		expect(permissionOfField('softDeleteTask')).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+		expect(permissionOfField('recoverTask')).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+		for (const field of ['tasks', 'myTasks', 'task', 'taskCount', 'taskMaxNumber', 'taskByNumber', 'tasksByView']) {
 			expect(permissionOfField(field)).toEqual([
 				PermissionsEnum.ALL_ORG_VIEW,
 				PermissionsEnum.ORG_TASK_VIEW
@@ -557,5 +656,88 @@ describe('TaskResolver — a capability that is switched off is not served', () 
 		const { guard } = gate(true);
 
 		await expect(guard.canActivate(graphqlContext('tasks'))).resolves.toBe(true);
+	});
+});
+
+describe('TaskService.findByNumber — one row by its human key, never a guess', () => {
+	/** The method over a scripted tenant-scoped read. */
+	function reader(rows: unknown[]) {
+		const find = jest.fn().mockResolvedValue(rows);
+		const service = Object.create(TaskService.prototype) as TaskService;
+		(service as unknown as { find: jest.Mock }).find = find;
+
+		return { service, find };
+	}
+
+	it('reads within the credential’s tenant and the stated organization, and at most two rows', async () => {
+		const { service, find } = reader([ROWS[0]]);
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+
+		try {
+			const one = await service.findByNumber({ organizationId: ORGANIZATION, prefix: 'FUL', number: 12 });
+
+			expect(one).toBe(ROWS[0]);
+			expect(find).toHaveBeenCalledWith({
+				where: { tenantId: TENANT, organizationId: ORGANIZATION, prefix: 'FUL', number: 12 },
+				take: 2
+			});
+
+			await service.findByNumber({ organizationId: ORGANIZATION, prefix: 'FUL', number: 12, projectId: PROJECT });
+			expect(find).toHaveBeenLastCalledWith({
+				where: {
+					tenantId: TENANT,
+					organizationId: ORGANIZATION,
+					prefix: 'FUL',
+					number: 12,
+					projectId: PROJECT
+				},
+				take: 2
+			});
+		} finally {
+			tenant.mockRestore();
+		}
+	});
+
+	it('refuses a key two projects share instead of answering whichever row came back first', async () => {
+		const { service } = reader([ROWS[0], { ...ROWS[0], id: EXCEPTION, projectId: VIEW }]);
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+
+		try {
+			const refusal = await service
+				.findByNumber({ organizationId: ORGANIZATION, prefix: 'Gau', number: 1 })
+				.catch((thrown) => thrown);
+
+			expect(refusal).toBeInstanceOf(BadRequestException);
+			expect((refusal as Error).message).toContain('TASK_NUMBER_AMBIGUOUS');
+		} finally {
+			tenant.mockRestore();
+		}
+	});
+
+	it('answers a miss as a 404', async () => {
+		const { service } = reader([]);
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+
+		try {
+			await expect(
+				service.findByNumber({ organizationId: ORGANIZATION, prefix: 'FUL', number: 404 })
+			).rejects.toBeInstanceOf(NotFoundException);
+		} finally {
+			tenant.mockRestore();
+		}
+	});
+
+	it('refuses to read without an organization rather than widening to the whole tenant', async () => {
+		const { service, find } = reader([ROWS[0]]);
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+
+		try {
+			await expect(service.findByNumber({ prefix: 'FUL', number: 12 })).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+			expect(find).not.toHaveBeenCalled();
+		} finally {
+			tenant.mockRestore();
+		}
 	});
 });

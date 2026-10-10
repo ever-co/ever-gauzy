@@ -448,6 +448,42 @@ export class TaskResolver {
 	}
 
 	/**
+	 * One task of the caller's organization, by its human key: the project prefix and the number.
+	 *
+	 * The node read `GET /tasks/by-number/:prefix/:number` performs, through the same service method. The
+	 * route takes the organization from its query string, where it is checked against the caller's
+	 * memberships; this field takes it from the credential, which is the value the route's own clients send
+	 * and one a caller cannot misstate. A key two projects share is refused unless the project is stated —
+	 * the service's rule, not this field's — and a key nothing carries answers `null`, which is the route's
+	 * `404` in this protocol's vocabulary.
+	 */
+	@Query('taskByNumber')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW)
+	async taskByNumber(
+		@Args('prefix', { type: () => String }) prefix: string,
+		@Args('number', { type: () => Int }) number: number,
+		@Args('projectId', { type: () => ID, nullable: true }) projectId?: Id
+	): Promise<Task | null> {
+		const { tenantId, organizationId } = this.scopeOfTheCaller();
+
+		try {
+			return await this.taskService.findByNumber({
+				tenantId,
+				organizationId,
+				prefix,
+				number,
+				projectId: projectId ?? null
+			});
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		}
+	}
+
+	/**
 	 * Files a task.
 	 *
 	 * The same command the create route dispatches. The relations the caller states as identifiers
@@ -486,6 +522,30 @@ export class TaskResolver {
 		await this.taskService.delete(id);
 
 		return true;
+	}
+
+	/**
+	 * Retires a task without removing it, through the service method `DELETE /api/tasks/:id/soft` calls.
+	 *
+	 * The controller inherits that route from the CRUD base without overriding it, so the route runs under
+	 * the class-level permission alone — `ALL_ORG_EDIT` — and this field states exactly that, neither wider
+	 * nor narrower than REST. The service resolves the row through the tenant-scoped read before it touches
+	 * it, so a task of another tenant is a miss, never a write.
+	 */
+	@Mutation('softDeleteTask')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	async softDeleteTask(@Args('id', { type: () => ID }) id: Id): Promise<Task> {
+		return await this.taskService.softRemove(id);
+	}
+
+	/**
+	 * Restores a retired task through the service method `PUT /api/tasks/:id/recover` calls, under the
+	 * permission that inherited route runs under — the class-level `ALL_ORG_EDIT`, as above.
+	 */
+	@Mutation('recoverTask')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+	async recoverTask(@Args('id', { type: () => ID }) id: Id): Promise<Task> {
+		return await this.taskService.softRecover(id);
 	}
 
 	/**

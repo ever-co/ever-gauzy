@@ -1,0 +1,26 @@
+# The shared invoice's root field.
+#
+# `Query` is declared by the kernel and extended here: a root operation type exists once for the whole
+# platform, so a domain adds fields to it and never declares its own.
+#
+# **One field, mirroring `GET /public/invoice/:id/:token`, and public as that route is.** A share link is
+# opened by someone who has no account, so the route carries the platform's public marker and the field
+# does too, with no guard and no permission of its own — the `inviteByToken` precedent. The capability
+# gate is still over it, which can make the field narrower than the route for a caller without a tenant
+# scope; it is never wider. The route's `PUT` (an estimate accepted or rejected by its email token) is a
+# different token and a write, and is not part of this field.
+#
+# The answer is the `Invoice` row and no relation — the type declares none — and the operator's internal
+# note is withheld from the document a link holder reads.
+
+extend type Query {
+	"""
+	The invoice a share link opens, read by the link's own identifier and token.
+
+	The token must be an invoice-share token for exactly this invoice and must equal the link currently
+	stored on it, so regenerating the link revokes the old one. Every miss — a wrong token, a token of
+	another kind, another invoice's token, a revoked link — is the same refusal, so this field cannot be
+	used to learn which links are live. The internal note is always null here.
+	"""
+	invoiceByToken(id: ID!, token: String!): Invoice
+}

@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { In } from 'typeorm';
 import {
 	TermsAcceptanceService as Recorder,
@@ -11,6 +11,7 @@ import {
 } from 'terms-acceptance';
 import { TypeOrmAcceptanceAdapter } from 'terms-acceptance/typeorm';
 import { ITermsAcceptanceClaim, ITermsAcceptanceDocument } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { TypeOrmTermsAcceptanceRepository } from './repository/type-orm-terms-acceptance.repository';
 
 /**
@@ -27,6 +28,9 @@ const corpus = require('@ever-co/legal/index.json') as CorpusIndex;
 
 /** The product id this deployment publishes under in the legal corpus. */
 export const TERMS_PRODUCT = 'gauzy';
+
+/** The most documents one acceptance may name; the corpus publishes a handful per product. */
+export const MAX_CLAIMS_PER_ACCEPTANCE = 20;
 
 /**
  * Records terms-of-service acceptance.
@@ -178,5 +182,70 @@ export class TermsAcceptanceService {
 	/** Every acceptance on file for a user, newest first, integrity-checked. */
 	public async history(subjectId: string, tenantId?: string | null): Promise<AcceptanceRecord[]> {
 		return this.recorder.history({ subjectId, tenantId: tenantId ?? null });
+	}
+
+	/**
+	 * Record the caller's own acceptance of the documents it was shown — the re-accept path for an account
+	 * that already exists, when a document it accepted at signup has since been republished.
+	 *
+	 * The subject and the tenant are the credential's and never a member a caller can state, so nobody can
+	 * accept on someone else's behalf. The claims are checked against the published corpus *before* the
+	 * recorder runs, so a digest the corpus never published is a `400` naming the document rather than an
+	 * error from inside the recorder; the recorder then re-checks every one on write. Recording is
+	 * idempotent per `(subject, tenant, document, version)`, so a double-submitted form answers the records
+	 * that already exist.
+	 *
+	 * `method` is `api`: this is the authenticated endpoint, and the server cannot tell which form a client
+	 * rendered. The client address is salted and hashed exactly as the signup path does it, and the
+	 * user-agent is the request's own.
+	 *
+	 * @param claims What the client says it displayed.
+	 * @returns The acceptance records, one per claim.
+	 * @throws UnauthorizedException when the request carries no user.
+	 * @throws BadRequestException when a claim does not match published text.
+	 */
+	public async acceptAsCaller(claims: ITermsAcceptanceClaim[]): Promise<AcceptanceRecord[]> {
+		const subjectId = RequestContext.currentUserId();
+
+		if (!subjectId) {
+			throw new UnauthorizedException();
+		}
+
+		// The REST body is capped by its DTO; the GraphQL input is not validated by one, so the bound that keeps
+		// one request from asking the recorder for an unbounded batch is stated here, once, for both.
+		if (!Array.isArray(claims) || claims.length === 0 || claims.length > MAX_CLAIMS_PER_ACCEPTANCE) {
+			throw new BadRequestException(
+				`Terms acceptance must list between 1 and ${MAX_CLAIMS_PER_ACCEPTANCE} documents.`
+			);
+		}
+
+		this.assertClaimsArePublished(claims);
+
+		const request = RequestContext.currentRequest();
+
+		return this.record(subjectId, claims, {
+			tenantId: RequestContext.currentTenantId() ?? null,
+			method: 'api',
+			ip: request?.ip ?? null,
+			userAgent: (request?.headers?.['user-agent'] as string | undefined) ?? null
+		});
+	}
+
+	/**
+	 * Every acceptance on file for the caller in the caller's tenant, newest first, integrity-checked.
+	 *
+	 * The subject and the tenant are the credential's, so this read answers "what have I accepted here?"
+	 * and nothing else — another user's evidence is not reachable through it.
+	 *
+	 * @throws UnauthorizedException when the request carries no user.
+	 */
+	public async historyOfCaller(): Promise<AcceptanceRecord[]> {
+		const subjectId = RequestContext.currentUserId();
+
+		if (!subjectId) {
+			throw new UnauthorizedException();
+		}
+
+		return this.history(subjectId, RequestContext.currentTenantId() ?? null);
 	}
 }

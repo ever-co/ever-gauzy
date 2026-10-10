@@ -8,7 +8,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { GLOBAL_MODULE_METADATA, MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
@@ -127,13 +127,23 @@ const SPLIT_ROWS = [
 ];
 
 /** The resolver, over scripted services, a scripted command bus and a scripted query bus. */
+/** The totals a scripted statistics read answers with. */
+const STATISTICS = {
+	count: 1,
+	totals: [{ currency: 'USD', count: 1, amount: '12.5' }],
+	daily: [{ date: '2026-05-01', currency: 'USD', count: 1, amount: '12.5' }],
+	byEmployee: [{ id: EMPLOYEE, currency: 'USD', count: 1, amount: '12.5' }],
+	byProject: [{ id: PROJECT, currency: 'USD', count: 1, amount: '12.5' }]
+};
+
 function surfaces() {
 	const expenseService = {
 		findAllExpenses: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-05-01T10:00:00.000Z') }),
-		softRecover: jest.fn().mockResolvedValue(ROWS[0])
+		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
+		getStatistics: jest.fn().mockResolvedValue(STATISTICS)
 	};
 	const employeeService = { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: EMPLOYEE }) };
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
@@ -316,6 +326,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'expenseCount', route: 'getCount' },
 	{ field: 'splitExpensesByEmployee', route: 'findAllSplitExpenses' },
 	{ field: 'mySplitExpenses', route: 'findMyExpenseWithSplitIncluded' },
+	{ field: 'expenseStatistics', route: 'getStatistics' },
 	{ field: 'createExpense', route: 'create' },
 	{ field: 'updateExpense', route: 'update' },
 	{ field: 'deleteExpense', route: 'delete' },
@@ -388,6 +399,7 @@ describe('ExpenseResolver — the SDL declares the capabilities the REST routes 
 		expect(ownedRootFields('Query')).toEqual([
 			'expense',
 			'expenseCount',
+			'expenseStatistics',
 			'expenses',
 			'mySplitExpenses',
 			'splitExpensesByEmployee'
@@ -507,6 +519,141 @@ describe('ExpenseResolver — the SDL declares the capabilities the REST routes 
 		for (const [field, args] of WRITE_ARGS) {
 			expect(fieldArgs('Mutation', field)).toEqual(args);
 		}
+	});
+});
+
+describe('ExpenseResolver — the report’s figures, typed and exact', () => {
+	it('declares the statistics read with the report’s selectors, answering exact totals', () => {
+		expect(fieldArgs('Query', 'expenseStatistics')).toEqual([
+			'startDate',
+			'endDate',
+			'employeeIds',
+			'projectIds',
+			'categoryId',
+			'onlyMe'
+		]);
+		expect(fieldType('Query', 'expenseStatistics')).toBe('ExpenseStatistics!');
+
+		for (const type of ['ExpenseTotal', 'ExpenseDailyTotal', 'ExpenseGroupTotal']) {
+			expect(typeBody(type)).toMatch(/amount: Decimal!/);
+			expect(typeBody(type)).toMatch(/currency: String!/);
+			expect(typeBody(type)).not.toMatch(/Float/);
+		}
+		// Identifiers, never nested rows of another resource.
+		expect(typeBody('ExpenseGroupTotal')).toMatch(/id: ID\n/);
+	});
+
+	it('reads the statistics through the same service method the route calls, scoped by the credential', async () => {
+		const { resolver, expenseService } = surfaces();
+		const tenant = jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+		const from = new Date('2026-05-01T00:00:00.000Z');
+
+		try {
+			const statistics = await resolver.expenseStatistics(from, undefined, [EMPLOYEE], undefined, CATEGORY);
+
+			expect(statistics).toBe(STATISTICS);
+			expect(expenseService.getStatistics).toHaveBeenCalledWith({
+				tenantId: TENANT,
+				organizationId: ORGANIZATION,
+				startDate: from,
+				employeeIds: [EMPLOYEE],
+				categoryId: CATEGORY
+			});
+
+			const unused = {} as never;
+			const controller = new ExpenseController(expenseService as never, unused, unused, unused, unused);
+			const query = { organizationId: ORGANIZATION, startDate: from } as never;
+			expect(await controller.getStatistics(query)).toBe(STATISTICS);
+			expect(expenseService.getStatistics).toHaveBeenLastCalledWith(query);
+		} finally {
+			tenant.mockRestore();
+			organization.mockRestore();
+		}
+	});
+});
+
+describe('ExpenseService.getStatistics — the report’s rows, summed exactly per currency', () => {
+	/** The method over a scripted report reader. */
+	function reader(rows: unknown[]) {
+		const service = Object.create(ExpenseService.prototype) as ExpenseService;
+		const getExpense = jest.fn().mockResolvedValue(rows);
+		(service as unknown as { getExpense: jest.Mock }).getExpense = getExpense;
+
+		return { service, getExpense };
+	}
+
+	/** One row as a driver hands it over: the amount is a number on one driver and text on another. */
+	const row = (
+		amount: number | string,
+		currency: string,
+		at: string,
+		employeeId: string | null,
+		projectId: string | null
+	) => ({
+		amount,
+		currency,
+		valueDate: new Date(at),
+		employeeId,
+		projectId
+	});
+
+	const ROWS_OF_THE_WEEK = [
+		row(0.1, 'USD', '2026-05-01T09:00:00.000Z', EMPLOYEE, PROJECT),
+		row('0.2', 'USD', '2026-05-01T18:00:00.000Z', EMPLOYEE, null),
+		row(1000, 'EUR', '2026-05-02T09:00:00.000Z', null, PROJECT)
+	];
+
+	it('sums per currency as exact decimals, never adding two currencies together', async () => {
+		const { service } = reader(ROWS_OF_THE_WEEK);
+
+		const statistics = await service.getStatistics({ organizationId: ORGANIZATION });
+
+		expect(statistics.count).toBe(3);
+		// 0.1 + 0.2 in binary floating point is 0.30000000000000004; the total is the exact 0.3.
+		expect(statistics.totals).toEqual([
+			{ currency: 'USD', count: 2, amount: '0.3' },
+			{ currency: 'EUR', count: 1, amount: '1000' }
+		]);
+		expect(statistics.daily).toEqual([
+			{ date: '2026-05-01', currency: 'USD', count: 2, amount: '0.3' },
+			{ date: '2026-05-02', currency: 'EUR', count: 1, amount: '1000' }
+		]);
+		expect(statistics.byEmployee).toEqual([
+			{ id: EMPLOYEE, currency: 'USD', count: 2, amount: '0.3' },
+			{ id: null, currency: 'EUR', count: 1, amount: '1000' }
+		]);
+		expect(statistics.byProject).toEqual([
+			{ id: PROJECT, currency: 'USD', count: 1, amount: '0.1' },
+			{ id: null, currency: 'USD', count: 1, amount: '0.2' },
+			{ id: PROJECT, currency: 'EUR', count: 1, amount: '1000' }
+		]);
+	});
+
+	it('reads through the report’s own reader with its selectors, and never a page of them', async () => {
+		const { service, getExpense } = reader([]);
+
+		const statistics = await service.getStatistics({
+			organizationId: ORGANIZATION,
+			employeeIds: [EMPLOYEE],
+			limit: 10,
+			page: 2
+		});
+
+		expect(getExpense).toHaveBeenCalledWith({
+			organizationId: ORGANIZATION,
+			employeeIds: [EMPLOYEE],
+			limit: undefined,
+			page: undefined
+		});
+		expect(statistics).toEqual({ count: 0, totals: [], daily: [], byEmployee: [], byProject: [] });
+	});
+
+	it('refuses to total without an organization rather than widening to the whole tenant', async () => {
+		const { service, getExpense } = reader(ROWS_OF_THE_WEEK);
+
+		await expect(service.getStatistics({})).rejects.toBeInstanceOf(BadRequestException);
+		expect(getExpense).not.toHaveBeenCalled();
 	});
 });
 
@@ -1004,11 +1151,25 @@ describe('ExpenseResolver — the guard stack and the permission are the control
 	});
 
 	it('carries the view permission on every read, which is what every read route states', () => {
-		for (const field of ['expenses', 'expense', 'expenseCount', 'splitExpensesByEmployee', 'mySplitExpenses']) {
+		for (const field of [
+			'expenses',
+			'expense',
+			'expenseCount',
+			'splitExpensesByEmployee',
+			'mySplitExpenses',
+			'expenseStatistics'
+		]) {
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.ORG_EXPENSES_VIEW]);
 		}
 
-		for (const route of ['findAll', 'findById', 'getCount', 'findAllSplitExpenses', 'findMyExpenseWithSplitIncluded']) {
+		for (const route of [
+			'findAll',
+			'findById',
+			'getCount',
+			'findAllSplitExpenses',
+			'findMyExpenseWithSplitIncluded',
+			'getStatistics'
+		]) {
 			expect(permissionOfRoute(ExpenseController, route)).toEqual([PermissionsEnum.ORG_EXPENSES_VIEW]);
 		}
 	});

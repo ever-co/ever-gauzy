@@ -1,11 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { GetReportMenuItemsInput, IPagination, IReport } from '@gauzy/contracts';
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
+import { GetReportMenuItemsInput, ID, IPagination, IReport } from '@gauzy/contracts';
 import { CrudService } from '../core/crud';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { RequestContext } from './../core/context';
 import { Report } from './report.entity';
+import { assertReportCatalogueAuthoringEnabled, REPORT_CATALOGUE_TEXT_MAX, ReportCategoryService } from './report-category.service';
+import { REPORT_SLUG_PATTERN } from './dto/report-authoring.dto';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
+
+/** The members a caller states when it files a report into the catalogue. */
+export interface IReportCreateInput {
+	name: string;
+	slug: string;
+	description?: string;
+	image?: string;
+	iconClass?: string;
+	categoryId: ID;
+}
 
 @Injectable()
 export class ReportService extends CrudService<Report> {
@@ -13,9 +25,66 @@ export class ReportService extends CrudService<Report> {
 
 	constructor(
 		readonly typeOrmReportRepository: TypeOrmReportRepository,
-		readonly mikroOrmReportRepository: MikroOrmReportRepository
+		readonly mikroOrmReportRepository: MikroOrmReportRepository,
+		private readonly reportCategoryService: ReportCategoryService
 	) {
 		super(typeOrmReportRepository, mikroOrmReportRepository);
+	}
+
+	/**
+	 * Files one report into the platform-wide catalogue.
+	 *
+	 * The catalogue has no tenant, so the entry is offered to every organization's menu — where each
+	 * organization still switches it on for itself — and both routes that reach this are gated to
+	 * `SUPER_ADMIN`. The members are checked here rather than by a DTO alone, because the GraphQL input
+	 * reaches this method without one: the slug is the key a client routes by, so it must be well-formed and
+	 * not already taken by a live report, and the category must be a live one. `showInMenu` starts `false`:
+	 * it is computed per organization from that organization's menu rows, never stored as a decision here.
+	 *
+	 * @param input The report's members and its category.
+	 * @returns The report.
+	 * @throws BadRequestException when a member is malformed.
+	 * @throws NotFoundException when there is no such live category.
+	 * @throws ConflictException when a live report already has the slug.
+	 */
+	async createReport(input: IReportCreateInput): Promise<Report> {
+		assertReportCatalogueAuthoringEnabled();
+		const name = typeof input?.name === 'string' ? input.name.trim() : '';
+		const slug = typeof input?.slug === 'string' ? input.slug.trim() : '';
+
+		if (!name || name.length > REPORT_CATALOGUE_TEXT_MAX) {
+			throw new BadRequestException(`name must be 1 to ${REPORT_CATALOGUE_TEXT_MAX} characters.`);
+		}
+
+		if (!REPORT_SLUG_PATTERN.test(slug) || slug.length > REPORT_CATALOGUE_TEXT_MAX) {
+			throw new BadRequestException('slug must be lowercase words joined by single hyphens.');
+		}
+
+		for (const member of ['description', 'image', 'iconClass'] as const) {
+			const value = input[member];
+			const malformed = typeof value !== 'string' || value.length > REPORT_CATALOGUE_TEXT_MAX;
+
+			if (value !== undefined && value !== null && malformed) {
+				throw new BadRequestException(`${member} must be at most ${REPORT_CATALOGUE_TEXT_MAX} characters.`);
+			}
+		}
+
+		// A live category, read through the category service so the soft-delete filter applies.
+		await this.reportCategoryService.findOneByIdString(input.categoryId);
+
+		if ((await this.countBy({ slug })) > 0) {
+			throw new ConflictException(`REPORT_SLUG_TAKEN: a report with the slug "${slug}" already exists.`);
+		}
+
+		return await this.create({
+			name,
+			slug,
+			description: input.description ?? undefined,
+			image: input.image ?? undefined,
+			iconClass: input.iconClass ?? undefined,
+			categoryId: input.categoryId,
+			showInMenu: false
+		});
 	}
 
 	/**

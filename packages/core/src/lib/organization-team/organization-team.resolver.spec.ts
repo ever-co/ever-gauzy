@@ -14,8 +14,10 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../api/cursor';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
+import { RequestContext } from '../core/context';
 import { OrganizationTeamController } from './organization-team.controller';
 import { OrganizationTeamResolver } from './organization-team.resolver';
+import { OrganizationTeamService } from './organization-team.service';
 import { OrganizationTeamCreateCommand } from './commands';
 import { GetOrganizationTeamStatisticQuery } from './queries';
 
@@ -104,7 +106,8 @@ function surfaces() {
 		deleteTeam: jest.fn().mockResolvedValue({ affected: 1 }),
 		existTeamsAsMember: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[1], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
-		softRecover: jest.fn().mockResolvedValue(ROWS[1])
+		softRecover: jest.fn().mockResolvedValue(ROWS[1]),
+		addMember: jest.fn().mockResolvedValue(ROWS[1])
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[1]) };
 	const queryBus = { execute: jest.fn().mockResolvedValue(ROWS[1]) };
@@ -718,6 +721,138 @@ describe('OrganizationTeamResolver — one concept, two protocols, the same oper
 	});
 });
 
+describe('OrganizationTeamResolver — adding one member, through the set-based edit', () => {
+	it('declares the single add with the team, the organization, the employee and an optional manager flag', () => {
+		expect(printed).toMatch(/addTeamMember\(input: AddTeamMemberInput!\): OrganizationTeam!/);
+		const input = printed.match(/input AddTeamMemberInput \{([\s\S]*?)\n\}/)?.[1] ?? '';
+
+		expect(input).toMatch(/organizationTeamId: ID!/);
+		expect(input).toMatch(/organizationId: ID!/);
+		expect(input).toMatch(/employeeId: ID!/);
+		expect(input).toMatch(/isManager: Boolean$/m);
+	});
+
+	it('adds through the same service method the route calls, under the set-based edit’s permission', async () => {
+		const { resolver, organizationTeamService } = surfaces();
+
+		await resolver.addTeamMember({
+			organizationTeamId: ACME_TEAM,
+			organizationId: ORGANIZATION,
+			employeeId: MEMBER
+		});
+		expect(organizationTeamService.addMember).toHaveBeenCalledWith(ACME_TEAM, {
+			organizationId: ORGANIZATION,
+			employeeId: MEMBER
+		});
+
+		await resolver.addTeamMember({
+			organizationTeamId: ACME_TEAM,
+			organizationId: ORGANIZATION,
+			employeeId: MANAGER,
+			isManager: true
+		});
+		expect(organizationTeamService.addMember).toHaveBeenLastCalledWith(
+			ACME_TEAM,
+			expect.objectContaining({ employeeId: MANAGER, isManager: true })
+		);
+
+		const controller = new OrganizationTeamController({} as never, {} as never, organizationTeamService as never);
+		await controller.addMember(ACME_TEAM, { organizationId: ORGANIZATION, employeeId: MEMBER } as never);
+		expect(organizationTeamService.addMember).toHaveBeenLastCalledWith(ACME_TEAM, {
+			organizationId: ORGANIZATION,
+			tenantId: undefined,
+			employeeId: MEMBER,
+			isManager: undefined
+		});
+
+		expect(permissionOfField('addTeamMember')).toEqual(permissionOfField('updateOrganizationTeam'));
+		expect(permissionOfRoute(OrganizationTeamController, 'addMember')).toEqual(
+			permissionOfRoute(OrganizationTeamController, 'update')
+		);
+	});
+});
+
+describe('OrganizationTeamService.addMember — one employee in, the rest of the team untouched', () => {
+	/** The service over a scripted employee read, a scripted member read and the set-based edit observed. */
+	function service(options: { employee?: boolean; memberIds?: string[]; managerIds?: string[] } = {}) {
+		const instance = Object.create(OrganizationTeamService.prototype) as OrganizationTeamService;
+		const retrieveEmployees = jest.fn().mockResolvedValue(options.employee === false ? [] : [{ id: MEMBER }]);
+		const findMemberSets = jest.fn().mockResolvedValue({
+			memberIds: options.memberIds ?? [MANAGER],
+			managerIds: options.managerIds ?? [MANAGER]
+		});
+		const update = jest.fn().mockResolvedValue(ROWS[1]);
+		Object.assign(instance, {
+			retrieveEmployees,
+			update,
+			organizationTeamEmployeeService: { findMemberSets }
+		});
+
+		return { instance, retrieveEmployees, findMemberSets, update };
+	}
+
+	beforeEach(() => jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT));
+	afterEach(() => jest.restoreAllMocks());
+
+	it('hands the whole team plus the one employee to the set-based edit, keeping the managers', async () => {
+		const { instance, retrieveEmployees, findMemberSets, update } = service();
+
+		await instance.addMember(ACME_TEAM, { organizationId: ORGANIZATION, employeeId: MEMBER });
+
+		expect(retrieveEmployees).toHaveBeenCalledWith([MEMBER], [], ORGANIZATION, TENANT);
+		expect(findMemberSets).toHaveBeenCalledWith(ACME_TEAM, ORGANIZATION);
+		expect(update).toHaveBeenCalledWith(ACME_TEAM, {
+			organizationId: ORGANIZATION,
+			tenantId: TENANT,
+			memberIds: [MANAGER, MEMBER],
+			managerIds: [MANAGER]
+		});
+	});
+
+	it('makes the employee a manager, or a plain member, only when the flag is stated', async () => {
+		const promote = service({ memberIds: [MANAGER, MEMBER] });
+		const asManager = { organizationId: ORGANIZATION, employeeId: MEMBER, isManager: true };
+		await promote.instance.addMember(ACME_TEAM, asManager);
+		expect(promote.update).toHaveBeenCalledWith(
+			ACME_TEAM,
+			expect.objectContaining({ memberIds: [MANAGER, MEMBER], managerIds: [MANAGER, MEMBER] })
+		);
+
+		const demote = service({ memberIds: [MANAGER, MEMBER], managerIds: [MANAGER, MEMBER] });
+		await demote.instance.addMember(ACME_TEAM, { ...asManager, isManager: false });
+		expect(demote.update).toHaveBeenCalledWith(ACME_TEAM, expect.objectContaining({ managerIds: [MANAGER] }));
+
+		const unstated = service({ memberIds: [MANAGER, MEMBER], managerIds: [MANAGER, MEMBER] });
+		await unstated.instance.addMember(ACME_TEAM, { organizationId: ORGANIZATION, employeeId: MEMBER });
+		expect(unstated.update).toHaveBeenCalledWith(
+			ACME_TEAM,
+			expect.objectContaining({ managerIds: [MANAGER, MEMBER] })
+		);
+	});
+
+	it('refuses an employee outside the organization instead of answering a team without them', async () => {
+		const { instance, findMemberSets, update } = service({ employee: false });
+
+		await expect(
+			instance.addMember(ACME_TEAM, { organizationId: ORGANIZATION, employeeId: MEMBER })
+		).rejects.toBeInstanceOf(NotFoundException);
+		expect(findMemberSets).not.toHaveBeenCalled();
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('refuses a call that names no organization or no employee', async () => {
+		const { instance, update } = service();
+
+		await expect(instance.addMember(ACME_TEAM, { employeeId: MEMBER } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		await expect(instance.addMember(ACME_TEAM, { organizationId: ORGANIZATION } as never)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(update).not.toHaveBeenCalled();
+	});
+});
+
 describe('OrganizationTeamResolver — the guard stack and the permission are the controller’s', () => {
 	it('guards the resolver the way the controller is guarded', () => {
 		const resolverGuards = Reflect.getMetadata('__guards__', OrganizationTeamResolver) ?? [];
@@ -740,7 +875,8 @@ describe('OrganizationTeamResolver — the guard stack and the permission are th
 			'delete',
 			'existTeamsAsMember',
 			'softRemove',
-			'softRecover'
+			'softRecover',
+			'addMember'
 		];
 
 		for (const handler of routes) {
@@ -771,7 +907,8 @@ describe('OrganizationTeamResolver — the guard stack and the permission are th
 			['deleteOrganizationTeam', 'delete'],
 			['removeUserFromOrganizationTeams', 'existTeamsAsMember'],
 			['softDeleteOrganizationTeam', 'softRemove'],
-			['recoverOrganizationTeam', 'softRecover']
+			['recoverOrganizationTeam', 'softRecover'],
+			['addTeamMember', 'addMember']
 		];
 
 		const stated = Object.fromEntries(routes.map(([field]) => [field, permissionOfField(field)]));

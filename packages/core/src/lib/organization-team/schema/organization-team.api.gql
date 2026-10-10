@@ -118,6 +118,17 @@ extend type Mutation {
 	updateOrganizationTeam(input: UpdateOrganizationTeamInput!): OrganizationTeam!
 
 	"""
+	Adds one employee to a team, or changes whether that member manages it, without restating the rest of
+	the team.
+
+	Mirrors `POST /organization-team/:id/members`, under the same permission as `updateOrganizationTeam`,
+	which it rides on: the team's current members plus this one are handed to that same edit, so the same
+	rules decide who may edit which team. An employee outside the organization is refused. Leaving
+	`isManager` out keeps an existing member's role; a new member joins as a member.
+	"""
+	addTeamMember(input: AddTeamMemberInput!): OrganizationTeam!
+
+	"""
 	Removes a team outright, with the membership rows that belong to it.
 
 	The delivered answer is the removal result — its signature admits the row beside it — and the one

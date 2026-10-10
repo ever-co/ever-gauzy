@@ -3,21 +3,21 @@
 # `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
 # once for the whole platform, so a domain adds fields to it and never declares its own.
 #
-# The domain is served by `/api/email-reset`, whose controller declares two routes — both of them
-# `POST`s — and inherits none: asking for the address on an account to be changed, and presenting the
-# code that was mailed to the new address. Both are mirrored below, and they are the whole of the
-# surface, because a `POST` is the only thing either route is.
+# The domain is served by `/api/email-reset`, whose controller declares three routes and inherits none:
+# asking for the address on an account to be changed, presenting the code that was mailed to the new
+# address, and listing a user's requests. All three are mirrored below.
 #
 # **The two fields are named for the resource rather than for the route's own spelling.** The routes
 # spell the operation out — `request-change-email` and `verify-change-email` — while the row both of them
 # leave behind, and the controller, the service and the module around it, are all called the email reset.
 # A field is named for the concept, and the route it mirrors is stated on the field itself.
 #
-# **There is deliberately no read here, and that is a statement rather than an omission.** This
-# controller declares no list, no node and no count, and the service method that reads a reset record is
-# reached by the verification itself rather than by a route of its own. A field with no route behind it
-# would be a capability REST does not serve, which is the same defect as a route without a field, only in
-# the other direction. The reset row is an internal record of an attempt, and neither protocol exposes it.
+# **The one read never carries the secret.** `emailResets` mirrors `GET /email-reset`: a user's requests,
+# newest first, as `EmailReset` — who asked, from which address to which, and whether it has lapsed. The
+# verification code and the token are not members of the type and are not even selected by the read: they
+# are what a request is proved with, and a list that carried them would let its reader complete someone
+# else's change. The caller's own requests by default; another user's need `ORG_USERS_EDIT`, checked by
+# the service. There is no node and no count field, because the controller serves neither.
 #
 # **The guard chain and the permission are the controller's.** The class carries `TenantPermissionGuard`
 # and `PermissionGuard`, and its permission pair is stated on the class rather than on either handler —
@@ -57,4 +57,28 @@ extend type Mutation {
 	code was live, whether it matched, or whether the address had meanwhile been taken by somebody else.
 	"""
 	verifyEmailReset(input: VerifyEmailResetInput!): EmailResetOutcome!
+}
+
+extend type Query {
+	"""
+	The address-change requests of one user of the caller's tenant, newest first — never with their
+	verification code or token.
+
+	Mirrors `GET /email-reset`, under the class's pair. Omit `userId` for the caller's own requests; another
+	user's are refused unless the caller holds `ORG_USERS_EDIT`. At most a hundred are read. No request is
+	ever withdrawn, so there is no `withDeleted`.
+	"""
+	emailResets(
+		"The user whose requests are read. Omit it for the caller."
+		userId: ID
+		filter: EmailResetFilter
+		sort: [EmailResetSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): EmailResetConnection!
 }

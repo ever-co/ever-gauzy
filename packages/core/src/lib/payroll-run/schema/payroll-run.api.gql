@@ -103,6 +103,32 @@ extend type Query {
 		"The organization the run belongs to."
 		organizationId: ID!
 	): [PayrollSummary!]!
+
+	"""
+	The payroll lines of one organization across its runs, newest first, optionally narrowed to one run or
+	one employee.
+
+	Mirrors `GET /payroll-run/items`. Read under the caller's tenant and the organization named, and paged at
+	the store as the run list is (at most 100 lines per read); the connection narrows and orders that page.
+	A line is removed outright rather than withdrawn, so there is no `withDeleted`.
+	"""
+	payrollItems(
+		"The organization whose lines are read."
+		organizationId: ID!
+		"Only the lines of this run."
+		payrollRunId: ID
+		"Only the lines paid to this employee."
+		employeeId: ID
+		filter: PayrollItemFilter
+		sort: [PayrollItemSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): PayrollItemConnection!
 }
 
 extend type Mutation {
@@ -160,4 +186,13 @@ extend type Mutation {
 	which is the one member of that result a caller reads.
 	"""
 	removePayrollRunItem(id: ID!, itemId: ID!, organizationId: ID!): Boolean!
+
+	"""
+	Edits one line of a draft run and recomputes the run's totals from its lines, in integer cents.
+
+	Mirrors `PUT /payroll-run/:id/items/:itemId`. The run and the line are identifiers, not input members. A
+	line of a run that is not a draft is refused, and a line moved to another employee must move to one of
+	the same organization. A member left out is left as it is.
+	"""
+	updatePayrollItem(id: ID!, itemId: ID!, input: UpdatePayrollItemInput!): PayrollItem!
 }

@@ -8,13 +8,16 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { PUBLIC_METHOD_METADATA, FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { TermsAcceptanceController } from './terms-acceptance.controller';
 import { TermsAcceptanceResolver } from './terms-acceptance.resolver';
+import { TermsAcceptanceService } from './terms-acceptance.service';
 
 /**
  * The published legal corpus over GraphQL.
@@ -56,10 +59,44 @@ const DOCUMENTS = [
 	}
 ];
 
+/** The acceptance records a scripted recorder answers with, newest first. */
+const RECORDS = [
+	{
+		id: 'acc-2',
+		subjectId: 'user-1',
+		tenantId: 'tenant-1',
+		documentId: 'privacy:gauzy',
+		version: '2.1.0',
+		sha256: 'b'.repeat(64),
+		acceptedAt: '2026-09-01T10:00:00.000Z',
+		locale: 'en-US',
+		ipHash: null,
+		userAgent: null,
+		method: 'api',
+		fingerprint: 'f'.repeat(64)
+	},
+	{
+		id: 'acc-1',
+		subjectId: 'user-1',
+		tenantId: 'tenant-1',
+		documentId: 'tos:gauzy',
+		version: '1.0.0',
+		sha256: 'a'.repeat(64),
+		acceptedAt: '2026-01-01T10:00:00.000Z',
+		locale: 'en-US',
+		ipHash: null,
+		userAgent: null,
+		method: 'signup-checkbox',
+		fingerprint: 'e'.repeat(64)
+	}
+];
+
 /** The resolver, over a scripted service. */
 function surfaces() {
 	const termsAcceptanceService = {
-		getRequiredDocuments: jest.fn().mockReturnValue(DOCUMENTS)
+		getRequiredDocuments: jest.fn().mockReturnValue(DOCUMENTS),
+		acceptAsCaller: jest.fn().mockResolvedValue(RECORDS.slice(0, 1)),
+		historyOfCaller: jest.fn().mockResolvedValue(RECORDS)
 	};
 
 	return {
@@ -151,11 +188,26 @@ describe('TermsAcceptanceResolver — the SDL declares the capability the REST r
 		expect(rootFields('Query')).toEqual(expect.arrayContaining(['termsAcceptanceDocuments']));
 	});
 
-	it('declares the read the controller serves, and no more', () => {
-		// The controller declares one route and writes nothing, so a count field, a node field and any
-		// mutation would each be a capability with no delivered route behind it.
-		expect(ownedRootFields('Query')).toEqual(['termsAcceptanceDocuments']);
-		expect(ownedRootFields('Mutation')).toEqual([]);
+	it('declares the reads the controller serves, and no more', () => {
+		// Three routes: the corpus, the caller's history and the caller's acceptance. A count field or a node
+		// field would each be a capability with no delivered route behind it.
+		expect(ownedRootFields('Query')).toEqual(['termsAcceptanceDocuments', 'termsAcceptances']);
+		expect(rootFields('Mutation')).toEqual(expect.arrayContaining(['acceptTerms']));
+	});
+
+	it('declares the caller’s history as a connection and the acceptance as the records it wrote', () => {
+		expect(printed).toMatch(/termsAcceptances\([^)]*\): TermsAcceptanceConnection!/);
+		// No user argument anywhere: both act on the credential's person only.
+		expect(printed).not.toMatch(/termsAcceptances\([^)]*userId/);
+		expect(printed).toMatch(/acceptTerms\(input: AcceptTermsInput!\): \[TermsAcceptance!\]!/);
+		expect(printed).not.toMatch(/input AcceptTermsInput \{[^}]*userId/);
+
+		const body = printed.match(/type TermsAcceptance \{([\s\S]*?)\n\}/)?.[1] ?? '';
+		expect(body).toMatch(/sha256: String!/);
+		expect(body).toMatch(/acceptedAt: DateTime!/);
+		// The device-identifying members the recorder keeps are not projected.
+		expect(body).not.toMatch(/ipHash/);
+		expect(body).not.toMatch(/userAgent/);
 	});
 
 	it('answers a list rather than a connection, because the route answers a list', () => {
@@ -193,6 +245,33 @@ describe('TermsAcceptanceResolver — one concept, two protocols, the same read'
 		expect(termsAcceptanceService.getRequiredDocuments).toHaveBeenCalledWith('en-US');
 	});
 
+	it('records the caller’s acceptance through the same service method the accept route calls', async () => {
+		const { resolver, termsAcceptanceService } = surfaces();
+		const claim = { documentId: 'privacy:gauzy', version: '2.1.0', sha256: 'b'.repeat(64), locale: 'en-US' };
+
+		expect(await resolver.acceptTerms({ terms: [claim] })).toEqual(RECORDS.slice(0, 1));
+		expect(termsAcceptanceService.acceptAsCaller).toHaveBeenCalledWith([claim]);
+
+		const controller = new TermsAcceptanceController(termsAcceptanceService as never);
+		await controller.accept({ terms: [claim] });
+		expect(termsAcceptanceService.acceptAsCaller).toHaveBeenLastCalledWith([claim]);
+	});
+
+	it('reads the caller’s history through the same service method the route calls, as a connection', async () => {
+		const { resolver, termsAcceptanceService } = surfaces();
+
+		const connection = await resolver.termsAcceptances();
+		expect(termsAcceptanceService.historyOfCaller).toHaveBeenCalledWith();
+		expect(connection.totalCount).toBe(2);
+		expect(connection.nodes.map((node) => node.id)).toEqual(['acc-2', 'acc-1']);
+
+		const narrowed = await resolver.termsAcceptances({ documentId: { eq: 'tos:gauzy' } });
+		expect(narrowed.nodes.map((node) => node.id)).toEqual(['acc-1']);
+
+		const controller = new TermsAcceptanceController(termsAcceptanceService as never);
+		expect(await controller.acceptances()).toEqual(RECORDS);
+	});
+
 	it('leaves the locale unstated when the caller states none, which is the route’s own default', async () => {
 		const { resolver, termsAcceptanceService } = surfaces();
 
@@ -219,10 +298,28 @@ describe('TermsAcceptanceResolver — the guard stack and the permission are the
 		expect(isPublicField('termsAcceptanceDocuments')).toBe(true);
 	});
 
-	it('states no permission anywhere, because the controller states none', () => {
+	it('states no permission on the corpus read or on either class, because the controller states none there', () => {
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TermsAcceptanceController)).toBeUndefined();
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, TermsAcceptanceResolver)).toBeUndefined();
 		expect(permissionOfField('termsAcceptanceDocuments')).toBeUndefined();
+	});
+
+	it('runs the caller’s acceptance and history under the guards and the grant their routes state', () => {
+		const handlers = TermsAcceptanceController.prototype as unknown as Record<string, object>;
+		const fields = TermsAcceptanceResolver.prototype as unknown as Record<string, object>;
+
+		for (const [field, handler] of [
+			['acceptTerms', 'accept'],
+			['termsAcceptances', 'acceptances']
+		] as const) {
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.PROFILE_EDIT]);
+			expect(permissionOfField(field)).toEqual(Reflect.getMetadata(PERMISSIONS_METADATA, handlers[handler]));
+			expect(Reflect.getMetadata('__guards__', fields[field])).toEqual([TenantPermissionGuard, PermissionGuard]);
+			expect(guardsOfRoute(TermsAcceptanceController, handler)).toEqual([TenantPermissionGuard, PermissionGuard]);
+			// Neither is public: the person is the credential's, so a call without one has no subject.
+			expect(isPublicField(field)).toBe(false);
+			expect(isPublic(TermsAcceptanceController, handler)).toBe(false);
+		}
 	});
 });
 
@@ -297,5 +394,96 @@ describe('TermsAcceptanceResolver — a capability that is switched off is not s
 		expect(isPublicField('termsAcceptanceDocuments')).toBe(true);
 		expect(refusal).toBeInstanceOf(Error);
 		expect(Reflect.getMetadata(FEATURE_METADATA, TermsAcceptanceResolver)).toBe(FEATURE_GRAPHQL);
+	});
+});
+
+describe('TermsAcceptanceService — an acceptance is always the caller’s own, and always published text', () => {
+	const USER = 'user-1';
+	const TENANT = 'tenant-1';
+
+	/** The service over a repository it never reaches: recording and history are spied. */
+	function service() {
+		const instance = new TermsAcceptanceService({} as never);
+		const record = jest.spyOn(instance, 'record').mockResolvedValue(RECORDS as never);
+		const history = jest.spyOn(instance, 'history').mockResolvedValue(RECORDS as never);
+
+		return { instance, record, history };
+	}
+
+	/** A claim the published corpus does carry, read from the corpus itself. */
+	function publishedClaim(instance: TermsAcceptanceService) {
+		const [document] = instance.getRequiredDocuments();
+
+		return {
+			documentId: document.documentId,
+			version: document.version,
+			sha256: document.sha256,
+			locale: document.locale
+		};
+	}
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('records a published claim for the credential’s user and tenant, by the API method', async () => {
+		const { instance, record } = service();
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentRequest').mockReturnValue({
+			ip: '203.0.113.7',
+			headers: { 'user-agent': 'spec' }
+		});
+		const claim = publishedClaim(instance);
+
+		await instance.acceptAsCaller([claim]);
+
+		expect(record).toHaveBeenCalledWith(USER, [claim], {
+			tenantId: TENANT,
+			method: 'api',
+			ip: '203.0.113.7',
+			userAgent: 'spec'
+		});
+	});
+
+	it('refuses a digest the corpus never published, before anything is written', async () => {
+		const { instance, record } = service();
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		const forged = { ...publishedClaim(instance), sha256: '0'.repeat(64) };
+
+		await expect(instance.acceptAsCaller([forged])).rejects.toBeInstanceOf(BadRequestException);
+		expect(record).not.toHaveBeenCalled();
+	});
+
+	it('refuses an empty or an oversized batch, whichever protocol it arrived over', async () => {
+		const { instance, record } = service();
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
+		const claim = publishedClaim(instance);
+
+		await expect(instance.acceptAsCaller([])).rejects.toBeInstanceOf(BadRequestException);
+		await expect(instance.acceptAsCaller(Array.from({ length: 21 }, () => claim))).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(record).not.toHaveBeenCalled();
+	});
+
+	it('refuses a request that carries no user, for the write and for the read', async () => {
+		const { instance, record, history } = service();
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(null);
+
+		await expect(instance.acceptAsCaller([publishedClaim(instance)])).rejects.toBeInstanceOf(
+			UnauthorizedException
+		);
+		await expect(instance.historyOfCaller()).rejects.toBeInstanceOf(UnauthorizedException);
+		expect(record).not.toHaveBeenCalled();
+		expect(history).not.toHaveBeenCalled();
+	});
+
+	it('reads the history of the credential’s user in the credential’s tenant only', async () => {
+		const { instance, history } = service();
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+
+		expect(await instance.historyOfCaller()).toEqual(RECORDS);
+		expect(history).toHaveBeenCalledWith(USER, TENANT);
 	});
 });
